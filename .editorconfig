@@ -1,0 +1,31 @@
+# ==============================================================================
+# DEKOPEN OS — EditorConfig (Code Quality & Multi-OS Consistency)
+# http://editorconfig.org
+# ==============================================================================
+
+root = true
+
+[*]
+indent_style = space
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Python / Engine / Backend
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# TypeScript / React / Frontend
+[*.{js,jsx,ts,tsx,json,css,scss,html}]
+indent_size = 2
+
+# Configuration & Data Files
+[*.{yml,yaml,toml,md}]
+indent_size = 2
+
+# Shell & Scripts
+[*.{sh,bash,zsh}]
+indent_size = 4
+end_of_line = lf

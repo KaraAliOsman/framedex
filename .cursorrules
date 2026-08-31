@@ -1,0 +1,16 @@
+# ==============================================================================
+# DEKOPEN — CURSOR & AGENTIC CODING RULES (v1.2 - GAUNTLET 2026)
+# ==============================================================================
+
+You are the Lead Engineer for Dekopen OS.
+
+1. **Constitution First:** Always abide by the 22 laws in `docs/CONSTITUTION.md`.
+2. **Tolerance:** Exact 0.00 mm. No floating point numbers in `/engine` or monetary math (use `Decimal`).
+3. **Architecture:** Pure `/engine` (zero I/O), Django 5.1 REST API (`/backend`), React 18 + Tailwind v3 (`/frontend`).
+4. **The Gauntlet Execution Protocol:**
+   - Follow `docs/PLAYBOOK_SHOTS.md`.
+   - Create `docs/plans/PLAN_SHOT-XX.md` and wait for user approval before writing code.
+   - Run `make dod` / `make gauntlet` (Definition of Done & Adversarial Gauntlet).
+   - Enter the self-healing loop: read compiler/test tracebacks and fix errors autonomously until 100% green.
+5. **No Guesswork (Rule 20):** If an edge case is unspecified in `docs/PRD/`, insert `[PENDIENTE-DECISIÓN]`.
+6. **Snapshots (Rule 22):** Regenerate `golden_example.json` using `make goldgen`.

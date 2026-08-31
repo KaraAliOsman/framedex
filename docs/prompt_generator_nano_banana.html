@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dekopen — Generador de Ultra-Prompts Píxel a Píxel (Nano Banana / Midjourney v6 / Flux)</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #141417;
+      --surface-card: #18181b;
+      --surface-hover: #27272a;
+      --border: #27272a;
+      --border-active: #06b6d4;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #06b6d4;
+      --accent-hover: #0891b2;
+      --success: #10b981;
+      --code-bg: #0d0d10;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 360px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #0f0f12;
+    }
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-header p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .screen-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px;
+    }
+    .screen-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 6px;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .screen-btn:hover {
+      background: var(--surface-hover);
+    }
+    .screen-btn.active {
+      background: #083344;
+      border-color: var(--border-active);
+      color: #67e8f9;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+    }
+    .screen-btn .tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+    .screen-btn .title {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .screen-btn .desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+    .screen-btn.active .desc {
+      color: #a5f3fc;
+    }
+
+    /* Main Workspace */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #09090b;
+    }
+    .topbar {
+      padding: 14px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar-info h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .topbar-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-copy {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+    }
+    .btn-copy:hover {
+      background: var(--accent-hover);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn-copy:active {
+      transform: scale(0.98);
+    }
+    .btn-copy.copied {
+      background: var(--success) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-secondary {
+      background: var(--surface-hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-secondary:hover {
+      background: #3f3f46;
+      color: #fff;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      padding: 20px 28px;
+      overflow-y: auto;
+    }
+    .card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 10px 16px;
+      background: #111114;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card-body {
+      flex: 1;
+      padding: 16px;
+      background: var(--code-bg);
+      font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #e4e4e7;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+    .full-width-card {
+      grid-column: span 2;
+    }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--success);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+      display: none;
+      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar: Lista de Pantallas -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1><span>📐</span> Dekopen Pixel Studio</h1>
+      <p>Generador de Prompts Píxel a Píxel (Estilo Adobe Creative Suite • Tolerancia 0.00 mm)</p>
+    </div>
+    <div class="screen-list" id="screenList"></div>
+  </div>
+
+  <!-- Main View -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-info">
+        <h2 id="activeTitle">Cargando pantalla...</h2>
+        <p id="activeSub">Selecciona una pantalla de la izquierda para generar el prompt combinado</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-secondary" onclick="copyMidjourneyFormat()">🎨 Formato Midjourney v6</button>
+        <button class="btn-copy" id="copyBtn" onclick="copyFullPrompt()">
+          <span>📋</span> COPIAR ULTRA-PROMPT (MÁXIMO DETALLE)
+        </button>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- Full Output (Lo que se copia) -->
+      <div class="card full-width-card" style="height: 420px;">
+        <div class="card-header">
+          <span>🚀 PROMPT COMPLETO PÍXEL A PÍXEL (PARA NANO BANANA / FLUX.1 / IDEOGRAM)</span>
+          <span id="charCount" style="color: var(--accent);">0 caracteres</span>
+        </div>
+        <div class="card-body" id="fullPromptView" style="color: #67e8f9;"></div>
+      </div>
+
+      <!-- Base Context View -->
+      <div class="card" style="height: 300px;">
+        <div class="card-header">
+          <span>⚙️ CONTEXTO GLOBAL FIJO (ESTILO ADOBE, SISTEMA DE COLOR & CAD)</span>
+        </div>
+        <div class="card-body" id="baseContextView"></div>
+      </div>
+
+      <!-- Screen Specific View -->
+      <div class="card" style="height: 300px;">
+        <div class="card-header">
+          <span>🎯 ESPECIFICACIÓN DETALLADA DE LA PANTALLA SELECCIONADA</span>
+        </div>
+        <div class="card-body" id="screenSpecificView"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">✅ ¡Ultra-Prompt de alta densidad copiado al portapapeles!</div>
+
+  <script>
+    // =========================================================================
+    // 1. CONTEXTO MAESTRO GLOBAL DEL SISTEMA (Ultra Detallado Píxel a Píxel)
+    // =========================================================================
+    const GLOBAL_BASE_CONTEXT = `[SYSTEM CONTEXT & ART DIRECTION: DEKOPEN OS v1.2 - PIXEL-PERFECT ENGINEERING SUITE]
+PRODUCT IDENTITY: Dekopen OS — The first 0.00 mm deterministic engineering CAD, 1D linear cut optimizer, and B2B pricing operating system for PVC and Aluminum window/door fabricators in Chile and Latin America.
+DESIGN LANGUAGE: High-density Professional Engineering Software inspired by Adobe Creative Cloud (Illustrator, Photoshop, Lightroom) fused with Linear.app dark ergonomics and AutoCAD workstation precision. Zero "vibe-coded" aesthetics; every UI element is functional, tactile, and designed for experienced workshop engineers.
+8PX GRID & SPATIAL HIERARCHY: Strict 8px baseline layout grid with 4px micro-paddings. Panel borders are crisp 1px solid hairlines (#27272a border, #141417 card surface, #18181b canvas background). Subtly beveled 6px-8px border radius on dialogs and action badges.
+COLOR PALETTE & TOKENS:
+- Canvas & UI Surface: Slate-900 / Zinc-900 deep matte graphite base (#18181b), floating tool panels (#1f1f23), active panel headers (#111114).
+- Active CAD Vector Accents: Electric Cyan (#06b6d4) for selected dimension lines, vector nodes, and tool handles.
+- Verification & Safety Badges: Emerald Green (#10b981) for passed structural wind-load checks, 0.00mm tolerance approvals, and positive profit margins (+35%).
+- Revision & Diff Accents: Amber Gold (#f59e0b) for modified extrusion profiles, unsaved CAD revisions, and warning flags.
+- Action Accents: Cobalt Blue (#2563eb) for primary buttons and selection bounding boxes.
+- Typography Colors: Pure White (#ffffff, 100% opacity) for headers and critical dimensions; Cool Grey (#a1a1aa, 70% opacity) for secondary property labels; Dim Grey (#71717a) for inactive ruler tick marks.
+TYPOGRAPHY & DATA RENDERING:
+- UI Controls & Hierarchy: Inter and SF Pro Display (Medium 500 for navigation, Bold 700 for active tabs and modal headers).
+- Numerical Precision & Tables: JetBrains Mono and Roboto Mono for exact millimeter measurements, cutting angles (45.0° / 90.0°), Cartesian coordinates (X, Y), profile weight sums, and CLP currency amounts ($184,500 CLP).
+MATHEMATICAL & CAD ACCURACY:
+- Absolute 0.00 mm mathematical tolerance visualized. Double miter 45-degree heat-welded corners with 0.2mm weld-groove seam rendering.
+- Visible multi-chamber thermal extrusion profiles (5 internal air chambers, co-extruded black EPDM gaskets, 1.5mm galvanized steel U-channel reinforcements).
+- Double-glazed insulated glass units (4mm float glass + 16mm warm-edge aluminum spacer with desiccant beads + 4mm Low-E glass pane with soft 8% cyan ambient studio reflection).
+RENDER SETTINGS & QUALITY: 8k resolution, razor-sharp vector line art, no gaussian blur on text, high micro-contrast, photorealistic UI screenshot captured from a 32-inch 4K Retina Studio Display.`;
+
+    // =========================================================================
+    // 2. ESPECIFICACIONES ULTRA-DETALLADAS POR CADA PANTALLA (Píxel a Píxel)
+    // =========================================================================
+    const SCREENS = [
+      {
+        id: "S06-DARK",
+        tag: "S06 · NÚCLEO CAD",
+        title: "Canvas 2D CAD — Editor Paramétrico (Dark Graphite)",
+        desc: "Lienzo vectorial milimétrico con ventana Oscilobatiente 2 paños, cotas cian y BOM en vivo.",
+        prompt: `[SCREEN SPECIFICATION: S06 - 2D PARAMETRIC CAD CANVAS EDITOR (DARK GRAPHITE THEME)]
+VIEWPORT LAYOUT: 100vw x 100vh Fullscreen Engineering CAD environment.
+TOP HEADER (Height: 44px, #141417 background, 1px bottom border #27272a):
+- Left: Dekopen logo icon in electric cyan + Project Breadcrumb: 'Edificio Costanera / Nivel 4 / Depto 402 / Vano V-01 (Rev A)'.
+- Center: Segmented Zoom and Grid Controls: '[ 100% ] [ Snap to 5mm Grid (Active) ] [ Wireframe ] [ Realistic Render ] [ Section View ]'.
+- Right: Engine Status Pill in emerald green: '● Engine Determinista: 0.00 mm OK' + Action Button: '[ Generar OT y Corte (DOC-03) ]'.
+LEFT TOOLBAR (Width: 48px, #18181b background, 1px right border #27272a):
+- Stack of 10 Adobe Illustrator style square tool buttons (36x36px): Select Tool (Active with cyan border), Outer Frame Creator, Mullion/Transom Splitter (T-Joint), Sash Typology Assigner, Glazing Bead Selector, Hardware Handle Tool, Dimension Ruler, Weld Angle Gauge, Undo/Redo.
+CENTER WORKSPACE (Graphite grid canvas #18181b with 20px grid spacing):
+- Precision 2D elevation drawing of a European Dual-Sash Tilt-and-Turn (Oscilobatiente) PVC window in Traffic White (RAL 9016).
+- Frame Outer Dimensions: 1506.00 mm (Width) x 1406.00 mm (Height) with crisp cyan hairline dimension lines and dimension arrows reading '1506.00 mm' along the top and '1406.00 mm' along the left edge.
+- Vertical Mullion (Montante): 1280.00 mm length at X = 753.00 mm, splitting the window into two bays:
+  * Left Bay (Fixed Glass / Paño Fijo): Glass unit 680.00 mm x 1310.00 mm with subtle light cyan cross-hatch reflection. Glazing bead mitered at 45°.
+  * Right Bay (Tilt-Turn Sash / Hoja OB): Sash frame 672.00 mm x 1302.00 mm, inner glass 546.00 mm x 1176.00 mm. Dotted diagonal opening direction lines (dashed white lines meeting at right handle). Hoja handle in matte stainless steel at Y = 651.00 mm.
+RIGHT INSPECTOR PANEL (Width: 320px, #141417 background, 1px left border #27272a):
+- Parametric Tree Hierarchy: 'ROOT_FRAME (1506x1406) -> MULLION_V (1280) -> [BAY_LEFT(FIXED), BAY_RIGHT(TILT_TURN)]'.
+- System Specs: Dropdown 'VEKA Softline 70AD (5 Cámaras, Blanco)', Glass Dropdown 'Termopanel 4-16-4 Acústico (24mm)'.
+- Real-Time Physics & BOM Summary:
+  * PVC Linear Length: 6.78 m | Steel Reinforcement: 6.42 m | Total Glass Area: 1.53 m²
+  * Dynamic Weight Pill: '[ 🟢 Peso Hoja: 26.55 kg / Capacidad Kit: 100.00 kg (PASS) ]'
+  * Instant Unit Fabrication Cost: '$184,500 CLP' (Profit Margin: 38.5%).`
+      },
+      {
+        id: "S06-LIGHT",
+        tag: "S06-B · MODO TALLER",
+        title: "Canvas 2D CAD — Modo Taller (Light Studio Theme)",
+        desc: "Editor de alta luminosidad para sol de taller e impresión con corredera 4 hojas.",
+        prompt: `[SCREEN SPECIFICATION: S06-B - 2D PARAMETRIC CAD CANVAS (LIGHT STUDIO THEME)]
+VIEWPORT LAYOUT: Fullscreen High-Contrast Daylight Workshop Theme (#f4f4f5 platinum canvas, #ffffff panels, #e4e4e7 borders, #0f172a dark slate text).
+TOP RULER HEADER: InDesign style precision millimeter ruler spanning horizontal X-axis (0 to 2200 mm) and vertical Y-axis (0 to 2300 mm) with hairline graduation tick marks every 10mm.
+CENTER CANVAS: Technical 2D elevation blueprint of a 4-sash Sliding PVC Balcony Patio Door (2000.00 mm Width x 2100.00 mm Height) in Anthracite Grey (RAL 7016 textured foil).
+- Deep Cobalt Blue (#2563eb) dimension arrows and hairline callouts:
+  * Outer Frame Cut: 2000.00 mm (Horizontal) / 2100.00 mm (Vertical).
+  * 4 Sliding Sashes: Each sash measuring exactly 966.00 mm Width x 1956.00 mm Height (calculated via formula (2000-120+40)/2+6).
+  * Central Interlock Overlap (Traslape): Highlighted with dashed cobalt indicator 'Overlap: 40.00 mm'.
+- Bottom-Left Inset Diagram (Scale 1:2): Cross-section callout bubble showing the 2-track sill profile with CNC milled drainage weep holes (35x5mm slots) and anti-wind brush seals.
+RIGHT WORKSHOP DOCK:
+- Instant Cutting List Table:
+  * Profile Articles: Frame 2000mm (2x 45°/45°), Sash 966mm (8x 45°/45°), Interlock 1956mm (4x 90°/90°).
+  * Steel Channels: Frame Steel 1940mm (2x), Sash Steel 906mm (8x), Interlock Reinforcement 1926mm (4x).
+- Operator Quick Actions: '[ Imprimir Ficha de Corte ] [ Enviar a Tronzadora Doble Cabezal CNC ]'.`
+      },
+      {
+        id: "S01-DASH",
+        tag: "S01 / S03 · EJECUTIVO",
+        title: "Dashboard Principal & Gestión de Taller",
+        desc: "Panel de control ejecutivo: KPIs de m², aprovechamiento de barras 94.8% y tabla de OTs.",
+        prompt: `[SCREEN SPECIFICATION: S01/S03 - EXECUTIVE WORKSHOP DASHBOARD & WORK ORDER MANAGER]
+VIEWPORT LAYOUT: Modern Dark Graphite Enterprise Dashboard (#18181b base, #222226 cards).
+TOP STATS ROW (4 Equal Metric Cards, 280px width each, with subtle glowing 1px borders):
+1. 'Volumen Fabricado Mensual': 580.4 m² (↑ +14.2% vs mes anterior) + Mini emerald area sparkline.
+2. 'Aprovechamiento Lineal de Barra': 95.2% (Desperdicio: 4.8%) + Circular radial progress gauge.
+3. 'Órdenes de Trabajo Activas': 24 OT en Taller (8 en Corte, 10 en Armado, 6 en Vidriado) + Segmented status bar.
+4. 'Billetera Dekopen AI': 1,420 Créditos Disponibles (Consumo promedio: 14 cr/día) + Cyan recharge badge.
+MAIN CONTENT - ACTIVE PROJECTS PIPELINE:
+- Filter Bar: Tabs '[ Todas las OT (24) ] [ En Corte CNC (8) ] [ En Vidriado (6) ] [ Listas para Despacho (10) ]' + Search input 'Buscar por Proyecto, Cliente o Razón Social...'.
+- Rich Data Table (Dark UI with alternating row striping #1f1f23 / #18181b):
+  * Row 1: 'OT-1042' | 'Hotel Bahía Marina' | '142 Vanos' | 'PVC Blanco VEKA' | Status Pill '[ 🟢 85% En Corte ]' | Entrega '04-Sep-2026' | Total '$24,850,000 CLP'.
+  * Row 2: 'OT-1043' | 'Residencial Los Robles' | '48 Vanos' | 'Foliado Roble Dorado' | Status Pill '[ 🟡 En Vidriado ]' | Entrega '08-Sep-2026' | Total '$9,420,000 CLP'.
+  * Row 3: 'OT-1044' | 'Clínica Dental del Valle' | '16 Vanos' | 'Aluminio RPT 60' | Status Pill '[ 🔵 Revisión Comercial ]' | Entrega '12-Sep-2026' | Total '$3,180,000 CLP'.
+TOP-RIGHT ACTIONS: '[ + Nueva Cotización (Cmd+N) ] [ 📄 Importar Plano OCR (S27) ] [ Exportar Excel Consolidado ]'.`
+      },
+      {
+        id: "S04-GRID",
+        tag: "S04 · POSICIONES",
+        title: "Matriz de Vanos y Catálogo de Ventanas (V1 a V8)",
+        prompt: `[SCREEN SPECIFICATION: S04 - WINDOW POSITION MATRIX & SCHEDULE GRID]
+VIEWPORT LAYOUT: Responsive Grid of Architectural Openings for Project 'Edificio Costanera Tower (180 Ventanas)'.
+TOP FILTER & SUMMARY HEADER:
+- Project Title: 'Proyecto #402: Edificio Costanera • 8 Tipologías Maestras • Total Proyecto: $42,650,000 CLP'.
+- Multi-select Tag Filters: '[ Todas las Tipologías ] [ Fijos ] [ Oscilobatientes ] [ Correderas ] [ Proyectantes ]'.
+INTERACTIVE OPENING SCHEDULE CARDS (4 Columns x 2 Rows Grid, #222226 card background, 1px border #333338):
+- Card 1: Header 'Vano V-01 (Cant: 42)' | Center: Vector elevation thumbnail of 2-sash Tilt-Turn (1500x1400mm) | Specs: 'VEKA 70mm / Termopanel 4-16-4 / Herraje Vorne' | Footer: Unit Price '$184,500 CLP' | Margin Badge '+38.5%'.
+- Card 2: Header 'Vano V-02 (Cant: 36)' | Center: Vector thumbnail of 4-sash Balcony Slider (2000x2100mm) | Specs: 'Aluplast 4000 / Termopanel 4-12-4' | Footer: Unit Price '$342,000 CLP' | Margin Badge '+41.0%'.
+- Card 3: Header 'Vano V-03 (Cant: 18)' | Center: Vector thumbnail of 1-sash Awning Window (800x600mm) | Specs: 'Rehau Euro-Design / Monolítico 6mm' | Footer: Unit Price '$78,900 CLP' | Margin Badge '+35.0%'.
+- Card 4: Header 'Vano V-04 (Cant: 24)' | Center: Vector thumbnail of Fixed Panoramic Bay (2400x1800mm) | Specs: 'VEKA 70mm / Laminado 4+4-12-6' | Footer: Unit Price '$412,000 CLP' | Margin Badge '+44.2%'.
+BOTTOM FLOATING ACTIONS BAR (Glassmorphism #18181be6, backdrop-filter 12px blur):
+- Selected count: '4 Tipologías Seleccionadas (120 unidades)' | Buttons: '[ Asignar Kit de Herrajes ] [ Recalcular Costos con +5% Vidrio ] [ Exportar Presupuesto Comercial DOC-01 ]'.`
+      },
+      {
+        id: "S27-OCR",
+        tag: "S27 · IA VISUAL",
+        title: "OCR Multimodal de Planos Arquitectónicos",
+        prompt: `[SCREEN SPECIFICATION: S27 - SPLIT-SCREEN MULTIMODAL BLUEPRINT AI OCR VECTORIZER]
+VIEWPORT LAYOUT: 50/50 Horizontal Split-Screen High-Tech AI Ingestion View.
+LEFT VIEWPORT (Architectural Blueprint PDF Viewer):
+- Blueprint Sheet: Dark blueprint style drawing of an architectural floorplan with white/blue structural CAD lines.
+- AI Scanning Laser: Horizontal glowing cyan scan line animating across the drawing.
+- Detected Bounding Boxes: Glowing emerald and cyan rectangular boxes drawn over window schedules:
+  * Box over 'V-01': Tooltip '1500 x 1400 mm • Confianza: 99.8%'.
+  * Box over 'V-02': Tooltip '2000 x 2100 mm • Confianza: 99.4%'.
+  * Box over 'V-03': Tooltip '800 x 600 mm • Confianza: 98.9%'.
+RIGHT VIEWPORT (Interactive AI Extraction & Verification Table):
+- Header: 'Dekopen Vision CAD™ • 8 Vanos Detectados • 0 Conflictos Geométricos'.
+- AG-Grid Style Verification Table (#18181b surface, #27272a borders):
+  * Headers: '[ Posición ] [ Ancho (mm) ] [ Alto (mm) ] [ Tipología ] [ Vidrio Sugerido ] [ Confianza ] [ Acción ]'.
+  * Row 1: 'V-01' | '1500.00' | '1400.00' | Dropdown 'Oscilobatiente 2H' | 'Termopanel 4-16-4' | Pill '🟢 99.8%' | '[ ✓ Validado ]'.
+  * Row 2: 'V-02' | '2000.00' | '2100.00' | Dropdown 'Corredera 4H' | 'Termopanel 4-12-4' | Pill '🟢 99.4%' | '[ ✓ Validado ]'.
+  * Row 3: 'V-03' | '800.00' | '600.00' | Dropdown 'Proyectante 1H' | 'Monolítico 6mm' | Pill '🟢 98.9%' | '[ ✓ Validado ]'.
+BOTTOM STICKY BAR: Status text 'Tolerancia Matemática 0.00 mm Garantizada' + Main Button: '[ Importar 8 Posiciones al Taller (Cmd+Enter) ]'.`
+      },
+      {
+        id: "S17-DIFF",
+        tag: "S17 / S10 · NLP & UNDO",
+        title: "Comandos NLP & Modal Diff 'Sacred Undo'",
+        prompt: `[SCREEN SPECIFICATION: S17/S10 - NLP AI COMMAND DRAWER & PARAMETRIC DIFF MODAL]
+VIEWPORT LAYOUT: CAD Workspace with an Overlay Side-by-Side Parametric Diff Inspection Dialog (#141417 card, #3f3f46 border).
+DIFF MODAL (Width: 960px, Centered with subtle dark backdrop-blur):
+- Header: 'Inspección de Cambios de IA • Propuesta de Optimización de Costos (Rev B)'.
+- Left Viewport (Rev A - Original): Window elevation with standard 82mm deep frame profile, total unit cost '$185,000 CLP', profit margin 32.0%.
+- Right Viewport (Rev B - Propuesta con IA): Window elevation with optimized 70mm frame profile and lightweight glass bead, changed profile sections highlighted in glowing emerald outlines, total unit cost '$158,000 CLP', profit margin 41.5% (Ahorro: $27,000 CLP/unidad).
+BOTTOM NLP PROMPT INPUT BAR (Floating at bottom of CAD canvas):
+- Input box with blue glowing border and active user prompt text: 'Cambia todos los marcos a serie 70mm económica, sube el margen al 40% y añade manilla Hoppe Secustik'.
+- Action Buttons inside modal:
+  * Button 1 (Emerald Primary): '[ Aceptar Propuesta y Recalcular OT (Cmd+Enter) ]'.
+  * Button 2 (Subtle Dark Red Outline): '[ Sacred Undo: Descartar y Volver a Rev A (Cmd+Z) ]'.`
+      },
+      {
+        id: "S07-CUT",
+        tag: "S07 · OPTIMIZADOR 1D",
+        title: "Optimizador de Corte 1D en Barras de 5.8m",
+        prompt: `[SCREEN SPECIFICATION: S07 - 1D LINEAR PROFILE BAR CUTTING OPTIMIZER & QR RETAZOS]
+VIEWPORT LAYOUT: High-Density Industrial Workshop Cutting Station (#18181b base, high contrast for touch screens).
+TOP SUMMARY DASHBOARD:
+- 'Aprovechamiento Global': 96.8% (Desperdicio: 3.2%) | 'Barras de 5.80m Requeridas': 14 Unidades | 'Merma por Disco de Corte': 4.0 mm/corte | 'Retazos Reutilizables': 4 Unidades (>500mm).
+MAIN LINEAR BAR CUTTING MATRIX:
+- Vertical list of 6 horizontal PVC profile bar visualizers (5.80 meters each, proportional width representation):
+  * Bar #1 (Perfil Marco VEKA 70mm Blanco): Cut Segment 1 '1470 mm (V01-Marco Sup)' (Blue #2563eb) | Cut Segment 2 '1470 mm (V01-Marco Inf)' (Blue) | Cut Segment 3 '1370 mm (V01-Marco Izq)' (Cyan #06b6d4) | Cut Segment 4 '1370 mm (V01-Marco Der)' (Cyan) | Tail Segment 'Retazo: 104 mm (Merma Final)' (Striped Red #ef4444).
+  * Bar #2 (Perfil Hoja OB): Cut 1 '1302 mm' | Cut 2 '1302 mm' | Cut 3 '672 mm' | Cut 4 '672 mm' | Cut 5 '1302 mm' | Tail Segment 'Retazo Útil: 546 mm con QR #R-402' (Striped Green #10b981).
+- Cutting sequence callout flags showing 45°/45° miter cut angles on each piece.
+BOTTOM ACTIONS: '[ Imprimir Etiquetas con Código de Barras / QR ] [ Enviar Secuencia G-Code a Centro de Corte ]'.`
+      },
+      {
+        id: "S19-3D",
+        tag: "S19 · VISOR 3D",
+        title: "Visor 3D Paramétrico Fotorrealista (R3F)",
+        prompt: `[SCREEN SPECIFICATION: S19 - PHOTOREALISTIC 3D PARAMETRIC CLIENT VIEWER (REACT THREE FIBER)]
+VIEWPORT LAYOUT: Clean Minimalist 3D Web Viewport with Three-Point Architectural Studio Lighting.
+3D MODEL RENDERING:
+- High-fidelity volumetric 3D model of a Tilt-and-Turn European PVC Window with Golden Oak (Roble Dorado) textured woodgrain lamination.
+- Active Kinematic Opening: Sash is rendered open at a 45-degree angle on its stainless steel pivot hinges.
+- Micro-Mechanical Details: Visible multipoint locking steel drive-rod with brass mushroom cams, double EPDM rubber compression gaskets, and drainage cap slots on outer sill.
+- Glass Shader: Photorealistic double-glazed acoustic unit (4-16-4) with realistic physical refraction, subtle green edge tint, and soft environment sky reflections.
+STUDIO ENVIRONMENT: Neutral dark slate studio floor with soft ambient contact shadow beneath the window frame. Zero technical pricing or fabrication costs visible (Safe for End Clients).
+BOTTOM FLOATING CONTROLS (Glassmorphic dark pill bar):
+- Interactive Buttons: '[ 360° Rotación Libre ] [ Slider Apertura 0° a 90° ] [ Despiece Volumétrico ] [ Paleta de Colores (Blanco / Antracita / Nogal / Roble) ] [ Compartir Enlace Público ]'.`
+      },
+      {
+        id: "S14-CATALOG",
+        tag: "S14 / S16 · EXTRUSIÓN",
+        title: "Compilador Visual de Perfiles y Junquillos",
+        prompt: `[SCREEN SPECIFICATION: S14/S16 - TECHNICAL PROFILE CROSS-SECTION & GLAZING BEAD MATRIX]
+VIEWPORT LAYOUT: High-Precision Engineering Catalog Compiler Interface (#141417 background, #27272a borders).
+CENTER TECHNICAL BLUEPRINT (Scale 1:1 Engineering Vector Drawing):
+- Ultra-sharp CAD cross-section schematic of a 70mm 5-chamber PVC sash and frame profile assembly.
+- Internal details: 5 thermal insulation air cavities, central galvanized steel U-profile chamber (1.5mm wall thickness), gasket retention grooves, and snap-in bead interlocking tooth.
+RIGHT PROPERTY MATRIX (Glazing Bead Selector Matrix Table):
+- Matrix Header: 'Matriz de Junquillos por Espesor de Vidrio (Sistema VEKA Softline 70)'.
+- Interactive Data Grid mapping Total Glass Thickness to Profile Bead Articles:
+  * Row 1: 'Vidrio 4 mm (Monolítico)' -> 'Junquillo Curvo 36mm (Art #107.214)' | 'Holgura: 5.0 mm'.
+  * Row 2: 'Vidrio 20 mm (Termopanel 4-12-4)' -> 'Junquillo Recto 20mm (Art #107.218)' | 'Holgura: 5.0 mm'.
+  * Row 3: 'Vidrio 24 mm (Termopanel 4-16-4)' -> 'Junquillo Biselado 16mm (Art #107.220)' | 'Holgura: 5.0 mm'.
+  * Row 4: 'Vidrio 32 mm (Triple Vidrio 4-10-4-10-4)' -> 'Junquillo Plano 8mm (Art #107.224)' | 'Holgura: 5.0 mm'.
+STATUS BADGE: '[ 🟢 4 Fixtures Calibrados en 0.00 mm: VEKA, Aluplast, Rehau, Proline ]'.`
+      },
+      {
+        id: "S20-WALLET",
+        tag: "S20 · BILLETERA",
+        title: "Billetera de Créditos & Selector de Modo Titan",
+        prompt: `[SCREEN SPECIFICATION: S20 - AI CREDIT WALLET & TITAN ENGINE POWER CONTROLLER]
+VIEWPORT LAYOUT: Modern SaaS Financial & AI Compute Management Screen in Dark Graphite Theme.
+HERO BALANCE CARD (#18181b surface with subtle cyan gradient halo):
+- Large numeric display: '1,420 Créditos Disponibles' (Equivalente a ~710 comandos NLP o 142 lecturas de planos).
+- Action Button: '[ + Recargar Pack de Créditos (1,000 cr / $15 USD) ]'.
+AI ENGINE POWER SELECTOR (Prominent Dual Segmented Switcher in center of page):
+- Left Option (Active with Cyan Border #06b6d4, #083344 background):
+  * '⚡ Dekopen Neural Core™ (GPT 5.6 Luna xHigh-Max)'
+  * Subtitle: 'Modo Estándar Recomendado • 99% de las tareas diarias • 1x Consumo de Créditos (1 a 4 cr)'.
+- Right Option (Inactive with Dark Border #27272a, #18181b background):
+  * '🔬 Dekopen Titan Engine™ (GPT 5.6 Sol / Kimi k3)'
+  * Subtitle: 'Modo Ultra-Ingeniería • Razonamiento Máximo • Solo bajo demanda para catálogos masivos o estructuras complejas (15 a 50 cr)'.
+AUDIT LEDGER TABLE (Real-Time Credit Transaction History):
+- Columns: '[ Fecha y Hora ] [ Herramienta / Operación ] [ Modelo Backend ] [ Créditos Usados ] [ Saldo Resultante ]'.
+- Row 1: '30-08-2026 21:45' | 'T2 - Comando NLP ("Aumentar margen 15%")' | 'GPT 5.6 Luna' | '-2 Créditos' | '1,420 cr'.
+- Row 2: '30-08-2026 20:12' | 'T1 - Extracción OCR Plano 8 Vanos' | 'Gemini 3.7 High' | '-10 Créditos' | '1,422 cr'.
+- Row 3: '30-08-2026 18:30' | 'T8 - Certificado Fabricabilidad Doble Ciego' | 'Dual Core (Luna + Vision)' | '-50 Créditos' | '1,432 cr'.`
+      },
+      {
+        id: "S11-PDF",
+        tag: "S11 · HOJA TALLER",
+        title: "Salida Técnica DOC-03: Hoja de Corte de Taller",
+        prompt: `[SCREEN SPECIFICATION: S11 - OFFICIAL DOC-03 WORKSHOP FABRICATION & CUTTING SHEET]
+VIEWPORT LAYOUT: High-Resolution Digital Preview of an Official DIN A4 Vertical Workshop Fabrication Document.
+DOCUMENT STYLING: Crisp White Paper Canvas (#ffffff) with Jet Black Engineering Typography (#000000) and Technical Hairline Vector Schematics.
+HEADER BLOCK:
+- Left: Workshop Logo 'Carpintería Alemana SpA' + RUT '76.842.190-3'.
+- Center: Document Title 'HOJA TÉCNICA DE CORTE Y ARMADO (DOC-03)' • Proyecto: 'Edificio Costanera / Vano V-01'.
+- Right: Verification Fabricability QR Code + SHA-256 Security Hash 'a8f3b29c017e4d89...' + Fecha '30-08-2026'.
+UPPER SECTION - ELEVATION SCHEMATIC:
+- 2D Technical elevation schematic of window with cut callouts labeled [1], [2], [3], [4] on outer frame, [5] on mullion, and [6], [7] on sash.
+LOWER SECTION - STRUCTURED CUTTING TABLES:
+1. 'PERFILES DE PVC (VEKA Softline 70AD Blanco RAL 9016)':
+   * Marco Superior: 1506.00 mm (Corte 45°/45°) | Marco Inferior: 1506.00 mm (45°/45°) | Marco Lateral (2x): 1406.00 mm (45°/45°).
+   * Montante Central: 1280.00 mm (Corte 90°/90° con fresado de testa).
+   * Hoja OB Superior/Inferior (2x): 672.00 mm (45°/45°) | Hoja OB Lateral (2x): 1302.00 mm (45°/45°).
+2. 'REFUERZOS DE ACERO GALVANIZADO (1.5 mm)':
+   * Refuerzo Marco (2x): 1470.00 mm | Refuerzo Marco Lateral (2x): 1370.00 mm | Refuerzo Montante: 1270.00 mm.
+3. 'VIDRIOS Y TERMOPANELES':
+   * Paño Fijo: 680.00 mm x 1310.00 mm (Termopanel 4-16-4, Espesor neto 8.00 mm, Peso: 17.82 kg).
+   * Paño Hoja: 546.00 mm x 1176.00 mm (Termopanel 4-16-4, Espesor neto 8.00 mm, Peso: 12.84 kg).
+4. 'HERRAJES Y ACCESORIOS':
+   * Kit Oscilobatiente Vorne (800-1000 x 1200-1400) | Calzos de acristalamiento 5mm (8x) | Desagües con cortaviento (2x).`
+      },
+      {
+        id: "LANDING",
+        tag: "PÚBLICA · WEB",
+        title: "Landing Page Comercial (dekopen.com)",
+        desc: "Web oficial en Framer: Hero con maqueta 3D, comparador de precios y sello 'Humano Aprueba'.",
+        prompt: `[SCREEN SPECIFICATION: LANDING - DEKOPEN.COM PUBLIC SAAS HOMEPAGE]
+VIEWPORT LAYOUT: High-Converting Modern Dark SaaS Landing Page (Framer / Linear.app aesthetic).
+HERO SECTION:
+- Super Headline in glowing gradient text: 'El Primer Sistema Operativo de Ingeniería para Carpinterías de PVC'.
+- Subtitle: 'Cálculo paramétrico en 0.00 mm, optimización de corte 1D y cotizaciones automáticas con IA. Sin errores, sin mermas, sin hojas de cálculo rotas.'.
+- Call to Action: '[ Iniciar Prueba Gratuita de 14 Días (500 Créditos Gratis) ]' + Secondary '[ Ver Demo en Vivo (3 Min) ]'.
+- Central Hero Image: 3D floating perspective mockup of the Dekopen CAD editor with subtle ambient cyan reflection against dark zinc background.
+PRICING COMPARISON SECTION (3 Column Card Grid with Annual Billing Toggle '-20% Descuento'):
+1. 'Starter' ($39 USD / mes): Para talleres artesanales (1 Usuario, 500 créditos/mes, PDF básico).
+2. 'Profesional' ($69 USD / mes - Badge 'Más Popular' con borde cian): Para fábricas medianas (2 Usuarios, 2,000 créditos/mes, OCR planos S27, Optimización 1D, Editor Adobe).
+3. 'Business' ($129 USD / mes): Para plantas industriales (3 Usuarios, 6,000 créditos/mes, Certificados Doble Ciego T8, Integración CNC).
+TRUST & COMPLIANCE BADGES (Bottom Section):
+- 'Motor Determinista en Python (0 Tokens de IA en Matemáticas)'.
+- 'Paddle Global Merchant of Record (Impuestos y Facturación Internacional 100% Gestionados)'.
+- 'El Humano Siempre Aprueba (Flujo de Aprobación Sagrado antes de Cortar)'.`
+      }
+    ];
+
+    let activeIndex = 0;
+
+    function renderScreenList() {
+      const listEl = document.getElementById("screenList");
+      listEl.innerHTML = "";
+      SCREENS.forEach((s, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `screen-btn ${idx === activeIndex ? "active" : ""}`;
+        btn.onclick = () => selectScreen(idx);
+        btn.innerHTML = `
+          <span class="tag">${s.tag}</span>
+          <span class="title">${s.title}</span>
+          <span class="desc">${s.desc}</span>
+        `;
+        listEl.appendChild(btn);
+      });
+    }
+
+    function selectScreen(index) {
+      activeIndex = index;
+      renderScreenList();
+      updatePromptView();
+    }
+
+    function getFullPromptText() {
+      const s = SCREENS[activeIndex];
+      return `${GLOBAL_BASE_CONTEXT}\n\n${s.prompt}\n\n[FINAL ULTRA-QUALITY DIRECTIVE: 8k resolution master screenshot, pixel-perfect alignment, zero blur, sharp CAD vector elevation lines, professional Adobe Creative Cloud dark/light interface aesthetics, Dribbble trending prototype, photorealistic software display].`;
+    }
+
+    function updatePromptView() {
+      const s = SCREENS[activeIndex];
+      document.getElementById("activeTitle").innerText = s.title;
+      document.getElementById("activeSub").innerText = `${s.tag} • Densidad máxima de píxeles para Nano Banana / Midjourney`;
+
+      document.getElementById("baseContextView").innerText = GLOBAL_BASE_CONTEXT;
+      document.getElementById("screenSpecificView").innerText = s.prompt;
+
+      const fullPrompt = getFullPromptText();
+      document.getElementById("fullPromptView").innerText = fullPrompt;
+      document.getElementById("charCount").innerText = `${fullPrompt.length} caracteres • ~${Math.round(fullPrompt.length / 4)} tokens`;
+    }
+
+    function copyFullPrompt() {
+      const fullText = getFullPromptText();
+      navigator.clipboard.writeText(fullText).then(() => {
+        const btn = document.getElementById("copyBtn");
+        btn.classList.add("copied");
+        btn.innerHTML = "<span>✅</span> ¡COPIADO!";
+        
+        const toast = document.getElementById("toast");
+        toast.style.display = "block";
+
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.innerHTML = "<span>📋</span> COPIAR ULTRA-PROMPT (MÁXIMO DETALLE)";
+          toast.style.display = "none";
+        }, 2200);
+      });
+    }
+
+    function copyMidjourneyFormat() {
+      const fullText = getFullPromptText() + " --ar 16:9 --v 6.1 --style raw --q 2";
+      navigator.clipboard.writeText(fullText).then(() => {
+        const toast = document.getElementById("toast");
+        toast.innerText = "✅ ¡Prompt con flags de Midjourney v6 copiado!";
+        toast.style.display = "block";
+        setTimeout(() => {
+          toast.style.display = "none";
+          toast.innerText = "✅ ¡Ultra-Prompt de alta densidad copiado al portapapeles!";
+        }, 2200);
+      });
+    }
+
+    // Init
+    renderScreenList();
+    updatePromptView();
+  </script>
+</body>
+</html>

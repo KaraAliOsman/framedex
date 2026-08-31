@@ -1,0 +1,35 @@
+# ==============================================================================
+# DEKOPEN — CODEX & AGENTIC AI RULES (2026 LOOP ENGINEERING STANDARD)
+# Basado en la doctrina Cherny / Osmani / Steinberger: Maker-Checker & State Loops
+# ==============================================================================
+
+[SYSTEM INVARIANTS]
+project_name: "Dekopen OS"
+core_tolerance: "0.00 mm"
+number_format: "Decimal everywhere (prohibit float in engine and money)"
+database: "PostgreSQL 16 with Row Level Security (RLS) on all business tables"
+engine_isolation: "engine/ is 100% pure Python without I/O, network or database"
+design_system: "Adobe Style Dual Theme (Light Studio / Dark Graphite), zero raw hex codes"
+
+[THE 4 LAWS OF LOOP ENGINEERING (2026)]
+1. SEPARACIÓN MAKER / CHECKER (Ley de Osmani):
+   - El agente que escribe el código (Maker) JAMÁS valida su propio trabajo.
+   - La validación la ejecuta exclusivamente el Gauntlet determinista (`make dod` / `make gauntlet`), que opera con RECHAZO POR DEFECTO.
+2. CONDICIÓN DE PARADA MECÁNICA (Stop Condition):
+   - Prohibido declarar una tarea completada en lenguaje natural ("todo se ve bien").
+   - La ÚNICA condición de parada válida es `exit code 0` devuelto por `scripts/check_dod.py`.
+3. MEMORIA PERSISTENTE EN DISCO (Ralph Loop / "The Repo Remembers"):
+   - El contexto del modelo es efímero; el repositorio es permanente.
+   - El estado de cada shot vive en `docs/plans/PLAN_SHOT-XX.md` y `docs/PRD/PLAN_SHOTS.md`.
+4. PROHIBICIÓN DE PRUEBAS VACÍAS (Anti-Vacuous Tests):
+   - Todo test unitario debe fallar si se introduce una mutación de ±0.01 mm en las holguras.
+   - Tests que pasan con código roto se consideran vacíos y violan la Constitución.
+
+[CANONICAL COMMANDS]
+gauntlet: "make gauntlet"
+validation: "make dod"
+testing: "make test"
+linting: "make lint"
+typecheck: "make typecheck"
+snapshot_regen: "make goldgen"
+branch_init: "make shot-XX"

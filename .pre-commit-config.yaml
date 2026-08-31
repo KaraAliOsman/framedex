@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-mypy
+        name: Ruff Lint + Mypy Engine
+        entry: bash -c 'ruff check . && mypy engine/'
+        language: system
+        pass_filenames: false
+      - id: no-float-in-engine
+        name: Bloqueo de float() en /engine (Regla 3)
+        entry: bash -c '! grep -rn "float(" engine/src/ 2>/dev/null || (echo "❌ REGLA 3 VIOLADA: float prohibido en /engine" && exit 1)'
+        language: system
+        pass_filenames: false
+      - id: no-hex-hardcode-frontend
+        name: Bloqueo de colores hex hardcodeados (Tokens ADOBE)
+        entry: bash -c '! grep -rEn "#[0-9a-fA-F]{6}\b" frontend/src/ --exclude="*.test.*" 2>/dev/null | grep -v "0x" | grep -v "var(" || (echo "❌ VIOLACIÓN: hex hardcodeado en frontend" && exit 1)'
+        language: system
+        pass_filenames: false
