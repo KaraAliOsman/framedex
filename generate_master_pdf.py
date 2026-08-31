@@ -1,13 +1,21 @@
 import os
 import re
-from reportlab.lib.pagesizes import letter
+
 from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable, Preformatted
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    HRFlowable,
+    PageBreak,
+    Paragraph,
+    Preformatted,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
+
 
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -313,7 +321,7 @@ def build_pdf():
             continue
             
         # Lists
-        if stripped.startswith('- ') or stripped.startswith('* '):
+        if stripped.startswith(("- ", "* ")):
             bullet_text = f"• {clean_inline_md(stripped[2:])}"
             story.append(Paragraph(bullet_text, styles['ListBulletCustom']))
             idx += 1

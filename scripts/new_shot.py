@@ -4,12 +4,13 @@ Dekopen Shot Initialization Helper (2026 Global Alignment Standard)
 Usage: python scripts/new_shot.py SHOT-01
 """
 
-import sys
 import os
 import re
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -73,6 +74,7 @@ def main():
         print(f"[OK] Created implementation plan scaffold at: {plan_file}")
     else:
         print(f"[INFO] Implementation plan already exists at: {plan_file}")
+
 
 if __name__ == "__main__":
     main()

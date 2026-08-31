@@ -5,21 +5,23 @@ Executes across Windows, macOS, and Linux without bash dependency.
 Usage: python scripts/check_dod.py [lint|typecheck|test|snapshot|all|gauntlet]
 """
 
-import sys
 import os
-import subprocess
 import re
+import subprocess
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 def run_cmd(cmd, cwd=None, allow_fail=False):
     print(f"  $ {' '.join(cmd) if isinstance(cmd, list) else cmd}")
-    res = subprocess.run(cmd, shell=isinstance(cmd, str), cwd=cwd)
+    res = subprocess.run(cmd, shell=isinstance(cmd, str), cwd=cwd, check=False)
     if res.returncode != 0 and not allow_fail:
         print(f"\n[FAIL] Command failed with exit code {res.returncode}")
         sys.exit(res.returncode)
     return res.returncode
+
 
 def check_constitutional_guards():
     print("⚖️  [FILTRO 1/6] Verificando Guardias Constitucionales (Reglas 1 a 22)...")
@@ -55,6 +57,7 @@ def check_constitutional_guards():
                                 
     print("   ✓ Guardias constitucionales: 100% SUPERADAS")
 
+
 def check_linters():
     print("🔍 [FILTRO 2/6] Ejecutando Linters (Ruff & ESLint)...")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,6 +70,7 @@ def check_linters():
     if os.path.exists(os.path.join(frontend_dir, "package.json")):
         run_cmd("npx eslint src/ --max-warnings 0", cwd=frontend_dir, allow_fail=True)
     print("   ✓ Linters: 0 errores críticos")
+
 
 def check_typechecks():
     print("🛡️  [FILTRO 3/6] Verificando Tipado Estricto (Mypy Strict & TSC)...")
@@ -82,6 +86,7 @@ def check_typechecks():
     if os.path.exists(os.path.join(frontend_dir, "tsconfig.json")):
         run_cmd("npx tsc --noEmit", cwd=frontend_dir, allow_fail=True)
     print("   ✓ Tipado estricto verificado")
+
 
 def check_tests():
     print("🧪 [FILTRO 4/6] Ejecutando Casos de Oro (G1–G12) y Suites de Pruebas...")
@@ -105,13 +110,16 @@ def check_tests():
         run_cmd("npx vitest run", cwd=frontend_dir, allow_fail=True)
     print("   ✓ Tests de tolerancia y suites verificadas")
 
+
 def check_snapshots():
     print("📸 [FILTRO 5/6] Verificando Integridad de Snapshots Matemáticos...")
     print("   ✓ Snapshots Golden validados")
 
+
 def check_isolation():
     print("🏰 [FILTRO 6/6] Verificando Aislamiento Multi-Tenant y Cobertura...")
     print("   ✓ Aislamiento RLS y empaquetado verificados")
+
 
 def main():
     target = sys.argv[1] if len(sys.argv) > 1 else "all"
@@ -133,6 +141,7 @@ def main():
         print("\n======================================================================")
         print("🏆 ¡GAUNTLET SUPERADO CON ÉXITO! (100% CUMPLIMIENTO CONSTITUCIONAL)")
         print("======================================================================")
+
 
 if __name__ == "__main__":
     main()
