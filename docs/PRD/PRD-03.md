@@ -78,15 +78,15 @@ El sistema **NO cobra tarifas fijas hardcodeadas**. Cada llamada a una herramien
 
 | Tool ID | Función | Operación Realizada | Consumo Promedio Estimado | Modelo Asignado |
 |---|---|---|---|---|
-| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Dekopen Vision CAD™ (Gemini 3.7) |
-| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Dekopen Matrix Reader™ (Kimi k3) |
-| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (Luna vs Sol) |
-| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline completo multimodal |
-| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Dekopen Vision CAD™ (Gemini 3.7) |
-| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Modelo Visión OCR (`gemini-3.7-high`) |
+| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Long-Context Parser (`kimi-k3`) |
+| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (`gpt-5.6-luna` vs `gpt-5.6-sol`) |
+| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline Multimodal Completo |
+| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Modelo Visión OCR (`gemini-3.7-high`) |
+| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |

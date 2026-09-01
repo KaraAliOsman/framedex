@@ -1,15 +1,15 @@
 # PRD-13: AI GATEWAY, ENRUTAMIENTO Y GOBERNANZA DE PROMPTS (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Enterprise AI Gateway & White-Label Router Standard)  
+**Versión:** 1.2 (AI Gateway Standard & Dynamic Database-Driven ai_routes)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 2 (Inteligencia Asistida y Automatización)  
 **Bloquea a:** PRD-09, PRD-10, PRD-14, PRD-15
 
 ---
 
-## 1. Arquitectura del AI Gateway y Suite White-Label
+## 1. Arquitectura del AI Gateway
 
-El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para todas las operaciones de inteligencia artificial en Dekopen. Aplica **White-Labeling absoluto** (los usuarios de los talleres nunca ven nombres de proveedores crudos) y enruta el 99% de las tareas al motor principal ultra-eficiente:
+El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para todas las operaciones de inteligencia artificial en Dekopen. Enruta dinámicamente las solicitudes según la configuración en la tabla `ai_routes`:
 
 ```
 [ Frontend / Canvas S06 ] ──► [ AI Gateway Django Middleware ]
@@ -17,9 +17,9 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
      ┌────────────────────────────────┴────────────────────────────────┐
      ▼                                                                 ▼
 [ PRE-INVOCATION HOOKS ]                                      [ ENRUTADOR DINÁMICO (ai_routes) ]
-• Validación transaccional de saldo                           • Dekopen Neural Core™ (GPT 5.6 Luna - 99%)
-• Sanitización de inyecciones                                 • Dekopen Vision CAD™ (Gemini 3.7 High)
-• Inyección de identidad y RLS (org_id)                       • Dekopen Titan Engine™ (Sol / Kimi Opt-In)
+• Validación transaccional de saldo                           • Modelo Principal NLP (GPT 5.6 Luna - 99%)
+• Sanitización de inyecciones                                 • Modelo Visión OCR (Gemini 3.7 High)
+• Inyección de identidad y RLS (org_id)                       • Modelo Dual / Long-Context (Sol / Kimi)
      │                                                                 │
      └────────────────────────────────┬────────────────────────────────┘
                                       │
@@ -38,12 +38,12 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
 
 ## 2. Técnicas de Prompting y Enrutamiento por Herramienta
 
-| Tool ID | Herramienta | Capa de IA (Marca Propia) | Modelo Backend Configurado | Técnica Canónica |
+| Tool ID | Herramienta | Rol Arquitectónico | Modelo Backend Configurado | Técnica Canónica |
 |---|---|---|---|---|
-| **T1** | OCR de Planos (S27) | **Dekopen Vision CAD™** | `gemini-3.7-high` | **Few-Shot Multimodal** (extracción JSON de vanos). |
-| **T2** | Comandos NLP (Canvas) | **Dekopen Neural Core™** | `gpt-5.6-luna-xhigh-max` | **ReAct con Hooks** (diff paramétrico $\rightarrow$ `/engine`). |
-| **T3** | Sugerencia de Descuentos | **Dekopen Neural Core™** | `gpt-5.6-luna-xhigh-max` | **Chain-of-Thought (CoT)** (análisis de márgenes). |
-| **T6** | Compilador de Catálogos | **Dekopen Matrix Reader™** | `gemini-3.7-high` / `kimi-k3` | **Directional Stimulus** (holguras y junquillos). |
+| **T1** | OCR de Planos (S27) | **Visión Multimodal** | `gemini-3.7-high` | **Few-Shot Multimodal** (extracción JSON de vanos). |
+| **T2** | Comandos NLP (Canvas) | **Principal NLP** | `gpt-5.6-luna-xhigh-max` | **ReAct con Hooks** (diff paramétrico $\rightarrow$ `/engine`). |
+| **T3** | Sugerencia de Descuentos | **Principal NLP** | `gpt-5.6-luna-xhigh-max` | **Chain-of-Thought (CoT)** (análisis de márgenes). |
+| **T6** | Compilador de Catálogos | **Long-Context Parser** | `gemini-3.7-high` / `kimi-k3` | **Directional Stimulus** (holguras y junquillos). |
 | **T8** | Certificado Fabricabilidad | **Doble Verificador Ciego** | `gpt-5.6-luna` vs `gpt-5.6-sol` | **Self-Consistency Dual** (cero discrepancia $>0.00\text{ mm}$). |
 
 ---

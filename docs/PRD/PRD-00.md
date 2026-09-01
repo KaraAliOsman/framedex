@@ -45,7 +45,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
-| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
+| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Supabase Storage | Todo | 0 |
 
 ---
 
@@ -74,7 +74,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
-- **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
+- **SHOT-22:** Comparador T10 + bandeja email (Resend / Inbound).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.
 - **SHOT-24:** Retazos QR + WhatsApp + **G10 monoriel** + PT-BR + Vista instalador (S26).
 
