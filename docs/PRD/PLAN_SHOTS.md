@@ -23,7 +23,7 @@
 | **P3** | Dominios: `dekopen.com`, `app.dekopen.com`, `dekopenmail.com` + DNS | D25 |
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
-| **P5-bis** | Cuenta Creem sandbox (crear pre-semana 15) | SHOT-18 |
+| **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
 | **P6** | Este documento + Biblia v1.1.2 cargados en Notion y como fuente de Fin | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
@@ -46,7 +46,7 @@
 | **SHOT-03** | 0 · s2–3 | PRD-01 §2–4 (+M9, M5) | Engine núcleo: models, geometry FIXED/TURN/TILT_TURN/MULLION, BOM base | `pytest engine/`: **G1, G2, G3, G4 en 0.00**; G8/G9/G11/G12 en xfail declarado |
 | **SHOT-04** | 0 · s3 | PRD-03 §1, PRD-19 §3 | Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual | Magic link E2E; TOTP owner; OpenAPI $\rightarrow$ TS client autogenerado en CI; PostHog captura eventos base; shell navegable claro/oscuro |
 | **SHOT-05** | 0 · s3 | PRD-04, ADOBE, ANIM | Canvas 2D mínimo (fijo + cotas) | Dibuja G1 en pantalla = números del engine (<300 ms); cota editable por teclado; snapping |
-| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, BAY_WINDOW/CORNER, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
+| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra |
@@ -58,7 +58,7 @@
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
 | **SHOT-17** | 2 · s14–15 | PRD-11 | Plantillas PDF 3 slots + bloques protegidos | Re-estiliza sin reescribir números (test: totales intactos tras CSS loco); restaurar original 1 clic; CSP |
-| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Creem Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Creem; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
+| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | Enlace Web en Vivo (`/view/`) + Exportador CAD 2D (`.dxf`) | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas (3D WebGL diferido a V2) |
 | **SHOT-20** | 3 · s18–20 | PRD-13, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
 | **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
@@ -80,7 +80,7 @@
 | **6 · Fin responde 20 preguntas** | SHOT-23 |
 | **7 · Backup restaurado en ensayo** | SHOT-11 |
 | **8 · Términos "humano aprueba" publicados** | Tarea Fundador Semanas 8–9 (Framer / Legal) |
-| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Creem) |
+| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Paddle) |
 | **10 · Débito de créditos idempotente** | SHOT-11 (test de reintento en staging) |
 
 ---

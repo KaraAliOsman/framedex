@@ -58,7 +58,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-03:** Engine núcleo (G1–G4 en 0.00).
 - **SHOT-04:** Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual.
 - **SHOT-05:** Canvas 2D mínimo (fijo + cotas).
-- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, BAY_WINDOW/CORNER, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
+- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
 - **SHOT-07:** Corte 1D BFD + Inspector R01–R14 (G7 puerta en 0.00 + test optimizador barras 5.8m).
 - **SHOT-08:** Precios 5 modos + listas de costo + `price_audit_logs`.
 - **SHOT-09:** Documentos WeasyPrint & openpyxl + Pantalla S19 (Pedidos proveedor).
@@ -70,7 +70,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
@@ -90,5 +90,5 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
 7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Creem probada de extremo a extremo.
+9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.

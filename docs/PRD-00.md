@@ -70,7 +70,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
@@ -90,5 +90,5 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
 7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Creem probada de extremo a extremo.
+9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.

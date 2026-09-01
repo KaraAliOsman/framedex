@@ -1,0 +1,71 @@
+{
+  "version": "1.1.2",
+  "tolerance_mm": "0.00",
+  "cases": {
+    "G1": {
+      "name": "Paño Fijo Simple 1000x1000 Blanco",
+      "target_shot": "SHOT-03",
+      "status": "pending"
+    },
+    "G2": {
+      "name": "Practicable 1 Hoja 800x1200",
+      "target_shot": "SHOT-03",
+      "status": "pending"
+    },
+    "G3": {
+      "name": "Oscilobatiente 1 Hoja 1000x1400",
+      "target_shot": "SHOT-03",
+      "status": "pending"
+    },
+    "G4": {
+      "name": "Compuesta Fijo + OB con Poste 1800x1500",
+      "target_shot": "SHOT-03",
+      "status": "pending"
+    },
+    "G5": {
+      "name": "Corredera 2 Hojas 2000x2100",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G6": {
+      "name": "Proyectante 1200x800",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G7": {
+      "name": "Puerta Entrada Multipunto 950x2150",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G8": {
+      "name": "Corredera 3 Hojas",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G9": {
+      "name": "Corredera 4 Hojas 4000x2000",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G10": {
+      "name": "Corredera Monoriel 2 Hojas 3000x2400",
+      "target_shot": "SHOT-24",
+      "status": "xfail"
+    },
+    "G11": {
+      "name": "Puerta Doble Hoja 1800x2100",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G12": {
+      "name": "Fijo Gran Formato 3000x2500",
+      "target_shot": "SHOT-06",
+      "status": "pending"
+    },
+    "G-Pro1": {
+      "name": "Fijo 1000x1000 Proline Pro6004 Sign-off Fundador",
+      "target_shot": "SHOT-12",
+      "status": "pending"
+    }
+  }
+}

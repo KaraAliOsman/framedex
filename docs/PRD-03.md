@@ -29,7 +29,7 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
-- **Internacional (US/EU/Resto):** **Creem** (Merchant of Record - MoR que gestiona Sales Tax y VAT). Moneda ancla oficial: **USD**.
+- **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona Sales Tax y VAT). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 
 ---

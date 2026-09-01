@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (V1: Full Tipologies con Bow Windows/Acoples • V2 Bridges: 3D & CNC)
+**Versión Oficial:** 1.2 (Canonical Sealed Architecture • Paddle MoR • DIN EN 12519)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -123,7 +123,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-03:** Engine núcleo (G1–G4 en 0.00).
 - **SHOT-04:** Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual.
 - **SHOT-05:** Canvas 2D mínimo (fijo + cotas).
-- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, BAY_WINDOW/CORNER, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
+- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
 - **SHOT-07:** Corte 1D BFD + Inspector R01–R14 (G7 puerta en 0.00 + test optimizador barras 5.8m).
 - **SHOT-08:** Precios 5 modos + listas de costo + `price_audit_logs`.
 - **SHOT-09:** Documentos WeasyPrint & openpyxl + Pantalla S19 (Pedidos proveedor).
@@ -135,7 +135,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
@@ -155,7 +155,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
 7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Creem probada de extremo a extremo.
+9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
 
 
@@ -399,16 +399,6 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         case "AWNING":
             w_sash = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
-
-        case "BAY_WINDOW" | "CORNER_COUPLER":
-            # Descuento de poste esquinero / acople angular (90°, 135° o variable)
-            # w_frame_nominal = rough_opening - coupler_deduction_mm
-            w_frame_nominal = node.width_mm - node.coupler_deduction_mm
-            l_frame_cut_h = w_frame_nominal + (Decimal('2.0') * params.welding_loss_per_corner)
-            l_frame_cut_v = node.height_mm + (Decimal('2.0') * params.welding_loss_per_corner)
-            w_inner = w_frame_nominal - (Decimal('2.0') * params.frame_face_width_mm)
-            h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
-            # Despiece del sub-vano interior según su tipo de apertura (fijo, corredera u oscilobatiente)
 ```
 
 ---
@@ -784,7 +774,7 @@ CREATE TABLE ai_audit_logs (
 CREATE TABLE payment_customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES tenancy_organizations(id) ON DELETE CASCADE,
-    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'creem', 'mercadopago')),
+    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'paddle', 'mercadopago')),
     provider_customer_id VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uk_org_provider UNIQUE (org_id, provider)
@@ -1016,7 +1006,7 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
-- **Internacional (US/EU/Resto):** **Creem** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
+- **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 
 ---
@@ -2391,7 +2381,7 @@ graph TD
 
 # PRD: SISTEMA DE DISEÑO, MOTOR CAD Y VERSIÓN WEB MÓVIL ESENCIAL (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Web 100% Cloud • OCR Cuaderno de Obra • Escáner QR Web • Móvil Esencial)  
+**Versión:** 1.2 (Web 100% Cloud • OCR planos arquitectónicos impresos • Escáner QR Web • Móvil Esencial)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
@@ -2406,7 +2396,7 @@ En el celular **NO se necesita tener toda la complejidad del computador**. La ve
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                               LAS 4 ACCIONES ESENCIALES EN CELULAR                               │
 ├───────────────────────────────────┬──────────────────────────────────────────────────────────────┤
-│ 📝 1. FOTO AL CUADERNO DE MEDIDAS │ Tomas foto con el celular a tus apuntes a mano en tu libreta │
+│ 📝 1. FOTO AL plano DE MEDIDAS │ Tomas foto con el celular a tus apuntes a mano en tu libreta │
 │    (OCR Inteligente de Terreno)   │ de obra y la IA crea la cotización con los vanos listos.     │
 ├───────────────────────────────────┼──────────────────────────────────────────────────────────────┤
 │ 📲 2. ENVIAR A WHATSAPP EN 1 CLIC │ Abres la cotización, revisas el total y mandas el PDF oficial│
@@ -2422,14 +2412,14 @@ En el celular **NO se necesita tener toda la complejidad del computador**. La ve
 
 ---
 
-## 2. OCR de Terreno: Foto al Cuaderno o Libreta de Medidas (Tool T1)
+## 2. OCR de Terreno: Foto al plano o Libreta de Medidas (Tool T1)
 
 El flujo real de cualquier carpintero en obra:
-1. Mide los vanos con su distanciómetro láser y anota a mano en su cuaderno o croquis:  
+1. Mide los vanos con su distanciómetro láser y anota a mano en su plano o croquis:  
    *`Vano 1: 1500 x 1200 Corredera 2H Nogal Termopanel`*  
    *`Vano 2: 800 x 600 Proyectante Blanco Simple`*  
    *`Vano 3: 2000 x 2100 Puerta Corredera 2H Antracita`*
-2. Entra a **dekopen.com** en su celular, presiona **`+ Cotizar desde Foto`** y le saca una foto a la hoja de su cuaderno.
+2. Entra a **dekopen.com** en su celular, presiona **`+ Cotizar desde Foto`** y le saca una foto a la hoja de su plano.
 3. El motor de visión (Gemini 3.7 / GPT-5.6) lee los números y textos manuscritos, estructura los vanos y entrega el **borrador de cotización calculado a 0.00 mm en la pantalla del celular**.
 
 ---
@@ -2748,7 +2738,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **P3** | Dominios: `dekopen.com`, `app.dekopen.com`, `dekopenmail.com` + DNS | D25 |
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
-| **P5-bis** | Cuenta Creem sandbox (crear pre-semana 15) | SHOT-18 |
+| **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
 | **P6** | Este documento + Biblia v1.1.2 cargados en Notion y como fuente de Fin | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
@@ -2771,7 +2761,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-03** | 0 · s2–3 | PRD-01 §2–4 (+M9, M5) | Engine núcleo: models, geometry FIXED/TURN/TILT_TURN/MULLION, BOM base | `pytest engine/`: **G1, G2, G3, G4 en 0.00**; G8/G9/G11/G12 en xfail declarado |
 | **SHOT-04** | 0 · s3 | PRD-03 §1, PRD-19 §3 | Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual | Magic link E2E; TOTP owner; OpenAPI $\rightarrow$ TS client autogenerado en CI; PostHog captura eventos base; shell navegable claro/oscuro |
 | **SHOT-05** | 0 · s3 | PRD-04, ADOBE, ANIM | Canvas 2D mínimo (fijo + cotas) | Dibuja G1 en pantalla = números del engine (<300 ms); cota editable por teclado; snapping |
-| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, BAY_WINDOW/CORNER, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
+| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra |
@@ -2783,7 +2773,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
 | **SHOT-17** | 2 · s14–15 | PRD-11 | Plantillas PDF 3 slots + bloques protegidos | Re-estiliza sin reescribir números (test: totales intactos tras CSS loco); restaurar original 1 clic; CSP |
-| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Creem Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Creem; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
+| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | Enlace Web en Vivo (`/view/`) + Exportador CAD 2D (`.dxf`) | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas (3D WebGL diferido a V2) |
 | **SHOT-20** | 3 · s18–20 | PRD-13, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
 | **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
@@ -2805,7 +2795,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **6 · Fin responde 20 preguntas** | SHOT-23 |
 | **7 · Backup restaurado en ensayo** | SHOT-11 |
 | **8 · Términos "humano aprueba" publicados** | Tarea Fundador Semanas 8–9 (Framer / Legal) |
-| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Creem) |
+| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Paddle) |
 | **10 · Débito de créditos idempotente** | SHOT-11 (test de reintento en staging) |
 
 ---

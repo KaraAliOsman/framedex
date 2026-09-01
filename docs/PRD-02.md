@@ -340,7 +340,7 @@ CREATE TABLE ai_audit_logs (
 CREATE TABLE payment_customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES tenancy_organizations(id) ON DELETE CASCADE,
-    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'creem', 'mercadopago')),
+    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'paddle', 'mercadopago')),
     provider_customer_id VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uk_org_provider UNIQUE (org_id, provider)

@@ -149,7 +149,7 @@ CREATE TABLE hardware_kits (
 6. Fin responde las 20 preguntas de onboarding.
 7. Un backup se restauró al menos una vez en ensayo (Gate 7 de PRD-19).
 8. Términos legales de "humano aprueba" publicados en Framer (Semanas 8–9).
-9. Checkout sandbox Flow y Creem funcional.
+9. Checkout sandbox Flow y Paddle funcional.
 10. Débito de créditos 100% idempotente (`payment_events` + `credit_ledger` verificados).
 
 ---
@@ -175,7 +175,7 @@ CREATE TABLE hardware_kits (
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin (Pantalla S28).
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.

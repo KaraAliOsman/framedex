@@ -9,6 +9,7 @@ import sys
 import os
 import subprocess
 import re
+import json
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -84,17 +85,28 @@ def check_typechecks():
     print("   ✓ Tipado estricto verificado")
 
 def check_tests():
-    print("🧪 [FILTRO 4/6] Ejecutando Casos de Oro (G1–G12) y Suites de Pruebas...")
+    print("🧪 [FILTRO 4/6] Verificando Casos de Oro (G1–G12) y Suites de Pruebas...")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # 4.1 Verificar Manifiesto de Casos de Oro
+    manifest_path = os.path.join(base_dir, "engine", "tests", "GOLD_CASES_MANIFEST.json")
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+        pending_count = sum(1 for c in manifest.get("cases", {}).values() if c.get("status") == "pending")
+        frozen_count = sum(1 for c in manifest.get("cases", {}).values() if c.get("status") == "frozen")
+        print(f"   ℹ️ Manifiesto G-Cases: {frozen_count} Frozen / {pending_count} Pending (Pre-engine)")
+    
+    # 4.2 Ejecución de Pytest si existen tests
     engine_tests = os.path.join(base_dir, "engine", "tests")
-    if os.path.exists(engine_tests):
+    if os.path.exists(engine_tests) and any(f.startswith("test_") for f in os.listdir(engine_tests)):
         try:
             run_cmd(["pytest", "engine/", "-q"], cwd=base_dir, allow_fail=True)
         except FileNotFoundError:
             pass
             
     backend_dir = os.path.join(base_dir, "backend")
-    if os.path.exists(backend_dir):
+    if os.path.exists(backend_dir) and os.path.exists(os.path.join(backend_dir, "manage.py")):
         try:
             run_cmd(["pytest", "backend/", "-q"], cwd=base_dir, allow_fail=True)
         except FileNotFoundError:
@@ -103,7 +115,8 @@ def check_tests():
     frontend_dir = os.path.join(base_dir, "frontend")
     if os.path.exists(os.path.join(frontend_dir, "package.json")):
         run_cmd("npx vitest run", cwd=frontend_dir, allow_fail=True)
-    print("   ✓ Tests de tolerancia y suites verificadas")
+        
+    print("   ✓ Manifiesto y suites de pruebas validadas")
 
 def check_snapshots():
     print("📸 [FILTRO 5/6] Verificando Integridad de Snapshots Matemáticos...")

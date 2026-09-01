@@ -1,6 +1,6 @@
 # PRD: SISTEMA DE DISEÑO, MOTOR CAD Y VERSIÓN WEB MÓVIL ESENCIAL (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Web 100% Cloud • OCR Cuaderno de Obra • Escáner QR Web • Móvil Esencial)  
+**Versión:** 1.2 (Web 100% Cloud • OCR planos arquitectónicos impresos • Escáner QR Web • Móvil Esencial)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
@@ -15,7 +15,7 @@ En el celular **NO se necesita tener toda la complejidad del computador**. La ve
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                               LAS 4 ACCIONES ESENCIALES EN CELULAR                               │
 ├───────────────────────────────────┬──────────────────────────────────────────────────────────────┤
-│ 📝 1. FOTO AL CUADERNO DE MEDIDAS │ Tomas foto con el celular a tus apuntes a mano en tu libreta │
+│ 📝 1. FOTO AL plano DE MEDIDAS │ Tomas foto con el celular a tus apuntes a mano en tu libreta │
 │    (OCR Inteligente de Terreno)   │ de obra y la IA crea la cotización con los vanos listos.     │
 ├───────────────────────────────────┼──────────────────────────────────────────────────────────────┤
 │ 📲 2. ENVIAR A WHATSAPP EN 1 CLIC │ Abres la cotización, revisas el total y mandas el PDF oficial│
@@ -31,14 +31,14 @@ En el celular **NO se necesita tener toda la complejidad del computador**. La ve
 
 ---
 
-## 2. OCR de Terreno: Foto al Cuaderno o Libreta de Medidas (Tool T1)
+## 2. OCR de Terreno: Foto al plano o Libreta de Medidas (Tool T1)
 
 El flujo real de cualquier carpintero en obra:
-1. Mide los vanos con su distanciómetro láser y anota a mano en su cuaderno o croquis:  
+1. Mide los vanos con su distanciómetro láser y anota a mano en su plano o croquis:  
    *`Vano 1: 1500 x 1200 Corredera 2H Nogal Termopanel`*  
    *`Vano 2: 800 x 600 Proyectante Blanco Simple`*  
    *`Vano 3: 2000 x 2100 Puerta Corredera 2H Antracita`*
-2. Entra a **dekopen.com** en su celular, presiona **`+ Cotizar desde Foto`** y le saca una foto a la hoja de su cuaderno.
+2. Entra a **dekopen.com** en su celular, presiona **`+ Cotizar desde Foto`** y le saca una foto a la hoja de su plano.
 3. El motor de visión (Gemini 3.7 / GPT-5.6) lee los números y textos manuscritos, estructura los vanos y entrega el **borrador de cotización calculado a 0.00 mm en la pantalla del celular**.
 
 ---

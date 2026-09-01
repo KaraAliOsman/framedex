@@ -46,7 +46,7 @@
 
 ## 4. Finanzas, Seguridad e Infraestructura
 
-13. **IDEMPOTENCIA FINANCIERA:** Todos los webhooks de pasarelas de pago (Flow, Creem, MercadoPago) deben ser procesados con restricciones de unicidad sobre `payment_events(provider, event_id)` y `payments(provider_payment_id)`. Un reintento de red jamás puede duplicar la acreditación de suscripciones o recarga de saldo de créditos.
+13. **IDEMPOTENCIA FINANCIERA:** Todos los webhooks de pasarelas de pago (Flow, Paddle, MercadoPago) deben ser procesados con restricciones de unicidad sobre `payment_events(provider, event_id)` y `payments(provider_payment_id)`. Un reintento de red jamás puede duplicar la acreditación de suscripciones o recarga de saldo de créditos.
 14. **CONVENCIONES DE IDIOMA:** Código fuente, nombres de tablas, columnas de base de datos, firmas de funciones y comentarios deben escribirse en inglés. La interfaz de usuario (UI), alertas y documentos generados deben operar al 100% mediante claves de internacionalización (`i18n`) con localización por defecto en `es-CL`.
 15. **LISTA BLANCA DE DEPENDENCIAS:** Solo se permite el uso de dependencias declaradas en el PRD-00 (§10). La incorporación de una nueva librería en frontend o backend requiere una justificación técnica formal y aprobación explícita.
 16. **SEGURIDAD DE ARCHIVOS:** Todos los archivos adjuntos, planos, comprobantes y PDFs generados se almacenan en Supabase Storage bajo la estructura de carpetas `org_{org_id}/{resource}/{uuid}.ext` y solo se sirven mediante URLs firmadas con tiempo de expiración máximo de 3600 segundos.
@@ -144,7 +144,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
@@ -164,7 +164,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
 7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Creem probada de extremo a extremo.
+9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
 
 
@@ -783,7 +783,7 @@ CREATE TABLE ai_audit_logs (
 CREATE TABLE payment_customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES tenancy_organizations(id) ON DELETE CASCADE,
-    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'creem', 'mercadopago')),
+    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'paddle', 'mercadopago')),
     provider_customer_id VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uk_org_provider UNIQUE (org_id, provider)
@@ -1015,7 +1015,7 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
-- **Internacional (US/EU/Resto):** **Creem** (Merchant of Record - MoR que gestiona Sales Tax y VAT). Moneda ancla oficial: **USD**.
+- **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona Sales Tax y VAT). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 
 ---
@@ -2971,7 +2971,7 @@ Todas las pantallas privadas de la plataforma utilizan el **Desktop CAD Shell La
 | **P3** | Dominios: `dekopen.com`, `app.dekopen.com`, `dekopenmail.com` + DNS | D25 |
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
-| **P5-bis** | Cuenta Creem sandbox (crear pre-semana 15) | SHOT-18 |
+| **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
 | **P6** | Este documento + Biblia v1.1.2 cargados en Notion y como fuente de Fin | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
@@ -3006,7 +3006,7 @@ Todas las pantallas privadas de la plataforma utilizan el **Desktop CAD Shell La
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
 | **SHOT-17** | 2 · s14–15 | PRD-11 | Plantillas PDF 3 slots + bloques protegidos | Re-estiliza sin reescribir números (test: totales intactos tras CSS loco); restaurar original 1 clic; CSP |
-| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Creem global + MP stub + página pricing + Founding 50 | Checkout USD sandbox; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
+| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle global + MP stub + página pricing + Founding 50 | Checkout USD sandbox; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | 3D R3F + link `/view/` | PNG + link read-only **sin costos ni despiece en el bundle**; cinemática 3 aperturas; si no llega a nivel Apple $\rightarrow$ se mantiene 2D (criterio §7.9) |
 | **SHOT-20** | 3 · s18–20 | PRD-13, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
 | **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
@@ -3028,7 +3028,7 @@ Todas las pantallas privadas de la plataforma utilizan el **Desktop CAD Shell La
 | **6 · Fin responde 20 preguntas** | SHOT-23 |
 | **7 · Backup restaurado en ensayo** | SHOT-11 |
 | **8 · Términos "humano aprueba" publicados** | Tarea Fundador Semanas 8–9 (Framer / Legal) |
-| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Creem) |
+| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Paddle) |
 | **10 · Débito de créditos idempotente** | SHOT-11 (test de reintento en staging) |
 
 ---
