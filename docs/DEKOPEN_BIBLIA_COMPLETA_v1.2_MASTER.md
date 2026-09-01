@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Audited Clean Edition • Strict Flow & Paddle Rails • Zero Hallucination)
+**Versión Oficial:** 1.2 (Final Master Edition • Resolved Dependencies & Branch Protection)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -110,7 +110,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
-| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Supabase Storage | Todo | 0 |
+| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
 
 ---
 
@@ -139,7 +139,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
-- **SHOT-22:** Comparador T10 + bandeja email (Resend / Inbound).
+- **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.
 - **SHOT-24:** Retazos QR + WhatsApp + **G10 monoriel** + PT-BR + Vista instalador (S26).
 
@@ -157,6 +157,32 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
 9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
+
+---
+
+## 6. Lista Cerrada y Canónica de Dependencias del Monorepo (Regla 15)
+
+### Backend & Núcleo (`/backend` y `/engine`)
+* `python >= 3.12`
+* `pydantic >= 2.7` (Validación de esquemas tipados y modelos del motor)
+* `django >= 5.0`
+* `djangorestframework >= 3.15`
+* `django-cors-headers >= 4.3`
+* `psycopg[binary] >= 3.1` (Conector PostgreSQL 16)
+* `weasyprint >= 62.0` (Generación de PDFs DOC-01..07)
+* `openpyxl >= 3.1` (Exportación Excel de listas de corte DOC-03)
+* `huey >= 2.5` & `redis >= 5.0` (Colas asíncronas ligeras)
+* `posthog >= 3.5` (Telemetría de eventos)
+* **Tooling:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
+
+### Frontend (`/frontend`)
+* `node >= 20`
+* `react >= 18.3` & `react-dom >= 18.3`
+* `typescript >= 5.4`
+* `vite >= 5.2`
+* `tailwindcss >= 3.4` (con variables semánticas `--theme-*`)
+* `lucide-react >= 0.370` (Iconografía técnica estándar)
+* **Tooling:** `vitest >= 1.6`, `eslint >= 8.57`.
 
 
 
@@ -1055,18 +1081,18 @@ El sistema **NO cobra tarifas fijas hardcodeadas**. Cada llamada a una herramien
 
 | Tool ID | Función | Operación Realizada | Consumo Promedio Estimado | Modelo Asignado |
 |---|---|---|---|---|
-| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Modelo Visión OCR (`gemini-3.7-high`) |
-| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Long-Context Parser (`kimi-k3`) |
-| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (`gpt-5.6-luna` vs `gpt-5.6-sol`) |
-| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline Multimodal Completo |
-| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Modelo Visión OCR (`gemini-3.7-high`) |
-| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
-| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) |
+| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Dekopen Vision CAD™ (Gemini 3.7) |
+| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Dekopen Matrix Reader™ (Kimi k3) |
+| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (Luna vs Sol) |
+| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline completo multimodal |
+| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Dekopen Vision CAD™ (Gemini 3.7) |
+| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
 
 
 
@@ -1876,16 +1902,16 @@ Utiliza la librería en Python `ezdxf` en el backend para generar planos vectori
 
 # PRD-13: AI GATEWAY, ENRUTAMIENTO Y GOBERNANZA DE PROMPTS (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (AI Gateway Standard & Dynamic Database-Driven ai_routes)  
+**Versión:** 1.2 (Enterprise AI Gateway & White-Label Router Standard)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 2 (Inteligencia Asistida y Automatización)  
 **Bloquea a:** PRD-09, PRD-10, PRD-14, PRD-15
 
 ---
 
-## 1. Arquitectura del AI Gateway
+## 1. Arquitectura del AI Gateway y Suite White-Label
 
-El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para todas las operaciones de inteligencia artificial en Dekopen. Enruta dinámicamente las solicitudes según la configuración en la tabla `ai_routes`:
+El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para todas las operaciones de inteligencia artificial en Dekopen. Aplica **White-Labeling absoluto** (los usuarios de los talleres nunca ven nombres de proveedores crudos) y enruta el 99% de las tareas al motor principal ultra-eficiente:
 
 ```
 [ Frontend / Canvas S06 ] ──► [ AI Gateway Django Middleware ]
@@ -1893,9 +1919,9 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
      ┌────────────────────────────────┴────────────────────────────────┐
      ▼                                                                 ▼
 [ PRE-INVOCATION HOOKS ]                                      [ ENRUTADOR DINÁMICO (ai_routes) ]
-• Validación transaccional de saldo                           • Modelo Principal NLP (GPT 5.6 Luna - 99%)
-• Sanitización de inyecciones                                 • Modelo Visión OCR (Gemini 3.7 High)
-• Inyección de identidad y RLS (org_id)                       • Modelo Dual / Long-Context (Sol / Kimi)
+• Validación transaccional de saldo                           • Dekopen Neural Core™ (GPT 5.6 Luna - 99%)
+• Sanitización de inyecciones                                 • Dekopen Vision CAD™ (Gemini 3.7 High)
+• Inyección de identidad y RLS (org_id)                       • Dekopen Titan Engine™ (Sol / Kimi Opt-In)
      │                                                                 │
      └────────────────────────────────┬────────────────────────────────┘
                                       │
@@ -1914,12 +1940,12 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
 
 ## 2. Técnicas de Prompting y Enrutamiento por Herramienta
 
-| Tool ID | Herramienta | Rol Arquitectónico | Modelo Backend Configurado | Técnica Canónica |
+| Tool ID | Herramienta | Capa de IA (Marca Propia) | Modelo Backend Configurado | Técnica Canónica |
 |---|---|---|---|---|
-| **T1** | OCR de Planos (S27) | **Visión Multimodal** | `gemini-3.7-high` | **Few-Shot Multimodal** (extracción JSON de vanos). |
-| **T2** | Comandos NLP (Canvas) | **Principal NLP** | `gpt-5.6-luna-xhigh-max` | **ReAct con Hooks** (diff paramétrico $\rightarrow$ `/engine`). |
-| **T3** | Sugerencia de Descuentos | **Principal NLP** | `gpt-5.6-luna-xhigh-max` | **Chain-of-Thought (CoT)** (análisis de márgenes). |
-| **T6** | Compilador de Catálogos | **Long-Context Parser** | `gemini-3.7-high` / `kimi-k3` | **Directional Stimulus** (holguras y junquillos). |
+| **T1** | OCR de Planos (S27) | **Dekopen Vision CAD™** | `gemini-3.7-high` | **Few-Shot Multimodal** (extracción JSON de vanos). |
+| **T2** | Comandos NLP (Canvas) | **Dekopen Neural Core™** | `gpt-5.6-luna-xhigh-max` | **ReAct con Hooks** (diff paramétrico $\rightarrow$ `/engine`). |
+| **T3** | Sugerencia de Descuentos | **Dekopen Neural Core™** | `gpt-5.6-luna-xhigh-max` | **Chain-of-Thought (CoT)** (análisis de márgenes). |
+| **T6** | Compilador de Catálogos | **Dekopen Matrix Reader™** | `gemini-3.7-high` / `kimi-k3` | **Directional Stimulus** (holguras y junquillos). |
 | **T8** | Certificado Fabricabilidad | **Doble Verificador Ciego** | `gpt-5.6-luna` vs `gpt-5.6-sol` | **Self-Consistency Dual** (cero discrepancia $>0.00\text{ mm}$). |
 
 ---
@@ -1966,17 +1992,17 @@ El Certificado de Fabricabilidad (Documento **DOC-08** y Tool **T8**) es una gar
 
 ---
 
-## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — ~50 Créditos Estimados)
+## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — 50 Créditos)
 
-Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas de LLM independientes:
+Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas independientes:
 
 ```
                   [ Árbol Paramétrico + BOM + Memoria de Cálculo ]
                                          │
                  ┌───────────────────────┴───────────────────────┐
                  ▼                                               ▼
-      [ Modelo A: Principal NLP ]                     [ Modelo B: Verificador Cruzado ]
-        (GPT 5.6 Luna xHigh-Max)                        (Gemini 3.7 High / GPT 5.6 Sol)
+      [ Modelo A: Dekopen Neural Core™ ]          [ Modelo B: Dekopen Vision CAD™ / Titan ]
+         (GPT 5.6 Luna xHigh-Max)                      (Gemini 3.7 High / GPT 5.6 Sol)
                  │                                               │
                  └───────────────────────┬───────────────────────┘
                                          ▼
@@ -1993,8 +2019,8 @@ Para emitir el sello de certificación oficial sin quemar tokens innecesarios, e
 
 ## 3. Reglas Normativas de T8
 
-1. **Auditoría Estándar (~50 créditos estimados por tokens):** Cruza el Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) con el Modelo Visión/Auditor (`gemini-3.7-high`).
-2. **Modo Auditoría Avanzada (Opt-in):** Si el usuario activa explícitamente el toggle de máxima verificación, el segundo árbitro escala a `gpt-5.6-sol`.
+1. **Auditoría Estándar (Default 50 créditos):** Cruza **Dekopen Neural Core™ (GPT 5.6 Luna)** con **Dekopen Vision CAD™ (Gemini 3.7 High)**.
+2. **Modo Titan (Max Effort):** Si el usuario activa explícitamente el toggle de ultra-razonamiento, el segundo árbitro escala a **Dekopen Titan Engine™ (GPT 5.6 Sol)**.
 3. **Concordancia Matemática Obligatoria:** Cualquier desviación $> 0.00\text{ mm}$ en holguras o $> 0.1\text{ kg}$ en peso de hoja bloquea la emisión del certificado y alerta al taller.
 4. **Sello Criptográfico:** Al aprobarse, genera el documento **DOC-08** con código QR público que resuelve el estado de fabricación sin exponer costos ni despiece confidencial del taller.
 
@@ -2849,19 +2875,19 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 <!-- INICIO DE STACK_APLICACIONES_Y_SERVICIOS.md -->
 
 
-# STACK OFICIAL DE APLICACIONES, SERVICIOS Y RECURSOS — DEKOPEN (v1.2)
+# STACK OFICIAL DE APLICACIONES, SERVICIOS Y SUITE FOUNDER (+$40K USD) — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Regla de Oro:** **Separación Estricta Producto vs Herramientas Internas.** Las herramientas personales de desarrollo se usan **exclusivamente para gestión interna**; la infraestructura de cara al cliente es **100% multi-tenant y escalable** con $0 gasto de bolsillo gracias a los beneficios Founder/Insider.
+**Regla de Oro:** **Separación Estricta Producto vs Herramientas Internas.** Las herramientas personales o de 1 solo usuario se usan **exclusivamente para desarrollo, diseño y gestión interna**; la infraestructura de cara al cliente es **100% multi-tenant y escalable**.
 
 ---
 
-## 1. Infraestructura de Producto Multi-Tenant (Producción / Clientes)
+## 1. Infraestructura de Producto Multi-Tenant (De cara a los Clientes y Talleres)
 
-Servicios escalables que atienden a los talleres, cotizaciones y usuarios en producción:
+Servicios escalables que atienden directamente a todos los usuarios, talleres y cotizaciones en producción ($0 gasto de bolsillo):
 
-| Servicio / Infraestructura | Plan / Beneficio Real | Rol en la Plataforma Dekopen | Integración en Shot |
+| Servicio / Infraestructura | Plan / Beneficio | Rol en la Plataforma Dekopen | Integración en Shot |
 |---|---|---|:---:|
-| 🐘 **Supabase Pro** | 1 año en créditos | Base de Datos PostgreSQL 16 con RLS multi-tenant, Auth por Magic Link, Storage de planos, PDFs y respaldos diarios. | **SHOT-02 / SHOT-04** |
+| 🐘 **Supabase Pro** | 1 año en créditos | Base de Datos PostgreSQL 16 con RLS multi-tenant, Auth por Magic Link, Storage de planos y cotizaciones. | **SHOT-02 / SHOT-04** |
 | 🚂 **Railway** | 1 año Hobby / Deploy | Hosting de la API Django (DRF), colas asíncronas Huey y health checks continuos. | **SHOT-04 / SHOT-11** |
 | 🦔 **PostHog Scale** | 1 año con 2x límites ($16.5k) | Telemetría global de usuarios, Session Replays en el Canvas 2D y embudos de conversión. | **SHOT-04 / SHOT-23** |
 | 🤖 **Intercom + Fin AI** | 1 año (5 seats + $100/mo) | Agente de IA para soporte 24/7 a clientes y onboarding guiado de carpintería. | **SHOT-04 / SHOT-23** |
@@ -2871,47 +2897,61 @@ Servicios escalables que atienden a los talleres, cotizaciones y usuarios en pro
 | ⚡ **n8n Cloud** | 1 año Starter | Orquestación visual de webhooks, sincronización CRM y alertas a administradores. | **SHOT-11 / SHOT-17** |
 | 🖥️ **Framer Pro** | 1 año Framer Pro | Landing page comercial pública para captación y onboarding de los primeros 50 talleres. | **SHOT-18** |
 | 🌐 **Cloudflare** | Plan Gratuito de por vida | Proxy CDN global, protección contra ataques DDoS y certificados SSL automáticos. | **SHOT-04 / SHOT-11** |
-| 🇨🇱 **Flow.cl** | Pasarela Directa (Chile) | Cobro nativo en Pesos Chilenos (CLP) por Webpay Plus, Khipu, Servipag y emisión obligatoria de Factura Electrónica DTE con RUT. | **SHOT-11** |
-| 🌎 **Paddle** | Merchant of Record (MoR) | Cobro mundial en Dólares (USD) con retención y liquidación automática de impuestos internacionales (Sales Tax / IVA). | **SHOT-18** |
+| 🇨🇱 **Flow.cl** | Pasarela Directa | Cobro nativo en Chile (Webpay Plus, Khipu) y emisión de Factura Electrónica DTE. | **SHOT-11** |
+| 🌎 **Paddle** | Merchant of Record (MoR) | Cobro mundial en USD con retención y liquidación automática de impuestos. | **SHOT-18** |
 
 ---
 
-## 2. Suite Interna de Desarrollo y Operaciones (Uso Exclusivo del Fundador / Equipo)
+## 2. Suite Interna de Desarrollo, Diseño y Operaciones (Uso Exclusivo del Fundador / Equipo)
 
-Herramientas para acelerar la construcción, diseño y gestión del proyecto sin acoplamiento con la app de clientes:
+Herramientas para acelerar la construcción, diseño y gestión del proyecto sin tocar la arquitectura de los clientes:
 
 | Herramienta | Beneficio Real | Uso Exclusivo en Desarrollo y Operaciones |
 |---|---|---|
 | 📐 **Linear Business** | 1 año gratis (5 seats) | Gestión del backlog técnico, sprints y seguimiento de los 24 shots. |
 | 📱 **Mobbin Team** | 1 año gratis (10 seats) | Referencia UI/UX para diseño de componentes técnicos en Figma y pantallas S01–S28. |
 | 💻 **Cursor Pro & Warp Build** | 1 año gratis cada uno | Entornos de desarrollo asistidos por IA y terminal agentic para construcción rápida. |
-| 🌐 **Google AI Pro** | 1 año gratis (5 TB Storage) | Modelos Gemini y 5 TB de almacenamiento seguro para respaldos locales del equipo. |
+| 🌐 **Google AI Pro** | 1 año gratis (5 TB Storage) | Modelos Gemini experimentales y 5 TB de almacenamiento en la nube para respaldos locales. |
 | 📝 **Notion Business** | 1 año gratis | Base de conocimiento interna, minutas y documentación privada del equipo. |
 | 🏦 **Mercury Personal** | 2 años gratis | Operaciones financieras y recepción de fondos internacionales del fundador. |
 | 🎙️ **ElevenLabs & Supercut** | 1 año gratis cada uno | Creación de videos tutoriales, demos de producto y onboarding en audio/video. |
 
 ---
 
-## 3. Arquitectura del AI Router Dinámico (`ai_routes`)
+## 3. Suite de Inteligencia Artificial de Producción (White-Label 2026)
 
-El backend desacopla los modelos de la lógica de negocio mediante la tabla `ai_routes` en PostgreSQL y variables de entorno:
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               DEKOPEN AI INTELLIGENCE SUITE (2026)                               │
+├───────────────────────────────┬──────────────────────────────────┬───────────────────────────────┤
+│ ⚡ 1. DEKOPEN NEURAL CORE™     │ 👁️ 2. DEKOPEN VISION CAD™        │ 🔬 3. DEKOPEN TITAN ENGINE™   │
+│ (Motor Principal - 99% Uptime)│ (Visión Multimodal de Planos)    │ (Ultra-Ingeniería / QC Opt-In)│
+├───────────────────────────────┼──────────────────────────────────┼───────────────────────────────┤
+│ • Backend: GPT 5.6 Luna xHigh │ • Backend: Gemini 3.7 High       │ • Backend: GPT 5.6 Sol / Kimi │
+│ • Consumo: 1x (Ultra eficiente)│ • Consumo: 2x (Solo con planos)  │ • Consumo: 5x–10x (Bajo demanda)│
+│ • Para: Comandos NLP (T2),    │ • Para: Extracción OCR de vanos  │ • Para: Doble verificación T8 │
+│   árbol paramétrico, diffs,   │   en planos arquitectónicos PDF  │   y catálogos masivos de 50+  │
+│   cotizador rápido y márgenes │   y cuadros de medidas (T1).     │   páginas con matrices (T6).  │
+└───────────────────────────────┴──────────────────────────────────┴───────────────────────────────┘
+```
 
-| Nivel de Carga | Configuración Técnica | Modelo Asignado | Casos de Uso Exclusivos | Consumo de Créditos |
+| Nivel de Potencia | Marca Propia | Backend Configurado | Casos de Uso Exclusivos | Consumo de Créditos |
 |---|---|---|---|:---:|
-| **Principal NLP (99% de tareas)** | `AI_MODEL_PRIMARY` / `OPENAI_API_KEY` | `gpt-5.6-luna-xhigh-max` | Comandos de diseño NLP (T2/T3), árbol paramétrico, explicaciones técnicas (T5), cotizador rápido y cálculo de rentabilidad. | **Bajo** (~1 a 4 cr) |
-| **Visión Multimodal** | `AI_MODEL_VISION` / `GOOGLE_AI_API_KEY` | `gemini-3.7-high` | Extracción de cuadros de vanos en planos arquitectónicos PDF (T1) y reconocimiento de cotas milimétricas. | **Medio** (~10 cr / plano) |
-| **Doble Verificador T8** | `AI_MODEL_DUAL_AUDIT` / `OPENAI_API_KEY` | `gpt-5.6-sol` | Arbitraje independiente de doble ciego para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (~50 cr) |
-| **Catálogos Extensos** | `AI_MODEL_CATALOG` / `KIMI_API_KEY` | `kimi-k3` | Ingestión masiva de catálogos técnicos de 50+ páginas con tablas matriciales complejas de junquillos. | **Por página** (~$25 + 2\text{ cr/pág}$) |
+| **Principal NLP (Default 99%)** | **Dekopen Neural Core™** | `gpt-5.6-luna-xhigh-max` | Comandos de diseño NLP (T2/T3), árbol paramétrico, explicaciones técnicas (T5), cotizador rápido y cálculo de rentabilidad. | **Bajo** (1 a 4 cr) |
+| **Visión Multimodal** | **Dekopen Vision CAD™** | `gemini-3.7-high` | Extracción de cuadros de vanos en planos arquitectónicos PDF (T1) y reconocimiento de cotas milimétricas. | **Medio** (10 cr / plano) |
+| **Doble Verificador T8** | **Doble Verificador Ciego** | `gpt-5.6-sol` | Arbitraje independiente de doble ciego para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (50 cr) |
+| **Catálogos Extensos** | **Dekopen Matrix Reader™** | `kimi-k3` | Ingestión masiva de catálogos técnicos de 50+ páginas con tablas matriciales complejas de junquillos. | **Por página** ($25 + 2\text{ cr/pág}$) |
 
 ---
 
-## 4. Gobernanza y Medición de Tokens
+## 4. Protocolo de Protección contra Desperdicio de Tokens (Zero-Waste)
 
 1. **Cálculos Matemáticos a $0 Token:** Ningún corte, medida, vidrio o cálculo de rentabilidad pasa por un LLM. Todo es procesado en microsegundos por el motor en Python `/engine`.
 2. **Bloqueo Preventivo de Saldo Cero:** El backend verifica y bloquea el saldo en `credit_ledger` *antes* de enviar cualquier request a la API de IA. Si el saldo es 0, no se realiza la llamada HTTP.
 3. **Payloads Estrictos con `max_output_tokens`:** Las respuestas de las Tools (T1 a T12) están forzadas a JSON estructurado y conciso (e.g., T2 devuelve ~50 tokens de diff, jamás párrafos explicativos innecesarios).
-4. **Gating Visual:** Modelos multimodales se invocan **únicamente** cuando se adjunta un archivo PDF o imagen; las peticiones de texto plano se enrutan al modelo principal.
+4. **Gating Visual:** Modelos multimodales (`Gemini 3.7 High`) se invocan **únicamente** cuando se adjunta un archivo PDF o imagen; las peticiones de texto plano se enrutan a `GPT 5.6 Luna`.
 5. **Anti-Loop Circuit Breaker:** Cualquier fallo en OCR o NLP tiene un límite estricto de **1 reintento**. Prohibidos los bucles de llamadas infinitas.
+6. **En Desarrollo (Codex):** El agente utiliza contexto JIT (lee solo el PRD del shot actual, ~2k tokens) y realiza ediciones quirúrgicas de líneas específicas en lugar de reescribir archivos enteros.
 
 
 

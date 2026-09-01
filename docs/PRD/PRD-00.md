@@ -45,7 +45,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
-| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Supabase Storage | Todo | 0 |
+| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
 
 ---
 
@@ -74,7 +74,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
-- **SHOT-22:** Comparador T10 + bandeja email (Resend / Inbound).
+- **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.
 - **SHOT-24:** Retazos QR + WhatsApp + **G10 monoriel** + PT-BR + Vista instalador (S26).
 
@@ -92,3 +92,29 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
 9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
+
+---
+
+## 6. Lista Cerrada y Canónica de Dependencias del Monorepo (Regla 15)
+
+### Backend & Núcleo (`/backend` y `/engine`)
+* `python >= 3.12`
+* `pydantic >= 2.7` (Validación de esquemas tipados y modelos del motor)
+* `django >= 5.0`
+* `djangorestframework >= 3.15`
+* `django-cors-headers >= 4.3`
+* `psycopg[binary] >= 3.1` (Conector PostgreSQL 16)
+* `weasyprint >= 62.0` (Generación de PDFs DOC-01..07)
+* `openpyxl >= 3.1` (Exportación Excel de listas de corte DOC-03)
+* `huey >= 2.5` & `redis >= 5.0` (Colas asíncronas ligeras)
+* `posthog >= 3.5` (Telemetría de eventos)
+* **Tooling:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
+
+### Frontend (`/frontend`)
+* `node >= 20`
+* `react >= 18.3` & `react-dom >= 18.3`
+* `typescript >= 5.4`
+* `vite >= 5.2`
+* `tailwindcss >= 3.4` (con variables semánticas `--theme-*`)
+* `lucide-react >= 0.370` (Iconografía técnica estándar)
+* **Tooling:** `vitest >= 1.6`, `eslint >= 8.57`.

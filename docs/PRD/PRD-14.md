@@ -13,17 +13,17 @@ El Certificado de Fabricabilidad (Documento **DOC-08** y Tool **T8**) es una gar
 
 ---
 
-## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — ~50 Créditos Estimados)
+## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — 50 Créditos)
 
-Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas de LLM independientes:
+Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas independientes:
 
 ```
                   [ Árbol Paramétrico + BOM + Memoria de Cálculo ]
                                          │
                  ┌───────────────────────┴───────────────────────┐
                  ▼                                               ▼
-      [ Modelo A: Principal NLP ]                     [ Modelo B: Verificador Cruzado ]
-        (GPT 5.6 Luna xHigh-Max)                        (Gemini 3.7 High / GPT 5.6 Sol)
+      [ Modelo A: Dekopen Neural Core™ ]          [ Modelo B: Dekopen Vision CAD™ / Titan ]
+         (GPT 5.6 Luna xHigh-Max)                      (Gemini 3.7 High / GPT 5.6 Sol)
                  │                                               │
                  └───────────────────────┬───────────────────────┘
                                          ▼
@@ -40,7 +40,7 @@ Para emitir el sello de certificación oficial sin quemar tokens innecesarios, e
 
 ## 3. Reglas Normativas de T8
 
-1. **Auditoría Estándar (~50 créditos estimados por tokens):** Cruza el Modelo Principal NLP (`gpt-5.6-luna-xhigh-max`) con el Modelo Visión/Auditor (`gemini-3.7-high`).
-2. **Modo Auditoría Avanzada (Opt-in):** Si el usuario activa explícitamente el toggle de máxima verificación, el segundo árbitro escala a `gpt-5.6-sol`.
+1. **Auditoría Estándar (Default 50 créditos):** Cruza **Dekopen Neural Core™ (GPT 5.6 Luna)** con **Dekopen Vision CAD™ (Gemini 3.7 High)**.
+2. **Modo Titan (Max Effort):** Si el usuario activa explícitamente el toggle de ultra-razonamiento, el segundo árbitro escala a **Dekopen Titan Engine™ (GPT 5.6 Sol)**.
 3. **Concordancia Matemática Obligatoria:** Cualquier desviación $> 0.00\text{ mm}$ en holguras o $> 0.1\text{ kg}$ en peso de hoja bloquea la emisión del certificado y alerta al taller.
 4. **Sello Criptográfico:** Al aprobarse, genera el documento **DOC-08** con código QR público que resuelve el estado de fabricación sin exponer costos ni despiece confidencial del taller.

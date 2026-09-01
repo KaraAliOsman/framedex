@@ -28,7 +28,7 @@
 13. Webhooks y pagos: idempotencia obligatoria (UNIQUE provider+event_id,
     provider_payment_id). Un retry jamás cobra dos veces.
 14. Código/comentarios/DB en inglés. UI solo vía claves i18n ES-CL.
-15. Dependencias: SOLO la lista cerrada (PRD-00 §10). Nuevo dep = decisión explícita del owner.
+15. Dependencias: SOLO la lista cerrada (PRD-00 §6). Nuevo dep = decisión explícita del owner.
 16. Archivos: Supabase Storage con path org_id/… y URLs firmadas con expiración.
 17. Prohibido inventar U_w / R_w. Solo desde ficha certificada o no se muestra.
 18. offcut_inventory: schema existe, producción prohibida hasta Fase 4.
