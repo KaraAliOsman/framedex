@@ -5,17 +5,17 @@ Executes across Windows, macOS, and Linux without bash dependency.
 Usage: python scripts/check_dod.py [lint|typecheck|test|snapshot|all|gauntlet]
 """
 
-import sys
 import os
-import subprocess
 import re
+import subprocess
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 def run_cmd(cmd, cwd=None, allow_fail=False):
     print(f"  $ {' '.join(cmd) if isinstance(cmd, list) else cmd}")
-    res = subprocess.run(cmd, shell=isinstance(cmd, str), cwd=cwd)
+    res = subprocess.run(cmd, shell=isinstance(cmd, str), cwd=cwd, check=False)
     if res.returncode != 0 and not allow_fail:
         print(f"\n[FAIL] Command failed with exit code {res.returncode}")
         sys.exit(res.returncode)

@@ -4,9 +4,9 @@ Dekopen Shot Initialization Helper (2026 Global Alignment Standard)
 Usage: python scripts/new_shot.py SHOT-01
 """
 
-import sys
 import os
 import re
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
