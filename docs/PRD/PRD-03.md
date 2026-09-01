@@ -54,32 +54,39 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 
 ---
 
-## 4. Billetera y Consumo de Créditos de IA
+## 4. Billetera y Consumo de Créditos de IA (Medición Dinámica por Tokens Reales)
 
-### 4.1. Conversión Interna Privada y Saldo Cero
-- **Conversión Interna Privada:** 200 créditos = USD 1 de costo API real ($1\text{ crédito} = \text{USD } 0.005$). Esta equivalencia es estrictamente privada y nunca visible en la UI.
-- **Saldo Cero:** Al agotarse los créditos, las funciones de IA se pausan. **El motor de cálculo, diseñador 2D, cotizador manual, corte 1D y exportación de PDFs siguen 100% operativos** (*retención, no castigo*).
+### 4.1. Algoritmo de Cálculo y Débito Dinámico por Tokens
+El sistema **NO cobra tarifas fijas hardcodeadas**. Cada llamada a una herramienta de IA (Tools T1 a T12) se debita en tiempo real según los **tokens reales consumidos** devueltos por el proveedor (`tokens_in` y `tokens_out`):
 
-### 4.2. Packs de Recarga de Emergencia
-| Pack | Precio | Créditos Incluidos |
-|---|---|---|
-| **Top-up 1.000** | USD 15 | 1.000 créditos |
-| **Top-up 3.000** | USD 40 | 3.000 créditos |
-| **Top-up 7.500** | USD 90 | 7.500 créditos |
+1. **Cálculo del Costo API Real (USD):**
+   $$\text{Costo API} = (\text{tokens\_in} \times \text{precio\_in}) + (\text{tokens\_out} \times \text{precio\_out})$$
+2. **Conversión a Créditos Dekopen (con Margen 2x de Ganancia):**
+   $$\text{Créditos a Debitar} = \lceil \text{Costo API en USD} \times 200 \rceil$$
+   *(Equivalencia: \$1 USD de costo API = 100 créditos base. Con margen comercial 2x = 200 créditos por cada \$1 USD de costo API).*
+3. **Saldo Cero:** Al agotarse los créditos, las funciones de IA se pausan. **El motor de cálculo `/engine`, diseñador 2D, cotizador manual, corte 1D y exportación de PDFs siguen 100% operativos** (*retención, no castigo*).
 
-### 4.3. Tabla de Consumo por Herramienta de IA
+### 4.2. Packs de Recarga de Créditos (Margen Comercial 2x)
+| Pack | Precio al Cliente | Costo API Real | Créditos Incluidos |
+|---|---|---|---|
+| **Top-up 1.000** | USD 15 | ~$5 USD | 1.000 créditos |
+| **Top-up 3.000** | USD 40 | ~$15 USD | 3.000 créditos |
+| **Top-up 7.500** | USD 90 | ~$37.5 USD | 7.500 créditos |
 
-| Tool ID | Función | Operación Realizada | Costo en Créditos | Justificación de Costo API |
+### 4.3. Tabla de Consumo Promedio Estimado (Referencial para Marketing)
+*Nota técnica: Los siguientes valores son promedios referenciales de consumo típico para comunicación al cliente. El débito en base de datos (`credit_ledger`) siempre se calcula de forma dinámica según los tokens reales.*
+
+| Tool ID | Función | Operación Realizada | Consumo Promedio Estimado | Modelo Asignado |
 |---|---|---|---|---|
-| `T1` | `extract_positions(file)` | OCR multimodal de plano/pliego y extracción de vanos | **10 créditos** por plano | Gemini Flash OCR multimodal |
-| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **4 créditos** | Mutación paramétrica tipada |
-| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **3 créditos** | Diff comercial |
-| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **2 créditos** | Consulta quirúrgica |
-| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **1 crédito** | Micro-explicación |
-| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **25 + 2 créditos / pág** *(mín 25)* | Extracción profunda de tablas y matrices |
-| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **2 créditos** | Grafo de herrajes |
-| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **50 créditos** | Doble modelo LLM independiente (~$0.25) |
-| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **30 + 2 créditos / pág** | Pipeline completo multimodal + BOM |
-| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **8 créditos** | Comparativa visual de planos |
-| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **1 crédito** | Análisis financiero de riesgo |
-| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **5 créditos** | Modelo predictivo de compras |
+| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Dekopen Vision CAD™ (Gemini 3.7) |
+| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Dekopen Matrix Reader™ (Kimi k3) |
+| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (Luna vs Sol) |
+| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline completo multimodal |
+| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Dekopen Vision CAD™ (Gemini 3.7) |
+| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
