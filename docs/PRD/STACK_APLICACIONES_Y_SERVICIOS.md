@@ -10,7 +10,7 @@
 |---|---|---|---|:---:|
 | 🐘 **Supabase Pro** | Base de Datos & Auth | PostgreSQL 16 con RLS, Auth (Magic Link), Storage Buckets firmados para PDFs y planos. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04** |
 | 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), Huey Async Workers, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
-| ☁️ **Cloudflare Pro + R2** | CDN & Backups | CDN global con WebSockets, y almacenamiento R2 cifrado para dumps de base de datos con **$0 egress fees**. | Nivel Pro Founder | **SHOT-11 / SHOT-19** |
+| ☁️ **Cloudflare (CDN & R2)** | CDN & Backups | CDN global, proxy DNS/DDoS y almacenamiento R2 cifrado para backups de base de datos con **$0 egress fees**. | Tier Estándar + R2 | **SHOT-11 / SHOT-19** |
 | 🦔 **PostHog Scale** | Analítica de Producto | Telemetría de eventos, Session Replays (grabación de uso en Canvas), embudos de conversión y Feature Flags. | **$50,000 USD** en eventos | **SHOT-04 / SHOT-23** |
 | ✉️ **Customer.io** | Email Marketing & Drip | Automatización de ciclo de vida, secuencias de onboarding, reactivación de cotizaciones frías y alertas. | **$3,000 USD** en créditos | **SHOT-11 / SHOT-18** |
 | 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup | **SHOT-04 / SHOT-09** |
