@@ -6,21 +6,47 @@
 
 ## ⚡ Quickstart
 
-Para comenzar o validar el estado completo del repositorio:
+Requisitos de SHOT-01: Python 3.12+, Node.js 20.19+ y npm. La instalación usa solo
+la lista cerrada de `docs/PRD/PRD-00.md` §6.
 
 ```bash
-# Validar el Definition of Done completo (Regla 19 de la Constitución)
-make dod
-
-# Ejecutar tests unitarios (Engine, Backend, Frontend)
-make test
-
-# Validar linters y reglas constitucionales (sin float en engine, sin hex en UI)
-make lint
-
-# Chequeo estricto de tipos (mypy strict + tsc)
-make typecheck
+python -m venv .venv
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+python -m pip install --requirement requirements-dev.txt
+cd frontend && npm ci && cd ..
 ```
+
+Para validar el estado completo del repositorio:
+
+```bash
+# Entrada canónica y multiplataforma del gate
+python scripts/check_dod.py all
+
+# Atajos equivalentes cuando GNU Make está disponible
+make test
+make lint
+make typecheck
+make build
+```
+
+El checker rechaza herramientas o suites ausentes, warnings, colores hex crudos en
+`frontend/src`, usos de `float` en `engine/src` y cualquier comando con retorno no cero.
+
+---
+
+## 🔒 Branch protection de `main`
+
+La rama `main` no admite merge directo. En GitHub, configurar **Settings → Branches →
+Branch protection rules** para `main` con estos requisitos mínimos:
+
+1. Exigir pull request antes de integrar cambios.
+2. Exigir que la rama esté actualizada antes del merge.
+3. Exigir exactamente los status checks `Lint & Typecheck`, `Test Suite` y
+   `Frontend Build` definidos en `.github/workflows/ci.yml`.
+4. No permitir bypass, force pushes ni eliminación de `main`.
+
+Cada shot se publica en su rama `shot-XX` y espera la orden explícita `MERGE` del owner.
 
 ---
 

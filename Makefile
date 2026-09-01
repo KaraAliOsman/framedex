@@ -1,4 +1,4 @@
-.PHONY: test lint typecheck goldgen dod gauntlet shot-% help
+.PHONY: test lint typecheck build goldgen dod gauntlet shot-% help
 
 help:
 	@echo "Dekopen Builder Command Center (2026 Cross-Platform Gauntlet)"
@@ -7,6 +7,7 @@ help:
 	@echo "  make test       - Run all test suites (engine, backend, frontend)"
 	@echo "  make lint       - Run linters and constitutional anti-pattern guards"
 	@echo "  make typecheck  - Strict type checking (mypy strict + tsc)"
+	@echo "  make build      - Build the frontend production bundle"
 	@echo "  make goldgen    - Regenerate engine golden snapshots (Rule 22)"
 	@echo "  make shot-XX    - Initialize shot branch and plan (e.g. make shot-01)"
 
@@ -18,6 +19,9 @@ lint:
 
 typecheck:
 	python scripts/check_dod.py typecheck
+
+build:
+	python scripts/check_dod.py build
 
 goldgen:
 	python -m engine.scripts.regenerate_golden
