@@ -1,110 +1,66 @@
-# PRD-10: INTERFAZ DE COMANDOS DE DISEÑO Y PRECIO EN LENGUAJE NATURAL (v1.1.0)
+# PRD-10: CO-PILOTO DE ACCIÓN DIRECTA (CMD+K), DIFFS VISUALES Y DESHACER SAGRADO (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Fase:** 2 (Inteligencia Operativa)  
-**Bloquea a:** PRD-15
+**Versión:** 1.2 (Action-First UX Standard — Estilo Codex / Antigravity)  
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
+**Fase:** 2 (Comandos y Diffs Paramétricos)  
+**Bloquea a:** PRD-11
 
 ---
 
-## 1. Misión y Filosofía de los Comandos
+## 1. Filosofía de Interacción: Cero Chatbot, Acción Pura
 
-La interfaz de comandos (Tools **T2**, **T3** y Pantalla **S21**) permite a los carpinteros y cotizadores interactuar con el sistema mediante lenguaje natural conversacional ("Divide la ventana al medio y pon la derecha oscilobatiente", "Aplica 5% de descuento por volumen").
+En Dekopen, la inteligencia artificial **NO es una ventana de chat flotante ni un bot conversacional con saludos**. Es un **operador de acción directa integrado en el Canvas** diseñado bajo la interacción de herramientas como Codex, Claude Code y Antigravity:
 
-### Las Tres Leyes de los Comandos de IA
-1. **La IA muta parámetros, el motor calcula:** El LLM interpreta la intención del usuario y emite un diff estructurado de parámetros (`parametric_tree_diff` o `pricing_diff`). El LLM **JAMÁS** calcula o escribe números de corte o precios finales directamente.
-2. **Preview Obligatorio Antes/Después:** Ninguna mutación se aplica a ciegas. El usuario siempre visualiza una vista previa gráfica y numérica con los deltas de costo, precio y estado del inspector antes de confirmar.
-3. **Deshacer Sagrado (Undo Transaccional):** Toda acción ejecutada por un comando de IA se registra en el stack de deshacer con su snapshot previo íntegro, permitiendo revertir la operación con `Cmd + Z` o mediante un botón visible en la UI.
+1. **Cero Saludos o Texto de Relleno:** La IA no responde con explicaciones largas. Modifica el dibujo técnico o el presupuesto en milisegundos.
+2. **Barra de Comandos `Cmd + K` (o `Ctrl + K`):** Acceso instantáneo desde cualquier pantalla para transformar ventanas o precios sin navegar por menús.
+3. **Diffs Visuales Antes / Después:** Toda propuesta de cambio genera una vista previa con delta de costo antes de aplicarse.
+4. **El Deshacer Sagrado (`Cmd + Z`):** Toda mutación ejecutada por la IA se puede revertir con una sola tecla.
 
 ---
 
-## 2. Tipos de Comandos y Esquemas de Herramientas
+## 2. Flujo de Trabajo de la Barra de Comandos (`Cmd + K`)
 
-```mermaid
-graph TD
-    UserPrompt[Instrucción en Lenguaje Natural] --> Classifier{Clasificador de Intención}
-    Classifier -->|Modificación Geométrica| T2[Tool T2: propose_window_command]
-    Classifier -->|Ajuste Comercial| T3[Tool T3: apply_pricing_command]
-    Classifier -->|Consulta Técnica| T5[Tool T5: explain_item]
-    
-    T2 --> DiffGenerator[Generador de Diff Paramétrico]
-    T3 --> PricingDiff[Generador de Diff de Precios]
-    
-    DiffGenerator --> EngineCalc[/engine: Cálculo Determinista]
-    PricingDiff --> EngineCalc
-    
-    EngineCalc --> PreviewModal[Modal de Vista Previa Antes/Después]
-    PreviewModal -->|Aprobación Humana| ApplyState[Aplicación de Estado + Audit Log]
+```
+[ Usuario presiona Cmd+K ] ──► [ Input Flotante Minimalista en Canvas ]
+                                             │
+                       [ "dividir en 3 hojas, centro oscilobatiente" ]
+                                             │
+                                             ▼
+                      [ AI Gateway (Tool T2: Parse Command) ]
+                                             │
+                                             ▼
+                          [ Cálculo en /engine (0.00 mm) ]
+                                             │
+                                             ▼
+                    ┌─────────────────────────────────────────────────┐
+                    │          MODAL DE DIFF VISUAL (200 ms)          │
+                    ├─────────────────────────────────────────────────┤
+                    │ • Antes (Rojo): 2 Hojas Correderas ($180.000)   │
+                    │ • Propuesta (Verde): 3 Cuerpos OB ($215.000)    │
+                    │                                                 │
+                    │ [ Tab / Enter: Aceptar ]    [ Esc: Descartar ]  │
+                    └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 2.1. Herramienta T2: `propose_window_command` (Diseño Geométrico)
-- **Costo:** 4 puntos.
-- **Entrada:**
-  ```json
-  {
-    "current_tree": { ... },
-    "command_text": "Divide verticalmente al centro y pon la hoja derecha oscilobatiente con manilla a 400mm"
-  }
-  ```
-- **Salida Tipada:**
-  ```json
-  {
-    "mutation_type": "SPLIT_NODE",
-    "target_node_id": "root",
-    "operations": [
-      {
-        "op": "SPLIT_V",
-        "split_ratio": 0.5,
-        "children": [
-          { "type": "BAY", "opening_type": "FIXED" },
-          { "type": "BAY", "opening_type": "TILT_TURN_RIGHT", "handle_height_mm": 400 }
-        ]
-      }
-    ],
-    "explanation_es": "Se dividió el vano en 2 partes iguales: Paño fijo a la izquierda y Oscilobatiente derecha con manilla a 400 mm."
-  }
-  ```
+## 3. Comandos de Precios y Rentabilidad (Tool T2 / T3)
+
+La IA traduce lenguaje natural a parámetros de `/engine` sin inventar aritmética:
+
+| Comando del Usuario | Interpretación de la IA | Acción en `/engine` |
+|---|---|---|
+| *"Ponle 200% de ganancia a este proyecto"* | `mode: MARGIN_PERCENT, value: 200.0` | Recalcula el precio de venta manteniendo el costo de materiales intacto. |
+| *"Calcula a 200 mil por m² en ventanas nogal"* | `mode: TARGET_M2, value: 200000.0, filter: {color: 'nogal'}` | Despeja el margen necesario para que el precio final por $m^2$ sea exacto. |
+| *"Aplica 15% de descuento a los fijos del 2do piso"* | `mode: DISCOUNT_PERCENT, value: 15.0, filter: {type: 'FIXED', floor: 2}` | Aplica descuento de línea sin alterar las demás ventanas. |
+| *"¿Qué cambiarías para bajar 10% el costo?"* | `tool: T9_ALTERNATIVES, goal: COST_REDUCTION_10` | Propone alternativas de optimización de perfil o vidrio en el modal de Diff. |
 
 ---
 
-### 2.2. Herramienta T3: `apply_pricing_command` (Ajustes Comerciales)
-- **Costo:** 3 puntos.
-- **Entrada:**
-  ```json
-  {
-    "project_id": "proj_123",
-    "command_text": "Aplica un margen del 38% para constructora y descuenta 3% en las ventanas de dormitorios"
-  }
-  ```
-- **Salida Tipada:**
-  ```json
-  {
-    "target_mode": "COST_PLUS_MARGIN",
-    "global_margin_pct": 0.3800,
-    "position_overrides": [
-      { "location_tag_pattern": "Dormitorio*", "discount_pct": 0.0300 }
-    ],
-    "delta_summary": {
-      "previous_total_net": 3450000,
-      "new_total_net": 3620000,
-      "net_difference": 170000
-    }
-  }
-  ```
+## 4. Tareas en Segundo Plano sin Bloqueo de UI (*Non-Blocking Workers*)
 
----
-
-## 3. Experiencia de Usuario: Modal de Vista Previa (Preview & Diff)
-
-Al procesar cualquier comando, la UI despliega un panel flotante de confirmación con 3 secciones:
-1. **Comparativa Visual 2D (Side-by-Side):**
-   - Panel Izquierdo: Estado actual (SVG previo).
-   - Panel Derecho: Estado propuesto con resaltado de modificaciones en color verde.
-2. **Impacto Técnico y Comercial:**
-   - Variación de Costo de Materiales ($\Delta \text{Costo}$).
-   - Variación de Precio de Venta ($\Delta \text{Precio}$).
-   - Estado del Inspector Técnico: Si el comando introduce una infracción (e.g. hoja demasiado pesada), se muestra la advertencia en amarillo/rojo antes de aplicar.
-3. **Botones de Decisión:**
-   - `[Aplicar Cambios (Enter)]` (Color primario azul).
-   - `[Descartar (Esc)]` (Gris).
-   - Botón contextual post-aplicación: `[↶ Deshacer Comando]`.
+Cuando se procesan operaciones pesadas (como la lectura de un PDF de planos con 15 vanos en S27):
+1. **La interfaz nunca se congela:** El usuario puede seguir dibujando o cotizando.
+2. **Notificación Discreta en Barra de Estado:**  
+   `[ ⚡ 15 vanos extraídos del plano • 13 seguros / 2 para revisar ] -> [ Revisar e Importar ]`
+3. **Auditoría Obligatoria:** Todo cambio registra una fila en `ai_audit_logs` con el payload antes/después para permitir reversión infinita.

@@ -1,7 +1,7 @@
 # STACK OFICIAL DE MODELOS Y AI ROUTER 2026 — DEKOPEN (v1.2)
 **Fecha:** 30 de Agosto de 2026  
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** Nombres de marca propios (White-label), 99% de operaciones sobre GPT 5.6 Luna xHigh-Max (eficiente y ultra-rápido), activación explícita ("Modo Titan / Ultra-Ingeniería") para modelos pesados (Sol / Kimi k3), y pasarela internacional vía **Paddle (Merchant of Record - MoR)**.
+**Filosofía:** Nombres de marca propios (White-label), 99% de operaciones sobre GPT 5.6 Luna xHigh-Max (eficiente y ultra-rápido), activación explícita ("Modo Titan / Ultra-Ingeniería") para modelos pesados (Sol / Kimi k3), y pasarela internacional vía **Creem (Merchant of Record - MoR)**.
 
 ---
 
@@ -40,7 +40,7 @@ El usuario final y los clientes de los talleres **jamás ven nombres comerciales
 | Región | Pasarela | Rol | Moneda | Razón de Elección |
 |---|---|---|---|---|
 | **Chile** | **Flow.cl** | Pasarela Directa | **CLP** | Medios de pago chilenos (Webpay, Khipu, Servipag) y emisión obligatoria de DTE / Factura Electrónica. |
-| **Internacional (Global)** | **Paddle** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Paddle recauda, declara y paga automáticamente los impuestos (Sales Tax en EE. UU., IVA/VAT en Europa y LatAm). |
+| **Internacional (Global)** | **Creem** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Creem recauda, declara y paga automáticamente los impuestos (Sales Tax en EE. UU., IVA/VAT en Europa y LatAm). |
 
 ---
 
@@ -117,11 +117,11 @@ FLOW_SECRET_KEY=flow_sandbox_secret_key
 FLOW_API_URL=https://sandbox.flow.cl/api
 FLOW_WEBHOOK_SECRET=flow_webhook_secret
 
-# Payments: Paddle Global MoR (USD - Taxes/VAT automatizado)
-PADDLE_ENVIRONMENT=sandbox
-PADDLE_API_KEY=paddle_sandbox_api_key
-PADDLE_WEBHOOK_SECRET=paddle_sandbox_webhook_secret
-PADDLE_CLIENT_TOKEN=paddle_sandbox_client_token
+# Payments: Creem Global MoR (USD - Taxes/VAT automatizado)
+CREEM_ENVIRONMENT=sandbox
+CREEM_API_KEY=creem_sandbox_api_key
+CREEM_WEBHOOK_SECRET=creem_sandbox_webhook_secret
+CREEM_CLIENT_TOKEN=creem_sandbox_client_token
 
 # Mailing & Telemetry
 RESEND_API_KEY=re_your_resend_api_key

@@ -1,64 +1,37 @@
-# PRD-12: VISOR 3D ESQUEMÁTICO Y ENLACE INTERACTIVO PARA CLIENTES (v1.1.0)
+# PRD-12: ENLACE EN VIVO PARA CLIENTES Y EXPORTADOR CAD 2D .DXF (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Fase:** 3 (Experiencia Visual)  
-**Bloquea a:** Ninguno
+**Versión:** 1.2 (V1: Live Portal & 2D CAD • V2: 3D WebGL & AR)  
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
+**Fase:** 3 (Salidas Comerciales y Enlaces en Vivo)  
+**Bloquea a:** PRD-13
 
 ---
 
-## 1. Misión y Propósito Comercial
+## 1. Misión del Módulo de Salidas Digitales
 
-El módulo 3D (implementado con **React Three Fiber / Three.js**) permite a los talleres generar una visualización tridimensional interactiva y fotorrealista de las aberturas cotizadas a partir del `parametric_tree` 2D, elevando el valor percibido por el cliente final y acelerando la tasa de cierre de ventas.
-
----
-
-## 2. Generación Procedural de Geometrías 3D
-
-El visor 3D extruye y ensambla proceduralmente cada componente a partir de los datos geométricos calculados en `/engine`:
-
-```mermaid
-graph TD
-    ParamTree[parametric_tree JSON] --> Extruder[Generador Procedural R3F]
-    
-    Extruder --> FrameMesh[1. Mesh Marco: Extrusión perimetral con ingletes 45°]
-    Extruder --> SashMesh[2. Mesh Hoja: Extrusión con eje de rotación cinemático]
-    Extruder --> GlassMesh[3. Mesh Vidrio: Material dieléctrico con IOR 1.52 y espaciador]
-    Extruder --> HardwareMesh[4. Mesh Accesorios: Manillas 3D y bisagras normalizadas]
-    
-    FrameMesh --> Scene[Escena 3D Iluminada con HDRI]
-    SashMesh --> Scene
-    GlassMesh --> Scene
-    HardwareMesh --> Scene
-    
-    Scene --> OrbitControls[Control Orbital 360° + Zoom]
-    Scene --> Kinematics[Animación Interactiva de Apertura]
-    Scene --> SnapshotExport[Exportación de PNG en Alta Resolución]
-```
-
-### 2.1. Cinemática y Animación de Aperturas
-Al hacer clic sobre la manilla o presionar el botón *"Simular Apertura"*:
-1. **Practicable (Giro Lateral):** La manilla rota $90^\circ$ hacia abajo y la hoja pivota sobre el eje vertical de las bisagras de $0^\circ$ a $90^\circ$.
-2. **Oscilobatiente (Abatimiento):** La manilla rota $180^\circ$ hacia arriba y la hoja bascula hacia el interior sobre el eje horizontal inferior de $0^\circ$ a $15^\circ$.
-3. **Corredera (Traslación):** La hoja móvil se desliza horizontalmente sobre su carril respectivo hasta el tope lateral.
+Entregar a los talleres dos herramientas comerciales de alto impacto que reemplazan los presupuestos estáticos en papel:
+1. **Enlace Web en Vivo para Clientes y Constructoras (`/view/[token]`):** Portal interactivo para que el cliente final o la constructora revise la cotización desde su celular sin descargar archivos.
+2. **Exportador de Planos Técnicos 2D (.DXF):** Descarga instantánea de secciones de perfiles y elevaciones en formato compatible con AutoCAD para arquitectos.
+*(Nota de Alcance: El visor 3D volumétrico WebGL y la Realidad Aumentada AR están programados para la Versión 2).*
 
 ---
 
-## 3. Shader de Materiales y Renderizado de Colores
+## 2. Especificación del Enlace Web en Vivo (`/view/[token]`)
 
-El motor de materiales implementa shaders PBR (Physically Based Rendering) estandarizados:
-- **PVC Blanco:** `roughness: 0.25`, `metalness: 0.0`, `color: #F8FAFC`.
-- **Foliado Roble Dorado (Golden Oak):** Textura procedural con relieve sutil de veta de madera (`normalMap`).
-- **Foliado Gris Antracita (RAL 7016):** `roughness: 0.40`, `color: #374151`.
-- **Vidrio Termopanel (DVH):** `transmission: 0.92`, `ior: 1.52`, `roughness: 0.05`, `thickness: 24.0`, intercalario interior de aluminio con sellado de butilo negro.
+Ruta pública de solo lectura protegida con token criptográfico UUID:
+- **Seguridad Inviolable:** El bundle de JavaScript y las respuestas de API **NO contienen costos de compra, fórmulas de margen ni despiece interno del taller**. Solo exponen dimensiones exteriores, tipo de apertura, color, vidrio y precio de venta final.
+- **Interactividad Comercial:** El cliente puede aprobar el presupuesto directamente desde su teléfono o solicitar ajustes.
+- **Acciones Disponibles:**
+  - `Descargar Cotización Oficial (PDF DOC-01)`
+  - `Aceptar Presupuesto y Solicitar Anticipo`
+  - `Ver Plano Técnico Vectorial (SVG)`
 
 ---
 
-## 4. Enlace Público Compartible para Clientes (`/view/{share_token}`)
+## 3. Exportador de Planos CAD 2D (.DXF)
 
-Cada cotización aprobada puede generar un enlace público protegido:
-- **URL:** `https://app.dekopen.com/view/dko_live_7a9f8e21`
-- **Capacidades del Cliente:**
-  - Inspección 3D orbital completa desde cualquier smartphone o computadora sin instalar software.
-  - Alternancia interactiva de colores de perfil (Blanco vs. Madera vs. Antracita) para ver el impacto visual.
-  - Simulación de apertura de todas las hojas móviles.
-  - Botón de Aceptación Digital: *"Aprobar Cotización Formalmente"* con firma táctil en pantalla y confirmación por email.
-- **Seguridad:** Vista 100% en modo lectura. Los costos brutos, despieces de corte, marcas de perfiles y márgenes están totalmente ocultos y purgados del bundle de datos enviado al navegador.
+Utiliza la librería en Python `ezdxf` en el backend para generar planos vectoriales limpios:
+- **Capa 0 (Estructura):** Geometría exterior del vano y marco con cotas milimétricas.
+- **Capa 1 (Hojas y Perfiles):** Líneas de perfilería de PVC y refuerzos de acero.
+- **Capa 2 (Vidrios y Junquillos):** Polígonos de vidrio con espesor y etiquetas de composición (ej: `5-12-5`).
+- **Capa 3 (Simbología de Apertura):** Líneas discontinuas normalizadas que indican el sentido de apertura (interior/exterior/corredera).

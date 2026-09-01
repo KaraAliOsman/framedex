@@ -1,7 +1,7 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Enterprise AI Gateway & ReAct Governance Standard)
+**Versión Oficial:** 1.2 (Action-First UX Standard • Estilo Codex / Antigravity • V1 Lean Scope)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
-**Fecha de Emisión:** 30 de Agosto de 2026
+**Fecha de Emisión:** 31 de Agosto de 2026
 
 ---
 
@@ -135,7 +135,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-15:** OCR T1 + pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
-- **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
+- **SHOT-18:** Creem global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** 3D R3F + link `/view/`.
 - **SHOT-20:** Catálogo global + cola admin.
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
@@ -155,7 +155,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
 7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
 8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
+9. **Checkout Funcional:** Integración de pasarelas Flow y Creem probada de extremo a extremo.
 10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
 
 
@@ -774,7 +774,7 @@ CREATE TABLE ai_audit_logs (
 CREATE TABLE payment_customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES tenancy_organizations(id) ON DELETE CASCADE,
-    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'paddle', 'mercadopago')),
+    provider VARCHAR(30) NOT NULL CHECK (provider IN ('flow', 'creem', 'mercadopago')),
     provider_customer_id VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uk_org_provider UNIQUE (org_id, provider)
@@ -1006,7 +1006,7 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
-- **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
+- **Internacional (US/EU/Resto):** **Creem** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 
 ---
@@ -1633,116 +1633,72 @@ export interface ExtractedPositionCandidate {
 <!-- INICIO DE PRD-10.md -->
 
 
-# PRD-10: INTERFAZ DE COMANDOS DE DISEÑO Y PRECIO EN LENGUAJE NATURAL (v1.1.0)
+# PRD-10: CO-PILOTO DE ACCIÓN DIRECTA (CMD+K), DIFFS VISUALES Y DESHACER SAGRADO (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Fase:** 2 (Inteligencia Operativa)  
-**Bloquea a:** PRD-15
+**Versión:** 1.2 (Action-First UX Standard — Estilo Codex / Antigravity)  
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
+**Fase:** 2 (Comandos y Diffs Paramétricos)  
+**Bloquea a:** PRD-11
 
 ---
 
-## 1. Misión y Filosofía de los Comandos
+## 1. Filosofía de Interacción: Cero Chatbot, Acción Pura
 
-La interfaz de comandos (Tools **T2**, **T3** y Pantalla **S21**) permite a los carpinteros y cotizadores interactuar con el sistema mediante lenguaje natural conversacional ("Divide la ventana al medio y pon la derecha oscilobatiente", "Aplica 5% de descuento por volumen").
+En Dekopen, la inteligencia artificial **NO es una ventana de chat flotante ni un bot conversacional con saludos**. Es un **operador de acción directa integrado en el Canvas** diseñado bajo la interacción de herramientas como Codex, Claude Code y Antigravity:
 
-### Las Tres Leyes de los Comandos de IA
-1. **La IA muta parámetros, el motor calcula:** El LLM interpreta la intención del usuario y emite un diff estructurado de parámetros (`parametric_tree_diff` o `pricing_diff`). El LLM **JAMÁS** calcula o escribe números de corte o precios finales directamente.
-2. **Preview Obligatorio Antes/Después:** Ninguna mutación se aplica a ciegas. El usuario siempre visualiza una vista previa gráfica y numérica con los deltas de costo, precio y estado del inspector antes de confirmar.
-3. **Deshacer Sagrado (Undo Transaccional):** Toda acción ejecutada por un comando de IA se registra en el stack de deshacer con su snapshot previo íntegro, permitiendo revertir la operación con `Cmd + Z` o mediante un botón visible en la UI.
+1. **Cero Saludos o Texto de Relleno:** La IA no responde con explicaciones largas. Modifica el dibujo técnico o el presupuesto en milisegundos.
+2. **Barra de Comandos `Cmd + K` (o `Ctrl + K`):** Acceso instantáneo desde cualquier pantalla para transformar ventanas o precios sin navegar por menús.
+3. **Diffs Visuales Antes / Después:** Toda propuesta de cambio genera una vista previa con delta de costo antes de aplicarse.
+4. **El Deshacer Sagrado (`Cmd + Z`):** Toda mutación ejecutada por la IA se puede revertir con una sola tecla.
 
 ---
 
-## 2. Tipos de Comandos y Esquemas de Herramientas
+## 2. Flujo de Trabajo de la Barra de Comandos (`Cmd + K`)
 
-```mermaid
-graph TD
-    UserPrompt[Instrucción en Lenguaje Natural] --> Classifier{Clasificador de Intención}
-    Classifier -->|Modificación Geométrica| T2[Tool T2: propose_window_command]
-    Classifier -->|Ajuste Comercial| T3[Tool T3: apply_pricing_command]
-    Classifier -->|Consulta Técnica| T5[Tool T5: explain_item]
-    
-    T2 --> DiffGenerator[Generador de Diff Paramétrico]
-    T3 --> PricingDiff[Generador de Diff de Precios]
-    
-    DiffGenerator --> EngineCalc[/engine: Cálculo Determinista]
-    PricingDiff --> EngineCalc
-    
-    EngineCalc --> PreviewModal[Modal de Vista Previa Antes/Después]
-    PreviewModal -->|Aprobación Humana| ApplyState[Aplicación de Estado + Audit Log]
+```
+[ Usuario presiona Cmd+K ] ──► [ Input Flotante Minimalista en Canvas ]
+                                             │
+                       [ "dividir en 3 hojas, centro oscilobatiente" ]
+                                             │
+                                             ▼
+                      [ AI Gateway (Tool T2: Parse Command) ]
+                                             │
+                                             ▼
+                          [ Cálculo en /engine (0.00 mm) ]
+                                             │
+                                             ▼
+                    ┌─────────────────────────────────────────────────┐
+                    │          MODAL DE DIFF VISUAL (200 ms)          │
+                    ├─────────────────────────────────────────────────┤
+                    │ • Antes (Rojo): 2 Hojas Correderas ($180.000)   │
+                    │ • Propuesta (Verde): 3 Cuerpos OB ($215.000)    │
+                    │                                                 │
+                    │ [ Tab / Enter: Aceptar ]    [ Esc: Descartar ]  │
+                    └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 2.1. Herramienta T2: `propose_window_command` (Diseño Geométrico)
-- **Costo:** 4 puntos.
-- **Entrada:**
-  ```json
-  {
-    "current_tree": { ... },
-    "command_text": "Divide verticalmente al centro y pon la hoja derecha oscilobatiente con manilla a 400mm"
-  }
-  ```
-- **Salida Tipada:**
-  ```json
-  {
-    "mutation_type": "SPLIT_NODE",
-    "target_node_id": "root",
-    "operations": [
-      {
-        "op": "SPLIT_V",
-        "split_ratio": 0.5,
-        "children": [
-          { "type": "BAY", "opening_type": "FIXED" },
-          { "type": "BAY", "opening_type": "TILT_TURN_RIGHT", "handle_height_mm": 400 }
-        ]
-      }
-    ],
-    "explanation_es": "Se dividió el vano en 2 partes iguales: Paño fijo a la izquierda y Oscilobatiente derecha con manilla a 400 mm."
-  }
-  ```
+## 3. Comandos de Precios y Rentabilidad (Tool T2 / T3)
+
+La IA traduce lenguaje natural a parámetros de `/engine` sin inventar aritmética:
+
+| Comando del Usuario | Interpretación de la IA | Acción en `/engine` |
+|---|---|---|
+| *"Ponle 200% de ganancia a este proyecto"* | `mode: MARGIN_PERCENT, value: 200.0` | Recalcula el precio de venta manteniendo el costo de materiales intacto. |
+| *"Calcula a 200 mil por m² en ventanas nogal"* | `mode: TARGET_M2, value: 200000.0, filter: {color: 'nogal'}` | Despeja el margen necesario para que el precio final por $m^2$ sea exacto. |
+| *"Aplica 15% de descuento a los fijos del 2do piso"* | `mode: DISCOUNT_PERCENT, value: 15.0, filter: {type: 'FIXED', floor: 2}` | Aplica descuento de línea sin alterar las demás ventanas. |
+| *"¿Qué cambiarías para bajar 10% el costo?"* | `tool: T9_ALTERNATIVES, goal: COST_REDUCTION_10` | Propone alternativas de optimización de perfil o vidrio en el modal de Diff. |
 
 ---
 
-### 2.2. Herramienta T3: `apply_pricing_command` (Ajustes Comerciales)
-- **Costo:** 3 puntos.
-- **Entrada:**
-  ```json
-  {
-    "project_id": "proj_123",
-    "command_text": "Aplica un margen del 38% para constructora y descuenta 3% en las ventanas de dormitorios"
-  }
-  ```
-- **Salida Tipada:**
-  ```json
-  {
-    "target_mode": "COST_PLUS_MARGIN",
-    "global_margin_pct": 0.3800,
-    "position_overrides": [
-      { "location_tag_pattern": "Dormitorio*", "discount_pct": 0.0300 }
-    ],
-    "delta_summary": {
-      "previous_total_net": 3450000,
-      "new_total_net": 3620000,
-      "net_difference": 170000
-    }
-  }
-  ```
+## 4. Tareas en Segundo Plano sin Bloqueo de UI (*Non-Blocking Workers*)
 
----
-
-## 3. Experiencia de Usuario: Modal de Vista Previa (Preview & Diff)
-
-Al procesar cualquier comando, la UI despliega un panel flotante de confirmación con 3 secciones:
-1. **Comparativa Visual 2D (Side-by-Side):**
-   - Panel Izquierdo: Estado actual (SVG previo).
-   - Panel Derecho: Estado propuesto con resaltado de modificaciones en color verde.
-2. **Impacto Técnico y Comercial:**
-   - Variación de Costo de Materiales ($\Delta \text{Costo}$).
-   - Variación de Precio de Venta ($\Delta \text{Precio}$).
-   - Estado del Inspector Técnico: Si el comando introduce una infracción (e.g. hoja demasiado pesada), se muestra la advertencia en amarillo/rojo antes de aplicar.
-3. **Botones de Decisión:**
-   - `[Aplicar Cambios (Enter)]` (Color primario azul).
-   - `[Descartar (Esc)]` (Gris).
-   - Botón contextual post-aplicación: `[↶ Deshacer Comando]`.
+Cuando se procesan operaciones pesadas (como la lectura de un PDF de planos con 15 vanos en S27):
+1. **La interfaz nunca se congela:** El usuario puede seguir dibujando o cotizando.
+2. **Notificación Discreta en Barra de Estado:**  
+   `[ ⚡ 15 vanos extraídos del plano • 13 seguros / 2 para revisar ] -> [ Revisar e Importar ]`
+3. **Auditoría Obligatoria:** Todo cambio registra una fila en `ai_audit_logs` con el payload antes/después para permitir reversión infinita.
 
 
 
@@ -1862,70 +1818,43 @@ En la pantalla **S22**, cada slot dispone de un botón de emergencia:
 <!-- INICIO DE PRD-12.md -->
 
 
-# PRD-12: VISOR 3D ESQUEMÁTICO Y ENLACE INTERACTIVO PARA CLIENTES (v1.1.0)
+# PRD-12: ENLACE EN VIVO PARA CLIENTES Y EXPORTADOR CAD 2D .DXF (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Fase:** 3 (Experiencia Visual)  
-**Bloquea a:** Ninguno
+**Versión:** 1.2 (V1: Live Portal & 2D CAD • V2: 3D WebGL & AR)  
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
+**Fase:** 3 (Salidas Comerciales y Enlaces en Vivo)  
+**Bloquea a:** PRD-13
 
 ---
 
-## 1. Misión y Propósito Comercial
+## 1. Misión del Módulo de Salidas Digitales
 
-El módulo 3D (implementado con **React Three Fiber / Three.js**) permite a los talleres generar una visualización tridimensional interactiva y fotorrealista de las aberturas cotizadas a partir del `parametric_tree` 2D, elevando el valor percibido por el cliente final y acelerando la tasa de cierre de ventas.
-
----
-
-## 2. Generación Procedural de Geometrías 3D
-
-El visor 3D extruye y ensambla proceduralmente cada componente a partir de los datos geométricos calculados en `/engine`:
-
-```mermaid
-graph TD
-    ParamTree[parametric_tree JSON] --> Extruder[Generador Procedural R3F]
-    
-    Extruder --> FrameMesh[1. Mesh Marco: Extrusión perimetral con ingletes 45°]
-    Extruder --> SashMesh[2. Mesh Hoja: Extrusión con eje de rotación cinemático]
-    Extruder --> GlassMesh[3. Mesh Vidrio: Material dieléctrico con IOR 1.52 y espaciador]
-    Extruder --> HardwareMesh[4. Mesh Accesorios: Manillas 3D y bisagras normalizadas]
-    
-    FrameMesh --> Scene[Escena 3D Iluminada con HDRI]
-    SashMesh --> Scene
-    GlassMesh --> Scene
-    HardwareMesh --> Scene
-    
-    Scene --> OrbitControls[Control Orbital 360° + Zoom]
-    Scene --> Kinematics[Animación Interactiva de Apertura]
-    Scene --> SnapshotExport[Exportación de PNG en Alta Resolución]
-```
-
-### 2.1. Cinemática y Animación de Aperturas
-Al hacer clic sobre la manilla o presionar el botón *"Simular Apertura"*:
-1. **Practicable (Giro Lateral):** La manilla rota $90^\circ$ hacia abajo y la hoja pivota sobre el eje vertical de las bisagras de $0^\circ$ a $90^\circ$.
-2. **Oscilobatiente (Abatimiento):** La manilla rota $180^\circ$ hacia arriba y la hoja bascula hacia el interior sobre el eje horizontal inferior de $0^\circ$ a $15^\circ$.
-3. **Corredera (Traslación):** La hoja móvil se desliza horizontalmente sobre su carril respectivo hasta el tope lateral.
+Entregar a los talleres dos herramientas comerciales de alto impacto que reemplazan los presupuestos estáticos en papel:
+1. **Enlace Web en Vivo para Clientes y Constructoras (`/view/[token]`):** Portal interactivo para que el cliente final o la constructora revise la cotización desde su celular sin descargar archivos.
+2. **Exportador de Planos Técnicos 2D (.DXF):** Descarga instantánea de secciones de perfiles y elevaciones en formato compatible con AutoCAD para arquitectos.
+*(Nota de Alcance: El visor 3D volumétrico WebGL y la Realidad Aumentada AR están programados para la Versión 2).*
 
 ---
 
-## 3. Shader de Materiales y Renderizado de Colores
+## 2. Especificación del Enlace Web en Vivo (`/view/[token]`)
 
-El motor de materiales implementa shaders PBR (Physically Based Rendering) estandarizados:
-- **PVC Blanco:** `roughness: 0.25`, `metalness: 0.0`, `color: #F8FAFC`.
-- **Foliado Roble Dorado (Golden Oak):** Textura procedural con relieve sutil de veta de madera (`normalMap`).
-- **Foliado Gris Antracita (RAL 7016):** `roughness: 0.40`, `color: #374151`.
-- **Vidrio Termopanel (DVH):** `transmission: 0.92`, `ior: 1.52`, `roughness: 0.05`, `thickness: 24.0`, intercalario interior de aluminio con sellado de butilo negro.
+Ruta pública de solo lectura protegida con token criptográfico UUID:
+- **Seguridad Inviolable:** El bundle de JavaScript y las respuestas de API **NO contienen costos de compra, fórmulas de margen ni despiece interno del taller**. Solo exponen dimensiones exteriores, tipo de apertura, color, vidrio y precio de venta final.
+- **Interactividad Comercial:** El cliente puede aprobar el presupuesto directamente desde su teléfono o solicitar ajustes.
+- **Acciones Disponibles:**
+  - `Descargar Cotización Oficial (PDF DOC-01)`
+  - `Aceptar Presupuesto y Solicitar Anticipo`
+  - `Ver Plano Técnico Vectorial (SVG)`
 
 ---
 
-## 4. Enlace Público Compartible para Clientes (`/view/{share_token}`)
+## 3. Exportador de Planos CAD 2D (.DXF)
 
-Cada cotización aprobada puede generar un enlace público protegido:
-- **URL:** `https://app.dekopen.com/view/dko_live_7a9f8e21`
-- **Capacidades del Cliente:**
-  - Inspección 3D orbital completa desde cualquier smartphone o computadora sin instalar software.
-  - Alternancia interactiva de colores de perfil (Blanco vs. Madera vs. Antracita) para ver el impacto visual.
-  - Simulación de apertura de todas las hojas móviles.
-  - Botón de Aceptación Digital: *"Aprobar Cotización Formalmente"* con firma táctil en pantalla y confirmación por email.
-- **Seguridad:** Vista 100% en modo lectura. Los costos brutos, despieces de corte, marcas de perfiles y márgenes están totalmente ocultos y purgados del bundle de datos enviado al navegador.
+Utiliza la librería en Python `ezdxf` en el backend para generar planos vectoriales limpios:
+- **Capa 0 (Estructura):** Geometría exterior del vano y marco con cotas milimétricas.
+- **Capa 1 (Hojas y Perfiles):** Líneas de perfilería de PVC y refuerzos de acero.
+- **Capa 2 (Vidrios y Junquillos):** Polígonos de vidrio con espesor y etiquetas de composición (ej: `5-12-5`).
+- **Capa 3 (Simbología de Apertura):** Líneas discontinuas normalizadas que indican el sentido de apertura (interior/exterior/corredera).
 
 
 
@@ -2843,7 +2772,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **P3** | Dominios: `dekopen.com`, `app.dekopen.com`, `dekopenmail.com` + DNS | D25 |
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
-| **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
+| **P5-bis** | Cuenta Creem sandbox (crear pre-semana 15) | SHOT-18 |
 | **P6** | Este documento + Biblia v1.1.2 cargados en Notion y como fuente de Fin | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
@@ -2878,8 +2807,8 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
 | **SHOT-17** | 2 · s14–15 | PRD-11 | Plantillas PDF 3 slots + bloques protegidos | Re-estiliza sin reescribir números (test: totales intactos tras CSS loco); restaurar original 1 clic; CSP |
-| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
-| **SHOT-19** | 3 · s17–18 | PRD-12 | 3D R3F + link `/view/` | PNG + link read-only **sin costos ni despiece en el bundle**; cinemática 3 aperturas; si no llega a nivel Apple $\rightarrow$ se mantiene 2D (criterio §7.9) |
+| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Creem Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Creem; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
+| **SHOT-19** | 3 · s17–18 | PRD-12 | Enlace Web en Vivo (`/view/`) + Exportador CAD 2D (`.dxf`) | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas (3D WebGL diferido a V2) |
 | **SHOT-20** | 3 · s18–20 | PRD-13, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
 | **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
 | **SHOT-22** | 3 · s22–24 | PRD-15 parcial, PRD-17 parcial | Comparador T10 + bandeja email (SendGrid) | V1 vs V2 diff correcto; email $\rightarrow$ inbound_request $\rightarrow$ Huey $\rightarrow$ borrador |
@@ -2900,7 +2829,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **6 · Fin responde 20 preguntas** | SHOT-23 |
 | **7 · Backup restaurado en ensayo** | SHOT-11 |
 | **8 · Términos "humano aprueba" publicados** | Tarea Fundador Semanas 8–9 (Framer / Legal) |
-| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Paddle) |
+| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Creem) |
 | **10 · Débito de créditos idempotente** | SHOT-11 (test de reintento en staging) |
 
 ---
@@ -2949,7 +2878,7 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 # STACK OFICIAL DE MODELOS Y AI ROUTER 2026 — DEKOPEN (v1.2)
 **Fecha:** 30 de Agosto de 2026  
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** Nombres de marca propios (White-label), 99% de operaciones sobre GPT 5.6 Luna xHigh-Max (eficiente y ultra-rápido), activación explícita ("Modo Titan / Ultra-Ingeniería") para modelos pesados (Sol / Kimi k3), y pasarela internacional vía **Paddle (Merchant of Record - MoR)**.
+**Filosofía:** Nombres de marca propios (White-label), 99% de operaciones sobre GPT 5.6 Luna xHigh-Max (eficiente y ultra-rápido), activación explícita ("Modo Titan / Ultra-Ingeniería") para modelos pesados (Sol / Kimi k3), y pasarela internacional vía **Creem (Merchant of Record - MoR)**.
 
 ---
 
@@ -2988,7 +2917,7 @@ El usuario final y los clientes de los talleres **jamás ven nombres comerciales
 | Región | Pasarela | Rol | Moneda | Razón de Elección |
 |---|---|---|---|---|
 | **Chile** | **Flow.cl** | Pasarela Directa | **CLP** | Medios de pago chilenos (Webpay, Khipu, Servipag) y emisión obligatoria de DTE / Factura Electrónica. |
-| **Internacional (Global)** | **Paddle** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Paddle recauda, declara y paga automáticamente los impuestos (Sales Tax en EE. UU., IVA/VAT en Europa y LatAm). |
+| **Internacional (Global)** | **Creem** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Creem recauda, declara y paga automáticamente los impuestos (Sales Tax en EE. UU., IVA/VAT en Europa y LatAm). |
 
 ---
 
@@ -3065,11 +2994,11 @@ FLOW_SECRET_KEY=flow_sandbox_secret_key
 FLOW_API_URL=https://sandbox.flow.cl/api
 FLOW_WEBHOOK_SECRET=flow_webhook_secret
 
-# Payments: Paddle Global MoR (USD - Taxes/VAT automatizado)
-PADDLE_ENVIRONMENT=sandbox
-PADDLE_API_KEY=paddle_sandbox_api_key
-PADDLE_WEBHOOK_SECRET=paddle_sandbox_webhook_secret
-PADDLE_CLIENT_TOKEN=paddle_sandbox_client_token
+# Payments: Creem Global MoR (USD - Taxes/VAT automatizado)
+CREEM_ENVIRONMENT=sandbox
+CREEM_API_KEY=creem_sandbox_api_key
+CREEM_WEBHOOK_SECRET=creem_sandbox_webhook_secret
+CREEM_CLIENT_TOKEN=creem_sandbox_client_token
 
 # Mailing & Telemetry
 RESEND_API_KEY=re_your_resend_api_key

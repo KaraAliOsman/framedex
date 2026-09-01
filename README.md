@@ -60,7 +60,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | **SHOT-15** | 2 | OCR Multimodal de Planos S27 | PDF 8 vanos $\rightarrow$ borrador revisable < 5 min | ⏳ Pendiente |
 | **SHOT-16** | 2 | Comandos NLP + Diff Preview + Sacred Undo | Preview antes/después; Cmd+Z revierte | ⏳ Pendiente |
 | **SHOT-17** | 2 | Plantillas PDF 3 slots + CSP | Re-estiliza sin alterar totales numéricos | ⏳ Pendiente |
-| **SHOT-18** | 2 | Paddle Global + Landing Legal | **Apertura comercial Profesional** | ⏳ Pendiente |
+| **SHOT-18** | 2 | Creem Global + Landing Legal | **Apertura comercial Profesional** | ⏳ Pendiente |
 | **SHOT-19** | 3 | Visor 3D Esquemático React Three Fiber | PNG + enlace público sin costos en bundle | ⏳ Pendiente |
 | **SHOT-20** | 3 | Catálogo Global + Cola Admin S28 | Aprobación comunitaria; costos privados blindados | ⏳ Pendiente |
 | **SHOT-21** | 3 | Certificado Fabricabilidad Doble Ciego | **Apertura comercial Business / Business 2x** | ⏳ Pendiente |
