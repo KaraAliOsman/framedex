@@ -228,6 +228,16 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         case "AWNING":
             w_sash = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
+
+        case "BAY_WINDOW" | "CORNER_COUPLER":
+            # Descuento de poste esquinero / acople angular (90°, 135° o variable)
+            # w_frame_nominal = rough_opening - coupler_deduction_mm
+            w_frame_nominal = node.width_mm - node.coupler_deduction_mm
+            l_frame_cut_h = w_frame_nominal + (Decimal('2.0') * params.welding_loss_per_corner)
+            l_frame_cut_v = node.height_mm + (Decimal('2.0') * params.welding_loss_per_corner)
+            w_inner = w_frame_nominal - (Decimal('2.0') * params.frame_face_width_mm)
+            h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
+            # Despiece del sub-vano interior según su tipo de apertura (fijo, corredera u oscilobatiente)
 ```
 
 ---

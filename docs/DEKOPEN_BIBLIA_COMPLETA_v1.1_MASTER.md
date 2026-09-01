@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Sanitized Canonical Architecture • Zero Scope Creep)
+**Versión Oficial:** 1.2 (V1: Full Tipologies con Bow Windows/Acoples • V2 Bridges: 3D & CNC)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -123,7 +123,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-03:** Engine núcleo (G1–G4 en 0.00).
 - **SHOT-04:** Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual.
 - **SHOT-05:** Canvas 2D mínimo (fijo + cotas).
-- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
+- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, BAY_WINDOW/CORNER, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
 - **SHOT-07:** Corte 1D BFD + Inspector R01–R14 (G7 puerta en 0.00 + test optimizador barras 5.8m).
 - **SHOT-08:** Precios 5 modos + listas de costo + `price_audit_logs`.
 - **SHOT-09:** Documentos WeasyPrint & openpyxl + Pantalla S19 (Pedidos proveedor).
@@ -399,6 +399,16 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         case "AWNING":
             w_sash = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
+
+        case "BAY_WINDOW" | "CORNER_COUPLER":
+            # Descuento de poste esquinero / acople angular (90°, 135° o variable)
+            # w_frame_nominal = rough_opening - coupler_deduction_mm
+            w_frame_nominal = node.width_mm - node.coupler_deduction_mm
+            l_frame_cut_h = w_frame_nominal + (Decimal('2.0') * params.welding_loss_per_corner)
+            l_frame_cut_v = node.height_mm + (Decimal('2.0') * params.welding_loss_per_corner)
+            w_inner = w_frame_nominal - (Decimal('2.0') * params.frame_face_width_mm)
+            h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
+            # Despiece del sub-vano interior según su tipo de apertura (fijo, corredera u oscilobatiente)
 ```
 
 ---
@@ -2761,7 +2771,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-03** | 0 · s2–3 | PRD-01 §2–4 (+M9, M5) | Engine núcleo: models, geometry FIXED/TURN/TILT_TURN/MULLION, BOM base | `pytest engine/`: **G1, G2, G3, G4 en 0.00**; G8/G9/G11/G12 en xfail declarado |
 | **SHOT-04** | 0 · s3 | PRD-03 §1, PRD-19 §3 | Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual | Magic link E2E; TOTP owner; OpenAPI $\rightarrow$ TS client autogenerado en CI; PostHog captura eventos base; shell navegable claro/oscuro |
 | **SHOT-05** | 0 · s3 | PRD-04, ADOBE, ANIM | Canvas 2D mínimo (fijo + cotas) | Dibuja G1 en pantalla = números del engine (<300 ms); cota editable por teclado; snapping |
-| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
+| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, BAY_WINDOW/CORNER, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra |

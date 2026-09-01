@@ -1,34 +1,29 @@
-# REGISTRO DE DESCARTES Y FUNCIONALIDADES FUERA DE ALCANCE (V1)
-**Estado:** Inmutable / Archivo de Control de Alcance  
-**Referencia Normativa:** PRD-00 §5.4 y CONSTITUTION.md (Regla 20)
-
-Este documento registra formalmente todas las ideas, conceptos o características exploratorias que quedan **ESTRICTAMENTE FUERA DE ALCANCE** para los 24 shots de Dekopen V1. La IA constructora tiene **PROHIBIDO** crear modelos, tablas, rutas, componentes o código para cualquiera de estos puntos.
+# REGISTRO DE ALCANCE V1 Y PUENTES A FASE 2 (3D & CNC)
+**Estado:** Inmutable / Control de Alcance V1 y Roadmap V2  
+**Referencia:** PRD-00, PRD-01, PLAN_SHOTS.md
 
 ---
 
-## 1. Características Técnicas y Geométricas Descartadas
+## 1. Alcance Completo de Tipologías en Versión 1 (V1 — 100% INCLUIDAS)
 
-1. **Bow Windows / Ventanas en Bahía / Curvas:**
-   - **Estado:** FUERA DE ALCANCE según PRD-00 §5.4.
-   - **Instrucción:** NO construir. El motor `/engine` soporta exclusivamente: Fijo (FIXED), Proyectante (AWNING), Oscilobatiente (TILT_TURN), Corredera 2/3/4 hojas (SLIDING), y Puerta batiente/multipunto (DOOR).
-2. **Conexión Directa a Maquinaria CNC / Tronzadoras Industriales (G-Code):**
-   - **Estado:** FUERA DE ALCANCE (Postergado 18 meses a Fase Industrial / V2).
-   - **Instrucción:** NO construir drivers, generadores G-code ni módulos CNC en el monorepo.
-3. **Módulo de Realidad Aumentada (AR) / 3D Volumétrico Pesado:**
-   - **Estado:** FUERA DE ALCANCE en V1 (Diferido a V2).
-   - **Instrucción:** En V1 se utiliza exclusivamente el Canvas 2D Vectorial y el Enlace Web de Proyecto `/view/[token]`.
+Todas las geometrías y tipologías de ventanas y puertas de PVC y aluminio son **núcleo esencial de la Versión 1**:
 
----
-
-## 2. Nomenclatura y Modelos de IA Estándar
-
-1. **Modelos de IA Canónicos:**
-   - Para tareas de extracción visual y OCR de planos: **Gemini 1.5 Pro / Flash** (o OpenAI Vision según configuración en `.env`).
-   - Para interpretación de comandos y estructuración: **OpenAI GPT-4o / GPT-4o-mini** (o LLM compatible estándar vía AI Gateway).
-   - Cualquier nombre interno exploratorio (*Luna*, *Neural Core*, *Vision CAD*, *Titan Engine*, *Kimi*) queda archivado aquí como referencia de brainstorming conceptual y no representa dependencias obligatorias de código.
+1. **Paños Fijos (FIXED):** Geometría simple y compuesta con travesaños verticales y horizontales.
+2. **Correderas (SLIDING):** 2 hojas, 3 hojas, 4 hojas, 3 rieles (3T) y monorriel con paño fijo.
+3. **Oscilobatientes (TILT_TURN):** Apertura practicable interior y ventilación superior con herraje perimetral.
+4. **Proyectantes / Proyección Exterior (AWNING):** Brazos de fricción y cremonas multipunto.
+5. **Puertas de Entrada y Balcón (DOOR):** Cerraduras de seguridad, cilindros, manillas dobles y umbrales de aluminio.
+6. **Bow Windows / Ventanas en Bahía / Esquinas en Ángulo (BAY_WINDOW & CORNER_COUPLER):**
+   - Cálculo exacto de deducción geométrica por **Poste de Acople a 90°**, **Poste de Acople a 135°** y **Poste Esquinero Variable con Tubo de Acero Estructural**.
+   - Despiece de marcos individuales descontando la huella del acople angular para encajar milimétricamente en el vano en ochavo o esquina.
 
 ---
 
-## 3. Normativa de Dibujo
+## 2. Características Diferidas Exclusivamente a Fase 2 (V2 — Roadmap 18 Meses)
 
-- Las flechas y triángulos de apertura se rigen por la **simbología estándar de carpintería técnica**, sin implementar motores de validación de normativas extranjeras que no apliquen a Latinoamérica.
+Únicamente dos características avanzadas quedan programadas para la Fase 2, dejando sus puentes arquitectónicos listos en V1:
+
+1. **Visor 3D Volumétrico WebGL & Realidad Aumentada (AR):**
+   - *En V1 (SHOT-19):* Se entrega el Canvas CAD 2D de alta precisión y el Enlace Web `/view/[token]` de proyecto. En SHOT-19 se deja el andamiaje del viewport preparado para activar el render 3D en V2 sin reescribir la API.
+2. **Conexión Directa a Tronzadoras y Maquinaria CNC (G-Code):**
+   - *En V1 (SHOT-24):* Se entregan las Listas de Corte optimizadas (DOC-03) en PDF y Excel, y se deja el endpoint stub `/api/v1/export/cnc/` preparado para habilitar los drivers binarios en V2.

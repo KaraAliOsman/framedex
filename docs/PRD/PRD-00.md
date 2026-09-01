@@ -58,7 +58,7 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 - **SHOT-03:** Engine núcleo (G1–G4 en 0.00).
 - **SHOT-04:** Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual.
 - **SHOT-05:** Canvas 2D mínimo (fijo + cotas).
-- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
+- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, BAY_WINDOW/CORNER, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
 - **SHOT-07:** Corte 1D BFD + Inspector R01–R14 (G7 puerta en 0.00 + test optimizador barras 5.8m).
 - **SHOT-08:** Precios 5 modos + listas de costo + `price_audit_logs`.
 - **SHOT-09:** Documentos WeasyPrint & openpyxl + Pantalla S19 (Pedidos proveedor).
