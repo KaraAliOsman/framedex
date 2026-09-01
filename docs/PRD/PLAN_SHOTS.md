@@ -41,7 +41,7 @@
 
 | Shot | Fase / Sem | PRD Fuente | Entrega Principal | Gate de Cierre |
 |---|---|---|---|---|
-| **SHOT-01** | 0 · s1 | PRD-00 | Monorepo + CI + Constitución aplicada | Pipeline verde sobre stubs: ruff + mypy + pytest + vitest + build en CI, branch protection |
+| **SHOT-01** | 0 · s1 | PRD-00 | **CERRADO** — Monorepo + CI + Constitución aplicada | Pipeline verde sobre stubs: ruff + mypy + pytest + vitest + build en CI, branch protection |
 | **SHOT-02** | 0 · s1–2 | PRD-02 (+Enm. 1 & F1) | DDL completo + `hardware_kits` + RLS + tests aislamiento (Supabase CLI en CI) | SQL aplica en Supabase limpio; test tenant-A≠tenant-B pasa; seed Demo 60 visible global; `payment_events`/`credit_ledger`/`hardware_kits` existen |
 | **SHOT-03** | 0 · s2–3 | PRD-01 §2–4 (+M9, M5) | Engine núcleo: models, geometry FIXED/TURN/TILT_TURN/MULLION, BOM base | `pytest engine/`: **G1, G2, G3, G4 en 0.00**; G8/G9/G11/G12 en xfail declarado |
 | **SHOT-04** | 0 · s3 | PRD-03 §1, PRD-19 §3 | Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual | Magic link E2E; TOTP owner; OpenAPI $\rightarrow$ TS client autogenerado en CI; PostHog captura eventos base; shell navegable claro/oscuro |
