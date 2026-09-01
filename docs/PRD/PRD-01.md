@@ -20,7 +20,7 @@ El paquete `/engine` es el núcleo matemático puro de Dekopen. Sus responsabili
 ### Principio de Aislamiento Puro y Convención de Soldadura
 - **Sin I/O:** Prohibido importar módulos de red, sockets, base de datos o frameworks web.
 - **Tipado Decimal:** Prohibido `float`. Todas las dimensiones y coeficientes se expresan como `Decimal`.
-- **Convención de Soldadura:** `SystemParams.welding_loss_per_corner` (e.g. $3.00\text{ mm}$ por cabezal/esquina en inglete) vs `profile_articles.welding_loss_mm` ($6.00\text{ mm}$ total por pieza de corte con 2 extremos soldados). La fórmula $L_{cut} = W_{nominal} + (2 \times \text{welding\_loss\_per\_corner})$ equivale exactamente a $W_{nominal} + \text{welding\_loss\_mm}$.
+- **Convención de Soldadura:** `profile_articles.welding_loss_mm` es la única autoridad persistida/editable y se resuelve por artículo/rol. `SystemParams.welding_loss_per_corner` es una representación derivada por extremo: `article.welding_loss_mm / 2`. La fórmula $L_{cut} = W_{nominal} + (2 \times \text{welding\_loss\_per\_corner})$ equivale exactamente a $W_{nominal} + \text{welding\_loss\_mm}$ para el artículo que se está cortando; nunca autoriza reutilizar un valor global entre roles.
 
 ---
 
@@ -80,7 +80,7 @@ class SystemParams(BaseModel):
     system_code: str
     depth_mm: Decimal
     material: MaterialType = MaterialType.PVC
-    welding_loss_per_corner: Decimal = Decimal('3.00')
+    welding_loss_per_corner: Decimal = Decimal('3.00')  # DERIVADO por artículo/rol; fallback no persistido
     frame_face_width_mm: Decimal = Decimal('60.00')
     sash_face_width_mm: Decimal = Decimal('75.00')
     mullion_face_width_mm: Decimal = Decimal('80.00')
@@ -236,23 +236,62 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
 
 ## 5. Tabla Canónica de Correspondencia: Base de Datos ⟷ `/engine` (Regla Cero)
 
-Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las clases Pydantic del motor, esta tabla define el mapeo exacto de cada parámetro:
+Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las clases
+Pydantic del motor, esta tabla define el mapeo exhaustivo de `SystemParams`. `DIRECTO`
+significa columna persistida con correspondencia uno a uno; `DERIVADO` significa que el
+loader obtiene el valor de filas relacionadas o transforma una autoridad persistida;
+`FALLBACK` significa que no existe columna canónica y se usa el default tipado del motor.
+Un fallback nunca prevalece sobre un valor persistido.
 
-| Parámetro Engine (`SystemParams`) | Tabla PostgreSQL | Columna PostgreSQL | Tipo / Unidad | Fuente Oficial | Nullable | Quién Modifica | Valor Canónico DEMO_60 |
-|---|---|---|---|---|:---:|---|:---:|
-| `system_code` | `profile_systems` | `code` | `VARCHAR(50)` | Ficha Fabricante | NO | Admin / Taller | `'DEMO_60'` |
-| `depth_mm` | `profile_systems` | `depth_mm` | `NUMERIC(10,2)` mm | Ficha Fabricante | NO | Admin / Taller | `60.00` |
-| `material` | `profile_systems` | `material` | `material_type` | Ficha Fabricante | NO | Admin / Taller | `'PVC'` |
-| `sash_overlap_mm` | `profile_systems` | `sash_overlap_mm` | `NUMERIC(4,2)` mm | Catálogo Técnico | NO | Taller | `8.00` |
-| `glass_clearance_white_mm` | `profile_systems` | `glass_clearance_white_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
-| `glass_clearance_foil_mm` | `profile_systems` | `glass_clearance_foil_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
-| `central_overlap_mm` | `profile_systems` | `central_overlap_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `40.00` |
-| `sliding_end_add_mm` | `profile_systems` | `sliding_end_add_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `6.00` |
-| `pulley_height_mm` | `profile_systems` | `pulley_height_mm` | `NUMERIC(4,2)` mm | Ficha Rodamientos | NO | Taller | `12.00` |
-| `welding_loss_mm` (Autoridad) | `profile_articles` | `welding_loss_mm` | `NUMERIC(10,2)` mm | Ficha Perfil | NO | Taller | `6.00` (Marco/Hoja) / `0.00` (Poste) |
-| `pvc_weight_kg_m` | `profile_articles` | `weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Perfil | NO | Taller | `1.2000` |
-| `steel_weight_kg_m` | `profile_articles` | `steel_weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Refuerzo | NO | Taller | `1.7000` |
-| `is_demo` (Aislamiento) | `profile_systems` | `is_demo` | `BOOLEAN` | Sistema | NO | Sistema | `TRUE` |
+| Engine field | Origen DB | Tabla / columna | Unidad / tipo | Autoridad | Nullable | Quién modifica | DEMO_60 / fallback | Regla de derivación |
+|---|---|---|---|---|:---:|---|---|---|
+| `system_code` | DIRECTO | `profile_systems.code` | `str` ← `VARCHAR(50)` | Ficha fabricante | NO | Admin / Taller | `DEMO_60` | Copia exacta del sistema seleccionado. |
+| `depth_mm` | DIRECTO | `profile_systems.depth_mm` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha fabricante | NO | Admin / Taller | `60.00` | Conversión exacta `NUMERIC` → `Decimal`; prohibido `float`. |
+| `material` | DIRECTO | `profile_systems.material` | `MaterialType` ← `material_type` | Ficha fabricante | NO | Admin / Taller | `PVC` | Mapeo unívoco del enum PostgreSQL al enum del motor. |
+| `welding_loss_per_corner` | DERIVADO por rol; nombre heredado equivalente a `welding_loss_per_end` | `profile_articles.welding_loss_mm`, artículo seleccionado por `role` | `Decimal`, mm/extremo ← `NUMERIC(10,2)` | Ficha del artículo; única autoridad persistida | NO | Taller | `FRAME=3.00`; `SASH=3.00`; `MULLION_V/H=0.00`; `GLAZING_BEAD=0.00`; fallback tipado `3.00` sólo sin catálogo | `welding_loss_per_end(role) = article(role).welding_loss_mm / Decimal('2')`; se deriva separadamente para cada rol. |
+| `frame_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='FRAME'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo FRAME | NO | Taller | `60.00`; fallback `60.00` | Seleccionar el artículo FRAME efectivo del sistema; el fallback no reemplaza catálogo. |
+| `sash_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='SASH'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo SASH | NO | Taller | `60.00`; fallback `75.00` | Seleccionar el artículo SASH efectivo del sistema. |
+| `mullion_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role IN ('MULLION_V','MULLION_H')` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del poste/travesaño seleccionado | NO | Taller | `60.00` para ambos roles; fallback `80.00` | Consumir el artículo MULLION_V o MULLION_H de la pieza; no colapsar valores asimétricos. |
+| `rebate_depth_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `20.00` | Sin derivación DB; no inferir desde `depth_mm`, cara o junquillo. |
+| `steel_gap_corner_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo FRAME/SASH seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del artículo | NO | Taller | `15.00`; fallback `15.00` | Resolver por artículo/rol; el persistido prevalece sobre el fallback. |
+| `steel_gap_mullion_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo MULLION_V/H seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del poste/travesaño | NO | Taller | `15.00` persistido por default DB; fallback `5.00` | Resolver por artículo MULLION_V/H; no reutilizar el gap de FRAME/SASH. |
+| `end_milling_overlap_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `0.00` | Sin derivación DB; prohibido inferir desde `sash_overlap_mm`. |
+| `sash_overlap_mm` | DIRECTO | `profile_systems.sash_overlap_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Catálogo técnico del sistema | NO | Taller | `8.00` | Copia exacta del sistema seleccionado. |
+| `glass_clearance_white_mm` | DIRECTO | `profile_systems.glass_clearance_white_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de holgura del sistema | NO | Taller | `5.00`; fallback de clase `3.00` sólo sin catálogo | El valor persistido prevalece; seleccionar cuando `is_foiled = FALSE`. |
+| `glass_clearance_foil_mm` | DIRECTO | `profile_systems.glass_clearance_foil_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de holgura del sistema | NO | Taller | `5.00`; fallback `5.00` | Seleccionar cuando `is_foiled = TRUE`. |
+| `pulley_height_mm` | DIRECTO | `profile_systems.pulley_height_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de rodamientos del sistema | NO | Taller | `12.00` | Copia exacta del sistema seleccionado. |
+| `central_overlap_mm` | DIRECTO | `profile_systems.central_overlap_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de traslape del sistema | NO | Taller | `40.00` | Copia exacta; valor canónico que produce G5 = `966.00 mm`. |
+| `sliding_lateral_clearance_mm` | DIRECTO | `profile_systems.sliding_lateral_clearance_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de corredera del sistema | NO | Taller | `0.00` | Copia exacta del sistema seleccionado. |
+| `sliding_end_add_mm` | DIRECTO | `profile_systems.sliding_end_add_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de corredera del sistema | NO | Taller | `6.00` | Copia exacta del sistema seleccionado. |
+| `corner_bracket_loss_mm` | DIRECTO | `profile_systems.corner_bracket_loss_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha del sistema de aluminio | NO | Taller | `0.00` | Copia exacta; sólo participa en la rama de material ALUMINIUM. |
+| `hook_depth_mm` | DIRECTO | `profile_systems.hook_depth_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha del sistema | NO | Taller | `0.00` | Copia exacta del sistema seleccionado. |
+| `door_threshold_mm` | DIRECTO | `profile_systems.door_threshold_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de puerta del sistema | NO | Taller | `30.00` | Copia exacta del sistema seleccionado. |
+| `door_bottom_clearance_mm` | DIRECTO | `profile_systems.door_bottom_clearance_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de puerta del sistema | NO | Taller | `20.00` | Copia exacta del sistema seleccionado. |
+| `rail_type` | DIRECTO | `profile_systems.rail_type` | `RailType` ← `VARCHAR(10)` | Ficha de riel del sistema | NO | Taller | `dual` | Mapeo unívoco al enum; `hardware_kits.rail_type` se usa para matching, no como segunda autoridad del sistema. |
+| `pvc_weight_kg_m` | DERIVADO por artículo | `profile_articles.weight_kg_m` del artículo seleccionado | `Decimal`, kg/m ← `NUMERIC(8,4)` | Ficha de peso del artículo | NO | Taller | `1.2000`; fallback `1.2000` | Resolver por artículo/rol; el peso persistido prevalece sobre el fallback de `SystemParams`. |
+| `steel_weight_kg_m` | DERIVADO por artículo | `profile_articles.steel_weight_kg_m` del artículo seleccionado | `Decimal`, kg/m ← `NUMERIC(8,4)` | Ficha de refuerzo del artículo | NO | Taller | `1.7000`; fallback `1.7000` | Resolver por artículo/rol; no asumir el mismo refuerzo para artículos distintos. |
+| `hardware_kit_weight_kg` | FALLBACK; no existe columna de peso en `hardware_kits` en SHOT-02 | — | `Decimal`, kg | Default tipado del motor hasta existir autoridad persistida aprobada | NO | Sistema / futura ficha aprobada | fallback `2.50` | No derivar desde `contents`, cantidades ni límites dimensionales. |
+| `available_hardware_kits` | DERIVADO como colección | Filas de `hardware_kits` del `system_id` seleccionado; columnas `sku`, `name`, `opening_type`, límites, `rail_type`, cantidades y `contents` | `List[HardwareKitRule]` | Catálogo de herrajes visible por RLS | NO | Admin / Taller | 3 kits: `TURN`, `TILT_TURN`, `SLIDING`; fallback `[]` | Cargar sólo kits `is_active=TRUE` visibles para el tenant/globales y mapear cada columna sin inferencias. |
+
+### 5.1. Contrato canónico y generalizable de soldadura por rol
+
+1. `profile_articles.welding_loss_mm` es la **única autoridad persistida y editable**.
+   No existe ni debe crearse una segunda autoridad en `profile_systems` o en `/engine`.
+2. Cada pieza consume el valor de su propio artículo: FRAME usa el artículo FRAME, SASH
+   usa el artículo SASH, y MULLION_V, MULLION_H y GLAZING_BEAD usan sus respectivos
+   artículos. DEMO_60 congela `6.00 mm` para FRAME/SASH y `0.00 mm` para
+   MULLION_V/MULLION_H/GLAZING_BEAD.
+3. Cuando una fórmula requiere pérdida por extremo, el valor es estrictamente derivado:
+   `welding_loss_per_end(role) = article(role).welding_loss_mm / Decimal('2')`. Para
+   DEMO_60 resulta `3.00 mm` por extremo en FRAME y SASH, y `0.00 mm` en postes y
+   junquillos.
+4. El nombre heredado `SystemParams.welding_loss_per_corner` representa ese valor por
+   extremo y **no** una constante global del sistema. El loader debe resolverlo para el
+   artículo/rol que se calcula; dos roles con pérdidas distintas nunca se igualan ni se
+   promedian.
+5. En el pseudocódigo de §4, cada aparición de `params.welding_loss_per_corner` se lee
+   normativamente como `welding_loss_per_end(role_de_la_pieza)`: FRAME para marco y SASH
+   para hoja. Esta notación abreviada no modifica la precedencia definida aquí.
 
 ---
 
