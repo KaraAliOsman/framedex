@@ -67,6 +67,20 @@ def test_complete_schema_enables_rls_for_every_business_table(migration_sql: str
         assert f"ALTER TABLE public.{table} ENABLE ROW LEVEL SECURITY;" in migration_sql
 
 
+def test_rule_zero_schema_contract_is_aligned(migration_sql: str) -> None:
+    organization = table_definition(migration_sql, "tenancy_organizations")
+    systems = table_definition(migration_sql, "profile_systems")
+    articles = table_definition(migration_sql, "profile_articles")
+    assert "credits_balance INT NOT NULL DEFAULT 500" in organization
+    assert "points_balance" not in organization
+    assert "glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00" in systems
+    assert "central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 40.00" in systems
+    assert "is_demo BOOLEAN NOT NULL DEFAULT FALSE" in systems
+    assert "welding_loss_mm" not in systems
+    assert "welding_loss_mm NUMERIC(10, 2) NOT NULL DEFAULT 6.00" in articles
+    assert "CREATE UNIQUE INDEX uk_tenant_system_code" in migration_sql
+
+
 def test_business_schema_has_no_floating_point_types(migration_sql: str) -> None:
     executable_sql = without_literals_or_comments(migration_sql)
     forbidden = re.compile(r"\b(?:REAL|FLOAT\d*|DOUBLE\s+PRECISION)\b", re.IGNORECASE)
@@ -97,7 +111,7 @@ def test_cost_policy_is_strict_for_reads_and_writes(
     )
     assert policy is not None
     policy_sql = policy.group(1)
-    predicate = "org_id in (select public.current_user_org_ids())"
+    predicate = "org_id in (select private.current_user_org_ids())"
     assert "for all" in policy_sql
     assert f"using ({predicate})" in policy_sql
     assert f"with check ({predicate})" in policy_sql
@@ -113,7 +127,24 @@ def test_tenant_data_contract_filters_by_current_memberships(
         normalized_migration,
     )
     assert policy is not None
-    assert "org_id in (select public.current_user_org_ids())" in policy.group(1)
+    assert "org_id in (select private.current_user_org_ids())" in policy.group(1)
+
+
+def test_rls_helper_is_private_and_hardened(normalized_migration: str) -> None:
+    assert "create schema if not exists private" in normalized_migration
+    assert "create or replace function private.current_user_org_ids()" in normalized_migration
+    assert "security definer set search_path = ''" in normalized_migration
+    assert "from public.tenancy_memberships as membership" in normalized_migration
+    assert "grant usage on schema private to authenticated" in normalized_migration
+    assert (
+        "revoke all on function private.current_user_org_ids() from public"
+        in normalized_migration
+    )
+    assert (
+        "grant execute on function private.current_user_org_ids() to authenticated"
+        in normalized_migration
+    )
+    assert "public.current_user_org_ids" not in normalized_migration
 
 
 def test_global_catalog_requires_an_authenticated_user(normalized_migration: str) -> None:
@@ -139,12 +170,14 @@ def test_demo_60_system_seed_is_exact(seed_sql: str) -> None:
         "'PVC'",
         "8.00",
         "5.00",
-        "35.00",
+        "40.00",
         "6.00",
         "TRUE",
     )
     for value in expected_values:
         assert value in seed_sql
+    assert re.search(r"is_global,\s+is_demo", seed_sql)
+    assert re.search(r"6\.00,\s+TRUE,\s+TRUE", seed_sql)
 
 
 @pytest.mark.parametrize(

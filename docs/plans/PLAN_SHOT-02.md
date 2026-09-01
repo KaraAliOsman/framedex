@@ -4,7 +4,7 @@
 
 - **Branch de trabajo:** `shot-02`, creada desde `main` en `0496ffad1fff507d7f892afbe9ce81fa58c4f511`.
 - **SHOT anterior:** SHOT-01 cerrado; tag `shot-01` en `8f16aca508092e44161146f94a4360247702893b`.
-- **Constitución leída:** `docs/CONSTITUTION.md` v1.2, reglas 1–22.
+- **Constitución leída:** `docs/CONSTITUTION.md` v1.2 MASTER, reglas 0–22.
 - **Gate leído:** `docs/PRD/PLAN_SHOTS.md`.
 - **Contrato funcional leído:** `docs/PRD/PRD-02.md` completo.
 - **Interfaces reales inspeccionadas:** configuración Django, dependencias Python y frontend, `Makefile`, `scripts/check_dod.py`, workflow CI, `.env.example` y estructura actual del repositorio.
@@ -273,6 +273,27 @@ El enum permanece intacto. Se crean `POSTE-V` con `MULLION_V` y `POSTE-H` con
 
 Permanece exclusivamente en `profile_articles`: `6.00` para `FRAME` y `SASH`; `0.00`
 para postes y junquillos.
+
+### [RESUELTA 2026-09-01] Traslape central y contrato de consumo de soldadura
+
+El catálogo `DEMO_60` persiste `central_overlap_mm = 40.00`, consistente con G5 =
+`966.00 mm`. `profile_articles.welding_loss_mm` es la única autoridad editable:
+`6.00` para `FRAME` y `SASH`, y `0.00` para `MULLION_V`, `MULLION_H` y
+`GLAZING_BEAD`. Los consumidores futuros deberán resolver la pérdida por artículo/rol;
+no podrán asumir que `FRAME` y `SASH` comparten siempre el mismo valor.
+
+### [RESUELTA 2026-09-01] Helper RLS en schema privado
+
+`private.current_user_org_ids()` será `SECURITY DEFINER`, tendrá `search_path` vacío y
+referencias calificadas a `public.tenancy_memberships`. Sólo `authenticated` recibirá
+`USAGE` del schema y `EXECUTE` de la función; `PUBLIC` queda revocado. Todas las policies
+invocarán el nombre calificado. Los catálogos globales no concederán privilegios a `anon`.
+
+### [RESUELTA 2026-09-01] Alineación Regla Cero del schema canónico
+
+El DDL conserva los nombres canónicos `credits_balance` e `is_demo`, fija la holgura
+blanca por defecto en `5.00` y usa índices únicos parciales separados para códigos de
+sistemas globales y de tenant, conforme al PRD-02 vigente.
 
 ## 10. Referencias técnicas externas verificadas
 

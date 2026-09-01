@@ -37,7 +37,7 @@ CREATE TABLE public.tenancy_organizations (
         CHECK (billing_cycle IN ('monthly', 'annual')),
     founding_member BOOLEAN NOT NULL DEFAULT FALSE,
     trial_ends_at TIMESTAMPTZ,
-    points_balance INT NOT NULL DEFAULT 500 CHECK (points_balance >= 0),
+    credits_balance INT NOT NULL DEFAULT 500 CHECK (credits_balance >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -80,10 +80,10 @@ CREATE TABLE public.profile_systems (
     material public.material_type NOT NULL DEFAULT 'PVC',
     chamber_count INT NOT NULL DEFAULT 3,
     sash_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 8.00,
-    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 3.00,
+    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00,
     glass_clearance_foil_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00,
     pulley_height_mm NUMERIC(4, 2) NOT NULL DEFAULT 12.00,
-    central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 35.00,
+    central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 40.00,
     sliding_lateral_clearance_mm NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     sliding_end_add_mm NUMERIC(4, 2) NOT NULL DEFAULT 6.00,
     corner_bracket_loss_mm NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
@@ -93,15 +93,19 @@ CREATE TABLE public.profile_systems (
     rail_type VARCHAR(10) NOT NULL DEFAULT 'dual'
         CHECK (rail_type IN ('dual', 'mono')),
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
+    is_demo BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     version INT NOT NULL DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_org_system_code UNIQUE (org_id, code, version)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX uk_global_system_code
     ON public.profile_systems (code, version)
     WHERE org_id IS NULL;
+
+CREATE UNIQUE INDEX uk_tenant_system_code
+    ON public.profile_systems (org_id, code, version)
+    WHERE org_id IS NOT NULL;
 
 CREATE TABLE public.profile_articles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -454,12 +458,15 @@ CREATE INDEX idx_ledger_org_created
 -- RLS helpers and policies
 -- --------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.current_user_org_ids()
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC;
+
+CREATE OR REPLACE FUNCTION private.current_user_org_ids()
 RETURNS SETOF UUID
 LANGUAGE SQL
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = ''
 AS $$
     SELECT membership.org_id
     FROM public.tenancy_memberships AS membership
@@ -472,7 +479,7 @@ RETURNS BOOLEAN
 LANGUAGE SQL
 STABLE
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = ''
 AS $$
     SELECT COALESCE(
         (auth.jwt() -> 'app_metadata' ->> 'is_superadmin') = 'true',
@@ -480,9 +487,10 @@ AS $$
     );
 $$;
 
-REVOKE ALL ON FUNCTION public.current_user_org_ids() FROM PUBLIC;
+GRANT USAGE ON SCHEMA private TO authenticated;
+REVOKE ALL ON FUNCTION private.current_user_org_ids() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.is_platform_superadmin() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.current_user_org_ids() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION private.current_user_org_ids() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_platform_superadmin() TO authenticated, service_role;
 
 ALTER TABLE public.tenancy_organizations ENABLE ROW LEVEL SECURITY;
@@ -509,23 +517,23 @@ ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY tenancy_organizations_select ON public.tenancy_organizations
     FOR SELECT
-    USING (id IN (SELECT public.current_user_org_ids()));
+    USING (id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY tenancy_memberships_select ON public.tenancy_memberships
     FOR SELECT
-    USING (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY profile_systems_select ON public.profile_systems
     FOR SELECT
     USING (
         (auth.uid() IS NOT NULL AND is_global = TRUE)
-        OR org_id IN (SELECT public.current_user_org_ids())
+        OR org_id IN (SELECT private.current_user_org_ids())
     );
 
 CREATE POLICY profile_systems_modify ON public.profile_systems
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY profile_articles_select ON public.profile_articles
     FOR SELECT
@@ -538,13 +546,13 @@ CREATE POLICY profile_articles_select ON public.profile_articles
                 WHERE system.is_global = TRUE
             )
         )
-        OR org_id IN (SELECT public.current_user_org_ids())
+        OR org_id IN (SELECT private.current_user_org_ids())
     );
 
 CREATE POLICY profile_articles_modify ON public.profile_articles
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY glazing_bead_matrix_select ON public.glazing_bead_matrix
     FOR SELECT
@@ -557,13 +565,13 @@ CREATE POLICY glazing_bead_matrix_select ON public.glazing_bead_matrix
                 WHERE system.is_global = TRUE
             )
         )
-        OR org_id IN (SELECT public.current_user_org_ids())
+        OR org_id IN (SELECT private.current_user_org_ids())
     );
 
 CREATE POLICY glazing_bead_matrix_modify ON public.glazing_bead_matrix
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY hardware_kits_select ON public.hardware_kits
     FOR SELECT
@@ -576,82 +584,82 @@ CREATE POLICY hardware_kits_select ON public.hardware_kits
                 WHERE system.is_global = TRUE
             )
         )
-        OR org_id IN (SELECT public.current_user_org_ids())
+        OR org_id IN (SELECT private.current_user_org_ids())
     );
 
 CREATE POLICY hardware_kits_modify ON public.hardware_kits
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY cost_lists_isolation ON public.cost_lists
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY cost_list_items_isolation ON public.cost_list_items
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY pricing_rules_isolation ON public.pricing_rules
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY price_audit_logs_isolation ON public.price_audit_logs
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY projects_isolation ON public.projects
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY positions_isolation ON public.project_positions
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY project_versions_isolation ON public.project_versions
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY orders_isolation ON public.orders
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY offcut_inventory_isolation ON public.offcut_inventory
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY ai_audit_logs_isolation ON public.ai_audit_logs
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY payment_customers_isolation ON public.payment_customers
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY subscriptions_isolation ON public.subscriptions
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY payments_isolation ON public.payments
     FOR ALL
-    USING (org_id IN (SELECT public.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY credit_ledger_isolation ON public.credit_ledger
     FOR SELECT
-    USING (org_id IN (SELECT public.current_user_org_ids()));
+    USING (org_id IN (SELECT private.current_user_org_ids()));
 
 CREATE POLICY payment_events_service_role ON public.payment_events
     FOR ALL
@@ -659,10 +667,11 @@ CREATE POLICY payment_events_service_role ON public.payment_events
     WITH CHECK (auth.jwt() ->> 'role' = 'service_role');
 
 -- Supabase API roles need table privileges before RLS can evaluate their policies.
-GRANT SELECT ON public.profile_systems TO anon;
-GRANT SELECT ON public.profile_articles TO anon;
-GRANT SELECT ON public.glazing_bead_matrix TO anon;
-GRANT SELECT ON public.hardware_kits TO anon;
+-- Anonymous callers receive no direct catalog privileges.
+REVOKE ALL ON public.profile_systems FROM anon;
+REVOKE ALL ON public.profile_articles FROM anon;
+REVOKE ALL ON public.glazing_bead_matrix FROM anon;
+REVOKE ALL ON public.hardware_kits FROM anon;
 
 GRANT SELECT ON public.tenancy_organizations TO authenticated;
 GRANT SELECT ON public.tenancy_memberships TO authenticated;

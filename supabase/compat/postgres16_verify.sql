@@ -80,10 +80,12 @@ BEGIN
     FROM public.profile_systems
     WHERE code = 'DEMO_60'
       AND org_id IS NULL
-      AND is_global = TRUE;
+      AND is_global = TRUE
+      AND is_demo = TRUE
+      AND central_overlap_mm = 40.00;
 
     IF demo_system_count <> 1 THEN
-        RAISE EXCEPTION 'Expected one global DEMO_60 system, got %', demo_system_count;
+        RAISE EXCEPTION 'Expected one canonical global DEMO_60 system, got %', demo_system_count;
     END IF;
 END;
 $$;

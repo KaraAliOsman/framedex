@@ -246,7 +246,7 @@ Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las cl
 | `sash_overlap_mm` | `profile_systems` | `sash_overlap_mm` | `NUMERIC(4,2)` mm | Catálogo Técnico | NO | Taller | `8.00` |
 | `glass_clearance_white_mm` | `profile_systems` | `glass_clearance_white_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
 | `glass_clearance_foil_mm` | `profile_systems` | `glass_clearance_foil_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
-| `central_overlap_mm` | `profile_systems` | `central_overlap_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `35.00` |
+| `central_overlap_mm` | `profile_systems` | `central_overlap_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `40.00` |
 | `sliding_end_add_mm` | `profile_systems` | `sliding_end_add_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `6.00` |
 | `pulley_height_mm` | `profile_systems` | `pulley_height_mm` | `NUMERIC(4,2)` mm | Ficha Rodamientos | NO | Taller | `12.00` |
 | `welding_loss_mm` (Autoridad) | `profile_articles` | `welding_loss_mm` | `NUMERIC(10,2)` mm | Ficha Perfil | NO | Taller | `6.00` (Marco/Hoja) / `0.00` (Poste) |

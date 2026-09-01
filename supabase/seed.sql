@@ -12,7 +12,8 @@ INSERT INTO public.profile_systems (
     glass_clearance_white_mm,
     central_overlap_mm,
     sliding_end_add_mm,
-    is_global
+    is_global,
+    is_demo
 )
 VALUES (
     uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60'),
@@ -24,8 +25,9 @@ VALUES (
     3,
     8.00,
     5.00,
-    35.00,
+    40.00,
     6.00,
+    TRUE,
     TRUE
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -39,7 +41,8 @@ ON CONFLICT (id) DO UPDATE SET
     glass_clearance_white_mm = EXCLUDED.glass_clearance_white_mm,
     central_overlap_mm = EXCLUDED.central_overlap_mm,
     sliding_end_add_mm = EXCLUDED.sliding_end_add_mm,
-    is_global = EXCLUDED.is_global;
+    is_global = EXCLUDED.is_global,
+    is_demo = EXCLUDED.is_demo;
 
 INSERT INTO public.profile_articles (
     id,

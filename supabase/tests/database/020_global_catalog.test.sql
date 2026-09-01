@@ -30,9 +30,10 @@ SELECT is(
         WHERE code = 'DEMO_60'
           AND org_id IS NULL
           AND is_global = TRUE
+          AND is_demo = TRUE
           AND depth_mm = 60.00
           AND glass_clearance_white_mm = 5.00
-          AND central_overlap_mm = 35.00
+          AND central_overlap_mm = 40.00
     ),
     1::BIGINT,
     'DEMO_60 seed has the canonical system parameters'
@@ -88,15 +89,21 @@ SELECT is((SELECT count(*) FROM public.hardware_kits), 3::BIGINT, 'tenant B sees
 SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), 5::BIGINT, 'tenant B sees beads');
 
 RESET ROLE;
-SET LOCAL ROLE anon;
-SELECT set_config('request.jwt.claims', '{}', TRUE);
-SELECT set_config('request.jwt.claim.sub', '', TRUE);
-
-SELECT is((SELECT count(*) FROM public.profile_systems), 0::BIGINT, 'anonymous sees no systems');
-SELECT is((SELECT count(*) FROM public.profile_articles), 0::BIGINT, 'anonymous sees no profiles');
-SELECT is((SELECT count(*) FROM public.hardware_kits), 0::BIGINT, 'anonymous sees no hardware');
-SELECT is((SELECT count(*) FROM public.glazing_bead_matrix), 0::BIGINT, 'anonymous sees no beads');
-
-RESET ROLE;
+SELECT ok(
+    NOT has_table_privilege('anon', 'public.profile_systems', 'SELECT'),
+    'anonymous has no profile systems privilege'
+);
+SELECT ok(
+    NOT has_table_privilege('anon', 'public.profile_articles', 'SELECT'),
+    'anonymous has no profile articles privilege'
+);
+SELECT ok(
+    NOT has_table_privilege('anon', 'public.hardware_kits', 'SELECT'),
+    'anonymous has no hardware kits privilege'
+);
+SELECT ok(
+    NOT has_table_privilege('anon', 'public.glazing_bead_matrix', 'SELECT'),
+    'anonymous has no glazing matrix privilege'
+);
 SELECT * FROM finish();
 ROLLBACK;
