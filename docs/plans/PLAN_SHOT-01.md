@@ -130,3 +130,14 @@ Commits previstos, ajustables solo para mantener atomicidad real:
 - **Entorno local:** Python es 3.14.4 y Node 24.14.0, mientras la CI usa Python 3.12 y Node 20.19. La verificación local se ejecuta en `.venv` y no depende de instalaciones Python globales.
 - `[RESUELTO]` El falso verde inicial fue eliminado: el checker propaga retornos, exige herramientas/suites y build; el wrapper POSIX ya no contiene bypasses. Las pruebas negativas verifican rechazo de un comando no cero y de una suite ausente.
 - **Riesgo de alcance:** el repositorio contiene documentos y variables de shots futuros. Se conservarán intactos y no se convertirán en implementación anticipada.
+
+## 7. Evidencia de ejecución y cierre sin merge
+
+- **Rama:** `shot-01`, creada desde `b3a88ef` y publicada en `origin/shot-01`.
+- **Gauntlet local canónico:** `python scripts/check_dod.py all` terminó con exit code 0. Ruff, ESLint y Prettier pasaron sin warnings; Mypy informó `Success: no issues found in 2 source files`; Pytest informó `1 passed` en engine y `1 passed` en backend; Vitest informó `1 passed`; Vite generó el bundle sin warnings.
+- **Pruebas fail-closed:** un subprocess temporal con exit code 23 fue propagado como 23; retirar temporalmente `frontend/src/App.test.tsx` produjo exit code 1 y el archivo fue restaurado.
+- **Auditoría de dependencias frontend:** `npm audit --audit-level=moderate` informó `found 0 vulnerabilities`.
+- **CI remota:** GitHub Actions run `33535800959` terminó `success`; jobs `Lint & Typecheck`, `Test Suite` y `Frontend Build` terminaron `success`.
+- **Branch protection:** API de GitHub confirmó `main` protegida, status checks estrictos con los tres contextos anteriores, PR obligatorio, enforcement para administradores, force-push deshabilitado y borrado deshabilitado.
+- **Regla 22:** no se tocaron fórmulas, `engine/tests/GOLD_CASES_MANIFEST.json` ni snapshots; `make goldgen` no aplica a SHOT-01.
+- **Merge:** no realizado; queda sujeto a la orden explícita `MERGE` del owner.
