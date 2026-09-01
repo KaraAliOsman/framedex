@@ -6,8 +6,9 @@
 
 ## ⚡ Quickstart
 
-Requisitos de SHOT-01: Python 3.12+, Node.js 20.19+ y npm. La instalación usa solo
-la lista cerrada de `docs/PRD/PRD-00.md` §6.
+Requisitos: Python 3.12+, Node.js 20.19+ y npm. La instalación usa sólo la lista
+cerrada de `docs/PRD/PRD-00.md` §6. El gate SQL real requiere además Docker y
+Supabase CLI 2.116.0; no son dependencias del producto.
 
 ```bash
 python -m venv .venv
@@ -28,10 +29,20 @@ make test
 make lint
 make typecheck
 make build
+
+# Gate PostgreSQL 16/RLS sobre una instancia Supabase local limpia
+make database
 ```
 
 El checker rechaza herramientas o suites ausentes, warnings, colores hex crudos en
-`frontend/src`, usos de `float` en `engine/src` y cualquier comando con retorno no cero.
+`frontend/src`, usos de `float` en `engine/src`, tipos SQL flotantes, tablas sin RLS y
+cualquier comando con retorno no cero. `python scripts/check_dod.py all` ejecuta el
+contrato SQL y los tests Python aislados; `make database` levanta Supabase, aplica la
+migración y el seed desde cero, ejecuta el lint SQL y corre las pruebas pgTAP.
+
+La fuente de verdad vive en `supabase/migrations/`; `supabase/seed.sql` contiene el
+catálogo global determinista `DEMO_60`. Ningún comando del shot enlaza ni modifica una
+instancia Supabase remota.
 
 ---
 
@@ -42,8 +53,8 @@ Branch protection rules** para `main` con estos requisitos mínimos:
 
 1. Exigir pull request antes de integrar cambios.
 2. Exigir que la rama esté actualizada antes del merge.
-3. Exigir exactamente los status checks `Lint & Typecheck`, `Test Suite` y
-   `Frontend Build` definidos en `.github/workflows/ci.yml`.
+3. Exigir exactamente los status checks `Lint & Typecheck`, `Test Suite`,
+   `Frontend Build` y `Database Gate` definidos en `.github/workflows/ci.yml`.
 4. No permitir bypass, force pushes ni eliminación de `main`.
 
 Cada shot se publica en su rama `shot-XX` y espera la orden explícita `MERGE` del owner.
@@ -69,8 +80,8 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 
 | Shot | Fase | Descripción | Gate de Cierre | Estado |
 |---|---|---|---|:---:|
-| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ⏳ Pendiente |
-| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | ⏳ Pendiente |
+| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ✅ Cerrado |
+| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | 🛠 En curso |
 | **SHOT-03** | 0 | Engine núcleo (fórmulas fijas + OB + BOM) | `pytest engine/`: G1–G4 en 0.00 mm | ⏳ Pendiente |
 | **SHOT-04** | 0 | Auth + tenancy + API DRF + Shell ADOBE | Magic link E2E; OpenAPI $\rightarrow$ TS; PostHog base | ⏳ Pendiente |
 | **SHOT-05** | 0 | Canvas 2D mínimo SVG (fijo + cotas) | Dibuja G1 en pantalla (<300 ms) | ⏳ Pendiente |
