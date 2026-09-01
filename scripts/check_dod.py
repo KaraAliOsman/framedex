@@ -6,6 +6,7 @@ from __future__ import annotations
 import ast
 from collections.abc import Sequence
 import json
+import os
 from pathlib import Path
 import re
 import shlex
@@ -103,6 +104,15 @@ def configure_output() -> None:
 
 def fail(message: str, exit_code: int = 1) -> None:
     print(f"[FAIL] {message}", file=sys.stderr, flush=True)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        annotation = (
+            message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        )
+        print(
+            f"::error title=Dekopen SHOT-02 gate::{annotation}",
+            file=sys.stderr,
+            flush=True,
+        )
     raise SystemExit(exit_code)
 
 
@@ -290,17 +300,47 @@ def stop_local_supabase() -> None:
         fail(f"Command exited with code {result.returncode}: {rendered}", result.returncode)
 
 
+def run_database_command(command: Sequence[str]) -> None:
+    rendered = shlex.join(command)
+    print(f"  [{display_path(ROOT)}] $ {rendered}", flush=True)
+
+    try:
+        result = subprocess.run(
+            command,
+            cwd=ROOT,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError:
+        fail(f"Required executable is missing: {command[0]}", 127)
+
+    output = result.stdout.rstrip()
+    if output:
+        print(output, flush=True)
+    if result.returncode != 0:
+        output_tail = "\n".join(output.splitlines()[-40:])
+        fail(
+            f"Command exited with code {result.returncode}: {rendered}\n"
+            f"Output tail:\n{output_tail}",
+            result.returncode,
+        )
+
+
 def check_live_database() -> None:
     if SUPABASE is None:
         fail("Required executable is missing: supabase", 127)
 
     check_database_contract()
     try:
-        run_command([SUPABASE, "--version"])
-        run_command([SUPABASE, "start"])
-        run_command([SUPABASE, "db", "reset"])
-        run_command([SUPABASE, "db", "lint", "--level", "warning"])
-        run_command([SUPABASE, "test", "db"])
+        run_database_command([SUPABASE, "--version"])
+        run_database_command([SUPABASE, "start"])
+        run_database_command([SUPABASE, "db", "reset"])
+        run_database_command([SUPABASE, "db", "lint", "--level", "warning"])
+        run_database_command([SUPABASE, "test", "db"])
     finally:
         stop_local_supabase()
 
