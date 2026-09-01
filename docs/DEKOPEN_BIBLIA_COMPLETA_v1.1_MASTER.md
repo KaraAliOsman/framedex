@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Full Startup Perks + Suite • Dekopen AI Suite • Flow & Paddle)
+**Versión Oficial:** 1.2 (Full Zero Out-of-Pocket Stack •  Perks • Dekopen AI Suite)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -2332,10 +2332,10 @@ Dekopen se posiciona como el **primer sistema operativo especializado para talle
 > Un respaldo que nunca ha sido restaurado en un simulacro real equivale a no tener respaldo.
 
 1. **Respaldos Continuos (PITR):** Supabase Pro mantiene bitácora de transacciones WAL (Write-Ahead Logging) con capacidad de restauración a cualquier segundo de los últimos 7 días.
-2. **Dump Diario Cifrado Externo:**
+2. **Dump Diario Cifrado:**
    - Cada noche a las 03:00 UTC, una tarea cron ejecuta `pg_dump` con compresión máxima.
    - El archivo se cifra simétricamente con `AES-256` utilizando una clave maestra en variables de entorno.
-   - Se transfiere a un bucket secundario en **Cloudflare R2** (proveedor independiente a Supabase).
+   - Se almacena de forma segura en el bucket `dekopen-backups` de Supabase Storage.
 3. **Simulacro de Restauración Obligatorio (Gate 7):**
    - Antes de pasar a producción comercial, se debe ejecutar y documentar un simulacro de recuperación completo en un ambiente de staging limpio a partir del último dump cifrado.
 
@@ -2767,7 +2767,7 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra |
 | **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S12, S13, S15, S16 | Flujo proyectos + versiones + clonación + **catálogos manuales (S02, S12, S13, S15, S16)** | Autómata de estados; freeze REV-A congela snapshot; editar enviada $\rightarrow$ REV-B; CRUD manual de series, junquillos y kits de herraje funcional para el fundador |
-| **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado R2 + simulacro restauración documentado**; alertas Railway activas |
+| **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado Supabase Storage + simulacro restauración documentado**; alertas Railway activas |
 | **SHOT-12** | 1 · s10 | Todo Fase 1 | **Starter end-to-end + validación fundador** | **Gate-N:** fundador cotiza 10 trabajos reales en paralelo a NuveraPro sin perder en cortes ni pedido Proline $\rightarrow$ **sign-off G-Pro1**. Checkpoint: se abre cobro Starter |
 | **SHOT-13** | 2 · s11 | PRD-03 §4, PRD-08 §3, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de modelo probado; T6=25+2, T8=50, T9=30+2 |
 | **SHOT-14** | 2 · s11–12 | PRD-08 (+M1) | Compilador T6 + preguntas T4 + G sintéticos | **Los 4 fixtures (VEKA/Aluplast/Rehau/Proline) parsean a ficha v1 y validan contra engine 0.00**; serie nueva exige G-case mínimo antes de uso |
@@ -2844,7 +2844,7 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 
 # STACK OFICIAL DE APLICACIONES, SERVICIOS Y STARTUP PERKS (+$40K USD) — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** Aprovechamiento al 100% de la suite de créditos y beneficios Founder/Startup (~$40,000+ USD en infraestructura, soporte, analítica y automatizaciones) para operar a costo $0 real en el primer año.
+**Filosofía:** **Gasto out-of-pocket: $0 USD.** Aprovechamiento al 100% exclusivo de los créditos y beneficios Founder/Startup (~$40,000+ USD en infraestructura, soporte, analítica y automatizaciones) para operar sin pagar un solo dólar adicional de tu bolsillo.
 
 ---
 
@@ -2852,15 +2852,15 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 
 | Servicio / Herramienta | Categoría | Rol en Dekopen | Valor / Crédito Aprovechado | Integración en Shot |
 |---|---|---|---|:---:|
-| 🐘 **Supabase Pro** | Base de Datos & Auth | PostgreSQL 16 con RLS, Auth (Magic Link), Storage Buckets firmados para PDFs y planos. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04** |
-| 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), Huey Async Workers, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
-| ☁️ **Cloudflare (CDN & R2)** | CDN & Backups | CDN global, proxy DNS/DDoS y almacenamiento R2 cifrado para backups de base de datos con **$0 egress fees**. | Tier Estándar + R2 | **SHOT-11 / SHOT-19** |
+| 🐘 **Supabase Pro** | Base de Datos, Auth & Storage | PostgreSQL 16 con RLS, Auth (Magic Link), Point-in-Time Recovery (PITR) y **Buckets de Storage firmados** para planos, PDFs y respaldos diarios. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04 / SHOT-11** |
+| 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), colas asíncronas Huey, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
 | 🦔 **PostHog Scale** | Analítica de Producto | Telemetría de eventos, Session Replays (grabación de uso en Canvas), embudos de conversión y Feature Flags. | **$50,000 USD** en eventos | **SHOT-04 / SHOT-23** |
 | ✉️ **Customer.io** | Email Marketing & Drip | Automatización de ciclo de vida, secuencias de onboarding, reactivación de cotizaciones frías y alertas. | **$3,000 USD** en créditos | **SHOT-11 / SHOT-18** |
-| 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup | **SHOT-04 / SHOT-09** |
+| 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup ($0) | **SHOT-04 / SHOT-09** |
 | 🤖 **Intercom + Fin AI** | Soporte & Onboarding | **1 año cubierto de Fin AI Agent + Fin Advanced** ($100/mo de saldo) para soporte 24/7 y onboarding de carpintería. | **$1,200+ USD** anual | **SHOT-04 / SHOT-23** |
-| 🍓 **Jam.dev** | Bug Reporting Visual | Captura de errores en 1-clic con video, logs de consola, llamadas de red y metadata del Canvas 2D. | Licencia Team | **SHOT-04 / SHOT-10** |
-| ⚡ **n8n Cloud** | Automatizaciones Low-Code | Orquestación de webhooks, sincronización CRM y alertas a administradores. | Plan Pro Cloud | **SHOT-11 / SHOT-17** |
+| 🍓 **Jam.dev** | Bug Reporting Visual | Captura de errores en 1-clic con video, logs de consola, llamadas de red y metadata del Canvas 2D. | Licencia Team ($0) | **SHOT-04 / SHOT-10** |
+| ⚡ **n8n Cloud** | Automatizaciones Low-Code | Orquestación de webhooks, sincronización CRM y alertas a administradores. | Plan Pro Cloud ($0) | **SHOT-11 / SHOT-17** |
+| 🌐 **Cloudflare DNS** | DNS & Proxy SSL | Proxy CDN global gratuito, certificados SSL automáticos y protección DDoS. | **$0 / Gratuito** | **SHOT-04 / SHOT-11** |
 | 🇨🇱 **Flow.cl** | Pasarela Chile (CLP) | Cobro nativo con Webpay Plus, Khipu, Servipag y emisión obligatoria de Factura Electrónica DTE. | Pasarela Directa | **SHOT-11** |
 | 🌎 **Paddle** | Pasarela Global (USD) | **Merchant of Record (MoR):** Cobro mundial sin fricción tributaria (Paddle declara el Sales Tax e IVA internacional). | MoR Global | **SHOT-18** |
 

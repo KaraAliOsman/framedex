@@ -24,10 +24,10 @@
 > Un respaldo que nunca ha sido restaurado en un simulacro real equivale a no tener respaldo.
 
 1. **Respaldos Continuos (PITR):** Supabase Pro mantiene bitácora de transacciones WAL (Write-Ahead Logging) con capacidad de restauración a cualquier segundo de los últimos 7 días.
-2. **Dump Diario Cifrado Externo:**
+2. **Dump Diario Cifrado:**
    - Cada noche a las 03:00 UTC, una tarea cron ejecuta `pg_dump` con compresión máxima.
    - El archivo se cifra simétricamente con `AES-256` utilizando una clave maestra en variables de entorno.
-   - Se transfiere a un bucket secundario en **Cloudflare R2** (proveedor independiente a Supabase).
+   - Se almacena de forma segura en el bucket `dekopen-backups` de Supabase Storage.
 3. **Simulacro de Restauración Obligatorio (Gate 7):**
    - Antes de pasar a producción comercial, se debe ejecutar y documentar un simulacro de recuperación completo en un ambiente de staging limpio a partir del último dump cifrado.
 

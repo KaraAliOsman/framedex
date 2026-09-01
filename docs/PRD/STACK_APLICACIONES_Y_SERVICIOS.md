@@ -1,6 +1,6 @@
 # STACK OFICIAL DE APLICACIONES, SERVICIOS Y STARTUP PERKS (+$40K USD) — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** Aprovechamiento al 100% de la suite de créditos y beneficios Founder/Startup (~$40,000+ USD en infraestructura, soporte, analítica y automatizaciones) para operar a costo $0 real en el primer año.
+**Filosofía:** **Gasto out-of-pocket: $0 USD.** Aprovechamiento al 100% exclusivo de los créditos y beneficios Founder/Startup (~$40,000+ USD en infraestructura, soporte, analítica y automatizaciones) para operar sin pagar un solo dólar adicional de tu bolsillo.
 
 ---
 
@@ -8,15 +8,15 @@
 
 | Servicio / Herramienta | Categoría | Rol en Dekopen | Valor / Crédito Aprovechado | Integración en Shot |
 |---|---|---|---|:---:|
-| 🐘 **Supabase Pro** | Base de Datos & Auth | PostgreSQL 16 con RLS, Auth (Magic Link), Storage Buckets firmados para PDFs y planos. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04** |
-| 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), Huey Async Workers, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
-| ☁️ **Cloudflare (CDN & R2)** | CDN & Backups | CDN global, proxy DNS/DDoS y almacenamiento R2 cifrado para backups de base de datos con **$0 egress fees**. | Tier Estándar + R2 | **SHOT-11 / SHOT-19** |
+| 🐘 **Supabase Pro** | Base de Datos, Auth & Storage | PostgreSQL 16 con RLS, Auth (Magic Link), Point-in-Time Recovery (PITR) y **Buckets de Storage firmados** para planos, PDFs y respaldos diarios. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04 / SHOT-11** |
+| 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), colas asíncronas Huey, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
 | 🦔 **PostHog Scale** | Analítica de Producto | Telemetría de eventos, Session Replays (grabación de uso en Canvas), embudos de conversión y Feature Flags. | **$50,000 USD** en eventos | **SHOT-04 / SHOT-23** |
 | ✉️ **Customer.io** | Email Marketing & Drip | Automatización de ciclo de vida, secuencias de onboarding, reactivación de cotizaciones frías y alertas. | **$3,000 USD** en créditos | **SHOT-11 / SHOT-18** |
-| 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup | **SHOT-04 / SHOT-09** |
+| 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup ($0) | **SHOT-04 / SHOT-09** |
 | 🤖 **Intercom + Fin AI** | Soporte & Onboarding | **1 año cubierto de Fin AI Agent + Fin Advanced** ($100/mo de saldo) para soporte 24/7 y onboarding de carpintería. | **$1,200+ USD** anual | **SHOT-04 / SHOT-23** |
-| 🍓 **Jam.dev** | Bug Reporting Visual | Captura de errores en 1-clic con video, logs de consola, llamadas de red y metadata del Canvas 2D. | Licencia Team | **SHOT-04 / SHOT-10** |
-| ⚡ **n8n Cloud** | Automatizaciones Low-Code | Orquestación de webhooks, sincronización CRM y alertas a administradores. | Plan Pro Cloud | **SHOT-11 / SHOT-17** |
+| 🍓 **Jam.dev** | Bug Reporting Visual | Captura de errores en 1-clic con video, logs de consola, llamadas de red y metadata del Canvas 2D. | Licencia Team ($0) | **SHOT-04 / SHOT-10** |
+| ⚡ **n8n Cloud** | Automatizaciones Low-Code | Orquestación de webhooks, sincronización CRM y alertas a administradores. | Plan Pro Cloud ($0) | **SHOT-11 / SHOT-17** |
+| 🌐 **Cloudflare DNS** | DNS & Proxy SSL | Proxy CDN global gratuito, certificados SSL automáticos y protección DDoS. | **$0 / Gratuito** | **SHOT-04 / SHOT-11** |
 | 🇨🇱 **Flow.cl** | Pasarela Chile (CLP) | Cobro nativo con Webpay Plus, Khipu, Servipag y emisión obligatoria de Factura Electrónica DTE. | Pasarela Directa | **SHOT-11** |
 | 🌎 **Paddle** | Pasarela Global (USD) | **Merchant of Record (MoR):** Cobro mundial sin fricción tributaria (Paddle declara el Sales Tax e IVA internacional). | MoR Global | **SHOT-18** |
 
