@@ -1,98 +1,78 @@
-# PRD-DESIGN-SYSTEM-ADOBE: SISTEMA DE DISEÑO DUAL (LIGHT STUDIO / DARK GRAPHITE) (v1.2)
+# PRD: DESIGN SYSTEM ADOBE & MOTOR VECTORIAL TÉCNICO CAD (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía Visual:** Adobe Precision Tooling (Inspirado en Illustrator, InDesign, AutoCAD y Fusion 360).  
-**Soporte Dual:** Modo Claro (Studio Light) y Modo Oscuro (Dark Graphite) seleccionables por el usuario con 1 clic.
+**Versión:** 1.2 (Estándar de Dibujo Técnico DIN/ISO vs Arte Genérico de IA)  
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
 
-## 1. Paleta Dual de Tokens Semánticos (Light Studio & Dark Graphite)
+## 1. Filosofía Visual: Cero "Vibe Coding", Dibujo Técnico Industrial Real
 
-El usuario puede alternar en cualquier momento entre el **Modo Claro (Light Studio)** y el **Modo Oscuro (Dark Graphite)** mediante el switch de tema en la barra superior.
+En Dekopen, el dibujo de ventanas y las cotizaciones **NO son ilustraciones genéricas de IA ni rectángulos planos de CSS**. Siguen estrictamente el estándar de dibujo arquitectónico e industrial de software profesional (como NuveraPro, Moxisys, LogiKal o Orgadata):
 
 ```
-========================================================================================================================
-TOKEN SEMÁNTICO              MODO CLARO (LIGHT STUDIO)     MODO OSCURO (DARK GRAPHITE)   APLICACIÓN EN INTERFAZ
-========================================================================================================================
---theme-bg-canvas (Base)     #F4F5F7  (Gris Estudio Claro) #121214  (Grafito Mate)       Lienzo de dibujo CAD infinito
---theme-surface-panel        #FFFFFF  (Blanco Puro)        #1A1A1E  (Panel Oscuro)       Paneles dockables (Árbol, Inspector)
---theme-surface-card         #EAECEF  (Gris Suave Card)    #222228  (Tarjeta Oscura)     Accordions, inputs, cards de vanos
---theme-surface-hover        #DFE2E6  (Hover Claro)        #2C2C34  (Hover Oscuro)       Hover en botones de herramientas y filas
---theme-border-subtle        #D1D5DB  (Borde Estructural)  #3A3A46  (Borde Oscuro)       Separadores de paneles (1px sólido)
---theme-text-primary         #0F172A  (Negro Pizarra)      #F8FAFC  (Blanco Tiza)        Títulos, cotas activas, precios
---theme-text-secondary       #475569  (Gris Pizarra)       #94A3B8  (Gris Plata)         Etiquetas de formulario, roles
---theme-text-muted           #94A3B8  (Gris Atenuado)      #626274  (Gris Oscuro Muted)  Placeholders, atajos de teclado
-
---theme-cyan-tool            #0091EA  (Azul Técnico Intenso)#00E5FF  (Cian Neón CAD)     Líneas de cota milimétricas y guías
---theme-amber-opening        #D97706  (Ámbar Cálido)       #FFB300  (Ámbar Luminoso)     Líneas DIN de apertura en hojas
---theme-emerald-action       #059669  (Verde Esmeralda)    #00C853  (Verde Neón)         Botón primario "Aprobar para OT"
---theme-crimson-alert        #DC2626  (Rojo Alerta)        #FF1744  (Rojo Carmesí)       Bloqueos críticos del inspector
---theme-glass-tint           rgba(0,145,234,0.06)          rgba(0,229,255,0.08)         Sombreado interior de cristales
-========================================================================================================================
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ❌ EL ERROR COMÚN DE LAS IAs        │ 📐 EL ESTÁNDAR VECTORIAL CAD DE DEKOPEN (Norma DIN / ISO) │
+├─────────────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ • Rectángulos planos de colores.    │ • Perfiles extruidos reales: marco, hoja, junquillo y T. │
+│ • Dibujos infantiles o cartoon.     │ • Simbología cinemática estandarizada (Triángulos DIN).  │
+│ • Cotas dibujadas como texto plano. │ • Cadenas de cotas de ingeniería con flechas y extensión.│
+│ • Colores CSS básicos (#ff0000).    │ • Texturas arquitectónicas reales de foliado (Renolit).  │
+│ • PDFs que parecen resúmenes de chat│ • Cuadro Técnico de Carpinterías estilo Ejecutivo/Apple. │
+└─────────────────────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Tipografía Estricta y Escala Tabular
+## 2. Capas de Renderizado Vectorial SVG (Multi-Layer Technical Engine)
 
-- **Interfaz de Usuario:** `'Inter', -apple-system, BlinkMacSystemFont, sans-serif`
-- **Cotas, Fórmulas y Dinero:** `'JetBrains Mono', 'SF Mono', monospace` (`font-variant-numeric: tabular-nums`).
-
-| Nivel | Tamaño | Peso | Line Height | Uso |
-|---|---|---|---|---|
-| **App Title** | `14px / 0.875rem` | 700 (Bold) | `18px` | Título de proyecto, código COT |
-| **Panel Header** | `11px / 0.6875rem` | 700 (Bold) | `16px` | Encabezados de acordeón en mayúsculas |
-| **Body UI** | `12px / 0.75rem` | 400 / 500 | `16px` | Etiquetas, opciones de selección |
-| **Cota Dimensión** | `11px / 0.6875rem` | 700 (Bold) | `14px` | Cotas milimétricas sobre el canvas |
-| **Precios / Totales**| `13px / 0.8125rem` | 700 (Bold) | `16px` | Desglose económico e IVA |
-
----
-
-## 3. Disposición de Pantalla y Docking Modular (Adobe CAD Grid)
+Cada ventana en el Canvas y en los PDFs se construye matemáticamente en 6 capas vectoriales independientes:
 
 ```
-+----------------------------------------------------------------------------------------------------+
-| 1. APPLICATION RIBBON (Height: 48px) - [Logo] [Archivo v] [Edición v] | [COT-2026-0142] | [🌓 Modo]|
-+--------------+--------------------------------------------------------------------+----------------+
-| 2. TOOLBAR   | 3. CAD CANVAS VIEWPORT (Infinito con Pan/Zoom en Modo Claro/Oscuro)| 4. DOCKABLE    |
-| (Width: 52px)|                                                                    | INSPECTOR      |
-|              |             [ ← 1500.00 mm (Cota Editable Teclado) → ]             | (Width: 320px) |
-| [ ⇱ Cursor ] |     +---------------------------+---------------------+            |                |
-| [ ┼ Snapping]|     |                           |       / \ (OB)      |            | ▼ Dimensions   |
-| [ ⧉ Dividers]| 1400|        PAÑO FIJO          | 1400/     \ (Manilla|            |   W: [1500 mm] |
-| [ ◫ Sashes  ]|  mm |        DVH 24mm           |  mm/       \   o    |            |   H: [1400 mm] |
-| [ ⎔ Openings]|     |        690x1310 mm        |   /         \  |    |            |                |
-| [ 📏 Measure]|     +---------------------------+---------------------+            | ▼ Profile Spec |
-|              |               [ 750 mm ]                  [ 750 mm ]               |   Demo 60 mm v |
-|              |                                                                    |                |
-|              |                                                                    | ▼ Inspector    |
-|              |                                                                    |   🟢 0 Errores |
-|              |                                                                    |   Weight: 38kg |
-|              |                                                                    |                |
-|              |                                                                    | [ APROBAR OT ] |
-+--------------+--------------------------------------------------------------------+----------------+
-| 5. STATUS BAR (Height: 24px) - [Engine: 0.00mm] [Grid: 10mm] [Snap: ON] [X: 750 Y: 1400]           |
-+----------------------------------------------------------------------------------------------------+
+[ CAPA 6: COTAS DE INGENIERÍA ] ──► Líneas de extensión, cotas exteriores y luz libre
+[ CAPA 5: SIMBOLOGÍA DIN 18055] ──► Triángulos de apertura (Línea discontinua / continua)
+[ CAPA 4: JUNQUILLOS (Beads) ]  ──► Perfil retenedor con bisel a 45° según espesor de vidrio
+[ CAPA 3: VIDRIO Y TERMOPANEL ] ──► Shading multicapa con reflejo de cámara (Low-E / Laminado)
+[ CAPA 2: HOJA MÓVIL (Sash) ]   ──► Geometría de traslape con holgura perimetral exacta
+[ CAPA 1: MARCO EXTERIOR ]      ──► Perfil perimetral soldado con cámara de desagüe
 ```
 
 ---
 
-## 4. Arquitectura de Funcionamiento de Inteligencia Artificial (AI Engine & Diff Workflow)
+## 3. Simbología Cinemática Estandarizada (Norma DIN 18055 / ISO)
 
-El motor de IA opera bajo un protocolo estricto de 5 pasos con previsualización comparativa:
+Los sentidos de apertura siguen la convención técnica internacional que entienden los talleres y arquitectos:
 
-```
-[1. Entrada de Usuario] ---> [2. Gateway IA (Tool Tx)] ---> [3. Cálculo Determinista /engine]
-  • Prompt NLP                 • Extracción tipada            • Explosión BOM
-  • Plano PDF / Croquis        • Auditoría previa             • Semáforo Inspector
-                                • Débito de créditos                  |
-                                                                      v
-[5. Aprobación Humana] <---------------------------------- [4. Modal de Diff Antes/Después]
-  • [Aplicar Mutación]                                       • Comparativa visual 2D
-  • [Deshacer Sagrado (⌘Z)]                                  • Delta de Costo y Precio
-```
+1. **Oscilobatiente (Tilt & Turn):** Triángulo doble punteado. El vértice superior indica apertura proyectante superior; el vértice lateral indica apertura practicable hacia el interior.
+2. **Practicable Interior (Side-Hung):** Triángulo con vértice en el lado de la manilla y base en las bisagras.
+3. **Corredera (Sliding):** Flechas horizontales vectoriales ($\leftarrow / \rightarrow$) sobre las hojas móviles y símbolo $\mathbf{O}$ o $\mathbf{X}$ en las hojas fijas.
+4. **Proyectante / Fricción (Awning):** Triángulo con vértice inferior hacia el pestillo.
 
-1. **Ingestión:** El usuario ingresa una instrucción en lenguaje natural (e.g. *"Divide la ventana al medio y pon la hoja derecha oscilobatiente"*) o arrastra un plano PDF.
-2. **Ejecución Tipada:** La herramienta correspondiente (`T1` a `T12`) genera una propuesta estructurada de mutación en formato JSON. Se audita en `ai_audit_logs` y se descuentan los créditos de la organización.
-3. **Validación en `/engine`:** El motor matemático calcula las nuevas cotas, despiece y corre las 14 reglas del inspector.
-4. **Modal Visual Diff (Antes / Después):** Se despliega una ventana flotante modal mostrando el estado previo vs. el estado propuesto con los nuevos elementos resaltados en verde, junto con los deltas de costo y precio de venta.
-5. **Aprobación Humana y Deshacer:** El cambio solo se aplica a la base de datos tras el clic explícito del usuario (`[Apply Mutation]`), y se puede revertir inmediatamente con el botón `[Sacred Undo]` (`⌘Z`).
+---
+
+## 4. Texturas y Acabados Arquitectónicos Reales (Foliados Renolit / Hornschuch)
+
+En lugar de colores planos genéricos, el motor de renderizado aplica filtros SVG y patrones CSS de texturas reales de PVC:
+
+| Código Acabado | Nombre Comercial | Render Vectorial / Shader |
+|---|---|---|
+| `PVC_WHITE_9016` | Blanco Puro RAL 9016 | Acabado satinado suave con sombra interior de cámara $1.5\text{px}$. |
+| `FOIL_NOGAL_70` | Nogal / Walnut (Renolit) | Veta de madera oscura con líneas de relieve longitudinales y tinte cálido. |
+| `FOIL_ROBLE_DOR` | Roble Dorado / Golden Oak | Tono miel amaderado con micro-sombreado de fibra natural. |
+| `FOIL_ANTRACITA` | Gris Antracita RAL 7016 | Micro-textura arenada mate con absorción de luz. |
+| `FOIL_NEGRO_MAT` | Negro Grafito RAL 9005 | Acabado arquitectónico mate contemporáneo. |
+
+---
+
+## 5. Diseño Ejecutivo de Cotizaciones (DOC-01: Architectural Schedule)
+
+El presupuesto comercial que recibe el cliente final parece un **dossier de arquitectura de alta gama**:
+
+1. **Encabezado Corporativo Limpio:** Logotipo del taller, datos del cliente, dirección de obra, validez de oferta y número de cotización único.
+2. **Grilla de Posiciones (Cuadro de Vanos):**
+   - Dibujo vectorial nítido en alta resolución con sus cotas de fabricación.
+   - Etiqueta de posición (`P01`, `P02`, etc.) y ubicación en la casa (*"Living principal"*, *"Dormitorio 2"*).
+   - Ficha técnica de la posición: Serie de perfil, color, composición del termopanel (ej: `5mm Incoloro + 12mm Cámara Argón + 5mm Low-E`), herraje y transmitancia térmica $U_w$.
+3. **Resumen Financiero y Métodos de Pago:**
+   - Desglose neto, IVA y total con tipografía clara y contrastada.
+   - Hitos de pago configurables (*50% anticipo, 40% entrega, 10% instalación*).
+4. **Firma Digital y Código QR:** Enlace directo al visor interactivo web y al Certificado de Fabricabilidad.
