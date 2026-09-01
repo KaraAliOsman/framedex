@@ -62,6 +62,8 @@ flujos de aplicación.
 | `supabase/tests/database/010_rls_isolation.test.sql` | Fixtures A/B y pruebas positivas/negativas de SELECT/INSERT/UPDATE/DELETE bajo identidad autenticada. | Demuestra mecánicamente `tenant-A != tenant-B`; una política ausente o permisiva debe romper el test. |
 | `supabase/tests/database/020_global_catalog.test.sql` | Prueba de visibilidad de Demo 60 y sus registros globales desde ambos tenants, más ocultamiento de catálogos privados ajenos. | Demuestra el componente “seed Demo 60 visible global” sin convertir el test en una mera comprobación de existencia. |
 | `supabase/tests/database/030_billing_idempotency.test.sql` | Pruebas de unicidad/idempotencia de eventos y pagos, saldo no negativo, aislamiento del ledger y acceso de servicio a eventos. | Verifica los contratos críticos de `payment_events` y `credit_ledger`. |
+| `supabase/tests/postgres16_bootstrap.sql` | Stubs mínimos de roles y funciones `auth` que Supabase aporta, sólo para el contenedor PostgreSQL 16 limpio de CI. | Permite aplicar el mismo DDL fuera de la imagen Supabase sin falsear sus dependencias de autenticación. |
+| `supabase/tests/postgres16_verify.sql` | Asserts fail-closed de versión, 21 tablas, RLS y seed global sobre PostgreSQL 16. | Demuestra compatibilidad exacta con la versión canónica de PRD-02. |
 
 La migración contendrá las 21 tablas del DDL completo de PRD-02, agrupadas así:
 
@@ -197,6 +199,7 @@ La evidencia de cierre incluirá comando, exit code y salida real relevante. No 
 | Política global demasiado amplia. | Lectura anónima no autorizada. | Resolver explícitamente el contrato de autenticación antes de codificar. |
 | Checker deja procesos/volúmenes o encubre fallos al limpiar. | Runs inestables o falso verde. | Limpieza controlada en `finally`, preservando el primer exit code no cero. |
 | Dependencia local inexistente. | No se puede satisfacer el stop condition local. | Resolver el entorno antes de construcción; no declarar verde sólo por CI. |
+| La CLI Supabase vigente no ofrece PostgreSQL 16 local. | El gate Supabase usa PostgreSQL 17 y no prueba por sí solo la versión canónica. | Aplicar el mismo DDL/seed adicionalmente sobre `postgres:16-alpine` en `Database Gate`. |
 | Cambio manual del golden. | Violación de Regla 22. | No se toca `/engine` ni golden; si el diff apareciera, detenerse y diagnosticar. |
 
 ## 9. Decisiones del dueño

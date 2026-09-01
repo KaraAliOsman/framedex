@@ -105,6 +105,16 @@ jobs:
   database-gate:
     name: Database Gate
     runs-on: ubuntu-latest
+    services:
+      postgres16:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -118,6 +128,19 @@ jobs:
         uses: supabase/setup-cli@v3.0.0
         with:
           version: 2.116.0
+
+      - name: Verify PostgreSQL 16 compatibility
+        shell: bash
+        run: |
+          container="${{ job.services.postgres16.id }}"
+          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
+            < supabase/tests/postgres16_bootstrap.sql
+          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
+            < supabase/migrations/20260901000000_initial_schema.sql
+          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
+            < supabase/seed.sql
+          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
+            < supabase/tests/postgres16_verify.sql
 
       - name: Apply clean database and run SQL tests
         run: python scripts/check_dod.py database

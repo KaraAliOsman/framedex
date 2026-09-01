@@ -8,7 +8,9 @@
 
 Requisitos: Python 3.12+, Node.js 20.19+ y npm. La instalación usa sólo la lista
 cerrada de `docs/PRD/PRD-00.md` §6. El gate SQL real requiere además Docker y
-Supabase CLI 2.116.0; no son dependencias del producto.
+Supabase CLI 2.116.0; no son dependencias del producto. La stack local vigente de esa
+CLI usa PostgreSQL 17, mientras CI aplica adicionalmente el mismo DDL sobre PostgreSQL 16
+para verificar el contrato de versión de PRD-02.
 
 ```bash
 python -m venv .venv

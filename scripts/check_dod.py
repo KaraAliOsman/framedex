@@ -48,6 +48,8 @@ REQUIRED_DATABASE_PATHS = (
     SUPABASE_TEST_DIR / "010_rls_isolation.test.sql",
     SUPABASE_TEST_DIR / "020_global_catalog.test.sql",
     SUPABASE_TEST_DIR / "030_billing_idempotency.test.sql",
+    SUPABASE_DIR / "tests" / "postgres16_bootstrap.sql",
+    SUPABASE_DIR / "tests" / "postgres16_verify.sql",
     BACKEND_DIR / "tests" / "test_database_contract.py",
 )
 
