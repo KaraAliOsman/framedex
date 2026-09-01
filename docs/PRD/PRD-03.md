@@ -50,7 +50,8 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 
 - **Trial:** 7 días sobre Profesional completo, sin tarjeta, techo duro de 500 créditos totales. Signup directo a Starter = 0 créditos. Al expirar el trial, downgrade automático a Starter (*el motor de cálculo nunca se bloquea*).
 - **Usuario Extra:** USD 12/mes (USD 10/mes en ciclo anual), en todos los planes pagos.
-- **Cláusula de Grandfathering:** Todo cambio futuro en los precios de lista de las suscripciones exige un aviso previo de 60 días a los clientes y garantiza el precio congelado por 12 meses para suscriptores activos.
+- **Cláusula de Grandfathering Estándar:** Todo cambio futuro en precios de lista garantiza precio congelado por 12 meses para suscriptores activos.
+- **Founding 50 (Excepción de Precio de por Vida):** Los primeros 50 suscriptores anuales (`founding_member = TRUE`) congelan su tarifa de por vida (`price_locked = TRUE`), protegida contra incrementos futuros de tarifa o reajustes por IPC. Respaldada en `tenancy_organizations.founding_member` y `subscriptions.founding_member`.
 
 ---
 

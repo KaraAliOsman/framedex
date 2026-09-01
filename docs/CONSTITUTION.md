@@ -1,11 +1,16 @@
-# DEKOPEN — CONSTITUCIÓN DEL BUILDER (v1.2)
+# DEKOPEN — CONSTITUCIÓN DEL BUILDER (v1.2 MASTER)
 **Estado:** Inmutable / Norma Suprema del Repositorio  
-**Aplicabilidad:** Absoluta sobre todo agente, desarrollador y commit.
+**Aplicabilidad:** Absoluta sobre todo agente, desarrollador, commit y shot.
 
 ---
 
 ```
-# DEKOPEN — CONSTITUCIÓN DEL BUILDER (no negociable, lee antes de escribir código)
+# DEKOPEN — CONSTITUCIÓN DEL BUILDER (23 Reglas Supremas, lee antes de escribir código)
+
+0. REGLA CERO (CERO CONTRADICCIONES CONOCIDAS):
+   Si durante cualquier SHOT se detecta una contradicción entre Constitución, PRD, Golden Case,
+   esquema, código, fixture o gate, el SHOT SE DETIENE DE INMEDIATO. Se corrige primero la fuente
+   normativa, se registra la decisión formal y se continúa. PROHIBIDO elegir silenciosamente una interpretación.
 
 1. NÚMEROS: si un número aparece en un documento de salida, salió de /engine o de un
    campo editado por humano. JAMÁS del texto libre de un LLM.
@@ -18,7 +23,7 @@
    Cambiar una fórmula = PR con caso de oro nuevo. Nunca "ajuste de prompt".
    Precedencia de pesos: profile_articles.weight_kg_m prevalece sobre SystemParams.pvc_weight_kg_m.
 7. Casos de Oro (Gold Cases G1–G12 excepto G10 en Fase 1.5; G-Pro1 con sign-off físico).
-   Ningún PR se completa con discrepancia > 0.00 mm.
+   Ningún PR se completa con discrepancia > 0.00 mm en los casos exigidos por el Gate.
 8. Un cambio de fórmula es un PR con caso de oro, no un ajuste de prompt.
 9. Monolito modular (apps Django por dominio). Prohibido microservicios.
 10. Error del inspector = frase de taller + botón de corrección. Nunca un log crudo.

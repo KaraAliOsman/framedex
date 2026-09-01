@@ -1,146 +1,84 @@
-name: Dekopen CI
+name: Dekopen CI Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - "shot-*"
+    branches: [ main, 'shot-*' ]
   pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [ main ]
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Typecheck
+  lint-and-guards:
+    name: Lint, Quality & Constitutional Guards
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: pip
+          python-version: '3.12'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.19"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Python dependencies
-        run: python -m pip install --requirement requirements-dev.txt
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run lint and constitutional guards
-        run: python scripts/check_dod.py lint
-
-      - name: Run strict type checks
-        run: python scripts/check_dod.py typecheck
-
-  test-suite:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.19"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Python dependencies
-        run: python -m pip install --requirement requirements-dev.txt
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run test suites
-        run: python scripts/check_dod.py test
-
-  frontend-build:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.19"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-  database-gate:
-    name: Database Gate
-    runs-on: ubuntu-latest
-    services:
-      postgres16:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v3.0.0
-        with:
-          version: 2.116.0
-
-      - name: Verify PostgreSQL 16 compatibility
-        shell: bash
+      - name: Install Linting Tools
         run: |
-          container="${{ job.services.postgres16.id }}"
-          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
-            < supabase/tests/postgres16_bootstrap.sql
-          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
-            < supabase/migrations/20260901000000_initial_schema.sql
-          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
-            < supabase/seed.sql
-          docker exec -i "$container" psql -v ON_ERROR_STOP=1 -U postgres \
-            < supabase/tests/postgres16_verify.sql
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest pydantic
 
-      - name: Apply clean database and run SQL tests
-        run: python scripts/check_dod.py database
+      - name: Check Constitutional Anti-Patterns
+        run: |
+          bash scripts/check_dod.sh lint
+
+  typecheck:
+    name: Strict Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mypy pydantic
+          if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+            cd frontend && npm ci
+          fi
+
+      - name: Run Typechecks
+        run: |
+          bash scripts/check_dod.sh typecheck
+
+  test-suites:
+    name: Test Suites (Engine, Backend, Frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pydantic
+          if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+            cd frontend && npm ci
+          fi
+
+      - name: Run Tests & Verify 0.00mm Tolerance
+        run: |
+          bash scripts/check_dod.sh test

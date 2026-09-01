@@ -47,7 +47,7 @@ CREATE TABLE tenancy_organizations (
     billing_cycle VARCHAR(10) NOT NULL DEFAULT 'annual' CHECK (billing_cycle IN ('monthly', 'annual')),
     founding_member BOOLEAN NOT NULL DEFAULT FALSE,
     trial_ends_at TIMESTAMPTZ,
-    points_balance INT NOT NULL DEFAULT 500 CHECK (points_balance >= 0),
+    credits_balance INT NOT NULL DEFAULT 500 CHECK (credits_balance >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -82,7 +82,7 @@ CREATE TABLE profile_systems (
     
     -- Parámetros canónicos de sistema
     sash_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 8.00,
-    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 3.00, -- Demo 60 congela 5.00
+    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00, -- Canónico Demo 60
     glass_clearance_foil_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00,
     pulley_height_mm NUMERIC(4, 2) NOT NULL DEFAULT 12.00,
     central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 35.00,
@@ -95,11 +95,16 @@ CREATE TABLE profile_systems (
     rail_type VARCHAR(10) NOT NULL DEFAULT 'dual' CHECK (rail_type IN ('dual', 'mono')),
     
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
+    is_demo BOOLEAN NOT NULL DEFAULT FALSE, -- Aislamiento estricto de sistemas de prueba
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     version INT NOT NULL DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_org_system_code UNIQUE (org_id, code, version)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Integridad Relacional: Índices Parciales para Catálogos Globales vs Tenants
+CREATE UNIQUE INDEX uk_global_system_code ON profile_systems (code, version) WHERE org_id IS NULL;
+CREATE UNIQUE INDEX uk_tenant_system_code ON profile_systems (org_id, code, version) WHERE org_id IS NOT NULL;
+
 
 CREATE TABLE profile_articles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -434,7 +439,7 @@ RETURNS SETOF UUID AS $$
     SELECT org_id 
     FROM tenancy_memberships 
     WHERE user_id = auth.uid() AND is_active = TRUE;
-$$ LANGUAGE SQL STABLE SECURITY DEFINER;
+$$ LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public, auth;
 
 -- Tenancy & Memberships (Lectura de la propia organización para miembros activos)
 CREATE POLICY tenancy_organizations_select ON tenancy_organizations
@@ -443,9 +448,12 @@ CREATE POLICY tenancy_organizations_select ON tenancy_organizations
 CREATE POLICY tenancy_memberships_select ON tenancy_memberships
     FOR SELECT USING (org_id IN (SELECT current_user_org_ids()));
 
--- Catálogos (Lectura: Propios O Globales; Escritura: Solo Propios)
+-- Catálogos (Lectura: Propios O Globales autenticados; Escritura: Solo Propios)
 CREATE POLICY profile_systems_select ON profile_systems
-    FOR SELECT USING (is_global = TRUE OR org_id IN (SELECT current_user_org_ids()));
+    FOR SELECT USING (
+        (auth.uid() IS NOT NULL AND is_global = TRUE) 
+        OR org_id IN (SELECT current_user_org_ids())
+    );
 
 CREATE POLICY profile_systems_modify ON profile_systems
     FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
@@ -453,7 +461,7 @@ CREATE POLICY profile_systems_modify ON profile_systems
 
 CREATE POLICY profile_articles_select ON profile_articles
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
@@ -463,7 +471,7 @@ CREATE POLICY profile_articles_modify ON profile_articles
 
 CREATE POLICY glazing_bead_matrix_select ON glazing_bead_matrix
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
@@ -473,11 +481,24 @@ CREATE POLICY glazing_bead_matrix_modify ON glazing_bead_matrix
 
 CREATE POLICY hardware_kits_select ON hardware_kits
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
 CREATE POLICY hardware_kits_modify ON hardware_kits
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+-- Costos y Reglas Comerciales (Aislamiento Estricto)
+CREATE POLICY cost_lists_isolation ON cost_lists
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+CREATE POLICY cost_list_items_isolation ON cost_list_items
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+CREATE POLICY pricing_rules_isolation ON pricing_rules
     FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
     WITH CHECK (org_id IN (SELECT current_user_org_ids()));
 

@@ -6,60 +6,21 @@
 
 ## ⚡ Quickstart
 
-Requisitos: Python 3.12+, Node.js 20.19+ y npm. La instalación usa sólo la lista
-cerrada de `docs/PRD/PRD-00.md` §6. El gate SQL real requiere además Docker y
-Supabase CLI 2.116.0; no son dependencias del producto. La stack local vigente de esa
-CLI usa PostgreSQL 17, mientras CI aplica adicionalmente el mismo DDL sobre PostgreSQL 16
-para verificar el contrato de versión de PRD-02.
+Para comenzar o validar el estado completo del repositorio:
 
 ```bash
-python -m venv .venv
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-# macOS/Linux: source .venv/bin/activate
-python -m pip install --requirement requirements-dev.txt
-cd frontend && npm ci && cd ..
-```
+# Validar el Definition of Done completo (Regla 19 de la Constitución)
+make dod
 
-Para validar el estado completo del repositorio:
-
-```bash
-# Entrada canónica y multiplataforma del gate
-python scripts/check_dod.py all
-
-# Atajos equivalentes cuando GNU Make está disponible
+# Ejecutar tests unitarios (Engine, Backend, Frontend)
 make test
+
+# Validar linters y reglas constitucionales (sin float en engine, sin hex en UI)
 make lint
+
+# Chequeo estricto de tipos (mypy strict + tsc)
 make typecheck
-make build
-
-# Gate PostgreSQL 16/RLS sobre una instancia Supabase local limpia
-make database
 ```
-
-El checker rechaza herramientas o suites ausentes, warnings, colores hex crudos en
-`frontend/src`, usos de `float` en `engine/src`, tipos SQL flotantes, tablas sin RLS y
-cualquier comando con retorno no cero. `python scripts/check_dod.py all` ejecuta el
-contrato SQL y los tests Python aislados; `make database` levanta Supabase, aplica la
-migración y el seed desde cero, ejecuta el lint SQL y corre las pruebas pgTAP.
-
-La fuente de verdad vive en `supabase/migrations/`; `supabase/seed.sql` contiene el
-catálogo global determinista `DEMO_60`. Ningún comando del shot enlaza ni modifica una
-instancia Supabase remota.
-
----
-
-## 🔒 Branch protection de `main`
-
-La rama `main` no admite merge directo. En GitHub, configurar **Settings → Branches →
-Branch protection rules** para `main` con estos requisitos mínimos:
-
-1. Exigir pull request antes de integrar cambios.
-2. Exigir que la rama esté actualizada antes del merge.
-3. Exigir exactamente los status checks `Lint & Typecheck`, `Test Suite`,
-   `Frontend Build` y `Database Gate` definidos en `.github/workflows/ci.yml`.
-4. No permitir bypass, force pushes ni eliminación de `main`.
-
-Cada shot se publica en su rama `shot-XX` y espera la orden explícita `MERGE` del owner.
 
 ---
 
@@ -82,8 +43,8 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 
 | Shot | Fase | Descripción | Gate de Cierre | Estado |
 |---|---|---|---|:---:|
-| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ✅ Cerrado |
-| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | 🛠 En curso |
+| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ⏳ Pendiente |
+| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | ⏳ Pendiente |
 | **SHOT-03** | 0 | Engine núcleo (fórmulas fijas + OB + BOM) | `pytest engine/`: G1–G4 en 0.00 mm | ⏳ Pendiente |
 | **SHOT-04** | 0 | Auth + tenancy + API DRF + Shell ADOBE | Magic link E2E; OpenAPI $\rightarrow$ TS; PostHog base | ⏳ Pendiente |
 | **SHOT-05** | 0 | Canvas 2D mínimo SVG (fijo + cotas) | Dibuja G1 en pantalla (<300 ms) | ⏳ Pendiente |

@@ -685,4 +685,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.subscriptions TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.payments TO authenticated;
 GRANT SELECT ON public.credit_ledger TO authenticated;
 
+-- Supabase default privileges must not bypass the service-role-only webhook log.
+REVOKE ALL ON public.payment_events FROM anon, authenticated;
+
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;

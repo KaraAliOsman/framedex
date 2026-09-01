@@ -80,6 +80,7 @@ def test_payment_events_contract(migration_sql: str, normalized_migration: str) 
     assert "CONSTRAINT uk_provider_event UNIQUE (provider, event_id)" in definition
     assert "create policy payment_events_service_role" in normalized_migration
     assert "auth.jwt() ->> 'role' = 'service_role'" in normalized_migration
+    assert "revoke all on public.payment_events from anon, authenticated" in normalized_migration
 
 
 @pytest.mark.parametrize(

@@ -62,8 +62,8 @@ flujos de aplicación.
 | `supabase/tests/database/010_rls_isolation.test.sql` | Fixtures A/B y pruebas positivas/negativas de SELECT/INSERT/UPDATE/DELETE bajo identidad autenticada. | Demuestra mecánicamente `tenant-A != tenant-B`; una política ausente o permisiva debe romper el test. |
 | `supabase/tests/database/020_global_catalog.test.sql` | Prueba de visibilidad de Demo 60 y sus registros globales desde ambos tenants, más ocultamiento de catálogos privados ajenos. | Demuestra el componente “seed Demo 60 visible global” sin convertir el test en una mera comprobación de existencia. |
 | `supabase/tests/database/030_billing_idempotency.test.sql` | Pruebas de unicidad/idempotencia de eventos y pagos, saldo no negativo, aislamiento del ledger y acceso de servicio a eventos. | Verifica los contratos críticos de `payment_events` y `credit_ledger`. |
-| `supabase/tests/postgres16_bootstrap.sql` | Stubs mínimos de roles y funciones `auth` que Supabase aporta, sólo para el contenedor PostgreSQL 16 limpio de CI. | Permite aplicar el mismo DDL fuera de la imagen Supabase sin falsear sus dependencias de autenticación. |
-| `supabase/tests/postgres16_verify.sql` | Asserts fail-closed de versión, 21 tablas, RLS y seed global sobre PostgreSQL 16. | Demuestra compatibilidad exacta con la versión canónica de PRD-02. |
+| `supabase/compat/postgres16_bootstrap.sql` | Stubs mínimos de roles y funciones `auth` que Supabase aporta, sólo para el contenedor PostgreSQL 16 limpio de CI. | Permite aplicar el mismo DDL fuera de la imagen Supabase sin falsear sus dependencias de autenticación y queda fuera del discovery pgTAP. |
+| `supabase/compat/postgres16_verify.sql` | Asserts fail-closed de versión, 21 tablas, RLS y seed global sobre PostgreSQL 16. | Demuestra compatibilidad exacta con la versión canónica de PRD-02 sin ejecutarse como suite TAP. |
 
 La migración contendrá las 21 tablas del DDL completo de PRD-02, agrupadas así:
 

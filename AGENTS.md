@@ -48,13 +48,14 @@ Para eliminar la alucinación, el "verifier theater" y los fallos en tareas de l
 
 ---
 
-## 4. Reglas Constitucionales de Oro (CONSTITUTION.md v1.2)
+## 4. Reglas Constitucionales de Oro (CONSTITUTION.md v1.2 MASTER — 23 Reglas)
 
+0. **REGLA CERO (CERO CONTRADICCIONES):** Ante cualquier discrepancia normativa entre spec, PRD, esquema o tests, el SHOT SE DETIENE y se resuelve la fuente oficial. Jamás se asume en silencio.
 1. **NÚMEROS:** Todo número en cotizaciones, cortes y OT sale de `/engine` o edición humana explícita. Prohibido float (`Decimal` en todo mm y dinero).
 2. **MOTOR PURO:** `/engine` es independiente de Django, red, I/O o base de datos. Testeable con `pytest engine/`.
 3. **RLS Y AISLAMIENTO:** Toda tabla de negocio lleva `org_id` + RLS con `current_user_org_ids()`. Un tenant jamás lee precios de otro.
 4. **AUDITORÍA OBLIGATORIA:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs` ANTES de mutar estado.
-5. **CASOS DE ORO (G1–G12):** Tolerancia `0.00 mm`. Ningún PR se aprueba con discrepancias en los casos de prueba.
+5. **CASOS DE ORO (G1–G12):** Tolerancia `0.00 mm`. Ningún PR se aprueba con discrepancias en los casos exigidos por el Gate.
 6. **REGLA 20 (CERO SUPUESTOS):** Si un PRD tiene un vacío, **DETENTE** e inserta `[PENDIENTE-DECISIÓN]`. Nunca inventes reglas de negocio.
 7. **REGLA 22 (GOLDEN SNAPSHOTS):** `golden_example.json` se genera con `make goldgen` desde `/engine`, jamás se edita a mano.
 

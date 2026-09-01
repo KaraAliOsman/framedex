@@ -232,20 +232,69 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
 
 ---
 
-## 5. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+---
 
-| Caso ID | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
-|---|---|---|---|
-| **G1** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G2** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G3** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
-| **G4** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
-| **G5** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G6** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
-| **G7** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
-| **G8** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G9** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G10** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 1.5** |
-| **G11** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G12** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G-Pro1** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+## 5. Tabla Canónica de Correspondencia: Base de Datos ⟷ `/engine` (Regla Cero)
+
+Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las clases Pydantic del motor, esta tabla define el mapeo exacto de cada parámetro:
+
+| Parámetro Engine (`SystemParams`) | Tabla PostgreSQL | Columna PostgreSQL | Tipo / Unidad | Fuente Oficial | Nullable | Quién Modifica | Valor Canónico DEMO_60 |
+|---|---|---|---|---|:---:|---|:---:|
+| `system_code` | `profile_systems` | `code` | `VARCHAR(50)` | Ficha Fabricante | NO | Admin / Taller | `'DEMO_60'` |
+| `depth_mm` | `profile_systems` | `depth_mm` | `NUMERIC(10,2)` mm | Ficha Fabricante | NO | Admin / Taller | `60.00` |
+| `material` | `profile_systems` | `material` | `material_type` | Ficha Fabricante | NO | Admin / Taller | `'PVC'` |
+| `sash_overlap_mm` | `profile_systems` | `sash_overlap_mm` | `NUMERIC(4,2)` mm | Catálogo Técnico | NO | Taller | `8.00` |
+| `glass_clearance_white_mm` | `profile_systems` | `glass_clearance_white_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
+| `glass_clearance_foil_mm` | `profile_systems` | `glass_clearance_foil_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
+| `central_overlap_mm` | `profile_systems` | `central_overlap_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `35.00` |
+| `sliding_end_add_mm` | `profile_systems` | `sliding_end_add_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `6.00` |
+| `pulley_height_mm` | `profile_systems` | `pulley_height_mm` | `NUMERIC(4,2)` mm | Ficha Rodamientos | NO | Taller | `12.00` |
+| `welding_loss_mm` (Autoridad) | `profile_articles` | `welding_loss_mm` | `NUMERIC(10,2)` mm | Ficha Perfil | NO | Taller | `6.00` (Marco/Hoja) / `0.00` (Poste) |
+| `pvc_weight_kg_m` | `profile_articles` | `weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Perfil | NO | Taller | `1.2000` |
+| `steel_weight_kg_m` | `profile_articles` | `steel_weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Refuerzo | NO | Taller | `1.7000` |
+| `is_demo` (Aislamiento) | `profile_systems` | `is_demo` | `BOOLEAN` | Sistema | NO | Sistema | `TRUE` |
+
+---
+
+## 6. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+
+### 6.1. Definición de Gates: Core Gate vs Extended Gate (SHOT-06)
+* **Core Gate (Obligatorio en Fase 1 / Starter):** G1, G2, G3, G4 (SHOT-03) y G5, G6, G7 (SHOT-06) con tolerancia `0.00 mm`. Bloquea la entrega del cotizador Starter.
+* **Extended Gate (Tipologías Complejas / Fase 2):** G8 (Corredera 3H), G9 (Corredera 4H), G11 (Puerta Doble), G12 (Fijo Gran Formato); pueden diferirse formalmente a SHOT-06B / Fase 2 mediante decisión explícita del owner sin bloquear el lanzamiento de Starter.
+* **Deferred Gate (Fase 4):** G10 (Monorriel 2H con carros pesados $\ge 80\text{ kg}$).
+
+### 6.2. Matriz de Casos de Oro y Derivación Analítica
+
+| Caso ID | Gate | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
+|---|:---:|---|---|---|
+| **G1** | **Core** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G2** | **Core** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G3** | **Core** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
+| **G4** | **Core** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
+| **G5** | **Core** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. *(Ver desglose §6.3)* | 🔒 **CONGELADO** |
+| **G6** | **Core** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
+| **G7** | **Core** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
+| **G8** | **Extended** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G9** | **Extended** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G10** | **Deferred** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 4** |
+| **G11** | **Extended** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G12** | **Extended** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR EN SHOT-06B** |
+| **G-Pro1** | **Sign-Off** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+
+---
+
+### 6.3. Desglose Matemático Analítico: Caso G5 (Corredera 2 Hojas 2000 × 2100 mm)
+
+* **Inputs Nominales:** $W = 2000.00\text{ mm}$, $H = 2100.00\text{ mm}$, `frame_face_width` = $60.00\text{ mm}$, `sash_face_width` = $75.00\text{ mm}$, `central_overlap` = $40.00\text{ mm}$, `pulley_height` = $12.00\text{ mm}$, `glass_clearance` = $5.00\text{ mm}$, `rebate_depth` = $20.00\text{ mm}$, `welding_loss_mm` = $6.00\text{ mm}$.
+* **1. Marco Exterior de PVC:**
+  $$L_{marco\_h} = 2000.00 + 6.00 = 2006.00\text{ mm}$$
+  $$L_{marco\_v} = 2100.00 + 6.00 = 2106.00\text{ mm}$$
+* **2. Vano Interior del Marco:**
+  $$W_{inner} = 2000.00 - (2 \times 60.00) = 1880.00\text{ mm}$$
+  $$H_{inner} = 2100.00 - (2 \times 60.00) = 1980.00\text{ mm}$$
+* **3. Hojas Móviles de PVC (Ancho y Alto de Corte):**
+  $$W_{hoja\_corte} = \frac{1880.00 + 40.00}{2} + 6.00 = \frac{1920.00}{2} + 6.00 = 960.00 + 6.00 = 966.00\text{ mm}$$
+  $$H_{hoja\_corte} = 1980.00 - (2 \times 12.00) = 1980.00 - 24.00 = 1956.00\text{ mm}$$
+* **4. Paños de Vidrio Simple o Termopanel:**
+  $$W_{vidrio} = (966.00 - 6.00) - (2 \times 75.00) + (2 \times 20.00) - (2 \times 5.00) = 960.00 - 150.00 + 40.00 - 10.00 = 840.00\text{ mm}$$
+  *(Con ajuste de cruce y junquillo Demo 60: $820.00 \times 1810.00\text{ mm}$).*
