@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Web Cloud 100% • OCR Cuaderno de Obra • Escáner QR Web • Móvil Esencial)
+**Versión Oficial:** 1.2 (Sanitized Canonical Architecture • Zero Scope Creep)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -1886,9 +1886,9 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
      ┌────────────────────────────────┴────────────────────────────────┐
      ▼                                                                 ▼
 [ PRE-INVOCATION HOOKS ]                                      [ ENRUTADOR DE MODELOS ]
-• Validación de saldo (credit_ledger)                         • Dekopen Neural Core (Luna 99%)
-• Sanitización de inyecciones (Indirect Prompt Injection)     • Dekopen Vision CAD (Gemini 3.7)
-• Inyección de identidad y RLS (org_id)                       • Dekopen Titan (Sol / Kimi Opt-In)
+• Validación de saldo (credit_ledger)                         • Primary NLP Engine (GPT-4o / LLM estándar)
+• Sanitización de inyecciones (Indirect Prompt Injection)     • Vision & OCR Engine (Gemini Vision / multimodal)
+• Inyección de identidad y RLS (org_id)                       • Dual Auditor Engine (Segundo modelo independiente)
      │                                                                 │
      └────────────────────────────────┬────────────────────────────────┘
                                       │
@@ -1913,7 +1913,7 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
 | **T2** | Comandos NLP (Canvas) | **ReAct con Hooks** | Alternancia *Thought $\rightarrow$ Action $\rightarrow$ Observation*. La acción llama a `/engine` para diff numérico. |
 | **T3** | Sugerencia de Descuentos | **Chain-of-Thought (CoT)** | Razonamiento paso a paso sobre márgenes antes de sugerir el porcentaje. |
 | **T6** | Compilador de Catálogos | **Directional Stimulus** | Guías semánticas dirigidas a matrices de junquillos y holguras de perfiles. |
-| **T8** | Certificado Fabricabilidad | **Self-Consistency Doble Ciego** | Auditoría dual independiente cruzando Neural Core y Vision CAD (o Titan Sol en Max Effort). |
+| **T8** | Certificado Fabricabilidad | **Self-Consistency Doble Ciego** | Auditoría dual independiente cruzando dos proveedores de IA distintos. |
 
 ---
 
@@ -1961,15 +1961,15 @@ El Certificado de Fabricabilidad (Documento **DOC-08** y Tool **T8**) es una gar
 
 ## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — 50 Créditos)
 
-Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas independientes:
+Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos modelos independientes:
 
 ```
                   [ Árbol Paramétrico + BOM + Memoria de Cálculo ]
                                          │
                  ┌───────────────────────┴───────────────────────┐
                  ▼                                               ▼
-     [ Modelo A: Dekopen Neural Core™ ]           [ Modelo B: Dekopen Vision CAD™ ]
-        (GPT 5.6 Luna xHigh-Max)                      (Gemini 3.7 High / GLM 5.3)
+      [ Modelo A: Validador Primario ]                [ Modelo B: Validador Secundario ]
+          (Proveedor de IA 1)                             (Proveedor de IA 2)
                  │                                               │
                  └───────────────────────┬───────────────────────┘
                                          ▼
@@ -1982,10 +1982,13 @@ Para emitir el sello de certificación oficial sin quemar tokens innecesarios, e
         Sello DOC-08 + Hash + QR                Alerta Crítica + Bloqueo OT
 ```
 
-### Reglas Normativas de T8
-1. **Auditoría Estándar (Default 50 créditos):** Cruza **Dekopen Neural Core™ (GPT 5.6 Luna)** con **Dekopen Vision CAD™ (Gemini 3.7 High)**. No consume tokens de modelos masivos.
-2. **Opción Ultra-Ingeniería (Modo Titan):** Si el usuario activa explícitamente el toggle *"Auditoría Titan (Max Effort)"*, el segundo árbitro escala a **Dekopen Titan Engine™ (GPT 5.6 Sol)**.
-3. **Concordancia Matemática:** Cualquier desviación $> 0.00\text{ mm}$ en holguras o $> 0.1\text{ kg}$ en peso de hoja bloquea la emisión del certificado y alerta al taller con frase de inspección.
+---
+
+## 3. Reglas Normativas de T8
+
+1. **Auditoría Estándar (Default 50 créditos):** Cruza dos motores de IA independientes para verificar que no existan alucinaciones estructurales.
+2. **Concordancia Matemática Obligatoria:** Cualquier desviación $> 0.00\text{ mm}$ en holguras o $> 0.1\text{ kg}$ en peso de hoja bloquea la emisión del certificado y alerta al taller con frase de inspección.
+3. **Sello Criptográfico:** Al aprobarse, genera el documento **DOC-08** con código QR público que resuelve el estado de fabricación sin exponer costos ni despiece confidencial del taller.
 
 
 
@@ -2838,27 +2841,26 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 <!-- INICIO DE STACK_APLICACIONES_Y_SERVICIOS.md -->
 
 
-# STACK OFICIAL DE MODELOS Y AI ROUTER 2026 — DEKOPEN (v1.2)
-**Fecha:** 30 de Agosto de 2026  
+# STACK OFICIAL DE MODELOS Y AI ROUTER — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** Nombres de marca propios (White-label), 99% de operaciones sobre GPT 5.6 Luna xHigh-Max (eficiente y ultra-rápido), activación explícita ("Modo Titan / Ultra-Ingeniería") para modelos pesados (Sol / Kimi k3), y pasarela internacional vía **Creem (Merchant of Record - MoR)**.
+**Filosofía:** AI Gateway desacoplado, motor determinista a $0 tokens en `/engine`, y pasarelas de pago Flow.cl (Chile CLP) y Paddle (Global USD MoR).
 
 ---
 
-## 1. Arquitectura del AI Gateway y Nombres Propios de Marca
+## 1. Arquitectura del AI Gateway
 
-El usuario final y los clientes de los talleres **jamás ven nombres comerciales de proveedores de IA** ("GPT", "Gemini", "OpenAI", "Kimi"). La interfaz expone la suite de marca propia de Dekopen con tres niveles de potencia:
+El usuario final y los talleres operan sobre la interfaz de Dekopen con tres perfiles de procesamiento configurables vía variables de entorno:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                DEKOPEN AI INTELLIGENCE SUITE                                     │
 ├───────────────────────────────┬──────────────────────────────────┬───────────────────────────────┤
-│ ⚡ DEKOPEN NEURAL CORE™       │ 👁️ DEKOPEN VISION CAD™           │ 🔬 DEKOPEN TITAN ENGINE™      │
-│ (99% de las Operaciones)      │ (Visión y Planos Multimodal)     │ (Modo Ultra-Ingeniería / Opt) │
+│ ⚡ MODELO PRINCIPAL NLP       │ 👁️ MODELO DE VISIÓN Y PLANOS     │ 🔬 VALIDADOR DE DOBLE CIEGO   │
+│ (99% de las Operaciones)      │ (Extracción Multimodal)          │ (Certificación DOC-08 T8)     │
 ├───────────────────────────────┼──────────────────────────────────┼───────────────────────────────┤
-│ Backend: GPT 5.6 Luna xHigh   │ Backend: Gemini 3.7 High/GLM 5.3 │ Backend: GPT 5.6 Sol / Kimi k3│
-│ Consumo: 1x (Ultra eficiente) │ Consumo: 2x (Solo con imágenes)  │ Consumo: 5x–10x (Bajo demanda)│
-│ Para: Comandos, diffs, cotizar│ Para: OCR planos PDF y cuadros   │ Para: Catálogos 100p / Mega QC│
+│ Backend: OpenAI / LLM Estándar│ Backend: Google Gemini Vision    │ Backend: Proveedor Secundario │
+│ Consumo: 1x (Ultra eficiente) │ Consumo: 2x (Solo con imágenes)  │ Consumo: 5x (Solo en T8)      │
+│ Para: Comandos, diffs, cotizar│ Para: OCR planos PDF y cuadros   │ Para: Doble verificación T8   │
 └───────────────────────────────┴──────────────────────────────────┴───────────────────────────────┘
 ```
 
@@ -2866,12 +2868,11 @@ El usuario final y los clientes de los talleres **jamás ven nombres comerciales
 
 ## 2. Matriz de Enrutamiento Inteligente (AI Router)
 
-| Nombre de Marca en UI | Nivel de Potencia / Modo | Backend Real | Casos de Uso Exclusivos | Consumo de Créditos |
-|---|---|---|---|:---:|
-| **Dekopen Neural Core™** | **Estándar (Default 99%)** | `gpt-5.6-luna-xhigh-max` | Comandos NLP (T2/T3), árbol paramétrico, explicaciones de taller (T5), cálculo comercial, semáforo y cotizador rápido (T9). | **Bajo** (1 a 4 cr) |
-| **Dekopen Vision CAD™** | **Visión Multimodal** | `gemini-3.7-high` / `glm-5.3` | Se invoca **exclusivamente** al subir archivos visuales: extracción de vanos en planos arquitectónicos (T1) y reconocimiento de perfiles. | **Medio** (10 cr / plano) |
-| **Dekopen Titan Engine™** | **Ultra-Ingeniería (Max Effort)** | `gpt-5.6-sol` | **Solo activable por el usuario con toggle explícito** en UI ("Activar Razonamiento Titan") para resolver proyectos de extrema complejidad o estructuras especiales. | **Alto** (15 a 50 cr) |
-| **Dekopen Matrix Reader™** | **Catálogos Masivos (Long Context)** | `kimi-k3` | **Solo con toggle explícito** al compilar catálogos técnicos de más de 50 páginas con cientos de matrices de junquillos. | **Por página** ($25 + 2\text{ cr/pág}$) |
+| Nivel de Potencia | Backend Configurado | Casos de Uso Exclusivos | Consumo de Créditos |
+|---|---|---|:---:|
+| **Estándar NLP (Default 99%)** | `OPENAI_API_KEY` (GPT-4o / compatible) | Comandos NLP (T2/T3), árbol paramétrico, explicaciones de taller (T5), cálculo comercial y semáforo. | **Bajo** (1 a 4 cr) |
+| **Visión Multimodal** | `GOOGLE_AI_API_KEY` (Gemini Vision) | Extracción de vanos en planos arquitectónicos PDF (T1), cuadros de medidas y fotos de cuadernos de obra. | **Medio** (10 cr / plano) |
+| **Doble Verificador T8** | Proveedor Independiente Cruzado | Arbitraje independiente para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (50 cr) |
 
 ---
 
@@ -2880,101 +2881,18 @@ El usuario final y los clientes de los talleres **jamás ven nombres comerciales
 | Región | Pasarela | Rol | Moneda | Razón de Elección |
 |---|---|---|---|---|
 | **Chile** | **Flow.cl** | Pasarela Directa | **CLP** | Medios de pago chilenos (Webpay, Khipu, Servipag) y emisión obligatoria de DTE / Factura Electrónica. |
-| **Internacional (Global)** | **Creem** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Creem recauda, declara y paga automáticamente los impuestos (Sales Tax en EE. UU., IVA/VAT en Europa y LatAm). |
+| **Internacional (Global)** | **Paddle** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Paddle recauda, declara y paga automáticamente los impuestos (Sales Tax e IVA internacional). |
 
 ---
 
-## 4. UI/UX: Selector de Potencia en el Canvas CAD
-
-En la barra de estado superior del Canvas 2D (Pantalla S06) y en la configuración de la Billetera (S20):
-
-```
-+----------------------------------------------------------------------------------------------------+
-| MOTOR DE IA: [ (•) Dekopen Neural Core (Rápido)  |  ( ) Modo Titan Ultra-Ingeniería (Max Effort) ]  |
-| ⚡ Modo Neural activo: 99.4% precisión matemática • 1.420 créditos disponibles                     |
-+----------------------------------------------------------------------------------------------------+
-```
-
----
-
-## 5. Protocolo de Protección contra Desperdicio de Tokens (Zero-Waste)
-
-Para garantizar un consumo mínimo de tokens tanto en desarrollo (Codex) como en la aplicación en producción (SaaS):
+## 4. Protocolo de Protección contra Desperdicio de Tokens (Zero-Waste)
 
 1. **Cálculos Matemáticos a $0 Token:** Ningún corte, medida, vidrio o cálculo de rentabilidad pasa por un LLM. Todo es procesado en microsegundos por el motor en Python `/engine`.
-2. **Bloqueo Preventivo de Saldo Cero:** El backend verifica y bloquea el saldo en `credit_ledger` *antes* de enviar cualquier request a la API de OpenAI/Google. Si el saldo es 0, no se realiza la llamada HTTP.
+2. **Bloqueo Preventivo de Saldo Cero:** El backend verifica y bloquea el saldo en `credit_ledger` *antes* de enviar cualquier request a la API de IA. Si el saldo es 0, no se realiza la llamada HTTP.
 3. **Payloads Estrictos con `max_output_tokens`:** Las respuestas de las Tools (T1 a T12) están forzadas a JSON estructurado y conciso (e.g., T2 devuelve ~50 tokens de diff, jamás párrafos explicativos innecesarios).
-4. **Gating Visual:** Modelos multimodales (`Gemini 3.7 High`) se invocan **únicamente** cuando se adjunta un archivo PDF/imagen; las peticiones de texto plano se enrutan a modelos ultralivianos.
+4. **Gating Visual:** Modelos multimodales se invocan **únicamente** cuando se adjunta un archivo PDF o imagen; las peticiones de texto plano se enrutan a modelos estándar.
 5. **Anti-Loop Circuit Breaker:** Cualquier fallo en OCR o NLP tiene un límite estricto de **1 reintento**. Prohibidos los bucles de llamadas infinitas.
 6. **En Desarrollo (Codex):** El agente utiliza contexto JIT (lee solo el PRD del shot actual, ~2k tokens) y realiza ediciones quirúrgicas de líneas específicas en lugar de reescribir archivos enteros.
-
----
-
-## 6. Plantilla de Variables de Entorno (`.env.example`)
-
-```env
-# ==============================================================================
-# DEKOPEN AI GATEWAY & BILLING 2026 — VARIABLES DE ENTORNO
-# ==============================================================================
-
-# Core Backend
-ENVIRONMENT=development
-SECRET_KEY=django-insecure-change-this-in-production-key-seed-dekopen-2026
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1,api.dekopen.com,backend-production.up.railway.app
-CORS_ALLOWED_ORIGINS=http://localhost:5173,https://app.dekopen.com
-
-# Supabase Pro (PostgreSQL 16 con RLS + Auth + Storage)
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
-SUPABASE_URL=https://[PROJECT_REF].supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOi...anon_key
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...service_role_key
-SUPABASE_JWT_SECRET=supabase-jwt-signing-secret-here
-
-# Supabase Storage Buckets
-SUPABASE_STORAGE_BUCKET_DOCS=dekopen-documents
-SUPABASE_STORAGE_BUCKET_PLANS=dekopen-blueprints
-SUPABASE_STORAGE_BUCKET_CATALOGS=dekopen-catalogs
-
-# AI Gateway 2026 (99% Default: GPT 5.6 Luna xHigh-Max / Vision: Gemini 3.7 / Opt-in: Sol & Kimi)
-OPENAI_API_KEY=sk-proj-your-openai-key-here
-AI_MODEL_PRIMARY_NEURAL=gpt-5.6-luna-xhigh-max
-AI_MODEL_TITAN_SOL=gpt-5.6-sol
-
-GOOGLE_AI_API_KEY=AIzaSy-your-google-ai-key-here
-AI_MODEL_VISION_CAD=gemini-3.7-high
-GLM_API_KEY=glm-your-key-here
-AI_MODEL_FALLBACK_VISION=glm-5.3
-
-KIMI_API_KEY=kimi-your-key-here
-AI_MODEL_TITAN_CATALOG=kimi-k3
-
-AI_DEFAULT_EFFORT_LEVEL=neural_standard
-
-# Payments: Flow.cl (Chile - CLP)
-FLOW_API_KEY=flow_sandbox_api_key
-FLOW_SECRET_KEY=flow_sandbox_secret_key
-FLOW_API_URL=https://sandbox.flow.cl/api
-FLOW_WEBHOOK_SECRET=flow_webhook_secret
-
-# Payments: Creem Global MoR (USD - Taxes/VAT automatizado)
-CREEM_ENVIRONMENT=sandbox
-CREEM_API_KEY=creem_sandbox_api_key
-CREEM_WEBHOOK_SECRET=creem_sandbox_webhook_secret
-CREEM_CLIENT_TOKEN=creem_sandbox_client_token
-
-# Mailing & Telemetry
-RESEND_API_KEY=re_your_resend_api_key
-DEFAULT_FROM_EMAIL=notificaciones@dekopen.com
-CUSTOMERIO_SITE_ID=customerio_site_id
-CUSTOMERIO_API_KEY=customerio_api_key
-
-VITE_POSTHOG_KEY=phc_public_project_api_key
-VITE_POSTHOG_HOST=https://us.i.posthog.com
-VITE_FIN_INTERCOM_APP_ID=intercom_app_id
-JAM_PROJECT_ID=jam_project_token
-N8N_WEBHOOK_URL=https://dekopen.app.n8n.cloud/webhook/...
-```
 
 
 

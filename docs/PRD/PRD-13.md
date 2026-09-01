@@ -17,9 +17,9 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
      ┌────────────────────────────────┴────────────────────────────────┐
      ▼                                                                 ▼
 [ PRE-INVOCATION HOOKS ]                                      [ ENRUTADOR DE MODELOS ]
-• Validación de saldo (credit_ledger)                         • Dekopen Neural Core (Luna 99%)
-• Sanitización de inyecciones (Indirect Prompt Injection)     • Dekopen Vision CAD (Gemini 3.7)
-• Inyección de identidad y RLS (org_id)                       • Dekopen Titan (Sol / Kimi Opt-In)
+• Validación de saldo (credit_ledger)                         • Primary NLP Engine (GPT-4o / LLM estándar)
+• Sanitización de inyecciones (Indirect Prompt Injection)     • Vision & OCR Engine (Gemini Vision / multimodal)
+• Inyección de identidad y RLS (org_id)                       • Dual Auditor Engine (Segundo modelo independiente)
      │                                                                 │
      └────────────────────────────────┬────────────────────────────────┘
                                       │
@@ -44,7 +44,7 @@ El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para to
 | **T2** | Comandos NLP (Canvas) | **ReAct con Hooks** | Alternancia *Thought $\rightarrow$ Action $\rightarrow$ Observation*. La acción llama a `/engine` para diff numérico. |
 | **T3** | Sugerencia de Descuentos | **Chain-of-Thought (CoT)** | Razonamiento paso a paso sobre márgenes antes de sugerir el porcentaje. |
 | **T6** | Compilador de Catálogos | **Directional Stimulus** | Guías semánticas dirigidas a matrices de junquillos y holguras de perfiles. |
-| **T8** | Certificado Fabricabilidad | **Self-Consistency Doble Ciego** | Auditoría dual independiente cruzando Neural Core y Vision CAD (o Titan Sol en Max Effort). |
+| **T8** | Certificado Fabricabilidad | **Self-Consistency Doble Ciego** | Auditoría dual independiente cruzando dos proveedores de IA distintos. |
 
 ---
 
