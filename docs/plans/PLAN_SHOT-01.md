@@ -99,7 +99,7 @@ El harness también verificará que los directorios, manifiestos y suites obliga
 ## 4. Secuencia de construcción tras aprobación
 
 1. Crear/cambiar a la rama `shot-01` desde el `main` limpio actual.
-2. Resolver los `[PENDIENTE-DECISIÓN]` antes de instalar o fijar dependencias.
+2. Aplicar la lista cerrada restaurada en `PRD-00` §6 al instalar o fijar dependencias.
 3. Crear el scaffold Python/engine/backend y sus smoke tests.
 4. Crear el scaffold frontend, lockfile y sus comprobaciones estrictas.
 5. Endurecer el checker, luego alinear Makefile, pre-commit y CI.
@@ -125,8 +125,8 @@ Commits previstos, ajustables solo para mantener atomicidad real:
 
 ## 6. Riesgos y decisiones pendientes
 
-- `[PENDIENTE-DECISIÓN — BLOQUEANTE]` `docs/PRD/PRD-00.md` declara que la lista cerrada de dependencias está en §10, pero el archivo real termina en §5. `PLAN_SHOTS.md` sí nombra Python tooling, Django 5.1, DRF 3.15, drf-spectacular, pytest-django, React 18, Vite, Tailwind CSS, TypeScript 5.6 y Vitest, pero no fija el conjunto/versiones compatibles de paquetes auxiliares (por ejemplo, adapter de Vite para React, ESLint, DOM de tests y PostCSS). Antes de Fase 2, el owner debe aportar/restaurar §10 o aprobar explícitamente el manifiesto/lockfile exacto; el builder no lo inventará.
-- `[PENDIENTE-DECISIÓN — BLOQUEANTE PARA CIERRE]` La estación no tiene GitHub CLI instalado y el estado real de branch protection no pudo consultarse por esa vía. Debe confirmarse si la activación se hará con una sesión GitHub autenticada disponible o manualmente por el owner; documentación sin activación no satisface el gate.
-- **Entorno local:** Python es 3.14.4 y Node 24.14.0, mientras la CI existente usa Python 3.12 y Node 20; Ruff, Mypy y Pytest no están instalados globalmente. Se usará un entorno local aislado y las versiones CI bloqueadas, sin depender de instalaciones globales.
-- **Riesgo de falso verde actual:** `scripts/check_dod.py` usa retornos ignorados y omite herramientas/suites ausentes; `scripts/check_dod.sh` contiene `|| true`; la CI actual no tiene job de build. El endurecimiento fail-closed es parte inseparable de SHOT-01.
+- `[RESUELTO]` El commit base `b3a88ef` restauró la lista cerrada en `docs/PRD/PRD-00.md` §6 y corrigió la referencia constitucional. La implementación queda limitada a esa lista y a las herramientas nombradas expresamente por el gate de SHOT-01.
+- `[RESUELTO PARA EJECUCIÓN]` El owner confirmó `https://github.com/KaraAliOsman/framedex`, que coincide con `origin`. La activación y consulta de branch protection se intentará mediante la credencial Git ya configurada; si GitHub rechaza permisos, el cierre quedará pendiente de acción manual del owner.
+- **Entorno local:** Python es 3.14.4 y Node 24.14.0, mientras la CI usa Python 3.12 y Node 20.19. La verificación local se ejecuta en `.venv` y no depende de instalaciones Python globales.
+- `[RESUELTO]` El falso verde inicial fue eliminado: el checker propaga retornos, exige herramientas/suites y build; el wrapper POSIX ya no contiene bypasses. Las pruebas negativas verifican rechazo de un comando no cero y de una suite ausente.
 - **Riesgo de alcance:** el repositorio contiene documentos y variables de shots futuros. Se conservarán intactos y no se convertirán en implementación anticipada.
