@@ -28,7 +28,7 @@ El usuario final y los talleres operan sobre la interfaz de Dekopen con tres per
 | Nivel de Potencia | Backend Configurado | Casos de Uso Exclusivos | Consumo de Créditos |
 |---|---|---|:---:|
 | **Estándar NLP (Default 99%)** | `OPENAI_API_KEY` (GPT-4o / compatible) | Comandos NLP (T2/T3), árbol paramétrico, explicaciones de taller (T5), cálculo comercial y semáforo. | **Bajo** (1 a 4 cr) |
-| **Visión Multimodal** | `GOOGLE_AI_API_KEY` (Gemini Vision) | Extracción de vanos en planos arquitectónicos PDF (T1), cuadros de medidas y fotos de cuadernos de obra. | **Medio** (10 cr / plano) |
+| **Visión Multimodal** | `GOOGLE_AI_API_KEY` (Gemini Vision) | Extracción de vanos en planos arquitectónicos PDF (T1) y cuadros de medidas impresos. | **Medio** (10 cr / plano) |
 | **Doble Verificador T8** | Proveedor Independiente Cruzado | Arbitraje independiente para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (50 cr) |
 
 ---
