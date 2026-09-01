@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Fidelidad Geométrica Real • Texturas Renolit Curadas • Uniones PVC 45° vs Alu 90°)
+**Versión Oficial:** 1.2 (Estándar Mobile-First PWA • Ergonomía de Pulgar • Gestos CAD • Offline)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -2376,64 +2376,75 @@ graph TD
 <!-- INICIO DE PRD-DESIGN-SYSTEM-ADOBE.md -->
 
 
-# PRD: MOTOR VECTORIAL DE ALTA FIDELIDAD Y TEXTURAS ARQUITECTÓNICAS (v1.2)
+# PRD: DESIGN SYSTEM ADOBE, MOTOR CAD Y ARQUITECTURA MOBILE-FIRST PWA (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Fidelidad Geométrica Real • Texturas Renolit / Anodizados • Uniones PVC 45° vs Aluminio 90°)  
+**Versión:** 1.2 (Estándar Mobile Pro • Ergonomía de Pulgar • Gestos CAD • PWA Offline)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
 
-## 1. Fidelidad Visual Absoluta: PVC Real vs. Aluminio Real
+## 1. Filosofía Móvil: Una App Nativa Pro en el Teléfono (Cero Web Comprimida)
 
-En Dekopen, el dibujo de cada ventana **NO es una representación genérica**. Se construye paramétricamente a partir de los datos exactos del catálogo técnico (`profile_articles`):
+El 70% del tiempo de un dueño de taller, vendedor o instalador transcurre fuera de la oficina: en la camioneta, visitando clientes o en una obra en construcción. 
+
+Dekopen en el celular **NO es una página web de escritorio encogida donde tienes que hacer zoom con los dedos**: está diseñado como una **Progressive Web App (PWA) de nivel profesional (tipo Uber, Figma Mobile o Revolut)** con ergonomía de pulgar, teclado numérico de obra y soporte offline.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                COMPARATIVA DE FIDELIDAD TÉCNICA                                  │
-├───────────────────────────────────┬──────────────────────────────────────────────────────────────┤
-│ 🪟 VENTANA DE PVC (Ej: Proline/Veka)│ 🪟 VENTANA DE ALUMINIO (Ej: Xelentia/Alas 20)                 │
-├───────────────────────────────────┼──────────────────────────────────────────────────────────────┤
-│ • Vista de perfil ancha: 60–70 mm.│ • Vista de perfil esbelta y recta: 35–45 mm.                 │
-│ • Uniones esquineras a 45°        │ • Uniones esquineras a 90° mecánicas con corte recto y junta │
-│   (Costura de soldadura técnica). │   milimétrica de ensamble con escuadra.                      │
-│ • Textura: Foliado Renolit con    │ • Textura: Anodizado metálico satinado o pintura electrostá- │
-│   veta natural de madera o mate.  │   tica micro-texturada (Polvo Qualicoat).                    │
-│ • Junquillo biselado suave.       │ • Junquillo recto minimalista clipado a presión.             │
-└───────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+│                               ARQUITECTURA MÓVIL "THUMB ZONE" (PWA)                              │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 📱 PANTALLA PRINCIPAL EN CELULAR                                                                 │
+│                                                                                                  │
+│ ┌────────────────────────────────────────────────────────────┐                                   │
+│ │ [≡] Dekopen Pro             Proyecto: Casa Peñalolén   [⚙️]│ <── Barra superior minimalista    │
+│ ├────────────────────────────────────────────────────────────┤                                   │
+│ │                                                            │                                   │
+│ │                     [ CANVAS CAD TÁCTIL ]                  │ <── Viewport con gestos multitouch│
+│ │              • Pinch-to-zoom suave (2 dedos)               │     (Pellizcar, arrastrar, tap)   │
+│ │              • Doble tap para centrar ventana              │                                   │
+│ │                                                            │                                   │
+│ ├────────────────────────────────────────────────────────────┤                                   │
+│ │  Posición 1: 1.500 × 1.200 mm  •  Serie Proline 60  [Nogal]│ <── Tarjeta de resumen de posición│
+│ ├────────────────────────────────────────────────────────────┤                                   │
+│ │  ⚡ TOTAL: $285.000 CLP                                    │                                   │
+│ │  [ 📄 WhatsApp PDF ]         [ ✏️ Modificar con Cmd+K ]     │ <── ZONA DE PULGAR (Bottom Sheet) │
+│ └────────────────────────────────────────────────────────────┘     (Botones de 48px accesibles)  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Biblioteca de Texturas Arquitectónicas Curadas (Cero Inventos de IA)
+## 2. Los 5 Pilares de la Experiencia Móvil Pro
 
-En lugar de dejar que la IA invente colores o degradados aleatorios, el sistema utiliza una **biblioteca cerrada de patrones de alta resolución WebP sin costuras (*seamless patterns*)** ubicada en `/assets/textures/`:
+### 2.1. Ergonomía de la "Zona del Pulgar" (*Thumb Zone Architecture*)
+- Todos los controles críticos (cambiar serie, cambiar color, agregar división, ajustar ganancia, enviar cotización) están ubicados en la mitad inferior de la pantalla en **paneles deslizables (*Bottom Sheets*)**.
+- El usuario opera la aplicación completa con **una sola mano mientras camina por la obra**.
+- Los botones tienen un área táctil mínima de **$48 \times 48\text{ px}$** con micro-vibración háptica (*Haptic Feedback*) al tocar.
 
-| Código de Acabado | Material | Archivo de Textura Curada | Comportamiento Visual |
-|---|---|---|---|
-| `PVC_WHITE_9016` | PVC | `pvc_white_satin.webp` | Blanco cálido RAL 9016 con sombreado de profundidad en rebajes de cámara. |
-| `PVC_FOIL_NOGAL` | PVC | `foil_renolit_nogal.webp` | Foliado original Renolit Nogal con vetas de madera oscura y relieve satinado. |
-| `PVC_FOIL_ROBLE` | PVC | `foil_renolit_golden_oak.webp` | Roble Dorado con tinte miel y micro-fibras naturales. |
-| `PVC_FOIL_ANTRACITA`| PVC | `foil_renolit_antracita_sand.webp`| Gris Antracita RAL 7016 con micro-textura arenada mate. |
-| `ALU_MATE_NATURAL`| Aluminio | `alu_anodized_silver.webp` | Aluminio natural anodizado con sutil reflejo metálico direccional. |
-| `ALU_TITANIO_ANOD`| Aluminio | `alu_anodized_titanium.webp` | Tono titanio/champagne satinado de alta gama. |
-| `ALU_NEGRO_ELECTRO`| Aluminio | `alu_powder_black_matte.webp` | Negro mate electrostático Qualicoat micro-texturado. |
+### 2.2. Teclado Numérico CAD de Obra (Oversized CAD Numpad)
+- Al tocar el ancho o el alto de una ventana, **NO se abre el teclado genérico del celular** (que estorba y tapa el dibujo).
+- Se despliega un **teclado numérico gigante integrado con accesos directos de taller**:
+  `[ 1.000 ]  [ 1.200 ]  [ 1.500 ]  [ 2.000 ]  [ +50mm ]  [ ⌫ ]`
+- Permite ingresar cotas exactas en 2 segundos, incluso usando guantes de trabajo.
 
----
+### 2.3. Gestos Multitáctiles en el Canvas 2D
+- **Pellizcar para Zoom (*Pinch-to-Zoom*):** Acerca y aleja la ventana con inercia física suave a 60 FPS.
+- **Doble Tap:** Centra y encuadra la ventana automáticamente en la pantalla.
+- **Tap en un Paño:** Despliega un menú radial táctil (*Radial Context Menu*):
+  `[ Cambiar a Oscilobatiente ] • [ Poner Fijo ] • [ Cambiar Vidrio ] • [ Eliminar ]`
 
-## 3. Renderizado Óptico del Vidrio y Termopanel
+### 2.4. Flujo "Cotización en Terreno en 60 Segundos"
+Diseñado para cerrar la venta directamente frente al cliente en su casa:
+1. Tocar **`+ Nueva Cotización`**.
+2. Tomar foto al plano con la cámara $\rightarrow$ la IA detecta los vanos al instante.
+3. Elegir color tocando la muestra real de textura (**Nogal**, **Blanco**, **Antracita**).
+4. El precio total se calcula en tiempo real con margen protegido.
+5. Presionar **`Compartir por WhatsApp`**: genera el PDF comercial oficial y el enlace interactivo en un solo toque.
 
-El acristalamiento se dibuja con fidelidad arquitectónica real:
-1. **Luz de Vidrio Real:** Calculada descontando el ancho exacto del marco, la hoja y el junquillo según la serie seleccionada.
-2. **Reflejo Arquitectónico Vectorial:** Gradiente suave a 45° con transparencia ($88\%$ de opacidad) y sutil tinte azul/verdoso técnico que simula el vidrio con tratamiento Low-E y cámara de gas Argón.
-3. **Borde Perimetral de Espaciador (*Warm-Edge*):** Sutil línea oscura perimetral de $1\text{px}$ que representa el intercalario térmico de la cámara del termopanel.
-
----
-
-## 4. Por qué esta arquitectura es la más "Top" y Ligera:
-
-- **100% Vectorial y Nítida:** Pesa menos de $150\text{ KB}$ por ventana, carga instantáneamente en cualquier teléfono y se ve nítida en pantallas 4K/Retina.
-- **Exportación Idéntica a PDF:** La misma textura y proporciones geométricas exactas se plasman en el PDF de cotización sin pixelarse al imprimir.
-- **Cero Complejidad de Videojuego:** No sobrecalienta el celular del cliente ni la computadora del taller.
+### 2.5. Modo PWA Instalable & Soporte Offline en Obra
+- **Instalación en 1 Clic:** Se instala en iOS (Safari $\rightarrow$ *"Agregar a inicio"*) y Android como una aplicación nativa con icono propio y pantalla de carga sin barra de navegador.
+- **Modo Offline:** Si estás en un subterráneo o en una obra rural sin señal 4G/5G, puedes seguir diseñando ventanas y guardando cotizaciones. Cuando recuperas internet, se sincroniza automáticamente con la nube.
+- **Escáner QR Integrado con la Cámara:** Permite a los instaladores escanear la etiqueta de la ventana en obra para ver el plano de armado y checklist de entrega.
 
 
 
