@@ -1,65 +1,58 @@
-# PRD: DESIGN SYSTEM PROFESIONAL & MOTOR CAD CANVAS (v1.2)
+# PRD: MOTOR VECTORIAL DE ALTA FIDELIDAD Y TEXTURAS ARQUITECTÓNICAS (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Prohibición de Vibe-Coding • Motor Canvas 2D GPU • Estándar Figma/AutoCAD)  
+**Versión:** 1.2 (Fidelidad Geométrica Real • Texturas Renolit / Anodizados • Uniones PVC 45° vs Aluminio 90°)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
 
-## 1. Prohibición Absoluta de Vibe-Coding e Ilustraciones de IA
+## 1. Fidelidad Visual Absoluta: PVC Real vs. Aluminio Real
 
-Queda **terminantemente prohibido** el uso de patrones típicos de diseño generativo ("vibe-coding"):
-- ❌ **Prohibido:** Efectos de resplandor neón (*glow*), sombras borrosas (*drop-shadows* excesivos) o filtros de desenfoque (*backdrop-blur* tipo vidrio falso).
-- ❌ **Prohibido:** Rectángulos redondeados caricaturescos o dibujos planos que parezcan ilustraciones infantiles.
-- ❌ **Prohibido:** Colores con degradados saturados que hagan parecer la aplicación un demo de IA.
+En Dekopen, el dibujo de cada ventana **NO es una representación genérica**. Se construye paramétricamente a partir de los datos exactos del catálogo técnico (`profile_articles`):
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ❌ EL ERROR DEL VIBE CODING (Falso e Infantil) │ ⚡ EL ESTÁNDAR CAD PROFESIONAL (Figma / AutoCAD) │
-├────────────────────────────────────────────────┼─────────────────────────────────────────────────┤
-│ • SVGs con sombras y brillos borrosos.         │ • Motor Canvas 2D / PixiJS acelerado por GPU.   │
-│ • Tarjetas con bordes brillantes y glow.       │ • Líneas vectoriales técnicas nítidas de 1px.   │
-│ • Texto plano sin alineación geométrica.       │ • Cotas arquitectónicas con tipografía tabular. │
-│ • Degradados morados/azules genéricos de IA.   │ • Interfaz neutra estilo Adobe Studio / Linear. │
-└────────────────────────────────────────────────┴─────────────────────────────────────────────────┘
+│                                COMPARATIVA DE FIDELIDAD TÉCNICA                                  │
+├───────────────────────────────────┬──────────────────────────────────────────────────────────────┤
+│ 🪟 VENTANA DE PVC (Ej: Proline/Veka)│ 🪟 VENTANA DE ALUMINIO (Ej: Xelentia/Alas 20)                 │
+├───────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ • Vista de perfil ancha: 60–70 mm.│ • Vista de perfil esbelta y recta: 35–45 mm.                 │
+│ • Uniones esquineras a 45°        │ • Uniones esquineras a 90° mecánicas con corte recto y junta │
+│   (Costura de soldadura técnica). │   milimétrica de ensamble con escuadra.                      │
+│ • Textura: Foliado Renolit con    │ • Textura: Anodizado metálico satinado o pintura electrostá- │
+│   veta natural de madera o mate.  │   tica micro-texturada (Polvo Qualicoat).                    │
+│ • Junquillo biselado suave.       │ • Junquillo recto minimalista clipado a presión.             │
+└───────────────────────────────────┴──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Motor de Renderizado: Canvas 2D Técnico Acelerado por GPU (`Konva.js` / `PixiJS`)
+## 2. Biblioteca de Texturas Arquitectónicas Curadas (Cero Inventos de IA)
 
-En lugar de incrustar SVGs estáticos con estilos de CSS, el dibujo de carpintería se renderiza sobre un **Viewport CAD Interactivo de Alto Rendimiento**:
+En lugar de dejar que la IA invente colores o degradados aleatorios, el sistema utiliza una **biblioteca cerrada de patrones de alta resolución WebP sin costuras (*seamless patterns*)** ubicada en `/assets/textures/`:
 
-1. **Rendimiento a 60/120 FPS:** Renderizado en Canvas 2D / WebGL acelerado por hardware para soportar proyectos de 50+ ventanas sin lag.
-2. **Viewport Profesional con Zoom y Pan Infinito:**
-   - Zoom suave con la rueda del ratón ($0.1\times$ a $10\times$).
-   - Desplazamiento panorámico (*Pan*) con barra espaciadora o botón central del ratón.
-   - Rejilla de ingeniería (*Grid*) con ajuste magnético (*Snapping*) a $1\text{ mm}$, $5\text{ mm}$ y $10\text{ mm}$.
-3. **Líneas de Espesor Técnico CAD Normalizado:**
-   - Líneas de corte exterior: `1.5px` sólido.
-   - Líneas de traslape interior: `1.0px` sólido.
-   - Líneas de cota y extensión: `0.75px` neutro con puntas de flecha DIN a 45°.
-   - Líneas de apertura cinemática: `0.75px` discontinuo (`dash: [4, 4]`).
-
----
-
-## 3. Sistema de Componentes UI: Estándar Radix UI + Adobe Spectrum Tokens
-
-La interfaz de usuario no utiliza plantillas genéricas. Se construye sobre **primitivas accesibles y ultra-limpias**:
-
-- **Librería de Componentes:** **Radix UI Primitives** (menús, modales, tooltips y sliders sin estilos basura).
-- **Tipografía Técnica:** 
-  - Textos de interfaz: **Inter** o **Geist Sans** (limpia, legible y profesional).
-  - Cotas, medidas y números de dinero: **Geist Mono** o **JetBrains Mono** (tipografía tabular con números monoespaciados para que las cifras no bailen).
-- **Paleta de Colores Neutra y Sobria (Estilo Linear / Adobe):**
-  - Fondo Canvas Claro: `--theme-canvas-bg: #F8FAFC` (Gris técnico suave).
-  - Fondo Canvas Oscuro: `--theme-canvas-bg: #0F172A` (Grafito arquitectónico).
-  - Líneas de Perfil: `--theme-cad-line: #0F172A` (en claro) / `--theme-cad-line: #F1F5F9` (en oscuro).
-  - Acentos de Selección: `--theme-accent: #0284C7` (Azul técnico de ingeniería).
+| Código de Acabado | Material | Archivo de Textura Curada | Comportamiento Visual |
+|---|---|---|---|
+| `PVC_WHITE_9016` | PVC | `pvc_white_satin.webp` | Blanco cálido RAL 9016 con sombreado de profundidad en rebajes de cámara. |
+| `PVC_FOIL_NOGAL` | PVC | `foil_renolit_nogal.webp` | Foliado original Renolit Nogal con vetas de madera oscura y relieve satinado. |
+| `PVC_FOIL_ROBLE` | PVC | `foil_renolit_golden_oak.webp` | Roble Dorado con tinte miel y micro-fibras naturales. |
+| `PVC_FOIL_ANTRACITA`| PVC | `foil_renolit_antracita_sand.webp`| Gris Antracita RAL 7016 con micro-textura arenada mate. |
+| `ALU_MATE_NATURAL`| Aluminio | `alu_anodized_silver.webp` | Aluminio natural anodizado con sutil reflejo metálico direccional. |
+| `ALU_TITANIO_ANOD`| Aluminio | `alu_anodized_titanium.webp` | Tono titanio/champagne satinado de alta gama. |
+| `ALU_NEGRO_ELECTRO`| Aluminio | `alu_powder_black_matte.webp` | Negro mate electrostático Qualicoat micro-texturado. |
 
 ---
 
-## 4. Cotizaciones Ejecutivas en PDF (Vectorial Puro con WeasyPrint & Cairo)
+## 3. Renderizado Óptico del Vidrio y Termopanel
 
-Para los presupuestos comerciales (DOC-01):
-- **Cero Artefactos de Rasterizado:** Los dibujos técnicos se incrustan como vectores vectoriales puros a `300 DPI` de impresión.
-- **Tipografía Incrustada:** Todos los números y símbolos técnicos se compilan con fuentes vectoriales nativas, garantizando que el PDF se vea impecable tanto en un teléfono como impreso en papel en la obra.
+El acristalamiento se dibuja con fidelidad arquitectónica real:
+1. **Luz de Vidrio Real:** Calculada descontando el ancho exacto del marco, la hoja y el junquillo según la serie seleccionada.
+2. **Reflejo Arquitectónico Vectorial:** Gradiente suave a 45° con transparencia ($88\%$ de opacidad) y sutil tinte azul/verdoso técnico que simula el vidrio con tratamiento Low-E y cámara de gas Argón.
+3. **Borde Perimetral de Espaciador (*Warm-Edge*):** Sutil línea oscura perimetral de $1\text{px}$ que representa el intercalario térmico de la cámara del termopanel.
+
+---
+
+## 4. Por qué esta arquitectura es la más "Top" y Ligera:
+
+- **100% Vectorial y Nítida:** Pesa menos de $150\text{ KB}$ por ventana, carga instantáneamente en cualquier teléfono y se ve nítida en pantallas 4K/Retina.
+- **Exportación Idéntica a PDF:** La misma textura y proporciones geométricas exactas se plasman en el PDF de cotización sin pixelarse al imprimir.
+- **Cero Complejidad de Videojuego:** No sobrecalienta el celular del cliente ni la computadora del taller.
