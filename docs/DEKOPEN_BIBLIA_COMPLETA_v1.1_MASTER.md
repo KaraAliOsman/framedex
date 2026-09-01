@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Canonical Sealed Architecture • Paddle MoR • DIN EN 12519)
+**Versión Oficial:** 1.2 (2026 AI Suite • GPT 5.6 Luna / Gemini 3.7 / Sol & Kimi • Paddle MoR)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -2841,38 +2841,39 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 <!-- INICIO DE STACK_APLICACIONES_Y_SERVICIOS.md -->
 
 
-# STACK OFICIAL DE MODELOS Y AI ROUTER — DEKOPEN (v1.2)
+# STACK OFICIAL DE MODELOS Y AI ROUTER 2026 — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** AI Gateway desacoplado, motor determinista a $0 tokens en `/engine`, y pasarelas de pago Flow.cl (Chile CLP) y Paddle (Global USD MoR).
+**Filosofía:** Enrutador de IA 2026 de alta gama: 99% de operaciones sobre **GPT 5.6 Luna xHigh-Max** (ultra-rápido y económico), **Gemini 3.7 High** para extracción visual de planos, y activación bajo demanda (**GPT 5.6 Sol Max / Kimi k3**) para tareas de alta complejidad.
 
 ---
 
-## 1. Arquitectura del AI Gateway
+## 1. Arquitectura del AI Gateway (Enrutamiento Inteligente)
 
-El usuario final y los talleres operan sobre la interfaz de Dekopen con tres perfiles de procesamiento configurables vía variables de entorno:
+El router de IA enruta dinámicamente cada petición al modelo óptimo según el tipo de tarea y payload:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                DEKOPEN AI INTELLIGENCE SUITE                                     │
 ├───────────────────────────────┬──────────────────────────────────┬───────────────────────────────┤
-│ ⚡ MODELO PRINCIPAL NLP       │ 👁️ MODELO DE VISIÓN Y PLANOS     │ 🔬 VALIDADOR DE DOBLE CIEGO   │
+│ ⚡ MODELO PRINCIPAL NLP       │ 👁️ MODELO DE VISIÓN Y PLANOS     │ 🔬 MODO ULTRA-INGENIERÍA / QC │
 │ (99% de las Operaciones)      │ (Extracción Multimodal)          │ (Certificación DOC-08 T8)     │
 ├───────────────────────────────┼──────────────────────────────────┼───────────────────────────────┤
-│ Backend: OpenAI / LLM Estándar│ Backend: Google Gemini Vision    │ Backend: Proveedor Secundario │
-│ Consumo: 1x (Ultra eficiente) │ Consumo: 2x (Solo con imágenes)  │ Consumo: 5x (Solo en T8)      │
+│ Backend: GPT 5.6 Luna xHigh   │ Backend: Gemini 3.7 High         │ Backend: GPT 5.6 Sol / Kimi k3│
+│ Consumo: 1x (Ultra eficiente) │ Consumo: 2x (Solo con imágenes)  │ Consumo: 5x–10x (Bajo demanda)│
 │ Para: Comandos, diffs, cotizar│ Para: OCR planos PDF y cuadros   │ Para: Doble verificación T8   │
 └───────────────────────────────┴──────────────────────────────────┴───────────────────────────────┘
 ```
 
 ---
 
-## 2. Matriz de Enrutamiento Inteligente (AI Router)
+## 2. Matriz de Enrutamiento por Modelo (AI Router)
 
 | Nivel de Potencia | Backend Configurado | Casos de Uso Exclusivos | Consumo de Créditos |
 |---|---|---|:---:|
-| **Estándar NLP (Default 99%)** | `OPENAI_API_KEY` (GPT-4o / compatible) | Comandos NLP (T2/T3), árbol paramétrico, explicaciones de taller (T5), cálculo comercial y semáforo. | **Bajo** (1 a 4 cr) |
-| **Visión Multimodal** | `GOOGLE_AI_API_KEY` (Gemini Vision) | Extracción de vanos en planos arquitectónicos PDF (T1), cuadros de medidas y fotos de cuadernos de obra. | **Medio** (10 cr / plano) |
-| **Doble Verificador T8** | Proveedor Independiente Cruzado | Arbitraje independiente para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (50 cr) |
+| **Principal NLP (Default 99%)** | `gpt-5.6-luna-xhigh-max` | Comandos de diseño NLP (T2/T3), árbol paramétrico, explicaciones técnicas (T5), cotizador rápido y cálculo de rentabilidad. | **Bajo** (1 a 4 cr) |
+| **Visión Multimodal** | `gemini-3.7-high` | Extracción de cuadros de vanos en planos arquitectónicos PDF (T1) y reconocimiento de cotas milimétricas. | **Medio** (10 cr / plano) |
+| **Doble Verificador T8** | `gpt-5.6-sol` | Arbitraje independiente de doble ciego para la emisión del Certificado de Fabricabilidad (DOC-08). | **Fijo** (50 cr) |
+| **Catálogos Extensos** | `kimi-k3` | Ingestión masiva de catálogos técnicos de 50+ páginas con tablas matriciales complejas de junquillos. | **Por página** ($25 + 2\text{ cr/pág}$) |
 
 ---
 
@@ -2880,8 +2881,8 @@ El usuario final y los talleres operan sobre la interfaz de Dekopen con tres per
 
 | Región | Pasarela | Rol | Moneda | Razón de Elección |
 |---|---|---|---|---|
-| **Chile** | **Flow.cl** | Pasarela Directa | **CLP** | Medios de pago chilenos (Webpay, Khipu, Servipag) y emisión obligatoria de DTE / Factura Electrónica. |
-| **Internacional (Global)** | **Paddle** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Paddle recauda, declara y paga automáticamente los impuestos (Sales Tax e IVA internacional). |
+| **Chile** | **Flow.cl** | Pasarela Directa | **CLP** | Medios de pago chilenos (Webpay, Khipu, Servipag) y emisión obligatoria de Factura Electrónica DTE con RUT. |
+| **Internacional (Global)** | **Paddle** | **Merchant of Record (MoR)** | **USD** | **Cero fricción fiscal:** Paddle recauda, declara y liquida automáticamente los impuestos (Sales Tax en EE. UU. e IVA internacional). |
 
 ---
 
@@ -2890,7 +2891,7 @@ El usuario final y los talleres operan sobre la interfaz de Dekopen con tres per
 1. **Cálculos Matemáticos a $0 Token:** Ningún corte, medida, vidrio o cálculo de rentabilidad pasa por un LLM. Todo es procesado en microsegundos por el motor en Python `/engine`.
 2. **Bloqueo Preventivo de Saldo Cero:** El backend verifica y bloquea el saldo en `credit_ledger` *antes* de enviar cualquier request a la API de IA. Si el saldo es 0, no se realiza la llamada HTTP.
 3. **Payloads Estrictos con `max_output_tokens`:** Las respuestas de las Tools (T1 a T12) están forzadas a JSON estructurado y conciso (e.g., T2 devuelve ~50 tokens de diff, jamás párrafos explicativos innecesarios).
-4. **Gating Visual:** Modelos multimodales se invocan **únicamente** cuando se adjunta un archivo PDF o imagen; las peticiones de texto plano se enrutan a modelos estándar.
+4. **Gating Visual:** Modelos multimodales (`Gemini 3.7 High`) se invocan **únicamente** cuando se adjunta un archivo PDF o imagen; las peticiones de texto plano se enrutan a `GPT 5.6 Luna`.
 5. **Anti-Loop Circuit Breaker:** Cualquier fallo en OCR o NLP tiene un límite estricto de **1 reintento**. Prohibidos los bucles de llamadas infinitas.
 6. **En Desarrollo (Codex):** El agente utiliza contexto JIT (lee solo el PRD del shot actual, ~2k tokens) y realiza ediciones quirúrgicas de líneas específicas en lugar de reescribir archivos enteros.
 
