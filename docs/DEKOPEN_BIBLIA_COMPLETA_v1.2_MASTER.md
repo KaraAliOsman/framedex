@@ -1,5 +1,5 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Full Zero Out-of-Pocket Stack •  Perks • Dekopen AI Suite)
+**Versión Oficial:** 1.2 (Exact Real Insider Perks + • Dekopen AI Suite • Flow & Paddle)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -2842,27 +2842,32 @@ Pipeline verde en CI sobre stubs y branch protection activa.
 <!-- INICIO DE STACK_APLICACIONES_Y_SERVICIOS.md -->
 
 
-# STACK OFICIAL DE APLICACIONES, SERVICIOS Y STARTUP PERKS (+$40K USD) — DEKOPEN (v1.2)
+# STACK OFICIAL DE APLICACIONES, SERVICIOS Y PERKS REALES (+$40K USD) — DEKOPEN (v1.2)
 **Estado:** Bloqueado / Congelado  
-**Filosofía:** **Gasto out-of-pocket: $0 USD.** Aprovechamiento al 100% exclusivo de los créditos y beneficios Founder/Startup (~$40,000+ USD en infraestructura, soporte, analítica y automatizaciones) para operar sin pagar un solo dólar adicional de tu bolsillo.
+**Filosofía:** **Gasto out-of-pocket: $0 USD.** Aprovechamiento al 100% de la suite real de beneficios y créditos Founder/Insider (~$40,000+ USD de valor real) para operar el software sin poner un solo dólar de tu bolsillo durante el primer año.
 
 ---
 
-## 1. Suite de Infraestructura, Servicios y Startup Perks (+$40,000 USD)
+## 1. Suite Real de Infraestructura, Servicios y Software ($0 Gasto Real)
 
-| Servicio / Herramienta | Categoría | Rol en Dekopen | Valor / Crédito Aprovechado | Integración en Shot |
+| Servicio / Herramienta | Plan / Beneficio Real | Rol Técnico en Dekopen | Valor Real | Shot de Integración |
 |---|---|---|---|:---:|
-| 🐘 **Supabase Pro** | Base de Datos, Auth & Storage | PostgreSQL 16 con RLS, Auth (Magic Link), Point-in-Time Recovery (PITR) y **Buckets de Storage firmados** para planos, PDFs y respaldos diarios. | **$10,000 USD** en créditos | **SHOT-02 / SHOT-04 / SHOT-11** |
-| 🚂 **Railway Team** | Hosting & Workers | Backend Django (DRF), colas asíncronas Huey, Redis y health checks continuos. | **$5,000 USD** en créditos | **SHOT-04 / SHOT-11** |
-| 🦔 **PostHog Scale** | Analítica de Producto | Telemetría de eventos, Session Replays (grabación de uso en Canvas), embudos de conversión y Feature Flags. | **$50,000 USD** en eventos | **SHOT-04 / SHOT-23** |
-| ✉️ **Customer.io** | Email Marketing & Drip | Automatización de ciclo de vida, secuencias de onboarding, reactivación de cotizaciones frías y alertas. | **$3,000 USD** en créditos | **SHOT-11 / SHOT-18** |
-| 📬 **Resend** | Email Transaccional | Envío de enlaces de cotizaciones (DOC-01), comprobantes de pago, Magic Links y alertas técnicas. | Nivel Startup ($0) | **SHOT-04 / SHOT-09** |
-| 🤖 **Intercom + Fin AI** | Soporte & Onboarding | **1 año cubierto de Fin AI Agent + Fin Advanced** ($100/mo de saldo) para soporte 24/7 y onboarding de carpintería. | **$1,200+ USD** anual | **SHOT-04 / SHOT-23** |
-| 🍓 **Jam.dev** | Bug Reporting Visual | Captura de errores en 1-clic con video, logs de consola, llamadas de red y metadata del Canvas 2D. | Licencia Team ($0) | **SHOT-04 / SHOT-10** |
-| ⚡ **n8n Cloud** | Automatizaciones Low-Code | Orquestación de webhooks, sincronización CRM y alertas a administradores. | Plan Pro Cloud ($0) | **SHOT-11 / SHOT-17** |
-| 🌐 **Cloudflare DNS** | DNS & Proxy SSL | Proxy CDN global gratuito, certificados SSL automáticos y protección DDoS. | **$0 / Gratuito** | **SHOT-04 / SHOT-11** |
-| 🇨🇱 **Flow.cl** | Pasarela Chile (CLP) | Cobro nativo con Webpay Plus, Khipu, Servipag y emisión obligatoria de Factura Electrónica DTE. | Pasarela Directa | **SHOT-11** |
-| 🌎 **Paddle** | Pasarela Global (USD) | **Merchant of Record (MoR):** Cobro mundial sin fricción tributaria (Paddle declara el Sales Tax e IVA internacional). | MoR Global | **SHOT-18** |
+| 🦔 **PostHog Scale** | **1 año gratis con 2x límites** | Telemetría completa, Session Replays (video del uso del Canvas 2D), embudos de cotización y Feature Flags. | **$16,500 USD** | **SHOT-04 / SHOT-23** |
+| 🤖 **Intercom + Fin AI** | **1 año gratis (5 seats + $100/mo AI credits)** | Agente de IA para soporte técnico 24/7 y onboarding con las 20 preguntas maestras de carpintería. | **$7,140 USD** | **SHOT-04 / SHOT-23** |
+| 🍓 **Jam.dev** | **1 año gratis Team (10 seats)** | Reporte visual de bugs en 1-clic (graba pantalla, consola de navegador y red si el Canvas falla). | **$1,920 USD** | **SHOT-04 / SHOT-10** |
+| 📱 **Mobbin** | **1 año gratis Team (10 seats)** | Biblioteca de referencia UI/UX para diseño de componentes técnicos y flujos móviles. | **$1,920 USD** | **Diseño / S01–S28** |
+| ✉️ **Customer.io** | **1 año gratis Essentials** | Automatización de ciclo de vida, onboarding por email y secuencias de reactivación de cotizaciones frías. | **$1,200 USD** | **SHOT-11 / SHOT-18** |
+| 📐 **Linear** | **1 año gratis Business (5 seats)** | Planificación ágil, backlog de fabricación y tracking de los 24 shots. | **$1,080 USD** | **Tooling / PM** |
+| 🖥️ **Framer** | **1 año gratis Framer Pro** | Landing page comercial ultrarrápida para captar los primeros 50 talleres (Founding 50). | **$360 USD** | **SHOT-18** |
+| 🐘 **Supabase Pro** | **1 año gratis en créditos** | PostgreSQL 16 con RLS, Auth por Magic Link, PITR y Buckets de Storage para planos, PDFs y respaldos. | **$300 USD** | **SHOT-02 / SHOT-04** |
+| 🚂 **Railway** | **1 año gratis Hobby** | Hosting del backend Django (DRF), colas asíncronas Huey y base de datos de desarrollo. | **$245 USD** | **SHOT-04 / SHOT-11** |
+| 📬 **Resend** | **1 año gratis Transactional Pro** | Envío instantáneo de cotizaciones (DOC-01), Magic Links y alertas técnicas por email. | **$240 USD** | **SHOT-04 / SHOT-09** |
+| ⚡ **n8n Cloud** | **1 año gratis Starter** | Motor de automatización visual de webhooks, sincronización CRM y alertas a fundadores. | **$240 USD** | **SHOT-11 / SHOT-17** |
+| 🌐 **Google AI Pro** | **1 año gratis (5 TB Cloud Storage)** | Acceso a modelos Gemini y 5 TB de almacenamiento seguro en la nube para respaldos externos. | **$240 USD** | **Infraestructura** |
+| 🏦 **Mercury** | **2 años gratis Mercury Personal** | Cuenta bancaria fintech para recepción de fondos internacionales. | **$480 USD** | **Finanzas** |
+| 🌐 **Cloudflare** | **Plan Gratuito de por vida** | Proxy CDN global, protección contra ataques DDoS y certificados SSL automáticos. | **$0 / Free** | **SHOT-04 / SHOT-11** |
+| 🇨🇱 **Flow.cl** | **Pasarela Directa** | Cobro nativo en Chile (Webpay Plus, Khipu) y emisión de Factura Electrónica DTE con RUT. | **Pasarela** | **SHOT-11** |
+| 🌎 **Paddle** | **Merchant of Record (MoR)** | Cobro mundial en USD sin fricción tributaria (Paddle retiene Sales Tax e IVA internacional). | **MoR Global** | **SHOT-18** |
 
 ---
 
