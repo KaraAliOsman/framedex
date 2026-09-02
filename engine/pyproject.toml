@@ -3,7 +3,7 @@ name = "dekopen-engine"
 version = "0.1.0"
 description = "Pure deterministic calculation engine for Dekopen"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["pydantic>=2.7"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
