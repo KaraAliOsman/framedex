@@ -290,3 +290,24 @@ reason="SHOT-06: hardware_kits resolution")`; no hay lookup ni kit simulado.
 PD-01…PD-09 cuentan con resolución formal y la FASE 2 está autorizada. Antes
 del cierre se repetirá Regla 0; cualquier vacío nuevo se registrará como
 `[PENDIENTE-DECISIÓN]` y detendrá el trabajo sin inventar comportamiento.
+
+## 12. Registro de construcción y verificación local
+
+- Contrato normativo: `SystemParams` cubierto `23/23`; no existen scalars
+  globales de cara, gap o soldadura.
+- Implementación: `models.py`, `glass.py`, `geometry.py` y `bom.py` puros,
+  sin Django, DB, red, I/O externo ni `float`.
+- GlassPiece: densidad `2500 kg/m³`, factor `2.50 kg/m²/mm`, área exacta para
+  peso y cuantización pública única `ROUND_HALF_UP`; fixtures A/B y prueba
+  anti-doble-redondeo pasan.
+- Casos core: G1, G2, G3 geométrico y G4 pasan mediante igualdad Decimal con
+  discrepancia exacta `0.00 mm`; una mutación de `0.01 mm` es rechazada.
+- Diferidos: G3 hardware y G8/G9/G11/G12 aparecen como cinco
+  `xfail(strict=True)` con razón normativa.
+- `python -m pytest engine/ -q -rxX`: `22 passed, 5 xfailed`.
+- `python scripts/check_dod.py all`: exit code real `0`; Ruff, mypy, pytest,
+  Vitest, build y contrato DB pasaron.
+- Golden snapshot: no existe en SHOT-03 y no fue creado ni modificado; su
+  generación canónica permanece en SHOT-06.
+- `[PENDIENTE-DECISIÓN]` restante: ninguno.
+- Contradicciones normativas conocidas tras la revalidación: ninguna.
