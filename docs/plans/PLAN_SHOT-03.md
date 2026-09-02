@@ -18,9 +18,8 @@
 - **Stop condition final:** `python scripts/check_dod.py all` devuelve un
   exit code real `0`, seguido por los cuatro jobs protegidos de CI en
   `completed/success`.
-- **Estado de esta fase:** FASE 2 autorizada para PD-01…PD-08. La parte
-  segura normativa/DB avanza; `/engine` queda detenido por el nuevo vacío
-  real PD-09 registrado en §10, conforme a Regla 20.
+- **Estado de esta fase:** FASE 2 reanudada. PD-01…PD-09 están formalmente
+  resueltas; no queda un bloqueo normativo conocido antes de implementar.
 
 ## 2. Lecturas y contratos inspeccionados
 
@@ -45,7 +44,7 @@ No se usaron documentos de `docs/archive/` como fuente funcional.
 
 ## 3. Objetivo exacto
 
-Una vez resuelto PD-09 de §10, construir un paquete Python puro,
+Construir un paquete Python puro,
 determinista y estrictamente tipado que:
 
 1. represente con `Decimal` el árbol mínimo y los parámetros necesarios para
@@ -97,7 +96,7 @@ esos consumidores, pero no implementarán ninguna de esas capas futuras.
 |---|---|---|
 | `engine/src/dekopen_engine/models.py` | Enums y modelos tipados aprobados para artículos efectivos, parámetros, nodo/árbol, piezas y resultado. Todos los valores dimensionales son `Decimal`. | Hace representables los inputs y outputs exactos de G1–G4 sin scalar global de soldadura. |
 | `engine/src/dekopen_engine/geometry.py` | Funciones puras de soldadura por artículo y geometría aprobada para FRAME, FIXED, TURN, TILT_TURN y MULLION. | Produce las dimensiones que compara `pytest engine/`. |
-| `engine/src/dekopen_engine/glass.py` | Implementación pura de `derive_net_glass_thickness()` de PRD-01 §3.1, sólo si el contrato final de `GlassPiece` lo requiere. | Mantiene DVH de G2/G3 tipado sin inferir espesor por `float`. |
+| `engine/src/dekopen_engine/glass.py` | Derivar `thickness_net_mm` y construir `GlassPiece` desde área exacta, densidad `2500 kg/m³` y cuantización final `ROUND_HALF_UP`. | Mantiene vidrio/peso de G1–G4 determinista, sin `float` ni doble redondeo. |
 | `engine/src/dekopen_engine/bom.py` | Ensamble determinista del BOM base conforme al modelo y reglas que apruebe el owner. | Expone las piezas críticas de G1–G4 para aserciones exactas. |
 | `engine/tests/conftest.py` | Fixtures puras del catálogo efectivo DEMO_60; no consulta SQL ni red. | Reproduce el contrato SHOT-02 como inputs explícitos. |
 | `engine/tests/test_models.py` | Validación de `Decimal`, enums, artículos por rol y separación FRAME/SASH. | Prueba el contrato DB↔Engine y evita regresión a un scalar ambiguo. |
@@ -178,10 +177,10 @@ resultado puro contiene `profile_cuts`, `reinforcements`, `glasses` y
 
 | Caso | Evidencia obligatoria | Resultado normativo | Estado del plan |
 |---|---|---|---|
-| G1 | Marco H/V, acero H/V, vidrio H/V y junquillo | `1006.00`, `970.00`, `910.00 × 910.00`, junquillo `919.00` mm | Fórmulas y fixture resueltos; pendiente PD-09 para materializar `GlassPiece`. |
-| G2 | Hoja H/V, acero H/V y vidrio DVH 24 mm | `702.00 / 1102.00`, `666.00 / 1066.00`, `576.00 × 976.00` mm | SASH DEMO_60 resuelto en `75.00 mm`; pendiente PD-09. |
-| G3 | Hoja H/V y vidrio DVH 20 mm | `902.00 / 1302.00`, `776.00 × 1176.00` mm | Geometría obligatoria; hardware queda en `xfail(strict=True)` para SHOT-06; pendiente PD-09. |
-| G4 | Poste, acero poste, vidrio fijo y vidrio OB | `1380.00`, `1370.00`, `830.00 × 1410.00`, `696.00 × 1276.00` mm | Topología y MULLION cara/gap resueltos; pendiente PD-09. |
+| G1 | Marco H/V, acero H/V, vidrio H/V y junquillo | `1006.00`, `970.00`, `910.00 × 910.00`, junquillo `919.00` mm | Contrato completo; implementación obligatoria. |
+| G2 | Hoja H/V, acero H/V y vidrio DVH 24 mm | `702.00 / 1102.00`, `666.00 / 1066.00`, `576.00 × 976.00` mm | Contrato completo; implementación obligatoria. |
+| G3 | Hoja H/V y vidrio DVH 20 mm | `902.00 / 1302.00`, `776.00 × 1176.00` mm | Geometría obligatoria; hardware queda en `xfail(strict=True)` para SHOT-06. |
+| G4 | Poste, acero poste, vidrio fijo y vidrio OB | `1380.00`, `1370.00`, `830.00 × 1410.00`, `696.00 × 1276.00` mm | Contrato completo; implementación obligatoria. |
 
 Cada valor se comparará mediante igualdad de `Decimal`. La discrepancia se
 calculará como `abs(actual - expected)` y deberá ser exactamente
@@ -267,29 +266,27 @@ G3 geométrico es gate obligatorio. La resolución del kit se difiere a SHOT-06
 en una prueba separada `xfail(strict=True,
 reason="SHOT-06: hardware_kits resolution")`; no hay lookup ni kit simulado.
 
-### PD-09 — [PENDIENTE-DECISIÓN]: peso de `GlassPiece`
+### PD-09 — RESUELTA: área y peso de `GlassPiece`
 
-La revisión global posterior a PD-01…PD-08 encontró que `GlassPiece` exige
-`area_m2`, `weight_kg` y `thickness_net_mm`. PRD-FRONTEND §1.1 publica dos
-resultados de peso (`17.82` y `12.84`) pero ninguna fuente canónica define:
+- `area_m2_exact = (width_mm × height_mm) / Decimal('1000000')`; permanece
+  sin cuantizar durante cálculos derivados.
+- `GlassPiece.area_m2` cuantiza al final a `Decimal('0.0001')` con
+  `ROUND_HALF_UP`.
+- `FLOAT_GLASS_DENSITY_KG_M3 = Decimal('2500')` y su equivalencia
+  `GLASS_WEIGHT_FACTOR_KG_M2_PER_MM = Decimal('2.50')` son constantes físicas
+  del motor, nunca campos de `SystemParams`.
+- El peso usa exclusivamente `thickness_net_mm`, derivado desde `glass_spec`
+  sumando paños; no usa espesor total del DVH, cámara, gas ni separador.
+- `weight_kg_exact = area_m2_exact × thickness_net_mm × Decimal('2.50')` y
+  `GlassPiece.weight_kg` cuantiza una sola vez a `Decimal('0.01')` con
+  `ROUND_HALF_UP`.
+- Queda prohibido calcular peso leyendo el `area_m2` público ya cuantizado.
+- Fixtures obligatorios: `680×1310 / 4-16-4 → 0.8908 / 17.82` y
+  `546×1176 / 4-12-4 → exact 0.642096, publicado 0.6421 / 12.84`, más una
+  prueba anti-doble-redondeo.
 
-- la densidad de vidrio que convierte área/espesor a kilogramos;
-- si el peso usa `glass_thickness_mm` total o `thickness_net_mm` de paños;
-- la cuantización y modo de redondeo para `area_m2` y `weight_kg`.
+## 11. Condición de reanudación satisfecha
 
-Los dos ejemplos son compatibles con una inferencia convencional, pero la
-Regla 20 prohíbe convertir esa inferencia en regla de negocio. Como
-`GlassPiece conserva el contrato existente`, tampoco se puede omitir el campo
-ni hacerlo nullable sin otra decisión.
-
-**Resolución requerida:** formalizar la fórmula completa de `area_m2` y
-`weight_kg`, incluidas constantes, espesor usado, escala y redondeo; o declarar
-expresamente que ambos valores quedan diferidos y aprobar cómo representa
-SHOT-03 ese diferimiento sin violar el contrato no-null de `GlassPiece`.
-
-## 11. Condición para reanudar `/engine`
-
-La orden `APROBADO — EJECUTA FASE 2` aplica a PD-01…PD-08. Se completarán
-fuentes normativas, migración, seed, contratos DB y Database Gate que no
-dependen de PD-09. Después, ninguna implementación de `/engine` continuará
-hasta recibir la resolución formal de PD-09.
+PD-01…PD-09 cuentan con resolución formal y la FASE 2 está autorizada. Antes
+del cierre se repetirá Regla 0; cualquier vacío nuevo se registrará como
+`[PENDIENTE-DECISIÓN]` y detendrá el trabajo sin inventar comportamiento.

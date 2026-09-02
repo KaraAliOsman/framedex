@@ -167,6 +167,41 @@ def derive_net_glass_thickness(glass_spec: str, fallback_thickness: Decimal) -> 
     return fallback_thickness
 ```
 
+#### 3.1.1. Área y peso canónicos de `GlassPiece` (PD-09)
+
+```python
+FLOAT_GLASS_DENSITY_KG_M3 = Decimal('2500')
+GLASS_WEIGHT_FACTOR_KG_M2_PER_MM = Decimal('2.50')
+
+area_m2_exact = (width_mm * height_mm) / Decimal('1000000')
+area_m2 = area_m2_exact.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+
+weight_kg_exact = (
+    area_m2_exact
+    * thickness_net_mm
+    * GLASS_WEIGHT_FACTOR_KG_M2_PER_MM
+)
+weight_kg = weight_kg_exact.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+```
+
+`FLOAT_GLASS_DENSITY_KG_M3` es una constante física del material dentro de
+`/engine`, no un parámetro del sistema de perfiles y no forma parte de
+`SystemParams`. `weight_kg` usa exclusivamente `thickness_net_mm`, es decir,
+la suma de los paños de vidrio derivada desde `glass_spec`; cámara, gas,
+separador y espesor total del paquete DVH no participan.
+
+La autoridad intermedia es siempre `area_m2_exact`. Queda prohibido calcular
+el peso desde `GlassPiece.area_m2` ya cuantizado. Cada campo público se
+cuantiza una sola vez al emitirse mediante `ROUND_HALF_UP`: `area_m2` a cuatro
+decimales, `weight_kg` a dos y `thickness_net_mm` a dos.
+
+Fixtures congelados:
+
+- `680.00 × 1310.00`, `4-16-4` → área `0.8908`, espesor neto `8.00`, peso
+  `17.82`.
+- `546.00 × 1176.00`, `4-12-4` → área exacta `0.642096`, área publicada
+  `0.6421`, espesor neto `8.00`, peso `12.84`.
+
 ### 3.2. Resolución y Normalización de Herrajes (`engine/hardware.py`)
 
 > **Límite SHOT-03:** este algoritmo pertenece a SHOT-06. SHOT-03 no llama

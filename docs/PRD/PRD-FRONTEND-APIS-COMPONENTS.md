@@ -36,7 +36,9 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
 > `bay_id` nullable; cada refuerzo añade `parent_profile_sku`,
 > `reinforcement_sku` nullable y `bay_id` nullable. `hardware_items` es `[]`
 > y no ejecuta resolución de kits. `calculation_hash` se incorpora en
-> SHOT-06 y `inspector` en SHOT-07, fuera del resultado de SHOT-03.
+> SHOT-06 y `inspector` en SHOT-07, fuera del resultado de SHOT-03. Área y
+> peso de cada `GlassPiece` se calculan exclusivamente mediante PRD-01
+> §3.1.1, conservando el área exacta hasta la cuantización final.
 
 - **Request Payload:**
   ```json
