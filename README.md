@@ -58,7 +58,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | Shot | Fase | Descripción | Gate de Cierre | Estado |
 |---|---|---|---|:---:|
 | **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ✅ Cerrado |
-| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | 🛠 En curso |
+| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | ✅ Cerrado |
 | **SHOT-03** | 0 | Engine núcleo (fórmulas fijas + OB + BOM) | `pytest engine/`: G1–G4 en 0.00 mm | ⏳ Pendiente |
 | **SHOT-04** | 0 | Auth + tenancy + API DRF + Shell ADOBE | Magic link E2E; OpenAPI $\rightarrow$ TS; PostHog base | ⏳ Pendiente |
 | **SHOT-05** | 0 | Canvas 2D mínimo SVG (fijo + cotas) | Dibuja G1 en pantalla (<300 ms) | ⏳ Pendiente |
