@@ -126,6 +126,30 @@ EXPECTED_G_CASE_STATUSES = {
     "G-Pro1": "pending",
 }
 
+EXPECTED_G_CASE_TARGET_SHOTS = {
+    "G1": "SHOT-03",
+    "G2": "SHOT-03",
+    "G3": "SHOT-03",
+    "G4": "SHOT-03",
+    "G5": "SHOT-06",
+    "G6": "SHOT-06",
+    "G7": "SHOT-06",
+    "G8": "SHOT-06B",
+    "G9": "SHOT-06B",
+    "G10": "SHOT-24",
+    "G11": "SHOT-06B",
+    "G12": "SHOT-06B",
+    "G-Pro1": "SHOT-12",
+}
+
+EXPECTED_G3_DEFERRED_ASSERTIONS = {
+    "hardware_kit_resolution": {
+        "status": "xfail",
+        "target_shot": "SHOT-06",
+        "reason": "SHOT-06: hardware_kits resolution",
+    }
+}
+
 
 def configure_output() -> None:
     if hasattr(sys.stdout, "reconfigure"):
@@ -271,6 +295,10 @@ def load_g_case_manifest() -> dict[str, object]:
 
 def check_g_case_manifest() -> None:
     manifest = load_g_case_manifest()
+    if "version" in manifest:
+        fail("G-case manifest must not contain an ambiguous version field")
+    if manifest.get("normative_source") != "docs/PRD/PLAN_SHOTS.md":
+        fail("G-case manifest normative_source must be docs/PRD/PLAN_SHOTS.md")
     if manifest.get("tolerance_mm") != "0.00":
         fail("G-case manifest tolerance_mm must be the exact string '0.00'")
 
@@ -279,18 +307,37 @@ def check_g_case_manifest() -> None:
         fail("G-case manifest must contain exactly G1-G12 and G-Pro1")
 
     actual_statuses: dict[str, object] = {}
+    actual_target_shots: dict[str, object] = {}
     for case_id, case_contract in cases.items():
         if not isinstance(case_contract, dict):
             fail(f"G-case {case_id} contract must be an object")
         actual_statuses[case_id] = case_contract.get("status")
+        actual_target_shots[case_id] = case_contract.get("target_shot")
+        if case_contract.get("status") == "xfail":
+            reason = case_contract.get("reason")
+            if not isinstance(reason, str) or not reason.strip():
+                fail(f"Deferred xfail G-case {case_id} must have a non-empty reason")
     if actual_statuses != EXPECTED_G_CASE_STATUSES:
         fail(
             "G-case manifest status mismatch; "
             f"expected={EXPECTED_G_CASE_STATUSES}, actual={actual_statuses}"
         )
+    if actual_target_shots != EXPECTED_G_CASE_TARGET_SHOTS:
+        fail(
+            "G-case manifest target_shot mismatch; "
+            f"expected={EXPECTED_G_CASE_TARGET_SHOTS}, actual={actual_target_shots}"
+        )
+
+    g3_contract = cases["G3"]
+    if not isinstance(g3_contract, dict):
+        fail("G-case G3 contract must be an object")
+    if g3_contract.get("deferred_assertions") != EXPECTED_G3_DEFERRED_ASSERTIONS:
+        fail(
+            "G3 deferred assertions must declare hardware kit resolution for SHOT-06"
+        )
 
     print(
-        "  G-case manifest contract: G1-G4 pass; G8/G9/G11/G12 xfail",
+        "  G-case manifest contract: statuses, targets, and deferred reasons passed",
         flush=True,
     )
 

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.2",
+  "normative_source": "docs/PRD/PLAN_SHOTS.md",
   "tolerance_mm": "0.00",
   "cases": {
     "G1": {
@@ -15,7 +15,14 @@
     "G3": {
       "name": "Oscilobatiente 1 Hoja 1000x1400",
       "target_shot": "SHOT-03",
-      "status": "pass"
+      "status": "pass",
+      "deferred_assertions": {
+        "hardware_kit_resolution": {
+          "status": "xfail",
+          "target_shot": "SHOT-06",
+          "reason": "SHOT-06: hardware_kits resolution"
+        }
+      }
     },
     "G4": {
       "name": "Compuesta Fijo + OB con Poste 1800x1500",
@@ -39,30 +46,31 @@
     },
     "G8": {
       "name": "Corredera 3 Hojas",
-      "target_shot": "SHOT-06",
+      "target_shot": "SHOT-06B",
       "status": "xfail",
       "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G9": {
       "name": "Corredera 4 Hojas 4000x2000",
-      "target_shot": "SHOT-06",
+      "target_shot": "SHOT-06B",
       "status": "xfail",
       "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G10": {
       "name": "Corredera Monoriel 2 Hojas 3000x2400",
       "target_shot": "SHOT-24",
-      "status": "xfail"
+      "status": "xfail",
+      "reason": "SHOT-24: G10 monorail geometry deferred by PLAN_SHOTS"
     },
     "G11": {
       "name": "Puerta Doble Hoja 1800x2100",
-      "target_shot": "SHOT-06",
+      "target_shot": "SHOT-06B",
       "status": "xfail",
       "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G12": {
       "name": "Fijo Gran Formato 3000x2500",
-      "target_shot": "SHOT-06",
+      "target_shot": "SHOT-06B",
       "status": "xfail",
       "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
