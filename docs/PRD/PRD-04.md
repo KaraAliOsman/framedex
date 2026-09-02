@@ -36,14 +36,17 @@ export type BayOpeningType =
 export interface ParametricNode {
   id: string;
   type: NodeType;
-  width_mm: number;
-  height_mm: number;
+  // Dimensiones nominales del nodo top-level; los BAY hijos son derivados.
+  width_mm?: number;
+  height_mm?: number;
   // Solo para nodos de tipo SPLIT_H o SPLIT_V
   split_offset_mm?: number;
   mullion_profile_sku?: string;
   children?: ParametricNode[];
   // Solo para nodos hoja de tipo BAY
   opening_type?: BayOpeningType;
+  glass_thickness_mm?: number;
+  glass_spec?: string;
   glass_article_sku?: string;
   hardware_set_sku?: string;
   handle_height_mm?: number;
@@ -58,6 +61,54 @@ export interface WindowDesignState {
   root: ParametricNode;
 }
 ```
+
+### 2.1. Semántica canónica del límite Engine (SHOT-03)
+
+- El `parametric_tree` puede llegar con top-level `BAY`, `SPLIT_H`,
+  `SPLIT_V` o con wrapper `ROOT`. El engine normaliza el wrapper sin cambiar
+  semántica.
+- En Python, toda dimensión se representa con `Decimal`; queda prohibido
+  convertir los milímetros a `float`.
+- `split_offset_mm` se mide desde el origen local hasta el eje/centerline del
+  mullion: desde la izquierda en `SPLIT_V` y desde arriba en `SPLIT_H`.
+- `width_mm` y `height_mm` identifican las dimensiones nominales del nodo
+  top-level. Las dimensiones efectivas de cada BAY hijo son derivadas por el
+  engine y no constituyen campos editables ni una segunda autoridad.
+- Todo BAY de SHOT-03 lleva `opening_type`, `glass_thickness_mm` y
+  `glass_spec`; estos dos últimos campos reconcilian el árbol con el request
+  canónico de PRD-FRONTEND §1.1.
+
+La topología congelada de G4 es:
+
+```json
+{
+  "id": "g4",
+  "type": "SPLIT_V",
+  "width_mm": "1800.00",
+  "height_mm": "1500.00",
+  "split_offset_mm": "900.00",
+  "mullion_profile_sku": "POSTE-V",
+  "children": [
+    {
+      "id": "bay_fixed",
+      "type": "BAY",
+      "opening_type": "FIXED",
+      "glass_thickness_mm": "24.00",
+      "glass_spec": "4-16-4 Float Incoloro"
+    },
+    {
+      "id": "bay_ob",
+      "type": "BAY",
+      "opening_type": "TILT_TURN_RIGHT",
+      "glass_thickness_mm": "20.00",
+      "glass_spec": "4-12-4 Float Incoloro"
+    }
+  ]
+}
+```
+
+Con FRAME `60.00 mm` y MULLION_V `80.00 mm`, ambos BAY efectivos de G4
+derivan a `800.00 × 1380.00 mm`.
 
 ---
 
