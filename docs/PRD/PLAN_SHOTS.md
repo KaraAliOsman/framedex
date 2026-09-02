@@ -1,6 +1,6 @@
-# PLAN DE EJECUCIÓN SHOT-01 → SHOT-24 — DEKOPEN (v1.1.2)
+# PLAN DE EJECUCIÓN SHOT-01 → SHOT-24 — DEKOPEN (v1.2 MASTER)
 
-> **Nota de nomenclatura:** Los shots se numeran **SHOT-01…SHOT-24** (mayúscula + guion) para no colisionar con las pantallas S01–S28. Este documento es la tercera y última pieza de la biblia: PRD v1.1.0 (contrato) → Biblia v1.1.2 (especificación) → **este plan (ejecución)**. A partir de aquí, ninguna decisión se toma en caliente: si el builder encuentra un vacío, aplica la Regla 20 (`[PENDIENTE-DECISIÓN]`), nunca improvisa.
+> **Nota de nomenclatura:** Los shots se numeran **SHOT-01…SHOT-24** (mayúscula + guion) para no colisionar con las pantallas S01–S28. Este documento es la tercera y última pieza de la biblia: PRD v1.1.0 (contrato) → Biblia v1.2 MASTER (especificación) → **este plan (ejecución)**. A partir de aquí, ninguna decisión se toma en caliente: si el builder encuentra un vacío, aplica la Regla 20 (`[PENDIENTE-DECISIÓN]`), nunca improvisa.
 
 ---
 
@@ -24,7 +24,7 @@
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
 | **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
-| **P6** | Este documento + Biblia v1.1.2 cargados en Notion y como fuente de Fin | Base de conocimiento |
+| **P6** | Este documento + Biblia v1.2 MASTER cargados en Notion y como fuente de Fin | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
 ---
@@ -37,7 +37,7 @@
 
 ---
 
-## 4. Tabla Maestra de Shots (v1.1.2)
+## 4. Tabla Maestra de Shots (v1.2 MASTER)
 
 | Shot | Fase / Sem | PRD Fuente | Entrega Principal | Gate de Cierre |
 |---|---|---|---|---|
