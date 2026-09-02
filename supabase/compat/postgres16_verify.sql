@@ -3,6 +3,8 @@ DECLARE
     business_table_count INT;
     rls_table_count INT;
     demo_system_count INT;
+    demo_profile_authority_count INT;
+    demo_glazing_rule_count INT;
 BEGIN
     IF current_setting('server_version_num')::INT < 160000
         OR current_setting('server_version_num')::INT >= 170000 THEN
@@ -86,6 +88,39 @@ BEGIN
 
     IF demo_system_count <> 1 THEN
         RAISE EXCEPTION 'Expected one canonical global DEMO_60 system, got %', demo_system_count;
+    END IF;
+
+    SELECT count(*)
+    INTO demo_profile_authority_count
+    FROM public.profile_articles AS article
+    JOIN public.profile_systems AS profile_system
+      ON profile_system.id = article.system_id
+    WHERE profile_system.code = 'DEMO_60'
+      AND (
+          (article.role = 'FRAME' AND article.face_width_mm = 60.00 AND article.reinforcement_gap_mm = 15.00)
+          OR (article.role = 'SASH' AND article.face_width_mm = 75.00 AND article.reinforcement_gap_mm = 15.00)
+          OR (article.role = 'MULLION_V' AND article.face_width_mm = 80.00 AND article.reinforcement_gap_mm = 5.00)
+          OR (article.role = 'MULLION_H' AND article.face_width_mm = 80.00 AND article.reinforcement_gap_mm = 5.00)
+      );
+
+    IF demo_profile_authority_count <> 4 THEN
+        RAISE EXCEPTION
+            'Expected four canonical DEMO_60 profile authorities, got %',
+            demo_profile_authority_count;
+    END IF;
+
+    SELECT count(*)
+    INTO demo_glazing_rule_count
+    FROM public.glazing_bead_matrix AS bead_rule
+    JOIN public.profile_systems AS profile_system
+      ON profile_system.id = bead_rule.system_id
+    WHERE profile_system.code = 'DEMO_60'
+      AND bead_rule.cut_add_mm = 9.00;
+
+    IF demo_glazing_rule_count <> 5 THEN
+        RAISE EXCEPTION
+            'Expected five DEMO_60 glazing rules with cut_add_mm 9.00, got %',
+            demo_glazing_rule_count;
     END IF;
 END;
 $$;

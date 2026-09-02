@@ -22,6 +22,11 @@ SUPABASE_DIR = ROOT / "supabase"
 SUPABASE_MIGRATION = (
     SUPABASE_DIR / "migrations" / "20260901000000_initial_schema.sql"
 )
+SUPABASE_SHOT_03_MIGRATION = (
+    SUPABASE_DIR
+    / "migrations"
+    / "20260902000000_add_glazing_bead_cut_add.sql"
+)
 SUPABASE_TEST_DIR = SUPABASE_DIR / "tests" / "database"
 
 PYTHON = sys.executable
@@ -44,6 +49,7 @@ REQUIRED_PATHS = (
 REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "config.toml",
     SUPABASE_MIGRATION,
+    SUPABASE_SHOT_03_MIGRATION,
     SUPABASE_DIR / "seed.sql",
     SUPABASE_TEST_DIR / "000_schema.test.sql",
     SUPABASE_TEST_DIR / "010_rls_isolation.test.sql",
@@ -281,7 +287,11 @@ def check_database_contract() -> None:
         if rls_statement not in migration:
             fail(f"RLS is not enabled for required table: {table}")
 
-    executable_sql = sql_without_literals_or_comments(migration)
+    shot_03_migration = SUPABASE_SHOT_03_MIGRATION.read_text(encoding="utf-8")
+    normalized_shot_03_migration = " ".join(shot_03_migration.lower().split())
+    executable_sql = sql_without_literals_or_comments(
+        migration + "\n" + shot_03_migration
+    )
     forbidden_type = re.compile(
         r"\b(?:REAL|FLOAT\d*|DOUBLE\s+PRECISION)\b",
         flags=re.IGNORECASE,
@@ -306,11 +316,26 @@ def check_database_contract() -> None:
     if "public.current_user_org_ids" in normalized_migration:
         fail("RLS policies must call private.current_user_org_ids() explicitly")
 
+    required_shot_03_fragments = (
+        "add column cut_add_mm numeric(6, 2)",
+        "set cut_add_mm = 9.00",
+        "profile_system.code = 'demo_60'",
+        "alter column cut_add_mm set not null",
+    )
+    for fragment in required_shot_03_fragments:
+        if fragment not in normalized_shot_03_migration:
+            fail(f"Required SHOT-03 database contract is missing: {fragment}")
+    if "cut_add_mm numeric(6, 2) not null default" in normalized_shot_03_migration:
+        fail("glazing_bead_matrix.cut_add_mm must not invent a catalog default")
+
     seed = (SUPABASE_DIR / "seed.sql").read_text(encoding="utf-8")
     if "'DEMO_60'" not in seed or "is_global" not in seed or "TRUE" not in seed:
         fail("Canonical global DEMO_60 seed is missing")
     if "40.00" not in seed:
         fail("Canonical DEMO_60 central overlap 40.00 is missing")
+    for fragment in ("75.00", "80.00", "15.00", "5.00", "cut_add_mm", "9.00"):
+        if fragment not in seed:
+            fail(f"Canonical DEMO_60 SHOT-03 seed value is missing: {fragment}")
 
     print("  DDL/RLS/seed source contract: passed", flush=True)
 

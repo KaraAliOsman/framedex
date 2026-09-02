@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(55);
+SELECT plan(56);
 
 SELECT ok(
     to_regclass('public.' || table_name) IS NOT NULL,
@@ -119,6 +119,21 @@ SELECT ok(
           AND column_name = 'is_demo'
     ),
     'profile systems identify isolated demo catalogs'
+);
+
+SELECT ok(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'glazing_bead_matrix'
+          AND column_name = 'cut_add_mm'
+          AND data_type = 'numeric'
+          AND numeric_precision = 6
+          AND numeric_scale = 2
+          AND is_nullable = 'NO'
+    ),
+    'glazing bead cut addition is an exact required catalog value'
 );
 
 SELECT ok(

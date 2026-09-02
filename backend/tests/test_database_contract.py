@@ -7,6 +7,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION_PATH = ROOT / "supabase" / "migrations" / "20260901000000_initial_schema.sql"
+SHOT_03_MIGRATION_PATH = (
+    ROOT
+    / "supabase"
+    / "migrations"
+    / "20260902000000_add_glazing_bead_cut_add.sql"
+)
 SEED_PATH = ROOT / "supabase" / "seed.sql"
 
 BUSINESS_TABLES = (
@@ -42,6 +48,11 @@ def migration_sql() -> str:
 @pytest.fixture(scope="module")
 def normalized_migration(migration_sql: str) -> str:
     return " ".join(migration_sql.lower().split())
+
+
+@pytest.fixture(scope="module")
+def shot_03_migration_sql() -> str:
+    return SHOT_03_MIGRATION_PATH.read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -81,10 +92,26 @@ def test_rule_zero_schema_contract_is_aligned(migration_sql: str) -> None:
     assert "CREATE UNIQUE INDEX uk_tenant_system_code" in migration_sql
 
 
-def test_business_schema_has_no_floating_point_types(migration_sql: str) -> None:
-    executable_sql = without_literals_or_comments(migration_sql)
+def test_business_schema_has_no_floating_point_types(
+    migration_sql: str,
+    shot_03_migration_sql: str,
+) -> None:
+    executable_sql = without_literals_or_comments(
+        migration_sql + "\n" + shot_03_migration_sql
+    )
     forbidden = re.compile(r"\b(?:REAL|FLOAT\d*|DOUBLE\s+PRECISION)\b", re.IGNORECASE)
     assert forbidden.search(executable_sql) is None
+
+
+def test_glazing_bead_cut_add_is_explicit_and_non_nullable(
+    shot_03_migration_sql: str,
+) -> None:
+    normalized = " ".join(shot_03_migration_sql.lower().split())
+    assert "add column cut_add_mm numeric(6, 2)" in normalized
+    assert "set cut_add_mm = 9.00" in normalized
+    assert "profile_system.code = 'demo_60'" in normalized
+    assert "alter column cut_add_mm set not null" in normalized
+    assert "cut_add_mm numeric(6, 2) not null default" not in normalized
 
 
 def test_payment_events_contract(migration_sql: str, normalized_migration: str) -> None:
@@ -206,22 +233,27 @@ def test_demo_60_hardware_seed_is_exact(
         cursor = row_tail.index(value, cursor) + len(value)
 
 
-def test_demo_60_profile_roles_and_welding_are_exact(seed_sql: str) -> None:
+def test_demo_60_profile_article_authorities_are_exact(seed_sql: str) -> None:
     required_rows = (
-        ("'MARCO'", "'FRAME'", "60.00", "6.00"),
-        ("'HOJA'", "'SASH'", "60.00", "6.00"),
-        ("'POSTE-V'", "'MULLION_V'", "60.00", "0.00"),
-        ("'POSTE-H'", "'MULLION_H'", "60.00", "0.00"),
-        ("'JQ-24'", "'GLAZING_BEAD'", "24.00", "0.00"),
-        ("'JQ-14'", "'GLAZING_BEAD'", "14.00", "0.00"),
-        ("'JQ-10'", "'GLAZING_BEAD'", "10.00", "0.00"),
+        ("'MARCO'", "'FRAME'", "60.00", "6.00", "15.00"),
+        ("'HOJA'", "'SASH'", "75.00", "6.00", "15.00"),
+        ("'POSTE-V'", "'MULLION_V'", "80.00", "0.00", "5.00"),
+        ("'POSTE-H'", "'MULLION_H'", "80.00", "0.00", "5.00"),
+        ("'JQ-24'", "'GLAZING_BEAD'", "24.00", "0.00", "15.00"),
+        ("'JQ-14'", "'GLAZING_BEAD'", "14.00", "0.00", "15.00"),
+        ("'JQ-10'", "'GLAZING_BEAD'", "10.00", "0.00", "15.00"),
     )
-    for sku, role, width, welding_loss in required_rows:
+    for sku, role, width, welding_loss, reinforcement_gap in required_rows:
         start = seed_sql.index(f"        {sku},")
         row_tail = seed_sql[start : seed_sql.index("    )", start)]
         assert role in row_tail
-        assert width in row_tail
-        assert row_tail.rstrip().endswith(welding_loss)
+        expected_tail = (
+            f"{width},\n"
+            f"        6000.00,\n"
+            f"        {welding_loss},\n"
+            f"        {reinforcement_gap}"
+        )
+        assert expected_tail in row_tail
 
 
 @pytest.mark.parametrize(
@@ -245,5 +277,5 @@ def test_demo_60_glazing_matrix_is_exact(
     start = seed_sql.index(marker)
     row_tail = seed_sql[start : seed_sql.index("    )", start)]
     assert f"/{bead}'" in row_tail
-    expected_tail = f"{width},\n        {gasket},\n        {gasket}"
+    expected_tail = f"{width},\n        {gasket},\n        {gasket},\n        9.00"
     assert expected_tail in row_tail

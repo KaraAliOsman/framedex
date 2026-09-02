@@ -53,7 +53,8 @@ INSERT INTO public.profile_articles (
     role,
     face_width_mm,
     commercial_length_mm,
-    welding_loss_mm
+    welding_loss_mm,
+    reinforcement_gap_mm
 )
 VALUES
     (
@@ -65,7 +66,8 @@ VALUES
         'FRAME',
         60.00,
         6000.00,
-        6.00
+        6.00,
+        15.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/HOJA'),
@@ -74,9 +76,10 @@ VALUES
         'HOJA',
         'Hoja Demo 60',
         'SASH',
-        60.00,
+        75.00,
         6000.00,
-        6.00
+        6.00,
+        15.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/POSTE-V'),
@@ -85,9 +88,10 @@ VALUES
         'POSTE-V',
         'Poste Vertical Demo 60',
         'MULLION_V',
-        60.00,
+        80.00,
         6000.00,
-        0.00
+        0.00,
+        5.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/POSTE-H'),
@@ -96,9 +100,10 @@ VALUES
         'POSTE-H',
         'Travesaño Horizontal Demo 60',
         'MULLION_H',
-        60.00,
+        80.00,
         6000.00,
-        0.00
+        0.00,
+        5.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-24'),
@@ -109,7 +114,8 @@ VALUES
         'GLAZING_BEAD',
         24.00,
         6000.00,
-        0.00
+        0.00,
+        15.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-14'),
@@ -120,7 +126,8 @@ VALUES
         'GLAZING_BEAD',
         14.00,
         6000.00,
-        0.00
+        0.00,
+        15.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-10'),
@@ -131,7 +138,8 @@ VALUES
         'GLAZING_BEAD',
         10.00,
         6000.00,
-        0.00
+        0.00,
+        15.00
     )
 ON CONFLICT (id) DO UPDATE SET
     system_id = EXCLUDED.system_id,
@@ -141,7 +149,8 @@ ON CONFLICT (id) DO UPDATE SET
     role = EXCLUDED.role,
     face_width_mm = EXCLUDED.face_width_mm,
     commercial_length_mm = EXCLUDED.commercial_length_mm,
-    welding_loss_mm = EXCLUDED.welding_loss_mm;
+    welding_loss_mm = EXCLUDED.welding_loss_mm,
+    reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm;
 
 INSERT INTO public.hardware_kits (
     id,
@@ -226,7 +235,8 @@ INSERT INTO public.glazing_bead_matrix (
     bead_article_id,
     bead_width_mm,
     gasket_interior_mm,
-    gasket_exterior_mm
+    gasket_exterior_mm,
+    cut_add_mm
 )
 VALUES
     (
@@ -237,7 +247,8 @@ VALUES
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-24'),
         24.00,
         3.00,
-        3.00
+        3.00,
+        9.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/GLASS-5'),
@@ -247,7 +258,8 @@ VALUES
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-24'),
         24.00,
         2.50,
-        2.50
+        2.50,
+        9.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/GLASS-6'),
@@ -257,7 +269,8 @@ VALUES
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-24'),
         24.00,
         2.00,
-        2.00
+        2.00,
+        9.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/GLASS-20'),
@@ -267,7 +280,8 @@ VALUES
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-14'),
         14.00,
         3.00,
-        3.00
+        3.00,
+        9.00
     ),
     (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/GLASS-24'),
@@ -277,7 +291,8 @@ VALUES
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/JQ-10'),
         10.00,
         3.00,
-        3.00
+        3.00,
+        9.00
     )
 ON CONFLICT (id) DO UPDATE SET
     system_id = EXCLUDED.system_id,
@@ -286,4 +301,5 @@ ON CONFLICT (id) DO UPDATE SET
     bead_article_id = EXCLUDED.bead_article_id,
     bead_width_mm = EXCLUDED.bead_width_mm,
     gasket_interior_mm = EXCLUDED.gasket_interior_mm,
-    gasket_exterior_mm = EXCLUDED.gasket_exterior_mm;
+    gasket_exterior_mm = EXCLUDED.gasket_exterior_mm,
+    cut_add_mm = EXCLUDED.cut_add_mm;
