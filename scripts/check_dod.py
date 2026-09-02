@@ -37,7 +37,17 @@ REQUIRED_PATHS = (
     ROOT / "pyproject.toml",
     ENGINE_DIR / "pyproject.toml",
     ENGINE_DIR / "src" / "dekopen_engine" / "__init__.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "models.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "geometry.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "glass.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "bom.py",
     ENGINE_DIR / "tests" / "test_package.py",
+    ENGINE_DIR / "tests" / "test_glass.py",
+    ENGINE_DIR / "tests" / "test_gold_cases_core.py",
+    ENGINE_DIR / "tests" / "test_gold_cases_deferred.py",
+    ENGINE_DIR / "tests" / "test_models.py",
+    ENGINE_DIR / "tests" / "test_purity.py",
+    ENGINE_DIR / "tests" / "test_tree_geometry.py",
     BACKEND_DIR / "manage.py",
     BACKEND_DIR / "tests" / "test_bootstrap.py",
     FRONTEND_DIR / "package.json",
@@ -100,6 +110,22 @@ EXPECTED_G_CASES = {
     "G-Pro1",
 }
 
+EXPECTED_G_CASE_STATUSES = {
+    "G1": "pass",
+    "G2": "pass",
+    "G3": "pass",
+    "G4": "pass",
+    "G5": "pending",
+    "G6": "pending",
+    "G7": "pending",
+    "G8": "xfail",
+    "G9": "xfail",
+    "G10": "xfail",
+    "G11": "xfail",
+    "G12": "xfail",
+    "G-Pro1": "pending",
+}
+
 
 def configure_output() -> None:
     if hasattr(sys.stdout, "reconfigure"):
@@ -115,7 +141,7 @@ def fail(message: str, exit_code: int = 1) -> None:
             message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         )
         print(
-            f"::error title=Dekopen SHOT-02 gate::{annotation}",
+            f"::error title=Dekopen SHOT-03 gate::{annotation}",
             file=sys.stderr,
             flush=True,
         )
@@ -184,6 +210,11 @@ def check_python_ast_guards() -> None:
                     "Constitution Rule 3 forbids float in engine: "
                     f"{display_path(path)}:{node.lineno}"
                 )
+            if isinstance(node, ast.Constant) and isinstance(node.value, float):
+                fail(
+                    "Constitution Rule 3 forbids float literals in engine: "
+                    f"{display_path(path)}:{node.lineno}"
+                )
 
 
 def check_frontend_hex_guard() -> None:
@@ -247,7 +278,21 @@ def check_g_case_manifest() -> None:
     if not isinstance(cases, dict) or set(cases) != EXPECTED_G_CASES:
         fail("G-case manifest must contain exactly G1-G12 and G-Pro1")
 
-    print("  G-case manifest contract: passed (calculation cases remain deferred)", flush=True)
+    actual_statuses: dict[str, object] = {}
+    for case_id, case_contract in cases.items():
+        if not isinstance(case_contract, dict):
+            fail(f"G-case {case_id} contract must be an object")
+        actual_statuses[case_id] = case_contract.get("status")
+    if actual_statuses != EXPECTED_G_CASE_STATUSES:
+        fail(
+            "G-case manifest status mismatch; "
+            f"expected={EXPECTED_G_CASE_STATUSES}, actual={actual_statuses}"
+        )
+
+    print(
+        "  G-case manifest contract: G1-G4 pass; G8/G9/G11/G12 xfail",
+        flush=True,
+    )
 
 
 def check_tests() -> None:
@@ -415,11 +460,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-02 fail-closed checker", flush=True)
+    print("Dekopen SHOT-03 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_database()
-        print("[PASS] SHOT-02 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-03 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -434,7 +479,7 @@ def main() -> None:
     if target in {"all", "gauntlet"}:
         check_database_contract()
 
-    print(f"[PASS] SHOT-02 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-03 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

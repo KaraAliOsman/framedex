@@ -5,22 +5,22 @@
     "G1": {
       "name": "Paño Fijo Simple 1000x1000 Blanco",
       "target_shot": "SHOT-03",
-      "status": "pending"
+      "status": "pass"
     },
     "G2": {
       "name": "Practicable 1 Hoja 800x1200",
       "target_shot": "SHOT-03",
-      "status": "pending"
+      "status": "pass"
     },
     "G3": {
       "name": "Oscilobatiente 1 Hoja 1000x1400",
       "target_shot": "SHOT-03",
-      "status": "pending"
+      "status": "pass"
     },
     "G4": {
       "name": "Compuesta Fijo + OB con Poste 1800x1500",
       "target_shot": "SHOT-03",
-      "status": "pending"
+      "status": "pass"
     },
     "G5": {
       "name": "Corredera 2 Hojas 2000x2100",
@@ -40,12 +40,14 @@
     "G8": {
       "name": "Corredera 3 Hojas",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "xfail",
+      "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G9": {
       "name": "Corredera 4 Hojas 4000x2000",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "xfail",
+      "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G10": {
       "name": "Corredera Monoriel 2 Hojas 3000x2400",
@@ -55,12 +57,14 @@
     "G11": {
       "name": "Puerta Doble Hoja 1800x2100",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "xfail",
+      "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G12": {
       "name": "Fijo Gran Formato 3000x2500",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "xfail",
+      "reason": "SHOT-06B: extended geometry deferred by PLAN_SHOTS"
     },
     "G-Pro1": {
       "name": "Fijo 1000x1000 Proline Pro6004 Sign-off Fundador",
