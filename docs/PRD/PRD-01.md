@@ -20,7 +20,7 @@ El paquete `/engine` es el núcleo matemático puro de Dekopen. Sus responsabili
 ### Principio de Aislamiento Puro y Convención de Soldadura
 - **Sin I/O:** Prohibido importar módulos de red, sockets, base de datos o frameworks web.
 - **Tipado Decimal:** Prohibido `float`. Todas las dimensiones y coeficientes se expresan como `Decimal`.
-- **Convención de Soldadura:** `profile_articles.welding_loss_mm` es la única autoridad persistida/editable y se resuelve por artículo/rol. `SystemParams.welding_loss_per_corner` es una representación derivada por extremo: `article.welding_loss_mm / 2`. La fórmula $L_{cut} = W_{nominal} + (2 \times \text{welding\_loss\_per\_corner})$ equivale exactamente a $W_{nominal} + \text{welding\_loss\_mm}$ para el artículo que se está cortando; nunca autoriza reutilizar un valor global entre roles.
+- **Convención de Soldadura:** `profile_articles.welding_loss_mm` es la única autoridad persistida/editable. El adapter entrega al motor el artículo efectivo de cada pieza/rol y la pérdida por extremo se deriva exclusivamente como `welding_loss_per_end(article) = article.welding_loss_mm / Decimal('2')`. FRAME, SASH, MULLION y GLAZING_BEAD nunca comparten un scalar global de pérdida.
 
 ---
 
@@ -40,6 +40,16 @@ class MaterialType(str, Enum):
 class RailType(str, Enum):
     DUAL = "dual"
     MONO = "mono"
+
+class ProfileRole(str, Enum):
+    FRAME = "FRAME"
+    SASH = "SASH"
+    MULLION_V = "MULLION_V"
+    MULLION_H = "MULLION_H"
+    INVERSOR = "INVERSOR"
+    GLAZING_BEAD = "GLAZING_BEAD"
+    COUPLER = "COUPLER"
+    ADDITIONAL = "ADDITIONAL"
 
 class BayOpeningType(str, Enum):
     FIXED = "FIXED"
@@ -76,11 +86,20 @@ class HardwareKitRule(BaseModel):
     stay_arms_qty: int = 1
     contents: List[Dict[str, str]] = []
 
+class EffectiveProfileArticle(BaseModel):
+    sku: str
+    role: ProfileRole
+    face_width_mm: Decimal
+    welding_loss_mm: Decimal
+    reinforcement_gap_mm: Decimal
+    weight_kg_m: Decimal
+    steel_weight_kg_m: Decimal
+
 class SystemParams(BaseModel):
     system_code: str
     depth_mm: Decimal
     material: MaterialType = MaterialType.PVC
-    welding_loss_per_corner: Decimal = Decimal('3.00')  # DERIVADO por artículo/rol; fallback no persistido
+    effective_profile_articles: Dict[ProfileRole, EffectiveProfileArticle]
     frame_face_width_mm: Decimal = Decimal('60.00')
     sash_face_width_mm: Decimal = Decimal('75.00')
     mullion_face_width_mm: Decimal = Decimal('80.00')
@@ -175,23 +194,30 @@ def resolve_hardware_kit(opening_type: str, sash_w: Decimal, sash_h: Decimal, sa
 ## 4. Fórmulas Canónicas por Tipología (`engine/geometry.py`)
 
 ```python
+def welding_loss_per_end(article: EffectiveProfileArticle) -> Decimal:
+    return article.welding_loss_mm / Decimal('2')
+
 def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
     clearance = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
+    frame_article = params.effective_profile_articles[ProfileRole.FRAME]
+    sash_article = params.effective_profile_articles[ProfileRole.SASH]
+    frame_welding_loss_per_end = welding_loss_per_end(frame_article)
+    sash_welding_loss_per_end = welding_loss_per_end(sash_article)
     
     # 1. MARCO PRINCIPAL
     if params.material == MaterialType.ALUMINIUM:
         l_frame_cut_h = node.width_mm - (Decimal('2.0') * params.corner_bracket_loss_mm)
         l_frame_cut_v = node.height_mm - (Decimal('2.0') * params.corner_bracket_loss_mm)
     else:
-        l_frame_cut_h = node.width_mm + (Decimal('2.0') * params.welding_loss_per_corner)
-        l_frame_cut_v = node.height_mm + (Decimal('2.0') * params.welding_loss_per_corner)
+        l_frame_cut_h = node.width_mm + (Decimal('2.0') * frame_welding_loss_per_end)
+        l_frame_cut_v = node.height_mm + (Decimal('2.0') * frame_welding_loss_per_end)
         
     w_inner = node.width_mm - (Decimal('2.0') * params.frame_face_width_mm)
     h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
     
     # REFUERZOS DE ACERO DE MARCO
-    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
-    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
+    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
+    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
     
     # 2. RESOLUCIÓN DE VANOS (DISPATCHER POR TIPOLOGÍA)
     match node.opening_type:
@@ -202,10 +228,10 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         case "TURN_LEFT" | "TURN_RIGHT" | "TILT_TURN_LEFT" | "TILT_TURN_RIGHT":
             w_sash_outer = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash_outer = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
-            l_sash_cut_h = w_sash_outer + (Decimal('2.0') * params.welding_loss_per_corner)
-            l_sash_cut_v = h_sash_outer + (Decimal('2.0') * params.welding_loss_per_corner)
-            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
-            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
+            l_sash_cut_h = w_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
+            l_sash_cut_v = h_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
+            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
+            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
             w_glass = w_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
             h_glass = h_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
 
@@ -248,7 +274,7 @@ Un fallback nunca prevalece sobre un valor persistido.
 | `system_code` | DIRECTO | `profile_systems.code` | `str` ← `VARCHAR(50)` | Ficha fabricante | NO | Admin / Taller | `DEMO_60` | Copia exacta del sistema seleccionado. |
 | `depth_mm` | DIRECTO | `profile_systems.depth_mm` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha fabricante | NO | Admin / Taller | `60.00` | Conversión exacta `NUMERIC` → `Decimal`; prohibido `float`. |
 | `material` | DIRECTO | `profile_systems.material` | `MaterialType` ← `material_type` | Ficha fabricante | NO | Admin / Taller | `PVC` | Mapeo unívoco del enum PostgreSQL al enum del motor. |
-| `welding_loss_per_corner` | DERIVADO por rol; nombre heredado equivalente a `welding_loss_per_end` | `profile_articles.welding_loss_mm`, artículo seleccionado por `role` | `Decimal`, mm/extremo ← `NUMERIC(10,2)` | Ficha del artículo; única autoridad persistida | NO | Taller | `FRAME=3.00`; `SASH=3.00`; `MULLION_V/H=0.00`; `GLAZING_BEAD=0.00`; fallback tipado `3.00` sólo sin catálogo | `welding_loss_per_end(role) = article(role).welding_loss_mm / Decimal('2')`; se deriva separadamente para cada rol. |
+| `effective_profile_articles` | DERIVADO como colección obligatoria; no persistido como agregado | Filas efectivas de `profile_articles` del sistema, indexadas por `role`; columnas `sku`, `role`, `face_width_mm`, `welding_loss_mm`, `reinforcement_gap_mm`, `weight_kg_m`, `steel_weight_kg_m` | `Dict[ProfileRole, EffectiveProfileArticle]` | Cada fila `profile_articles`; `welding_loss_mm` es la única autoridad de soldadura | NO | Taller mediante catálogo; adapter sólo mapea | FRAME/SASH `welding_loss_mm=6.00`; MULLION_V/H y GLAZING_BEAD `0.00`; sin fallback de soldadura | El adapter de SHOT-03 entrega un objeto distinto por artículo/rol efectivo. La pérdida por extremo se calcula después con `welding_loss_per_end(article)`; nunca se almacena un scalar común. |
 | `frame_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='FRAME'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo FRAME | NO | Taller | `60.00`; fallback `60.00` | Seleccionar el artículo FRAME efectivo del sistema; el fallback no reemplaza catálogo. |
 | `sash_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='SASH'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo SASH | NO | Taller | `60.00`; fallback `75.00` | Seleccionar el artículo SASH efectivo del sistema. |
 | `mullion_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role IN ('MULLION_V','MULLION_H')` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del poste/travesaño seleccionado | NO | Taller | `60.00` para ambos roles; fallback `80.00` | Consumir el artículo MULLION_V o MULLION_H de la pieza; no colapsar valores asimétricos. |
@@ -276,22 +302,24 @@ Un fallback nunca prevalece sobre un valor persistido.
 ### 5.1. Contrato canónico y generalizable de soldadura por rol
 
 1. `profile_articles.welding_loss_mm` es la **única autoridad persistida y editable**.
-   No existe ni debe crearse una segunda autoridad en `profile_systems` o en `/engine`.
-2. Cada pieza consume el valor de su propio artículo: FRAME usa el artículo FRAME, SASH
-   usa el artículo SASH, y MULLION_V, MULLION_H y GLAZING_BEAD usan sus respectivos
-   artículos. DEMO_60 congela `6.00 mm` para FRAME/SASH y `0.00 mm` para
-   MULLION_V/MULLION_H/GLAZING_BEAD.
-3. Cuando una fórmula requiere pérdida por extremo, el valor es estrictamente derivado:
-   `welding_loss_per_end(role) = article(role).welding_loss_mm / Decimal('2')`. Para
-   DEMO_60 resulta `3.00 mm` por extremo en FRAME y SASH, y `0.00 mm` en postes y
-   junquillos.
-4. El nombre heredado `SystemParams.welding_loss_per_corner` representa ese valor por
-   extremo y **no** una constante global del sistema. El loader debe resolverlo para el
-   artículo/rol que se calcula; dos roles con pérdidas distintas nunca se igualan ni se
-   promedian.
-5. En el pseudocódigo de §4, cada aparición de `params.welding_loss_per_corner` se lee
-   normativamente como `welding_loss_per_end(role_de_la_pieza)`: FRAME para marco y SASH
-   para hoja. Esta notación abreviada no modifica la precedencia definida aquí.
+   No existe ni debe crearse una segunda autoridad en `profile_systems`, `SystemParams`
+   o cualquier otro objeto del motor.
+2. `SystemParams` no contiene un scalar global de soldadura. Contiene los artículos
+   efectivos como objetos separados por rol; una representación equivalente es válida
+   sólo si preserva inequívocamente la identidad del artículo y no colapsa roles.
+3. El adapter/loader que implemente SHOT-03 carga `welding_loss_mm` desde cada fila
+   efectiva de `profile_articles`. FRAME consume el artículo FRAME; SASH consume SASH;
+   MULLION_V, MULLION_H y GLAZING_BEAD consumen sus propios artículos.
+4. La única transformación permitida es
+   `welding_loss_per_end(article) = article.welding_loss_mm / Decimal('2')`. El resultado
+   es efímero y derivado: nunca se persiste ni se vuelve editable.
+5. `calculate_geometry` mantiene referencias y variables diferentes:
+   `frame_article` → `frame_welding_loss_per_end` y
+   `sash_article` → `sash_welding_loss_per_end`. Por ello una misma ejecución representa,
+   sin reinterpretación contextual, por ejemplo FRAME `6.00 → 3.00 mm/end` y SASH
+   `5.00 → 2.50 mm/end`.
+6. DEMO_60 congela FRAME `6.00 → 3.00 mm/end`, SASH `6.00 → 3.00 mm/end`,
+   MULLION_V/H `0.00 → 0.00 mm/end` y GLAZING_BEAD `0.00 → 0.00 mm/end`.
 
 ---
 
@@ -324,7 +352,7 @@ Un fallback nunca prevalece sobre un valor persistido.
 
 ### 6.3. Desglose Matemático Analítico: Caso G5 (Corredera 2 Hojas 2000 × 2100 mm)
 
-* **Inputs Nominales:** $W = 2000.00\text{ mm}$, $H = 2100.00\text{ mm}$, `frame_face_width` = $60.00\text{ mm}$, `sash_face_width` = $75.00\text{ mm}$, `central_overlap` = $40.00\text{ mm}$, `pulley_height` = $12.00\text{ mm}$, `glass_clearance` = $5.00\text{ mm}$, `rebate_depth` = $20.00\text{ mm}$, `welding_loss_mm` = $6.00\text{ mm}$.
+* **Inputs Nominales:** $W = 2000.00\text{ mm}$, $H = 2100.00\text{ mm}$, `frame_face_width` = $60.00\text{ mm}$, `sash_face_width` = $75.00\text{ mm}$, `central_overlap` = $40.00\text{ mm}$, `pulley_height` = $12.00\text{ mm}$, `glass_clearance` = $5.00\text{ mm}$, `rebate_depth` = $20.00\text{ mm}$, FRAME `welding_loss_mm` = $6.00\text{ mm}$ y SASH `welding_loss_mm` = $6.00\text{ mm}$.
 * **1. Marco Exterior de PVC:**
   $$L_{marco\_h} = 2000.00 + 6.00 = 2006.00\text{ mm}$$
   $$L_{marco\_v} = 2100.00 + 6.00 = 2106.00\text{ mm}$$
