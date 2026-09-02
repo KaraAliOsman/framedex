@@ -22,6 +22,11 @@ SUPABASE_DIR = ROOT / "supabase"
 SUPABASE_MIGRATION = (
     SUPABASE_DIR / "migrations" / "20260901000000_initial_schema.sql"
 )
+SUPABASE_SHOT_03_MIGRATION = (
+    SUPABASE_DIR
+    / "migrations"
+    / "20260902000000_add_glazing_bead_cut_add.sql"
+)
 SUPABASE_TEST_DIR = SUPABASE_DIR / "tests" / "database"
 
 PYTHON = sys.executable
@@ -32,7 +37,17 @@ REQUIRED_PATHS = (
     ROOT / "pyproject.toml",
     ENGINE_DIR / "pyproject.toml",
     ENGINE_DIR / "src" / "dekopen_engine" / "__init__.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "models.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "geometry.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "glass.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "bom.py",
     ENGINE_DIR / "tests" / "test_package.py",
+    ENGINE_DIR / "tests" / "test_glass.py",
+    ENGINE_DIR / "tests" / "test_gold_cases_core.py",
+    ENGINE_DIR / "tests" / "test_gold_cases_deferred.py",
+    ENGINE_DIR / "tests" / "test_models.py",
+    ENGINE_DIR / "tests" / "test_purity.py",
+    ENGINE_DIR / "tests" / "test_tree_geometry.py",
     BACKEND_DIR / "manage.py",
     BACKEND_DIR / "tests" / "test_bootstrap.py",
     FRONTEND_DIR / "package.json",
@@ -44,6 +59,7 @@ REQUIRED_PATHS = (
 REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "config.toml",
     SUPABASE_MIGRATION,
+    SUPABASE_SHOT_03_MIGRATION,
     SUPABASE_DIR / "seed.sql",
     SUPABASE_TEST_DIR / "000_schema.test.sql",
     SUPABASE_TEST_DIR / "010_rls_isolation.test.sql",
@@ -94,6 +110,46 @@ EXPECTED_G_CASES = {
     "G-Pro1",
 }
 
+EXPECTED_G_CASE_STATUSES = {
+    "G1": "pass",
+    "G2": "pass",
+    "G3": "pass",
+    "G4": "pass",
+    "G5": "pending",
+    "G6": "pending",
+    "G7": "pending",
+    "G8": "xfail",
+    "G9": "xfail",
+    "G10": "xfail",
+    "G11": "xfail",
+    "G12": "xfail",
+    "G-Pro1": "pending",
+}
+
+EXPECTED_G_CASE_TARGET_SHOTS = {
+    "G1": "SHOT-03",
+    "G2": "SHOT-03",
+    "G3": "SHOT-03",
+    "G4": "SHOT-03",
+    "G5": "SHOT-06",
+    "G6": "SHOT-06",
+    "G7": "SHOT-06",
+    "G8": "SHOT-06B",
+    "G9": "SHOT-06B",
+    "G10": "SHOT-24",
+    "G11": "SHOT-06B",
+    "G12": "SHOT-06B",
+    "G-Pro1": "SHOT-12",
+}
+
+EXPECTED_G3_DEFERRED_ASSERTIONS = {
+    "hardware_kit_resolution": {
+        "status": "xfail",
+        "target_shot": "SHOT-06",
+        "reason": "SHOT-06: hardware_kits resolution",
+    }
+}
+
 
 def configure_output() -> None:
     if hasattr(sys.stdout, "reconfigure"):
@@ -109,7 +165,7 @@ def fail(message: str, exit_code: int = 1) -> None:
             message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         )
         print(
-            f"::error title=Dekopen SHOT-02 gate::{annotation}",
+            f"::error title=Dekopen SHOT-03 gate::{annotation}",
             file=sys.stderr,
             flush=True,
         )
@@ -178,6 +234,11 @@ def check_python_ast_guards() -> None:
                     "Constitution Rule 3 forbids float in engine: "
                     f"{display_path(path)}:{node.lineno}"
                 )
+            if isinstance(node, ast.Constant) and isinstance(node.value, float):
+                fail(
+                    "Constitution Rule 3 forbids float literals in engine: "
+                    f"{display_path(path)}:{node.lineno}"
+                )
 
 
 def check_frontend_hex_guard() -> None:
@@ -234,6 +295,10 @@ def load_g_case_manifest() -> dict[str, object]:
 
 def check_g_case_manifest() -> None:
     manifest = load_g_case_manifest()
+    if "version" in manifest:
+        fail("G-case manifest must not contain an ambiguous version field")
+    if manifest.get("normative_source") != "docs/PRD/PLAN_SHOTS.md":
+        fail("G-case manifest normative_source must be docs/PRD/PLAN_SHOTS.md")
     if manifest.get("tolerance_mm") != "0.00":
         fail("G-case manifest tolerance_mm must be the exact string '0.00'")
 
@@ -241,7 +306,40 @@ def check_g_case_manifest() -> None:
     if not isinstance(cases, dict) or set(cases) != EXPECTED_G_CASES:
         fail("G-case manifest must contain exactly G1-G12 and G-Pro1")
 
-    print("  G-case manifest contract: passed (calculation cases remain deferred)", flush=True)
+    actual_statuses: dict[str, object] = {}
+    actual_target_shots: dict[str, object] = {}
+    for case_id, case_contract in cases.items():
+        if not isinstance(case_contract, dict):
+            fail(f"G-case {case_id} contract must be an object")
+        actual_statuses[case_id] = case_contract.get("status")
+        actual_target_shots[case_id] = case_contract.get("target_shot")
+        if case_contract.get("status") == "xfail":
+            reason = case_contract.get("reason")
+            if not isinstance(reason, str) or not reason.strip():
+                fail(f"Deferred xfail G-case {case_id} must have a non-empty reason")
+    if actual_statuses != EXPECTED_G_CASE_STATUSES:
+        fail(
+            "G-case manifest status mismatch; "
+            f"expected={EXPECTED_G_CASE_STATUSES}, actual={actual_statuses}"
+        )
+    if actual_target_shots != EXPECTED_G_CASE_TARGET_SHOTS:
+        fail(
+            "G-case manifest target_shot mismatch; "
+            f"expected={EXPECTED_G_CASE_TARGET_SHOTS}, actual={actual_target_shots}"
+        )
+
+    g3_contract = cases["G3"]
+    if not isinstance(g3_contract, dict):
+        fail("G-case G3 contract must be an object")
+    if g3_contract.get("deferred_assertions") != EXPECTED_G3_DEFERRED_ASSERTIONS:
+        fail(
+            "G3 deferred assertions must declare hardware kit resolution for SHOT-06"
+        )
+
+    print(
+        "  G-case manifest contract: statuses, targets, and deferred reasons passed",
+        flush=True,
+    )
 
 
 def check_tests() -> None:
@@ -281,7 +379,11 @@ def check_database_contract() -> None:
         if rls_statement not in migration:
             fail(f"RLS is not enabled for required table: {table}")
 
-    executable_sql = sql_without_literals_or_comments(migration)
+    shot_03_migration = SUPABASE_SHOT_03_MIGRATION.read_text(encoding="utf-8")
+    normalized_shot_03_migration = " ".join(shot_03_migration.lower().split())
+    executable_sql = sql_without_literals_or_comments(
+        migration + "\n" + shot_03_migration
+    )
     forbidden_type = re.compile(
         r"\b(?:REAL|FLOAT\d*|DOUBLE\s+PRECISION)\b",
         flags=re.IGNORECASE,
@@ -306,11 +408,26 @@ def check_database_contract() -> None:
     if "public.current_user_org_ids" in normalized_migration:
         fail("RLS policies must call private.current_user_org_ids() explicitly")
 
+    required_shot_03_fragments = (
+        "add column cut_add_mm numeric(6, 2)",
+        "set cut_add_mm = 9.00",
+        "profile_system.code = 'demo_60'",
+        "alter column cut_add_mm set not null",
+    )
+    for fragment in required_shot_03_fragments:
+        if fragment not in normalized_shot_03_migration:
+            fail(f"Required SHOT-03 database contract is missing: {fragment}")
+    if "cut_add_mm numeric(6, 2) not null default" in normalized_shot_03_migration:
+        fail("glazing_bead_matrix.cut_add_mm must not invent a catalog default")
+
     seed = (SUPABASE_DIR / "seed.sql").read_text(encoding="utf-8")
     if "'DEMO_60'" not in seed or "is_global" not in seed or "TRUE" not in seed:
         fail("Canonical global DEMO_60 seed is missing")
     if "40.00" not in seed:
         fail("Canonical DEMO_60 central overlap 40.00 is missing")
+    for fragment in ("75.00", "80.00", "15.00", "5.00", "cut_add_mm", "9.00"):
+        if fragment not in seed:
+            fail(f"Canonical DEMO_60 SHOT-03 seed value is missing: {fragment}")
 
     print("  DDL/RLS/seed source contract: passed", flush=True)
 
@@ -390,11 +507,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-02 fail-closed checker", flush=True)
+    print("Dekopen SHOT-03 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_database()
-        print("[PASS] SHOT-02 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-03 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -409,7 +526,7 @@ def main() -> None:
     if target in {"all", "gauntlet"}:
         check_database_contract()
 
-    print(f"[PASS] SHOT-02 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-03 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 -r backend/requirements.txt
+-e ./engine
 mypy==1.20.2
 pytest==8.4.2
 pytest-django==4.14.0

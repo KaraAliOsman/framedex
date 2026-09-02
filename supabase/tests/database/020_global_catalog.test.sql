@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(15);
+SELECT plan(17);
 
 INSERT INTO public.tenancy_organizations (id, name, tax_id)
 VALUES
@@ -51,6 +51,35 @@ SELECT is(
     )),
     5::BIGINT,
     'DEMO_60 contains five canonical glazing mappings'
+);
+SELECT is(
+    (
+        SELECT count(*)
+        FROM public.profile_articles
+        WHERE system_id = (
+            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+        )
+          AND (
+              (role = 'FRAME' AND face_width_mm = 60.00 AND reinforcement_gap_mm = 15.00)
+              OR (role = 'SASH' AND face_width_mm = 75.00 AND reinforcement_gap_mm = 15.00)
+              OR (role = 'MULLION_V' AND face_width_mm = 80.00 AND reinforcement_gap_mm = 5.00)
+              OR (role = 'MULLION_H' AND face_width_mm = 80.00 AND reinforcement_gap_mm = 5.00)
+          )
+    ),
+    4::BIGINT,
+    'DEMO_60 profile faces and reinforcement gaps match G1-G4'
+);
+SELECT is(
+    (
+        SELECT count(*)
+        FROM public.glazing_bead_matrix
+        WHERE system_id = (
+            SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'
+        )
+          AND cut_add_mm = 9.00
+    ),
+    5::BIGINT,
+    'DEMO_60 glazing mappings use the canonical 9.00 mm cut addition'
 );
 
 SET LOCAL ROLE authenticated;

@@ -94,18 +94,23 @@ class EffectiveProfileArticle(BaseModel):
     reinforcement_gap_mm: Decimal
     weight_kg_m: Decimal
     steel_weight_kg_m: Decimal
+    reinforcement_sku: Optional[str] = None
+
+class GlazingBeadRule(BaseModel):
+    glass_thickness_mm: Decimal
+    bead_article: EffectiveProfileArticle
+    bead_width_mm: Decimal
+    gasket_interior_mm: Decimal
+    gasket_exterior_mm: Decimal
+    cut_add_mm: Decimal
 
 class SystemParams(BaseModel):
     system_code: str
     depth_mm: Decimal
     material: MaterialType = MaterialType.PVC
     effective_profile_articles: Dict[ProfileRole, EffectiveProfileArticle]
-    frame_face_width_mm: Decimal = Decimal('60.00')
-    sash_face_width_mm: Decimal = Decimal('75.00')
-    mullion_face_width_mm: Decimal = Decimal('80.00')
+    glazing_bead_rules: Dict[Decimal, GlazingBeadRule]
     rebate_depth_mm: Decimal = Decimal('20.00')
-    steel_gap_corner_mm: Decimal = Decimal('15.00')
-    steel_gap_mullion_mm: Decimal = Decimal('5.00')
     end_milling_overlap_mm: Decimal = Decimal('0.00')
     
     # Parámetros avanzados
@@ -127,7 +132,7 @@ class SystemParams(BaseModel):
     steel_weight_kg_m: Decimal = Decimal('1.7000')  # Refuerzo estándar 1.5mm
     hardware_kit_weight_kg: Decimal = Decimal('2.50') # Peso estándar kit herraje
     
-    available_hardware_kits: List[HardwareKitRule] = []
+    available_hardware_kits: List[HardwareKitRule] = Field(default_factory=list)
 
 # Precedencia de pesos: profile_articles.weight_kg_m prevalece sobre SystemParams.pvc_weight_kg_m (fallback de sistema).
 WEIGHT_FALLBACK_FACTOR = Decimal('1.1')
@@ -162,7 +167,48 @@ def derive_net_glass_thickness(glass_spec: str, fallback_thickness: Decimal) -> 
     return fallback_thickness
 ```
 
+#### 3.1.1. Área y peso canónicos de `GlassPiece` (PD-09)
+
+```python
+FLOAT_GLASS_DENSITY_KG_M3 = Decimal('2500')
+GLASS_WEIGHT_FACTOR_KG_M2_PER_MM = Decimal('2.50')
+
+area_m2_exact = (width_mm * height_mm) / Decimal('1000000')
+area_m2 = area_m2_exact.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
+
+weight_kg_exact = (
+    area_m2_exact
+    * thickness_net_mm
+    * GLASS_WEIGHT_FACTOR_KG_M2_PER_MM
+)
+weight_kg = weight_kg_exact.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+```
+
+`FLOAT_GLASS_DENSITY_KG_M3` es una constante física del material dentro de
+`/engine`, no un parámetro del sistema de perfiles y no forma parte de
+`SystemParams`. `weight_kg` usa exclusivamente `thickness_net_mm`, es decir,
+la suma de los paños de vidrio derivada desde `glass_spec`; cámara, gas,
+separador y espesor total del paquete DVH no participan.
+
+La autoridad intermedia es siempre `area_m2_exact`. Queda prohibido calcular
+el peso desde `GlassPiece.area_m2` ya cuantizado. Cada campo público se
+cuantiza una sola vez al emitirse mediante `ROUND_HALF_UP`: `area_m2` a cuatro
+decimales, `weight_kg` a dos y `thickness_net_mm` a dos.
+
+Fixtures congelados:
+
+- `680.00 × 1310.00`, `4-16-4` → área `0.8908`, espesor neto `8.00`, peso
+  `17.82`.
+- `546.00 × 1176.00`, `4-12-4` → área exacta `0.642096`, área publicada
+  `0.6421`, espesor neto `8.00`, peso `12.84`.
+
 ### 3.2. Resolución y Normalización de Herrajes (`engine/hardware.py`)
+
+> **Límite SHOT-03:** este algoritmo pertenece a SHOT-06. SHOT-03 no llama
+> `resolve_hardware_kit()`, entrega `hardware_items=[]` y mantiene la
+> subaserción de hardware de G3 como
+> `xfail(strict=True, reason="SHOT-06: hardware_kits resolution")`.
+
 ```python
 def normalize_opening_type(opening_type: str) -> str:
     if opening_type in ("TURN_LEFT", "TURN_RIGHT"):
@@ -189,8 +235,6 @@ def resolve_hardware_kit(opening_type: str, sash_w: Decimal, sash_h: Decimal, sa
     return None
 ```
 
----
-
 ## 4. Fórmulas Canónicas por Tipología (`engine/geometry.py`)
 
 ```python
@@ -212,12 +256,12 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         l_frame_cut_h = node.width_mm + (Decimal('2.0') * frame_welding_loss_per_end)
         l_frame_cut_v = node.height_mm + (Decimal('2.0') * frame_welding_loss_per_end)
         
-    w_inner = node.width_mm - (Decimal('2.0') * params.frame_face_width_mm)
-    h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
+    w_inner = node.width_mm - (Decimal('2.0') * frame_article.face_width_mm)
+    h_inner = node.height_mm - (Decimal('2.0') * frame_article.face_width_mm)
     
     # REFUERZOS DE ACERO DE MARCO
-    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
-    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
+    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (frame_welding_loss_per_end + frame_article.reinforcement_gap_mm))
+    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (frame_welding_loss_per_end + frame_article.reinforcement_gap_mm))
     
     # 2. RESOLUCIÓN DE VANOS (DISPATCHER POR TIPOLOGÍA)
     match node.opening_type:
@@ -230,14 +274,14 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
             h_sash_outer = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
             l_sash_cut_h = w_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
             l_sash_cut_v = h_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
-            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
-            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
-            w_glass = w_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
-            h_glass = h_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
+            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (sash_welding_loss_per_end + sash_article.reinforcement_gap_mm))
+            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (sash_welding_loss_per_end + sash_article.reinforcement_gap_mm))
+            w_glass = w_sash_outer - (Decimal('2.0') * sash_article.face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
+            h_glass = h_sash_outer - (Decimal('2.0') * sash_article.face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
 
         case "SLIDING_2L":
-            w_sash = ((node.width_mm - (Decimal('2.0') * params.frame_face_width_mm) + params.central_overlap_mm) / Decimal('2.0')) + params.sliding_end_add_mm
-            h_sash = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm) - (Decimal('2.0') * params.pulley_height_mm)
+            w_sash = ((node.width_mm - (Decimal('2.0') * frame_article.face_width_mm) + params.central_overlap_mm) / Decimal('2.0')) + params.sliding_end_add_mm
+            h_sash = node.height_mm - (Decimal('2.0') * frame_article.face_width_mm) - (Decimal('2.0') * params.pulley_height_mm)
             
         case "SLIDING_3L":
             w_sash = (w_inner - (Decimal('2.0') * params.sliding_lateral_clearance_mm) + (Decimal('2.0') * params.central_overlap_mm)) / Decimal('3.0')
@@ -255,6 +299,76 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
             w_sash = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
 ```
+
+### 4.1. Árbol, splits y dimensiones efectivas de BAY en SHOT-03
+
+El contrato de nodo es PRD-04 §2. El motor acepta como top-level `BAY`,
+`SPLIT_V`, `SPLIT_H` o un wrapper `ROOT`, que normaliza sin alterar la
+semántica. Todas las dimensiones dentro del límite Python son `Decimal`.
+`split_offset_mm` se mide desde el origen local hasta el eje del mullion:
+desde la izquierda para `SPLIT_V` y desde arriba para `SPLIT_H`. Las
+dimensiones efectivas de cada BAY se derivan durante el recorrido y no son
+una segunda entrada editable.
+
+G4 queda congelado como `SPLIT_V` de `1800.00 × 1500.00`, offset `900.00`,
+perfil `POSTE-V`, con `bay_fixed` FIXED/24.00/`4-16-4 Float Incoloro` y
+`bay_ob` TILT_TURN_RIGHT/20.00/`4-12-4 Float Incoloro`. Tras descontar el
+FRAME de `60.00` y la media cara del MULLION de `80.00`, ambos BAY miden
+`800.00 × 1380.00`.
+
+### 4.2. Fórmulas de MULLION y GLAZING_BEAD
+
+```python
+# El artículo se selecciona por el rol/SKU efectivo de la pieza.
+if mullion_article.role == ProfileRole.MULLION_V:
+    mullion_cut = parent_clear_height + Decimal('2') * params.end_milling_overlap_mm
+else:  # MULLION_H
+    mullion_cut = parent_clear_width + Decimal('2') * params.end_milling_overlap_mm
+
+mullion_steel = (
+    mullion_cut - Decimal('2') * mullion_article.reinforcement_gap_mm
+)
+
+bead_rule = params.glazing_bead_rules[glass_thickness_mm]
+bead_cut_length = glass_length + bead_rule.cut_add_mm
+```
+
+`glazing_bead_matrix.cut_add_mm` es la autoridad persistida del suplemento
+longitudinal. DEMO_60 congela `9.00 mm` para sus cinco espesores; queda
+prohibido hardcodear `+9.00` en `geometry.py`. Los cortes se emiten con el
+artículo de `bead_rule` y rol `GLAZING_BEAD`.
+
+### 4.3. Contrato puro de salida/BOM base de SHOT-03
+
+```python
+class ProfileCut(BaseModel):
+    sku: str
+    role: ProfileRole
+    length_mm: Decimal
+    angle_left: Decimal
+    angle_right: Decimal
+    qty: int
+    bay_id: Optional[str] = None
+
+class ReinforcementPiece(BaseModel):
+    parent_profile_sku: str
+    reinforcement_sku: Optional[str] = None
+    role: ProfileRole
+    length_mm: Decimal
+    qty: int
+    bay_id: Optional[str] = None
+
+class EngineResult(BaseModel):
+    profile_cuts: List[ProfileCut]
+    reinforcements: List[ReinforcementPiece]
+    glasses: List[GlassPiece]
+    hardware_items: List[Dict[str, str]] = Field(default_factory=list)
+```
+
+La salida es determinista y serializable. `profile_cuts` cubre FRAME, SASH,
+MULLION_V/H y GLAZING_BEAD. SHOT-03 no incluye pricing, BFD, inspector, API
+ni hash de snapshot. El contrato interno de un elemento de hardware se
+difiere junto con su resolución; por eso esta colección permanece vacía.
 
 ---
 
@@ -274,13 +388,9 @@ Un fallback nunca prevalece sobre un valor persistido.
 | `system_code` | DIRECTO | `profile_systems.code` | `str` ← `VARCHAR(50)` | Ficha fabricante | NO | Admin / Taller | `DEMO_60` | Copia exacta del sistema seleccionado. |
 | `depth_mm` | DIRECTO | `profile_systems.depth_mm` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha fabricante | NO | Admin / Taller | `60.00` | Conversión exacta `NUMERIC` → `Decimal`; prohibido `float`. |
 | `material` | DIRECTO | `profile_systems.material` | `MaterialType` ← `material_type` | Ficha fabricante | NO | Admin / Taller | `PVC` | Mapeo unívoco del enum PostgreSQL al enum del motor. |
-| `effective_profile_articles` | DERIVADO como colección obligatoria; no persistido como agregado | Filas efectivas de `profile_articles` del sistema, indexadas por `role`; columnas `sku`, `role`, `face_width_mm`, `welding_loss_mm`, `reinforcement_gap_mm`, `weight_kg_m`, `steel_weight_kg_m` | `Dict[ProfileRole, EffectiveProfileArticle]` | Cada fila `profile_articles`; `welding_loss_mm` es la única autoridad de soldadura | NO | Taller mediante catálogo; adapter sólo mapea | FRAME/SASH `welding_loss_mm=6.00`; MULLION_V/H y GLAZING_BEAD `0.00`; sin fallback de soldadura | El adapter de SHOT-03 entrega un objeto distinto por artículo/rol efectivo. La pérdida por extremo se calcula después con `welding_loss_per_end(article)`; nunca se almacena un scalar común. |
-| `frame_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='FRAME'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo FRAME | NO | Taller | `60.00`; fallback `60.00` | Seleccionar el artículo FRAME efectivo del sistema; el fallback no reemplaza catálogo. |
-| `sash_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='SASH'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo SASH | NO | Taller | `60.00`; fallback `75.00` | Seleccionar el artículo SASH efectivo del sistema. |
-| `mullion_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role IN ('MULLION_V','MULLION_H')` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del poste/travesaño seleccionado | NO | Taller | `60.00` para ambos roles; fallback `80.00` | Consumir el artículo MULLION_V o MULLION_H de la pieza; no colapsar valores asimétricos. |
+| `effective_profile_articles` | DERIVADO como colección obligatoria; no persistido como agregado | Filas efectivas de `profile_articles` del sistema, indexadas por `role`; columnas `sku`, `role`, `face_width_mm`, `welding_loss_mm`, `reinforcement_gap_mm`, `weight_kg_m`, `steel_weight_kg_m`, `reinforcement_sku` | `Dict[ProfileRole, EffectiveProfileArticle]` | Cada fila `profile_articles`; soldadura, cara y gap pertenecen al artículo | NO | Taller mediante catálogo; adapter sólo mapea | FRAME cara/gap/soldadura `60.00/15.00/6.00`; SASH `75.00/15.00/6.00`; MULLION_V/H `80.00/5.00/0.00`; GLAZING_BEAD soldadura `0.00` | El adapter entrega un objeto distinto por artículo/rol efectivo. Geometría consume `face_width_mm` y `reinforcement_gap_mm` directamente del artículo; `welding_loss_per_end(article)` es derivado y nunca se almacena como scalar común. |
+| `glazing_bead_rules` | DERIVADO como colección obligatoria; no persistido como agregado | `glazing_bead_matrix` unida con su `profile_articles` por `bead_article_id`; columnas `glass_thickness_mm`, `bead_width_mm`, `gasket_interior_mm`, `gasket_exterior_mm`, `cut_add_mm` y artículo efectivo | `Dict[Decimal, GlazingBeadRule]` | Fila de matriz + artículo GLAZING_BEAD referenciado | NO | Taller mediante catálogo; adapter sólo mapea | Cinco espesores `4/5/6/20/24`; `cut_add_mm=9.00` en todos | Indexar por `glass_thickness_mm`; `bead_cut_length = glass_length + rule.cut_add_mm`; prohibido hardcodear el suplemento. |
 | `rebate_depth_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `20.00` | Sin derivación DB; no inferir desde `depth_mm`, cara o junquillo. |
-| `steel_gap_corner_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo FRAME/SASH seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del artículo | NO | Taller | `15.00`; fallback `15.00` | Resolver por artículo/rol; el persistido prevalece sobre el fallback. |
-| `steel_gap_mullion_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo MULLION_V/H seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del poste/travesaño | NO | Taller | `15.00` persistido por default DB; fallback `5.00` | Resolver por artículo MULLION_V/H; no reutilizar el gap de FRAME/SASH. |
 | `end_milling_overlap_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `0.00` | Sin derivación DB; prohibido inferir desde `sash_overlap_mm`. |
 | `sash_overlap_mm` | DIRECTO | `profile_systems.sash_overlap_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Catálogo técnico del sistema | NO | Taller | `8.00` | Copia exacta del sistema seleccionado. |
 | `glass_clearance_white_mm` | DIRECTO | `profile_systems.glass_clearance_white_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de holgura del sistema | NO | Taller | `5.00`; fallback de clase `3.00` sólo sin catálogo | El valor persistido prevalece; seleccionar cuando `is_foiled = FALSE`. |
@@ -298,6 +408,8 @@ Un fallback nunca prevalece sobre un valor persistido.
 | `steel_weight_kg_m` | DERIVADO por artículo | `profile_articles.steel_weight_kg_m` del artículo seleccionado | `Decimal`, kg/m ← `NUMERIC(8,4)` | Ficha de refuerzo del artículo | NO | Taller | `1.7000`; fallback `1.7000` | Resolver por artículo/rol; no asumir el mismo refuerzo para artículos distintos. |
 | `hardware_kit_weight_kg` | FALLBACK; no existe columna de peso en `hardware_kits` en SHOT-02 | — | `Decimal`, kg | Default tipado del motor hasta existir autoridad persistida aprobada | NO | Sistema / futura ficha aprobada | fallback `2.50` | No derivar desde `contents`, cantidades ni límites dimensionales. |
 | `available_hardware_kits` | DERIVADO como colección | Filas de `hardware_kits` del `system_id` seleccionado; columnas `sku`, `name`, `opening_type`, límites, `rail_type`, cantidades y `contents` | `List[HardwareKitRule]` | Catálogo de herrajes visible por RLS | NO | Admin / Taller | 3 kits: `TURN`, `TILT_TURN`, `SLIDING`; fallback `[]` | Cargar sólo kits `is_active=TRUE` visibles para el tenant/globales y mapear cada columna sin inferencias. |
+
+**Cobertura exhaustiva vigente:** `23/23` campos reales de `SystemParams`.
 
 ### 5.1. Contrato canónico y generalizable de soldadura por rol
 
@@ -320,6 +432,20 @@ Un fallback nunca prevalece sobre un valor persistido.
    `5.00 → 2.50 mm/end`.
 6. DEMO_60 congela FRAME `6.00 → 3.00 mm/end`, SASH `6.00 → 3.00 mm/end`,
    MULLION_V/H `0.00 → 0.00 mm/end` y GLAZING_BEAD `0.00 → 0.00 mm/end`.
+
+### 5.2. Contrato canónico de cara y gap por artículo
+
+1. `profile_articles.face_width_mm` y
+   `profile_articles.reinforcement_gap_mm` pertenecen al artículo efectivo;
+   no existen scalars editables equivalentes en `SystemParams`.
+2. FRAME y SASH calculan acero como
+   `pvc_cut - 2 × (welding_loss_per_end(article) + article.reinforcement_gap_mm)`.
+3. MULLION calcula acero como
+   `mullion_cut - 2 × mullion_article.reinforcement_gap_mm`.
+4. DEMO_60 congela FRAME `face=60.00/gap=15.00`, SASH
+   `face=75.00/gap=15.00` y MULLION_V/H `face=80.00/gap=5.00`.
+5. El cálculo de un split consume la cara del artículo MULLION_V o
+   MULLION_H seleccionado, preservando catálogos futuros asimétricos.
 
 ---
 

@@ -29,6 +29,17 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
 > [!IMPORTANT]
 > **Regla de Generación Automatizada (Enmienda 2 & H1):** El archivo `engine/tests/golden_example.json` se **GENERA** ejecutando `/engine` sobre el request de entrada en el SHOT-06 y se commitea como snapshot de prueba en CI. El request transmite obligatoriamente `glass_spec` y el motor deriva `thickness_net_mm` sumando exclusivamente los paños de cristal (`4-16-4` $\rightarrow 8.00\text{ mm}$, `4-12-4` $\rightarrow 8.00\text{ mm}$, `6-12-6` $\rightarrow 12.00\text{ mm}$, monolítico $\rightarrow$ espesor propio).
 
+> **Compatibilidad SHOT-03:** este apartado sólo congela para SHOT-03 el
+> request de árbol y el resultado puro/BOM; no autoriza implementar el
+> endpoint. El resultado del engine contiene exclusivamente `profile_cuts`,
+> `reinforcements`, `glasses` y `hardware_items`. Cada corte añade `sku` y
+> `bay_id` nullable; cada refuerzo añade `parent_profile_sku`,
+> `reinforcement_sku` nullable y `bay_id` nullable. `hardware_items` es `[]`
+> y no ejecuta resolución de kits. `calculation_hash` se incorpora en
+> SHOT-06 y `inspector` en SHOT-07, fuera del resultado de SHOT-03. Área y
+> peso de cada `GlassPiece` se calculan exclusivamente mediante PRD-01
+> §3.1.1, conservando el área exacta hasta la cuantización final.
+
 - **Request Payload:**
   ```json
   {
@@ -64,22 +75,22 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
   {
     "calculation_hash": "sha256_[GENERAR-AL-COMPILAR]",
     "profile_cuts": [
-      { "role": "FRAME",        "length_mm": "1506.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "FRAME",        "length_mm": "1406.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "MULLION_V",    "length_mm": "1280.00", "angle_left": "90.0", "angle_right": "90.0", "qty": 1 },
-      { "role": "SASH",         "length_mm": "672.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "SASH",         "length_mm": "1302.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "GLAZING_BEAD", "length_mm": "689.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "GLAZING_BEAD", "length_mm": "1319.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "GLAZING_BEAD", "length_mm": "555.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2 },
-      { "role": "GLAZING_BEAD", "length_mm": "1185.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2 }
+      { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1506.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
+      { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1406.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
+      { "sku": "POSTE-V", "role": "MULLION_V",   "length_mm": "1280.00", "angle_left": "90.0", "angle_right": "90.0", "qty": 1, "bay_id": null },
+      { "sku": "HOJA",   "role": "SASH",         "length_mm": "672.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
+      { "sku": "HOJA",   "role": "SASH",         "length_mm": "1302.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
+      { "sku": "JQ-10",  "role": "GLAZING_BEAD", "length_mm": "689.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_1" },
+      { "sku": "JQ-10",  "role": "GLAZING_BEAD", "length_mm": "1319.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_1" },
+      { "sku": "JQ-14",  "role": "GLAZING_BEAD", "length_mm": "555.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
+      { "sku": "JQ-14",  "role": "GLAZING_BEAD", "length_mm": "1185.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" }
     ],
     "reinforcements": [
-      { "role": "FRAME",     "length_mm": "1470.00", "qty": 2 },
-      { "role": "FRAME",     "length_mm": "1370.00", "qty": 2 },
-      { "role": "MULLION_V", "length_mm": "1270.00", "qty": 1 },
-      { "role": "SASH",      "length_mm": "636.00",  "qty": 2 },
-      { "role": "SASH",      "length_mm": "1266.00", "qty": 2 }
+      { "parent_profile_sku": "MARCO",  "reinforcement_sku": null, "role": "FRAME",     "length_mm": "1470.00", "qty": 2, "bay_id": null },
+      { "parent_profile_sku": "MARCO",  "reinforcement_sku": null, "role": "FRAME",     "length_mm": "1370.00", "qty": 2, "bay_id": null },
+      { "parent_profile_sku": "POSTE-V", "reinforcement_sku": null, "role": "MULLION_V", "length_mm": "1270.00", "qty": 1, "bay_id": null },
+      { "parent_profile_sku": "HOJA",   "reinforcement_sku": null, "role": "SASH",      "length_mm": "636.00",  "qty": 2, "bay_id": "bay_2" },
+      { "parent_profile_sku": "HOJA",   "reinforcement_sku": null, "role": "SASH",      "length_mm": "1266.00", "qty": 2, "bay_id": "bay_2" }
     ],
     "glasses": [
       { "bay_id": "bay_1", "width_mm": "680.00",  "height_mm": "1310.00",
@@ -87,6 +98,7 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
       { "bay_id": "bay_2", "width_mm": "546.00",  "height_mm": "1176.00",
         "area_m2": "0.6421", "weight_kg": "12.84", "thickness_net_mm": "8.00" }
     ],
+    "hardware_items": [],
     "inspector": {
       "status": "GREEN",
       "findings": [],
