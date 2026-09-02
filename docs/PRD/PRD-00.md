@@ -80,35 +80,45 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 
 ---
 
-## 5. Los 10 Criterios Go/No-Go del Negocio
+## 5. Matriz Canónica de Criterios Go/No-Go (IDs Únicos Permanentes)
 
-1. **Tolerancia Cero en Casos de Oro:** Casos G1–G12 (excepto G10) con discrepancia de $0.00\text{ mm}$ en CI.
-2. **Aislamiento Multi-Tenant Certificado:** Cero filtraciones de precios o datos entre organizaciones.
-3. **Idempotencia de Pagos:** Ningún webhook duplicado puede cobrar o acreditar doble saldo.
-4. **Motor Inmune a Saldo Cero:** Agotar créditos de IA jamás bloquea el motor 2D ni la exportación de PDFs.
-5. **Inmutabilidad Documental:** Todo PDF comercial emitido queda congelado con hash SHA-256 inmutable.
-6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
-7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
-8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
-10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
+Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se evalúa contra estos identificadores canónicos:
+
+| ID Canónico | Criterio de Aceptación Innegociable | Verificación / Gate |
+|---|---|---|
+| `GNG-01-GOLDEN` | Tolerancia matemática de $0.00\text{ mm}$ en los Casos de Oro exigidos por el Shot (Core G1–G7 en Fase 1). | `pytest engine/` + Snapshot bit a bit |
+| `GNG-02-TENANCY` | Aislamiento RLS multi-tenant absoluto. Tenant A jamás lee costos, cotizaciones o clientes de Tenant B. | Test PostgreSQL multi-tenant con RLS |
+| `GNG-03-PAYMENTS` | Idempotencia estricta en webhooks de pago (Flow.cl en Chile y Paddle MoR internacional). Reintentos de red jamás duplican cobros. | Test replay de webhook con UNIQUE |
+| `GNG-04-ZERO-BALANCE` | Inmunidad de la plataforma ante saldo 0 de créditos IA: motor 2D, optimizador 1D, cotizador manual y exportación PDF siguen 100% operativos. | Test de corte manual con `credits_balance = 0` |
+| `GNG-05-IMMUTABILITY` | Inmutabilidad documental: cada PDF o Excel emitido congela su snapshot de BOM y hash SHA-256 en base de datos. | Hash SHA-256 inmutable en `project_versions` |
+| `GNG-06-HUMAN-UX` | Lenguaje de taller profesional: el inspector R01–R14 muestra frases humanas con botón de corrección; cero trazas crudas. | Test de interfaz y mensajes tipados |
+| `GNG-07-AUDIT` | Auditoría previa obligatoria: toda mutación de precio genera fila en `price_audit_logs` y toda llamada IA en `ai_audit_logs` antes de aplicar cambios. | Test transaccional de auditoría |
+| `GNG-08-LEGAL-FOUNDING`| Términos legales, disclaimers técnicos y contrato Founding 50 (precio congelado de por vida en BD) publicados en landing. | Check de schema y flags comerciales |
+| `GNG-09-CHECKOUT-E2E` | Checkouts funcionales de extremo a extremo en sandbox (Flow CLP con DTE y Paddle USD global). | Test E2E de compra y activación |
+| `GNG-10-DISASTER-RECOVERY` | Protocolo de recuperación de desastres: RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, dump cifrado diario a Supabase Storage y simulacro de restauración probado. | `scripts/restore_drill.sh` en instancia limpia |
+| `GNG-PILOT-SIGN-OFF` | Validación humana en taller real: sign-off físico G-Pro1 con 10 trabajos cotizados en paralelo sin fallos antes de abrir cobro Starter. | Acta firmada con taller en SHOT-12 |
 
 ---
 
 ## 6. Lista Cerrada y Canónica de Dependencias del Monorepo (Regla 15)
 
+El builder tiene **estrictamente prohibido** instalar cualquier paquete fuera de este manifiesto único y cerrado:
+
 ### Backend & Núcleo (`/backend` y `/engine`)
 * `python >= 3.12`
-* `pydantic >= 2.7` (Validación de esquemas tipados y modelos del motor)
-* `django >= 5.0`
+* `django >= 5.0, < 6.0` (Arquitectura Django 5.2 LTS ready)
 * `djangorestframework >= 3.15`
 * `django-cors-headers >= 4.3`
-* `psycopg[binary] >= 3.1` (Conector PostgreSQL 16)
-* `weasyprint >= 62.0` (Generación de PDFs DOC-01..07)
-* `openpyxl >= 3.1` (Exportación Excel de listas de corte DOC-03)
-* `huey >= 2.5` & `redis >= 5.0` (Colas asíncronas ligeras)
-* `posthog >= 3.5` (Telemetría de eventos)
-* **Tooling:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
+* `pydantic >= 2.7` & `pydantic-settings >= 2.2` (Esquemas tipados y settings validados)
+* `psycopg[binary] >= 3.1` (Conector nativo PostgreSQL 16)
+* `weasyprint >= 62.0` (Generación de PDFs DOC-01 a DOC-08)
+* `openpyxl >= 3.1` (Generación de listas de corte en Excel DOC-03)
+* `drf-spectacular >= 0.27` (Autogeneración OpenAPI 3.0 / TypeScript client)
+* `structlog >= 24.1` (Observabilidad y logs estructurados en JSON)
+* `whitenoise >= 6.6` (Servido de archivos estáticos)
+* `huey >= 2.5` & `redis >= 5.0` (Cola de tareas asíncronas ligeras)
+* `posthog >= 3.5` (Telemetría de producto)
+* **Tooling Backend:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
 
 ### Frontend (`/frontend`)
 * `node >= 20`
@@ -116,5 +126,6 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 * `typescript >= 5.4`
 * `vite >= 5.2`
 * `tailwindcss >= 3.4` (con variables semánticas `--theme-*`)
-* `lucide-react >= 0.370` (Iconografía técnica estándar)
-* **Tooling:** `vitest >= 1.6`, `eslint >= 8.57`.
+* `lucide-react >= 0.370` (Iconografía técnica)
+* **Tooling Frontend:** `vitest >= 1.6`, `eslint >= 8.57`, `prettier >= 3.2`.
+

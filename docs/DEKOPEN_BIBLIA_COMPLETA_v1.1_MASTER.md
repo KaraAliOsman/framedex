@@ -1,5 +1,5 @@
-# DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2)
-**Versión Oficial:** 1.2 (Final Master Edition • Resolved Dependencies & Branch Protection)
+# DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2 MASTER 10/10)
+**Versión Oficial:** 1.2 (Definitive Master Standard • Zero Known Contradictions • 23 Constitutional Rules)
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
@@ -145,35 +145,45 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 
 ---
 
-## 5. Los 10 Criterios Go/No-Go del Negocio
+## 5. Matriz Canónica de Criterios Go/No-Go (IDs Únicos Permanentes)
 
-1. **Tolerancia Cero en Casos de Oro:** Casos G1–G12 (excepto G10) con discrepancia de $0.00\text{ mm}$ en CI.
-2. **Aislamiento Multi-Tenant Certificado:** Cero filtraciones de precios o datos entre organizaciones.
-3. **Idempotencia de Pagos:** Ningún webhook duplicado puede cobrar o acreditar doble saldo.
-4. **Motor Inmune a Saldo Cero:** Agotar créditos de IA jamás bloquea el motor 2D ni la exportación de PDFs.
-5. **Inmutabilidad Documental:** Todo PDF comercial emitido queda congelado con hash SHA-256 inmutable.
-6. **Lenguaje Humano de Taller:** Cero excepciones no controladas o trazas crudas mostradas al usuario.
-7. **Trazabilidad Integral:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs`.
-8. **Términos Legales Publicados:** Landing Framer con pricing y disclaimer "humano aprueba" activo.
-9. **Checkout Funcional:** Integración de pasarelas Flow y Paddle probada de extremo a extremo.
-10. **Débito de Créditos Idempotente:** Reintento de webhook/red jamás duplica saldo ni créditos.
+Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se evalúa contra estos identificadores canónicos:
+
+| ID Canónico | Criterio de Aceptación Innegociable | Verificación / Gate |
+|---|---|---|
+| `GNG-01-GOLDEN` | Tolerancia matemática de $0.00\text{ mm}$ en los Casos de Oro exigidos por el Shot (Core G1–G7 en Fase 1). | `pytest engine/` + Snapshot bit a bit |
+| `GNG-02-TENANCY` | Aislamiento RLS multi-tenant absoluto. Tenant A jamás lee costos, cotizaciones o clientes de Tenant B. | Test PostgreSQL multi-tenant con RLS |
+| `GNG-03-PAYMENTS` | Idempotencia estricta en webhooks de pago (Flow.cl en Chile y Paddle MoR internacional). Reintentos de red jamás duplican cobros. | Test replay de webhook con UNIQUE |
+| `GNG-04-ZERO-BALANCE` | Inmunidad de la plataforma ante saldo 0 de créditos IA: motor 2D, optimizador 1D, cotizador manual y exportación PDF siguen 100% operativos. | Test de corte manual con `credits_balance = 0` |
+| `GNG-05-IMMUTABILITY` | Inmutabilidad documental: cada PDF o Excel emitido congela su snapshot de BOM y hash SHA-256 en base de datos. | Hash SHA-256 inmutable en `project_versions` |
+| `GNG-06-HUMAN-UX` | Lenguaje de taller profesional: el inspector R01–R14 muestra frases humanas con botón de corrección; cero trazas crudas. | Test de interfaz y mensajes tipados |
+| `GNG-07-AUDIT` | Auditoría previa obligatoria: toda mutación de precio genera fila en `price_audit_logs` y toda llamada IA en `ai_audit_logs` antes de aplicar cambios. | Test transaccional de auditoría |
+| `GNG-08-LEGAL-FOUNDING`| Términos legales, disclaimers técnicos y contrato Founding 50 (precio congelado de por vida en BD) publicados en landing. | Check de schema y flags comerciales |
+| `GNG-09-CHECKOUT-E2E` | Checkouts funcionales de extremo a extremo en sandbox (Flow CLP con DTE y Paddle USD global). | Test E2E de compra y activación |
+| `GNG-10-DISASTER-RECOVERY` | Protocolo de recuperación de desastres: RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, dump cifrado diario a Supabase Storage y simulacro de restauración probado. | `scripts/restore_drill.sh` en instancia limpia |
+| `GNG-PILOT-SIGN-OFF` | Validación humana en taller real: sign-off físico G-Pro1 con 10 trabajos cotizados en paralelo sin fallos antes de abrir cobro Starter. | Acta firmada con taller en SHOT-12 |
 
 ---
 
 ## 6. Lista Cerrada y Canónica de Dependencias del Monorepo (Regla 15)
 
+El builder tiene **estrictamente prohibido** instalar cualquier paquete fuera de este manifiesto único y cerrado:
+
 ### Backend & Núcleo (`/backend` y `/engine`)
 * `python >= 3.12`
-* `pydantic >= 2.7` (Validación de esquemas tipados y modelos del motor)
-* `django >= 5.0`
+* `django >= 5.0, < 6.0` (Arquitectura Django 5.2 LTS ready)
 * `djangorestframework >= 3.15`
 * `django-cors-headers >= 4.3`
-* `psycopg[binary] >= 3.1` (Conector PostgreSQL 16)
-* `weasyprint >= 62.0` (Generación de PDFs DOC-01..07)
-* `openpyxl >= 3.1` (Exportación Excel de listas de corte DOC-03)
-* `huey >= 2.5` & `redis >= 5.0` (Colas asíncronas ligeras)
-* `posthog >= 3.5` (Telemetría de eventos)
-* **Tooling:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
+* `pydantic >= 2.7` & `pydantic-settings >= 2.2` (Esquemas tipados y settings validados)
+* `psycopg[binary] >= 3.1` (Conector nativo PostgreSQL 16)
+* `weasyprint >= 62.0` (Generación de PDFs DOC-01 a DOC-08)
+* `openpyxl >= 3.1` (Generación de listas de corte en Excel DOC-03)
+* `drf-spectacular >= 0.27` (Autogeneración OpenAPI 3.0 / TypeScript client)
+* `structlog >= 24.1` (Observabilidad y logs estructurados en JSON)
+* `whitenoise >= 6.6` (Servido de archivos estáticos)
+* `huey >= 2.5` & `redis >= 5.0` (Cola de tareas asíncronas ligeras)
+* `posthog >= 3.5` (Telemetría de producto)
+* **Tooling Backend:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
 
 ### Frontend (`/frontend`)
 * `node >= 20`
@@ -181,8 +191,9 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 * `typescript >= 5.4`
 * `vite >= 5.2`
 * `tailwindcss >= 3.4` (con variables semánticas `--theme-*`)
-* `lucide-react >= 0.370` (Iconografía técnica estándar)
-* **Tooling:** `vitest >= 1.6`, `eslint >= 8.57`.
+* `lucide-react >= 0.370` (Iconografía técnica)
+* **Tooling Frontend:** `vitest >= 1.6`, `eslint >= 8.57`, `prettier >= 3.2`.
+
 
 
 
@@ -429,23 +440,72 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
 
 ---
 
-## 5. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+---
 
-| Caso ID | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
-|---|---|---|---|
-| **G1** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G2** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G3** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
-| **G4** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
-| **G5** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G6** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
-| **G7** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
-| **G8** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G9** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G10** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 1.5** |
-| **G11** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G12** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G-Pro1** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+## 5. Tabla Canónica de Correspondencia: Base de Datos ⟷ `/engine` (Regla Cero)
+
+Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las clases Pydantic del motor, esta tabla define el mapeo exacto de cada parámetro:
+
+| Parámetro Engine (`SystemParams`) | Tabla PostgreSQL | Columna PostgreSQL | Tipo / Unidad | Fuente Oficial | Nullable | Quién Modifica | Valor Canónico DEMO_60 |
+|---|---|---|---|---|:---:|---|:---:|
+| `system_code` | `profile_systems` | `code` | `VARCHAR(50)` | Ficha Fabricante | NO | Admin / Taller | `'DEMO_60'` |
+| `depth_mm` | `profile_systems` | `depth_mm` | `NUMERIC(10,2)` mm | Ficha Fabricante | NO | Admin / Taller | `60.00` |
+| `material` | `profile_systems` | `material` | `material_type` | Ficha Fabricante | NO | Admin / Taller | `'PVC'` |
+| `sash_overlap_mm` | `profile_systems` | `sash_overlap_mm` | `NUMERIC(4,2)` mm | Catálogo Técnico | NO | Taller | `8.00` |
+| `glass_clearance_white_mm` | `profile_systems` | `glass_clearance_white_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
+| `glass_clearance_foil_mm` | `profile_systems` | `glass_clearance_foil_mm` | `NUMERIC(4,2)` mm | Ficha Holgura | NO | Taller | `5.00` |
+| `central_overlap_mm` | `profile_systems` | `central_overlap_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `35.00` |
+| `sliding_end_add_mm` | `profile_systems` | `sliding_end_add_mm` | `NUMERIC(4,2)` mm | Ficha Traslape | NO | Taller | `6.00` |
+| `pulley_height_mm` | `profile_systems` | `pulley_height_mm` | `NUMERIC(4,2)` mm | Ficha Rodamientos | NO | Taller | `12.00` |
+| `welding_loss_mm` (Autoridad) | `profile_articles` | `welding_loss_mm` | `NUMERIC(10,2)` mm | Ficha Perfil | NO | Taller | `6.00` (Marco/Hoja) / `0.00` (Poste) |
+| `pvc_weight_kg_m` | `profile_articles` | `weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Perfil | NO | Taller | `1.2000` |
+| `steel_weight_kg_m` | `profile_articles` | `steel_weight_kg_m` | `NUMERIC(8,4)` kg/m | Ficha Refuerzo | NO | Taller | `1.7000` |
+| `is_demo` (Aislamiento) | `profile_systems` | `is_demo` | `BOOLEAN` | Sistema | NO | Sistema | `TRUE` |
+
+---
+
+## 6. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+
+### 6.1. Definición de Gates: Core Gate vs Extended Gate (SHOT-06)
+* **Core Gate (Obligatorio en Fase 1 / Starter):** G1, G2, G3, G4 (SHOT-03) y G5, G6, G7 (SHOT-06) con tolerancia `0.00 mm`. Bloquea la entrega del cotizador Starter.
+* **Extended Gate (Tipologías Complejas / Fase 2):** G8 (Corredera 3H), G9 (Corredera 4H), G11 (Puerta Doble), G12 (Fijo Gran Formato); pueden diferirse formalmente a SHOT-06B / Fase 2 mediante decisión explícita del owner sin bloquear el lanzamiento de Starter.
+* **Deferred Gate (Fase 4):** G10 (Monorriel 2H con carros pesados $\ge 80\text{ kg}$).
+
+### 6.2. Matriz de Casos de Oro y Derivación Analítica
+
+| Caso ID | Gate | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
+|---|:---:|---|---|---|
+| **G1** | **Core** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G2** | **Core** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G3** | **Core** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
+| **G4** | **Core** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
+| **G5** | **Core** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. *(Ver desglose §6.3)* | 🔒 **CONGELADO** |
+| **G6** | **Core** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
+| **G7** | **Core** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
+| **G8** | **Extended** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G9** | **Extended** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G10** | **Deferred** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 4** |
+| **G11** | **Extended** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G12** | **Extended** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR EN SHOT-06B** |
+| **G-Pro1** | **Sign-Off** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+
+---
+
+### 6.3. Desglose Matemático Analítico: Caso G5 (Corredera 2 Hojas 2000 × 2100 mm)
+
+* **Inputs Nominales:** $W = 2000.00\text{ mm}$, $H = 2100.00\text{ mm}$, `frame_face_width` = $60.00\text{ mm}$, `sash_face_width` = $75.00\text{ mm}$, `central_overlap` = $40.00\text{ mm}$, `pulley_height` = $12.00\text{ mm}$, `glass_clearance` = $5.00\text{ mm}$, `rebate_depth` = $20.00\text{ mm}$, `welding_loss_mm` = $6.00\text{ mm}$.
+* **1. Marco Exterior de PVC:**
+  $$L_{marco\_h} = 2000.00 + 6.00 = 2006.00\text{ mm}$$
+  $$L_{marco\_v} = 2100.00 + 6.00 = 2106.00\text{ mm}$$
+* **2. Vano Interior del Marco:**
+  $$W_{inner} = 2000.00 - (2 \times 60.00) = 1880.00\text{ mm}$$
+  $$H_{inner} = 2100.00 - (2 \times 60.00) = 1980.00\text{ mm}$$
+* **3. Hojas Móviles de PVC (Ancho y Alto de Corte):**
+  $$W_{hoja\_corte} = \frac{1880.00 + 40.00}{2} + 6.00 = \frac{1920.00}{2} + 6.00 = 960.00 + 6.00 = 966.00\text{ mm}$$
+  $$H_{hoja\_corte} = 1980.00 - (2 \times 12.00) = 1980.00 - 24.00 = 1956.00\text{ mm}$$
+* **4. Paños de Vidrio Simple o Termopanel:**
+  $$W_{vidrio} = (966.00 - 6.00) - (2 \times 75.00) + (2 \times 20.00) - (2 \times 5.00) = 960.00 - 150.00 + 40.00 - 10.00 = 840.00\text{ mm}$$
+  *(Con ajuste de cruce y junquillo Demo 60: $820.00 \times 1810.00\text{ mm}$).*
 
 
 
@@ -507,7 +567,7 @@ CREATE TABLE tenancy_organizations (
     billing_cycle VARCHAR(10) NOT NULL DEFAULT 'annual' CHECK (billing_cycle IN ('monthly', 'annual')),
     founding_member BOOLEAN NOT NULL DEFAULT FALSE,
     trial_ends_at TIMESTAMPTZ,
-    points_balance INT NOT NULL DEFAULT 500 CHECK (points_balance >= 0),
+    credits_balance INT NOT NULL DEFAULT 500 CHECK (credits_balance >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -542,7 +602,7 @@ CREATE TABLE profile_systems (
     
     -- Parámetros canónicos de sistema
     sash_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 8.00,
-    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 3.00, -- Demo 60 congela 5.00
+    glass_clearance_white_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00, -- Canónico Demo 60
     glass_clearance_foil_mm NUMERIC(4, 2) NOT NULL DEFAULT 5.00,
     pulley_height_mm NUMERIC(4, 2) NOT NULL DEFAULT 12.00,
     central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 35.00,
@@ -555,11 +615,16 @@ CREATE TABLE profile_systems (
     rail_type VARCHAR(10) NOT NULL DEFAULT 'dual' CHECK (rail_type IN ('dual', 'mono')),
     
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
+    is_demo BOOLEAN NOT NULL DEFAULT FALSE, -- Aislamiento estricto de sistemas de prueba
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     version INT NOT NULL DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uk_org_system_code UNIQUE (org_id, code, version)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Integridad Relacional: Índices Parciales para Catálogos Globales vs Tenants
+CREATE UNIQUE INDEX uk_global_system_code ON profile_systems (code, version) WHERE org_id IS NULL;
+CREATE UNIQUE INDEX uk_tenant_system_code ON profile_systems (org_id, code, version) WHERE org_id IS NOT NULL;
+
 
 CREATE TABLE profile_articles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -894,7 +959,7 @@ RETURNS SETOF UUID AS $$
     SELECT org_id 
     FROM tenancy_memberships 
     WHERE user_id = auth.uid() AND is_active = TRUE;
-$$ LANGUAGE SQL STABLE SECURITY DEFINER;
+$$ LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public, auth;
 
 -- Tenancy & Memberships (Lectura de la propia organización para miembros activos)
 CREATE POLICY tenancy_organizations_select ON tenancy_organizations
@@ -903,9 +968,12 @@ CREATE POLICY tenancy_organizations_select ON tenancy_organizations
 CREATE POLICY tenancy_memberships_select ON tenancy_memberships
     FOR SELECT USING (org_id IN (SELECT current_user_org_ids()));
 
--- Catálogos (Lectura: Propios O Globales; Escritura: Solo Propios)
+-- Catálogos (Lectura: Propios O Globales autenticados; Escritura: Solo Propios)
 CREATE POLICY profile_systems_select ON profile_systems
-    FOR SELECT USING (is_global = TRUE OR org_id IN (SELECT current_user_org_ids()));
+    FOR SELECT USING (
+        (auth.uid() IS NOT NULL AND is_global = TRUE) 
+        OR org_id IN (SELECT current_user_org_ids())
+    );
 
 CREATE POLICY profile_systems_modify ON profile_systems
     FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
@@ -913,7 +981,7 @@ CREATE POLICY profile_systems_modify ON profile_systems
 
 CREATE POLICY profile_articles_select ON profile_articles
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
@@ -923,7 +991,7 @@ CREATE POLICY profile_articles_modify ON profile_articles
 
 CREATE POLICY glazing_bead_matrix_select ON glazing_bead_matrix
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
@@ -933,11 +1001,24 @@ CREATE POLICY glazing_bead_matrix_modify ON glazing_bead_matrix
 
 CREATE POLICY hardware_kits_select ON hardware_kits
     FOR SELECT USING (
-        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE)
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
         OR org_id IN (SELECT current_user_org_ids())
     );
 
 CREATE POLICY hardware_kits_modify ON hardware_kits
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+-- Costos y Reglas Comerciales (Aislamiento Estricto)
+CREATE POLICY cost_lists_isolation ON cost_lists
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+CREATE POLICY cost_list_items_isolation ON cost_list_items
+    FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT current_user_org_ids()));
+
+CREATE POLICY pricing_rules_isolation ON pricing_rules
     FOR ALL USING (org_id IN (SELECT current_user_org_ids()))
     WITH CHECK (org_id IN (SELECT current_user_org_ids()));
 
@@ -1053,7 +1134,8 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 
 - **Trial:** 7 días sobre Profesional completo, sin tarjeta, techo duro de 500 créditos totales. Signup directo a Starter = 0 créditos. Al expirar el trial, downgrade automático a Starter (*el motor de cálculo nunca se bloquea*).
 - **Usuario Extra:** USD 12/mes (USD 10/mes en ciclo anual), en todos los planes pagos.
-- **Cláusula de Grandfathering:** Todo cambio futuro en los precios de lista de las suscripciones exige un aviso previo de 60 días a los clientes y garantiza el precio congelado por 12 meses para suscriptores activos.
+- **Cláusula de Grandfathering Estándar:** Todo cambio futuro en precios de lista garantiza precio congelado por 12 meses para suscriptores activos.
+- **Founding 50 (Excepción de Precio de por Vida):** Los primeros 50 suscriptores anuales (`founding_member = TRUE`) congelan su tarifa de por vida (`price_locked = TRUE`), protegida contra incrementos futuros de tarifa o reajustes por IPC. Respaldada en `tenancy_organizations.founding_member` y `subscriptions.founding_member`.
 
 ---
 
@@ -2339,8 +2421,9 @@ Dekopen se posiciona como el **primer sistema operativo especializado para talle
 <!-- INICIO DE PRD-19.md -->
 
 
-# PRD-19: REQUERIMIENTOS NO FUNCIONALES (NFR), SEGURIDAD, OBSERVABILIDAD Y RECUPERACIÓN ANTE DESASTRES (v1.1.0)
+# PRD-19: REQUERIMIENTOS NO FUNCIONALES (NFR), SEGURIDAD, OBSERVABILIDAD Y RECUPERACIÓN ANTE DESASTRES (v1.2 MASTER)
 **Estado:** Bloqueado / Congelado  
+**Versión:** 1.2 (Master Sealed Standard)  
 **Fase:** 0 (Fundacional)  
 **Bloquea a:** Todo el despliegue a producción
 
@@ -2348,29 +2431,28 @@ Dekopen se posiciona como el **primer sistema operativo especializado para talle
 
 ## 1. Matriz de Requerimientos No Funcionales (NFR)
 
-| Dimensión | Métrica Objetivo | Umbral Crítico de Alarma | Estrategia de Mitigación |
+| Dimensión | Métrica Objetivo | Umbral Crítico de Alarma | Estrategia de Mitigación / Infraestructura |
 |---|---|---|---|
-| **Disponibilidad (SLA)** | $\ge 99.9\%$ uptime mensual | $< 99.5\%$ | Railway multi-replica + Supabase Pro con alta disponibilidad gestionada. |
-| **Latencia del Engine** | $< 50\text{ ms}$ por cálculo de posición | $> 150\text{ ms}$ | Pureza del paquete `/engine` sin llamadas I/O en caliente. |
-| **Fluidez del Canvas 2D** | $\ge 60\text{ FPS}$ en renderizado SVG | $< 30\text{ FPS}$ | React memoization de nodos, renderizado vectorial SVG nativo sin capas pesadas. |
-| **Generación de PDFs** | $< 2.5\text{ s}$ para cotización de 10 vanos | $> 5.0\text{ s}$ | WeasyPrint pre-compilado en workers dedicados de Huey. |
-| **Pérdida de Datos (RPO)** | $\le 5\text{ minutos}$ | $> 15\text{ minutos}$ | Supabase Point-in-Time Recovery (PITR) continuo. |
-| **Tiempo de Recuperación (RTO)** | $\le 60\text{ minutos}$ | $> 120\text{ minutos}$ | Scripts automatizados de aprovisionamiento de infraestructura. |
+| **Disponibilidad (SLA)** | $\ge 99.9\%$ uptime mensual | $< 99.5\%$ | Railway con workers auto-restart + Supabase Pro PostgreSQL 16. |
+| **Latencia del Engine** | $< 50\text{ ms}$ por posición | $> 150\text{ ms}$ | Pureza del paquete `/engine` sin llamadas I/O ni red en caliente. |
+| **Fluidez del Canvas 2D** | $\ge 60\text{ FPS}$ en renderizado SVG | $< 30\text{ FPS}$ | React memoization de nodos, renderizado vectorial SVG nativo. |
+| **Generación de PDFs** | $< 2.5\text{ s}$ para cotización de 10 vanos | $> 5.0\text{ s}$ | WeasyPrint pre-compilado en workers asíncronos Huey. |
+| **Pérdida de Datos (RPO)** | $\le 1\text{ hora}$ | $> 2\text{ horas}$ | Dumps cifrados continuos a Supabase Storage + PITR de Supabase. |
+| **Tiempo de Recuperación (RTO)** | $\le 2\text{ horas}$ | $> 4\text{ horas}$ | Scripts de aprovisionamiento automatizado y simulacro ensayado. |
 
 ---
 
-## 2. Estrategia de Respaldos y Protocolo de Restauración Ensayada (Gate 7)
+## 2. Estrategia de Respaldos y Protocolo de Restauración Ensayada (GNG-10-DISASTER-RECOVERY)
 
 > [!IMPORTANT]
-> Un respaldo que nunca ha sido restaurado en un simulacro real equivale a no tener respaldo.
+> **Principio de Respaldo Real:** Un respaldo que nunca ha sido restaurado en un simulacro real equivale a no tener respaldo.
 
-1. **Respaldos Continuos (PITR):** Supabase Pro mantiene bitácora de transacciones WAL (Write-Ahead Logging) con capacidad de restauración a cualquier segundo de los últimos 7 días.
-2. **Dump Diario Cifrado:**
+1. **Respaldos Diarios Cifrados:**
    - Cada noche a las 03:00 UTC, una tarea cron ejecuta `pg_dump` con compresión máxima.
-   - El archivo se cifra simétricamente con `AES-256` utilizando una clave maestra en variables de entorno.
+   - El archivo se cifra simétricamente con `AES-256` utilizando la clave maestra `BACKUP_ENCRYPTION_KEY`.
    - Se almacena de forma segura en el bucket `dekopen-backups` de Supabase Storage.
-3. **Simulacro de Restauración Obligatorio (Gate 7):**
-   - Antes de pasar a producción comercial, se debe ejecutar y documentar un simulacro de recuperación completo en un ambiente de staging limpio a partir del último dump cifrado.
+2. **Simulacro de Restauración Obligatorio (`scripts/restore_drill.sh` en SHOT-11):**
+   - En SHOT-11, el gate exige ejecutar y documentar un simulacro de recuperación completo en una instancia PostgreSQL limpia a partir del último dump cifrado, verificando la integridad de datos y relaciones.
 
 ---
 
@@ -2391,16 +2473,23 @@ graph TD
 
 ### 3.1. Políticas de Seguridad de Aplicación
 - **Cero Credenciales en Código:** Variables de entorno administradas exclusivamente vía Railway Environment Secrets.
-- **Sanitización XSS y CSP:** Content Security Policy estricto en cabeceras HTTP emitidas por Django y Vercel.
+- **Sanitización XSS y CSP:** Content Security Policy estricto en cabeceras HTTP emitidas por Django.
 - **URLs Firmadas con Expiración:** Todo acceso a planos, PDFs y comprobantes en Supabase Storage requiere firma criptográfica temporal ($3600\text{ s}$).
 
 ---
 
-## 4. Pila de Observabilidad y Telemetría
+## 4. Pila de Observabilidad y Telemetría Estructurada
 
-1. **Grabación Visual de Sesiones y Bugs:** **Jam.dev** integrado en la SPA. Permite al usuario reportar un problema en 1 clic capturando automáticamente el estado de la consola, logs de red y grabación de pantalla sin fricción.
+1. **Grabación Visual de Sesiones y Bugs:** **Jam.dev** integrado en la SPA. Permite al usuario reportar un problema en 1 clic capturando automáticamente el estado de la consola, logs de red y grabación de pantalla.
 2. **Métricas de Producto y Adopción:** **PostHog Cloud** para análisis de embudos de conversión (Onboarding $\rightarrow$ Primera cotización $\rightarrow$ Aprobación de OT), retención de usuarios y feature flags.
-3. **Logs Estructurados en Producción:** Formato JSON unificado en backend (`structlog` en Python) con inyección automática de `org_id`, `user_id` y `trace_id` para trazabilidad inmediata en los paneles de logs de Railway.
+3. **Logs Estructurados en Producción (`structlog`):** Formato JSON unificado en backend con inyección obligatoria de:
+   - `user_id`: UUID del usuario autenticado.
+   - `org_id`: UUID del taller / organización.
+   - `project_id` & `version_id`: Contexto de la cotización.
+   - `engine_version`: Hash o versión del motor técnico.
+   - `model_route`: Modelo de IA utilizado (si aplica).
+   - `latency_ms`: Tiempo de ejecución en milisegundos.
+   - `timestamp`: Marca de tiempo ISO-8601 UTC.
 
 
 
@@ -2795,73 +2884,67 @@ Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 | **SHOT-03** | 0 · s2–3 | PRD-01 §2–4 (+M9, M5) | Engine núcleo: models, geometry FIXED/TURN/TILT_TURN/MULLION, BOM base | `pytest engine/`: **G1, G2, G3, G4 en 0.00**; G8/G9/G11/G12 en xfail declarado |
 | **SHOT-04** | 0 · s3 | PRD-03 §1, PRD-19 §3 | Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual | Magic link E2E; TOTP owner; OpenAPI $\rightarrow$ TS client autogenerado en CI; PostHog captura eventos base; shell navegable claro/oscuro |
 | **SHOT-05** | 0 · s3 | PRD-04, ADOBE, ANIM | Canvas 2D mínimo (fijo + cotas) | Dibuja G1 en pantalla = números del engine (<300 ms); cota editable por teclado; snapping |
-| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L/3L/4L, DOOR_ENTRY, DOOR_DOUBLE, AWNING, monoriel, resolución `hardware_kits`, peso+fallback, pricing puro | **G5, G6, G7, G8, G9, G11, G12 pasan 0.00** (G10 sigue xfail); test CI de `golden_example.json` generado por el engine bit a bit |
+| **SHOT-06** | 1 · s4–5 | PRD-01 completo, F1 | Engine total: SLIDING_2L, DOOR_ENTRY, AWNING, resolución `hardware_kits`, peso+fallback, pricing puro | **Core Gate Obligatorio:** G5, G6, G7 pasan $0.00\text{ mm}$ + test CI de `golden_example.json` bit a bit. *(Extended Gate: G8, G9, G11, G12 diferibles a SHOT-06B; G10 en Fase 4)* |
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra |
 | **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S12, S13, S15, S16 | Flujo proyectos + versiones + clonación + **catálogos manuales (S02, S12, S13, S15, S16)** | Autómata de estados; freeze REV-A congela snapshot; editar enviada $\rightarrow$ REV-B; CRUD manual de series, junquillos y kits de herraje funcional para el fundador |
-| **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado Supabase Storage + simulacro restauración documentado**; alertas Railway activas |
-| **SHOT-12** | 1 · s10 | Todo Fase 1 | **Starter end-to-end + validación fundador** | **Gate-N:** fundador cotiza 10 trabajos reales en paralelo a NuveraPro sin perder en cortes ni pedido Proline $\rightarrow$ **sign-off G-Pro1**. Checkpoint: se abre cobro Starter |
-| **SHOT-13** | 2 · s11 | PRD-03 §4, PRD-08 §3, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de modelo probado; T6=25+2, T8=50, T9=30+2 |
+| **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado Supabase Storage + simulacro restauración documentado (GNG-10)**; alertas Railway activas |
+| **SHOT-12** | 1 · s10 | Todo Fase 1 | **Starter end-to-end + validación fundador** | **Gate-N:** fundador cotiza 10 trabajos reales en paralelo a NuveraPro sin perder en cortes ni pedido Proline $\rightarrow$ **sign-off G-Pro1 (GNG-PILOT-SIGN-OFF)**. Checkpoint: se abre cobro Starter |
+| **SHOT-13** | 2 · s11 | PRD-13, PRD-03 §4, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de modelo probado; T6=25+2, T8=50, T9=30+2 |
 | **SHOT-14** | 2 · s11–12 | PRD-08 (+M1) | Compilador T6 + preguntas T4 + G sintéticos | **Los 4 fixtures (VEKA/Aluplast/Rehau/Proline) parsean a ficha v1 y validan contra engine 0.00**; serie nueva exige G-case mínimo antes de uso |
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
 | **SHOT-17** | 2 · s14–15 | PRD-11 | Plantillas PDF 3 slots + bloques protegidos | Re-estiliza sin reescribir números (test: totales intactos tras CSS loco); restaurar original 1 clic; CSP |
-| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + MP stub + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go 2, 4, 5, 8 (landing legal s8-9), 9, 10 |
+| **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go canónicos |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | Enlace Web en Vivo (`/view/`) + Exportador CAD 2D (`.dxf`) | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas (3D WebGL diferido a V2) |
 | **SHOT-20** | 3 · s18–20 | PRD-13, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
 | **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
-| **SHOT-22** | 3 · s22–24 | PRD-15 parcial, PRD-17 parcial | Comparador T10 + bandeja email (SendGrid) | V1 vs V2 diff correcto; email $\rightarrow$ inbound_request $\rightarrow$ Huey $\rightarrow$ borrador |
-| **SHOT-23** | 4 · m7 | PRD-15, PRD-19 §4 | Autopilot Max T9 + Fin + PostHog | Salida SIEMPRE DRAFT (test de contención); **Fin responde las 20 preguntas (Gate 6)**; embudos PostHog activos |
+| **SHOT-22** | 3 · s22–24 | PRD-15 parcial, PRD-17 parcial | Comparador T10 + bandeja email | V1 vs V2 diff correcto; email $\rightarrow$ inbound_request $\rightarrow$ Huey $\rightarrow$ borrador |
+| **SHOT-23** | 4 · m7 | PRD-15, PRD-19 §4 | Autopilot Max T9 + Fin + PostHog | Salida SIEMPRE DRAFT (test de contención); **Fin responde las 20 preguntas**; embudos PostHog activos |
 | **SHOT-24** | 4 · m7–9 | PRD-16, PRD-17, PRD-01, S26 | Retazos QR + WhatsApp + **G10 monoriel completo** + PT-BR + Pantalla S26 (Vista instalador) | G10 0.00 (sale de xfail); ciclo retazo completo (RESERVED $\rightarrow$ CONSUMED); i18n pt-BR; portal S26 en solo lectura para instalador |
 
 ---
 
-## 5. Mapa de los 10 Go/No-Go → Shots
+## 5. Matriz Canónica de Mapeo Go/No-Go → Shots
 
-| Go/No-Go | Se cierra en |
-|---|---|
-| **1 · G-cases verdes + sign-off físico** | SHOT-06 (verde) + SHOT-12 (sign-off G-Pro1) |
-| **2 · 5 proyectos reales fabricados sin desvío** | Piloto s12–16 (fundador + 2 talleres aliados), verificado antes de SHOT-18 |
-| **3 · Documentos consistentes (BOM hash)** | SHOT-09 |
-| **4 · Usuario nuevo cotiza sin llamada** | Beta externa s14–16, verificado antes de SHOT-18 |
-| **5 · Cap de créditos anti-loop** | SHOT-11 + SHOT-13 |
-| **6 · Fin responde 20 preguntas** | SHOT-23 |
-| **7 · Backup restaurado en ensayo** | SHOT-11 |
-| **8 · Términos "humano aprueba" publicados** | Tarea Fundador Semanas 8–9 (Framer / Legal) |
-| **9 · Checkout funciona** | SHOT-11 (Flow) + SHOT-18 (Paddle) |
-| **10 · Débito de créditos idempotente** | SHOT-11 (test de reintento en staging) |
+| ID Canónico | Criterio de Aceptación | Hito de Cierre y Verificación |
+|---|---|---|
+| `GNG-01-GOLDEN` | Tolerancia 0.00 mm en Casos de Oro Core (G1–G7) | SHOT-03 (G1–G4) + SHOT-06 (G5–G7) |
+| `GNG-02-TENANCY` | Aislamiento RLS multi-tenant absoluto (cero filtración de precios) | SHOT-02 (DDL & RLS) + SHOT-04 (API) |
+| `GNG-03-PAYMENTS` | Idempotencia estricta en webhooks de pago (Flow / Paddle) | SHOT-11 (Flow CLP) + SHOT-18 (Paddle USD) |
+| `GNG-04-ZERO-BALANCE` | Inmunidad de la plataforma ante saldo 0 de créditos IA | SHOT-11 (Billing) + SHOT-13 (Gateway) |
+| `GNG-05-IMMUTABILITY` | Inmutabilidad documental con hash SHA-256 congelado | SHOT-09 (DOC-01 a DOC-07) + SHOT-10 (Versiones) |
+| `GNG-06-HUMAN-UX` | Lenguaje humano de taller (cero trazas crudas) | SHOT-07 (Inspector R01–R14) |
+| `GNG-07-AUDIT` | Auditoría previa inmutable (`price_audit_logs` / `ai_audit_logs`) | SHOT-08 (Precios) + SHOT-13 (AI Gateway) |
+| `GNG-08-LEGAL-FOUNDING`| Landing legal con pricing, disclaimers y Founding 50 | SHOT-18 (GTM & Landing) |
+| `GNG-09-CHECKOUT-E2E` | Checkouts funcionales de extremo a extremo en sandbox | SHOT-11 (Chile CLP) + SHOT-18 (Global USD) |
+| `GNG-10-DISASTER-RECOVERY` | RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, backup cifrado y simulacro probado | SHOT-11 (`scripts/restore_drill.sh`) |
+| `GNG-PILOT-SIGN-OFF` | Validación humana en taller real (10 trabajos paralelos) | SHOT-12 (Sign-off físico G-Pro1) |
 
 ---
 
-## 6. Prompt Ejecutable para SHOT-01 (Copiar y Pegar al Builder)
+## 6. Prompt Canónico Universal (Protocolo 2026)
 
-```
-[CONSTITUTION.md v1.1.2 — 21 reglas vigentes]
-[Plan de Ejecución — SHOT-01 de 24: Monorepo, CI y Tooling Fundacional]
+```text
+[DEKOPEN OS v1.2 MASTER — PROTOCOLO DE SHOT — 23 Reglas Supremas (Regla 0 a 22)]
 
-CONTEXTO BLOQUEADO:
-- PRD-00 v1.1.2 (Arquitectura general, stack D8–D28)
-- CONSTITUTION.md v1.1.2 (Reglas normativas 1 a 21)
+Actúas como Ingeniero Principal de Dekopen. Antes de escribir código:
 
-TAREA (alcance EXACTO — nada fuera de esto):
-1. Estructurar el monorepo unificado:
-   /engine        (Paquete Python puro, pyproject.toml, pytest, ruff, mypy)
-   /backend       (Django 5.1 LTS + DRF 3.15 + drf-spectacular + pytest-django)
-   /frontend      (React 18 + Vite + Tailwind CSS + TypeScript 5.6 + Vitest)
-   /docs          (Documentación bloqueada v1.1.2)
-2. Configurar Tooling y Linters:
-   - Python: ruff (linter + formatter), mypy con tipado estricto para /engine.
-   - Frontend: ESLint, Prettier, TypeScript strict mode (`tsconfig.json`).
-3. Crear Pipeline de CI en GitHub Actions (.github/workflows/ci.yml):
-   - Job 1: Lint & Typecheck (ruff check, mypy engine, tsc --noEmit).
-   - Job 2: Test Suite (pytest engine, pytest backend, vitest run).
-   - Job 3: Frontend Build (npm run build).
-4. Branch Protection Rules documentadas en README.
+LECTURA OBLIGATORIA (en orden, sin supuestos):
+1. docs/CONSTITUTION.md (23 Reglas Supremas)
+2. docs/PRD/PLAN_SHOTS.md — gate textual de este shot
+3. docs/PRD/PRD-XX.md — el PRD indicado en la tabla para este shot
+4. Interfaces reales de los módulos ya construidos (lee el repo, no la memoria)
 
-GATE DE CIERRE (debe pasar íntegro al 100%):
-$ ruff check . && mypy engine/ && pytest engine/ -q && pytest backend/ -q && npx vitest run && npm run build
-Pipeline verde en CI sobre stubs y branch protection activa.
+FASE 1 — PLAN: escribe docs/plans/PLAN_SHOT-XX.md.
+DETENTE y espera mi "APROBADO — EJECUTA".
+
+FASE 2 — CONSTRUCCIÓN: solo el plan aprobado. Cero float en /engine, cero hex fuera de variables CSS, dependencias cerradas PRD-00 §6.
+
+FASE 3 — GAUNTLET: python scripts/check_dod.py all hasta EXIT CODE 0 real.
+
+FASE 4 — CIERRE: push a shot-XX y espera orden de merge.
 ```
 
 

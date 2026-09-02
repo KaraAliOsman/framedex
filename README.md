@@ -6,8 +6,10 @@
 
 ## ⚡ Quickstart
 
-Requisitos de SHOT-01: Python 3.12+, Node.js 20.19+ y npm. La instalación usa solo
-la lista cerrada de `docs/PRD/PRD-00.md` §6.
+Requisitos: Python 3.12+, Node.js 20.19+ y npm. El gate SQL real requiere además
+Docker y Supabase CLI 2.116.0; son herramientas de verificación, no dependencias del
+producto. Supabase local usa PostgreSQL 17 y CI aplica el mismo DDL adicionalmente sobre
+`postgres:16-alpine` para verificar el contrato de PRD-02.
 
 ```bash
 python -m venv .venv
@@ -15,38 +17,24 @@ python -m venv .venv
 # macOS/Linux: source .venv/bin/activate
 python -m pip install --requirement requirements-dev.txt
 cd frontend && npm ci && cd ..
-```
 
-Para validar el estado completo del repositorio:
-
-```bash
-# Entrada canónica y multiplataforma del gate
+# Gauntlet canónico multiplataforma
 python scripts/check_dod.py all
 
-# Atajos equivalentes cuando GNU Make está disponible
-make test
-make lint
-make typecheck
-make build
+# Migración, seed, lint SQL y pgTAP sobre una stack Supabase limpia
+make database
 ```
 
-El checker rechaza herramientas o suites ausentes, warnings, colores hex crudos en
-`frontend/src`, usos de `float` en `engine/src` y cualquier comando con retorno no cero.
-
----
+El checker rechaza herramientas o suites ausentes, warnings, tipos SQL flotantes, tablas
+sin RLS y cualquier comando con retorno no cero. La fuente de verdad vive en
+`supabase/migrations/`; el seed global determinista `DEMO_60` vive en
+`supabase/seed.sql`. Ningún comando del shot enlaza ni modifica una instancia remota.
 
 ## 🔒 Branch protection de `main`
 
-La rama `main` no admite merge directo. En GitHub, configurar **Settings → Branches →
-Branch protection rules** para `main` con estos requisitos mínimos:
-
-1. Exigir pull request antes de integrar cambios.
-2. Exigir que la rama esté actualizada antes del merge.
-3. Exigir exactamente los status checks `Lint & Typecheck`, `Test Suite` y
-   `Frontend Build` definidos en `.github/workflows/ci.yml`.
-4. No permitir bypass, force pushes ni eliminación de `main`.
-
-Cada shot se publica en su rama `shot-XX` y espera la orden explícita `MERGE` del owner.
+La protección debe exigir pull request y los cuatro checks exactos `Lint & Typecheck`,
+`Test Suite`, `Frontend Build` y `Database Gate`, sin bypass ni force pushes. Cada shot
+se publica en `shot-XX` y espera la orden explícita `MERGE` del owner.
 
 ---
 
@@ -57,7 +45,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | Documento | Ubicación | Propósito |
 |---|---|---|
 | **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap obligatorio para Codex, Claude Code y agentes de desarrollo |
-| **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 22 reglas inviolables de calidad, tipado y determinismo |
+| **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 23 reglas inviolables de calidad, tipado y determinismo |
 | **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Guía paso a paso para planificar, ejecutar y cerrar cada shot |
 | **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-19) |
 | **Catálogo de Pantallas** | [`/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md`](./docs/PRD/SCREENS_SPECIFICATION_S01_S28.md) | Especificación de las 28 pantallas de la aplicación |
@@ -69,8 +57,8 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 
 | Shot | Fase | Descripción | Gate de Cierre | Estado |
 |---|---|---|---|:---:|
-| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ⏳ Pendiente |
-| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | ⏳ Pendiente |
+| **SHOT-01** | 0 | Monorepo + CI + Tooling Fundacional | Pipeline verde sobre stubs (`make dod`) | ✅ Cerrado |
+| **SHOT-02** | 0 | DDL completo + `hardware_kits` + RLS | SQL aplica en Supabase; tests aislamiento pasan | 🛠 En curso |
 | **SHOT-03** | 0 | Engine núcleo (fórmulas fijas + OB + BOM) | `pytest engine/`: G1–G4 en 0.00 mm | ⏳ Pendiente |
 | **SHOT-04** | 0 | Auth + tenancy + API DRF + Shell ADOBE | Magic link E2E; OpenAPI $\rightarrow$ TS; PostHog base | ⏳ Pendiente |
 | **SHOT-05** | 0 | Canvas 2D mínimo SVG (fijo + cotas) | Dibuja G1 en pantalla (<300 ms) | ⏳ Pendiente |

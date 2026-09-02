@@ -20,7 +20,7 @@ El paquete `/engine` es el núcleo matemático puro de Dekopen. Sus responsabili
 ### Principio de Aislamiento Puro y Convención de Soldadura
 - **Sin I/O:** Prohibido importar módulos de red, sockets, base de datos o frameworks web.
 - **Tipado Decimal:** Prohibido `float`. Todas las dimensiones y coeficientes se expresan como `Decimal`.
-- **Convención de Soldadura:** `SystemParams.welding_loss_per_corner` (e.g. $3.00\text{ mm}$ por cabezal/esquina en inglete) vs `profile_articles.welding_loss_mm` ($6.00\text{ mm}$ total por pieza de corte con 2 extremos soldados). La fórmula $L_{cut} = W_{nominal} + (2 \times \text{welding\_loss\_per\_corner})$ equivale exactamente a $W_{nominal} + \text{welding\_loss\_mm}$.
+- **Convención de Soldadura:** `profile_articles.welding_loss_mm` es la única autoridad persistida/editable. El adapter entrega al motor el artículo efectivo de cada pieza/rol y la pérdida por extremo se deriva exclusivamente como `welding_loss_per_end(article) = article.welding_loss_mm / Decimal('2')`. FRAME, SASH, MULLION y GLAZING_BEAD nunca comparten un scalar global de pérdida.
 
 ---
 
@@ -40,6 +40,16 @@ class MaterialType(str, Enum):
 class RailType(str, Enum):
     DUAL = "dual"
     MONO = "mono"
+
+class ProfileRole(str, Enum):
+    FRAME = "FRAME"
+    SASH = "SASH"
+    MULLION_V = "MULLION_V"
+    MULLION_H = "MULLION_H"
+    INVERSOR = "INVERSOR"
+    GLAZING_BEAD = "GLAZING_BEAD"
+    COUPLER = "COUPLER"
+    ADDITIONAL = "ADDITIONAL"
 
 class BayOpeningType(str, Enum):
     FIXED = "FIXED"
@@ -76,11 +86,20 @@ class HardwareKitRule(BaseModel):
     stay_arms_qty: int = 1
     contents: List[Dict[str, str]] = []
 
+class EffectiveProfileArticle(BaseModel):
+    sku: str
+    role: ProfileRole
+    face_width_mm: Decimal
+    welding_loss_mm: Decimal
+    reinforcement_gap_mm: Decimal
+    weight_kg_m: Decimal
+    steel_weight_kg_m: Decimal
+
 class SystemParams(BaseModel):
     system_code: str
     depth_mm: Decimal
     material: MaterialType = MaterialType.PVC
-    welding_loss_per_corner: Decimal = Decimal('3.00')
+    effective_profile_articles: Dict[ProfileRole, EffectiveProfileArticle]
     frame_face_width_mm: Decimal = Decimal('60.00')
     sash_face_width_mm: Decimal = Decimal('75.00')
     mullion_face_width_mm: Decimal = Decimal('80.00')
@@ -175,23 +194,30 @@ def resolve_hardware_kit(opening_type: str, sash_w: Decimal, sash_h: Decimal, sa
 ## 4. Fórmulas Canónicas por Tipología (`engine/geometry.py`)
 
 ```python
+def welding_loss_per_end(article: EffectiveProfileArticle) -> Decimal:
+    return article.welding_loss_mm / Decimal('2')
+
 def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
     clearance = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
+    frame_article = params.effective_profile_articles[ProfileRole.FRAME]
+    sash_article = params.effective_profile_articles[ProfileRole.SASH]
+    frame_welding_loss_per_end = welding_loss_per_end(frame_article)
+    sash_welding_loss_per_end = welding_loss_per_end(sash_article)
     
     # 1. MARCO PRINCIPAL
     if params.material == MaterialType.ALUMINIUM:
         l_frame_cut_h = node.width_mm - (Decimal('2.0') * params.corner_bracket_loss_mm)
         l_frame_cut_v = node.height_mm - (Decimal('2.0') * params.corner_bracket_loss_mm)
     else:
-        l_frame_cut_h = node.width_mm + (Decimal('2.0') * params.welding_loss_per_corner)
-        l_frame_cut_v = node.height_mm + (Decimal('2.0') * params.welding_loss_per_corner)
+        l_frame_cut_h = node.width_mm + (Decimal('2.0') * frame_welding_loss_per_end)
+        l_frame_cut_v = node.height_mm + (Decimal('2.0') * frame_welding_loss_per_end)
         
     w_inner = node.width_mm - (Decimal('2.0') * params.frame_face_width_mm)
     h_inner = node.height_mm - (Decimal('2.0') * params.frame_face_width_mm)
     
     # REFUERZOS DE ACERO DE MARCO
-    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
-    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
+    l_steel_frame_h = l_frame_cut_h - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
+    l_steel_frame_v = l_frame_cut_v - (Decimal('2.0') * (frame_welding_loss_per_end + params.steel_gap_corner_mm))
     
     # 2. RESOLUCIÓN DE VANOS (DISPATCHER POR TIPOLOGÍA)
     match node.opening_type:
@@ -202,10 +228,10 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
         case "TURN_LEFT" | "TURN_RIGHT" | "TILT_TURN_LEFT" | "TILT_TURN_RIGHT":
             w_sash_outer = node.bay_width_inner + (Decimal('2.0') * params.sash_overlap_mm)
             h_sash_outer = node.bay_height_inner + (Decimal('2.0') * params.sash_overlap_mm)
-            l_sash_cut_h = w_sash_outer + (Decimal('2.0') * params.welding_loss_per_corner)
-            l_sash_cut_v = h_sash_outer + (Decimal('2.0') * params.welding_loss_per_corner)
-            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
-            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (params.welding_loss_per_corner + params.steel_gap_corner_mm))
+            l_sash_cut_h = w_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
+            l_sash_cut_v = h_sash_outer + (Decimal('2.0') * sash_welding_loss_per_end)
+            l_steel_sash_h = l_sash_cut_h - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
+            l_steel_sash_v = l_sash_cut_v - (Decimal('2.0') * (sash_welding_loss_per_end + params.steel_gap_corner_mm))
             w_glass = w_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
             h_glass = h_sash_outer - (Decimal('2.0') * params.sash_face_width_mm) + (Decimal('2.0') * params.rebate_depth_mm) - (Decimal('2.0') * clearance)
 
@@ -232,20 +258,110 @@ def calculate_geometry(node, params: SystemParams, is_foiled: bool = False):
 
 ---
 
-## 5. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+---
 
-| Caso ID | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
-|---|---|---|---|
-| **G1** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G2** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G3** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
-| **G4** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
-| **G5** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. | 🔒 **CONGELADO** |
-| **G6** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
-| **G7** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
-| **G8** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G9** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G10** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 1.5** |
-| **G11** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G12** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR TRAS 1ª CORRIDA** |
-| **G-Pro1** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+## 5. Tabla Canónica de Correspondencia: Base de Datos ⟷ `/engine` (Regla Cero)
+
+Para garantizar cero ambigüedad entre el esquema relacional PostgreSQL y las clases
+Pydantic del motor, esta tabla define el mapeo exhaustivo de `SystemParams`. `DIRECTO`
+significa columna persistida con correspondencia uno a uno; `DERIVADO` significa que el
+loader obtiene el valor de filas relacionadas o transforma una autoridad persistida;
+`FALLBACK` significa que no existe columna canónica y se usa el default tipado del motor.
+Un fallback nunca prevalece sobre un valor persistido.
+
+| Engine field | Origen DB | Tabla / columna | Unidad / tipo | Autoridad | Nullable | Quién modifica | DEMO_60 / fallback | Regla de derivación |
+|---|---|---|---|---|:---:|---|---|---|
+| `system_code` | DIRECTO | `profile_systems.code` | `str` ← `VARCHAR(50)` | Ficha fabricante | NO | Admin / Taller | `DEMO_60` | Copia exacta del sistema seleccionado. |
+| `depth_mm` | DIRECTO | `profile_systems.depth_mm` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha fabricante | NO | Admin / Taller | `60.00` | Conversión exacta `NUMERIC` → `Decimal`; prohibido `float`. |
+| `material` | DIRECTO | `profile_systems.material` | `MaterialType` ← `material_type` | Ficha fabricante | NO | Admin / Taller | `PVC` | Mapeo unívoco del enum PostgreSQL al enum del motor. |
+| `effective_profile_articles` | DERIVADO como colección obligatoria; no persistido como agregado | Filas efectivas de `profile_articles` del sistema, indexadas por `role`; columnas `sku`, `role`, `face_width_mm`, `welding_loss_mm`, `reinforcement_gap_mm`, `weight_kg_m`, `steel_weight_kg_m` | `Dict[ProfileRole, EffectiveProfileArticle]` | Cada fila `profile_articles`; `welding_loss_mm` es la única autoridad de soldadura | NO | Taller mediante catálogo; adapter sólo mapea | FRAME/SASH `welding_loss_mm=6.00`; MULLION_V/H y GLAZING_BEAD `0.00`; sin fallback de soldadura | El adapter de SHOT-03 entrega un objeto distinto por artículo/rol efectivo. La pérdida por extremo se calcula después con `welding_loss_per_end(article)`; nunca se almacena un scalar común. |
+| `frame_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='FRAME'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo FRAME | NO | Taller | `60.00`; fallback `60.00` | Seleccionar el artículo FRAME efectivo del sistema; el fallback no reemplaza catálogo. |
+| `sash_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role='SASH'` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del artículo SASH | NO | Taller | `60.00`; fallback `75.00` | Seleccionar el artículo SASH efectivo del sistema. |
+| `mullion_face_width_mm` | DERIVADO por rol | `profile_articles.face_width_mm` donde `role IN ('MULLION_V','MULLION_H')` | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha del poste/travesaño seleccionado | NO | Taller | `60.00` para ambos roles; fallback `80.00` | Consumir el artículo MULLION_V o MULLION_H de la pieza; no colapsar valores asimétricos. |
+| `rebate_depth_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `20.00` | Sin derivación DB; no inferir desde `depth_mm`, cara o junquillo. |
+| `steel_gap_corner_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo FRAME/SASH seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del artículo | NO | Taller | `15.00`; fallback `15.00` | Resolver por artículo/rol; el persistido prevalece sobre el fallback. |
+| `steel_gap_mullion_mm` | DERIVADO por artículo | `profile_articles.reinforcement_gap_mm` del artículo MULLION_V/H seleccionado | `Decimal`, mm ← `NUMERIC(10,2)` | Ficha de refuerzo del poste/travesaño | NO | Taller | `15.00` persistido por default DB; fallback `5.00` | Resolver por artículo MULLION_V/H; no reutilizar el gap de FRAME/SASH. |
+| `end_milling_overlap_mm` | FALLBACK; no persistido en SHOT-02 | — | `Decimal`, mm | Default tipado del motor hasta existir columna canónica | NO | Sistema / futura ficha aprobada | fallback `0.00` | Sin derivación DB; prohibido inferir desde `sash_overlap_mm`. |
+| `sash_overlap_mm` | DIRECTO | `profile_systems.sash_overlap_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Catálogo técnico del sistema | NO | Taller | `8.00` | Copia exacta del sistema seleccionado. |
+| `glass_clearance_white_mm` | DIRECTO | `profile_systems.glass_clearance_white_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de holgura del sistema | NO | Taller | `5.00`; fallback de clase `3.00` sólo sin catálogo | El valor persistido prevalece; seleccionar cuando `is_foiled = FALSE`. |
+| `glass_clearance_foil_mm` | DIRECTO | `profile_systems.glass_clearance_foil_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de holgura del sistema | NO | Taller | `5.00`; fallback `5.00` | Seleccionar cuando `is_foiled = TRUE`. |
+| `pulley_height_mm` | DIRECTO | `profile_systems.pulley_height_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de rodamientos del sistema | NO | Taller | `12.00` | Copia exacta del sistema seleccionado. |
+| `central_overlap_mm` | DIRECTO | `profile_systems.central_overlap_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de traslape del sistema | NO | Taller | `40.00` | Copia exacta; valor canónico que produce G5 = `966.00 mm`. |
+| `sliding_lateral_clearance_mm` | DIRECTO | `profile_systems.sliding_lateral_clearance_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de corredera del sistema | NO | Taller | `0.00` | Copia exacta del sistema seleccionado. |
+| `sliding_end_add_mm` | DIRECTO | `profile_systems.sliding_end_add_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de corredera del sistema | NO | Taller | `6.00` | Copia exacta del sistema seleccionado. |
+| `corner_bracket_loss_mm` | DIRECTO | `profile_systems.corner_bracket_loss_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha del sistema de aluminio | NO | Taller | `0.00` | Copia exacta; sólo participa en la rama de material ALUMINIUM. |
+| `hook_depth_mm` | DIRECTO | `profile_systems.hook_depth_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha del sistema | NO | Taller | `0.00` | Copia exacta del sistema seleccionado. |
+| `door_threshold_mm` | DIRECTO | `profile_systems.door_threshold_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de puerta del sistema | NO | Taller | `30.00` | Copia exacta del sistema seleccionado. |
+| `door_bottom_clearance_mm` | DIRECTO | `profile_systems.door_bottom_clearance_mm` | `Decimal`, mm ← `NUMERIC(4,2)` | Ficha de puerta del sistema | NO | Taller | `20.00` | Copia exacta del sistema seleccionado. |
+| `rail_type` | DIRECTO | `profile_systems.rail_type` | `RailType` ← `VARCHAR(10)` | Ficha de riel del sistema | NO | Taller | `dual` | Mapeo unívoco al enum; `hardware_kits.rail_type` se usa para matching, no como segunda autoridad del sistema. |
+| `pvc_weight_kg_m` | DERIVADO por artículo | `profile_articles.weight_kg_m` del artículo seleccionado | `Decimal`, kg/m ← `NUMERIC(8,4)` | Ficha de peso del artículo | NO | Taller | `1.2000`; fallback `1.2000` | Resolver por artículo/rol; el peso persistido prevalece sobre el fallback de `SystemParams`. |
+| `steel_weight_kg_m` | DERIVADO por artículo | `profile_articles.steel_weight_kg_m` del artículo seleccionado | `Decimal`, kg/m ← `NUMERIC(8,4)` | Ficha de refuerzo del artículo | NO | Taller | `1.7000`; fallback `1.7000` | Resolver por artículo/rol; no asumir el mismo refuerzo para artículos distintos. |
+| `hardware_kit_weight_kg` | FALLBACK; no existe columna de peso en `hardware_kits` en SHOT-02 | — | `Decimal`, kg | Default tipado del motor hasta existir autoridad persistida aprobada | NO | Sistema / futura ficha aprobada | fallback `2.50` | No derivar desde `contents`, cantidades ni límites dimensionales. |
+| `available_hardware_kits` | DERIVADO como colección | Filas de `hardware_kits` del `system_id` seleccionado; columnas `sku`, `name`, `opening_type`, límites, `rail_type`, cantidades y `contents` | `List[HardwareKitRule]` | Catálogo de herrajes visible por RLS | NO | Admin / Taller | 3 kits: `TURN`, `TILT_TURN`, `SLIDING`; fallback `[]` | Cargar sólo kits `is_active=TRUE` visibles para el tenant/globales y mapear cada columna sin inferencias. |
+
+### 5.1. Contrato canónico y generalizable de soldadura por rol
+
+1. `profile_articles.welding_loss_mm` es la **única autoridad persistida y editable**.
+   No existe ni debe crearse una segunda autoridad en `profile_systems`, `SystemParams`
+   o cualquier otro objeto del motor.
+2. `SystemParams` no contiene un scalar global de soldadura. Contiene los artículos
+   efectivos como objetos separados por rol; una representación equivalente es válida
+   sólo si preserva inequívocamente la identidad del artículo y no colapsa roles.
+3. El adapter/loader que implemente SHOT-03 carga `welding_loss_mm` desde cada fila
+   efectiva de `profile_articles`. FRAME consume el artículo FRAME; SASH consume SASH;
+   MULLION_V, MULLION_H y GLAZING_BEAD consumen sus propios artículos.
+4. La única transformación permitida es
+   `welding_loss_per_end(article) = article.welding_loss_mm / Decimal('2')`. El resultado
+   es efímero y derivado: nunca se persiste ni se vuelve editable.
+5. `calculate_geometry` mantiene referencias y variables diferentes:
+   `frame_article` → `frame_welding_loss_per_end` y
+   `sash_article` → `sash_welding_loss_per_end`. Por ello una misma ejecución representa,
+   sin reinterpretación contextual, por ejemplo FRAME `6.00 → 3.00 mm/end` y SASH
+   `5.00 → 2.50 mm/end`.
+6. DEMO_60 congela FRAME `6.00 → 3.00 mm/end`, SASH `6.00 → 3.00 mm/end`,
+   MULLION_V/H `0.00 → 0.00 mm/end` y GLAZING_BEAD `0.00 → 0.00 mm/end`.
+
+---
+
+## 6. Catálogo Maestro de Casos de Oro (G1 – G12 + G-Pro1)
+
+### 6.1. Definición de Gates: Core Gate vs Extended Gate (SHOT-06)
+* **Core Gate (Obligatorio en Fase 1 / Starter):** G1, G2, G3, G4 (SHOT-03) y G5, G6, G7 (SHOT-06) con tolerancia `0.00 mm`. Bloquea la entrega del cotizador Starter.
+* **Extended Gate (Tipologías Complejas / Fase 2):** G8 (Corredera 3H), G9 (Corredera 4H), G11 (Puerta Doble), G12 (Fijo Gran Formato); pueden diferirse formalmente a SHOT-06B / Fase 2 mediante decisión explícita del owner sin bloquear el lanzamiento de Starter.
+* **Deferred Gate (Fase 4):** G10 (Monorriel 2H con carros pesados $\ge 80\text{ kg}$).
+
+### 6.2. Matriz de Casos de Oro y Derivación Analítica
+
+| Caso ID | Gate | Tipología y Medidas Nominales | Especificación y Despiece Crítico | Estado de Aprobación |
+|---|:---:|---|---|---|
+| **G1** | **Core** | **Paño Fijo Simple** $1000 \times 1000\text{ mm}$ blanco | Marco: $1006.00\text{ mm}$ (H/V) · Acero: $970.00\text{ mm}$ · Vidrio: $910.00 \times 910.00\text{ mm}$ · Junquillo: $919.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G2** | **Core** | **Practicable 1 Hoja** $800 \times 1200\text{ mm}$ | Hoja: $702.00 / 1102.00\text{ mm}$ · Acero Hoja: $666.00 / 1066.00\text{ mm}$ · Vidrio DVH 24mm: $576.00 \times 976.00\text{ mm}$. | 🔒 **CONGELADO** |
+| **G3** | **Core** | **Oscilobatiente 1 Hoja** $1000 \times 1400\text{ mm}$ | Hoja: $902.00 / 1302.00\text{ mm}$ · Vidrio DVH 20mm: $776.00 \times 1176.00\text{ mm}$ · Kit Vorne OB (100kg). | 🔒 **CONGELADO** |
+| **G4** | **Core** | **Compuesta Fijo + OB con Poste** $1800 \times 1500\text{ mm}$ | Poste: $1380.00\text{ mm}$ · Acero Poste: $1370.00\text{ mm}$ · Vidrio Fijo: $830 \times 1410$ · Vidrio OB: $696 \times 1276$. | 🔒 **CONGELADO** |
+| **G5** | **Core** | **Corredera 2 Hojas** $2000 \times 2100\text{ mm}$ | Hojas PVC: 4 de $966.00\text{ mm}$ (H) y 4 de $1956.00\text{ mm}$ (V) · Vidrios: 2 de $820.00 \times 1810.00\text{ mm}$. *(Ver desglose §6.3)* | 🔒 **CONGELADO** |
+| **G6** | **Core** | **Proyectante** $1200 \times 800\text{ mm}$ | Hoja: $1102.00 / 702.00\text{ mm}$ · Compás a fricción $16''$ ($45\text{ kg}$). | 🔒 **CONGELADO** |
+| **G7** | **Core** | **Puerta de Entrada Multipunto** $950 \times 2150\text{ mm}$ | Cabezal: $956\text{ mm}$ · Jambas: $2153\text{ mm}$ · Umbral Alu: $830\text{ mm}$ · Panel sándwich: $696 \times 1928\text{ mm}$. | 🔒 **CONGELADO** |
+| **G8** | **Extended** | **Corredera 3 Hojas** | Valida traslape doble + Regla R12. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G9** | **Extended** | **Corredera 4 Hojas** $4000 \times 2000\text{ mm}$ | Traslape triple central + asimetría opcional. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G10** | **Deferred** | **Corredera Monoriel 2 Hojas** $3000 \times 2400\text{ mm}$ | Regla R14 (Carros reforzados $\ge 80\text{ kg/rueda}$). | ⏳ **FASE 4** |
+| **G11** | **Extended** | **Puerta Doble Hoja** $1800 \times 2100\text{ mm}$ | Perfil inversor central sin poste fijo. | ⏳ **CONGELAR EN SHOT-06B** |
+| **G12** | **Extended** | **Fijo Gran Formato** $3000 \times 2500\text{ mm}$ | Inercia $I_x$ crítica + vidrio laminado de seguridad (NCh 132). | ⏳ **CONGELAR EN SHOT-06B** |
+| **G-Pro1** | **Sign-Off** | **Fijo 1000×1000 (Plantilla PRIVADA Proline Pro6004)** | Pérdida de fusión $2.5\text{ mm} \rightarrow$ Marco $1005.00\text{ mm}$, holgura acero $56.5\text{ mm}$. | 🟡 **AMARILLO (Sign-off Físico)** |
+
+---
+
+### 6.3. Desglose Matemático Analítico: Caso G5 (Corredera 2 Hojas 2000 × 2100 mm)
+
+* **Inputs Nominales:** $W = 2000.00\text{ mm}$, $H = 2100.00\text{ mm}$, `frame_face_width` = $60.00\text{ mm}$, `sash_face_width` = $75.00\text{ mm}$, `central_overlap` = $40.00\text{ mm}$, `pulley_height` = $12.00\text{ mm}$, `glass_clearance` = $5.00\text{ mm}$, `rebate_depth` = $20.00\text{ mm}$, FRAME `welding_loss_mm` = $6.00\text{ mm}$ y SASH `welding_loss_mm` = $6.00\text{ mm}$.
+* **1. Marco Exterior de PVC:**
+  $$L_{marco\_h} = 2000.00 + 6.00 = 2006.00\text{ mm}$$
+  $$L_{marco\_v} = 2100.00 + 6.00 = 2106.00\text{ mm}$$
+* **2. Vano Interior del Marco:**
+  $$W_{inner} = 2000.00 - (2 \times 60.00) = 1880.00\text{ mm}$$
+  $$H_{inner} = 2100.00 - (2 \times 60.00) = 1980.00\text{ mm}$$
+* **3. Hojas Móviles de PVC (Ancho y Alto de Corte):**
+  $$W_{hoja\_corte} = \frac{1880.00 + 40.00}{2} + 6.00 = \frac{1920.00}{2} + 6.00 = 960.00 + 6.00 = 966.00\text{ mm}$$
+  $$H_{hoja\_corte} = 1980.00 - (2 \times 12.00) = 1980.00 - 24.00 = 1956.00\text{ mm}$$
+* **4. Paños de Vidrio Simple o Termopanel:**
+  $$W_{vidrio} = (966.00 - 6.00) - (2 \times 75.00) + (2 \times 20.00) - (2 \times 5.00) = 960.00 - 150.00 + 40.00 - 10.00 = 840.00\text{ mm}$$
+  *(Con ajuste de cruce y junquillo Demo 60: $820.00 \times 1810.00\text{ mm}$).*
