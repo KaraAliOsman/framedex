@@ -17,12 +17,106 @@ Dekopen implementa una capa de autenticación delegada en **Supabase Auth** con 
 |  (Navegador)  | <----------------------- | (Magic Link)   |
 |               |      2. Email con Link   +----------------+
 |               |                                  |
-|               |      3. Valida JWT               v
-|               | -----------------------> +----------------+
-|               | <----------------------- | Django API     |
-+---------------+   {org_id, role, saldo}  | (/api/v1/auth) |
-                                           +----------------+
+|               |      3. Bearer JWT verificado    v
+|               | -----------------------> +----------------------+
+|               | <----------------------- | Django API          |
++---------------+   Auth + tenancy propio  | /api/v1/auth/me/    |
+                                           +----------------------+
 ```
+
+### 1.1. Identidad, JWT y contexto RLS
+
+- La identidad técnica proviene exclusivamente de un JWT Supabase verificado. Los
+  claims mínimos son `sub`, `exp`, `iss`, `aud` y `role`; `aal` ausente equivale a
+  `aal1`.
+- El único rol técnico aceptado para usuarios de la aplicación es
+  `role=authenticated`. Se rechazan `anon`, `service_role`, firma/issuer/audience
+  inválidos, tokens expirados y `sub` ausente o no UUID.
+- `SUPABASE_JWT_VERIFY_MODE` admite exactamente `jwks` y `auth_server`. `jwks` valida
+  localmente contra `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`, issuer
+  `${SUPABASE_URL}/auth/v1`, audience `authenticated` y allowlist `ES256`, `RS256`,
+  `EdDSA`. `auth_server` valida mediante `GET ${SUPABASE_URL}/auth/v1/user` con
+  `apikey` y Bearer, exige HTTP 200 y comprueba `JWT.sub == returned_user.id`.
+- `org_id` y el rol organizacional jamás proceden del JWT. Se obtienen exclusivamente
+  desde una fila activa de `tenancy_memberships` para `user_id=JWT.sub`.
+- Toda consulta autenticada a tablas con RLS ocurre dentro de `transaction.atomic()`;
+  antes de la primera consulta se ejecutan `set_config('request.jwt.claims',
+  <VERIFIED_CLAIMS_JSON>, true)` y `SET LOCAL ROLE authenticated`. El contexto es local
+  a la transacción y no puede sobrevivir a commit/rollback ni filtrarse entre requests.
+- La organización activa añade un filtro de aplicación centralizado
+  `org_id=active_organization.id`; no sustituye a RLS ni autoriza service role.
+
+### 1.2. Organización activa
+
+Los endpoints tenant-bound aceptan `X-Organization-ID: <uuid>` y revalidan membership y
+rol en cada request:
+
+- cero memberships activas: `403 no_active_membership`;
+- una membership activa sin header: selección automática;
+- más de una activa sin header: `409 organization_selection_required`;
+- header malformado: `400 invalid_organization_id`;
+- UUID ajeno o membership inactiva: `403 organization_access_denied`.
+
+El frontend usa `/select-organization` y persiste sólo el UUID seleccionado en
+`localStorage["dekopen.active_org.<user_id>"]`. Nunca persiste el rol como autoridad.
+
+### 1.3. MFA/TOTP para OWNER
+
+La autoridad MFA es exclusivamente el claim verificado `aal`. El campo histórico
+`tenancy_memberships.totp_enabled` es **NO AUTORITATIVO PARA AUTORIZACIÓN**.
+
+Una membership activa `OWNER` exige `aal2` en todo endpoint autenticado tenant-bound.
+Con `aal1` responde `403 mfa_required`. La regla se evalúa por organización activa; los
+roles no OWNER pueden operar con `aal1`. Enrollment, challenge y verify se delegan
+exclusivamente a Supabase Auth; Dekopen no genera ni valida TOTP.
+
+### 1.4. Contrato de `GET /api/v1/auth/me/`
+
+La respuesta vigente de SHOT-04 es:
+
+```json
+{
+  "user": {"id": "<uuid>", "email": "user@example.com"},
+  "aal": "aal1",
+  "active_organization": {
+    "id": "<uuid>",
+    "name": "Taller",
+    "role": "ESTIMATOR"
+  },
+  "memberships": [
+    {
+      "organization_id": "<uuid>",
+      "organization_name": "Taller",
+      "role": "ESTIMATOR"
+    }
+  ]
+}
+```
+
+`active_organization` puede ser `null` únicamente durante selección requerida. El
+endpoint no devuelve saldo, créditos, billing ni suscripciones; `saldo` se difiere al
+shot de wallet/billing. Todos los errores usan
+`{"error":{"code":"machine_code","detail":"human readable detail"}}` y los códigos
+canónicos `authentication_required`, `invalid_token`, `invalid_organization_id`,
+`no_active_membership`, `organization_access_denied`, `mfa_required` y
+`organization_selection_required`.
+
+### 1.5. Gate local de Magic Link y TOTP (SHOT-04)
+
+El gate usa Supabase Auth real y el capturador local de email de Supabase CLI
+(**Mailpit en CLI `2.116.0`**, resolución PD-04-14). No usa mocks de Auth ni correo
+externo. Antes del E2E, `GET http://127.0.0.1:54324/readyz` debe devolver `200`.
+
+La prueba crea usuario/membership locales, solicita Magic Link desde `/login`, busca el
+destinatario único de la corrida mediante `/api/v1/messages`, recupera el body real
+mediante `/api/v1/message/{ID}` y navega al link extraído. El ID y el token nunca se
+hardcodean. Se exigen callback, sesión Supabase y Bearer real contra Django; el polling
+es finito y falla si falta cualquier eslabón. El ciclo OWNER incluye enrollment TOTP
+real, `aal2`, logout y un segundo Magic Link que exige verificar el factor existente.
+
+La configuración pública de CLI puede conservar el nombre histórico `inbucket`; el
+servicio runtime y la API canónicos de SHOT-04 son Mailpit. No se usa la antigua ruta
+`/api/v1/mailbox/...` ni se cambia el pin de CLI para recuperar Inbucket.
 
 ---
 

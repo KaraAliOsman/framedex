@@ -29,16 +29,22 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
 > [!IMPORTANT]
 > **Regla de Generación Automatizada (Enmienda 2 & H1):** El archivo `engine/tests/golden_example.json` se **GENERA** ejecutando `/engine` sobre el request de entrada en el SHOT-06 y se commitea como snapshot de prueba en CI. El request transmite obligatoriamente `glass_spec` y el motor deriva `thickness_net_mm` sumando exclusivamente los paños de cristal (`4-16-4` $\rightarrow 8.00\text{ mm}$, `4-12-4` $\rightarrow 8.00\text{ mm}$, `6-12-6` $\rightarrow 12.00\text{ mm}$, monolítico $\rightarrow$ espesor propio).
 
-> **Compatibilidad SHOT-03:** este apartado sólo congela para SHOT-03 el
-> request de árbol y el resultado puro/BOM; no autoriza implementar el
-> endpoint. El resultado del engine contiene exclusivamente `profile_cuts`,
+> **Contrato vigente SHOT-04:** este apartado congela el request del adaptador HTTP
+> fino sobre el engine aprobado en SHOT-03. El resultado contiene exclusivamente
+> `profile_cuts`,
 > `reinforcements`, `glasses` y `hardware_items`. Cada corte añade `sku` y
 > `bay_id` nullable; cada refuerzo añade `parent_profile_sku`,
 > `reinforcement_sku` nullable y `bay_id` nullable. `hardware_items` es `[]`
 > y no ejecuta resolución de kits. `calculation_hash` se incorpora en
-> SHOT-06 y `inspector` en SHOT-07, fuera del resultado de SHOT-03. Área y
+> SHOT-06 y `inspector` en SHOT-07, fuera de la respuesta actual. Área y
 > peso de cada `GlassPiece` se calculan exclusivamente mediante PRD-01
 > §3.1.1, conservando el área exacta hasta la cuantización final.
+>
+> El endpoint sólo ejecuta tipologías soportadas por SHOT-03. Un contrato sintáctico
+> válido pero diferido responde `422 unsupported_engine_contract`; un sistema inexistente
+> o no visible responde `404 system_not_found`; una entrada inválida responde
+> `400 validation_error`. Dimensiones y resultados se serializan como strings decimales,
+> nunca como `float`.
 
 - **Request Payload:**
   ```json
@@ -73,7 +79,6 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
 - **Response Schema Esperado (Verificación Matemática Demo 60 mm):**
   ```json
   {
-    "calculation_hash": "sha256_[GENERAR-AL-COMPILAR]",
     "profile_cuts": [
       { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1506.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
       { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1406.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
@@ -98,13 +103,7 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
       { "bay_id": "bay_2", "width_mm": "546.00",  "height_mm": "1176.00",
         "area_m2": "0.6421", "weight_kg": "12.84", "thickness_net_mm": "8.00" }
     ],
-    "hardware_items": [],
-    "inspector": {
-      "status": "GREEN",
-      "findings": [],
-      "sash_weight_kg": "26.55",
-      "sash_max_allowed_kg": "100.00"
-    }
+    "hardware_items": []
   }
   ```
 

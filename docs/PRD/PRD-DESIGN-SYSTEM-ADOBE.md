@@ -1,6 +1,6 @@
-# PRD-DESIGN-SYSTEM-ADOBE: SISTEMA DE DISEÑO DUAL (LIGHT STUDIO / DARK GRAPHITE) (v1.2)
+# PRD-DESIGN-SYSTEM-ADOBE: SISTEMA DE DISEÑO DUAL (LIGHT STUDIO / DARK GRAPHITE) (v1.2 MASTER)
 **Estado:** Bloqueado / Congelado  
-**Filosofía Visual:** Adobe Precision Tooling (Inspirado en Illustrator, InDesign, AutoCAD y Fusion 360).  
+**Filosofía Visual:** Adobe Precision Tooling (Inspirado en Illustrator, InDesign, AutoCAD y Fusion 360).
 **Soporte Dual:** Modo Claro (Studio Light) y Modo Oscuro (Dark Graphite) seleccionables por el usuario con 1 clic.
 
 ---

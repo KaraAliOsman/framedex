@@ -53,6 +53,26 @@ graph TD
 - **Sanitización XSS y CSP:** Content Security Policy estricto en cabeceras HTTP emitidas por Django.
 - **URLs Firmadas con Expiración:** Todo acceso a planos, PDFs y comprobantes en Supabase Storage requiere firma criptográfica temporal ($3600\text{ s}$).
 
+### 3.2. Frontera de implementación por shot
+
+SHOT-04 implementa exclusivamente:
+
+- validación JWT Supabase fail-closed;
+- contexto PostgreSQL/RLS transaction-local derivado sólo de claims ya verificados;
+- aislamiento tenant adicional por organización activa en el API;
+- cero credenciales hardcodeadas;
+- CORS explícito desde `CORS_ALLOWED_ORIGINS`, sin `*`, con
+  `Authorization`, `Content-Type` y `X-Organization-ID`, y
+  `CORS_ALLOW_CREDENTIALS=False`.
+
+Permanecen diferidos hasta el shot que introduce la infraestructura o flujo consumidor:
+
+- Cloudflare WAF/TLS productivo y Redis/rate limiting productivo: despliegue;
+- URLs firmadas de Storage: shot que introduce cada flujo de Storage;
+- CSP completo para templates o contenido dinámico: gate posterior correspondiente.
+
+Estos elementos diferidos no amplían el alcance ni bloquean el gate de SHOT-04.
+
 ---
 
 ## 4. Pila de Observabilidad y Telemetría Estructurada
