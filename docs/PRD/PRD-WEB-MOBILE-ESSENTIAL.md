@@ -1,4 +1,4 @@
-# PRD: SISTEMA DE DISEÑO, MOTOR CAD Y VERSIÓN WEB MÓVIL ESENCIAL (v1.2)
+# PRD-WEB-MOBILE-ESSENTIAL: VERSIÓN WEB MÓVIL ESENCIAL (v1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.2 (Web 100% Cloud • OCR planos arquitectónicos impresos • Escáner QR Web • Móvil Esencial)  
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
