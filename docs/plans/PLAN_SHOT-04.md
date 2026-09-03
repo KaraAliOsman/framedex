@@ -4,8 +4,9 @@
 
 - **Shot:** `SHOT-04` — Supabase Auth, tenancy, API skeleton DRF/JWT/OpenAPI,
   PostHog base y shell de aplicación ADOBE dual.
-- **Fase actual:** implementación y gauntlet local verificados; PD-01…PD-14 resueltas.
-  Pendiente publicación/CI del PR protegido y aprobación humana de merge (§25).
+- **Fase actual:** FASE 4, PR protegido abierto para revisión humana; PD-01…PD-14
+  resueltas. Evidencia local en §25 y publicación/CI técnico en §26. No hay autorización
+  de merge ni cierre de SHOT-04.
 - **Branch:** `shot-04`.
 - **Base canónica verificada:**
   `main@040d818c22ffd4d1f86105242025e50b606d1e8a`.
@@ -754,7 +755,38 @@ frontend. No reutilizó como PASS las corridas incompletas de sesiones anteriore
   recuperable, y se verificó Engine `29.7.2` antes de ejecutar los gates; no se tocaron
   imágenes, volúmenes, datos, credenciales ni seguridad de Windows.
 
-No hay nuevo `[PENDIENTE-DECISIÓN]` ni contradicción normativa conocida. Esto es evidencia
-local, no aprobación automática de merge: falta registrar el PR y los cuatro checks
-reales del HEAD publicado. No se inicia SHOT-05 ni se cierra SHOT-04 por iniciativa del
-Maker.
+No hay nuevo `[PENDIENTE-DECISIÓN]` ni contradicción normativa conocida. La evidencia
+local se complementa con §26 y no constituye aprobación automática de merge. No se
+inicia SHOT-05 ni se cierra SHOT-04 por iniciativa del Maker.
+
+## 26. Publicación protegida y CI del cierre técnico
+
+- [PR #10: shot-04 → main](https://github.com/KaraAliOsman/framedex/pull/10), abierto,
+  sin merge. `main` permanece en `040d818c22ffd4d1f86105242025e50b606d1e8a`.
+- HEAD técnico publicado y verificado:
+  `4659730602b40214288baddf087fb715b056ce90`.
+- Seis commits técnicos/documentales por responsabilidad. Los dos traslados de documentos
+  se registraron por separado y Git los reconoció como renames (98% y 99%); se conservaron
+  también los saltos Markdown heredados del documento móvil. No se descartó el working
+  tree ni se debilitaron comprobaciones de whitespace.
+- [CI del PR para ese HEAD](https://github.com/KaraAliOsman/framedex/actions/runs/33761843779):
+
+| Required context | Estado comprobado |
+| --- | --- |
+| Lint & Typecheck | `completed/success` |
+| Test Suite | `completed/success` |
+| Frontend Build | `completed/success` |
+| Database Gate | `completed/success` |
+
+La [corrida de push del mismo HEAD](https://github.com/KaraAliOsman/framedex/actions/runs/33761745076)
+también terminó con los cuatro jobs `completed/success`. Los logs confirman, entre otros,
+17 tests de integración RLS real y 90 tests pgTAP, además del pipeline real de Auth/E2E.
+
+Branch protection comprobada mediante GitHub: los mismos cuatro contexts obligatorios,
+`strict=true`, `enforce_admins=true`, PR obligatorio, force-push y borrado deshabilitados.
+No se modificó protección, no se usó bypass y no se fusionó a `main`.
+
+Esta sección fija evidencia de un SHA concreto: cualquier commit documental posterior
+debe superar de nuevo los cuatro checks sobre su propio HEAD antes de entregarse al
+owner. El estado vivo de checks reside en el PR; no se presume heredado del SHA anterior.
+El cierre de README/PLAN_SHOTS y el tag de SHOT-04 esperan la orden humana de MERGE.
