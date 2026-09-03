@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import ast
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 import json
 import os
 from pathlib import Path
@@ -13,6 +13,8 @@ import shlex
 import shutil
 import subprocess
 import sys
+
+import local_gates
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE_DIR = ROOT / "engine"
@@ -50,10 +52,34 @@ REQUIRED_PATHS = (
     ENGINE_DIR / "tests" / "test_tree_geometry.py",
     BACKEND_DIR / "manage.py",
     BACKEND_DIR / "tests" / "test_bootstrap.py",
+    BACKEND_DIR / "authentication" / "backends.py",
+    BACKEND_DIR / "authentication" / "rls.py",
+    BACKEND_DIR / "authentication" / "tenancy.py",
+    BACKEND_DIR / "engine_api" / "adapter.py",
+    BACKEND_DIR / "engine_api" / "repository.py",
+    BACKEND_DIR / "openapi.yaml",
+    BACKEND_DIR / "tests" / "test_jwt_authentication.py",
+    BACKEND_DIR / "tests" / "test_tenancy.py",
+    BACKEND_DIR / "tests" / "test_auth_me.py",
+    BACKEND_DIR / "tests" / "test_engine_api.py",
+    BACKEND_DIR / "tests" / "integration" / "test_rls_context_integration.py",
     FRONTEND_DIR / "package.json",
     FRONTEND_DIR / "package-lock.json",
     FRONTEND_DIR / "tsconfig.json",
     FRONTEND_DIR / "src" / "App.test.tsx",
+    FRONTEND_DIR / "src" / "api" / "generated" / "dekopen.ts",
+    FRONTEND_DIR / "src" / "auth" / "AuthSessionProvider.tsx",
+    FRONTEND_DIR / "src" / "styles" / "tokens.css",
+    FRONTEND_DIR / "src" / "telemetry" / "telemetry.ts",
+    FRONTEND_DIR / "tests" / "e2e" / "auth.spec.ts",
+    FRONTEND_DIR / "tests" / "e2e" / "support" / "mailpit.ts",
+    FRONTEND_DIR / "tests" / "contracts" / "mailpit.test.ts",
+    ROOT / "docs" / "plans" / "PLAN_SHOT-04.md",
+    ROOT / "docs" / "PRD" / "PRD-DESIGN-SYSTEM-ADOBE.md",
+    ROOT / "docs" / "PRD" / "PRD-WEB-MOBILE-ESSENTIAL.md",
+    ROOT / "scripts" / "check_generated_api.py",
+    ROOT / "scripts" / "local_gates.py",
+    ROOT / "scripts" / "check_auth_e2e.py",
 )
 
 REQUIRED_DATABASE_PATHS = (
@@ -165,7 +191,7 @@ def fail(message: str, exit_code: int = 1) -> None:
             message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         )
         print(
-            f"::error title=Dekopen SHOT-03 gate::{annotation}",
+            f"::error title=Dekopen SHOT-04 gate::{annotation}",
             file=sys.stderr,
             flush=True,
         )
@@ -179,12 +205,14 @@ def display_path(path: Path) -> str:
         return str(path)
 
 
-def run_command(command: Sequence[str], *, cwd: Path = ROOT) -> None:
+def run_command(
+    command: Sequence[str], *, cwd: Path = ROOT, env: Mapping[str, str] | None = None
+) -> None:
     rendered = shlex.join(command)
     print(f"  [{display_path(cwd)}] $ {rendered}", flush=True)
 
     try:
-        result = subprocess.run(command, cwd=cwd, check=False)
+        result = subprocess.run(command, cwd=cwd, env=env, check=False)
     except FileNotFoundError:
         fail(f"Required executable is missing: {command[0]}", 127)
 
@@ -244,9 +272,12 @@ def check_python_ast_guards() -> None:
 def check_frontend_hex_guard() -> None:
     hex_pattern = re.compile(r"#[0-9a-fA-F]{6}\b")
     source_extensions = {".css", ".js", ".jsx", ".scss", ".ts", ".tsx"}
+    tokens_path = FRONTEND_DIR / "src" / "styles" / "tokens.css"
 
     for path in sorted((FRONTEND_DIR / "src").rglob("*")):
         if not path.is_file() or path.suffix not in source_extensions:
+            continue
+        if path == tokens_path:
             continue
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if hex_pattern.search(line):
@@ -255,6 +286,97 @@ def check_frontend_hex_guard() -> None:
                     f"{display_path(path)}:{line_number}"
                 )
 
+    tokens = tokens_path.read_text(encoding="utf-8")
+    expected_tokens = {
+        "--theme-bg-canvas",
+        "--theme-surface-panel",
+        "--theme-surface-card",
+        "--theme-surface-hover",
+        "--theme-border-subtle",
+        "--theme-text-primary",
+        "--theme-text-secondary",
+        "--theme-text-muted",
+        "--theme-cyan-tool",
+        "--theme-amber-opening",
+        "--theme-emerald-action",
+        "--theme-crimson-alert",
+        "--theme-glass-tint",
+    }
+    for token in expected_tokens:
+        if tokens.count(token) != 2:
+            fail(f"ADOBE token must have exactly light/dark definitions: {token}")
+
+
+def check_shot_04_contract() -> None:
+    canonical_design = ROOT / "docs" / "PRD" / "PRD-DESIGN-SYSTEM-ADOBE.md"
+    misplaced_design = ROOT / "docs" / "PRD-DESIGN-SYSTEM-ADOBE.md"
+    if misplaced_design.exists():
+        fail("ADOBE design system must have one authority under docs/PRD")
+    if "LIGHT STUDIO / DARK GRAPHITE" not in canonical_design.read_text(encoding="utf-8"):
+        fail("Canonical ADOBE design authority does not contain the dual theme")
+
+    secret_pattern = re.compile(
+        r"VITE_[A-Z0-9_]*(?:SERVICE_ROLE|JWT_SECRET|DATABASE_URL|PASSWORD|SECRET_KEY)"
+    )
+    secret_surfaces = [
+        ROOT / ".env.example",
+        ROOT / ".github" / "workflows" / "ci.yml",
+        *sorted((FRONTEND_DIR / "src").rglob("*")),
+    ]
+    for path in secret_surfaces:
+        if path.is_file() and secret_pattern.search(path.read_text(encoding="utf-8")):
+            fail(f"Forbidden browser secret variable found: {display_path(path)}")
+
+    package = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
+    expected_packages = {
+        "@supabase/supabase-js": "2.112.4",
+        "react-router-dom": "7.18.3",
+        "@tanstack/react-query": "5.102.8",
+        "zustand": "5.0.15",
+        "posthog-js": "1.422.5",
+        "orval": "8.27.0",
+        "@playwright/test": "1.62.1",
+        "jsdom": "30.0.1",
+        "otpauth": "9.5.1",
+        "@types/react": "18.3.28",
+        "@types/react-dom": "18.3.7",
+    }
+    declared = {**package.get("dependencies", {}), **package.get("devDependencies", {})}
+    for name, version in expected_packages.items():
+        if declared.get(name) != version:
+            fail(f"SHOT-04 dependency must be exactly {name}@{version}")
+
+    openapi = (BACKEND_DIR / "openapi.yaml").read_text(encoding="utf-8")
+    for future_field in ("calculation_hash", "inspector"):
+        if future_field in openapi:
+            fail(f"SHOT-04 OpenAPI exposes future field: {future_field}")
+    for endpoint in ("/api/v1/auth/me/", "/api/v1/engine/calculate/"):
+        if endpoint not in openapi:
+            fail(f"SHOT-04 OpenAPI endpoint is missing: {endpoint}")
+
+    e2e = (FRONTEND_DIR / "tests" / "e2e" / "auth.spec.ts").read_text(
+        encoding="utf-8"
+    )
+    for evidence in ("requireMailpitHealthy", "waitForMagicLink", "mfa_required", "OTPAuth.TOTP", "accessToken"):
+        if evidence not in e2e:
+            fail(f"Real Magic Link/TOTP E2E evidence is missing: {evidence}")
+    mailpit = (FRONTEND_DIR / "tests" / "e2e" / "support" / "mailpit.ts").read_text(
+        encoding="utf-8"
+    )
+    for evidence in ("/readyz", "/api/v1/messages", "/api/v1/message/", "excludedMessageIds", "deadline"):
+        if evidence not in mailpit:
+            fail(f"Mailpit fail-closed evidence is missing: {evidence}")
+    if "/api/v1/mailbox/" in e2e + mailpit:
+        fail("SHOT-04 E2E must use Mailpit rather than the historical Inbucket API")
+    if re.search(r"\btest\.(?:skip|fixme)\s*\(", e2e):
+        fail("Real auth E2E must not contain skipped tests")
+
+    checker_source = Path(__file__).read_text(encoding="utf-8")
+    forbidden_fail_open = "allow" + "_fail"
+    if forbidden_fail_open in checker_source:
+        fail("Mandatory gauntlet gates must not use fail-open placeholders")
+    print("  SHOT-04 auth/API/design drift guards: passed", flush=True)
+
 
 def check_constitutional_guards() -> None:
     print("[1/6] Constitutional guards", flush=True)
@@ -262,6 +384,7 @@ def check_constitutional_guards() -> None:
     check_required_database_paths()
     check_python_ast_guards()
     check_frontend_hex_guard()
+    check_shot_04_contract()
     print("  Constitutional source guards: passed", flush=True)
 
 
@@ -270,11 +393,13 @@ def check_linters() -> None:
     run_command([PYTHON, "-m", "ruff", "check", "."])
     run_command(npm_command("run", "lint"), cwd=FRONTEND_DIR)
     run_command(npm_command("run", "format:check"), cwd=FRONTEND_DIR)
+    run_command([PYTHON, "scripts/check_generated_api.py"])
 
 
 def check_typechecks() -> None:
     print("[3/6] Strict type checks", flush=True)
     run_command([PYTHON, "-m", "mypy", "engine/"])
+    run_command([PYTHON, "backend/manage.py", "check"])
     run_command(npm_command("run", "typecheck"), cwd=FRONTEND_DIR)
 
 
@@ -342,11 +467,11 @@ def check_g_case_manifest() -> None:
     )
 
 
-def check_tests() -> None:
+def check_tests(env: Mapping[str, str]) -> None:
     print("[4/6] Test suites", flush=True)
     check_g_case_manifest()
-    run_command([PYTHON, "-m", "pytest", "engine/", "-q"])
-    run_command([PYTHON, "-m", "pytest", "backend/", "-q"])
+    run_command([PYTHON, "-m", "pytest", "engine/", "-q", "-W", "error"], env=env)
+    run_command([PYTHON, "-m", "pytest", "backend/", "-q", "-W", "error"], env=env)
     run_command(npm_command("run", "test"), cwd=FRONTEND_DIR)
 
 
@@ -432,60 +557,27 @@ def check_database_contract() -> None:
     print("  DDL/RLS/seed source contract: passed", flush=True)
 
 
-def stop_local_supabase() -> None:
-    if SUPABASE is None:
-        return
-    command = [SUPABASE, "stop", "--no-backup"]
-    rendered = shlex.join(command)
-    print(f"  [{display_path(ROOT)}] $ {rendered}", flush=True)
-    result = subprocess.run(command, cwd=ROOT, check=False)
-    if result.returncode != 0 and sys.exc_info()[0] is None:
-        fail(f"Command exited with code {result.returncode}: {rendered}", result.returncode)
-
-
-def run_database_command(command: Sequence[str]) -> None:
-    rendered = shlex.join(command)
-    print(f"  [{display_path(ROOT)}] $ {rendered}", flush=True)
-
-    try:
-        result = subprocess.run(
-            command,
-            cwd=ROOT,
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except FileNotFoundError:
-        fail(f"Required executable is missing: {command[0]}", 127)
-
-    output = result.stdout.rstrip()
-    if output:
-        print(output, flush=True)
-    if result.returncode != 0:
-        output_tail = "\n".join(output.splitlines()[-40:])
-        fail(
-            f"Command exited with code {result.returncode}: {rendered}\n"
-            f"Output tail:\n{output_tail}",
-            result.returncode,
-        )
-
-
-def check_live_database() -> None:
-    if SUPABASE is None:
-        fail("Required executable is missing: supabase", 127)
-
+def check_live_gates(*, tests: bool, database: bool) -> None:
     check_database_contract()
     try:
-        run_database_command([SUPABASE, "--version"])
-        run_database_command([SUPABASE, "start"])
-        run_database_command([SUPABASE, "db", "reset"])
-        run_database_command([SUPABASE, "db", "lint", "--level", "warning"])
-        run_database_command([SUPABASE, "test", "db"])
+        env = local_gates.start_clean_stack()
+        if tests:
+            check_tests(env)
+            local_gates.run_auth_e2e(env)
+        if database:
+            supabase = local_gates.executable("supabase")
+            local_gates.run([supabase, "db", "lint", "--level", "warning", "--fail-on", "warning"])
+            local_gates.run([supabase, "test", "db"])
+            if not tests:
+                local_gates.run(
+                    [PYTHON, "-m", "pytest", "backend/tests/integration/", "-q", "-W", "error"],
+                    env=env,
+                )
+            local_gates.verify_postgres16()
+    except (RuntimeError, ValueError) as error:
+        fail(str(error))
     finally:
-        stop_local_supabase()
+        local_gates.stop_stack()
 
 
 def main() -> None:
@@ -507,11 +599,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-03 fail-closed checker", flush=True)
+    print("Dekopen SHOT-04 fail-closed checker", flush=True)
 
     if target == "database":
-        check_live_database()
-        print("[PASS] SHOT-03 live database gate completed with exit code 0", flush=True)
+        check_live_gates(tests=False, database=True)
+        print("[PASS] SHOT-04 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -520,13 +612,11 @@ def main() -> None:
     if target in {"typecheck", "all", "gauntlet"}:
         check_typechecks()
     if target in {"test", "all", "gauntlet"}:
-        check_tests()
+        check_live_gates(tests=True, database=target in {"all", "gauntlet"})
     if target in {"build", "all", "gauntlet"}:
         check_build()
-    if target in {"all", "gauntlet"}:
-        check_database_contract()
 
-    print(f"[PASS] SHOT-03 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-04 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

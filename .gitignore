@@ -43,6 +43,8 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
+frontend/test-results/
+frontend/playwright-report/
 
 # Django Backend
 *.log
