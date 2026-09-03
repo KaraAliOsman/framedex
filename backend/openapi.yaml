@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: Dekopen API
+  version: 1.0.0
+  description: SHOT-04 authenticated API boundary.
+paths:
+  /api/v1/auth/me/:
+    get:
+      operationId: auth_me
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - auth
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/engine/calculate/:
+    post:
+      operationId: engine_calculate
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineCalculateResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+components:
+  schemas:
+    AalEnum:
+      enum:
+      - aal1
+      - aal2
+      type: string
+      description: |-
+        * `aal1` - aal1
+        * `aal2` - aal2
+    ActiveOrganization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - id
+      - name
+      - role
+    AuthMeResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        aal:
+          $ref: '#/components/schemas/AalEnum'
+        active_organization:
+          allOf:
+          - $ref: '#/components/schemas/ActiveOrganization'
+          nullable: true
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membership'
+      required:
+      - aal
+      - active_organization
+      - memberships
+      - user
+    EngineCalculateRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
+    EngineCalculateResponse:
+      type: object
+      properties:
+        profile_cuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileCut'
+        reinforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reinforcement'
+        glasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassPiece'
+        hardware_items:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - glasses
+      - hardware_items
+      - profile_cuts
+      - reinforcements
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+        required_aal:
+          $ref: '#/components/schemas/RequiredAalEnum'
+      required:
+      - code
+      - detail
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membership'
+      required:
+      - error
+    GlassPiece:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        area_m2:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,4})?$
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        thickness_net_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - area_m2
+      - bay_id
+      - height_mm
+      - thickness_net_mm
+      - weight_kg
+      - width_mm
+    Membership:
+      type: object
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        organization_name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - organization_id
+      - organization_name
+      - role
+    ProfileCut:
+      type: object
+      properties:
+        sku:
+          type: string
+        role:
+          type: string
+        length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        angle_left:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+        angle_right:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+        qty:
+          type: integer
+        bay_id:
+          type: string
+          nullable: true
+      required:
+      - angle_left
+      - angle_right
+      - bay_id
+      - length_mm
+      - qty
+      - role
+      - sku
+    Reinforcement:
+      type: object
+      properties:
+        parent_profile_sku:
+          type: string
+        reinforcement_sku:
+          type: string
+          nullable: true
+        role:
+          type: string
+        length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        qty:
+          type: integer
+        bay_id:
+          type: string
+          nullable: true
+      required:
+      - bay_id
+      - length_mm
+      - parent_profile_sku
+      - qty
+      - reinforcement_sku
+      - role
+    RequiredAalEnum:
+      enum:
+      - aal2
+      type: string
+      description: '* `aal2` - aal2'
+    RoleEnum:
+      enum:
+      - OWNER
+      - ESTIMATOR
+      - WORKSHOP_MANAGER
+      - INSTALLER
+      type: string
+      description: |-
+        * `OWNER` - OWNER
+        * `ESTIMATOR` - ESTIMATOR
+        * `WORKSHOP_MANAGER` - WORKSHOP_MANAGER
+        * `INSTALLER` - INSTALLER
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+      required:
+      - email
+      - id
+  securitySchemes:
+    SupabaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
