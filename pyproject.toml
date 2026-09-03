@@ -16,5 +16,8 @@ exclude = ["^docs/"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-pythonpath = ["backend", "engine/src"]
+pythonpath = [".", "backend", "engine/src"]
 addopts = ["--strict-config", "--strict-markers"]
+markers = [
+    "rls_integration: requires a clean local Supabase PostgreSQL stack",
+]
