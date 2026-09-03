@@ -1,10 +1,20 @@
 export default [
+  // Approved toolchain: ESLint checks JS; strict tsc in `npm run lint` checks TS/TSX.
+  // No unapproved TypeScript parser dependency is introduced.
   {
-    ignores: ["dist/**"],
+    ignores: [
+      "dist/**",
+      "test-results/**",
+      "playwright-report/**",
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "orval.config.ts",
+      "vite.config.ts",
+      "tailwind.config.ts",
+    ],
   },
   {
-    files: ["**/*.{js,ts,tsx}"],
-    ignores: ["src/**/*.d.ts"],
+    files: ["**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
