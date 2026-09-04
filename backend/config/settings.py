@@ -90,7 +90,7 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Dekopen API",
-    "DESCRIPTION": "SHOT-04 authenticated API boundary.",
+    "DESCRIPTION": "Authenticated tenant and engine API boundary.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,

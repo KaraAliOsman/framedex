@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Dekopen API
   version: 1.0.0
-  description: SHOT-04 authenticated API boundary.
+  description: Authenticated tenant and engine API boundary.
 paths:
   /api/v1/auth/me/:
     get:
@@ -120,6 +120,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/engine/systems/:
+    get:
+      operationId: engine_systems
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineSystemsResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
 components:
   schemas:
     AalEnum:
@@ -214,6 +260,15 @@ components:
       - hardware_items
       - profile_cuts
       - reinforcements
+    EngineSystemsResponse:
+      type: object
+      properties:
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileSystemSummary'
+      required:
+      - systems
     ErrorDetail:
       type: object
       properties:
@@ -315,6 +370,23 @@ components:
       - qty
       - role
       - sku
+    ProfileSystemSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        is_demo:
+          type: boolean
+      required:
+      - code
+      - id
+      - is_demo
+      - name
     Reinforcement:
       type: object
       properties:

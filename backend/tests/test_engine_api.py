@@ -8,12 +8,17 @@ from rest_framework.test import APIClient
 import engine_api.views
 from authentication.tenancy import MembershipRepository
 from backend.tests.factories import (
+    ORG_A_ID,
     SYSTEM_ID,
     authenticated_identity,
     demo_60_params,
     membership,
 )
-from engine_api.repository import SystemNotFound, SystemParamsRepository
+from engine_api.repository import (
+    SystemNotFound,
+    SystemParamsRepository,
+    VisibleProfileSystem,
+)
 
 
 def configure_api(
@@ -154,3 +159,67 @@ def test_api_dimensions_must_be_decimal_strings(monkeypatch: pytest.MonkeyPatch)
     response = client.post("/api/v1/engine/calculate/", payload, format="json")
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "validation_error"
+
+
+def test_engine_systems_requires_bearer() -> None:
+    response = APIClient().get("/api/v1/engine/systems/")
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "authentication_required"
+
+
+def test_engine_systems_returns_only_the_minimal_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = APIClient()
+    configure_api(client, monkeypatch)
+    monkeypatch.setattr(
+        SystemParamsRepository,
+        "list_visible",
+        lambda self, active_org_id: (
+            VisibleProfileSystem(
+                id=SYSTEM_ID,
+                code="DEMO_60",
+                name="Sistema Demo 60mm PVC",
+                is_demo=True,
+            ),
+        ),
+    )
+
+    response = client.get("/api/v1/engine/systems/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "systems": [
+            {
+                "id": str(SYSTEM_ID),
+                "code": "DEMO_60",
+                "name": "Sistema Demo 60mm PVC",
+                "is_demo": True,
+            }
+        ]
+    }
+
+
+def test_engine_systems_enforces_owner_aal2(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = APIClient()
+    user, token = authenticated_identity(aal="aal1")
+    client.force_authenticate(user=user, token=token)
+    monkeypatch.setattr(engine_api.views, "authenticated_rls_context", lambda claims: nullcontext())
+    monkeypatch.setattr(
+        MembershipRepository,
+        "list_active_for_user",
+        lambda self, user_id: (membership(ORG_A_ID, role="OWNER"),),
+    )
+    monkeypatch.setattr(SystemParamsRepository, "list_visible", lambda self, active_org_id: ())
+
+    response = client.get("/api/v1/engine/systems/")
+
+    assert response.status_code == 403
+    assert response.json()["error"] == {
+        "code": "mfa_required",
+        "detail": "OWNER requires aal2",
+        "required_aal": "aal2",
+    }
