@@ -1,8 +1,10 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { t } from "./i18n/es-CL";
 
 import { AppShell } from "./app/AppShell";
+import { DashboardPage } from "./app/DashboardPage";
 import { PlaceholderPage } from "./app/PlaceholderPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
@@ -10,6 +12,11 @@ import { useAuthSession } from "./auth/AuthSessionProvider";
 import { LoginPage } from "./auth/LoginPage";
 import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
+
+const CanvasEditor2DView = lazy(async () => {
+  const module = await import("./features/canvas/CanvasEditor2DView");
+  return { default: module.CanvasEditor2DView };
+});
 
 function ProtectedPage({ title, description }: { title: string; description: string }) {
   return (
@@ -58,7 +65,23 @@ export function AppRoutes(): JSX.Element {
       <Route
         path="/dashboard"
         element={
-          <ProtectedPage title={t("page.dashboard")} description={t("page.dashboardDescription")} />
+          <ReadyGuard>
+            <AppShell>
+              <DashboardPage />
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/projects/:id/positions/:posId/edit"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
+                <CanvasEditor2DView />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
         }
       />
       <Route
