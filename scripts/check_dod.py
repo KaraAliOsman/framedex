@@ -71,10 +71,22 @@ REQUIRED_PATHS = (
     FRONTEND_DIR / "src" / "auth" / "AuthSessionProvider.tsx",
     FRONTEND_DIR / "src" / "styles" / "tokens.css",
     FRONTEND_DIR / "src" / "telemetry" / "telemetry.ts",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "CanvasEditor2DView.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "CADViewportSvg.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "CanvasTechnicalResults.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "EditableDimension.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "canvasStore.ts",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "snapping.ts",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "useEngineCalculation.ts",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "CanvasEditor2DView.test.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "canvasResults.test.tsx",
+    FRONTEND_DIR / "src" / "features" / "canvas" / "snapping.test.ts",
     FRONTEND_DIR / "tests" / "e2e" / "auth.spec.ts",
+    FRONTEND_DIR / "tests" / "e2e" / "canvas.spec.ts",
     FRONTEND_DIR / "tests" / "e2e" / "support" / "mailpit.ts",
     FRONTEND_DIR / "tests" / "contracts" / "mailpit.test.ts",
     ROOT / "docs" / "plans" / "PLAN_SHOT-04.md",
+    ROOT / "docs" / "plans" / "PLAN_SHOT-05.md",
     ROOT / "docs" / "PRD" / "PRD-DESIGN-SYSTEM-ADOBE.md",
     ROOT / "docs" / "PRD" / "PRD-WEB-MOBILE-ESSENTIAL.md",
     ROOT / "scripts" / "check_generated_api.py",
@@ -378,6 +390,99 @@ def check_shot_04_contract() -> None:
     print("  SHOT-04 auth/API/design drift guards: passed", flush=True)
 
 
+def check_shot_05_contract() -> None:
+    openapi = (BACKEND_DIR / "openapi.yaml").read_text(encoding="utf-8")
+    if "/api/v1/engine/systems/" not in openapi:
+        fail("SHOT-05 OpenAPI system discovery endpoint is missing")
+
+    generated = (FRONTEND_DIR / "src" / "api" / "generated" / "dekopen.ts").read_text(
+        encoding="utf-8"
+    )
+    for evidence in ("engineSystems", "EngineSystemsResponse", "/api/v1/engine/systems/"):
+        if evidence not in generated:
+            fail(f"SHOT-05 generated discovery client evidence is missing: {evidence}")
+
+    canvas_dir = FRONTEND_DIR / "src" / "features" / "canvas"
+    production_paths = sorted(
+        path
+        for path in canvas_dir.rglob("*")
+        if path.is_file()
+        and path.suffix in {".ts", ".tsx", ".css"}
+        and ".test." not in path.name
+    )
+    production = "\n".join(path.read_text(encoding="utf-8") for path in production_paths)
+    for forbidden_output in ("1006.00", "970.00", "910.00", "919.00"):
+        if forbidden_output in production:
+            fail(
+                "G1 engine output must not be hardcoded in canvas production source: "
+                f"{forbidden_output}"
+            )
+    if "3067da09-3119-5ad0-a1d5-498cd2dfd753" in production:
+        fail("DEMO_60 UUID must be discovered at runtime rather than hardcoded")
+    for future_surface in ("calculation_hash", "inspector"):
+        if future_surface in production.lower():
+            fail(f"SHOT-05 canvas exposes future surface: {future_surface}")
+    if "EngineCalculateResponse" in (
+        canvas_dir / "canvasStore.ts"
+    ).read_text(encoding="utf-8"):
+        fail("Zustand must not duplicate the TanStack-owned engine response")
+
+    snapping = (canvas_dir / "snapping.ts").read_text(encoding="utf-8")
+    for evidence in ("SNAP_RADIUS_PX = 12n", "FIFTY_MM_CENTI", "TEN_MM_CENTI"):
+        if evidence not in snapping:
+            fail(f"SHOT-05 exact snapping evidence is missing: {evidence}")
+    if "Math.round(" in snapping:
+        fail("Math.round() must not define SHOT-05 HALF_UP snapping")
+
+    app = (FRONTEND_DIR / "src" / "App.tsx").read_text(encoding="utf-8")
+    dashboard = (FRONTEND_DIR / "src" / "app" / "DashboardPage.tsx").read_text(
+        encoding="utf-8"
+    )
+    if "/projects/:id/positions/:posId/edit" not in app:
+        fail("Canonical S06 editor route is missing")
+    if "/projects/demo/positions/g1/edit" not in dashboard:
+        fail("Dashboard demo bootstrap route is missing")
+    messages = (FRONTEND_DIR / "src" / "i18n" / "es-CL.ts").read_text(encoding="utf-8")
+    if '"canvas.openDemo": "Abrir Demo G1"' not in messages:
+        fail("Dashboard demo action copy is missing")
+
+    hook = (canvas_dir / "useEngineCalculation.ts").read_text(encoding="utf-8")
+    editor = (canvas_dir / "CanvasEditor2DView.tsx").read_text(encoding="utf-8")
+    for evidence in ("performance.now()", "fetchQuery", "acceptDimension"):
+        if evidence not in hook:
+            fail(f"SHOT-05 transactional timing evidence is missing: {evidence}")
+    if "requestAnimationFrame" not in editor:
+        fail("SHOT-05 timing must end on the first painted animation frame")
+
+    sentinel = (canvas_dir / "canvasResults.test.tsx").read_text(encoding="utf-8")
+    for value in ("1111.25", "1066.60", "876.54", "777.75"):
+        if value not in sentinel:
+            fail(f"Canvas anti-hardcode sentinel is missing: {value}")
+
+    e2e = (FRONTEND_DIR / "tests" / "e2e" / "canvas.spec.ts").read_text(
+        encoding="utf-8"
+    )
+    for evidence in (
+        "waitForMagicLink",
+        "engine/systems/",
+        "data-last-commit-ms",
+        "toBeLessThan(300)",
+        '["1070", "1080", "1090", "1100", "1110"]',
+        "snap-guide",
+    ):
+        if evidence not in e2e:
+            fail(f"Real SHOT-05 E2E evidence is missing: {evidence}")
+    if re.search(r"\btest\.(?:skip|fixme)\s*\(", e2e):
+        fail("Real canvas E2E must not contain skipped tests")
+
+    animations = (
+        ROOT / "docs" / "PRD" / "PRD-ANIMATIONS-INTERACTIONS.md"
+    ).read_text(encoding="utf-8")
+    if "gate de snapping exclusivamente al redimensionar las cotas" not in animations:
+        fail("ANIM must separate SHOT-05 outer snapping from future division snapping")
+    print("  SHOT-05 canvas/discovery/performance drift guards: passed", flush=True)
+
+
 def check_constitutional_guards() -> None:
     print("[1/6] Constitutional guards", flush=True)
     check_required_paths()
@@ -385,6 +490,7 @@ def check_constitutional_guards() -> None:
     check_python_ast_guards()
     check_frontend_hex_guard()
     check_shot_04_contract()
+    check_shot_05_contract()
     print("  Constitutional source guards: passed", flush=True)
 
 
@@ -599,11 +705,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-04 fail-closed checker", flush=True)
+    print("Dekopen SHOT-05 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-04 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-05 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -616,7 +722,7 @@ def main() -> None:
     if target in {"build", "all", "gauntlet"}:
         check_build()
 
-    print(f"[PASS] SHOT-04 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-05 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":
