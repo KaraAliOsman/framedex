@@ -45,6 +45,28 @@ Al arrastrar un poste o travesaño con el ratón:
 2. **Restricción de Seguridad Mínima ($250.00\text{ mm}$):**
    - Si el operario intenta arrastrar una división dejando un vano libre menor a $250\text{ mm}$, la línea se detiene bruscamente y la cota cambia temporalmente a color carmesí `#FF1744`.
 
+### 3.1. Asignación temporal de alcance — SHOT-05
+
+El algoritmo de §3 conserva íntegramente su semántica de **divisiones**: postes,
+travesaños, centro exacto del vano y mínimo de `250.00 mm` se implementan únicamente
+en un shot futuro donde `SPLIT`/`MULLION` estén dentro del alcance. No pertenecen a
+SHOT-05.
+
+SHOT-05 satisface su gate de snapping exclusivamente al redimensionar las cotas
+exteriores de un único `BAY / FIXED`, mediante grips horizontal y vertical:
+
+1. Con Snap ON, la posición de puntero se transforma a candidate mm usando el
+   viewport vigente.
+2. Se elige el múltiplo de `50 mm` más cercano cuando queda dentro de `±12 px` en
+   pantalla; fuera de ese radio se cuantiza al múltiplo de `10 mm` más cercano.
+3. Con Snap OFF, el candidate se cuantiza únicamente a `0.01 mm`.
+4. Todo desempate usa `ROUND_HALF_UP`; `Math.round()` no es autoridad técnica.
+5. El drag sólo produce preview de presentación. `pointerup` envía el candidate al
+   engine y únicamente una respuesta 200 consolida la dimensión.
+
+Esta asignación no crea divisiones, no aplica snap a 50% y no aplica el mínimo de
+`250 mm` de BAY hijo.
+
 ---
 
 ## 4. Micro-Interacciones de Corrección en 1 Clic
