@@ -20,6 +20,9 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 > [!IMPORTANT]
 > **Precedencia de Diseño:** `PRD-DESIGN-SYSTEM-ADOBE.md` (v1.2, Dual Claro/Oscuro) es el documento CANÓNICO e inapelable para tokens de color, contrastes, tipografía y temas. El archivo `UI_UX_DESIGN_SYSTEM.md` queda **SUPERSEDED** salvo en las especificaciones anatómicas de sus componentes (§4), las cuales deben re-expresarse usando exclusivamente los tokens de `PRD-DESIGN-SYSTEM-ADOBE.md` (cero código hexadecimal hardcodeado).
 
+La especificación móvil/OCR/QR que antes ocupaba por error esa ruta vive, sin pérdida de
+contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
+
 ---
 
 ## 3. Mapa Completo de Documentos PRD-00 a PRD-19
@@ -118,6 +121,8 @@ El builder tiene **estrictamente prohibido** instalar cualquier paquete fuera de
 * `whitenoise >= 6.6` (Servido de archivos estáticos)
 * `huey >= 2.5` & `redis >= 5.0` (Cola de tareas asíncronas ligeras)
 * `posthog >= 3.5` (Telemetría de producto)
+* **Pins SHOT-04:** `PyJWT[crypto]==2.13.0`, `cryptography==50.0.1`,
+  `httpx==0.28.1`, `django-cors-headers==4.9.0`.
 * **Tooling Backend:** `pytest >= 8.0`, `pytest-django >= 4.8`, `ruff >= 0.4`, `mypy >= 1.10`.
 
 ### Frontend (`/frontend`)
@@ -127,5 +132,14 @@ El builder tiene **estrictamente prohibido** instalar cualquier paquete fuera de
 * `vite >= 5.2`
 * `tailwindcss >= 3.4` (con variables semánticas `--theme-*`)
 * `lucide-react >= 0.370` (Iconografía técnica)
+* **Runtime SHOT-04:** `@supabase/supabase-js@2.112.4`,
+  `react-router-dom@7.18.3`, `@tanstack/react-query@5.102.8`,
+  `zustand@5.0.15`, `posthog-js@1.422.5`.
+* **Tooling SHOT-04:** `orval@8.27.0`, `@playwright/test@1.62.1`,
+  `@testing-library/react@16.3.3`, `@testing-library/dom@10.4.1`,
+  `@testing-library/jest-dom@7.0.1`, `jsdom@30.0.1`, `otpauth@9.5.1`.
+* **Tipos React (PD-04-13 resuelta):** `@types/react@18.3.28`,
+  `@types/react-dom@18.3.7` como devDependencies exactas; no autoriza upgrades de
+  React, ReactDOM ni TypeScript.
 * **Tooling Frontend:** `vitest >= 1.6`, `eslint >= 8.57`, `prettier >= 3.2`.
 

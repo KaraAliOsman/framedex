@@ -19,10 +19,10 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - name: Set up Node.js 20.19
+      - name: Set up Node.js 24.15
         uses: actions/setup-node@v7.0.0
         with:
-          node-version: '20.19'
+          node-version: '24.15.0'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -38,6 +38,9 @@ jobs:
       - name: Run strict type checks
         run: python scripts/check_dod.py typecheck
 
+      - name: Verify generated API tree is clean
+        run: git diff --exit-code -- backend/openapi.yaml frontend/src/api/generated/
+
   test-suite:
     name: Test Suite
     runs-on: ubuntu-latest
@@ -50,18 +53,27 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - name: Set up Node.js 20.19
+      - name: Set up Node.js 24.15
         uses: actions/setup-node@v7.0.0
         with:
-          node-version: '20.19'
+          node-version: '24.15.0'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Supabase CLI 2.116.0
+        uses: supabase/setup-cli@v3.0.0
+        with:
+          version: 2.116.0
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
           npm ci --prefix frontend
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
 
       - name: Run test suites
         run: python scripts/check_dod.py test
@@ -72,10 +84,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
-      - name: Set up Node.js 20.19
+      - name: Set up Node.js 24.15
         uses: actions/setup-node@v7.0.0
         with:
-          node-version: '20.19'
+          node-version: '24.15.0'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -116,15 +128,12 @@ jobs:
         with:
           version: 2.116.0
 
-      - name: Verify PostgreSQL 16 compatibility
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run PostgreSQL 16, clean Supabase, RLS integration and pgTAP
         env:
           POSTGRES16_CONTAINER: ${{ job.services.postgres16.id }}
-        run: |
-          docker exec -i "$POSTGRES16_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/compat/postgres16_bootstrap.sql
-          docker exec -i "$POSTGRES16_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/migrations/20260901000000_initial_schema.sql
-          docker exec -i "$POSTGRES16_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/migrations/20260902000000_add_glazing_bead_cut_add.sql
-          docker exec -i "$POSTGRES16_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/seed.sql
-          docker exec -i "$POSTGRES16_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/compat/postgres16_verify.sql
-
-      - name: Run clean Supabase migration, lint and pgTAP
         run: python scripts/check_dod.py database
