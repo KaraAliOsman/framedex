@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "api:generate": "orval --config orval.config.ts && prettier --write \"src/api/generated/**/*.ts\"",
+    "api:generate": "orval --config orval.config.ts",
     "build": "vite build"
   },
   "dependencies": {
