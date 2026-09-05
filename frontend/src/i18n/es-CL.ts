@@ -51,6 +51,10 @@ const messages = {
   "page.systemsDescription": "Placeholder navegable; sin gestión de catálogo en este shot.",
   "page.settings": "Ajustes generales",
   "page.settingsDescription": "Placeholder navegable; sin mutaciones de configuración.",
+  "canvas.openDemo": "Abrir Demo G1",
+  "canvas.loading": "Descubriendo DEMO_60 y calculando G1…",
+  "canvas.calculating": "Calculando con el engine…",
+  "canvas.calculationRejected": "Cálculo rechazado",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

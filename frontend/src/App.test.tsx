@@ -62,6 +62,10 @@ describe("SHOT-04 application routes", () => {
   it("renders the navigable authenticated shell and placeholder routes", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Abrir Demo G1" })).toHaveAttribute(
+      "href",
+      "/projects/demo/positions/g1/edit",
+    );
     fireEvent.click(screen.getByLabelText("Proyectos"));
     expect(await screen.findByRole("heading", { name: "Proyectos" })).toBeInTheDocument();
   });

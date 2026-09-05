@@ -53,3 +53,14 @@ class EngineCalculateResponseSerializer(serializers.Serializer):
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)
     hardware_items = serializers.ListField(child=serializers.DictField())
+
+
+class ProfileSystemSummarySerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    code = serializers.CharField()
+    name = serializers.CharField()
+    is_demo = serializers.BooleanField()
+
+
+class EngineSystemsResponseSerializer(serializers.Serializer):
+    systems = ProfileSystemSummarySerializer(many=True)

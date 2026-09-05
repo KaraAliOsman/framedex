@@ -201,3 +201,13 @@ a:focus-visible {
 [role="alert"] {
   color: var(--theme-crimson-alert);
 }
+
+.primary-action {
+  background: var(--theme-cyan-tool);
+  color: var(--theme-surface-panel);
+  display: inline-block;
+  font-weight: 700;
+  margin-top: 1rem;
+  padding: 0.625rem 0.875rem;
+  text-decoration: none;
+}

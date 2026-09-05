@@ -8,6 +8,7 @@ export default defineConfig({
       schemas: "./src/api/generated/models",
       client: "fetch",
       clean: true,
+      formatter: "prettier",
       override: {
         mutator: {
           path: "./src/api/apiMutator.ts",

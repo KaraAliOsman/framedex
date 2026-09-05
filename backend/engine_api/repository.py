@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from decimal import Decimal
 import json
 from typing import cast
@@ -29,6 +30,22 @@ class UnsupportedCatalogContract(ValueError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class VisibleProfileSystem:
+    id: UUID
+    code: str
+    name: str
+    is_demo: bool
+
+    def public_dict(self) -> dict[str, object]:
+        return {
+            "id": str(self.id),
+            "code": self.code,
+            "name": self.name,
+            "is_demo": self.is_demo,
+        }
+
+
 def _decimal(value: object) -> Decimal:
     if isinstance(value, Decimal):
         return value
@@ -51,6 +68,29 @@ def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectivePro
 
 
 class SystemParamsRepository:
+    def list_visible(self, active_org_id: UUID) -> tuple[VisibleProfileSystem, ...]:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, code, name, is_demo
+                FROM public.profile_systems
+                WHERE is_active = TRUE
+                  AND (is_global = TRUE OR org_id = %s)
+                ORDER BY is_demo DESC, code ASC, id ASC
+                """,
+                [active_org_id],
+            )
+            rows: Sequence[tuple[object, object, object, object]] = cursor.fetchall()
+        return tuple(
+            VisibleProfileSystem(
+                id=row[0] if isinstance(row[0], UUID) else UUID(str(row[0])),
+                code=str(row[1]),
+                name=str(row[2]),
+                is_demo=bool(row[3]),
+            )
+            for row in rows
+        )
+
     def load_visible(self, system_id: UUID, active_org_id: UUID) -> SystemParams:
         with connection.cursor() as cursor:
             cursor.execute(

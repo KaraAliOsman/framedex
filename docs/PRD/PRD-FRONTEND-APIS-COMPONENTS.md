@@ -13,6 +13,7 @@ Todos los endpoints responden en formato JSON y requieren encabezado `Authorizat
 MÉTODO & RUTA                         PROPÓSITO & ALCANCE                    CACHE KEY TANSTACK QUERY
 =====================================================================================================
 POST /api/v1/engine/calculate/        Cálculo determinista instantáneo       ['engine', 'calc', hash]
+GET  /api/v1/engine/systems/          Discovery read-only de series visibles ['engine', 'systems', orgId]
 GET  /api/v1/projects/                Lista paginada de proyectos             ['projects', { page, status }]
 GET  /api/v1/projects/:id/            Detalle completo de proyecto + vanos    ['projects', projectId]
 POST /api/v1/projects/:id/positions/  Creación de nueva posición/vano         Invalida ['projects', id]
@@ -106,6 +107,40 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
     "hardware_items": []
   }
   ```
+
+### 1.2. Discovery read-only de sistemas para SHOT-05
+
+`GET /api/v1/engine/systems/` es el único discovery de catálogo autorizado en
+SHOT-05. No constituye CRUD ni persiste una selección. Exige exactamente el mismo
+JWT, organización activa, `aal2` para OWNER y contexto RLS que
+`POST /api/v1/engine/calculate/`.
+
+Devuelve únicamente sistemas `is_active = TRUE` que sean globales o pertenezcan a
+la organización activa, con orden determinista `is_demo DESC`, `code ASC`,
+`id ASC`:
+
+```json
+{
+  "systems": [
+    {
+      "id": "<uuid>",
+      "code": "DEMO_60",
+      "name": "Sistema Demo 60mm PVC",
+      "is_demo": true
+    }
+  ]
+}
+```
+
+Cada elemento expone exclusivamente `id`, `code`, `name` e `is_demo`. Queda
+prohibido devolver artículos, costos, precios, hardware, fórmulas o configuración
+completa.
+
+En `/projects/demo/positions/g1/edit`, el frontend debe buscar exactamente una fila
+`code === "DEMO_60" && is_demo === true`. Cero coincidencias produce el estado
+fail-closed `demo_system_unavailable`; más de una produce
+`demo_system_ambiguous`. Nunca se selecciona implícitamente el primer elemento y el
+UUID de DEMO_60 no se hardcodea como autoridad productiva del navegador.
 
 ---
 

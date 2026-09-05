@@ -33,7 +33,42 @@ from engine_api.repository import (
 from engine_api.serializers import (
     EngineCalculateRequestSerializer,
     EngineCalculateResponseSerializer,
+    EngineSystemsResponseSerializer,
 )
+
+
+class EngineSystemsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        operation_id="engine_systems",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={
+            200: EngineSystemsResponseSerializer,
+            400: OpenApiResponse(ErrorResponseSerializer),
+            401: OpenApiResponse(ErrorResponseSerializer),
+            403: OpenApiResponse(ErrorResponseSerializer),
+            409: OpenApiResponse(ErrorResponseSerializer),
+        },
+        tags=["engine"],
+    )
+    def get(self, request: Request) -> Response:
+        token = verified_request_token(request)
+        with authenticated_rls_context(token.claims):
+            memberships = MembershipRepository().list_active_for_user(token.user_id)
+            tenant = resolve_tenant_context(
+                memberships,
+                request.headers.get("X-Organization-ID"),
+            )
+            enforce_owner_mfa(tenant, token.aal)
+            systems = SystemParamsRepository().list_visible(
+                tenant.active_organization.organization_id
+            )
+
+        return Response(
+            {"systems": [system.public_dict() for system in systems]},
+            status=status.HTTP_200_OK,
+        )
 
 
 class EngineCalculateView(APIView):

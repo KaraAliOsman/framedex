@@ -304,6 +304,47 @@ def test_multi_org_api_rejects_system_b_when_a_is_selected(real_rows: RLSFixture
     assert_no_context()
 
 
+@pytest.mark.parametrize("tenant", ["A", "B"])
+def test_engine_system_discovery_is_rls_visible_and_deterministic(
+    real_rows: RLSFixtures, tenant: str
+) -> None:
+    response = APIClient().get(
+        "/api/v1/engine/systems/",
+        HTTP_AUTHORIZATION=f"Bearer {real_rows.tokens[tenant].access_token}",
+    )
+
+    assert response.status_code == 200
+    systems = response.json()["systems"]
+    assert systems[0] == {
+        "id": str(real_rows.demo_system),
+        "code": "DEMO_60",
+        "name": "Sistema Demo 60mm PVC",
+        "is_demo": True,
+    }
+    assert {system["id"] for system in systems} == {
+        str(real_rows.demo_system),
+        str(real_rows.systems[tenant]),
+    }
+    assert all(set(system) == {"id", "code", "name", "is_demo"} for system in systems)
+    assert_no_context()
+
+
+def test_multi_org_system_discovery_honors_active_organization(
+    real_rows: RLSFixtures,
+) -> None:
+    response = APIClient().get(
+        "/api/v1/engine/systems/",
+        HTTP_AUTHORIZATION=f"Bearer {real_rows.tokens['both'].access_token}",
+        HTTP_X_ORGANIZATION_ID=str(real_rows.organizations["A"]),
+    )
+
+    assert response.status_code == 200
+    ids = {system["id"] for system in response.json()["systems"]}
+    assert ids == {str(real_rows.demo_system), str(real_rows.systems["A"])}
+    assert str(real_rows.systems["B"]) not in ids
+    assert_no_context()
+
+
 def test_modified_sub_or_aal_cannot_enter_rls(real_rows: RLSFixtures) -> None:
     original = real_rows.tokens["A"]
     header, _, signature = original.access_token.split(".")

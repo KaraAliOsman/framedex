@@ -8,11 +8,12 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_shot_04_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_shot_05_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
+        "/api/v1/engine/systems/",
     }
     bearer = schema["components"]["securitySchemes"]["SupabaseBearer"]
     assert bearer == {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
@@ -26,7 +27,11 @@ def test_engine_response_excludes_future_fields() -> None:
 
 def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
-    for path, method in (("/api/v1/auth/me/", "get"), ("/api/v1/engine/calculate/", "post")):
+    for path, method in (
+        ("/api/v1/auth/me/", "get"),
+        ("/api/v1/engine/calculate/", "post"),
+        ("/api/v1/engine/systems/", "get"),
+    ):
         header = next(p for p in schema["paths"][path][method]["parameters"] if p["name"] == "X-Organization-ID")
         assert header["in"] == "header"
         assert header["schema"]["format"] == "uuid"
