@@ -30,27 +30,26 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
 > [!IMPORTANT]
 > **Regla de Generación Automatizada (Enmienda 2 & H1):** El archivo `engine/tests/golden_example.json` se **GENERA** ejecutando `/engine` sobre el request de entrada en el SHOT-06 y se commitea como snapshot de prueba en CI. El request transmite obligatoriamente `glass_spec` y el motor deriva `thickness_net_mm` sumando exclusivamente los paños de cristal (`4-16-4` $\rightarrow 8.00\text{ mm}$, `4-12-4` $\rightarrow 8.00\text{ mm}$, `6-12-6` $\rightarrow 12.00\text{ mm}$, monolítico $\rightarrow$ espesor propio).
 
-> **Contrato vigente SHOT-04:** este apartado congela el request del adaptador HTTP
-> fino sobre el engine aprobado en SHOT-03. El resultado contiene exclusivamente
-> `profile_cuts`,
-> `reinforcements`, `glasses` y `hardware_items`. Cada corte añade `sku` y
-> `bay_id` nullable; cada refuerzo añade `parent_profile_sku`,
-> `reinforcement_sku` nullable y `bay_id` nullable. `hardware_items` es `[]`
-> y no ejecuta resolución de kits. `calculation_hash` se incorpora en
-> SHOT-06 y `inspector` en SHOT-07, fuera de la respuesta actual. Área y
-> peso de cada `GlassPiece` se calculan exclusivamente mediante PRD-01
-> §3.1.1, conservando el área exacta hasta la cuantización final.
->
-> El endpoint sólo ejecuta tipologías soportadas por SHOT-03. Un contrato sintáctico
-> válido pero diferido responde `422 unsupported_engine_contract`; un sistema inexistente
-> o no visible responde `404 system_not_found`; una entrada inválida responde
-> `400 validation_error`. Dimensiones y resultados se serializan como strings decimales,
-> nunca como `float`.
+**Contrato normativo SHOT-06, Fase 2 autorizada tras resolver PD-06-19/20:** resultado con
+profile_cuts, reinforcements, glasses, panels, hardware_items, leaf_weights y
+calculation_hash. Ningún inspector/BFD/pricing/costs/price/audit/OT.
+Cortes incluyen material real del artículo y leaf_id nullable; refuerzos, vidrios,
+paneles, pesos y hardware incluyen leaf_id nullable. G1–G4 mantienen geometría exacta.
+HardwareItem tiene kit_sku,name,qty:int=1,unit="kit",bay_id,leaf_id,contents tipados;
+contents no se flattenea y conserva orden del catálogo. LeafWeight publica componentes
+PVC/acero/infill/hardware y total a2 HALF_UP, más used_fallback; cálculo interno exacto.
+PanelPiece no es GlassPiece. Detalles en PRD-01 y resolución íntegra del plan SHOT-06.
+
+Adapter conserva auth/RLS/organización activa, WHITE aprobado, errores de validación
+400, sistema inexistente/no visible404 y contrato diferido422. La implementación
+SHOT-04/05 permanece intacta hasta autorización efectiva tras Regla0. Extended sigue
+sin geometría ejecutable. OpenAPI y Orval se regeneran después de implementar contrato.
+Dimensiones/pesos/áreas son strings Decimal, nunca float; qty entero cuando se define int.
 
 - **Request Payload:**
   ```json
   {
-    "system_id": "d0000000-0000-0000-0000-000000000001",
+    "system_id": "3067da09-3119-5ad0-a1d5-498cd2dfd753",
     "nominal_width_mm": "1500.00",
     "nominal_height_mm": "1400.00",
     "color": "WHITE",
@@ -58,6 +57,7 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
       "id": "root",
       "type": "SPLIT_V",
       "split_offset_mm": "750.00",
+      "mullion_profile_sku": "POSTE-V",
       "children": [
         { 
           "id": "bay_1", 
@@ -77,36 +77,58 @@ GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  [
     }
   }
   ```
-- **Response Schema Esperado (Verificación Matemática Demo 60 mm):**
-  ```json
-  {
-    "profile_cuts": [
-      { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1506.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
-      { "sku": "MARCO",  "role": "FRAME",        "length_mm": "1406.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": null },
-      { "sku": "POSTE-V", "role": "MULLION_V",   "length_mm": "1280.00", "angle_left": "90.0", "angle_right": "90.0", "qty": 1, "bay_id": null },
-      { "sku": "HOJA",   "role": "SASH",         "length_mm": "672.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
-      { "sku": "HOJA",   "role": "SASH",         "length_mm": "1302.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
-      { "sku": "JQ-10",  "role": "GLAZING_BEAD", "length_mm": "689.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_1" },
-      { "sku": "JQ-10",  "role": "GLAZING_BEAD", "length_mm": "1319.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_1" },
-      { "sku": "JQ-14",  "role": "GLAZING_BEAD", "length_mm": "555.00",  "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" },
-      { "sku": "JQ-14",  "role": "GLAZING_BEAD", "length_mm": "1185.00", "angle_left": "45.0", "angle_right": "45.0", "qty": 2, "bay_id": "bay_2" }
-    ],
-    "reinforcements": [
-      { "parent_profile_sku": "MARCO",  "reinforcement_sku": null, "role": "FRAME",     "length_mm": "1470.00", "qty": 2, "bay_id": null },
-      { "parent_profile_sku": "MARCO",  "reinforcement_sku": null, "role": "FRAME",     "length_mm": "1370.00", "qty": 2, "bay_id": null },
-      { "parent_profile_sku": "POSTE-V", "reinforcement_sku": null, "role": "MULLION_V", "length_mm": "1270.00", "qty": 1, "bay_id": null },
-      { "parent_profile_sku": "HOJA",   "reinforcement_sku": null, "role": "SASH",      "length_mm": "636.00",  "qty": 2, "bay_id": "bay_2" },
-      { "parent_profile_sku": "HOJA",   "reinforcement_sku": null, "role": "SASH",      "length_mm": "1266.00", "qty": 2, "bay_id": "bay_2" }
-    ],
-    "glasses": [
-      { "bay_id": "bay_1", "width_mm": "680.00",  "height_mm": "1310.00",
-        "area_m2": "0.8908", "weight_kg": "17.82", "thickness_net_mm": "8.00" },
-      { "bay_id": "bay_2", "width_mm": "546.00",  "height_mm": "1176.00",
-        "area_m2": "0.6421", "weight_kg": "12.84", "thickness_net_mm": "8.00" }
-    ],
-    "hardware_items": []
-  }
-  ```
+**Response SHOT-06: contrato de campos (el archivo golden sólo se genera):**
+
+| Campo | Contenido |
+|---|---|
+| calculation_hash | sha256:<64 lowercase hex>, sin self-hash |
+| profile_cuts | SKU,rol,material,length_mm,ángulos,qty,bay_id,leaf_id |
+| reinforcements | parent_profile_sku,reinforcement_sku nullable,rol,length_mm,qty,bay_id,leaf_id |
+| glasses | bay_id,leaf_id,width_mm,height_mm,area_m2,weight_kg,thickness_net_mm |
+| panels | sku,name,bay_id,leaf_id,width_mm,height_mm,area_m2,weight_kg; [] en este request |
+| hardware_items | Un HardwareItem por hoja operable con kit/composición; bay_2→KIT-TILT-TURN / Kit Vorne OB 100kg |
+| leaf_weights | bay_id,leaf_id,pvc_weight_kg,steel_weight_kg,infill_weight_kg,hardware_weight_kg,total_weight_kg,used_fallback |
+
+Fixture geométrica compuesta intacta:
+
+| Grupo | Valores mm y cantidades |
+|---|---|
+| FRAME PVC | 1506×2 /1406×2, bay_id null |
+| MULLION_V PVC | POSTE-V1280×1, 90/90 |
+| SASH PVC bay_2 | 672×2 /1302×2 |
+| Beads fijo bay_1 | JQ-10:689×2 /1319×2 |
+| Beads OB bay_2 | JQ-14:555×2 /1185×2 |
+| Acero FRAME | 1470×2 /1370×2 |
+| Acero MULLION | 1270×1 |
+| Acero SASH | 636×2 /1266×2 |
+| Vidrio fijo | 680×1310; area0.8908; weight17.82; net8.00 |
+| Vidrio OB | 546×1176; area0.6421; weight12.84; net8.00 |
+| Peso OB exacto/publicado | 26.54632→26.55 kg; kit2.50 persistido; used_fallback=false |
+
+Leaf_id permanece null para las piezas de hoja única de este request. Todos los
+cortes salvo mullion tienen45/45. Cantidades, SKU y geometría anteriores se preservan.
+G3 standalone publica33.29 kg; golden compuesto bay_2 publica26.55 kg (PD-06-19).
+G7 emite PanelPiece y ProfileCut GLAZING_BEAD705.00/1937.00 qty2, sin glass ficticio
+y sin sumar beads al peso móvil32.35 (PD-06-20).
+
+**Hash:** objeto {request,response_without_calculation_hash}. UTF-8,
+ensure_ascii=False, keys lexicográficas, separators=(",",":"), sin whitespace ni LF;
+arrays en orden canónico del motor, Decimal→string, nunca float. SHA-256 hexdigest
+minúsculo con prefijo público sha256:. Hash no entra en sus propios bytes.
+
+**Snapshot:** {request,response}, incluyendo calculation_hash en response. UTF-8,
+LF, indent=2, sort_keys=True, ensure_ascii=False, exactamente un newline final.
+Orden de arrays conserva orden estable de roles/recorrido del engine y hojas L1/L2;
+contents mantiene orden persistido. La serialización de Decimal respeta escalas
+públicas del contrato; no hace aritmética ni redondeo dimensional que oculte drift.
+No se calcula un hash de este documento ni se escribe manualmente un response golden.
+
+**Generación:** make goldgen conserva la interfaz existente y es la única ruta de
+escritura. python -m engine.scripts.regenerate_golden --check calcula bytes en memoria
+y compara archivo existente; CI usa --check, nunca reescribe. Drift/archivo ausente
+produce FAIL. Tests: segunda generación idéntica, mutación de un byte falla, cambio
+request/response cambia hash, no self-hash y sin inspector. El request usa UUID real
+y POSTE-V explícito; engine matemático no consulta DB ni HTTP.
 
 ### 1.2. Discovery read-only de sistemas para SHOT-05
 
