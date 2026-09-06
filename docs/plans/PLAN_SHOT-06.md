@@ -2613,3 +2613,20 @@ en `scratch/gauntlet-final.log` (ignorada, sin credenciales productivas).
   cero contradicciones conocidas. Las PD históricas resueltas se conservan.
 - Autorización vigente: commits por subsistema y PR a main protegido;
   verificar los cuatro required checks. **NO MERGE**, sin tag de cierre.
+
+### Entrega a revisión — PR #14
+
+- PR abierto: https://github.com/KaraAliOsman/framedex/pull/14, `shot-06` →
+  `main`. Base verificada `fa3616fda9645bda5092e7c0cb9de80ecd8495b9`.
+- Commits por subsistema: `467089e` autoridades/documentación, `389c132`
+  catálogo/migraciones, `f555925` engine/golden, `06b9007` API/auth TLS,
+  `52a6c85` cliente/fixtures frontend, `374dfb5` harness. Esta anotación agrega
+  sólo trazabilidad documental; no modifica fuentes generadas ni código.
+- `main` mantiene protección para todos y cuatro checks requeridos:
+  `Lint & Typecheck`, `Test Suite`, `Frontend Build`, `Database Gate`.
+  Sus resultados del HEAD vigente se consultan en el PR; CI inicial en curso.
+- Diff al abrir: 69 archivos, +6035/−667 líneas. Inventario Git sin scratch,
+  binarios, secretos ni tooling del host. Working tree limpio tras los seis
+  commits; OpenAPI/Orval final vuelto a comprobar sin drift.
+- Estado del shot: implementado y entregado a revisión. No cerrado ni
+  fusionado; **NO MERGE** permanece explícito en el PR y en el plan global.
