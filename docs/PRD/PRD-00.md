@@ -18,7 +18,8 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 ## 2. Precedencia Normativa de Diseño (Parche P1-6)
 
 > [!IMPORTANT]
-> **Precedencia de Diseño:** `PRD-DESIGN-SYSTEM-ADOBE.md` (v1.2, Dual Claro/Oscuro) es el documento CANÓNICO e inapelable para tokens de color, contrastes, tipografía y temas. El archivo `UI_UX_DESIGN_SYSTEM.md` queda **SUPERSEDED** salvo en las especificaciones anatómicas de sus componentes (§4), las cuales deben re-expresarse usando exclusivamente los tokens de `PRD-DESIGN-SYSTEM-ADOBE.md` (cero código hexadecimal hardcodeado).
+> **Precedencia de Diseño (Constraint System, Not a Fixed Mockup):** `PRD-DESIGN-SYSTEM-ADOBE.md` (Dual Claro/Oscuro) es la autoridad normativa para **tokens semánticos de color, contrastes WCAG AAA, semántica de temas y línea base tipográfica** (cero valores hexadecimales hardcodeados fuera de variables CSS `--theme-*`).
+> No ejerce autoridad rígida ni congelada sobre layout, composición espacial, densidad de paneles, navegación o arquitectura UX. Los desarrolladores y agentes de IA tienen libertad para innovar en la ergonomía y disposición de la interfaz siempre que preserven la accesibilidad, coherencia visual, tokens y estados del sistema. El archivo `UI_UX_DESIGN_SYSTEM.md` permanece **SUPERSEDED** en tokens.
 
 La especificación móvil/OCR/QR que antes ocupaba por error esa ruta vive, sin pérdida de
 contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.

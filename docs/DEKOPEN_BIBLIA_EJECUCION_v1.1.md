@@ -1,9 +1,10 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA DE ESPECIFICACIONES TÉCNICAS (v1.1.2)
-**Versión:** 1.1.2 (Congelada y Bloqueada tras Micro-Parche Final)  
+**Versión:** 1.1.2 (Snapshot Histórico Preejecución • Superado por v1.3)  
+**Naturaleza Normativa:** `HISTORICAL SNAPSHOT / NON-NORMATIVE (CERO AUTORIDAD ACTIVA)`  
+**Autoridad de la Verdad:** DERIVADA / NULA. La autoridad de la verdad reside exclusivamente en `/docs/CONSTITUTION.md` y `/docs/PRD/*.md`.
 **Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fecha de Congelación:** 30 de Agosto de 2026  
-**Autor:** Arquitectura Técnica de Dekopen  
-**Estado:** Documento Maestro Definitivo (Merge de Enmiendas A, B, C, Parches P1–P3, F1–F7, H1–H3 y Plan SHOT-01..24)
+**Estado:** Documento Histórico Archivador de Fase 0
 
 ---
 

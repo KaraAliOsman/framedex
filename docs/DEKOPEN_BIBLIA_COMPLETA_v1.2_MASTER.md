@@ -1,5 +1,7 @@
 # DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA COMPLETA (v1.2 MASTER 10/10)
-**Versión Oficial:** 1.2 (Definitive Master Standard • Zero Known Contradictions • 23 Constitutional Rules)
+**Versión Oficial:** 1.2 (Snapshot Consolidado de Lectura • Zero Known Contradictions • 23 Constitutional Rules)
+**Naturaleza Normativa:** `GENERATED VIEW / SNAPSHOT (NO NORMATIVO)`  
+**Autoridad de la Verdad:** DERIVADA. Este documento es una compilación estática de lectura. La autoridad de la verdad reside exclusivamente en los documentos atómicos activos en `/docs/CONSTITUTION.md` y `/docs/PRD/*.md`. Ante cualquier discrepancia, prevalecen siempre las fuentes atómicas activas.
 **Hash de Integridad Normativa:** [HASH-RECALCULAR-AL-EMITIR]
 **Fecha de Emisión:** 1 de Septiembre de 2026
 
