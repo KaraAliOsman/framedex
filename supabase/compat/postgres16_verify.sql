@@ -22,6 +22,7 @@ BEGIN
           'profile_articles',
           'glazing_bead_matrix',
           'hardware_kits',
+          'infill_articles',
           'cost_lists',
           'cost_list_items',
           'pricing_rules',
@@ -39,8 +40,8 @@ BEGIN
           'credit_ledger'
       ]);
 
-    IF business_table_count <> 21 THEN
-        RAISE EXCEPTION 'Expected 21 business tables, got %', business_table_count;
+    IF business_table_count <> 22 THEN
+        RAISE EXCEPTION 'Expected 22 business tables, got %', business_table_count;
     END IF;
 
     SELECT count(*)
@@ -55,6 +56,7 @@ BEGIN
           'profile_articles',
           'glazing_bead_matrix',
           'hardware_kits',
+          'infill_articles',
           'cost_lists',
           'cost_list_items',
           'pricing_rules',
@@ -73,8 +75,8 @@ BEGIN
       ])
       AND catalog.relrowsecurity = TRUE;
 
-    IF rls_table_count <> 21 THEN
-        RAISE EXCEPTION 'Expected RLS on 21 business tables, got %', rls_table_count;
+    IF rls_table_count <> 22 THEN
+        RAISE EXCEPTION 'Expected RLS on 22 business tables, got %', rls_table_count;
     END IF;
 
     SELECT count(*)
