@@ -15,6 +15,8 @@ from dekopen_engine import (
     EffectiveProfileArticle,
     GlazingBeadRule,
     HardwareKitRule,
+    HardwareComponent,
+    PanelRule,
     MaterialType,
     ProfileRole,
     RailType,
@@ -47,15 +49,19 @@ class VisibleProfileSystem:
 
 
 def _decimal(value: object) -> Decimal:
-    if isinstance(value, Decimal):
-        return value
-    return Decimal(str(value))
+    if isinstance(value, bool) or not isinstance(value, (Decimal, str, int)):
+        raise UnsupportedCatalogContract("Catalog numbers must be exact decimals")
+    result = Decimal(value)
+    if not result.is_finite():
+        raise UnsupportedCatalogContract("Catalog numbers must be finite")
+    return result
 
 
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
+        material=MaterialType(str(row[offset + 8])),
         face_width_mm=_decimal(row[offset + 2]),
         welding_loss_mm=_decimal(row[offset + 3]),
         reinforcement_gap_mm=_decimal(row[offset + 4]),
@@ -65,6 +71,16 @@ def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectivePro
             str(row[offset + 7]) if row[offset + 7] is not None else None
         ),
     )
+
+
+def _hardware_contents(value: object) -> list[HardwareComponent]:
+    # SELECT contents::text avoids driver JSON decoding through binary floats.
+    if not isinstance(value, str):
+        raise UnsupportedCatalogContract("Hardware contents must be raw JSON text")
+    raw = json.loads(value, parse_float=Decimal, parse_int=Decimal)
+    if not isinstance(raw, list):
+        raise UnsupportedCatalogContract("Hardware contents must be an array")
+    return [HardwareComponent.model_validate(component) for component in raw]
 
 
 class SystemParamsRepository:
@@ -100,7 +116,9 @@ class SystemParamsRepository:
                        pulley_height_mm, central_overlap_mm,
                        sliding_lateral_clearance_mm, sliding_end_add_mm,
                        corner_bracket_loss_mm, hook_depth_mm,
-                       door_threshold_mm, door_bottom_clearance_mm, rail_type
+                       door_threshold_mm, door_bottom_clearance_mm, rail_type,
+                       sliding_glazing_deduction_width_mm,
+                       sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -136,8 +154,10 @@ class SystemParamsRepository:
             door_threshold_mm=_decimal(system[12]),
             door_bottom_clearance_mm=_decimal(system[13]),
             rail_type=RailType(str(system[14])),
-            pvc_weight_kg_m=frame.weight_kg_m,
-            steel_weight_kg_m=frame.steel_weight_kg_m,
+            sliding_glazing_deduction_width_mm=_decimal(system[15]),
+            sliding_glazing_deduction_height_mm=_decimal(system[16]),
+            door_leaf_side_clearance_mm=_decimal(system[17]),
+            available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
 
@@ -149,7 +169,7 @@ class SystemParamsRepository:
                 """
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
-                       reinforcement_sku
+                       reinforcement_sku, material::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
                 ORDER BY sku
@@ -181,7 +201,7 @@ class SystemParamsRepository:
                        article.sku, article.role::text, article.face_width_mm,
                        article.welding_loss_mm, article.reinforcement_gap_mm,
                        article.weight_kg_m, article.steel_weight_kg_m,
-                       article.reinforcement_sku
+                       article.reinforcement_sku, article.material::text
                 FROM public.glazing_bead_matrix AS matrix
                 JOIN public.profile_articles AS article
                   ON article.id = matrix.bead_article_id
@@ -215,7 +235,7 @@ class SystemParamsRepository:
                 SELECT sku, name, opening_type, min_leaf_width_mm,
                        max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
                        max_leaf_weight_kg, rail_type, carriages_qty,
-                       stay_arms_qty, contents
+                       stay_arms_qty, contents::text, weight_kg
                 FROM public.hardware_kits
                 WHERE system_id = %s AND is_active = TRUE
                   AND (org_id IS NULL OR org_id = %s)
@@ -237,11 +257,33 @@ class SystemParamsRepository:
                 rail_type=RailType(str(row[8])),
                 carriages_qty=int(cast(int, row[9])),
                 stay_arms_qty=int(cast(int, row[10])),
-                contents=(
-                    json.loads(row[11])
-                    if isinstance(row[11], str)
-                    else cast(list[dict[str, str]], row[11])
-                ),
+                contents=_hardware_contents(row[11]),
+                weight_kg=_decimal(row[12]) if row[12] is not None else None,
             )
             for row in rows
         ]
+
+
+    def _load_panel_rules(
+        self, system_id: UUID, active_org_id: UUID
+    ) -> dict[str, PanelRule]:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT sku, name, kind, thickness_mm, weight_kg_m2
+                FROM public.infill_articles
+                WHERE system_id = %s AND is_active = TRUE
+                  AND (org_id IS NULL OR org_id = %s)
+                ORDER BY sku
+                """,
+                [system_id, active_org_id],
+            )
+            rows = cursor.fetchall()
+        return {
+            str(row[0]): PanelRule(
+                sku=str(row[0]), name=str(row[1]), kind=row[2],
+                thickness_mm=_decimal(row[3]),
+                weight_kg_m2=_decimal(row[4]) if row[4] is not None else None,
+            )
+            for row in rows
+        }

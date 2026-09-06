@@ -107,6 +107,9 @@ class AuthServerTokenVerifier:
         self.user_url = f"{self.issuer}/user"
         self.anon_key = anon_key
         self.timeout_seconds = timeout_seconds
+        # Reuse the immutable trust configuration, never an authentication result.
+        # Rebuilding the certificate store on every request stalls Canvas on Windows.
+        self.tls_context = httpx.create_ssl_context()
 
     def verify(self, token: str) -> VerifiedSupabaseToken:
         if not self.anon_key:
@@ -119,6 +122,7 @@ class AuthServerTokenVerifier:
                     "Authorization": f"Bearer {token}",
                 },
                 timeout=self.timeout_seconds,
+                verify=self.tls_context,
             )
             if response.status_code != 200:
                 raise invalid_token()

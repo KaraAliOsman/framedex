@@ -22,6 +22,7 @@ BUSINESS_TABLES = (
     "profile_articles",
     "glazing_bead_matrix",
     "hardware_kits",
+    "infill_articles",
     "cost_lists",
     "cost_list_items",
     "pricing_rules",
@@ -42,7 +43,10 @@ BUSINESS_TABLES = (
 
 @pytest.fixture(scope="module")
 def migration_sql() -> str:
-    return MIGRATION_PATH.read_text(encoding="utf-8")
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(MIGRATION_PATH.parent.glob("*.sql"))
+    )
 
 
 @pytest.fixture(scope="module")
@@ -204,7 +208,7 @@ def test_demo_60_system_seed_is_exact(seed_sql: str) -> None:
     for value in expected_values:
         assert value in seed_sql
     assert re.search(r"is_global,\s+is_demo", seed_sql)
-    assert re.search(r"6\.00,\s+TRUE,\s+TRUE", seed_sql)
+    assert re.search(r"7\.00,\s+TRUE,\s+TRUE", seed_sql)
 
 
 @pytest.mark.parametrize(

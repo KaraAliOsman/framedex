@@ -106,7 +106,7 @@ def test_g1_through_adapter_matches_engine_exactly(
     assert payload["glasses"][0]["width_mm"] == "910.00"
     assert payload["glasses"][0]["height_mm"] == "910.00"
     assert payload["hardware_items"] == []
-    assert "calculation_hash" not in payload
+    assert payload["calculation_hash"].startswith("sha256:")
     assert "inspector" not in payload
 
 
@@ -130,7 +130,7 @@ def test_deferred_opening_returns_422(monkeypatch: pytest.MonkeyPatch) -> None:
     client = APIClient()
     configure_api(client, monkeypatch)
     payload = g1_request()
-    payload["parametric_tree"]["opening_type"] = "SLIDING_2L"
+    payload["parametric_tree"]["opening_type"] = "SLIDING_3L"
 
     response = client.post("/api/v1/engine/calculate/", payload, format="json")
 

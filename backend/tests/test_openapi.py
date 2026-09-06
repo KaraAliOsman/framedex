@@ -19,9 +19,9 @@ def test_openapi_contains_only_shot_05_paths_and_bearer_security() -> None:
     assert bearer == {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
 
 
-def test_engine_response_excludes_future_fields() -> None:
+def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
     schema_text = OPENAPI.read_text(encoding="utf-8")
-    assert "calculation_hash" not in schema_text
+    assert "calculation_hash" in schema_text
     assert "inspector" not in schema_text
 
 

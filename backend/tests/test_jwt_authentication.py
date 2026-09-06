@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import ssl
 from types import SimpleNamespace
 from uuid import UUID
 
@@ -135,3 +136,30 @@ def test_auth_server_requires_matching_returned_user(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: mismatch)
     with pytest.raises(ContractAPIException):
         verifier.verify(token)
+
+
+def test_auth_server_reuses_tls_trust_but_checks_every_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    verifier = AuthServerTokenVerifier("https://project.supabase.co", "anon-key", 5)
+    assert verifier.tls_context.verify_mode == ssl.CERT_REQUIRED
+    assert verifier.tls_context.check_hostname
+    tokens = [jwt.encode(claims(aal=aal), "s" * 32, algorithm="HS256") for aal in ("aal1", "aal2")]
+    calls: list[dict[str, object]] = []
+
+    def request(url: str, **kwargs: object) -> httpx.Response:
+        calls.append(kwargs)
+        return httpx.Response(
+            200 if len(calls) == 1 else 401,
+            json={"id": USER_ID}, request=httpx.Request("GET", url),
+        )
+
+    monkeypatch.setattr(httpx, "get", request)
+    assert verifier.verify(tokens[0]).aal == "aal1"
+    with pytest.raises(ContractAPIException):
+        verifier.verify(tokens[1])
+    assert len(calls) == 2
+    for token, call in zip(tokens, calls, strict=True):
+        assert call["verify"] is verifier.tls_context
+        assert call["headers"] == {"apikey": "anon-key", "Authorization": f"Bearer {token}"}
+        assert call["timeout"] == 5
