@@ -241,6 +241,9 @@ def verify_postgres16() -> None:
                 [docker, "exec", "-i", container, "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", "postgres"],
                 input_text=path.read_text(encoding="utf-8"),
             )
+        import check_migration_upgrades
+
+        check_migration_upgrades.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])
