@@ -54,9 +54,20 @@ def exact_glass_area_m2(width_mm: Decimal, height_mm: Decimal) -> Decimal:
     return (width_mm * height_mm) / _SQUARE_MILLIMETRES_PER_SQUARE_METRE
 
 
+def exact_glass_weight(
+    width_mm: Decimal, height_mm: Decimal, glass_spec: str, fallback_thickness_mm: Decimal,
+) -> Decimal:
+    if width_mm <= Decimal("0") or height_mm <= Decimal("0"):
+        raise ValueError("Glass dimensions must be positive")
+    return (exact_glass_area_m2(width_mm, height_mm)
+            * derive_net_glass_thickness(glass_spec, fallback_thickness_mm)
+            * GLASS_WEIGHT_FACTOR_KG_M2_PER_MM)
+
+
 def build_glass_piece(
     *,
     bay_id: str,
+    leaf_id: str | None = None,
     width_mm: Decimal,
     height_mm: Decimal,
     glass_spec: str,
@@ -69,14 +80,13 @@ def build_glass_piece(
         fallback_thickness_mm,
     )
     area_m2_exact = exact_glass_area_m2(width_mm, height_mm)
-    weight_kg_exact = (
-        area_m2_exact
-        * thickness_net_exact_mm
-        * GLASS_WEIGHT_FACTOR_KG_M2_PER_MM
+    weight_kg_exact = exact_glass_weight(
+        width_mm, height_mm, glass_spec, fallback_thickness_mm,
     )
 
     return GlassPiece(
         bay_id=bay_id,
+        leaf_id=leaf_id,
         width_mm=width_mm,
         height_mm=height_mm,
         area_m2=area_m2_exact.quantize(_AREA_OUTPUT_QUANTUM, rounding=ROUND_HALF_UP),

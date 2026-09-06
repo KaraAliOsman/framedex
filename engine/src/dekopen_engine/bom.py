@@ -7,6 +7,9 @@ from collections.abc import Sequence
 from dekopen_engine.models import (
     EngineResult,
     GlassPiece,
+    PanelPiece,
+    HardwareItem,
+    LeafWeight,
     ProfileCut,
     ProfileRole,
     ReinforcementPiece,
@@ -21,6 +24,7 @@ _PROFILE_ROLE_ORDER = {
     ProfileRole.INVERSOR: 5,
     ProfileRole.COUPLER: 6,
     ProfileRole.ADDITIONAL: 7,
+    ProfileRole.THRESHOLD: 8,
 }
 
 
@@ -29,6 +33,9 @@ def build_engine_result(
     profile_cuts: Sequence[ProfileCut],
     reinforcements: Sequence[ReinforcementPiece],
     glasses: Sequence[GlassPiece],
+    panels: Sequence[PanelPiece] = (),
+    hardware_items: Sequence[HardwareItem] = (),
+    leaf_weights: Sequence[LeafWeight] = (),
 ) -> EngineResult:
     """Copy and stably order BOM categories without recalculating geometry."""
 
@@ -44,5 +51,7 @@ def build_engine_result(
         profile_cuts=ordered_profile_cuts,
         reinforcements=ordered_reinforcements,
         glasses=list(glasses),
-        hardware_items=[],
+        panels=list(panels),
+        hardware_items=list(hardware_items),
+        leaf_weights=list(leaf_weights),
     )

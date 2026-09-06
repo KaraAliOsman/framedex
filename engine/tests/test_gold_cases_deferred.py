@@ -2,17 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from dekopen_engine import ParametricNode, SystemParams, calculate_geometry
+from decimal import Decimal
 
-
-@pytest.mark.xfail(strict=True, reason="SHOT-06: hardware_kits resolution")
-def test_g3_hardware_kit_resolution_is_deferred(
-    demo_60_params: SystemParams,
-    g3_node: ParametricNode,
-) -> None:
-    result = calculate_geometry(g3_node, demo_60_params)
-    assert result.hardware_items
-
+from dekopen_engine import RailType, SystemParams, calculate_geometry
+from engine.tests.test_shot06_core import core_node
 
 @pytest.mark.xfail(
     strict=True,
@@ -44,3 +37,13 @@ def test_g11_double_door_is_declared_deferred() -> None:
 )
 def test_g12_large_fixed_is_declared_deferred() -> None:
     raise NotImplementedError("G12 is outside SHOT-03")
+
+
+@pytest.mark.xfail(strict=True, raises=NotImplementedError, reason="SHOT-24: G10 monorail geometry deferred by PLAN_SHOTS")
+def test_g10_monorail_is_declared_deferred(demo_60_params: SystemParams) -> None:
+    node = core_node("G5").model_copy(update={
+        "id": "G10", "width_mm": Decimal("3000.00"), "height_mm": Decimal("2400.00"),
+    })
+    params = demo_60_params.model_copy(update={"rail_type": RailType.MONO})
+    result = calculate_geometry(node, params)
+    assert result.glasses and result.hardware_items

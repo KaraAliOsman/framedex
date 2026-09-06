@@ -5,6 +5,7 @@ import json
 
 from dekopen_engine import (
     EffectiveProfileArticle,
+    MaterialType,
     ProfileRole,
     SystemParams,
     calculate_geometry,
@@ -13,8 +14,8 @@ from dekopen_engine import (
 from dekopen_engine.models import ParametricNode
 
 
-def test_system_params_contract_has_exactly_23_fields() -> None:
-    assert len(SystemParams.model_fields) == 23
+def test_system_params_contract_has_exactly_27_fields() -> None:
+    assert len(SystemParams.model_fields) == 27
     assert "frame_face_width_mm" not in SystemParams.model_fields
     assert "sash_face_width_mm" not in SystemParams.model_fields
     assert "mullion_face_width_mm" not in SystemParams.model_fields
@@ -25,6 +26,7 @@ def test_system_params_contract_has_exactly_23_fields() -> None:
 def test_welding_loss_is_derived_independently_per_effective_article() -> None:
     frame = EffectiveProfileArticle(
         sku="FRAME-ASYM",
+        material=MaterialType.PVC,
         role=ProfileRole.FRAME,
         face_width_mm=Decimal("60.00"),
         welding_loss_mm=Decimal("6.00"),
@@ -34,6 +36,7 @@ def test_welding_loss_is_derived_independently_per_effective_article() -> None:
     )
     sash = EffectiveProfileArticle(
         sku="SASH-ASYM",
+        material=MaterialType.PVC,
         role=ProfileRole.SASH,
         face_width_mm=Decimal("75.00"),
         welding_loss_mm=Decimal("5.00"),
