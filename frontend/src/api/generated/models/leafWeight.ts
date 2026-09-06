@@ -6,18 +6,19 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface GlassPiece {
+export interface LeafWeight {
   bay_id: string;
   /** @nullable */
   leaf_id: string | null;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  width_mm: string;
+  pvc_weight_kg: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  height_mm: string;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,4})?$ */
-  area_m2: string;
+  steel_weight_kg: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  weight_kg: string;
+  infill_weight_kg: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  thickness_net_mm: string;
+  hardware_weight_kg: string;
+  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
+  total_weight_kg: string;
+  used_fallback: boolean;
 }

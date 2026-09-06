@@ -5,10 +5,12 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { MaterialEnum } from "./materialEnum";
 
 export interface ProfileCut {
   sku: string;
   role: string;
+  material: MaterialEnum;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   length_mm: string;
   /** @pattern ^-?\d{0,4}(?:\.\d{0,1})?$ */
@@ -18,4 +20,6 @@ export interface ProfileCut {
   qty: number;
   /** @nullable */
   bay_id: string | null;
+  /** @nullable */
+  leaf_id: string | null;
 }

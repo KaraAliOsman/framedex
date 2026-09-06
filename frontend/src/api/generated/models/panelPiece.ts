@@ -6,7 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface GlassPiece {
+export interface PanelPiece {
+  sku: string;
+  name: string;
   bay_id: string;
   /** @nullable */
   leaf_id: string | null;
@@ -18,6 +20,4 @@ export interface GlassPiece {
   area_m2: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  thickness_net_mm: string;
 }

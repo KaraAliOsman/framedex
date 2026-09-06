@@ -16,4 +16,6 @@ export interface Reinforcement {
   qty: number;
   /** @nullable */
   bay_id: string | null;
+  /** @nullable */
+  leaf_id: string | null;
 }
