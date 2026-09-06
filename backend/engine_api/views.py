@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import cast
+from dekopen_engine.snapshot import calculation_response
 
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
@@ -118,6 +118,9 @@ class EngineCalculateView(APIView):
                     color=data["color"],
                     params=params,
                 )
+                response_payload = calculation_response(
+                    {**data, "system_id": str(data["system_id"])}, result,
+                )
         except SystemNotFound as error:
             raise contract_error(
                 status.HTTP_404_NOT_FOUND,
@@ -128,14 +131,13 @@ class EngineCalculateView(APIView):
             raise contract_error(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "unsupported_engine_contract",
-                "Engine contract is not supported in SHOT-04",
+                "Engine contract is not supported in SHOT-06 Core",
             ) from error
-        except InvalidEngineRequest as error:
+        except (InvalidEngineRequest, ValueError) as error:
             raise contract_error(
                 status.HTTP_400_BAD_REQUEST,
                 "validation_error",
                 "Request validation failed",
             ) from error
 
-        response_payload = cast(dict[str, object], result.model_dump(mode="json"))
         return Response(response_payload, status=status.HTTP_200_OK)

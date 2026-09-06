@@ -21,11 +21,13 @@ class EngineCalculateRequestSerializer(serializers.Serializer):
 class ProfileCutSerializer(serializers.Serializer):
     sku = serializers.CharField()
     role = serializers.CharField()
+    material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
     length_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     angle_left = serializers.DecimalField(max_digits=5, decimal_places=1, coerce_to_string=True)
     angle_right = serializers.DecimalField(max_digits=5, decimal_places=1, coerce_to_string=True)
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
 
 
 class ReinforcementSerializer(serializers.Serializer):
@@ -35,10 +37,12 @@ class ReinforcementSerializer(serializers.Serializer):
     length_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
 
 
 class GlassPieceSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
     width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
@@ -48,11 +52,53 @@ class GlassPieceSerializer(serializers.Serializer):
     )
 
 
+class PanelPieceSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
+    weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+
+
+class HardwareComponentSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    qty = serializers.CharField(help_text="Exact Decimal quantity serialized as a string")
+    unit = serializers.CharField()
+
+
+class HardwareItemSerializer(serializers.Serializer):
+    kit_sku = serializers.CharField()
+    name = serializers.CharField()
+    qty = serializers.IntegerField()
+    unit = serializers.ChoiceField(choices=["kit"])
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    contents = HardwareComponentSerializer(many=True)
+
+
+class LeafWeightSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    pvc_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    steel_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    infill_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    hardware_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    total_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    used_fallback = serializers.BooleanField()
+
+
 class EngineCalculateResponseSerializer(serializers.Serializer):
     profile_cuts = ProfileCutSerializer(many=True)
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)
-    hardware_items = serializers.ListField(child=serializers.DictField())
+    panels = PanelPieceSerializer(many=True)
+    hardware_items = HardwareItemSerializer(many=True)
+    leaf_weights = LeafWeightSerializer(many=True)
+    calculation_hash = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
 
 
 class ProfileSystemSummarySerializer(serializers.Serializer):

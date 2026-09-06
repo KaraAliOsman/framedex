@@ -5,6 +5,12 @@
 **Fase:** 0 (Fundacional)  
 **Bloquea a:** Todos los módulos del backend y frontend
 
+**Enmienda SHOT-06:** DDL final normativo actualizado por resolución del owner.
+Sólo se implementará con migraciones NUEVAS; las migraciones SHOT-02/03 son inmutables.
+PD-06-19/20 están resueltas y Fase 2 está autorizada; ver evidencia de implementación
+y Database Gate en el plan SHOT-06. Datos nuevos de DEMO_60 sin ficha son SYNTHETIC FIXTURE, no especificaciones
+reales de fabricante.
+
 ---
 
 ## 1. Principios Rectores de la Base de Datos
@@ -69,7 +75,7 @@ CREATE TABLE tenancy_memberships (
 -- ============================================================================
 
 CREATE TYPE material_type AS ENUM ('PVC', 'ALUMINIUM');
-CREATE TYPE profile_role AS ENUM ('FRAME', 'SASH', 'MULLION_V', 'MULLION_H', 'INVERSOR', 'GLAZING_BEAD', 'COUPLER', 'ADDITIONAL');
+CREATE TYPE profile_role AS ENUM ('FRAME', 'SASH', 'MULLION_V', 'MULLION_H', 'INVERSOR', 'GLAZING_BEAD', 'COUPLER', 'ADDITIONAL', 'THRESHOLD');
 
 CREATE TABLE profile_systems (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -88,10 +94,13 @@ CREATE TABLE profile_systems (
     central_overlap_mm NUMERIC(4, 2) NOT NULL DEFAULT 40.00,
     sliding_lateral_clearance_mm NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     sliding_end_add_mm NUMERIC(4, 2) NOT NULL DEFAULT 6.00,
+    sliding_glazing_deduction_width_mm NUMERIC(10, 2) NOT NULL,
+    sliding_glazing_deduction_height_mm NUMERIC(10, 2) NOT NULL,
     corner_bracket_loss_mm NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     hook_depth_mm NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     door_threshold_mm NUMERIC(4, 2) NOT NULL DEFAULT 30.00,
     door_bottom_clearance_mm NUMERIC(4, 2) NOT NULL DEFAULT 20.00,
+    door_leaf_side_clearance_mm NUMERIC(10, 2) NOT NULL,
     rail_type VARCHAR(10) NOT NULL DEFAULT 'dual' CHECK (rail_type IN ('dual', 'mono')),
     
     is_global BOOLEAN NOT NULL DEFAULT FALSE,
@@ -113,6 +122,7 @@ CREATE TABLE profile_articles (
     sku VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     role profile_role NOT NULL,
+    material material_type NOT NULL DEFAULT 'PVC',
     face_width_mm NUMERIC(10, 2) NOT NULL,
     commercial_length_mm NUMERIC(10, 2) NOT NULL DEFAULT 6000.00,
     welding_loss_mm NUMERIC(10, 2) NOT NULL DEFAULT 6.00,
@@ -133,6 +143,7 @@ CREATE TABLE glazing_bead_matrix (
     bead_width_mm NUMERIC(6, 2) NOT NULL,
     gasket_interior_mm NUMERIC(6, 2) NOT NULL DEFAULT 3.00,
     gasket_exterior_mm NUMERIC(6, 2) NOT NULL DEFAULT 3.00,
+    cut_add_mm NUMERIC(6, 2) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT uk_system_glass_thickness UNIQUE (system_id, glass_thickness_mm)
 );
@@ -152,10 +163,26 @@ CREATE TABLE hardware_kits (
     rail_type VARCHAR(10) NOT NULL DEFAULT 'dual',
     carriages_qty INT NOT NULL DEFAULT 2,        -- alimenta Regla R14
     stay_arms_qty INT NOT NULL DEFAULT 1,        -- alimenta Regla R13
+    weight_kg NUMERIC(8,2),
     contents JSONB NOT NULL DEFAULT '[]',        -- [{sku, name, qty, unit}]
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uk_kit_system_sku UNIQUE (system_id, sku)
+);
+
+-- SHOT-06 infill catalog. New migration only.
+CREATE TABLE infill_articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    system_id UUID NOT NULL REFERENCES profile_systems(id) ON DELETE CASCADE,
+    org_id UUID REFERENCES tenancy_organizations(id) ON DELETE CASCADE,
+    sku VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    kind VARCHAR(30) NOT NULL CHECK (kind IN ('SANDWICH_PANEL')),
+    thickness_mm NUMERIC(6,2) NOT NULL,
+    weight_kg_m2 NUMERIC(10,4),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_infill_system_sku UNIQUE (system_id, sku)
 );
 
 -- ============================================================================
@@ -418,6 +445,7 @@ ALTER TABLE profile_systems ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profile_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE glazing_bead_matrix ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hardware_kits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE infill_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cost_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cost_list_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pricing_rules ENABLE ROW LEVEL SECURITY;
@@ -499,6 +527,20 @@ CREATE POLICY hardware_kits_modify ON hardware_kits
     FOR ALL USING (org_id IN (SELECT private.current_user_org_ids()))
     WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
+CREATE POLICY infill_articles_select ON infill_articles
+    FOR SELECT USING (
+        system_id IN (SELECT id FROM profile_systems WHERE is_global = TRUE AND auth.uid() IS NOT NULL)
+        OR org_id IN (SELECT private.current_user_org_ids())
+    );
+
+CREATE POLICY infill_articles_modify ON infill_articles
+    FOR ALL USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
+
+REVOKE ALL ON infill_articles FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON infill_articles TO authenticated;
+GRANT ALL ON infill_articles TO service_role;
+
 -- Costos y Reglas Comerciales (Aislamiento Estricto)
 CREATE POLICY cost_lists_isolation ON cost_lists
     FOR ALL USING (org_id IN (SELECT private.current_user_org_ids()))
@@ -563,3 +605,33 @@ CREATE POLICY payment_events_service_role ON payment_events
 
 REVOKE ALL ON payment_events FROM anon, authenticated;
 ```
+
+## 3. Seed y autoridad de actualización SHOT-06
+
+Todos los cambios se ejecutan después de levantar Regla0, mediante migraciones nuevas
+para instalaciones existentes y seed coherente para reset limpio. PS deducciones W/H
+20.00/20.00 y door_leaf_side_clearance7.00, sin default técnico global inventado;
+backfill DEMO_60 explícito antes de NOT NULL. Otro catálogo requiere autoridad explícita,
+no heredar valores de DEMO_60 en silencio. PA.material default PVC, DEMO existente PVC.
+
+| Artículo/regla | Valores aprobados sintéticos DEMO_60 |
+|---|---|
+| UMBRAL-ALU | Umbral Aluminio Demo 60; THRESHOLD; ALUMINIUM; cara30; soldadura0; gap0; reinforcement_sku NULL; sin acero y fuera de masa móvil |
+| PANEL-SANDWICH-DEMO-24 | Panel Sándwich Demo 24mm; SANDWICH_PANEL; thickness24.00; weight_kg_m2=10.0000 |
+| KIT-AWNING-16 | Kit Proyectante Compás 16" 45kg; AWNING; W400–1200; H400–1000; max45; dual; carros0; compases2; weight2.50 |
+| KIT-DOOR-MULTIPOINT | Kit Puerta Entrada Multipunto Demo 60; DOOR; W700–1200; H1800–2400; max120; dual; carros0; compases0; weight2.50 |
+| KIT-TILT-TURN | Renombrar sólo display name a Kit Vorne OB 100kg; SKU/rangos originales conservados; masa2.50 |
+| KIT-TURN / KIT-SLIDING | Conservar datos existentes; masa2.50 |
+
+Nombres y contents literales exactos se congelan en PRD-01 §6.4/6.5/6.6 y resolución
+íntegra del plan. AWNING contents: DEMO-STAY-16, Compás a fricción 16", qty2,
+unit=unit. DOOR: DEMO-LOCK-MULTIPOINT, Cerradura multipunto Demo, qty1, unit=unit.
+No agregar componentes comerciales. HK.weight_kg NULL activa fallback puro1.10;
+infill.weight_kg_m2 NULL no tiene fallback cuando participa en masa de hoja.
+PA pesos DB siguen NOT NULL; modelos internos aceptan None para tests de fallback.
+Modificador: catálogo propio bajo RLS o global por admin autorizado. Loader restringe
+system/org activos y no hace fórmulas; engine recibe sólo modelos Decimal.
+
+PD-06-20: glazing_bead_matrix.glass_thickness_mm conserva su nombre y pasa a significar
+espesor de infill retenido; vidrio o panel compatible. No añade columna ni migra nombres.
+Panel G7 de24.00 usa regla24.00, beads705.00/1937.00 qty2, sin sumar masa bead a leaf32.35.

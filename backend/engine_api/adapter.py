@@ -35,6 +35,7 @@ _NODE_FIELDS = {
     "glass_thickness_mm",
     "glass_spec",
     "glass_article_sku",
+    "panel_article_sku",
     "hardware_set_sku",
     "handle_height_mm",
 }
@@ -86,6 +87,7 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         "mullion_profile_sku",
         "glass_spec",
         "glass_article_sku",
+        "panel_article_sku",
         "hardware_set_sku",
     ):
         if field_name in raw and raw[field_name] is not None:

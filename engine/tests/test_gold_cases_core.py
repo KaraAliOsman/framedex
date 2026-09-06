@@ -79,7 +79,7 @@ def test_g2_turn_is_exactly_zero_mm(
     glass = result.glasses[0]
     _assert_exact_mm(glass.width_mm, "576.00")
     _assert_exact_mm(glass.height_mm, "976.00")
-    assert result.hardware_items == []
+    assert len(result.hardware_items) == 1
 
 
 def test_g3_tilt_turn_geometry_is_exactly_zero_mm(
@@ -94,7 +94,7 @@ def test_g3_tilt_turn_geometry_is_exactly_zero_mm(
     glass = result.glasses[0]
     _assert_exact_mm(glass.width_mm, "776.00")
     _assert_exact_mm(glass.height_mm, "1176.00")
-    assert result.hardware_items == []
+    assert len(result.hardware_items) == 1
 
 
 def test_g4_fixed_tilt_turn_with_mullion_is_exactly_zero_mm(
@@ -124,7 +124,7 @@ def test_g4_fixed_tilt_turn_with_mullion_is_exactly_zero_mm(
     assert mullion_cut.angle_right == Decimal("90.0")
     sash_cuts = [cut for cut in result.profile_cuts if cut.role is ProfileRole.SASH]
     assert all(cut.bay_id == "bay_ob" for cut in sash_cuts)
-    assert result.hardware_items == []
+    assert len(result.hardware_items) == 1
 
 
 def test_exact_assertion_rejects_a_point_zero_one_mm_mutation() -> None:

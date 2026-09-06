@@ -6,4 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type EngineCalculateResponseHardwareItemsItem = { [key: string]: unknown };
+/**
+ * * `kit` - kit
+ */
+export type UnitEnum = (typeof UnitEnum)[keyof typeof UnitEnum];
+
+export const UnitEnum = {
+  kit: "kit",
+} as const;

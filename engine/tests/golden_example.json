@@ -1,0 +1,225 @@
+{
+  "request": {
+    "color": "WHITE",
+    "nominal_height_mm": "1400.00",
+    "nominal_width_mm": "1500.00",
+    "parametric_tree": {
+      "children": [
+        {
+          "glass_spec": "4-16-4 Float Incoloro",
+          "glass_thickness_mm": "24.00",
+          "id": "bay_1",
+          "opening_type": "FIXED",
+          "type": "BAY"
+        },
+        {
+          "glass_spec": "4-12-4 Float Incoloro",
+          "glass_thickness_mm": "20.00",
+          "id": "bay_2",
+          "opening_type": "TILT_TURN_RIGHT",
+          "type": "BAY"
+        }
+      ],
+      "id": "root",
+      "mullion_profile_sku": "POSTE-V",
+      "split_offset_mm": "750.00",
+      "type": "SPLIT_V"
+    },
+    "system_id": "3067da09-3119-5ad0-a1d5-498cd2dfd753"
+  },
+  "response": {
+    "calculation_hash": "sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21",
+    "glasses": [
+      {
+        "area_m2": "0.8908",
+        "bay_id": "bay_1",
+        "height_mm": "1310.00",
+        "leaf_id": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "17.82",
+        "width_mm": "680.00"
+      },
+      {
+        "area_m2": "0.6421",
+        "bay_id": "bay_2",
+        "height_mm": "1176.00",
+        "leaf_id": null,
+        "thickness_net_mm": "8.00",
+        "weight_kg": "12.84",
+        "width_mm": "546.00"
+      }
+    ],
+    "hardware_items": [
+      {
+        "bay_id": "bay_2",
+        "contents": [],
+        "kit_sku": "KIT-TILT-TURN",
+        "leaf_id": null,
+        "name": "Kit Vorne OB 100kg",
+        "qty": 1,
+        "unit": "kit"
+      }
+    ],
+    "leaf_weights": [
+      {
+        "bay_id": "bay_2",
+        "hardware_weight_kg": "2.50",
+        "infill_weight_kg": "12.84",
+        "leaf_id": null,
+        "pvc_weight_kg": "4.74",
+        "steel_weight_kg": "6.47",
+        "total_weight_kg": "26.55",
+        "used_fallback": false
+      }
+    ],
+    "panels": [],
+    "profile_cuts": [
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1506.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sku": "MARCO"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1406.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "FRAME",
+        "sku": "MARCO"
+      },
+      {
+        "angle_left": "90.0",
+        "angle_right": "90.0",
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1280.00",
+        "material": "PVC",
+        "qty": 1,
+        "role": "MULLION_V",
+        "sku": "POSTE-V"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "672.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sku": "HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "1302.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "SASH",
+        "sku": "HOJA"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_1",
+        "leaf_id": null,
+        "length_mm": "689.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "JQ-10"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_1",
+        "leaf_id": null,
+        "length_mm": "1319.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "JQ-10"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "555.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "JQ-14"
+      },
+      {
+        "angle_left": "45.0",
+        "angle_right": "45.0",
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "1185.00",
+        "material": "PVC",
+        "qty": 2,
+        "role": "GLAZING_BEAD",
+        "sku": "JQ-14"
+      }
+    ],
+    "reinforcements": [
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1470.00",
+        "parent_profile_sku": "MARCO",
+        "qty": 2,
+        "reinforcement_sku": null,
+        "role": "FRAME"
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1370.00",
+        "parent_profile_sku": "MARCO",
+        "qty": 2,
+        "reinforcement_sku": null,
+        "role": "FRAME"
+      },
+      {
+        "bay_id": null,
+        "leaf_id": null,
+        "length_mm": "1270.00",
+        "parent_profile_sku": "POSTE-V",
+        "qty": 1,
+        "reinforcement_sku": null,
+        "role": "MULLION_V"
+      },
+      {
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "636.00",
+        "parent_profile_sku": "HOJA",
+        "qty": 2,
+        "reinforcement_sku": null,
+        "role": "SASH"
+      },
+      {
+        "bay_id": "bay_2",
+        "leaf_id": null,
+        "length_mm": "1266.00",
+        "parent_profile_sku": "HOJA",
+        "qty": 2,
+        "reinforcement_sku": null,
+        "role": "SASH"
+      }
+    ]
+  }
+}

@@ -250,14 +250,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GlassPiece'
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelPiece'
         hardware_items:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/HardwareItem'
+        leaf_weights:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeafWeight'
+        calculation_hash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
       required:
+      - calculation_hash
       - glasses
       - hardware_items
+      - leaf_weights
+      - panels
       - profile_cuts
       - reinforcements
     EngineSystemsResponse:
@@ -297,6 +310,9 @@ components:
       properties:
         bay_id:
           type: string
+        leaf_id:
+          type: string
+          nullable: true
         width_mm:
           type: string
           format: decimal
@@ -321,9 +337,102 @@ components:
       - area_m2
       - bay_id
       - height_mm
+      - leaf_id
       - thickness_net_mm
       - weight_kg
       - width_mm
+    HardwareComponent:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        qty:
+          type: string
+          description: Exact Decimal quantity serialized as a string
+        unit:
+          type: string
+      required:
+      - name
+      - qty
+      - sku
+      - unit
+    HardwareItem:
+      type: object
+      properties:
+        kit_sku:
+          type: string
+        name:
+          type: string
+        qty:
+          type: integer
+        unit:
+          $ref: '#/components/schemas/UnitEnum'
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        contents:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareComponent'
+      required:
+      - bay_id
+      - contents
+      - kit_sku
+      - leaf_id
+      - name
+      - qty
+      - unit
+    LeafWeight:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        pvc_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        steel_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        infill_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        hardware_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        used_fallback:
+          type: boolean
+      required:
+      - bay_id
+      - hardware_weight_kg
+      - infill_weight_kg
+      - leaf_id
+      - pvc_weight_kg
+      - steel_weight_kg
+      - total_weight_kg
+      - used_fallback
+    MaterialEnum:
+      enum:
+      - PVC
+      - ALUMINIUM
+      type: string
+      description: |-
+        * `PVC` - PVC
+        * `ALUMINIUM` - ALUMINIUM
     Membership:
       type: object
       properties:
@@ -338,6 +447,43 @@ components:
       - organization_id
       - organization_name
       - role
+    PanelPiece:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        area_m2:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,4})?$
+        weight_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - area_m2
+      - bay_id
+      - height_mm
+      - leaf_id
+      - name
+      - sku
+      - weight_kg
+      - width_mm
     ProfileCut:
       type: object
       properties:
@@ -345,6 +491,8 @@ components:
           type: string
         role:
           type: string
+        material:
+          $ref: '#/components/schemas/MaterialEnum'
         length_mm:
           type: string
           format: decimal
@@ -362,11 +510,16 @@ components:
         bay_id:
           type: string
           nullable: true
+        leaf_id:
+          type: string
+          nullable: true
       required:
       - angle_left
       - angle_right
       - bay_id
+      - leaf_id
       - length_mm
+      - material
       - qty
       - role
       - sku
@@ -406,8 +559,12 @@ components:
         bay_id:
           type: string
           nullable: true
+        leaf_id:
+          type: string
+          nullable: true
       required:
       - bay_id
+      - leaf_id
       - length_mm
       - parent_profile_sku
       - qty
@@ -430,6 +587,11 @@ components:
         * `ESTIMATOR` - ESTIMATOR
         * `WORKSHOP_MANAGER` - WORKSHOP_MANAGER
         * `INSTALLER` - INSTALLER
+    UnitEnum:
+      enum:
+      - kit
+      type: string
+      description: '* `kit` - kit'
     User:
       type: object
       properties:

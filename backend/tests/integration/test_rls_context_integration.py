@@ -81,8 +81,10 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                     )
                     cursor.execute(
                         "INSERT INTO public.profile_systems "
-                        "(id, org_id, name, code, depth_mm, is_global, is_active) "
-                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE)",
+                        "(id, org_id, name, code, depth_mm, is_global, is_active, "
+                        "sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, "
+                        "door_leaf_side_clearance_mm) "
+                        "VALUES (%s, %s, %s, %s, 60.00, FALSE, TRUE, 20.00, 20.00, 7.00)",
                         [systems[name], org_id, f"System {name}", f"RLS_{name}"],
                     )
                     cursor.execute(
@@ -281,8 +283,8 @@ def test_real_bearer_and_db_adapter_preserve_engine_geometry(
         assert mullion["length_mm"] == "1380.00"
         widths = {piece["bay_id"]: piece["width_mm"] for piece in result["glasses"]}
         assert widths == {"bay_fixed": "830.00", "bay_ob": "696.00"}
-    assert result["hardware_items"] == []
-    assert set(result) == {"profile_cuts", "reinforcements", "glasses", "hardware_items"}
+    assert [item["kit_sku"] for item in result["hardware_items"]] == ([] if case == "G1" else ["KIT-TILT-TURN"])
+    assert set(result) == {"profile_cuts", "reinforcements", "glasses", "panels", "hardware_items", "leaf_weights", "calculation_hash"}
     assert_no_context()
 
 
@@ -356,3 +358,60 @@ def test_modified_sub_or_aal_cannot_enter_rls(real_rows: RLSFixtures) -> None:
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "invalid_token"
     assert_no_context()
+
+
+def test_shot06_all_27_catalog_fields_reach_typed_engine(real_rows: RLSFixtures) -> None:
+    from engine.tests.catalog import demo_60_params
+    from dekopen_engine import SystemParams, calculate_geometry
+    from engine.tests.test_shot06_core import core_node
+
+    with authenticated_rls_context(real_rows.tokens["A"].claims):
+        loaded = SystemParamsRepository().load_visible(real_rows.demo_system, real_rows.organizations["A"])
+    expected = demo_60_params()
+    actual_fields = loaded.model_dump()
+    expected_fields = expected.model_dump()
+    actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
+    expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
+    assert len(SystemParams.model_fields) == len(actual_fields) == 27
+    assert actual_fields == expected_fields
+    for case, published in (("G5", "48.89"), ("G6", "23.96"), ("G7", "32.35")):
+        result = calculate_geometry(core_node(case), loaded)
+        assert all(weight.total_weight_kg == Decimal(published) for weight in result.leaf_weights)
+        assert result.hardware_items
+    assert_no_context()
+
+
+def test_shot06_live_composite_response_matches_canonical_generator(real_rows: RLSFixtures) -> None:
+    from engine.scripts.regenerate_golden import golden_request, golden_result
+    from dekopen_engine.snapshot import calculation_response
+
+    request = golden_request()
+    assert str(real_rows.demo_system) == request["system_id"]
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {real_rows.tokens['A'].access_token}")
+    response = client.post("/api/v1/engine/calculate/", request, format="json")
+    assert response.status_code == 200
+    assert response.json() == calculation_response(request, golden_result())
+    assert_no_context()
+
+
+def test_inactive_panel_is_not_loaded_and_missing_weight_cannot_fallback(real_rows: RLSFixtures) -> None:
+    from django.db import transaction
+    from dekopen_engine import calculate_geometry
+    from dekopen_engine.weight import MissingWeightAuthority
+    from engine.tests.test_shot06_core import core_node
+
+    for assignment in ("weight_kg_m2 = NULL", "is_active = FALSE"):
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(f"UPDATE public.infill_articles SET {assignment} WHERE system_id = %s", [real_rows.demo_system])
+                assert cursor.rowcount == 1
+            with authenticated_rls_context(real_rows.tokens["A"].claims):
+                params = SystemParamsRepository().load_visible(real_rows.demo_system, real_rows.organizations["A"])
+                if assignment == "weight_kg_m2 = NULL":
+                    with pytest.raises(MissingWeightAuthority):
+                        calculate_geometry(core_node("G7"), params)
+                else:
+                    assert params.available_panel_rules == {}
+            transaction.set_rollback(True)
+        assert_no_context()

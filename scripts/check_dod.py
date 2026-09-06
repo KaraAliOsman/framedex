@@ -92,12 +92,23 @@ REQUIRED_PATHS = (
     ROOT / "scripts" / "check_generated_api.py",
     ROOT / "scripts" / "local_gates.py",
     ROOT / "scripts" / "check_auth_e2e.py",
+    ROOT / "scripts" / "check_core_mutations.py",
+    ENGINE_DIR / "scripts" / "regenerate_golden.py",
+    ENGINE_DIR / "tests" / "golden_example.json",
+    ENGINE_DIR / "tests" / "test_shot06_core.py",
+    ENGINE_DIR / "tests" / "test_hardware_weight.py",
+    ENGINE_DIR / "tests" / "test_snapshot.py",
+    ENGINE_DIR / "tests" / "test_pricing.py",
+    ROOT / "docs" / "plans" / "PLAN_SHOT-06.md",
 )
 
 REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "config.toml",
     SUPABASE_MIGRATION,
     SUPABASE_SHOT_03_MIGRATION,
+    SUPABASE_DIR / "migrations" / "20260905000000_shot_06_catalog_authorities.sql",
+    SUPABASE_DIR / "migrations" / "20260905000100_shot_06_demo_catalog.sql",
+    SUPABASE_TEST_DIR / "040_shot_06_catalog.test.sql",
     SUPABASE_DIR / "seed.sql",
     SUPABASE_TEST_DIR / "000_schema.test.sql",
     SUPABASE_TEST_DIR / "010_rls_isolation.test.sql",
@@ -105,6 +116,7 @@ REQUIRED_DATABASE_PATHS = (
     SUPABASE_TEST_DIR / "030_billing_idempotency.test.sql",
     SUPABASE_DIR / "compat" / "postgres16_bootstrap.sql",
     SUPABASE_DIR / "compat" / "postgres16_verify.sql",
+    ROOT / "scripts" / "check_migration_upgrades.py",
     BACKEND_DIR / "tests" / "test_database_contract.py",
 )
 
@@ -115,6 +127,7 @@ EXPECTED_DATABASE_TABLES = {
     "profile_articles",
     "glazing_bead_matrix",
     "hardware_kits",
+    "infill_articles",
     "cost_lists",
     "cost_list_items",
     "pricing_rules",
@@ -153,9 +166,9 @@ EXPECTED_G_CASE_STATUSES = {
     "G2": "pass",
     "G3": "pass",
     "G4": "pass",
-    "G5": "pending",
-    "G6": "pending",
-    "G7": "pending",
+    "G5": "pass",
+    "G6": "pass",
+    "G7": "pass",
     "G8": "xfail",
     "G9": "xfail",
     "G10": "xfail",
@@ -180,12 +193,8 @@ EXPECTED_G_CASE_TARGET_SHOTS = {
     "G-Pro1": "SHOT-12",
 }
 
-EXPECTED_G3_DEFERRED_ASSERTIONS = {
-    "hardware_kit_resolution": {
-        "status": "xfail",
-        "target_shot": "SHOT-06",
-        "reason": "SHOT-06: hardware_kits resolution",
-    }
+EXPECTED_G3_RESOLVED_ASSERTIONS = {
+    "hardware_kit_resolution": {"status": "pass", "resolved_in": "SHOT-06"}
 }
 
 
@@ -359,9 +368,11 @@ def check_shot_04_contract() -> None:
             fail(f"SHOT-04 dependency must be exactly {name}@{version}")
 
     openapi = (BACKEND_DIR / "openapi.yaml").read_text(encoding="utf-8")
-    for future_field in ("calculation_hash", "inspector"):
+    for future_field in ("inspector",):
         if future_field in openapi:
             fail(f"SHOT-04 OpenAPI exposes future field: {future_field}")
+    if "calculation_hash" not in openapi:
+        fail("SHOT-06 OpenAPI must include calculation_hash")
     for endpoint in ("/api/v1/auth/me/", "/api/v1/engine/calculate/"):
         if endpoint not in openapi:
             fail(f"SHOT-04 OpenAPI endpoint is missing: {endpoint}")
@@ -562,9 +573,9 @@ def check_g_case_manifest() -> None:
     g3_contract = cases["G3"]
     if not isinstance(g3_contract, dict):
         fail("G-case G3 contract must be an object")
-    if g3_contract.get("deferred_assertions") != EXPECTED_G3_DEFERRED_ASSERTIONS:
+    if g3_contract.get("resolved_assertions") != EXPECTED_G3_RESOLVED_ASSERTIONS or "deferred_assertions" in g3_contract:
         fail(
-            "G3 deferred assertions must declare hardware kit resolution for SHOT-06"
+            "G3 must declare hardware kit resolution completed in SHOT-06"
         )
 
     print(
@@ -576,6 +587,8 @@ def check_g_case_manifest() -> None:
 def check_tests(env: Mapping[str, str]) -> None:
     print("[4/6] Test suites", flush=True)
     check_g_case_manifest()
+    run_command([PYTHON, "-m", "engine.scripts.regenerate_golden", "--check"], env=env)
+    run_command([PYTHON, "scripts/check_core_mutations.py"], env=env)
     run_command([PYTHON, "-m", "pytest", "engine/", "-q", "-W", "error"], env=env)
     run_command([PYTHON, "-m", "pytest", "backend/", "-q", "-W", "error"], env=env)
     run_command(npm_command("run", "test"), cwd=FRONTEND_DIR)
@@ -595,7 +608,10 @@ def check_database_contract() -> None:
     print("[6/6] Database source contract", flush=True)
     check_required_database_paths()
 
-    migration = SUPABASE_MIGRATION.read_text(encoding="utf-8")
+    migration = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((SUPABASE_DIR / "migrations").glob("*.sql"))
+    )
     normalized_migration = " ".join(migration.lower().split())
     actual_tables = set(
         re.findall(r"CREATE TABLE public\.(\w+)\s*\(", migration, flags=re.IGNORECASE)
@@ -705,11 +721,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-05 fail-closed checker", flush=True)
+    print("Dekopen SHOT-06 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-05 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-06 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -722,7 +738,7 @@ def main() -> None:
     if target in {"build", "all", "gauntlet"}:
         check_build()
 
-    print(f"[PASS] SHOT-05 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-06 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

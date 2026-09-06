@@ -11,29 +11,35 @@ const sentinelResponse: EngineCalculateResponse = {
     {
       sku: "FRAME-SENTINEL",
       role: "FRAME",
+      material: "PVC",
       length_mm: "1111.25",
       angle_left: "45.0",
       angle_right: "45.0",
       qty: 2,
       bay_id: "g1",
+      leaf_id: null,
     },
     {
       sku: "FRAME-SENTINEL",
       role: "FRAME",
+      material: "PVC",
       length_mm: "1222.50",
       angle_left: "45.0",
       angle_right: "45.0",
       qty: 2,
       bay_id: "g1",
+      leaf_id: null,
     },
     {
       sku: "BEAD-SENTINEL",
       role: "GLAZING_BEAD",
+      material: "PVC",
       length_mm: "777.75",
       angle_left: "45.0",
       angle_right: "45.0",
       qty: 4,
       bay_id: "g1",
+      leaf_id: null,
     },
   ],
   reinforcements: [
@@ -44,11 +50,13 @@ const sentinelResponse: EngineCalculateResponse = {
       length_mm: "1066.60",
       qty: 4,
       bay_id: "g1",
+      leaf_id: null,
     },
   ],
   glasses: [
     {
       bay_id: "g1",
+      leaf_id: null,
       width_mm: "876.54",
       height_mm: "765.43",
       area_m2: "0.6708",
@@ -57,6 +65,9 @@ const sentinelResponse: EngineCalculateResponse = {
     },
   ],
   hardware_items: [],
+  panels: [],
+  leaf_weights: [],
+  calculation_hash: `sha256:${"0".repeat(64)}`,
 };
 
 describe("API-owned canvas outputs", () => {

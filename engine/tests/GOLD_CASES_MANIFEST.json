@@ -16,11 +16,10 @@
       "name": "Oscilobatiente 1 Hoja 1000x1400",
       "target_shot": "SHOT-03",
       "status": "pass",
-      "deferred_assertions": {
+      "resolved_assertions": {
         "hardware_kit_resolution": {
-          "status": "xfail",
-          "target_shot": "SHOT-06",
-          "reason": "SHOT-06: hardware_kits resolution"
+          "status": "pass",
+          "resolved_in": "SHOT-06"
         }
       }
     },
@@ -32,17 +31,17 @@
     "G5": {
       "name": "Corredera 2 Hojas 2000x2100",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "pass"
     },
     "G6": {
       "name": "Proyectante 1200x800",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "pass"
     },
     "G7": {
       "name": "Puerta Entrada Multipunto 950x2150",
       "target_shot": "SHOT-06",
-      "status": "pending"
+      "status": "pass"
     },
     "G8": {
       "name": "Corredera 3 Hojas",

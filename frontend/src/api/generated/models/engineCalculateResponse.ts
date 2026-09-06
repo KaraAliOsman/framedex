@@ -5,8 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { EngineCalculateResponseHardwareItemsItem } from "./engineCalculateResponseHardwareItemsItem";
 import type { GlassPiece } from "./glassPiece";
+import type { HardwareItem } from "./hardwareItem";
+import type { LeafWeight } from "./leafWeight";
+import type { PanelPiece } from "./panelPiece";
 import type { ProfileCut } from "./profileCut";
 import type { Reinforcement } from "./reinforcement";
 
@@ -14,5 +16,9 @@ export interface EngineCalculateResponse {
   profile_cuts: ProfileCut[];
   reinforcements: Reinforcement[];
   glasses: GlassPiece[];
-  hardware_items: EngineCalculateResponseHardwareItemsItem[];
+  panels: PanelPiece[];
+  hardware_items: HardwareItem[];
+  leaf_weights: LeafWeight[];
+  /** @pattern ^sha256:[0-9a-f]{64}$ */
+  calculation_hash: string;
 }

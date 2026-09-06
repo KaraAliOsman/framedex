@@ -8,6 +8,8 @@
 
 export interface GlassPiece {
   bay_id: string;
+  /** @nullable */
+  leaf_id: string | null;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   width_mm: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */

@@ -28,20 +28,24 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
       {
         sku: "FRAME",
         role: "FRAME",
+        material: "PVC",
         length_mm: changed ? "1206.25" : "1006.00",
         angle_left: "45.0",
         angle_right: "45.0",
         qty: 4,
         bay_id: "g1",
+        leaf_id: null,
       },
       {
         sku: "BEAD",
         role: "GLAZING_BEAD",
+        material: "PVC",
         length_mm: changed ? "1119.25" : "919.00",
         angle_left: "45.0",
         angle_right: "45.0",
         qty: 4,
         bay_id: "g1",
+        leaf_id: null,
       },
     ],
     reinforcements: [
@@ -52,11 +56,13 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         length_mm: changed ? "1170.25" : "970.00",
         qty: 4,
         bay_id: "g1",
+        leaf_id: null,
       },
     ],
     glasses: [
       {
         bay_id: "g1",
+        leaf_id: null,
         width_mm: request.nominal_width_mm === "1000.00" ? "910.00" : "1010.25",
         height_mm: request.nominal_height_mm === "1000.00" ? "910.00" : "1060.50",
         area_m2: "1.1775",
@@ -65,6 +71,9 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
       },
     ],
     hardware_items: [],
+    panels: [],
+    leaf_weights: [],
+    calculation_hash: `sha256:${"0".repeat(64)}`,
   };
 }
 

@@ -16,6 +16,18 @@ El motor de precios de Dekopen (`/engine/pricing.py` y `apps.pricing`) garantiza
 
 ---
 
+### Frontera SHOT-06 / SHOT-08 — resolución owner PD-06-15
+
+SHOT-06 implementa sólo dos primitives matemáticas puras derivadas del Modo1:
+price_from_cost_and_margin(cost,margin)=cost/(1-margin), cost>=0 y0<=margin<1,
+price_net a2 decimales ROUND_HALF_UP; gross_margin_pct(cost,price)=(price-cost)/price,
+output4 HALF_UP. Fixture cost100000.00/margin0.3500→153846.15. No DB, FX, API
+pricing ni integración project_positions. Son valores matemáticos sin emisión CLP;
+la Constitución conserva CLP sin decimales en la cotización comercial.
+SHOT-08 conserva listas de costo, lookup pricing_rules, FX, waste, labor, installation,
+routing de cinco modos, descuentos, permisos y price_audit_logs. Este límite no habilita
+comercial en SHOT-06. División por cero en gross_margin_pct queda fuera del dominio.
+
 ## 2. Los 5 Modos Canónicos de Fijación de Precios (§6.2)
 
 ```mermaid

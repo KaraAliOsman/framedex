@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(56);
+SELECT plan(58);
 
 SELECT ok(
     to_regclass('public.' || table_name) IS NOT NULL,
@@ -16,6 +16,7 @@ FROM unnest(ARRAY[
     'profile_articles',
     'glazing_bead_matrix',
     'hardware_kits',
+    'infill_articles',
     'cost_lists',
     'cost_list_items',
     'pricing_rules',
@@ -44,6 +45,7 @@ FROM unnest(ARRAY[
     'profile_articles',
     'glazing_bead_matrix',
     'hardware_kits',
+    'infill_articles',
     'cost_lists',
     'cost_list_items',
     'pricing_rules',
@@ -73,6 +75,7 @@ SELECT is(
               'profile_articles',
               'glazing_bead_matrix',
               'hardware_kits',
+    'infill_articles',
               'cost_list_items',
               'pricing_rules',
               'price_audit_logs',
