@@ -1,8 +1,8 @@
-# PRD-13: ESPECIFICACIÓN NORMATIVA (PUNTERO DE REDIRECCIÓN)
+# PRD-20: ESPECIFICACIÓN NORMATIVA (PUNTERO DE REDIRECCIÓN)
 
-> **Ubicación Canónica Activa:** [docs/PRD/PRD-13.md](./PRD/PRD-13.md)
+> **Ubicación Canónica Activa:** [docs/PRD/PRD-20.md](./PRD/PRD-20.md)
 
 Este archivo en la raíz de /docs/ es un puntero normativo de redirección para evitar desincronización de versiones.
 La especificación canónica, actualizada y autorizada vive exclusivamente en:
 
-👉 [**docs/PRD/PRD-13.md**](./PRD/PRD-13.md)
+👉 [**docs/PRD/PRD-20.md**](./PRD/PRD-20.md)

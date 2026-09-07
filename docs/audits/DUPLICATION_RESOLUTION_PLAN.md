@@ -16,7 +16,7 @@ Por directriz explícita del Owner:
 3. **Consolidación de Contenido Único sin Pérdida:** Toda especificación única detectada en archivos de raíz antes de convertirlos en punteros fue transferida a su destino canónico antes del sellado:
    - Esquemas JSON tipados de Tools T2 (`modify_dimensions`) y T3 (`bulk_discount`) $\rightarrow$ consolidados en [`docs/PRD/PRD-10.md`](../PRD/PRD-10.md).
    - Especificaciones de extrusión 3D procedimental, cinemática y shaders $\rightarrow$ consolidados en [`docs/PRD/PRD-12.md`](../PRD/PRD-12.md).
-   - Catálogo Global y Moderación Administrativa (Pantalla S28) para SHOT-20 con blindaje de precios $\rightarrow$ preservado en [`docs/PRD/PRD-20-CATALOGO-GLOBAL.md`](../PRD/PRD-20-CATALOGO-GLOBAL.md).
+   - Catálogo Global y Moderación Administrativa (Pantalla S28) para SHOT-20 con blindaje de precios $\rightarrow$ preservado en [`docs/PRD/PRD-20.md`](../PRD/PRD-20.md).
 
 ---
 
@@ -61,7 +61,7 @@ Por directriz explícita del Owner:
 | `docs/PRD-10.md` | `docs/PRD/PRD-10.md` | No | Esquemas JSON tipados para Tool T2 (`modify_dimensions`) y Tool T3 (`bulk_discount`) | Action-First Command Bar, protocolo Undo sagrado | Active normative unique content (schemas) | **Migrado contenido único a `docs/PRD/PRD-10.md`**; raíz convertido a puntero |
 | `docs/PRD-11.md` | `docs/PRD/PRD-11.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
 | `docs/PRD-12.md` | `docs/PRD/PRD-12.md` | No | Extrusión 3D procedimental, cinemática de apertura (giro, oscilo, corredera), shaders | Enlace público `/view/`, tokenless bundle, exportador CAD 2D DXF | Active normative unique content (3D & kinematics) | **Consolidado en `docs/PRD/PRD-12.md` (v1.3 MASTER)** para SHOT-19; raíz convertido a puntero |
-| `docs/PRD-13.md` | `docs/PRD/PRD-13.md` / `docs/PRD/PRD-20-CATALOGO-GLOBAL.md` | No | Catálogo Global y Moderación S28 (SHOT-20) con blindaje de precios | AI Gateway, white-label routing, credit caps, fallbacks (SHOT-13) | Active normative unique content (displaced module) | **Preservado en `docs/PRD/PRD-20-CATALOGO-GLOBAL.md`**; SHOT-20 actualizado en PLAN_SHOTS; raíz convertido a dual pointer |
+| `docs/PRD-13.md` | `docs/PRD/PRD-13.md` | No | Contenido histórico de Catálogo Global migrado a `PRD-20` | AI Gateway, white-label routing, credit caps, fallbacks (SHOT-13) | Active normative unique content (displaced module) | **Preservado en `docs/PRD/PRD-20.md`**; SHOT-20 en `PRD-20`; `docs/PRD-13.md` apunta a AI Gateway y `docs/PRD-20.md` a Catálogo Global |
 | `docs/PRD-14.md` | `docs/PRD/PRD-14.md` | No | Ninguno (borrador v1.1) | Verificación doble ciego multi-modelo (T8), sello DOC-08, QR | Superseded minor text | Convertido a puntero normativo |
 | `docs/PRD-15.md` | `docs/PRD/PRD-15.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
 | `docs/PRD-16.md` | `docs/PRD/PRD-16.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |

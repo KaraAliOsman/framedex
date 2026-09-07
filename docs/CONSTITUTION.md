@@ -55,7 +55,7 @@
 14. Código/comentarios/DB en inglés. UI solo vía claves i18n ES-CL.
 15. DEPENDENCIAS (POLÍTICA DE TRES NIVELES): Approved Baseline Dependencies (PRD-00).
     - TIER A (DEV/TOOLING LOW RISK): El agente puede añadirla mediante PR sin aprobación Owner si:
-      licencia compatible (MIT/Apache-2.0/BSD), mantenimiento razonable, security scan sin issue crítico,
+      licencia compatible con la política de distribución, seguridad y compliance del proyecto (ej: MIT, Apache-2.0, BSD, ISC), mantenimiento razonable, security scan sin issue crítico,
       sin duplicación injustificada, lockfile reproducible y tests/gauntlet verdes.
     - TIER B (ORDINARY RUNTIME DEPENDENCY): El agente puede añadirla mediante PR SIN aprobación Owner si:
       no cambia la arquitectura principal, no crea un proveedor externo crítico, no altera DB/auth/infra,

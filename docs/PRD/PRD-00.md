@@ -50,8 +50,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
 | **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
-| **PRD-20** | Catálogo Global y Moderación | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
-
+| [**PRD-20**](./PRD-20.md) | [Catálogo Global y Moderación](./PRD-20.md) | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
 ---
 
 ## 4. Plan Maestro de Ejecución por Shots (SHOT-01 → SHOT-24)
@@ -77,7 +76,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
 - **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
 - **SHOT-19:** Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática (PRD-12).
-- **SHOT-20:** Catálogo global + cola admin (Pantalla S28) (PRD-20).
+- **SHOT-20:** Catálogo global + cola admin (Pantalla S28) ([PRD-20](./PRD-20.md)).
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
 - **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.
@@ -108,7 +107,7 @@ Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se 
 ## 6. Manifiesto de Dependencias Base Aprobadas y Gobernanza de Dependencias (Regla 15)
 
 El repositorio se rige por la **Política de Dependencias de Dos Niveles** establecida en la Constitución (Regla 15):
-- **A) DEV/TOOLING LOW-RISK:** Dependencias de tooling, linters o testing pueden ser incorporadas por desarrolladores y agentes mediante PR siempre que tengan licencia compatible (MIT/Apache-2.0/BSD), proyecto activamente mantenido, sin duplicación injustificada, lockfile reproducible y tests verdes.
+- **A) DEV/TOOLING LOW-RISK:** Dependencias de tooling, linters o testing pueden ser incorporadas por desarrolladores y agentes mediante PR siempre que tengan licencia compatible con la política de distribución, seguridad y compliance del proyecto (ej: MIT, Apache-2.0, BSD, ISC), proyecto activamente mantenido, sin duplicación injustificada, lockfile reproducible y tests verdes.
 - **B) PRODUCTION RUNTIME:** La incorporación de dependencias en producción requiere análisis de impacto y justificación técnica. Aprobación del Owner obligatoria exclusivamente para frameworks principales, bases de datos, proveedores cloud críticos o cambios arquitectónicos mayores.
 
 ### Dependencias Base Aprobadas (Approved Baseline):

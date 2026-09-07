@@ -60,7 +60,7 @@
 | **S25** | **Configuración General** | Parámetros de taller y mermas | OWNER (`FIXED_BY_CONTRACT`) | `/settings/general` (`CURRENT_BASELINE`) | Validación de rangos numéricos | Formulario de preferencias | Layout: `FLEXIBLE` • Tabs: `FLEXIBLE` |
 | **S26** | **Portal Cliente / Instalador** | Aprobación online y montaje | Cliente / INSTALLER (`FIXED_BY_CONTRACT`) | `/view/:token` o `/p/quote/:uuid` (`FIXED_BY_CONTRACT`) | Sin márgenes ni despiece interno | Portal responsive read-only | Layout: `FLEXIBLE` • Composición: `FLEXIBLE` |
 | **S27** | **Intérprete Multimodal OCR** | Ingesta de planos y cuadernos | OWNER, ESTIMATOR (`FIXED_BY_CONTRACT`) | `/ai/extract-positions` (`CURRENT_BASELINE`) | Semáforo de confianza PRD-09 | Split-screen plano vs grilla | Layout: `FLEXIBLE` • Composición: `FLEXIBLE` |
-| **S28** | **Moderación Catálogo Global** | Verificación sin precios | SUPERADMIN (`FIXED_BY_CONTRACT`) | `/admin/queue` (`FIXED_BY_CONTRACT`) | Cero lectura de costos ajenos | Cola admin con diff de series | Layout: `FLEXIBLE` • Composición: `FLEXIBLE` |
+| **S28** | **Moderación Catálogo Global** (PRD-20) | Verificación sin precios | SUPERADMIN (`FIXED_BY_CONTRACT`) | `/admin/queue` (`FIXED_BY_CONTRACT`) | Cero lectura de costos ajenos | Cola admin con diff de series | Layout: `FLEXIBLE` • Composición: `FLEXIBLE` |
 
 ---
 
@@ -340,6 +340,7 @@
 
 ### S28 · Cola de Moderación de Catálogo Global
 - **Capability ID:** `S28`
+- **Normative PRD:** [`PRD-20: Catálogo Global y Moderación Administrativa`](./PRD-20.md) (SHOT-20).
 - **User Goal:** Revisar y aprobar series de perfiles enviadas por organizaciones para publicación en el catálogo comunitario.
 - **Role Contract:** Rol exclusivo `SUPERADMIN` (`FIXED_BY_CONTRACT`).
 - **Route / Deep-Link Contract:** `/admin/queue` (`FIXED_BY_CONTRACT`).

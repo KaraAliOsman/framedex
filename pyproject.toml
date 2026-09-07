@@ -21,7 +21,3 @@ addopts = ["--strict-config", "--strict-markers"]
 markers = [
     "rls_integration: requires a clean local Supabase PostgreSQL stack",
 ]
-filterwarnings = [
-    "error",
-    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
-]
