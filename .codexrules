@@ -5,6 +5,7 @@
 
 [SYSTEM INVARIANTS]
 project_name: "Dekopen OS"
+constitution: "docs/CONSTITUTION.md (v1.3 MASTER — 23 Rules)"
 core_tolerance: "0.00 mm"
 number_format: "Decimal everywhere (prohibit float in engine and money)"
 database: "PostgreSQL 16 with Row Level Security (RLS) on all business tables"

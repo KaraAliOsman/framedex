@@ -43,20 +43,20 @@ Para eliminar la alucinación, el "verifier theater" y los fallos en tareas de l
 [ 4. Validación Gauntlet ] [ 5. Salidas Técnicas ]      [ 6. Certificación ]
   • Tolerancia 0.00 mm       • PDF Comercial (DOC-01)     • Sello T8 Doble Ciego (SHOT-21)
   • Reglas R01–R14           • Lista de Corte (DOC-03)    • QR de Fabricabilidad
-  • Aislamiento RLS          • Visor 3D R3F (SHOT-19)     • Trazabilidad SHA-256
+  • Aislamiento RLS          • Visor 3D Técnico & Cinemática (SHOT-19) • Trazabilidad SHA-256
 ```
 
 ---
 
-## 4. Reglas Constitucionales de Oro (CONSTITUTION.md v1.2 MASTER — 23 Reglas)
+## 4. Reglas Constitucionales de Oro (CONSTITUTION.md v1.3 MASTER — 23 Reglas)
 
-0. **REGLA CERO (CERO CONTRADICCIONES):** Ante cualquier discrepancia normativa entre spec, PRD, esquema o tests, el SHOT SE DETIENE y se resuelve la fuente oficial. Jamás se asume en silencio.
+0. **REGLA CERO (CERO CONTRADICCIONES MATERIALES):** Ante cualquier discrepancia normativa material entre spec, PRD, esquema o tests (matemática, dinero, RLS, seguridad, permisos, datos certificados o acciones irreversibles), el SHOT SE DETIENE y se resuelve la fuente oficial. Para decisiones no materiales (wording, layout, naming interno), el agente resuelve autónomamente con best practice y documenta rationale.
 1. **NÚMEROS:** Todo número en cotizaciones, cortes y OT sale de `/engine` o edición humana explícita. Prohibido float (`Decimal` en todo mm y dinero).
 2. **MOTOR PURO:** `/engine` es independiente de Django, red, I/O o base de datos. Testeable con `pytest engine/`.
 3. **RLS Y AISLAMIENTO:** Toda tabla de negocio lleva `org_id` + RLS con `current_user_org_ids()`. Un tenant jamás lee precios de otro.
 4. **AUDITORÍA OBLIGATORIA:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs` ANTES de mutar estado.
 5. **CASOS DE ORO (G1–G12):** Tolerancia `0.00 mm`. Ningún PR se aprueba con discrepancias en los casos exigidos por el Gate.
-6. **REGLA 20 (CERO SUPUESTOS):** Si un PRD tiene un vacío, **DETENTE** e inserta `[PENDIENTE-DECISIÓN]`. Nunca inventes reglas de negocio.
+6. **REGLA 20 (TRATAMIENTO DE GAPS):** Si una spec tiene un vacío MATERIAL según la Regla 0, **DETENTE** e inserta `[PENDIENTE-DECISIÓN]` (la Regla 0 es la única autoridad de materialidad). Para vacíos no materiales y reversibles, el agente resuelve autónomamente con buenas prácticas y documenta rationale.
 7. **REGLA 22 (GOLDEN SNAPSHOTS):** `golden_example.json` se genera con `make goldgen` desde `/engine`, jamás se edita a mano.
 
 ---

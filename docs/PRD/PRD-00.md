@@ -18,14 +18,15 @@ Dekopen es el **primer sistema operativo de ingeniería, cálculo paramétrico, 
 ## 2. Precedencia Normativa de Diseño (Parche P1-6)
 
 > [!IMPORTANT]
-> **Precedencia de Diseño:** `PRD-DESIGN-SYSTEM-ADOBE.md` (v1.2, Dual Claro/Oscuro) es el documento CANÓNICO e inapelable para tokens de color, contrastes, tipografía y temas. El archivo `UI_UX_DESIGN_SYSTEM.md` queda **SUPERSEDED** salvo en las especificaciones anatómicas de sus componentes (§4), las cuales deben re-expresarse usando exclusivamente los tokens de `PRD-DESIGN-SYSTEM-ADOBE.md` (cero código hexadecimal hardcodeado).
+> **Precedencia de Diseño (Constraint System, Not a Fixed Mockup):** `PRD-DESIGN-SYSTEM-ADOBE.md` (Dual Claro/Oscuro) es la autoridad normativa para **tokens semánticos de color, contrastes WCAG AAA, semántica de temas y línea base tipográfica** (cero valores hexadecimales hardcodeados fuera de variables CSS `--theme-*`).
+> No ejerce autoridad rígida ni congelada sobre layout, composición espacial, densidad de paneles, navegación o arquitectura UX. Los desarrolladores y agentes de IA tienen libertad para innovar en la ergonomía y disposición de la interfaz siempre que preserven la accesibilidad, coherencia visual, tokens y estados del sistema. El archivo `UI_UX_DESIGN_SYSTEM.md` permanece **SUPERSEDED** en tokens.
 
 La especificación móvil/OCR/QR que antes ocupaba por error esa ruta vive, sin pérdida de
 contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 
 ---
 
-## 3. Mapa Completo de Documentos PRD-00 a PRD-19
+## 3. Mapa Completo de Documentos PRD-00 a PRD-20
 
 | ID | Documento | Contenido Principal | Bloquea a | Fase |
 |---|---|---|---|---|
@@ -41,41 +42,41 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-09** | Intérprete de Planos (S27) | Extracción de cuadros de vanos, bounding boxes | 10 | 2 |
 | **PRD-10** | Comandos de Diseño NLP | Diff paramétrico antes/después, Sacred Undo | — | 2 |
 | **PRD-11** | Plantillas PDF | 3 slots configurables, bloques protegidos | — | 2 |
-| **PRD-12** | Visor 3D Esquemático | React Three Fiber, cinemática de apertura | — | 3 |
-| **PRD-13** | Catálogo Global | Publicación comunitaria sin precios privados | — | 3 |
+| **PRD-12** | Live View, CAD 2D & 3D | Portal /view/, exportador CAD DXF, visor 3D técnico y cinemática | — | 3 |
+| **PRD-13** | AI Gateway y Enrutamiento | Router agnóstico ai_routes, fallback de proveedores y auditoría | — | 2 |
 | **PRD-14** | Certificado Fabricabilidad | Doble ciego Tool T8, NCh 432 / NCh 132 (Chile v1) | — | 3 |
 | **PRD-15** | Autopilot Max | Cotización desasistida con espera humana obligatoria | — | 3 |
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
 | **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
-
+| [**PRD-20**](./PRD-20.md) | [Catálogo Global y Moderación](./PRD-20.md) | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
 ---
 
 ## 4. Plan Maestro de Ejecución por Shots (SHOT-01 → SHOT-24)
 
-*(Ver detalle de gates y pre-requisitos en [`PLAN_DE_EJECUCION_SHOTS.md`](file:///c:/Users/alios/Documents/antigravity/vibrant-hertz/docs/PLAN_DE_EJECUCION_SHOTS.md))*
+*(Ver detalle de gates y roadmap canónico en [`PLAN_SHOTS.md`](./PLAN_SHOTS.md))*
 
 - **SHOT-01:** Monorepo + CI + Constitución aplicada.
-- **SHOT-02:** DDL completo + `hardware_kits` + RLS + tests de aislamiento (Supabase CLI).
-- **SHOT-03:** Engine núcleo (G1–G4 en 0.00).
-- **SHOT-04:** Auth + tenancy + API skeleton DRF/JWT/OpenAPI + PostHog base + shell app ADOBE dual.
-- **SHOT-05:** Canvas 2D mínimo (fijo + cotas).
-- **SHOT-06:** Engine total (SLIDING, DOOR, AWNING, `hardware_kits` $\rightarrow$ G5–G12 en 0.00 + golden test).
-- **SHOT-07:** Corte 1D BFD + Inspector R01–R14 (G7 puerta en 0.00 + test optimizador barras 5.8m).
-- **SHOT-08:** Precios 5 modos + listas de costo + `price_audit_logs`.
-- **SHOT-09:** Documentos WeasyPrint & openpyxl + Pantalla S19 (Pedidos proveedor).
-- **SHOT-10:** Flujo proyectos + versiones + **catálogos manuales (S02, S12, S13, S15, S16)**.
-- **SHOT-11:** Billing Flow + créditos + trial + deploy prod con alertas de uptime.
-- **SHOT-12:** **Starter end-to-end + validación fundador (Sign-off G-Pro1).**
-- **SHOT-13:** AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos T6/T8/T9).
-- **SHOT-14:** Compilador T6 + preguntas T4 + G sintéticos (4 fixtures 0.00).
-- **SHOT-15:** OCR T1 + pantalla S27 split-screen.
+- **SHOT-02:** Modelo de Datos DDL + RLS multi-tenant + Seed determinista DEMO_60.
+- **SHOT-03:** Motor Técnico `/engine` puro + Casos de Oro Core (G1–G4).
+- **SHOT-04:** API Django REST + Auth JWT Supabase + OpenAPI spec sincronizado.
+- **SHOT-05:** Canvas 2D interactivo (SVG puro) + integración de cálculo en tiempo real.
+- **SHOT-06:** Casos de Oro G5, G6, G7 a 0.00 mm + hardware_kits en DB + DDL complementario.
+- **SHOT-07:** Optimizador 1D Best Fit Decreasing (BFD) + Inspector de 14 Reglas (R01–R14).
+- **SHOT-08:** Motor de Costos de 5 Modos + Márgenes y Auditoría de Precios.
+- **SHOT-09:** Documentos oficiales de salida (DOC-01 a DOC-07) + hash inmutable.
+- **SHOT-10:** Inmutabilidad y Versionado de Proyectos (`project_versions`).
+- **SHOT-11:** Facturación Chile (Flow.cl CLP) + Ledger de Créditos IA.
+- **SHOT-12:** Starter end-to-end + Sign-off físico G-Pro1 en taller.
+- **SHOT-13:** AI Gateway + enrutamiento `ai_routes` + semáforo y auditoría.
+- **SHOT-14:** Compilador asistido de catálogos + fixtures de fabricantes.
+- **SHOT-15:** OCR Multimodal (Tool T1) + Pantalla S27 split-screen.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
 - **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
-- **SHOT-19:** 3D R3F + link `/view/`.
-- **SHOT-20:** Catálogo global + cola admin.
+- **SHOT-19:** Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática (PRD-12).
+- **SHOT-20:** Catálogo global + cola admin (Pantalla S28) ([PRD-20](./PRD-20.md)).
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
 - **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.
@@ -103,9 +104,13 @@ Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se 
 
 ---
 
-## 6. Lista Cerrada y Canónica de Dependencias del Monorepo (Regla 15)
+## 6. Manifiesto de Dependencias Base Aprobadas y Gobernanza de Dependencias (Regla 15)
 
-El builder tiene **estrictamente prohibido** instalar cualquier paquete fuera de este manifiesto único y cerrado:
+El repositorio se rige por la **Política de Dependencias de Dos Niveles** establecida en la Constitución (Regla 15):
+- **A) DEV/TOOLING LOW-RISK:** Dependencias de tooling, linters o testing pueden ser incorporadas por desarrolladores y agentes mediante PR siempre que tengan licencia compatible con la política de distribución, seguridad y compliance del proyecto (ej: MIT, Apache-2.0, BSD, ISC), proyecto activamente mantenido, sin duplicación injustificada, lockfile reproducible y tests verdes.
+- **B) PRODUCTION RUNTIME:** La incorporación de dependencias en producción requiere análisis de impacto y justificación técnica. Aprobación del Owner obligatoria exclusivamente para frameworks principales, bases de datos, proveedores cloud críticos o cambios arquitectónicos mayores.
+
+### Dependencias Base Aprobadas (Approved Baseline):
 
 ### Backend & Núcleo (`/backend` y `/engine`)
 * `python >= 3.12`
