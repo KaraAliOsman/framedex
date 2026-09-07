@@ -1,8 +1,8 @@
 # PRD-10: CO-PILOTO DE ACCIÓN DIRECTA (CMD+K), DIFFS VISUALES Y DESHACER SAGRADO (v1.2)
-**Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Action-First UX Standard — Estilo Codex / Antigravity)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
-**Fase:** 2 (Comandos y Diffs Paramétricos)  
+**Estado:** Bloqueado / Congelado
+**Versión:** 1.2 (Action-First UX Standard — Estilo Codex / Antigravity)
+**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`
+**Fase:** 2 (Comandos y Diffs Paramétricos)
 **Bloquea a:** PRD-11
 
 ---
@@ -61,6 +61,63 @@ La IA traduce lenguaje natural a parámetros de `/engine` sin inventar aritméti
 
 Cuando se procesan operaciones pesadas (como la lectura de un PDF de planos con 15 vanos en S27):
 1. **La interfaz nunca se congela:** El usuario puede seguir dibujando o cotizando.
-2. **Notificación Discreta en Barra de Estado:**  
+2. **Notificación Discreta en Barra de Estado:**
    `[ ⚡ 15 vanos extraídos del plano • 13 seguros / 2 para revisar ] -> [ Revisar e Importar ]`
 3. **Auditoría Obligatoria:** Todo cambio registra una fila en `ai_audit_logs` con el payload antes/después para permitir reversión infinita.
+
+---
+
+## 5. Esquemas JSON Tipados de Entrada y Salida (Tools T2 y T3)
+
+### 5.1. Herramienta T2: `propose_window_command` (Diseño Geométrico)
+- **Costo:** 4 créditos.
+- **Entrada:**
+  ```json
+  {
+    "current_tree": { "type": "ROOT", "width_mm": 1500, "height_mm": 1200 },
+    "command_text": "Divide verticalmente al centro y pon la hoja derecha oscilobatiente con manilla a 400mm"
+  }
+  ```
+- **Salida Tipada:**
+  ```json
+  {
+    "mutation_type": "SPLIT_NODE",
+    "target_node_id": "root",
+    "operations": [
+      {
+        "op": "SPLIT_V",
+        "split_ratio": 0.5,
+        "children": [
+          { "type": "BAY", "opening_type": "FIXED" },
+          { "type": "BAY", "opening_type": "TILT_TURN_RIGHT", "handle_height_mm": 400 }
+        ]
+      }
+    ],
+    "explanation_es": "Se dividió el vano en 2 partes iguales: Paño fijo a la izquierda y Oscilobatiente derecha con manilla a 400 mm."
+  }
+  ```
+
+### 5.2. Herramienta T3: `apply_pricing_command` (Ajustes Comerciales)
+- **Costo:** 3 créditos.
+- **Entrada:**
+  ```json
+  {
+    "project_id": "proj_123",
+    "command_text": "Aplica un margen del 38% para constructora y descuenta 3% en las ventanas de dormitorios"
+  }
+  ```
+- **Salida Tipada:**
+  ```json
+  {
+    "target_mode": "COST_PLUS_MARGIN",
+    "global_margin_pct": 0.3800,
+    "position_overrides": [
+      { "location_tag_pattern": "Dormitorio*", "discount_pct": 0.0300 }
+    ],
+    "delta_summary": {
+      "previous_total_net": 3450000,
+      "new_total_net": 3620000,
+      "net_difference": 170000
+    }
+  }
+  ```
