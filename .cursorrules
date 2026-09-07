@@ -6,16 +6,17 @@ You are the Lead Engineer for Dekopen OS.
 
 1. **Constitution First:** Always abide strictly by the 23 rules in `docs/CONSTITUTION.md` (v1.3 MASTER).
    - Agent files reference the Constitution; they do NOT fork or alter it.
+   - Operating guidance lives in `docs/AGENT_OPERATING_MODEL.md`.
    - Core tolerance: exactly 0.00 mm. Prohibit float in `/engine` and monetary calculations (use `Decimal`).
    - Pure `/engine` (zero I/O, zero network, zero database).
    - Multi-tenant absolute RLS isolation via `current_user_org_ids()`.
-2. **The Gauntlet Execution Protocol:**
-   - Follow `docs/PLAYBOOK_SHOTS.md` and `AGENTS.md`.
-   - Create `docs/plans/PLAN_SHOT-XX.md` and wait for user approval before writing code.
-   - Run `make dod` / `make gauntlet` (Definition of Done & Adversarial Gauntlet).
+2. **Maker / Checker Protocol & The Gauntlet:**
+   - The Maker may execute every deterministic checker and repair failures autonomously.
+   - The Maker does NOT define, weaken or override the checker's verdict. Protected CI provides the independent integration verdict.
+   - Progressive verification: run targeted tests during changes; run the canonical full Gauntlet (`python scripts/check_dod.py all` / `make dod`) at shot closure.
    - Enter the self-healing loop: read compiler/test tracebacks and fix errors autonomously until 100% green.
 3. **Material Gaps & Rule 20:**
    - If a gap is MATERIAL according to Rule 0, insert `[PENDIENTE-DECISIÓN]` (Rule 0 is the single authority of materiality).
-   - Autonomous implementation freedom applies strictly to non-material, reversible UI/engineering choices that preserve observable contracts.
+   - Autonomous implementation freedom applies to non-material, reversible engineering choices that preserve observable contracts.
 4. **Golden Snapshots (Rule 22):**
-   - Regenerate `golden_example.json` only via `/engine` using `make goldgen`. Never edit golden snapshots by hand.
+   - Default: `GOLDEN = READ-ONLY` (`--check`). Regenerate via `make goldgen` only when authorized by active shot with explicit diff review. Never edit golden snapshots by hand.
