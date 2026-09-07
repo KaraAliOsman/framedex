@@ -68,7 +68,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | **SHOT-04** | ✅ Cerrado |
 | **SHOT-05** | ✅ Cerrado |
 | **SHOT-06** | ✅ Cerrado |
-| **SHOT-07** | ⏳ Pendiente |
+| **SHOT-07** | ✅ Cerrado |
 | **SHOT-08** | ⏳ Pendiente |
 | **SHOT-09** | ⏳ Pendiente |
 | **SHOT-10** | ⏳ Pendiente |
