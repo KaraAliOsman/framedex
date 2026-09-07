@@ -1,203 +1,311 @@
 # DEKOPEN — BASELINE DE SUPERFICIES Y FLUJOS DE USUARIO (CAPABILITY MAP S01–S28) (v1.3 MASTER)
 
-> **Estado:** Documento Normativo Activo — Flexible & Componible  
-> **Propósito:** Mapeo de Capacidades, Roles, Contratos y Viajes de Usuario (User Journeys)  
-> **Filosofía UX:** Ergonomía Adaptable de Taller, Eficiencia de Clics y Componibilidad Modular  
+> **Estado:** Documento Normativo Activo — Flexible & Componible
+> **Propósito:** Mapeo Canónico de Capacidades, Roles, Contratos y Superficies de Interfaz
+> **Filosofía UX:** Ergonomía Adaptable de Taller, Eficiencia Operativa y Componibilidad Modular
 
 ---
 
-## 1. Principios de Componibilidad y Flexibilidad de Interfaces
+## 1. Principios Constitucionales de Componibilidad y Flexibilidad
 
-1. **Referencias de Capacidad, No Prisión de Pantallas Físicas:**
-   Los identificadores `S01` a `S28` representan **capacidades funcionales y superficies del flujo de trabajo**, conservados para trazabilidad histórica, planes de shot y auditoría. **NO constituyen una restricción de tener exactamente 28 pantallas web aisladas**.
-2. **Libertad de Composición para Agentes y Diseñadores:**
-   Los constructores e inteligencias artificiales avanzadas están facultados para agrupar, desacoplar o componer estas capacidades según lo dicte la ergonomía real del taller de carpintería:
-   - Capacidades complementarias pueden coexistir en un **Espacio de Trabajo Unificado (Dockable Workspace)**, como el Lienzo 2D (`S06`), el Inspector Técnico (`S07`) y la Consola de Comandos (`S21`).
-   - Una capacidad puede implementarse como **pantalla completa, modal contextual, drawer lateral flotante, pestaña o panel acoplable**, siempre que garantice usabilidad, accesibilidad y velocidad.
-   - Una superficie puede dividirse en pasos progresivos o simplificarse en una vista única si los datos demuestran mejor flujo operativo.
-3. **Contratos de Enlace (Deep-Links):**
-   Las rutas URL solo son obligatorias e inmutables cuando responden a un **contrato externo, seguridad o enlace compartible** (ej: `/login`, portales de clientes `/p/quote/:uuid`, visor de solo lectura `/view/:token`, o redirecciones de pasarelas de pago `/settings/billing`). Las rutas internas son adaptables según la arquitectura de navegación.
+1. **IDs de Capacidad y Flujo, No Prisión de Pantallas Físicas:**
+   Los identificadores `S01` a `S28` representan **capacidades funcionales y contratos de flujo del usuario**, preservados para trazabilidad histórica, roadmaps y auditoría. **NO imponen la obligación de tener exactamente 28 pantallas web aisladas**.
+2. **Niveles de Flexibilidad de Superficie (`surface_flexibility`):**
+   Cada capacidad se rige por uno de tres niveles formales:
+   - `FIXED_BY_CONTRACT`: La ruta URL o formato es un contrato inmutable externo (autenticación, retornos de pago, enlaces públicos seguros compartidos a clientes o cola de administración central).
+   - `CURRENT_BASELINE`: Superficie o formato definido como línea base para los shots actuales.
+   - `FLEXIBLE`: La interfaz puede implementarse libremente como modal contextual, panel acoplable (dockable), drawer flotante, pestaña o split-screen si demuestra mejor usabilidad y velocidad de taller.
+3. **Precedencia Temporal del Shot Actual (Principio Inviolable):**
+   > **`GLOBAL FLEXIBILITY DOES NOT RETROACTIVELY DESTABILIZE AN ACTIVE SHOT CONTRACT.`**
+   Si una decisión de interfaz ya quedó formalmente congelada en un plan de shot activo mediante resolución del Owner (ejemplo: `S07` congelado como Modal contextual en `docs/plans/PLAN_SHOT-07.md`), dicha decisión **se mantiene inmutable durante la ejecución de ese shot**. La flexibilidad global habilita la evolución en shots posteriores, jamás la desestabilización del sprint en curso.
 
 ---
 
 ## 2. Matriz Maestra de Capacidades y Superficies (S01 a S28)
 
-| ID | Capacidad / Superficie | Objetivo Primario | Usuario / Rol | Deep-Link / Contrato | Formato de Implementación Sugerido |
-|---|---|---|---|---|---|
-| **S01** | **Autenticación y Magic Link** | Acceso seguro sin contraseñas frágiles | Todos / Público | `/login` (Obligatorio) | Pantalla limpia, centrada, con soporte OTP/Magic Link |
-| **S02** | **Onboarding de Taller** | Configuración de empresa, RUT y moneda | OWNER | `/onboarding` (Obligatorio) | Wizard guiado paso a paso con validación legal |
-| **S03** | **Dashboard Operativo & KPIs** | Visibilidad de margen, producción y alertas | OWNER, ESTIMATOR, MGR | `/dashboard` (Recomendado) | Tablero modular con widgets reordenables |
-| **S04** | **Listado de Proyectos** | Búsqueda rápida, filtros y estados de cotización | OWNER, ESTIMATOR, MGR | `/projects` (Recomendado) | Tabla densa con atajos de teclado y vista en tarjetas |
-| **S05** | **Detalle de Proyecto & Vanos** | Gestión de vanos, estado global y emisión | OWNER, ESTIMATOR, MGR | `/projects/:id` (Obligatorio) | Vista maestra con grilla de vanos y métricas sumarias |
-| **S06** | **Lienzo CAD 2D Paramétrico** | Dibujo y acotación milimétrica en tiempo real | OWNER, ESTIMATOR | `/projects/:id/positions/:posId/edit` | Workspace CAD con viewport SVG interactivo pan/zoom |
-| **S07** | **Inspector Técnico R01–R14** | Detección de fallas físicas y corrección 1-clic| OWNER, ESTIMATOR | Contextual a S06 (No deep-link)| Panel dockable lateral o modal emergente en S06 |
-| **S08** | **Explosión BOM de Materiales** | Desglose milimétrico de perfiles, herrajes y vidrio| OWNER, ESTIMATOR, MGR | `/projects/:id/bom` | Tabla técnica exportable con agrupación por SKU |
-| **S09** | **Listas de Costo y Precios** | Configuración de márgenes, mano de obra y costos| OWNER | `/pricing/cost-lists` | Grilla editable tipo hoja de cálculo con auditoría previa |
-| **S10** | **Previsualización & Emisión PDF**| Congelación legal de presupuestos DOC-01 | OWNER, ESTIMATOR | `/projects/:id/quote-preview` | Visor split-screen PDF con botón de firma y emisión |
-| **S11** | **Orden de Trabajo (OT)** | Instrucciones de fabricación para planta | OWNER, WORKSHOP_MANAGER | `/orders/ot/:id` | Hoja de producción con QR de vano y plano acotado |
-| **S12** | **Visor 3D y Cinemática** | Visualización interactiva y simulación física | Todos / Cliente | `/viewer-3d/:posId` o integrado | Canvas R3F orbital 360° con selector de apertura y color |
-| **S13** | **Catálogo de Sistemas de Perfil**| Parámetros de series, nudos e inercias | OWNER, WORKSHOP_MANAGER | `/catalogs/systems` | Vista de catálogo con explorador de perfiles y nudos |
-| **S14** | **Compilador de Catálogos IA** | Ingesta asistida de catálogos en PDF/Excel | OWNER | `/catalogs/compiler` | Split-screen: PDF de fabricante vs Formulario de mapeo |
-| **S15** | **Matriz Junquillo–Vidrio** | Asignación inequívoca junquillo según vidrio | OWNER, WORKSHOP_MANAGER | `/catalogs/systems/:id/glazing` | Matriz interactiva de compatibilidad dimensional |
-| **S16** | **Inventario de Retazos QR** | Registro de sobrantes para reutilización | WORKSHOP_MANAGER | `/inventory/offcuts` | Vista adaptada a móvil/tablet con lector de cámara QR |
-| **S17** | **Certificado de Fabricabilidad**| Sello de garantía técnica y doble ciego T8 | OWNER, ESTIMATOR | `/quality/certificates/:id` | Panel de trazabilidad con firmas hash SHA-256 |
-| **S18** | **Bandeja Omnicanal (Email/WA)** | Recepción automática de pedidos y solicitudes | OWNER, ESTIMATOR | `/inbox` | Inbox conversacional con previsualizador de adjuntos |
-| **S19** | **Optimizador de Corte 1D BFD** | Plan de corte de barras y minimización de merma| WORKSHOP_MANAGER | `/orders/ot/:id/cutting-plan` | Diagrama visual de barras de 6m con secuencia de corte |
-| **S20** | **Billetera de Créditos IA** | Saldo, recargas y consumo de herramientas | OWNER | `/settings/wallet` | Widget de saldo con historial de transacciones y recarga |
-| **S21** | **Consola Comandos & Diff (Cmd+K)**| Modificación ágil por lenguaje natural/comandos | OWNER, ESTIMATOR | Overlay en S06 (Sin ruta URL) | Barra de comandos tipo Spotlight o Drawer contextual |
-| **S22** | **Editor de Plantillas PDF** | Personalización de logos, tipografía y colores | OWNER | `/settings/templates` | Editor visual con vista previa en tiempo real |
-| **S23** | **Gestión de Equipo de Taller** | Asignación de roles y permisos a operarios | OWNER | `/settings/team` | Gestión de usuarios con switch de roles (RBAC) |
-| **S24** | **Suscripción y Facturación** | Gestión de planes Starter/Pro/Business/B2x | OWNER | `/settings/billing` (Obligatorio)| Portal con estado de plan, facturas y checkout seguro |
-| **S25** | **Configuración General & RLS** | Parámetros del taller, mermas y auditoría | OWNER | `/settings/general` | Formulario de preferencias globales y seguridad |
-| **S26** | **Portal Cliente / Instalador** | Aprobación de presupuesto y ficha de montaje | Cliente Final / INSTALLER | `/p/quote/:uuid` (Obligatorio)| Interfaz ligera responsive optimizada para smartphones |
-| **S27** | **Intérprete Multimodal OCR** | Extracción de vanos desde planos y apuntes | OWNER, ESTIMATOR | `/ai/extract-positions` | Split-screen: imagen de plano/apunte vs tabla editable |
-| **S28** | **Moderación Catálogo Global** | Validación de sistemas de perfil comunitarios | SUPERADMIN | `/admin/queue` (Obligatorio) | Cola de revisión administrativa con diff de catálogo |
+| ID | Capacidad / Superficie | Objetivo Primario (User Goal) | Roles | Deep-Link / Contrato | Superficie Base Actual | Flexibilidad |
+|---|---|---|---|---|---|:---:|
+| **S01** | **Autenticación y Magic Link** | Acceso seguro sin passwords vulnerables | Público / Todos | `/login` | Pantalla de login limpia | `FIXED_BY_CONTRACT` |
+| **S02** | **Onboarding de Taller** | Registro fiscal, RUT, logo y moneda | OWNER | `/onboarding` | Wizard guiado paso a paso | `FIXED_BY_CONTRACT` |
+| **S03** | **Dashboard Operativo & KPIs** | Visibilidad de margen, volumen y alertas | OWNER, ESTIMATOR, MGR | `/dashboard` | Tablero de métricas modular | `CURRENT_BASELINE` |
+| **S04** | **Listado de Proyectos** | Búsqueda y gestión de cotizaciones | OWNER, ESTIMATOR, MGR | `/projects` | Grilla tabular con filtros | `CURRENT_BASELINE` |
+| **S05** | **Detalle de Proyecto & Vanos** | Gestión de vanos, estados y emisión | OWNER, ESTIMATOR, MGR | `/projects/:id` | Maestro-detalle con cards | `FIXED_BY_CONTRACT` |
+| **S06** | **Lienzo CAD 2D Paramétrico** | Edición geométrica en tiempo real a 0.00mm | OWNER, ESTIMATOR | `/projects/:id/positions/:posId/edit` | Workspace CAD SVG viewport | `CURRENT_BASELINE` |
+| **S07** | **Inspector Técnico R01–R14** | Detección de fallas físicas y fix 1-clic | OWNER, ESTIMATOR | Contextual a S06 (sin URL) | Modal contextual en S06 | `CURRENT_BASELINE` |
+| **S08** | **Explosión BOM de Materiales** | Desglose milimétrico de perfiles y vidrio | OWNER, ESTIMATOR, MGR | `/projects/:id/bom` | Tabla técnica exportable | `FLEXIBLE` |
+| **S09** | **Listas de Costo y Precios** | Precios de compra, MO y márgenes | OWNER | `/pricing/cost-lists` | Hoja de cálculo con auditoría | `CURRENT_BASELINE` |
+| **S10** | **Previsualización & Emisión PDF**| Congelación legal de cotización DOC-01 | OWNER, ESTIMATOR | `/projects/:id/quote-preview` | Visor split-screen PDF | `CURRENT_BASELINE` |
+| **S11** | **Orden de Trabajo (OT)** | Ficha de corte y ensamble para planta | OWNER, WORKSHOP_MANAGER | `/orders/ot/:id` | Hoja de manufactura DOC-03 | `CURRENT_BASELINE` |
+| **S12** | **Visor 3D y Cinemática** | Inspección 3D orbital y animación giro | Todos / Cliente | `/view/:token` o integrado | Canvas 3D orbital interactivo | `CURRENT_BASELINE` |
+| **S13** | **Catálogo de Sistemas de Perfil**| Series de perfiles, nudos y accesorios | OWNER, WORKSHOP_MANAGER | `/catalogs/systems` | Explorador de series técnicas | `FLEXIBLE` |
+| **S14** | **Compilador de Catálogos IA** | Mapeo asistido de fichas de fabricante | OWNER | `/catalogs/compiler` | Split-screen PDF vs Catálogo | `FLEXIBLE` |
+| **S15** | **Matriz Junquillo–Vidrio** | Compatibilidad espesor vidrio vs junquillo| OWNER, WORKSHOP_MANAGER | `/catalogs/systems/:id/glazing` | Matriz bidimensional interactiva | `FLEXIBLE` |
+| **S16** | **Inventario de Retazos QR** | Registro de sobrantes $\ge 600\text{ mm}$ | WORKSHOP_MANAGER | `/inventory/offcuts` | Vista móvil con escaneo QR | `FLEXIBLE` |
+| **S17** | **Certificado de Fabricabilidad**| Sello de calidad T8 con hash SHA-256 | OWNER, ESTIMATOR | `/quality/certificates/:id` | Panel de trazabilidad DOC-08 | `FLEXIBLE` |
+| **S18** | **Bandeja Omnicanal (Email/WA)** | Recepción centralizada de cotizaciones | OWNER, ESTIMATOR | `/inbox` | Inbox con preview de adjuntos | `CURRENT_BASELINE` |
+| **S19** | **Optimizador de Corte 1D BFD** | Secuencia de corte de barras y merma | WORKSHOP_MANAGER | `/orders/ot/:id/cutting-plan` | Mapa visual de barras cortadas | `CURRENT_BASELINE` |
+| **S20** | **Billetera de Créditos IA** | Saldo, recarga y consumo auditado | OWNER | `/settings/wallet` | Widget de saldo y transacciones | `FLEXIBLE` |
+| **S21** | **Consola Comandos NLP (Cmd+K)**| Edición rápida con lenguaje natural | OWNER, ESTIMATOR | Overlay en S06 (sin URL) | Command bar flotante / Drawer | `FLEXIBLE` |
+| **S22** | **Editor de Plantillas PDF** | Personalización estética de presupuestos | OWNER | `/settings/templates` | Editor visual con vista previa | `FLEXIBLE` |
+| **S23** | **Gestión de Equipo de Taller** | Invitaciones y asignación de roles RBAC | OWNER | `/settings/team` | Tabla de usuarios y permisos | `FLEXIBLE` |
+| **S24** | **Suscripción y Facturación** | Gestión de planes Starter/Pro/Business | OWNER | `/settings/billing` | Portal de pagos Flow/Paddle | `FIXED_BY_CONTRACT` |
+| **S25** | **Configuración General & RLS** | Parámetros globales de taller y mermas | OWNER | `/settings/general` | Formulario de preferencias | `CURRENT_BASELINE` |
+| **S26** | **Portal Cliente / Instalador** | Aprobación online y ficha de montaje | Cliente / INSTALLER | `/p/quote/:uuid` o `/view/:token`| Portal read-only responsive | `FIXED_BY_CONTRACT` |
+| **S27** | **Intérprete Multimodal OCR** | Ingesta de planos, tablas y apuntes | OWNER, ESTIMATOR | `/ai/extract-positions` | Split-screen plano vs grilla | `CURRENT_BASELINE` |
+| **S28** | **Moderación Catálogo Global** | Verificación comunitaria sin precios | SUPERADMIN | `/admin/queue` | Cola admin con diff de series | `FIXED_BY_CONTRACT` |
 
 ---
 
 ## 3. Especificación Detallada por Capacidad
 
-### S01 · Autenticación y Acceso Seguro
-- **Objetivo:** Permitir el ingreso instantáneo sin contraseñas vulnerables mediante Magic Links y Google OAuth.
-- **Roles:** Acceso público.
-- **Seguridad:** Supabase Auth con emisión de JWT que encapsula `org_id` y rol de usuario. Cero contraseñas en texto plano.
-- **Contrato URL:** `/login`.
+### S01 · Autenticación y Magic Link
+- **User Goal:** Iniciar sesión o autenticarse de forma segura y sin fricción mediante Magic Link o Google OAuth.
+- **Roles:** Público / Todos los usuarios.
+- **Required Information:** Email corporativo o personal del usuario.
+- **Business & Security Constraints:** Cero contraseñas en texto plano; sesión gestionada mediante Supabase Auth con emisión de JWT estricto que encapsula `org_id`, `role` y `user_id`.
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/login`.
+- **Current Baseline Surface:** Pantalla centrada de login minimalista.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.
 
-### S02 · Onboarding y Configuración de Organización
-- **Objetivo:** Recolectar datos fiscales de la carpintería (RUT/RUC/Tax ID), moneda predeterminada (CLP/USD), nombre comercial y logotipo.
-- **Roles:** OWNER únicamente.
-- **Contrato URL:** `/onboarding`. Al completar, transiciona a `S03`.
+### S02 · Onboarding de Organización y Taller
+- **User Goal:** Configurar los datos de la empresa recién creada: RUT fiscal, razón social, moneda base (CLP/USD) y logotipo.
+- **Roles:** OWNER exclusivamente.
+- **Required Information:** RUT/Tax ID válido, razón social, dirección de taller, moneda de operación.
+- **Business & Security Constraints:** Creación de registro inmutable en `tenancy_organizations` y membresía inicial con rol OWNER.
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/onboarding`.
+- **Current Baseline Surface:** Formulario wizard secuencial de tres pasos.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.
 
-### S03 · Dashboard Operativo y Centro de Control de Taller
-- **Objetivo:** Mostrar indicadores clave de desempeño (KPIs): volumen cotizado en el mes, margen promedio ponderado, vanos en cola de fabricación y alertas de stock de barras.
+### S03 · Dashboard Operativo y KPIs de Taller
+- **User Goal:** Monitorear métricas de salud del taller: volumen cotizado en el mes, margen bruto promedio, vanos en cola de producción y atajos rápidos.
 - **Roles:** OWNER, ESTIMATOR, WORKSHOP_MANAGER.
-- **Composición:** Tarjetas analíticas interactivas con acceso rápido a proyectos recientes y atajo `Cmd+K` para crear cotizaciones.
+- **Required Information:** Resumen consolidado de proyectos, métricas de taller calculadas por backend.
+- **Business & Security Constraints:** Filtrado estricto por `org_id`.
+- **Deep-Link Requirement:** Recomendado en `/dashboard`.
+- **Current Baseline Surface:** Tablero de tarjetas analíticas y accesos directos.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S04 · Listado y Gestión de Proyectos
-- **Objetivo:** Búsqueda instantánea, filtrado por estado (Borrador, Cotizado, Aprobado, En Fabricación, Terminado) y gestión masiva de cotizaciones.
+### S04 · Listado y Búsqueda de Proyectos
+- **User Goal:** Localizar, filtrar y clasificar proyectos según estado (Borrador, Cotizado, En Fabricación, Terminado) y cliente.
 - **Roles:** OWNER, ESTIMATOR, WORKSHOP_MANAGER.
-- **Contrato URL:** `/projects`.
+- **Required Information:** Lista de proyectos con conteo de vanos, total neto, cliente y fecha.
+- **Business & Security Constraints:** Paginación eficiente y aislamiento RLS total.
+- **Deep-Link Requirement:** `/projects`.
+- **Current Baseline Surface:** Tabla con búsqueda en tiempo real y vista en tarjetas.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
 ### S05 · Detalle de Proyecto y Grilla de Vanos
-- **Objetivo:** Centro neurálgico del proyecto. Muestra la lista de vanos (posiciones), dimensiones nominales exterior marco, tipología, serie de perfiles, color y valor neto.
+- **User Goal:** Gestionar las aberturas (posiciones) de un proyecto, agregar nuevos vanos, duplicar vanos y emitir cotización.
 - **Roles:** OWNER, ESTIMATOR, WORKSHOP_MANAGER.
-- **Contrato URL:** `/projects/:id`. Permite añadir vanos manualmente, clonar vanos existentes o importar lotes vía `S27`.
+- **Required Information:** ID de proyecto, lista de posiciones con cotas exteriores, serie de perfiles y precio neto unitario.
+- **Business & Security Constraints:** Contrato maestro de navegación del proyecto.
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/projects/:id`.
+- **Current Baseline Surface:** Grilla de tarjetas de vanos con previsualización SVG miniatura y barra de resumen económico.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.
 
-### S06 · Editor 2D / Canvas SVG Paramétrico
-- **Objetivo:** Editor visual en tiempo real de la geometría de la abertura. El usuario altera anchos, alturas y travesaños, recalculando el árbol paramétrico en `/engine` a tolerancia `0.00 mm`.
+### S06 · Lienzo CAD 2D Paramétrico
+- **User Goal:** Dibujar y editar visualmente la geometría de una ventana en tiempo real con tolerancia matemática garantizada de `0.00 mm`.
 - **Roles:** OWNER, ESTIMATOR.
-- **Contrato URL:** `/projects/:id/positions/:posId/edit`.
-- **Integración de Superficie:** Coexiste idealmente en un mismo espacio de trabajo con `S07` (Inspector) y `S21` (Comandos).
+- **Required Information:** `parametric_tree` JSON de la posición seleccionada, serie de perfiles activa, cotas de ancho y alto.
+- **Business & Security Constraints:** Todo recálculo proviene de `/engine` determinista. Cero float en coordenadas de cota.
+- **Deep-Link Requirement:** `/projects/:id/positions/:posId/edit`.
+- **Current Baseline Surface:** Workspace CAD completo con viewport SVG infinito, pan/zoom y cotas dinámicas editables.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S07 · Inspector Técnico y Corrección en 1 Clic
-- **Objetivo:** Ejecutar las 14 reglas canónicas de validación técnica (R01 a R14) verificando límites de peso por herraje, holgura de junquillo, relación de aspecto de hojas y compatibilidad de perfiles.
+### S07 · Inspector Técnico y Corrección en 1 Clic (R01–R14)
+- **User Goal:** Validar la fabricabilidad de la ventana contra las 14 reglas canónicas (límites de peso, holgura de junquillo, relación de aspecto) y corregir problemas en 1 clic.
 - **Roles:** OWNER, ESTIMATOR.
-- **UX:** Muestra mensajes en lenguaje comprensible de taller con un botón de corrección automática en 1 clic (ej: *"La hoja excede 80 kg; cambiar a herraje pesado de 130 kg"*). No requiere ruta independiente; se recomienda implementarlo como panel lateral acoplable o modal contextual.
+- **Required Information:** Hallazgos generados por el motor de reglas en `/engine`, código de regla (R01–R14), severidad y acción de reparación recomendada.
+- **Business & Security Constraints:** Mensajes en lenguaje comprensible de taller; botón de fix que emite una mutación determinista.
+- **Deep-Link Requirement:** No requiere deep-link (superficie contextual acoplada al editor).
+- **Current Baseline Surface:** Modal contextual superpuesto en S06 (congelado por resolución PD-07-02 de SHOT-07).
+- **Surface Flexibility:** `CURRENT_BASELINE` (congelado en SHOT-07; posterior a SHOT-07 puede evolucionar a panel lateral acoplable).
 
 ### S08 · Explosión BOM y Despiece Milimétrico
-- **Objetivo:** Generar la lista exhaustiva de materiales requeridos para el proyecto: perfiles de PVC cortados con pérdida de fusión, refuerzos de acero galvanizado, vidrios termopanel, kits de herraje y metros de burlete.
+- **User Goal:** Visualizar el despiece técnico completo de la ventana: barras de PVC cortadas a 45°/90° con pérdida de fusión, refuerzos de acero, metros de burlete, termopaneles y kits de herrajes.
 - **Roles:** OWNER, ESTIMATOR, WORKSHOP_MANAGER.
-- **Contrato URL:** `/projects/:id/bom`. Exportable a PDF y Excel.
+- **Required Information:** BOM estructurado generado por `/engine/despiece.py`.
+- **Business & Security Constraints:** Precisión decimal milimétrica estricta (`0.00 mm`).
+- **Deep-Link Requirement:** `/projects/:id/bom`.
+- **Current Baseline Surface:** Tabla técnica tabular con filtros por categoría de material.
+- **Surface Flexibility:** `FLEXIBLE` (puede embeberse como pestaña en S05 o pantalla completa).
 
-### S09 · Gestión de Listas de Costo y Precios
-- **Objetivo:** Administrar los costos de compra de materiales por proveedor, costo horario de operarios de taller e instalación, y definir las reglas de margen de venta.
+### S09 · Listas de Costo y Precios de Taller
+- **User Goal:** Configurar los costos de adquisición de perfiles, vidrios y herrajes por proveedor, costo horario de taller y márgenes de ganancia.
 - **Roles:** OWNER exclusivamente.
-- **Seguridad:** Protegido por RLS estricto (`org_id`). Toda modificación dispara un registro previo e inmutable en `price_audit_logs` (Regla 21).
+- **Required Information:** Listas de costos activas por proveedor, coeficientes de mano de obra y márgenes por tipo de cliente.
+- **Business & Security Constraints:** Aislamiento RLS inviolable. Todo cambio de precio exige registro previo en `price_audit_logs` (Regla 21).
+- **Deep-Link Requirement:** `/pricing/cost-lists`.
+- **Current Baseline Surface:** Grilla editable con confirmación de cambios.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S10 · Vista Previa y Congelación de Cotización PDF (DOC-01)
-- **Objetivo:** Previsualizar el presupuesto comercial con desglose de ítems, términos comerciales, plazo de entrega y valor total. Al presionar *"Emitir Cotización"*, se congela una revisión inmutable en `project_versions` con hash SHA-256 (Regla 12).
+### S10 · Previsualización y Emisión de Cotización PDF (DOC-01)
+- **User Goal:** Revisar el presupuesto oficial con membrete y condiciones comerciales antes de congelarlo legalmente en `project_versions`.
 - **Roles:** OWNER, ESTIMATOR.
-- **Contrato URL:** `/projects/:id/quote-preview`.
+- **Required Information:** Datos comerciales del proyecto, cliente, validez de oferta y deslose neto/IVA.
+- **Business & Security Constraints:** La emisión congela un registro inmutable en `project_versions` con hash SHA-256 (Regla 12).
+- **Deep-Link Requirement:** `/projects/:id/quote-preview`.
+- **Current Baseline Surface:** Pantalla partida con visor PDF de alta fidelidad y panel de metadatos.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
 ### S11 · Orden de Trabajo de Taller (OT) (DOC-03)
-- **Objetivo:** Instrucciones de manufactura para los maestros operarios. Detalla medidas exteriores de corte, orificios de desagüe, altura de manilla y códigos de herraje.
+- **User Goal:** Entregar al jefe de taller y operarios las instrucciones de fabricación con planos acotados, medidas de corte de refuerzos y orificios de desagüe.
 - **Roles:** OWNER, WORKSHOP_MANAGER.
-- **Contrato URL:** `/orders/ot/:id`.
+- **Required Information:** Ficha de fabricación generada por backend a partir de la versión congelada del proyecto.
+- **Business & Security Constraints:** Contrato de taller inviolable; no modificable tras su pase a producción sin orden de rectificación.
+- **Deep-Link Requirement:** `/orders/ot/:id`.
+- **Current Baseline Surface:** Documento de manufactura imprimible con código QR de trazabilidad por vano.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S12 · Visor 3D y Simulación Cinemática
-- **Objetivo:** Generar la representación volumétrica fotorrealista de la ventana con materiales PBR y simulación de apertura interactiva (giro, oscilo y corredera) para elevar la tasa de cierre comercial.
-- **Roles:** Acceso universal (público si se accede vía enlace de proyecto).
-- **Contrato URL:** `/viewer-3d/:posId` o embebido en portal cliente.
-- **Nota de Roadmap:** Capacidad formalmente planificada (`[PENDIENTE-DECISIÓN: ROADMAP-3D]`).
+### S12 · Visor 3D y Cinemática de Apertura
+- **User Goal:** Visualizar interactivamente la ventana en 3D volumétrico, inspeccionar acabados y simular dinámicamente sus aperturas (practicable, oscilo, corredera).
+- **Roles:** Universal / Clientes y Taller.
+- **Required Information:** Geometría de componentes generada desde `parametric_tree`, shaders de materiales y vectores de pivoteo cinemático.
+- **Business & Security Constraints:** No expone despiece interno ni costos de taller en el bundle público.
+- **Deep-Link Requirement:** Embebido en portal cliente `/view/:token` o ruta técnica `/viewer-3d/:posId`.
+- **Current Baseline Surface:** Canvas 3D interactivo con controles orbitales y selector de apertura.
+- **Surface Flexibility:** `CURRENT_BASELINE` (integrado oficialmente en SHOT-19).
 
-### S13 · Catálogo de Perfiles, Series y Kits de Herrajes
-- **Objetivo:** Visualización y personalización de las series de perfiles de PVC disponibles para el taller (ej: Eurovent, Kömmerling, Rehau, Deceuninck, Aluplast).
+### S13 · Catálogo de Sistemas de Perfiles y Herrajes
+- **User Goal:** Explorar los sistemas de perfiles habilitados para el taller (ej: series de 60mm, 70mm, correderas y batientes) con sus geometrías de nudo.
 - **Roles:** OWNER, WORKSHOP_MANAGER.
-- **Contrato URL:** `/catalogs/systems`.
+- **Required Information:** Registro de series en `profile_systems`, artículos y kits de herrajes asociados.
+- **Business & Security Constraints:** Parámetros leídos de base de datos certificada (Regla 6).
+- **Deep-Link Requirement:** `/catalogs/systems`.
+- **Current Baseline Surface:** Catálogo visual con acordeones por serie.
+- **Surface Flexibility:** `FLEXIBLE`.
 
-### S14 · Compilador de Catálogos Asistido por IA
-- **Objetivo:** Acelerar el alta de nuevos catálogos de fabricantes mediante el análisis de PDFs técnicos y tablas de accesorios, extrayendo dimensiones de nudo y descuentos de perfiles.
+### S14 · Compilador Asistido de Catálogos por IA
+- **User Goal:** Cargar un catálogo técnico nuevo en PDF o Excel y asistirse con IA para mapear artículos, nudos y descuentos a la base de datos.
 - **Roles:** OWNER.
-- **UX:** Pantalla partida que compara el documento técnico con las propiedades mapeadas en base de datos.
+- **Required Information:** Documento PDF/Excel subido, mapeador de columnas y extractor semántico.
+- **Business & Security Constraints:** Los datos extraídos deben verificarse contra el caso de oro antes de activarse para cotizar.
+- **Deep-Link Requirement:** `/catalogs/compiler`.
+- **Current Baseline Surface:** Split-screen: visor de documento a la izquierda, formulario de asignación a la derecha.
+- **Surface Flexibility:** `FLEXIBLE`.
 
 ### S15 · Matriz Junquillo–Vidrio
-- **Objetivo:** Configurar la tabla de correspondencia dimensional que determina qué junquillo corresponde a cada espesor total de vidrio (DVH o simple) para garantizar la presión de estanqueidad.
+- **User Goal:** Definir la regla biunívoca que asigna el junquillo adecuado según el espesor total de vidrio (ej: junquillo curvo 18mm para DVH 24mm).
 - **Roles:** OWNER, WORKSHOP_MANAGER.
-- **Contrato URL:** `/catalogs/systems/:id/glazing`.
+- **Required Information:** Rango de espesores de acristalamiento y SKUs de junquillo compatibles.
+- **Business & Security Constraints:** Evita el armado de termopaneles sin presión de sellado adecuada.
+- **Deep-Link Requirement:** `/catalogs/systems/:id/glazing`.
+- **Current Baseline Surface:** Matriz bidimensional interactiva editable.
+- **Surface Flexibility:** `FLEXIBLE`.
 
-### S16 · Inventario y Registro de Retazos QR
-- **Objetivo:** Registrar las barras cortadas sobrantes con longitud $\ge 600\text{ mm}$, etiquetándolas con código QR para que el optimizador BFD las reutilice en futuras órdenes de trabajo.
+### S16 · Inventario y Registro de Retazos QR (Offcuts)
+- **User Goal:** Registrar retazos sobrantes de barras con longitud $\ge 600\text{ mm}$ e imprimirles código QR para reutilización en corte 1D.
 - **Roles:** WORKSHOP_MANAGER.
-- **UX:** Optimizada para dispositivos móviles con escaneo de cámara integrado.
+- **Required Information:** Longitud remanente en mm, SKU de perfil, color y código de ubicación en estantería.
+- **Business & Security Constraints:** Cumple con el ciclo de estados `AVAILABLE -> RESERVED -> CONSUMED`.
+- **Deep-Link Requirement:** `/inventory/offcuts`.
+- **Current Baseline Surface:** Vista web-móvil adaptada para tablets de taller con lector de cámara QR.
+- **Surface Flexibility:** `FLEXIBLE`.
 
-### S17 · Panel de Certificado de Fabricabilidad
-- **Objetivo:** Mostrar la garantía de calidad del vano tras superar la verificación cruzada doble ciego T8, emitiendo el sello de trazabilidad matemática y certificado DOC-08 con código QR.
+### S17 · Panel de Certificado de Fabricabilidad (DOC-08)
+- **User Goal:** Consultar la certificación técnica del proyecto tras superar el doble ciego T8, con hash criptográfico y sello QR de garantía.
 - **Roles:** OWNER, ESTIMATOR.
-- **Contrato URL:** `/quality/certificates/:id`.
+- **Required Information:** Registro en `quality_certificates`, hash de cálculo, logs de verificación de ambos agentes evaluadores.
+- **Business & Security Constraints:** Inmutabilidad de la firma criptográfica SHA-256.
+- **Deep-Link Requirement:** `/quality/certificates/:id`.
+- **Current Baseline Surface:** Panel de auditoría técnica con visor del certificado descargable.
+- **Surface Flexibility:** `FLEXIBLE`.
 
 ### S18 · Bandeja de Entrada Omnicanal (Email & WhatsApp)
-- **Objetivo:** Centralizar solicitudes de cotización entrantes desde correos o mensajes de clientes, extrayendo automáticamente adjuntos para convertirlos en proyectos borradores.
+- **User Goal:** Centralizar solicitudes de presupuesto entrantes desde emails o mensajes de WhatsApp y convertirlas en proyectos borradores.
 - **Roles:** OWNER, ESTIMATOR.
-- **Contrato URL:** `/inbox`.
+- **Required Information:** Mensaje entrante, remitente, archivos adjuntos (PDFs de planos o fotos de vanos).
+- **Business & Security Constraints:** Tareas en segundo plano desacopladas; creación de proyectos siempre en estado `DRAFT`.
+- **Deep-Link Requirement:** `/inbox`.
+- **Current Baseline Surface:** Bandeja estilo correo electrónico con visor lateral de mensajes y adjuntos.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S19 · Optimizador y Mapa de Corte 1D / Pedido de Barras
-- **Objetivo:** Ejecutar el algoritmo Best Fit Decreasing (BFD) para calcular el patrón de corte óptimo barra por barra, minimizando el desperdicio de PVC/aluminio y generando el pedido consolidado DOC-04/DOC-05.
+### S19 · Optimizador y Mapa de Corte 1D (BFD)
+- **User Goal:** Calcular el patrón de corte óptimo barra por barra mediante Best Fit Decreasing, minimizando la merma y generando el pedido comercial DOC-04/DOC-05.
 - **Roles:** WORKSHOP_MANAGER.
-- **Contrato URL:** `/orders/ot/:id/cutting-plan`.
+- **Required Information:** Lista de piezas de PVC requeridas con sus ángulos de corte (45°/90°) y longitud de barra comercial (6.00 m).
+- **Business & Security Constraints:** Descuento obligatorio de pérdida de soldadura por fusión ($3.00\text{ mm}$ estándar) y ancho de disco (*kerf*). Algoritmo determinista con tie-break congelado.
+- **Deep-Link Requirement:** `/orders/ot/:id/cutting-plan`.
+- **Current Baseline Surface:** Diagrama interactivo de barras de corte con código de barras por pieza.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
 ### S20 · Billetera y Consumo de Créditos IA
-- **Objetivo:** Consultar el saldo disponible de créditos de cómputo para herramientas de visión y optimización, historial de consumos auditados y botón de recarga inmediata.
+- **User Goal:** Visualizar el saldo de créditos para operaciones de IA (OCR, diffs de comandos), historial de consumo auditado y compra de recargas.
 - **Roles:** OWNER exclusivamente.
-- **Contrato URL:** `/settings/wallet`. Inmunidad ante saldo cero (la plataforma base nunca se bloquea si se agotan los créditos).
+- **Required Information:** Saldo de créditos en `tenancy_organizations`, transacciones en ledger de facturación.
+- **Business & Security Constraints:** Inmunidad ante saldo cero: agotar créditos suspende herramientas de IA pero **jamás** bloquea el motor 2D ni la emisión de PDFs.
+- **Deep-Link Requirement:** `/settings/wallet`.
+- **Current Baseline Surface:** Widget de saldo con tabla de auditoría y botón de recarga vía pasarela.
+- **Surface Flexibility:** `FLEXIBLE`.
 
 ### S21 · Consola de Comandos NLP y Diff Preview (Cmd+K)
-- **Objetivo:** Permitir modificaciones ultrarrápidas mediante atajos de teclado y lenguaje natural (ej: *"cambiar todas las hojas a termopanel 4-12-4"*), mostrando siempre un diff visual antes de aplicar cambios y soportando deshacer sagrado (Undo/Cmd+Z).
+- **User Goal:** Ejecutar modificaciones geométricas o comerciales mediante comandos rápidos de teclado o lenguaje natural con previsualización antes/después y soporte de `Cmd+Z` (Undo).
 - **Roles:** OWNER, ESTIMATOR.
-- **Formato:** Overlay flotante contextual desplegable sobre cualquier pantalla de diseño.
+- **Required Information:** Texto del comando del usuario, `current_tree` y contexto de cotización.
+- **Business & Security Constraints:** El LLM solo propone diffs tipados (Tools T2/T3); el cálculo de cotas y precios lo realiza exclusivamente `/engine`.
+- **Deep-Link Requirement:** No requiere URL (superficie flotante superpuesta).
+- **Current Baseline Surface:** Command Bar flotante desplegable con modal de previsualización comparativa antes/después.
+- **Surface Flexibility:** `FLEXIBLE`.
 
-### S22 · Personalizador de Plantillas de Documentos
-- **Objetivo:** Ajustar el diseño visual de los presupuestos PDF (DOC-01), encabezados, firmas y bloques protegidos de disclaimer legal.
+### S22 · Personalizador de Plantillas de Presupuesto
+- **User Goal:** Personalizar el aspecto estético de las cotizaciones PDF (colores institucionales, logotipo del taller, bloques de condiciones y disclaimers protegidos).
 - **Roles:** OWNER.
-- **Contrato URL:** `/settings/templates`.
+- **Required Information:** Configuración de estilos CSS seguros, imágenes de cabecera y términos de pago.
+- **Business & Security Constraints:** Se prohíbe la inyección de código que altere los totales calculados por el motor.
+- **Deep-Link Requirement:** `/settings/templates`.
+- **Current Baseline Surface:** Editor de opciones visuales con previsualizador PDF interactivo.
+- **Surface Flexibility:** `FLEXIBLE`.
 
-### S23 · Gestión de Equipo de Taller y Permisos
-- **Objetivo:** Invitar miembros del taller y asignar roles granulares (Owner, Estimator, Workshop Manager, Installer).
-- **Roles:** OWNER.
-- **Contrato URL:** `/settings/team`.
+### S23 · Gestión de Equipo de Taller y Roles (RBAC)
+- **User Goal:** Invitar colaboradores de la carpintería y asignarles roles con permisos granulares (Owner, Estimator, Workshop Manager, Installer).
+- **Roles:** OWNER exclusivamente.
+- **Required Information:** Email del invitado y rol seleccionado.
+- **Business & Security Constraints:** Control estricto de acceso; solo el Owner puede asignar o revocar roles de administración y precios.
+- **Deep-Link Requirement:** `/settings/team`.
+- **Current Baseline Surface:** Tabla de usuarios con estados de invitación y switches de permisos.
+- **Surface Flexibility:** `FLEXIBLE`.
 
 ### S24 · Suscripción y Facturación (Planes Dekopen)
-- **Objetivo:** Administrar la suscripción mensual/anual de la plataforma (Starter, Profesional, Business, Business 2x), descargar facturas y gestionar métodos de pago con pasarelas (Flow CLP / Paddle USD).
+- **User Goal:** Gestionar el plan de suscripción mensual/anual (Starter, Profesional, Business, Business 2x), actualizar medios de pago y descargar facturas.
 - **Roles:** OWNER exclusivamente.
-- **Contrato URL:** `/settings/billing` (Contrato obligatorio de retorno de pago).
+- **Required Information:** ID de cliente en pasarela de pago (Flow CLP o Paddle USD), estado de suscripción.
+- **Business & Security Constraints:** Idempotencia absoluta en webhooks de facturación (Regla 13).
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/settings/billing`.
+- **Current Baseline Surface:** Panel de suscripción con botones de checkout seguro y tabla de facturas.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.
 
 ### S25 · Configuración General y Políticas de Taller
-- **Objetivo:** Definir holguras de instalación por defecto, pérdida de soldadura por fusión ($3.00\text{ mm}$ estándar), margen de merma presupuestaria y visualización de auditoría.
+- **User Goal:** Configurar parámetros operativos del taller: holgura estándar de instalación, tolerancia de escuadra, pérdida de fusión y margen de merma.
 - **Roles:** OWNER.
-- **Contrato URL:** `/settings/general`.
+- **Required Information:** Parámetros guardados en configuración de la organización.
+- **Business & Security Constraints:** Modificaciones registradas con trazabilidad de usuario.
+- **Deep-Link Requirement:** `/settings/general`.
+- **Current Baseline Surface:** Formulario de preferencias generales de taller.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
-### S26 · Portal Público de Aprobación / Vista de Instalador
-- **Objetivo:** Interfaz pública read-only y responsive para smartphones donde el cliente final aprueba el presupuesto, o donde el instalador en obra revisa las medidas de fijación y nivelación.
+### S26 · Portal Público de Aprobación de Cotización / Vista Instalador
+- **User Goal:** Permitir que el cliente final revise y apruebe online la cotización desde su smartphone, o que el instalador en obra consulte medidas de montaje.
 - **Roles:** Cliente Final / INSTALLER.
-- **Seguridad Inviolable:** El bundle de JS y la respuesta de API **JAMÁS contienen costos de compra, márgenes comerciales ni despiece interno del taller**.
-- **Contrato URL:** `/p/quote/:uuid` o `/view/[token]` (Obligatorio e inmutable).
+- **Required Information:** Token criptográfico UUID de acceso público de solo lectura.
+- **Business & Security Constraints:** Seguridad estricta: **el bundle de JavaScript y las respuestas de API JAMÁS contienen costos de compra, fórmulas de margen ni despiece interno del taller**.
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/p/quote/:uuid` o `/view/:token`.
+- **Current Baseline Surface:** Interfaz web ligera y responsive optimizada para smartphones.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.
 
-### S27 · Intérprete Multimodal de Planos y Croquis OCR
-- **Objetivo:** Procesar planos arquitectónicos, tablas impresas o croquis manuscritos de obra para extraer automáticamente vanos y cargarlos como borrador revisable en menos de 5 minutos humanos.
+### S27 · Intérprete Multimodal OCR de Planos y Croquis
+- **User Goal:** Subir un plano arquitectónico, tabla de vanos o croquis manuscrito de obra y extraer automáticamente los vanos hacia un borrador revisable en menos de 5 minutos humanos.
 - **Roles:** OWNER, ESTIMATOR.
-- **UX:** Pantalla split-screen: izquierda imagen o plano original con marcadores interactivos; derecha grilla editable con celdas semaforizadas (Verde, Amarillo de validación, Rojo de ingreso manual).
-- **Contrato URL:** `/ai/extract-positions`.
+- **Required Information:** Archivo PDF o imagen en alta resolución subido por el usuario.
+- **Business & Security Constraints:** Los apuntes manuscritos son soportados con semáforo de certeza (Verde/Amarillo/Rojo). Toda lectura ambigua exige confirmación humana en split-screen; no se inventan cotas.
+- **Deep-Link Requirement:** `/ai/extract-positions`.
+- **Current Baseline Surface:** Split-screen con plano interactivo a la izquierda y tabla editable a la derecha.
+- **Surface Flexibility:** `CURRENT_BASELINE`.
 
 ### S28 · Cola de Moderación de Catálogo Global
-- **Objetivo:** Interfaz administrativa central para verificar y publicar sistemas de perfiles creados por la comunidad de talleres sin filtrar costos internos de ninguna organización.
+- **User Goal:** Revisar y aprobar solicitudes de publicación comunitaria de series de perfiles sin exponer costos privados de ningún taller.
 - **Roles:** SUPERADMIN exclusivamente.
-- **Contrato URL:** `/admin/queue`.
+- **Required Information:** Serie de perfiles enviada a revisión comunitaria, resultados de validación de casos de oro G-cases a 0.00 mm.
+- **Business & Security Constraints:** Blindaje de costos: el superadministrador jamás tiene acceso a los precios ni proveedores del taller solicitante.
+- **Deep-Link Requirement:** `FIXED_BY_CONTRACT` en `/admin/queue`.
+- **Current Baseline Surface:** Cola de tareas de moderación con diff dimensional de catálogo.
+- **Surface Flexibility:** `FIXED_BY_CONTRACT`.

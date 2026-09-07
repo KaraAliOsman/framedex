@@ -1,11 +1,11 @@
 # DEKOPEN — INFORME DE AUDITORÍA DE FRICCIÓN NORMATIVA Y REFORMA DE CAPACIDAD (v1.0)
 
-> **Tipo de Documento:** Auditoría de Arquitectura Normativa, PRD y Gobernanza Técnica  
-> **Fecha:** Septiembre 2026  
-> **Estado:** Oficial / Propuesta para Aprobación del Owner  
-> **Rama de Preparación:** `normative-capability-cleanup` (base: commit canónico `3900549`)  
-> **Ámbito:** Totalidad documental de `/docs`, `/docs/PRD`, `/docs/archive`, `/docs/plans`, `AGENTS.md` y `README.md`  
-> **Rol Emisor:** Arquitecto Normativo / PRD / Teoría de Dekopen  
+> **Tipo de Documento:** Auditoría de Arquitectura Normativa, PRD y Gobernanza Técnica
+> **Fecha:** Septiembre 2026
+> **Estado:** Oficial / Propuesta para Aprobación del Owner
+> **Rama de Preparación:** `normative-capability-cleanup` (base: commit canónico `3900549`)
+> **Ámbito:** Totalidad documental de `/docs`, `/docs/PRD`, `/docs/archive`, `/docs/plans`, `AGENTS.md` y `README.md`
+> **Rol Emisor:** Arquitecto Normativo / PRD / Teoría de Dekopen
 
 ---
 
@@ -20,8 +20,8 @@ Sin embargo, a lo largo de las iteraciones documentales (de v1.0 a v1.2), una se
 4. Generar confusión y bifurcación de la verdad debido a documentos archivados que se autoproclaman canónicos (`DESCARTES-NO-ALCANCE.md`), copias duplicadas desfasadas en la raíz de `/docs/` y múltiples Biblias concatenadas.
 
 ### El Principio Rector de la Reforma:
-> **MÁXIMA CAPACIDAD + MÁXIMO RIGOR**  
-> **Libertad en CÓMO** (tecnología, layout, ergonomía de componentes, tooling moderno, adaptadores de integración y razonamiento de IA).  
+> **MÁXIMA CAPACIDAD + MÁXIMO RIGOR**
+> **Libertad en CÓMO** (tecnología, layout, ergonomía de componentes, tooling moderno, adaptadores de integración y razonamiento de IA).
 > **Rigor en QUÉ DEBE SER VERDAD** (0.00 mm de tolerancia, motor determinista puro, Decimal para mm y dinero, RLS multi-tenant inviolable, auditoría previa inmutable de precios e IA, idempotencia en cobros y Golden Cases verificados por Gauntlet).
 
 ---
@@ -34,8 +34,8 @@ Se realizó una revisión integral sobre todos los archivos normativos, especifi
 |---|---|---|---|
 | **Protocolo de Agentes** | `/AGENTS.md` | Protocolo de Loop Engineering 2026 | Activo / Primario para agentes |
 | **README Maestro** | `/README.md` | Guía de inicio y mapa de arquitectura | Activo / Informativo y contractual |
-| **Constitución del Builder (Raíz)** | `/docs/CONSTITUTION.md` | 23 Reglas Supremas (v1.2 MASTER) | Activo / Norma Suprema (contiene Regla 0) |
-| **Constitución en Subdirectorio** | `/docs/PRD/CONSTITUTION.md` | Constitución (v1.2) | Desfasado (carece de Regla 0) |
+| **Constitución del Builder** | `/docs/CONSTITUTION.md` | 23 Reglas Supremas (v1.3 MASTER) | Activo / Única Norma Suprema Inapelable |
+| **Constitución Secundaria (Eliminada)** | `/docs/PRD/CONSTITUTION.md` | Duplicado secundario | ELIMINADO (Mandato Owner: Una Sola Constitución) |
 | **Plan de Ejecución de Shots (Raíz)** | `/docs/PLAN_DE_EJECUCION_SHOTS.md` | Roadmap de Shots (v1.1.2) | Desfasado respecto a v1.2 |
 | **Plan Maestro de Shots (PRD)** | `/docs/PRD/PLAN_SHOTS.md` | Secuencia de 24 Shots (v1.2 MASTER) | Activo / Primario para el Roadmap V1 |
 | **Playbook de Sesión** | `/docs/PLAYBOOK_SHOTS.md` | Guía operativa paso a paso | Activo / Procedimental |
@@ -295,19 +295,78 @@ Para erradicar cualquier ambigüedad sobre qué documento prevalece ante una dis
 
 ## 8. Plan de Resolución de Duplicaciones Normativas
 
-Se identificaron duplicaciones críticas en el repositorio que confunden a los agentes de desarrollo. El siguiente cuadro define la acción inmediata para cada documento:
+Se identificaron duplicaciones críticas en el repositorio que confunden a los agentes de desarrollo. Siguiendo el **mandato de Autoridad Única del Owner**, se ejecutó la unificación:
+1. **Una Sola Constitución:** `/docs/CONSTITUTION.md` (v1.3 MASTER) es la única autoridad constitucional. Se eliminó el duplicado secundario `/docs/PRD/CONSTITUTION.md`.
+2. **Punteros Limpios:** Los 22 archivos PRD en raíz se convirtieron en punteros normativos hacia `/docs/PRD/`.
+3. **Cero Pérdida de Contenido:** Se migraron los esquemas JSON T2/T3 a `PRD-10`, la geometría 3D procedimental y cinemática a `PRD-12`, y la especificación de Catálogo Global S28 a `docs/PRD/PRD-20-CATALOGO-GLOBAL.md`.
 
-| Archivo Original / Activo (Canónico) | Duplicado Desfasado o Copia Secundaria | Estado del Duplicado | Acción Normativa Requerida |
+| Archivo Original / Activo (Canónico) | Duplicado Desfasado o Copia Secundaria | Estado del Duplicado | Acción Normativa Ejecutada |
 |---|---|---|---|
-| `/docs/CONSTITUTION.md` (v1.2 MASTER, 23 reglas) | `/docs/PRD/CONSTITUTION.md` | Desfasado (omite Regla 0) | Sincronizar `/docs/PRD/CONSTITUTION.md` con la versión oficial v1.3 |
-| `/docs/PRD/PLAN_SHOTS.md` (v1.2 MASTER) | `/docs/PLAN_DE_EJECUCION_SHOTS.md` | Desfasado (v1.1.2 antiguo) | Reemplazar contenido con puntero directo a `PRD/PLAN_SHOTS.md` |
-| `/docs/PRD/PRD-00.md` a `PRD-19.md` | `/docs/PRD-00.md` a `PRD-19.md` (en raíz) | Desfasados (v1.1.0/v1.1.2) | Reemplazar con avisos de redirección hacia `docs/PRD/` |
-| `/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` | `/docs/SCREENS_SPECIFICATION_S01_S28.md` | Desfasado (en raíz) | Reemplazar con puntero hacia `docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` |
-| `/docs/PRD/PRD-DESIGN-SYSTEM-ADOBE.md` | Fragmentos en `UI_UX_DESIGN_SYSTEM-ARCHIVED.md` | Histórico archivado | Mantener archivado como registro histórico sin autoridad |
-| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_COMPLETA_v1.2_MASTER.md` | Snapshot estático | Agregar disclaimer en encabezado declarándolo vista no autoritativa |
-| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_COMPLETA_v1.1_MASTER.md` | Snapshot viejo | Mover formalmente a registro histórico no autoritativo |
-| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_EJECUCION_v1.1.md` | Snapshot viejo | Mover formalmente a registro histórico no autoritativo |
-| `/docs/PRD/FUTURE_CAPABILITIES.md` | `docs/archive/DESCARTES-NO-ALCANCE.md` | Archivo mal titulado | Reformar descartes con disclaimer de no-autoridad y reclasificación |
+| `/docs/CONSTITUTION.md` (v1.3 MASTER, 23 reglas) | `/docs/PRD/CONSTITUTION.md` | Duplicado secundario | ELIMINADO por mandato del Owner (Una Sola Constitución) |
+| `/docs/PRD/PLAN_SHOTS.md` (v1.3 MASTER) | `/docs/PLAN_DE_EJECUCION_SHOTS.md` | Desfasado (v1.1.2 antiguo) | Reemplazado contenido con puntero directo a `PRD/PLAN_SHOTS.md` |
+| `/docs/PRD/PRD-00.md` a `PRD-19.md` | `/docs/PRD-00.md` a `PRD-19.md` (en raíz) | Desfasados / Duplicados | Migrado contenido único y reemplazados con avisos de redirección |
+| `/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` | `/docs/SCREENS_SPECIFICATION_S01_S28.md` | Desfasado (en raíz) | Reemplazado con puntero hacia `docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` |
+| `/docs/PRD/PRD-DESIGN-SYSTEM-ADOBE.md` | Fragmentos en `UI_UX_DESIGN_SYSTEM-ARCHIVED.md` | Histórico archivado | Mantenido archivado como registro histórico sin autoridad |
+| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_COMPLETA_v1.2_MASTER.md` | Snapshot estático | Agregado disclaimer en encabezado declarándolo vista no autoritativa |
+| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_COMPLETA_v1.1_MASTER.md` | Snapshot viejo | Movido formalmente a registro histórico no autoritativo |
+| Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_EJECUCION_v1.1.md` | Snapshot viejo | Movido formalmente a registro histórico no autoritativo |
+| `/docs/PRD/FUTURE_CAPABILITIES.md` | `docs/archive/DESCARTES-NO-ALCANCE.md` | Archivo mal titulado | Reformado descartes con disclaimer de no-autoridad y reclasificación |
+
+### 8.1. Matriz Exhaustiva de Consolidación de los 22 Archivos PRD
+
+| Root file | Canonical candidate | Identical | Unique root content | Unique canonical content | Classification | Action |
+|---|---|:---:|---|---|---|---|
+| `docs/PRD-00.md` | `docs/PRD/PRD-00.md` | No | Ninguno | Decisiones D1–D30 completas, 2-tier dependencies, precedence rule | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-01.md` | `docs/PRD/PRD-01.md` | No | Ninguno | Fixture DEMO_60 completo, hardware kits, glass matrix, casos G1–G12 | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-02.md` | `docs/PRD/PRD-02.md` | No | Ninguno | DDL completo PG16/PG17, RLS `current_user_org_ids()`, tablas audit | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-03.md` | `docs/PRD/PRD-03.md` | No | Ninguno | Paddle Global (USD MoR), Flow (CLP), ledger idempotente, webhooks HMAC | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-04.md` | `docs/PRD/PRD-04.md` | No | `width_mm: number` obligatorio en todos los vanos | `width_mm?: number` opcional para vanos hijos, modelo recursivo split | Superseded minor text | Convertido a puntero normativo |
+| `docs/PRD-05.md` | `docs/PRD/PRD-05.md` | No | Ninguno | Motor de costos 5 modos extendido, frontera matemática SHOT-06/SHOT-08 | Strict superset in canon | Convertido a puntero normativo |
+| `docs/PRD-06.md` | `docs/PRD/PRD-06.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-07.md` | `docs/PRD/PRD-07.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-08.md` | `docs/PRD/PRD-08.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-09.md` | `docs/PRD/PRD-09.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-10.md` | `docs/PRD/PRD-10.md` | No | Esquemas JSON tipados para Tool T2 (`modify_dimensions`) y Tool T3 (`bulk_discount`) | Action-First Command Bar, protocolo Undo sagrado | Active normative unique content (schemas) | **Migrado contenido único a `docs/PRD/PRD-10.md`**; raíz convertido a puntero |
+| `docs/PRD-11.md` | `docs/PRD/PRD-11.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-12.md` | `docs/PRD/PRD-12.md` | No | Extrusión 3D procedimental, cinemática de apertura (giro, oscilo, corredera), shaders | Enlace público `/view/`, tokenless bundle, exportador CAD 2D DXF | Active normative unique content (3D & kinematics) | **Consolidado en `docs/PRD/PRD-12.md` (v1.3 MASTER)** para SHOT-19; raíz convertido a puntero |
+| `docs/PRD-13.md` | `docs/PRD/PRD-13.md` / `docs/PRD/PRD-20-CATALOGO-GLOBAL.md` | No | Catálogo Global y Moderación S28 (SHOT-20) con blindaje de precios | AI Gateway, white-label routing, credit caps, fallbacks (SHOT-13) | Active normative unique content (displaced module) | **Preservado en `docs/PRD/PRD-20-CATALOGO-GLOBAL.md`**; SHOT-20 actualizado en PLAN_SHOTS; raíz convertido a dual pointer |
+| `docs/PRD-14.md` | `docs/PRD/PRD-14.md` | No | Ninguno | Verificación doble ciego multi-modelo (T8), sello DOC-08, QR | Superseded minor text | Convertido a puntero normativo |
+| `docs/PRD-15.md` | `docs/PRD/PRD-15.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-16.md` | `docs/PRD/PRD-16.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-17.md` | `docs/PRD/PRD-17.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-18.md` | `docs/PRD/PRD-18.md` | Yes | Ninguno | Ninguno | Identical duplicate | Convertido a puntero normativo |
+| `docs/PRD-19.md` | `docs/PRD/PRD-19.md` | No | Ninguno | NFR maestros v1.2 sellados, SLOs de latencia, retención de auditoría | Superseded minor text | Convertido a puntero normativo |
+| `docs/PRD-ANIMATIONS-INTERACTIONS.md` | `docs/PRD/PRD-ANIMATIONS-INTERACTIONS.md` | No | Ninguno | Feedback táctil/auditivo para tablet de taller, microinteracciones framer-motion | Strict superset in canon | Convertido a puntero normativo |
+| `docs/PRD-FRONTEND-APIS-COMPONENTS.md` | `docs/PRD/PRD-FRONTEND-APIS-COMPONENTS.md` | No | Ninguno | Firmas de componentes Canvas 2D, contratos SVG split nodes, tipos frontend | Obsolete subset | Convertido a puntero normativo |
+
+### 8.2. Hashes Criptográficos SHA-256 (Before vs After)
+
+Base evaluada: `39005492b8dbd5f7a3b90f76876a0ad6e63f3714` | Rama: `normative-capability-cleanup`
+
+| Archivo en Raíz `/docs/` | SHA-256 Base (`3900549`) | SHA-256 Actual (Puntero Reformado) | SHA-256 Canónico Activo (`docs/PRD/`) |
+|---|---|---|---|
+| `docs/PRD-00.md` | `f43b8e217cda3bab0380ffccefbc3b1ae6465c7d70a6df48aabffa6df0fae840` | `8c6e48417583f0a783e3312096a7b18d74204db34e7f5a22ad13d1acd15e22a2` | `b00d966009af43b5cf4c87701a1bdc730cb871461c81994e4f65ac76000b1781` |
+| `docs/PRD-01.md` | `824d33be065e2bf05b628e915fe3d6e2cc3b9788e0ce9c4795305adc4c6da80c` | `3aec399dc5ee2e2d50095a85c1b85532312b76699057fa52a47207435a3a03b6` | `c26e8e711edd70eebc3a6ac1d1da12166423781ddc5cd69c7125e1525ca072b6` |
+| `docs/PRD-02.md` | `bc6d43088dc3511c5160b3cef9d8fd5d31135fc2ac9d9237bd4ddd7fc22c39f6` | `acb521ba0dd7d29dace44567dcbd6957a1a5db136f3b23e6c9dd7327e0584068` | `666f668b0421fc47bea9d8b06378d335d509869a89d5f5350bdb4400e71d2f0b` |
+| `docs/PRD-03.md` | `6acd37d2b580af3d0119017c81d08230fb3950f1b3f2e73abd12f50c3fac8fed` | `771aed969b15cba34d7ad19e7def8256dfaecdd8ef4c9598568cda770bc7e6a0` | `962a329d75bcebd37de1cff7ada6eef303b0dcd762ee30aa97871b7830a882cb` |
+| `docs/PRD-04.md` | `c6b97f45ed0d7a75543c071b4e0a5b2bb3f0b358a5641c84cd9aa338a4e6ffa2` | `ea3aadd28b871e0f431f3fb8a4a0d45d95cb1643d97c545a12f33b5972a06edd` | `772a62f02ccf352e06fc0e7020a940419b3142cdebd3281155a4b8720af98cbc` |
+| `docs/PRD-05.md` | `a499bb79ec0cbd73c67ff94ea4fc780a1e2978efbd30197c2d9394c755dd9fcc` | `6e1dee35ad8a935b1eb85181d1b9d0b64e32a5b7904a299b6968ad345cf31573` | `0b87c8c16299f29d646fdfb6d10e3960e0e39d76031b7169b2cb06213322b378` |
+| `docs/PRD-06.md` | `865749db44bc78bf43865a51aeecc8ae0cc71f82f9d48431f4e56c686b72bca9` | `0f84a0d6283d38e9d6302e2a3b606ee28791b897dd1efa79a7b8198c46a3f97c` | `d9fbd6cbe9eccba233cfeb146c0195129f2a8f0df2a0c40c755c0a26b46dcd80` |
+| `docs/PRD-07.md` | `c8724d24dd9e8976a354984c05d17a71228888b2dafd1a43730151c5da67b7e2` | `13bc39f78a2acd0c973eac34b39a620b182acd27774700c4e602a86e84b960fd` | `4bad02371886827f83e59504e3750f6fa216f4009cf09110cc7925d872b5f7d2` |
+| `docs/PRD-08.md` | `04bfef8209fd31562b3320841ef2e3940569aa2a92f6731b98e21229be127466` | `55f825d336151958590b3431be5141ada3dd92979ba598e9c1b94c0a97c71df0` | `ad9418e7d06f1bee346482f2fa12fcb3eae268e23c5755716a0edfb85bb0aec6` |
+| `docs/PRD-09.md` | `287a6fd2bc72e3c2070477f187d1879bc1b1f25293a6512268166078386d987f` | `3ffc7f7ec3d2499ac09c322956e2410a9899a71ec6598b4f048a5079171dfa5b` | `16601e31f80f491bb2d0f8aed756883cf4004cdb444e4b53b2e6311f9fd47266` |
+| `docs/PRD-10.md` | `18bf30c05f5faae4d2a0c1882523259c3dfed7593b2ed37df705f27596d6ba62` | `0a8cd22822e2abc49c8da1a36357ca6ae8f59835d28b1c9258eff70e66f03461` | `fd18211ad2e8ed17faea096770effb6f74ff2ba83e7b75641d2a7cb0f1e562f3` |
+| `docs/PRD-11.md` | `a9fecc34b9e8e5887341b78d62a4199f54727d7698c3caae8f718716eea5456a` | `5e63c279ebf8e9ad623d51f14ba34e74f18186d49da4ae7704aaa6ac2225c9a3` | `a4025adcf01712c65eb5f5b03cd0e01cd009db02e2e8fb78a6ccf9b771ca9590` |
+| `docs/PRD-12.md` | `8c7fcba1e2a2ff75db15bf68d8df5a944ad89a7da9331d34f25476274969d805` | `2d9de462a28139b2672f479b5b7299ebc31fd10339f9b3a94e97e2d580a19b93` | `bbedaf29b77ee18cdac067380a72a9eba92aeb03ab463342428fe6969fb679c5` |
+| `docs/PRD-13.md` | `f4258ac98bb2e6206a7d377dc290213945dbe5acdfa43a121c2a74bcde777810` | `63e17c6d47cebd18fa9e7dd0e58be3579d6058a9862b3f03ca6980b0db2510a8` | `b5815dbd1d7ca657312b9962e973081323ed8857597b2a73ee9815f9d266fc9d` |
+| `docs/PRD-14.md` | `96dc6b3ad5ea934b3e1dbaee1ef9a65d3641d5800e42525419bad4fa3101b382` | `188ef45ec8ee9d87e31913d01398467e98c4a29f72161d6254a95cb06bb0804d` | `5ca4b19663a74f4a8fd7b08f235ae905956058b361082505dbed37e7e95b1052` |
+| `docs/PRD-15.md` | `bf3675c1c53a9a67371506fab6be2c6f630a1911b52f913de28e4dbf5afb5602` | `6e16f6b05f4d41446357e047a9e6524ff8363c4754ddfc90976de5dfda0714e0` | `c9cb69fa3d6112be0acad1ccbea14962ca06a5aec4f902f9cc8c6d47a5900dcb` |
+| `docs/PRD-16.md` | `7d4fc9bfb5162b41ccf012717d20745dd01a3ff6d18ff03f48b1e68aa9614eaf` | `4a742d711339b2e3dbeac29033f385df44f8041cc877880008ab8b7d829f16e4` | `f57ba556410ea18763f3f7ff77f8d7742d4f143d932bfc527e0d57028f054f33` |
+| `docs/PRD-17.md` | `2dc43ccfa56a1a63c6500ef4b3a2576a6f524a30cea6a43480ef23c7e3e32920` | `eb216e069f502aa9d1d0164db518ecd28952df25cf27127988f60d5a10afc14c` | `8fc2ba1157ef850018ad85ef6f45e153df03ac23196b44329429f46f434255e4` |
+| `docs/PRD-18.md` | `920d48bb36e59bcbe888c268a2805dd39e02d478b3be6f5db7e4cf3c471fead1` | `fcbbb3bc0908baaafbe1b8a5c23d9beb2e3d5cb412a8ec51079383b09aeff142` | `eb792794f907836cb82de7dec05771680d33977944a60728d62ff68a91981f4d` |
+| `docs/PRD-19.md` | `c15c24f4a37f9a500ba3df8985a3d6e30d6cbe1290cda830b688a01eed73f0ac` | `a146eba5a289c311dbb5540f246804db10cef1f30fcb587250f241b27ec9d101` | `d73c4ab8b6a65332197dc01ed3c217dc12a34a0e881dd38bb1afc6ea7789010a` |
+| `docs/PRD-ANIMATIONS-INTERACTIONS.md` | `943fcbc9a4f13bad828fcab9577115142370aad51f30708c21e7ca96f1092f10` | `97571a6832db9b268420103c013b36cf8b2279ebeaf9d51ceed8a785d6b0f670` | `3942350fc7c624eb6840143ce856519646e943bc3b416d0d4b88ce8eccd563fe` |
+| `docs/PRD-FRONTEND-APIS-COMPONENTS.md` | `7be7c61ed7c2d6b1028b606ff1ec28f094c9543772f55428ada3c250cca55646` | `bc43c70b82194cd6dbf3c74fb34d1e7ab00beeaa5c029f4995a40606e16df26c` | `e2af7bc4616502accf08e9492d60b0c22bda9d7b7b1d89110bc5c76fbc2cb290` |
 
 ---
 

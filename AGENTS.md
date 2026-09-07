@@ -43,7 +43,7 @@ Para eliminar la alucinación, el "verifier theater" y los fallos en tareas de l
 [ 4. Validación Gauntlet ] [ 5. Salidas Técnicas ]      [ 6. Certificación ]
   • Tolerancia 0.00 mm       • PDF Comercial (DOC-01)     • Sello T8 Doble Ciego (SHOT-21)
   • Reglas R01–R14           • Lista de Corte (DOC-03)    • QR de Fabricabilidad
-  • Aislamiento RLS          • Visor 3D R3F (SHOT-19)     • Trazabilidad SHA-256
+  • Aislamiento RLS          • Visor 3D Técnico & Cinemática (SHOT-19) • Trazabilidad SHA-256
 ```
 
 ---
