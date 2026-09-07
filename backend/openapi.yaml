@@ -120,6 +120,158 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/engine/inspect/:
+    post:
+      operationId: engine_inspect
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineInspectRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EngineInspectRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EngineInspectRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineInspectResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/engine/optimize-cut/:
+    post:
+      operationId: engine_optimize_cut
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineOptimizeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EngineOptimizeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EngineOptimizeRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineOptimizeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/engine/systems/:
     get:
       operationId: engine_systems
@@ -190,6 +342,55 @@ components:
       - id
       - name
       - role
+    AnnotationRequest:
+      type: object
+      properties:
+        bay_id:
+          type: string
+          minLength: 1
+        leaf_id:
+          type: string
+          nullable: true
+          minLength: 1
+        bottom_drain_holes_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        closing_points_perimeter_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        continuous_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        finish_class:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        has_coupler:
+          type: boolean
+          nullable: true
+        measured_d1_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        measured_d2_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+      required:
+      - bay_id
     AuthMeResponse:
       type: object
       properties:
@@ -210,6 +411,158 @@ components:
       - active_organization
       - memberships
       - user
+    CutBar:
+      type: object
+      properties:
+        bar_index:
+          type: integer
+        commercial_sku:
+          type: string
+        material:
+          $ref: '#/components/schemas/CutMaterialEnum'
+        color:
+          type: string
+        stock_length_mm:
+          type: string
+        head_trim_mm:
+          type: string
+        tail_trim_mm:
+          type: string
+        kerf_mm:
+          type: string
+        cuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CutPlacement'
+        kerf_total_mm:
+          type: string
+        productive_length_mm:
+          type: string
+        process_consumed_mm:
+          type: string
+        remainder_mm:
+          type: string
+        waste_mm:
+          type: string
+        yield_pct:
+          type: string
+        waste_pct:
+          type: string
+      required:
+      - bar_index
+      - color
+      - commercial_sku
+      - cuts
+      - head_trim_mm
+      - kerf_mm
+      - kerf_total_mm
+      - material
+      - process_consumed_mm
+      - productive_length_mm
+      - remainder_mm
+      - stock_length_mm
+      - tail_trim_mm
+      - waste_mm
+      - waste_pct
+      - yield_pct
+    CutMaterialEnum:
+      enum:
+      - PVC
+      - ALUMINIUM
+      - STEEL
+      type: string
+      description: |-
+        * `PVC` - PVC
+        * `ALUMINIUM` - ALUMINIUM
+        * `STEEL` - STEEL
+    CutPlacement:
+      type: object
+      properties:
+        piece_id:
+          type: string
+        source_kind:
+          $ref: '#/components/schemas/SourceKindEnum'
+        workshop_sku:
+          type: string
+        material:
+          $ref: '#/components/schemas/CutMaterialEnum'
+        color:
+          type: string
+        length_mm:
+          type: string
+        source_position_id:
+          type: string
+          nullable: true
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+        role:
+          type: string
+        unit_index:
+          type: integer
+        angle_left:
+          type: string
+          nullable: true
+        angle_right:
+          type: string
+          nullable: true
+        sequence:
+          type: integer
+      required:
+      - angle_left
+      - angle_right
+      - bay_id
+      - color
+      - leaf_id
+      - length_mm
+      - material
+      - piece_id
+      - role
+      - sequence
+      - source_kind
+      - source_position_id
+      - unit_index
+      - workshop_sku
+    DiffPreconditions:
+      type: object
+      properties:
+        opening_width_mm:
+          type: string
+        bottom_drain_holes_mm:
+          type: array
+          items:
+            type: string
+      required:
+      - bottom_drain_holes_mm
+      - opening_width_mm
+    DrainFixRuleIdEnum:
+      enum:
+      - R07
+      type: string
+      description: '* `R07` - R07'
+    DrainOperation:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        target:
+          $ref: '#/components/schemas/InspectorTarget'
+        old_value:
+          type: array
+          items:
+            type: string
+        new_value:
+          type: array
+          items:
+            type: string
+      required:
+      - kind
+      - new_value
+      - old_value
+      - target
     EngineCalculateRequestRequest:
       type: object
       properties:
@@ -273,6 +626,123 @@ components:
       - panels
       - profile_cuts
       - reinforcements
+    EngineInspectRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnotationRequest'
+        structural_inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/StructuralInputRequest'
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          default: DESIGN
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
+    EngineInspectResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/EngineInspectResponseStatusEnum'
+        production_allowed:
+          type: boolean
+        evaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleEvaluation'
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectorFinding'
+        source_calculation_hash:
+          type: string
+          nullable: true
+      required:
+      - evaluations
+      - findings
+      - production_allowed
+      - source_calculation_hash
+      - status
+    EngineInspectResponseStatusEnum:
+      enum:
+      - GREEN
+      - YELLOW
+      - RED
+      type: string
+      description: |-
+        * `GREEN` - GREEN
+        * `YELLOW` - YELLOW
+        * `RED` - RED
+    EngineOptimizeRequestRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        cutting_profile_code:
+          type: string
+          nullable: true
+          minLength: 1
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
+    EngineOptimizeResponse:
+      type: object
+      properties:
+        source_calculation_hash:
+          type: string
+        purchase_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseLine'
+        workshop_cut_plan:
+          type: array
+          items:
+            $ref: '#/components/schemas/CutBar'
+      required:
+      - purchase_list
+      - source_calculation_hash
+      - workshop_cut_plan
     EngineSystemsResponse:
       type: object
       properties:
@@ -305,6 +775,24 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - error
+    FinishClassEnum:
+      enum:
+      - WHITE
+      - FOILED
+      type: string
+      description: |-
+        * `WHITE` - WHITE
+        * `FOILED` - FOILED
+    FixabilityEnum:
+      enum:
+      - AUTO_FIXABLE
+      - SUGGESTION_ONLY
+      - BLOCKED_MISSING_AUTHORITY
+      type: string
+      description: |-
+        * `AUTO_FIXABLE` - AUTO_FIXABLE
+        * `SUGGESTION_ONLY` - SUGGESTION_ONLY
+        * `BLOCKED_MISSING_AUTHORITY` - BLOCKED_MISSING_AUTHORITY
     GlassPiece:
       type: object
       properties:
@@ -386,6 +874,113 @@ components:
       - name
       - qty
       - unit
+    InspectorDiff:
+      type: object
+      properties:
+        diff_id:
+          type: string
+        rule_id:
+          $ref: '#/components/schemas/DrainFixRuleIdEnum'
+        target:
+          $ref: '#/components/schemas/InspectorTarget'
+        preconditions:
+          $ref: '#/components/schemas/DiffPreconditions'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrainOperation'
+      required:
+      - diff_id
+      - operations
+      - preconditions
+      - rule_id
+      - target
+    InspectorFinding:
+      type: object
+      properties:
+        rule_id:
+          $ref: '#/components/schemas/InspectorRuleIdEnum'
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        title:
+          type: string
+        diagnosis:
+          type: string
+        risk:
+          type: string
+        recommendation:
+          type: string
+        fixability:
+          $ref: '#/components/schemas/FixabilityEnum'
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+        fix:
+          allOf:
+          - $ref: '#/components/schemas/InspectorDiff'
+          nullable: true
+      required:
+      - bay_id
+      - diagnosis
+      - fix
+      - fixability
+      - leaf_id
+      - recommendation
+      - risk
+      - rule_id
+      - severity
+      - title
+    InspectorRuleIdEnum:
+      enum:
+      - R01
+      - R02
+      - R03
+      - R04
+      - R05
+      - R06
+      - R07
+      - R08
+      - R09
+      - R10
+      - R11
+      - R12
+      - R13
+      - R14
+      type: string
+      description: |-
+        * `R01` - R01
+        * `R02` - R02
+        * `R03` - R03
+        * `R04` - R04
+        * `R05` - R05
+        * `R06` - R06
+        * `R07` - R07
+        * `R08` - R08
+        * `R09` - R09
+        * `R10` - R10
+        * `R11` - R11
+        * `R12` - R12
+        * `R13` - R13
+        * `R14` - R14
+    InspectorTarget:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - bay_id
+      - leaf_id
+    KindEnum:
+      enum:
+      - ADD_BOTTOM_DRAIN_HOLE
+      type: string
+      description: '* `ADD_BOTTOM_DRAIN_HOLE` - ADD_BOTTOM_DRAIN_HOLE'
     LeafWeight:
       type: object
       properties:
@@ -447,6 +1042,17 @@ components:
       - organization_id
       - organization_name
       - role
+    ModeEnum:
+      enum:
+      - DESIGN
+      - WORKSHOP_QC
+      type: string
+      description: |-
+        * `DESIGN` - DESIGN
+        * `WORKSHOP_QC` - WORKSHOP_QC
+    NullEnum:
+      enum:
+      - null
     PanelPiece:
       type: object
       properties:
@@ -540,6 +1146,40 @@ components:
       - id
       - is_demo
       - name
+    PurchaseLine:
+      type: object
+      properties:
+        commercial_sku:
+          type: string
+        manufacturer:
+          type: string
+        supplier:
+          type: string
+          nullable: true
+        stock_length_mm:
+          type: string
+        material:
+          $ref: '#/components/schemas/CutMaterialEnum'
+        color:
+          type: string
+        unit:
+          $ref: '#/components/schemas/PurchaseUnitEnum'
+        qty_bars:
+          type: integer
+      required:
+      - color
+      - commercial_sku
+      - manufacturer
+      - material
+      - qty_bars
+      - stock_length_mm
+      - supplier
+      - unit
+    PurchaseUnitEnum:
+      enum:
+      - BAR
+      type: string
+      description: '* `BAR` - BAR'
     Reinforcement:
       type: object
       properties:
@@ -587,6 +1227,68 @@ components:
         * `ESTIMATOR` - ESTIMATOR
         * `WORKSHOP_MANAGER` - WORKSHOP_MANAGER
         * `INSTALLER` - INSTALLER
+    RuleEvaluation:
+      type: object
+      properties:
+        rule_id:
+          $ref: '#/components/schemas/InspectorRuleIdEnum'
+        status:
+          $ref: '#/components/schemas/RuleEvaluationStatusEnum'
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - bay_id
+      - leaf_id
+      - rule_id
+      - status
+    RuleEvaluationStatusEnum:
+      enum:
+      - PASS
+      - FAIL
+      - NOT_APPLICABLE
+      - MISSING_INPUT
+      type: string
+      description: |-
+        * `PASS` - PASS
+        * `FAIL` - FAIL
+        * `NOT_APPLICABLE` - NOT_APPLICABLE
+        * `MISSING_INPUT` - MISSING_INPUT
+    SeverityEnum:
+      enum:
+      - YELLOW
+      - RED
+      type: string
+      description: |-
+        * `YELLOW` - YELLOW
+        * `RED` - RED
+    SourceKindEnum:
+      enum:
+      - PROFILE
+      - REINFORCEMENT
+      type: string
+      description: |-
+        * `PROFILE` - PROFILE
+        * `REINFORCEMENT` - REINFORCEMENT
+    StructuralInputRequest:
+      type: object
+      properties:
+        target_id:
+          type: string
+          minLength: 1
+        required_ix_cm4:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,4})?$
+          nullable: true
+        structural_basis:
+          type: string
+          nullable: true
+      required:
+      - target_id
     UnitEnum:
       enum:
       - kit

@@ -635,3 +635,22 @@ system/org activos y no hace fórmulas; engine recibe sólo modelos Decimal.
 PD-06-20: glazing_bead_matrix.glass_thickness_mm conserva su nombre y pasa a significar
 espesor de infill retenido; vidrio o panel compatible. No añade columna ni migra nombres.
 Panel G7 de24.00 usa regla24.00, beads705.00/1937.00 qty2, sin sumar masa bead a leaf32.35.
+
+## Autoridades adicionales SHOT-07 (resolución owner 2026-09-06)
+
+Migraciones NUEVAS; no modificar históricas. Contrato completo de campos en
+resolución PD-07-01/03/04/10/21/24 de `../plans/PLAN_SHOT-07.md`.
+
+| Autoridad | Contrato |
+|---|---|
+| profile_purchase_mappings | FK artículo, org nullable, commercial_sku, manufacturer_name, supplier_name nullable, purchase_unit=BAR, is_active, created_at; tenant activo antes de global; cero/múltiples efectivos producen errores tipados |
+| profile_articles.commercial_length_mm | ÚNICA longitud de stock para ProfileCut; sku sigue técnico, material existente; color de request WHITE |
+| reinforcement_articles | sistema, org nullable, parent_profile_article_id, SKU técnico/comercial, nombre/fabricante/proveedor, stock_length, thickness/ix nullable, BAR, default/active; cero/múltiples defaults fallan; sin segunda masa |
+| cutting_profiles | org nullable, code/name, kerf/head/tail Decimal, default/active; code explícito único visible o único default efectivo; sin fallback oculto |
+| inspector_rule_configs | sistema, org nullable, R01…14, params JSONB, active, timestamps; unique scope/system/rule; tenant/global; 14 configs obligatorias; parse params::text con parse_float/parse_int=Decimal y modelos específicos |
+| profile_systems.chamber_clearance_mm | NUMERIC(10,2), obligatorio para sistemas aptos para Inspector; DEMO sintético12 |
+| hardware_kits.carriage_capacity_kg | NUMERIC nullable; exigido sólo cuando R14 se activa; dual actual puede ser NULL |
+
+RLS global/tenant según catálogo existente. Datos nuevos DEMO_60 sin ficha deben
+identificarse DEMO_60 SYNTHETIC FIXTURE. Masa de acero sigue en
+profile_articles.steel_weight_kg_m. No prices/orders/offcuts nuevos.

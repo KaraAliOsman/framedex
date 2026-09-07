@@ -105,14 +105,14 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Invalid parametric_tree") from error
 
 
-def calculate_from_api(
+def normalized_root_from_api(
     *,
     parametric_tree: object,
     nominal_width_mm: Decimal,
     nominal_height_mm: Decimal,
     color: str,
     params: SystemParams,
-) -> EngineResult:
+) -> ParametricNode:
     if color != "WHITE":
         raise UnsupportedEngineContract("Only WHITE has a canonical SHOT-04 color mapping")
 
@@ -123,6 +123,17 @@ def calculate_from_api(
         raise InvalidEngineRequest("nominal_height_mm conflicts with parametric_tree")
     root = root.model_copy(
         update={"width_mm": nominal_width_mm, "height_mm": nominal_height_mm}
+    )
+    return root
+
+
+def calculate_from_api(
+    *, parametric_tree: object, nominal_width_mm: Decimal, nominal_height_mm: Decimal,
+    color: str, params: SystemParams,
+) -> EngineResult:
+    root = normalized_root_from_api(
+        parametric_tree=parametric_tree, nominal_width_mm=nominal_width_mm,
+        nominal_height_mm=nominal_height_mm, color=color, params=params,
     )
     try:
         return calculate_geometry(root, params, is_foiled=False)

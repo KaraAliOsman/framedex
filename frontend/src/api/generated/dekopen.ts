@@ -9,6 +9,10 @@ import type {
   AuthMeResponse,
   EngineCalculateRequestRequest,
   EngineCalculateResponse,
+  EngineInspectRequestRequest,
+  EngineInspectResponse,
+  EngineOptimizeRequestRequest,
+  EngineOptimizeResponse,
   EngineSystemsResponse,
   ErrorResponse,
 } from "./models";
@@ -135,6 +139,169 @@ export const engineCalculate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(engineCalculateRequestRequest),
+  });
+};
+
+export type engineInspectResponse200 = {
+  data: EngineInspectResponse;
+  status: 200;
+};
+
+export type engineInspectResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type engineInspectResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type engineInspectResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type engineInspectResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type engineInspectResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type engineInspectResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type engineInspectResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type engineInspectResponseSuccess = engineInspectResponse200 & {
+  headers: Headers;
+};
+export type engineInspectResponseError = (
+  | engineInspectResponse400
+  | engineInspectResponse401
+  | engineInspectResponse403
+  | engineInspectResponse404
+  | engineInspectResponse409
+  | engineInspectResponse422
+  | engineInspectResponse503
+) & {
+  headers: Headers;
+};
+
+export type engineInspectResponse = engineInspectResponseSuccess | engineInspectResponseError;
+
+export const getEngineInspectUrl = () => {
+  return `/api/v1/engine/inspect/`;
+};
+
+export const engineInspect = async (
+  engineInspectRequestRequest: EngineInspectRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<engineInspectResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<engineInspectResponse>(getEngineInspectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineInspectRequestRequest),
+  });
+};
+
+export type engineOptimizeCutResponse200 = {
+  data: EngineOptimizeResponse;
+  status: 200;
+};
+
+export type engineOptimizeCutResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type engineOptimizeCutResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type engineOptimizeCutResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type engineOptimizeCutResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type engineOptimizeCutResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type engineOptimizeCutResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type engineOptimizeCutResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type engineOptimizeCutResponseSuccess = engineOptimizeCutResponse200 & {
+  headers: Headers;
+};
+export type engineOptimizeCutResponseError = (
+  | engineOptimizeCutResponse400
+  | engineOptimizeCutResponse401
+  | engineOptimizeCutResponse403
+  | engineOptimizeCutResponse404
+  | engineOptimizeCutResponse409
+  | engineOptimizeCutResponse422
+  | engineOptimizeCutResponse503
+) & {
+  headers: Headers;
+};
+
+export type engineOptimizeCutResponse =
+  engineOptimizeCutResponseSuccess | engineOptimizeCutResponseError;
+
+export const getEngineOptimizeCutUrl = () => {
+  return `/api/v1/engine/optimize-cut/`;
+};
+
+export const engineOptimizeCut = async (
+  engineOptimizeRequestRequest: EngineOptimizeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<engineOptimizeCutResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<engineOptimizeCutResponse>(getEngineOptimizeCutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineOptimizeRequestRequest),
   });
 };
 

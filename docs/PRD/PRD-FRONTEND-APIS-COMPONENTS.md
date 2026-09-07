@@ -189,7 +189,7 @@ UUID de DEMO_60 no se hardcodea como autoridad productiva del navegador.
   │           ├── <CotaWidthBox />
   │           ├── <CotaHeightBox />
   │           └── <CotaSplitOffsetBox />
-  └── <DockableInspectorPanel>           // Panel lateral dockable estilo Adobe (320px)
+  └── <InspectorModalS07>               // Modal dentro de S06; tabs Inspector y Corte 1D
         ├── <AccordionDimensions />      // Inputs numéricos directos (W, H, Offset)
         ├── <AccordionProfileSystem />   // Selector de serie, color y pérdidas
         ├── <AccordionGlazing />         // Matriz junquillo-vidrio
@@ -197,3 +197,30 @@ UUID de DEMO_60 no se hardcodea como autoridad productiva del navegador.
         ├── <AccordionInspector />       // Semáforo y hallazgos con botón 1-clic fix
         └── <WorkshopApprovalBar />      // Botón primario verde para generar OT
 ```
+
+## SHOT-07 — S07, derivados y fix autorizado
+
+S07 es MODAL de /projects/:id/positions/:posId/edit, superficie demo vigente,
+sin ruta /inspector. Tabs Inspector y Corte1D; Pedido muestra SKU comercial;
+Plan de corte de taller muestra SKU técnico, barras/cortes, kerf/trims/remanente.
+TanStack Query guarda Inspector/BFD remotos; Zustand sólo inputs técnicos,
+WorkshopAnnotations y preview diff. No duplicar EngineResult. Light/Dark.
+
+POST /api/v1/engine/inspect/: calculation request, annotations, structural
+inputs y mode DESIGN/WORKSHOP_QC. source_calculation_hash coincide con calculate
+si geometry completa; nullable en preflight bloqueado. Errores tipados humanos.
+POST /api/v1/engine/optimize-cut/: calculation request; server calcula piezas,
+carga stock/política y optimiza. No confiar en cortes enviados por navegador.
+Devuelve source_calculation_hash sin modificar identidad.
+Ambos JWT/org/OWNER aal2/RLS y catálogo server-authoritative.
+Calculate conserva exactamente sus siete claves; Inspector/BFD fuera de hash y
+golden byte-identical. Contratos detallados en resolución íntegra del plan SHOT07.
+
+R07 fix tipado ADD_BOTTOM_DRAIN_HOLE: width1000 con dos drenajes válidos y centro
+ausente propone500. InspectorDiff contiene diff_id/rule_id/target/preconditions/
+operations; union discriminada, nunca JSON Patch arbitrario. Preview→clic→validar
+precondiciones→draft→calculate→inspect→commit sólo con ambos success; rollback
+exacto ante fallo. Reaplicar no duplica y una precondición obsoleta falla sin mutar.
+R07 desaparece tras recálculo y hash geométrico sigue igual.
+WorkshopReadiness=inspector.production_allowed AND cut_optimization.ok; errores
+config/stock/fit deshabilitan gate sin falsificar el semáforo. No OT/persistencia.

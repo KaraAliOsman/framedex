@@ -15,7 +15,7 @@
 | **S04** | Listado de Proyectos y Cotizaciones | `/projects` | OWNER, ESTIMATOR, WORKSHOP_MANAGER |
 | **S05** | Detalle de Proyecto y Grilla de Vanos | `/projects/:id` | OWNER, ESTIMATOR, WORKSHOP_MANAGER |
 | **S06** | Editor 2D / Canvas SVG Paramétrico | `/projects/:id/positions/:posId/edit` | OWNER, ESTIMATOR |
-| **S07** | Inspector Técnico y Corrección en 1 Clic | Modal en `/positions/:id/edit` | OWNER, ESTIMATOR |
+| **S07** | Inspector Técnico y Corrección en 1 Clic | Modal en `/projects/:id/positions/:posId/edit` | OWNER, ESTIMATOR |
 | **S08** | Explosión BOM y Despiece Milimétrico | `/projects/:id/bom` | OWNER, ESTIMATOR, WORKSHOP_MANAGER |
 | **S09** | Gestión de Listas de Costo y Precios | `/pricing/cost-lists` | OWNER |
 | **S10** | Vista Previa y Congelación de Cotización PDF | `/projects/:id/quote-preview` | OWNER, ESTIMATOR |

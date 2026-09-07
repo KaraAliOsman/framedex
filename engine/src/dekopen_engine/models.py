@@ -99,6 +99,7 @@ class HardwareKitRule(EngineModel):
     stay_arms_qty: int = 1
     contents: list[HardwareComponent] = Field(default_factory=list)
     weight_kg: Decimal | None = None
+    carriage_capacity_kg: Decimal | None = None
 
 
 class EffectiveProfileArticle(EngineModel):

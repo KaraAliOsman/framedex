@@ -8,21 +8,25 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_shot_05_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_authorized_shot_07_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
         "/api/v1/engine/systems/",
+        "/api/v1/engine/inspect/",
+        "/api/v1/engine/optimize-cut/",
     }
     bearer = schema["components"]["securitySchemes"]["SupabaseBearer"]
     assert bearer == {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
 
 
 def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
-    schema_text = OPENAPI.read_text(encoding="utf-8")
-    assert "calculation_hash" in schema_text
-    assert "inspector" not in schema_text
+    schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
+    assert set(schema["components"]["schemas"]["EngineCalculateResponse"]["properties"]) == {
+        "calculation_hash", "profile_cuts", "reinforcements", "glasses",
+        "panels", "hardware_items", "leaf_weights",
+    }
 
 
 def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
@@ -31,6 +35,8 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
         ("/api/v1/auth/me/", "get"),
         ("/api/v1/engine/calculate/", "post"),
         ("/api/v1/engine/systems/", "get"),
+        ("/api/v1/engine/inspect/", "post"),
+        ("/api/v1/engine/optimize-cut/", "post"),
     ):
         header = next(p for p in schema["paths"][path][method]["parameters"] if p["name"] == "X-Organization-ID")
         assert header["in"] == "header"

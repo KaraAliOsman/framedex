@@ -235,7 +235,7 @@ class SystemParamsRepository:
                 SELECT sku, name, opening_type, min_leaf_width_mm,
                        max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
                        max_leaf_weight_kg, rail_type, carriages_qty,
-                       stay_arms_qty, contents::text, weight_kg
+                       stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg
                 FROM public.hardware_kits
                 WHERE system_id = %s AND is_active = TRUE
                   AND (org_id IS NULL OR org_id = %s)
@@ -259,6 +259,7 @@ class SystemParamsRepository:
                 stay_arms_qty=int(cast(int, row[10])),
                 contents=_hardware_contents(row[11]),
                 weight_kg=_decimal(row[12]) if row[12] is not None else None,
+                carriage_capacity_kg=_decimal(row[13]) if row[13] is not None else None,
             )
             for row in rows
         ]

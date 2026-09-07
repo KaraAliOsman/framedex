@@ -7,6 +7,7 @@ ENGINE_SOURCE = Path(__file__).resolve().parents[1] / "src" / "dekopen_engine"
 FORBIDDEN_IMPORT_ROOTS = {
     "django",
     "http",
+    "httpx",
     "os",
     "pathlib",
     "psycopg",
@@ -14,6 +15,10 @@ FORBIDDEN_IMPORT_ROOTS = {
     "socket",
     "sqlalchemy",
     "urllib",
+    "random",
+    "time",
+    "subprocess",
+    "io",
 }
 
 
