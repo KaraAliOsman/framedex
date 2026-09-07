@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { engineCalculate, engineInspect, engineOptimizeCut } from "../../api/generated/dekopen";
 import type {
@@ -215,6 +215,28 @@ describe("SHOT-07 transactional modal", () => {
     await screen.findByRole("alert");
     expect(useCanvasStore.getState().annotations).toEqual(original);
     expect(useCanvasStore.getState().inputs.nominalWidthMm).toBe("1100.00");
+  });
+  it("discards a correction when the editor unmounts before calculation returns", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const normal = vi.mocked(engineCalculate).getMockImplementation()!;
+    vi.mocked(engineCalculate).mockImplementation(async (...args) => {
+      await gate;
+      return normal(...args);
+    });
+    const cache = mount();
+    await preview();
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar corrección" }));
+    cleanup();
+    await act(async () => {
+      release();
+      await gate;
+    });
+    expect(useCanvasStore.getState().annotations).toEqual(original);
+    expect(engineInspect).toHaveBeenCalledTimes(1);
+    expect(cache.getQueriesData({ queryKey: ["engine-calculation"] })).toEqual([]);
   });
   it("does not approve a GREEN inspector when BFD fails", async () => {
     vi.mocked(engineInspect).mockResolvedValue({

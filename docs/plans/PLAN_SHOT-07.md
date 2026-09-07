@@ -2,7 +2,7 @@
 
 Base: `39005492b8dbd5f7a3b90f76876a0ad6e63f3714`. Rama: `shot-07`.
 Owner: resolución `aade4165-9ade-4078-a90d-f32bb2ded1ed`, 2026-09-06.
-PD-07-01…29 RESUELTAS. FASE 2 autorizada hasta PR protegido con cuatro checks verdes. NO MERGE.
+PD-07-01…29 RESUELTAS. FASE 2 local autorizada. Última orden owner: detener antes de push/PR/merge funcional final.
 Codex es único escritor. No SHOT-06B/08 ni G8/G9/G10/G11/G12.
 
 ## Contrato activo y precedencia
@@ -63,6 +63,29 @@ G1–G7 intactos; cinco xfails; golden sólo --check, sin regenerar.
 No marcar implementación, tests ni gauntlet completos sin evidencia real.
 
 ## Registro de ejecución
+
+### Reconciliación y continuación 2026-09-07
+
+- Orden vigente: adjunto owner `b2aab8a3-99e1-45e6-ad0a-144b323e0458`, continuar implementación existente; cierre local y STOP antes de push/PR/merge funcional.
+- PR #18 ya merged: `3421497ffffd97f1837ee929a24ee4cd8361ff77`; cuatro required contexts completed/success sobre `7b2ccda6efcca0ab6dab899bc0d2bfe47aeb36dc`.
+- Starting SHOT-07 HEAD: `e356afe8f47f2c6d9e66e091dde1836b003850df`, working tree limpio. Checkpoint íntegro ya existente: `09f09577fa16813f925015d65f519cdd22c1852f` (`chore(shot-07): checkpoint before v1.3 reconciliation`). Rama remota shot-07 no encontrada.
+- Fetch y merge completo de origin/main `3421497ffffd97f1837ee929a24ee4cd8361ff77` dentro de shot-07. Merge local `d629224a99f1eaa80225d28217e37d3f7a6c947d`, sin conflictos. Sin rebase/reset/cherry-pick.
+- Rule 0: 0 contradicciones materiales nuevas. Precedencia temporal v1.3 conserva PD-07-01…29 y S07 modal. Comparación checkpoint→merge: engine/backend/frontend/supabase/check_dod byte-contractual sin cambios funcionales; harness/documentación integrados.
+- Docker Engine comprobado operativo: 29.7.2 Linux. Python oficial 3.12.10. El bloqueo previo Docker/v1.3 está resuelto, no es pendiente activo.
+- Targeted post-merge: checker lint EXIT 0, OpenAPI/Orval reproducible; seis integraciones SHOT-07 PASS con Auth/PostgreSQL reales.
+- Gap encontrado por test: unmount del editor durante calculate permitía commit tardío de R07. Guard de ciclo de vida y verificación de contexto antes de calculate, antes de inspect y antes de commit; test rojo antes de reparar, 15 tests del modal PASS después.
+- E2E detectó expectativa de formato equivocada: entradas declaradas se serializan a cuatro decimales y centro a dos. Se preservan datos/API y se corrige sólo la expectativa exacta del test; no tolerancia numérica ni cambio de fórmula.
+- Inspector: 73 tests PASS, incluyendo ausencia individual de las 14 configs, missing structural basis/Ix, no invención de drenajes laterales, observaciones ausentes/duplicadas/fuera de límite. Ruff y mypy 32 módulos PASS.
+- E2E de estabilización: 5/5 PASS, incluidos Auth real, TOTP, Canvas, modal Light/Dark, rollback de red y R07. Revisión visual de ambas capturas: pedido comercial y plan de taller separados, estados y controles legibles.
+- Cierre canónico ejecutado una vez tras estabilizar: `python scripts/check_dod.py all` → **EXIT 0** (Python 3.12.10 oficial). Evidencia local ignorada por Git: `scratch/shot07-canonical-all.log`.
+- Resultado: engine **186 PASS** (Inspector73, BFD20); backend **119 PASS**, incluidas **29 integration** reales; Vitest **59 PASS**; Playwright Chromium/Supabase/Mailpit **5 PASS**; pgTAP **213/213** en6 archivos; DB lint sin warnings; PostgreSQL16 cadena completa, upgrade poblado07, preservación06 y rollback PASS; build PASS.
+- Core mutations **20/20 killed**. G1–G7 PASS. Diferidos canónicos estrictos: G8→SHOT-06B xfail; G9→SHOT-06B xfail; G10→SHOT-24 xfail; G11→SHOT-06B xfail; G12→SHOT-06B xfail. Ninguno activado.
+- OpenAPI/Orval reproducible; Ruff/ESLint/Prettier/tsc/mypy/Django PASS. Golden **read-only byte check PASS**, sin diff frente a main; hash `sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21`. No regeneración Golden.
+- Canvas en cierre canónico: **105.100, 89.800, 115.300, 89.000, 77.100 ms**, cinco mediciones <300ms. Semáforo 150ms y pulso300ms verificados en ambos temas.
+- Sin warnings de lint/tipos/tests/DB. Se conservó el aviso informativo de Supabase CLI sobre versión2.117.0 disponible y los NOTICE de extensión pgTAP existente; CLI sigue en pin autorizado2.116.0. No bypass ni cambios al checker/CI durante esta reconciliación.
+- Sin pendientes funcionales conocidos ni nuevas contradicciones materiales; PD07 permanece congelada. Cierre **local** verde: la integración protegida de SHOT-07 todavía requiere push/PR/CI y autorización posterior. STOP antes de push/PR/merge funcional. SHOT-08 no iniciado.
+
+### Evidencia previa a la reconciliación (histórica)
 
 - Resolución incorporada íntegramente; PRD01/02/06/07, ANIM, frontend/API y pantalla S07 alineados.
 - Regla0/20: las28 pendientes previas quedan resueltas por owner. R10 ahora WORKSHOP_QC alinea también DOC06 a1.50, eliminando su antigua segunda tolerancia1.0.

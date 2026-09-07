@@ -298,7 +298,7 @@ for (const theme of ["light", "dark"] as const) {
     expect(inspected.source_calculation_hash).toBe(cuts.source_calculation_hash);
     expect(inspected.status).toBe("GREEN");
     await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "GREEN");
-    await expect(drains).toHaveValue("100.00, 500.00, 900.00");
+    await expect(drains).toHaveValue("100.0000, 500.00, 900.0000");
     await expect(modal.getByRole("button", { name: "Aplicar corrección" })).toHaveCount(0);
     await expect(approve).toBeEnabled();
     const transition = await modal

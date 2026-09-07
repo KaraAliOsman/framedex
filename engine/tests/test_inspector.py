@@ -4,6 +4,7 @@ from dataclasses import replace
 from decimal import Decimal as D
 
 import pytest
+from pydantic import ValidationError
 
 from dekopen_engine.geometry import calculate_geometry, compute_geometry
 from dekopen_engine.hardware import NoCompatibleHardwareKit
@@ -218,3 +219,51 @@ def test_diagnostic_facts_do_not_relax_strict_calculation(demo_60_params: System
     assert facts.result is None
     assert any(e.rule_id.value == "R06" and e.status is RuleEvaluationStatus.FAIL
                for e in inspect(InspectorInput(facts, D("12")), config).evaluations)
+
+
+@pytest.mark.parametrize("number", range(1, 15))
+def test_all_fourteen_configs_are_required(config: InspectorConfig, number: int) -> None:
+    raw = config.model_dump()
+    del raw[f"R{number:02d}"]
+    with pytest.raises(ValidationError):
+        InspectorConfig.model_validate(raw)
+
+
+@pytest.mark.parametrize("basis,ix", [(None, D("45")), (" ", D("45")), ("External", None)])
+def test_r05_missing_structural_authority_is_red(config: InspectorConfig,
+                                               basis: str | None, ix: D | None) -> None:
+    data = InspectorInput(GeometryComputation(spans=[SpanTechnicalFacts("T", "MULLION", D("1800.01"))]),
+        D("12"), structural_inputs=[StructuralInput(target_id="T", required_ix_cm4=D("45"),
+                                                    structural_basis=basis)],
+        reinforcement_ix_by_target={"T": ix})
+    result = inspect(data, config)
+    assert state(data, config, "R05") == "MISSING_INPUT"
+    assert result.status == "RED" and not result.production_allowed
+    assert result.findings[0].fixability.value == "BLOCKED_MISSING_AUTHORITY"
+
+
+@pytest.mark.parametrize("holes", [[], [D("100")], [D("100"), D("500")]])
+def test_r07_never_invents_lateral_positions(config: InspectorConfig, holes: list[D]) -> None:
+    result = inspect(opening_data(bottom_drain_holes_mm=holes), config)
+    finding = next(f for f in result.findings if f.rule_id.value == "R07")
+    assert finding.fix is None and finding.fixability.value == "SUGGESTION_ONLY"
+
+
+def test_missing_observations_and_coupler(config: InspectorConfig) -> None:
+    assert state(data_with_leaf(leaf()), config, "R08") == "MISSING_INPUT"
+    assert state(replace(data_with_leaf(leaf()), chamber_clearance_mm=None), config, "R11") == "MISSING_INPUT"
+    assert state(opening_data(), config, "R09") == "MISSING_INPUT"
+    assert state(replace(opening_data(), mode=InspectionMode.WORKSHOP_QC), config, "R10") == "MISSING_INPUT"
+    assert state(opening_data(continuous_width_mm=D("4000.01"), finish_class="WHITE",
+                              has_coupler=True), config, "R09") == "PASS"
+
+
+def test_duplicate_observation_targets_and_invalid_coordinates_fail_closed(config: InspectorConfig) -> None:
+    data = opening_data(bottom_drain_holes_mm=[D("100"), D("900")])
+    with pytest.raises(ValueError, match="Duplicate annotation"):
+        inspect(replace(data, annotations=data.annotations * 2), config)
+    for holes in ([D("-0.01")], [D("100"), D("100.00")]):
+        with pytest.raises(ValidationError):
+            WorkshopAnnotations(bay_id="B", bottom_drain_holes_mm=holes)
+    with pytest.raises(ValueError, match="outside"):
+        inspect(opening_data(bottom_drain_holes_mm=[D("1000.01")]), config)

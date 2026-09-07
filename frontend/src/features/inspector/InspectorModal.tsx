@@ -46,6 +46,13 @@ export function InspectorModal({
   const [pulse, setPulse] = useState(0);
   const [approved, setApproved] = useState(false);
   const currentOrg = useRef(organizationId);
+  const mountEpoch = useRef(0);
+  useEffect(
+    () => () => {
+      mountEpoch.current += 1;
+    },
+    [],
+  );
   useEffect(() => {
     currentOrg.current = organizationId;
   }, [organizationId]);
@@ -108,18 +115,24 @@ export function InspectorModal({
     setApproved(false);
     const inputIdentity = JSON.stringify(inputs);
     const annotationIdentity = JSON.stringify(annotations);
+    const epoch = mountEpoch.current;
+    const unchanged = (): boolean =>
+      epoch === mountEpoch.current &&
+      JSON.stringify(useCanvasStore.getState().inputs) === inputIdentity &&
+      JSON.stringify(useCanvasStore.getState().annotations) === annotationIdentity &&
+      currentOrg.current === organizationId;
     try {
       const draft = previewDrainDraft(annotations, diff, inputs.nominalWidthMm);
+      if (!unchanged()) throw new Error("stale_correction");
       const recalculated = await engineCalculate(technical);
       if (recalculated.status !== 200) throw new Error("calculation_failed");
+      if (!unchanged()) throw new Error("stale_correction");
       const checked = await engineInspect({ ...technical, annotations: draft, mode: "DESIGN" });
       if (
         checked.status !== 200 ||
         checked.data.source_calculation_hash !== recalculated.data.calculation_hash ||
         recalculated.data.calculation_hash !== calculationHash ||
-        JSON.stringify(useCanvasStore.getState().inputs) !== inputIdentity ||
-        JSON.stringify(useCanvasStore.getState().annotations) !== annotationIdentity ||
-        currentOrg.current !== organizationId
+        !unchanged()
       ) {
         throw new Error("stale_correction");
       }
@@ -128,9 +141,9 @@ export function InspectorModal({
       setAnnotations(draft);
       setPulse((value) => value + 1);
     } catch (failure) {
-      setError(humanError(failure));
+      if (epoch === mountEpoch.current) setError(humanError(failure));
     } finally {
-      setBusy(false);
+      if (epoch === mountEpoch.current) setBusy(false);
     }
   }
   function saveObservations(): void {
