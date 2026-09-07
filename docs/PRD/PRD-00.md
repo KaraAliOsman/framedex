@@ -26,7 +26,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 
 ---
 
-## 3. Mapa Completo de Documentos PRD-00 a PRD-19
+## 3. Mapa Completo de Documentos PRD-00 a PRD-20
 
 | ID | Documento | Contenido Principal | Bloquea a | Fase |
 |---|---|---|---|---|
@@ -50,6 +50,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
 | **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
+| **PRD-20** | Catálogo Global y Moderación | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
 
 ---
 
@@ -75,8 +76,8 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 - **SHOT-16:** Comandos T2/T3/T5 + modal diff + undo sagrado.
 - **SHOT-17:** Plantillas PDF 3 slots + bloques protegidos.
 - **SHOT-18:** Paddle global + landing legal en Framer (w8-9) $\rightarrow$ **Profesional a cobro**.
-- **SHOT-19:** Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática.
-- **SHOT-20:** Catálogo global + cola admin (Pantalla S28).
+- **SHOT-19:** Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática (PRD-12).
+- **SHOT-20:** Catálogo global + cola admin (Pantalla S28) (PRD-20).
 - **SHOT-21:** Certificado T8 doble ciego + DOC-08 + QR $\rightarrow$ **Business a cobro**.
 - **SHOT-22:** Comparador T10 + bandeja email (SendGrid).
 - **SHOT-23:** Autopilot Max T9 + Fin + PostHog.

@@ -9,69 +9,47 @@
 
 ## 1. Misión del Módulo de Salidas Digitales (SHOT-19)
 
-Entregar a los talleres tres herramientas comerciales y técnicas de alto impacto que modernizan la interacción con constructoras y clientes finales:
-1. **Enlace Web en Vivo para Clientes (`/view/[token]`):** Portal interactivo para que el cliente final o la constructora revise la cotización desde cualquier dispositivo sin instalar software.
-2. **Exportador de Planos Técnicos 2D (.DXF):** Descarga instantánea de secciones de perfiles y elevaciones en formato compatible con AutoCAD para arquitectos y proyectistas.
-3. **Visor 3D Técnico y Cinemática de Apertura:** Visualización volumétrica fotorrealista interactiva a partir del `parametric_tree` 2D con simulación dinámica de apertura para maximizar la tasa de cierre de ventas.
-*(Nota de Alcance: La Realidad Aumentada [AR] en terreno permanece como Future Capability posterior post-V1).*
+Entregar a los talleres tres herramientas comerciales y técnicas de alto impacto para la interacción con constructoras y clientes finales:
+1. **Enlace Web en Vivo para Clientes (`/view/[token]`):** Portal interactivo para que el cliente final o la constructora revise la cotización desde cualquier dispositivo.
+2. **Exportador de Planos Técnicos 2D (.DXF):** Descarga de secciones de perfiles y elevaciones en formato compatible con CAD para proyectistas y arquitectos.
+3. **Visor 3D Técnico y Cinemática de Apertura:** Visualización volumétrica interactiva generada a partir del `parametric_tree` de `/engine` con simulación dinámica de apertura.
+*(Nota de Alcance: La Realidad Aumentada [AR] en terreno permanece como Future Capability diferida a post-V1).*
 
 ---
 
-## 2. Especificación del Enlace Web en Vivo (`/view/[token]`)
+## 2. Contratos Normativos Vinculantes (Binding Architecture Contracts)
 
-Ruta pública de solo lectura protegida con token criptográfico UUID:
-- **Seguridad Inviolable:** El bundle de JavaScript y las respuestas de API **JAMÁS contienen costos de compra, fórmulas de margen ni despiece interno del taller**. Solo exponen dimensiones exteriores, tipo de apertura, color, vidrio y precio de venta final.
-- **Interactividad Comercial:** El cliente puede aprobar el presupuesto directamente desde su teléfono o solicitar ajustes.
-- **Acciones Disponibles:**
-  - `Descargar Cotización Oficial (PDF DOC-01)`
-  - `Aceptar Presupuesto y Solicitar Anticipo`
-  - `Ver Plano Técnico Vectorial (SVG)`
-  - `Inspeccionar en 3D Interactivo con Cinemática`
+Los siguientes requerimientos constituyen el contrato formal de SHOT-19 y no admiten variación sin un cambio normativo aprobado:
+
+### 2.1. Seguridad Absoluta del Live Viewer (`/view/[token]`)
+- **Blindaje de Precios y Costos:** El bundle de frontend y las respuestas de API en la ruta pública `/view/` **JAMÁS deben contener costos de compra, listas de materiales con precio mayorista, fórmulas de margen ni despiece interno de taller**.
+- **Datos Permitidos:** Únicamente dimensiones nominales exteriores, tipo de apertura, color/acabado comercial, tipo de vidrio y precio final de venta aprobado.
+- **Acciones Disponibles:** Descarga de Cotización Oficial (PDF DOC-01), aprobación con solicitud de anticipo, vista de plano SVG e inspección 3D técnica.
+
+### 2.2. Contrato de Exportación CAD 2D (.DXF)
+- Generación backend determinista de archivos `.dxf` con capas estandarizadas:
+  - `Capa 0 (Estructura):` Geometría exterior del vano y marco con cotas milimétricas.
+  - `Capa 1 (Hojas y Perfiles):` Contornos de perfilería y refuerzos.
+  - `Capa 2 (Vidrios y Junquillos):` Geometría de acristalamiento y etiqueta de composición.
+  - `Capa 3 (Simbología de Apertura):` Indicación normalizada de sentido de apertura.
+
+### 2.3. Contrato de Visualización 3D y Cinemática
+- **Fidelidad Geométrica:** Todo modelo 3D se construye a partir del `parametric_tree` determinista generado por `/engine`, respetando dimensiones, holguras y perfiles calculados.
+- **Cinemática Paramétrica:** Soporte de interacción dinámica que simule el movimiento de las hojas según su tipología de apertura (giro practicable, abatimiento proyectante/oscilobatiente y traslación corredera).
+- **Rendimiento:** Carga fluida en navegadores de escritorio y dispositivos móviles modernos sin degradar la capacidad de respuesta de la aplicación.
 
 ---
 
-## 3. Exportador de Planos CAD 2D (.DXF)
+## 3. Línea Base de Implementación (Non-Binding Reference Baseline)
 
-Utiliza la librería en Python `ezdxf` en el backend para generar planos vectoriales limpios con capas normalizadas:
-- **Capa 0 (Estructura):** Geometría exterior del vano y marco con cotas milimétricas.
-- **Capa 1 (Hojas y Perfiles):** Líneas de perfilería de PVC y refuerzos de acero.
-- **Capa 2 (Vidrios y Junquillos):** Polígonos de vidrio con espesor y etiquetas de composición (ej: `5-12-5`).
-- **Capa 3 (Simbología de Apertura):** Líneas discontinuas normalizadas que indican el sentido de apertura (interior/exterior/corredera).
+Los siguientes elementos representan referencias arquitectónicas y de diseño recomendadas, pero **NO constituyen un candado tecnológico contractual**:
 
----
+### 3.1. Motor de Renderizado y Framework Gráfico
+- **Referencia Técnica:** El agente o equipo puede implementar el visor utilizando Three.js, React Three Fiber (R3F), Babylon.js, WebGPU o renderizadores WebGL estándar según idoneidad técnica, huella de bundle y desempeño en producción.
+- **Materiales PBR y Shaders:** Los acabados visuales (satinado blanco, vetas de madera, antracita mate o vidrio dieléctrico reflectivo) son líneas base de referencia estética; su implementación interna mediante shaders o materiales estándar queda abierta a la ergonomía técnica.
 
-## 4. Visualización Procedural 3D y Cinemática de Apertura
-
-A partir del `parametric_tree` calculado deterministamente en `/engine`, el módulo visual genera y ensambla proceduralmente los componentes de la abertura:
-
-```mermaid
-graph TD
-    ParamTree[parametric_tree JSON] --> Extruder[Generador Procedural 3D]
-
-    Extruder --> FrameMesh[1. Geometría Marco: Extrusión perimetral con ingletes 45°]
-    Extruder --> SashMesh[2. Geometría Hoja: Extrusión con eje de rotación cinemático]
-    Extruder --> GlassMesh[3. Geometría Vidrio: Material dieléctrico y espaciador]
-    Extruder --> HardwareMesh[4. Accesorios: Manillas y bisagras normalizadas]
-
-    FrameMesh --> Scene[Escena 3D Iluminada]
-    SashMesh --> Scene
-    GlassMesh --> Scene
-    HardwareMesh --> Scene
-
-    Scene --> OrbitControls[Control Orbital 360° + Zoom]
-    Scene --> Kinematics[Simulación Interactiva de Apertura]
-    Scene --> SnapshotExport[Captura de Imagen en Alta Resolución]
-```
-
-### 4.1. Cinemática y Simulación Interactiva de Aperturas
-Al presionar sobre la manilla o accionar el control de *"Simular Apertura"*:
-1. **Practicable (Giro Lateral):** La manilla rota $90^\circ$ hacia abajo y la hoja pivota sobre el eje vertical de las bisagras de $0^\circ$ a $90^\circ$.
-2. **Oscilobatiente (Abatimiento Basculante):** La manilla rota $180^\circ$ hacia arriba y la hoja bascula hacia el interior sobre el eje horizontal inferior de $0^\circ$ a $15^\circ$.
-3. **Corredera (Traslación):** La hoja móvil se desplaza horizontalmente sobre su carril respectivo hasta el tope lateral del marco.
-
-### 4.2. Materiales y Representación Fiel
-Representación fiel de los materiales industriales sin atadura dogmática a un motor de renderizado exclusivo:
-- **PVC Blanco:** Acabado liso satinado técnico (`color: #F8FAFC`).
-- **Foliados Madera / Roble Dorado / Nogal:** Texturas con relieve sutil de veta de madera.
-- **Foliados Gris Antracita (RAL 7016):** Acabado mate arquitectónico (`color: #374151`).
-- **Vidrio Termopanel (DVH):** Superficie translúcida reflectiva con índice de refracción dieléctrico (`ior: 1.52`) e intercalario perimetral con sellado negro.
+### 3.2. Rangos de Cinemática de Referencia (Baseline Examples)
+Los siguientes valores son ejemplos de referencia para la animación interactiva, no leyes físicas inmutables:
+- *Practicable (Giro):* Rotación de manilla $\approx 90^\circ$ y apertura de hoja de $0^\circ$ hasta $\approx 90^\circ$ sobre el eje de bisagras.
+- *Oscilobatiente (Abatimiento):* Rotación de manilla $\approx 180^\circ$ y basculamiento interior de $0^\circ$ hasta $\approx 15^\circ$ sobre el eje horizontal.
+- *Corredera (Traslación):* Desplazamiento horizontal de la hoja sobre su guía hasta el límite de apertura.

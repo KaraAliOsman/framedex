@@ -304,7 +304,7 @@ Se identificaron duplicaciones críticas en el repositorio que confunden a los a
 |---|---|---|---|
 | `/docs/CONSTITUTION.md` (v1.3 MASTER, 23 reglas) | `/docs/PRD/CONSTITUTION.md` | Duplicado secundario | ELIMINADO por mandato del Owner (Una Sola Constitución) |
 | `/docs/PRD/PLAN_SHOTS.md` (v1.3 MASTER) | `/docs/PLAN_DE_EJECUCION_SHOTS.md` | Desfasado (v1.1.2 antiguo) | Reemplazado contenido con puntero directo a `PRD/PLAN_SHOTS.md` |
-| `/docs/PRD/PRD-00.md` a `PRD-19.md` | `/docs/PRD-00.md` a `PRD-19.md` (en raíz) | Desfasados / Duplicados | Migrado contenido único y reemplazados con avisos de redirección |
+| `/docs/PRD/PRD-00.md` a `PRD-20.md` | `/docs/PRD-00.md` a `PRD-19.md` (en raíz) | Desfasados / Duplicados | Migrado contenido único (T2/T3 en PRD-10, 3D en PRD-12, Catálogo en PRD-20) y reemplazados con avisos de redirección |
 | `/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` | `/docs/SCREENS_SPECIFICATION_S01_S28.md` | Desfasado (en raíz) | Reemplazado con puntero hacia `docs/PRD/SCREENS_SPECIFICATION_S01_S28.md` |
 | `/docs/PRD/PRD-DESIGN-SYSTEM-ADOBE.md` | Fragmentos en `UI_UX_DESIGN_SYSTEM-ARCHIVED.md` | Histórico archivado | Mantenido archivado como registro histórico sin autoridad |
 | Fuentes activas en `/docs/PRD/` | `docs/DEKOPEN_BIBLIA_COMPLETA_v1.2_MASTER.md` | Snapshot estático | Agregado disclaimer en encabezado declarándolo vista no autoritativa |
@@ -316,7 +316,7 @@ Se identificaron duplicaciones críticas en el repositorio que confunden a los a
 
 | Root file | Canonical candidate | Identical | Unique root content | Unique canonical content | Classification | Action |
 |---|---|:---:|---|---|---|---|
-| `docs/PRD-00.md` | `docs/PRD/PRD-00.md` | No | Ninguno | Decisiones D1–D30 completas, 2-tier dependencies, precedence rule | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-00.md` | `docs/PRD/PRD-00.md` | No | Ninguno | Decisiones D1–D30 completas, 3-tier dependencies, precedence rule | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-01.md` | `docs/PRD/PRD-01.md` | No | Ninguno | Fixture DEMO_60 completo, hardware kits, glass matrix, casos G1–G12 | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-02.md` | `docs/PRD/PRD-02.md` | No | Ninguno | DDL completo PG16/PG17, RLS `current_user_org_ids()`, tablas audit | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-03.md` | `docs/PRD/PRD-03.md` | No | Ninguno | Paddle Global (USD MoR), Flow (CLP), ledger idempotente, webhooks HMAC | Obsolete subset | Convertido a puntero normativo |

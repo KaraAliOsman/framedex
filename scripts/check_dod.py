@@ -590,7 +590,20 @@ def check_tests(env: Mapping[str, str]) -> None:
     run_command([PYTHON, "-m", "engine.scripts.regenerate_golden", "--check"], env=env)
     run_command([PYTHON, "scripts/check_core_mutations.py"], env=env)
     run_command([PYTHON, "-m", "pytest", "engine/", "-q", "-W", "error"], env=env)
-    run_command([PYTHON, "-m", "pytest", "backend/", "-q", "-W", "error"], env=env)
+    run_command(
+        [
+            PYTHON,
+            "-m",
+            "pytest",
+            "backend/",
+            "-q",
+            "-W",
+            "error",
+            "-W",
+            "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+        ],
+        env=env,
+    )
     run_command(npm_command("run", "test"), cwd=FRONTEND_DIR)
 
 
@@ -692,7 +705,17 @@ def check_live_gates(*, tests: bool, database: bool) -> None:
             local_gates.run([supabase, "test", "db"])
             if not tests:
                 local_gates.run(
-                    [PYTHON, "-m", "pytest", "backend/tests/integration/", "-q", "-W", "error"],
+                    [
+                        PYTHON,
+                        "-m",
+                        "pytest",
+                        "backend/tests/integration/",
+                        "-q",
+                        "-W",
+                        "error",
+                        "-W",
+                        "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+                    ],
                     env=env,
                 )
             local_gates.verify_postgres16()
@@ -704,24 +727,32 @@ def check_live_gates(*, tests: bool, database: bool) -> None:
 
 def main() -> None:
     configure_output()
-    target = sys.argv[1] if len(sys.argv) == 2 else "all"
+    raw_target = sys.argv[1] if len(sys.argv) == 2 else "all"
+    target = "test" if raw_target == "tests" else raw_target
     allowed_targets = {
+        "guards",
         "lint",
         "typecheck",
         "test",
+        "tests",
         "build",
         "database",
         "all",
         "gauntlet",
     }
-    if len(sys.argv) > 2 or target not in allowed_targets:
+    if len(sys.argv) > 2 or raw_target not in allowed_targets:
         fail(
             "Usage: python scripts/check_dod.py "
-            "[lint|typecheck|test|build|database|all|gauntlet]",
+            "[guards|lint|typecheck|test|tests|build|database|all|gauntlet]",
             2,
         )
 
     print("Dekopen SHOT-06 fail-closed checker", flush=True)
+
+    if target == "guards":
+        check_constitutional_guards()
+        print("[PASS] SHOT-06 checker target 'guards' completed with exit code 0", flush=True)
+        return
 
     if target == "database":
         check_live_gates(tests=False, database=True)

@@ -14,8 +14,8 @@ You are the Lead Engineer for Dekopen OS.
    - Create `docs/plans/PLAN_SHOT-XX.md` and wait for user approval before writing code.
    - Run `make dod` / `make gauntlet` (Definition of Done & Adversarial Gauntlet).
    - Enter the self-healing loop: read compiler/test tracebacks and fix errors autonomously until 100% green.
-3. **Domain Authority & Spec Gaps (Rule 20):**
-   - If a domain, math, pricing, safety or irreversible action gap is detected, insert `[PENDIENTE-DECISIÓN]`.
-   - Autonomous implementation freedom applies strictly to internal, reversible UI/engineering choices that preserve observable contracts.
+3. **Material Gaps & Rule 20:**
+   - If a gap is MATERIAL according to Rule 0, insert `[PENDIENTE-DECISIÓN]` (Rule 0 is the single authority of materiality).
+   - Autonomous implementation freedom applies strictly to non-material, reversible UI/engineering choices that preserve observable contracts.
 4. **Golden Snapshots (Rule 22):**
    - Regenerate `golden_example.json` only via `/engine` using `make goldgen`. Never edit golden snapshots by hand.

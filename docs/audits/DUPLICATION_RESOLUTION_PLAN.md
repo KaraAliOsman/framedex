@@ -48,7 +48,7 @@ Por directriz explícita del Owner:
 
 | Root file | Canonical candidate | Identical | Unique root content | Unique canonical content | Classification | Action |
 |---|---|:---:|---|---|---|---|
-| `docs/PRD-00.md` | `docs/PRD/PRD-00.md` | No | Ninguno (borrador preliminar sin D29/D30) | Decisiones D1–D30 completas, 2-tier dependencies, precedence rule | Obsolete subset | Convertido a puntero normativo |
+| `docs/PRD-00.md` | `docs/PRD/PRD-00.md` | No | Ninguno (borrador preliminar sin D29/D30) | Decisiones D1–D30 completas, 3-tier dependencies, precedence rule | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-01.md` | `docs/PRD/PRD-01.md` | No | Ninguno (borrador 13.8 KB vs 47.4 KB canónico) | Fixture DEMO_60 completo, hardware kits, glass matrix, casos G1–G12 | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-02.md` | `docs/PRD/PRD-02.md` | No | Ninguno (DDL antiguo) | DDL completo PG16/PG17, RLS `current_user_org_ids()`, tablas audit | Obsolete subset | Convertido a puntero normativo |
 | `docs/PRD-03.md` | `docs/PRD/PRD-03.md` | No | Ninguno (esbozo auth simple) | Paddle Global (USD MoR), Flow (CLP), ledger idempotente, webhooks HMAC | Obsolete subset | Convertido a puntero normativo |

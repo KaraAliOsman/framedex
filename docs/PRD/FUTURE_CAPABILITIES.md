@@ -73,19 +73,10 @@ Dekopen consagra como principios inmutables de alcance y diseño de producto:
 
 ### 2.4. Ingesta Multimodal Tolerante (`MULTIMODAL_INTAKE`)
 - **Estado Normativo:** `SUPPORTED MULTIMODAL INPUT CLASS WITH CONFIDENCE / HUMAN REVIEW`.
-- **Declaración Explícita:** **`HANDWRITTEN INPUT IS NOT PROHIBITED`** (La entrada manuscrita NO está prohibida).
-- **Clases de Entrada Soportadas:**
-  - Planos arquitectónicos impresos en PDF o imagen.
-  - Cuadros de vanos y tablas tipográficas.
-  - Fotografías y escaneos de especificaciones.
-  - Cuadernos de obra y apuntes manuscritos de instaladores/maestros.
-  - Croquis con cotas manuscritas de terreno.
-  - Documentos mixtos (impreso con correcciones a mano).
-- **Control por Niveles de Confianza (Confidence Tiers):**
-  - **GREEN ($\ge 90\%$):** Detección nítida de alta certeza $\rightarrow$ Precarga asistida.
-  - **YELLOW ($70\% - 89\%$):** Manuscrito legible, tipografía con artefactos o inferencia por escala $\rightarrow$ Celda amarilla que exige revisión humana en split-screen.
-  - **RED ($<70\%$):** Ambigüedad severa $\rightarrow$ Celda que exige ingreso manual explícito.
-- **Rigor:** Prohibido alucinar precisión no demostrada; la revisión humana en pantalla partida garantiza tolerancia matemática final de `0.00 mm`.
+- **Declaración Explícita:** **`HANDWRITTEN INPUT IS NOT PROHIBITED`**.
+- **Clases de Entrada:** Planos arquitectónicos en PDF o imagen, cuadros de vanos, fotografías, croquis de terreno, cuadernos de obra y documentos mixtos con anotaciones manuscritas.
+- **Semántica de Confianza y Bloqueo:** `Confidence bands and import-blocking semantics inherit the currently active PRD-09 contract.`
+- **Gobernanza:** Este catálogo no duplica ni fija umbrales numéricos de confianza; si PRD-09 evoluciona en el futuro, esta capacidad hereda automáticamente las bandas activas sin desincronización. Prohibido alucinar precisión: la revisión humana en pantalla partida garantiza la tolerancia matemática final de `0.00 mm`.
 
 ---
 
@@ -100,3 +91,4 @@ Dekopen consagra como principios inmutables de alcance y diseño de producto:
 1. **Especificar QUÉ y no CÓMO:** Los PRDs definen contratos de datos, invariantes geométricas, esquemas JSON y validaciones de seguridad. No congelan prompts efímeros, nombres comerciales de modelos ni cadenas de pensamiento internas.
 2. **Sin Dependencia de Proveedor Único:** Prohibido hardcodear dependencias de un único proveedor de IA o tecnología. El sistema utiliza enrutamiento agnóstico.
 3. **Evolución sin Ruptura Constitucional:** Los modelos de IA futuros más capaces deben elevar la precisión y velocidad del producto sin requerir reescribir la Constitución ni las especificaciones normativas.
+4. **Intención Arquitectónica (`DO NOT UNNECESSARILY PRECLUDE THIS CAPABILITY`):** Este documento preserva la capacidad de evolución del sistema frente a dogmas o restricciones innecesarias. No prescribe cómo debe implementarse cada tecnología (`THIS IS HOW IT MUST BE BUILT`), sino que salvaguarda que las decisiones arquitectónicas presentes no impidan la incorporación fluida de capacidades futuras.

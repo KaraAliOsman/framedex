@@ -56,7 +56,7 @@ Para eliminar la alucinación, el "verifier theater" y los fallos en tareas de l
 3. **RLS Y AISLAMIENTO:** Toda tabla de negocio lleva `org_id` + RLS con `current_user_org_ids()`. Un tenant jamás lee precios de otro.
 4. **AUDITORÍA OBLIGATORIA:** Toda acción de IA en `ai_audit_logs` y todo cambio de precio en `price_audit_logs` ANTES de mutar estado.
 5. **CASOS DE ORO (G1–G12):** Tolerancia `0.00 mm`. Ningún PR se aprueba con discrepancias en los casos exigidos por el Gate.
-6. **REGLA 20 (CERO SUPUESTOS EN DOMINIO):** Si un PRD tiene un vacío de lógica de negocio, dinero o seguridad, **DETENTE** e inserta `[PENDIENTE-DECISIÓN]`. Para diseño interno, ergonomía y refactors reversibles, el agente resuelve guiado por buenas prácticas, evidencia del repo y tests.
+6. **REGLA 20 (TRATAMIENTO DE GAPS):** Si una spec tiene un vacío MATERIAL según la Regla 0, **DETENTE** e inserta `[PENDIENTE-DECISIÓN]` (la Regla 0 es la única autoridad de materialidad). Para vacíos no materiales y reversibles, el agente resuelve autónomamente con buenas prácticas y documenta rationale.
 7. **REGLA 22 (GOLDEN SNAPSHOTS):** `golden_example.json` se genera con `make goldgen` desde `/engine`, jamás se edita a mano.
 
 ---
