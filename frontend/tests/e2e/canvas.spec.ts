@@ -239,3 +239,81 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
     expect(duration).toBeLessThan(300);
   }
 });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`SHOT-07 ${theme}: real modal, BFD, preview, rollback and recomputed semaphore`, async ({
+    page,
+  }) => {
+    await authenticate(page, await setupEstimator());
+    await page.getByRole("link", { name: "Abrir Demo G1" }).click();
+    await expect(page.getByTestId("technical-frame")).toHaveText("1006.00 mm");
+    if (theme === "dark") await page.getByRole("button", { name: "Cambiar tema" }).click();
+    const optimization = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/v1/engine/optimize-cut/") && response.status() === 200,
+    );
+    await page.getByRole("button", { name: "Inspector y corte 1D" }).click();
+    const modal = page.getByRole("dialog", { name: "Revisión técnica de taller" });
+    await expect(modal).toBeVisible();
+    await expect(page).toHaveURL(/\/projects\/demo\/positions\/g1\/edit$/);
+    const cutResponse = await optimization;
+    const cuts = (await cutResponse.json()) as {
+      source_calculation_hash: string;
+      purchase_list: Array<{ commercial_sku: string }>;
+      workshop_cut_plan: Array<{ cuts: Array<{ workshop_sku: string; length_mm: string }> }>;
+    };
+    expect(cuts.purchase_list.map((line) => line.commercial_sku)).toContain("DEMO-BAR-MARCO");
+    expect(
+      cuts.workshop_cut_plan
+        .flatMap((bar) => bar.cuts)
+        .some((cut) => cut.workshop_sku === "MARCO" && cut.length_mm === "1006.00"),
+    ).toBe(true);
+    expect(cutResponse.request().postDataJSON()).not.toHaveProperty("cuts");
+    await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "RED");
+    const approve = modal.getByRole("button", { name: "Aprobar para Taller" });
+    await expect(approve).toBeDisabled();
+    const drains = modal.getByLabel("Posiciones de desagües inferiores (mm, separadas por coma)");
+    await drains.fill("100, 900");
+    await modal.getByLabel("Ancho continuo declarado (mm)").fill("1000");
+    await modal.getByLabel("¿Existe acople de dilatación?").selectOption("no");
+    await modal.getByRole("button", { name: "Verificar observaciones" }).click();
+    await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "YELLOW");
+    await modal.getByRole("button", { name: "Ver corrección propuesta" }).click();
+    await expect(drains).toHaveValue("100, 900");
+    await expect(modal.getByLabel("Ver corrección propuesta")).toContainText("500");
+    // Inject one network failure; the calculations and successful retry use the real server.
+    await page.route("**/api/v1/engine/inspect/", (route) => route.abort("failed"), { times: 1 });
+    await modal.getByRole("button", { name: "Aplicar corrección" }).click();
+    await expect(modal.getByRole("alert")).toContainText("El diseño anterior se conserva");
+    await expect(drains).toHaveValue("100, 900");
+    await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "YELLOW");
+    const inspection = page.waitForResponse(
+      (response) => response.url().endsWith("/api/v1/engine/inspect/") && response.status() === 200,
+    );
+    await modal.getByRole("button", { name: "Aplicar corrección" }).click();
+    const inspected = (await (await inspection).json()) as {
+      source_calculation_hash: string;
+      status: string;
+    };
+    expect(inspected.source_calculation_hash).toBe(cuts.source_calculation_hash);
+    expect(inspected.status).toBe("GREEN");
+    await expect(modal.locator(".inspector-semaphore")).toHaveAttribute("data-status", "GREEN");
+    await expect(drains).toHaveValue("100.0000, 500.00, 900.0000");
+    await expect(modal.getByRole("button", { name: "Aplicar corrección" })).toHaveCount(0);
+    await expect(approve).toBeEnabled();
+    const transition = await modal
+      .locator(".inspector-semaphore")
+      .evaluate((el) => getComputedStyle(el).transitionDuration);
+    expect(transition.split(", ")).toContain("0.15s");
+    await expect(modal.locator(".is-corrected")).toHaveCSS("animation-duration", "0.3s");
+    await modal.getByRole("button", { name: "Corte 1D", exact: true }).click();
+    await expect(modal.getByRole("heading", { name: "Pedido", exact: true })).toBeVisible();
+    await expect(modal.getByText("DEMO-BAR-MARCO", { exact: true })).toBeVisible();
+    await expect(modal.getByRole("heading", { name: "Plan de corte de taller" })).toBeVisible();
+    await expect(modal.getByText("MARCO", { exact: true }).first()).toBeVisible();
+    await modal.screenshot({ path: `test-results/shot07-${theme}.png` });
+    await modal.getByRole("button", { name: "Cerrar revisión" }).click();
+    await expect(modal).not.toBeVisible();
+    await expect(page.getByTestId("canvas-glass-dimension")).toHaveText("910.00 × 910.00 mm");
+  });
+}

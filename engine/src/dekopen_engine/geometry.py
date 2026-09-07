@@ -6,8 +6,14 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from dekopen_engine.bom import build_engine_result
-from dekopen_engine.glass import build_glass_piece, exact_glass_weight
-from dekopen_engine.hardware import resolve_hardware_kit
+from dekopen_engine.glass import build_glass_piece, exact_glass_weight, exact_glass_area_m2
+from dekopen_engine.hardware import (
+    NoCompatibleHardwareKit, evaluate_hardware_candidates, resolve_hardware_evaluations,
+)
+from dekopen_engine.technical_facts import (
+    GeometryComputation, InfillTechnicalFacts, LeafTechnicalFacts, OpeningTechnicalFacts,
+    SpanTechnicalFacts,
+)
 from dekopen_engine.panel import build_panel_piece, exact_panel_weight
 from dekopen_engine.weight import base_leaf_weight
 from dekopen_engine.models import (
@@ -75,6 +81,12 @@ class _Rect:
 
 @dataclass(slots=True)
 class _GeometryAccumulator:
+    computation: GeometryComputation = field(default_factory=GeometryComputation)
+    diagnostic: bool = False
+    contract_valid: bool = True
+    top_node_id: str = ""
+    nominal_width_mm: Decimal = Decimal("0")
+    nominal_height_mm: Decimal = Decimal("0")
     profile_cuts: list[ProfileCut] = field(default_factory=list)
     reinforcements: list[ReinforcementPiece] = field(default_factory=list)
     glasses: list[GlassPiece] = field(default_factory=list)
@@ -176,6 +188,9 @@ def _append_glazing_beads(
     accumulator: _GeometryAccumulator, *, params: SystemParams, bay_id: str,
     leaf_id: str | None, infill_thickness_mm: Decimal, width_mm: Decimal, height_mm: Decimal,
 ) -> None:
+    if accumulator.diagnostic and infill_thickness_mm not in params.glazing_bead_rules:
+        accumulator.contract_valid = False
+        return
     rule = resolve_bead_rule(infill_thickness_mm, params)
     for length in (width_mm, height_mm):
         _append_profile(
@@ -252,6 +267,13 @@ def _append_leaf(
             bay_id=node.id, leaf_id=leaf_id, width_mm=width, height_mm=height,
             glass_spec=node.glass_spec, fallback_thickness_mm=infill_thickness,
         ))
+    accumulator.computation.infills.append(InfillTechnicalFacts(
+        bay_id=node.id, leaf_id=leaf_id,
+        kind="PANEL" if node.opening_type is BayOpeningType.DOOR_ENTRY else "GLASS",
+        thickness_mm=infill_thickness, glass_spec=node.glass_spec,
+        width_mm=width, height_mm=height, exact_area_m2=exact_glass_area_m2(width, height),
+        bead_supported=infill_thickness in params.glazing_bead_rules,
+    ))
     _append_glazing_beads(
         accumulator, params=params, bay_id=node.id, leaf_id=leaf_id,
         infill_thickness_mm=infill_thickness, width_mm=width, height_mm=height,
@@ -262,11 +284,28 @@ def _append_leaf(
         infill_weight_kg=infill_weight, params=params,
     )
     assert node.opening_type is not None
-    kit, exact_weight = resolve_hardware_kit(
+    candidates = evaluate_hardware_candidates(
         opening=node.opening_type, width_mm=sash.finished_width_mm,
         height_mm=sash.finished_height_mm, base_weight=base, params=params,
         explicit_sku=node.hardware_set_sku,
     )
+    try:
+        kit, exact_weight = resolve_hardware_evaluations(
+            candidates, opening=node.opening_type, explicit_sku=node.hardware_set_sku,
+        )
+    except NoCompatibleHardwareKit:
+        if not accumulator.diagnostic:
+            raise
+        accumulator.contract_valid = False
+        kit, exact_weight = None, None
+    accumulator.computation.leaves.append(LeafTechnicalFacts(
+        bay_id=node.id, leaf_id=leaf_id, opening_type=node.opening_type,
+        rail_type=params.rail_type, finished_width_mm=sash.finished_width_mm,
+        finished_height_mm=sash.finished_height_mm, base_weight=base,
+        candidates=candidates, selected_kit=kit, exact_weight=exact_weight,
+    ))
+    if kit is None or exact_weight is None:
+        return
     accumulator.hardware_items.append(HardwareItem(
         kit_sku=kit.sku, name=kit.name, bay_id=node.id, leaf_id=leaf_id,
         contents=[component.model_copy() for component in kit.contents],
@@ -285,6 +324,13 @@ def _append_bay(
         raise NotImplementedError(f"{opening.value} geometry is outside SHOT-06 Core")
     if opening is BayOpeningType.DOOR_ENTRY:
         raise NotImplementedError("DOOR_ENTRY requires a top-level BAY in SHOT-06 Core")
+    accumulator.computation.openings.append(OpeningTechnicalFacts(
+        bay_id=node.id,
+        width_mm=(accumulator.nominal_width_mm if node.id == accumulator.top_node_id
+                  else rect.width_mm),
+        height_mm=(accumulator.nominal_height_mm if node.id == accumulator.top_node_id
+                   else rect.height_mm),
+    ))
     if opening is BayOpeningType.FIXED:
         if node.glass_thickness_mm is None or node.glass_spec is None:
             raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
@@ -293,6 +339,12 @@ def _append_bay(
         accumulator.glasses.append(build_glass_piece(
             bay_id=node.id, width_mm=width, height_mm=height,
             glass_spec=node.glass_spec, fallback_thickness_mm=node.glass_thickness_mm,
+        ))
+        accumulator.computation.infills.append(InfillTechnicalFacts(
+            bay_id=node.id, leaf_id=None, kind="GLASS", thickness_mm=node.glass_thickness_mm,
+            glass_spec=node.glass_spec, width_mm=width, height_mm=height,
+            exact_area_m2=exact_glass_area_m2(width, height),
+            bead_supported=node.glass_thickness_mm in params.glazing_bead_rules,
         ))
         _append_glazing_beads(
             accumulator, params=params, bay_id=node.id, leaf_id=None,
@@ -322,6 +374,9 @@ def _append_door(
     accumulator: _GeometryAccumulator, *, node: ParametricNode, params: SystemParams,
     nominal_width_mm: Decimal, nominal_height_mm: Decimal, clearance_mm: Decimal,
 ) -> None:
+    accumulator.computation.openings.append(OpeningTechnicalFacts(
+        bay_id=node.id, width_mm=nominal_width_mm, height_mm=nominal_height_mm,
+    ))
     frame = _article(params, ProfileRole.FRAME)
     per_end = welding_loss_per_end(frame)
     _append_profile(accumulator, article=frame,
@@ -440,6 +495,10 @@ def _walk_node(
         article=mullion_article,
         length_mm=mullion_length_mm,
     )
+    accumulator.computation.spans.append(SpanTechnicalFacts(
+        target_id=node.id, parent_profile_sku=mullion_article.sku,
+        span_mm=rect.height_mm if node.type is NodeType.SPLIT_V else rect.width_mm,
+    ))
     _walk_node(
         accumulator,
         node=node.children[0],
@@ -462,12 +521,13 @@ def _walk_node(
     )
 
 
-def calculate_geometry(
+def compute_geometry(
     root: ParametricNode,
     params: SystemParams,
     *,
     is_foiled: bool = False,
-) -> EngineResult:
+    diagnostic: bool = False,
+) -> GeometryComputation:
     """Calculate Core geometry, mobile-leaf weights and selected hardware."""
 
     if params.material is not MaterialType.PVC:
@@ -480,7 +540,10 @@ def calculate_geometry(
     if clear_width_mm <= Decimal("0") or clear_height_mm <= Decimal("0"):
         raise ValueError("FRAME face produces a non-positive clear rectangle")
 
-    accumulator = _GeometryAccumulator()
+    accumulator = _GeometryAccumulator(
+        diagnostic=diagnostic, top_node_id=top.id, nominal_width_mm=nominal_width_mm,
+        nominal_height_mm=nominal_height_mm,
+    )
     clearance_mm = (
         params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     )
@@ -502,11 +565,22 @@ def calculate_geometry(
             local_origin_x_mm=Decimal("0"), local_origin_y_mm=Decimal("0"),
             params=params, clearance_mm=clearance_mm, is_top=True,
         )
-    return build_engine_result(
-        profile_cuts=accumulator.profile_cuts,
-        reinforcements=accumulator.reinforcements,
-        glasses=accumulator.glasses,
-        panels=accumulator.panels,
-        hardware_items=accumulator.hardware_items,
-        leaf_weights=accumulator.leaf_weights,
-    )
+    if accumulator.contract_valid:
+        accumulator.computation.result = build_engine_result(
+            profile_cuts=accumulator.profile_cuts,
+            reinforcements=accumulator.reinforcements,
+            glasses=accumulator.glasses,
+            panels=accumulator.panels,
+            hardware_items=accumulator.hardware_items,
+            leaf_weights=accumulator.leaf_weights,
+        )
+    return accumulator.computation
+
+
+def calculate_geometry(
+    root: ParametricNode, params: SystemParams, *, is_foiled: bool = False,
+) -> EngineResult:
+    """Strict public SHOT-06 contract; diagnostic facts never replace a valid BOM."""
+    computation = compute_geometry(root, params, is_foiled=is_foiled)
+    assert computation.result is not None
+    return computation.result

@@ -100,6 +100,22 @@ REQUIRED_PATHS = (
     ENGINE_DIR / "tests" / "test_snapshot.py",
     ENGINE_DIR / "tests" / "test_pricing.py",
     ROOT / "docs" / "plans" / "PLAN_SHOT-06.md",
+    ROOT / "docs" / "plans" / "PLAN_SHOT-07.md",
+    ENGINE_DIR / "src" / "dekopen_engine" / "cutting.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "inspection_models.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "inspector.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "technical_facts.py",
+    ENGINE_DIR / "tests" / "test_cutting.py",
+    ENGINE_DIR / "tests" / "test_inspector.py",
+    BACKEND_DIR / "engine_api" / "cutting_repository.py",
+    BACKEND_DIR / "engine_api" / "inspection_repository.py",
+    BACKEND_DIR / "engine_api" / "derivative_serializers.py",
+    BACKEND_DIR / "engine_api" / "derivative_views.py",
+    BACKEND_DIR / "tests" / "test_engine_derivatives.py",
+    BACKEND_DIR / "tests" / "integration" / "test_shot07_catalog.py",
+    FRONTEND_DIR / "src" / "features" / "inspector" / "InspectorModal.tsx",
+    FRONTEND_DIR / "src" / "features" / "inspector" / "InspectorModal.test.tsx",
+    FRONTEND_DIR / "src" / "features" / "inspector" / "inspectorDraft.ts",
 )
 
 REQUIRED_DATABASE_PATHS = (
@@ -109,6 +125,9 @@ REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "migrations" / "20260905000000_shot_06_catalog_authorities.sql",
     SUPABASE_DIR / "migrations" / "20260905000100_shot_06_demo_catalog.sql",
     SUPABASE_TEST_DIR / "040_shot_06_catalog.test.sql",
+    SUPABASE_DIR / "migrations" / "20260906000000_shot_07_authorities.sql",
+    SUPABASE_DIR / "migrations" / "20260906000100_shot_07_demo_catalog.sql",
+    SUPABASE_TEST_DIR / "050_shot_07_catalog.test.sql",
     SUPABASE_DIR / "seed.sql",
     SUPABASE_TEST_DIR / "000_schema.test.sql",
     SUPABASE_TEST_DIR / "010_rls_isolation.test.sql",
@@ -121,6 +140,10 @@ REQUIRED_DATABASE_PATHS = (
 )
 
 EXPECTED_DATABASE_TABLES = {
+    "profile_purchase_mappings",
+    "reinforcement_articles",
+    "cutting_profiles",
+    "inspector_rule_configs",
     "tenancy_organizations",
     "tenancy_memberships",
     "profile_systems",
@@ -368,9 +391,9 @@ def check_shot_04_contract() -> None:
             fail(f"SHOT-04 dependency must be exactly {name}@{version}")
 
     openapi = (BACKEND_DIR / "openapi.yaml").read_text(encoding="utf-8")
-    for future_field in ("inspector",):
-        if future_field in openapi:
-            fail(f"SHOT-04 OpenAPI exposes future field: {future_field}")
+    for endpoint in ("/api/v1/engine/inspect/", "/api/v1/engine/optimize-cut/"):
+        if endpoint not in openapi:
+            fail(f"SHOT-07 derivative endpoint is missing: {endpoint}")
     if "calculation_hash" not in openapi:
         fail("SHOT-06 OpenAPI must include calculation_hash")
     for endpoint in ("/api/v1/auth/me/", "/api/v1/engine/calculate/"):
@@ -430,13 +453,10 @@ def check_shot_05_contract() -> None:
             )
     if "3067da09-3119-5ad0-a1d5-498cd2dfd753" in production:
         fail("DEMO_60 UUID must be discovered at runtime rather than hardcoded")
-    for future_surface in ("calculation_hash", "inspector"):
-        if future_surface in production.lower():
-            fail(f"SHOT-05 canvas exposes future surface: {future_surface}")
-    if "EngineCalculateResponse" in (
-        canvas_dir / "canvasStore.ts"
-    ).read_text(encoding="utf-8"):
-        fail("Zustand must not duplicate the TanStack-owned engine response")
+    store_source = (canvas_dir / "canvasStore.ts").read_text(encoding="utf-8")
+    for remote_result in ("EngineCalculateResponse", "EngineInspectResponse", "EngineOptimizeResponse"):
+        if remote_result in store_source:
+            fail("Zustand must not duplicate TanStack-owned engine responses")
 
     snapping = (canvas_dir / "snapping.ts").read_text(encoding="utf-8")
     for evidence in ("SNAP_RADIUS_PX = 12n", "FIFTY_MM_CENTI", "TEN_MM_CENTI"):
@@ -721,11 +741,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-06 fail-closed checker", flush=True)
+    print("Dekopen SHOT-07 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-06 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-07 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -738,7 +758,7 @@ def main() -> None:
     if target in {"build", "all", "gauntlet"}:
         check_build()
 
-    print(f"[PASS] SHOT-06 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-07 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

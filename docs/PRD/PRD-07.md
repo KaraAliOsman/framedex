@@ -19,31 +19,83 @@ Ningún hallazgo del inspector puede presentarse como un código de error crudo 
 
 ---
 
-## 2. Las 14 Reglas Canónicas de Validación (§6.6 + Enmienda B.4)
+## 2. Reglas canónicas SHOT-07 — resolución owner 2026-09-06
 
-Todas las constantes son configurables y overridibles por sistema de perfiles en base de datos.
+La resolución íntegra PD-07-01…29 en `../plans/PLAN_SHOT-07.md` sustituye las
+fórmulas y acciones históricas de esta sección. Constantes configurables por
+sistema en inspector_rule_configs; tenant antes de global. Las14 configs son
+obligatorias, sin fallback hardcoded; JSON parseado con Decimal, modelo por R.
+Malformed/ausencia de config es InspectorConfigurationError, no finding ficticio.
 
-| # | Regla | Condición Matemática de Fallo | Severidad | Acción Correctiva en 1 Clic |
-|---|---|---|---|---|
-| **R01** | **Peso Máximo de Hoja** | $P_{total\_sash} = P_{pvc} + P_{acero} + P_{vidrio} > P_{max\_herraje}$ *(e.g. $> 100\text{ kg}$ en herraje estándar)* | 🔴 **ROJO** | *"Actualizar a kit de bisagras reforzadas 130 kg"* o *"Dividir vano en 2 hojas"*. |
-| **R02** | **Relación de Aspecto (Proporción)** | $H_{sash} / W_{sash} > 2.5$ O $H_{sash} / W_{sash} < 0.4$ | 🟡 **AMARILLO** | *"Ajustar división a proporción recomendada 1:1.5"*. |
-| **R03** | **Dimensiones Mínimas / Máximas** | $W_{sash} < 350\text{ mm}$ O $W_{sash} > 1600\text{ mm}$ O $H_{sash} > 2400\text{ mm}$ | 🔴 **ROJO** | *"Redimensionar vano al límite permitido por la serie"*. |
-| **R04** | **Área vs. Espesor de Vidrio** | Monolítico 4mm: Área $> 1.80\text{ m}^2$ / DVH 4-12-4: Área $> 2.60\text{ m}^2$ | 🔴 **ROJO** | *"Aumentar cristal a 6 mm templado o termopanel 6-12-6"*. |
-| **R05** | **Inercia Eólica en Travesaños (NCh 432)** | Momento de inercia del refuerzo $I_x < I_{req}$ para luz $> 1800\text{ mm}$ | 🔴 **ROJO** | *"Cambiar a refuerzo de acero pesado 2.0 mm (SKU: RF-HEAVY)"*. |
-| **R06** | **Matriz Junquillo–Vidrio** | $\text{Espesor Vidrio} \notin \text{glazing\_bead\_matrix}(\text{system\_id})$ | 🔴 **ROJO** | *"Seleccionar espesor estándar (20 mm o 24 mm) disponible en catálogo"*. |
-| **R07** | **Desagües y Descompresión** | Ancho vano $> 800\text{ mm}$ requiere $\ge 3$ orificios de desagüe inferiores | 🟡 **AMARILLO** | *"Añadir orificio de desagüe central automáticamente"*. |
-| **R08** | **Espaciado de Cerraderos Perimetrales** | Distancia entre puntos de cierre consecutivos $> 800\text{ mm}$ | 🟡 **AMARILLO** | *"Añadir reenvío de esquina con punto de cierre adicional"*. |
-| **R09** | **Junta de Dilatación Térmica** | Ancho continuo $> 4000\text{ mm}$ en blanco ($> 3000\text{ mm}$ foliado) sin acople | 🔴 **ROJO** | *"Insertar perfil de acople de dilatación con junta elástica"*. |
-| **R10** | **Tolerancia Diagonal de Marco** | Diferencia teórica $|D_1 - D_2| > 1.50\text{ mm}$ | 🔴 **ROJO** | *"Recalcular escuadra ortogonal de marco"*. |
-| **R11** | **Holgura Perimetral de Cámara** | Holgura entre hoja y marco fuera del rango $12.0\text{ mm} \pm 1.5\text{ mm}$ | 🔴 **ROJO** | *"Restablecer solape nominal de 8.0 mm"*. |
-| **R12** | **Inercia en Corredera 3 Hojas** | Corredera 3 hojas con vano $> 4500\text{ mm}$ exige refuerzo con $I_x \ge 45\text{ cm}^4$ | 🔴 **ROJO** | *"Cambiar a refuerzo pesado (SKU RF-HEAVY)"*. |
-| **R13** | **Proyectante de Gran Altura** | Proyectante con $H > 1200\text{ mm}$ exige compás doble | 🟡 **AMARILLO** | *"Añadir segundo compás"*. |
-| **R14** | **Carga de Carros Monoriel** | Corredera `rail_type='mono'` con hoja $> 150\text{ kg}$ exige 4 carros de carga ($\ge 80\text{ kg/rueda}$) | 🔴 **ROJO** | *"Configurar kit monoriel cuádruple"*. |
+| Regla | Autoridad y condición | Severidad | Fix |
+|---|---|---|---|
+| R01 | ExactLeafWeight.total_weight_kg (PVC+acero+infill+hardware) > selected kit.max_leaf_weight_kg; no suma pública redondeada | RED | BLOCKED_MISSING_AUTHORITY, sin kit/división inventados |
+| R02 | H/W exteriores terminados fuera de [0.4000,2.5000]; sugerido1.5000 | YELLOW | SUGGESTION_ONLY |
+| R03 | Dimensiones terminadas fuera de intersección Inspector/kit: W mínimo max(350,kit.min_w), W máximo min(1600,kit.max_w), H mínimo kit.min_h, H máximo min(2400,kit.max_h) | RED | SUGGESTION_ONLY |
+| R04 | Área exacta width*height/1000000; MONOLITHIC_4 >1.8000, DVH_4_ANY_4 >2.6000 cualquiera sea cámara; panel N/A; otras clases sin límite MISSING_INPUT | RED | SUGGESTION_ONLY |
+| R05 | span>1800: actual Ix de reinforcement_articles.ix_cm4 < required_ix_cm4 externo aprobado, con structural_basis; falta requisito/dato requerido MISSING_INPUT; span<=1800 N/A | RED | BLOCKED_MISSING_AUTHORITY |
+| R06 | Espesor infill no existe en glazing_bead_rules: glass_thickness_mm para vidrio, PanelRule.thickness_mm para panel; preflight antes del acceso estricto | RED | SUGGESTION_ONLY |
+| R07 | Ancho nominal/opening>800 exige tres drenajes inferiores; WorkshopAnnotations.bottom_drain_holes_mm, coordenadas Decimal dentro del vano; observación ausente MISSING_INPUT | YELLOW | AUTO_FIXABLE sólo exactamente dos, centro ausente/válido y requisito3; agregar width/2. Otros casos sugerencia |
+| R08 | closing_points_perimeter_mm, origen esquina superior izquierda, sentido horario, 0<=p<perimeter; ordenar y comparar todos los gaps incluido wrap; máximo>800; datos insuficientes MISSING_INPUT | YELLOW | SUGGESTION_ONLY |
+| R09 | continuous_width_mm>4000 WHITE o >3000 FOILED y sin has_coupler; acabado foliado sólo tests puros, producción WHITE | RED | BLOCKED_MISSING_AUTHORITY |
+| R10 | MEDICIONES measured_d1_mm/measured_d2_mm, abs(diff)>1.50; sólo WORKSHOP_QC; DESIGN N/A | RED | SUGGESTION_ONLY |
+| R11 | profile_systems.chamber_clearance_mm fuera de expected12±1.50; DEMO12 explícito; sin ecuación con overlap8, que es sólo recomendación | RED | SUGGESTION_ONLY |
+| R12 | Fixture puro SLIDING_3L, ancho>4500 exige Ix>=45.0000; no ejecutar geometría3L | RED | BLOCKED_MISSING_AUTHORITY |
+| R13 | AWNING, altura exterior terminada>1200 y selected_kit.stay_arms_qty<2; negativo puro, sin nuevo kit | YELLOW | SUGGESTION_ONLY |
+| R14 | Fixture puro mono con masa exacta>150 exige carriages_qty>=4 y carriage_capacity_kg>=80; capacidad ausente MISSING_INPUT; no geometría mono | RED | BLOCKED_MISSING_AUTHORITY |
 
----
+Estos son los valores DEMO de configuración autorizados, no constantes ocultas.
+R01/R06 no duplican umbrales de catálogo. R14 usa capacidad por carro según
+resolución PD24; sustituye el ambiguo texto histórico por rueda.
 
-## 3. Comportamiento del Semáforo y Bloqueo de Producción
+### R05: frontera estructural
 
-1. **Estado VERDE (Aprobado):** Cero infracciones. Habilita botón *"Aprobar para Taller"*.
-2. **Estado AMARILLO (Advertencia de Taller):** Alerta no estructural (e.g. compás doble sugerido). Permite cotizar y deja constancia en la OT.
-3. **Estado ROJO (Bloqueo Crítico P0):** Infracción de seguridad o ensamble. Bloquea físicamente la emisión de la orden de producción.
+Referencia owner: NCh432:2025 — Diseño estructural - Cargas de viento.
+SHOT07 NO implementa solver de viento: required_ix_cm4 procede de autoridad
+estructural externa/usuario/proyecto aprobada y structural_basis documenta su
+base. No derivar de zona/altura/heurística/prompt. Comparar Ix NO certifica
+cumplimiento NCh432. Ausencia: “Falta la exigencia estructural de viento para
+verificar este travesaño.” Sin RF-HEAVY ni sustitución automática.
+
+### Facts y cálculo estricto
+
+evaluate_hardware_candidates puro compartido devuelve opening_match,
+rail_match, width_match, height_match, exact_total_weight, weight_match.
+resolve_hardware_kit es wrapper estricto y conserva selección/error SHOT06.
+Candidato opening/rail/dim que falla sólo peso permite diagnóstico R01;
+límites dimensionales permiten R03. Múltiples compatibles son error de
+configuración/AmbiguousHardwareKit, no finding del usuario. R06 preflight.
+Inspector reutiliza geometría/peso exactos; no los recalcula. No fabricar
+EngineResult exitoso si el cálculo estricto falla.
+
+## 3. Estados, hallazgos y bloqueo
+
+RuleEvaluationStatus: PASS, FAIL, NOT_APPLICABLE, MISSING_INPUT.
+InspectorFinding: rule_id R01…14, severity YELLOW/RED, title, diagnosis, risk,
+recommendation, fixability, bay_id/leaf_id nullable, fix nullable. Lenguaje humano.
+InspectorResult: status GREEN/YELLOW/RED, production_allowed, evaluations,
+findings, source_calculation_hash nullable.
+Sin findings GREEN; sólo YELLOW → YELLOW; cualquier RED → RED.
+MISSING_INPUT de regla aplicable genera finding con severidad de esa regla;
+R10 DESIGN es N/A. production_allowed es FALSE con RED, TRUE GREEN/YELLOW.
+WorkshopReadiness además exige cut_optimization.ok. Config inválida, stock
+faltante/ambiguo o pieza que no cabe hacen readiness false sin falsear semáforo.
+“Aprobar para Taller” sólo gate UI, sin orden/OT/project status/version.
+
+## 4. Corrección real y transacción
+
+InspectorDiff: diff_id, rule_id, target, preconditions, operations discriminadas.
+SHOT07 permite ADD_BOTTOM_DRAIN_HOLE, con target/old_value/new_value. No JSON
+Patch arbitrario. Fixture width1000, exactamente dos posiciones válidas y centro
+ausente: preview agrega500. Clic, precondiciones, draft, POST calculate, POST
+inspect; commit local sólo si ambos success; error rollback exacto. Reaplicar
+no duplica; precondiciones obsoletas fallan sin mutar. R07 desaparece por
+reevaluación, hash geométrico idéntico. Nada de DB/proyectos/OT.
+Pulso300ms, semáforo previous→recomputed en150ms, nunca forced GREEN/unlock.
+
+## 5. Pruebas y alcance
+
+Cada R requiere PASS/FAIL y fronteras/ausencias aplicables. Matriz numérica
+completa y pruebas BFD/API/UI/fix en resolución íntegra del plan SHOT07.
+R12/R14 sólo fixtures puros; G8/G9/G11/G12→06B y G10→24 siguen cinco xfails.
+G1–G7, cálculo/hash/golden, pesos/herrajes, auth/RLS y Canvas<300ms intactos.

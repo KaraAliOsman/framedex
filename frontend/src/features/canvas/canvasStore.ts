@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { AnnotationRequest, InspectorDiff } from "../../api/generated/models";
 
 export type DimensionAxis = "width" | "height";
 
@@ -30,6 +31,10 @@ type ViewportState = {
 };
 
 type CanvasState = {
+  annotations: AnnotationRequest[];
+  previewDiff: InspectorDiff | null;
+  setAnnotations(annotations: AnnotationRequest[]): void;
+  setPreviewDiff(diff: InspectorDiff | null): void;
   inputs: CanvasDesignInputs;
   draftDimension: DraftDimension;
   selection: "g1";
@@ -68,6 +73,14 @@ const INITIAL_VIEWPORT: ViewportState = {
 };
 
 export const useCanvasStore = create<CanvasState>((set) => ({
+  annotations: [],
+  previewDiff: null,
+  setAnnotations(annotations) {
+    set({ annotations, previewDiff: null });
+  },
+  setPreviewDiff(previewDiff) {
+    set({ previewDiff });
+  },
   inputs: initialInputs(),
   draftDimension: null,
   selection: "g1",
@@ -96,6 +109,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   },
   reset() {
     set({
+      annotations: [],
+      previewDiff: null,
       inputs: initialInputs(),
       draftDimension: null,
       selection: "g1",

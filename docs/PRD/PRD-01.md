@@ -771,3 +771,39 @@ infill retenido (vidrio/panel u otro infill futuro explícitamente soportado).
 Helper neutral resolve_bead_rule(infill_thickness_mm,params), sin duplicar lookup
 vidrio/panel ni acoplar selección a GlassPiece. Panel sigue PanelPiece, sin glass_spec,
 sin densidad/masa de vidrio. Beads siguen ProfileCut GLAZING_BEAD, no PanelBeadPiece.
+
+## SHOT-07 — contrato derivado autorizado (2026-09-06)
+
+Autoridad: resolución canónica PD-07-01…29 íntegra en `../plans/PLAN_SHOT-07.md`.
+SHOT-07 consume geometría, masas y selección de herraje existentes sin alterar
+EngineResult, las siete claves de calculate, golden ni preimagen del hash.
+Inspector y BFD son Python/Decimal puros. El adapter aporta catálogo bajo RLS.
+
+BFD expande qty con identidad estable; ordena length DESC, workshop_sku,
+source_position_id, bay_id, leaf_id, role, piece_id, unit_index ASC. Null sólo
+se convierte en cadena vacía para ordenar. Elige el menor remanente no negativo
+tras insertar, empatando por menor bar_index. Orden final por bar_index y cortes
+por inserción. No depende de orden incidental de DB, hash, set o dict.
+Agrupa por commercial_sku, stock_length_mm, material, color, cutting_profile_id;
+compatibilidad de SKU técnicos distintos exige mapping explícito al mismo stock.
+PVC, ALUMINIUM y STEEL son distintos.
+
+U=L-head-tail; consumo de piezas=sum(lengths)+N*kerf; remainder=U-consumo.
+Una pieza y la última consumen un kerf. Trims una vez por barra nueva.
+Cabe si remainder>=0, con fronteras exactas ±0.01 y cero float.
+productive=sum(lengths); process=productive+N*kerf+head+tail;
+waste=L-productive; yield=productive/L*100; waste_pct=100-yield,
+porcentajes a cuatro decimales HALF_UP. No inventario/QR de remanentes.
+Modelos CutPiece, StockRule, CutPlacement, CutBar, PurchaseLine y
+CutOptimizationResult conservan pedido y plan de taller separados, con los
+campos y errores tipados completos definidos en la resolución del plan.
+
+Fixture Proline interno sintético: taller PRO6004-FRAME-DEMO, compra
+DEMO-PROLINE-PRO6004-BAR-5800, proveedor DEMO-SUPPLIER, PVC WHITE BAR,
+stock5800, 1006×4+806×2, kerf4, head15/tail15: una barra y remanente110.
+Estos identificadores no son SKU reales de fabricante ni certifican Proline.
+
+Hardware comparte evaluate_hardware_candidates y el resolver estricto conserva
+su resultado/error. Inspector recibe facts exactos de la misma matemática,
+con preflight R06 antes de rechazo por matriz; nunca simula un EngineResult válido.
+R12/R14 se prueban con inputs puros sin ampliar geometría 3L/mono ni diferidos.

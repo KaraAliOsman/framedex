@@ -23,9 +23,9 @@ Este hash se incrusta como código de verificación en el pie de página de todo
 | **DOC-01** | **Cotización Comercial Formal** | PDF (WeasyPrint) | Cliente Final / Arquitecto | Membrete de empresa, renders vectoriales 2D (SVG), desglose de vanos, especificación de vidrios y colores, totales neto/IVA/bruto, condiciones de pago y validez de oferta. |
 | **DOC-02** | **Planilla de Pedido de Vidrios** | Excel `.xlsx` (openpyxl) | Fábrica de Termopaneles / Vidriería | Pestaña estandarizada con vanos, composición exacta, anchos, altos, cantidades, m² totales, cantos pulidos y etiquetas de ubicación. |
 | **DOC-03** | **Orden de Trabajo de Taller (OT)** | PDF (WeasyPrint) | Jefe de Taller / Operarios | Planos técnicos acotados con cotas de corte exterior, medidas de refuerzo de acero, orificios de desagüe, altura de manillas y matriz de ensamble. |
-| **DOC-04** | **Pedido de Barras y Perfiles** | PDF + Excel | Distribuidor de Perfilería | Consolidado de barras comerciales de $6.00\text{ m}$ por SKU y color, barras de acero galvanizado y accesorios. |
+| **DOC-04** | **Pedido de Barras y Perfiles** | PDF + Excel | Distribuidor de Perfilería | Consolidado de barras comerciales de longitud según catálogo por SKU comercial y color, barras de acero galvanizado y accesorios. |
 | **DOC-05** | **Hoja de Optimización de Corte 1D** | PDF (WeasyPrint) | Operario de Tronzadora / Sierra | Secuencia de corte barra por barra, IDs de piezas, longitudes exactas con pérdida de fusión, ángulos (45°/90°) y retazos resultantes. |
-| **DOC-06** | **Checklist de Calidad y Control Final** | PDF (WeasyPrint) | Control de Calidad en Taller | Hoja de verificación física: escuadra de diagonales ($\le 1.0\text{ mm}$), estanqueidad de burletes, desagües destapados, calibración de herraje. |
+| **DOC-06** | **Checklist de Calidad y Control Final** | PDF (WeasyPrint) | Control de Calidad en Taller | Hoja de verificación física: escuadra de diagonales ($\le 1.50\text{ mm}$), estanqueidad de burletes, desagües destapados, calibración de herraje. |
 | **DOC-07** | **Informe Ejecutivo de Costos y Margen** | PDF (Solo Propietario) | Dueño de Empresa / Gerencia | Desglose confidencial de costo de materiales, mano de obra, mermas reales, margen bruto por posición y rentabilidad consolidada. |
 
 ---
@@ -136,7 +136,7 @@ BARRA #1: [Despunte: 15mm]
   ├── [Pos 1 - Marco Der]  1006 mm  (45°/45°) -> Refuerzo: 970 mm
   ├── [Pos 2 - Marco Inf]   806 mm  (45°/45°) -> Refuerzo: 770 mm
   ├── [Pos 2 - Marco Sup]   806 mm  (45°/45°) -> Refuerzo: 770 mm
-  └── [Retazo Sobrante: 320 mm] (Kerf acumulado: 24mm | Despunte fin: 15mm)
+  └── [Retazo Sobrante: 310 mm] (Kerf acumulado: 24mm | Despunte fin: 15mm)
 --------------------------------------------------------------------------------
 ```
 
@@ -147,3 +147,12 @@ BARRA #1: [Despunte: 15mm]
 1. **Bucket:** Supabase Storage (`bucket: documents`).
 2. **Ruta:** `org_{org_id}/projects/{project_id}/{revision_code}/{document_type}_{hash}.pdf`.
 3. **Acceso:** Exclusivamente a través de URLs firmadas con expiración máxima de $3600\text{ segundos}$ ($1\text{ hora}$) generadas por el backend tras validar la sesión del usuario.
+
+## Alineación SHOT-07 (2026-09-06)
+
+DOC05: 6000-5636-24-15-15=310 mm; el anterior320 era error documental.
+El gate Proline5800 usa catálogo/fixture propio, sin constante universal6000.
+R10 Inspector usa diagonales MEDIDAS, sólo WORKSHOP_QC, tolerancia configurable
+DEMO1.50. El checklist físico DOC06 se alinea a <=1.50, según resolución PD-07-20
+que sitúa este control en WORKSHOP_QC. Sustituye la antigua tolerancia1.0;
+no se mantiene una segunda autoridad para el mismo control.

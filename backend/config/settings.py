@@ -89,6 +89,14 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
+    "ENUM_NAME_OVERRIDES": {
+        "UnitEnum": ["kit"],
+        "PurchaseUnitEnum": ["BAR"],
+        "MaterialEnum": ["PVC", "ALUMINIUM"],
+        "CutMaterialEnum": ["PVC", "ALUMINIUM", "STEEL"],
+        "InspectorRuleIdEnum": [f"R{i:02d}" for i in range(1, 15)],
+        "DrainFixRuleIdEnum": ["R07"],
+    },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",
     "VERSION": "1.0.0",

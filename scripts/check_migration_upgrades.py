@@ -76,6 +76,55 @@ def verify(container: str) -> None:
         END $$;
     """)
     print("  Populated SHOT-05 DEMO catalog upgrade: PASS", flush=True)
+    sql("shot06_upgrade", """
+        CREATE TABLE shot07_before AS SELECT
+          (SELECT jsonb_agg(to_jsonb(s) ORDER BY id) FROM public.profile_systems s) systems,
+          (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM public.profile_articles p) profiles,
+          (SELECT jsonb_agg(to_jsonb(k) ORDER BY id) FROM public.hardware_kits k) kits;
+    """)
+    for name in ("20260906000000_shot_07_authorities.sql",
+                 "20260906000100_shot_07_demo_catalog.sql"):
+        sql("shot06_upgrade", (ROOT / "supabase/migrations" / name).read_text(encoding="utf-8"))
+    sql("shot06_upgrade", """
+        DO $$ BEGIN
+          IF (SELECT jsonb_agg(to_jsonb(s)-'chamber_clearance_mm' ORDER BY id)
+              FROM public.profile_systems s) IS DISTINCT FROM (SELECT systems FROM shot07_before)
+             OR (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM public.profile_articles p)
+                IS DISTINCT FROM (SELECT profiles FROM shot07_before)
+             OR (SELECT jsonb_agg(to_jsonb(k)-'carriage_capacity_kg' ORDER BY id)
+                 FROM public.hardware_kits k) IS DISTINCT FROM (SELECT kits FROM shot07_before)
+          THEN RAISE EXCEPTION 'SHOT-07 changed existing SHOT-06 catalog data'; END IF;
+          IF (SELECT count(*) FROM public.inspector_rule_configs) <> 14
+             OR NOT EXISTS (SELECT 1 FROM public.profile_systems
+                 WHERE code='DEMO_60' AND chamber_clearance_mm=12.00)
+             OR NOT EXISTS (SELECT 1 FROM public.cutting_profiles WHERE code='DEMO'
+                 AND kerf_mm=4 AND head_trim_mm=15 AND tail_trim_mm=15)
+             OR to_regclass('public.profile_purchase_mappings') IS NULL
+             OR to_regclass('public.reinforcement_articles') IS NULL
+          THEN RAISE EXCEPTION 'SHOT-07 explicit fixture upgrade failed'; END IF;
+        END $$;
+        INSERT INTO public.profile_systems (code,name,depth_mm,
+          sliding_glazing_deduction_width_mm,sliding_glazing_deduction_height_mm,
+          door_leaf_side_clearance_mm)
+        VALUES ('LEGACY-NO-INSPECTOR','Historical non-inspector system',60,20,20,7);
+        DO $$ DECLARE target UUID; BEGIN
+          SELECT id INTO target FROM public.profile_systems WHERE code='LEGACY-NO-INSPECTOR';
+          IF NOT EXISTS (SELECT 1 FROM public.profile_systems
+                         WHERE id=target AND chamber_clearance_mm IS NULL)
+          THEN RAISE EXCEPTION 'Legacy nullable authority not preserved'; END IF;
+          BEGIN
+            INSERT INTO public.inspector_rule_configs(system_id,rule_id,params)
+            VALUES (target,'R01','{}');
+            RAISE EXCEPTION 'Missing clearance unexpectedly accepted';
+          EXCEPTION WHEN raise_exception THEN
+            IF SQLERRM <> 'Inspector requires explicit chamber clearance' THEN RAISE; END IF;
+          END;
+          IF EXISTS (SELECT 1 FROM public.inspector_rule_configs WHERE system_id=target)
+          THEN RAISE EXCEPTION 'Failed config activation did not roll back'; END IF;
+        END $$;
+    """)
+    print("  SHOT-07 populated upgrade, existing authorities and activation rollback: PASS",
+          flush=True)
     sql("shot06_unresolved", """
         INSERT INTO public.profile_systems (code, name, depth_mm)
         VALUES ('UNRESOLVED-CATALOG', 'No approved SHOT-06 authority', 70.00);

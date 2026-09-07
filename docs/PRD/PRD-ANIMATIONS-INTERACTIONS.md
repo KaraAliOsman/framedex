@@ -73,5 +73,5 @@ Esta asignación no crea divisiones, no aplica snap a 50% y no aplica el mínimo
 
 Al presionar el botón `[⚡ Corregir en 1 Clic]` en el inspector técnico:
 1. El componente corregido en el canvas (e.g. la hoja con sobrepeso) emite un pulso visual de destello esmeralda `#00C853` de $300\text{ ms}$.
-2. El semáforo del panel superior realiza una transición de rojo a verde en $150\text{ ms}$.
-3. El botón principal *"Aprobar para Taller"* se desbloquea inmediatamente iluminándose con sombra esmeralda.
+2. Tras recalcular engine e Inspector, el semáforo anima previous_status → recomputed_status en $150\text{ ms}$; puede quedar RED, YELLOW o GREEN.
+3. El botón principal *"Aprobar para Taller"* depende exclusivamente de WorkshopReadiness (Inspector permite producción y BFD válido). Prohibido forzar GREEN o desbloquear tras un fix. No emite OT ni persiste proyectos.

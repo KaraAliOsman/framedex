@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -7,9 +7,11 @@ import { CADViewportSvg } from "./CADViewportSvg";
 import { useCanvasStore } from "./canvasStore";
 import { CanvasTechnicalResults } from "./CanvasTechnicalResults";
 import { useEngineCalculation } from "./useEngineCalculation";
+import { InspectorModal } from "../inspector/InspectorModal";
 import "./canvas.css";
 
 export function CanvasEditor2DView(): JSX.Element {
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const auth = useAuthSession();
   const { id, posId } = useParams();
   const organizationId = auth.me?.active_organization?.id ?? "";
@@ -72,6 +74,9 @@ export function CanvasEditor2DView(): JSX.Element {
           Snap {snapEnabled ? "ON" : "OFF"}
         </button>
         <span>{controller.demoSystem?.name}</span>
+        <button type="button" onClick={() => setInspectorOpen(true)}>
+          {t("inspector.open")}
+        </button>
       </div>
       {controller.commitErrorCode !== null ? (
         <p className="canvas-error" role="alert">
@@ -93,6 +98,13 @@ export function CanvasEditor2DView(): JSX.Element {
         />
         <CanvasTechnicalResults response={controller.result} />
       </div>
+      <InspectorModal
+        open={inspectorOpen}
+        onClose={() => setInspectorOpen(false)}
+        organizationId={organizationId}
+        inputs={inputs}
+        calculationHash={controller.result.calculation_hash}
+      />
     </div>
   );
 }

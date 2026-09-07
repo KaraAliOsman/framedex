@@ -47,7 +47,7 @@ function errorCode(error: unknown, fallback: string): string {
   return typeof payload.error?.code === "string" ? payload.error.code : fallback;
 }
 
-function requestFromInputs(inputs: CanvasDesignInputs): EngineCalculateRequestRequest {
+export function requestFromInputs(inputs: CanvasDesignInputs): EngineCalculateRequestRequest {
   if (inputs.systemId === null) throw new Error("Engine system has not been resolved");
   return {
     system_id: inputs.systemId,
@@ -58,7 +58,10 @@ function requestFromInputs(inputs: CanvasDesignInputs): EngineCalculateRequestRe
   };
 }
 
-function calculationKey(organizationId: string, inputs: CanvasDesignInputs): readonly unknown[] {
+export function calculationKey(
+  organizationId: string,
+  inputs: CanvasDesignInputs,
+): readonly unknown[] {
   return [
     "engine-calculation",
     organizationId,
