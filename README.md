@@ -44,10 +44,12 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 
 | Documento | Ubicación | Propósito |
 |---|---|---|
-| **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap obligatorio para Codex, Claude Code y agentes de desarrollo |
+| **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap y mapa de autoridades para Astra, Codex, Claude Code y agentes de desarrollo |
 | **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 23 reglas inviolables de calidad, tipado y determinismo (v1.3 MASTER) |
+| **Doctrina Operativa de Agentes** | [`/docs/AGENT_OPERATING_MODEL.md`](./docs/AGENT_OPERATING_MODEL.md) | Guía operativa: calidad production-grade, eficiencia de tokens y verificación progresiva |
+| **Mapa de Calidad Operativo** | [`/docs/QUALITY_SCORE.md`](./docs/QUALITY_SCORE.md) | Mapa JIT de capacidades probadas (`PROVEN`) vs. en progreso o diferidas con evidencia real |
 | **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Guía paso a paso para planificar, ejecutar y cerrar cada shot |
-| **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-19) |
+| **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-20) |
 | **Baseline de Superficies y Flujos** | [`/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md`](./docs/PRD/SCREENS_SPECIFICATION_S01_S28.md) | Baseline de superficies y flujos de usuario (Capability Map S01 a S28) |
 | **Plan Maestro de Shots** | [`/docs/PRD/PLAN_SHOTS.md`](./docs/PRD/PLAN_SHOTS.md) | Secuencia de ejecución canónica de los 24 shots y gates de cierre |
 | **Capacidades Futuras Protegidas** | [`/docs/PRD/FUTURE_CAPABILITIES.md`](./docs/PRD/FUTURE_CAPABILITIES.md) | Registro activo de arquitectura extensible (3D, CNC, geometría avanzada) |

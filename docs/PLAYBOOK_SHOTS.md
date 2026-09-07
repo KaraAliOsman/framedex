@@ -1,6 +1,6 @@
-# PLAYBOOK POR SHOT — PROTOCOLO DE SESIÓN CON ALINEACIÓN GLOBAL (v1.2)
+# PLAYBOOK POR SHOT — PROTOCOLO DE SESIÓN CON ALINEACIÓN GLOBAL (v1.3)
 
-> Este documento define el flujo de trabajo estándar e inmutable para cada una de las 24 sesiones de construcción (**SHOT-01** a **SHOT-24**). Garantiza que el agente mantenga siempre una visión holística de cómo encaja su código en el sistema global sin perderse ni trabajar de forma aislada.
+> Este documento define el flujo de trabajo estándar para cada una de las 24 sesiones de construcción (**SHOT-01** a **SHOT-24**). Garantiza que el agente mantenga siempre una visión holística de cómo encaja su código en el sistema global y aplique la doctrina operativa de [`docs/AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md).
 
 ---
 
@@ -9,24 +9,24 @@
 ```
 [ 1. Iniciar Shot ] ──► make shot-XX (Crea branch y scaffold con upstream/downstream)
        │
-[ 2. Contexto JIT ] ──► Leer AGENTS.md + CONSTITUTION.md + docs/PRD/PRD-{XX}.md
+[ 2. Contexto JIT ] ──► Leer AGENTS.md + CONSTITUTION.md + docs/PRD/PLAN_SHOTS.md + PRD afectado
        │
 [ 3. Redactar Plan ]──► Completar docs/plans/PLAN_SHOT-XX.md (esperar OK de usuario)
        │
-[ 4. Ejecución TDD ]──► Escribir código + tests unitarios + contratos de datos
+[ 4. Ejecución TDD ]──► Maker implementa + verificación progresiva (tests unitarios locales Nivel 1/2)
        │
-[ 5. El Gauntlet ]  ──► python scripts/check_dod.py all (Auto-reparación hasta 100% verde)
+[ 5. El Gauntlet ]  ──► python scripts/check_dod.py all (Gauntlet canónico completo Nivel 4)
        │
-[ 6. Golden Check ] ──► make goldgen (si tocó fórmulas; commit diff snapshot)
+[ 6. Golden Check ] ──► python -m engine.scripts.regenerate_golden --check (Default READ-ONLY)
        │
-[ 7. Cierre ]       ──► Commit convencional + PR + merge squash + tag shot-XX
+[ 7. Cierre ]       ──► Commit convencional + PR protegido (4 checks CI) + merge ordenado + tag shot-XX
 ```
 
 ---
 
 ## 2. Plantilla Obligatoria de `docs/plans/PLAN_SHOT-XX.md`
 
-Antes de escribir código en cualquier sesión, el agente debe redactar y guardar el plan en `docs/plans/PLAN_SHOT-XX.md` utilizando exactamente esta estructura:
+Antes de escribir código en cualquier sesión, el agente debe redactar y guardar el plan en `docs/plans/PLAN_SHOT-XX.md` utilizando esta estructura:
 
 ```markdown
 # Plan de Implementación — SHOT-XX: [Nombre del Shot]
@@ -46,13 +46,14 @@ Antes de escribir código en cualquier sesión, el agente debe redactar y guarda
 - `[MODIFY] ruta/del/archivo.ts` — Cambios puntuales a realizar.
 - `[PROHIBIDO]` — Módulos o funcionalidades explícitamente fuera de este shot.
 
-## 3. Estrategia de Pruebas y Validación Gauntlet
-- Tests unitarios a escribir en `engine/tests/` o `backend/apps/`.
-- Casos de oro G-cases evaluados (Tolerancia 0.00 mm).
-- Comando exacto: `python scripts/check_dod.py all` (o `make dod`).
+## 3. Estrategia de Pruebas y Verificación Progresiva
+- Nivel 1: Tests unitarios focalizados en `engine/tests/` o `backend/tests/`.
+- Nivel 2: Suites de módulos estabilizados.
+- Nivel 3: Pruebas de integración, RLS y navegador real.
+- Nivel 4 (Cierre): `python scripts/check_dod.py all`.
 
 ## 4. Riesgos y [PENDIENTE-DECISIÓN]
-- Identificación de cualquier ambigüedad en el PRD. Si existe, aplicar Regla 20.
+- Identificación de cualquier ambigüedad material bajo Regla 0. Si existe, aplicar Regla 20.
 ```
 
 ---
@@ -64,3 +65,5 @@ Antes de escribir código en cualquier sesión, el agente debe redactar y guarda
 3. **Aislamiento Multi-Tenant:** Toda consulta de negocio incluye `org_id` y respeta políticas RLS.
 4. **Trazabilidad:** Toda acción de IA registra fila en `ai_audit_logs`; todo cambio de precio en `price_audit_logs`.
 5. **Idempotencia:** Webhooks y pagos protegidos con restricciones `UNIQUE` contra reintentos.
+6. **Maker / Checker:** El Maker ejecuta checkers y auto-repara; la finalización la certifica mecánicamente el Gauntlet y el CI protegido.
+7. **Política Golden:** `GOLDEN = READ-ONLY` por defecto; `make goldgen` solo ante cambio material de fórmula autorizado.
