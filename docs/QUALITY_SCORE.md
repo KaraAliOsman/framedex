@@ -30,7 +30,7 @@ To eliminate ambiguity and "verifier theater", every module and shot is classifi
 | **SHOT-05** | Canvas 2D Interactive Editor | `PROVEN` | PR #12, Playwright paint benchmarks (<300 ms), transactional dimension edits, snapping. |
 | **SHOT-06** | Extended Typologies & Hardware Kits | `PROVEN` | PR #14, SLIDING_2L, DOOR, AWNING, G5–G7 in $0.00\text{ mm}$, 20/20 core mutations killed. |
 | **v1.3 MASTER** | Normative & Capability Alignment | `PROVEN` | PR #16 (merged aaf739a), Single Constitution, PRD-20 community catalog, 4/4 CI contexts green. |
-| **Agent Harness** | Production-Grade Operating Model | `IN_PROGRESS` | Local validation passed (6/6 filters exit 0); protected integration pending. |
+| **Agent Harness** | Production-Grade Operating Model | `PROVEN` | PR #17 (merged 5be2b99), unified Maker/Checker protocol, durable quality score. |
 | **SHOT-07** | 1D BFD Cutting & Inspector R01–R14 | `IN_PROGRESS` | Branch `shot-07`, 1D BFD optimizer, R01–R14 inspector, S07 modal design. |
 | **SHOT-06B** | Complex Cases (G8, G9, G11, G12) | `DEFERRED_BY_ROADMAP` | Extended sliding 3-4L and double door scheduled for Phase 1.5. |
 | **SHOT-08** | 5-Mode Pricing Engine & Auditing | `NOT_EVALUATED` | Phase 1 milestone, scheduled after SHOT-07 closure. |
