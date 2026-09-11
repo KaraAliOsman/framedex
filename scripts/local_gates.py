@@ -244,6 +244,9 @@ def verify_postgres16() -> None:
         import check_migration_upgrades
 
         check_migration_upgrades.verify(container)
+        import check_shot08_upgrade
+
+        check_shot08_upgrade.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])

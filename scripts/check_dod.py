@@ -140,6 +140,10 @@ REQUIRED_DATABASE_PATHS = (
 )
 
 EXPECTED_DATABASE_TABLES = {
+    "pricing_configurations",
+    "pricing_matrix_cells",
+    "pricing_fx_snapshots",
+    "pricing_operations",
     "profile_purchase_mappings",
     "reinforcement_articles",
     "cutting_profiles",
@@ -741,11 +745,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-07 fail-closed checker", flush=True)
+    print("Dekopen SHOT-08 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-07 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-08 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -758,7 +762,7 @@ def main() -> None:
     if target in {"build", "all", "gauntlet"}:
         check_build()
 
-    print(f"[PASS] SHOT-07 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-08 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":
