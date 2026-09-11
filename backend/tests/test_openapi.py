@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_authorized_shot_07_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_authorized_shot_08_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
         "/api/v1/auth/me/",
@@ -16,6 +16,12 @@ def test_openapi_contains_only_authorized_shot_07_paths_and_bearer_security() ->
         "/api/v1/engine/systems/",
         "/api/v1/engine/inspect/",
         "/api/v1/engine/optimize-cut/",
+        "/api/v1/pricing/admin/{resource}/",
+        "/api/v1/pricing/preview/",
+        "/api/v1/pricing/operations/",
+        "/api/v1/pricing/operations/{operation_id}/apply/",
+        "/api/v1/pricing/drafts/",
+        "/api/v1/pricing/import/",
     }
     bearer = schema["components"]["securitySchemes"]["SupabaseBearer"]
     assert bearer == {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
@@ -37,6 +43,12 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
         ("/api/v1/engine/systems/", "get"),
         ("/api/v1/engine/inspect/", "post"),
         ("/api/v1/engine/optimize-cut/", "post"),
+        ("/api/v1/pricing/admin/{resource}/", "post"),
+        ("/api/v1/pricing/preview/", "post"),
+        ("/api/v1/pricing/operations/", "get"),
+        ("/api/v1/pricing/operations/{operation_id}/apply/", "post"),
+        ("/api/v1/pricing/drafts/", "post"),
+        ("/api/v1/pricing/import/", "post"),
     ):
         header = next(p for p in schema["paths"][path][method]["parameters"] if p["name"] == "X-Organization-ID")
         assert header["in"] == "header"
