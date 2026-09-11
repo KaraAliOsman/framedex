@@ -12,6 +12,8 @@ const navigation = [
   ["/projects", "nav.projects"],
   ["/catalogs/systems", "nav.systems"],
   ["/settings/general", "nav.settings"],
+  ["/pricing/cost-lists", "pricing.title"],
+  ["/pricing/commercial", "pricing.calculate"],
 ] as const;
 
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
@@ -35,11 +37,18 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
         </button>
       </header>
       <nav className="tool-rail" aria-label={t("shell.navigation")}>
-        {navigation.map(([to, label]) => (
-          <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
-            {t(label).slice(0, 1)}
-          </NavLink>
-        ))}
+        {navigation
+          .filter(([to]) => {
+            const role = auth.me?.active_organization?.role;
+            if (to === "/pricing/cost-lists") return role === "OWNER";
+            if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
+            return true;
+          })
+          .map(([to, label]) => (
+            <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
+              {t(label).slice(0, 1)}
+            </NavLink>
+          ))}
       </nav>
       <main className="workspace">{children}</main>
       <aside className="context-panel">

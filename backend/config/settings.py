@@ -73,7 +73,7 @@ CORS_ALLOWED_ORIGINS = _csv_env("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173")
 CORS_ALLOW_CREDENTIALS = False
 CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:54321").rstrip("/")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_JWT_VERIFY_MODE = os.environ.get("SUPABASE_JWT_VERIFY_MODE", "auth_server")
 SUPABASE_JWT_HTTP_TIMEOUT_SECONDS = 5

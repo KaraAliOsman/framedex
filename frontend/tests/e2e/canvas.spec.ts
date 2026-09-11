@@ -5,7 +5,7 @@ import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
 
 const supabaseUrl = requiredEnvironment("SUPABASE_URL");
 const serviceRoleKey = requiredEnvironment("SUPABASE_SERVICE_ROLE_KEY");
-const mailpitUrl = environment("MAILPIT_URL") ?? "http://127.0.0.1:54324";
+const mailpitUrl = environment("MAILPIT_URL") ?? "http://127.0.0.1:25324";
 
 type FixtureUser = {
   email: string;

@@ -30,6 +30,10 @@ export function configureApiAuthContext(provider: () => Promise<ApiAuthContext>)
 export async function apiMutator<T>(url: string, options: RequestInit): Promise<T> {
   const context = await readAuthContext();
   const headers = new Headers(options.headers);
+  const requestedOrganization = headers.get("X-Organization-ID");
+  if (requestedOrganization !== null && requestedOrganization !== context.organizationId) {
+    throw new ApiError(409, { error: { code: "stale_organization" } });
+  }
   headers.set("Accept", "application/json");
   if (context.accessToken !== null) {
     headers.set("Authorization", `Bearer ${context.accessToken}`);
