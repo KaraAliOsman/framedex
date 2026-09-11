@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(20);
+SELECT plan(38);
 SELECT ok(relrowsecurity,relname||' has RLS') FROM pg_class
  WHERE relnamespace='public'::regnamespace AND relname IN
  ('pricing_configurations','pricing_matrix_cells','pricing_fx_snapshots','pricing_operations') ORDER BY relname;
@@ -45,5 +45,30 @@ SELECT set_config('request.jwt.claims','{"sub":"88100000-0000-4000-8000-00000000
 SELECT is((SELECT count(*) FROM cost_list_items),0::bigint,'installer cannot read costs');
 RESET ROLE;
 SELECT ok(NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='pricing_backend' AND (rolsuper OR rolbypassrls OR rolcanlogin)),'calculator role has no login or RLS bypass');
+
+-- Owner finding: NULL actor cannot bypass the commercial INSERT guard.
+SELECT set_config('request.jwt.claims','{}',true);
+SELECT set_config('request.jwt.claim.sub','',true);
+SET LOCAL ROLE postgres;
+SELECT lives_ok($$INSERT INTO projects(id,org_id,code,name,client_name,created_by) VALUES('88400000-0000-4000-8000-000000000001','88000000-0000-4000-8000-000000000001','ZERO-postgres','Zero draft','Fixture','88100000-0000-4000-8000-000000000001')$$,'postgres actor NULL may insert zero project');
+SELECT lives_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000001',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60'$$,'postgres actor NULL may insert zero position');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_cost_net) VALUES('88000000-0000-4000-8000-000000000001','REJECT-postgres-total_cost_net','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','postgres rejects nonzero total_cost_net INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_net) VALUES('88000000-0000-4000-8000-000000000001','REJECT-postgres-total_price_net','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','postgres rejects nonzero total_price_net INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_tax) VALUES('88000000-0000-4000-8000-000000000001','REJECT-postgres-total_price_tax','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','postgres rejects nonzero total_price_tax INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_gross) VALUES('88000000-0000-4000-8000-000000000001','REJECT-postgres-total_price_gross','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','postgres rejects nonzero total_price_gross INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,cost_net) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000001',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','postgres rejects nonzero cost_net INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,price_net) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000001',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','postgres rejects nonzero price_net INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,discount_pct) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000001',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','postgres rejects nonzero discount_pct INSERT');
+SET LOCAL ROLE service_role;
+SELECT lives_ok($$INSERT INTO projects(id,org_id,code,name,client_name,created_by) VALUES('88400000-0000-4000-8000-000000000002','88000000-0000-4000-8000-000000000001','ZERO-service_role','Zero draft','Fixture','88100000-0000-4000-8000-000000000001')$$,'service_role actor NULL may insert zero project');
+SELECT lives_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000002',1,'FIXED',id,1000,1000,'{}','{}' FROM profile_systems WHERE code='DEMO_60'$$,'service_role actor NULL may insert zero position');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_cost_net) VALUES('88000000-0000-4000-8000-000000000001','REJECT-service_role-total_cost_net','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','service_role rejects nonzero total_cost_net INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_net) VALUES('88000000-0000-4000-8000-000000000001','REJECT-service_role-total_price_net','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','service_role rejects nonzero total_price_net INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_tax) VALUES('88000000-0000-4000-8000-000000000001','REJECT-service_role-total_price_tax','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','service_role rejects nonzero total_price_tax INSERT');
+SELECT throws_ok($$INSERT INTO projects(org_id,code,name,client_name,created_by,total_price_gross) VALUES('88000000-0000-4000-8000-000000000001','REJECT-service_role-total_price_gross','Rejected','Fixture','88100000-0000-4000-8000-000000000001',1)$$,'42501','pricing_service_required','service_role rejects nonzero total_price_gross INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,cost_net) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000002',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','service_role rejects nonzero cost_net INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,price_net) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000002',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','service_role rejects nonzero price_net INSERT');
+SELECT throws_ok($$INSERT INTO project_positions(org_id,project_id,position_index,typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot,discount_pct) SELECT '88000000-0000-4000-8000-000000000001','88400000-0000-4000-8000-000000000002',2,'FIXED',id,1000,1000,'{}','{}',0.01 FROM profile_systems WHERE code='DEMO_60'$$,'42501','pricing_service_required','service_role rejects nonzero discount_pct INSERT');
+RESET ROLE;
 SELECT * FROM finish();
 ROLLBACK;

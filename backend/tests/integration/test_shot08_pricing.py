@@ -255,3 +255,104 @@ def test_estimator_pending_owner_approval_and_stale_input(commercial_rows):
         rows('UPDATE public.project_positions SET quantity=2 WHERE project_id=%s RETURNING id',[project])
         with pytest.raises(PricingError,match='stale_pricing_operation'):
             apply_operation(org,users['OWNER'],'OWNER',next_output['id'],'Stale',False)
+
+
+@pytest.mark.parametrize('session_role', ['postgres', 'service_role', 'OWNER', 'ESTIMATOR'])
+def test_direct_commercial_insert_guard_all_fields(commercial_rows, session_role):
+    """Real roles: zero drafts remain valid; every nonzero commercial field fails."""
+    from contextlib import nullcontext
+    from psycopg import sql
+
+    org, _, users = commercial_rows
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    identity = as_user(users[session_role]) if session_role in users else nullcontext()
+    with transaction.atomic(), identity:
+        with connection.cursor() as cursor:
+            if session_role not in users:
+                cursor.execute("SELECT set_config('request.jwt.claims','{}',true)")
+                cursor.execute("SELECT set_config('request.jwt.claim.sub','',true)")
+                cursor.execute(sql.SQL('SET LOCAL ROLE {}').format(sql.Identifier(session_role)))
+                cursor.execute('SELECT auth.uid()')
+                assert cursor.fetchone()[0] is None
+            project = uuid4()
+            cursor.execute('INSERT INTO public.projects(id,org_id,code,name,client_name,created_by) '
+                           'VALUES(%s,%s,%s,%s,%s,%s)',
+                           [project,org,str(project),'Zero draft','Fixture',users['OWNER']])
+            position = uuid4()
+            position_values = [position,org,project,1,'FIXED',system,'{}','{}']
+            position_insert = ('INSERT INTO public.project_positions(id,org_id,project_id,position_index,'
+                               'typology,system_id,parametric_tree,bom_snapshot{extra}) '
+                               'VALUES(%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb{value})')
+            # Dimensions are mandatory but their schema defaults are not assumed.
+            position_insert = position_insert.replace('bom_snapshot{extra}',
+                'bom_snapshot,width_mm,height_mm{extra}').replace('%s::jsonb{value}',
+                '%s::jsonb,1000,1000{value}')
+            cursor.execute(position_insert.format(extra='',value=''),position_values)
+            for field in ('total_cost_net','total_price_net','total_price_tax','total_price_gross'):
+                attempted = uuid4()
+                with pytest.raises(DatabaseError,match='pricing_service_required') as rejected, transaction.atomic():
+                    cursor.execute(sql.SQL('INSERT INTO public.projects(id,org_id,code,name,client_name,created_by,{}) '
+                        'VALUES(%s,%s,%s,%s,%s,%s,1)').format(sql.Identifier(field)),
+                        [attempted,org,str(attempted),'Forbidden','Fixture',users['OWNER']])
+                assert rejected.value.__cause__.sqlstate == '42501'
+                cursor.execute('SELECT count(*) FROM public.projects WHERE id=%s',[attempted])
+                assert cursor.fetchone()[0] == 0
+            for field in ('cost_net','price_net','discount_pct'):
+                attempted = uuid4()
+                with pytest.raises(DatabaseError,match='pricing_service_required') as rejected, transaction.atomic():
+                    cursor.execute(position_insert.format(extra=','+field,value=',0.01'),
+                                   [attempted,org,project,2,'FIXED',system,'{}','{}'])
+                assert rejected.value.__cause__.sqlstate == '42501'
+                cursor.execute('SELECT count(*) FROM public.project_positions WHERE id=%s',[attempted])
+                assert cursor.fetchone()[0] == 0
+            cursor.execute('SELECT count(*) FROM public.projects WHERE id=%s',[project])
+            assert cursor.fetchone()[0] == 1
+            cursor.execute('SELECT count(*) FROM public.project_positions WHERE id=%s',[position])
+            assert cursor.fetchone()[0] == 1
+
+
+def test_authorized_apply_audit_before_and_full_rollback(commercial_rows):
+    """A second BEFORE trigger witnesses prior evidence; a late failure rolls all back."""
+    org, _, users = commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
+        cursor.execute("""CREATE FUNCTION pg_temp.assert_commercial_before() RETURNS trigger
+          LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ BEGIN
+          IF NOT EXISTS(SELECT 1 FROM public.price_audit_logs WHERE entity_id=NEW.id
+            AND old_record=to_jsonb(OLD) AND new_record=to_jsonb(NEW)
+            AND actor_user_id=auth.uid() AND reason='Apply owner fix gate') THEN
+            RAISE EXCEPTION 'commercial_audit_not_before'; END IF;
+          RETURN NEW; END $$;
+          CREATE TRIGGER zz_assert_commercial_before BEFORE UPDATE ON public.project_positions
+            FOR EACH ROW EXECUTE FUNCTION pg_temp.assert_commercial_before();
+          CREATE TRIGGER zz_assert_commercial_before BEFORE UPDATE ON public.projects
+            FOR EACH ROW EXECUTE FUNCTION pg_temp.assert_commercial_before();
+          CREATE FUNCTION pg_temp.reject_commercial_apply() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+            IF NEW.state='APPLIED' THEN RAISE EXCEPTION 'forced_apply_rollback'; END IF;
+            RETURN NEW; END $$;
+          CREATE TRIGGER zz_reject_apply BEFORE UPDATE ON public.pricing_operations
+            FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_commercial_apply();""")
+    with as_user(users['OWNER']), commercial_backend():
+        operation = preview(org,tenant(org,'OWNER'),price_request(project,users['OWNER']))
+    with connection.cursor() as cursor:
+        cursor.execute('RESET ROLE')
+    before_project = one('SELECT * FROM public.projects WHERE id=%s',[project])
+    before_positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s',[project])
+    count = one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']
+    with pytest.raises(DatabaseError,match='forced_apply_rollback'), transaction.atomic():
+        with as_user(users['OWNER']), commercial_backend():
+            apply_operation(org,users['OWNER'],'OWNER',operation['id'],'Apply owner fix gate',False)
+    assert one('SELECT * FROM public.projects WHERE id=%s',[project]) == before_project
+    assert rows('SELECT * FROM public.project_positions WHERE project_id=%s',[project]) == before_positions
+    assert one('SELECT state FROM public.pricing_operations WHERE id=%s',[operation['id']])['state']=='PREVIEW'
+    assert one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']==count
+    with connection.cursor() as cursor:
+        cursor.execute('DROP TRIGGER zz_reject_apply ON public.pricing_operations')
+    with as_user(users['OWNER']), commercial_backend():
+        assert apply_operation(org,users['OWNER'],'OWNER',operation['id'],
+                               'Apply owner fix gate',False)['state']=='APPLIED'
+    with connection.cursor() as cursor:
+        cursor.execute('RESET ROLE')
+    assert one('SELECT total_price_net FROM public.projects WHERE id=%s',[project])['total_price_net']==Decimal('500')
+    assert one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']==count+3

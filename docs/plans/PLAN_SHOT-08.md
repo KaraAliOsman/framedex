@@ -1,5 +1,23 @@
 # PLAN_SHOT-08 — cierre local verificado; integración no iniciada
 
+## Owner merge review — commercial INSERT guard correction (2026-09-11)
+
+The Owner rejected PR #21 at `0caefc755d26c9f8e1a120590495ed633cfdfabe` for one material defect: `guard_commercial_write()` returned early for any NULL actor, allowing privileged nonzero commercial INSERTs without the UPDATE-only pricing audit triggers. This finding supersedes the previous zero-known-blockers audit for that HEAD. Constitution Rule 21 and PLAN_SHOTS GNG-07-AUDIT govern the correction; no PD or pricing design was reopened.
+
+The only functional change removes `OR auth.uid() IS NULL` in the new SHOT-08 migration. The explicit exception remains solely `pricing_backend`. Maintenance sessions may still insert zero-valued drafts; NULL-actor postgres/service_role and authenticated OWNER/ESTIMATOR cannot directly INSERT any of the four project totals or three position cost/price/discount fields with nonzero values. RLS, grants, pricing_backend architecture and historical migrations are unchanged.
+
+Real PostgreSQL evidence:
+- SHOT-08 pgTAP: 38/38 PASS, including zero project/position INSERTs and rejection of all seven nonzero fields for postgres and service_role (`42501`, `pricing_service_required`).
+- SHOT-08 pricing integration: 17 passed. The four-role regression checks all seven fields and confirms rejected rows are absent; zero drafts survive. Existing five-mode, tenant/RBAC, approval and stale-input tests remain green.
+- Authorized pricing_backend application is witnessed by a second BEFORE trigger on projects and project_positions: matching old/new/actor/reason audit evidence must already exist. A forced failure at operation finalization rolls back prices, state and audit rows; removing that test-only failure permits the operation and its three audit records.
+- PostgreSQL 16 clean installation and populated migration upgrade/rollback: PASS. Focused logs: `scratch/shot08-owner-fix-focused.log` (pgTAP) and `scratch/shot08-owner-fix-focused-retry.log` (integration/upgrade). The initial integration run found a test-setup role issue while installing the witness trigger; test setup was corrected before the final gate.
+
+One execution of `python scripts/check_dod.py all` after the focused gates: EXIT 0, official Python 3.12.10 and operational Docker 29.7.2 linux. Engine 216 pass + 5 canonical xfails; Backend 153 pass; Vitest 66 pass; real Playwright 6 pass; pgTAP 251/251; PostgreSQL 16 upgrade/rollback PASS; lint/types/OpenAPI/build PASS; Core mutations 20/20. Full local log: `scratch/shot08-owner-fix-all.log`.
+
+Golden remains byte-identical: calculation hash `sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21`; complete-file SHA-256 `c21c88d66e7ee2e0049ff01f4007cdd168383595d5b2f0f001fccf743ac5bff6`. H6 unchanged; G1–G7 pass, G8/G9/G11/G12 remain SHOT-06B xfail, G10 remains SHOT-24 xfail. No executable edits after the successful full gate.
+
+The sole Owner blocker is corrected locally. Publication remains on `codex/shot-08` / PR #21 for a second Owner merge review after the new HEAD receives all four required CI successes. NO MERGE, no roadmap closure, no SHOT-09.
+
 ## Estado vigente — 2026-09-10
 
 Las resoluciones owner finales sustituyen los residuos PD-08-04/05. RULE 0 = ZERO KNOWN MATERIAL CONTRADICTIONS. RULE 20 = ZERO MATERIAL GAPS al iniciar implementación. No se reabre ninguna PD cerrada. Reauditoría realizada sobre la base 14e535a42b9356d90865a72408377a45895cb70b y las autoridades JIT ya referidas abajo.

@@ -223,7 +223,7 @@ END $$;
 CREATE FUNCTION private.guard_commercial_write() RETURNS TRIGGER
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 BEGIN
-  IF current_setting('role')='pricing_backend' OR auth.uid() IS NULL THEN RETURN NEW; END IF;
+  IF current_setting('role')='pricing_backend' THEN RETURN NEW; END IF;
   IF TG_TABLE_NAME='project_positions' THEN
     IF TG_OP='INSERT' AND (NEW.cost_net<>0 OR NEW.price_net<>0 OR NEW.discount_pct<>0) THEN
       RAISE EXCEPTION 'pricing_service_required' USING ERRCODE='42501';
