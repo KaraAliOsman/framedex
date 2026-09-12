@@ -636,6 +636,7 @@ function CommercialOperations({
     generation.current += 1;
     setBusy(false);
     setError("");
+    setConfirmed(false);
   }
   async function runCurrent<T>(
     action: () => Promise<T>,

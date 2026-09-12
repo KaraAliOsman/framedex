@@ -23,6 +23,13 @@ class CuttingAuthorities:
     reinforcement_ix: dict[str, Decimal | None]
 
 
+def _positive_stock_length(value) -> Decimal:
+    length = _decimal(value)
+    if length <= Decimal('0'):
+        raise MissingStockAuthority('Stock length must be positive')
+    return length
+
+
 def effective_scope(rows: list[tuple[object, ...]], org_id: UUID, scope_index: int) -> list[
     tuple[object, ...]
 ]:
@@ -84,7 +91,7 @@ class CuttingRepository:
             stock_authority_id=str(row[0]), workshop_sku=sku, commercial_sku=str(row[1]),
             manufacturer_name=str(row[2]), supplier_name=None if row[3] is None else str(row[3]),
             purchase_unit="BAR", material=CutMaterial(str(article[2])), color=color,
-            stock_length_mm=_decimal(article[1]),
+            stock_length_mm=_positive_stock_length(article[1]),
         )
 
     def reinforcement_stock(
@@ -123,7 +130,7 @@ class CuttingRepository:
             stock_authority_id=str(row[0]), workshop_sku=str(row[1]), commercial_sku=str(row[2]),
             manufacturer_name="" if row[3] is None else str(row[3]),
             supplier_name=None if row[4] is None else str(row[4]), purchase_unit="BAR",
-            material=CutMaterial.STEEL, color=color, stock_length_mm=_decimal(row[5]),
+            material=CutMaterial.STEEL, color=color, stock_length_mm=_positive_stock_length(row[5]),
         ), None if row[7] is None else _decimal(row[7])
 
     def for_result(

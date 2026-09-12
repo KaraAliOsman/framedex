@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection, transaction, DatabaseError
 import pytest
 from rest_framework.test import APIClient
@@ -174,7 +175,7 @@ def test_configuration_requires_base_glass_and_finite_authorities(commercial_row
                 'effective_date':date(2026,9,10),'source':'Invalid fixture'},'Reject nonfinite')
 
 
-def seed_commercial_project(org, owner):
+def seed_unpriced_project(org, owner):
     system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
     project = one('INSERT INTO public.projects(org_id,code,name,client_name,created_by) '
                   'VALUES(%s,%s,%s,%s,%s) RETURNING id',[org,str(uuid4()),'Commercial gate','Fixture',owner])['id']
@@ -183,6 +184,11 @@ def seed_commercial_project(org, owner):
     one('INSERT INTO public.project_positions(org_id,project_id,position_index,quantity,typology,system_id,'
         'width_mm,height_mm,parametric_tree,bom_snapshot) VALUES(%s,%s,1,1,%s,%s,1000,1000,%s::jsonb,%s::jsonb) RETURNING id',
         [org,project,'FIXED',system,json_text(tree),'{}'])
+    return project
+
+
+def seed_commercial_project(org, owner):
+    project = seed_unpriced_project(org, owner)
     with as_user(owner):
         parent = admin_write('cost-lists',org,{'supplier_name':'Gate','currency':'CLP','valid_from':date(2026,9,1)},'Gate setup')
         for sku,unit,cost in [('DEMO-BAR-MARCO','BAR','100'),('DEMO-BAR-JQ-10','BAR','100'),
@@ -243,6 +249,7 @@ def test_five_modes_resolve_real_bom_and_apply_atomically(commercial_rows,mode):
 def test_estimator_pending_owner_approval_and_stale_input(commercial_rows):
     org,_,users=commercial_rows
     project=seed_commercial_project(org,users['OWNER'])
+    draft=seed_unpriced_project(org,users['OWNER'])
     with as_user(users['ESTIMATOR']),commercial_backend():
         with pytest.raises(PricingError,match='pricing_permission_denied'):
             preview(org,tenant(org,'ESTIMATOR'),price_request(project,users['ESTIMATOR'],'TARGET_GROSS_MARGIN_PROJECT'))
@@ -252,8 +259,11 @@ def test_estimator_pending_owner_approval_and_stale_input(commercial_rows):
             apply_operation(org,users['ESTIMATOR'],'ESTIMATOR',output['id'],'Try unauthorized',False)
     with as_user(users['OWNER']),commercial_backend():
         assert apply_operation(org,users['OWNER'],'OWNER',output['id'],'Approve exact request',False)['state']=='APPLIED'
-        next_output=preview(org,tenant(org,'OWNER'),price_request(project,users['OWNER']))
-        rows('UPDATE public.project_positions SET quantity=2 WHERE project_id=%s RETURNING id',[project])
+        next_output=preview(org,tenant(org,'OWNER'),price_request(draft,users['OWNER']))
+    with as_user(users['OWNER']):
+        assert len(rows('UPDATE public.project_positions SET quantity=2 WHERE project_id=%s RETURNING id',
+                        [draft]))==1
+    with as_user(users['OWNER']),commercial_backend():
         with pytest.raises(PricingError,match='stale_pricing_operation'):
             apply_operation(org,users['OWNER'],'OWNER',next_output['id'],'Stale',False)
 
@@ -450,3 +460,188 @@ def test_pricing_http_valid_preview_remains_successful(commercial_rows):
     assert body['project_tax']=='95'
     assert body['project_gross']=='595'
     assert body['lines']==[{'position_index':1,'line_net':'500'}]
+
+
+def privileged_role():
+    with connection.cursor() as cursor:
+        cursor.execute('RESET ROLE')
+
+
+def applied_commercial_project(org, owner):
+    project = seed_commercial_project(org,owner)
+    with as_user(owner), commercial_backend():
+        output = preview(org,tenant(org,'OWNER'),price_request(project,owner))
+        assert apply_operation(org,owner,'OWNER',output['id'],
+                               'Apply fixture gate',False)['state']=='APPLIED'
+    privileged_role()
+    return project
+
+
+def assert_commercial_state(project, before_project, before_positions, org, before_audit):
+    assert one('SELECT * FROM public.projects WHERE id=%s',[project])==before_project
+    assert rows('SELECT * FROM public.project_positions WHERE project_id=%s ORDER BY id',
+                [project])==before_positions
+    assert one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',
+               [org])['n']==before_audit
+
+
+def test_applied_commercial_state_rejects_direct_writes(commercial_rows):
+    org,_,users = commercial_rows
+    project = applied_commercial_project(org,users['OWNER'])
+    draft = seed_unpriced_project(org,users['OWNER'])
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[project])['id']
+    draft_position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[draft])['id']
+    before_project = one('SELECT * FROM public.projects WHERE id=%s',[project])
+    before_positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s ORDER BY id',
+                            [project])
+    before_draft = one('SELECT * FROM public.projects WHERE id=%s',[draft])
+    before_draft_positions = rows(
+        'SELECT * FROM public.project_positions WHERE project_id=%s ORDER BY id',[draft])
+    before_audit = one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']
+    forbidden = [
+        ('DELETE FROM public.project_positions WHERE id=%s RETURNING id',[position]),
+        ('DELETE FROM public.projects WHERE id=%s RETURNING id',[project]),
+        ('UPDATE public.project_positions SET quantity=2 WHERE id=%s RETURNING id',[position]),
+        ('UPDATE public.project_positions SET width_mm=1100 WHERE id=%s RETURNING id',[position]),
+        ("UPDATE public.project_positions SET parametric_tree='{}'::jsonb WHERE id=%s RETURNING id",
+         [position]),
+        ("UPDATE public.project_positions SET color_exterior='FOILED' WHERE id=%s RETURNING id",
+         [position]),
+        ("UPDATE public.projects SET name='Direct rename' WHERE id=%s RETURNING id",[project]),
+        ('INSERT INTO public.project_positions(org_id,project_id,position_index,quantity,typology,'
+         'system_id,width_mm,height_mm,parametric_tree,bom_snapshot) '
+         'VALUES(%s,%s,9,1,%s,%s,1000,1000,%s::jsonb,%s::jsonb) RETURNING id',
+         [org,project,'FIXED',system,'{}','{}']),
+        ('UPDATE public.project_positions SET project_id=%s WHERE id=%s RETURNING id',
+         [project,draft_position]),
+        ('UPDATE public.project_positions SET project_id=%s WHERE id=%s RETURNING id',
+         [draft,position]),
+    ]
+    with as_user(users['OWNER']):
+        for statement,parameters in forbidden:
+            with pytest.raises(DatabaseError,match='pricing_service_required') as rejected, \
+                    transaction.atomic():
+                rows(statement,parameters)
+            assert rejected.value.__cause__.sqlstate=='42501'
+    privileged_role()
+    assert_commercial_state(project,before_project,before_positions,org,before_audit)
+    assert one('SELECT * FROM public.projects WHERE id=%s',[draft])==before_draft
+    assert rows('SELECT * FROM public.project_positions WHERE project_id=%s ORDER BY id',
+                [draft])==before_draft_positions
+
+
+def test_other_tenant_direct_writes_touch_zero_rows(commercial_rows):
+    org,other,users = commercial_rows
+    project = applied_commercial_project(org,users['OWNER'])
+    position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[project])['id']
+    outsider = uuid4()
+    with connection.cursor() as cursor:
+        cursor.execute('INSERT INTO public.tenancy_memberships(org_id,user_id,role) '
+                       'VALUES(%s,%s,%s)',[other,outsider,'OWNER'])
+    before_project = one('SELECT * FROM public.projects WHERE id=%s',[project])
+    before_positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s ORDER BY id',
+                            [project])
+    before_audit = one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']
+    with as_user(outsider):
+        assert rows("UPDATE public.projects SET name='Hidden' WHERE id=%s RETURNING id",
+                    [project])==[]
+        assert rows('DELETE FROM public.projects WHERE id=%s RETURNING id',[project])==[]
+        assert rows('UPDATE public.project_positions SET quantity=9 WHERE id=%s RETURNING id',
+                    [position])==[]
+        assert rows('DELETE FROM public.project_positions WHERE id=%s RETURNING id',[position])==[]
+    privileged_role()
+    assert_commercial_state(project,before_project,before_positions,org,before_audit)
+
+
+def test_zero_unapplied_draft_remains_directly_mutable(commercial_rows):
+    org,_,users = commercial_rows
+    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    before_audit = one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',
+                       [org])['n']
+    with as_user(users['OWNER']):
+        project = one('INSERT INTO public.projects(org_id,code,name,client_name,created_by) '
+                      'VALUES(%s,%s,%s,%s,%s) RETURNING id',
+                      [org,str(uuid4()),'Direct draft','Fixture',users['OWNER']])['id']
+        first = one('INSERT INTO public.project_positions(org_id,project_id,position_index,quantity,'
+                    'typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot) '
+                    'VALUES(%s,%s,1,1,%s,%s,1000,1000,%s::jsonb,%s::jsonb) RETURNING id',
+                    [org,project,'FIXED',system,'{}','{}'])['id']
+        second = one('INSERT INTO public.project_positions(org_id,project_id,position_index,quantity,'
+                     'typology,system_id,width_mm,height_mm,parametric_tree,bom_snapshot) '
+                     'VALUES(%s,%s,2,1,%s,%s,1000,1000,%s::jsonb,%s::jsonb) RETURNING id',
+                     [org,project,'FIXED',system,'{}','{}'])['id']
+        assert len(rows("UPDATE public.project_positions SET quantity=2,width_mm=1100,"
+                        "color_exterior='FOILED' WHERE id=%s RETURNING id",[first]))==1
+        assert len(rows("UPDATE public.projects SET name='Renamed draft' WHERE id=%s RETURNING id",
+                        [project]))==1
+        assert len(rows('DELETE FROM public.project_positions WHERE id=%s RETURNING id',
+                        [first]))==1
+        assert len(rows('DELETE FROM public.projects WHERE id=%s RETURNING id',[project]))==1
+        assert rows('SELECT id FROM public.project_positions WHERE id=%s',[second])==[]
+        assert rows('SELECT id FROM public.projects WHERE id=%s',[project])==[]
+    privileged_role()
+    assert one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',
+               [org])['n']==before_audit
+
+
+def import_file():
+    return SimpleUploadedFile('prices.xlsx',workbook_bytes([['IMP-1','Importable','M','1.5']]),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+def import_payload(list_id,**overrides):
+    data = {'file':import_file(),'mapping':json_text(MAPPING),'decimal_separator':'.',
+            'cost_list_id':str(list_id),'reason':'Audited import','apply':'false'}
+    for key,value in overrides.items():
+        if value is None:
+            data.pop(key)
+        else:
+            data[key] = value
+    return data
+
+
+@pytest.mark.parametrize('override',[
+    {'cost_list_id':'not-a-uuid'},
+    {'apply':'not-boolean'},
+    {'decimal_separator':';'},
+    {'reason':None},
+    {'file':None},
+    {'mapping':'{'},
+    {'org_id':str(uuid4())},
+],ids=['malformed-uuid','invalid-boolean','invalid-separator','missing-reason',
+       'missing-file','malformed-mapping','unknown-org-id'])
+def test_pricing_import_http_contract_failures_are_canonical_400(commercial_rows,override):
+    org,_,users = commercial_rows
+    with as_user(users['OWNER']):
+        list_id = make_list(org,date(2026,9,1),'1')
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/import/',
+        import_payload(list_id,**override),format='multipart')
+    assert_public_error(response,400,'validation_error','Revisa los campos y los valores ingresados.')
+
+
+def test_pricing_import_http_valid_preview_persists_nothing(commercial_rows):
+    org,_,users = commercial_rows
+    with as_user(users['OWNER']):
+        list_id = make_list(org,date(2026,9,1),'1')
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/import/',
+        import_payload(list_id),format='multipart')
+    assert response.status_code==200
+    assert response.json()['items']==[{'sku':'IMP-1','description':'Importable','unit':'M',
+                                       'unit_cost':'1.5'}]
+    assert rows("SELECT id FROM public.cost_list_items WHERE sku='IMP-1'")==[]
+
+
+@pytest.mark.parametrize('length',['0','-1'])
+def test_pricing_http_nonpositive_stock_length_returns_public_422(commercial_rows,length):
+    org,_,users = commercial_rows
+    changed = rows("UPDATE public.profile_articles SET commercial_length_mm=%s "
+                   "WHERE org_id IS NULL AND sku='MARCO' AND system_id=("
+                   "SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND is_global) "
+                   "RETURNING id",[length])
+    assert len(changed)==1
+    project = seed_commercial_project(org,users['OWNER'])
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                 format='json')
+    assert_public_error(response,422,'technical_authority_required',
+                        'Revisa el diseño y su catálogo técnico antes de cotizar.')

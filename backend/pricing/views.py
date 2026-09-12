@@ -183,14 +183,8 @@ class ImportView(APIView):
                    responses={200:AdminResponseSerializer,**ERRORS},tags=['pricing'])
     def post(self,request):
         with scope(request) as (_,_,org):
-            try:
-                upload = request.FILES['file']
-                mapping = json.loads(request.data['mapping'])
-                parsed = parse_xlsx(upload.read(5*1024*1024+1),mapping,request.data.get('decimal_separator','.'))
-                output = import_rows(org,request.data['cost_list_id'],parsed,request.data['reason'],
-                                     request.data.get('apply')=='true')
-            except (KeyError,ValueError,TypeError) as error:
-                if isinstance(error,PricingError):
-                    raise
-                raise PricingError('invalid_import_request') from error
+            data = validate(ImportRequestSerializer,request.data)
+            upload = data['file']
+            parsed = parse_xlsx(upload.read(5*1024*1024+1),data['mapping'],data['decimal_separator'])
+            output = import_rows(org,data['cost_list_id'],parsed,data['reason'],data['apply'])
         return Response(json.loads(json_text({'items':output})))

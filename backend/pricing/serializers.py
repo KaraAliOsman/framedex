@@ -1,6 +1,7 @@
 """Explicit monetary strings and typed S09 input/output schemas."""
 
 from decimal import Decimal
+import json
 
 from rest_framework import serializers
 
@@ -152,6 +153,15 @@ class ImportRequestSerializer(StrictSerializer):
     cost_list_id = serializers.UUIDField()
     reason = serializers.CharField(max_length=1000)
     apply = serializers.BooleanField(default=False)
+
+    def validate_mapping(self, value):
+        try:
+            mapping = json.loads(value)
+        except (TypeError, ValueError) as error:
+            raise serializers.ValidationError('Invalid mapping') from error
+        if not isinstance(mapping, dict):
+            raise serializers.ValidationError('Invalid mapping')
+        return mapping
 
 
 RESOURCE_SERIALIZERS = {

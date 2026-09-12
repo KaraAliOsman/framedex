@@ -384,6 +384,87 @@ it.each(["reload", "apply", "reject"] as const)(
   },
 );
 
+function confirmCheckbox(): HTMLElement {
+  return screen.getByLabelText(t("pricing.confirmDiscount"));
+}
+function previewBodies() {
+  return vi
+    .mocked(apiMutator)
+    .mock.calls.filter((call) => String(call[0]).endsWith("preview/"))
+    .map((call) => JSON.parse(String(call[1]?.body)) as Record<string, unknown>);
+}
+function operationApplyBodies() {
+  return vi
+    .mocked(apiMutator)
+    .mock.calls.filter((call) => /operations\/.+\/apply\//.test(String(call[0])))
+    .map((call) => JSON.parse(String(call[1]?.body)) as Record<string, unknown>);
+}
+
+it("a material request change voids the owner's discount attestation", async () => {
+  const first = deferred(),
+    second = deferred();
+  vi.mocked(apiMutator)
+    .mockImplementationOnce(() => first.promise)
+    .mockImplementationOnce(() => second.promise);
+  render(<CommercialPricingPage />);
+  fireEvent.change(screen.getByLabelText(t("pricing.discount")), {
+    target: { value: "0.25" },
+  });
+  fireEvent.click(confirmCheckbox());
+  expect(confirmCheckbox()).toBeChecked();
+  submitPreview();
+  await settle(first, { ...result("A"), discount_pct: "0.25" });
+  expect(previewBodies()[0]?.confirmed).toBe(true);
+  fireEvent.change(screen.getByLabelText(t("pricing.currency")), {
+    target: { value: "USD" },
+  });
+  expect(confirmCheckbox()).not.toBeChecked();
+  submitPreview();
+  expect(previewBodies()[1]?.confirmed).toBe(false);
+  await settle(second, null, true);
+  expect(screen.getByRole("alert")).toHaveTextContent(t("pricing.calculateError"));
+});
+
+it("changing the project voids the owner's discount attestation", () => {
+  render(<CommercialPricingPage />);
+  fireEvent.click(confirmCheckbox());
+  expect(confirmCheckbox()).toBeChecked();
+  fireEvent.change(screen.getByLabelText(t("pricing.projectId")), {
+    target: { value: "another-project" },
+  });
+  expect(confirmCheckbox()).not.toBeChecked();
+});
+
+it("selecting a different persisted operation from history voids the attestation", async () => {
+  const applyTask = deferred();
+  vi.mocked(apiMutator)
+    .mockResolvedValueOnce({
+      data: [{ ...result("A"), discount_pct: "0.25" }],
+    })
+    .mockImplementationOnce(() => applyTask.promise);
+  render(<CommercialPricingPage />);
+  fireEvent.click(confirmCheckbox());
+  expect(confirmCheckbox()).toBeChecked();
+  fireEvent.click(screen.getByRole("button", { name: t("pricing.reload") }));
+  fireEvent.click(await screen.findByRole("button", { name: t("pricing.review") }));
+  expect(confirmCheckbox()).not.toBeChecked();
+  fireEvent.change(screen.getByLabelText(t("pricing.reason")), {
+    target: { value: "Revisado sin nueva confirmación" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: t("pricing.apply") }));
+  await waitFor(() => expect(operationApplyBodies()).toHaveLength(1));
+  expect(operationApplyBodies()[0]?.confirmed).toBe(false);
+});
+
+it("editing only the audit reason preserves the owner's attestation", () => {
+  render(<CommercialPricingPage />);
+  fireEvent.click(confirmCheckbox());
+  fireEvent.change(screen.getByLabelText(t("pricing.reason")), {
+    target: { value: "Motivo aclarado" },
+  });
+  expect(confirmCheckbox()).toBeChecked();
+});
+
 it.each(["apply", "reject"] as const)(
   "late %s success cannot replace preview B that already completed",
   async (action) => {
