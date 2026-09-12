@@ -438,31 +438,65 @@ function ImportCosts({
   const [pending, setPending] = useState<FormData | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const generation = useRef(0);
-  useEffect(
-    () => () => {
-      generation.current += 1;
-    },
-    [],
-  );
+  const inputRevision = useRef(0);
+  const requestSequence = useRef(0);
+  const activeRequest = useRef<{ id: number; apply: boolean } | null>(null);
+  const pendingAuthority = useRef<FormData | null>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      inputRevision.current += 1;
+      activeRequest.current = null;
+      pendingAuthority.current = null;
+    };
+  }, []);
   async function run(form: FormData, apply: boolean): Promise<void> {
-    const current = ++generation.current;
-    form.set("apply", String(apply));
-    setBusy(true);
+    if (!mounted.current) return;
+    if (apply) {
+      if (activeRequest.current !== null || pendingAuthority.current !== form) return;
+      pendingAuthority.current = null;
+    } else if (activeRequest.current?.apply) {
+      return;
+    }
+    const revision = inputRevision.current;
+    const body = new FormData();
+    form.forEach((value, key) => {
+      body.append(key, value);
+    });
+    body.set("apply", String(apply));
+    const id = ++requestSequence.current;
+    activeRequest.current = { id, apply };
+    pendingAuthority.current = null;
+    setPreview([]);
+    setPending(null);
     setError("");
+    setBusy(true);
     try {
-      const response = await request<{ items: Row[] }>("import/", "POST", form);
-      if (generation.current !== current) return;
-      setPreview(response.items);
-      setPending(apply ? null : form);
-      if (apply) onSaved();
+      const response = await request<{ items: Row[] }>("import/", "POST", body);
+      const current = mounted.current && activeRequest.current?.id === id;
+      const fresh = revision === inputRevision.current;
+      if (current && fresh) {
+        setPreview(response.items);
+        if (!apply) {
+          pendingAuthority.current = body;
+          setPending(body);
+        }
+      }
     } catch {
-      if (generation.current === current) {
+      const current = mounted.current && activeRequest.current?.id === id;
+      const fresh = revision === inputRevision.current;
+      if (current && fresh) {
         setError(t("pricing.importError"));
         setPending(null);
       }
     } finally {
-      setBusy(false);
+      if (mounted.current && activeRequest.current?.id === id) {
+        activeRequest.current = null;
+        setBusy(false);
+        if (apply) onSaved();
+      }
     }
   }
   return (
@@ -470,9 +504,11 @@ function ImportCosts({
       <h2>{t("pricing.import")}</h2>
       <form
         onChange={() => {
-          generation.current += 1;
+          inputRevision.current += 1;
+          pendingAuthority.current = null;
           setPending(null);
           setPreview([]);
+          setError("");
         }}
         onSubmit={(event) => {
           event.preventDefault();
