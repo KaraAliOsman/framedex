@@ -220,11 +220,19 @@ def verify_postgres16() -> None:
     try:
         deadline = time.monotonic() + 60
         while True:
+            server_ready = True
+            if owned:
+                server = subprocess.run(
+                    [docker, "exec", container, "cat", "/proc/1/comm"],
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
+                    text=True,
+                )
+                server_ready = server.returncode == 0 and server.stdout.strip() == "postgres"
             result = subprocess.run(
                 [docker, "exec", container, "pg_isready", "-U", "postgres", "-d", "postgres"],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False,
             )
-            if result.returncode == 0:
+            if server_ready and result.returncode == 0:
                 break
             if time.monotonic() >= deadline:
                 raise RuntimeError("Independent PostgreSQL 16 container did not become ready")
