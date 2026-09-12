@@ -596,16 +596,43 @@ function CommercialOperations({
     },
     [],
   );
-  async function reload(): Promise<void> {
+  function invalidate(): void {
+    generation.current += 1;
+    setBusy(false);
+    setError("");
+  }
+  async function runCurrent<T>(
+    action: () => Promise<T>,
+    publish: (value: T) => void,
+    errorKey: Parameters<typeof t>[0],
+  ): Promise<void> {
+    const current = ++generation.current;
     setBusy(true);
     setError("");
     try {
-      setHistory(await request<Operation[]>("operations/"));
+      const value = await action();
+      if (generation.current === current) publish(value);
     } catch {
-      setError(t("pricing.loadError"));
+      if (generation.current === current) setError(t(errorKey));
     } finally {
-      setBusy(false);
+      if (generation.current === current) setBusy(false);
     }
+  }
+  function reload(): Promise<void> {
+    return runCurrent(() => request<Operation[]>("operations/"), setHistory, "pricing.loadError");
+  }
+  function apply(reject = false): Promise<void> {
+    if (!operation) return Promise.resolve();
+    return runCurrent(
+      () =>
+        request<Operation>(`operations/${operation.id}/apply/`, "POST", {
+          reason,
+          confirmed,
+          ...(reject ? { reject: true } : {}),
+        }),
+      setOperation,
+      "pricing.applyError",
+    );
   }
   return (
     <section>
@@ -613,7 +640,7 @@ function CommercialOperations({
       <CommercialDraft
         request={request}
         onCreated={(id) => {
-          generation.current += 1;
+          invalidate();
           setOperation(null);
           setProjectId(id);
         }}
@@ -622,22 +649,18 @@ function CommercialOperations({
         onChange={(event) => {
           const target = event.target as HTMLInputElement;
           if (target.name === "reason" || target.name === "confirmed") return;
-          generation.current += 1;
+          invalidate();
           setOperation(null);
         }}
         onSubmit={(event) => {
           event.preventDefault();
           const data = Object.fromEntries(new FormData(event.currentTarget));
           if (data.fx_snapshot_id === "") delete data.fx_snapshot_id;
-          setBusy(true);
-          setError("");
-          const current = ++generation.current;
-          void request<Operation>("preview/", "POST", { ...data, confirmed })
-            .then((value) => {
-              if (generation.current === current) setOperation(value);
-            })
-            .catch(() => setError(t("pricing.calculateError")))
-            .finally(() => setBusy(false));
+          void runCurrent(
+            () => request<Operation>("preview/", "POST", { ...data, confirmed }),
+            setOperation,
+            "pricing.calculateError",
+          );
         }}
       >
         <label>
@@ -745,19 +768,7 @@ function CommercialOperations({
           <p>{t(operation.state === "APPLIED" ? "pricing.applied" : "pricing.notApplied")}</p>
           {["PREVIEW", "PENDING"].includes(operation.state) &&
             (owner || operation.state !== "PENDING") && (
-              <button
-                disabled={busy || !reason.trim()}
-                onClick={() => {
-                  setBusy(true);
-                  void request<Operation>(`operations/${operation.id}/apply/`, "POST", {
-                    reason,
-                    confirmed,
-                  })
-                    .then(setOperation)
-                    .catch(() => setError(t("pricing.applyError")))
-                    .finally(() => setBusy(false));
-                }}
-              >
+              <button disabled={busy || !reason.trim()} onClick={() => void apply()}>
                 {t("pricing.apply")}
               </button>
             )}
@@ -765,17 +776,7 @@ function CommercialOperations({
             <button
               type="button"
               disabled={busy || !reason.trim()}
-              onClick={() => {
-                setBusy(true);
-                void request<Operation>(`operations/${operation.id}/apply/`, "POST", {
-                  reason,
-                  confirmed,
-                  reject: true,
-                })
-                  .then(setOperation)
-                  .catch(() => setError(t("pricing.applyError")))
-                  .finally(() => setBusy(false));
-              }}
+              onClick={() => void apply(true)}
             >
               {t("pricing.reject")}
             </button>
@@ -806,6 +807,7 @@ function CommercialOperations({
             type="button"
             disabled={busy}
             onClick={() => {
+              invalidate();
               setOperation(item);
               setReason("");
               setConfirmed(false);
