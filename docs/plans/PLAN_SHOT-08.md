@@ -1,4 +1,34 @@
-# PLAN_SHOT-08 — cierre local verificado; integración no iniciada
+# PLAN_SHOT-08 — Owner final correction pass verificado localmente
+
+## Owner final correction pass — commercial integrity and runtime contracts (2026-09-12)
+
+PR #21 was frozen at `386dc2e2b39058f02cbe4508898c6c473909ffad` when the Owner identified three current-SHA defects and one stock-authority hardening case. Constitution Rules 4 and 21, PLAN_SHOTS GNG-07-AUDIT, PD-08-09/10/11/13 and the explicit Owner correction govern this pass. No approved pricing formula, H6 primitive, Golden fixture, historical migration or resolved PD was reopened.
+
+Pre-fix reproductions against real PostgreSQL/RLS and the runtime UI established:
+- an authenticated OWNER could directly delete an applied project or position and could change priced technical/commercial meaning without `pricing_backend` or pre-mutation audit;
+- all seven malformed multipart contract cases diverged from the advertised serializer: malformed UUID returned 409, invalid boolean and unknown input were accepted with 200, and invalid separator/missing fields/malformed mapping returned 422 instead of canonical 400;
+- material request and project changes retained the OWNER's prior critical-discount confirmation;
+- nonpositive `profile_articles.commercial_length_mm` did not reach division: `StockRule(gt=0)` raised an uncaught Pydantic validation exception first, producing HTTP 500.
+
+Corrections are narrow and additive:
+- new migration `20260912000000_shot_08_commercial_state_integrity.sql` protects projects and positions once any nonzero valuation or `APPLIED` pricing operation exists. Direct INSERT/UPDATE/DELETE then fails with `42501 pricing_service_required`; zero-valued unapplied drafts remain directly editable/deletable, tenant RLS remains authoritative, privileged organization teardown retains its existing cascade exception, and audited `pricing_backend` application remains valid;
+- `ImportView` now executes `ImportRequestSerializer` as its real multipart authority and consumes only `validated_data`; malformed mapping JSON is a serializer error and all contract-shape failures use HTTP 400 `validation_error`;
+- `CommercialOperations.invalidate()` revokes the critical confirmation together with request authority for every material field or project/draft replacement, while reason-only edits preserve it;
+- both profile and reinforcement stock loaders convert nonpositive persisted length to existing `MissingStockAuthority`, yielding the safe HTTP 422 `technical_authority_required` boundary without changing `linear_cost` or any formula.
+
+Focused final evidence:
+- real PostgreSQL pricing integration: 34 passed, including direct priced DELETE/UPDATE/move/insert rejection, exact rollback state and audit count, cross-tenant zero-row isolation, valid zero-draft lifecycle, authorized audited application, seven malformed import contracts, valid import preview and nonpositive stock HTTP behavior;
+- pricing transport/OpenAPI tests: 20 passed; OpenAPI and generated TypeScript remained reproducible with no generated diff;
+- `PricingPage.test.tsx`: 42 passed, including material change, project replacement, persisted-request selection, reason-only preservation and all prior request-coordination cases;
+- pgTAP: 7 files / 251 tests passed; Ruff, ESLint, TypeScript and Prettier passed.
+
+The first canonical invocation reached PostgreSQL 16 after all preceding tests passed, then failed before project SQL because `pg_isready` observed the Docker image's temporary initialization server during its restart gap. `verify_postgres16()` was strengthened without weakening any gate: checker-owned containers must now expose final PID 1 `postgres` in addition to `pg_isready`. A focused fresh-container run then passed clean installation and every populated upgrade/rollback gate.
+
+The authorized post-fix canonical rerun, under Python 3.12.14, returned literal EXIT 0: guards/lint/format/types/OpenAPI/build passed; engine 216 passed + 5 canonical xfails; backend 170 passed; Vitest 101 passed; real Playwright 6 passed; pgTAP 251/251; PostgreSQL 16 clean install and SHOT-05/07/08 upgrade/rollback gates passed; Core mutations 20/20 killed. G1–G7 and H6 remain intact.
+
+Golden remains byte-identical: calculation hash `sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21`; complete-file SHA-256 `c21c88d66e7ee2e0049ff01f4007cdd168383595d5b2f0f001fccf743ac5bff6`.
+
+RULE 0 = ZERO KNOWN MATERIAL CONTRADICTIONS. RULE 20 = ZERO MATERIAL GAPS. Local executable blockers after this correction pass: 0. Publication of the new commit and protected CI on its exact SHA remain pending. NO MERGE, no roadmap closure, no SHOT-09.
 
 ## Owner merge review — commercial INSERT guard correction (2026-09-11)
 
