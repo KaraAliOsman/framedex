@@ -3,13 +3,14 @@
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from django.db import connection, transaction, DatabaseError
 import pytest
+from rest_framework.test import APIClient
 
 from authentication.rls import authenticated_rls_context
-from authentication.types import Membership, TenantContext
+from authentication.types import Membership, SupabaseUser, TenantContext, VerifiedSupabaseToken
 from pricing.repository import PricingRepository, admin_write, audit_reason, commercial_backend, rows
 from dekopen_engine.commercial import PricingError
 from pricing.service import preview, apply_operation
@@ -356,3 +357,96 @@ def test_authorized_apply_audit_before_and_full_rollback(commercial_rows):
         cursor.execute('RESET ROLE')
     assert one('SELECT total_price_net FROM public.projects WHERE id=%s',[project])['total_price_net']==Decimal('500')
     assert one('SELECT count(*) AS n FROM public.price_audit_logs WHERE org_id=%s',[org])['n']==count+3
+
+
+def price_payload(project, mode='COST_PLUS_MARGIN', discount='0'):
+    request = price_request(project,None,mode,discount)
+    request.pop('_actor_id')
+    return {key:str(value) if isinstance(value,(UUID,date,Decimal)) else value
+            for key,value in request.items()}
+
+
+def owner_client(user):
+    client = APIClient()
+    client.force_authenticate(
+        user=SupabaseUser(id=user,email='owner@fixture.local'),
+        token=VerifiedSupabaseToken(access_token='verified-token',user_id=user,
+            email='owner@fixture.local',aal='aal2',
+            claims={'sub':str(user),'role':'authenticated','aal':'aal2'}))
+    return client
+
+
+def assert_public_error(response, status_code, code, detail):
+    assert response.status_code==status_code
+    assert response.json()=={'error':{'code':code,'detail':detail}}
+    body = response.content.decode()
+    for marker in ('Traceback','InvalidEngineRequest','InvalidCutContract','MissingStockAuthority',
+                   'AmbiguousStockAuthority','UnsupportedEngineContract','UnsupportedCatalogContract',
+                   'SystemNotFound','PricingError','ValueError','SELECT','INSERT','UPDATE','DELETE',
+                   'backend/','backend\\','C:\\','C:/'):
+        assert marker not in body
+
+
+def test_pricing_http_invalid_design_returns_public_400(commercial_rows):
+    org,_,users = commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with as_user(users['OWNER']):
+        assert len(rows("UPDATE public.project_positions SET parametric_tree="
+                        "jsonb_set(parametric_tree,'{width_mm}','\"999.00\"'::jsonb) "
+                        "WHERE project_id=%s RETURNING id",[project]))==1
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                 format='json')
+    assert_public_error(response,400,'validation_error','Revisa los campos y los valores ingresados.')
+
+
+def test_pricing_http_missing_stock_returns_public_422(commercial_rows):
+    org,_,users = commercial_rows
+    one("UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE org_id IS NULL "
+        "AND is_active AND profile_article_id=(SELECT article.id FROM public.profile_articles article "
+        "JOIN public.profile_systems system ON system.id=article.system_id "
+        "WHERE system.code='DEMO_60' AND system.is_global AND article.sku='MARCO' "
+        "AND article.org_id IS NULL) RETURNING id")
+    project = seed_commercial_project(org,users['OWNER'])
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                 format='json')
+    assert_public_error(response,422,'technical_authority_required',
+                        'Revisa el diseño y su catálogo técnico antes de cotizar.')
+
+
+def test_pricing_http_ambiguous_stock_returns_public_422(commercial_rows):
+    org,_,users = commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with as_user(users['OWNER']):
+        created = rows("INSERT INTO public.profile_purchase_mappings"
+                       "(profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit) "
+                       "SELECT article.id,%s,'DEMO-ALT-'||article.sku||'-'||variant.tag,"
+                       "'Fixture manufacturer','BAR' "
+                       "FROM public.profile_articles article "
+                       "JOIN public.profile_systems system ON system.id=article.system_id "
+                       "CROSS JOIN (VALUES('A'),('B')) variant(tag) "
+                       "WHERE system.code='DEMO_60' AND system.is_global "
+                       "AND article.sku='MARCO' AND article.org_id IS NULL RETURNING id",[org])
+        assert len(created)==2
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                 format='json')
+    assert_public_error(response,422,'technical_authority_required',
+                        'Revisa el diseño y su catálogo técnico antes de cotizar.')
+
+
+def test_pricing_http_valid_preview_remains_successful(commercial_rows):
+    org,_,users = commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                 format='json')
+    assert response.status_code==200
+    body = response.json()
+    assert set(body)=={'id','project_id','discount_pct','state','currency','lines',
+                      'project_net','project_tax','project_gross'}
+    assert body['state']=='PREVIEW'
+    assert body['project_id']==str(project)
+    assert body['discount_pct']=='0.0000'
+    assert body['currency']=='CLP'
+    assert body['project_net']=='500'
+    assert body['project_tax']=='95'
+    assert body['project_gross']=='595'
+    assert body['lines']==[{'position_index':1,'line_net':'500'}]

@@ -17,7 +17,8 @@ from authentication.serializers import ACTIVE_ORGANIZATION_HEADER, ErrorResponse
 from authentication.tenancy import MembershipRepository, enforce_owner_mfa, resolve_tenant_context
 from authentication.views import verified_request_token
 from dekopen_engine.commercial import PricingError
-from engine_api.adapter import calculate_from_api, UnsupportedEngineContract
+from dekopen_engine.cutting import InvalidCutContract
+from engine_api.adapter import calculate_from_api, InvalidEngineRequest, UnsupportedEngineContract
 from engine_api.repository import SystemParamsRepository, UnsupportedCatalogContract, SystemNotFound
 from pricing.repository import (admin_list, admin_write, audit_reason, commercial_backend,
                                 json_text, one, rows)
@@ -64,7 +65,10 @@ def scope(request, allowed=('OWNER',)):
         forbidden = error.code in ('pricing_permission_denied','owner_confirmation_required','owner_approval_required')
         raise contract_error(403 if forbidden else 422,error.code,
                              'La operación comercial requiere revisar sus permisos, datos o configuración.') from error
-    except (UnsupportedEngineContract,UnsupportedCatalogContract,SystemNotFound) as error:
+    except InvalidEngineRequest as error:
+        raise contract_error(400,'validation_error',
+                             'Revisa los campos y los valores ingresados.') from error
+    except (InvalidCutContract,UnsupportedEngineContract,UnsupportedCatalogContract,SystemNotFound) as error:
         raise contract_error(422,'technical_authority_required','Revisa el diseño y su catálogo técnico antes de cotizar.') from error
     except DatabaseError as error:
         cause = error.__cause__
