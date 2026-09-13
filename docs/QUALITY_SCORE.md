@@ -33,7 +33,7 @@ To eliminate ambiguity and "verifier theater", every module and shot is classifi
 | **Agent Harness** | Production-Grade Operating Model | `PROVEN` | PR #17 (merged 5be2b99), unified Maker/Checker protocol, durable quality score. |
 | **SHOT-07** | 1D BFD Cutting & Inspector R01–R14 | `PROVEN` | [PR #19](https://github.com/KaraAliOsman/framedex/pull/19); approved head `e29c6e8eb5b5314400b0cec4f82952c30ec52a47`; technical merge `68ce52f62eb6a37373435c6ff1a14905d4fc885f`; 4/4 required CI completed/success: Lint & Typecheck, Test Suite, Frontend Build, Database Gate. |
 | **SHOT-06B** | Complex Cases (G8, G9, G11, G12) | `DEFERRED_BY_ROADMAP` | Extended sliding 3-4L and double door scheduled for Phase 1.5. |
-| **SHOT-08** | 5-Mode Pricing Engine & Auditing | `NOT_EVALUATED` | Phase 1 milestone, scheduled after SHOT-07 closure. |
+| **SHOT-08** | 5-Mode Pricing Engine & Auditing | `PROVEN` | [PR #21](https://github.com/KaraAliOsman/framedex/pull/21); approved head `e19351ee23896678eacb5c19a9bdf17376c74aad`; technical merge `063b6a4d6eb7a6b43105169c1dc30c8c809fe9a4`; 4/4 required CI completed/success: Lint & Typecheck, Test Suite, Frontend Build, Database Gate. |
 | **SHOT-09** | Workshop Technical Outputs (DOC-01..07) | `NOT_EVALUATED` | Phase 1 milestone, PDF/Excel generation and BOM hashing. |
 | **SHOT-10** | Project Versioning & Catalog CRUD | `NOT_EVALUATED` | Phase 1 milestone, state machine and revision freezes. |
 | **SHOT-11** | Flow.cl Billing & Ledger Integration | `NOT_EVALUATED` | Phase 1 commercial checkpoint, CLP checkout and disaster recovery drill. |
