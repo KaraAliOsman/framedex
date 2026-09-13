@@ -5,7 +5,7 @@ from decimal import Decimal, localcontext
 from hashlib import sha256
 import json
 
-from django.db import connection
+from django.db import connection, DatabaseError
 
 from dekopen_engine.commercial import (
     CommercialLine, PricingError, PricingMode, direct_cost, discount_state,
@@ -72,7 +72,14 @@ def position_cost(repo, position, rules):
         for steel in result.reinforcements:
             steel_stocks[(steel.parent_profile_sku,steel.reinforcement_sku)] = stock_repo.reinforcement_stock(
                 position['system_id'],repo.org_id,steel.parent_profile_sku,steel.reinforcement_sku,color)[0]
-    finally:
+    except DatabaseError:
+        raise
+    except BaseException:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute('SET LOCAL ROLE pricing_backend')
+        raise
+    else:
         if not connection.needs_rollback:
             with connection.cursor() as cursor:
                 cursor.execute('SET LOCAL ROLE pricing_backend')

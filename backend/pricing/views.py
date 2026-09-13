@@ -5,8 +5,9 @@ from decimal import Decimal
 import json
 import logging
 
-from django.db import DatabaseError
+from django.db import connection, DatabaseError, transaction
 from drf_spectacular.utils import OpenApiResponse, extend_schema
+from psycopg.pq import TransactionStatus
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -51,16 +52,9 @@ def validate(serializer_type, data):
 
 
 @contextmanager
-def scope(request, allowed=('OWNER',)):
-    token = verified_request_token(request)
+def public_pricing_errors():
     try:
-        with authenticated_rls_context(token.claims):
-            tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
-                                            request.headers.get('X-Organization-ID'))
-            enforce_owner_mfa(tenant,token.aal)
-            if tenant.active_organization.role not in allowed:
-                raise PricingError('pricing_permission_denied')
-            yield token,tenant,tenant.active_organization.organization_id
+        yield
     except PricingError as error:
         forbidden = error.code in ('pricing_permission_denied','owner_confirmation_required','owner_approval_required')
         raise contract_error(403 if forbidden else 422,error.code,
@@ -77,6 +71,63 @@ def scope(request, allowed=('OWNER',)):
             getattr(getattr(cause,'diag',None),'constraint_name',None))
         raise contract_error(409,'pricing_transaction_rejected',
                              'No se guardó el cambio. Revisa duplicados, vigencia y permisos; vuelve a cargar los datos.') from error
+
+
+@contextmanager
+def scope(request, allowed=('OWNER',)):
+    token = verified_request_token(request)
+    with public_pricing_errors():
+        with authenticated_rls_context(token.claims):
+            tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
+                                            request.headers.get('X-Organization-ID'))
+            enforce_owner_mfa(tenant,token.aal)
+            if tenant.active_organization.role not in allowed:
+                raise PricingError('pricing_permission_denied')
+            yield token,tenant,tenant.active_organization.organization_id
+
+
+def _preview_connection_ready():
+    if connection.vendor != 'postgresql':
+        raise DatabaseError('Pricing preview requires PostgreSQL')
+    connection.ensure_connection()
+    raw_connection = connection.connection
+    if (raw_connection is None or raw_connection.closed or connection.in_atomic_block
+            or not connection.get_autocommit()
+            or raw_connection.info.transaction_status != TransactionStatus.IDLE):
+        raise DatabaseError('Pricing preview requires an idle outermost connection')
+
+
+def _preview_attempt(token, claims, organization_header, data):
+    _preview_connection_ready()
+    with transaction.atomic(durable=True):
+        with connection.cursor() as cursor:
+            cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
+            cursor.execute("SELECT set_config('request.jwt.claims',%s,true)",
+                           [json.dumps(claims,separators=(',',':'),sort_keys=True)])
+            cursor.execute('SET LOCAL ROLE authenticated')
+        tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
+                                        organization_header)
+        enforce_owner_mfa(tenant,token.aal)
+        if tenant.active_organization.role not in ('OWNER','ESTIMATOR'):
+            raise PricingError('pricing_permission_denied')
+        attempt_data = {**data,'_actor_id':token.user_id}
+        with commercial_backend():
+            output = preview(tenant.active_organization.organization_id,tenant,attempt_data)
+    return output
+
+
+def _database_sqlstate(error):
+    return getattr(error.__cause__,'sqlstate',None)
+
+
+def _preview_with_retry(token, claims, organization_header, data):
+    for attempt in range(3):
+        try:
+            return _preview_attempt(token,claims,organization_header,data)
+        except DatabaseError as error:
+            if _database_sqlstate(error) not in ('40001','40P01') or attempt==2:
+                raise
+    raise AssertionError('unreachable preview retry state')
 
 
 def price_response(value):
@@ -115,10 +166,11 @@ class PreviewView(APIView):
                    request=PriceRequestSerializer,responses={200:PriceResponseSerializer,**ERRORS},tags=['pricing'])
     def post(self,request):
         data = validate(PriceRequestSerializer,request.data)
-        with scope(request,('OWNER','ESTIMATOR')) as (token,tenant,org):
-            data['_actor_id'] = token.user_id
-            with commercial_backend():
-                output = preview(org,tenant,data)
+        token = verified_request_token(request)
+        claims = dict(token.claims)
+        organization_header = request.headers.get('X-Organization-ID')
+        with public_pricing_errors():
+            output = _preview_with_retry(token,claims,organization_header,data)
         return Response(price_response(output))
 
 

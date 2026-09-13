@@ -1,7 +1,9 @@
 """Independent monetary examples for the SHOT-08 owner contracts."""
 
 from decimal import Decimal
+from fractions import Fraction
 from itertools import permutations
+from random import Random
 
 import pytest
 
@@ -12,6 +14,42 @@ from dekopen_engine.commercial import (
 )
 
 D = Decimal
+
+
+def fraction_oracle(
+    costs: list[tuple[int, Decimal]], margin: Decimal, currency: str
+) -> tuple[dict[int, int], int, dict[int, int]]:
+    q = Fraction(1) if currency == 'CLP' else Fraction(1, 100)
+    retention = Fraction(1) - Fraction(margin)
+    exact = {index: Fraction(cost) / retention / q for index, cost in costs}
+    total = sum((Fraction(cost) for _, cost in costs), Fraction(0)) / retention / q
+    target_floor, target_remainder = divmod(total.numerator, total.denominator)
+    target_units = target_floor + (2 * target_remainder >= total.denominator)
+    minimum = {
+        index: -(-Fraction(cost).numerator * q.denominator //
+                 (Fraction(cost).denominator * q.numerator))
+        for index, cost in costs
+    }
+    if sum(minimum.values()) > target_units:
+        raise ValueError('target_below_non_loss_minimum')
+    floor = {index: value.numerator // value.denominator for index, value in exact.items()}
+    remainder = {index: exact[index] - floor[index] for index in exact}
+    assigned = {index: max(floor[index], minimum[index]) for index in exact}
+    while sum(assigned.values()) > target_units:
+        donors = [index for index in assigned if assigned[index] > minimum[index]]
+        assigned[min(donors, key=lambda index: (remainder[index], -index))] -= 1
+    residual = target_units - sum(assigned.values())
+    order = sorted(assigned, key=lambda index: (-remainder[index], index))
+    for index in order[:residual]:
+        assigned[index] += 1
+    return assigned, target_units, minimum
+
+
+def result_units(lines: tuple[tuple[int, Decimal], ...], currency: str) -> dict[int, int]:
+    q = Fraction(1) if currency == 'CLP' else Fraction(1, 100)
+    units = {index: Fraction(amount) / q for index, amount in lines}
+    assert all(value.denominator == 1 for value in units.values())
+    return {index: value.numerator for index, value in units.items()}
 
 
 @pytest.mark.parametrize('currency,value,expected', [
@@ -88,6 +126,85 @@ def test_mode_four_non_loss_floors_take_precedence() -> None:
 def test_mode_four_usd_residual() -> None:
     assert target_project([(2,D('0.01')), (1,D('0.01'))], D('0.2'), 'USD', D('0')).lines == (
         (1,D('0.02')), (2,D('0.01')))
+
+
+@pytest.mark.parametrize(('currency', 'costs', 'expected'), [
+    ('USD', [(1, D('136.2')), (2, D('28539.1'))], ((1, D('258.35')), (2, D('54133.34')))),
+    ('CLP', [(1, D('13620')), (2, D('2853910'))], ((1, D('25835')), (2, D('5413334')))),
+])
+def test_mode_four_true_remainder_tie_uses_lower_index(
+    currency: str, costs: list[tuple[int, Decimal]], expected: tuple[tuple[int, Decimal], ...]
+) -> None:
+    for order in permutations(costs):
+        assert target_project(order, D('0.4728'), currency, D('0')).lines == expected
+
+
+@pytest.mark.parametrize(('currency', 'costs', 'expected'), [
+    ('CLP', [(1, D('9')), (2, D('9')), (3, D('0.1'))],
+     ((1, D('10')), (2, D('9')), (3, D('1')))),
+    ('USD', [(1, D('0.09')), (2, D('0.09')), (3, D('0.001'))],
+     ((1, D('0.10')), (2, D('0.09')), (3, D('0.01')))),
+])
+def test_mode_four_true_remainder_tie_removes_from_higher_index(
+    currency: str, costs: list[tuple[int, Decimal]], expected: tuple[tuple[int, Decimal], ...]
+) -> None:
+    for order in permutations(costs):
+        assert target_project(order, D('0.1'), currency, D('0')).lines == expected
+
+
+def test_mode_four_multiple_ties_subquantum_and_large_coefficients() -> None:
+    tied = [(4, D('1')), (2, D('1')), (1, D('1')), (3, D('1'))]
+    assert target_project(tied, D('0.30'), 'CLP', D('0')).lines == (
+        (1, D('2')), (2, D('2')), (3, D('1')), (4, D('1')))
+    assert target_project([(1, D('0.001')), (2, D('0.001'))], D('0.9'), 'USD', D('0')).lines == (
+        (1, D('0.01')), (2, D('0.01')))
+    costs = [
+        (1, D('1234567890123456789012345678901234567890.123456789')),
+        (2, D('9876543210987654321098765432109876543210.987654321')),
+        (3, D('0.000000001')),
+    ]
+    expected, target_units, minimum = fraction_oracle(costs, D('0.123456789'), 'USD')
+    result = target_project(costs, D('0.123456789'), 'USD', D('0'))
+    assert result_units(result.lines, 'USD') == expected
+    assert sum(expected.values()) == target_units
+    assert all(expected[index] >= minimum[index] for index in expected)
+
+
+def test_mode_four_matches_independent_fraction_oracle() -> None:
+    for currency, seed in (('CLP', 8041), ('USD', 8042)):
+        random = Random(seed)
+        successful = impossible = 0
+        for case in range(500):
+            count = random.randint(2, 8)
+            indices = list(range(1, count + 1))
+            random.shuffle(indices)
+            if case % 10 == 0:
+                scale = -3 if currency == 'CLP' else -5
+                costs = [(index, D(random.randint(1, 9)).scaleb(scale)) for index in indices]
+                margin = D(random.randint(0, 5000)).scaleb(-4)
+            else:
+                costs = [
+                    (index, D(random.randint(1, 10**15)).scaleb(-random.randint(0, 9)))
+                    for index in indices
+                ]
+                margin = D(random.randint(0, 9500)).scaleb(-4)
+            try:
+                expected, target_units, minimum = fraction_oracle(costs, margin, currency)
+            except ValueError:
+                impossible += 1
+                with pytest.raises(PricingError, match='target_below_non_loss_minimum'):
+                    target_project(costs, margin, currency, D('0'))
+                continue
+            successful += 1
+            result = target_project(costs, margin, currency, D('0'))
+            actual = result_units(result.lines, currency)
+            assert actual == expected
+            assert sum(actual.values()) == target_units
+            assert all(actual[index] >= minimum[index] for index in actual)
+            random.shuffle(costs)
+            assert result_units(target_project(costs, margin, currency, D('0')).lines, currency) == expected
+        assert successful == 450
+        assert impossible == 50
 
 
 @pytest.mark.parametrize('role,discount,confirmed,expected', [

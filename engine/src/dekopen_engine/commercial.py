@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, localcontext
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 from enum import Enum
 
 D = Decimal
@@ -209,40 +209,77 @@ def finish_lines(lines: Sequence[CommercialLine], currency: str,
     return totals(result, currency, tax_rate)
 
 
+def _decimal_ratio(value: Decimal) -> tuple[int, int]:
+    sign, digits, exponent = value.as_tuple()
+    if not isinstance(exponent, int):
+        raise PricingError('invalid_decimal')
+    coefficient = 0
+    for digit in digits:
+        coefficient = coefficient * 10 + digit
+    if sign:
+        coefficient = -coefficient
+    if exponent >= 0:
+        return coefficient * 10 ** exponent, 1
+    return coefficient, 10 ** -exponent
+
+
+def _currency_amount(units: int, currency: str) -> Decimal:
+    if currency == 'CLP':
+        return D(units)
+    return D((0, tuple(int(digit) for digit in str(units)), -2))
+
+
 def target_project(costs: Sequence[tuple[int, Decimal]], margin: Decimal,
                    currency: str, tax_rate: Decimal) -> CommercialResult:
     fraction(margin, margin=True)
-    q = quantum(currency)
+    q_numerator, q_denominator = _decimal_ratio(quantum(currency))
     if not costs or len({index for index, _ in costs}) != len(costs):
         raise PricingError('invalid_positions')
+    cost_ratios = {}
     for index, cost in costs:
         if index < 1:
             raise PricingError('invalid_positions')
-        number(cost)
-    with localcontext() as context:
-        context.prec = 80
-        total_cost = sum((cost for _, cost in costs), ZERO)
-        if total_cost == ZERO:
-            raise PricingError('undefined_project_margin')
-        target = quantize_currency(total_cost/(ONE-margin), currency)
-        exact = {index: cost/(ONE-margin)/q for index, cost in costs}
-        minimum = {index: int((cost/q).to_integral_value(rounding=ROUND_CEILING))
-                   for index, cost in costs}
-        target_units = int(target/q)
-        if sum(minimum.values()) > target_units:
-            raise PricingError('target_below_non_loss_minimum')
-        floor = {index: int(price.to_integral_value(rounding=ROUND_FLOOR))
-                 for index, price in exact.items()}
-        assigned = {index: max(floor[index], minimum[index]) for index in exact}
-        remainders = {index: exact[index]-D(floor[index]) for index in exact}
-        # Honor the minimums first, then correct the constrained floor allocation.
-        while sum(assigned.values()) > target_units:
-            candidates = [index for index in assigned if assigned[index] > minimum[index]]
-            index = min(candidates, key=lambda i: (remainders[i], -i))
-            assigned[index] -= 1
-        residual = target_units - sum(assigned.values())
-        order = sorted(assigned, key=lambda i: (-remainders[i], i))
-        for offset in range(residual):
-            assigned[order[offset % len(order)]] += 1
-        return totals([(index, D(units)*q) for index, units in assigned.items()],
-                      currency, tax_rate)
+        cost_ratios[index] = _decimal_ratio(number(cost))
+    common_cost_denominator = max(denominator for _, denominator in cost_ratios.values())
+    total_cost_numerator = sum(
+        numerator * (common_cost_denominator // denominator)
+        for numerator, denominator in cost_ratios.values()
+    )
+    if total_cost_numerator == 0:
+        raise PricingError('undefined_project_margin')
+    margin_numerator, margin_denominator = _decimal_ratio(margin)
+    divisor_numerator = (margin_denominator - margin_numerator) * q_numerator
+    divisor_denominator = margin_denominator * q_denominator
+    target_numerator = total_cost_numerator * divisor_denominator
+    target_denominator = common_cost_denominator * divisor_numerator
+    target_floor, target_remainder = divmod(target_numerator, target_denominator)
+    target_units = target_floor + (2 * target_remainder >= target_denominator)
+    minimum = {
+        index: (numerator * q_denominator + denominator * q_numerator - 1)
+        // (denominator * q_numerator)
+        for index, (numerator, denominator) in cost_ratios.items()
+    }
+    if sum(minimum.values()) > target_units:
+        raise PricingError('target_below_non_loss_minimum')
+    floor = {}
+    remainder = {}
+    remainder_denominator = {}
+    for index, (numerator, denominator) in cost_ratios.items():
+        scaled_numerator = numerator * divisor_denominator
+        scaled_denominator = denominator * divisor_numerator
+        floor[index], remainder[index] = divmod(scaled_numerator, scaled_denominator)
+        remainder_denominator[index] = scaled_denominator
+    common_remainder_denominator = max(remainder_denominator.values())
+    rank = {
+        index: remainder[index] * (common_remainder_denominator // remainder_denominator[index])
+        for index in remainder
+    }
+    assigned = {index: max(floor[index], minimum[index]) for index in floor}
+    while sum(assigned.values()) > target_units:
+        candidates = [index for index in assigned if assigned[index] > minimum[index]]
+        assigned[min(candidates, key=lambda index: (rank[index], -index))] -= 1
+    residual = target_units - sum(assigned.values())
+    for index in sorted(assigned, key=lambda item: (-rank[item], item))[:residual]:
+        assigned[index] += 1
+    return totals([(index, _currency_amount(units, currency))
+                   for index, units in assigned.items()], currency, tax_rate)

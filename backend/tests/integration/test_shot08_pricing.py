@@ -1,19 +1,25 @@
 """Real PostgreSQL commercial authorities and atomic audit invariants."""
 
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
+from threading import Event, get_ident
 from uuid import UUID, uuid4
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connection, transaction, DatabaseError
+from django.db import close_old_connections, connection, transaction, DatabaseError
+from django.db.backends.utils import CursorWrapper
 import pytest
 from rest_framework.test import APIClient
 
 from authentication.rls import authenticated_rls_context
+from authentication.tenancy import MembershipRepository
 from authentication.types import Membership, SupabaseUser, TenantContext, VerifiedSupabaseToken
 from pricing.repository import PricingRepository, admin_write, audit_reason, commercial_backend, rows
 from dekopen_engine.commercial import PricingError
+import pricing.service as pricing_service
+import pricing.views as pricing_views
 from pricing.service import preview, apply_operation
 from pricing.repository import json_text, one
 from pricing.xlsx_import import import_rows, parse_xlsx
@@ -38,6 +44,27 @@ def commercial_rows(django_db_blocker):
                                    [org,user,role])
             yield org,other,users
             transaction.set_rollback(True)
+
+
+@pytest.fixture
+def committed_commercial_rows(django_db_blocker):
+    with django_db_blocker.unblock():
+        if connection.vendor != 'postgresql':
+            pytest.fail('SHOT-08 requires real PostgreSQL; never skipped')
+        org, other = uuid4(), uuid4()
+        users = {role:uuid4() for role in ('OWNER','ESTIMATOR','WORKSHOP_MANAGER','INSTALLER')}
+        with connection.cursor() as cursor:
+            cursor.execute('INSERT INTO public.tenancy_organizations(id,name,tax_id) VALUES(%s,%s,%s),(%s,%s,%s)',
+                           [org,'Committed pricing A',str(org),other,'Committed pricing B',str(other)])
+            for role,user in users.items():
+                cursor.execute('INSERT INTO public.tenancy_memberships(org_id,user_id,role) VALUES(%s,%s,%s)',
+                               [org,user,role])
+        try:
+            yield org,other,users
+        finally:
+            connection.close()
+            with connection.cursor() as cursor:
+                cursor.execute('DELETE FROM public.tenancy_organizations WHERE id IN (%s,%s)',[org,other])
 
 
 @contextmanager
@@ -397,8 +424,69 @@ def assert_public_error(response, status_code, code, detail):
         assert marker not in body
 
 
-def test_pricing_http_invalid_design_returns_public_400(commercial_rows):
-    org,_,users = commercial_rows
+def threaded_preview(user, project, before=None):
+    close_old_connections()
+    try:
+        if before is not None:
+            before()
+        return owner_client(user).post('/api/v1/pricing/preview/',price_payload(project),format='json')
+    finally:
+        close_old_connections()
+
+
+def pricing_operation_evidence(org, project):
+    operations = rows('SELECT id,input_snapshot,result,source_revision FROM public.pricing_operations '
+                      'WHERE org_id=%s AND project_id=%s ORDER BY created_at,id',[org,project])
+    audits = rows("SELECT entity_id FROM public.price_audit_logs WHERE org_id=%s "
+                  "AND entity='pricing_operations' ORDER BY created_at,id",[org])
+    return operations, audits
+
+
+def required_cost_list(org, valid_from, cost):
+    parent = admin_write('cost-lists',org,{'supplier_name':'Snapshot fixture','currency':'CLP',
+                         'valid_from':valid_from},'Snapshot list')
+    for sku,unit in [('DEMO-BAR-MARCO','BAR'),('DEMO-BAR-JQ-10','BAR'),
+                     ('DEMO-STEEL-BAR-MARCO','BAR'),('GLASS-BASE','M2')]:
+        admin_write('cost-items',org,{'cost_list_id':parent['id'],'sku':sku,
+                    'item_type':'FIXTURE','unit':unit,'unit_cost':Decimal(cost)},'Snapshot cost')
+    return parent['id']
+
+
+@contextmanager
+def deferred_preview_failure(sqlstate, once):
+    if sqlstate not in {'40001','40P01','23505','23514','42501','55P03','57014','25P02'}:
+        raise ValueError('unsupported test SQLSTATE')
+    suffix = uuid4().hex
+    sequence = f'test_preview_attempt_{suffix}'
+    function = f'test_preview_failure_{suffix}'
+    trigger = f'test_preview_commit_{suffix}'
+    condition = 'attempt_no = 1' if once else 'TRUE'
+    with connection.cursor() as cursor:
+        cursor.execute(f'CREATE SEQUENCE public.{sequence}')
+        cursor.execute(f"""CREATE FUNCTION public.{function}() RETURNS trigger
+          LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+          DECLARE attempt_no BIGINT;
+          BEGIN
+            attempt_no := nextval('public.{sequence}'::regclass);
+            IF {condition} THEN
+              RAISE EXCEPTION 'forced_preview_commit_failure' USING ERRCODE='{sqlstate}';
+            END IF;
+            RETURN NEW;
+          END $$""")
+        cursor.execute(f"""CREATE CONSTRAINT TRIGGER {trigger}
+          AFTER INSERT ON public.pricing_operations DEFERRABLE INITIALLY DEFERRED
+          FOR EACH ROW EXECUTE FUNCTION public.{function}()""")
+    try:
+        yield sequence
+    finally:
+        with connection.cursor() as cursor:
+            cursor.execute(f'DROP TRIGGER {trigger} ON public.pricing_operations')
+            cursor.execute(f'DROP FUNCTION public.{function}()')
+            cursor.execute(f'DROP SEQUENCE public.{sequence}')
+
+
+def test_pricing_http_invalid_design_returns_public_400(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
     project = seed_commercial_project(org,users['OWNER'])
     with as_user(users['OWNER']):
         assert len(rows("UPDATE public.project_positions SET parametric_tree="
@@ -409,22 +497,26 @@ def test_pricing_http_invalid_design_returns_public_400(commercial_rows):
     assert_public_error(response,400,'validation_error','Revisa los campos y los valores ingresados.')
 
 
-def test_pricing_http_missing_stock_returns_public_422(commercial_rows):
-    org,_,users = commercial_rows
-    one("UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE org_id IS NULL "
+def test_pricing_http_missing_stock_returns_public_422(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
+    mapping = one("UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE org_id IS NULL "
         "AND is_active AND profile_article_id=(SELECT article.id FROM public.profile_articles article "
         "JOIN public.profile_systems system ON system.id=article.system_id "
         "WHERE system.code='DEMO_60' AND system.is_global AND article.sku='MARCO' "
         "AND article.org_id IS NULL) RETURNING id")
-    project = seed_commercial_project(org,users['OWNER'])
-    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
-                                                 format='json')
-    assert_public_error(response,422,'technical_authority_required',
-                        'Revisa el diseño y su catálogo técnico antes de cotizar.')
+    try:
+        project = seed_commercial_project(org,users['OWNER'])
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                     format='json')
+        assert_public_error(response,422,'technical_authority_required',
+                            'Revisa el diseño y su catálogo técnico antes de cotizar.')
+    finally:
+        one('UPDATE public.profile_purchase_mappings SET is_active=TRUE WHERE id=%s RETURNING id',
+            [mapping['id']])
 
 
-def test_pricing_http_ambiguous_stock_returns_public_422(commercial_rows):
-    org,_,users = commercial_rows
+def test_pricing_http_ambiguous_stock_returns_public_422(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
     project = seed_commercial_project(org,users['OWNER'])
     with as_user(users['OWNER']):
         created = rows("INSERT INTO public.profile_purchase_mappings"
@@ -443,8 +535,8 @@ def test_pricing_http_ambiguous_stock_returns_public_422(commercial_rows):
                         'Revisa el diseño y su catálogo técnico antes de cotizar.')
 
 
-def test_pricing_http_valid_preview_remains_successful(commercial_rows):
-    org,_,users = commercial_rows
+def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
     project = seed_commercial_project(org,users['OWNER'])
     response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
                                                  format='json')
@@ -633,15 +725,412 @@ def test_pricing_import_http_valid_preview_persists_nothing(commercial_rows):
 
 
 @pytest.mark.parametrize('length',['0','-1'])
-def test_pricing_http_nonpositive_stock_length_returns_public_422(commercial_rows,length):
-    org,_,users = commercial_rows
-    changed = rows("UPDATE public.profile_articles SET commercial_length_mm=%s "
-                   "WHERE org_id IS NULL AND sku='MARCO' AND system_id=("
-                   "SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND is_global) "
-                   "RETURNING id",[length])
+def test_pricing_http_nonpositive_stock_length_returns_public_422(committed_commercial_rows,length):
+    org,_,users = committed_commercial_rows
+    article = one("SELECT id,commercial_length_mm FROM public.profile_articles WHERE org_id IS NULL "
+                  "AND sku='MARCO' AND system_id=(SELECT id FROM public.profile_systems "
+                  "WHERE code='DEMO_60' AND is_global)")
+    changed = rows('UPDATE public.profile_articles SET commercial_length_mm=%s WHERE id=%s RETURNING id',
+                   [length,article['id']])
     assert len(changed)==1
+    try:
+        project = seed_commercial_project(org,users['OWNER'])
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
+                                                     format='json')
+        assert_public_error(response,422,'technical_authority_required',
+                            'Revisa el diseño y su catálogo técnico antes de cotizar.')
+    finally:
+        one('UPDATE public.profile_articles SET commercial_length_mm=%s WHERE id=%s RETURNING id',
+            [article['commercial_length_mm'],article['id']])
+
+
+def test_preview_uses_one_snapshot_for_rules_costs_and_repeated_skus(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
     project = seed_commercial_project(org,users['OWNER'])
-    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
-                                                 format='json')
-    assert_public_error(response,422,'technical_authority_required',
-                        'Revisa el diseño y su catálogo técnico antes de cotizar.')
+    one('INSERT INTO public.project_positions(org_id,project_id,position_index,quantity,typology,'
+        'system_id,width_mm,height_mm,parametric_tree,bom_snapshot,color_interior,color_exterior) '
+        'SELECT org_id,project_id,2,quantity,typology,system_id,width_mm,height_mm,parametric_tree,'
+        'bom_snapshot,color_interior,color_exterior FROM public.project_positions '
+        'WHERE project_id=%s AND position_index=1 RETURNING id',[project])
+    early_read, resume = Event(), Event()
+    original_cost = PricingRepository.cost
+
+    def paused_cost(repo, sku, required_unit):
+        value = original_cost(repo,sku,required_unit)
+        if not early_read.is_set():
+            early_read.set()
+            assert resume.wait(10)
+        return value
+
+    monkeypatch.setattr(PricingRepository,'cost',paused_cost)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        request = pool.submit(threaded_preview,users['OWNER'],project)
+        assert early_read.wait(10)
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute('UPDATE public.cost_list_items SET unit_cost=200 WHERE org_id=%s',[org])
+            cursor.execute('UPDATE public.pricing_rules SET labor_rate_per_m2=30 WHERE org_id=%s',[org])
+        resume.set()
+        response = request.result(timeout=15)
+    assert response.status_code==200
+    first = one('SELECT input_snapshot FROM public.pricing_operations WHERE id=%s',[response.json()['id']])
+    snapshot = pricing_service.decoded(first['input_snapshot'])
+    first_costs = [item['cost'] for item in snapshot['authorities'] if 'cost' in item]
+    assert len(first_costs)>4
+    assert {Decimal(str(item['unit_cost'])) for item in first_costs}=={Decimal('100')}
+    assert Decimal(str(snapshot['rules']['labor_rate_per_m2']))==Decimal('15')
+    second = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),format='json')
+    assert second.status_code==200
+    current = pricing_service.decoded(one('SELECT input_snapshot FROM public.pricing_operations '
+        'WHERE id=%s',[second.json()['id']])['input_snapshot'])
+    second_costs = [item['cost'] for item in current['authorities'] if 'cost' in item]
+    assert {Decimal(str(item['unit_cost'])) for item in second_costs}=={Decimal('200')}
+    assert Decimal(str(current['rules']['labor_rate_per_m2']))==Decimal('30')
+
+
+def test_preview_snapshot_excludes_newly_applicable_cost_authority(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    old_list = one('SELECT id FROM public.cost_lists WHERE org_id=%s',[org])['id']
+    snapshot_ready, resume = Event(), Event()
+    original_one = pricing_service.one
+
+    def pause_after_rules(query, parameters=(), code='authority_not_found'):
+        value = original_one(query,parameters,code)
+        if 'FROM public.pricing_rules' in str(query) and not snapshot_ready.is_set():
+            snapshot_ready.set()
+            assert resume.wait(10)
+        return value
+
+    monkeypatch.setattr(pricing_service,'one',pause_after_rules)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        request = pool.submit(threaded_preview,users['OWNER'],project)
+        assert snapshot_ready.wait(10)
+        with transaction.atomic(), as_user(users['OWNER']):
+            new_list = required_cost_list(org,date(2026,9,10),'300')
+        resume.set()
+        response = request.result(timeout=15)
+    assert response.status_code==200
+    first = pricing_service.decoded(one('SELECT input_snapshot FROM public.pricing_operations '
+        'WHERE id=%s',[response.json()['id']])['input_snapshot'])
+    assert {item['cost']['cost_list_id'] for item in first['authorities'] if 'cost' in item}=={str(old_list)}
+    second = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),format='json')
+    assert second.status_code==200
+    current = pricing_service.decoded(one('SELECT input_snapshot FROM public.pricing_operations '
+        'WHERE id=%s',[second.json()['id']])['input_snapshot'])
+    assert {item['cost']['cost_list_id'] for item in current['authorities'] if 'cost' in item}=={str(new_list)}
+
+
+def test_preview_project_conflict_retries_complete_attempt_and_commits_once(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    snapshot_ready, resume = Event(), Event()
+    membership_calls = []
+    original_memberships = MembershipRepository.list_active_for_user
+
+    def paused_memberships(repo, user_id):
+        memberships = original_memberships(repo,user_id)
+        membership_calls.append(tuple(memberships))
+        if len(membership_calls)==1:
+            snapshot_ready.set()
+            assert resume.wait(10)
+        return memberships
+
+    monkeypatch.setattr(MembershipRepository,'list_active_for_user',paused_memberships)
+    attempts = []
+    original_attempt = pricing_views._preview_attempt
+
+    def counted_attempt(*args,**kwargs):
+        attempts.append(1)
+        return original_attempt(*args,**kwargs)
+
+    monkeypatch.setattr(pricing_views,'_preview_attempt',counted_attempt)
+    sqlstates = []
+    original_sqlstate = pricing_views._database_sqlstate
+
+    def observed_sqlstate(error):
+        state = original_sqlstate(error)
+        sqlstates.append(state)
+        return state
+
+    monkeypatch.setattr(pricing_views,'_database_sqlstate',observed_sqlstate)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        request = pool.submit(threaded_preview,users['OWNER'],project)
+        assert snapshot_ready.wait(10)
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute("UPDATE public.projects SET name='Concurrent revision' WHERE id=%s",[project])
+        resume.set()
+        response = request.result(timeout=15)
+    assert response.status_code==200
+    assert sqlstates==['40001']
+    assert len(attempts)==2
+    assert len(membership_calls)==2
+    operations,audits = pricing_operation_evidence(org,project)
+    assert len(operations)==1
+    assert [item['entity_id'] for item in audits]==[operations[0]['id']]
+    current_project = one('SELECT * FROM public.projects WHERE id=%s',[project])
+    positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s '
+                     'ORDER BY position_index FOR UPDATE',[project])
+    assert operations[0]['source_revision']==pricing_service.source_revision(current_project,positions)
+
+
+def test_preview_retry_refreshes_membership_authorization(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    snapshot_ready, resume = Event(), Event()
+    calls = []
+    original_memberships = MembershipRepository.list_active_for_user
+
+    def paused_memberships(repo, user_id):
+        memberships = original_memberships(repo,user_id)
+        calls.append(memberships[0].role)
+        if len(calls)==1:
+            snapshot_ready.set()
+            assert resume.wait(10)
+        return memberships
+
+    monkeypatch.setattr(MembershipRepository,'list_active_for_user',paused_memberships)
+    sqlstates = []
+    original_sqlstate = pricing_views._database_sqlstate
+
+    def observed_sqlstate(error):
+        state = original_sqlstate(error)
+        sqlstates.append(state)
+        return state
+
+    monkeypatch.setattr(pricing_views,'_database_sqlstate',observed_sqlstate)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        request = pool.submit(threaded_preview,users['OWNER'],project)
+        assert snapshot_ready.wait(10)
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute("UPDATE public.projects SET name='Authorization revision' WHERE id=%s",[project])
+            cursor.execute("UPDATE public.tenancy_memberships SET role='INSTALLER' "
+                           'WHERE org_id=%s AND user_id=%s',[org,users['OWNER']])
+        resume.set()
+        response = request.result(timeout=15)
+    assert_public_error(response,403,'pricing_permission_denied',
+                        'La operación comercial requiere revisar sus permisos, datos o configuración.')
+    assert sqlstates==['40001']
+    assert calls==['OWNER','INSTALLER']
+    assert pricing_operation_evidence(org,project)==([],[])
+
+
+def test_preview_deadlock_retries_complete_attempt_and_commits_once(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    position = one('SELECT id FROM public.project_positions WHERE project_id=%s',[project])['id']
+    child_locked, parent_locked, writer_done = Event(), Event(), Event()
+
+    def writer_cycle():
+        close_old_connections()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SET deadlock_timeout='5s'")
+            with transaction.atomic(), connection.cursor() as cursor:
+                cursor.execute('SELECT id FROM public.project_positions WHERE id=%s FOR UPDATE',[position])
+                child_locked.set()
+                assert parent_locked.wait(10)
+                cursor.execute('SELECT id FROM public.projects WHERE id=%s FOR UPDATE',[project])
+        finally:
+            writer_done.set()
+            close_old_connections()
+
+    original_rows = pricing_service.rows
+    lock_attempts = []
+
+    def observed_position_lock(query, parameters=()):
+        if 'FROM public.project_positions' in str(query) and 'FOR UPDATE' in str(query):
+            lock_attempts.append(1)
+            if len(lock_attempts)==1:
+                parent_locked.set()
+        return original_rows(query,parameters)
+
+    monkeypatch.setattr(pricing_service,'rows',observed_position_lock)
+    attempts = []
+    original_attempt = pricing_views._preview_attempt
+
+    def counted_attempt(*args,**kwargs):
+        attempts.append(1)
+        if len(attempts)==2:
+            assert writer_done.wait(10)
+        return original_attempt(*args,**kwargs)
+
+    monkeypatch.setattr(pricing_views,'_preview_attempt',counted_attempt)
+    sqlstates = []
+    original_sqlstate = pricing_views._database_sqlstate
+
+    def observed_sqlstate(error):
+        state = original_sqlstate(error)
+        sqlstates.append(state)
+        return state
+
+    monkeypatch.setattr(pricing_views,'_database_sqlstate',observed_sqlstate)
+
+    def preview_timeout():
+        with connection.cursor() as cursor:
+            cursor.execute("SET deadlock_timeout='100ms'")
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        writer = pool.submit(writer_cycle)
+        assert child_locked.wait(10)
+        request = pool.submit(threaded_preview,users['OWNER'],project,preview_timeout)
+        response = request.result(timeout=20)
+        writer.result(timeout=20)
+    assert response.status_code==200
+    assert sqlstates==['40P01']
+    assert len(attempts)==2
+    operations,audits = pricing_operation_evidence(org,project)
+    assert len(operations)==1
+    assert [item['entity_id'] for item in audits]==[operations[0]['id']]
+
+
+def test_preview_commit_failure_retries_after_full_rollback(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    attempts = []
+    original_attempt = pricing_views._preview_attempt
+
+    def counted_attempt(*args,**kwargs):
+        attempts.append(1)
+        return original_attempt(*args,**kwargs)
+
+    monkeypatch.setattr(pricing_views,'_preview_attempt',counted_attempt)
+    with deferred_preview_failure('40001',True) as sequence:
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
+                                                     price_payload(project),format='json')
+        assert one(f'SELECT last_value FROM public.{sequence}')['last_value']==2
+    assert response.status_code==200
+    assert len(attempts)==2
+    operations,audits = pricing_operation_evidence(org,project)
+    assert len(operations)==1
+    assert [item['entity_id'] for item in audits]==[operations[0]['id']]
+
+
+@pytest.mark.parametrize('sqlstate',['40001','40P01'])
+def test_preview_retry_exhaustion_is_three_attempts_and_zero_state(
+    committed_commercial_rows, sqlstate
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with deferred_preview_failure(sqlstate,False) as sequence:
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
+                                                     price_payload(project),format='json')
+        assert one(f'SELECT last_value FROM public.{sequence}')['last_value']==3
+    assert_public_error(response,409,'pricing_transaction_rejected',
+                        'No se guardó el cambio. Revisa duplicados, vigencia y permisos; vuelve a cargar los datos.')
+    assert pricing_operation_evidence(org,project)==([],[])
+
+
+@pytest.mark.parametrize('sqlstate',['23505','23514','42501','55P03','57014','25P02'])
+def test_preview_does_not_retry_nonretryable_commit_failures(committed_commercial_rows,sqlstate):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with deferred_preview_failure(sqlstate,False) as sequence:
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
+                                                     price_payload(project),format='json')
+        assert one(f'SELECT last_value FROM public.{sequence}')['last_value']==1
+    assert_public_error(response,409,'pricing_transaction_rejected',
+                        'No se guardó el cambio. Revisa duplicados, vigencia y permisos; vuelve a cargar los datos.')
+    assert pricing_operation_evidence(org,project)==([],[])
+
+
+def test_preview_isolation_first_sql_and_normal_endpoint_is_read_committed(
+    committed_commercial_rows, monkeypatch
+):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    statements = []
+    request_thread = get_ident()
+    original_execute = CursorWrapper.execute
+
+    def traced_execute(cursor, sql, params=None):
+        if get_ident()==request_thread:
+            statements.append(str(sql).strip())
+        return original_execute(cursor,sql,params)
+
+    monkeypatch.setattr(CursorWrapper,'execute',traced_execute)
+    preview_isolation = []
+    original_preview = pricing_views.preview
+
+    def checked_preview(*args,**kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute('SHOW transaction_isolation')
+            preview_isolation.append(cursor.fetchone()[0])
+        return original_preview(*args,**kwargs)
+
+    monkeypatch.setattr(pricing_views,'preview',checked_preview)
+    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
+                                                 price_payload(project),format='json')
+    assert response.status_code==200
+    assert statements[0]=='SET TRANSACTION ISOLATION LEVEL REPEATABLE READ'
+    assert preview_isolation==['repeatable read']
+    normal_isolation = []
+    original_admin_list = pricing_views.admin_list
+
+    def checked_admin_list(*args,**kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute('SHOW transaction_isolation')
+            normal_isolation.append(cursor.fetchone()[0])
+        return original_admin_list(*args,**kwargs)
+
+    monkeypatch.setattr(pricing_views,'admin_list',checked_admin_list)
+    response = owner_client(users['OWNER']).get('/api/v1/pricing/admin/cost-lists/')
+    assert response.status_code==200
+    assert normal_isolation==['read committed']
+
+
+def test_preview_refuses_an_enclosing_transaction(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    with transaction.atomic():
+        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
+                                                     price_payload(project),format='json')
+    assert_public_error(response,409,'pricing_transaction_rejected',
+                        'No se guardó el cambio. Revisa duplicados, vigencia y permisos; vuelve a cargar los datos.')
+    assert pricing_operation_evidence(org,project)==([],[])
+
+
+def test_apply_uses_frozen_preview_after_authority_change(committed_commercial_rows):
+    org,_,users = committed_commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+    client = owner_client(users['OWNER'])
+    preview_response = client.post('/api/v1/pricing/preview/',price_payload(project),format='json')
+    assert preview_response.status_code==200
+    with transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute('UPDATE public.cost_list_items SET unit_cost=400 WHERE org_id=%s',[org])
+    applied = client.post(f"/api/v1/pricing/operations/{preview_response.json()['id']}/apply/",
+                          {'reason':'Apply frozen authority','confirmed':False,'reject':False},format='json')
+    assert applied.status_code==200
+    assert applied.json()['project_net']==preview_response.json()['project_net']
+    assert one('SELECT total_price_net FROM public.projects WHERE id=%s',[project])['total_price_net']==Decimal(
+        preview_response.json()['project_net'])
+
+
+def test_position_cost_preserves_original_database_sqlstate(commercial_rows,monkeypatch):
+    org,_,users = commercial_rows
+    project = seed_commercial_project(org,users['OWNER'])
+
+    def failed_technical_read(*args,**kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT * FROM public.missing_shot08_technical_authority')
+
+    monkeypatch.setattr(pricing_service.SystemParamsRepository,'load_visible',failed_technical_read)
+    with pytest.raises(DatabaseError) as rejected:
+        with as_user(users['OWNER']), commercial_backend():
+            repo = PricingRepository(org,date(2026,9,10),'CLP')
+            position = one('SELECT * FROM public.project_positions WHERE project_id=%s',[project])
+            rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org])
+            pricing_service.position_cost(repo,position,rules)
+    assert rejected.value.__cause__.sqlstate=='42P01'
+    assert one('SELECT 1 AS value')['value']==1
