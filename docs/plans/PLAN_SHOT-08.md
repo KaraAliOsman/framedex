@@ -1,5 +1,33 @@
 # PLAN_SHOT-08 — Owner final correction pass verificado localmente
 
+## Final material correction pass — coherent preview, exact Mode 4 and tenant canvas (2026-09-12)
+
+PR #21 began this correction at frozen SHA `2612412fd4e990066842c3cb909dfb2eb07eb3f1`. The Owner-authorized delta closes only preview snapshot tearing, original SQLSTATE masking during technical reads, finite-precision Mode 4 tie ordering and cross-identity canvas state. No schema migration, historical migration, H6 primitive, Golden fixture, public error code, authority cache or unrelated endpoint isolation changed.
+
+Pre-fix focused reproductions established:
+- a committed READ COMMITTED preview paused after its first commercial cost read, then persisted repeated-SKU authorities from both committed generations (`100` and `200`) together with torn rules;
+- a raw technical-read SQL failure with original SQLSTATE `42P01` was replaced by role-restoration SQLSTATE `25P02`;
+- USD costs `136.2` and `28539.1` at margin `0.4728` produced `(258.34, 54133.35)` instead of the exact tied-remainder allocation `(258.35, 54133.34)`;
+- organization replacement, successful sign-out and different-user replacement retained every seeded mutable canvas field, while the same-user/same-organization token-refresh control correctly retained valid work.
+
+The correction is narrow:
+- preview alone now uses an outermost durable transaction whose first application SQL is `SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`; verified claims, active memberships, selected organization, MFA/RBAC, project/position locks, technical and commercial authorities, calculation, operation, input snapshot, result, source revision and trigger audit all belong to that attempt and commit atomically;
+- the retry catch is outside the complete atomic attempt, inspects preserved `cause.sqlstate`, permits only `40001` and `40P01`, and has three total attempts. Exhaustion and every nonretryable database failure retain HTTP 409 `pricing_transaction_rejected`. Apply remains READ COMMITTED and consumes the frozen preview without re-resolving commercial authority;
+- `position_cost()` now re-raises `DatabaseError` without restoration SQL, while healthy success and non-database failures retain role restoration;
+- Mode 4 derives exact integer coefficients and powers of ten from finite Decimal tuples. Integer quotient/remainder arithmetic controls target HALF_UP rounding, per-line floors, no-loss ceilings, exact remainder order, lower-index awards and higher-index removals; production imports no `Fraction` or float;
+- the auth provider tracks logical user/organization identity and synchronously resets the complete canvas store before organization or user replacement. Successful sign-out resets; failed sign-out and same-user/same-organization access-token refresh preserve work. The real `CommercialDraft` surface cannot expose or submit tenant A inputs after selecting tenant B.
+
+Focused evidence:
+- commercial engine test file: 36 passed, including exact USD/CLP Mode 4 addition ties, USD/CLP constrained-removal ties, multiple ties, sub-quantum costs, impossible minima, large coefficients, permutation invariance and 1,000 deterministic independent `fractions.Fraction` oracle cases (900 valid allocations and 100 typed impossible minima);
+- real PostgreSQL pricing integration: 52 passed. Deterministic event/barrier tests prove coherent repeated-SKU and newly applicable cost-list snapshots, actual project conflict `40001`, actual parent/child deadlock `40P01`, retry authorization refresh, deferred commit failure rollback, three-attempt exhaustion for both retryable SQLSTATEs, single attempts for `23505`/`23514`/`42501`/`55P03`/`57014`/`25P02`, exactly one successful operation/audit set, zero failed-attempt state, first-SQL isolation, nested-boundary rejection, normal READ COMMITTED endpoints and frozen apply semantics;
+- SQLSTATE preservation: original `42P01` survives unchanged and the connection is healthy after unwind;
+- frontend: AuthSessionProvider 12 passed; focused auth/canvas/inspector/pricing 75 passed; full Vitest 107 passed across 10 files. Organization switch, sign-out, user switch, failed sign-out, token refresh and actual CommercialDraft consumption are covered;
+- neighboring suites: engine 222 passed + 5 canonical xfails, backend 188 passed, OpenAPI/generated TypeScript reproducible, Ruff/mypy/ESLint/TypeScript/Prettier clean.
+
+Exactly one final `py -3.12 scripts/check_dod.py all` invocation on the stable executable candidate, using official Python 3.12.10, returned literal EXIT 0. Golden read-only check passed; Core mutations 20/20 killed; engine 222 passed + 5 canonical xfails; backend 188 passed; Vitest 107 passed; real Playwright 6 passed; pgTAP 7 files / 251 tests passed; PostgreSQL 16 clean install and populated SHOT-05/07/08 upgrade/rollback passed; OpenAPI, lint, types and production build passed.
+
+Golden remains byte-identical: calculation hash `sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21`; complete-file SHA-256 `c21c88d66e7ee2e0049ff01f4007cdd168383595d5b2f0f001fccf743ac5bff6`. H6 and all historical migrations are unchanged. RULE 0 = ZERO KNOWN MATERIAL CONTRADICTIONS. RULE 20 = ZERO MATERIAL GAPS. Publication and exact-head protected CI remain pending. NO MERGE and no SHOT-09.
+
 ## Owner final correction pass — commercial integrity and runtime contracts (2026-09-12)
 
 PR #21 was frozen at `386dc2e2b39058f02cbe4508898c6c473909ffad` when the Owner identified three current-SHA defects and one stock-authority hardening case. Constitution Rules 4 and 21, PLAN_SHOTS GNG-07-AUDIT, PD-08-09/10/11/13 and the explicit Owner correction govern this pass. No approved pricing formula, H6 primitive, Golden fixture, historical migration or resolved PD was reopened.
