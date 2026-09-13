@@ -16,6 +16,10 @@ SHOT_03_MIGRATION_PATH = (
 SEED_PATH = ROOT / "supabase" / "seed.sql"
 
 BUSINESS_TABLES = (
+    "pricing_configurations",
+    "pricing_matrix_cells",
+    "pricing_fx_snapshots",
+    "pricing_operations",
     "tenancy_organizations",
     "tenancy_memberships",
     "profile_systems",

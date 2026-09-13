@@ -318,6 +318,501 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/admin/{resource}/:
+    get:
+      operationId: pricing_admin_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: resource
+        schema:
+          type: string
+        required: true
+      tags:
+      - pricing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: pricing_admin_write
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: resource
+        schema:
+          type: string
+        required: true
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminWriteRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/drafts/:
+    post:
+      operationId: pricing_create_draft
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftProjectRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/import/:
+    post:
+      operationId: pricing_import_xlsx
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/operations/:
+    get:
+      operationId: pricing_operations
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/operations/{operation_id}/apply/:
+    post:
+      operationId: pricing_apply
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/pricing/preview/:
+    post:
+      operationId: pricing_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
 components:
   schemas:
     AalEnum:
@@ -342,6 +837,32 @@ components:
       - id
       - name
       - role
+    AdminResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - items
+    AdminWriteRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        values:
+          type: object
+          additionalProperties: {}
+      required:
+      - reason
+      - values
     AnnotationRequest:
       type: object
       properties:
@@ -391,6 +912,21 @@ components:
           nullable: true
       required:
       - bay_id
+    ApplyRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        confirmed:
+          type: boolean
+          default: false
+        reject:
+          type: boolean
+          default: false
+      required:
+      - reason
     AuthMeResponse:
       type: object
       properties:
@@ -411,6 +947,14 @@ components:
       - active_organization
       - memberships
       - user
+    CurrencyEnum:
+      enum:
+      - CLP
+      - USD
+      type: string
+      description: |-
+        * `CLP` - CLP
+        * `USD` - USD
     CutBar:
       type: object
       properties:
@@ -526,6 +1070,14 @@ components:
       - source_position_id
       - unit_index
       - workshop_sku
+    DecimalSeparatorEnum:
+      enum:
+      - .
+      - ','
+      type: string
+      description: |-
+        * `.` - .
+        * `,` - ,
     DiffPreconditions:
       type: object
       properties:
@@ -538,6 +1090,81 @@ components:
       required:
       - bottom_drain_holes_mm
       - opening_width_mm
+    DraftPositionRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        parametric_tree: {}
+        position_index:
+          type: integer
+          minimum: 1
+        quantity:
+          type: integer
+          minimum: 1
+        typology:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - position_index
+      - quantity
+      - system_id
+      - typology
+    DraftProjectRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        client_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DraftPositionRequest'
+      required:
+      - client_name
+      - code
+      - name
+      - positions
+      - reason
+    DraftResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+      - id
     DrainFixRuleIdEnum:
       enum:
       - R07
@@ -874,6 +1501,36 @@ components:
       - name
       - qty
       - unit
+    ImportRequestRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        mapping:
+          type: string
+          minLength: 1
+          description: JSON object mapping sku, description, unit and unit_cost to
+            column names.
+        decimal_separator:
+          allOf:
+          - $ref: '#/components/schemas/DecimalSeparatorEnum'
+          default: .
+        cost_list_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        apply:
+          type: boolean
+          default: false
+      required:
+      - cost_list_id
+      - file
+      - mapping
+      - reason
     InspectorDiff:
       type: object
       properties:
@@ -1020,6 +1677,16 @@ components:
       - steel_weight_kg
       - total_weight_kg
       - used_fallback
+    LineResponse:
+      type: object
+      properties:
+        position_index:
+          type: integer
+        line_net:
+          type: string
+      required:
+      - line_net
+      - position_index
     MaterialEnum:
       enum:
       - PVC
@@ -1090,6 +1757,104 @@ components:
       - sku
       - weight_kg
       - width_mm
+    PriceRequestRequest:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        pricing_mode:
+          $ref: '#/components/schemas/PricingModeEnum'
+        context_code:
+          type: string
+          minLength: 1
+          default: DEFAULT
+          maxLength: 100
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        effective_date:
+          type: string
+          format: date
+        fx_snapshot_id:
+          type: string
+          format: uuid
+          nullable: true
+        discount_pct:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+          default: '0.0000'
+        target_margin:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,4})?$
+          default: '0.3500'
+        segment:
+          allOf:
+          - $ref: '#/components/schemas/SegmentEnum'
+          default: RETAIL
+        confirmed:
+          type: boolean
+          default: false
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - currency
+      - effective_date
+      - pricing_mode
+      - project_id
+      - reason
+    PriceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        discount_pct:
+          type: string
+        state:
+          $ref: '#/components/schemas/StateEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineResponse'
+        project_net:
+          type: string
+        project_tax:
+          type: string
+        project_gross:
+          type: string
+      required:
+      - currency
+      - discount_pct
+      - id
+      - lines
+      - project_gross
+      - project_id
+      - project_net
+      - project_tax
+      - state
+    PricingModeEnum:
+      enum:
+      - COST_PLUS_MARGIN
+      - PRICE_PER_M2_BY_TYPOLOGY
+      - FIXED_PRICE_MATRIX_DIMENSIONAL
+      - TARGET_GROSS_MARGIN_PROJECT
+      - COMMERCIAL_LIST_WITH_DISCOUNTS
+      type: string
+      description: |-
+        * `COST_PLUS_MARGIN` - COST_PLUS_MARGIN
+        * `PRICE_PER_M2_BY_TYPOLOGY` - PRICE_PER_M2_BY_TYPOLOGY
+        * `FIXED_PRICE_MATRIX_DIMENSIONAL` - FIXED_PRICE_MATRIX_DIMENSIONAL
+        * `TARGET_GROSS_MARGIN_PROJECT` - TARGET_GROSS_MARGIN_PROJECT
+        * `COMMERCIAL_LIST_WITH_DISCOUNTS` - COMMERCIAL_LIST_WITH_DISCOUNTS
     ProfileCut:
       type: object
       properties:
@@ -1257,6 +2022,16 @@ components:
         * `FAIL` - FAIL
         * `NOT_APPLICABLE` - NOT_APPLICABLE
         * `MISSING_INPUT` - MISSING_INPUT
+    SegmentEnum:
+      enum:
+      - RETAIL
+      - ARCHITECT
+      - CONSTRUCTION
+      type: string
+      description: |-
+        * `RETAIL` - RETAIL
+        * `ARCHITECT` - ARCHITECT
+        * `CONSTRUCTION` - CONSTRUCTION
     SeverityEnum:
       enum:
       - YELLOW
@@ -1273,6 +2048,18 @@ components:
       description: |-
         * `PROFILE` - PROFILE
         * `REINFORCEMENT` - REINFORCEMENT
+    StateEnum:
+      enum:
+      - PREVIEW
+      - PENDING
+      - APPLIED
+      - REJECTED
+      type: string
+      description: |-
+        * `PREVIEW` - PREVIEW
+        * `PENDING` - PENDING
+        * `APPLIED` - APPLIED
+        * `REJECTED` - REJECTED
     StructuralInputRequest:
       type: object
       properties:

@@ -13,6 +13,7 @@ import {
 import { ApiError, configureApiAuthContext } from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
 import type { AuthMeResponse, Membership } from "../api/generated/models";
+import { useCanvasStore } from "../features/canvas/canvasStore";
 import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
 import { supabase } from "./supabaseClient";
@@ -79,6 +80,35 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
   const organizationRef = useRef<string | null>(null);
   const requestGeneration = useRef(0);
   const mounted = useRef(true);
+  const canvasIdentity = useRef<{ userId: string; organizationId: string | null } | null>(null);
+
+  const transitionCanvasIdentity = useCallback(
+    (userId: string | null, organizationId: string | null): void => {
+      const previous = canvasIdentity.current;
+      if (userId === null) {
+        if (previous !== null) useCanvasStore.getState().reset();
+        canvasIdentity.current = null;
+        return;
+      }
+      if (previous === null || previous.userId !== userId) {
+        useCanvasStore.getState().reset();
+        canvasIdentity.current = { userId, organizationId };
+        return;
+      }
+      if (
+        organizationId !== null &&
+        previous.organizationId !== null &&
+        previous.organizationId !== organizationId
+      ) {
+        useCanvasStore.getState().reset();
+      }
+      canvasIdentity.current = {
+        userId,
+        organizationId: organizationId ?? previous.organizationId,
+      };
+    },
+    [],
+  );
 
   const loadContext = useCallback(async (): Promise<void> => {
     const current = sessionRef.current;
@@ -103,14 +133,15 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         if (response.status !== 200) {
           throw new Error("Unexpected generated-client response");
         }
-        setMe(response.data);
-        setMemberships(response.data.memberships);
         const active = response.data.active_organization;
         if (active !== null) {
+          transitionCanvasIdentity(current.user.id, active.id);
           organizationRef.current = active.id;
           window.localStorage.setItem(organizationStorageKey(current.user.id), active.id);
           telemetry.organization(active.id);
         }
+        setMe(response.data);
+        setMemberships(response.data.memberships);
         setStatus("ready");
         return;
       } catch (caught) {
@@ -141,7 +172,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
         return;
       }
     }
-  }, []);
+  }, [transitionCanvasIdentity]);
 
   useEffect(
     () =>
@@ -166,6 +197,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
     function applySession(nextSession: Session | null, signedIn: boolean): void {
       if (!active) return;
       ++requestGeneration.current;
+      transitionCanvasIdentity(nextSession?.user.id ?? null, null);
       sessionRef.current = nextSession;
       setSession(nextSession);
       if (nextSession === null) {
@@ -216,7 +248,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       for (const timer of scheduled) window.clearTimeout(timer);
       data.subscription.unsubscribe();
     };
-  }, [loadContext]);
+  }, [loadContext, transitionCanvasIdentity]);
 
   const value = useMemo<AuthSessionContextValue>(
     () => ({
@@ -242,6 +274,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       async selectOrganization(organizationId: string) {
         const current = sessionRef.current;
         if (current === null) return;
+        transitionCanvasIdentity(current.user.id, organizationId);
         organizationRef.current = organizationId;
         window.localStorage.setItem(organizationStorageKey(current.user.id), organizationId);
         telemetry.organization(organizationId);
@@ -260,10 +293,11 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
             return;
           }
         }
+        transitionCanvasIdentity(null, null);
         telemetry.reset();
       },
     }),
-    [error, loadContext, me, memberships, session, status],
+    [error, loadContext, me, memberships, session, status, transitionCanvasIdentity],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;

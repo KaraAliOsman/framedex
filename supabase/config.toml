@@ -2,14 +2,15 @@ project_id = "dekopen"
 
 [api]
 enabled = true
-port = 54321
+# Local ports below Windows' dynamic/excluded ephemeral ranges.
+port = 25321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
-shadow_port = 54320
+port = 25322
+shadow_port = 25320
 major_version = 17
 
 [db.pooler]
@@ -27,9 +28,9 @@ enabled = false
 
 [local_smtp]
 enabled = true
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
+port = 25324
+smtp_port = 25325
+pop3_port = 25326
 
 [storage]
 enabled = false

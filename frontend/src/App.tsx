@@ -12,6 +12,14 @@ import { useAuthSession } from "./auth/AuthSessionProvider";
 import { LoginPage } from "./auth/LoginPage";
 import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
+const PricingPage = lazy(async () => {
+  const module = await import("./features/pricing/PricingPage");
+  return { default: module.PricingPage };
+});
+const CommercialPricingPage = lazy(async () => {
+  const module = await import("./features/pricing/PricingPage");
+  return { default: module.CommercialPricingPage };
+});
 
 const CanvasEditor2DView = lazy(async () => {
   const module = await import("./features/canvas/CanvasEditor2DView");
@@ -43,6 +51,30 @@ function HomeRedirect(): JSX.Element {
 export function AppRoutes(): JSX.Element {
   return (
     <Routes>
+      <Route
+        path="/pricing/commercial"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("pricing.loading")}</p>}>
+                <CommercialPricingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/pricing/cost-lists"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("pricing.loading")}</p>}>
+                <PricingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />

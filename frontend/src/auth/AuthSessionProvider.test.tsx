@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../api/apiMutator";
 import { authMe } from "../api/generated/dekopen";
+import { CommercialPricingPage } from "../features/pricing/PricingPage";
+import { useCanvasStore } from "../features/canvas/canvasStore";
+import { t } from "../i18n/es-CL";
 import { telemetry } from "../telemetry/telemetry";
 import { AuthSessionProvider, useAuthSession } from "./AuthSessionProvider";
 
@@ -31,17 +34,21 @@ vi.mock("./supabaseClient", () => ({
 }));
 vi.mock("../api/generated/dekopen", () => ({ authMe: vi.fn() }));
 
-const session = {
-  access_token: "unit-session-only",
-  user: { id: "unit-user" },
-} as Session;
+function sessionFor(userId: string, accessToken: string): Session {
+  return {
+    access_token: accessToken,
+    user: { id: userId },
+  } as Session;
+}
 
-function result(org: string): Awaited<ReturnType<typeof authMe>> {
+const session = sessionFor("unit-user", "unit-session-only");
+
+function result(org: string, userId = "unit-user"): Awaited<ReturnType<typeof authMe>> {
   return {
     status: 200,
     headers: new Headers(),
     data: {
-      user: { id: "unit-user", email: "" },
+      user: { id: userId, email: "" },
       aal: "aal1",
       active_organization: { id: org, name: org, role: "ESTIMATOR" },
       memberships: [],
@@ -57,16 +64,81 @@ function Probe(): JSX.Element {
       <span data-testid="active-org">{auth.me?.active_organization?.id ?? ""}</span>
       <button onClick={() => void auth.selectOrganization("org-B")}>Select B</button>
       <button onClick={() => void auth.requestMagicLink("fixture@example.com")}>Magic link</button>
+      <button onClick={() => void auth.signOut()}>Sign out</button>
     </>
   );
 }
 
-function mount(): void {
-  render(
-    <AuthSessionProvider>
-      <Probe />
-    </AuthSessionProvider>,
+function DraftSurface(): JSX.Element {
+  const auth = useAuthSession();
+  return (
+    <>
+      <span data-testid="status">{auth.status}</span>
+      <button onClick={() => void auth.selectOrganization("org-B")}>Select draft B</button>
+      {auth.status === "ready" ? <CommercialPricingPage /> : null}
+    </>
   );
+}
+
+function mount(child: JSX.Element = <Probe />): void {
+  render(<AuthSessionProvider>{child}</AuthSessionProvider>);
+}
+
+function seedCanvas(): void {
+  act(() => {
+    const canvas = useCanvasStore.getState();
+    canvas.setSystemId("tenant-a-system");
+    canvas.acceptDimension("width", "1444.00");
+    canvas.acceptDimension("height", "1555.00");
+    canvas.setAnnotations([{ bay_id: "g1", bottom_drain_holes_mm: ["100", "900"] }]);
+    canvas.setPreviewDiff({
+      diff_id: "tenant-a-diff",
+      rule_id: "R07",
+      target: { bay_id: "g1", leaf_id: null },
+      preconditions: { opening_width_mm: "1444.00", bottom_drain_holes_mm: ["100", "900"] },
+      operations: [],
+    });
+    canvas.setDraftDimension({ axis: "width", value: "1666" });
+    canvas.setViewport({ scale: 2, offsetX: 20, offsetY: 30 });
+    canvas.toggleSnap();
+  });
+}
+
+function canvasSnapshot(): object {
+  const canvas = useCanvasStore.getState();
+  return structuredClone({
+    annotations: canvas.annotations,
+    previewDiff: canvas.previewDiff,
+    inputs: canvas.inputs,
+    draftDimension: canvas.draftDimension,
+    selection: canvas.selection,
+    viewport: canvas.viewport,
+    snapEnabled: canvas.snapEnabled,
+  });
+}
+
+function expectResetCanvas(): void {
+  expect(canvasSnapshot()).toEqual({
+    annotations: [],
+    previewDiff: null,
+    inputs: {
+      systemId: null,
+      nominalWidthMm: "1000.00",
+      nominalHeightMm: "1000.00",
+      color: "WHITE",
+      parametricTree: {
+        id: "g1",
+        type: "BAY",
+        opening_type: "FIXED",
+        glass_thickness_mm: "4.00",
+        glass_spec: "4 Float Incoloro",
+      },
+    },
+    draftDimension: null,
+    selection: "g1",
+    viewport: { scale: 1, offsetX: 0, offsetY: 0 },
+    snapEnabled: true,
+  });
 }
 
 beforeEach(() => {
@@ -76,6 +148,8 @@ beforeEach(() => {
   fake.getSession.mockResolvedValue({ data: { session }, error: null });
   fake.getAssurance.mockResolvedValue({ data: { currentLevel: "aal1" }, error: null });
   fake.signInWithOtp.mockResolvedValue({ data: {}, error: null });
+  fake.signOut.mockResolvedValue({ error: null });
+  useCanvasStore.getState().reset();
   vi.mocked(authMe).mockReset().mockResolvedValue(result("org-A"));
 });
 
@@ -143,6 +217,86 @@ describe("authoritative session and active-organization boundary", () => {
     });
     expect(screen.getByTestId("active-org")).toHaveTextContent("org-B");
     expect(localStorage.getItem("dekopen.active_org.unit-user")).toBe("org-B");
+  });
+
+  it("resets canvas before an active-organization replacement can resolve", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
+    vi.mocked(authMe).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishB = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Select B" }));
+    expectResetCanvas();
+    await act(async () => finishB?.(result("org-B")));
+    await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
+  });
+
+  it("resets canvas after sign-out succeeds", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    await waitFor(() => expect(fake.signOut).toHaveBeenCalledOnce());
+    await waitFor(expectResetCanvas);
+  });
+
+  it("preserves canvas when sign-out fails and logical identity does not change", async () => {
+    fake.signOut.mockResolvedValueOnce({ error: new Error("controlled sign-out failure") });
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    const before = canvasSnapshot();
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("error"));
+    expect(canvasSnapshot()).toEqual(before);
+  });
+
+  it("resets canvas before a different authenticated user can resolve", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    vi.mocked(authMe).mockResolvedValueOnce(result("org-B", "unit-user-B"));
+    act(() => fake.callback?.("SIGNED_IN", sessionFor("unit-user-B", "user-b-token")));
+    expectResetCanvas();
+    await waitFor(() => expect(screen.getByTestId("active-org")).toHaveTextContent("org-B"));
+  });
+
+  it("preserves canvas for a same-user same-organization token refresh", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    const before = canvasSnapshot();
+    vi.mocked(authMe).mockResolvedValueOnce(result("org-A"));
+    act(() => fake.callback?.("TOKEN_REFRESHED", sessionFor("unit-user", "refreshed-token")));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    expect(canvasSnapshot()).toEqual(before);
+  });
+
+  it("cannot expose tenant A design through CommercialDraft after selecting tenant B", async () => {
+    mount(<DraftSurface />);
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    seedCanvas();
+    expect(screen.getByText("1444.00 × 1555.00 mm")).toBeInTheDocument();
+    let finishB: ((value: Awaited<ReturnType<typeof authMe>>) => void) | undefined;
+    vi.mocked(authMe).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishB = resolve;
+        }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Select draft B" }));
+    expectResetCanvas();
+    await act(async () => finishB?.(result("org-B")));
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    expect(screen.getByText(t("pricing.prepareDesign"))).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("pricing.createDraft") }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not call async Auth methods from inside onAuthStateChange", async () => {

@@ -6,7 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  AdminResponse,
+  AdminWriteRequest,
+  ApplyRequest,
   AuthMeResponse,
+  DraftProjectRequest,
+  DraftResponse,
   EngineCalculateRequestRequest,
   EngineCalculateResponse,
   EngineInspectRequestRequest,
@@ -15,6 +20,9 @@ import type {
   EngineOptimizeResponse,
   EngineSystemsResponse,
   ErrorResponse,
+  ImportRequestRequest,
+  PriceRequestRequest,
+  PriceResponse,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -354,5 +362,561 @@ export const engineSystems = async (
   return apiMutator<engineSystemsResponse>(getEngineSystemsUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type pricingAdminListResponse200 = {
+  data: AdminResponse;
+  status: 200;
+};
+
+export type pricingAdminListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingAdminListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingAdminListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingAdminListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingAdminListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingAdminListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingAdminListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingAdminListResponseSuccess = pricingAdminListResponse200 & {
+  headers: Headers;
+};
+export type pricingAdminListResponseError = (
+  | pricingAdminListResponse400
+  | pricingAdminListResponse401
+  | pricingAdminListResponse403
+  | pricingAdminListResponse404
+  | pricingAdminListResponse409
+  | pricingAdminListResponse422
+  | pricingAdminListResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingAdminListResponse =
+  pricingAdminListResponseSuccess | pricingAdminListResponseError;
+
+export const getPricingAdminListUrl = (resource: string) => {
+  return `/api/v1/pricing/admin/${resource}/`;
+};
+
+export const pricingAdminList = async (
+  resource: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingAdminListResponse> => {
+  return apiMutator<pricingAdminListResponse>(getPricingAdminListUrl(resource), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type pricingAdminWriteResponse200 = {
+  data: AdminResponse;
+  status: 200;
+};
+
+export type pricingAdminWriteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingAdminWriteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingAdminWriteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingAdminWriteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingAdminWriteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingAdminWriteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingAdminWriteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingAdminWriteResponseSuccess = pricingAdminWriteResponse200 & {
+  headers: Headers;
+};
+export type pricingAdminWriteResponseError = (
+  | pricingAdminWriteResponse400
+  | pricingAdminWriteResponse401
+  | pricingAdminWriteResponse403
+  | pricingAdminWriteResponse404
+  | pricingAdminWriteResponse409
+  | pricingAdminWriteResponse422
+  | pricingAdminWriteResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingAdminWriteResponse =
+  pricingAdminWriteResponseSuccess | pricingAdminWriteResponseError;
+
+export const getPricingAdminWriteUrl = (resource: string) => {
+  return `/api/v1/pricing/admin/${resource}/`;
+};
+
+export const pricingAdminWrite = async (
+  resource: string,
+  adminWriteRequest: AdminWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingAdminWriteResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingAdminWriteResponse>(getPricingAdminWriteUrl(resource), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminWriteRequest),
+  });
+};
+
+export type pricingCreateDraftResponse201 = {
+  data: DraftResponse;
+  status: 201;
+};
+
+export type pricingCreateDraftResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingCreateDraftResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingCreateDraftResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingCreateDraftResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingCreateDraftResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingCreateDraftResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingCreateDraftResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingCreateDraftResponseSuccess = pricingCreateDraftResponse201 & {
+  headers: Headers;
+};
+export type pricingCreateDraftResponseError = (
+  | pricingCreateDraftResponse400
+  | pricingCreateDraftResponse401
+  | pricingCreateDraftResponse403
+  | pricingCreateDraftResponse404
+  | pricingCreateDraftResponse409
+  | pricingCreateDraftResponse422
+  | pricingCreateDraftResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingCreateDraftResponse =
+  pricingCreateDraftResponseSuccess | pricingCreateDraftResponseError;
+
+export const getPricingCreateDraftUrl = () => {
+  return `/api/v1/pricing/drafts/`;
+};
+
+export const pricingCreateDraft = async (
+  draftProjectRequest: DraftProjectRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingCreateDraftResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingCreateDraftResponse>(getPricingCreateDraftUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftProjectRequest),
+  });
+};
+
+export type pricingImportXlsxResponse200 = {
+  data: AdminResponse;
+  status: 200;
+};
+
+export type pricingImportXlsxResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingImportXlsxResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingImportXlsxResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingImportXlsxResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingImportXlsxResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingImportXlsxResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingImportXlsxResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingImportXlsxResponseSuccess = pricingImportXlsxResponse200 & {
+  headers: Headers;
+};
+export type pricingImportXlsxResponseError = (
+  | pricingImportXlsxResponse400
+  | pricingImportXlsxResponse401
+  | pricingImportXlsxResponse403
+  | pricingImportXlsxResponse404
+  | pricingImportXlsxResponse409
+  | pricingImportXlsxResponse422
+  | pricingImportXlsxResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingImportXlsxResponse =
+  pricingImportXlsxResponseSuccess | pricingImportXlsxResponseError;
+
+export const getPricingImportXlsxUrl = () => {
+  return `/api/v1/pricing/import/`;
+};
+
+export const pricingImportXlsx = async (
+  importRequestRequest: ImportRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingImportXlsxResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, importRequestRequest.file);
+  formData.append(`mapping`, importRequestRequest.mapping);
+  if (importRequestRequest.decimal_separator !== undefined) {
+    formData.append(`decimal_separator`, importRequestRequest.decimal_separator);
+  }
+  formData.append(`cost_list_id`, importRequestRequest.cost_list_id);
+  formData.append(`reason`, importRequestRequest.reason);
+  if (importRequestRequest.apply !== undefined) {
+    formData.append(`apply`, importRequestRequest.apply.toString());
+  }
+
+  return apiMutator<pricingImportXlsxResponse>(getPricingImportXlsxUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export type pricingOperationsResponse200 = {
+  data: PriceResponse[];
+  status: 200;
+};
+
+export type pricingOperationsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingOperationsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingOperationsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingOperationsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingOperationsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingOperationsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingOperationsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingOperationsResponseSuccess = pricingOperationsResponse200 & {
+  headers: Headers;
+};
+export type pricingOperationsResponseError = (
+  | pricingOperationsResponse400
+  | pricingOperationsResponse401
+  | pricingOperationsResponse403
+  | pricingOperationsResponse404
+  | pricingOperationsResponse409
+  | pricingOperationsResponse422
+  | pricingOperationsResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingOperationsResponse =
+  pricingOperationsResponseSuccess | pricingOperationsResponseError;
+
+export const getPricingOperationsUrl = () => {
+  return `/api/v1/pricing/operations/`;
+};
+
+export const pricingOperations = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingOperationsResponse> => {
+  return apiMutator<pricingOperationsResponse>(getPricingOperationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type pricingApplyResponse200 = {
+  data: PriceResponse;
+  status: 200;
+};
+
+export type pricingApplyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingApplyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingApplyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingApplyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingApplyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingApplyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingApplyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingApplyResponseSuccess = pricingApplyResponse200 & {
+  headers: Headers;
+};
+export type pricingApplyResponseError = (
+  | pricingApplyResponse400
+  | pricingApplyResponse401
+  | pricingApplyResponse403
+  | pricingApplyResponse404
+  | pricingApplyResponse409
+  | pricingApplyResponse422
+  | pricingApplyResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingApplyResponse = pricingApplyResponseSuccess | pricingApplyResponseError;
+
+export const getPricingApplyUrl = (operationId: string) => {
+  return `/api/v1/pricing/operations/${operationId}/apply/`;
+};
+
+export const pricingApply = async (
+  operationId: string,
+  applyRequest: ApplyRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingApplyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingApplyResponse>(getPricingApplyUrl(operationId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(applyRequest),
+  });
+};
+
+export type pricingPreviewResponse200 = {
+  data: PriceResponse;
+  status: 200;
+};
+
+export type pricingPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingPreviewResponseSuccess = pricingPreviewResponse200 & {
+  headers: Headers;
+};
+export type pricingPreviewResponseError = (
+  | pricingPreviewResponse400
+  | pricingPreviewResponse401
+  | pricingPreviewResponse403
+  | pricingPreviewResponse404
+  | pricingPreviewResponse409
+  | pricingPreviewResponse422
+  | pricingPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingPreviewResponse = pricingPreviewResponseSuccess | pricingPreviewResponseError;
+
+export const getPricingPreviewUrl = () => {
+  return `/api/v1/pricing/preview/`;
+};
+
+export const pricingPreview = async (
+  priceRequestRequest: PriceRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingPreviewResponse>(getPricingPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(priceRequestRequest),
   });
 };

@@ -174,7 +174,9 @@ def test_tenants_cannot_read_each_others_projects_or_costs(
             cursor.execute("SELECT org_id FROM public.projects")
             assert {row[0] for row in cursor.fetchall()} == {real_rows.organizations[tenant]}
             cursor.execute("SELECT org_id FROM public.cost_lists")
-            assert {row[0] for row in cursor.fetchall()} == {real_rows.organizations[tenant]}
+            # PD-08-10: these real Auth fixtures are ESTIMATOR. Neither tenant's
+            # supplier costs may be exposed, including their own organization.
+            assert cursor.fetchall() == []
         params = SystemParamsRepository().load_visible(
             real_rows.demo_system, real_rows.organizations[tenant]
         )
