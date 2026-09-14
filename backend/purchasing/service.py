@@ -46,16 +46,20 @@ def _array(value: object, code: str) -> list[object]:
 
 
 def _version(version_id: UUID, org_id: UUID) -> dict[str, object]:
-    return one(
+    version = one(
         "SELECT version.id,version.project_id,version.org_id,version.revision_code,"
-        "version.bom_hash,version.snapshot_sha256,version.production_allowed,"
-        "version.documentary_complete,version.emitted_at,project.code AS project_code "
+        "version.authority_version,version.bom_hash,version.snapshot_sha256,"
+        "version.production_allowed,version.documentary_complete,version.emitted_at,"
+        "project.code AS project_code "
         "FROM public.project_versions version JOIN public.projects project "
         "ON project.id=version.project_id AND project.org_id=version.org_id "
         "WHERE version.id=%s AND version.org_id=%s",
         [version_id, org_id],
         "project_version_not_found",
     )
+    if version["authority_version"] != "SHOT09_V1":
+        raise DocumentaryError("legacy_version_not_eligible")
+    return version
 
 
 def _line_snapshot(row: dict[str, object]) -> dict[str, object]:
@@ -114,7 +118,8 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             versions = rows(
                 "SELECT id,project_id,revision_code,bom_hash,snapshot_sha256,"
                 "documentary_complete,emitted_at FROM public.project_versions "
-                "WHERE org_id=%s ORDER BY emitted_at DESC,id",
+                "WHERE org_id=%s AND authority_version='SHOT09_V1' "
+                "ORDER BY emitted_at DESC,id",
                 [org_id],
             )
             return {"versions": _public(versions)}

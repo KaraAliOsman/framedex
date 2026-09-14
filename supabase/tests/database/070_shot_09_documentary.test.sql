@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(70);
+SELECT plan(76);
 SELECT ok(relrowsecurity,relname||' has RLS') FROM pg_class
  WHERE relnamespace='public'::regnamespace AND relname IN
  ('manufacturing_placement_policies','handle_requirement_policies','reinforcement_cut_policies',
@@ -147,5 +147,25 @@ SELECT throws_ok($$SELECT * FROM document_artifacts$$,'42501',NULL,'authenticate
 SELECT is((SELECT count(*) FROM project_versions),1::bigint,'org member reads the version through safe columns');
 RESET ROLE;
 SELECT is((SELECT public FROM storage.buckets WHERE id='documents'),FALSE,'documents bucket stays private');
+
+-- Populated-upgrade compatibility: a PRE_SHOT09 row stays typed, immutable,
+-- and unable to bind documentary evidence; V1 keeps the full strict contract.
+ALTER TABLE public.project_versions DISABLE TRIGGER require_applied_pricing_authority;
+INSERT INTO project_versions(id,project_id,org_id,revision_code,snapshot_json,emitted_by,authority_version)
+ VALUES('88740000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','REV-0','{}','88610000-0000-4000-8000-000000000001','PRE_SHOT09');
+ALTER TABLE public.project_versions ENABLE TRIGGER require_applied_pricing_authority;
+SELECT is((SELECT authority_version FROM project_versions WHERE id='88740000-0000-4000-8000-000000000001'),'PRE_SHOT09','pre-upgrade row keeps the explicit PRE_SHOT09 type');
+SELECT throws_ok($$INSERT INTO project_versions(project_id,org_id,revision_code,snapshot_json,emitted_by,authority_version)
+ VALUES('88620000-0000-4000-8000-000000000003','88600000-0000-4000-8000-000000000001','REV-9','{}','88610000-0000-4000-8000-000000000001','PRE_SHOT09')$$,'23514','legacy_version_insert_forbidden','new PRE_SHOT09 rows cannot be fabricated');
+SELECT throws_ok($$UPDATE project_versions SET revision_code='REV-X' WHERE id='88740000-0000-4000-8000-000000000001'$$,'42501','documentary_evidence_immutable','legacy row stays immutable');
+SELECT throws_ok($$INSERT INTO document_artifacts(org_id,project_id,project_version_id,artifact_scope,artifact_scope_id,document_type,format,bom_hash,revision_snapshot_sha256,storage_bucket,storage_object_key,file_sha256,media_type,byte_size,created_by)
+ VALUES('88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000003','88740000-0000-4000-8000-000000000001','PROJECT_REVISION','88740000-0000-4000-8000-000000000001','DOC-05','PDF','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','documents','org_88600000-0000-4000-8000-000000000001/projects/88620000-0000-4000-8000-000000000003/REV-0/doc05.pdf','1212121212121212121212121212121212121212121212121212121212121212','application/pdf',1024,'88610000-0000-4000-8000-000000000001')$$,'23503',NULL,'legacy version cannot bind a documentary artifact');
+SELECT set_config('app.pricing_reason','pgTAP V1 authority fixture',true);
+INSERT INTO pricing_operations(id,org_id,project_id,requested_by,request,input_snapshot,result,source_revision,state,reason) VALUES
+ ('88640000-0000-4000-8000-000000000004','88600000-0000-4000-8000-000000000001','88620000-0000-4000-8000-000000000002','88610000-0000-4000-8000-000000000001','{}','{}','{}','REV-A','APPLIED','shot09 upgrade-applied fixture');
+SELECT throws_ok($$INSERT INTO project_versions(project_id,org_id,revision_code,snapshot_json,emitted_by,authority_version,pricing_operation_id,canonical_version,snapshot_sha256,production_allowed,documentary_complete)
+ VALUES('88620000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','REV-A','{}','88610000-0000-4000-8000-000000000001','SHOT09_V1','88640000-0000-4000-8000-000000000004','DOCUMENTARY_CANONICAL_V1','dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',TRUE,TRUE)$$,'23514',NULL,'V1 revision without bom_hash is rejected');
+SELECT lives_ok($$INSERT INTO project_versions(project_id,org_id,revision_code,snapshot_json,emitted_by,authority_version,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,production_allowed,documentary_complete)
+ VALUES('88620000-0000-4000-8000-000000000002','88600000-0000-4000-8000-000000000001','REV-A','{}','88610000-0000-4000-8000-000000000001','SHOT09_V1','88640000-0000-4000-8000-000000000004','DOCUMENTARY_CANONICAL_V1','cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc','dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',TRUE,TRUE)$$,'a new V1 revision still satisfies the full contract after upgrade');
 SELECT * FROM finish();
 ROLLBACK;

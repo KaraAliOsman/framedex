@@ -162,6 +162,7 @@ REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "compat" / "postgres16_bootstrap.sql",
     SUPABASE_DIR / "compat" / "postgres16_verify.sql",
     ROOT / "scripts" / "check_migration_upgrades.py",
+    ROOT / "scripts" / "check_shot09_upgrade.py",
     BACKEND_DIR / "tests" / "test_database_contract.py",
     SUPABASE_DIR / "migrations" / "20260914000000_shot_09_documentary.sql",
     SUPABASE_DIR / "migrations" / "20260914000100_shot_09_demo_authorities.sql",
@@ -673,9 +674,14 @@ def check_shot_09_contract() -> None:
         "grant update (location_tag, updated_at) on public.project_positions to documentary_backend",
         "for update to documentary_backend",
         "unique nulls not distinct (system_id, org_id, version)",
+        "authority_version in ('pre_shot09', 'shot09_v1')",
+        "update public.project_versions set authority_version = 'pre_shot09'",
+        "legacy_version_insert_forbidden",
     ):
         if fragment not in normalized:
             fail(f"SHOT-09 database contract fragment is missing: {fragment}")
+    if "empty pre-authority project_versions" in normalized:
+        fail("SHOT-09 migration must support populated pre-authority project_versions")
     if re.search(r"grant\s+(?:all|insert|update|delete)[^;]*document_artifacts\s+to\s+authenticated", normalized):
         fail("document_artifacts must not grant member writes")
 
@@ -688,6 +694,8 @@ def check_shot_09_contract() -> None:
         "documentary_backend",
         "document_artifacts",
         "purchase_requirement_lines",
+        "legacy_version_insert_forbidden",
+        "authority_version",
     ):
         if evidence not in pgtap:
             fail(f"SHOT-09 pgTAP evidence is missing: {evidence}")

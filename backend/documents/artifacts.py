@@ -54,12 +54,15 @@ def _revision_snapshot(
     project_version_id: UUID, org_id: UUID
 ) -> tuple[dict[str, object], dict[str, object]]:
     version = one(
-        "SELECT id,project_id,org_id,revision_code,snapshot_json::text,bom_hash,"
-        "snapshot_sha256,production_allowed,documentary_complete,emitted_by,emitted_at "
+        "SELECT id,project_id,org_id,revision_code,authority_version,snapshot_json::text,"
+        "bom_hash,snapshot_sha256,production_allowed,documentary_complete,"
+        "emitted_by,emitted_at "
         "FROM public.project_versions WHERE id=%s AND org_id=%s",
         [project_version_id, org_id],
         "project_version_not_found",
     )
+    if version["authority_version"] != "SHOT09_V1":
+        raise DocumentaryError("legacy_version_not_eligible")
     snapshot = decoded(version["snapshot_json"])
     if not isinstance(snapshot, dict) or not all(isinstance(key, str) for key in snapshot):
         raise DocumentaryError("invalid_frozen_revision_snapshot")

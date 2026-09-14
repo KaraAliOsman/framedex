@@ -30,7 +30,7 @@ const glassRequirement = {
   unit: "EA",
   quantity: "4",
   specification: {},
-  source_trace: [{ position_id: "p1", bay_id: "V1", leaf_id: null }],
+  source_trace: ["5".repeat(64), "6".repeat(64)],
 };
 const profileRequirement = {
   id: "req-profile",
@@ -43,7 +43,7 @@ const profileRequirement = {
   unit: "BAR",
   quantity: "7",
   specification: {},
-  source_trace: [{ position_id: "p1", member_id: "FRAME_TOP" }],
+  source_trace: ["7".repeat(64)],
 };
 const eligibility = {
   id: "elig-glass",
@@ -195,19 +195,53 @@ it("sends a draft order only after explicit attestation", async () => {
   );
 });
 
-it("hides the confidential cost report from non-owner roles", async () => {
+it("renders string source traces as complete identities, not characters", async () => {
   mockState();
   renderPage();
+  const cell = (await screen.findByText("4 EA")).closest("tr")!;
+  const trace = "5".repeat(64);
+  // Old behavior enumerated characters via Object.entries on the string,
+  // producing "0=5 · 1=5 · ..." rows and never the complete identity.
+  expect(within(cell).getByText(trace)).toBeInTheDocument();
+  expect(within(cell).getByText("6".repeat(64))).toBeInTheDocument();
+  expect(within(cell).queryByText(/^0=/)).not.toBeInTheDocument();
+});
+
+it("shows workshop managers only document actions the backend authorizes", async () => {
+  mockState({
+    orders: [
+      {
+        id: "order-1",
+        order_code: "OC-GLASS-1",
+        order_type: "SUPPLIER_GLASS_PO",
+        status: "SENT",
+        supplier_name: "Vidrios SPA",
+        order_snapshot_hash: "e".repeat(64),
+      },
+    ],
+  });
+  renderPage();
   await screen.findByText("4 EA");
+  for (const key of ["purchasing.doc03", "purchasing.doc05", "purchasing.doc06"] as const)
+    expect(screen.getByText(t(key))).toBeInTheDocument();
+  expect(screen.getByText(t("purchasing.doc02"))).toBeInTheDocument();
+  expect(screen.queryByText(t("purchasing.doc01"))).not.toBeInTheDocument();
   expect(screen.queryByText(t("purchasing.doc07"))).not.toBeInTheDocument();
 });
 
-it("exposes the confidential cost report to the owner", async () => {
+it("shows the owner every document action including DOC-01 and DOC-07", async () => {
   identity.role = "OWNER";
   mockState();
   renderPage();
   await screen.findByText("4 EA");
-  expect(screen.getByText(t("purchasing.doc07"))).toBeInTheDocument();
+  for (const key of [
+    "purchasing.doc01",
+    "purchasing.doc03",
+    "purchasing.doc05",
+    "purchasing.doc06",
+    "purchasing.doc07",
+  ] as const)
+    expect(screen.getByText(t(key))).toBeInTheDocument();
 });
 
 it("surfaces a load failure without fabricating requirements", async () => {

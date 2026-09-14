@@ -32,7 +32,7 @@ type Requirement = {
   unit: string;
   quantity: string;
   specification: Record<string, unknown>;
-  source_trace: Array<Record<string, unknown>>;
+  source_trace: Array<string | Record<string, unknown>>;
 };
 type Eligibility = {
   id: string;
@@ -114,7 +114,7 @@ export function PurchasingPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "WORKSHOP_MANAGER"].includes(org.role))
     return <p role="alert">{t("purchasing.denied")}</p>;
-  return <PurchasingWorkspace key={org.id} orgId={org.id} owner={org.role === "OWNER"} />;
+  return <PurchasingWorkspace key={org.id} orgId={org.id} role={org.role} />;
 }
 
 function traceLine(entry: Record<string, unknown>): string {
@@ -124,33 +124,45 @@ function traceLine(entry: Record<string, unknown>): string {
     .join(" · ");
 }
 
-function orderDocuments(
-  order: Order,
-): Array<{ type: string; format: string; label: Parameters<typeof t>[0] }> {
+// Mirrors backend/documents/artifacts.py _DOCUMENT_ROLES exactly: a visible
+// action must never deterministically fail with document_access_denied.
+const DOCUMENT_ROLES: Record<string, string[]> = {
+  "DOC-01": ["OWNER", "ESTIMATOR"],
+  "DOC-02": ["OWNER", "WORKSHOP_MANAGER"],
+  "DOC-03": ["OWNER", "WORKSHOP_MANAGER"],
+  "DOC-04": ["OWNER", "WORKSHOP_MANAGER"],
+  "DOC-05": ["OWNER", "WORKSHOP_MANAGER"],
+  "DOC-06": ["OWNER", "WORKSHOP_MANAGER"],
+  "DOC-07": ["OWNER"],
+};
+
+type DocumentAction = { type: string; format: string; label: Parameters<typeof t>[0] };
+
+function orderDocuments(order: Order, role: string): DocumentAction[] {
+  let docs: DocumentAction[] = [];
   if (order.order_type === "SUPPLIER_GLASS_PO")
-    return [{ type: "DOC-02", format: "XLSX", label: "purchasing.doc02" }];
-  if (order.order_type === "SUPPLIER_PROFILE_PO")
-    return [
+    docs = [{ type: "DOC-02", format: "XLSX", label: "purchasing.doc02" }];
+  else if (order.order_type === "SUPPLIER_PROFILE_PO")
+    docs = [
       { type: "DOC-04", format: "PDF", label: "purchasing.doc04Pdf" },
       { type: "DOC-04", format: "XLSX", label: "purchasing.doc04Xlsx" },
     ];
-  return [];
+  return docs.filter((doc) => DOCUMENT_ROLES[doc.type]?.includes(role) === true);
 }
 
-function revisionDocuments(
-  owner: boolean,
-): Array<{ type: string; format: string; label: Parameters<typeof t>[0] }> {
-  const docs: Array<{ type: string; format: string; label: Parameters<typeof t>[0] }> = [
-    { type: "DOC-01", format: "PDF", label: "purchasing.doc01" },
-    { type: "DOC-03", format: "PDF", label: "purchasing.doc03" },
-    { type: "DOC-05", format: "PDF", label: "purchasing.doc05" },
-    { type: "DOC-06", format: "PDF", label: "purchasing.doc06" },
-  ];
-  if (owner) docs.push({ type: "DOC-07", format: "PDF", label: "purchasing.doc07" });
-  return docs;
+function revisionDocuments(role: string): DocumentAction[] {
+  return (
+    [
+      { type: "DOC-01", format: "PDF", label: "purchasing.doc01" },
+      { type: "DOC-03", format: "PDF", label: "purchasing.doc03" },
+      { type: "DOC-05", format: "PDF", label: "purchasing.doc05" },
+      { type: "DOC-06", format: "PDF", label: "purchasing.doc06" },
+      { type: "DOC-07", format: "PDF", label: "purchasing.doc07" },
+    ] as DocumentAction[]
+  ).filter((doc) => DOCUMENT_ROLES[doc.type]?.includes(role) === true);
 }
 
-function PurchasingWorkspace({ orgId, owner }: { orgId: string; owner: boolean }): JSX.Element {
+function PurchasingWorkspace({ orgId, role }: { orgId: string; role: string }): JSX.Element {
   const { request } = usePurchasingRequest(orgId);
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [versionId, setVersionId] = useState("");
@@ -325,6 +337,7 @@ function PurchasingWorkspace({ orgId, owner }: { orgId: string; owner: boolean }
             <OrderCard
               key={order.id}
               order={order}
+              role={role}
               busy={busy}
               request={request}
               action={action}
@@ -337,7 +350,7 @@ function PurchasingWorkspace({ orgId, owner }: { orgId: string; owner: boolean }
         <section className="purchasing-documents">
           <h2>{t("purchasing.documents")}</h2>
           <ul>
-            {revisionDocuments(owner).map((doc) => (
+            {revisionDocuments(role).map((doc) => (
               <li key={`${doc.type}-${doc.format}`}>
                 <span>{t(doc.label)}</span>
                 <button
@@ -533,7 +546,7 @@ function RequirementRow({
           {requirement.source_trace.length === 0 && <p>{t("purchasing.noTrace")}</p>}
           <ul>
             {requirement.source_trace.map((entry, index) => (
-              <li key={index}>{traceLine(entry)}</li>
+              <li key={index}>{typeof entry === "string" ? entry : traceLine(entry)}</li>
             ))}
           </ul>
         </details>
@@ -657,12 +670,14 @@ function EligibilityForm({
 
 function OrderCard({
   order,
+  role,
   busy,
   request,
   action,
   onDocument,
 }: {
   order: Order;
+  role: string;
   busy: boolean;
   request: RequestFn;
   action: (task: Promise<unknown>) => Promise<boolean>;
@@ -702,7 +717,7 @@ function OrderCard({
         </form>
       )}
       <ul>
-        {orderDocuments(order).map((doc) => (
+        {orderDocuments(order, role).map((doc) => (
           <li key={doc.format}>
             <button type="button" disabled={busy} onClick={() => onDocument(doc.type, doc.format)}>
               {t(doc.label)}

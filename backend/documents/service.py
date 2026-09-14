@@ -545,9 +545,9 @@ def freeze_revision_a(
         version = one(
             "INSERT INTO public.project_versions("
             "project_id,org_id,revision_code,snapshot_json,pdf_storage_path,emitted_by,emitted_at,"
-            "pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,"
+            "authority_version,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,"
             "production_allowed,documentary_complete) "
-            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,%s,%s,%s,%s,TRUE,%s) "
+            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,'SHOT09_V1',%s,%s,%s,%s,TRUE,%s) "
             "RETURNING id,revision_code,bom_hash,snapshot_sha256,production_allowed,"
             "documentary_complete,emitted_at",
             [project_id, org_id, revision,
@@ -692,12 +692,15 @@ def save_documentary_inputs(
 def revision_snapshot(version_id: UUID, org_id: UUID) -> tuple[dict[str, object], dict[str, object]]:
     with documentary_backend():
         version = one(
-            "SELECT id,project_id,org_id,revision_code,snapshot_json::text,bom_hash,"
-            "snapshot_sha256,production_allowed,documentary_complete,emitted_by,emitted_at "
+            "SELECT id,project_id,org_id,revision_code,authority_version,snapshot_json::text,"
+            "bom_hash,snapshot_sha256,production_allowed,documentary_complete,"
+            "emitted_by,emitted_at "
             "FROM public.project_versions WHERE id=%s AND org_id=%s",
             [version_id, org_id],
             "project_version_not_found",
         )
+    if version["authority_version"] != "SHOT09_V1":
+        raise DocumentaryError("legacy_version_not_eligible")
     snapshot = _json_object(version["snapshot_json"], "invalid_frozen_revision_snapshot")
     if snapshot_sha256_v1(snapshot) != str(version["snapshot_sha256"]):
         raise DocumentaryError("frozen_revision_hash_mismatch")

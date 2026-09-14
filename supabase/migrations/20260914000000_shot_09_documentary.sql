@@ -410,29 +410,55 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_documentary_inputs,
     public.position_documentary_inputs TO authenticated, documentary_backend;
 GRANT ALL ON public.project_documentary_inputs, public.position_documentary_inputs TO service_role;
 
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM public.project_versions) THEN
-        RAISE EXCEPTION 'SHOT-09 requires an empty pre-authority project_versions table';
-    END IF;
-END;
-$$;
-
 ALTER TABLE public.pricing_operations
     ADD CONSTRAINT shot09_pricing_operation_identity UNIQUE (id, project_id, org_id);
 
+-- Every row that predates this migration is immutable PRE_SHOT09 historical
+-- evidence. Its V1 authority columns stay NULL rather than being fabricated.
+-- New revisions default to SHOT09_V1 and must satisfy the complete contract.
 ALTER TABLE public.project_versions
     DROP CONSTRAINT IF EXISTS project_versions_project_id_fkey,
     DROP CONSTRAINT IF EXISTS project_versions_org_id_fkey,
-    ADD COLUMN pricing_operation_id UUID NOT NULL,
-    ADD COLUMN canonical_version TEXT NOT NULL,
-    ADD COLUMN bom_hash TEXT NOT NULL CHECK (bom_hash ~ '^[0-9a-f]{64}$'),
-    ADD COLUMN snapshot_sha256 TEXT NOT NULL CHECK (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
-    ADD COLUMN production_allowed BOOLEAN NOT NULL,
-    ADD COLUMN documentary_complete BOOLEAN NOT NULL,
-    ADD CONSTRAINT project_versions_initial_revision CHECK (revision_code = 'REV-A'),
+    ADD COLUMN authority_version TEXT,
+    ADD COLUMN pricing_operation_id UUID,
+    ADD COLUMN canonical_version TEXT,
+    ADD COLUMN bom_hash TEXT CHECK (bom_hash IS NULL OR bom_hash ~ '^[0-9a-f]{64}$'),
+    ADD COLUMN snapshot_sha256 TEXT CHECK (
+        snapshot_sha256 IS NULL OR snapshot_sha256 ~ '^[0-9a-f]{64}$'
+    ),
+    ADD COLUMN production_allowed BOOLEAN,
+    ADD COLUMN documentary_complete BOOLEAN;
+
+UPDATE public.project_versions SET authority_version = 'PRE_SHOT09';
+
+ALTER TABLE public.project_versions
+    ALTER COLUMN authority_version SET DEFAULT 'SHOT09_V1',
+    ALTER COLUMN authority_version SET NOT NULL,
+    ADD CONSTRAINT project_versions_authority_kind
+        CHECK (authority_version IN ('PRE_SHOT09', 'SHOT09_V1')),
+    ADD CONSTRAINT project_versions_initial_revision
+        CHECK (authority_version <> 'SHOT09_V1' OR revision_code = 'REV-A'),
+    ADD CONSTRAINT project_versions_v1_authority
+        CHECK (authority_version <> 'SHOT09_V1' OR (
+            pricing_operation_id IS NOT NULL
+            AND canonical_version = 'DOCUMENTARY_CANONICAL_V1'
+            AND bom_hash IS NOT NULL
+            AND snapshot_sha256 IS NOT NULL
+            AND production_allowed IS NOT NULL
+            AND documentary_complete IS NOT NULL
+        )),
+    ADD CONSTRAINT project_versions_legacy_unbound
+        CHECK (authority_version <> 'PRE_SHOT09' OR (
+            pricing_operation_id IS NULL
+            AND canonical_version IS NULL
+            AND bom_hash IS NULL
+            AND snapshot_sha256 IS NULL
+            AND production_allowed IS NULL
+            AND documentary_complete IS NULL
+        )),
     ADD CONSTRAINT project_versions_project_tenant
-        FOREIGN KEY (project_id, org_id) REFERENCES public.projects(id, org_id) ON DELETE RESTRICT,
+        FOREIGN KEY (project_id, org_id) REFERENCES public.projects(id, org_id)
+        ON DELETE RESTRICT NOT VALID,
     ADD CONSTRAINT project_versions_org_restrict
         FOREIGN KEY (org_id) REFERENCES public.tenancy_organizations(id) ON DELETE RESTRICT,
     ADD CONSTRAINT project_versions_pricing_authority
@@ -449,6 +475,9 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+    IF NEW.authority_version <> 'SHOT09_V1' THEN
+        RAISE EXCEPTION 'legacy_version_insert_forbidden' USING ERRCODE = '23514';
+    END IF;
     IF NOT EXISTS (
         SELECT 1
         FROM public.pricing_operations
@@ -493,9 +522,9 @@ FOR EACH ROW EXECUTE FUNCTION private.protect_sealed_pricing_operation();
 DROP POLICY IF EXISTS project_versions_isolation ON public.project_versions;
 REVOKE ALL ON public.project_versions FROM anon, authenticated;
 GRANT SELECT (
-    id, project_id, org_id, revision_code, pricing_operation_id, canonical_version,
-    bom_hash, snapshot_sha256, production_allowed, documentary_complete,
-    emitted_by, emitted_at
+    id, project_id, org_id, revision_code, authority_version, pricing_operation_id,
+    canonical_version, bom_hash, snapshot_sha256, production_allowed,
+    documentary_complete, emitted_by, emitted_at
 ) ON public.project_versions TO authenticated;
 GRANT SELECT, INSERT ON public.project_versions TO documentary_backend;
 GRANT ALL ON public.project_versions TO service_role;
