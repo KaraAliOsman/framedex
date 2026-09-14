@@ -1,0 +1,39 @@
+from django.urls import path
+
+from purchasing.views import (
+    ConfirmBatchView,
+    PurchasingVersionsView,
+    PurchasingVersionView,
+    RequirementAllocationView,
+    SendOrderView,
+    SupplierEligibilityView,
+)
+
+urlpatterns = [
+    path("versions/", PurchasingVersionsView.as_view(), name="purchasing-versions"),
+    path(
+        "versions/<uuid:version_id>/",
+        PurchasingVersionView.as_view(),
+        name="purchasing-version",
+    ),
+    path(
+        "versions/<uuid:version_id>/eligibilities/",
+        SupplierEligibilityView.as_view(),
+        name="purchasing-eligibility",
+    ),
+    path(
+        "versions/<uuid:version_id>/confirm/",
+        ConfirmBatchView.as_view(),
+        name="purchasing-confirm",
+    ),
+    path(
+        "requirements/<uuid:requirement_id>/allocation/",
+        RequirementAllocationView.as_view(),
+        name="purchasing-allocation",
+    ),
+    path(
+        "orders/<uuid:order_id>/send/",
+        SendOrderView.as_view(),
+        name="purchasing-send",
+    ),
+]

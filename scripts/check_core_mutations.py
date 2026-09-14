@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MUTATIONS = {
     "sash-welding": ("width + loss, height + loss", "width + loss + DELTA, height + loss"),
     "steel-gap": ("- _TWO * article.reinforcement_gap_mm)", "- _TWO * article.reinforcement_gap_mm + DELTA)"),
-    "bead-cut": ("length_mm=length + rule.cut_add_mm,", "length_mm=length + rule.cut_add_mm + DELTA,"),
+    "bead-cut-width": ("length_mm=width_mm + rule.cut_add_mm,", "length_mm=width_mm + rule.cut_add_mm + DELTA,"),
+    "bead-cut-height": ("length_mm=height_mm + rule.cut_add_mm,", "length_mm=height_mm + rule.cut_add_mm + DELTA,"),
     "sliding-cut-width": ("/ _TWO + params.sliding_end_add_mm", "/ _TWO + params.sliding_end_add_mm + DELTA"),
     "sliding-cut-height": ("rect.height_mm - _TWO * params.pulley_height_mm", "rect.height_mm - _TWO * params.pulley_height_mm + DELTA"),
     "sliding-glass-width": ("width -= params.sliding_glazing_deduction_width_mm", "width -= params.sliding_glazing_deduction_width_mm + DELTA"),

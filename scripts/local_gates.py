@@ -95,10 +95,16 @@ def running_environment() -> dict[str, str]:
     result.pop("VITE_POSTHOG_HOST", None)
     result.pop("NO_COLOR", None)
     result["FORCE_COLOR"] = "0"
+    if os.name == "nt":
+        dlls = Path("C:/msys64/ucrt64/bin")
+        if dlls.is_dir():
+            result.setdefault("WEASYPRINT_DLL_DIRECTORIES", str(dlls))
     return result
 
 
 def start_clean_stack() -> dict[str, str]:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     docker = executable("docker")
     supabase = executable("supabase")
     run([docker, "info", "--format", "{{.ServerVersion}} {{.OSType}}"])

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from dekopen_engine.hardware import HardwareCandidateEvaluation
+from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
 from dekopen_engine.models import BayOpeningType, EngineResult, HardwareKitRule, RailType
 from dekopen_engine.weight import ExactLeafWeight
 
@@ -52,6 +53,7 @@ class SpanTechnicalFacts:
 @dataclass(slots=True)
 class GeometryComputation:
     result: EngineResult | None = None
+    manufacturing_trace: GeometryManufacturingTraceV1 | None = None
     leaves: list[LeafTechnicalFacts] = field(default_factory=list)
     infills: list[InfillTechnicalFacts] = field(default_factory=list)
     openings: list[OpeningTechnicalFacts] = field(default_factory=list)

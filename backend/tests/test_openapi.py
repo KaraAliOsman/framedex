@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_authorized_shot_08_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_authorized_shot_09_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
         "/api/v1/auth/me/",
@@ -22,6 +22,16 @@ def test_openapi_contains_only_authorized_shot_08_paths_and_bearer_security() ->
         "/api/v1/pricing/operations/{operation_id}/apply/",
         "/api/v1/pricing/drafts/",
         "/api/v1/pricing/import/",
+        "/api/v1/documents/projects/{project_id}/freeze/",
+        "/api/v1/documents/projects/{project_id}/inputs/",
+        "/api/v1/documents/artifacts/",
+        "/api/v1/documents/artifacts/{artifact_id}/access/",
+        "/api/v1/purchasing/versions/",
+        "/api/v1/purchasing/versions/{version_id}/",
+        "/api/v1/purchasing/versions/{version_id}/eligibilities/",
+        "/api/v1/purchasing/versions/{version_id}/confirm/",
+        "/api/v1/purchasing/requirements/{requirement_id}/allocation/",
+        "/api/v1/purchasing/orders/{order_id}/send/",
     }
     bearer = schema["components"]["securitySchemes"]["SupabaseBearer"]
     assert bearer == {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
@@ -49,6 +59,16 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
         ("/api/v1/pricing/operations/{operation_id}/apply/", "post"),
         ("/api/v1/pricing/drafts/", "post"),
         ("/api/v1/pricing/import/", "post"),
+        ("/api/v1/documents/projects/{project_id}/freeze/", "post"),
+        ("/api/v1/documents/projects/{project_id}/inputs/", "put"),
+        ("/api/v1/documents/artifacts/", "post"),
+        ("/api/v1/documents/artifacts/{artifact_id}/access/", "post"),
+        ("/api/v1/purchasing/versions/", "get"),
+        ("/api/v1/purchasing/versions/{version_id}/", "get"),
+        ("/api/v1/purchasing/versions/{version_id}/eligibilities/", "post"),
+        ("/api/v1/purchasing/versions/{version_id}/confirm/", "post"),
+        ("/api/v1/purchasing/requirements/{requirement_id}/allocation/", "put"),
+        ("/api/v1/purchasing/orders/{order_id}/send/", "post"),
     ):
         header = next(p for p in schema["paths"][path][method]["parameters"] if p["name"] == "X-Organization-ID")
         assert header["in"] == "header"

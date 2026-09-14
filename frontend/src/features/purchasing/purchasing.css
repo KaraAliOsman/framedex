@@ -1,0 +1,128 @@
+.purchasing-page {
+  padding: 1.5rem;
+  color: var(--theme-text-primary);
+  max-width: 90rem;
+  margin: auto;
+}
+.purchasing-page h1,
+.purchasing-page h2 {
+  margin-bottom: 0.75rem;
+}
+.purchasing-page header p {
+  color: var(--theme-text-secondary);
+}
+.purchasing-page [role="alert"] {
+  color: var(--theme-crimson-alert);
+}
+.purchasing-version {
+  color: var(--theme-text-secondary);
+}
+.purchasing-page label {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.5rem 0;
+}
+.purchasing-page input,
+.purchasing-page select {
+  background: var(--theme-bg-canvas);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border-subtle);
+  padding: 0.6rem;
+  border-radius: 0.25rem;
+  min-width: 0;
+}
+.purchasing-page input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.purchasing-page button {
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+}
+.purchasing-page button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.purchasing-blockers {
+  border: 1px solid var(--theme-crimson-alert);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.purchasing-type,
+.purchasing-orders,
+.purchasing-documents {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  background: var(--theme-surface-panel);
+}
+.purchasing-badge {
+  margin-left: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--theme-cyan-tool);
+  color: var(--theme-cyan-tool);
+  font-size: 0.8rem;
+}
+.purchasing-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.purchasing-page td,
+.purchasing-page th {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+.purchasing-page td small {
+  display: block;
+  color: var(--theme-text-secondary);
+}
+.purchasing-eligibility,
+.purchasing-confirm,
+.purchasing-order {
+  border-top: 1px solid var(--theme-border-subtle);
+  padding: 0.75rem 0;
+}
+.purchasing-eligibility form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.purchasing-eligibility fieldset {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.25rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.purchasing-order header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.purchasing-order-sent {
+  opacity: 0.85;
+}
+.purchasing-documents ul,
+.purchasing-order ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.purchasing-documents li,
+.purchasing-order li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+@media (max-width: 760px) {
+  .purchasing-page {
+    padding: 0.75rem;
+  }
+}

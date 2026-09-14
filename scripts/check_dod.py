@@ -116,6 +116,32 @@ REQUIRED_PATHS = (
     FRONTEND_DIR / "src" / "features" / "inspector" / "InspectorModal.tsx",
     FRONTEND_DIR / "src" / "features" / "inspector" / "InspectorModal.test.tsx",
     FRONTEND_DIR / "src" / "features" / "inspector" / "inspectorDraft.ts",
+    ROOT / "docs" / "plans" / "PLAN_SHOT-09.md",
+    ENGINE_DIR / "src" / "dekopen_engine" / "documentary_canonical.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "manufacturing.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "manufacturing_trace.py",
+    ENGINE_DIR / "src" / "dekopen_engine" / "purchasing.py",
+    ENGINE_DIR / "tests" / "test_documentary_canonical.py",
+    ENGINE_DIR / "tests" / "test_manufacturing.py",
+    ENGINE_DIR / "tests" / "test_purchasing.py",
+    BACKEND_DIR / "documents" / "service.py",
+    BACKEND_DIR / "documents" / "repository.py",
+    BACKEND_DIR / "documents" / "views.py",
+    BACKEND_DIR / "documents" / "artifacts.py",
+    BACKEND_DIR / "documents" / "renderers.py",
+    BACKEND_DIR / "documents" / "xlsx.py",
+    BACKEND_DIR / "documents" / "storage.py",
+    BACKEND_DIR / "documents" / "serializers.py",
+    BACKEND_DIR / "documents" / "urls.py",
+    BACKEND_DIR / "purchasing" / "service.py",
+    BACKEND_DIR / "purchasing" / "views.py",
+    BACKEND_DIR / "purchasing" / "urls.py",
+    BACKEND_DIR / "purchasing" / "serializers.py",
+    BACKEND_DIR / "tests" / "test_documents_contract.py",
+    BACKEND_DIR / "tests" / "integration" / "test_shot09_documentary.py",
+    FRONTEND_DIR / "src" / "features" / "purchasing" / "PurchasingPage.tsx",
+    FRONTEND_DIR / "src" / "features" / "purchasing" / "PurchasingPage.test.tsx",
+    FRONTEND_DIR / "src" / "features" / "purchasing" / "purchasing.css",
 )
 
 REQUIRED_DATABASE_PATHS = (
@@ -137,6 +163,9 @@ REQUIRED_DATABASE_PATHS = (
     SUPABASE_DIR / "compat" / "postgres16_verify.sql",
     ROOT / "scripts" / "check_migration_upgrades.py",
     BACKEND_DIR / "tests" / "test_database_contract.py",
+    SUPABASE_DIR / "migrations" / "20260914000000_shot_09_documentary.sql",
+    SUPABASE_DIR / "migrations" / "20260914000100_shot_09_demo_authorities.sql",
+    SUPABASE_TEST_DIR / "070_shot_09_documentary.test.sql",
 )
 
 EXPECTED_DATABASE_TABLES = {
@@ -170,6 +199,21 @@ EXPECTED_DATABASE_TABLES = {
     "payments",
     "payment_events",
     "credit_ledger",
+    "manufacturing_placement_policies",
+    "handle_requirement_policies",
+    "reinforcement_cut_policies",
+    "glass_purchase_mappings",
+    "hardware_purchase_mappings",
+    "panel_purchase_authorities",
+    "project_documentary_inputs",
+    "position_documentary_inputs",
+    "purchase_projections",
+    "purchase_requirement_lines",
+    "supplier_eligibility_versions",
+    "purchase_allocations",
+    "order_allocation_batches",
+    "order_requirement_lines",
+    "document_artifacts",
 }
 
 EXPECTED_G_CASES = {
@@ -239,7 +283,7 @@ def fail(message: str, exit_code: int = 1) -> None:
             message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         )
         print(
-            f"::error title=Dekopen SHOT-04 gate::{annotation}",
+            f"::error title=Dekopen gate::{annotation}",
             file=sys.stderr,
             flush=True,
         )
@@ -518,6 +562,139 @@ def check_shot_05_contract() -> None:
     print("  SHOT-05 canvas/discovery/performance drift guards: passed", flush=True)
 
 
+def check_shot_09_contract() -> None:
+    plan_path = ROOT / "docs" / "plans" / "PLAN_SHOT-09.md"
+    plan = plan_path.read_text(encoding="utf-8")
+    for decision in (
+        "PD-09-01",
+        "PD-09-05",
+        "PD-09-10",
+        "PD-09-15",
+        "PD-09-19",
+    ):
+        if decision not in plan:
+            fail(f"SHOT-09 plan is missing decision record: {decision}")
+    if re.search(
+        r"^\s*(?:#+\s*|[-*]\s*|>\s*)?\[PENDIENTE-DECISIÓN\]", plan, flags=re.MULTILINE
+    ):
+        fail("SHOT-09 plan must not keep an unresolved material decision")
+
+    canonical = (
+        ENGINE_DIR / "src" / "dekopen_engine" / "documentary_canonical.py"
+    ).read_text(encoding="utf-8")
+    for evidence in (
+        "DOCUMENTARY_CANONICAL_V1",
+        "def bom_hash_v1(",
+        "def snapshot_sha256_v1(",
+        "def file_sha256(",
+    ):
+        if evidence not in canonical:
+            fail(f"SHOT-09 documentary canonicalization evidence is missing: {evidence}")
+
+    purchasing_source = (
+        ENGINE_DIR / "src" / "dekopen_engine" / "purchasing.py"
+    ).read_text(encoding="utf-8")
+    for evidence in ("PhysicalStockBindingV1", "AccessoryScheduleV1", "SupplierOrderType"):
+        if evidence not in purchasing_source:
+            fail(f"SHOT-09 purchase projection evidence is missing: {evidence}")
+
+    openapi = (BACKEND_DIR / "openapi.yaml").read_text(encoding="utf-8")
+    for endpoint in (
+        "/api/v1/documents/projects/{project_id}/freeze/",
+        "/api/v1/documents/projects/{project_id}/inputs/",
+        "/api/v1/documents/artifacts/",
+        "/api/v1/documents/artifacts/{artifact_id}/access/",
+        "/api/v1/purchasing/versions/",
+        "/api/v1/purchasing/versions/{version_id}/",
+        "/api/v1/purchasing/versions/{version_id}/eligibilities/",
+        "/api/v1/purchasing/versions/{version_id}/confirm/",
+        "/api/v1/purchasing/requirements/{requirement_id}/allocation/",
+        "/api/v1/purchasing/orders/{order_id}/send/",
+    ):
+        if endpoint not in openapi:
+            fail(f"SHOT-09 OpenAPI endpoint is missing: {endpoint}")
+
+    generated = (FRONTEND_DIR / "src" / "api" / "generated" / "dekopen.ts").read_text(
+        encoding="utf-8"
+    )
+    for evidence in (
+        "purchasingVersionState",
+        "purchasingConfirmOrderType",
+        "purchasingAllocateRequirement",
+        "purchasingCreateEligibility",
+        "purchasingSendOrder",
+        "documentaryGenerateArtifact",
+        "documentaryArtifactAccess",
+        "documentaryFreezeRevisionA",
+        "documentarySaveInputs",
+    ):
+        if evidence not in generated:
+            fail(f"SHOT-09 generated client evidence is missing: {evidence}")
+
+    app = (FRONTEND_DIR / "src" / "App.tsx").read_text(encoding="utf-8")
+    if '"/purchasing"' not in app:
+        fail("Canonical S19 purchasing route is missing")
+    shell = (FRONTEND_DIR / "src" / "app" / "AppShell.tsx").read_text(encoding="utf-8")
+    if '"/purchasing"' not in shell or "WORKSHOP_MANAGER" not in shell:
+        fail("S19 navigation must preserve WORKSHOP_MANAGER operational access")
+
+    messages = (FRONTEND_DIR / "src" / "i18n" / "es-CL.ts").read_text(encoding="utf-8")
+    for key in (
+        '"purchasing.title"',
+        '"purchasing.confirmCheckbox"',
+        '"purchasing.sendCheckbox"',
+        '"purchasing.immutable"',
+        '"purchasing.doc07"',
+    ):
+        if key not in messages:
+            fail(f"S19 i18n key is missing: {key}")
+
+    page = (
+        FRONTEND_DIR / "src" / "features" / "purchasing" / "PurchasingPage.tsx"
+    ).read_text(encoding="utf-8")
+    if 'name="quantity"' in page or re.search(r'input[^>]*quantity', page):
+        fail("S19 must not expose editable requirement quantities")
+    for evidence in ("SUPPLIER_GLASS_PO", "confirmCheckbox", "sendCheckbox", "trace"):
+        if evidence not in page:
+            fail(f"S19 UI evidence is missing: {evidence}")
+
+    migration = (
+        SUPABASE_DIR / "migrations" / "20260914000000_shot_09_documentary.sql"
+    ).read_text(encoding="utf-8")
+    normalized = " ".join(migration.lower().split())
+    for fragment in (
+        "documentary_backend nologin nosuperuser nobypassrls",
+        "applied_pricing_authority_required",
+        "sealed_pricing_operation_immutable",
+        "sealed_documentary_inputs_immutable",
+        "documentary_evidence_immutable",
+        "documentary_position_update_forbidden",
+        "shot09_project_version_operation unique (pricing_operation_id)",
+        "grant update (location_tag, updated_at) on public.project_positions to documentary_backend",
+        "for update to documentary_backend",
+        "unique nulls not distinct (system_id, org_id, version)",
+    ):
+        if fragment not in normalized:
+            fail(f"SHOT-09 database contract fragment is missing: {fragment}")
+    if re.search(r"grant\s+(?:all|insert|update|delete)[^;]*document_artifacts\s+to\s+authenticated", normalized):
+        fail("document_artifacts must not grant member writes")
+
+    pgtap = (SUPABASE_TEST_DIR / "070_shot_09_documentary.test.sql").read_text(
+        encoding="utf-8"
+    )
+    for evidence in (
+        "applied_pricing_authority_required",
+        "documentary_evidence_immutable",
+        "documentary_backend",
+        "document_artifacts",
+        "purchase_requirement_lines",
+    ):
+        if evidence not in pgtap:
+            fail(f"SHOT-09 pgTAP evidence is missing: {evidence}")
+
+    print("  SHOT-09 documentary/purchasing/S19 drift guards: passed", flush=True)
+
+
 def check_constitutional_guards() -> None:
     print("[1/6] Constitutional guards", flush=True)
     check_required_paths()
@@ -526,6 +703,7 @@ def check_constitutional_guards() -> None:
     check_frontend_hex_guard()
     check_shot_04_contract()
     check_shot_05_contract()
+    check_shot_09_contract()
     print("  Constitutional source guards: passed", flush=True)
 
 
@@ -745,11 +923,11 @@ def main() -> None:
             2,
         )
 
-    print("Dekopen SHOT-08 fail-closed checker", flush=True)
+    print("Dekopen SHOT-09 fail-closed checker", flush=True)
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-08 live database gate completed with exit code 0", flush=True)
+        print("[PASS] SHOT-09 live database gate completed with exit code 0", flush=True)
         return
 
     if target in {"lint", "all", "gauntlet"}:
@@ -762,7 +940,7 @@ def main() -> None:
     if target in {"build", "all", "gauntlet"}:
         check_build()
 
-    print(f"[PASS] SHOT-08 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] SHOT-09 checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

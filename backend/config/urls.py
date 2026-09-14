@@ -4,6 +4,8 @@ from django.urls import URLPattern, URLResolver, include, path
 from drf_spectacular.views import SpectacularAPIView
 
 urlpatterns: list[URLPattern | URLResolver] = [
+    path("api/v1/documents/", include("documents.urls")),
+    path("api/v1/purchasing/", include("purchasing.urls")),
     path("api/v1/pricing/", include("pricing.urls")),
     path("api/v1/auth/", include("authentication.urls")),
     path("api/v1/engine/", include("engine_api.urls")),

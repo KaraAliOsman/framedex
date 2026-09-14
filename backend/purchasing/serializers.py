@@ -1,0 +1,87 @@
+"""Strict supplier eligibility and order action transports for S19."""
+
+from rest_framework import serializers
+
+from documents.serializers import ArtifactResponseSerializer, StrictSerializer
+
+ORDER_TYPES = [
+    "SUPPLIER_PROFILE_PO",
+    "SUPPLIER_GLASS_PO",
+    "SUPPLIER_HARDWARE_PO",
+    "SUPPLIER_PANEL_PO",
+]
+
+
+class SupplierDetailsSerializer(StrictSerializer):
+    tax_id = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    email = serializers.EmailField(required=False, allow_blank=True, default="")
+    phone = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    address = serializers.CharField(max_length=1000, required=False, allow_blank=True, default="")
+
+
+class EligibilityEvidenceSerializer(StrictSerializer):
+    basis = serializers.CharField(max_length=2000, allow_blank=False)
+    reference = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    valid_until = serializers.DateField(required=False, allow_null=True, default=None)
+
+
+class EligibilityRequestSerializer(StrictSerializer):
+    order_type = serializers.ChoiceField(choices=ORDER_TYPES)
+    supplier_identity = serializers.CharField(max_length=200, allow_blank=False, trim_whitespace=True)
+    supplier_name = serializers.CharField(max_length=300, allow_blank=False, trim_whitespace=True)
+    supplier_details = SupplierDetailsSerializer()
+    eligible_requirement_keys = serializers.ListField(
+        child=serializers.RegexField(r"^[0-9a-f]{64}$"), allow_empty=False
+    )
+    evidence = EligibilityEvidenceSerializer()
+    version = serializers.IntegerField(min_value=1)
+    confirmed = serializers.BooleanField()
+
+    def validate_eligible_requirement_keys(self, value):
+        if value != sorted(set(value)):
+            raise serializers.ValidationError("Requirement keys must be unique and sorted")
+        return value
+
+
+class AllocationRequestSerializer(StrictSerializer):
+    supplier_eligibility_id = serializers.UUIDField()
+
+
+class ConfirmBatchRequestSerializer(StrictSerializer):
+    order_type = serializers.ChoiceField(choices=ORDER_TYPES)
+    confirmed = serializers.BooleanField()
+
+
+class SendOrderRequestSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+
+
+class PurchasingStateSerializer(serializers.Serializer):
+    versions = serializers.ListField(child=serializers.DictField(), required=False)
+    version = serializers.DictField(required=False)
+    requirements = serializers.ListField(child=serializers.DictField(), required=False)
+    eligibilities = serializers.ListField(child=serializers.DictField(), required=False)
+    allocations = serializers.ListField(child=serializers.DictField(), required=False)
+    orders = serializers.ListField(child=serializers.DictField(), required=False)
+    artifacts = ArtifactResponseSerializer(many=True, required=False)
+    blockers = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class EligibilityResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    content_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
+
+
+class AllocationResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    requirement_line_id = serializers.UUIDField()
+    supplier_eligibility_id = serializers.UUIDField()
+
+
+class OrderResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    order_type = serializers.ChoiceField(choices=ORDER_TYPES)
+    status = serializers.ChoiceField(choices=["DRAFT", "SENT"])
+    supplier_name = serializers.CharField()
+    order_snapshot_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
