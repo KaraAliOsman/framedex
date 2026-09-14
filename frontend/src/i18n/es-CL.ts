@@ -227,8 +227,9 @@ const messages = {
   "purchasing.frozenAt": "Congelada",
   "purchasing.immutable": "Cantidades inmutables: provienen de la revisión congelada.",
   "purchasing.blockers": "Bloqueos pendientes",
-  "purchasing.blockerUnallocated": "Requisitos sin proveedor asignado",
-  "purchasing.blockerUnconfirmed": "Órdenes confirmadas sin enviar",
+  "purchasing.blockerEligibilityRequired":
+    "Se requiere un proveedor elegible para este tipo de pedido",
+  "purchasing.blockerAllocationRequired": "Requisitos sin proveedor asignado",
   "purchasing.requirements": "Requisitos de compra",
   "purchasing.category": "Categoría",
   "purchasing.requirementKey": "Clave de requisito",

@@ -77,9 +77,10 @@ type PurchasingState = {
 
 type RequestFn = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
 
+// Codes mirror backend/purchasing/service.py purchasing_state blockers exactly.
 const blockerLabels: Record<string, Parameters<typeof t>[0]> = {
-  unallocated_requirements: "purchasing.blockerUnallocated",
-  unconfirmed_orders: "purchasing.blockerUnconfirmed",
+  SUPPLIER_ELIGIBILITY_REQUIRED: "purchasing.blockerEligibilityRequired",
+  ALLOCATION_REQUIRED: "purchasing.blockerAllocationRequired",
 };
 
 function usePurchasingRequest(orgId: string): {
@@ -211,7 +212,10 @@ function PurchasingWorkspace({ orgId, role }: { orgId: string; role: string }): 
         if (current) setState(data);
       })
       .catch(() => {
-        if (current) setMessage(t("purchasing.loadError"));
+        if (current) {
+          setState(null);
+          setMessage(t("purchasing.loadError"));
+        }
       })
       .finally(() => {
         if (current) setBusy(false);

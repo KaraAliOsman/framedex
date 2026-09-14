@@ -53,6 +53,14 @@ class SupabaseDocumentStorage:
                     return
             raise DocumentaryError("document_storage_upload_failed")
 
+    def delete_object(self, object_key: str) -> None:
+        with httpx.Client(timeout=10) as client:
+            response = client.delete(
+                self._object_url(object_key), headers=self._headers()
+            )
+        if response.status_code not in (200, 204, 404):
+            raise DocumentaryError("document_storage_delete_failed")
+
     def signed_url(self, object_key: str) -> str:
         encoded = "/".join(quote(part, safe="") for part in object_key.split("/"))
         endpoint = f"{self.base_url}/storage/v1/object/sign/{self.bucket}/{encoded}"

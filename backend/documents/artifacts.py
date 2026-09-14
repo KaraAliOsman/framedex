@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from django.db import connection
+from django.db import connection, transaction
 
 from dekopen_engine.documentary_canonical import (
     documentary_sha256_v1,
@@ -110,58 +110,84 @@ def generate_artifact(
     else:
         raise DocumentaryError("document_type_invalid")
 
+    storage: SupabaseDocumentStorage | None = None
+    object_key: str | None = None
+    try:
+        with documentary_backend(), transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                    [f"{scope_id}:{document_type}:{file_format}"],
+                )
+            existing = rows(
+                "SELECT * FROM public.document_artifacts "
+                "WHERE artifact_scope_id=%s AND document_type=%s AND format=%s",
+                [scope_id, document_type, file_format],
+            )
+            if existing:
+                if len(existing) != 1:
+                    raise DocumentaryError("artifact_slot_ambiguous")
+                return _metadata(existing[0])
+            version, frozen_revision = _revision_snapshot(project_version_id, org_id)
+            order: dict[str, object] | None = None
+            frozen: dict[str, object] = frozen_revision
+            if order_id is not None:
+                order, frozen = _order_snapshot(order_id, project_version_id, org_id)
+            identifier = (
+                str(version["snapshot_sha256"])
+                if order is None else str(order["order_snapshot_hash"])
+            )
+            if file_format == "PDF":
+                content, media_type = render_pdf_document(
+                    document_type, frozen, pdf_identifier=identifier
+                )
+                extension = "pdf"
+            else:
+                content, media_type = render_order_xlsx(document_type, frozen)
+                extension = "xlsx"
+            content_hash = file_sha256(content)
+            object_key = (
+                f"org_{org_id}/projects/{version['project_id']}/{version['revision_code']}/"
+                f"{document_type.lower()}_{file_format.lower()}_{content_hash}.{extension}"
+            )
+            storage = SupabaseDocumentStorage()
+            storage.upload_immutable(object_key, content, media_type)
+            artifact = one(
+                "INSERT INTO public.document_artifacts("
+                "org_id,project_id,project_version_id,order_id,order_type,artifact_scope,"
+                "artifact_scope_id,document_type,format,bom_hash,revision_snapshot_sha256,"
+                "storage_bucket,storage_object_key,file_sha256,media_type,byte_size,created_by) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'documents',%s,%s,%s,%s,%s) "
+                "RETURNING *",
+                [org_id, version["project_id"], project_version_id, order_id,
+                 None if order is None else order["order_type"], scope, scope_id,
+                 document_type, file_format, version["bom_hash"], version["snapshot_sha256"],
+                 object_key, content_hash, media_type, len(content), actor_id],
+            )
+            return _metadata(artifact)
+    except Exception:
+        if storage is not None and object_key is not None:
+            _delete_unreferenced_object(
+                org_id=org_id, storage=storage, object_key=object_key
+            )
+        raise
+
+
+def _delete_unreferenced_object(
+    *, org_id: UUID, storage: SupabaseDocumentStorage, object_key: str
+) -> None:
     with documentary_backend():
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
-                [f"{scope_id}:{document_type}:{file_format}"],
-            )
-        existing = rows(
-            "SELECT * FROM public.document_artifacts "
-            "WHERE artifact_scope_id=%s AND document_type=%s AND format=%s",
-            [scope_id, document_type, file_format],
+        referenced = rows(
+            "SELECT id FROM public.document_artifacts "
+            "WHERE org_id=%s AND storage_object_key=%s",
+            [org_id, object_key],
         )
-        if existing:
-            if len(existing) != 1:
-                raise DocumentaryError("artifact_slot_ambiguous")
-            return _metadata(existing[0])
-        version, frozen_revision = _revision_snapshot(project_version_id, org_id)
-        order: dict[str, object] | None = None
-        frozen: dict[str, object] = frozen_revision
-        if order_id is not None:
-            order, frozen = _order_snapshot(order_id, project_version_id, org_id)
-        identifier = (
-            str(version["snapshot_sha256"])
-            if order is None else str(order["order_snapshot_hash"])
-        )
-        if file_format == "PDF":
-            content, media_type = render_pdf_document(
-                document_type, frozen, pdf_identifier=identifier
-            )
-            extension = "pdf"
-        else:
-            content, media_type = render_order_xlsx(document_type, frozen)
-            extension = "xlsx"
-        content_hash = file_sha256(content)
-        object_key = (
-            f"org_{org_id}/projects/{version['project_id']}/{version['revision_code']}/"
-            f"{document_type.lower()}_{file_format.lower()}_{content_hash}.{extension}"
-        )
-        storage = SupabaseDocumentStorage()
-        storage.upload_immutable(object_key, content, media_type)
-        artifact = one(
-            "INSERT INTO public.document_artifacts("
-            "org_id,project_id,project_version_id,order_id,order_type,artifact_scope,"
-            "artifact_scope_id,document_type,format,bom_hash,revision_snapshot_sha256,"
-            "storage_bucket,storage_object_key,file_sha256,media_type,byte_size,created_by) "
-            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'documents',%s,%s,%s,%s,%s) "
-            "RETURNING *",
-            [org_id, version["project_id"], project_version_id, order_id,
-             None if order is None else order["order_type"], scope, scope_id,
-             document_type, file_format, version["bom_hash"], version["snapshot_sha256"],
-             object_key, content_hash, media_type, len(content), actor_id],
-        )
-        return _metadata(artifact)
+    if referenced:
+        return
+    try:
+        storage.delete_object(object_key)
+    except DocumentaryError:
+        pass
 
 
 def signed_artifact_access(

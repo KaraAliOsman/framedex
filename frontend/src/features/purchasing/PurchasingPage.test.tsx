@@ -252,3 +252,55 @@ it("surfaces a load failure without fabricating requirements", async () => {
   );
   expect(screen.queryByText("4 EA")).not.toBeInTheDocument();
 });
+
+it("drops the stale revision when the newly selected version fails to load", async () => {
+  const other = { ...versionItem, id: "version-b", revision_code: "REV-B" };
+  vi.mocked(apiMutator).mockImplementation((url) => {
+    const path = String(url);
+    if (path.endsWith("purchasing/versions/"))
+      return Promise.resolve({ data: { versions: [versionItem, other] } });
+    if (path.includes(`purchasing/versions/${versionItem.id}/`)) return Promise.resolve(state());
+    if (path.includes(`purchasing/versions/${other.id}/`))
+      return Promise.reject(new Error("unavailable"));
+    return Promise.resolve({ data: {} });
+  });
+  renderPage();
+  await screen.findByText("P-001");
+  fireEvent.change(screen.getByLabelText(t("purchasing.chooseVersion")), {
+    target: { value: other.id },
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("alert")).toHaveTextContent(t("purchasing.loadError")),
+  );
+  expect(screen.queryByText("P-001")).not.toBeInTheDocument();
+  expect(screen.queryByText("4 EA")).not.toBeInTheDocument();
+  expect(screen.queryByText(t("purchasing.doc03"))).not.toBeInTheDocument();
+});
+
+it("maps backend blocker codes to actionable labels", async () => {
+  mockState({
+    blockers: [
+      { order_type: "SUPPLIER_PROFILE_PO", code: "SUPPLIER_ELIGIBILITY_REQUIRED" },
+      {
+        order_type: "SUPPLIER_GLASS_PO",
+        code: "ALLOCATION_REQUIRED",
+        requirement_keys: [glassRequirement.requirement_key],
+      },
+    ],
+  });
+  renderPage();
+  const section = await screen.findByRole("heading", {
+    name: t("purchasing.blockers"),
+  });
+  const list = section.closest("section")!;
+  expect(
+    within(list).getByText(t("purchasing.blockerEligibilityRequired"), {
+      exact: false,
+    }),
+  ).toBeInTheDocument();
+  expect(
+    within(list).getByText(t("purchasing.blockerAllocationRequired"), {
+      exact: false,
+    }),
+  ).toBeInTheDocument();
+});

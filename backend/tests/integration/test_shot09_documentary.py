@@ -1,5 +1,6 @@
 """Real PostgreSQL SHOT-09 freeze, evidence, order, and artifact invariants."""
 
+from collections.abc import Sequence
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
@@ -16,6 +17,7 @@ from engine_api.repository import SystemParamsRepository
 from pricing.repository import admin_write, audit_reason, commercial_backend, json_text, one, rows
 from pricing.service import apply_operation, preview
 
+import documents.artifacts as artifacts_module
 from documents.artifacts import generate_artifact
 from documents.repository import DocumentaryError, documentary_backend
 from documents.renderers import _doc01
@@ -286,6 +288,7 @@ def _eligibility_data(order_type: str, keys: list[str], supplier: str) -> dict[s
 class FakeStorage:
     uploads: dict[str, bytes] = {}
     upload_calls = 0
+    deleted: list[str] = []
 
     def upload_immutable(self, object_key: str, content: bytes, content_type: str) -> None:
         FakeStorage.upload_calls += 1
@@ -293,6 +296,10 @@ class FakeStorage:
         if prior is not None and prior != content:
             raise AssertionError("immutable storage collision")
         self.uploads[object_key] = content
+
+    def delete_object(self, object_key: str) -> None:
+        FakeStorage.deleted.append(object_key)
+        self.uploads.pop(object_key, None)
 
     def signed_url(self, object_key: str) -> str:
         return f"http://127.0.0.1:25321/signed/{object_key}"
@@ -304,6 +311,7 @@ def test_order_types_confirm_independently_and_artifacts_do_not_send(
     org, _, users, _ = documentary_tenant
     FakeStorage.uploads = {}
     FakeStorage.upload_calls = 0
+    FakeStorage.deleted = []
     project_id, _, operation_id = _seed_project(org, users["OWNER"])
     frozen = _freeze(org, users["OWNER"], project_id, operation_id)
     version_id = UUID(frozen["id"])
@@ -410,3 +418,41 @@ def test_historical_render_uses_frozen_snapshot_after_catalog_change(documentary
         _, loaded = revision_snapshot(UUID(frozen["id"]), org)
     assert _doc01(loaded) == before
     assert documentary_sha256_v1(loaded) == documentary_sha256_v1(snapshot)
+
+
+def test_failed_artifact_registration_removes_the_uploaded_object(
+    documentary_tenant, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    org, _, users, _ = documentary_tenant
+    FakeStorage.uploads = {}
+    FakeStorage.upload_calls = 0
+    FakeStorage.deleted = []
+    project_id, _, operation_id = _seed_project(org, users["OWNER"])
+    frozen = _freeze(org, users["OWNER"], project_id, operation_id)
+    version_id = UUID(frozen["id"])
+    monkeypatch.setattr("documents.artifacts.SupabaseDocumentStorage", FakeStorage)
+    original_one = artifacts_module.one
+
+    def failing_one(
+        query: object, parameters: Sequence[object] = (), code: str = ""
+    ) -> dict[str, object]:
+        if str(query).lstrip().upper().startswith("INSERT INTO PUBLIC.DOCUMENT_ARTIFACTS"):
+            raise DatabaseError("forced_registration_failure")
+        return original_one(query, parameters, code)
+
+    monkeypatch.setattr(artifacts_module, "one", failing_one)
+    with as_user(users["OWNER"]), pytest.raises(
+        DatabaseError, match="forced_registration_failure"
+    ):
+        generate_artifact(
+            org_id=org, actor_id=users["OWNER"], role="OWNER",
+            project_version_id=version_id, order_id=None,
+            document_type="DOC-01", file_format="PDF",
+        )
+    assert FakeStorage.upload_calls == 1
+    assert len(FakeStorage.deleted) == 1
+    with documentary_backend():
+        assert not rows(
+            "SELECT id FROM public.document_artifacts WHERE storage_object_key=%s",
+            [FakeStorage.deleted[0]],
+        )
