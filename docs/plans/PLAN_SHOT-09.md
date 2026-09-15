@@ -3,6 +3,7 @@
 ## Estado y proveniencia
 
 - **Shot:** SHOT-09.
+- **Cierre:** `CLOSED / PROVEN` — merge [PR #23](https://github.com/KaraAliOsman/framedex/pull/23) en `main @ 251f4417a85b9e37ffad905d84147d76f21b68f6` desde head aprobado `10615b534fcbdfb99f358a3629231c903f950ab7`; Gauntlet exit 0, Golden byte-idéntico, CI `main` run `34914566757` verde (4/4 jobs).
 - **Base autoritativa real:** `main @ 7c0c18695aa29b488338811e3640474fd920647d`.
 - **Rama de trabajo:** `codex/shot-09`.
 - **Autoridad:** `CONSTITUTION > docs/PRD/PLAN_SHOTS.md > docs/PRD/PRD-06.md > decisiones Owner congeladas para SHOT-09 > este plan > implementación`.
