@@ -1,4 +1,5 @@
 from io import BytesIO
+import warnings
 
 from openpyxl import load_workbook
 import pytest
@@ -176,9 +177,15 @@ def test_qc_is_blank_and_cost_report_uses_frozen_not_recorded_authority() -> Non
 
 def test_pdf_producer_emits_concrete_file_with_distinct_hash(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("WEASYPRINT_DLL_DIRECTORIES", "C:\\msys64\\ucrt64\\bin")
-    content, media_type = render_pdf_document(
-        "DOC-01", revision_snapshot(), pdf_identifier="b" * 64
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="HarfBuzz-Subset will be required by future versions of WeasyPrint.*",
+            category=DeprecationWarning,
+        )
+        content, media_type = render_pdf_document(
+            "DOC-01", revision_snapshot(), pdf_identifier="b" * 64
+        )
     assert content.startswith(b"%PDF-")
     assert media_type == "application/pdf"
     assert file_sha256(content) not in {"a" * 64, "b" * 64}
