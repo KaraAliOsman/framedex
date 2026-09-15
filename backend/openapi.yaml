@@ -50,6 +50,328 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/documents/artifacts/:
+    post:
+      operationId: documentary_generate_artifact
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtifactRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtifactRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/artifacts/{artifact_id}/access/:
+    post:
+      operationId: documentary_artifact_access
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: artifact_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedAccessResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/freeze/:
+    post:
+      operationId: documentary_freeze_revision_a
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FreezeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FreezeRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreezeResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreezeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/documents/projects/{project_id}/inputs/:
+    put:
+      operationId: documentary_save_inputs
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentaryInputsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DocumentaryInputsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentaryInputsRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentaryInputsResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/engine/calculate/:
     post:
       operationId: engine_calculate
@@ -813,6 +1135,478 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/purchasing/orders/{order_id}/send/:
+    post:
+      operationId: purchasing_send_order
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOrderRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SendOrderRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendOrderRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/requirements/{requirement_id}/allocation/:
+    put:
+      operationId: purchasing_allocate_requirement
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: requirement_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AllocationRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AllocationRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/versions/:
+    get:
+      operationId: purchasing_versions
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - purchasing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasingState'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/versions/{version_id}/:
+    get:
+      operationId: purchasing_version_state
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchasingState'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/versions/{version_id}/confirm/:
+    post:
+      operationId: purchasing_confirm_order_type
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmBatchRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmBatchRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmBatchRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/purchasing/versions/{version_id}/eligibilities/:
+    post:
+      operationId: purchasing_create_eligibility
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - purchasing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EligibilityRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EligibilityRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EligibilityRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EligibilityResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
 components:
   schemas:
     AalEnum:
@@ -823,6 +1617,71 @@ components:
       description: |-
         * `aal1` - aal1
         * `aal2` - aal2
+    AccessoryLineRequest:
+      type: object
+      properties:
+        obligation_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        obligation_kind:
+          $ref: '#/components/schemas/ObligationKindEnum'
+        technical_sku:
+          type: string
+          minLength: 1
+          maxLength: 200
+        purchasing_sku:
+          type: string
+          minLength: 1
+          maxLength: 200
+        manufacturer_name:
+          type: string
+          minLength: 1
+          maxLength: 300
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        unit:
+          allOf:
+          - $ref: '#/components/schemas/AccessoryLineUnitEnum'
+          default: EA
+        quantity_per_position_unit:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - description
+      - manufacturer_name
+      - obligation_id
+      - obligation_kind
+      - order_type
+      - purchasing_sku
+      - quantity_per_position_unit
+      - technical_sku
+    AccessoryLineUnitEnum:
+      enum:
+      - EA
+      type: string
+      description: '* `EA` - EA'
+    AccessoryScheduleRequest:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        coverage:
+          $ref: '#/components/schemas/CoverageEnum'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessoryLineRequest'
+      required:
+      - coverage
+      - items
     ActiveOrganization:
       type: object
       properties:
@@ -863,6 +1722,30 @@ components:
       required:
       - reason
       - values
+    AllocationRequestRequest:
+      type: object
+      properties:
+        supplier_eligibility_id:
+          type: string
+          format: uuid
+      required:
+      - supplier_eligibility_id
+    AllocationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        requirement_line_id:
+          type: string
+          format: uuid
+        supplier_eligibility_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - requirement_line_id
+      - supplier_eligibility_id
     AnnotationRequest:
       type: object
       properties:
@@ -927,6 +1810,68 @@ components:
           default: false
       required:
       - reason
+    ArtifactRequestRequest:
+      type: object
+      properties:
+        document_type:
+          $ref: '#/components/schemas/DocumentTypeEnum'
+        format:
+          $ref: '#/components/schemas/FormatEnum'
+        project_version_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - document_type
+      - format
+      - project_version_id
+    ArtifactResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        artifact_scope:
+          $ref: '#/components/schemas/ArtifactScopeEnum'
+        artifact_scope_id:
+          type: string
+          format: uuid
+        document_type:
+          type: string
+        format:
+          type: string
+        bom_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        file_sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        byte_size:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - artifact_scope
+      - artifact_scope_id
+      - bom_hash
+      - byte_size
+      - created_at
+      - document_type
+      - file_sha256
+      - format
+      - id
+    ArtifactScopeEnum:
+      enum:
+      - PROJECT_REVISION
+      - ORDER
+      type: string
+      description: |-
+        * `PROJECT_REVISION` - PROJECT_REVISION
+        * `ORDER` - ORDER
     AuthMeResponse:
       type: object
       properties:
@@ -947,6 +1892,24 @@ components:
       - active_organization
       - memberships
       - user
+    ConfirmBatchRequestRequest:
+      type: object
+      properties:
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - order_type
+    CoverageEnum:
+      enum:
+      - DECLARED
+      - NONE_REQUIRED
+      type: string
+      description: |-
+        * `DECLARED` - DECLARED
+        * `NONE_REQUIRED` - NONE_REQUIRED
     CurrencyEnum:
       enum:
       - CLP
@@ -1090,6 +2053,72 @@ components:
       required:
       - bottom_drain_holes_mm
       - opening_width_mm
+    DocumentTypeEnum:
+      enum:
+      - DOC-01
+      - DOC-02
+      - DOC-03
+      - DOC-04
+      - DOC-05
+      - DOC-06
+      - DOC-07
+      type: string
+      description: |-
+        * `DOC-01` - DOC-01
+        * `DOC-02` - DOC-02
+        * `DOC-03` - DOC-03
+        * `DOC-04` - DOC-04
+        * `DOC-05` - DOC-05
+        * `DOC-06` - DOC-06
+        * `DOC-07` - DOC-07
+    DocumentaryInputsRequest:
+      type: object
+      properties:
+        payment_terms:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        quotation_valid_until:
+          type: string
+          format: date
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionDocumentaryInputRequest'
+      required:
+      - payment_terms
+      - positions
+      - quotation_valid_until
+    DocumentaryInputsResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        positions_saved:
+          type: integer
+      required:
+      - positions_saved
+      - project_id
+    DocumentaryStructuralInputRequest:
+      type: object
+      properties:
+        target_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        required_ix_cm4:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,4})?$
+          nullable: true
+        structural_basis:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 1000
+      required:
+      - target_id
     DraftPositionRequest:
       type: object
       properties:
@@ -1190,6 +2219,72 @@ components:
       - new_value
       - old_value
       - target
+    EligibilityEvidenceRequest:
+      type: object
+      properties:
+        basis:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        reference:
+          type: string
+          default: ''
+          maxLength: 500
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - basis
+    EligibilityRequestRequest:
+      type: object
+      properties:
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        supplier_identity:
+          type: string
+          minLength: 1
+          maxLength: 200
+        supplier_name:
+          type: string
+          minLength: 1
+          maxLength: 300
+        supplier_details:
+          $ref: '#/components/schemas/SupplierDetailsRequest'
+        eligible_requirement_keys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            pattern: ^[0-9a-f]{64}$
+        evidence:
+          $ref: '#/components/schemas/EligibilityEvidenceRequest'
+        version:
+          type: integer
+          minimum: 1
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - eligible_requirement_keys
+      - evidence
+      - order_type
+      - supplier_details
+      - supplier_identity
+      - supplier_name
+      - version
+    EligibilityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      required:
+      - content_hash
+      - id
     EngineCalculateRequestRequest:
       type: object
       properties:
@@ -1420,6 +2515,64 @@ components:
         * `AUTO_FIXABLE` - AUTO_FIXABLE
         * `SUGGESTION_ONLY` - SUGGESTION_ONLY
         * `BLOCKED_MISSING_AUTHORITY` - BLOCKED_MISSING_AUTHORITY
+    FormatEnum:
+      enum:
+      - PDF
+      - XLSX
+      type: string
+      description: |-
+        * `PDF` - PDF
+        * `XLSX` - XLSX
+    FreezeRequestRequest:
+      type: object
+      properties:
+        pricing_operation_id:
+          type: string
+          format: uuid
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - pricing_operation_id
+    FreezeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pricing_operation_id:
+          type: string
+          format: uuid
+        created:
+          type: boolean
+        revision_code:
+          $ref: '#/components/schemas/RevisionCodeEnum'
+        bom_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        snapshot_sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        production_allowed:
+          type: boolean
+        documentary_complete:
+          type: boolean
+        emitted_at:
+          type: string
+          format: date-time
+        purchase_projection_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      required:
+      - bom_hash
+      - created
+      - documentary_complete
+      - emitted_at
+      - id
+      - pricing_operation_id
+      - production_allowed
+      - revision_code
+      - snapshot_sha256
     GlassPiece:
       type: object
       properties:
@@ -1456,6 +2609,60 @@ components:
       - thickness_net_mm
       - weight_kg
       - width_mm
+    GlassPolishingRequest:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        bay_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        edges:
+          $ref: '#/components/schemas/PolishingEdgesRequest'
+      required:
+      - bay_id
+      - edges
+    HandleIntentRequest:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        bay_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        handle_domain_slot:
+          type: string
+          minLength: 1
+          maxLength: 100
+        requested_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        vertical_reference:
+          $ref: '#/components/schemas/VerticalReferenceEnum'
+      required:
+      - bay_id
+      - handle_domain_slot
+      - requested_height_mm
+      - vertical_reference
     HardwareComponent:
       type: object
       properties:
@@ -1720,6 +2927,62 @@ components:
     NullEnum:
       enum:
       - null
+    ObligationKindEnum:
+      enum:
+      - SEALING
+      - FASTENING
+      - INSTALLATION_ACCESSORY
+      - OTHER_DECLARED
+      type: string
+      description: |-
+        * `SEALING` - SEALING
+        * `FASTENING` - FASTENING
+        * `INSTALLATION_ACCESSORY` - INSTALLATION_ACCESSORY
+        * `OTHER_DECLARED` - OTHER_DECLARED
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        status:
+          $ref: '#/components/schemas/OrderResponseStatusEnum'
+        supplier_name:
+          type: string
+        order_snapshot_hash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      required:
+      - id
+      - order_code
+      - order_snapshot_hash
+      - order_type
+      - status
+      - supplier_name
+    OrderResponseStatusEnum:
+      enum:
+      - DRAFT
+      - SENT
+      type: string
+      description: |-
+        * `DRAFT` - DRAFT
+        * `SENT` - SENT
+    OrderTypeEnum:
+      enum:
+      - SUPPLIER_PROFILE_PO
+      - SUPPLIER_GLASS_PO
+      - SUPPLIER_HARDWARE_PO
+      - SUPPLIER_PANEL_PO
+      type: string
+      description: |-
+        * `SUPPLIER_PROFILE_PO` - SUPPLIER_PROFILE_PO
+        * `SUPPLIER_GLASS_PO` - SUPPLIER_GLASS_PO
+        * `SUPPLIER_HARDWARE_PO` - SUPPLIER_HARDWARE_PO
+        * `SUPPLIER_PANEL_PO` - SUPPLIER_PANEL_PO
     PanelPiece:
       type: object
       properties:
@@ -1757,6 +3020,73 @@ components:
       - sku
       - weight_kg
       - width_mm
+    PolishingEdgesRequest:
+      type: object
+      properties:
+        top:
+          type: boolean
+        right:
+          type: boolean
+        bottom:
+          type: boolean
+        left:
+          type: boolean
+      required:
+      - bottom
+      - left
+      - right
+      - top
+    PositionDocumentaryInputRequest:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        location_tag:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturing_placement_policy_id:
+          type: string
+          format: uuid
+        handle_requirement_policy_id:
+          type: string
+          format: uuid
+        reinforcement_cut_policy_id:
+          type: string
+          format: uuid
+        workshop_annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopAnnotationRequest'
+        structural_inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryStructuralInputRequest'
+        glass_polishing:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassPolishingRequest'
+        handle_intents:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandleIntentRequest'
+        accessory_schedule:
+          $ref: '#/components/schemas/AccessoryScheduleRequest'
+        legacy_handle_migration_confirmed:
+          type: boolean
+          default: false
+      required:
+      - accessory_schedule
+      - glass_polishing
+      - handle_intents
+      - handle_requirement_policy_id
+      - location_tag
+      - manufacturing_placement_policy_id
+      - position_id
+      - reinforcement_cut_policy_id
+      - structural_inputs
+      - workshop_annotations
     PriceRequestRequest:
       type: object
       properties:
@@ -1945,6 +3275,46 @@ components:
       - BAR
       type: string
       description: '* `BAR` - BAR'
+    PurchasingState:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        version:
+          type: object
+          additionalProperties: {}
+        requirements:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        eligibilities:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        allocations:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        orders:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactResponse'
+        blockers:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
     Reinforcement:
       type: object
       properties:
@@ -1980,6 +3350,11 @@ components:
       - aal2
       type: string
       description: '* `aal2` - aal2'
+    RevisionCodeEnum:
+      enum:
+      - REV-A
+      type: string
+      description: '* `REV-A` - REV-A'
     RoleEnum:
       enum:
       - OWNER
@@ -2032,6 +3407,13 @@ components:
         * `RETAIL` - RETAIL
         * `ARCHITECT` - ARCHITECT
         * `CONSTRUCTION` - CONSTRUCTION
+    SendOrderRequestRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
     SeverityEnum:
       enum:
       - YELLOW
@@ -2040,6 +3422,23 @@ components:
       description: |-
         * `YELLOW` - YELLOW
         * `RED` - RED
+    SignedAccessResponse:
+      type: object
+      properties:
+        artifact_id:
+          type: string
+          format: uuid
+        signed_url:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+          maximum: 3600
+          minimum: 3600
+      required:
+      - artifact_id
+      - expires_in
+      - signed_url
     SourceKindEnum:
       enum:
       - PROFILE
@@ -2076,6 +3475,28 @@ components:
           nullable: true
       required:
       - target_id
+    SupplierDetailsRequest:
+      type: object
+      properties:
+        tax_id:
+          type: string
+          default: ''
+          maxLength: 100
+        email:
+          oneOf:
+          - type: string
+            format: email
+            default: ''
+          - type: string
+            maxLength: 0
+        phone:
+          type: string
+          default: ''
+          maxLength: 100
+        address:
+          type: string
+          default: ''
+          maxLength: 1000
     UnitEnum:
       enum:
       - kit
@@ -2096,6 +3517,59 @@ components:
       required:
       - email
       - id
+    VerticalReferenceEnum:
+      enum:
+      - OUTER_TOP
+      - OUTER_BOTTOM
+      - LEAF_TOP
+      - LEAF_BOTTOM
+      type: string
+      description: |-
+        * `OUTER_TOP` - OUTER_TOP
+        * `OUTER_BOTTOM` - OUTER_BOTTOM
+        * `LEAF_TOP` - LEAF_TOP
+        * `LEAF_BOTTOM` - LEAF_BOTTOM
+    WorkshopAnnotationRequest:
+      type: object
+      properties:
+        bay_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 200
+        bottom_drain_holes_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        closing_points_perimeter_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        continuous_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        finish_class:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        has_coupler:
+          type: boolean
+          nullable: true
+      required:
+      - bay_id
   securitySchemes:
     SupabaseBearer:
       type: http

@@ -26,6 +26,11 @@ const CanvasEditor2DView = lazy(async () => {
   return { default: module.CanvasEditor2DView };
 });
 
+const PurchasingPage = lazy(async () => {
+  const module = await import("./features/purchasing/PurchasingPage");
+  return { default: module.PurchasingPage };
+});
+
 function ProtectedPage({ title, description }: { title: string; description: string }) {
   return (
     <ReadyGuard>
@@ -100,6 +105,18 @@ export function AppRoutes(): JSX.Element {
           <ReadyGuard>
             <AppShell>
               <DashboardPage />
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/purchasing"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("purchasing.loading")}</p>}>
+                <PurchasingPage />
+              </Suspense>
             </AppShell>
           </ReadyGuard>
         }

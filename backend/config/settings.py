@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "authentication.apps.AuthenticationConfig",
     "engine_api.apps.EngineApiConfig",
+    "documents.apps.DocumentsConfig",
+    "purchasing.apps.PurchasingConfig",
 ]
 
 MIDDLEWARE = [
@@ -75,6 +77,10 @@ CORS_ALLOW_HEADERS = (*default_headers, "x-organization-id")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "http://127.0.0.1:25321").rstrip("/")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_STORAGE_BUCKET_DOCS = os.environ.get("SUPABASE_STORAGE_BUCKET_DOCS", "documents")
+if SUPABASE_STORAGE_BUCKET_DOCS != "documents":
+    raise ValueError("SUPABASE_STORAGE_BUCKET_DOCS must be the immutable documents bucket")
 SUPABASE_JWT_VERIFY_MODE = os.environ.get("SUPABASE_JWT_VERIFY_MODE", "auth_server")
 SUPABASE_JWT_HTTP_TIMEOUT_SECONDS = 5
 

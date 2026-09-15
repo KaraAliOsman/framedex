@@ -1,0 +1,178 @@
+"""Strict SHOT-09 documentary input, freeze, artifact, and access contracts."""
+
+from decimal import Decimal
+
+from rest_framework import serializers
+
+from engine_api.serializers import DecimalStringField
+
+
+class StrictSerializer(serializers.Serializer):
+    def to_internal_value(self, data):
+        if not isinstance(data, dict) or set(data) - set(self.fields):
+            raise serializers.ValidationError("Unknown input fields")
+        return super().to_internal_value(data)
+
+
+class WorkshopAnnotationSerializer(StrictSerializer):
+    bay_id = serializers.CharField(max_length=200)
+    leaf_id = serializers.CharField(max_length=200, allow_null=True, required=False, default=None)
+    bottom_drain_holes_mm = serializers.ListField(
+        child=DecimalStringField(max_digits=14, decimal_places=4), allow_null=True,
+        required=False, default=None,
+    )
+    closing_points_perimeter_mm = serializers.ListField(
+        child=DecimalStringField(max_digits=14, decimal_places=4), allow_null=True,
+        required=False, default=None,
+    )
+    continuous_width_mm = DecimalStringField(
+        max_digits=14, decimal_places=4, min_value=Decimal("0.0001"),
+        allow_null=True, required=False, default=None,
+    )
+    finish_class = serializers.ChoiceField(
+        choices=["WHITE", "FOILED"], allow_null=True, required=False, default=None
+    )
+    has_coupler = serializers.BooleanField(allow_null=True, required=False, default=None)
+
+
+class DocumentaryStructuralInputSerializer(StrictSerializer):
+    target_id = serializers.CharField(max_length=200)
+    required_ix_cm4 = DecimalStringField(
+        max_digits=12, decimal_places=4, min_value=Decimal("0.0001"),
+        allow_null=True, required=False, default=None,
+    )
+    structural_basis = serializers.CharField(
+        max_length=1000, allow_null=True, allow_blank=False, required=False, default=None
+    )
+
+
+class PolishingEdgesSerializer(StrictSerializer):
+    top = serializers.BooleanField()
+    right = serializers.BooleanField()
+    bottom = serializers.BooleanField()
+    left = serializers.BooleanField()
+
+
+class GlassPolishingSerializer(StrictSerializer):
+    schema_version = serializers.IntegerField(min_value=1, max_value=1, default=1)
+    bay_id = serializers.CharField(max_length=200)
+    leaf_id = serializers.CharField(max_length=200, allow_null=True, required=False, default=None)
+    edges = PolishingEdgesSerializer()
+
+
+class HandleIntentSerializer(StrictSerializer):
+    schema_version = serializers.IntegerField(min_value=1, max_value=1, default=1)
+    bay_id = serializers.CharField(max_length=200)
+    leaf_id = serializers.CharField(max_length=200, allow_null=True, required=False, default=None)
+    handle_domain_slot = serializers.CharField(max_length=100)
+    requested_height_mm = DecimalStringField(
+        max_digits=14, decimal_places=4, min_value=Decimal("0")
+    )
+    vertical_reference = serializers.ChoiceField(
+        choices=["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"]
+    )
+
+
+class AccessoryLineSerializer(StrictSerializer):
+    obligation_id = serializers.CharField(max_length=200)
+    obligation_kind = serializers.ChoiceField(
+        choices=["SEALING", "FASTENING", "INSTALLATION_ACCESSORY", "OTHER_DECLARED"]
+    )
+    technical_sku = serializers.CharField(max_length=200)
+    purchasing_sku = serializers.CharField(max_length=200)
+    manufacturer_name = serializers.CharField(max_length=300)
+    order_type = serializers.ChoiceField(
+        choices=[
+            "SUPPLIER_PROFILE_PO", "SUPPLIER_GLASS_PO",
+            "SUPPLIER_HARDWARE_PO", "SUPPLIER_PANEL_PO",
+        ]
+    )
+    unit = serializers.ChoiceField(choices=["EA"], default="EA")
+    quantity_per_position_unit = serializers.IntegerField(min_value=1)
+    description = serializers.CharField(max_length=1000)
+
+
+class AccessoryScheduleSerializer(StrictSerializer):
+    schema_version = serializers.IntegerField(min_value=1, max_value=1, default=1)
+    coverage = serializers.ChoiceField(choices=["DECLARED", "NONE_REQUIRED"])
+    items = AccessoryLineSerializer(many=True)
+
+    def validate(self, attrs):
+        if (attrs["coverage"] == "DECLARED") != bool(attrs["items"]):
+            raise serializers.ValidationError("Accessory coverage and declared items disagree")
+        obligations = [item["obligation_id"] for item in attrs["items"]]
+        if len(obligations) != len(set(obligations)):
+            raise serializers.ValidationError("Accessory obligations must be unique")
+        return attrs
+
+
+class PositionDocumentaryInputSerializer(StrictSerializer):
+    position_id = serializers.UUIDField()
+    location_tag = serializers.CharField(max_length=100, allow_blank=False, trim_whitespace=True)
+    manufacturing_placement_policy_id = serializers.UUIDField()
+    handle_requirement_policy_id = serializers.UUIDField()
+    reinforcement_cut_policy_id = serializers.UUIDField()
+    workshop_annotations = WorkshopAnnotationSerializer(many=True)
+    structural_inputs = DocumentaryStructuralInputSerializer(many=True)
+    glass_polishing = GlassPolishingSerializer(many=True)
+    handle_intents = HandleIntentSerializer(many=True)
+    accessory_schedule = AccessoryScheduleSerializer()
+    legacy_handle_migration_confirmed = serializers.BooleanField(default=False)
+
+
+class DocumentaryInputsSerializer(StrictSerializer):
+    payment_terms = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
+    quotation_valid_until = serializers.DateField()
+    positions = PositionDocumentaryInputSerializer(many=True, allow_empty=False)
+
+
+class DocumentaryInputsResponseSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField()
+    positions_saved = serializers.IntegerField()
+
+
+class FreezeRequestSerializer(StrictSerializer):
+    pricing_operation_id = serializers.UUIDField()
+    confirmed = serializers.BooleanField()
+
+
+class FreezeResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    pricing_operation_id = serializers.UUIDField()
+    created = serializers.BooleanField()
+    revision_code = serializers.ChoiceField(choices=["REV-A"])
+    bom_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
+    snapshot_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$")
+    production_allowed = serializers.BooleanField()
+    documentary_complete = serializers.BooleanField()
+    emitted_at = serializers.DateTimeField()
+    purchase_projection_hash = serializers.RegexField(
+        r"^[0-9a-f]{64}$", required=False
+    )
+
+
+class ArtifactRequestSerializer(StrictSerializer):
+    document_type = serializers.ChoiceField(
+        choices=["DOC-01", "DOC-02", "DOC-03", "DOC-04", "DOC-05", "DOC-06", "DOC-07"]
+    )
+    format = serializers.ChoiceField(choices=["PDF", "XLSX"])
+    project_version_id = serializers.UUIDField()
+    order_id = serializers.UUIDField(required=False, allow_null=True)
+
+
+class ArtifactResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    artifact_scope = serializers.ChoiceField(choices=["PROJECT_REVISION", "ORDER"])
+    artifact_scope_id = serializers.UUIDField()
+    document_type = serializers.CharField()
+    format = serializers.CharField()
+    bom_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
+    file_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$")
+    byte_size = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+
+
+class SignedAccessResponseSerializer(serializers.Serializer):
+    artifact_id = serializers.UUIDField()
+    signed_url = serializers.URLField()
+    expires_in = serializers.IntegerField(min_value=3600, max_value=3600)
