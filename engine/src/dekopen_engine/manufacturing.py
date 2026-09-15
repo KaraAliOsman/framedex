@@ -532,6 +532,15 @@ def project_manufacturing_facts_v1(
         ]
         if not handle_rules:
             raise ManufacturingAuthorityError("Handle requirement policy has no rule for a physical leaf")
+        rules_by_slot: dict[str, int] = {}
+        for slot_rule in handle_rules:
+            rules_by_slot[slot_rule.handle_domain_slot] = (
+                rules_by_slot.get(slot_rule.handle_domain_slot, 0) + 1
+            )
+        if any(count != 1 for count in rules_by_slot.values()):
+            raise ManufacturingAuthorityError(
+                "Handle requirement policy is ambiguous for a physical leaf"
+            )
         for handle_rule in sorted(handle_rules, key=lambda item: item.handle_domain_slot):
             handle_key = (leaf.bay_id, leaf.leaf_id, handle_rule.handle_domain_slot)
             try:

@@ -87,6 +87,7 @@ def project(
     *,
     repetition: int = 1,
     placement_policy: ManufacturingPlacementPolicyV1 | None = None,
+    handle_policy: HandleRequirementPolicyV1 | None = None,
     legacy: bool = False,
     confirmed: bool = False,
 ) -> tuple[GeometryComputation, ManufacturingFactsV1]:
@@ -114,7 +115,7 @@ def project(
         position_index=2,
         repetition_index=repetition,
         placement_policy=placement_policy or placement(),
-        handle_policy=handles(*openings),
+        handle_policy=handle_policy or handles(*openings),
         reinforcement_policy=steel(*roles_and_angles),
         handle_intents=intents,
         resolved_reinforcement_skus={
@@ -200,6 +201,30 @@ def test_sliding_and_steel_authority_fail_closed(demo_60_params: SystemParams) -
             )],
             resolved_reinforcement_skus={"MARCO": "STEEL-MARCO", "HOJA": "STEEL-HOJA"},
         )
+
+
+def test_overlapping_handle_rules_fail_closed(demo_60_params: SystemParams) -> None:
+    rule: dict[str, object] = {
+        "opening_type": BayOpeningType.SLIDING_2L,
+        "handle_domain_slot": "PRIMARY",
+        "host_member_side": MemberSide.RIGHT,
+        "horizontal_offset_mm": D("-10.00"),
+        "permitted_vertical_references": [VerticalReference.LEAF_TOP],
+        "mounting_min_from_leaf_top_mm": D("100.00"),
+        "mounting_max_from_leaf_top_mm": D("1900.00"),
+    }
+    wildcard_plus_specific = HandleRequirementPolicyV1.model_validate({
+        "policy_id": "HANDLE-AMBIGUOUS-V1", "version": 1,
+        "slots": [rule, {**rule, "leaf_slot": "L1"}],
+    })
+    with pytest.raises(ManufacturingAuthorityError, match="ambiguous"):
+        project(core_node("G5"), demo_60_params, handle_policy=wildcard_plus_specific)
+    duplicated = HandleRequirementPolicyV1.model_validate({
+        "policy_id": "HANDLE-DUPLICATED-V1", "version": 1,
+        "slots": [{**rule, "leaf_slot": "L1"}, {**rule, "leaf_slot": "L1"}],
+    })
+    with pytest.raises(ManufacturingAuthorityError, match="ambiguous"):
+        project(core_node("G5"), demo_60_params, handle_policy=duplicated)
 
 
 def test_legacy_handle_height_needs_explicit_confirmation(
