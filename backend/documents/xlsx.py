@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import datetime, timezone
+from decimal import Decimal
 from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
@@ -81,11 +82,20 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
         headers = [
             "Requisito", "SKU técnico", "SKU compra", "Composición", "Ancho mm",
             "Alto mm", "Cantidad", "Unidad", "Pulido", "Ubicación", "Trazabilidad",
+            "Área m²",
         ]
         data = []
+        total_area = Decimal("0")
         for line in lines:
             specification = _object(line.get("specification"), "invalid_order_line")
             polishing = _object(specification.get("polishing"), "invalid_order_line")
+            quantity = int(line["quantity"])
+            area = (
+                Decimal(_text(specification.get("oriented_width_mm")))
+                * Decimal(_text(specification.get("oriented_height_mm")))
+                * quantity / Decimal("1000000")
+            )
+            total_area += area
             data.append([
                 _text(line.get("requirement_key")),
                 ", ".join(_text(item) for item in _array(
@@ -95,7 +105,7 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
                 _text(specification.get("composition")),
                 _text(specification.get("oriented_width_mm")),
                 _text(specification.get("oriented_height_mm")),
-                int(line["quantity"]),
+                quantity,
                 _text(line.get("unit")),
                 "/".join(
                     edge.upper() for edge in ("top", "right", "bottom", "left")
@@ -105,7 +115,12 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
                 ", ".join(_text(item) for item in _array(
                     line.get("source_trace"), "invalid_order_line"
                 )),
+                format(area.normalize(), "f"),
             ])
+        data.append([
+            "TOTAL", "—", "—", "—", "—", "—", "—", "—", "—", "—", "—",
+            format(total_area.normalize(), "f"),
+        ])
     else:
         sheet_name = "Pedido de perfiles"
         headers = [
@@ -147,7 +162,8 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
     for row in expected:
         sheet.append(row)
     sheet.freeze_panes = "A8"
-    sheet.auto_filter.ref = f"A7:{chr(64 + len(headers))}{len(expected)}"
+    last_data_row = len(expected) - (1 if document_type == "DOC-02" else 0)
+    sheet.auto_filter.ref = f"A7:{chr(64 + len(headers))}{last_data_row}"
     for cell in sheet[7]:
         font = copy(cell.font)
         font.bold = True

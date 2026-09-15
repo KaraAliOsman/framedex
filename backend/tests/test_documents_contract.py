@@ -5,7 +5,7 @@ import pytest
 
 from dekopen_engine.documentary_canonical import file_sha256
 from documents.artifacts import _require_document_role
-from documents.renderers import _doc01, _doc06, _doc07, render_pdf_document
+from documents.renderers import _doc01, _doc03, _doc06, _doc07, render_pdf_document
 from documents.repository import DocumentaryError
 from documents.serializers import HandleIntentSerializer
 from documents.storage import SIGNED_URL_TTL_SECONDS, SupabaseDocumentStorage
@@ -34,6 +34,7 @@ def revision_snapshot() -> dict[str, object]:
             "notes_commercial": "Incluye instalación",
         },
         "positions": [{
+            "id": "11111111-1111-1111-1111-111111111111",
             "position_index": 1,
             "location_tag": "FACHADA-NORTE",
             "width_mm": "1000.00",
@@ -42,9 +43,19 @@ def revision_snapshot() -> dict[str, object]:
             "color_interior": "WHITE",
             "color_exterior": "WHITE",
             "parametric_tree": {
-                "id": "B1", "type": "BAY", "glass_spec": "4-12-4 Float Incoloro",
+                "id": "B1", "type": "BAY", "opening_type": "FIXED",
+                "glass_spec": "4-12-4 Float Incoloro",
                 "children": [],
             },
+            "workshop_annotations": [{
+                "bay_id": "B1",
+                "leaf_id": None,
+                "bottom_drain_holes_mm": ["100.00", "500.00", "900.00"],
+                "closing_points_perimeter_mm": ["150.00"],
+                "continuous_width_mm": "1000.00",
+                "finish_class": "WHITE",
+                "has_coupler": False,
+            }],
         }],
         "inspector": [{"config": {"R10": {"tolerance_mm": "1.50"}}}],
         "pricing": {
@@ -102,6 +113,54 @@ def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     assert "119000" in html
 
 
+def test_client_quote_includes_deterministic_opening_drawings() -> None:
+    html = _doc01(revision_snapshot())
+    assert "<svg" in html and 'viewBox="0 0 1000 1200"' in html
+    sliding = revision_snapshot()
+    sliding["positions"][0]["parametric_tree"] = {  # type: ignore[index]
+        "id": "B1", "type": "BAY", "opening_type": "SLIDING_2L",
+        "glass_spec": "4-12-4 Float Incoloro", "children": [],
+    }
+    sliding_html = _doc01(sliding)
+    assert sliding_html.count('marker-end="url(#arrow-1)"') == 2
+    assert _doc01(sliding) == sliding_html
+
+
+def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None:
+    snapshot = revision_snapshot()
+    snapshot["manufacturing"] = [{  # type: ignore[index]
+        "position_id": "11111111-1111-1111-1111-111111111111",
+        "position_index": 1,
+        "repetition_index": 1,
+        "nominal_width_mm": "1000.00",
+        "nominal_height_mm": "1200.00",
+        "members": [],
+        "reinforcements": [],
+        "infills": [],
+        "handles": [{
+            "handle_id": "f" * 64,
+            "bay_id": "B1",
+            "leaf_id": "L1",
+            "handle_domain_slot": "PRIMARY",
+            "host_member_id": "9" * 64,
+            "point": {"x_mm": "60.00", "y_mm": "1050.00"},
+            "requested_height_mm": "1050.00",
+            "vertical_reference": "OUTER_BOTTOM",
+        }],
+        "relationships": [
+            {"relationship": "BELONGS_TO_LEAF", "source_id": "a" * 64, "target_id": "b" * 64},
+            {"relationship": "REINFORCES", "source_id": "c" * 64, "target_id": "d" * 64},
+        ],
+    }]
+    html = _doc03(snapshot)
+    assert "100.00, 500.00, 900.00" in html
+    assert "150.00" in html
+    assert "Matriz de ensamble" in html
+    assert "BELONGS_TO_LEAF" in html and "REINFORCES" in html
+    assert "1050.00" in html
+    assert "<svg" in html
+
+
 def test_qc_is_blank_and_cost_report_uses_frozen_not_recorded_authority() -> None:
     qc = _doc06(revision_snapshot())
     assert "Diferencia ≤ 1.50 mm" in qc
@@ -137,6 +196,9 @@ def test_xlsx_is_deterministic_exact_text_and_no_formula_authority() -> None:
         assert sheet["F8"].value == "1076.00"
         assert sheet["G8"].value == 2
         assert sheet["I8"].value == "TOP/LEFT"
+        assert sheet["L8"].value == "1.885152"
+        assert sheet["A9"].value == "TOTAL"
+        assert sheet["L9"].value == "1.885152"
         assert not any(
             isinstance(cell.value, str) and cell.value.startswith("=")
             for row in sheet.iter_rows() for cell in row
