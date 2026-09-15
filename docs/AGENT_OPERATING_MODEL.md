@@ -87,8 +87,9 @@ Token efficiency is an engineering discipline of maximizing signal-to-noise rati
 - **Direct Navigation:** Grep for exact symbols, files, and paths rather than dumping whole directories.
 - **No Re-narrating History:** Do not restate the background of the entire project or past closed shots in responses.
 - **Targeted Verification Cycles:** Run fast, focused tests (e.g. `pytest engine/tests/test_x.py`) during development iterations.
+- **SHA-Bound Evidence Reuse:** Reuse still-valid verification evidence bound to an unchanged proof surface instead of re-executing the same gate after every commit, merge, or documentation delta (see Section 7).
 - **Concise Outputs:** Present structured diffs, exact test traces, and clear delta reports without boilerplate padding.
-- **Reasoning Escalation:** Scale reasoning effort to the difficulty of the task (see Section 8).
+- **Reasoning Escalation:** Scale reasoning effort to the difficulty of the task (see Section 9).
 
 ### 3.2. Prohibited Token-Saving Anti-Patterns
 Never sacrifice rigor to save tokens:
@@ -188,7 +189,60 @@ Verification is applied progressively to keep feedback loops fast during develop
 
 > [!IMPORTANT]
 > **Progressive verification optimizes ONLY the intermediate development cycle.**
-> It never skips, weakens, or eliminates any test, mutation check, DB/RLS test, Golden check, real-browser E2E, or CI context at the time of shot closure.
+> It never skips, weakens, or eliminates any test, mutation check, DB/RLS test, Golden check, real-browser E2E, or CI context required by the delta's proof surface — and the canonical Gauntlet remains mandatory for the final material implementation head of a SHOT.
+
+### 7.1. Evidence Reuse and Proof Surfaces
+
+```
+NEVER REDUCE MATERIAL VERIFICATION COVERAGE.
+ELIMINATE ONLY REDUNDANT VERIFICATION.
+
+CORRECTNESS COMES FROM TARGETED PROOF + TRACEABLE EVIDENCE,
+NOT FROM REPEATING THE SAME PROOF WITHOUT A RELEVANT DELTA.
+```
+
+- **Proof Is SHA-Bound:** Every meaningful verification result is evidence tied to the exact commit SHA, the gate/test/review executed, its result, and the proof surface covered. The repository and shot closure report serve as the evidence ledger; no dedicated persistence subsystem is required.
+- **Invalidation Is Delta-Driven:** A later commit does not automatically invalidate prior evidence. Only proof surfaces a delta can actually affect are invalidated. Verification is selected according to the changed proof surface, not merely because another commit exists:
+
+| Delta type | Run relevant | NOT automatically rerun |
+|---|---|---|
+| Documentation-only | Doc consistency / formatting | Engine, Golden, DB/RLS, backend, frontend, Playwright, math hashes |
+| Frontend behavior | Affected unit/component tests, lint + typecheck, production build, E2E of the changed flow | Engine, Golden, migration chain, unrelated suites |
+| Engine / math | Focused regression, engine suite, Golden `--check`, mutation checks for changed formulas/contracts | Unrelated frontend/browser suites |
+| DB / RLS / migration | Migrations, pgTAP, RLS/integration, affected backend tests | Unrelated visual/browser suites |
+| Renderer / document | Document contract tests, XLSX/PDF renderer tests, affected integration path | Unrelated surfaces |
+| Cross-cutting / material | Affected focused gates first, then the canonical Gauntlet before final acceptance | — |
+
+- **Expensive-Check Decision Rule:** Before any expensive gate, full repository review, subagent invocation, or high-cost model call, ask: *what new uncertainty does this execution resolve?* If the answer is "none — it only reconfirms still-valid evidence for the same proof surface", do **not** run it. If impact is uncertain, err on the side of verification: quality takes priority over token savings.
+
+### 7.2. Canonical Efficient Loop
+
+```
+implement smallest complete slice
+        ↓
+focused tests → focused checker/adversarial review → fix concrete findings
+        ↓
+next slice … SHOT implementation complete
+        ↓
+canonical Gauntlet → one complete adversarial review
+        ↓
+focused fixes + regression tests (if findings) → rerun affected gates
+        ↓
+full Gauntlet again ONLY if fixes materially invalidate broad proof surfaces
+        ↓
+protected CI → merge → main CI → STOP
+```
+
+Avoid `Gauntlet → fix → Gauntlet → review → Gauntlet → docs → Gauntlet → merge → Gauntlet` unless every intermediate delta genuinely invalidates the full proof.
+
+### 7.3. Gauntlet Lifecycle, Review Discipline and STOP
+
+- **Canonical Gauntlet:** Mandatory for the final material implementation head of a SHOT (all 6 filters, `exit code 0`). Not required after every intermediate commit, after documentation-only closure commits, or merely because an exact approved material head merged cleanly.
+- **Post-Gauntlet Fixes:** Broad/cross-cutting material fix → rerun the canonical Gauntlet. Narrow, proof-surface-contained fix → focused regression + the affected gates. When uncertain whether the change invalidates canonical evidence, run the Gauntlet.
+- **Review Discipline:** One complete adversarial review of the final material head is sufficient. Findings follow `finding → focused fix → regression test → affected verification`; do not restart the whole SHOT architecture review. Do not invoke repeated independent reviewers after a complete clean review unless new material code changed, a new concrete concern appeared, or an affected contract changed.
+- **Documentation-Only Commits:** Do not invalidate technical proof unless they modify a normative contract that changes expected executable behavior. Closure markers, status updates, typos, evidence records, and prose clarifications never trigger engine/DB/frontend/Playwright/Golden verification. A normative PRD contract change may invalidate relevant proof and is treated per its affected surface.
+- **Merge Closure:** For an exact approved material head: verify the PR head SHA is the approved SHA, required protected CI is green, merge normally without manual functional edits, verify the approved head is an ancestor of the merge, then verify required `main` CI. Do **not** rerun the local Gauntlet solely because Git produced a clean merge commit; conflict resolution or manual functional edits are a new material delta verified per its surface.
+- **STOP Rule:** A clean adversarial review + valid canonical evidence + required CI = **STOP**. Protected CI remains the independent integration verdict; its existence never justifies manually duplicating an expensive local suite when valid SHA-bound evidence already covers the delta.
 
 ---
 
