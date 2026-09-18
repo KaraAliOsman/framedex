@@ -38,9 +38,9 @@ class EligibilityRequestSerializer(StrictSerializer):
     confirmed = serializers.BooleanField()
 
     def validate_eligible_requirement_keys(self, value):
-        if value != sorted(set(value)):
-            raise serializers.ValidationError("Requirement keys must be unique and sorted")
-        return value
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Requirement keys must be unique")
+        return sorted(value)
 
 
 class AllocationRequestSerializer(StrictSerializer):
