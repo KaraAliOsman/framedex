@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
 from django.db import connection, transaction
@@ -17,6 +18,8 @@ from documents.repository import DocumentaryError, decoded, documentary_backend,
 from documents.storage import SIGNED_URL_TTL_SECONDS, SupabaseDocumentStorage
 from documents.xlsx import render_order_xlsx
 
+
+logger = logging.getLogger(__name__)
 
 _REVISION_DOCUMENTS = {"DOC-01", "DOC-03", "DOC-05", "DOC-06", "DOC-07"}
 _ORDER_DOCUMENTS = {"DOC-02", "DOC-04"}
@@ -93,7 +96,7 @@ def _order_snapshot(order_id: UUID, project_version_id: UUID, org_id: UUID) -> t
 def generate_artifact(
     *, org_id: UUID, actor_id: UUID, role: str, project_version_id: UUID,
     order_id: UUID | None, document_type: str, file_format: str,
-) -> dict[str, object]:
+) -> tuple[dict[str, object], bool]:
     _require_document_role(document_type, role)
     if document_type in _REVISION_DOCUMENTS:
         if order_id is not None or file_format != "PDF":
@@ -110,14 +113,15 @@ def generate_artifact(
     else:
         raise DocumentaryError("document_type_invalid")
 
+    slot = f"{scope_id}:{document_type}:{file_format}"
     storage: SupabaseDocumentStorage | None = None
     object_key: str | None = None
     try:
-        with documentary_backend(), transaction.atomic():
+        with transaction.atomic(), documentary_backend():
             with connection.cursor() as cursor:
                 cursor.execute(
                     "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
-                    [f"{scope_id}:{document_type}:{file_format}"],
+                    [slot],
                 )
             existing = rows(
                 "SELECT * FROM public.document_artifacts "
@@ -127,7 +131,7 @@ def generate_artifact(
             if existing:
                 if len(existing) != 1:
                     raise DocumentaryError("artifact_slot_ambiguous")
-                return _metadata(existing[0])
+                return _metadata(existing[0]), False
             version, frozen_revision = _revision_snapshot(project_version_id, org_id)
             order: dict[str, object] | None = None
             frozen: dict[str, object] = frozen_revision
@@ -164,30 +168,50 @@ def generate_artifact(
                  document_type, file_format, version["bom_hash"], version["snapshot_sha256"],
                  object_key, content_hash, media_type, len(content), actor_id],
             )
-            return _metadata(artifact)
+            return _metadata(artifact), True
     except Exception:
         if storage is not None and object_key is not None:
             _delete_unreferenced_object(
-                org_id=org_id, storage=storage, object_key=object_key
+                org_id=org_id, storage=storage, object_key=object_key, slot=slot
             )
         raise
 
 
 def _delete_unreferenced_object(
-    *, org_id: UUID, storage: SupabaseDocumentStorage, object_key: str
+    *, org_id: UUID, storage: SupabaseDocumentStorage, object_key: str, slot: str
 ) -> None:
-    with documentary_backend():
-        referenced = rows(
-            "SELECT id FROM public.document_artifacts "
-            "WHERE org_id=%s AND storage_object_key=%s",
-            [org_id, object_key],
-        )
-    if referenced:
-        return
+    # The compensating delete serializes on the same deterministic slot lock as
+    # generation: a committed artifact that references the object wins, an
+    # unreferenced orphan is removed, and a later generator re-uploads freely.
     try:
-        storage.delete_object(object_key)
-    except DocumentaryError:
-        pass
+        with transaction.atomic(), documentary_backend():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                    [slot],
+                )
+            referenced = rows(
+                "SELECT id FROM public.document_artifacts "
+                "WHERE org_id=%s AND storage_object_key=%s",
+                [org_id, object_key],
+            )
+            if referenced:
+                return
+            storage.delete_object(object_key)
+    except Exception as cleanup_error:
+        detail = getattr(cleanup_error, "code", None)
+        if not isinstance(detail, str):
+            detail = getattr(getattr(cleanup_error, "__cause__", None), "sqlstate", None)
+        logger.warning(
+            "document_artifact_cleanup_failed",
+            extra={
+                "artifact_slot": slot,
+                "storage_object_key": object_key,
+                "cleanup_error": (
+                    detail if isinstance(detail, str) else type(cleanup_error).__name__
+                ),
+            },
+        )
 
 
 def signed_artifact_access(
