@@ -103,14 +103,14 @@ class ConfirmBatchView(APIView):
     def post(self, request, version_id: UUID):
         data = validate(ConfirmBatchRequestSerializer, request.data)
         with documentary_scope(request, _ALLOWED) as (token, _, org_id):
-            output = confirm_order_type_batch(
+            output, created = confirm_order_type_batch(
                 org_id=org_id,
                 actor_id=token.user_id,
                 version_id=version_id,
                 order_type=data["order_type"],
                 confirmed=data["confirmed"],
             )
-        return Response(output, status=201)
+        return Response(output, status=201 if created else 200)
 
 
 class SendOrderView(APIView):

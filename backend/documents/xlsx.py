@@ -63,12 +63,14 @@ def _verify_matrix(content: bytes, sheet_name: str, expected: list[list[str | in
             for cell, wanted in zip(actual, expected_row, strict=True):
                 if cell.data_type == "f":
                     raise DocumentaryError("xlsx_formula_cell_forbidden")
+                actual_value = "" if cell.value is None else cell.value
+                actual_type = "s" if cell.value is None else cell.data_type
                 wanted_type = (
                     "n"
                     if isinstance(wanted, int) and not isinstance(wanted, bool)
                     else "s"
                 )
-                if cell.value != wanted or cell.data_type != wanted_type:
+                if actual_value != wanted or actual_type != wanted_type:
                     raise DocumentaryError("xlsx_frozen_value_mismatch")
     finally:
         workbook.close()

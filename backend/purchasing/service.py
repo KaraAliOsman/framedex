@@ -288,7 +288,7 @@ def allocate_requirement(
 def confirm_order_type_batch(
     *, org_id: UUID, actor_id: UUID, version_id: UUID,
     order_type: str, confirmed: bool,
-) -> list[dict[str, object]]:
+) -> tuple[list[dict[str, object]], bool]:
     if not confirmed:
         raise DocumentaryError("order_batch_confirmation_required")
     with documentary_backend():
@@ -309,7 +309,11 @@ def confirm_order_type_batch(
                 "FROM public.orders WHERE allocation_batch_id=%s ORDER BY supplier_name,id",
                 [existing_batch[0]["id"]],
             )
-            return [{key: str(value) for key, value in item.items()} for item in existing_orders]
+            return (
+                [{key: str(value) for key, value in item.items()}
+                 for item in existing_orders],
+                False,
+            )
         requirement_rows = _requirements(version_id, org_id, order_type)
         if not requirement_rows:
             raise DocumentaryError("order_type_has_no_requirements")
@@ -472,7 +476,7 @@ def confirm_order_type_batch(
                 "status": "DRAFT", "supplier_name": str(eligibility["supplier_name"]),
                 "order_snapshot_hash": order_snapshot_hash,
             })
-        return outputs
+        return outputs, True
 
 
 def send_order(

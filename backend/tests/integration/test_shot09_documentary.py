@@ -356,21 +356,22 @@ def test_order_types_confirm_independently_and_artifacts_do_not_send(
                     requirement_id=UUID(str(requirement["id"])),
                     eligibility_id=eligibility_ids[order_type],
                 )
-        glass_orders = confirm_order_type_batch(
+        glass_orders, glass_created_batch = confirm_order_type_batch(
             org_id=org, actor_id=users["WORKSHOP_MANAGER"], version_id=version_id,
             order_type="SUPPLIER_GLASS_PO", confirmed=True,
         )
-        assert len(glass_orders) == 1
+        assert len(glass_orders) == 1 and glass_created_batch is True
         state = purchasing_state(org, version_id)
         assert {item["order_type"] for item in state["orders"]} == {"SUPPLIER_GLASS_PO"}
-        profile_orders = confirm_order_type_batch(
+        profile_orders, profile_created_batch = confirm_order_type_batch(
             org_id=org, actor_id=users["WORKSHOP_MANAGER"], version_id=version_id,
             order_type="SUPPLIER_PROFILE_PO", confirmed=True,
         )
+        assert profile_created_batch is True
         assert confirm_order_type_batch(
             org_id=org, actor_id=users["WORKSHOP_MANAGER"], version_id=version_id,
             order_type="SUPPLIER_PROFILE_PO", confirmed=True,
-        ) == profile_orders
+        ) == (profile_orders, False)
         assert {
             item["requirement_key"]: item["quantity"]
             for item in purchasing_state(org, version_id)["requirements"]
@@ -1078,6 +1079,62 @@ def test_artifact_endpoint_returns_201_then_200(
     assert reused.status_code == 200, reused.content
     assert reused.json()["id"] == created.json()["id"]
     assert FakeStorage.upload_calls == 1
+
+
+def test_confirm_batch_endpoint_returns_201_then_200(documentary_tenant) -> None:
+    org, _, users, _ = documentary_tenant
+    project_id, _, operation_id = _seed_project(org, users["OWNER"])
+    frozen = _freeze(org, users["OWNER"], project_id, operation_id)
+    version_id = UUID(frozen["id"])
+    with as_user(users["WORKSHOP_MANAGER"]):
+        state = purchasing_state(org, version_id)
+        by_type: dict[str, list[dict[str, object]]] = {}
+        for requirement in state["requirements"]:
+            by_type.setdefault(requirement["order_type"], []).append(requirement)
+        order_type, type_lines = max(by_type.items(), key=lambda item: len(item[1]))
+        keys = sorted(str(item["requirement_key"]) for item in type_lines)
+        eligibility = create_eligibility(
+            org_id=org, actor_id=users["WORKSHOP_MANAGER"], version_id=version_id,
+            data=_eligibility_data(order_type, keys, "SUP-CONFIRM"),
+        )
+        for line in type_lines:
+            allocate_requirement(
+                org_id=org, actor_id=users["WORKSHOP_MANAGER"],
+                requirement_id=UUID(str(line["id"])),
+                eligibility_id=UUID(str(eligibility["id"])),
+            )
+    manager = SupabaseUser(id=users["WORKSHOP_MANAGER"], email="manager@example.test")
+    client = APIClient()
+    client.force_authenticate(
+        user=manager, token=_freeze_token(users["WORKSHOP_MANAGER"])
+    )
+    payload = {"order_type": order_type, "confirmed": True}
+    created = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/confirm/", payload, format="json",
+        HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert created.status_code == 201, created.content
+    replayed = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/confirm/", payload, format="json",
+        HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert replayed.status_code == 200, replayed.content
+    assert replayed.json() == created.json()
+
+
+def test_missing_artifact_and_order_map_to_404(documentary_tenant) -> None:
+    org, _, users, _ = documentary_tenant
+    manager = SupabaseUser(id=users["WORKSHOP_MANAGER"], email="manager@example.test")
+    client = APIClient()
+    client.force_authenticate(
+        user=manager, token=_freeze_token(users["WORKSHOP_MANAGER"])
+    )
+    response = client.post(
+        f"/api/v1/documents/artifacts/{uuid4()}/access/", {}, format="json",
+        HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert response.status_code == 404, response.content
+    assert response.json()["error"]["code"] == "artifact_not_found"
 
 
 def test_purchasing_state_endpoint_reports_partial_eligibility_blocker(

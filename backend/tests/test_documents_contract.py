@@ -262,6 +262,23 @@ def test_xlsx_formula_like_text_stays_literal_never_a_formula() -> None:
         profile_workbook.close()
 
 
+def test_xlsx_empty_text_cells_roundtrip_as_empty() -> None:
+    snapshot = order_snapshot("SUPPLIER_PROFILE_PO")
+    snapshot["lines"][0]["physical_stock_identity"] = None  # type: ignore[index]
+    snapshot["lines"][0]["technical_skus"] = []  # type: ignore[index]
+    content, _ = render_order_xlsx("DOC-04", snapshot)
+    workbook = load_workbook(BytesIO(content), read_only=True, data_only=False)
+    try:
+        sheet = workbook["Pedido de perfiles"]
+        assert sheet["C8"].value in (None, "")
+        assert sheet["E8"].value in (None, "")
+        assert all(
+            cell.data_type != "f" for row in sheet.iter_rows() for cell in row
+        )
+    finally:
+        workbook.close()
+
+
 def test_handle_transport_rejects_derived_manufacturing_fields() -> None:
     serializer = HandleIntentSerializer(data={
         "bay_id": "B1",

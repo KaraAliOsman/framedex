@@ -57,7 +57,16 @@ def public_documentary_errors():
     try:
         yield
     except DocumentaryError as error:
-        if error.code in ("project_not_found", "project_version_not_found", "pricing_operation_not_found"):
+        if error.code in (
+            "project_not_found",
+            "project_version_not_found",
+            "pricing_operation_not_found",
+            "order_not_found",
+            "artifact_not_found",
+            "purchase_requirement_not_found",
+            "supplier_eligibility_not_found",
+            "purchase_projection_not_found",
+        ):
             status_code = 404
         elif error.code == "document_access_denied":
             status_code = 403
