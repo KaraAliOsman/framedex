@@ -2,10 +2,12 @@
 
 ## Estado y proveniencia
 
+- **Estado actual:** ✅ `FINAL PROVEN` — SHOT-09 cerrado. Main de cierre final `b7ccc6c548d3c0455e745d74890fea0acc2abd5b` ([PR #30](https://github.com/KaraAliOsman/framedex/pull/30), evidencia documental); CI final de `main` run `35396326374` — 4/4 success.
 - **Shot:** SHOT-09.
 - **Cierre:** `CLOSED / PROVEN` — merge [PR #23](https://github.com/KaraAliOsman/framedex/pull/23) en `main @ 251f4417a85b9e37ffad905d84147d76f21b68f6` desde head aprobado `10615b534fcbdfb99f358a3629231c903f950ab7`; Gauntlet exit 0, Golden byte-idéntico, CI `main` run `34914566757` verde (4/4 jobs).
-- **Base autoritativa real:** `main @ 7c0c18695aa29b488338811e3640474fd920647d`.
-- **Rama de trabajo:** `codex/shot-09`.
+- **Parche correctivo post-cierre:** `FINAL PROVEN` — merge [PR #29](https://github.com/KaraAliOsman/framedex/pull/29) en `main @ 4662ec6ee15d1ed3cc365a8072cdc3db318f078f` desde head probado `061990f0d3ac749a4ec1b775a5535d7d5cc02f4a` (rama `fix/shot-09-final-corrections`). Correcciones A–F del audit adversarial: freeze REV-A bajo `REPEATABLE READ` con retry solo `40001`/`40P01` (máx. 3 intentos, snapshot fresco, sin writes parciales); limpieza de artefactos serializada por el mismo advisory lock de slot con reference check antes de borrar; XLSX con celdas de texto literales (sin fórmulas) y verificación `data_only=False`; cobertura de elegibilidad de proveedor por `(order_type, requirement_key)` con claves descubiertas exactas; idempotencia HTTP de artefactos y confirm-batch (`201` creación / `200` replay); fallos de limpieza registrados con contexto estructurado sin enmascarar el error original; `*_not_found` → `404`. Revisión adversarial: 3 hallazgos menores, corregidos en `061990f`. Gauntlet canónico exit 0 en `061990f`, CI `main` run `35394577256` verde (4/4 jobs).
+- **Base autoritativa histórica (build/base SHA, no estado actual del repositorio):** `main @ 7c0c18695aa29b488338811e3640474fd920647d` al inicio del shot.
+- **Rama de trabajo histórica de implementación:** `codex/shot-09` (ya mergeada vía PR #23).
 - **Autoridad:** `CONSTITUTION > docs/PRD/PLAN_SHOTS.md > docs/PRD/PRD-06.md > decisiones Owner congeladas para SHOT-09 > este plan > implementación`.
 - **Contrato temporal:** SHOT-09 sella exclusivamente la revisión documental inicial `REV-A`. REV-B, clonación y flujo general de revisiones pertenecen a SHOT-10.
 - **Regla 0:** cero contradicciones materiales conocidas después de aplicar las enmiendas Owner de este shot.
@@ -152,10 +154,10 @@ Cada slice se ataca además contra: autoridad incorrecta, tenant leak, lookup li
 
 ## DoD exacto SHOT-09
 
-SHOT-09 es candidato a revisión Owner únicamente si:
+SHOT-09 es candidato a revisión Owner únicamente si (condiciones de aceptación PRE-MERGE, ya satisfechas antes del cierre; no constituyen requisitos de estado actual — el shot está mergeado y cerrado):
 
 1. Este plan contiene PD-09-01…PD-09-19, enmiendas Owner, mapa de archivos/tests y coincide con el código final.
-2. La rama parte de `7c0c18695aa29b488338811e3640474fd920647d`; no hay merge a `main`.
+2. La rama parte de `7c0c18695aa29b488338811e3640474fd920647d`; no hay merge a `main`. *(Condición pre-merge satisfecha en su momento; el merge posterior vía PR #23/PR #29 es el resultado esperado del cierre.)*
 3. Migraciones nuevas son aditivas, instalan en PostgreSQL 16 limpio y pasan upgrade poblado; ninguna migración histórica cambia.
 4. `project_versions` sella una sola REV-A desde una operación APPLIED exacta y es evidencia restrictiva/append-only.
 5. Vectores canónicos y los cinco namespaces de hash son exactos; todos los documentos de una revisión comparten `bom_hash`.
@@ -169,8 +171,8 @@ SHOT-09 es candidato a revisión Owner únicamente si:
 13. S19 es funcional, denso y claro para `WORKSHOP_MANAGER`; cantidades/BFD son read-only y órdenes confirmadas se distinguen.
 14. DB gates, backend, engine, frontend lint/typecheck/build, Vitest, Playwright y adversarial tests están verdes.
 15. `engine/tests/golden_example.json` conserva exactamente el hash de cálculo y SHA de archivo registrados arriba.
-16. Un `py -3.12 scripts/check_dod.py all` final devuelve literalmente exit code 0, cero warnings y 20/20 mutaciones abatidas.
-17. Commits son slices coherentes, la rama se publica y existe un único PR reviewable sin merge.
+16. Un `py -3.12 scripts/check_dod.py all` final devuelve literalmente exit code 0, cero warnings y 22/22 mutaciones abatidas (11 sitios × ±0.01 mm; evidencia final en head probado `061990f`).
+17. Commits son slices coherentes, la rama se publica y existe un único PR reviewable sin merge. *(Condición pre-merge satisfecha; el PR fue posteriormente revisado y mergeado como PR #23, con parche correctivo PR #29.)*
 
 ## Límites no implementados
 

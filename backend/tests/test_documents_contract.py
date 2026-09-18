@@ -213,6 +213,72 @@ def test_xlsx_is_deterministic_exact_text_and_no_formula_authority() -> None:
         profile_workbook.close()
 
 
+def test_xlsx_formula_like_text_stays_literal_never_a_formula() -> None:
+    snapshot = order_snapshot("SUPPLIER_GLASS_PO")
+    snapshot["order"]["supplier_name"] = "=1+1"  # type: ignore[index]
+    snapshot["order"]["order_code"] = "+SUM(A1:A2)"  # type: ignore[index]
+    line = snapshot["lines"][0]  # type: ignore[index]
+    line["purchasing_sku"] = "-1+2"
+    line["technical_skus"] = ["@SUM(A1:A2)", "=cmd|' /C calc'!A0"]
+    line["source_trace"] = ['=HYPERLINK("http://x")', "+POW(2,3)"]
+    line["specification"]["composition"] = "@FILTER(A:A)"
+    line["specification"]["location_tag"] = "-FACHADA"
+    content, _ = render_order_xlsx("DOC-02", snapshot)
+    workbook = load_workbook(BytesIO(content), read_only=True, data_only=False)
+    try:
+        sheet = workbook["Pedido de vidrios"]
+        assert sheet["B2"].value == "+SUM(A1:A2)"
+        assert sheet["B3"].value == "=1+1"
+        assert sheet["B8"].value == "@SUM(A1:A2), =cmd|' /C calc'!A0"
+        assert sheet["C8"].value == "-1+2"
+        assert sheet["D8"].value == "@FILTER(A:A)"
+        assert sheet["J8"].value == "-FACHADA"
+        assert sheet["K8"].value == '=HYPERLINK("http://x"), +POW(2,3)'
+        assert all(
+            cell.data_type != "f" for row in sheet.iter_rows() for cell in row
+        )
+    finally:
+        workbook.close()
+    profile_snapshot = order_snapshot("SUPPLIER_PROFILE_PO")
+    profile_line = profile_snapshot["lines"][0]  # type: ignore[index]
+    profile_line["requirement_key"] = "=REQ"
+    profile_line["category"] = "@PROFILE"
+    profile_line["purchasing_sku"] = "-BUY"
+    profile_line["physical_stock_identity"] = "=STOCK+1"
+    profile_line["specification"]["cutting_profile_id"] = "+CUT"
+    profile, _ = render_order_xlsx("DOC-04", profile_snapshot)
+    profile_workbook = load_workbook(BytesIO(profile), read_only=True, data_only=False)
+    try:
+        sheet = profile_workbook["Pedido de perfiles"]
+        assert sheet["A8"].value == "=REQ"
+        assert sheet["B8"].value == "@PROFILE"
+        assert sheet["D8"].value == "-BUY"
+        assert sheet["E8"].value == "=STOCK+1"
+        assert sheet["I8"].value == "+CUT"
+        assert all(
+            cell.data_type != "f" for row in sheet.iter_rows() for cell in row
+        )
+    finally:
+        profile_workbook.close()
+
+
+def test_xlsx_empty_text_cells_roundtrip_as_empty() -> None:
+    snapshot = order_snapshot("SUPPLIER_PROFILE_PO")
+    snapshot["lines"][0]["physical_stock_identity"] = None  # type: ignore[index]
+    snapshot["lines"][0]["technical_skus"] = []  # type: ignore[index]
+    content, _ = render_order_xlsx("DOC-04", snapshot)
+    workbook = load_workbook(BytesIO(content), read_only=True, data_only=False)
+    try:
+        sheet = workbook["Pedido de perfiles"]
+        assert sheet["C8"].value in (None, "")
+        assert sheet["E8"].value in (None, "")
+        assert all(
+            cell.data_type != "f" for row in sheet.iter_rows() for cell in row
+        )
+    finally:
+        workbook.close()
+
+
 def test_handle_transport_rejects_derived_manufacturing_fields() -> None:
     serializer = HandleIntentSerializer(data={
         "bay_id": "B1",
