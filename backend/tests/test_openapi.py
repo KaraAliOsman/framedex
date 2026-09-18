@@ -8,9 +8,23 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_authorized_shot_09_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_authorized_shot_10_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
+        "/api/v1/projects/",
+        "/api/v1/projects/{project_id}/",
+        "/api/v1/projects/{project_id}/clone/",
+        "/api/v1/projects/{project_id}/positions/",
+        "/api/v1/projects/design-options/{system_id}/",
+        "/api/v1/positions/{position_id}/",
+        "/api/v1/catalogs/systems/",
+        "/api/v1/catalogs/systems/{row_id}/",
+        "/api/v1/catalogs/articles/",
+        "/api/v1/catalogs/articles/{row_id}/",
+        "/api/v1/catalogs/glazing/",
+        "/api/v1/catalogs/glazing/{row_id}/",
+        "/api/v1/catalogs/hardware-kits/",
+        "/api/v1/catalogs/hardware-kits/{row_id}/",
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
         "/api/v1/engine/systems/",

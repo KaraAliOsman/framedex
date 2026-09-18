@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { createBrowserRouter, Navigate, Route, RouterProvider, Routes } from "react-router-dom";
 
 import { t } from "./i18n/es-CL";
 
@@ -25,6 +25,28 @@ const CanvasEditor2DView = lazy(async () => {
   const module = await import("./features/canvas/CanvasEditor2DView");
   return { default: module.CanvasEditor2DView };
 });
+
+const ProjectPages = lazy(async () => ({
+  default: (await import("./features/projects/ProjectPages")).ProjectPages,
+}));
+const CatalogPage = lazy(async () => ({
+  default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
+}));
+const ProjectPositionEditor = lazy(async () => ({
+  default: (await import("./features/projects/ProjectPositionEditor")).ProjectPositionEditor,
+}));
+
+function ProjectSurface({ editor = false }: { editor?: boolean }): JSX.Element {
+  return (
+    <ReadyGuard>
+      <AppShell>
+        <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
+          {editor ? <ProjectPositionEditor /> : <ProjectPages />}
+        </Suspense>
+      </AppShell>
+    </ReadyGuard>
+  );
+}
 
 const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
@@ -56,6 +78,32 @@ function HomeRedirect(): JSX.Element {
 export function AppRoutes(): JSX.Element {
   return (
     <Routes>
+      <Route path="/projects/:id" element={<ProjectSurface />} />
+      <Route path="/projects/:id/positions/new" element={<ProjectSurface editor />} />
+      <Route
+        path="/projects/:id/pricing"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p>{t("projects.loading")}</p>}>
+                <CommercialPricingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/projects/demo/positions/g1/edit"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p>{t("canvas.loading")}</p>}>
+                <CanvasEditor2DView />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
       <Route
         path="/pricing/commercial"
         element={
@@ -126,23 +174,24 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
-                <CanvasEditor2DView />
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
+                <ProjectPositionEditor />
               </Suspense>
             </AppShell>
           </ReadyGuard>
         }
       />
-      <Route
-        path="/projects"
-        element={
-          <ProtectedPage title={t("page.projects")} description={t("page.projectsDescription")} />
-        }
-      />
+      <Route path="/projects" element={<ProjectSurface />} />
       <Route
         path="/catalogs/systems"
         element={
-          <ProtectedPage title={t("page.systems")} description={t("page.systemsDescription")} />
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
+                <CatalogPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
         }
       />
       <Route
@@ -156,10 +205,8 @@ export function AppRoutes(): JSX.Element {
   );
 }
 
+const router = createBrowserRouter([{ path: "*", element: <AppRoutes /> }]);
+
 export function App(): JSX.Element {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 }

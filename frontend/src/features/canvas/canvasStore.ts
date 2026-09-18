@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { AnnotationRequest, InspectorDiff } from "../../api/generated/models";
+import { intentBays, type IntentNode } from "./intentEditing";
 
 export type DimensionAxis = "width" | "height";
 
@@ -16,7 +17,7 @@ export type CanvasDesignInputs = {
   nominalWidthMm: string;
   nominalHeightMm: string;
   color: "WHITE";
-  parametricTree: FixedParametricTree;
+  parametricTree: IntentNode;
 };
 
 type DraftDimension = {
@@ -37,7 +38,10 @@ type CanvasState = {
   setPreviewDiff(diff: InspectorDiff | null): void;
   inputs: CanvasDesignInputs;
   draftDimension: DraftDimension;
-  selection: "g1";
+  selection: string;
+  selectBay(id: string): void;
+  loadDesign(inputs: CanvasDesignInputs): void;
+  acceptIntent(expected: CanvasDesignInputs, next: CanvasDesignInputs, selection: string): boolean;
   viewport: ViewportState;
   snapEnabled: boolean;
   setSystemId(systemId: string): void;
@@ -84,6 +88,36 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   inputs: initialInputs(),
   draftDimension: null,
   selection: "g1",
+  selectBay(id) {
+    set((state) =>
+      intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
+        ? { selection: id }
+        : state,
+    );
+  },
+  loadDesign(inputs) {
+    set({
+      inputs,
+      selection: intentBays(inputs.parametricTree)[0]?.id ?? "",
+      annotations: [],
+      previewDiff: null,
+      draftDimension: null,
+      viewport: INITIAL_VIEWPORT,
+    });
+  },
+  acceptIntent(expected, next, selection) {
+    let accepted = false;
+    set((state) => {
+      if (
+        state.inputs !== expected ||
+        !intentBays(next.parametricTree).some((bay) => bay.id === selection)
+      )
+        return state;
+      accepted = true;
+      return { inputs: next, selection, draftDimension: null, previewDiff: null };
+    });
+    return accepted;
+  },
   viewport: INITIAL_VIEWPORT,
   snapEnabled: true,
   setSystemId(systemId) {

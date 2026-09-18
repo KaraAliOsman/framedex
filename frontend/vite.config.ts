@@ -3,6 +3,13 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   build: {
     outDir: "dist",
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [{ name: "telemetry-vendor", test: /node_modules[\\/]posthog-js/ }],
+        },
+      },
+    },
   },
   server: {
     host: "127.0.0.1",

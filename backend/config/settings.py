@@ -96,6 +96,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
+        "CatalogProfileRoleEnum": ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "GLAZING_BEAD", "COUPLER", "ADDITIONAL", "THRESHOLD"],
+        "RoleEnum": ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"],
         "UnitEnum": ["kit"],
         "PurchaseUnitEnum": ["BAR"],
         "MaterialEnum": ["PVC", "ALUMINIUM"],
