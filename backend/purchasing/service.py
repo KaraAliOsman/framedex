@@ -152,15 +152,27 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             [version_id, org_id],
         )
         allocated = {str(item["requirement_line_id"]) for item in allocations}
-        eligible_by_type = {str(item["order_type"]) for item in eligibilities}
+        covered_keys = {
+            (str(item["order_type"]), str(key))
+            for item in eligibilities
+            for key in _array(
+                item["eligible_requirement_keys"], "invalid_supplier_eligibility"
+            )
+        }
         blockers = []
         for order_type in ORDER_TYPES:
             type_lines = [item for item in requirements if item["order_type"] == order_type]
             if not type_lines:
                 continue
+            uncovered = [
+                item["requirement_key"] for item in type_lines
+                if (order_type, item["requirement_key"]) not in covered_keys
+            ]
+            if uncovered:
+                blockers.append({"order_type": order_type,
+                                 "code": "SUPPLIER_ELIGIBILITY_REQUIRED",
+                                 "requirement_keys": uncovered})
             missing = [item["requirement_key"] for item in type_lines if item["id"] not in allocated]
-            if order_type not in eligible_by_type:
-                blockers.append({"order_type": order_type, "code": "SUPPLIER_ELIGIBILITY_REQUIRED"})
             if missing:
                 blockers.append({"order_type": order_type, "code": "ALLOCATION_REQUIRED",
                                  "requirement_keys": missing})
@@ -191,7 +203,12 @@ def create_eligibility(
         raise DocumentaryError("supplier_eligibility_confirmation_required")
     order_type = str(data["order_type"])
     keys = data["eligible_requirement_keys"]
-    if not isinstance(keys, list) or not all(isinstance(item, str) for item in keys):
+    if (
+        not isinstance(keys, list)
+        or not keys
+        or not all(isinstance(item, str) for item in keys)
+        or keys != sorted(set(keys))
+    ):
         raise DocumentaryError("invalid_supplier_eligibility")
     with documentary_backend():
         version = _version(version_id, org_id)

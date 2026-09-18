@@ -55,12 +55,21 @@ def _verify_matrix(content: bytes, sheet_name: str, expected: list[list[str | in
     workbook = load_workbook(BytesIO(content), read_only=True, data_only=False)
     try:
         sheet = workbook[sheet_name]
-        actual = [
-            [cell.value for cell in row[:len(expected[index])]]
-            for index, row in enumerate(sheet.iter_rows(max_row=len(expected)))
-        ]
-        if actual != expected:
-            raise DocumentaryError("xlsx_frozen_value_mismatch")
+        for index, row in enumerate(sheet.iter_rows(max_row=len(expected))):
+            expected_row = expected[index]
+            actual = row[: len(expected_row)]
+            if len(actual) != len(expected_row):
+                raise DocumentaryError("xlsx_frozen_value_mismatch")
+            for cell, wanted in zip(actual, expected_row, strict=True):
+                if cell.data_type == "f":
+                    raise DocumentaryError("xlsx_formula_cell_forbidden")
+                wanted_type = (
+                    "n"
+                    if isinstance(wanted, int) and not isinstance(wanted, bool)
+                    else "s"
+                )
+                if cell.value != wanted or cell.data_type != wanted_type:
+                    raise DocumentaryError("xlsx_frozen_value_mismatch")
     finally:
         workbook.close()
 
@@ -159,8 +168,16 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = sheet_name
-    for row in expected:
-        sheet.append(row)
+    for row_index, row in enumerate(expected, start=1):
+        for column_index, value in enumerate(row, start=1):
+            if isinstance(value, bool) or not isinstance(value, (int, str)):
+                raise DocumentaryError("xlsx_value_not_exact_text")
+            cell = sheet.cell(row=row_index, column=column_index, value=value)
+            if isinstance(value, str):
+                # Frozen authority text stays a literal string even when it
+                # begins with =, +, - or @; openpyxl would otherwise store a
+                # leading '=' as an executable formula.
+                cell.data_type = "s"
     sheet.freeze_panes = "A8"
     last_data_row = len(expected) - (1 if document_type == "DOC-02" else 0)
     sheet.auto_filter.ref = f"A7:{chr(64 + len(headers))}{last_data_row}"

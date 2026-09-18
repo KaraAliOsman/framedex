@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import json
 import logging
 from uuid import UUID
 
-from django.db import DatabaseError
+from django.db import connection, DatabaseError, transaction
 from drf_spectacular.utils import OpenApiResponse, extend_schema
+from psycopg.pq import TransactionStatus
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -118,6 +120,74 @@ def documentary_scope(request, allowed: tuple[str, ...]):
             yield token, tenant, tenant.active_organization.organization_id
 
 
+def _freeze_connection_ready() -> None:
+    if connection.vendor != "postgresql":
+        raise DatabaseError("Documentary freeze requires PostgreSQL")
+    connection.ensure_connection()
+    raw_connection = connection.connection
+    if (
+        raw_connection is None
+        or raw_connection.closed
+        or connection.in_atomic_block
+        or not connection.get_autocommit()
+        or raw_connection.info.transaction_status != TransactionStatus.IDLE
+    ):
+        raise DatabaseError("Documentary freeze requires an idle outermost connection")
+
+
+def _freeze_attempt(token, claims, organization_header, project_id, data):
+    # One outermost transaction at REPEATABLE READ: the isolation statement is
+    # the first SQL of the transaction, so claims, tenant resolution, RBAC/MFA,
+    # authority locks, documentary reads, canonicalization, and the evidence
+    # writes all share a single consistent snapshot.
+    _freeze_connection_ready()
+    with transaction.atomic(durable=True):
+        with connection.cursor() as cursor:
+            cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            cursor.execute(
+                "SELECT set_config('request.jwt.claims',%s,true)",
+                [json.dumps(claims, separators=(",", ":"), sort_keys=True)],
+            )
+            cursor.execute("SET LOCAL ROLE authenticated")
+        tenant = resolve_tenant_context(
+            MembershipRepository().list_active_for_user(token.user_id),
+            organization_header,
+        )
+        enforce_owner_mfa(tenant, token.aal)
+        if tenant.active_organization.role not in ("OWNER", "ESTIMATOR"):
+            raise contract_error(
+                403,
+                "documentary_permission_denied",
+                "Tu rol no permite realizar esta operación documental.",
+            )
+        output = freeze_revision_a(
+            org_id=tenant.active_organization.organization_id,
+            actor_id=token.user_id,
+            project_id=project_id,
+            pricing_operation_id=data["pricing_operation_id"],
+            confirmed=data["confirmed"],
+        )
+    return output
+
+
+def _database_sqlstate(error):
+    return getattr(error.__cause__, "sqlstate", None)
+
+
+def _freeze_with_retry(token, claims, organization_header, project_id, data):
+    # Only a serialization failure or deadlock justifies a fresh attempt; each
+    # retry runs the complete attempt inside a new transaction/snapshot.
+    for attempt in range(3):
+        try:
+            return _freeze_attempt(
+                token, claims, organization_header, project_id, data
+            )
+        except DatabaseError as error:
+            if _database_sqlstate(error) not in ("40001", "40P01") or attempt == 2:
+                raise
+    raise AssertionError("unreachable freeze retry state")
+
+
 class DocumentaryInputsView(APIView):
     @extend_schema(
         operation_id="documentary_save_inputs",
@@ -149,13 +219,14 @@ class FreezeRevisionView(APIView):
     )
     def post(self, request, project_id: UUID):
         data = validate(FreezeRequestSerializer, request.data)
-        with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (token, _, org_id):
-            output = freeze_revision_a(
-                org_id=org_id,
-                actor_id=token.user_id,
-                project_id=project_id,
-                pricing_operation_id=data["pricing_operation_id"],
-                confirmed=data["confirmed"],
+        token = verified_request_token(request)
+        with public_documentary_errors():
+            output = _freeze_with_retry(
+                token,
+                dict(token.claims),
+                request.headers.get("X-Organization-ID"),
+                project_id,
+                data,
             )
         return Response(output, status=201 if output["created"] else 200)
 
@@ -173,7 +244,7 @@ class ArtifactGenerateView(APIView):
         with documentary_scope(
             request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
         ) as (token, tenant, org_id):
-            output = generate_artifact(
+            output, created = generate_artifact(
                 org_id=org_id,
                 actor_id=token.user_id,
                 role=tenant.active_organization.role,
@@ -182,7 +253,7 @@ class ArtifactGenerateView(APIView):
                 document_type=data["document_type"],
                 file_format=data["format"],
             )
-        return Response(output, status=201)
+        return Response(output, status=201 if created else 200)
 
 
 class ArtifactAccessView(APIView):
