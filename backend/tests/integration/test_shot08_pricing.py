@@ -23,6 +23,8 @@ import pricing.views as pricing_views
 from pricing.service import preview, apply_operation
 from pricing.repository import json_text, one
 from pricing.xlsx_import import import_rows, parse_xlsx
+from projects import service as project_service
+from projects.serializers import PositionWriteSerializer
 from backend.tests.test_pricing_contract import MAPPING, workbook_bytes
 
 pytestmark = pytest.mark.rls_integration
@@ -271,6 +273,75 @@ def test_five_modes_resolve_real_bom_and_apply_atomically(commercial_rows,mode):
         assert persisted['total_price_net']==Decimal(str(output['project_net']))
         with pytest.raises(PricingError,match='operation_already_final'):
             apply_operation(org,users['OWNER'],'OWNER',output['id'],'Retry',False)
+
+
+def test_composite_pricing_requires_exact_typology_configuration(commercial_rows):
+    org,_,users=commercial_rows
+    project=seed_commercial_project(org,users['OWNER'])
+    position=one('SELECT id,system_id,updated_at FROM public.project_positions WHERE project_id=%s',[project])
+    tree={
+        'id':'S1','type':'SPLIT_V','split_offset_mm':'500.00','mullion_profile_sku':'POSTE-V',
+        'children':[
+            {'id':'B1','type':'BAY','opening_type':'FIXED','glass_spec':'4-12-4 Float Incoloro',
+             'glass_thickness_mm':'24.00','glass_article_sku':'GLASS-BASE'},
+            {'id':'B2','type':'BAY','opening_type':'FIXED','glass_spec':'4-12-4 Float Incoloro',
+             'glass_thickness_mm':'24.00','glass_article_sku':'GLASS-BASE'},
+        ],
+    }
+    serializer=PositionWriteSerializer(data={'location_tag':'Fachada','quantity':1,'design':{
+        'system_id':position['system_id'],'nominal_width_mm':'1000.00','nominal_height_mm':'1000.00',
+        'color':'WHITE','parametric_tree':tree}})
+    assert serializer.is_valid(),serializer.errors
+    values=serializer.validated_data
+    values['expected_updated_at']=position['updated_at']
+    with as_user(users['OWNER']):
+        saved=project_service.save_position(org,project,values,position_id=position['id'])
+        assert saved['typology']=='COMPOSITE'
+        cost_list=one('SELECT id FROM public.cost_lists WHERE org_id=%s',[org])
+        for sku in ('DEMO-BAR-POSTE-V','DEMO-STEEL-BAR-POSTE-V'):
+            admin_write('cost-items',org,{'cost_list_id':cost_list['id'],'sku':sku,
+                'item_type':'FIXTURE','unit':'BAR','unit_cost':Decimal('100')},'Composite input')
+        with commercial_backend():
+            assert preview(org,tenant(org,'OWNER'),price_request(
+                project,users['OWNER'],'COST_PLUS_MARGIN'))['state']=='PREVIEW'
+            assert preview(org,tenant(org,'OWNER'),price_request(
+                project,users['OWNER'],'TARGET_GROSS_MARGIN_PROJECT'))['state']=='PREVIEW'
+            for mode in ('PRICE_PER_M2_BY_TYPOLOGY','FIXED_PRICE_MATRIX_DIMENSIONAL',
+                         'COMMERCIAL_LIST_WITH_DISCOUNTS'):
+                with pytest.raises(PricingError,match='pricing_configuration_not_found'):
+                    preview(org,tenant(org,'OWNER'),price_request(project,users['OWNER'],mode))
+        for mode in ('PRICE_PER_M2_BY_TYPOLOGY','FIXED_PRICE_MATRIX_DIMENSIONAL',
+                     'COMMERCIAL_LIST_WITH_DISCOUNTS'):
+            config_values={'context_code':'DEFAULT','typology':'COMPOSITE','pricing_mode':mode,
+                           'currency':'CLP'}
+            if mode=='PRICE_PER_M2_BY_TYPOLOGY':
+                config_values.update(rate_per_m2=Decimal('3000'),base_glass_sku='GLASS-BASE')
+            if mode=='COMMERCIAL_LIST_WITH_DISCOUNTS':
+                config_values['catalog_price']=Decimal('3000')
+            config=admin_write('configurations',org,config_values,'Composite authority')
+            if mode=='FIXED_PRICE_MATRIX_DIMENSIONAL':
+                admin_write('matrix-cells',org,{'configuration_id':config['id'],'width_mm':1000,
+                            'height_mm':1000,'price':Decimal('3000')},'Composite matrix')
+            with commercial_backend():
+                assert preview(org,tenant(org,'OWNER'),price_request(
+                    project,users['OWNER'],mode))['project_net']==Decimal('3000')
+
+
+def test_legacy_draft_rejects_submitted_typology_mismatch(commercial_rows):
+    org,_,users=commercial_rows
+    system=one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    code=f"MISMATCH-{uuid4()}"
+    response=owner_client(users['OWNER']).post('/api/v1/pricing/drafts/',{
+        'code':code,'name':'Legacy mismatch','client_name':'Fixture','reason':'Legacy proof',
+        'positions':[{'position_index':1,'quantity':1,'typology':'TURN','system_id':str(system),
+            'nominal_width_mm':'1000.00','nominal_height_mm':'1000.00','color':'WHITE',
+            'parametric_tree':{'id':'B1','type':'BAY','opening_type':'FIXED',
+                'glass_spec':'4-12-4 Float Incoloro','glass_thickness_mm':'24.00',
+                'glass_article_sku':'GLASS-BASE'}}]},format='json')
+    assert response.status_code==400
+    assert response.json()['error']['code']=='typology_mismatch'
+    with as_user(users['OWNER']):
+        assert rows('SELECT id FROM public.projects WHERE org_id=%s AND code=%s',[org,code])==[]
 
 
 def test_estimator_pending_owner_approval_and_stale_input(commercial_rows):

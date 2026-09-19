@@ -1602,6 +1602,75 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
   /api/v1/documents/projects/{project_id}/inputs/:
+    get:
+      operationId: documentary_prepare_inputs
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentaryPreparationResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
     put:
       operationId: documentary_save_inputs
       parameters:
@@ -3091,6 +3160,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/successor/:
+    post:
+      operationId: projects_start_successor
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessorRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/design-options/{system_id}/:
     get:
       operationId: project_design_options
@@ -3643,6 +3794,44 @@ components:
       description: |-
         * `aal1` - aal1
         * `aal2` - aal2
+    AccessoryLine:
+      type: object
+      properties:
+        obligation_id:
+          type: string
+          maxLength: 200
+        obligation_kind:
+          $ref: '#/components/schemas/ObligationKindEnum'
+        technical_sku:
+          type: string
+          maxLength: 200
+        purchasing_sku:
+          type: string
+          maxLength: 200
+        manufacturer_name:
+          type: string
+          maxLength: 300
+        order_type:
+          $ref: '#/components/schemas/OrderTypeEnum'
+        unit:
+          allOf:
+          - $ref: '#/components/schemas/AccessoryLineUnitEnum'
+          default: EA
+        quantity_per_position_unit:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+          maxLength: 1000
+      required:
+      - description
+      - manufacturer_name
+      - obligation_id
+      - obligation_kind
+      - order_type
+      - purchasing_sku
+      - quantity_per_position_unit
+      - technical_sku
     AccessoryLineRequest:
       type: object
       properties:
@@ -3691,6 +3880,23 @@ components:
       - EA
       type: string
       description: '* `EA` - EA'
+    AccessorySchedule:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        coverage:
+          $ref: '#/components/schemas/CoverageEnum'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessoryLine'
+      required:
+      - coverage
+      - items
     AccessoryScheduleRequest:
       type: object
       properties:
@@ -4465,6 +4671,133 @@ components:
       required:
       - positions_saved
       - project_id
+    DocumentaryPolicyOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        version:
+          type: integer
+      required:
+      - id
+      - label
+      - version
+    DocumentaryPreparationPosition:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        location_tag:
+          type: string
+          maxLength: 100
+        manufacturing_placement_policy_id:
+          type: string
+          format: uuid
+          nullable: true
+        handle_requirement_policy_id:
+          type: string
+          format: uuid
+          nullable: true
+        reinforcement_cut_policy_id:
+          type: string
+          format: uuid
+          nullable: true
+        workshop_annotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopAnnotation'
+        structural_inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryStructuralInput'
+        glass_polishing:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassPolishing'
+        handle_intents:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandleIntent'
+        accessory_schedule:
+          $ref: '#/components/schemas/AccessorySchedule'
+        legacy_handle_migration_confirmed:
+          type: boolean
+          default: false
+        system_name:
+          type: string
+        placement_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryPolicyOption'
+        handle_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryPolicyOption'
+        reinforcement_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryPolicyOption'
+      required:
+      - accessory_schedule
+      - glass_polishing
+      - handle_intents
+      - handle_options
+      - handle_requirement_policy_id
+      - location_tag
+      - manufacturing_placement_policy_id
+      - placement_options
+      - position_id
+      - reinforcement_cut_policy_id
+      - reinforcement_options
+      - structural_inputs
+      - system_name
+      - workshop_annotations
+    DocumentaryPreparationResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        revision_code:
+          type: string
+          pattern: ^REV-[A-Z]+$
+        payment_terms:
+          type: string
+        quotation_valid_until:
+          type: string
+          format: date
+          nullable: true
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentaryPreparationPosition'
+      required:
+      - payment_terms
+      - positions
+      - project_id
+      - quotation_valid_until
+      - revision_code
+    DocumentaryStructuralInput:
+      type: object
+      properties:
+        target_id:
+          type: string
+          maxLength: 200
+        required_ix_cm4:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,4})?$
+          nullable: true
+        structural_basis:
+          type: string
+          nullable: true
+          maxLength: 1000
+      required:
+      - target_id
     DocumentaryStructuralInputRequest:
       type: object
       properties:
@@ -4935,7 +5268,8 @@ components:
         created:
           type: boolean
         revision_code:
-          $ref: '#/components/schemas/RevisionCodeEnum'
+          type: string
+          pattern: ^REV-[A-Z]+$
         bom_hash:
           type: string
           pattern: ^[0-9a-f]{64}$
@@ -4998,6 +5332,26 @@ components:
       - thickness_net_mm
       - weight_kg
       - width_mm
+    GlassPolishing:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        bay_id:
+          type: string
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        edges:
+          $ref: '#/components/schemas/PolishingEdges'
+      required:
+      - bay_id
+      - edges
     GlassPolishingRequest:
       type: object
       properties:
@@ -5020,6 +5374,35 @@ components:
       required:
       - bay_id
       - edges
+    HandleIntent:
+      type: object
+      properties:
+        schema_version:
+          type: integer
+          maximum: 1
+          minimum: 1
+          default: 1
+        bay_id:
+          type: string
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        handle_domain_slot:
+          type: string
+          maxLength: 100
+        requested_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        vertical_reference:
+          $ref: '#/components/schemas/VerticalReferenceEnum'
+      required:
+      - bay_id
+      - handle_domain_slot
+      - requested_height_mm
+      - vertical_reference
     HandleIntentRequest:
       type: object
       properties:
@@ -5872,6 +6255,22 @@ components:
           minimum: -2147483648
         is_active:
           type: boolean
+    PolishingEdges:
+      type: object
+      properties:
+        top:
+          type: boolean
+        right:
+          type: boolean
+        bottom:
+          type: boolean
+        left:
+          type: boolean
+      required:
+      - bottom
+      - left
+      - right
+      - top
     PolishingEdgesRequest:
       type: object
       properties:
@@ -6091,6 +6490,9 @@ components:
         project_id:
           type: string
           format: uuid
+        revision_code:
+          type: string
+          pattern: ^REV-[A-Z]+$
         discount_pct:
           type: string
         state:
@@ -6116,6 +6518,7 @@ components:
       - project_id
       - project_net
       - project_tax
+      - revision_code
       - state
     PricingModeEnum:
       enum:
@@ -6242,6 +6645,7 @@ components:
           $ref: '#/components/schemas/ProjectResponseStatusEnum'
         current_revision:
           type: string
+          pattern: ^REV-[A-Z]+$
         total_price_net:
           type: string
         total_price_tax:
@@ -6250,6 +6654,10 @@ components:
           type: string
         pricing_current:
           type: boolean
+        current_pricing_operation_id:
+          type: string
+          format: uuid
+          nullable: true
         position_count:
           type: integer
         updated_at:
@@ -6259,9 +6667,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PositionResponse'
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectVersionResponse'
       required:
       - client_name
       - code
+      - current_pricing_operation_id
       - current_revision
       - id
       - name
@@ -6288,6 +6701,43 @@ components:
         * `IN_PRODUCTION` - IN_PRODUCTION
         * `COMPLETED` - COMPLETED
         * `CANCELLED` - CANCELLED
+    ProjectVersionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision_code:
+          type: string
+          pattern: ^REV-[A-Z]+$
+        authority_version:
+          type: string
+        bom_hash:
+          type: string
+          nullable: true
+          pattern: ^[0-9a-f]{64}$
+        snapshot_sha256:
+          type: string
+          nullable: true
+          pattern: ^[0-9a-f]{64}$
+        production_allowed:
+          type: boolean
+          nullable: true
+        documentary_complete:
+          type: boolean
+          nullable: true
+        emitted_at:
+          type: string
+          format: date-time
+      required:
+      - authority_version
+      - bom_hash
+      - documentary_complete
+      - emitted_at
+      - id
+      - production_allowed
+      - revision_code
+      - snapshot_sha256
     ProjectWriteRequest:
       type: object
       properties:
@@ -6437,11 +6887,6 @@ components:
       - aal2
       type: string
       description: '* `aal2` - aal2'
-    RevisionCodeEnum:
-      enum:
-      - REV-A
-      type: string
-      description: '* `REV-A` - REV-A'
     RoleEnum:
       enum:
       - OWNER
@@ -6562,6 +7007,13 @@ components:
           nullable: true
       required:
       - target_id
+    SuccessorRequestRequest:
+      type: object
+      properties:
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
     SupplierDetailsRequest:
       type: object
       properties:
@@ -6866,6 +7318,45 @@ components:
         * `OUTER_BOTTOM` - OUTER_BOTTOM
         * `LEAF_TOP` - LEAF_TOP
         * `LEAF_BOTTOM` - LEAF_BOTTOM
+    WorkshopAnnotation:
+      type: object
+      properties:
+        bay_id:
+          type: string
+          maxLength: 200
+        leaf_id:
+          type: string
+          nullable: true
+          maxLength: 200
+        bottom_drain_holes_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        closing_points_perimeter_mm:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        continuous_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+          nullable: true
+        finish_class:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        has_coupler:
+          type: boolean
+          nullable: true
+      required:
+      - bay_id
     WorkshopAnnotationRequest:
       type: object
       properties:

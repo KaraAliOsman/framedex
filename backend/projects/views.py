@@ -21,6 +21,7 @@ from projects.serializers import (
     ProjectResponseSerializer,
     ProjectUpdateSerializer,
     ProjectWriteSerializer,
+    SuccessorRequestSerializer,
 )
 
 READ_ROLES = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
@@ -114,7 +115,24 @@ class ProjectCloneView(APIView):
     def post(self, request, project_id):
         data = validate(CloneProjectSerializer, request.data)
         with scope(request, WRITE_ROLES) as (token, _, org):
-            return response(service.clone_draft(org, token.user_id, project_id, data), status=201)
+            return response(service.clone_project(org, token.user_id, project_id, data), status=201)
+
+
+class ProjectSuccessorView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="projects_start_successor",
+        request=SuccessorRequestSerializer,
+        responses={200: ProjectResponseSerializer, 201: ProjectResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id):
+        validate(SuccessorRequestSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            value = service.start_successor(org, project_id)
+        created = value.pop("successor_created")
+        return response(value, status=201 if created else 200)
 
 
 class PositionView(APIView):

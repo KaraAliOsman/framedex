@@ -45,6 +45,7 @@ htmlcov/
 .hypothesis/
 frontend/test-results/
 frontend/playwright-report/
+test-results/
 
 # Django Backend
 *.log

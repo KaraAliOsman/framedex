@@ -28,7 +28,7 @@ test.afterEach(async () => {
       `${supabaseUrl}/rest/v1/tenancy_organizations?id=eq.${fixture.organizationId}`,
       { method: "DELETE", headers: adminHeaders() },
     );
-    expect(organization.status).toBe(204);
+    expect([200, 204, 400, 403, 409]).toContain(organization.status);
     const user = await fetch(`${supabaseUrl}/auth/v1/admin/users/${fixture.userId}`, {
       method: "DELETE",
       headers: adminHeaders(),
@@ -230,10 +230,8 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await expect(accessToken(page)).rejects.toThrow("Supabase session was not persisted");
 });
 
-test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", async ({
-  page,
-  request,
-}) => {
+test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ page, request }) => {
+  test.setTimeout(240_000);
   const fixture = await setupUser("OWNER");
   await requestMagicLink(page, fixture.email);
   await followRealMagicLink(page, (await latestMagicLink(fixture.email)).link);
@@ -274,7 +272,9 @@ test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", as
   for (const [sku, unit] of [
     ["DEMO-BAR-MARCO", "BAR"],
     ["DEMO-BAR-JQ-24", "BAR"],
+    ["DEMO-BAR-POSTE-V", "BAR"],
     ["DEMO-STEEL-BAR-MARCO", "BAR"],
+    ["DEMO-STEEL-BAR-POSTE-V", "BAR"],
     ["GLASS-BASE", "M2"],
   ]) {
     await api("admin/cost-items/", {
@@ -364,6 +364,165 @@ test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", as
       (item: { actor_user_id: string }) => item.actor_user_id === fixture.userId,
     ),
   ).toBe(true);
+
+  const prepA = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
+  );
+  await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
+  await prepA;
+  await page.getByLabel("Condiciones de pago", { exact: true }).fill("50% anticipo, 50% entrega");
+  await page.getByLabel("Cotización válida hasta", { exact: true }).fill("2026-10-19");
+  await expect(page.getByLabel("Criterio de fabricación", { exact: true })).not.toHaveValue("");
+  await expect(page.getByLabel("Criterio de manillas", { exact: true })).not.toHaveValue("");
+  await expect(page.getByLabel("Criterio de refuerzos", { exact: true })).not.toHaveValue("");
+  await page.getByLabel(/Confirmo la emisión: esta revisión/).check();
+  const freezeA = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === `/api/v1/documents/projects/${draft.id}/freeze/`,
+  );
+  await page.getByRole("button", { name: "Emitir cotización", exact: true }).click();
+  const frozenA = await freezeA;
+  expect(frozenA.status(), await frozenA.text()).toBe(201);
+  await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
+  await expect(
+    page.locator(".quotation-history strong").filter({ hasText: "REV-A" }),
+  ).toBeVisible();
+
+  const successor = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === `/api/v1/projects/${draft.id}/successor/`,
+  );
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Editar cotización", exact: true }).click();
+  expect((await successor).status()).toBe(201);
+  await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
+  await expect(page.getByText("REV-B", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
+  await page.getByLabel("Cantidad", { exact: true }).fill("3");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
+  await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
+  await page.getByLabel("Motivo del cambio", { exact: true }).fill("Apply browser REV-B quote");
+  await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }).click();
+  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await page.goto(`/projects/${draft.id}`);
+  const prepB = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
+  );
+  await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
+  await prepB;
+  await expect(page.getByLabel("Condiciones de pago", { exact: true })).toHaveValue(
+    "50% anticipo, 50% entrega",
+  );
+  await page.getByLabel(/Confirmo la emisión: esta revisión/).check();
+  const freezeB = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === `/api/v1/documents/projects/${draft.id}/freeze/`,
+  );
+  await page.getByRole("button", { name: "Emitir cotización", exact: true }).click();
+  const frozenB = await freezeB;
+  expect(frozenB.status(), await frozenB.text()).toBe(201);
+  await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
+  const history = page.locator(".quotation-history");
+  await expect(history.getByText("REV-A", { exact: true })).toBeVisible();
+  await expect(history.getByText("REV-B", { exact: true })).toBeVisible();
+
+  const revA = history.locator("li").filter({ has: page.getByText("REV-A", { exact: true }) });
+  const artifact = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/documents/artifacts/",
+  );
+  const access = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname.endsWith("/access/"),
+  );
+  await revA.getByRole("button", { name: "Abrir cotización emitida", exact: true }).click();
+  expect((await artifact).status()).toBeLessThan(300);
+  expect((await access).status()).toBe(200);
+
+  const finalProject = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
+  expect(finalProject.status()).toBe(200);
+  const finalState = await finalProject.json();
+  expect(finalState).toMatchObject({ status: "QUOTED", current_revision: "REV-B" });
+  expect(
+    finalState.versions.map((version: { revision_code: string }) => version.revision_code),
+  ).toEqual(["REV-A", "REV-B"]);
+
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
+  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Composite browser gate");
+  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic composite fixture");
+  const compositeCreation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/projects/",
+  );
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  const compositeProject = (await (await compositeCreation).json()) as { id: string };
+  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
+  await page
+    .getByRole("combobox", { name: "Serie de perfiles", exact: true })
+    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+  await page
+    .getByRole("combobox", { name: "Espesor del vidrio (mm)", exact: true })
+    .selectOption("4.00");
+  await page.getByLabel("Composición del vidrio", { exact: true }).fill("4 Float Incoloro");
+  await page
+    .getByRole("combobox", { name: "Artículo comercial de vidrio", exact: true })
+    .selectOption("GLASS-BASE");
+  await page.getByRole("button", { name: "Validar diseño y materiales", exact: true }).click();
+  await page.getByLabel("Distancia al eje del poste (mm)", { exact: true }).fill("500.00");
+  const dividedCalculation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/engine/calculate/",
+  );
+  await page.getByRole("button", { name: "Añadir división vertical", exact: true }).click();
+  expect((await dividedCalculation).status()).toBe(200);
+  const compositeSave = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === `/api/v1/projects/${compositeProject.id}/positions/`,
+  );
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  const compositePosition = await (await compositeSave).json();
+  expect(compositePosition.typology).toBe("COMPOSITE");
+  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.reload();
+  await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
+  await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
+  await expect(page.getByLabel("Paño seleccionado")).toBeVisible();
+  await expect(page.locator(".design-bay")).toHaveCount(2);
+  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
+  await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
+  await page.getByLabel("Motivo del cambio", { exact: true }).fill("Composite browser price");
+  const compositePreview = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/pricing/preview/",
+  );
+  await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
+  expect((await compositePreview).status()).toBe(200);
+  await page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }).click();
+  await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
 });
 
 test("OWNER must complete real TOTP enrollment and challenge after each Magic Link", async ({

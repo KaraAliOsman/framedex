@@ -57,6 +57,17 @@ class PositionResponseSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField()
 
 
+class ProjectVersionResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    revision_code = serializers.RegexField(r"^REV-[A-Z]+$")
+    authority_version = serializers.CharField()
+    bom_hash = serializers.RegexField(r"^[0-9a-f]{64}$", allow_null=True)
+    snapshot_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$", allow_null=True)
+    production_allowed = serializers.BooleanField(allow_null=True)
+    documentary_complete = serializers.BooleanField(allow_null=True)
+    emitted_at = serializers.DateTimeField()
+
+
 class ProjectResponseSerializer(ProjectWriteSerializer):
     id = serializers.UUIDField()
     code = serializers.CharField()
@@ -70,14 +81,16 @@ class ProjectResponseSerializer(ProjectWriteSerializer):
             "CANCELLED",
         ]
     )
-    current_revision = serializers.CharField()
+    current_revision = serializers.RegexField(r"^REV-[A-Z]+$")
     total_price_net = serializers.CharField()
     total_price_tax = serializers.CharField()
     total_price_gross = serializers.CharField()
     pricing_current = serializers.BooleanField()
+    current_pricing_operation_id = serializers.UUIDField(allow_null=True)
     position_count = serializers.IntegerField()
     updated_at = serializers.DateTimeField()
     positions = PositionResponseSerializer(many=True, required=False)
+    versions = ProjectVersionResponseSerializer(many=True, required=False)
 
 
 class ProjectListResponseSerializer(serializers.Serializer):
@@ -87,6 +100,15 @@ class ProjectListResponseSerializer(serializers.Serializer):
 class CloneProjectSerializer(StrictSerializer):
     name = serializers.CharField(max_length=255, required=False)
     expected_updated_at = serializers.DateTimeField()
+
+
+class SuccessorRequestSerializer(StrictSerializer):
+    confirmed = serializers.BooleanField()
+
+    def validate_confirmed(self, value):
+        if not value:
+            raise serializers.ValidationError("Successor confirmation required")
+        return value
 
 
 class DeletePositionSerializer(StrictSerializer):

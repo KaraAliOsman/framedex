@@ -1,4 +1,4 @@
-"""Atomic APPLIED-pricing freeze into one immutable documentary REV-A."""
+"""Atomic APPLIED-pricing freeze into immutable documentary revisions."""
 
 from __future__ import annotations
 
@@ -225,33 +225,37 @@ def freeze_revision_a(
             [org_id, project_id],
             "project_not_found",
         )
+        revision = str(project["current_revision"])
         existing = rows(
             "SELECT id,pricing_operation_id,revision_code,bom_hash,snapshot_sha256,"
             "production_allowed,documentary_complete,emitted_at "
-            "FROM public.project_versions WHERE project_id=%s AND org_id=%s",
-            [project_id, org_id],
+            "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
+            "AND revision_code=%s",
+            [project_id, org_id, revision],
         )
         if existing:
             if len(existing) != 1 or str(existing[0]["pricing_operation_id"]) != str(
                 pricing_operation_id
             ):
-                raise DocumentaryError("initial_revision_already_sealed")
+                raise DocumentaryError("revision_already_sealed")
             return {
                 **{key: (str(value) if isinstance(value, UUID) else value)
                    for key, value in existing[0].items()},
                 "pricing_operation_id": str(pricing_operation_id),
                 "created": False,
             }
-        if project["status"] != "DRAFT" or project["current_revision"] != "REV-A":
-            raise DocumentaryError("initial_revision_not_available")
+        if project["status"] != "DRAFT":
+            raise DocumentaryError("revision_not_available")
         operation = one(
             "SELECT id,org_id,project_id,requested_by,request::text,input_snapshot::text,"
-            "result::text,source_revision,state,approved_by,approved_at,reason,created_at "
+            "result::text,source_revision,revision_code,state,approved_by,approved_at,reason,created_at "
             "FROM public.pricing_operations WHERE id=%s AND org_id=%s AND project_id=%s",
             [pricing_operation_id, org_id, project_id],
             "pricing_operation_not_found",
         )
-        if operation["state"] != "APPLIED":
+        if operation["state"] != "APPLIED" or str(
+            operation["revision_code"] or "REV-A"
+        ) != revision:
             raise DocumentaryError("applied_pricing_authority_required")
         project_input = one(
             "SELECT * FROM public.project_documentary_inputs "
@@ -300,9 +304,11 @@ def freeze_revision_a(
                 raise DocumentaryError("documentary_geometry_incomplete")
             result = computation.result
             current_bom = result.model_dump(mode="json")
+            stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
+            stored_bom.pop("calculation_hash", None)
             if position_id not in priced_bom or not _same_documentary_value(
                 current_bom, priced_bom[position_id]
-            ) or not _same_documentary_value(current_bom, decoded(position["bom_snapshot"])):
+            ) or not _same_documentary_value(current_bom, stored_bom):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
             annotations = workshop_annotations(position["workshop_annotations"])
@@ -478,7 +484,6 @@ def freeze_revision_a(
             hardware_mappings=purchase_authorities.hardware_mappings,
             panel_authorities=purchase_authorities.panel_authorities,
         )
-        revision = "REV-A"
         bom_hash = bom_hash_v1(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
         )
@@ -547,7 +552,7 @@ def freeze_revision_a(
             "project_id,org_id,revision_code,snapshot_json,pdf_storage_path,emitted_by,emitted_at,"
             "authority_version,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,"
             "production_allowed,documentary_complete) "
-            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,'SHOT09_V1',%s,%s,%s,%s,TRUE,%s) "
+            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,'SHOT10_V1',%s,%s,%s,%s,TRUE,%s) "
             "RETURNING id,revision_code,bom_hash,snapshot_sha256,production_allowed,"
             "documentary_complete,emitted_at",
             [project_id, org_id, revision,
@@ -598,6 +603,13 @@ def freeze_revision_a(
                  requirement.unit, requirement.quantity, json_text(specification),
                  json_text(requirement.source_trace)],
             )
+        with commercial_backend():
+            one(
+                "UPDATE public.projects SET status='QUOTED',updated_at=clock_timestamp() "
+                "WHERE id=%s AND org_id=%s AND status='DRAFT' AND current_revision=%s RETURNING id",
+                [project_id, org_id, revision],
+                "revision_state_transition_failed",
+            )
         return {
             "id": str(version_id),
             "pricing_operation_id": str(pricing_operation_id),
@@ -610,6 +622,181 @@ def freeze_revision_a(
             "emitted_at": sealed_at,
             "purchase_projection_hash": purchase.projection_hash,
         }
+
+
+def _default_workshop_and_glass(
+    position: dict[str, object], org_id: UUID
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    try:
+        tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
+        color = (
+            "WHITE"
+            if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
+            else "FOILED"
+        )
+        system_id = UUID(str(position["system_id"]))
+        params = SystemParamsRepository().load_visible(system_id, org_id)
+        root = normalized_root_from_api(
+            parametric_tree=tree,
+            nominal_width_mm=D(str(position["width_mm"])),
+            nominal_height_mm=D(str(position["height_mm"])),
+            color=color,
+            params=params,
+        )
+        computation = compute_geometry(root, params, diagnostic=True)
+        workshop: list[dict[str, object]] = []
+        if computation.openings:
+            for opening in computation.openings:
+                w = opening.width_mm
+                left_drain = min(D("100"), (w / D("4")).quantize(D("0.01"), rounding=ROUND_HALF_UP))
+                center_drain = (w / D("2")).quantize(D("0.01"), rounding=ROUND_HALF_UP)
+                right_drain = max(left_drain, (w - left_drain).quantize(D("0.01"), rounding=ROUND_HALF_UP))
+                drains = sorted({left_drain, center_drain, right_drain})
+                workshop.append({
+                    "bay_id": opening.bay_id,
+                    "leaf_id": None,
+                    "bottom_drain_holes_mm": [str(d) for d in drains],
+                    "closing_points_perimeter_mm": None,
+                    "continuous_width_mm": str(w),
+                    "finish_class": "WHITE",
+                    "has_coupler": False,
+                })
+        glass: list[dict[str, object]] = []
+        if computation.manufacturing_trace and computation.manufacturing_trace.infills:
+            glass_targets = {
+                (infill.bay_id, infill.leaf_id)
+                for infill in computation.manufacturing_trace.infills
+                if infill.kind == "GLASS"
+            }
+            for bay_id, leaf_id in sorted(glass_targets):
+                glass.append({
+                    "schema_version": 1,
+                    "bay_id": bay_id,
+                    "leaf_id": leaf_id,
+                    "edges": {"top": False, "right": False, "bottom": False, "left": False},
+                })
+        return workshop, glass
+    except Exception:
+        return [], []
+
+
+def prepare_documentary_inputs(
+    *, org_id: UUID, project_id: UUID
+) -> dict[str, object]:
+    project = one(
+        "SELECT id,status,current_revision FROM public.projects WHERE id=%s AND org_id=%s",
+        [project_id, org_id],
+        "project_not_found",
+    )
+    positions = rows(
+        "SELECT position.id,position.system_id,position.location_tag,position.width_mm,"
+        "position.height_mm,position.color_interior,position.color_exterior,"
+        "position.parametric_tree,system.name AS system_name "
+        "FROM public.project_positions position JOIN public.profile_systems system "
+        "ON system.id=position.system_id WHERE position.project_id=%s AND position.org_id=%s "
+        "ORDER BY position.position_index",
+        [project_id, org_id],
+    )
+    project_inputs = rows(
+        "SELECT payment_terms,quotation_valid_until FROM public.project_documentary_inputs "
+        "WHERE project_id=%s AND org_id=%s",
+        [project_id, org_id],
+    )
+    position_inputs = {
+        str(item["position_id"]): item
+        for item in rows(
+            "SELECT position_id,manufacturing_placement_policy_id,handle_requirement_policy_id,"
+            "reinforcement_cut_policy_id,workshop_annotations::text,structural_inputs::text,"
+            "glass_polishing::text,handle_intents::text,accessory_schedule::text,"
+            "legacy_handle_migration_confirmed FROM public.position_documentary_inputs "
+            "WHERE project_id=%s AND org_id=%s",
+            [project_id, org_id],
+        )
+    }
+    systems = {item["system_id"] for item in positions}
+
+    def policy_options(table):
+        if not systems:
+            return {}
+        placeholders = ",".join(["%s"] * len(systems))
+        values = rows(
+            f"SELECT id,system_id,version,authority->>'policy_id' AS label FROM public.{table} "
+            f"WHERE system_id IN ({placeholders}) AND (org_id IS NULL OR org_id=%s) "
+            "ORDER BY system_id,version DESC,id",
+            [*systems, org_id],
+        )
+        grouped = {}
+        for value in values:
+            grouped.setdefault(str(value["system_id"]), []).append(
+                {
+                    "id": value["id"],
+                    "label": value["label"] or f"Versión {value['version']}",
+                    "version": value["version"],
+                }
+            )
+        return grouped
+
+    placement = policy_options("manufacturing_placement_policies")
+    handles = policy_options("handle_requirement_policies")
+    reinforcement = policy_options("reinforcement_cut_policies")
+
+    def selected(existing, key, options):
+        if existing and existing[key] is not None:
+            return existing[key]
+        return options[0]["id"] if len(options) == 1 else None
+
+    prepared = []
+    for position in positions:
+        identity = str(position["id"])
+        existing = position_inputs.get(identity)
+        system_id = str(position["system_id"])
+        placement_options = placement.get(system_id, [])
+        handle_options = handles.get(system_id, [])
+        reinforcement_options = reinforcement.get(system_id, [])
+        existing_workshop = decoded(existing["workshop_annotations"]) if existing and existing["workshop_annotations"] is not None else None
+        existing_glass = decoded(existing["glass_polishing"]) if existing and existing["glass_polishing"] is not None else None
+        default_workshop, default_glass = ([], []) if (existing_workshop and existing_glass) else _default_workshop_and_glass(position, org_id)
+
+        workshop = existing_workshop if existing_workshop else default_workshop
+        glass = existing_glass if existing_glass else default_glass
+        prepared.append(
+            {
+                "position_id": position["id"],
+                "location_tag": position["location_tag"] or "",
+                "system_name": position["system_name"],
+                "placement_options": placement_options,
+                "handle_options": handle_options,
+                "reinforcement_options": reinforcement_options,
+                "manufacturing_placement_policy_id": selected(
+                    existing, "manufacturing_placement_policy_id", placement_options
+                ),
+                "handle_requirement_policy_id": selected(
+                    existing, "handle_requirement_policy_id", handle_options
+                ),
+                "reinforcement_cut_policy_id": selected(
+                    existing, "reinforcement_cut_policy_id", reinforcement_options
+                ),
+                "workshop_annotations": workshop,
+                "structural_inputs": decoded(existing["structural_inputs"])
+                if existing and existing["structural_inputs"] is not None else [],
+                "glass_polishing": glass,
+                "handle_intents": decoded(existing["handle_intents"])
+                if existing and existing["handle_intents"] is not None else [],
+                "accessory_schedule": decoded(existing["accessory_schedule"])
+                if existing and existing["accessory_schedule"] is not None else {"schema_version": 1, "coverage": "NONE_REQUIRED", "items": []},
+                "legacy_handle_migration_confirmed": bool(
+                    existing and existing["legacy_handle_migration_confirmed"]
+                ),
+            }
+        )
+    values = project_inputs[0] if project_inputs else {}
+    return {
+        "project_id": project["id"],
+        "revision_code": project["current_revision"],
+        "payment_terms": values.get("payment_terms", ""),
+        "quotation_valid_until": values.get("quotation_valid_until"),
+        "positions": prepared,
+    }
 
 
 def save_documentary_inputs(
@@ -639,7 +826,11 @@ def save_documentary_inputs(
             raise DocumentaryError("documentary_position_coverage_required")
     with documentary_backend():
         if rows(
-            "SELECT id FROM public.project_versions WHERE project_id=%s AND org_id=%s",
+            "SELECT version.id FROM public.project_versions version "
+            "JOIN public.projects project ON project.id=version.project_id "
+            "AND project.org_id=version.org_id "
+            "WHERE version.project_id=%s AND version.org_id=%s "
+            "AND version.revision_code=project.current_revision",
             [project_id, org_id],
         ):
             raise DocumentaryError("sealed_documentary_inputs_immutable")
@@ -699,7 +890,7 @@ def revision_snapshot(version_id: UUID, org_id: UUID) -> tuple[dict[str, object]
             [version_id, org_id],
             "project_version_not_found",
         )
-    if version["authority_version"] != "SHOT09_V1":
+    if version["authority_version"] not in ("SHOT09_V1", "SHOT10_V1"):
         raise DocumentaryError("legacy_version_not_eligible")
     snapshot = _json_object(version["snapshot_json"], "invalid_frozen_revision_snapshot")
     if snapshot_sha256_v1(snapshot) != str(version["snapshot_sha256"]):

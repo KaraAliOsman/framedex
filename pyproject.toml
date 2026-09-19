@@ -18,6 +18,10 @@ exclude = ["^docs/"]
 DJANGO_SETTINGS_MODULE = "config.settings"
 pythonpath = [".", "backend", "engine/src"]
 addopts = ["--strict-config", "--strict-markers"]
+filterwarnings = [
+    "error",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
 markers = [
     "rls_integration: requires a clean local Supabase PostgreSQL stack",
 ]

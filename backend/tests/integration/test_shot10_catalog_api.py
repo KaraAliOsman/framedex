@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from uuid import uuid4
 
 from django.db import DatabaseError, connection, transaction
 import pytest
@@ -43,6 +44,18 @@ def rejected_sql():
     with pytest.raises(DatabaseError):
         with transaction.atomic():
             yield
+
+
+@pytest.mark.parametrize("role", ["WORKSHOP_MANAGER", "INSTALLER"])
+def test_successor_roles_are_denied_before_project_lookup(real_rows, role):
+    set_role(real_rows, role)
+    response = client_for(real_rows).post(
+        f"/api/v1/projects/{uuid4()}/successor/",
+        {"confirmed": True},
+        format="json",
+    )
+    assert response.status_code == 403
+    assert response.data["error"]["code"] == "pricing_permission_denied"
 
 
 def test_manager_crud_and_exact_contents(real_rows):

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { ApiError } from "../../api/apiMutator";
+import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   positionsDestroy,
   projectsClone,
@@ -20,6 +20,11 @@ import type {
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import { ProjectPages } from "./ProjectPages";
+
+vi.mock("../../api/apiMutator", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/apiMutator")>();
+  return { ...actual, apiMutator: vi.fn() };
+});
 
 vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({
@@ -103,8 +108,10 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     total_price_tax: "0.00",
     total_price_gross: "0.00",
     pricing_current: false,
+    current_pricing_operation_id: null,
     position_count: 0,
     positions: [],
+    versions: [],
     ...overrides,
   };
 }
@@ -420,3 +427,103 @@ it.each([
     expect(projectsRetrieve).toHaveBeenCalledTimes(1);
   },
 );
+
+it("prepares and explicitly emits the current priced revision", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  const quoted = makeProject({
+    ...priced,
+    status: "QUOTED",
+    versions: [
+      {
+        id: "version-a",
+        revision_code: "REV-A",
+        authority_version: "SHOT10_V1",
+        bom_hash: "a".repeat(64),
+        snapshot_sha256: "b".repeat(64),
+        production_allowed: true,
+        documentary_complete: false,
+        emitted_at: "2026-09-19T12:00:00Z",
+      },
+    ],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(response(200, quoted));
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [{ id: "handle-a", label: "Manillas v1", version: 1 }],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            handle_intents: [],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    if (url.endsWith("/inputs/") && options.method === "PUT")
+      return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
+    if (url.endsWith("/freeze/") && options.method === "POST")
+      return response(201, { revision_code: "REV-A" }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  await screen.findByLabelText(t("quotation.paymentTerms"));
+  change("quotation.paymentTerms", "50% anticipo");
+  change("quotation.validUntil", "2026-10-19");
+  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+
+  await screen.findByText(t("projects.quoted"));
+  expect(screen.getAllByText("REV-A")).toHaveLength(2);
+  expect(apiMutator).toHaveBeenCalledTimes(3);
+  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  expect(JSON.parse(String((saveRequest[1] as RequestInit).body))).toMatchObject({
+    payment_terms: "50% anticipo",
+    quotation_valid_until: "2026-10-19",
+    positions: [{ location_tag: "Dormitorio principal" }],
+  });
+});
+
+it("opens one idempotent editable successor from a quoted revision", async () => {
+  const quoted = makeProject({ status: "QUOTED", versions: [] });
+  const successor = makeProject({ current_revision: "REV-B" });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, quoted))
+    .mockResolvedValue(response(200, successor));
+  vi.mocked(apiMutator).mockResolvedValue(
+    response(201, { ...successor, successor_created: true }) as never,
+  );
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.editQuoted") }));
+
+  await screen.findByText("REV-B");
+  expect(apiMutator).toHaveBeenCalledTimes(1);
+  expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
+  expect(window.confirm).toHaveBeenCalledWith(t("quotation.successorConfirm"));
+});

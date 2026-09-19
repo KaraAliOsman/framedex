@@ -35,6 +35,7 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   SLIDING_2L: "pricing.sliding",
   DOOR_ENTRY: "pricing.door",
   AWNING: "pricing.awning",
+  COMPOSITE: "pricing.composite",
   RETAIL: "pricing.retail",
   ARCHITECT: "pricing.architect",
   CONSTRUCTION: "pricing.construction",
@@ -83,7 +84,7 @@ const fields: Record<string, Field[]> = {
     {
       name: "typology",
       label: "pricing.typology",
-      options: ["FIXED", "TURN", "TILT_TURN", "SLIDING_2L", "DOOR_ENTRY", "AWNING"],
+      options: ["FIXED", "TURN", "TILT_TURN", "SLIDING_2L", "DOOR_ENTRY", "AWNING", "COMPOSITE"],
     },
     { name: "pricing_mode", label: "pricing.mode", options: modes },
     { name: "currency", label: "pricing.currency", options: ["CLP", "USD"] },

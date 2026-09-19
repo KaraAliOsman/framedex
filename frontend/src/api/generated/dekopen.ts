@@ -28,6 +28,7 @@ import type {
   DesignOptions,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
+  DocumentaryPreparationResponse,
   DraftProjectRequest,
   DraftResponse,
   EligibilityRequestRequest,
@@ -64,6 +65,7 @@ import type {
   PurchasingState,
   SendOrderRequestRequest,
   SignedAccessResponse,
+  SuccessorRequestRequest,
   SystemList,
   SystemResponse,
   SystemWriteRequest,
@@ -1813,6 +1815,78 @@ export const documentaryFreezeRevisionA = async (
   );
 };
 
+export type documentaryPrepareInputsResponse200 = {
+  data: DocumentaryPreparationResponse;
+  status: 200;
+};
+
+export type documentaryPrepareInputsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type documentaryPrepareInputsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type documentaryPrepareInputsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type documentaryPrepareInputsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type documentaryPrepareInputsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type documentaryPrepareInputsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type documentaryPrepareInputsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type documentaryPrepareInputsResponseSuccess = documentaryPrepareInputsResponse200 & {
+  headers: Headers;
+};
+export type documentaryPrepareInputsResponseError = (
+  | documentaryPrepareInputsResponse400
+  | documentaryPrepareInputsResponse401
+  | documentaryPrepareInputsResponse403
+  | documentaryPrepareInputsResponse404
+  | documentaryPrepareInputsResponse409
+  | documentaryPrepareInputsResponse422
+  | documentaryPrepareInputsResponse503
+) & {
+  headers: Headers;
+};
+
+export type documentaryPrepareInputsResponse =
+  documentaryPrepareInputsResponseSuccess | documentaryPrepareInputsResponseError;
+
+export const getDocumentaryPrepareInputsUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/inputs/`;
+};
+
+export const documentaryPrepareInputs = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<documentaryPrepareInputsResponse> => {
+  return apiMutator<documentaryPrepareInputsResponse>(getDocumentaryPrepareInputsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type documentarySaveInputsResponse200 = {
   data: DocumentaryInputsResponse;
   status: 200;
@@ -3447,6 +3521,96 @@ export const positionsCreate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(positionWriteRequest),
+  });
+};
+
+export type projectsStartSuccessorResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsStartSuccessorResponse201 = {
+  data: ProjectResponse;
+  status: 201;
+};
+
+export type projectsStartSuccessorResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsStartSuccessorResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsStartSuccessorResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsStartSuccessorResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsStartSuccessorResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsStartSuccessorResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsStartSuccessorResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsStartSuccessorResponseSuccess = (
+  projectsStartSuccessorResponse200 | projectsStartSuccessorResponse201
+) & {
+  headers: Headers;
+};
+export type projectsStartSuccessorResponseError = (
+  | projectsStartSuccessorResponse400
+  | projectsStartSuccessorResponse401
+  | projectsStartSuccessorResponse403
+  | projectsStartSuccessorResponse404
+  | projectsStartSuccessorResponse409
+  | projectsStartSuccessorResponse422
+  | projectsStartSuccessorResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsStartSuccessorResponse =
+  projectsStartSuccessorResponseSuccess | projectsStartSuccessorResponseError;
+
+export const getProjectsStartSuccessorUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/successor/`;
+};
+
+export const projectsStartSuccessor = async (
+  projectId: string,
+  successorRequestRequest: SuccessorRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsStartSuccessorResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsStartSuccessorResponse>(getProjectsStartSuccessorUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(successorRequestRequest),
   });
 };
 

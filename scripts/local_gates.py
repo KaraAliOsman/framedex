@@ -148,13 +148,12 @@ def _wait_for_server(process: subprocess.Popen[str], url: str) -> None:
     raise RuntimeError(f"Gate server readiness timed out: {url}")
 
 
-def run_auth_e2e(env: Mapping[str, str]) -> None:
+def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     require_mailpit(env)
     _free_port(8000)
     _free_port(5173)
     node = executable("node")
     backend_env = dict(env)
-    backend_env.pop("SUPABASE_SERVICE_ROLE_KEY", None)
     frontend_env = {
         key: value for key, value in env.items()
         if key not in {"DATABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SECRET_KEY", "JWT_SECRET"}
@@ -184,7 +183,7 @@ def run_auth_e2e(env: Mapping[str, str]) -> None:
         _wait_for_server(processes[0], "http://127.0.0.1:8000/api/schema/")
         _wait_for_server(processes[1], "http://127.0.0.1:5173/login")
         run(
-            [node, "node_modules/@playwright/test/cli.js", "test"],
+            [node, "node_modules/@playwright/test/cli.js", "test", *test_args],
             cwd=FRONTEND, env=env,
         )
     except BaseException:

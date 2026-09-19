@@ -22,6 +22,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import "./projects.css";
 import { ProjectBom } from "./ProjectPositionEditor";
+import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 
 const fields = [
   ["name", "projects.name", "text", 255],
@@ -391,8 +392,8 @@ function ProjectWorkspace({
               {t("projects.edit")}
             </button>
           )}
-          {editable && (
-            <button disabled={disabled} onClick={() => void clone(project!)}>
+          {project && canWrite && (
+            <button disabled={disabled} onClick={() => void clone(project)}>
               {t("projects.cloneDraft")}
             </button>
           )}
@@ -452,6 +453,12 @@ function ProjectWorkspace({
               )}
             </dl>
           )}
+          <ProjectQuotationPanel
+            project={project}
+            orgId={orgId}
+            canWrite={canWrite}
+            onChanged={() => query.refetch()}
+          />
           <section>
             <div className="projects-actions">
               <h2>{t("projects.positions")}</h2>
@@ -460,9 +467,12 @@ function ProjectWorkspace({
                   {t("projects.addPosition")}
                 </Link>
               )}
-              {canWrite && project.position_count > 0 && (
-                <Link to={`/projects/${project.id}/pricing`}>{t("projects.priceProject")}</Link>
-              )}
+              {canWrite &&
+                project.status === "DRAFT" &&
+                !project.pricing_current &&
+                project.position_count > 0 && (
+                  <Link to={`/projects/${project.id}/pricing`}>{t("projects.priceProject")}</Link>
+                )}
             </div>
             {project.position_count === 0 && <p>{t("projects.noPositions")}</p>}
             {project.positions?.map((position) => (

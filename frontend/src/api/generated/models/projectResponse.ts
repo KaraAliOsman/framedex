@@ -7,6 +7,7 @@
  */
 import type { PositionResponse } from "./positionResponse";
 import type { ProjectResponseStatusEnum } from "./projectResponseStatusEnum";
+import type { ProjectVersionResponse } from "./projectVersionResponse";
 
 export interface ProjectResponse {
   /** @maxLength 255 */
@@ -24,12 +25,16 @@ export interface ProjectResponse {
   id: string;
   code: string;
   status: ProjectResponseStatusEnum;
+  /** @pattern ^REV-[A-Z]+$ */
   current_revision: string;
   total_price_net: string;
   total_price_tax: string;
   total_price_gross: string;
   pricing_current: boolean;
+  /** @nullable */
+  current_pricing_operation_id: string | null;
   position_count: number;
   updated_at: string;
   positions?: PositionResponse[];
+  versions?: ProjectVersionResponse[];
 }

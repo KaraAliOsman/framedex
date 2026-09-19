@@ -1,19 +1,24 @@
 """Tenant-scoped project inputs; technical outputs belong exclusively to engine."""
 
-from uuid import uuid4
 from copy import deepcopy
+from decimal import Decimal, ROUND_HALF_UP
+import re
+from uuid import uuid4
 
 from django.db import connection
 from psycopg import sql
 
 from authentication.errors import contract_error
+from dekopen_engine.documentary_canonical import documentary_canonical_json_v1
 from dekopen_engine.models import EngineResult
 from dekopen_engine.snapshot import calculation_response, calculation_hash, result_payload
+from documents.repository import documentary_backend
 from engine_api.adapter import calculate_from_api, UnsupportedEngineContract
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
-from pricing.repository import commercial_backend, json_text, rows
+from pricing.repository import audit_reason, commercial_backend, json_text, rows
 from pricing.service import decoded
 from projects.serializers import PositionWriteSerializer
+from projects.typology import derive_typology
 
 METADATA = (
     "name",
@@ -69,25 +74,31 @@ def project_row(org_id, project_id, *, lock=False):
     return values[0]
 
 
-def _priced(org_id, project_id):
+def _pricing_authority(org_id, project_id, revision):
     with commercial_backend():
-        return bool(
-            rows(
-                "SELECT id FROM public.pricing_operations WHERE org_id=%s "
-                "AND project_id=%s AND state='APPLIED' LIMIT 1",
-                [org_id, project_id],
-            )
+        values = rows(
+            "SELECT id FROM public.pricing_operations WHERE org_id=%s AND project_id=%s "
+            "AND state='APPLIED' AND COALESCE(revision_code,'REV-A')=%s "
+            "ORDER BY approved_at DESC,id DESC LIMIT 1",
+            [org_id, project_id, revision],
         )
+    return values[0] if values else None
+
+
+def _priced(org_id, project_id, revision):
+    return _pricing_authority(org_id, project_id, revision) is not None
 
 
 def editable(org_id, project_id):
     project = project_row(org_id, project_id, lock=True)
-    if project["status"] != "DRAFT" or rows(
-        "SELECT id FROM public.project_versions WHERE org_id=%s AND project_id=%s",
-        [org_id, project_id],
-    ):
+    sealed = rows(
+        "SELECT id FROM public.project_versions WHERE org_id=%s AND project_id=%s "
+        "AND revision_code=%s",
+        [org_id, project_id, project["current_revision"]],
+    )
+    if project["status"] != "DRAFT" or sealed:
         raise contract_error(409, "revision_required", "Esta revisión está cerrada para edición.")
-    if _priced(org_id, project_id):
+    if _priced(org_id, project_id, project["current_revision"]):
         raise contract_error(
             409,
             "commercial_revision_required",
@@ -156,8 +167,23 @@ def positions(org_id, project_id):
     ]
 
 
+def project_versions(org_id, project_id):
+    return rows(
+        "SELECT id,revision_code,authority_version,bom_hash,snapshot_sha256,"
+        "production_allowed,documentary_complete,emitted_at "
+        "FROM public.project_versions WHERE project_id=%s AND org_id=%s "
+        "ORDER BY emitted_at,id",
+        [project_id, org_id],
+    )
+
+
 def project_public(org_id, row, *, detail=False):
-    value = {**row, "pricing_current": _priced(org_id, row["id"])}
+    authority = _pricing_authority(org_id, row["id"], row["current_revision"])
+    value = {
+        **row,
+        "pricing_current": authority is not None,
+        "current_pricing_operation_id": authority["id"] if authority else None,
+    }
     for key in METADATA:
         value[key] = value[key] or ""
     for key in ("total_price_net", "total_price_tax", "total_price_gross"):
@@ -168,6 +194,7 @@ def project_public(org_id, row, *, detail=False):
     )[0]["count"]
     if detail:
         value["positions"] = positions(org_id, row["id"])
+        value["versions"] = project_versions(org_id, row["id"])
     return value
 
 
@@ -255,21 +282,14 @@ def calculate_design(org_id, design):
 
 
 def _typology(tree):
-    if tree.get("type") == "ROOT":
-        tree = tree["children"][0]
-    opening = tree.get("opening_type")
-    if tree.get("children"):
+    try:
+        return derive_typology(tree)
+    except ValueError as error:
         raise contract_error(
             422,
-            "composite_pricing_contract_required",
-            "La clasificación comercial de un vano con divisiones requiere definición.",
-        )
-    return {
-        "TURN_LEFT": "TURN",
-        "TURN_RIGHT": "TURN",
-        "TILT_TURN_LEFT": "TILT_TURN",
-        "TILT_TURN_RIGHT": "TILT_TURN",
-    }.get(opening, opening)
+            "typology_derivation_failed",
+            "La apertura o división no permite determinar la tipología comercial.",
+        ) from error
 
 
 def save_position(org_id, project_id, data, *, position_id=None):
@@ -339,14 +359,154 @@ def delete_position(org_id, position_id, expected):
         )
 
 
-def clone_draft(org_id, actor_id, project_id, data):
-    """Copy editable inputs into a new draft, under the existing write contract.
+def _same_documentary_value(left, right):
+    return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
-    Applied/frozen sources remain closed until successor semantics are approved.
-    No prices, audits, orders or historical evidence are copied.
-    """
-    source = editable(org_id, project_id)
+
+def next_revision_code(value):
+    match = re.fullmatch(r"REV-([A-Z]+)", value)
+    if match is None:
+        raise contract_error(409, "revision_sequence_invalid", "La secuencia de revisiones no es válida.")
+    number = 0
+    for character in match.group(1):
+        number = number * 26 + ord(character) - ord("A") + 1
+    number += 1
+    suffix = ""
+    while number:
+        number, remainder = divmod(number - 1, 26)
+        suffix = chr(ord("A") + remainder) + suffix
+    return f"REV-{suffix}"
+
+
+def _latest_version(org_id, project_id):
+    with documentary_backend():
+        values = rows(
+            "SELECT id,revision_code,authority_version,snapshot_json::text AS snapshot_json,"
+            "bom_hash,snapshot_sha256,emitted_at FROM public.project_versions "
+            "WHERE project_id=%s AND org_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+            [project_id, org_id],
+        )
+    return values[0] if values else None
+
+
+def _assert_live_matches_version(org_id, project_id, version):
+    snapshot = decoded(version["snapshot_json"])
+    if not isinstance(snapshot, dict):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    with commercial_backend():
+        live_project = rows(
+            "SELECT * FROM public.projects WHERE id=%s AND org_id=%s",
+            [project_id, org_id],
+        )[0]
+        live_positions = rows(
+            "SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s "
+            "ORDER BY position_index",
+            [project_id, org_id],
+        )
+    frozen_project = snapshot.get("project")
+    frozen_positions = snapshot.get("positions")
+    frozen_bom = snapshot.get("bom")
+    pricing = snapshot.get("pricing")
+    if not all(
+        isinstance(value, (dict, list))
+        for value in (frozen_project, frozen_positions, frozen_bom, pricing)
+    ):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    project_fields = (
+        "code",
+        "name",
+        "client_name",
+        "client_rut",
+        "client_email",
+        "client_phone",
+        "delivery_address",
+        "notes_commercial",
+        "total_price_net",
+        "total_price_tax",
+        "total_price_gross",
+    )
+    if not _same_documentary_value(
+        {key: live_project[key] for key in project_fields},
+        {key: frozen_project.get(key) for key in project_fields},
+    ):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    frozen_by_id = {
+        str(item.get("id")): item for item in frozen_positions if isinstance(item, dict)
+    }
+    bom_by_id = {
+        str(item.get("position_id")): item.get("engine_result")
+        for item in frozen_bom
+        if isinstance(item, dict)
+    }
+    pricing_snapshot = pricing.get("input_snapshot")
+    pricing_result = pricing.get("result")
+    pricing_request = pricing.get("request")
+    if not all(isinstance(value, dict) for value in (pricing_snapshot, pricing_result, pricing_request)):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    try:
+        costs = {
+            int(index): Decimal(str(amount)) for index, amount in pricing_snapshot["cost_lines"]
+        }
+        prices = {int(index): Decimal(str(amount)) for index, amount in pricing_result["lines"]}
+        discount = Decimal(str(pricing_request["discount_pct"]))
+    except (KeyError, TypeError, ValueError) as error:
+        raise contract_error(
+            409, "revision_source_drift", "La revisión emitida no coincide con el proyecto."
+        ) from error
+    indexes = {int(item["position_index"]) for item in live_positions}
+    if (
+        set(frozen_by_id) != {str(item["id"]) for item in live_positions}
+        or set(costs) != indexes
+        or set(prices) != indexes
+    ):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    for position in live_positions:
+        identity = str(position["id"])
+        frozen = frozen_by_id[identity]
+        live_input = {
+            "id": identity,
+            "position_index": position["position_index"],
+            "quantity": position["quantity"],
+            "typology": position["typology"],
+            "system_id": position["system_id"],
+            "width_mm": position["width_mm"],
+            "height_mm": position["height_mm"],
+            "color_interior": position["color_interior"],
+            "color_exterior": position["color_exterior"],
+            "location_tag": position["location_tag"] or "",
+            "parametric_tree": decoded(position["parametric_tree"]),
+        }
+        frozen_input = {key: frozen.get(key) for key in live_input}
+        stored_bom = decoded(position["bom_snapshot"])
+        if isinstance(stored_bom, dict):
+            stored_bom = {key: value for key, value in stored_bom.items() if key != "calculation_hash"}
+        index = int(position["position_index"])
+        if (
+            not _same_documentary_value(live_input, frozen_input)
+            or not _same_documentary_value(stored_bom, bom_by_id.get(identity))
+            or Decimal(str(position["cost_net"]))
+            != costs[index].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            or Decimal(str(position["price_net"]))
+            != prices[index].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            or Decimal(str(position["discount_pct"])) != discount
+        ):
+            raise contract_error(
+                409, "revision_source_drift", "La revisión emitida no coincide con el proyecto."
+            )
+    if Decimal(str(live_project["total_cost_net"])) != Decimal(
+        str(pricing.get("applied_total_cost_net"))
+    ):
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+
+
+def clone_project(org_id, actor_id, project_id, data):
+    source = project_row(org_id, project_id, lock=True)
     unchanged(source, data["expected_updated_at"])
+    latest = _latest_version(org_id, project_id)
+    if source["status"] == "QUOTED":
+        if latest is None or latest["revision_code"] != source["current_revision"]:
+            raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+        _assert_live_matches_version(org_id, project_id, latest)
     source_positions = positions(org_id, project_id)
     metadata = {key: source[key] or "" for key in METADATA}
     metadata["name"] = data.get("name", "Copia de " + source["name"][:246])
@@ -362,3 +522,46 @@ def clone_draft(org_id, actor_id, project_id, data):
         serializer.is_valid(raise_exception=True)
         save_position(org_id, copied["id"], serializer.validated_data)
     return project_public(org_id, project_row(org_id, copied["id"]), detail=True)
+
+
+def clone_draft(org_id, actor_id, project_id, data):
+    return clone_project(org_id, actor_id, project_id, data)
+
+
+def start_successor(org_id, project_id):
+    project = project_row(org_id, project_id, lock=True)
+    latest = _latest_version(org_id, project_id)
+    if latest is None:
+        raise contract_error(409, "successor_requires_emission", "Emite la cotización antes de revisarla.")
+    successor = next_revision_code(latest["revision_code"])
+    if project["status"] == "DRAFT" and project["current_revision"] == successor:
+        return {
+            **project_public(org_id, project_row(org_id, project_id), detail=True),
+            "successor_created": False,
+        }
+    if project["status"] != "QUOTED":
+        raise contract_error(409, "successor_status_invalid", "Este estado no permite una nueva revisión.")
+    if latest["revision_code"] != project["current_revision"]:
+        raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
+    _assert_live_matches_version(org_id, project_id, latest)
+    if project_versions(org_id, project_id)[-1]["revision_code"] != latest["revision_code"]:
+        raise contract_error(409, "revision_sequence_invalid", "La secuencia de revisiones no es válida.")
+    audit_reason(f"Open {successor}; invalidate {latest['revision_code']} live commercial authority")
+    with commercial_backend():
+        updated_positions = rows(
+            "UPDATE public.project_positions SET cost_net=0.00,price_net=0.00,discount_pct=0.0000,"
+            "updated_at=clock_timestamp() WHERE project_id=%s AND org_id=%s RETURNING id",
+            [project_id, org_id],
+        )
+        updated_projects = rows(
+            "UPDATE public.projects SET status='DRAFT',current_revision=%s,total_cost_net=0.00,"
+            "total_price_net=0.00,total_price_tax=0.00,total_price_gross=0.00,"
+            "updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
+            [successor, project_id, org_id],
+        )
+    if not updated_positions or len(updated_projects) != 1:
+        raise contract_error(403, "successor_permission_denied", "Tu rol no permite crear revisiones.")
+    return {
+        **project_public(org_id, project_row(org_id, project_id), detail=True),
+        "successor_created": True,
+    }

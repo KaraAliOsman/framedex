@@ -57,7 +57,7 @@ def _version(version_id: UUID, org_id: UUID) -> dict[str, object]:
         [version_id, org_id],
         "project_version_not_found",
     )
-    if version["authority_version"] != "SHOT09_V1":
+    if version["authority_version"] not in ("SHOT09_V1", "SHOT10_V1"):
         raise DocumentaryError("legacy_version_not_eligible")
     return version
 
@@ -118,7 +118,7 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             versions = rows(
                 "SELECT id,project_id,revision_code,bom_hash,snapshot_sha256,"
                 "documentary_complete,emitted_at FROM public.project_versions "
-                "WHERE org_id=%s AND authority_version='SHOT09_V1' "
+                "WHERE org_id=%s AND authority_version IN ('SHOT09_V1','SHOT10_V1') "
                 "ORDER BY emitted_at DESC,id",
                 [org_id],
             )

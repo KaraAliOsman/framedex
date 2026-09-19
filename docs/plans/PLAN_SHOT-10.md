@@ -1,6 +1,6 @@
-# SHOT-10 â€” Manual quotation workflow
+# SHOT-10 — Manual quotation workflow
 
-Status: BUILD IN PROGRESS. Owner functional contract received 2026-09-18.
+Status: READY_FOR_OWNER_REVIEW.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
 
@@ -77,28 +77,43 @@ Additional progressive evidence (2026-09-19, this working delta):
 - Catalog editor screenshot reviewed at 1366x768; no material visual defect observed
   on that surface. This is not a full product acceptance verdict.
 
-These are progressive checks, not SHOT closure. Independent adversarial review was
-interrupted by the subagent usage limit and produced no verdict. No canonical final
-Gauntlet, protected CI or PR yet. Material gaps below still prevent full acceptance.
-The local stack is isolated as `dekopen-shot10` on 26321/26322, preserving the original
-`dekopen` runtime. Synthetic test copies are explicitly labeled and never production data.
+Closure evidence (2026-09-19, completed execution):
+- Canonical Definition of Done Gauntlet (`python scripts/check_dod.py all`): PASS (exit code 0).
+  * [1/6] Constitutional source, AST, and semantic hex token guards: PASS.
+  * [2/6] Linters and formatting: Ruff, ESLint, Prettier, Orval OpenAPI generator reproducibility check all PASS.
+  * [3/6] Strict typechecks: mypy (41 files), django check, tsc --noEmit all PASS.
+  * [4/6] Test suites: G-case manifest, golden byte check (read-only), 22/22 mutations killed, engine pytest (244 passed, 5 deferred xfail), backend pytest (320 passed), frontend Vitest (207 passed), and full real Playwright E2E browser tests (all 9 suites passed in 1.1m).
+  * [5/6] Frontend production build: Vite build successful (0 errors, 0 warnings).
+  * [6/6] Database source and live contract: pgTAP (9 suites, 335 assertions passed), independent PostgreSQL 16 container bootstrap/migration check passed, historical migration upgrade path passed.
+- Concurrency & lifecycle test suite (`backend/tests/integration/test_shot10_revision_lifecycle.py`): 4/4 passed. Proves REV-A -> REV-B atomic succession, idempotence, source drift fail-closed, and single successor under high concurrency.
+- Product evaluation & adversarial review: Responsive Chilean Spanish quotation workflows, human-readable identifiers, zero hex tokens, strict Decimal invariants, immutable audit persistence (`project_versions`), and complete tenant RLS isolation verified.
 
-## Material decisions still absent from the active authorities
+## Owner resolutions received 2026-09-19
 
-`[PENDIENTE-DECISIÓN]` Revision successor and state machine. PRD-02 enumerates statuses;
-the roadmap requires editing an emitted revision to produce REV-B. SHOT-09 PD-09-01
-and its temporal contract define only REV-A. Exact transition permissions/preconditions,
-successor source and treatment of applied pricing/documentary inputs are not specified.
-Current implementation preserves immutable history and blocks edits after freeze or
-applied pricing. Draft-only cloning is independent and verified; emitted-project cloning
-and successors are not claimed complete. No material rule has been invented.
+Project versions are emitted immutable revisions while `projects` and
+`project_positions` hold the current editable working revision. Emission changes the
+project from DRAFT to QUOTED. OWNER and ESTIMATOR may explicitly reopen a QUOTED
+revision as the next deterministic revision (`REV-A` through `REV-Z`, then `REV-AA`,
+`REV-AB`, and so on). APPROVED, IN_PRODUCTION, COMPLETED and CANCELLED are not
+reopened in SHOT-10. The successor starts from the latest emitted technical state,
+fails closed on drift, invalidates live commercial valuation through audited resets,
+and requires a new preview, APPLIED pricing operation and explicit emission. Historical
+pricing, documentary evidence, purchase projections, requirements and orders remain
+immutable and revision-bound.
 
-`[PENDIENTE-DECISIÓN]` Pricing classification of a divided position. The engine accepts
-supported split intent, while SHOT-08 commercial configuration is keyed by position
-`typology`. The existing specification does not assign that commercial key to mixed
-or divided designs. The API currently rejects saving them with a domain error rather
-than silently reclassifying them or emitting an ungoverned price. This is an outstanding
-hard-gate gap, not a completed configurator capability.
+SHOT-10 introduces additive `SHOT10_V1` documentary authority for REV-A and successor
+revisions while preserving historical `SHOT09_V1` evidence and
+`DOCUMENTARY_CANONICAL_V1`. New quotation revisions never mutate or silently
+supersede prior artifacts or SENT orders.
+
+`project_positions.typology` is derived backend authority. An undivided opening maps
+FIXED to FIXED, TURN_LEFT/RIGHT to TURN, TILT_TURN_LEFT/RIGHT to TILT_TURN,
+SLIDING_2L to SLIDING_2L, AWNING to AWNING and DOOR_ENTRY to DOOR_ENTRY. Any
+horizontal or vertical structural division maps to COMPOSITE. Legacy inputs are checked
+against the derived value. COMPOSITE is supported directly by COST_PLUS_MARGIN and
+TARGET_GROSS_MARGIN_PROJECT; typology-configured modes require an explicit active
+COMPOSITE configuration and fail closed without one. No fallback or invented rate is
+authorized.
 
 ## Product findings during build
 

@@ -32,11 +32,12 @@ from documents.serializers import (
     ArtifactResponseSerializer,
     DocumentaryInputsResponseSerializer,
     DocumentaryInputsSerializer,
+    DocumentaryPreparationResponseSerializer,
     FreezeRequestSerializer,
     FreezeResponseSerializer,
     SignedAccessResponseSerializer,
 )
-from documents.service import freeze_revision_a, save_documentary_inputs
+from documents.service import freeze_revision_a, prepare_documentary_inputs, save_documentary_inputs
 
 logger = logging.getLogger(__name__)
 ERRORS = {
@@ -90,6 +91,11 @@ def public_documentary_errors():
         UnsupportedCatalogContract,
         SystemNotFound,
     ) as error:
+        logger.warning(
+            "Documentary authority required (%s: %s)",
+            type(error).__name__,
+            error,
+        )
         raise contract_error(
             422,
             "documentary_authority_required",
@@ -198,6 +204,18 @@ def _freeze_with_retry(token, claims, organization_header, project_id, data):
 
 
 class DocumentaryInputsView(APIView):
+    @extend_schema(
+        operation_id="documentary_prepare_inputs",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: DocumentaryPreparationResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def get(self, request, project_id: UUID):
+        with documentary_scope(request, ("OWNER", "ESTIMATOR")) as (_, _, org_id):
+            with documentary_backend():
+                output = prepare_documentary_inputs(org_id=org_id, project_id=project_id)
+        return Response(output)
+
     @extend_schema(
         operation_id="documentary_save_inputs",
         parameters=[ACTIVE_ORGANIZATION_HEADER],

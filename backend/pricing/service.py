@@ -168,11 +168,13 @@ def preview(org_id, actor, request):
     audit_reason(request['reason'])
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,request,input_snapshot,'
-        'result,source_revision,state,reason) VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s) RETURNING id',
+        'result,source_revision,revision_code,state,reason) '
+        'VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id',
         [org_id,project['id'],request['_actor_id'],
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
          json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines}),
-         json_text(asdict(output)),source_revision(project,positions),'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
+         json_text(asdict(output)),source_revision(project,positions),project['current_revision'],
+         'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     return {'id':str(record['id']),'state':'PENDING' if state=='PENDING' else 'PREVIEW',
             'project_id':str(project['id']),'discount_pct':str(discount),
             'currency':request['currency'],**asdict(output)}
@@ -181,6 +183,7 @@ def preview(org_id, actor, request):
 def operation_public(operation):
     return {'id':str(operation['id']),'state':operation['state'],
             'project_id':str(operation['project_id']),
+            'revision_code':operation.get('revision_code') or 'REV-A',
             'discount_pct':str(decoded(operation['request'])['discount_pct']),
             'currency':decoded(operation['request'])['currency'],**decoded(operation['result'])}
 
@@ -206,7 +209,9 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                   [operation['project_id'],org_id])
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
                      'ORDER BY position_index FOR UPDATE',[project['id'],org_id])
-    if project['status'] != 'DRAFT' or source_revision(project,positions) != operation['source_revision']:
+    if (project['status'] != 'DRAFT'
+            or (operation.get('revision_code') or 'REV-A') != project['current_revision']
+            or source_revision(project,positions) != operation['source_revision']):
         raise PricingError('stale_pricing_operation')
     output = decoded(operation['result'])
     snapshot = decoded(operation['input_snapshot'])

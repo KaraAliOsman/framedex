@@ -12,6 +12,8 @@ import type { StateEnum } from "./stateEnum";
 export interface PriceResponse {
   id: string;
   project_id: string;
+  /** @pattern ^REV-[A-Z]+$ */
+  revision_code: string;
   discount_pct: string;
   state: StateEnum;
   currency: CurrencyEnum;

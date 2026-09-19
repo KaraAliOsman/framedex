@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from dekopen_engine.commercial import PricingMode
 from engine_api.serializers import EngineCalculateRequestSerializer
+from projects.typology import COMMERCIAL_TYPOLOGIES
 
 MODES = [mode.value for mode in PricingMode]
 
@@ -56,7 +57,7 @@ class RulesSerializer(StrictSerializer):
 
 class ConfigurationSerializer(StrictSerializer):
     context_code = serializers.CharField(max_length=100)
-    typology = serializers.CharField(max_length=50)
+    typology = serializers.ChoiceField(choices=COMMERCIAL_TYPOLOGIES)
     pricing_mode = serializers.ChoiceField(choices=MODES)
     currency = serializers.ChoiceField(choices=['CLP','USD'])
     rate_per_m2 = money(required=False,allow_null=True)
@@ -119,6 +120,7 @@ class LineResponseSerializer(serializers.Serializer):
 class PriceResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     project_id = serializers.UUIDField()
+    revision_code = serializers.RegexField(r'^REV-[A-Z]+$')
     discount_pct = serializers.CharField()
     state = serializers.ChoiceField(choices=['PREVIEW','PENDING','APPLIED','REJECTED'])
     currency = serializers.ChoiceField(choices=['CLP','USD'])

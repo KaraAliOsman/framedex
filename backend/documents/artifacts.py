@@ -64,7 +64,7 @@ def _revision_snapshot(
         [project_version_id, org_id],
         "project_version_not_found",
     )
-    if version["authority_version"] != "SHOT09_V1":
+    if version["authority_version"] not in ("SHOT09_V1", "SHOT10_V1"):
         raise DocumentaryError("legacy_version_not_eligible")
     snapshot = decoded(version["snapshot_json"])
     if not isinstance(snapshot, dict) or not all(isinstance(key, str) for key in snapshot):
