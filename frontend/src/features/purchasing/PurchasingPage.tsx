@@ -612,7 +612,8 @@ function EligibilityForm({
             const data = new FormData(event.currentTarget);
             const keys = requirements
               .filter((item) => data.get(`key_${item.id}`) === "on")
-              .map((item) => item.requirement_key);
+              .map((item) => item.requirement_key)
+              .sort();
             void action(
               request(`purchasing/versions/${versionId}/eligibilities/`, "POST", {
                 order_type: orderType,

@@ -277,6 +277,48 @@ it("drops the stale revision when the newly selected version fails to load", asy
   expect(screen.queryByText(t("purchasing.doc03"))).not.toBeInTheDocument();
 });
 
+it("submits eligibility keys in canonical order even when visual order differs", async () => {
+  const lowKey = "a".repeat(64);
+  const laterVisualRequirement = {
+    ...glassRequirement,
+    id: "req-glass-2",
+    requirement_key: lowKey,
+    purchasing_sku: "DVE-6-12-6",
+    quantity: "9",
+  };
+  // Visual/table order is [c…, a…] — intentionally NOT lexicographic.
+  mockState({
+    requirements: [glassRequirement, laterVisualRequirement, profileRequirement],
+    eligibilities: [],
+  });
+  renderPage();
+  const section = (await screen.findByText("4 EA")).closest("section")!;
+  const form = section.querySelector("details.purchasing-eligibility form")!;
+  expect(form).not.toBeNull();
+  fireEvent.change(form.querySelector('input[name="supplier_identity"]')!, {
+    target: { value: "supplier-glass-2" },
+  });
+  fireEvent.change(form.querySelector('input[name="supplier_name"]')!, {
+    target: { value: "Vidrios Segunda" },
+  });
+  fireEvent.change(form.querySelector('input[name="basis"]')!, {
+    target: { value: "Selección humana explícita" },
+  });
+  fireEvent.submit(form);
+  await waitFor(() =>
+    expect(apiMutator).toHaveBeenCalledWith(
+      `/api/v1/purchasing/versions/${versionItem.id}/eligibilities/`,
+      expect.objectContaining({ body: expect.any(String) }),
+    ),
+  );
+  const call = vi
+    .mocked(apiMutator)
+    .mock.calls.find((item) => String(item[0]).includes("eligibilities"))!;
+  const body = JSON.parse(String((call[1] as { body: string }).body));
+  expect(body.eligible_requirement_keys).toEqual([lowKey, glassRequirement.requirement_key]);
+  expect(body.eligible_requirement_keys).toEqual([...body.eligible_requirement_keys].sort());
+});
+
 it("maps backend blocker codes to actionable labels", async () => {
   mockState({
     blockers: [

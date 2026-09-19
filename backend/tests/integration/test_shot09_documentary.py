@@ -131,30 +131,31 @@ def _seed_project(org: UUID, owner: UUID, *, valid_annotations: bool = True) -> 
         [org, project_id, system_id, json_text(tree), result.model_dump_json()],
     )["id"]))
     with as_user(owner):
-        cost_list = admin_write(
-            "cost-lists", org,
-            {"supplier_name": "Fixture", "currency": "CLP", "valid_from": date(2026, 9, 1)},
-            "SHOT-09 fixture list",
-        )
-        for sku, unit in (
-            ("DEMO-BAR-MARCO", "BAR"),
-            ("DEMO-BAR-JQ-10", "BAR"),
-            ("DEMO-STEEL-BAR-MARCO", "BAR"),
-            ("GLASS-BASE", "M2"),
-        ):
-            admin_write(
-                "cost-items", org,
-                {"cost_list_id": cost_list["id"], "sku": sku, "item_type": "FIXTURE",
-                 "unit": unit, "unit_cost": D("100.0000")},
-                "SHOT-09 fixture item",
+        if not rows("SELECT id FROM public.pricing_rules WHERE org_id=%s", [org]):
+            cost_list = admin_write(
+                "cost-lists", org,
+                {"supplier_name": "Fixture", "currency": "CLP", "valid_from": date(2026, 9, 1)},
+                "SHOT-09 fixture list",
             )
-        admin_write(
-            "rules", org,
-            {"pricing_mode": "COST_PLUS_MARGIN", "default_margin_pct": D("0.3500"),
-             "tax_rate_pct": D("0.1900"), "waste_factor_pct": D("0.0800"),
-             "labor_rate_per_m2": D("15.00"), "installation_rate_per_m2": D("12.00")},
-            "SHOT-09 fixture rules",
-        )
+            for sku, unit in (
+                ("DEMO-BAR-MARCO", "BAR"),
+                ("DEMO-BAR-JQ-10", "BAR"),
+                ("DEMO-STEEL-BAR-MARCO", "BAR"),
+                ("GLASS-BASE", "M2"),
+            ):
+                admin_write(
+                    "cost-items", org,
+                    {"cost_list_id": cost_list["id"], "sku": sku, "item_type": "FIXTURE",
+                     "unit": unit, "unit_cost": D("100.0000")},
+                    "SHOT-09 fixture item",
+                )
+            admin_write(
+                "rules", org,
+                {"pricing_mode": "COST_PLUS_MARGIN", "default_margin_pct": D("0.3500"),
+                 "tax_rate_pct": D("0.1900"), "waste_factor_pct": D("0.0800"),
+                 "labor_rate_per_m2": D("15.00"), "installation_rate_per_m2": D("12.00")},
+                "SHOT-09 fixture rules",
+            )
         with commercial_backend():
             operation = preview(org, _tenant(org, "OWNER"), {
                 "project_id": project_id,
@@ -1173,3 +1174,272 @@ def test_purchasing_state_endpoint_reports_partial_eligibility_blocker(
     ]
     assert len(eligibility) == 1
     assert sorted(eligibility[0]["requirement_keys"]) == keys[1:]
+
+
+def _order_for_type(
+    org: UUID, actor: UUID, version_id: UUID, order_type: str
+) -> UUID:
+    state = purchasing_state(org, version_id)
+    type_lines = [
+        item for item in state["requirements"] if item["order_type"] == order_type
+    ]
+    assert len(type_lines) >= 1
+    keys = sorted(str(item["requirement_key"]) for item in type_lines)
+    eligibility = create_eligibility(
+        org_id=org, actor_id=actor, version_id=version_id,
+        data=_eligibility_data(order_type, keys, f"SUP-{order_type}"),
+    )
+    for line in type_lines:
+        allocate_requirement(
+            org_id=org, actor_id=actor,
+            requirement_id=UUID(str(line["id"])),
+            eligibility_id=UUID(str(eligibility["id"])),
+        )
+    orders, created = confirm_order_type_batch(
+        org_id=org, actor_id=actor, version_id=version_id,
+        order_type=order_type, confirmed=True,
+    )
+    assert created is True and len(orders) == 1
+    return UUID(orders[0]["id"])
+
+
+def test_eligibility_canonicalizes_arbitrary_key_order_and_rejects_duplicates(
+    documentary_tenant,
+) -> None:
+    org, _, users, _ = documentary_tenant
+    project_id, _, operation_id = _seed_project(org, users["OWNER"])
+    frozen = _freeze(org, users["OWNER"], project_id, operation_id)
+    version_id = UUID(frozen["id"])
+    with as_user(users["WORKSHOP_MANAGER"]):
+        state = purchasing_state(org, version_id)
+        by_type: dict[str, list[dict[str, object]]] = {}
+        for requirement in state["requirements"]:
+            by_type.setdefault(requirement["order_type"], []).append(requirement)
+        order_type, type_lines = max(by_type.items(), key=lambda item: len(item[1]))
+        keys = sorted(str(item["requirement_key"]) for item in type_lines)
+        assert len(keys) >= 2
+        unsorted = list(reversed(keys))
+        assert unsorted != keys
+        payload = _eligibility_data(order_type, keys, "SUP-UNORDERED")
+        payload["eligible_requirement_keys"] = unsorted
+        created = create_eligibility(
+            org_id=org, actor_id=users["WORKSHOP_MANAGER"], version_id=version_id,
+            data=payload,
+        )
+        with documentary_backend():
+            stored = one(
+                "SELECT eligible_requirement_keys::text "
+                "FROM public.supplier_eligibility_versions WHERE id=%s",
+                [UUID(created["id"])],
+            )
+            eligibility = one(
+                "SELECT content_hash FROM public.supplier_eligibility_versions WHERE id=%s",
+                [UUID(created["id"])],
+            )
+            version_row = one(
+                "SELECT project_id,bom_hash,snapshot_sha256 FROM public.project_versions "
+                "WHERE id=%s",
+                [version_id],
+            )
+        assert decoded(stored["eligible_requirement_keys"]) == keys
+        canonical = _eligibility_data(order_type, keys, "SUP-UNORDERED")
+        canonical["eligible_requirement_keys"] = keys
+        expected = documentary_sha256_v1({
+            "schema_version": 1,
+            "project_id": version_row["project_id"],
+            "project_version_id": version_id,
+            "bom_hash": version_row["bom_hash"],
+            "snapshot_sha256": version_row["snapshot_sha256"],
+            "order_type": order_type,
+            "supplier_identity": canonical["supplier_identity"],
+            "supplier_name": canonical["supplier_name"],
+            "supplier_details": canonical["supplier_details"],
+            "eligible_requirement_keys": keys,
+            "evidence": canonical["evidence"],
+            "version": canonical["version"],
+        })
+        assert str(eligibility["content_hash"]) == expected
+        duplicated = _eligibility_data(order_type, keys, "SUP-DUPLICATED")
+        duplicated["eligible_requirement_keys"] = [keys[0], keys[0]]
+        with pytest.raises(DocumentaryError, match="invalid_supplier_eligibility"):
+            create_eligibility(
+                org_id=org, actor_id=users["WORKSHOP_MANAGER"],
+                version_id=version_id, data=duplicated,
+            )
+
+
+def test_eligibility_endpoint_canonicalizes_unsorted_keys_and_rejects_duplicates(
+    documentary_tenant,
+) -> None:
+    org, _, users, _ = documentary_tenant
+    project_id, _, operation_id = _seed_project(org, users["OWNER"])
+    frozen = _freeze(org, users["OWNER"], project_id, operation_id)
+    version_id = UUID(frozen["id"])
+    with as_user(users["WORKSHOP_MANAGER"]):
+        state = purchasing_state(org, version_id)
+        by_type: dict[str, list[dict[str, object]]] = {}
+        for requirement in state["requirements"]:
+            by_type.setdefault(requirement["order_type"], []).append(requirement)
+        order_type, type_lines = max(by_type.items(), key=lambda item: len(item[1]))
+        keys = sorted(str(item["requirement_key"]) for item in type_lines)
+    assert len(keys) >= 2
+    unsorted = list(reversed(keys))
+    manager = SupabaseUser(id=users["WORKSHOP_MANAGER"], email="manager@example.test")
+    client = APIClient()
+    client.force_authenticate(user=manager, token=_freeze_token(users["WORKSHOP_MANAGER"]))
+    payload = _eligibility_data(order_type, keys, "SUP-API-UNORDERED")
+    payload["eligible_requirement_keys"] = unsorted
+    created = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/eligibilities/", payload,
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert created.status_code == 201, created.content
+    with as_user(users["WORKSHOP_MANAGER"]), documentary_backend():
+        stored = one(
+            "SELECT eligible_requirement_keys::text "
+            "FROM public.supplier_eligibility_versions WHERE id=%s",
+            [UUID(created.json()["id"])],
+        )
+    assert decoded(stored["eligible_requirement_keys"]) == keys
+    duplicated = _eligibility_data(order_type, keys, "SUP-API-DUP")
+    duplicated["eligible_requirement_keys"] = [keys[0], keys[0]]
+    rejected = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/eligibilities/", duplicated,
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert rejected.status_code == 400, rejected.content
+    malformed = _eligibility_data(order_type, keys, "SUP-API-MALFORMED")
+    malformed["eligible_requirement_keys"] = ["not-a-sha"]
+    rejected = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/eligibilities/", malformed,
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert rejected.status_code == 400, rejected.content
+    empty = _eligibility_data(order_type, keys, "SUP-API-EMPTY")
+    empty["eligible_requirement_keys"] = []
+    rejected = client.post(
+        f"/api/v1/purchasing/versions/{version_id}/eligibilities/", empty,
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert rejected.status_code == 400, rejected.content
+
+
+def test_artifact_replay_validates_active_org_for_multi_membership_user(
+    documentary_tenant, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    org, other, users, _ = documentary_tenant
+    FakeStorage.uploads = {}
+    FakeStorage.upload_calls = 0
+    FakeStorage.deleted = []
+    dual_user = users["WORKSHOP_MANAGER"]
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO public.tenancy_memberships(org_id,user_id,role) "
+            "VALUES(%s,%s,'OWNER')",
+            [other, dual_user],
+        )
+    project_id, _, operation_id = _seed_project(other, dual_user)
+    frozen = _freeze(other, dual_user, project_id, operation_id)
+    version_id = UUID(frozen["id"])
+    monkeypatch.setattr("documents.artifacts.SupabaseDocumentStorage", FakeStorage)
+    artifact, created = generate_artifact(
+        org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
+        project_version_id=version_id, order_id=None,
+        document_type="DOC-03", file_format="PDF",
+    )
+    assert created is True
+    uploads_after_create = FakeStorage.upload_calls
+    # Same user, active organization A, foreign scope identifiers from B: the
+    # occupied slot must never bypass active-org/version authority validation.
+    with pytest.raises(DocumentaryError):
+        generate_artifact(
+            org_id=org, actor_id=dual_user, role="WORKSHOP_MANAGER",
+            project_version_id=version_id, order_id=None,
+            document_type="DOC-03", file_format="PDF",
+        )
+    assert FakeStorage.upload_calls == uploads_after_create
+    manager = SupabaseUser(id=dual_user, email="dual@example.test")
+    client = APIClient()
+    client.force_authenticate(user=manager, token=_freeze_token(dual_user))
+    response = client.post(
+        "/api/v1/documents/artifacts/",
+        {
+            "document_type": "DOC-03",
+            "format": "PDF",
+            "project_version_id": str(version_id),
+        },
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert response.status_code in (403, 404), response.content
+    assert artifact["id"] not in response.content.decode()
+    access = client.post(
+        f"/api/v1/documents/artifacts/{artifact['id']}/access/", {},
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert access.status_code == 404, access.content
+    # The same user can still replay under the artifact's real organization.
+    replayed, replayed_created = generate_artifact(
+        org_id=other, actor_id=dual_user, role="WORKSHOP_MANAGER",
+        project_version_id=version_id, order_id=None,
+        document_type="DOC-03", file_format="PDF",
+    )
+    assert replayed_created is False and replayed["id"] == artifact["id"]
+
+
+def test_artifact_replay_rejects_order_bound_to_a_different_version(
+    documentary_tenant, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    org, _, users, _ = documentary_tenant
+    FakeStorage.uploads = {}
+    FakeStorage.upload_calls = 0
+    FakeStorage.deleted = []
+    project_x, _, operation_x = _seed_project(org, users["OWNER"])
+    frozen_x = _freeze(org, users["OWNER"], project_x, operation_x)
+    version_x = UUID(frozen_x["id"])
+    project_y, _, operation_y = _seed_project(org, users["OWNER"])
+    frozen_y = _freeze(org, users["OWNER"], project_y, operation_y)
+    version_y = UUID(frozen_y["id"])
+    monkeypatch.setattr("documents.artifacts.SupabaseDocumentStorage", FakeStorage)
+    with as_user(users["WORKSHOP_MANAGER"]):
+        order_y = _order_for_type(
+            org, users["WORKSHOP_MANAGER"], version_y, "SUPPLIER_GLASS_PO"
+        )
+    artifact, created = generate_artifact(
+        org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
+        project_version_id=version_y, order_id=order_y,
+        document_type="DOC-02", file_format="XLSX",
+    )
+    assert created is True
+    # The DOC-02/XLSX slot for order_y is occupied; replaying it bound to
+    # version_x must reject instead of returning the existing artifact.
+    with pytest.raises(DocumentaryError, match="order_not_found"):
+        generate_artifact(
+            org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
+            project_version_id=version_x, order_id=order_y,
+            document_type="DOC-02", file_format="XLSX",
+        )
+    manager = SupabaseUser(id=users["WORKSHOP_MANAGER"], email="manager@example.test")
+    client = APIClient()
+    client.force_authenticate(
+        user=manager, token=_freeze_token(users["WORKSHOP_MANAGER"])
+    )
+    response = client.post(
+        "/api/v1/documents/artifacts/",
+        {
+            "document_type": "DOC-02",
+            "format": "XLSX",
+            "project_version_id": str(version_x),
+            "order_id": str(order_y),
+        },
+        format="json", HTTP_X_ORGANIZATION_ID=str(org),
+    )
+    assert response.status_code in (403, 404), response.content
+    assert artifact["id"] not in response.content.decode()
+    # A consistent replay still resolves the existing artifact idempotently.
+    replayed, replayed_created = generate_artifact(
+        org_id=org, actor_id=users["WORKSHOP_MANAGER"], role="WORKSHOP_MANAGER",
+        project_version_id=version_y, order_id=order_y,
+        document_type="DOC-02", file_format="XLSX",
+    )
+    assert replayed_created is False and replayed["id"] == artifact["id"]
+    assert FakeStorage.upload_calls == 1

@@ -207,9 +207,10 @@ def create_eligibility(
         not isinstance(keys, list)
         or not keys
         or not all(isinstance(item, str) for item in keys)
-        or keys != sorted(set(keys))
+        or len(keys) != len(set(keys))
     ):
         raise DocumentaryError("invalid_supplier_eligibility")
+    keys = sorted(keys)
     with documentary_backend():
         version = _version(version_id, org_id)
         requirement_rows = _requirements(version_id, org_id, order_type)

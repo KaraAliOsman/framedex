@@ -123,20 +123,23 @@ def generate_artifact(
                     "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                     [slot],
                 )
-            existing = rows(
-                "SELECT * FROM public.document_artifacts "
-                "WHERE artifact_scope_id=%s AND document_type=%s AND format=%s",
-                [scope_id, document_type, file_format],
-            )
-            if existing:
-                if len(existing) != 1:
-                    raise DocumentaryError("artifact_slot_ambiguous")
-                return _metadata(existing[0]), False
+            # Authority and binding are validated before any slot reuse: an
+            # occupied slot never authorizes the request.
             version, frozen_revision = _revision_snapshot(project_version_id, org_id)
             order: dict[str, object] | None = None
             frozen: dict[str, object] = frozen_revision
             if order_id is not None:
                 order, frozen = _order_snapshot(order_id, project_version_id, org_id)
+            existing = rows(
+                "SELECT * FROM public.document_artifacts "
+                "WHERE org_id=%s AND project_version_id=%s AND artifact_scope=%s "
+                "AND artifact_scope_id=%s AND document_type=%s AND format=%s",
+                [org_id, project_version_id, scope, scope_id, document_type, file_format],
+            )
+            if existing:
+                if len(existing) != 1:
+                    raise DocumentaryError("artifact_slot_ambiguous")
+                return _metadata(existing[0]), False
             identifier = (
                 str(version["snapshot_sha256"])
                 if order is None else str(order["order_snapshot_hash"])
