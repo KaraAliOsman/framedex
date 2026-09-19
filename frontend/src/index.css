@@ -107,10 +107,10 @@ a:focus-visible {
 .app-shell {
   display: grid;
   grid-template-areas:
-    "ribbon ribbon ribbon"
-    "tools workspace panel"
-    "status status status";
-  grid-template-columns: 52px minmax(0, 1fr) 320px;
+    "ribbon ribbon"
+    "tools workspace"
+    "status status";
+  grid-template-columns: 11rem minmax(0, 1fr);
   grid-template-rows: 48px minmax(calc(100vh - 72px), 1fr) 24px;
   min-height: 100vh;
 }
@@ -152,8 +152,9 @@ a:focus-visible {
   color: var(--theme-text-secondary);
   display: flex;
   font-weight: 700;
-  height: 36px;
-  justify-content: center;
+  min-height: 36px;
+  padding: 0.5rem;
+  justify-content: flex-start;
   text-decoration: none;
 }
 
@@ -165,7 +166,7 @@ a:focus-visible {
 .workspace {
   background: var(--theme-bg-canvas);
   grid-area: workspace;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .placeholder {

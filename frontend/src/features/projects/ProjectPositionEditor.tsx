@@ -17,6 +17,7 @@ import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { IntentEditor } from "../canvas/IntentEditor";
+import { FixedPositionPreview } from "./FixedPositionPreview";
 import { intentBays, type IntentNode, type SplitType } from "../canvas/intentEditing";
 import { requestFromInputs } from "../canvas/useEngineCalculation";
 import "./projects.css";
@@ -295,13 +296,17 @@ function PositionWorkspace({
       {message && <p role="status">{message}</p>}
       <div className="position-workspace">
         <div className="position-design">
-          <div className="design-caption">{t("projects.distribution")}</div>
-          <DesignDiagram
-            node={inputs.parametricTree}
-            selected={selected}
-            disabled={busy || pending || intentValidating || intentDraftPending}
-            onSelect={(id) => useCanvasStore.getState().selectBay(id)}
-          />
+          <FixedPositionPreview inputs={inputs} result={result}>
+            <div>
+              <div className="design-caption">{t("projects.distribution")}</div>
+              <DesignDiagram
+                node={inputs.parametricTree}
+                selected={selected}
+                disabled={busy || pending || intentValidating || intentDraftPending}
+                onSelect={(id) => useCanvasStore.getState().selectBay(id)}
+              />
+            </div>
+          </FixedPositionPreview>
           <IntentEditor
             organizationId={orgId}
             onValidationChange={intentValidationChanged}
@@ -538,8 +543,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
           <thead>
             <tr>
               <th>{t("pricing.glass")}</th>
-              <th>{t("intent.width")}</th>
-              <th>{t("intent.height")}</th>
+              <th>{t("projects.pieceWidth")}</th>
+              <th>{t("projects.pieceHeight")}</th>
             </tr>
           </thead>
           <tbody>
@@ -588,8 +593,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
             <thead>
               <tr>
                 <th>{t("projects.article")}</th>
-                <th>{t("intent.width")}</th>
-                <th>{t("intent.height")}</th>
+                <th>{t("projects.pieceWidth")}</th>
+                <th>{t("projects.pieceHeight")}</th>
               </tr>
             </thead>
             <tbody>

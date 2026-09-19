@@ -82,7 +82,7 @@ $$;
 DROP POLICY profile_systems_select ON public.profile_systems;
 
 CREATE POLICY profile_systems_select ON public.profile_systems
-FOR SELECT TO authenticated
+FOR SELECT TO authenticated, pricing_backend, documentary_backend
 USING (
     org_id IN (SELECT private.current_user_org_ids())
     OR (
@@ -132,7 +132,7 @@ BEGIN
         -- to a global system by an older unsafe policy.
         EXECUTE format(
             'CREATE POLICY catalog_read ON public.%I
-             FOR SELECT TO authenticated USING (
+             FOR SELECT TO authenticated, pricing_backend, documentary_backend USING (
                  org_id IN (SELECT private.current_user_org_ids())
                  OR (
                      auth.uid() IS NOT NULL

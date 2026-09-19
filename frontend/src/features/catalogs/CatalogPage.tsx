@@ -360,6 +360,7 @@ function CatalogEditor({
   );
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uncertainCreate, setUncertainCreate] = useState(false);
   const [error, setError] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
   const firstControl = useRef<HTMLHeadingElement>(null);
@@ -399,23 +400,29 @@ function CatalogEditor({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (readOnly || inFlight.current || noBeads) return;
+    if (readOnly || inFlight.current || noBeads || uncertainCreate) return;
+    let body;
+    try {
+      body = writeFromDraft(resource, draft, contents);
+    } catch {
+      setError(ct("errorValidation"));
+      return;
+    }
     inFlight.current = true;
     setBusy(true);
     setError("");
     try {
-      const saved = await api.save(
-        resource,
-        writeFromDraft(resource, draft, contents),
-        row?.id,
-        row?.revision,
-      );
+      const saved = await api.save(resource, body, row?.id, row?.revision);
       if (alive.current) {
         setDirty(false);
         onSaved(saved);
       }
     } catch (caught) {
-      if (alive.current) setError(failure(caught));
+      if (alive.current) {
+        const uncertain = !row && (!(caught instanceof ApiError) || caught.status >= 500);
+        setUncertainCreate(uncertain);
+        setError(uncertain ? ct("uncertainCreate") : failure(caught));
+      }
     } finally {
       inFlight.current = false;
       if (alive.current) setBusy(false);
@@ -539,6 +546,7 @@ function CatalogEditor({
       <p>{ct(readOnly ? "readOnlyHelp" : "humanValues")}</p>
       {row && resource !== "systems" && <p>{ct("parentFixed")}</p>}
       {noBeads && <p role="status">{ct("noBeads")}</p>}
+      {uncertainCreate && !error && <p role="status">{ct("uncertainCreate")}</p>}
       {error && (
         <p ref={errorRef} tabIndex={-1} role="alert">
           {error}
@@ -635,7 +643,7 @@ function CatalogEditor({
         <button
           type="submit"
           className="catalog-primary"
-          disabled={busy || readOnly || noBeads || (row !== undefined && !dirty)}
+          disabled={busy || readOnly || noBeads || uncertainCreate || (row !== undefined && !dirty)}
         >
           {ct(busy ? "working" : "save")}
         </button>

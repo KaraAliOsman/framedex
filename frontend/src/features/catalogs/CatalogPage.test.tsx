@@ -479,3 +479,26 @@ describe("CatalogPage typed kit editor", () => {
     },
   );
 });
+
+describe("Catalog creation recovery", () => {
+  it("preserves an uncertain creation without allowing duplicate submission", async () => {
+    vi.mocked(client.catalogKitCreate).mockRejectedValueOnce(
+      new TypeError("Network response lost"),
+    );
+    await mount();
+    fireEvent.click(button("catalog.hardware-kits"));
+    fireEvent.click(button("catalog.create"));
+    for (const [key, value] of Object.entries(kitWrite())) {
+      if (value !== null && key !== "contents") {
+        change(`catalog.field.${key}` as TranslationKey, String(value));
+      }
+    }
+    change("catalog.field.name", "Kit pendiente");
+    fireEvent.submit(editorForm());
+    expect(await screen.findByRole("alert")).toHaveTextContent(t("catalog.uncertainCreate"));
+    expect(screen.getByLabelText(t("catalog.field.name"))).toHaveValue("Kit pendiente");
+    expect(button("catalog.save")).toBeDisabled();
+    fireEvent.submit(editorForm());
+    expect(client.catalogKitCreate).toHaveBeenCalledTimes(1);
+  });
+});

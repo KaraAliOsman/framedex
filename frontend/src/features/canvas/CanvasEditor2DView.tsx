@@ -10,7 +10,7 @@ import { useEngineCalculation } from "./useEngineCalculation";
 import { InspectorModal } from "../inspector/InspectorModal";
 import "./canvas.css";
 
-export function CanvasEditor2DView(): JSX.Element {
+export function CanvasEditor2DView({ demoRoute = false }: { demoRoute?: boolean }): JSX.Element {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const auth = useAuthSession();
   const { id, posId } = useParams();
@@ -42,7 +42,7 @@ export function CanvasEditor2DView(): JSX.Element {
     inputs.nominalWidthMm,
   ]);
 
-  if (id !== "demo" || posId !== "g1") {
+  if (!demoRoute && (id !== "demo" || posId !== "g1")) {
     return <p role="alert">demo_route_unavailable</p>;
   }
   if (organizationId.length === 0) return <p role="alert">active_organization_unavailable</p>;

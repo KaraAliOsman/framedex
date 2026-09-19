@@ -67,6 +67,8 @@ const messages = {
   "projects.distribution": "Distribución de paños · esquema de selección",
   "projects.bom": "Despiece y materiales",
   "projects.length": "Largo (mm)",
+  "projects.pieceWidth": "Ancho de pieza (mm)",
+  "projects.pieceHeight": "Alto de pieza (mm)",
   "projects.leaveUnsaved": "Hay cambios sin guardar. ¿Quieres salir y descartarlos?",
   "intent.title": "Configuración del vano",
   "intent.selectedBay": "Paño seleccionado",
@@ -293,7 +295,7 @@ const messages = {
   "org.none": "Sin organización",
   "shell.navigation": "Navegación principal",
   "shell.organization": "ORGANIZACIÓN",
-  "shell.engineStatus": "Engine: 0.00 mm",
+  "shell.engineStatus": "Espacio de trabajo",
   "shell.apiStatus": "API autenticada",
   "shell.placeholder": "SHOT-04 · SHELL",
   "theme.toggle": "Cambiar tema",
@@ -456,6 +458,8 @@ const messages = {
     "Revisa los campos, las medidas y las referencias seleccionadas; luego vuelve a guardar.",
   "catalog.errorNetwork":
     "No se pudo confirmar la operación. Revisa la conexión y vuelve a cargar el catálogo antes de reintentar.",
+  "catalog.uncertainCreate":
+    "No recibimos la confirmación y el registro podría haberse creado. Conservamos tus datos. Antes de crear otro, cierra este formulario y vuelve a abrir el catálogo para comprobarlo.",
   "catalog.contents": "Contenido del kit",
   "catalog.component": "Componente",
   "catalog.addComponent": "Agregar componente",

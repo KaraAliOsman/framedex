@@ -49,16 +49,11 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
           })
           .map(([to, label]) => (
             <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
-              {t(label).slice(0, 1)}
+              {t(label)}
             </NavLink>
           ))}
       </nav>
       <main className="workspace">{children}</main>
-      <aside className="context-panel">
-        <p className="panel-label">{t("shell.organization")}</p>
-        <strong>{auth.me?.active_organization?.name}</strong>
-        <span>{auth.me?.active_organization?.role}</span>
-      </aside>
       <footer className="status-bar">
         <span>{t("shell.engineStatus")}</span>
         <span>{t("shell.apiStatus")}</span>

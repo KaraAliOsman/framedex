@@ -413,3 +413,20 @@ def test_frozen_project_rejects_edits_and_preserves_evidence(documentary_tenant)
                 )
                 == evidence
             )
+
+
+def test_project_creator_cannot_be_forged(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    with as_user(users["ESTIMATOR"]):
+        with pytest.raises(DatabaseError) as caught:
+            with transaction.atomic():
+                rows(
+                    "INSERT INTO public.projects(org_id,code,name,client_name,created_by) "
+                    "VALUES(%s,%s,'Casa','Cliente',%s) RETURNING id",
+                    [org, f"FORGED-{uuid4().hex}", users["OWNER"]],
+                )
+        assert caught.value.__cause__.sqlstate == "42501"
+        project = service.create_project(org, users["ESTIMATOR"], {
+            "name": "Casa", "client_name": "Cliente",
+        })
+        assert one("SELECT created_by FROM public.projects WHERE id=%s", [project["id"]])["created_by"] == users["ESTIMATOR"]

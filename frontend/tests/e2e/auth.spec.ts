@@ -202,8 +202,10 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
 
   await assertRealIdentity(page, request, fixture, "aal1");
 
-  for (const route of ["Proyectos", "Sistemas", "Ajustes", "Panel"]) {
-    await page.getByRole("link", { name: route, exact: true }).click();
+  const navigation = page.getByRole("navigation", { name: "Navegación principal" });
+  await expect(navigation.getByRole("link", { name: "Sistemas", exact: true })).toHaveCount(0);
+  for (const route of ["Proyectos", "Ajustes", "Panel"]) {
+    await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }
   const initialTheme = await page.locator("html").getAttribute("data-theme");
@@ -291,36 +293,39 @@ test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", as
     },
     reason: "Test commercial rules",
   });
-  await page.goto("/projects/demo/positions/g1/edit");
-  await expect(page.getByTestId("canvas-editor")).toBeVisible();
-  const systemId = await page.getByTestId("canvas-editor").getAttribute("data-system-id");
-  const draft = await api("drafts/", {
-    code: "SHOT08-GATE",
-    name: "Commercial browser gate",
-    client_name: "Fixture",
-    reason: "Draft for gate",
-    positions: [
-      {
-        position_index: 1,
-        quantity: 2,
-        typology: "FIXED",
-        system_id: systemId,
-        nominal_width_mm: "1000",
-        nominal_height_mm: "1000",
-        color: "WHITE",
-        parametric_tree: {
-          id: "g1",
-          type: "BAY",
-          opening_type: "FIXED",
-          glass_thickness_mm: "4.00",
-          glass_spec: "4 Float Incoloro",
-          glass_article_sku: "GLASS-BASE",
-        },
-      },
-    ],
-  });
-  await page.goto("/pricing/commercial");
-  await page.getByLabel("Proyecto", { exact: true }).fill(String(draft.id));
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
+  await page.getByLabel("Nombre del proyecto", { exact: true }).fill("Commercial browser gate");
+  await page.getByLabel("Cliente", { exact: true }).fill("Synthetic fixture");
+  const creation = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/api/v1/projects/",
+  );
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  const createdResponse = await creation;
+  expect(createdResponse.status()).toBe(201);
+  const draft = (await createdResponse.json()) as { id: string };
+  await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
+  await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
+  await page.getByLabel("Cantidad", { exact: true }).fill("2");
+  await page
+    .getByRole("combobox", { name: "Serie de perfiles", exact: true })
+    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+  await page
+    .getByRole("combobox", { name: "Espesor del vidrio (mm)", exact: true })
+    .selectOption("4.00");
+  await page.getByLabel("Composición del vidrio", { exact: true }).fill("4 Float Incoloro");
+  await page
+    .getByRole("combobox", { name: "Artículo comercial de vidrio", exact: true })
+    .selectOption("GLASS-BASE");
+  await page.getByRole("button", { name: "Validar diseño y materiales", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
+  await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-10");
   await page.getByLabel("Motivo del cambio", { exact: true }).fill("Apply browser quote");
   const previewResponse = page.waitForResponse((response) =>
@@ -329,6 +334,11 @@ test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", as
   await page.getByRole("button", { name: "Calcular y revisar", exact: true }).click();
   const priced = await previewResponse;
   expect(priced.status(), await priced.text()).toBe(200);
+  const quote = (await priced.json()) as {
+    project_net: string;
+    project_gross: string;
+    project_tax: string;
+  };
   await expect(
     page.getByRole("button", { name: "Aprobar y aplicar precios", exact: true }),
   ).toBeEnabled();
@@ -337,6 +347,16 @@ test("SHOT-08 OWNER manages S09 and applies a reproducible commercial price", as
   await page.reload();
   await page.getByRole("button", { name: "Recargar", exact: true }).click();
   await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
+  await page.goto(`/projects/${draft.id}`);
+  await expect(page.locator("dd").filter({ hasText: quote.project_gross })).toBeVisible();
+  const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
+  expect(persisted.status()).toBe(200);
+  const project = await persisted.json();
+  expect(project.pricing_current).toBe(true);
+  // Storage uses NUMERIC(14,2); compare Decimal text after removing only zero scale.
+  expect(String(project.total_price_gross).replace(/\.0+$/, "")).toBe(
+    quote.project_gross.replace(/\.0+$/, ""),
+  );
   const audits = await request.get(`${djangoUrl}/api/v1/pricing/admin/audits/`, { headers });
   expect(audits.status()).toBe(200);
   expect(

@@ -76,6 +76,7 @@ function ProjectMetadataForm({
 }): JSX.Element {
   return (
     <form
+      className="project-metadata-form"
       onSubmit={(event) => {
         event.preventDefault();
         if (!disabled) onSave();
@@ -407,7 +408,7 @@ function ProjectWorkspace({
         <>
           <p>{t(statuses[project.status])}</p>
           {!draft && (
-            <dl>
+            <dl className="project-metadata">
               {fields
                 .filter(([name]) => name !== "name")
                 .map(([name, label]) => (

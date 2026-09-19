@@ -303,6 +303,7 @@ def test_direct_commercial_insert_guard_all_fields(commercial_rows, session_role
 
     org, _, users = commercial_rows
     system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+    creator = users.get(session_role, users['OWNER'])
     identity = as_user(users[session_role]) if session_role in users else nullcontext()
     with transaction.atomic(), identity:
         with connection.cursor() as cursor:
@@ -315,7 +316,7 @@ def test_direct_commercial_insert_guard_all_fields(commercial_rows, session_role
             project = uuid4()
             cursor.execute('INSERT INTO public.projects(id,org_id,code,name,client_name,created_by) '
                            'VALUES(%s,%s,%s,%s,%s,%s)',
-                           [project,org,str(project),'Zero draft','Fixture',users['OWNER']])
+                           [project,org,str(project),'Zero draft','Fixture',creator])
             position = uuid4()
             position_values = [position,org,project,1,'FIXED',system,'{}','{}']
             position_insert = ('INSERT INTO public.project_positions(id,org_id,project_id,position_index,'
@@ -331,7 +332,7 @@ def test_direct_commercial_insert_guard_all_fields(commercial_rows, session_role
                 with pytest.raises(DatabaseError,match='pricing_service_required') as rejected, transaction.atomic():
                     cursor.execute(sql.SQL('INSERT INTO public.projects(id,org_id,code,name,client_name,created_by,{}) '
                         'VALUES(%s,%s,%s,%s,%s,%s,1)').format(sql.Identifier(field)),
-                        [attempted,org,str(attempted),'Forbidden','Fixture',users['OWNER']])
+                        [attempted,org,str(attempted),'Forbidden','Fixture',creator])
                 assert rejected.value.__cause__.sqlstate == '42501'
                 cursor.execute('SELECT count(*) FROM public.projects WHERE id=%s',[attempted])
                 assert cursor.fetchone()[0] == 0

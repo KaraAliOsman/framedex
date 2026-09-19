@@ -98,7 +98,7 @@ export function AppRoutes(): JSX.Element {
           <ReadyGuard>
             <AppShell>
               <Suspense fallback={<p>{t("canvas.loading")}</p>}>
-                <CanvasEditor2DView />
+                <CanvasEditor2DView demoRoute />
               </Suspense>
             </AppShell>
           </ReadyGuard>

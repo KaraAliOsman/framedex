@@ -103,7 +103,10 @@ function renderEditor(): void {
       <AuthSessionContext.Provider value={authValue()}>
         <MemoryRouter initialEntries={["/projects/demo/positions/g1/edit"]}>
           <Routes>
-            <Route path="/projects/:id/positions/:posId/edit" element={<CanvasEditor2DView />} />
+            <Route
+              path="/projects/demo/positions/g1/edit"
+              element={<CanvasEditor2DView demoRoute />}
+            />
           </Routes>
         </MemoryRouter>
       </AuthSessionContext.Provider>
