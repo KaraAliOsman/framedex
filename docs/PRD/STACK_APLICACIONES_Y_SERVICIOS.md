@@ -1,69 +1,55 @@
-# STACK DE APLICACIONES Y SERVICIOS — DEKOPEN (v1.3)
+# STACK DE APLICACIONES Y SERVICIOS — DEKOPEN
 
-> **Estado:** inventario operativo no normativo.
-> Los contratos de producto viven en los PRD activos, la Constitución y las migraciones. Esta
-> página distingue infraestructura de producto, beneficios temporales del fundador y rutas de
-> IA; no congela promociones, proveedores ni instrucciones para agentes como arquitectura.
+**Autoridad:** índice operativo. Los PRD de dominio y la Constitución gobiernan el producto;
+solo los guardrails de §4 conservan requisitos de producto propios de este documento.
+La separación es estricta: herramientas personales sirven al equipo; infraestructura de
+clientes conserva aislamiento multi-tenant. Una promoción no determina arquitectura.
 
-## 1. Infraestructura de producto
+## 1. Baseline de producto y fuentes
 
-Estas son las integraciones actuales del despliegue. El contrato funcional y de seguridad de
-cada una pertenece al PRD que la introduce; una sustitución compatible se decide allí.
+Esta tabla reúne selecciones actuales y planificadas; no afirma que todos los servicios estén
+desplegados. El [roadmap](./PLAN_SHOTS.md) determina cuándo se introducen y
+[QUALITY_SCORE](../QUALITY_SCORE.md) indica qué capacidades están probadas.
 
-| Servicio | Rol de producto | Shot de integración |
+| Servicio / baseline | Rol | Fuente contractual |
 |---|---|---|
-| Supabase | PostgreSQL, RLS, Auth y Storage multi-tenant | SHOT-02 / SHOT-04 |
-| Railway | API Django, workers y health checks | SHOT-04 / SHOT-11 |
-| PostHog | Telemetría y embudos | SHOT-04 / SHOT-23 |
-| Intercom/Fin | Soporte y onboarding | SHOT-04 / SHOT-23 |
-| Customer.io o servicio equivalente | Automatización de ciclo de vida | SHOT-11 / SHOT-18 |
-| Servicio de correo transaccional | Magic Links, cotizaciones y alertas | SHOT-04 / SHOT-09 |
-| n8n o servicio equivalente | Orquestación operativa | SHOT-11 / SHOT-17 |
-| Framer o servicio equivalente | Landing pública | SHOT-18 |
-| Cloudflare | Proxy, CDN y protección perimetral | SHOT-04 / SHOT-11 |
-| Flow.cl | Cobro local y DTE | SHOT-11 |
-| Paddle | Merchant of Record internacional | SHOT-18 |
+| Supabase PostgreSQL 16, Auth, Storage | Datos, RLS, Magic Link, archivos firmados | PRD-02, PRD-03, PRD-19; Constitución |
+| Railway, Django, Huey/Redis | API, workers, despliegue y salud | PRD-00, PRD-19; PLAN_SHOTS |
+| PostHog | Telemetría y embudos | PRD-19; SHOT-04/23 |
+| Intercom/Fin | Soporte | PLAN_SHOTS SHOT-23 |
+| Customer.io | Baseline operativa de ciclo de vida | Sin gate adicional por esta mención |
+| Resend | Baseline de correo transaccional | El contrato de cada flujo de correo gobierna |
+| Jam.dev | Reporte de errores en SPA | PRD-19 §4 |
+| n8n Cloud | Baseline de orquestación interna | No sustituye pagos, auditoría ni idempotencia |
+| Framer | Landing | PLAN_SHOTS; PRD-18 |
+| Cloudflare | Perímetro y CDN | PRD-19 |
+| Flow.cl / Paddle | Pagos Chile / internacionales | PRD-03 |
 
-La disponibilidad, retención, RLS, almacenamiento firmado, backups y recuperación se rigen por
-PRD-02, PRD-03 y PRD-19. Los nombres de planes o beneficios de terceros no son requisitos de
-producto.
+Las sustituciones estratégicas siguen la Regla 15. Este índice no autoriza reemplazar servicios
+fijados por un PRD, cambiar arquitectura ni adelantar shots.
 
-## 2. Herramientas internas y beneficios temporales
+## 2. Herramientas internas y beneficios temporales — no normativos
 
-Estas herramientas sirven para desarrollo, diseño, documentación u operaciones del fundador.
-Son una línea base temporal y no una dependencia de runtime ni una obligación para el producto:
+Linear, Mobbin, Cursor/Warp, Google AI Pro, Notion, Mercury, ElevenLabs y Supercut son referencias
+de trabajo interno. Las promociones de créditos, duración, seats y descuentos son condiciones
+comerciales temporales, sin garantía de disponibilidad ni autoridad sobre arquitectura o gates.
+Sus detalles históricos permanecen en Git y en las compilaciones históricas.
 
-- Linear, Mobbin, Figma, editores asistidos y terminales de desarrollo;
-- Notion y herramientas de documentación privada;
-- servicios de referencia o almacenamiento personal;
-- herramientas de captura de bugs, tutoriales y demos.
+## 3. Selección de IA — configuración operativa
 
-Una mención aquí no autoriza acceso a datos de clientes ni cambia la arquitectura multi-tenant.
+[PRD-13](./PRD-13.md) define capacidades y enrutamiento dinámico mediante `ai_routes` y variables
+de entorno; [PRD-14](./PRD-14.md) conserva doble ciego entre modelos distintos y opt-in Titan.
+Los nombres de modelos, proveedores, cuotas de tráfico y métodos internos no se congelan aquí.
+La configuración existente, incluida `.env.example`, no cambia por esta clasificación.
+Billing y las estimaciones de consumo se rigen por [PRD-03 §4](./PRD-03.md#4-billetera-y-consumo-de-créditos-de-ia-medición-dinámica-por-tokens-reales).
 
-## 3. Capacidades de IA y rutas de runtime
+## 4. Guardrails de producto conservados
 
-La interfaz de producto expone capacidades lógicas, no proveedores crudos. El gateway resuelve
-cada capacidad con ai_routes; proveedor, modelo, límites y fallback son configuración
-operativa versionada junto al runtime.
+- Cálculos de corte, medidas, vidrio y rentabilidad: `/engine`, según la Constitución.
+- Saldo y bloqueo previo, salida JSON tipada y auditoría: PRD-13. Los límites concretos de
+  `max_output_tokens` son configuración; ejemplos como «50 tokens» no son requisitos.
+- Gating visual: las llamadas de visión se usan cuando se adjunta PDF o imagen; las peticiones
+  de texto plano se enrutan a la capacidad de texto, sin fijar proveedores.
+- Circuit breaker OCR/NLP: máximo **1 reintento**; se conserva este límite contractual.
 
-| Capacidad | Ruta lógica | Uso |
-|---|---|---|
-| Asistencia de texto y comandos | text-command / text-assist | T2, T4, T5, T7, T11, T12 |
-| Extracción y comparación multimodal | multimodal-extraction / multimodal-comparison | T1, T10 |
-| Compilación técnica | catalog-compilation | T6 |
-| Asistencia comercial | pricing-assist | T3 |
-| Doble verificación | dual-verification | T8 |
-| Pipeline multimodal de borrador | multimodal-pipeline | T9 |
-
-Las rutas pueden cambiar o incorporar fallbacks sin cambiar el contrato de negocio. Deben
-conservar auditoría previa, aislamiento RLS, validación tipada, revisión humana donde aplique y
-recalculo determinista en /engine. La configuración concreta vigente se mantiene en runtime
-(por ejemplo, variables de entorno y registros de rutas), no en este documento.
-
-## 4. Guardrails observables
-
-1. Los cálculos de medidas, corte, BOM y rentabilidad se ejecutan en /engine, sin IA.
-2. El saldo se bloquea antes de una invocación y el consumo se registra con tokens reales.
-3. Las respuestas de herramientas usan esquemas tipados y límites configurables.
-4. Una entrada multimodal solo usa una ruta multimodal; un fallo tiene reintentos acotados.
-5. Ninguna ruta de IA escribe números técnicos finales ni evita auditoría, RLS o revisión humana.
+Las instrucciones de desarrollo viven en [AGENTS.md](../../AGENTS.md), no en el stack de producto.

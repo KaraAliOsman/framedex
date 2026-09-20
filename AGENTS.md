@@ -1,70 +1,55 @@
-# DEKOPEN — mapa operativo del repositorio
+# DEKOPEN — mapa del repositorio
 
-Este archivo es una guía breve de navegación. La autoridad normativa del producto y del
-sistema está en [`docs/CONSTITUTION.md`](docs/CONSTITUTION.md); este mapa no la replica.
+## Autoridad y navegación
 
-## Autoridad y contexto
+Precedencia: [Constitución](docs/CONSTITUTION.md) → [roadmap y gates](docs/PRD/PLAN_SHOTS.md)
+→ PRD de dominio en `docs/PRD/` → decisiones del plan de shot. El orden de lectura se adapta
+a la tarea: abre Constitución, gate y plan cuando afectes sus contratos; después, solo los PRD
+y código necesarios. No cargues todas las PRD ni compilaciones por defecto.
 
-Lee solo lo necesario, en este orden:
+- `docs/PRD-*.md` son punteros a las fuentes activas.
+- `docs/plans/PLAN_SHOT-XX.md` conserva decisiones aprobadas y evidencia. La flexibilidad futura
+  no reabre decisiones congeladas de shots activos/cerrados; consulta las que afecten al cambio.
+- `docs/QUALITY_SCORE.md` es un mapa informativo de lo probado, no un contrato.
+- `docs/AGENT_OPERATING_MODEL.md` es referencia de comandos, no otra política.
+- `docs/archive/**`, `docs/audits/**` y `DEKOPEN_BIBLIA_*.md` son históricos no normativos;
+  sus instrucciones de procedimiento no gobiernan trabajo nuevo.
+- `docs/PRD/STACK_APLICACIONES_Y_SERVICIOS.md` clasifica arquitectura, baseline y beneficios;
+  no convierte selecciones temporales en contratos nuevos.
 
-1. `AGENTS.md` para ubicar la tarea.
-2. `docs/CONSTITUTION.md` para invariantes y materialidad.
-3. `docs/PRD/PLAN_SHOTS.md` para secuencia, alcance y gates.
-4. `docs/plans/PLAN_SHOT-XX.md` si existe un shot activo o cerrado cuyo contrato afecte la tarea.
-5. Los PRD y archivos de código directamente afectados.
+## Invariantes locales
 
-`docs/PRD/*.md` contiene los contratos de dominio activos. `docs/AGENT_OPERATING_MODEL.md`
-contiene disciplina operativa no normativa. `docs/archive/**` y `DEKOPEN_BIBLIA_*.md` son
-registros o vistas históricas no autoritativas; no se cargan por defecto.
+- `/engine` es puro, sin I/O; dimensiones y dinero usan `Decimal`, con tolerancia `0.00 mm`.
+- Los números de salida provienen de `/engine` o de campos humanos explícitos.
+- RLS PostgreSQL y `current_user_org_ids()` aíslan tenants; auditoría de IA/precios precede
+  a escrituras. Emisión, fábrica y compras requieren la acción humana del contrato.
+- `DEMO_60` es sintético, nunca ficha certificada ni autoridad comercial.
+- UI mediante i18n ES-CL y tokens semánticos CSS; Golden es solo lectura por defecto.
+  Regenerarlo requiere cambio de fórmula autorizado y diff auditado (Regla 22).
 
-## Invariantes que no se pueden inferir de forma segura
+## Autonomía y finalización
 
-- Todas las dimensiones, cantidades y valores monetarios usan `Decimal`; `/engine` es puro,
-  determinista y sin I/O.
-- La tolerancia matemática exigida es `0.00 mm`. Los números de salida provienen de `/engine`
-  o de un campo humano explícito.
-- Las tablas de negocio están aisladas por PostgreSQL RLS y `current_user_org_ids()`.
-- Las escrituras de IA se auditan antes de aplicar el diff y los cambios de precio antes de
-  aplicarse; los pagos y webhooks son idempotentes.
-- La UI usa tokens semánticos CSS; no se añaden hexadecimales crudos.
-- Golden es de solo lectura por defecto. `make goldgen` requiere cambio de fórmula autorizado.
+Resuelve decisiones reversibles no materiales sin aprobación adicional. Usa planes cuando
+ayuden a registrar alcance, dependencias o decisiones; no son un ritual de aprobación.
+Ante contradicción o vacío material, aplica Reglas 0/20 y registra `[PENDIENTE-DECISIÓN]`.
+Si una regla detiene el trabajo, cita archivo/texto (`RULE SAYS`) y efecto (`AGENT INTERPRETS`).
+Las acciones irreversibles necesitan autorización; no se elude PR ni CI protegido.
 
-## Autonomía y límites
+Un escritor por worktree. El trabajo genuinamente independiente puede usar otros worktrees
+y ramas aislados; los cambios integrados conservan contratos y se verifican por su delta.
 
-Resuelve de forma autónoma decisiones reversibles y no materiales, corrección de fallos,
-formateo, pruebas y refactorizaciones que preserven contratos observables. Planificar es útil
-cuando la tarea tiene decisiones materiales o varias superficies; no es una aprobación humana
-obligatoria para cada cambio reversible.
+La **Regla 19** es la política única de verificación: pruebas por superficie, evidencia ligada
+al SHA, Gauntlet al cierre material de un shot y CI protegido como veredicto de integración.
+Finaliza al satisfacer los gates aplicables y registrar evidencia vigente; no repitas pruebas
+por un commit documental o merge limpio. No debilites checkers, tests ni protección.
 
-Detente solo ante una contradicción material bajo la Regla 0, un vacío material bajo la Regla
-20 (inserta `[PENDIENTE-DECISIÓN]`) o una acción irreversible sin autorización. Si una regla
-del repositorio te detiene, informa por separado `RULE SAYS` y `AGENT INTERPRETS`.
-
-El árbol canónico tiene un solo escritor. Usa una rama o worktree aislado cuando exista una
-razón real para separar trabajo; integra los cambios en la raíz.
-
-## Verificación y cierre
-
-Selecciona las pruebas por la superficie afectada y conserva evidencia ligada al SHA: cambios
-documentales requieren consistencia/formato; frontend, engine, DB/RLS, documentos y navegador
-requieren sus gates afectados. Una modificación más amplia o incertidumbre concreta justifica
-subir el nivel de verificación.
-
-El Gauntlet canónico (`python scripts/check_dod.py all`) es obligatorio para el head material
-final de implementación de un SHOT. No se repite automáticamente por commits documentales,
-por un merge limpio ni por cambios contenidos cuya evidencia SHA-bound siga vigente. Los cuatro
-checks protegidos de CI son el veredicto independiente de integración.
-
-## Comandos de referencia
+## Comandos importantes
 
 ```text
-python scripts/check_dod.py all       # Gauntlet de cierre de shot
-python scripts/new_shot.py SHOT-XX    # scaffold mínimo de plan
-pytest engine/ -q                     # suite del motor
-ruff check .                          # lint Python
-cd frontend; npm test                 # suite frontend
+python scripts/check_dod.py all                 # Gauntlet de cierre material de SHOT
+python scripts/check_dod.py lint                # lint y guards constitucionales
+python -m engine.scripts.regenerate_golden --check
+python scripts/new_shot.py SHOT-XX              # scaffold opcional; no inicia el shot
 ```
 
-No se cambia el comportamiento de producto, las fórmulas, Golden, RLS, auditoría o contratos
-para hacer pasar un checker. Los PR protegidos se fusionan solo con sus checks requeridos en
-verde; después se verifica el CI de `main`.
+Los comandos por superficie están en [el modelo operativo](docs/AGENT_OPERATING_MODEL.md).

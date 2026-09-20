@@ -1,14 +1,23 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: FINAL / MERGED on main via PR #34 (8712d67f66601cd63209128ee29fe2a043d9b755).
+Status: **CLOSED / MERGED** via [PR #34](https://github.com/KaraAliOsman/framedex/pull/34).
 
-The canonical full Gauntlet passed with exit code 0 on the final material implementation head
-85893c365a7228ef5805afe1e8292d1335ddc8dc. A later narrow executable refinement ended at
-4e1f7af367438f11a723e20f22fc771177a0ce40 and was verified with the affected frontend suite
-and protected CI; the full Gauntlet was not rerun because that delta did not broaden the
-covered proof surface. The documentation closure head is
-99f18562f0378712d0db668abcd6f47b15e9c5ff. The merged main commit is
-8712d67f66601cd63209128ee29fe2a043d9b755.
+| Evidence | Exact commit | Coverage |
+|---|---|---|
+| Canonical full Gauntlet, exit 0 | `85893c365a7228ef5805afe1e8292d1335ddc8dc` | Full implementation checkpoint; counts below |
+| Final executable/material head | `4e1f7af367438f11a723e20f22fc771177a0ce40` | Narrow pending-clone navigation-guard refinement; full frontend suite and protected CI |
+| Final PR documentation head | `99f18562f0378712d0db668abcd6f47b15e9c5ff` | Evidence note; no executable delta |
+| Merge and `shot-10` tag | `8712d67f66601cd63209128ee29fe2a043d9b755` | Approved head is an ancestor; required CI 4/4 passed |
+
+No full local Gauntlet is claimed for `4e1f7af`, `99f1856` or the merge. Unaffected engine,
+Golden and DB evidence is reused; the frontend delta has its own verification.
+[PR CI](https://github.com/KaraAliOsman/framedex/actions/runs/35533795560) and
+[merge CI](https://github.com/KaraAliOsman/framedex/actions/runs/35534121808) both passed
+Lint & Typecheck, Test Suite, Frontend Build and Database Gate. The missing `shot-10` tag was
+restored at the merge during the post-SHOT-10 maintenance pass.
+
+The sections below retain the build record and Owner-approved design decisions. Their workflow
+instructions describe that execution; they do not govern new work. SHOT-11 remains unstarted.
 
 ## Authorized scope and execution
 
@@ -236,9 +245,12 @@ not asked twice.
 Focused proof: 64 catalog/corrective/concurrency integration tests (singleton uniqueness
 parametrized over all eight non-bead roles, plus direct-write cross-scope rejection through
 RLS), 11 document contract tests and 343 pgTAP assertions passed; Ruff and PostgreSQL lint
-also passed. The canonical Gauntlet then passed on final material head
+also passed. The canonical Gauntlet then passed on implementation checkpoint
 `85893c3` with exit code 0: 248 engine tests
 plus 5 existing deferred xfails, 357 backend tests, 217 frontend tests, 9 real Chromium
 suites and 343 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
 PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production frontend
-build completed without warnings. No executable change followed this run.
+build completed without warnings. The later executable change `4e1f7af` kept the navigation
+guard armed while a clone request was pending and cleared quotation dirty state only after a
+successful response, immediately before navigation. Its frontend proof and final SHAs are
+recorded in the closure table above; it was not another full Gauntlet run.

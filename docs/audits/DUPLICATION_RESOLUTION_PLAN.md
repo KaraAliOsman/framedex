@@ -1,3 +1,6 @@
+> **HISTORICAL / NON-NORMATIVE:** propuesta y auditoría conservadas como registro.
+> Las fuentes activas enlazadas desde [AGENTS.md](../../AGENTS.md) gobiernan el trabajo actual.
+
 # DEKOPEN — PLAN DE RESOLUCIÓN DE DUPLICACIONES NORMATIVAS (v1.3 MASTER)
 
 > **Estado:** Documento Oficial de Gobernanza Documental

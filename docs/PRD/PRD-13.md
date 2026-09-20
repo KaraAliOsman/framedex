@@ -1,58 +1,68 @@
-# PRD-13: AI GATEWAY, ENRUTAMIENTO Y GOBERNANZA (v1.2)
+# PRD-13: AI GATEWAY, ENRUTAMIENTO Y GOBERNANZA DE PROMPTS (v1.2)
 **Estado:** Bloqueado / Congelado
-**Versión:** 1.2
+**Versión:** 1.2 (Enterprise AI Gateway & White-Label Router Standard)
 **Fase:** 2 (Inteligencia Asistida y Automatización)
 **Bloquea a:** PRD-09, PRD-10, PRD-14, PRD-15
 
 ---
 
-## 1. Contrato del AI Gateway
+## 1. Arquitectura del AI Gateway y Suite White-Label
 
-El AI Gateway (backend/apps/ai_gateway/) es el único punto de entrada para operaciones de
-inteligencia artificial. Expone capacidades con marca de producto, valida el contexto de
-organización y resuelve cada llamada mediante la tabla dinámica ai_routes. Los nombres de
-proveedores, modelos y técnicas internas son configuración operativa; no forman parte de este
-PRD.
+El AI Gateway (`backend/apps/ai_gateway/`) es el único punto de entrada para todas las operaciones de inteligencia artificial en Dekopen. Aplica **White-Labeling absoluto** (los usuarios de los talleres nunca ven nombres de proveedores crudos) y selecciona la capacidad requerida mediante `ai_routes`. La distribución de tráfico y los modelos son configuración operativa:
 
-El gateway debe:
+```
+[ Frontend / Canvas S06 ] ──► [ AI Gateway Django Middleware ]
+                                      │
+     ┌────────────────────────────────┴────────────────────────────────┐
+     ▼                                                                 ▼
+[ PRE-INVOCATION HOOKS ]                                      [ ENRUTADOR DINÁMICO (ai_routes) ]
+• Validación transaccional de saldo                           • Dekopen Neural Core™ (asistencia de texto)
+• Sanitización de inyecciones                                 • Dekopen Vision CAD™ (visión multimodal)
+• Inyección de identidad y RLS (org_id)                       • Dekopen Titan Engine™ (capacidad ampliada opt-in)
+     │                                                                 │
+     └────────────────────────────────┬────────────────────────────────┘
+                                      │
+                                      ▼
+                      [ EJECUCIÓN TOOL / LLM CALL ]
+                                      │
+     ┌────────────────────────────────┴────────────────────────────────┐
+     ▼                                                                 ▼
+[ POST-INVOCATION HOOKS ]                                     [ AUDITORÍA INMUTABLE ]
+• Validación de Schema JSON (Pydantic)                        • Registro en `ai_audit_logs`
+• Detección de secretos o datos cruzados                      • Registro en `price_audit_logs`
+• Entrega a /engine para cálculo 0.00 mm                      • Habilitación de Sacred Undo (Cmd+Z)
+```
 
-- validar saldo y permisos de forma transaccional antes de invocar una ruta;
-- sanitizar entradas, inyectar identidad/RLS y evitar datos entre organizaciones;
-- validar el esquema de salida y entregar cualquier diff al motor determinista /engine;
-- registrar ai_audit_logs antes de aplicar una escritura, incluyendo la ruta operativa usada,
-  latencia, tokens y hash del payload;
-- preservar el comportamiento humano de revisión y undo donde lo exija el flujo.
+---
 
-## 2. Capacidades y rutas lógicas por herramienta
+## 2. Capacidades por herramienta
 
-| Tool ID | Capacidad | Ruta lógica | Resultado observable |
+| Tool ID | Herramienta | Capa de IA (Marca Propia) | Contrato observable |
 |---|---|---|---|
-| T1 | OCR de planos (S27) | multimodal-extraction | posiciones estructuradas, confianza y revisión humana |
-| T2 | Comandos NLP de Canvas | text-command | diff paramétrico validado por /engine |
-| T3 | Sugerencia de descuentos | pricing-assist | preview antes/después sin escritura directa |
-| T6 | Compilación de catálogos | catalog-compilation | borrador tipado y validado antes de publicar |
-| T8 | Certificado de fabricabilidad | dual-verification | dos evaluaciones independientes y arbitraje determinista |
+| **T1** | OCR de Planos (S27) | **Dekopen Vision CAD™** | Extracción JSON de vanos; confianza y revisión según PRD-09. |
+| **T2** | Comandos NLP (Canvas) | **Dekopen Neural Core™** | Diff paramétrico enviado a `/engine`, según PRD-10. |
+| **T3** | Sugerencia de Descuentos | **Dekopen Neural Core™** | Preview de ajuste comercial; cálculos en `/engine`. |
+| **T6** | Compilador de Catálogos | **Dekopen Matrix Reader™** | Extracción de holguras y junquillos validada según PRD-08. |
+| **T8** | Certificado Fabricabilidad | **Doble Verificador Ciego** | Modelos distintos, doble ciego y arbitraje determinista según PRD-14. |
 
-La selección concreta de proveedor y modelo vive en ai_routes o en la configuración de runtime.
-Cambiar esa selección no puede alterar los contratos de datos, auditoría, seguridad ni las
-salidas deterministas.
+Las capacidades y sus contratos son normativos; los nombres concretos de modelo/proveedor y
+los métodos de prompting son configuración e implementación. No se prescriben cadenas de
+pensamiento ni se crean nuevos identificadores de ruta en este documento.
 
-## 3. Hooks de ejecución
+---
 
-1. **Pre-invocación:** bloquear saldo con SELECT ... FOR UPDATE, validar permisos y fijar el
-   contexto RLS antes del request externo. Saldo insuficiente cancela la llamada.
-2. **Post-invocación:** la IA nunca calcula cotas finales. Todo diff pasa por /engine para
-   recálculo a 0.00 mm y validación de esquema.
-3. **Auditoría:** ai_audit_logs se escribe antes de aplicar cualquier diff o cambio de datos.
-   Las mutaciones de precio además requieren price_audit_logs.
+## 3. Pre & Post-Invocation Hooks (Gobernanza a Nivel de Ejecución)
 
-## 4. Desacoplamiento operativo
+1. **Pre-Invocation:**
+   - **Bloqueo Transaccional de Saldo:** `SELECT ... FOR UPDATE` sobre `credit_ledger`. Si el saldo de puntos es $\le 0$, cancela la llamada antes de realizar el request HTTP a la API.
+   - **Aislamiento Multi-Tenant:** Inyecta automáticamente el `org_id` y valida permisos RLS.
+2. **Post-Invocation (Escudo Matemático):**
+   - **El LLM jamás calcula cotas finales:** Todo diff generado por la IA se envía obligatoriamente a `/engine` para recálculo determinista a `0.00 mm`.
+   - **Trazabilidad Inmutable:** Escribe en `ai_audit_logs` con `latency_ms`, `tokens_in`, `tokens_out`, `model_name` y hash de payload antes de mutar la BD.
 
-Las plantillas, prompts, proveedores, modelos, límites de tokens y técnicas de inferencia son
-detalles de implementación versionados junto al runtime. Pueden evolucionar sin cambiar este
-PRD mientras se mantengan los resultados observables, la auditoría previa, el aislamiento y la
-validación determinista.
+---
 
-ai_routes permite cambiar una ruta o añadir un fallback sin reescribir la lógica de negocio.
-Toda ruta nueva debe conservar el contrato de la herramienta, la seguridad y la evidencia de
-pruebas correspondiente.
+## 4. Versionado de Prompts y Registro Desacoplado
+
+- **Prompt Registry (FQN):** Los templates están versionados con identificadores unívocos y trazables. La ruta `prompts/v1/` y el formato `dekopen:prompt:t2_nlp_command:v1.2` son ejemplos de implementación; el texto del prompt no es un contrato de dominio.
+- **Enrutador Dinámico (D16):** Si en el futuro aparece un modelo más eficiente al mismo costo, se actualiza la tabla `ai_routes` o las variables de entorno sin alterar la lógica de negocio ni re-desplegar el core.

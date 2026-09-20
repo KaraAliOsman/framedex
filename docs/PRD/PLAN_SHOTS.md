@@ -1,15 +1,17 @@
 # PLAN DE EJECUCIÓN SHOT-01 → SHOT-24 — DEKOPEN (v1.2 MASTER)
 
-> **Nota de nomenclatura:** Los shots se numeran **SHOT-01…SHOT-24** (mayúscula + guion) para no colisionar con las pantallas S01–S28. Este documento es la tercera y última pieza de la biblia: PRD v1.1.0 (contrato) → Biblia v1.2 MASTER (especificación) → **este plan (ejecución)**. A partir de aquí, ninguna decisión se toma en caliente: si el builder encuentra un vacío, aplica la Regla 20 (`[PENDIENTE-DECISIÓN]`), nunca improvisa.
+> **Autoridad:** roadmap activo subordinado a la [Constitución](../CONSTITUTION.md).
+> Define alcance, secuencia, gates y estado. SHOT-01…SHOT-24 son hitos; S01–S28 son superficies
+> de producto. Las biblias compiladas son vistas históricas no normativas.
 
 ---
 
 ## 1. Principios Operativos (No Negociables)
 
-1. **Un shot a la vez, en orden.** Prohibido adelantar shots. Cada shot consume su PRD fuente bloqueado y nada más.
+1. **Un shot a la vez, en orden.** Prohibido adelantar shots. Cada shot consulta sus PRD fuente y los contratos previos que consume.
 2. **El shot no cierra sin su gate completo.** Si el gate falla, se corrige dentro del shot — la deuda técnica no viaja al siguiente shot.
 3. **Demo semanal al fundador.** El fundador es el usuario real: cada viernes, flujo funcionando en su máquina. Si no se puede demostrar, el shot no avanzó.
-4. **Un PR por shot, tag `shot-XX`.** El merge requiere el DoD de la Regla 19 (Constitución) + el gate específico del shot.
+4. **Integración mediante PR protegido y tag `shot-XX` al cierre.** El merge requiere el DoD de la Regla 19 (Constitución) + el gate específico del shot.
 5. **Los checkpoints de negocio (SHOT-12, SHOT-18, SHOT-21) requieren decisión explícita del fundador** para abrir el cobro. La IA nunca abre un plan.
 
 ---
@@ -24,7 +26,7 @@
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
 | **P5** | Ficha técnica Pro6004 + perfil físico + calibrador + balanza | Sign-off G-Pro1 (SHOT-12) |
 | **P5-bis** | Cuenta Paddle sandbox (crear pre-semana 15) | SHOT-18 |
-| **P6** | Este documento + Biblia v1.2 MASTER cargados en Notion y como fuente de Fin | Base de conocimiento |
+| **P6** | Fuentes activas enlazadas desde AGENTS.md como base de conocimiento de Fin; copias en Notion son derivadas | Base de conocimiento |
 | **P7** | **Tarea Fundador Semanas 8–9 (No-Code):** Landing en Framer con pricing v1.1 + waitlist + página de términos legales "humano aprueba" (con abogado, en paralelo a SpA) | Aterriza Go/No-Go 8 antes de SHOT-11 y SHOT-18 |
 
 ---
@@ -50,7 +52,7 @@
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | **CERRADO** — Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | **CERRADO** — Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | ✅ **CERRADO / FINAL PROVEN** — DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra; merge [PR #23](https://github.com/KaraAliOsman/framedex/pull/23) en `main @ 251f441` + parche correctivo [PR #29](https://github.com/KaraAliOsman/framedex/pull/29) en `main @ 4662ec6` (head probado `061990f`, Gauntlet exit 0, CI 4/4); cierre documental [PR #30](https://github.com/KaraAliOsman/framedex/pull/30) en `main @ b7ccc6c`; hotfix final [PR #32](https://github.com/KaraAliOsman/framedex/pull/32) en `main @ d94d7c2` (canonicalización de eligibility keys + binding de autoridad en replay de artefactos; Gauntlet exit 0 en `3aafccb`; tag `shot-09` → `d94d7c2`) |
-| **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S13, S15; gate semántico de catálogos | ✅ **CERRADO / FINAL PROVEN** — Flujo de proyectos, versiones, clonación y catálogos manuales | Autómata de estados; freeze REV-A congela snapshot; editar enviada → REV-B; CRUD manual funcional. Merge PR #34 en `main @ 8712d67`; Gauntlet EXIT 0 en `85893c3`; refinamiento ejecutable estrecho en `4e1f7af`; cierre documental en `99f1856` |
+| **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S13, S15; gate semántico de catálogos | ✅ **CERRADO / FINAL PROVEN** — Flujo de proyectos, versiones, clonación y catálogos manuales: series/artículos, compatibilidad junquillo–vidrio y kits de herraje | Autómata de estados; freeze REV-A congela snapshot; editar enviada → REV-B; CRUD manual de series, junquillos y kits de herraje funcional para el fundador. Merge PR #34 en `main @ 8712d67`; Gauntlet EXIT 0 en `85893c3`; refinamiento ejecutable estrecho en `4e1f7af`; cierre documental en `99f1856`; CI 4/4 verde en PR y merge; tag `shot-10` → `8712d67`; [evidencia](../plans/PLAN_SHOT-10.md) |
 | **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado Supabase Storage + simulacro restauración documentado (GNG-10)**; alertas Railway activas |
 | **SHOT-12** | 1 · s10 | Todo Fase 1 | **Starter end-to-end + validación fundador** | **Gate-N:** fundador cotiza 10 trabajos reales en paralelo a NuveraPro sin perder en cortes ni pedido Proline $\rightarrow$ **sign-off G-Pro1 (GNG-PILOT-SIGN-OFF)**. Checkpoint: se abre cobro Starter |
 | **SHOT-13** | 2 · s11 | PRD-13, PRD-03 §4, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de ruta probado; T6=25+2, T8=50, T9=30+2 |
@@ -61,7 +63,7 @@
 | **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go canónicos |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas; visor 3D técnico interactivo con cinemática de apertura (giro/oscilo/corredera) (AR completa diferida a post-V1) |
 | **SHOT-20** | 3 · s18–20 | PRD-20, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
-| **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Rutas independientes obligatorias; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
+| **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios, rutas configurables; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
 | **SHOT-22** | 3 · s22–24 | PRD-15 parcial, PRD-17 parcial | Comparador T10 + bandeja email | V1 vs V2 diff correcto; email $\rightarrow$ inbound_request $\rightarrow$ Huey $\rightarrow$ borrador |
 | **SHOT-23** | 4 · m7 | PRD-15, PRD-19 §4 | Autopilot Max T9 + Fin + PostHog | Salida SIEMPRE DRAFT (test de contención); **Fin responde las 20 preguntas**; embudos PostHog activos |
 | **SHOT-24** | 4 · m7–9 | PRD-16, PRD-17, PRD-01, S26 | Retazos QR + WhatsApp + **G10 monoriel completo** + PT-BR + Pantalla S26 (Vista instalador) | G10 0.00 (sale de xfail); ciclo retazo completo (RESERVED $\rightarrow$ CONSUMED); i18n pt-BR; portal S26 en solo lectura para instalador |
