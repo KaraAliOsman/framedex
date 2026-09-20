@@ -259,6 +259,7 @@ def test_five_modes_resolve_real_bom_and_apply_atomically(commercial_rows,mode):
     with as_user(users['OWNER']),commercial_backend():
         output=preview(org,tenant(org,'OWNER'),price_request(project,users['OWNER'],mode))
         assert output['state']=='PREVIEW'
+        assert output['revision_code']=='REV-A'
         if mode in ('PRICE_PER_M2_BY_TYPOLOGY','FIXED_PRICE_MATRIX_DIMENSIONAL','COMMERCIAL_LIST_WITH_DISCOUNTS'):
             assert output['project_net']==Decimal('2000')
             assert output['project_tax']==Decimal('380')
@@ -596,10 +597,11 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
                                                  format='json')
     assert response.status_code==200
     body = response.json()
-    assert set(body)=={'id','project_id','discount_pct','state','currency','lines',
+    assert set(body)=={'id','project_id','revision_code','discount_pct','state','currency','lines',
                       'project_net','project_tax','project_gross'}
     assert body['state']=='PREVIEW'
     assert body['project_id']==str(project)
+    assert body['revision_code']=='REV-A'
     assert body['discount_pct']=='0.0000'
     assert body['currency']=='CLP'
     assert body['project_net']=='500'

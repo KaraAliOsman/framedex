@@ -176,7 +176,8 @@ def preview(org_id, actor, request):
          json_text(asdict(output)),source_revision(project,positions),project['current_revision'],
          'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     return {'id':str(record['id']),'state':'PENDING' if state=='PENDING' else 'PREVIEW',
-            'project_id':str(project['id']),'discount_pct':str(discount),
+            'project_id':str(project['id']),'revision_code':project['current_revision'],
+            'discount_pct':str(discount),
             'currency':request['currency'],**asdict(output)}
 
 
