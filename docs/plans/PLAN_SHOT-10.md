@@ -1,6 +1,6 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `4fa5f55`.
+Status: final material implementation complete; local Gauntlet PASS on `b78f21f`.
 PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
@@ -200,12 +200,16 @@ writes could both pass the service precheck. Commit `2fe7f01` blocks replacement
 until the current authority is reset, serializes singleton-role create/update decisions and
 adds tenant/global partial unique indexes for database enforcement. Commit `4fa5f55`
 preserves the historical unapplied-freeze negative proof under that stricter lifecycle.
+Protected CI then reproduced package-level XLSX nondeterminism: OpenPyXL overwrote the
+fixed modified timestamp during its convenience save. Commit `b78f21f` uses the same writer
+without that timestamp mutation and makes the differing-clock regression deterministic.
 
 Focused proof: 114 pricing/catalog/corrective/revision integration tests, 69 related unit
-contract tests, 24 SHOT-09 documentary integration tests and 337 pgTAP assertions passed;
-Ruff and PostgreSQL lint also passed. The canonical Gauntlet then passed on final material
-head `4fa5f5574e59717a30d8c5e0f81571858fbf9d14` with exit code 0: 248 engine
-tests plus 5 existing deferred xfails, 349 backend tests, 215 frontend tests, 9 real Chromium
+contract tests, 24 SHOT-09 documentary integration tests, 11 document contract tests and
+337 pgTAP assertions passed; Ruff and PostgreSQL lint also passed. The canonical Gauntlet
+then passed on final material head `b78f21f66cab530a20473c271d9e37e3ba600488`
+with exit code 0: 248 engine tests plus 5 existing deferred xfails, 349 backend tests, 215
+frontend tests, 9 real Chromium
 suites and 337 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
 PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production frontend
 build completed without warnings. No executable change followed this run.
