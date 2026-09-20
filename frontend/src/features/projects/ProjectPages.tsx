@@ -153,6 +153,7 @@ function ProjectWorkspace({
 }): JSX.Element {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [quotationDirty, setQuotationDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -356,7 +357,10 @@ function ProjectWorkspace({
 
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
-      <UnsavedChangesGuard dirty={draft !== null} message={t("projects.leaveUnsaved")} />
+      <UnsavedChangesGuard
+        dirty={draft !== null || quotationDirty}
+        message={t("projects.leaveUnsaved")}
+      />
       <h1>{project ? `${project.code} · ${project.name}` : t("projects.title")}</h1>
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
@@ -458,6 +462,7 @@ function ProjectWorkspace({
             orgId={orgId}
             canWrite={canWrite}
             onChanged={() => query.refetch()}
+            onDirtyChange={setQuotationDirty}
           />
           <section>
             <div className="projects-actions">

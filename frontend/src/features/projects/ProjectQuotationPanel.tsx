@@ -52,13 +52,16 @@ export function ProjectQuotationPanel({
   orgId,
   canWrite,
   onChanged,
+  onDirtyChange,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
   onChanged(): Promise<unknown>;
+  onDirtyChange?(dirty: boolean): void;
 }): JSX.Element {
   const [preparation, setPreparation] = useState<DocumentaryPreparationResponse | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -70,6 +73,10 @@ export function ProjectQuotationPanel({
     },
     [],
   );
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
 
   async function loadPreparation(): Promise<void> {
     const current = ++generation.current;
@@ -88,6 +95,7 @@ export function ProjectQuotationPanel({
 
   function updatePosition(index: number, update: Partial<DocumentaryPreparationPosition>): void {
     if (!preparation) return;
+    setDirty(true);
     setPreparation({
       ...preparation,
       positions: preparation.positions.map((position, positionIndex) =>
@@ -149,6 +157,7 @@ export function ProjectQuotationPanel({
       if (generation.current !== current) return;
       setPreparation(null);
       setConfirmed(false);
+      setDirty(false);
       setMessage(`${t("quotation.emitted")} ${frozen.data.revision_code}`);
       await onChanged();
     } catch (error) {
@@ -206,6 +215,7 @@ export function ProjectQuotationPanel({
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       setPreparation(null);
+      setDirty(false);
       await onChanged();
     } catch {
       setMessage(t("quotation.conflict"));
@@ -289,9 +299,10 @@ export function ProjectQuotationPanel({
             maxLength={2000}
             disabled={busy}
             value={preparation.payment_terms}
-            onChange={(event) =>
-              setPreparation({ ...preparation, payment_terms: event.target.value })
-            }
+            onChange={(event) => {
+              setDirty(true);
+              setPreparation({ ...preparation, payment_terms: event.target.value });
+            }}
           />
           <label htmlFor="quotation-valid-until">{t("quotation.validUntil")}</label>
           <input
@@ -300,9 +311,10 @@ export function ProjectQuotationPanel({
             type="date"
             disabled={busy}
             value={preparation.quotation_valid_until ?? ""}
-            onChange={(event) =>
-              setPreparation({ ...preparation, quotation_valid_until: event.target.value })
-            }
+            onChange={(event) => {
+              setDirty(true);
+              setPreparation({ ...preparation, quotation_valid_until: event.target.value });
+            }}
           />
           {preparation.positions.map((position, index) => (
             <fieldset key={position.position_id} disabled={busy}>
@@ -351,7 +363,10 @@ export function ProjectQuotationPanel({
               type="checkbox"
               checked={confirmed}
               disabled={busy}
-              onChange={(event) => setConfirmed(event.target.checked)}
+              onChange={(event) => {
+                setDirty(true);
+                setConfirmed(event.target.checked);
+              }}
             />
             {t("quotation.confirm")}
           </label>
@@ -361,8 +376,10 @@ export function ProjectQuotationPanel({
               type="button"
               disabled={busy}
               onClick={() => {
+                if (dirty && !window.confirm(t("projects.discard"))) return;
                 setPreparation(null);
                 setConfirmed(false);
+                setDirty(false);
               }}
             >
               {t("projects.cancel")}

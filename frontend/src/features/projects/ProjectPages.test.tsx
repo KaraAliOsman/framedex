@@ -510,6 +510,82 @@ it("prepares and explicitly emits the current priced revision", async () => {
   });
 });
 
+it("guards unsaved quotation preparation edits against navigation and cancel", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  vi.mocked(projectsRetrieve).mockResolvedValue(response(200, priced));
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [{ id: "handle-a", label: "Manillas v1", version: 1 }],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            handle_intents: [],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  const router = mount();
+  const confirm = vi.mocked(window.confirm);
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  await screen.findByLabelText(t("quotation.paymentTerms"));
+  change("quotation.paymentTerms", "50% anticipo");
+
+  confirm.mockReturnValue(false);
+  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  await waitFor(() => expect(confirm).toHaveBeenCalledWith(t("projects.leaveUnsaved")));
+  expect(router.state.location.pathname).toBe("/projects/project-a");
+  expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
+
+  fireEvent.click(screen.getByRole("button", { name: t("projects.cancel") }));
+  expect(confirm).toHaveBeenCalledWith(t("projects.discard"));
+  expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
+
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByRole("button", { name: t("projects.cancel") }));
+  await waitFor(() =>
+    expect(screen.queryByLabelText(t("quotation.paymentTerms"))).not.toBeInTheDocument(),
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.prepare") }));
+  await screen.findByLabelText(t("quotation.paymentTerms"));
+  change("quotation.validUntil", "2026-10-19");
+  confirm.mockReturnValue(false);
+  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  await waitFor(() => expect(confirm).toHaveBeenCalledWith(t("projects.leaveUnsaved")));
+  expect(router.state.location.pathname).toBe("/projects/project-a");
+
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  await waitFor(() => expect(router.state.location.pathname).toBe("/projects"));
+});
+
 it("opens one idempotent editable successor from a quoted revision", async () => {
   const quoted = makeProject({ status: "QUOTED", versions: [] });
   const successor = makeProject({ current_revision: "REV-B" });
