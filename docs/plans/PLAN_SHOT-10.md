@@ -1,6 +1,6 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `4e1b7d1`.
+Status: final material implementation complete; local Gauntlet PASS on `4fa5f55`.
 PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
@@ -189,15 +189,23 @@ The persisted quotation API exposed FOILED on project positions and documentary 
 inputs even though ordinary project options, the adapter and SHOT10_V1 emission support
 WHITE only. Normal project saves rejected FOILED before persistence, but the advertised
 contract was inconsistent and documentary inputs could persist a value that emission
-would reject. The final material head `4e1b7d14d507de8cab5b752f02b3347f1c7c1a26`
-now uses a WHITE-only enum for persisted project request/response, legacy pricing-draft
-persistence and documentary annotations. Generic engine and inspector color types retain
-FOILED capability; no engine formula or database storage contract was narrowed.
+would reject. Commit `4e1b7d1` introduced a WHITE-only enum for persisted project
+request/response, legacy pricing-draft persistence and documentary annotations. Generic
+engine and inspector color types retain FOILED capability; no engine formula or generic
+storage contract was narrowed.
 
-Focused proof: 57 backend project/pricing/document/OpenAPI tests and 33 project-editor
-tests passed; Ruff, ESLint/TypeScript, Prettier and generated-client reproducibility passed.
-The canonical Gauntlet then passed on that exact material commit with exit code 0: 248
-engine tests plus 5 existing deferred xfails, 347 backend tests, 215 frontend tests, 9 real
-Chromium suites and 335 pgTAP assertions. Golden remained read-only, 22/22 mutations were
-killed, PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production
-frontend build completed without warnings. No executable change followed this run.
+The final protected review then reproduced two additional defects: an APPLIED draft could
+be repriced without the explicit audited reset, and concurrent singleton profile-role
+writes could both pass the service precheck. Commit `2fe7f01` blocks replacement previews
+until the current authority is reset, serializes singleton-role create/update decisions and
+adds tenant/global partial unique indexes for database enforcement. Commit `4fa5f55`
+preserves the historical unapplied-freeze negative proof under that stricter lifecycle.
+
+Focused proof: 114 pricing/catalog/corrective/revision integration tests, 69 related unit
+contract tests, 24 SHOT-09 documentary integration tests and 337 pgTAP assertions passed;
+Ruff and PostgreSQL lint also passed. The canonical Gauntlet then passed on final material
+head `4fa5f5574e59717a30d8c5e0f81571858fbf9d14` with exit code 0: 248 engine
+tests plus 5 existing deferred xfails, 349 backend tests, 215 frontend tests, 9 real Chromium
+suites and 337 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
+PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production frontend
+build completed without warnings. No executable change followed this run.
