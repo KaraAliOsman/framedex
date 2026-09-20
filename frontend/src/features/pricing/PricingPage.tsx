@@ -825,12 +825,10 @@ function CommercialOperations({
           {t("pricing.effectiveDate")}
           <input name="effective_date" type="date" required />
         </label>
-        {!boundProjectId && (
-          <label>
-            {t("pricing.fxId")}
-            <input name="fx_snapshot_id" />
-          </label>
-        )}
+        <label>
+          {t("pricing.fxId")}
+          <input name="fx_snapshot_id" />
+        </label>
         <label>
           {t("pricing.discount")}
           <input name="discount_pct" defaultValue="0" required />

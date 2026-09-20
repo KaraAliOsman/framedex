@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { apiMutator } from "../../api/apiMutator";
 import { t } from "../../i18n/es-CL";
@@ -748,4 +749,26 @@ it("lists human project identities before any pricing operation and submits only
   });
   submitPreview();
   expect(previewBodies()[0]?.project_id).toBe("project-a");
+});
+
+it("keeps FX authority available for a bound foreign-currency project quote", () => {
+  render(
+    <MemoryRouter initialEntries={["/projects/project-a/pricing"]}>
+      <Routes>
+        <Route path="/projects/:id/pricing" element={<CommercialPricingPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  fireEvent.change(screen.getByLabelText(t("pricing.currency")), {
+    target: { value: "USD" },
+  });
+  fireEvent.change(screen.getByLabelText(t("pricing.fxId")), {
+    target: { value: "fx-snapshot-a" },
+  });
+  submitPreview();
+  expect(previewBodies()[0]).toMatchObject({
+    project_id: "project-a",
+    currency: "USD",
+    fx_snapshot_id: "fx-snapshot-a",
+  });
 });
