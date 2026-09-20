@@ -1,7 +1,7 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: corrective implementation complete; local Gauntlet PASS. PR remains open for
-Owner review; protected CI is authoritative for its current head. No merge authorized.
+Status: final material implementation complete; local Gauntlet PASS on `4e1b7d1`.
+PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
 
@@ -180,4 +180,24 @@ real Playwright: 9 passed; pgTAP: 335 assertions across 9 suites. PostgreSQL lin
 schema errors; independent PostgreSQL 16 bootstrap and populated historical upgrade passed.
 Golden byte check remained read-only and passed; 22/22 core mutations were killed. No
 checker logic, workflow protection or Golden artifact was changed. Mutable test fixtures
-were isolated without removing assertions. No implementation changes followed this run.
+were isolated without removing assertions. No implementation changes followed that run
+until the final Owner-directed review below.
+
+## Final Owner-directed review — 2026-09-20
+
+The persisted quotation API exposed FOILED on project positions and documentary finish
+inputs even though ordinary project options, the adapter and SHOT10_V1 emission support
+WHITE only. Normal project saves rejected FOILED before persistence, but the advertised
+contract was inconsistent and documentary inputs could persist a value that emission
+would reject. The final material head `4e1b7d14d507de8cab5b752f02b3347f1c7c1a26`
+now uses a WHITE-only enum for persisted project request/response, legacy pricing-draft
+persistence and documentary annotations. Generic engine and inspector color types retain
+FOILED capability; no engine formula or database storage contract was narrowed.
+
+Focused proof: 57 backend project/pricing/document/OpenAPI tests and 33 project-editor
+tests passed; Ruff, ESLint/TypeScript, Prettier and generated-client reproducibility passed.
+The canonical Gauntlet then passed on that exact material commit with exit code 0: 248
+engine tests plus 5 existing deferred xfails, 347 backend tests, 215 frontend tests, 9 real
+Chromium suites and 335 pgTAP assertions. Golden remained read-only, 22/22 mutations were
+killed, PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production
+frontend build completed without warnings. No executable change followed this run.
