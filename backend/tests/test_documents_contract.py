@@ -1,4 +1,6 @@
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from types import SimpleNamespace
 
 from openpyxl import load_workbook
 import pytest
@@ -184,7 +186,21 @@ def test_pdf_producer_emits_concrete_file_with_distinct_hash(monkeypatch: pytest
     assert file_sha256(content) not in {"a" * 64, "b" * 64}
 
 
-def test_xlsx_is_deterministic_exact_text_and_no_formula_authority() -> None:
+def test_xlsx_is_deterministic_exact_text_and_no_formula_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class TickingDateTime:
+        calls = 0
+
+        @classmethod
+        def now(cls, tz=None):
+            cls.calls += 1
+            return datetime(2026, 9, 20, tzinfo=tz) + timedelta(seconds=cls.calls)
+
+    monkeypatch.setattr(
+        "openpyxl.writer.excel.datetime",
+        SimpleNamespace(datetime=TickingDateTime, timezone=timezone),
+    )
     first, media_type = render_order_xlsx("DOC-02", order_snapshot("SUPPLIER_GLASS_PO"))
     second, _ = render_order_xlsx("DOC-02", order_snapshot("SUPPLIER_GLASS_PO"))
     assert first == second
