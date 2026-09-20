@@ -90,6 +90,7 @@ def public_documentary_errors():
         UnsupportedEngineContract,
         UnsupportedCatalogContract,
         SystemNotFound,
+        ValueError,
     ) as error:
         logger.warning(
             "Documentary authority required (%s: %s)",
@@ -181,6 +182,7 @@ def _freeze_attempt(token, claims, organization_header, project_id, data):
             project_id=project_id,
             pricing_operation_id=data["pricing_operation_id"],
             confirmed=data["confirmed"],
+            allow_incomplete_workshop=True,
         )
     return output
 

@@ -4010,7 +4010,7 @@ components:
         finish_class:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/ColorEnum'
           - $ref: '#/components/schemas/NullEnum'
         has_coupler:
           type: boolean
@@ -4432,8 +4432,11 @@ components:
     ColorEnum:
       enum:
       - WHITE
+      - FOILED
       type: string
-      description: '* `WHITE` - WHITE'
+      description: |-
+        * `WHITE` - WHITE
+        * `FOILED` - FOILED
     ConfirmBatchRequestRequest:
       type: object
       properties:
@@ -5219,14 +5222,6 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - error
-    FinishClassEnum:
-      enum:
-      - WHITE
-      - FOILED
-      type: string
-      description: |-
-        * `WHITE` - WHITE
-        * `FOILED` - FOILED
     FixabilityEnum:
       enum:
       - AUTO_FIXABLE
@@ -5679,11 +5674,11 @@ components:
         carriages_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         stay_arms_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         contents:
           type: array
           items:
@@ -5768,11 +5763,11 @@ components:
         carriages_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         stay_arms_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         contents:
           type: array
           items:
@@ -6112,11 +6107,11 @@ components:
         carriages_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         stay_arms_qty:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 0
         contents:
           type: array
           items:
@@ -6185,7 +6180,7 @@ components:
         chamber_count:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         sash_overlap_mm:
           type: string
           format: decimal
@@ -6252,7 +6247,7 @@ components:
         version:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         is_active:
           type: boolean
     PolishingEdges:
@@ -7012,8 +7007,13 @@ components:
       properties:
         confirmed:
           type: boolean
+        expected_current_revision:
+          type: string
+          minLength: 1
+          pattern: ^REV-[A-Z]+$
       required:
       - confirmed
+      - expected_current_revision
     SupplierDetailsRequest:
       type: object
       properties:
@@ -7063,7 +7063,7 @@ components:
         chamber_count:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         sash_overlap_mm:
           type: string
           format: decimal
@@ -7130,7 +7130,7 @@ components:
         version:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         is_active:
           type: boolean
         revision:
@@ -7193,7 +7193,7 @@ components:
         chamber_count:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         sash_overlap_mm:
           type: string
           format: decimal
@@ -7260,7 +7260,7 @@ components:
         version:
           type: integer
           maximum: 2147483647
-          minimum: -2147483648
+          minimum: 1
         is_active:
           type: boolean
       required:
@@ -7350,7 +7350,7 @@ components:
         finish_class:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/ColorEnum'
           - $ref: '#/components/schemas/NullEnum'
         has_coupler:
           type: boolean
@@ -7391,7 +7391,7 @@ components:
         finish_class:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/FinishClassEnum'
+          - $ref: '#/components/schemas/ColorEnum'
           - $ref: '#/components/schemas/NullEnum'
         has_coupler:
           type: boolean

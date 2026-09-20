@@ -64,24 +64,24 @@ class QuantityField(serializers.Field):
 class SystemWriteSerializer(StrictSerializer):
     name = serializers.CharField(max_length=150)
     code = serializers.CharField(max_length=50)
-    depth_mm = decimal_field(10, 2)
+    depth_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
     material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
-    chamber_count = integer_field()
-    sash_overlap_mm = decimal_field(4, 2)
-    glass_clearance_white_mm = decimal_field(4, 2)
-    glass_clearance_foil_mm = decimal_field(4, 2)
-    pulley_height_mm = decimal_field(4, 2)
-    central_overlap_mm = decimal_field(4, 2)
-    sliding_lateral_clearance_mm = decimal_field(4, 2)
-    sliding_end_add_mm = decimal_field(4, 2)
-    corner_bracket_loss_mm = decimal_field(4, 2)
-    hook_depth_mm = decimal_field(4, 2)
-    door_threshold_mm = decimal_field(4, 2)
-    door_bottom_clearance_mm = decimal_field(4, 2)
+    chamber_count = serializers.IntegerField(min_value=1, max_value=2147483647)
+    sash_overlap_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    glass_clearance_white_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    glass_clearance_foil_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    pulley_height_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    central_overlap_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    sliding_lateral_clearance_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    sliding_end_add_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    corner_bracket_loss_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    hook_depth_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    door_threshold_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
+    door_bottom_clearance_mm = decimal_field(4, 2, min_value=Decimal("0.00"))
     rail_type = serializers.ChoiceField(choices=["dual", "mono"])
-    sliding_glazing_deduction_width_mm = decimal_field(10, 2)
-    sliding_glazing_deduction_height_mm = decimal_field(10, 2)
-    door_leaf_side_clearance_mm = decimal_field(10, 2)
+    sliding_glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    sliding_glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    door_leaf_side_clearance_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     chamber_clearance_mm = decimal_field(
         10,
         2,
@@ -89,7 +89,7 @@ class SystemWriteSerializer(StrictSerializer):
         required=False,
         min_value=Decimal("0.01"),
     )
-    version = integer_field()
+    version = serializers.IntegerField(min_value=1, max_value=2147483647)
     is_active = serializers.BooleanField()
 
 
@@ -111,28 +111,28 @@ class ArticleWriteSerializer(StrictSerializer):
         ]
     )
     material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
-    face_width_mm = decimal_field(10, 2)
+    face_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
     commercial_length_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
-    welding_loss_mm = decimal_field(10, 2)
+    welding_loss_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     reinforcement_sku = serializers.CharField(
         max_length=100,
         allow_null=True,
         allow_blank=True,
         required=False,
     )
-    reinforcement_gap_mm = decimal_field(10, 2)
-    weight_kg_m = decimal_field(8, 4)
-    steel_weight_kg_m = decimal_field(8, 4)
+    reinforcement_gap_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    weight_kg_m = decimal_field(8, 4, min_value=Decimal("0.0001"))
+    steel_weight_kg_m = decimal_field(8, 4, min_value=Decimal("0.0000"))
 
 
 class BeadWriteSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
-    glass_thickness_mm = decimal_field(6, 2)
+    glass_thickness_mm = decimal_field(6, 2, min_value=Decimal("0.01"))
     bead_article_id = serializers.UUIDField()
-    bead_width_mm = decimal_field(6, 2)
-    gasket_interior_mm = decimal_field(6, 2)
-    gasket_exterior_mm = decimal_field(6, 2)
-    cut_add_mm = decimal_field(6, 2)
+    bead_width_mm = decimal_field(6, 2, min_value=Decimal("0.01"))
+    gasket_interior_mm = decimal_field(6, 2, min_value=Decimal("0.00"))
+    gasket_exterior_mm = decimal_field(6, 2, min_value=Decimal("0.00"))
+    cut_add_mm = decimal_field(6, 2, min_value=Decimal("0.00"))
     is_active = serializers.BooleanField()
 
 
@@ -156,16 +156,16 @@ class KitWriteSerializer(StrictSerializer):
     sku = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255)
     opening_type = serializers.ChoiceField(choices=KIT_OPENING_TYPES)
-    min_leaf_width_mm = decimal_field(10, 2)
-    max_leaf_width_mm = decimal_field(10, 2)
-    min_leaf_height_mm = decimal_field(10, 2)
-    max_leaf_height_mm = decimal_field(10, 2)
-    max_leaf_weight_kg = decimal_field(6, 2)
+    min_leaf_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    min_leaf_height_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_height_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    max_leaf_weight_kg = decimal_field(6, 2, min_value=Decimal("0.01"))
     rail_type = serializers.ChoiceField(choices=["dual", "mono"])
-    carriages_qty = integer_field()
-    stay_arms_qty = integer_field()
+    carriages_qty = serializers.IntegerField(min_value=0, max_value=2147483647)
+    stay_arms_qty = serializers.IntegerField(min_value=0, max_value=2147483647)
     contents = CatalogHardwareComponentSerializer(many=True)
-    weight_kg = decimal_field(8, 2, allow_null=True, required=False)
+    weight_kg = decimal_field(8, 2, allow_null=True, required=False, min_value=Decimal("0.01"))
     carriage_capacity_kg = decimal_field(
         8,
         2,

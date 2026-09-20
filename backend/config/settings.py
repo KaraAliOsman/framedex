@@ -104,10 +104,28 @@ SPECTACULAR_SETTINGS = {
         "CutMaterialEnum": ["PVC", "ALUMINIUM", "STEEL"],
         "InspectorRuleIdEnum": [f"R{i:02d}" for i in range(1, 15)],
         "DrainFixRuleIdEnum": ["R07"],
+        "ColorEnum": ["WHITE", "FOILED"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
 }

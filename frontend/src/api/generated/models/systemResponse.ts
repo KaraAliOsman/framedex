@@ -17,7 +17,7 @@ export interface SystemResponse {
   depth_mm: string;
   material: MaterialEnum;
   /**
-   * @minimum -2147483648
+   * @minimum 1
    * @maximum 2147483647
    */
   chamber_count: number;
@@ -56,7 +56,7 @@ export interface SystemResponse {
    */
   chamber_clearance_mm?: string | null;
   /**
-   * @minimum -2147483648
+   * @minimum 1
    * @maximum 2147483647
    */
   version: number;

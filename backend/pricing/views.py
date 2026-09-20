@@ -45,8 +45,8 @@ class DecimalJSONParser(JSONParser):
             raise contract_error(400,'invalid_json','Revisa el formato de los datos.') from error
 
 
-def validate(serializer_type, data):
-    serializer = serializer_type(data=data)
+def validate(serializer_type, data, *, partial=False):
+    serializer = serializer_type(data=data, partial=partial)
     if not serializer.is_valid():
         raise contract_error(400,'validation_error','Revisa los campos y los valores ingresados.')
     return serializer.validated_data

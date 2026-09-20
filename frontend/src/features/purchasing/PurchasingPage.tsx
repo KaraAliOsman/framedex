@@ -312,7 +312,7 @@ function PurchasingWorkspace({
           >
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.revision_code} · {item.bom_hash.slice(0, 12)} · {item.emitted_at}
+                {item.revision_code} · {item.emitted_at}
               </option>
             ))}
           </select>

@@ -8,9 +8,11 @@
 
 /**
  * * `WHITE` - WHITE
+ * * `FOILED` - FOILED
  */
 export type ColorEnum = (typeof ColorEnum)[keyof typeof ColorEnum];
 
 export const ColorEnum = {
   WHITE: "WHITE",
+  FOILED: "FOILED",
 } as const;

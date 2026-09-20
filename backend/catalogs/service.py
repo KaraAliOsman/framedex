@@ -187,8 +187,24 @@ def _parameters(values):
     ]
 
 
+SINGLETON_ROLES = {"FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "THRESHOLD"}
+
+
 def create(resource, org_id, values):
     _bind_parent(resource, org_id, values)
+    if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT id FROM public.profile_articles "
+                f"WHERE system_id = %s AND role = %s AND {_visibility(ARTICLES)}",
+                [values["system_id"], values["role"], org_id],
+            )
+            if cursor.fetchone() is not None:
+                raise contract_error(
+                    409,
+                    "catalog_write_conflict",
+                    "catalogs.errors.catalog_constraint_conflict",
+                )
     columns = tuple(values)
     placeholders = ["%s::jsonb" if name == "contents" else "%s" for name in columns]
     with connection.cursor() as cursor:
@@ -222,6 +238,21 @@ def update(resource, org_id, row_id, values, expected_revision=None):
             "catalog_parent_immutable",
             "catalogs.errors.parent_immutable",
         )
+    target_role = values.get("role", current.get("role"))
+    if resource is ARTICLES and target_role in SINGLETON_ROLES:
+        target_system_id = values.get("system_id", current.get("system_id"))
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT id FROM public.profile_articles "
+                f"WHERE system_id = %s AND role = %s AND id != %s AND {_visibility(ARTICLES)}",
+                [target_system_id, target_role, row_id, org_id],
+            )
+            if cursor.fetchone() is not None:
+                raise contract_error(
+                    409,
+                    "catalog_write_conflict",
+                    "catalogs.errors.catalog_constraint_conflict",
+                )
     _bind_parent(resource, org_id, {**current, **values})
     if values:
         assignments = [

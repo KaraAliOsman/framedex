@@ -125,7 +125,7 @@ function PositionWorkspace({
             systemId: item.design.system_id,
             nominalWidthMm: item.design.nominal_width_mm,
             nominalHeightMm: item.design.nominal_height_mm,
-            color: "WHITE",
+            color: (item.design.color === "FOILED" ? "FOILED" : "WHITE") as "WHITE" | "FOILED",
             parametricTree: item.design.parametric_tree as IntentNode,
           });
           setSaved(copyId ? null : item);
@@ -235,7 +235,7 @@ function PositionWorkspace({
     const body = {
       location_tag: location,
       quantity: Number(quantity),
-      design: { ...requestFromInputs(inputs), color: "WHITE" as const },
+      design: { ...requestFromInputs(inputs), color: inputs.color },
     };
     try {
       const response = saved
@@ -298,7 +298,9 @@ function PositionWorkspace({
         <div className="position-design">
           <FixedPositionPreview inputs={inputs} result={result}>
             <div>
-              <div className="design-caption">{t("projects.distribution")}</div>
+              <div className="design-caption">
+                {t("projects.distribution")} (Esquemático · Proporcional)
+              </div>
               <DesignDiagram
                 node={inputs.parametricTree}
                 selected={selected}
@@ -349,6 +351,28 @@ function PositionWorkspace({
                   setDirty(true);
                 }}
               />
+            </label>
+            <label>
+              Color
+              <select
+                value={inputs.color}
+                onChange={(e) => {
+                  const newColor = e.target.value as "WHITE" | "FOILED";
+                  const candidate = { ...inputs, color: newColor };
+                  useCanvasStore.getState().loadDesign(candidate);
+                  setDirty(true);
+                  if (systemId) {
+                    void engineCalculate(requestFromInputs(candidate), requestOptions)
+                      .then((res) => {
+                        if (res.status === 200) setResult(res.data);
+                      })
+                      .catch(() => {});
+                  }
+                }}
+              >
+                <option value="WHITE">Blanco (WHITE)</option>
+                <option value="FOILED">Foliado (FOILED)</option>
+              </select>
             </label>
             <label>
               {t("projects.system")}
@@ -475,20 +499,29 @@ function DesignDiagram({
         ))}
       </>
     );
-  if (node.type === "SPLIT_V" || node.type === "SPLIT_H")
+  if (node.type === "SPLIT_V" || node.type === "SPLIT_H") {
+    const offset = Number(node.split_offset_mm);
     return (
       <div className={`design-split ${node.type === "SPLIT_H" ? "is-horizontal" : ""}`}>
-        {node.children?.map((child) => (
-          <DesignDiagram
-            key={child.id}
-            node={child}
-            selected={selected}
-            onSelect={onSelect}
-            disabled={disabled}
-          />
-        ))}
+        {node.children?.map((child, idx) => {
+          const style =
+            node.children?.length === 2 && offset > 0
+              ? { flex: idx === 0 ? `${offset}` : `calc(1000 - ${offset})` }
+              : { flex: 1 };
+          return (
+            <div key={child.id} style={style} className="design-proportional-child">
+              <DesignDiagram
+                node={child}
+                selected={selected}
+                onSelect={onSelect}
+                disabled={disabled}
+              />
+            </div>
+          );
+        })}
       </div>
     );
+  }
   return (
     <button
       type="button"

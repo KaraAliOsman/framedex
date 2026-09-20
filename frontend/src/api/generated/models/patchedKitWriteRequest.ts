@@ -35,12 +35,12 @@ export interface PatchedKitWriteRequest {
   max_leaf_weight_kg?: string;
   rail_type?: RailTypeEnum;
   /**
-   * @minimum -2147483648
+   * @minimum 0
    * @maximum 2147483647
    */
   carriages_qty?: number;
   /**
-   * @minimum -2147483648
+   * @minimum 0
    * @maximum 2147483647
    */
   stay_arms_qty?: number;

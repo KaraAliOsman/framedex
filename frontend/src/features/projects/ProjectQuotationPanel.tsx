@@ -171,7 +171,7 @@ export function ProjectQuotationPanel({
     try {
       const response = await projectsStartSuccessor(
         project.id,
-        { confirmed: true },
+        { confirmed: true, expected_current_revision: project.current_revision },
         requestOptions,
       );
       if (response.status !== 200 && response.status !== 201) {

@@ -32,7 +32,7 @@ class PositionDesignSerializer(EngineCalculateRequestSerializer, StrictSerialize
     nominal_height_mm = DecimalStringField(
         max_digits=10, decimal_places=2, min_value=Decimal("250")
     )
-    color = serializers.ChoiceField(choices=["WHITE"])
+    color = serializers.ChoiceField(choices=["WHITE", "FOILED"])
 
 
 class PositionWriteSerializer(StrictSerializer):
@@ -104,6 +104,7 @@ class CloneProjectSerializer(StrictSerializer):
 
 class SuccessorRequestSerializer(StrictSerializer):
     confirmed = serializers.BooleanField()
+    expected_current_revision = serializers.RegexField(r"^REV-[A-Z]+$")
 
     def validate_confirmed(self, value):
         if not value:

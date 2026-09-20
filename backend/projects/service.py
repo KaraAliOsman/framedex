@@ -226,6 +226,8 @@ def update_project(org_id, project_id, data):
     current = editable(org_id, project_id)
     unchanged(current, data["expected_updated_at"])
     values = {key: data[key] for key in METADATA if key in data}
+    if not values:
+        return project_public(org_id, current, detail=True)
     query = sql.SQL(
         "UPDATE public.projects SET {},updated_at=clock_timestamp() "
         "WHERE id=%s AND org_id=%s RETURNING id"
@@ -528,19 +530,20 @@ def clone_draft(org_id, actor_id, project_id, data):
     return clone_project(org_id, actor_id, project_id, data)
 
 
-def start_successor(org_id, project_id):
+def start_successor(org_id, project_id, expected_current_revision=None):
     project = project_row(org_id, project_id, lock=True)
     latest = _latest_version(org_id, project_id)
     if latest is None:
         raise contract_error(409, "successor_requires_emission", "Emite la cotización antes de revisarla.")
-    successor = next_revision_code(latest["revision_code"])
-    if project["status"] == "DRAFT" and project["current_revision"] == successor:
+    expected = expected_current_revision or latest["revision_code"]
+    successor = next_revision_code(expected)
+    if project["status"] == "DRAFT" and project["current_revision"] == successor and latest["revision_code"] == expected:
         return {
             **project_public(org_id, project_row(org_id, project_id), detail=True),
             "successor_created": False,
         }
-    if project["status"] != "QUOTED":
-        raise contract_error(409, "successor_status_invalid", "Este estado no permite una nueva revisión.")
+    if project["status"] != "QUOTED" or project["current_revision"] != expected:
+        raise contract_error(409, "successor_source_stale", "La revisión actual del proyecto no coincide con la esperada.")
     if latest["revision_code"] != project["current_revision"]:
         raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
     _assert_live_matches_version(org_id, project_id, latest)

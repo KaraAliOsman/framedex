@@ -76,7 +76,6 @@ export * from "./engineOptimizeResponse";
 export * from "./engineSystemsResponse";
 export * from "./errorDetail";
 export * from "./errorResponse";
-export * from "./finishClassEnum";
 export * from "./fixabilityEnum";
 export * from "./formatEnum";
 export * from "./freezeRequestRequest";

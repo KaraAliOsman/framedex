@@ -273,6 +273,29 @@ export function IntentEditor({
               {t("intent.applyOpening")}
             </button>
 
+            {(() => {
+              const reversible: Opening | null =
+                selected.opening_type === "TURN_LEFT"
+                  ? "TURN_RIGHT"
+                  : selected.opening_type === "TURN_RIGHT"
+                    ? "TURN_LEFT"
+                    : selected.opening_type === "TILT_TURN_LEFT"
+                      ? "TILT_TURN_RIGHT"
+                      : selected.opening_type === "TILT_TURN_RIGHT"
+                        ? "TILT_TURN_LEFT"
+                        : null;
+              if (!reversible) return null;
+              return (
+                <button
+                  type="button"
+                  disabled={dimensionsPending || !!offset}
+                  onClick={() => applyOpening(reversible)}
+                >
+                  Invertir apertura ({t(openingLabels[reversible])})
+                </button>
+              );
+            })()}
+
             {canSplit && (mullions.SPLIT_V || mullions.SPLIT_H) ? (
               <div>
                 <label>
@@ -286,6 +309,38 @@ export function IntentEditor({
                     }}
                   />
                 </label>
+                <div style={{ display: "flex", gap: "0.25rem", margin: "0.25rem 0" }}>
+                  <button
+                    type="button"
+                    disabled={dimensionsPending}
+                    onClick={() => {
+                      setOffset((Number(width) * 0.5).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    50% (Centro)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dimensionsPending}
+                    onClick={() => {
+                      setOffset(((Number(width) * 2) / 3).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    2/3
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dimensionsPending}
+                    onClick={() => {
+                      setOffset((Number(width) / 3).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    1/3 (Ecualizar)
+                  </button>
+                </div>
                 <p>{t("intent.offsetHelp")}</p>
                 {mullions.SPLIT_V ? (
                   <button
@@ -343,6 +398,38 @@ export function IntentEditor({
                     }}
                   />
                 </label>
+                <div style={{ display: "flex", gap: "0.25rem", margin: "0.25rem 0" }}>
+                  <button
+                    type="button"
+                    disabled={!divisionId}
+                    onClick={() => {
+                      setDivisionOffset((Number(width) * 0.5).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    Centrar 50%
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!divisionId}
+                    onClick={() => {
+                      setDivisionOffset(((Number(width) * 2) / 3).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    2/3
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!divisionId}
+                    onClick={() => {
+                      setDivisionOffset((Number(width) / 3).toFixed(2));
+                      onDraftChange?.();
+                    }}
+                  >
+                    1/3 (Ecualizar)
+                  </button>
+                </div>
                 <button
                   type="button"
                   disabled={!divisionId || !divisionOffset.trim()}

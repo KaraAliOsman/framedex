@@ -24,6 +24,8 @@ from dekopen_engine.inspection_models import (
 from dekopen_engine.inspector import inspect
 from dekopen_engine.manufacturing import project_manufacturing_facts_v1
 from dekopen_engine.purchasing import (
+    EdgePolishingV1,
+    GlassPolishingAuthorityV1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
@@ -199,7 +201,8 @@ def _collect_purchase_authorities(
 
 def freeze_revision_a(
     *, org_id: UUID, actor_id: UUID, project_id: UUID,
-    pricing_operation_id: UUID, confirmed: bool
+    pricing_operation_id: UUID, confirmed: bool,
+    allow_incomplete_workshop: bool = False,
 ) -> dict[str, object]:
     if not confirmed:
         raise DocumentaryError("documentary_freeze_confirmation_required")
@@ -281,6 +284,7 @@ def freeze_revision_a(
         purchase_positions: list[PositionPurchaseInputV1] = []
         purchase_authorities: PurchaseAuthorities | None = None
         documentary_complete = True
+        production_allowed = True
         stock_repository = CuttingRepository()
         for position in positions:
             position_id = str(position["id"])
@@ -349,12 +353,19 @@ def freeze_revision_a(
                 mode=InspectionMode.DESIGN,
                 source_calculation_hash=str(source_hash),
             ), inspector_authorities.config)
-            if not inspection.production_allowed or inspection.status == "RED":
+            has_failures = any(
+                evaluation.status is RuleEvaluationStatus.FAIL
+                for evaluation in inspection.evaluations
+            )
+            is_red = not inspection.production_allowed or inspection.status == "RED"
+            if has_failures or (is_red and not allow_incomplete_workshop):
                 raise DocumentaryError("inspector_red_blocks_documentary_freeze")
+            position_production_allowed = inspection.production_allowed
             position_complete = not any(
                 evaluation.status is RuleEvaluationStatus.MISSING_INPUT
                 for evaluation in inspection.evaluations
             )
+            production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
             policies = load_manufacturing_policies(
@@ -391,6 +402,28 @@ def freeze_revision_a(
                 contents=item.contents,
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
             polishing = glass_polishing(position["glass_polishing"])
+            glass_targets = {
+                (infill.bay_id, infill.leaf_id)
+                for unit in units
+                for infill in unit.infills
+                if infill.kind == "GLASS"
+            }
+            if not polishing and glass_targets and allow_incomplete_workshop:
+                purchase_polishing = [
+                    GlassPolishingAuthorityV1(
+                        schema_version=1,
+                        bay_id=bay_id,
+                        leaf_id=leaf_id,
+                        edges=EdgePolishingV1(top=False, right=False, bottom=False, left=False),
+                    )
+                    for bay_id, leaf_id in sorted(glass_targets)
+                ]
+                position_production_allowed = False
+                position_complete = False
+                production_allowed = False
+                documentary_complete = False
+            else:
+                purchase_polishing = polishing
             accessories = accessory_schedule(
                 position["accessory_schedule"], str(position["documentary_input_id"])
             )
@@ -404,7 +437,7 @@ def freeze_revision_a(
                 location_tag=location_tag,
                 manufacturing_units=units,
                 hardware=hardware,
-                glass_polishing=polishing,
+                glass_polishing=purchase_polishing,
                 accessory_schedule=accessories,
             )
             purchase_positions.append(purchase_position)
@@ -473,6 +506,7 @@ def freeze_revision_a(
                 "config": inspector_authorities.config.model_dump(mode="python"),
                 "chamber_clearance_mm": inspector_authorities.chamber_clearance_mm,
                 "documentary_complete": position_complete,
+                "production_allowed": position_production_allowed,
             })
 
         if purchase_authorities is None:
@@ -541,7 +575,7 @@ def freeze_revision_a(
                 "panel": [item.model_dump(mode="python")
                           for item in purchase_authorities.panel_authorities],
             },
-            "production_allowed": True,
+            "production_allowed": production_allowed,
             "documentary_complete": documentary_complete,
             "realized_waste": {"status": "NOT_RECORDED", "value": None},
             "bom_hash": bom_hash,
@@ -552,13 +586,13 @@ def freeze_revision_a(
             "project_id,org_id,revision_code,snapshot_json,pdf_storage_path,emitted_by,emitted_at,"
             "authority_version,pricing_operation_id,canonical_version,bom_hash,snapshot_sha256,"
             "production_allowed,documentary_complete) "
-            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,'SHOT10_V1',%s,%s,%s,%s,TRUE,%s) "
+            "VALUES(%s,%s,%s,%s::jsonb,NULL,%s,%s,'SHOT10_V1',%s,%s,%s,%s,%s,%s) "
             "RETURNING id,revision_code,bom_hash,snapshot_sha256,production_allowed,"
             "documentary_complete,emitted_at",
             [project_id, org_id, revision,
              documentary_canonical_json_v1(snapshot).decode("utf-8"), actor_id, sealed_at,
              pricing_operation_id, DOCUMENTARY_CANONICAL_VERSION, bom_hash,
-             snapshot_sha256, documentary_complete],
+             snapshot_sha256, production_allowed, documentary_complete],
         )
         version_id = UUID(str(version["id"]))
         projection_snapshot = purchase.model_dump(mode="python")
@@ -617,67 +651,11 @@ def freeze_revision_a(
             "revision_code": revision,
             "bom_hash": bom_hash,
             "snapshot_sha256": snapshot_sha256,
-            "production_allowed": True,
+            "production_allowed": production_allowed,
             "documentary_complete": documentary_complete,
             "emitted_at": sealed_at,
             "purchase_projection_hash": purchase.projection_hash,
         }
-
-
-def _default_workshop_and_glass(
-    position: dict[str, object], org_id: UUID
-) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-    try:
-        tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
-        color = (
-            "WHITE"
-            if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
-            else "FOILED"
-        )
-        system_id = UUID(str(position["system_id"]))
-        params = SystemParamsRepository().load_visible(system_id, org_id)
-        root = normalized_root_from_api(
-            parametric_tree=tree,
-            nominal_width_mm=D(str(position["width_mm"])),
-            nominal_height_mm=D(str(position["height_mm"])),
-            color=color,
-            params=params,
-        )
-        computation = compute_geometry(root, params, diagnostic=True)
-        workshop: list[dict[str, object]] = []
-        if computation.openings:
-            for opening in computation.openings:
-                w = opening.width_mm
-                left_drain = min(D("100"), (w / D("4")).quantize(D("0.01"), rounding=ROUND_HALF_UP))
-                center_drain = (w / D("2")).quantize(D("0.01"), rounding=ROUND_HALF_UP)
-                right_drain = max(left_drain, (w - left_drain).quantize(D("0.01"), rounding=ROUND_HALF_UP))
-                drains = sorted({left_drain, center_drain, right_drain})
-                workshop.append({
-                    "bay_id": opening.bay_id,
-                    "leaf_id": None,
-                    "bottom_drain_holes_mm": [str(d) for d in drains],
-                    "closing_points_perimeter_mm": None,
-                    "continuous_width_mm": str(w),
-                    "finish_class": "WHITE",
-                    "has_coupler": False,
-                })
-        glass: list[dict[str, object]] = []
-        if computation.manufacturing_trace and computation.manufacturing_trace.infills:
-            glass_targets = {
-                (infill.bay_id, infill.leaf_id)
-                for infill in computation.manufacturing_trace.infills
-                if infill.kind == "GLASS"
-            }
-            for bay_id, leaf_id in sorted(glass_targets):
-                glass.append({
-                    "schema_version": 1,
-                    "bay_id": bay_id,
-                    "leaf_id": leaf_id,
-                    "edges": {"top": False, "right": False, "bottom": False, "left": False},
-                })
-        return workshop, glass
-    except Exception:
-        return [], []
 
 
 def prepare_documentary_inputs(
@@ -750,15 +728,78 @@ def prepare_documentary_inputs(
         identity = str(position["id"])
         existing = position_inputs.get(identity)
         system_id = str(position["system_id"])
+        system_id_uuid = UUID(system_id)
         placement_options = placement.get(system_id, [])
         handle_options = handles.get(system_id, [])
         reinforcement_options = reinforcement.get(system_id, [])
-        existing_workshop = decoded(existing["workshop_annotations"]) if existing and existing["workshop_annotations"] is not None else None
-        existing_glass = decoded(existing["glass_polishing"]) if existing and existing["glass_polishing"] is not None else None
-        default_workshop, default_glass = ([], []) if (existing_workshop and existing_glass) else _default_workshop_and_glass(position, org_id)
 
-        workshop = existing_workshop if existing_workshop else default_workshop
-        glass = existing_glass if existing_glass else default_glass
+        tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
+        color = (
+            "WHITE"
+            if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
+            else "FOILED"
+        )
+        params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
+        root = normalized_root_from_api(
+            parametric_tree=tree,
+            nominal_width_mm=D(str(position["width_mm"])),
+            nominal_height_mm=D(str(position["height_mm"])),
+            color=color,
+            params=params,
+        )
+        computation = compute_geometry(root, params, diagnostic=True)
+        valid_bays = {opening.bay_id for opening in computation.openings}
+        valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in computation.leaves}
+        valid_spans = {span.target_id for span in computation.spans}
+        valid_glass = {
+            (infill.bay_id, infill.leaf_id)
+            for infill in (computation.manufacturing_trace.infills if computation.manufacturing_trace else [])
+            if infill.kind == "GLASS"
+        }
+
+        existing_workshop = (
+            decoded(existing["workshop_annotations"])
+            if existing and existing["workshop_annotations"] is not None
+            else []
+        )
+        existing_glass = (
+            decoded(existing["glass_polishing"])
+            if existing and existing["glass_polishing"] is not None
+            else []
+        )
+        existing_structural = (
+            decoded(existing["structural_inputs"])
+            if existing and existing["structural_inputs"] is not None
+            else []
+        )
+        existing_intents = (
+            decoded(existing["handle_intents"])
+            if existing and existing["handle_intents"] is not None
+            else []
+        )
+
+        workshop = [
+            item for item in (existing_workshop or [])
+            if isinstance(item, dict)
+            and item.get("bay_id") in valid_bays
+            and (item.get("leaf_id") is None or (item.get("bay_id"), item.get("leaf_id")) in valid_leaves)
+        ]
+        glass = [
+            item for item in (existing_glass or [])
+            if isinstance(item, dict)
+            and (item.get("bay_id"), item.get("leaf_id")) in valid_glass
+        ]
+        structural = [
+            item for item in (existing_structural or [])
+            if isinstance(item, dict)
+            and item.get("target_id") in valid_spans
+        ]
+        intents = [
+            item for item in (existing_intents or [])
+            if isinstance(item, dict)
+            and (item.get("bay_id"), item.get("leaf_id")) in valid_leaves
+        ]
+
         prepared.append(
             {
                 "position_id": position["id"],
@@ -777,11 +818,9 @@ def prepare_documentary_inputs(
                     existing, "reinforcement_cut_policy_id", reinforcement_options
                 ),
                 "workshop_annotations": workshop,
-                "structural_inputs": decoded(existing["structural_inputs"])
-                if existing and existing["structural_inputs"] is not None else [],
+                "structural_inputs": structural,
                 "glass_polishing": glass,
-                "handle_intents": decoded(existing["handle_intents"])
-                if existing and existing["handle_intents"] is not None else [],
+                "handle_intents": intents,
                 "accessory_schedule": decoded(existing["accessory_schedule"])
                 if existing and existing["accessory_schedule"] is not None else {"schema_version": 1, "coverage": "NONE_REQUIRED", "items": []},
                 "legacy_handle_migration_confirmed": bool(
@@ -816,7 +855,8 @@ def save_documentary_inputs(
         if project["status"] != "DRAFT":
             raise DocumentaryError("documentary_inputs_require_draft")
         positions = rows(
-            "SELECT id FROM public.project_positions WHERE project_id=%s AND org_id=%s "
+            "SELECT id,system_id,width_mm,height_mm,color_interior,color_exterior,parametric_tree "
+            "FROM public.project_positions WHERE project_id=%s AND org_id=%s "
             "ORDER BY position_index FOR UPDATE",
             [project_id, org_id],
         )
@@ -824,6 +864,49 @@ def save_documentary_inputs(
         supplied = {str(item["position_id"]) for item in supplied_values}
         if supplied != expected or len(supplied_values) != len(supplied):
             raise DocumentaryError("documentary_position_coverage_required")
+        positions_by_id = {str(item["id"]): item for item in positions}
+
+    for item in supplied_values:
+        pos = positions_by_id[str(item["position_id"])]
+        system_id_uuid = UUID(str(pos["system_id"]))
+        tree = _json_object(pos["parametric_tree"], "invalid_parametric_tree")
+        color = (
+            "WHITE"
+            if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE"
+            else "FOILED"
+        )
+        params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
+        root = normalized_root_from_api(
+            parametric_tree=tree,
+            nominal_width_mm=D(str(pos["width_mm"])),
+            nominal_height_mm=D(str(pos["height_mm"])),
+            color=color,
+            params=params,
+        )
+        comp = compute_geometry(root, params, diagnostic=True)
+        valid_bays = {opening.bay_id for opening in comp.openings}
+        valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in comp.leaves}
+        valid_spans = {span.target_id for span in comp.spans}
+        valid_glass = {
+            (infill.bay_id, infill.leaf_id)
+            for infill in (comp.manufacturing_trace.infills if comp.manufacturing_trace else [])
+            if infill.kind == "GLASS"
+        }
+        item_workshop = item.get("workshop_annotations") or []
+        for w in item_workshop:
+            if not isinstance(w, dict) or w.get("bay_id") not in valid_bays or (
+                w.get("leaf_id") is not None and (w.get("bay_id"), w.get("leaf_id")) not in valid_leaves
+            ):
+                raise DocumentaryError("workshop_annotation_target_invalid")
+        item_structural = item.get("structural_inputs") or []
+        for s in item_structural:
+            if not isinstance(s, dict) or s.get("target_id") not in valid_spans:
+                raise DocumentaryError("structural_input_target_invalid")
+        item_glass = item.get("glass_polishing") or []
+        for g in item_glass:
+            if not isinstance(g, dict) or (g.get("bay_id"), g.get("leaf_id")) not in valid_glass:
+                raise DocumentaryError("glass_polishing_target_invalid")
+
     with documentary_backend():
         if rows(
             "SELECT version.id FROM public.project_versions version "

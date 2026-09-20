@@ -8,4 +8,9 @@
 
 export interface SuccessorRequestRequest {
   confirmed: boolean;
+  /**
+   * @minLength 1
+   * @pattern ^REV-[A-Z]+$
+   */
+  expected_current_revision: string;
 }

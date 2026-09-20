@@ -647,6 +647,15 @@ function CommercialOperations({
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
   const [history, setHistory] = useState<Operation[]>([]);
   const generation = useRef(0);
+
+  const projectOptions = Array.from(
+    new Set(
+      [projectId, ...(Array.isArray(history) ? history.map((op) => op.project_id) : [])].filter(
+        Boolean,
+      ),
+    ),
+  );
+
   useEffect(
     () => () => {
       generation.current += 1;
@@ -728,12 +737,19 @@ function CommercialOperations({
         ) : (
           <label>
             {t("pricing.projectId")}
-            <input
+            <select
               name="project_id"
               required
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-            />
+            >
+              <option value="">Selecciona un proyecto...</option>
+              {projectOptions.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
           </label>
         )}
         <label>
@@ -855,38 +871,39 @@ function CommercialOperations({
       <button type="button" disabled={busy} onClick={() => void reload()}>
         {t("pricing.reload")}
       </button>
-      {history
-        .filter((item) => !boundProjectId || item.project_id === boundProjectId)
-        .map((item) => (
-          <article key={item.id}>
-            <p>
-              {item.project_net} {item.currency}
-            </p>
-            <p>
-              {t(
-                item.state === "PENDING"
-                  ? "pricing.pending"
-                  : item.state === "APPLIED"
-                    ? "pricing.applied"
-                    : item.state === "REJECTED"
-                      ? "pricing.rejected"
-                      : "pricing.notApplied",
-              )}
-            </p>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                invalidate();
-                setOperation(item);
-                setReason("");
-                setConfirmed(false);
-              }}
-            >
-              {t("pricing.review")}
-            </button>
-          </article>
-        ))}
+      {Array.isArray(history) &&
+        history
+          .filter((item) => !boundProjectId || item.project_id === boundProjectId)
+          .map((item) => (
+            <article key={item.id}>
+              <p>
+                {item.project_net} {item.currency}
+              </p>
+              <p>
+                {t(
+                  item.state === "PENDING"
+                    ? "pricing.pending"
+                    : item.state === "APPLIED"
+                      ? "pricing.applied"
+                      : item.state === "REJECTED"
+                        ? "pricing.rejected"
+                        : "pricing.notApplied",
+                )}
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  invalidate();
+                  setOperation(item);
+                  setReason("");
+                  setConfirmed(false);
+                }}
+              >
+                {t("pricing.review")}
+              </button>
+            </article>
+          ))}
     </section>
   );
 }

@@ -126,6 +126,11 @@ def generate_artifact(
             # Authority and binding are validated before any slot reuse: an
             # occupied slot never authorizes the request.
             version, frozen_revision = _revision_snapshot(project_version_id, org_id)
+            if document_type in ("DOC-02", "DOC-03", "DOC-04", "DOC-05", "DOC-06"):
+                if version.get("production_allowed") is not True:
+                    raise DocumentaryError("production_document_blocked")
+                if version.get("documentary_complete") is not True:
+                    raise DocumentaryError("manufacturing_document_incomplete")
             order: dict[str, object] | None = None
             frozen: dict[str, object] = frozen_revision
             if order_id is not None:

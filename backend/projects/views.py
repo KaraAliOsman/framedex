@@ -7,6 +7,7 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
@@ -83,7 +84,9 @@ class ProjectView(APIView):
         **SCHEMA,
     )
     def patch(self, request, project_id):
-        data = validate(ProjectUpdateSerializer, request.data)
+        if not isinstance(request.data, dict) or "expected_updated_at" not in request.data:
+            raise contract_error(400, "validation_error", "expected_updated_at es obligatorio.")
+        data = validate(ProjectUpdateSerializer, request.data, partial=True)
         with scope(request, WRITE_ROLES) as (_, _, org):
             return response(service.update_project(org, project_id, data))
 
@@ -128,9 +131,11 @@ class ProjectSuccessorView(APIView):
         **SCHEMA,
     )
     def post(self, request, project_id):
-        validate(SuccessorRequestSerializer, request.data)
         with scope(request, WRITE_ROLES) as (_, _, org):
-            value = service.start_successor(org, project_id)
+            data = validate(SuccessorRequestSerializer, request.data)
+            value = service.start_successor(
+                org, project_id, data["expected_current_revision"]
+            )
         created = value.pop("successor_created")
         return response(value, status=201 if created else 200)
 

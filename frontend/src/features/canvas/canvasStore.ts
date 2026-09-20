@@ -16,7 +16,7 @@ export type CanvasDesignInputs = {
   systemId: string | null;
   nominalWidthMm: string;
   nominalHeightMm: string;
-  color: "WHITE";
+  color: "WHITE" | "FOILED";
   parametricTree: IntentNode;
 };
 

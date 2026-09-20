@@ -42,6 +42,27 @@ function itemCode(row: Row<Resource>): string {
   return "sku" in row ? row.sku : "code" in row ? row.code : "";
 }
 
+function computeSystemReadiness(system: Row<"systems">, data: CatalogData) {
+  const isActive = Boolean(system.is_active);
+  const hasActiveFrame = data.articles.some((a) => a.system_id === system.id && a.role === "FRAME");
+  const hasActiveBead = data.glazing.some((g) => g.system_id === system.id && Boolean(g.is_active));
+  const hasCompatibleKit = data["hardware-kits"].some(
+    (k) => (k.system_id === system.id || k.system_id === null) && Boolean(k.is_active),
+  );
+  const ready = isActive && hasActiveFrame && hasActiveBead && hasCompatibleKit;
+  let statusText = "Listo";
+  if (!isActive) {
+    statusText = "Inactivo";
+  } else if (!hasActiveFrame) {
+    statusText = "Falta FRAME";
+  } else if (!hasActiveBead) {
+    statusText = "Falta junquillo";
+  } else if (!hasCompatibleKit) {
+    statusText = "Falta herraje";
+  }
+  return { ready, statusText };
+}
+
 export function CatalogPage(): JSX.Element {
   const { status, me, session } = useAuthSession();
   const organization = me?.active_organization;
@@ -206,6 +227,8 @@ function CatalogWorkspace({ orgId }: { orgId: string }): JSX.Element {
                   <small>
                     {system.is_global ? ct("global") : ct("own")}
                     {system.is_demo ? ` · ${ct("demo")}` : ""}
+                    {" · "}
+                    <span>{computeSystemReadiness(system, data).statusText}</span>
                   </small>
                 </button>
               </li>
@@ -229,6 +252,14 @@ function CatalogWorkspace({ orgId }: { orgId: string }): JSX.Element {
         <section className="catalog-detail" aria-label={ct("detail")}>
           <header>
             <h2>{currentSystem?.name ?? ct("unassignedKits")}</h2>
+            {currentSystem && (
+              <p>
+                <strong>Estado del sistema:</strong>{" "}
+                {computeSystemReadiness(currentSystem, data).statusText}
+                {" · "}
+                {currentSystem.is_active ? ct("active") : ct("inactive")}
+              </p>
+            )}
             {currentSystem?.is_global && <p>{ct("globalHelp")}</p>}
             {currentSystem?.is_demo && <p>{ct("demoHelp")}</p>}
           </header>
