@@ -1,6 +1,6 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `888223c`.
+Status: final material implementation complete; local Gauntlet PASS on `85893c3`.
 PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
@@ -222,14 +222,18 @@ page-level blocker, since react-router consults only the last registered one) an
 cancel path confirm discard. The adjacent claim that committed mutations report as failures
 on refetch error was verified not reachable: the only caller wires `onChanged` to
 `query.refetch()`, which resolves with an error result instead of rejecting, and a failed
-refetch already swaps the page into its reload-required error state.
+refetch already swaps the page into its reload-required error state. Extending guard
+coverage exposed one more ordering defect: cloning a project performed the mutation before
+navigation, so declining the guard prompt left an orphan clone. Commit `85893c3` confirms
+unsaved edits before cloning and bypasses the router blocker once confirmed so the user is
+not asked twice.
 
 Focused proof: 64 catalog/corrective/concurrency integration tests (singleton uniqueness
 parametrized over all eight non-bead roles, plus direct-write cross-scope rejection through
 RLS), 11 document contract tests and 343 pgTAP assertions passed; Ruff and PostgreSQL lint
 also passed. The canonical Gauntlet then passed on final material head
-`888223c` with exit code 0: 248 engine tests
-plus 5 existing deferred xfails, 357 backend tests, 216 frontend tests, 9 real Chromium
+`85893c3` with exit code 0: 248 engine tests
+plus 5 existing deferred xfails, 357 backend tests, 217 frontend tests, 9 real Chromium
 suites and 343 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
 PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production frontend
 build completed without warnings. No executable change followed this run.
