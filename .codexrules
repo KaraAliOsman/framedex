@@ -1,16 +1,5 @@
-# DEKOPEN — Codex repository rules
+# DEKOPEN — entrada para Codex
 
-Use `AGENTS.md` as the entry map and `docs/AGENT_OPERATING_MODEL.md` for non-normative
-execution guidance. The only product/system authority is `docs/CONSTITUTION.md`, followed by
-the active PRDs and `docs/PRD/PLAN_SHOTS.md`.
-
-Preserve Decimal-only dimensions and money, pure deterministic `/engine`, 0.00 mm tolerance,
-strict RLS, pre-write audit, idempotent payments, semantic CSS tokens and read-only Golden.
-
-Choose checks by the proof surface changed. A full `python scripts/check_dod.py all` is required
-for the final material implementation head of a SHOT; it is not an automatic stop condition for
-every documentation-only or contained follow-up change. Protected CI is the independent
-integration verdict.
-
-Stop for a material contradiction, a material gap marked `[PENDIENTE-DECISIÓN]`, or an
-unauthorized irreversible action. Do not weaken checkers, tests, Golden or branch protection.
+Lee AGENTS.md como mapa del repositorio. La autoridad normativa y la política de verificación
+están en docs/CONSTITUTION.md; los comandos por superficie, en docs/AGENT_OPERATING_MODEL.md.
+Este archivo no añade reglas ni condiciones de cierre.

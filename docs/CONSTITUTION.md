@@ -56,11 +56,11 @@
 15. DEPENDENCIAS (POLÍTICA DE TRES NIVELES): Approved Baseline Dependencies (PRD-00).
     - TIER A (DEV/TOOLING LOW RISK): El agente puede añadirla mediante PR sin aprobación Owner si:
       licencia compatible con la política de distribución, seguridad y compliance del proyecto (ej: MIT, Apache-2.0, BSD, ISC), mantenimiento razonable, security scan sin issue crítico,
-      sin duplicación injustificada, lockfile reproducible y tests/gauntlet verdes.
+      sin duplicación injustificada, lockfile reproducible y verificación verde según la superficie afectada (Regla 19).
     - TIER B (ORDINARY RUNTIME DEPENDENCY): El agente puede añadirla mediante PR SIN aprobación Owner si:
       no cambia la arquitectura principal, no crea un proveedor externo crítico, no altera DB/auth/infra,
       cuenta con rationale técnico documentado, revisión de licencia/seguridad/mantenimiento, impacto en bundle
-      y runtime medido, lockfile reproducible y tests verdes (ej: librería UI auxiliar, parser, utility library,
+      y runtime medido, lockfile reproducible y verificación verde según la Regla 19 (ej: librería UI auxiliar, parser, utility library,
       paquete helper o serializador menor; NO convertir cada paquete npm/pip de producción en decisión del fundador).
     - TIER C (STRATEGIC / CRITICAL DEPENDENCY): Requiere aprobación explícita del OWNER:
       framework principal, database, ORM principal, auth platform, payment provider, cloud provider,
@@ -70,7 +70,20 @@
 16. Archivos: Supabase Storage con path org_id/… y URLs firmadas con expiración.
 17. Prohibido inventar U_w / R_w. Solo desde ficha certificada o no se muestra.
 18. offcut_inventory: schema existe, producción prohibida hasta Fase 4.
-19. VERIFICACIÓN POR SUPERFICIE: Cada cambio ejecuta las pruebas y gates que cubren su delta, con evidencia ligada al SHA y checklist DoD. El Gauntlet canónico (`python scripts/check_dod.py all`) es obligatorio para el head material final de implementación de un SHOT; un cambio documental o contenido no invalida evidencia no afectada. CI protegido conserva el veredicto independiente de integración.
+19. VERIFICACIÓN POR SUPERFICIE:
+    Cada PR registra el SHA exacto, los gates ejecutados, resultados y superficies cubiertas.
+    La selección de pruebas sigue el delta; fallos, cambios más amplios o incertidumbre no
+    resuelta exigen ampliar verificación. No se reducen tests, Golden, mutaciones ni protección.
+    El Gauntlet canónico (`python scripts/check_dod.py all`) es obligatorio al completar el
+    head material final de implementación de un SHOT. Un refinamiento posterior estrecho requiere
+    regresión y gates afectados, conservando solo evidencia previa de superficies no afectadas;
+    se registran por separado el SHA del Gauntlet y el del refinamiento. Si el delta invalida
+    prueba transversal o su impacto es incierto, se repite el Gauntlet completo.
+    Ni un commit documental sin cambio de contrato ejecutable ni un merge limpio invalidan por
+    sí solos evidencia vigente. Cambios normativos que alteren comportamiento esperado se
+    verifican según ese impacto, aunque solo editen Markdown.
+    El CI protegido sigue siendo el veredicto independiente: todos sus checks requeridos deben
+    pasar antes del merge autorizado por PR. Verificar después ancestro probado y CI de main.
 20. TRATAMIENTO DE GAPS:
     - MATERIAL GAP: Si la especificación omite o deja indefinido un aspecto que resulte MATERIAL according to Rule 0:
       DETENTE de inmediato y añade `[PENDIENTE-DECISIÓN]`. Rule 0 es la ÚNICA autoridad de materialidad.

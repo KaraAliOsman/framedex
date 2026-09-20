@@ -2,7 +2,7 @@
 
 help:
 	@echo "Dekopen Builder Command Center (2026 Cross-Platform Gauntlet)"
-	@echo "  make dod        - Fast Definition of Done validation (Rule 19)"
+	@echo "  make dod        - Canonical full Definition of Done (Rule 19)"
 	@echo "  make gauntlet   - Complete 6-phase Adversarial Gauntlet execution"
 	@echo "  make test       - Run all test suites (engine, backend, frontend)"
 	@echo "  make lint       - Run linters and constitutional anti-pattern guards"

@@ -1,3 +1,6 @@
+> **HISTORICAL / NON-NORMATIVE:** propuesta y auditoría conservadas como registro.
+> Las fuentes activas enlazadas desde [AGENTS.md](../../AGENTS.md) gobiernan el trabajo actual.
+
 # DEKOPEN — INFORME DE AUDITORÍA DE FRICCIÓN NORMATIVA Y REFORMA DE CAPACIDAD (v1.0)
 
 > **Tipo de Documento:** Auditoría de Arquitectura Normativa, PRD y Gobernanza Técnica

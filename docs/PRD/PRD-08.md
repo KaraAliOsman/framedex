@@ -13,7 +13,7 @@ El Compilador de Catálogos (Tool **T6** y Pantalla **S14**) permite a una carpi
 *Costo de consumo:* **25 + 2 créditos / página** (mínimo 25 créditos) según el tamaño del PDF (Parche P1-2).
 
 ```
-[ PDF / Excel ] ---> [ OCR multimodal mediante la ruta T6 configurada ] ---> [ Staging en DB ]
+[ PDF / Excel ] ---> [ OCR Multimodal (T6) ] ---> [ Staging en DB ]
                            (Tool T6)               (profile_systems_draft)
                                                             |
 [ Publicación v1 ] <--- [ Verif. /engine ] <--- [ Preguntas Quirúrgicas ]

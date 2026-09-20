@@ -48,7 +48,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
-| **PRD-19** | NFR y Seguridad | RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, dumps cifrados diarios en Supabase Storage y simulacro de restauración | Todo | 0 |
+| **PRD-19** | NFR y Seguridad | [Objetivos RPO/RTO y contrato de respaldo y restauración](./PRD-19.md#2-estrategia-de-respaldos-y-protocolo-de-restauración-ensayada-gng-10-disaster-recovery) | Todo | 0 |
 | [**PRD-20**](./PRD-20.md) | [Catálogo Global y Moderación](./PRD-20.md) | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
 ---
 
@@ -105,10 +105,9 @@ Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se 
 
 ## 6. Manifiesto de Dependencias Base Aprobadas y Gobernanza de Dependencias (Regla 15)
 
-El repositorio se rige por la **Política de Dependencias de Tres Niveles** establecida en la Constitución (Regla 15):
-- **Tier A — DEV/TOOLING LOW RISK:** Puede incorporarse mediante PR con licencia compatible, mantenimiento razonable, revisión de seguridad, sin duplicación injustificada, lockfile reproducible y tests/gauntlet verdes.
-- **Tier B — ORDINARY RUNTIME:** Puede incorporarse mediante PR si no cambia la arquitectura principal, no crea un proveedor externo crítico ni altera DB/auth/infra; requiere rationale técnico, revisión de licencia/seguridad/mantenimiento, impacto medido y lockfile reproducible.
-- **Tier C — STRATEGIC / CRITICAL:** Requiere aprobación explícita del Owner para framework principal, base de datos, ORM, auth, pagos, cloud, cola, storage, observabilidad, motor mayor o cualquier dependencia que altere materialmente la arquitectura.
+La política de tres niveles y sus requisitos de aprobación y verificación se definen
+exclusivamente en la [Constitución, Reglas 15 y 19](../CONSTITUTION.md).
+Este manifiesto conserva la baseline aprobada y las decisiones congeladas de los shots.
 
 ### Dependencias Base Aprobadas (Approved Baseline):
 

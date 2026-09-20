@@ -33,22 +33,24 @@ sin RLS y cualquier comando con retorno no cero. La fuente de verdad vive en
 ## 🔒 Branch protection de `main`
 
 La protección debe exigir pull request y los cuatro checks exactos `Lint & Typecheck`,
-`Test Suite`, `Frontend Build` y `Database Gate`, sin bypass ni force pushes. Cada shot
-se publica en `shot-XX` y espera la orden explícita `MERGE` del owner.
+`Test Suite`, `Frontend Build` y `Database Gate`, sin bypass ni force pushes. Los cambios se publican mediante PR; el merge necesita autorización del Owner, que puede
+formar parte de la solicitud inicial. El tag `shot-XX` identifica el cierre, no el nombre
+obligatorio de la rama. Tras el merge se verifica el CI de `main`.
 
 ---
 
 ## 🗺️ Mapa de Documentación y Arquitectura
 
-Toda la documentación técnica normativa vive en `/docs/` y está dividida en módulos:
+La Constitución y el roadmap/PRD activos definen los contratos. Las guías, inventario de
+stack, calidad y archivos históricos llevan su autoridad explícita:
 
 | Documento | Ubicación | Propósito |
 |---|---|---|
 | **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap y mapa de autoridades para agentes de desarrollo |
 | **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 23 reglas inviolables de calidad, tipado y determinismo (v1.3 MASTER) |
-| **Doctrina Operativa de Agentes** | [`/docs/AGENT_OPERATING_MODEL.md`](./docs/AGENT_OPERATING_MODEL.md) | Guía operativa: calidad production-grade, eficiencia de tokens y verificación progresiva |
+| **Doctrina Operativa de Agentes** | [`/docs/AGENT_OPERATING_MODEL.md`](./docs/AGENT_OPERATING_MODEL.md) | Comandos y evidencia por superficie; no añade políticas normativas |
 | **Mapa de Calidad Operativo** | [`/docs/QUALITY_SCORE.md`](./docs/QUALITY_SCORE.md) | Mapa JIT de capacidades probadas (`PROVEN`) vs. en progreso o diferidas con evidencia real |
-| **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Guía breve para elegir contexto, pruebas y cierre de cada shot |
+| **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Puntero retirado hacia las fuentes consolidadas |
 | **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-20) |
 | **Baseline de Superficies y Flujos** | [`/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md`](./docs/PRD/SCREENS_SPECIFICATION_S01_S28.md) | Baseline de superficies y flujos de usuario (Capability Map S01 a S28) |
 | **Plan Maestro de Shots** | [`/docs/PRD/PLAN_SHOTS.md`](./docs/PRD/PLAN_SHOTS.md) | Secuencia de ejecución canónica de los 24 shots y gates de cierre |
@@ -87,5 +89,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | **SHOT-23** | ⏳ Pendiente |
 | **SHOT-24** | ⏳ Pendiente |
 
-
-SHOT-10 quedó fusionado en main mediante PR #34 (8712d67f66601cd63209128ee29fe2a043d9b755). El Gauntlet completo pasó en 85893c365a7228ef5805afe1e8292d1335ddc8dc; el refinamiento ejecutable posterior terminó en 4e1f7af367438f11a723e20f22fc771177a0ce40 y el cierre documental en 99f18562f0378712d0db668abcd6f47b15e9c5ff.
+SHOT-10 está cerrado por [PR #34](https://github.com/KaraAliOsman/framedex/pull/34), merge y tag
+`shot-10` en `8712d67`. El [registro de cierre](./docs/plans/PLAN_SHOT-10.md) distingue el
+Gauntlet en `85893c3`, el refinamiento ejecutable `4e1f7af` y el head documental `99f1856`.
+SHOT-11 no se ha iniciado.
