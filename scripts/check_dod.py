@@ -927,9 +927,10 @@ def check_live_gates(*, tests: bool, database: bool) -> None:
         local_gates.stop_stack()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     configure_output()
-    target = sys.argv[1] if len(sys.argv) == 2 else "all"
+    arguments = sys.argv[1:] if argv is None else argv
+    requested_target = arguments[0] if len(arguments) == 1 else "all"
     allowed_targets = {
         "lint",
         "typecheck",
@@ -939,31 +940,38 @@ def main() -> None:
         "all",
         "gauntlet",
     }
-    if len(sys.argv) > 2 or target not in allowed_targets:
+    if len(arguments) > 1 or requested_target not in allowed_targets:
         fail(
             "Usage: python scripts/check_dod.py "
             "[lint|typecheck|test|build|database|all|gauntlet]",
             2,
         )
 
-    print("Dekopen SHOT-09 fail-closed checker", flush=True)
+    target = "all" if requested_target == "gauntlet" else requested_target
+    print("Dekopen canonical repository fail-closed checker", flush=True)
+    if requested_target == "gauntlet":
+        print(
+            "[COMPAT] Target 'gauntlet' is an alias for 'all'; it produces the same "
+            "evidence. Do not run both.",
+            flush=True,
+        )
 
     if target == "database":
         check_live_gates(tests=False, database=True)
-        print("[PASS] SHOT-09 live database gate completed with exit code 0", flush=True)
+        print("[PASS] Repository live database gate completed with exit code 0", flush=True)
         return
 
-    if target in {"lint", "all", "gauntlet"}:
+    if target in {"lint", "all"}:
         check_constitutional_guards()
         check_linters()
-    if target in {"typecheck", "all", "gauntlet"}:
+    if target in {"typecheck", "all"}:
         check_typechecks()
-    if target in {"test", "all", "gauntlet"}:
-        check_live_gates(tests=True, database=target in {"all", "gauntlet"})
-    if target in {"build", "all", "gauntlet"}:
+    if target in {"test", "all"}:
+        check_live_gates(tests=True, database=target == "all")
+    if target in {"build", "all"}:
         check_build()
 
-    print(f"[PASS] SHOT-09 checker target '{target}' completed with exit code 0", flush=True)
+    print(f"[PASS] Repository checker target '{target}' completed with exit code 0", flush=True)
 
 
 if __name__ == "__main__":

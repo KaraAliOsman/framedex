@@ -1,9 +1,9 @@
 .PHONY: test lint typecheck build database goldgen dod gauntlet shot-% help
 
 help:
-	@echo "Dekopen Builder Command Center (2026 Cross-Platform Gauntlet)"
+	@echo "Dekopen Builder Command Center (2026 Canonical Verification)"
 	@echo "  make dod        - Canonical full Definition of Done (Rule 19)"
-	@echo "  make gauntlet   - Complete 6-phase Adversarial Gauntlet execution"
+	@echo "  make gauntlet   - Compatibility alias for make dod; same evidence, never run both"
 	@echo "  make test       - Run all test suites (engine, backend, frontend)"
 	@echo "  make lint       - Run linters and constitutional anti-pattern guards"
 	@echo "  make typecheck  - Strict type checking (mypy strict + tsc)"
@@ -34,7 +34,8 @@ dod:
 	python scripts/check_dod.py all
 
 gauntlet:
-	python scripts/check_dod.py gauntlet
+	@echo "Compatibility alias: make gauntlet == make dod; do not run both."
+	$(MAKE) dod
 
 shot-%:
 	python scripts/new_shot.py SHOT-$*
