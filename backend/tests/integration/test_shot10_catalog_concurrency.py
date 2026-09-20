@@ -169,3 +169,48 @@ def test_concurrent_singleton_role_writes_are_serialized(
         "WHERE system_id=%s AND role='FRAME'",
         [system],
     )["count"] == 1
+
+
+def _unreferenced_global_system(role):
+    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND is_global")
+    identity = uuid4()
+    one(
+        "INSERT INTO public.profile_systems SELECT (jsonb_populate_record("
+        "NULL::public.profile_systems,%s::jsonb)).* RETURNING id",
+        [json_text({**source, "id": identity, "code": f"GLOB-{identity.hex}",
+                    "is_demo": False, "technical_locked": False})],
+    )
+    one(
+        "INSERT INTO public.profile_articles(system_id,sku,name,role,material,face_width_mm) "
+        "VALUES(%s,%s,%s,%s,'PVC',60.00) RETURNING id",
+        [identity, f"G-{role}", f"Global {role}", role],
+    )
+    return identity
+
+
+def test_direct_cross_scope_singleton_write_is_rejected(committed_commercial_rows):
+    org, _, users = committed_commercial_rows
+    owner = users["OWNER"]
+    system = _unreferenced_global_system("FRAME")
+    try:
+        with as_user(owner):
+            # A tenant FRAME beside the global FRAME on a global system is ambiguous
+            # for every viewer, so the database rejects it without the service.
+            with pytest.raises(DatabaseError, match="catalog_singleton_role_conflict"):
+                with transaction.atomic():
+                    one(
+                        "INSERT INTO public.profile_articles(system_id,org_id,sku,name,role,face_width_mm) "
+                        "VALUES(%s,%s,'TENANT-FRAME','Tenant frame','FRAME',60.00) RETURNING id",
+                        [system, org],
+                    )
+            # A tenant may still extend a global system with a role it lacks.
+            created = one(
+                "INSERT INTO public.profile_articles(system_id,org_id,sku,name,role,face_width_mm) "
+                "VALUES(%s,%s,'TENANT-COUPLER','Tenant coupler','COUPLER',60.00) RETURNING id",
+                [system, org],
+            )
+            assert created["id"]
+    finally:
+        # Global catalog rows are visible to every tenant; remove the fixture so
+        # later gates keep their canonical global counts.
+        one("DELETE FROM public.profile_systems WHERE id=%s RETURNING id", [system])

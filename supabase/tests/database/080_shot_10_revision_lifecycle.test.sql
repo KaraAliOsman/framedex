@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(12);
+SELECT plan(16);
 SELECT has_column('public','pricing_operations','revision_code',
   'pricing operations expose revision-scoped authority');
 SELECT col_type_is('public','pricing_operations','revision_code','text',
@@ -52,5 +52,33 @@ SELECT ok(
     LIKE '%ADDITIONAL%',
   'global singleton index covers every non-bead profile role'
 );
+SELECT has_trigger('public','profile_articles','guard_singleton_profile_role',
+  'singleton profile roles are enforced across global and tenant scopes');
+INSERT INTO public.tenancy_organizations (id, name, tax_id)
+VALUES ('88000000-0000-4000-8000-000000000001','Singleton A','SHOT10-A');
+INSERT INTO public.profile_systems
+SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
+  jsonb_build_object('id','77000000-0000-4000-8000-0000000000AA'::uuid,'code','PGTAP10',
+    'is_demo',false,'technical_locked',false))).*
+FROM public.profile_systems source WHERE code='DEMO_60';
+INSERT INTO public.profile_articles (system_id, sku, name, role, face_width_mm)
+VALUES ('77000000-0000-4000-8000-0000000000AA','PGTAP10-FRAME','Global frame','FRAME',60.00);
+SELECT throws_ok($$
+  INSERT INTO public.profile_articles (system_id, org_id, sku, name, role, face_width_mm)
+  VALUES ('77000000-0000-4000-8000-0000000000AA','88000000-0000-4000-8000-000000000001',
+          'PGTAP-DUP-FRAME','Duplicate frame','FRAME',60.00)$$,
+  '23505', 'catalog_singleton_role_conflict',
+  'a tenant frame cannot duplicate the global frame on a global system');
+SELECT lives_ok($$
+  INSERT INTO public.profile_articles (system_id, org_id, sku, name, role, face_width_mm)
+  VALUES ('77000000-0000-4000-8000-0000000000AA','88000000-0000-4000-8000-000000000001',
+          'PGTAP-TENANT-COUPLER','Tenant coupler','COUPLER',60.00)$$,
+  'a tenant may extend a global system with a role the global catalog lacks');
+SELECT throws_ok($$
+  INSERT INTO public.profile_articles (system_id, org_id, sku, name, role, face_width_mm)
+  VALUES ('77000000-0000-4000-8000-0000000000AA',NULL,
+          'PGTAP-GLOBAL-COUPLER','Global coupler','COUPLER',60.00)$$,
+  '23505', 'catalog_singleton_role_conflict',
+  'a global row cannot duplicate a role a tenant already added to the same system');
 SELECT * FROM finish();
 ROLLBACK;
