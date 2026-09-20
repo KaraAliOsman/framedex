@@ -104,7 +104,7 @@ def test_concurrent_singleton_role_writes_are_serialized(
         with as_user(owner):
             targets = [
                 catalog_service.create(
-                    catalog_service.ARTICLES, org, _article(system, f"ADDITIONAL-{index}", "ADDITIONAL")
+                    catalog_service.ARTICLES, org, _article(system, f"JQ-{index}", "GLAZING_BEAD")
                 )
                 for index in range(2)
             ]

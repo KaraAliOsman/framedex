@@ -195,7 +195,18 @@ def _parameters(values):
     ]
 
 
-SINGLETON_ROLES = {"FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "THRESHOLD"}
+# Every non-bead role resolves to a single effective article per system; glazing
+# beads stay multi-valued because glazing_bead_matrix selects them per thickness.
+SINGLETON_ROLES = {
+    "FRAME",
+    "SASH",
+    "MULLION_V",
+    "MULLION_H",
+    "INVERSOR",
+    "COUPLER",
+    "ADDITIONAL",
+    "THRESHOLD",
+}
 
 
 def _lock_singleton_role(system_id):

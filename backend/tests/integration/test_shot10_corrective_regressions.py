@@ -263,7 +263,11 @@ def test_partial_project_update_and_empty_delta(documentary_tenant):
         assert UUID(str(noop["id"])) == project_id
 
 
-def test_catalog_singleton_role_uniqueness(documentary_tenant):
+@pytest.mark.parametrize(
+    "role",
+    ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "COUPLER", "ADDITIONAL", "THRESHOLD"],
+)
+def test_catalog_singleton_role_uniqueness(documentary_tenant, role):
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]
 
@@ -299,15 +303,14 @@ def test_catalog_singleton_role_uniqueness(documentary_tenant):
             },
         )
 
-        # Create first FRAME article
-        frame1 = catalog_service.create(
+        first = catalog_service.create(
             catalog_service.ARTICLES,
             org,
             {
                 "system_id": system["id"],
-                "sku": f"FRAME-{uuid4().hex[:6].upper()}",
-                "name": "Marco Principal",
-                "role": "FRAME",
+                "sku": f"{role}-{uuid4().hex[:6].upper()}",
+                "name": "Perfil Principal",
+                "role": role,
                 "material": "PVC",
                 "face_width_mm": D("60.00"),
                 "commercial_length_mm": D("6000.00"),
@@ -318,18 +321,18 @@ def test_catalog_singleton_role_uniqueness(documentary_tenant):
                 "steel_weight_kg_m": D("0.0000"),
             },
         )
-        assert frame1["role"] == "FRAME"
+        assert first["role"] == role
 
-        # Attempting to create duplicate FRAME for same system must raise 409
+        # Every non-bead role resolves to one effective article per system.
         with pytest.raises(ContractAPIException) as exc_info:
             catalog_service.create(
                 catalog_service.ARTICLES,
                 org,
                 {
                     "system_id": system["id"],
-                    "sku": f"FRAME-2-{uuid4().hex[:6].upper()}",
-                    "name": "Segundo Marco",
-                    "role": "FRAME",
+                    "sku": f"{role}-2-{uuid4().hex[:6].upper()}",
+                    "name": "Segundo Perfil",
+                    "role": role,
                     "material": "PVC",
                     "face_width_mm": D("60.00"),
                     "commercial_length_mm": D("6000.00"),

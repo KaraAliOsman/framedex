@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(10);
+SELECT plan(12);
 SELECT has_column('public','pricing_operations','revision_code',
   'pricing operations expose revision-scoped authority');
 SELECT col_type_is('public','pricing_operations','revision_code','text',
@@ -38,5 +38,19 @@ SELECT ok(to_regclass('public.uk_tenant_system_singleton_profile_role') IS NOT N
   'tenant singleton profile roles have an atomic database constraint');
 SELECT ok(to_regclass('public.uk_global_system_singleton_profile_role') IS NOT NULL,
   'global singleton profile roles have an atomic database constraint');
+SELECT ok(
+  pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
+    LIKE '%COUPLER%' AND
+  pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
+    LIKE '%ADDITIONAL%',
+  'tenant singleton index covers every non-bead profile role'
+);
+SELECT ok(
+  pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
+    LIKE '%COUPLER%' AND
+  pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
+    LIKE '%ADDITIONAL%',
+  'global singleton index covers every non-bead profile role'
+);
 SELECT * FROM finish();
 ROLLBACK;
