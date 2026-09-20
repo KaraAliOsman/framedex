@@ -1,7 +1,6 @@
 # PRD-02: MODELO DE DATOS, DDL Y POLÍTICAS DE AISLAMIENTO RLS (v1.1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.2 (Congelada y Bloqueada tras Auditoría Final)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 0 (Fundacional)  
 **Bloquea a:** Todos los módulos del backend y frontend
 

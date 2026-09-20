@@ -1,11 +1,14 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `85893c3`,
-followed by a focused clone-guard refinement `4e1f7af` verified by the full frontend
-suite and protected CI.
-PR remains open for protected CI; Owner authorized merge once its final head is clean.
-Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
-Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
+Status: FINAL / MERGED on main via PR #34 (8712d67f66601cd63209128ee29fe2a043d9b755).
+
+The canonical full Gauntlet passed with exit code 0 on the final material implementation head
+85893c365a7228ef5805afe1e8292d1335ddc8dc. A later narrow executable refinement ended at
+4e1f7af367438f11a723e20f22fc771177a0ce40 and was verified with the affected frontend suite
+and protected CI; the full Gauntlet was not rerun because that delta did not broaden the
+covered proof surface. The documentation closure head is
+99f18562f0378712d0db668abcd6f47b15e9c5ff. The merged main commit is
+8712d67f66601cd63209128ee29fe2a043d9b755.
 
 ## Authorized scope and execution
 
@@ -25,7 +28,7 @@ SHOT-09 corrective changes remain untouched in the original worktree.
 3. Technical catalog DB/RBAC -> typed CRUD -> manual UI -> isolation/negative proof.
 4. Exact lifecycle compatibility -> independent clone and revision work.
 5. Integrated focused proof -> independent adversarial review and real-product
-   evaluation -> final canonical Gauntlet -> protected CI -> one PR; no merge.
+   evaluation -> final canonical Gauntlet -> protected CI -> one protected PR and merge after required CI.
 
 Nodes 1, 2, 3 and test preparation run concurrently. The lead continuously integrates.
 
@@ -37,7 +40,7 @@ offcuts/QR, billing or AI capabilities are authorized in this shot.
 
 SHOT-09 snapshots and evidence remain immutable. Existing REV-A authority is not
 rewritten. Any missing material lifecycle contract will be recorded as
-`[PENDIENTE-DECISIÃ“N]`; independent authorized work continues first.
+`[PENDIENTE-DECISIÓN]`; independent authorized work continues first.
 
 ## Evidence
 

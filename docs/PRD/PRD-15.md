@@ -1,7 +1,6 @@
 # PRD-15: AUTOPILOT MAX — COTIZACIÓN AUTOMÁTICA DESASISTIDA (v1.1.1)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.1 (Congelada y Bloqueada)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 3 (Automatización de Alto Nivel)  
 **Bloquea a:** Ninguno
 

@@ -2,9 +2,8 @@ import os
 import re
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.units import inch
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable, Preformatted
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable, Preformatted
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfgen import canvas
@@ -36,7 +35,7 @@ class NumberedCanvas(canvas.Canvas):
         
         # Header
         self.drawString(40, letter[1] - 30, "DEKOPEN — BIBLIA DE EJECUCIÓN Y SUITE MAESTRA (v1.1)")
-        self.drawRightString(letter[0] - 40, letter[1] - 30, "Tolerancia 0.00 mm • [HASH-RECALCULAR-AL-EMITIR]")
+        self.drawRightString(letter[0] - 40, letter[1] - 30, "Tolerancia 0.00 mm • Autoridad en fuentes activas y Git")
         self.setStrokeColor(colors.HexColor("#E2E8F0"))
         self.setLineWidth(0.5)
         self.line(40, letter[1] - 34, letter[0] - 40, letter[1] - 34)
@@ -198,7 +197,7 @@ def build_pdf():
     story.append(HRFlowable(width="60%", thickness=2, color=colors.HexColor('#2563EB'), spaceAfter=40))
     
     story.append(Paragraph("<b>Versión Oficial:</b> 1.1 (Congelada y Bloqueada)", styles['CoverMeta']))
-    story.append(Paragraph("<b>Hash de Integridad Normativa:</b> [HASH-RECALCULAR-AL-EMITIR]", styles['CoverMeta']))
+    story.append(Paragraph("<b>Autoridad:</b> fuentes activas del repositorio y Git", styles['CoverMeta']))
     story.append(Paragraph("<b>Fecha de Compilación:</b> 30 de Agosto de 2026", styles['CoverMeta']))
     story.append(Paragraph("<b>Destinatario:</b> Agente Constructor / IA de Implementación y Equipo de Desarrollo", styles['CoverMeta']))
     story.append(Paragraph("<b>Motor Matemático:</b> Tolerancia 0.00 mm • Decimal Estricto • Monolito Django + React SVG", styles['CoverMeta']))

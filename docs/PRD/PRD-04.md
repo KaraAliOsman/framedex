@@ -1,7 +1,6 @@
 # PRD-04: DISEÑADOR 2D Y EDITOR PARAMÉTRICO EN CANVAS SVG (v1.1.1)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.1 (Congelada y Bloqueada)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 1 (Núcleo)  
 **Bloquea a:** PRD-06, PRD-07, PRD-10, PRD-12
 

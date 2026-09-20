@@ -18,7 +18,7 @@
 
 | # | Requisito | Por qué |
 |---|---|---|
-| **P1** | Cuentas: GitHub, Supabase Pro, Railway, Vercel, Linear, Cloudflare R2, PostHog, Intercom/Fin, Resend | Infraestructura base del stack D8–D28 |
+| **P1** | Cuentas: GitHub, Supabase Pro, Railway, Vercel, Linear, Cloudflare, PostHog, Intercom/Fin, Resend | Infraestructura base del stack D8–D28 |
 | **P2** | Cuenta Flow.cl + credenciales sandbox | SHOT-11 |
 | **P3** | Dominios: `dekopen.com`, `app.dekopen.com`, `dekopenmail.com` + DNS | D25 |
 | **P4** | Iniciar trámite **SpA Chile** (contador) | D4 — antes del primer cobro, no bloquea build |
@@ -50,10 +50,10 @@
 | **SHOT-07** | 1 · s5–6 | PRD-01 §6, PRD-07, ANIM | **CERRADO** — Corte 1D BFD + Inspector R01–R14 + panel inspector | **G7 (puerta multipunto) en 0.00**; test optimizador: pedido Proline barras 5.800m con SKU comercial $\ne$ lista corte taller; inspector bloquea OT en rojo; fix-1-clic aplica diff |
 | **SHOT-08** | 1 · s6–7 | PRD-05, PRD-02 (audit) | **CERRADO** — Precios 5 modos + listas costo + `price_audit_logs` | 5 modos con tests; gobernanza descuentos (margen negativo bloqueado); **cada mutación de precio genera fila de auditoría (test)** |
 | **SHOT-09** | 1 · s7–8 | PRD-06, S19 | ✅ **CERRADO / FINAL PROVEN** — DOC-01…DOC-07 (WeasyPrint + openpyxl) + Pantalla S19 (Pedidos proveedor) | PDF/Excel/OT/corte/checklist/informe con **BOM hash idéntico entre todos**; storage firmado 3600 s; S19 renderiza lista de compra; merge [PR #23](https://github.com/KaraAliOsman/framedex/pull/23) en `main @ 251f441` + parche correctivo [PR #29](https://github.com/KaraAliOsman/framedex/pull/29) en `main @ 4662ec6` (head probado `061990f`, Gauntlet exit 0, CI 4/4); cierre documental [PR #30](https://github.com/KaraAliOsman/framedex/pull/30) en `main @ b7ccc6c`; hotfix final [PR #32](https://github.com/KaraAliOsman/framedex/pull/32) en `main @ d94d7c2` (canonicalización de eligibility keys + binding de autoridad en replay de artefactos; Gauntlet exit 0 en `3aafccb`; tag `shot-09` → `d94d7c2`) |
-| **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S13, S15; gate semántico de catálogos | Flujo proyectos + versiones + clonación + **catálogos manuales: series/artículos, compatibilidad junquillo–vidrio y kits de herraje** | Autómata de estados; freeze REV-A congela snapshot; editar enviada $\rightarrow$ REV-B; CRUD manual de series, junquillos y kits de herraje funcional para el fundador |
+| **SHOT-10** | 1 · s8–9 | PRD-02, S02–S05, S08, S13, S15; gate semántico de catálogos | ✅ **CERRADO / FINAL PROVEN** — Flujo de proyectos, versiones, clonación y catálogos manuales | Autómata de estados; freeze REV-A congela snapshot; editar enviada → REV-B; CRUD manual funcional. Merge PR #34 en `main @ 8712d67`; Gauntlet EXIT 0 en `85893c3`; refinamiento ejecutable estrecho en `4e1f7af`; cierre documental en `99f1856` |
 | **SHOT-11** | 1 · s9–10 | PRD-03 §2–5, PRD-19 §2, Enm. 1 | Billing Flow + créditos + trial + **deploy producción + Uptime alerts** | Checkout sandbox Flow; webhook idempotente (reintento$\ne$doble); débito transaccional ledger; trial 7d/500 cap; **dump cifrado Supabase Storage + simulacro restauración documentado (GNG-10)**; alertas Railway activas |
 | **SHOT-12** | 1 · s10 | Todo Fase 1 | **Starter end-to-end + validación fundador** | **Gate-N:** fundador cotiza 10 trabajos reales en paralelo a NuveraPro sin perder en cortes ni pedido Proline $\rightarrow$ **sign-off G-Pro1 (GNG-PILOT-SIGN-OFF)**. Checkpoint: se abre cobro Starter |
-| **SHOT-13** | 2 · s11 | PRD-13, PRD-03 §4, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de modelo probado; T6=25+2, T8=50, T9=30+2 |
+| **SHOT-13** | 2 · s11 | PRD-13, PRD-03 §4, F7 | AI Gateway + router `ai_routes` + semáforo + auditoría IA (costos recalibrados T6/T8/T9) | Toda tool audita ANTES de aplicar (payload, hash, retención); débito con cap; semáforo 90/70; fallback de ruta probado; T6=25+2, T8=50, T9=30+2 |
 | **SHOT-14** | 2 · s11–12 | PRD-08 (+M1) | Compilador T6 + preguntas T4 + G sintéticos | **Los 4 fixtures (VEKA/Aluplast/Rehau/Proline) parsean a ficha v1 y validan contra engine 0.00**; serie nueva exige G-case mínimo antes de uso |
 | **SHOT-15** | 2 · s12–13 | PRD-09 | OCR T1 + pantalla S27 split-screen | **PDF 8 vanos $\rightarrow$ borrador revisable < 5 min humanos**; anclas bidireccionales; celdas rojas bloquean importación |
 | **SHOT-16** | 2 · s13–14 | PRD-10 | Comandos T2/T3/T5 + modal diff + undo sagrado | "20% ganancia" recalcula con preview antes/después; Cmd+Z revierte; **T3 jamás escribe número** (solo diff $\rightarrow$ engine) |
@@ -61,7 +61,7 @@
 | **SHOT-18** | 2 · s15–16 | PRD-18, PRD-03 | Paddle Global (USD MoR) + página pricing + Founding 50 | Checkout USD sandbox Paddle; toggle anual default; **checkpoint: Profesional se abre a cobro** tras verificar go/no-go canónicos |
 | **SHOT-19** | 3 · s17–18 | PRD-12 | Live View (`/view/`) + Exportador CAD 2D (`.dxf`) + Visor 3D Técnico & Cinemática | Enlace público read-only **sin costos ni despiece en el bundle**; exportador DXF funcional con capas normalizadas; visor 3D técnico interactivo con cinemática de apertura (giro/oscilo/corredera) (AR completa diferida a post-V1) |
 | **SHOT-20** | 3 · s18–20 | PRD-20, S28 | Catálogo global + cola admin (Pantalla S28) | Flujo solicitud $\rightarrow$ revisión $\rightarrow$ publicación sin precios; **test: admin no puede consultar costos ajenos** (blindaje) |
-| **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Modelos distintos obligatorios; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
+| **SHOT-21** | 3 · s20–22 | PRD-14 | Certificado T8 doble ciego + DOC-08 + QR | Rutas independientes obligatorias; árbitro 100% concordancia $\rightarrow$ sello; discrepancia $\rightarrow$ flag; **checkpoint: Business y Business 2x abren cobro** |
 | **SHOT-22** | 3 · s22–24 | PRD-15 parcial, PRD-17 parcial | Comparador T10 + bandeja email | V1 vs V2 diff correcto; email $\rightarrow$ inbound_request $\rightarrow$ Huey $\rightarrow$ borrador |
 | **SHOT-23** | 4 · m7 | PRD-15, PRD-19 §4 | Autopilot Max T9 + Fin + PostHog | Salida SIEMPRE DRAFT (test de contención); **Fin responde las 20 preguntas**; embudos PostHog activos |
 | **SHOT-24** | 4 · m7–9 | PRD-16, PRD-17, PRD-01, S26 | Retazos QR + WhatsApp + **G10 monoriel completo** + PT-BR + Pantalla S26 (Vista instalador) | G10 0.00 (sale de xfail); ciclo retazo completo (RESERVED $\rightarrow$ CONSUMED); i18n pt-BR; portal S26 en solo lectura para instalador |
@@ -83,28 +83,3 @@
 | `GNG-09-CHECKOUT-E2E` | Checkouts funcionales de extremo a extremo en sandbox | SHOT-11 (Chile CLP) + SHOT-18 (Global USD) |
 | `GNG-10-DISASTER-RECOVERY` | RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, backup cifrado y simulacro probado | SHOT-11 (`scripts/restore_drill.sh`) |
 | `GNG-PILOT-SIGN-OFF` | Validación humana en taller real (10 trabajos paralelos) | SHOT-12 (Sign-off físico G-Pro1) |
-
----
-
-## 6. Prompt Canónico Universal (Protocolo 2026)
-
-```text
-[DEKOPEN OS v1.2 MASTER — PROTOCOLO DE SHOT — 23 Reglas Supremas (Regla 0 a 22)]
-
-Actúas como Ingeniero Principal de Dekopen. Antes de escribir código:
-
-LECTURA OBLIGATORIA (en orden, sin supuestos):
-1. docs/CONSTITUTION.md (23 Reglas Supremas)
-2. docs/PRD/PLAN_SHOTS.md — gate textual de este shot
-3. docs/PRD/PRD-XX.md — el PRD indicado en la tabla para este shot
-4. Interfaces reales de los módulos ya construidos (lee el repo, no la memoria)
-
-FASE 1 — PLAN: escribe docs/plans/PLAN_SHOT-XX.md.
-DETENTE y espera mi "APROBADO — EJECUTA".
-
-FASE 2 — CONSTRUCCIÓN: solo el plan aprobado. Cero float en /engine, cero hex fuera de variables CSS, dependencias cerradas PRD-00 §6.
-
-FASE 3 — GAUNTLET: python scripts/check_dod.py all hasta EXIT CODE 0 real.
-
-FASE 4 — CIERRE: push a shot-XX y espera orden de merge.
-```

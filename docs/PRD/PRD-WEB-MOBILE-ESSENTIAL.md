@@ -1,7 +1,6 @@
 # PRD-WEB-MOBILE-ESSENTIAL: VERSIÓN WEB MÓVIL ESENCIAL (v1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.2 (Web 100% Cloud • OCR planos arquitectónicos impresos • Escáner QR Web • Móvil Esencial)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 
 ---
 
@@ -39,7 +38,7 @@ El flujo real de cualquier carpintero en obra:
    *`Vano 2: 800 x 600 Proyectante Blanco Simple`*  
    *`Vano 3: 2000 x 2100 Puerta Corredera 2H Antracita`*
 2. Entra a **dekopen.com** en su celular, presiona **`+ Cotizar desde Foto`** y le saca una foto a la hoja de su plano.
-3. El motor de visión (Gemini 3.7 / GPT-5.6) lee los números y textos manuscritos, estructura los vanos y entrega el **borrador de cotización calculado a 0.00 mm en la pantalla del celular**.
+3. La capacidad multimodal de la ruta T1 activa lee los números y textos manuscritos, estructura los vanos y entrega el **borrador de cotización calculado a 0.00 mm en la pantalla del celular**. El proveedor y el modelo pertenecen a la configuración de runtime.
 
 ---
 

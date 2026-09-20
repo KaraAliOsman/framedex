@@ -1,7 +1,6 @@
 # PRD-12: LIVE PORTAL CLIENTE, EXPORTADOR CAD 2D .DXF Y VISOR 3D TÉCNICO (v1.3 MASTER)
 **Estado:** Bloqueado / Congelado
 **Versión:** 1.3 (SHOT-19: Live View • CAD 2D .DXF • 3D Técnico y Cinemática • AR diferida post-V1)
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`
 **Fase:** 3 (Salidas Digitales y Experiencia Visual)
 **Bloquea a:** PRD-13
 

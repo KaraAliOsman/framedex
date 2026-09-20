@@ -1,7 +1,6 @@
 # PRD-10: CO-PILOTO DE ACCIÓN DIRECTA (CMD+K), DIFFS VISUALES Y DESHACER SAGRADO (v1.2)
 **Estado:** Bloqueado / Congelado
 **Versión:** 1.2 (Action-First UX Standard — Estilo Codex / Antigravity)
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`
 **Fase:** 2 (Comandos y Diffs Paramétricos)
 **Bloquea a:** PRD-11
 
@@ -9,7 +8,7 @@
 
 ## 1. Filosofía de Interacción: Cero Chatbot, Acción Pura
 
-En Dekopen, la inteligencia artificial **NO es una ventana de chat flotante ni un bot conversacional con saludos**. Es un **operador de acción directa integrado en el Canvas** diseñado bajo la interacción de herramientas como Codex, Claude Code y Antigravity:
+En Dekopen, la inteligencia artificial **NO es una ventana de chat flotante ni un bot conversacional con saludos**. Es un **operador de acción directa integrado en el Canvas** diseñado como una interfaz de acciones estructuradas sobre el Canvas:
 
 1. **Cero Saludos o Texto de Relleno:** La IA no responde con explicaciones largas. Modifica el dibujo técnico o el presupuesto en milisegundos.
 2. **Barra de Comandos `Cmd + K` (o `Ctrl + K`):** Acceso instantáneo desde cualquier pantalla para transformar ventanas o precios sin navegar por menús.

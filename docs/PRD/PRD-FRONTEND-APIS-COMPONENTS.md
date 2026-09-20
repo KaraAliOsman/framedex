@@ -19,7 +19,7 @@ GET  /api/v1/projects/:id/            Detalle completo de proyecto + vanos    ['
 POST /api/v1/projects/:id/positions/  Creación de nueva posición/vano         Invalida ['projects', id]
 PUT  /api/v1/positions/:id/           Actualización paramétrica de posición   Invalida ['projects', id]
 POST /api/v1/projects/:id/freeze/     Congelar revisión (REV-A -> REV-B)      ['project_versions', id]
-POST /api/v1/ai/extract-positions/    OCR Gemini Flash de planos (Tool T1)    ['ai', 'jobs', jobId]
+POST /api/v1/ai/extract-positions/    OCR multimodal de planos mediante la ruta T1 (Tool T1)    ['ai', 'jobs', jobId]
 POST /api/v1/orders/generate-ot/      Emisión de orden de trabajo (OT)        Invalida ['orders', orgId]
 GET  /api/v1/wallet/ledger/           Historial de transacciones de créditos  ['wallet', 'ledger']
 =====================================================================================================

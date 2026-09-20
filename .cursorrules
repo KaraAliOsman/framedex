@@ -1,22 +1,14 @@
-# ==============================================================================
-# DEKOPEN — CURSOR & AGENTIC CODING RULES (v1.3 - GAUNTLET 2026)
-# ==============================================================================
+# DEKOPEN — Cursor rules
 
-You are the Lead Engineer for Dekopen OS.
+Read `AGENTS.md`, then the Constitution, roadmap, active shot plan and affected PRDs. Preserve
+the repository invariants: Decimal and pure `/engine`, 0.00 mm deterministic outputs, RLS
+isolation, pre-write auditing, idempotent payments and semantic CSS tokens.
 
-1. **Constitution First:** Always abide strictly by the 23 rules in `docs/CONSTITUTION.md` (v1.3 MASTER).
-   - Agent files reference the Constitution; they do NOT fork or alter it.
-   - Operating guidance lives in `docs/AGENT_OPERATING_MODEL.md`.
-   - Core tolerance: exactly 0.00 mm. Prohibit float in `/engine` and monetary calculations (use `Decimal`).
-   - Pure `/engine` (zero I/O, zero network, zero database).
-   - Multi-tenant absolute RLS isolation via `current_user_org_ids()`.
-2. **Maker / Checker Protocol & The Gauntlet:**
-   - The Maker may execute every deterministic checker and repair failures autonomously.
-   - The Maker does NOT define, weaken or override the checker's verdict. Protected CI provides the independent integration verdict.
-   - Progressive verification: run targeted tests during changes; run the canonical full Gauntlet (`python scripts/check_dod.py all` / `make dod`) at shot closure.
-   - Enter the self-healing loop: read compiler/test tracebacks and fix errors autonomously until 100% green.
-3. **Material Gaps & Rule 20:**
-   - If a gap is MATERIAL according to Rule 0, insert `[PENDIENTE-DECISIÓN]` (Rule 0 is the single authority of materiality).
-   - Autonomous implementation freedom applies to non-material, reversible engineering choices that preserve observable contracts.
-4. **Golden Snapshots (Rule 22):**
-   - Default: `GOLDEN = READ-ONLY` (`--check`). Regenerate via `make goldgen` only when authorized by active shot with explicit diff review. Never edit golden snapshots by hand.
+Run focused checks for the changed proof surface. The canonical Gauntlet
+(`python scripts/check_dod.py all`) closes the final material implementation head of a SHOT;
+documentation-only and contained follow-ups use their affected gates. Protected CI remains the
+independent integration verdict.
+
+Use autonomous engineering judgment for reversible non-material choices. Stop only for a
+material contradiction, a material gap under Rule 20, or an unauthorized irreversible action.
+Never weaken tests, checker logic, Golden or branch protection.

@@ -1,7 +1,6 @@
 # PRD-03: GESTIÓN DE TENANCY, AUTENTICACIÓN, FACTURACIÓN Y BILLETERA DE CRÉDITOS (v1.1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.2 (Congelada y Bloqueada tras Auditoría Final)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 0 (Fundacional)  
 **Bloquea a:** PRD-05 a PRD-17
 
@@ -169,19 +168,23 @@ El sistema **NO cobra tarifas fijas hardcodeadas**. Cada llamada a una herramien
 | **Top-up 7.500** | USD 90 | ~$37.5 USD | 7.500 créditos |
 
 ### 4.3. Tabla de Consumo Promedio Estimado (Referencial para Marketing)
-*Nota técnica: Los siguientes valores son promedios referenciales de consumo típico para comunicación al cliente. El débito en base de datos (`credit_ledger`) siempre se calcula de forma dinámica según los tokens reales.*
 
-| Tool ID | Función | Operación Realizada | Consumo Promedio Estimado | Modelo Asignado |
+Estos valores son promedios referenciales para comunicación al cliente. El débito en
+`credit_ledger` siempre se calcula de forma dinámica según los tokens reales. La ruta lógica
+se resuelve mediante `ai_routes`; el proveedor y el modelo vigentes pertenecen a la
+configuración operativa y no son parte de este contrato.
+
+| Tool ID | Función | Operación realizada | Consumo promedio estimado | Ruta lógica |
 |---|---|---|---|---|
-| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | Dekopen Vision CAD™ (Gemini 3.7) |
-| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T6` | `compile_catalog(file)` | Compilación completa de catálogo técnico desde PDF | **~25 + 2 cr / pág** | Dekopen Matrix Reader™ (Kimi k3) |
-| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada con modelo alternativo | **~50 créditos** | Doble Verificador (Luna vs Sol) |
-| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador desasistida | **~30 + 2 cr / pág** | Pipeline completo multimodal |
-| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | Dekopen Vision CAD™ (Gemini 3.7) |
-| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | Dekopen Neural Core™ (GPT 5.6 Luna) |
-| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | Dekopen Neural Core™ (GPT 5.6 Luna) |
+| `T1` | `extract_positions(file)` | OCR multimodal de plano PDF y extracción de vanos | **~10 créditos** / plano | `multimodal-extraction` |
+| `T2` | `propose_window_command(text)` | Interpretación NLP de instrucción de diseño geométrico | **~4 créditos** | `text-command` |
+| `T3` | `apply_pricing_command(mode,params)` | Cálculo y preview de ajuste comercial por comando | **~3 créditos** | `pricing-assist` |
+| `T4` | `missing_questions(ctx)` | Diagnóstico de variables faltantes para cotización | **~2 créditos** | `text-assist` |
+| `T5` | `explain_item(bom_line)` | Explicación técnica de taller de una partida de material | **~1 crédito** | `text-assist` |
+| `T6` | `compile_catalog(file)` | Compilación de catálogo técnico desde PDF | **~25 + 2 cr / pág** | `catalog-compilation` |
+| `T7` | `propose_compatibility_edge(a,b)` | Sugerencia de compatibilidad perfil-herraje | **~2 créditos** | `compatibility-assist` |
+| `T8` | `cross_verify_certificate(pos)` | Doble verificación cruzada independiente | **~50 créditos** | `dual-verification` |
+| `T9` | `draft_autopilot(request)` | Generación integral de cotización borrador | **~30 + 2 cr / pág** | `multimodal-pipeline` |
+| `T10` | `compare_plans(v1,v2)` | Análisis de diferencias entre dos versiones de plano | **~8 créditos** | `multimodal-comparison` |
+| `T11` | `margin_alert(ctx)` | Detección preventiva de márgenes comerciales negativos | **~1 crédito** | `margin-assist` |
+| `T12` | `forecast_materials(h)` | Pronóstico de compra de barras según histórico | **~5 créditos** | `forecast-assist` |

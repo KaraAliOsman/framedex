@@ -1,7 +1,6 @@
 # PRD-01: MOTOR TÉCNICO DE CÁLCULO Y OPTIMIZACIÓN (`/engine`) (v1.1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.2 (Congelada y Bloqueada tras Micro-Parche Final)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 1 (Núcleo)  
 **Bloquea a:** PRD-04, PRD-05, PRD-06, PRD-07, PRD-08, PRD-16
 

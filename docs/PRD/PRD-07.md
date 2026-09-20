@@ -1,7 +1,6 @@
 # PRD-07: INSPECTOR TÉCNICO DE TALLER Y REGLAS DE FABRICABILIDAD (v1.1)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1 (Congelada y Bloqueada)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 1 (Núcleo)  
 **Bloquea a:** PRD-06, PRD-08, PRD-14
 
