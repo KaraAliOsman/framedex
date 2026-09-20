@@ -14,6 +14,8 @@ import type { WorkshopAnnotation } from "./workshopAnnotation";
 
 export interface DocumentaryPreparationPosition {
   position_id: string;
+  /** @pattern ^sha256:[0-9a-f]{64}$ */
+  calculation_hash: string;
   /** @maxLength 100 */
   location_tag: string;
   /** @nullable */
@@ -26,7 +28,7 @@ export interface DocumentaryPreparationPosition {
   structural_inputs: DocumentaryStructuralInput[];
   glass_polishing: GlassPolishing[];
   handle_intents: HandleIntent[];
-  accessory_schedule: AccessorySchedule;
+  accessory_schedule: AccessorySchedule | null;
   legacy_handle_migration_confirmed?: boolean;
   system_name: string;
   placement_options: DocumentaryPolicyOption[];

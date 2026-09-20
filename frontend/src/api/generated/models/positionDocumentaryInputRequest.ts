@@ -15,6 +15,11 @@ export interface PositionDocumentaryInputRequest {
   position_id: string;
   /**
    * @minLength 1
+   * @pattern ^sha256:[0-9a-f]{64}$
+   */
+  calculation_hash: string;
+  /**
+   * @minLength 1
    * @maxLength 100
    */
   location_tag: string;
@@ -25,6 +30,6 @@ export interface PositionDocumentaryInputRequest {
   structural_inputs: DocumentaryStructuralInputRequest[];
   glass_polishing: GlassPolishingRequest[];
   handle_intents: HandleIntentRequest[];
-  accessory_schedule: AccessoryScheduleRequest;
+  accessory_schedule: AccessoryScheduleRequest | null;
   legacy_handle_migration_confirmed?: boolean;
 }

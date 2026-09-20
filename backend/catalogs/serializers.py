@@ -176,7 +176,14 @@ class KitWriteSerializer(StrictSerializer):
     is_active = serializers.BooleanField()
 
 
+class CatalogReadinessSerializer(serializers.Serializer):
+    quote_ready = serializers.BooleanField()
+    scope = serializers.CharField()
+    reasons = serializers.ListField(child=serializers.CharField())
+
+
 class SystemResponseSerializer(SystemWriteSerializer):
+    readiness = CatalogReadinessSerializer(read_only=True)
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()

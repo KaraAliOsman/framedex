@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
+  engineLayout,
   engineCalculate,
   engineSystems,
   positionsCreate,
@@ -44,6 +45,7 @@ vi.mock("../../auth/AuthSessionProvider", async () => {
 });
 
 vi.mock("../../api/generated/dekopen", () => ({
+  engineLayout: vi.fn().mockResolvedValue({ status: 200, data: { nodes: [] } }),
   engineCalculate: vi.fn(),
   engineSystems: vi.fn(),
   positionsCreate: vi.fn(),
@@ -191,6 +193,9 @@ async function ready(location = "Cocina") {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(engineLayout).mockResolvedValue(
+    ok({ calculation_hash: "sha256:" + "a".repeat(64), nodes: [] }),
+  );
   vi.spyOn(window, "confirm").mockReturnValue(true);
   identity.id = "org-a";
   identity.role = "OWNER";
@@ -199,8 +204,22 @@ beforeEach(() => {
   vi.mocked(engineSystems).mockResolvedValue(
     ok({
       systems: [
-        { id: "system-a", code: "A", name: "Sistema A", is_demo: false },
-        { id: "system-b", code: "B", name: "Sistema B", is_demo: false },
+        {
+          id: "system-a",
+          code: "A",
+          name: "Sistema A",
+          is_demo: false,
+          quote_ready: true,
+          readiness_reasons: [],
+        },
+        {
+          id: "system-b",
+          code: "B",
+          name: "Sistema B",
+          is_demo: false,
+          quote_ready: true,
+          readiness_reasons: [],
+        },
       ],
     }),
   );
@@ -734,3 +753,32 @@ it.each([
     });
   },
 );
+
+it("does not offer FOILED or a catalog the backend marks incomplete", async () => {
+  vi.mocked(engineSystems).mockResolvedValue(
+    ok({
+      systems: [
+        {
+          id: "system-a",
+          code: "A",
+          name: "Sistema A",
+          is_demo: false,
+          quote_ready: true,
+          readiness_reasons: [],
+        },
+        {
+          id: "system-b",
+          code: "B",
+          name: "Incomplete system",
+          is_demo: false,
+          quote_ready: false,
+          readiness_reasons: ["manufacturing"],
+        },
+      ],
+    }),
+  );
+  mount();
+  await ready();
+  expect(screen.queryByRole("option", { name: /FOILED|Foliado/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("option", { name: "Incomplete system" })).not.toBeInTheDocument();
+});

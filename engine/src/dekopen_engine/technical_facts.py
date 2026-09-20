@@ -58,3 +58,5 @@ class GeometryComputation:
     infills: list[InfillTechnicalFacts] = field(default_factory=list)
     openings: list[OpeningTechnicalFacts] = field(default_factory=list)
     spans: list[SpanTechnicalFacts] = field(default_factory=list)
+    node_dimensions: dict[str, tuple[Decimal, Decimal]] = field(default_factory=dict)
+    split_axes: dict[str, tuple[bool, Decimal]] = field(default_factory=dict)

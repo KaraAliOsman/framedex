@@ -1,6 +1,7 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: READY_FOR_OWNER_REVIEW.
+Status: corrective implementation complete; local Gauntlet PASS. PR remains open for
+Owner review; protected CI is authoritative for its current head. No merge authorized.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
 
@@ -11,8 +12,8 @@ configuration, existing pricing and BOM integration, independent cloning, immuta
 revision lifecycle and manual technical catalogs. Ordinary use must require no JSON,
 internal IDs, code or manufacturing coordinates. DEMO_60 remains synthetic.
 
-Prior reconnaissance is accepted and reused. The lead is the sole writer; parallel
-agents supply bounded build/test patches and independent critique. Pre-existing
+Prior reconnaissance is accepted and reused. The lead is the sole writer; the corrective
+pass uses no subagents and one deliberate self-review of its final delta. Pre-existing
 SHOT-09 corrective changes remain untouched in the original worktree.
 
 ## Minimum implementation DAG
@@ -77,7 +78,7 @@ Additional progressive evidence (2026-09-19, this working delta):
 - Catalog editor screenshot reviewed at 1366x768; no material visual defect observed
   on that surface. This is not a full product acceptance verdict.
 
-Closure evidence (2026-09-19, completed execution):
+Historical pre-correction evidence (2026-09-19; does not certify the corrective delta):
 - Canonical Definition of Done Gauntlet (`python scripts/check_dod.py all`): PASS (exit code 0).
   * [1/6] Constitutional source, AST, and semantic hex token guards: PASS.
   * [2/6] Linters and formatting: Ruff, ESLint, Prettier, Orval OpenAPI generator reproducibility check all PASS.
@@ -123,3 +124,60 @@ authorized.
   heading hierarchy; no synthetic KPI or decorative chart was added.
 - Accurate preview is presently limited to the existing fixed-bay primitive. Other
   supported intent retains an explicitly schematic bay selection, not invented geometry.
+
+## Owner corrective contract — 2026-09-19/20
+
+- Missing accessory coverage and glass polishing remain absent. SHOT10_V1 may freeze
+  an incomplete commercial quotation with both readiness flags false and no purchase
+  projection. Production and purchasing remain fail-closed; historical SHOT09 evidence
+  and the strict V1 purchasing model remain unchanged.
+- Documentary position inputs require the canonical engine calculation hash at confirmation.
+  A changed identity invalidates technical evidence, including same-ID geometry changes.
+- Persisted positions reserve their catalog before calculation. Technical catalog rows and
+  stock bindings become immutable once referenced; row-version fencing rejects concurrent
+  stale saves. New technical authority requires a separate catalog. No saved BOM is rewritten.
+- An explicit OWNER/ESTIMATOR reset of an unissued DRAFT retires its live pricing using an
+  audited project timestamp. Original APPLIED operations remain immutable. The action binds
+  to the expected current operation, clears live amounts, and requires fresh pricing and emission.
+- WHITE is the supported API/documentary color. Catalog readiness reports current fixed-white
+  prerequisites from backend loaders; it is not design-specific or production certification.
+- Node layout reads the existing engine traversal. Split display weights and shortcuts use
+  each node's axis dimension; candidate offsets use Decimal hundredth-mm rounding, then strict
+  engine validation. Half means 50/50; thirds are distinct commands. Unresolved layouts are schematic.
+
+## Corrective self-review — 2026-09-20
+
+One deliberate review of the corrective delta found and corrected three gaps:
+catalog reservation now requires an active editing membership (and OWNER MFA),
+fixed-frame readiness resolves the default reinforcement even without an explicit SKU,
+and layout responses are bound to organization as well as design inputs.
+PostgreSQL reproduced the null-tenant/INSTALLER reservation and missing-default-stock
+failures before the fixes; a frontend regression reproduced stale layout across organizations.
+Clean migrations and the focused corrective/concurrency/revision suites passed (24 tests),
+as did the layout/editor regression tests (8 tests). Canonical closure evidence follows separately.
+
+Gate-driven corrections preserve legacy APPLIED operations without approval timestamps
+when no pricing reset exists; after reset, only a newer approval is current. The unchanged
+SHOT-09 pgTAP contract proves historical compatibility. Mutable catalog permission fixtures
+now use independent unreferenced catalogs, preserving all 335 pgTAP assertions. Project E2E
+uses the complete canonical synthetic catalog; catalog CRUD keeps its independent tenant copy.
+
+Local Windows Docker recovery: the interrupted Desktop had stale AF_UNIX socket directories
+in `%LOCALAPPDATA%/Docker/run` and `%LOCALAPPDATA%/docker-secrets-engine`. Stop the identified
+Desktop/backend processes, preserve both directories under unique sibling backup names,
+verify both original paths are newly created and empty, then launch the installed Desktop
+from `%LOCALAPPDATA%/Programs/DockerDesktop`. Verify `docker info` before Supabase. This
+recovered Linux engine 29.7.2 without deleting volumes or resetting Docker data. Socket
+backups contain runtime endpoints, not a repository dependency; retain them for diagnosis.
+
+## Final corrective verification — 2026-09-20
+
+`python scripts/check_dod.py all` completed with real exit code 0 on the implementation
+tree committed with this record: constitutional guards, Ruff, ESLint, Prettier, reproducible
+OpenAPI/client generation, mypy (43 files), Django checks, TypeScript and production build.
+Engine: 248 passed plus 5 existing deferred xfails; backend: 345 passed; frontend: 213 passed;
+real Playwright: 9 passed; pgTAP: 335 assertions across 9 suites. PostgreSQL lint found no
+schema errors; independent PostgreSQL 16 bootstrap and populated historical upgrade passed.
+Golden byte check remained read-only and passed; 22/22 core mutations were killed. No
+checker logic, workflow protection or Golden artifact was changed. Mutable test fixtures
+were isolated without removing assertions. No implementation changes followed this run.

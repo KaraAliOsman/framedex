@@ -63,6 +63,7 @@ function system(): SystemResponse {
     is_active: true,
     is_global: true,
     is_demo: true,
+    readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,
 
     read_only: true,

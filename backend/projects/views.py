@@ -22,6 +22,7 @@ from projects.serializers import (
     ProjectResponseSerializer,
     ProjectUpdateSerializer,
     ProjectWriteSerializer,
+    ResetPricingSerializer,
     SuccessorRequestSerializer,
 )
 
@@ -138,6 +139,17 @@ class ProjectSuccessorView(APIView):
             )
         created = value.pop("successor_created")
         return response(value, status=201 if created else 200)
+
+
+class ProjectResetPricingView(APIView):
+    @extend_schema(operation_id="projects_reset_pricing", request=ResetPricingSerializer,
+                   responses={200: ProjectResponseSerializer, **ERRORS}, **SCHEMA)
+    def post(self, request, project_id):
+        data = validate(ResetPricingSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(service.reset_draft_pricing(
+                org, project_id, data["expected_operation_id"], data["reason"],
+            ))
 
 
 class PositionView(APIView):

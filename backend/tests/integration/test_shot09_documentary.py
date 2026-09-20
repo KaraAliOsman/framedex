@@ -25,6 +25,7 @@ from authentication.types import (
     VerifiedSupabaseToken,
 )
 from dekopen_engine.documentary_canonical import documentary_sha256_v1
+from dekopen_engine.snapshot import calculation_response
 from engine_api.adapter import calculate_from_api
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import admin_write, audit_reason, commercial_backend, json_text, one, rows
@@ -204,6 +205,9 @@ def _seed_project(org: UUID, owner: UUID, *, valid_annotations: bool = True) -> 
                 "quotation_valid_until": date(2026, 10, 14),
                 "positions": [{
                     "position_id": position_id,
+                    "calculation_hash": calculation_response({"system_id": str(system_id),
+                        "parametric_tree": tree, "nominal_width_mm": D("1000"),
+                        "nominal_height_mm": D("1000"), "color": "WHITE"}, result)["calculation_hash"],
                     "location_tag": "FACHADA-NORTE",
                     "manufacturing_placement_policy_id": policies["placement_id"],
                     "handle_requirement_policy_id": policies["handle_id"],

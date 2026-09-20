@@ -42,13 +42,18 @@ INSERT INTO public.tenancy_organizations (id, name, tax_id) VALUES
 INSERT INTO public.tenancy_memberships (org_id, user_id) VALUES
     ('11111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
     ('22222222-2222-4222-8222-222222222222', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+-- Permission writes use a new global authority; persisted DEMO authority is immutable.
+INSERT INTO public.profile_systems
+SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
+    jsonb_build_object('id',gen_random_uuid(),'code','PGTAP06','technical_locked',false,'is_demo',false))).*
+FROM public.profile_systems source WHERE code='DEMO_60';
 -- Deliberately attach tenant rows to a global system: org_id must still isolate them.
 INSERT INTO public.infill_articles (system_id, org_id, sku, name, kind, thickness_mm)
 SELECT system.id, fixture.org_id::UUID, fixture.sku, fixture.sku, 'SANDWICH_PANEL', 24.00
 FROM public.profile_systems AS system CROSS JOIN (VALUES
     ('11111111-1111-4111-8111-111111111111', 'PANEL-A'),
     ('22222222-2222-4222-8222-222222222222', 'PANEL-B')) AS fixture(org_id, sku)
-WHERE system.code = 'DEMO_60';
+WHERE system.code = 'PGTAP06';
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims',
@@ -65,17 +70,17 @@ WITH changed AS (UPDATE public.infill_articles SET weight_kg_m2 = 99.00
     0::BIGINT, 'A cannot mutate global panel');
 SELECT throws_ok($$INSERT INTO public.infill_articles (system_id, sku, name, kind, thickness_mm)
     SELECT id, 'FORBIDDEN-GLOBAL', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'DEMO_60'$$, '42501',
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501',
     'new row violates row-level security policy for table "infill_articles"',
     'A cannot insert global panel');
 SELECT lives_ok($$INSERT INTO public.infill_articles
     (system_id, org_id, sku, name, kind, thickness_mm)
     SELECT id, '11111111-1111-4111-8111-111111111111', 'A-NEW', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'DEMO_60'$$, 'A can insert own panel');
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, 'A can insert own panel');
 SELECT throws_ok($$INSERT INTO public.infill_articles
     (system_id, org_id, sku, name, kind, thickness_mm)
     SELECT id, '22222222-2222-4222-8222-222222222222', 'B-FORBIDDEN', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'DEMO_60'$$, '42501',
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501',
     'new row violates row-level security policy for table "infill_articles"',
     'A cannot write B panel');
 WITH changed AS (UPDATE public.infill_articles SET weight_kg_m2 = 11.00
@@ -131,10 +136,10 @@ SELECT throws_ok($$INSERT INTO public.infill_articles
     '23503', NULL, 'an infill cannot reference a missing system');
 SELECT throws_ok($$INSERT INTO public.infill_articles (system_id, sku, name, kind, thickness_mm)
     SELECT system_id, sku, name, kind, thickness_mm FROM public.infill_articles
-    WHERE sku = 'PANEL-SANDWICH-DEMO-24'$$,
+    WHERE sku = 'PANEL-A'$$,
     '23505', NULL, 'duplicate panel SKU in a system is rejected');
 SELECT throws_ok($$INSERT INTO public.infill_articles (system_id, sku, name, kind, thickness_mm)
-    SELECT id, 'NOT-PANEL', 'X', 'GLASS', 24.00 FROM public.profile_systems WHERE code = 'DEMO_60'$$,
+    SELECT id, 'NOT-PANEL', 'X', 'GLASS', 24.00 FROM public.profile_systems WHERE code = 'PGTAP06'$$,
     '23514', NULL, 'unsupported infill kinds cannot enter the panel contract');
 SELECT ok(has_table_privilege('service_role', 'public.infill_articles', 'INSERT,UPDATE,DELETE,SELECT'),
     'service_role has catalog maintenance privileges');

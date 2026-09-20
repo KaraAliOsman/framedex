@@ -204,8 +204,8 @@ def test_configuration_requires_base_glass_and_finite_authorities(commercial_row
                 'effective_date':date(2026,9,10),'source':'Invalid fixture'},'Reject nonfinite')
 
 
-def seed_unpriced_project(org, owner):
-    system = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
+def seed_unpriced_project(org, owner, system=None):
+    system = system or one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")['id']
     project = one('INSERT INTO public.projects(org_id,code,name,client_name,created_by) '
                   'VALUES(%s,%s,%s,%s,%s) RETURNING id',[org,str(uuid4()),'Commercial gate','Fixture',owner])['id']
     tree = {'id':'root','type':'BAY','opening_type':'FIXED','glass_spec':'4-12-4 Float Incoloro',
@@ -216,8 +216,8 @@ def seed_unpriced_project(org, owner):
     return project
 
 
-def seed_commercial_project(org, owner):
-    project = seed_unpriced_project(org, owner)
+def seed_commercial_project(org, owner, system=None):
+    project = seed_unpriced_project(org, owner, system)
     with as_user(owner):
         parent = admin_write('cost-lists',org,{'supplier_name':'Gate','currency':'CLP','valid_from':date(2026,9,1)},'Gate setup')
         for sku,unit,cost in [('DEMO-BAR-MARCO','BAR','100'),('DEMO-BAR-JQ-10','BAR','100'),
@@ -569,42 +569,24 @@ def test_pricing_http_invalid_design_returns_public_400(committed_commercial_row
     assert_public_error(response,400,'validation_error','Revisa los campos y los valores ingresados.')
 
 
-def test_pricing_http_missing_stock_returns_public_422(committed_commercial_rows):
-    org,_,users = committed_commercial_rows
-    mapping = one("UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE org_id IS NULL "
-        "AND is_active AND profile_article_id=(SELECT article.id FROM public.profile_articles article "
-        "JOIN public.profile_systems system ON system.id=article.system_id "
-        "WHERE system.code='DEMO_60' AND system.is_global AND article.sku='MARCO' "
-        "AND article.org_id IS NULL) RETURNING id")
-    try:
-        project = seed_commercial_project(org,users['OWNER'])
-        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
-                                                     format='json')
-        assert_public_error(response,422,'technical_authority_required',
-                            'Revisa el diseño y su catálogo técnico antes de cotizar.')
-    finally:
-        one('UPDATE public.profile_purchase_mappings SET is_active=TRUE WHERE id=%s RETURNING id',
-            [mapping['id']])
-
-
-def test_pricing_http_ambiguous_stock_returns_public_422(committed_commercial_rows):
-    org,_,users = committed_commercial_rows
-    project = seed_commercial_project(org,users['OWNER'])
-    with as_user(users['OWNER']):
-        created = rows("INSERT INTO public.profile_purchase_mappings"
-                       "(profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit) "
-                       "SELECT article.id,%s,'DEMO-ALT-'||article.sku||'-'||variant.tag,"
-                       "'Fixture manufacturer','BAR' "
-                       "FROM public.profile_articles article "
-                       "JOIN public.profile_systems system ON system.id=article.system_id "
-                       "CROSS JOIN (VALUES('A'),('B')) variant(tag) "
-                       "WHERE system.code='DEMO_60' AND system.is_global "
-                       "AND article.sku='MARCO' AND article.org_id IS NULL RETURNING id",[org])
-        assert len(created)==2
-    response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
-                                                 format='json')
-    assert_public_error(response,422,'technical_authority_required',
-                        'Revisa el diseño y su catálogo técnico antes de cotizar.')
+@pytest.mark.parametrize("defect", ["missing", "ambiguous", "zero", "negative"])
+def test_pricing_http_invalid_stock_returns_public_422(committed_commercial_rows, defect):
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    org, _, users = committed_commercial_rows
+    system = copy_fixed_catalog(org)
+    article = one("SELECT id FROM public.profile_articles WHERE system_id=%s AND sku='MARCO'", [system])
+    if defect == "missing":
+        one("UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE profile_article_id=%s RETURNING id", [article["id"]])
+    elif defect == "ambiguous":
+        one("INSERT INTO public.profile_purchase_mappings(profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit) "
+            "VALUES(%s,%s,'ALTERNATIVE','Fixture','BAR') RETURNING id", [article["id"],org])
+    else:
+        one("UPDATE public.profile_articles SET commercial_length_mm=%s WHERE id=%s RETURNING id",
+            [0 if defect == "zero" else -1, article["id"]])
+    project = seed_commercial_project(org,users["OWNER"],system)
+    response = owner_client(users["OWNER"]).post("/api/v1/pricing/preview/",price_payload(project),format="json")
+    assert_public_error(response,422,"technical_authority_required",
+                        "Revisa el dise\u00f1o y su cat\u00e1logo t\u00e9cnico antes de cotizar.")
 
 
 def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows):
@@ -794,26 +776,6 @@ def test_pricing_import_http_valid_preview_persists_nothing(commercial_rows):
     assert response.json()['items']==[{'sku':'IMP-1','description':'Importable','unit':'M',
                                        'unit_cost':'1.5'}]
     assert rows("SELECT id FROM public.cost_list_items WHERE sku='IMP-1'")==[]
-
-
-@pytest.mark.parametrize('length',['0','-1'])
-def test_pricing_http_nonpositive_stock_length_returns_public_422(committed_commercial_rows,length):
-    org,_,users = committed_commercial_rows
-    article = one("SELECT id,commercial_length_mm FROM public.profile_articles WHERE org_id IS NULL "
-                  "AND sku='MARCO' AND system_id=(SELECT id FROM public.profile_systems "
-                  "WHERE code='DEMO_60' AND is_global)")
-    changed = rows('UPDATE public.profile_articles SET commercial_length_mm=%s WHERE id=%s RETURNING id',
-                   [length,article['id']])
-    assert len(changed)==1
-    try:
-        project = seed_commercial_project(org,users['OWNER'])
-        response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',price_payload(project),
-                                                     format='json')
-        assert_public_error(response,422,'technical_authority_required',
-                            'Revisa el diseño y su catálogo técnico antes de cotizar.')
-    finally:
-        one('UPDATE public.profile_articles SET commercial_length_mm=%s WHERE id=%s RETURNING id',
-            [article['commercial_length_mm'],article['id']])
 
 
 def test_preview_uses_one_snapshot_for_rules_costs_and_repeated_skus(

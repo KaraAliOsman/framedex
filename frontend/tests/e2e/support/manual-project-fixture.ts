@@ -162,6 +162,20 @@ export const test = base.extend<{
       const source = sources[0]!;
       const sourceId = text(source.id);
 
+      if (fixtureRole === "ESTIMATOR") {
+        // Project editing uses the complete canonical synthetic catalog, including
+        // its immutable inspection, manufacturing and purchasing authorities.
+        // Catalog CRUD below retains a separate, unreferenced tenant copy.
+        await authenticate(page, email, supabaseUrl, mailpitUrl);
+        await use({
+          organizationId,
+          systemId: sourceId,
+          systemName: text(source.name),
+          readRows,
+        });
+        return;
+      }
+
       // Test-only copy of existing synthetic authorities. No invented dimensions
       // and no modifications to the shared global DEMO catalog.
       await insert("profile_systems", {

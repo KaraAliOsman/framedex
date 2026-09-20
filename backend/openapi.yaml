@@ -1898,6 +1898,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/engine/layout/:
+    post:
+      operationId: engine_layout
+      description: Expose traversal dimensions without adding a second geometry implementation.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EngineCalculateRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineLayoutResponse'
+          description: ''
   /api/v1/engine/optimize-cut/:
     post:
       operationId: engine_optimize_cut
@@ -3160,6 +3195,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/reset-pricing/:
+    post:
+      operationId: projects_reset_pricing
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPricingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPricingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPricingRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/successor/:
     post:
       operationId: projects_start_successor
@@ -4258,6 +4375,19 @@ components:
       - active_organization
       - memberships
       - user
+    AxisOffsets:
+      type: object
+      properties:
+        half:
+          type: string
+        one_third:
+          type: string
+        two_thirds:
+          type: string
+      required:
+      - half
+      - one_third
+      - two_thirds
     BeadList:
       type: object
       properties:
@@ -4417,6 +4547,21 @@ components:
         * `COUPLER` - COUPLER
         * `ADDITIONAL` - ADDITIONAL
         * `THRESHOLD` - THRESHOLD
+    CatalogReadiness:
+      type: object
+      properties:
+        quote_ready:
+          type: boolean
+        scope:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+      required:
+      - quote_ready
+      - reasons
+      - scope
     CloneProjectRequest:
       type: object
       properties:
@@ -4694,6 +4839,9 @@ components:
         position_id:
           type: string
           format: uuid
+        calculation_hash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
         location_tag:
           type: string
           maxLength: 100
@@ -4726,7 +4874,9 @@ components:
           items:
             $ref: '#/components/schemas/HandleIntent'
         accessory_schedule:
-          $ref: '#/components/schemas/AccessorySchedule'
+          allOf:
+          - $ref: '#/components/schemas/AccessorySchedule'
+          nullable: true
         legacy_handle_migration_confirmed:
           type: boolean
           default: false
@@ -4746,6 +4896,7 @@ components:
             $ref: '#/components/schemas/DocumentaryPolicyOption'
       required:
       - accessory_schedule
+      - calculation_hash
       - glass_polishing
       - handle_intents
       - handle_options
@@ -5144,6 +5295,18 @@ components:
         * `GREEN` - GREEN
         * `YELLOW` - YELLOW
         * `RED` - RED
+    EngineLayoutResponse:
+      type: object
+      properties:
+        calculation_hash:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeLayout'
+      required:
+      - calculation_hash
+      - nodes
     EngineOptimizeRequestRequest:
       type: object
       properties:
@@ -5280,6 +5443,7 @@ components:
           format: date-time
         purchase_projection_hash:
           type: string
+          nullable: true
           pattern: ^[0-9a-f]{64}$
       required:
       - bom_hash
@@ -5878,6 +6042,30 @@ components:
       description: |-
         * `DESIGN` - DESIGN
         * `WORKSHOP_QC` - WORKSHOP_QC
+    NodeLayout:
+      type: object
+      properties:
+        node_id:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        vertical:
+          $ref: '#/components/schemas/AxisOffsets'
+        horizontal:
+          $ref: '#/components/schemas/AxisOffsets'
+        child_weights:
+          type: array
+          items:
+            type: string
+      required:
+      - child_weights
+      - height_mm
+      - horizontal
+      - node_id
+      - vertical
+      - width_mm
     NullEnum:
       enum:
       - null
@@ -6311,6 +6499,10 @@ components:
         position_id:
           type: string
           format: uuid
+        calculation_hash:
+          type: string
+          minLength: 1
+          pattern: ^sha256:[0-9a-f]{64}$
         location_tag:
           type: string
           minLength: 1
@@ -6341,12 +6533,15 @@ components:
           items:
             $ref: '#/components/schemas/HandleIntentRequest'
         accessory_schedule:
-          $ref: '#/components/schemas/AccessoryScheduleRequest'
+          allOf:
+          - $ref: '#/components/schemas/AccessoryScheduleRequest'
+          nullable: true
         legacy_handle_migration_confirmed:
           type: boolean
           default: false
       required:
       - accessory_schedule
+      - calculation_hash
       - glass_polishing
       - handle_intents
       - handle_requirement_policy_id
@@ -6590,11 +6785,19 @@ components:
           type: string
         is_demo:
           type: boolean
+        quote_ready:
+          type: boolean
+        readiness_reasons:
+          type: array
+          items:
+            type: string
       required:
       - code
       - id
       - is_demo
       - name
+      - quote_ready
+      - readiness_reasons
     ProjectListResponse:
       type: object
       properties:
@@ -6882,6 +7085,22 @@ components:
       - aal2
       type: string
       description: '* `aal2` - aal2'
+    ResetPricingRequest:
+      type: object
+      properties:
+        expected_operation_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        confirmed:
+          type: boolean
+      required:
+      - confirmed
+      - expected_operation_id
+      - reason
     RoleEnum:
       enum:
       - OWNER
@@ -7133,6 +7352,10 @@ components:
           minimum: 1
         is_active:
           type: boolean
+        readiness:
+          allOf:
+          - $ref: '#/components/schemas/CatalogReadiness'
+          readOnly: true
         revision:
           type: string
           readOnly: true
@@ -7166,6 +7389,7 @@ components:
       - pulley_height_mm
       - rail_type
       - read_only
+      - readiness
       - revision
       - sash_overlap_mm
       - sliding_end_add_mm

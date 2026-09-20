@@ -97,7 +97,12 @@ def list_rows(resource, org_id, system_id=None):
     if system_id is not None:
         where += " AND system_id = %s"
         params.append(system_id)
-    return _fetch(resource, where, params)
+    values = _fetch(resource, where, params)
+    if resource is SYSTEMS:
+        from catalogs.readiness import catalog_readiness
+        for value in values:
+            value["readiness"] = catalog_readiness(value["id"], org_id)
+    return values
 
 
 def retrieve(resource, org_id, row_id, *, lock=False):
@@ -109,6 +114,9 @@ def retrieve(resource, org_id, row_id, *, lock=False):
     )
     if not records:
         raise _not_found()
+    if resource is SYSTEMS:
+        from catalogs.readiness import catalog_readiness
+        records[0]["readiness"] = catalog_readiness(records[0]["id"], org_id)
     return records[0]
 
 

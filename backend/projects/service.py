@@ -79,8 +79,10 @@ def _pricing_authority(org_id, project_id, revision):
         values = rows(
             "SELECT id FROM public.pricing_operations WHERE org_id=%s AND project_id=%s "
             "AND state='APPLIED' AND COALESCE(revision_code,'REV-A')=%s "
+            "AND ((SELECT pricing_reset_at FROM public.projects WHERE id=%s) IS NULL "
+            "OR approved_at > (SELECT pricing_reset_at FROM public.projects WHERE id=%s)) "
             "ORDER BY approved_at DESC,id DESC LIMIT 1",
-            [org_id, project_id, revision],
+            [org_id, project_id, revision, project_id, project_id],
         )
     return values[0] if values else None
 
@@ -303,6 +305,9 @@ def save_position(org_id, project_id, data, *, position_id=None):
             missing()
         unchanged(current, data["expected_updated_at"])
     design = data["design"]
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT private.reserve_catalog_authority(%s,%s)",
+                       [design["system_id"], org_id])
     bom = calculate_design(org_id, design)
     values = [
         data["location_tag"],
@@ -528,6 +533,29 @@ def clone_project(org_id, actor_id, project_id, data):
 
 def clone_draft(org_id, actor_id, project_id, data):
     return clone_project(org_id, actor_id, project_id, data)
+
+
+def reset_draft_pricing(org_id, project_id, expected_operation_id, reason):
+    project = project_row(org_id, project_id, lock=True)
+    if project["status"] != "DRAFT" or rows(
+        "SELECT id FROM public.project_versions WHERE project_id=%s AND org_id=%s AND revision_code=%s",
+        [project_id, org_id, project["current_revision"]],
+    ):
+        raise contract_error(409, "revision_required", "Esta revisión ya fue emitida.")
+    current = _pricing_authority(org_id, project_id, project["current_revision"])
+    if current is None or str(current["id"]) != str(expected_operation_id):
+        raise contract_error(409, "stale_pricing_operation", "Recarga los precios del proyecto.")
+    if not reason.strip():
+        raise contract_error(400, "audit_reason_required", "Indica el motivo para revisar precios.")
+    audit_reason(reason)
+    with commercial_backend():
+        rows("UPDATE public.project_positions SET cost_net=0,price_net=0,discount_pct=0,"
+             "updated_at=clock_timestamp() WHERE project_id=%s AND org_id=%s RETURNING id",
+             [project_id, org_id])
+        rows("UPDATE public.projects SET pricing_reset_at=clock_timestamp(),total_cost_net=0,"
+             "total_price_net=0,total_price_tax=0,total_price_gross=0,updated_at=clock_timestamp() "
+             "WHERE id=%s AND org_id=%s RETURNING id", [project_id, org_id])
+    return project_public(org_id, project_row(org_id, project_id), detail=True)
 
 
 def start_successor(org_id, project_id, expected_current_revision=None):

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+
+import { projectsList } from "../../api/generated/dekopen";
+
+import type { ProjectResponse } from "../../api/generated/models";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
@@ -648,13 +652,39 @@ function CommercialOperations({
   const [history, setHistory] = useState<Operation[]>([]);
   const generation = useRef(0);
 
-  const projectOptions = Array.from(
-    new Set(
-      [projectId, ...(Array.isArray(history) ? history.map((op) => op.project_id) : [])].filter(
-        Boolean,
-      ),
-    ),
-  );
+  const orgId = useAuthSession().me?.active_organization?.id;
+
+  const [projectOptions, setProjectOptions] = useState<ProjectResponse[]>([]);
+
+  const [projectsError, setProjectsError] = useState(false);
+
+  const [projectReload, setProjectReload] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    setProjectOptions([]);
+
+    setProjectsError(false);
+
+    if (orgId)
+      void projectsList({ headers: { "X-Organization-ID": orgId } })
+        .then((response) => {
+          if (response.status !== 200) throw new Error("projects unavailable");
+
+          if (active) setProjectOptions(response.data.items);
+        })
+        .catch(() => {
+          if (active) setProjectsError(true);
+        });
+
+    return () => {
+      active = false;
+    };
+  }, [orgId, projectReload]);
+
+  const projectLabel = (project: ProjectResponse) =>
+    [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
 
   useEffect(
     () => () => {
@@ -704,6 +734,15 @@ function CommercialOperations({
   return (
     <section>
       <h2>{t("pricing.calculate")}</h2>
+
+      {projectsError && (
+        <p role="alert">
+          {t("projects.loadError")}{" "}
+          <button type="button" onClick={() => setProjectReload((value) => value + 1)}>
+            {t("pricing.reload")}
+          </button>
+        </p>
+      )}
       {!boundProjectId && (
         <CommercialDraft
           request={request}
@@ -711,6 +750,8 @@ function CommercialOperations({
             invalidate();
             setOperation(null);
             setProjectId(id);
+
+            setProjectReload((value) => value + 1);
           }}
         />
       )}
@@ -743,10 +784,11 @@ function CommercialOperations({
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
             >
-              <option value="">Selecciona un proyecto...</option>
-              {projectOptions.map((id) => (
-                <option key={id} value={id}>
-                  {id}
+              <option value="">{t("projects.chooseProject")}</option>
+
+              {projectOptions.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {projectLabel(project)}
                 </option>
               ))}
             </select>
@@ -834,7 +876,10 @@ function CommercialOperations({
         <article>
           {!boundProjectId && (
             <p>
-              {t("pricing.projectId")}: {operation.project_id}
+              {t("pricing.projectId")}:{" "}
+              {projectOptions.find((p) => p.id === operation.project_id)
+                ? projectLabel(projectOptions.find((p) => p.id === operation.project_id)!)
+                : t("projects.loadError")}
             </p>
           )}
           <p>

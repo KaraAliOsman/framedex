@@ -6,11 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProfileSystemSummary {
-  id: string;
-  code: string;
-  name: string;
-  is_demo: boolean;
+export interface CatalogReadiness {
   quote_ready: boolean;
-  readiness_reasons: string[];
+  scope: string;
+  reasons: string[];
 }

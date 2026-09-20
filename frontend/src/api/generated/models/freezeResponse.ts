@@ -19,6 +19,9 @@ export interface FreezeResponse {
   production_allowed: boolean;
   documentary_complete: boolean;
   emitted_at: string;
-  /** @pattern ^[0-9a-f]{64}$ */
-  purchase_projection_hash?: string;
+  /**
+   * @nullable
+   * @pattern ^[0-9a-f]{64}$
+   */
+  purchase_projection_hash?: string | null;
 }

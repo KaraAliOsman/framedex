@@ -1,12 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
-import { engineCalculate } from "../../api/generated/dekopen";
+import { engineCalculate, engineLayout } from "../../api/generated/dekopen";
 import type { EngineCalculateResponse } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import { useCanvasStore } from "./canvasStore";
 import { IntentEditor } from "./IntentEditor";
 
 vi.mock("../../api/generated/dekopen", () => ({
+  engineLayout: vi.fn().mockResolvedValue({ status: 200, data: { nodes: [] } }),
   engineCalculate: vi.fn(),
 }));
 
@@ -178,4 +179,44 @@ it("only offers divisions backed by effective catalog articles", () => {
     }),
   ).toBeNull();
   expect(screen.queryByText("INTERNAL-SKU")).toBeNull();
+});
+
+it("uses engine horizontal shortcut authority and validates the candidate", async () => {
+  vi.mocked(engineLayout).mockResolvedValue({
+    status: 200,
+    headers: new Headers(),
+    data: {
+      calculation_hash: "sha256:" + "0".repeat(64),
+      nodes: [
+        {
+          node_id: "g1",
+          width_mm: "2000",
+          height_mm: "1200",
+          vertical: { half: "1000.00", one_third: "666.67", two_thirds: "1333.33" },
+          horizontal: { half: "600.00", one_third: "400.00", two_thirds: "800.00" },
+          child_weights: [],
+        },
+      ],
+    },
+  });
+  calculate.mockResolvedValue(response);
+  const onCalculated = vi.fn();
+  render(
+    <IntentEditor
+      organizationId="org-a"
+      onValidationChange={vi.fn()}
+      mullions={{ SPLIT_H: { sku: "POST-H", name: "Travesano" } }}
+      onCalculated={onCalculated}
+    />,
+  );
+  const shortcut = screen.getByRole("button", {
+    name: `${t("intent.horizontal")} \u00b7 ${t("intent.half")}`,
+  });
+  await waitFor(() => expect(shortcut).toBeEnabled());
+  fireEvent.click(shortcut);
+  await waitFor(() => expect(calculate).toHaveBeenCalled());
+  expect(calculate.mock.calls[0]![0].parametric_tree).toMatchObject({
+    type: "SPLIT_H",
+    split_offset_mm: "600.00",
+  });
 });

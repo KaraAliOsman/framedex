@@ -96,6 +96,8 @@ def catalog_scope(request):
             yield tenant.active_organization.organization_id
     except DatabaseError as error:
         sqlstate = getattr(error.__cause__, "sqlstate", None)
+        if sqlstate == "23514" and "catalog_authority_referenced" in str(error):
+            raise contract_error(409, "catalog_authority_referenced", "catalogs.errors.referenced") from error
         if sqlstate == "42501":
             status, code = 403, "catalog_permission_denied"
         elif sqlstate and (sqlstate.startswith("23") or sqlstate in ("P0001", "40001", "40P01")):

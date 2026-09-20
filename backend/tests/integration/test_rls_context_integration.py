@@ -324,12 +324,19 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
         "code": "DEMO_60",
         "name": "Sistema Demo 60mm PVC",
         "is_demo": True,
+        "quote_ready": True,
+        "readiness_reasons": [],
     }
     assert {system["id"] for system in systems} == {
         str(real_rows.demo_system),
         str(real_rows.systems[tenant]),
     }
-    assert all(set(system) == {"id", "code", "name", "is_demo"} for system in systems)
+    assert all(set(system) == {
+        "id", "code", "name", "is_demo", "quote_ready", "readiness_reasons",
+    } for system in systems)
+    own = next(system for system in systems if system["id"] == str(real_rows.systems[tenant]))
+    assert own["quote_ready"] is False
+    assert own["readiness_reasons"]
     assert_no_context()
 
 

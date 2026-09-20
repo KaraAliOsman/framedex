@@ -24,8 +24,6 @@ from dekopen_engine.inspection_models import (
 from dekopen_engine.inspector import inspect
 from dekopen_engine.manufacturing import project_manufacturing_facts_v1
 from dekopen_engine.purchasing import (
-    EdgePolishingV1,
-    GlassPolishingAuthorityV1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
@@ -157,7 +155,7 @@ def _position_rows(project_id: UUID, org_id: UUID) -> list[dict[str, object]]:
         "input.reinforcement_cut_policy_id,input.workshop_annotations::text,"
         "input.structural_inputs::text,input.glass_polishing::text,"
         "input.handle_intents::text,input.accessory_schedule::text,"
-        "input.legacy_handle_migration_confirmed "
+        "input.legacy_handle_migration_confirmed,input.calculation_hash AS documentary_calculation_hash "
         "FROM public.project_positions position "
         "JOIN public.position_documentary_inputs input "
         "ON input.position_id=position.id AND input.project_id=position.project_id "
@@ -260,6 +258,10 @@ def freeze_revision_a(
             operation["revision_code"] or "REV-A"
         ) != revision:
             raise DocumentaryError("applied_pricing_authority_required")
+        if project["pricing_reset_at"] is not None and (
+            operation["approved_at"] is None or operation["approved_at"] <= project["pricing_reset_at"]
+        ):
+            raise DocumentaryError("applied_pricing_authority_required")
         project_input = one(
             "SELECT * FROM public.project_documentary_inputs "
             "WHERE project_id=%s AND org_id=%s",
@@ -344,6 +346,8 @@ def freeze_revision_a(
                 "color": color,
             }
             source_hash = calculation_response(calculation_request, result)["calculation_hash"]
+            if position["documentary_calculation_hash"] != source_hash:
+                raise DocumentaryError("documentary_calculation_identity_stale")
             inspection = inspect(InspectorInput(
                 computation=computation,
                 chamber_clearance_mm=inspector_authorities.chamber_clearance_mm,
@@ -408,39 +412,35 @@ def freeze_revision_a(
                 for infill in unit.infills
                 if infill.kind == "GLASS"
             }
-            if not polishing and glass_targets and allow_incomplete_workshop:
-                purchase_polishing = [
-                    GlassPolishingAuthorityV1(
-                        schema_version=1,
-                        bay_id=bay_id,
-                        leaf_id=leaf_id,
-                        edges=EdgePolishingV1(top=False, right=False, bottom=False, left=False),
-                    )
-                    for bay_id, leaf_id in sorted(glass_targets)
-                ]
+            accessories = (
+                accessory_schedule(position["accessory_schedule"], str(position["documentary_input_id"]))
+                if position["accessory_schedule"] is not None else None
+            )
+            purchase_complete = (
+                {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
+                and accessories is not None
+            )
+            if not purchase_complete:
+                if not allow_incomplete_workshop:
+                    raise DocumentaryError("purchase_authority_incomplete")
                 position_production_allowed = False
                 position_complete = False
                 production_allowed = False
                 documentary_complete = False
-            else:
-                purchase_polishing = polishing
-            accessories = accessory_schedule(
-                position["accessory_schedule"], str(position["documentary_input_id"])
-            )
             location_tag = str(position["location_tag"] or "")
-            purchase_position = PositionPurchaseInputV1(
-                position_id=position_id,
-                position_index=int(position["position_index"]),
-                system_id=str(system_id),
-                quantity=quantity,
-                color=color,
-                location_tag=location_tag,
-                manufacturing_units=units,
-                hardware=hardware,
-                glass_polishing=purchase_polishing,
-                accessory_schedule=accessories,
-            )
-            purchase_positions.append(purchase_position)
+            if purchase_complete:
+                purchase_positions.append(PositionPurchaseInputV1(
+                    position_id=position_id,
+                    position_index=int(position["position_index"]),
+                    system_id=str(system_id),
+                    quantity=quantity,
+                    color=color,
+                    location_tag=location_tag,
+                    manufacturing_units=units,
+                    hardware=hardware,
+                    glass_polishing=polishing,
+                    accessory_schedule=accessories,
+                ))
             profile_skus = {member.workshop_sku for unit in units for member in unit.members}
             reinforcement_skus = {
                 item.workshop_sku for unit in units for item in unit.reinforcements
@@ -482,7 +482,8 @@ def freeze_revision_a(
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
                 "glass_polishing": [item.model_dump(mode="python") for item in polishing],
                 "handle_intents": [item.model_dump(mode="python") for item in intents],
-                "accessory_schedule": accessories.model_dump(mode="python"),
+                "accessory_schedule": accessories.model_dump(mode="python") if accessories else None,
+                "calculation_hash": source_hash,
                 "manufacturing_policies": {
                     "placement": policies.placement.model_dump(mode="python"),
                     "handles": policies.handles.model_dump(mode="python"),
@@ -517,7 +518,7 @@ def freeze_revision_a(
             glass_mappings=purchase_authorities.glass_mappings,
             hardware_mappings=purchase_authorities.hardware_mappings,
             panel_authorities=purchase_authorities.panel_authorities,
-        )
+        ) if len(purchase_positions) == len(positions) else None
         bom_hash = bom_hash_v1(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
         )
@@ -562,7 +563,7 @@ def freeze_revision_a(
             },
             "inspector": inspector_evidence,
             "manufacturing": manufacturing,
-            "purchase_requirements": purchase.model_dump(mode="python"),
+            "purchase_requirements": purchase.model_dump(mode="python") if purchase else None,
             "purchase_authorities": {
                 "physical_stock_bindings": [
                     item.model_dump(mode="python")
@@ -595,48 +596,49 @@ def freeze_revision_a(
              snapshot_sha256, production_allowed, documentary_complete],
         )
         version_id = UUID(str(version["id"]))
-        projection_snapshot = purchase.model_dump(mode="python")
-        projection = one(
-            "INSERT INTO public.purchase_projections("
-            "project_id,project_version_id,org_id,bom_hash,snapshot_sha256,schema_version,"
-            "projection_hash,snapshot_json,created_by,created_at) "
-            "VALUES(%s,%s,%s,%s,%s,1,%s,%s::jsonb,%s,%s) RETURNING id",
-            [project_id, version_id, org_id, bom_hash, snapshot_sha256,
-             purchase.projection_hash,
-             documentary_canonical_json_v1(projection_snapshot).decode("utf-8"),
-             actor_id, sealed_at],
-        )
-        projection_id = UUID(str(projection["id"]))
-        for requirement in purchase.requirements:
-            requirement_id = uuid5(
-                NAMESPACE_URL, f"https://dekopen.local/requirement/{version_id}/{requirement.requirement_key}"
+        if purchase is not None:
+            projection_snapshot = purchase.model_dump(mode="python")
+            projection = one(
+                "INSERT INTO public.purchase_projections("
+                "project_id,project_version_id,org_id,bom_hash,snapshot_sha256,schema_version,"
+                "projection_hash,snapshot_json,created_by,created_at) "
+                "VALUES(%s,%s,%s,%s,%s,1,%s,%s::jsonb,%s,%s) RETURNING id",
+                [project_id, version_id, org_id, bom_hash, snapshot_sha256,
+                 purchase.projection_hash,
+                 documentary_canonical_json_v1(projection_snapshot).decode("utf-8"),
+                 actor_id, sealed_at],
             )
-            common = {
-                "requirement_key", "order_type", "category", "authority_ids",
-                "technical_skus", "purchasing_sku", "physical_stock_identity",
-                "unit", "quantity", "source_trace",
-            }
-            payload = requirement.model_dump(mode="python")
-            specification = {
-                key: value for key, value in payload.items()
-                if key not in common and value is not None
-            }
-            one(
-                "INSERT INTO public.purchase_requirement_lines("
-                "id,requirement_key,projection_id,project_id,project_version_id,org_id,"
-                "bom_hash,snapshot_sha256,order_type,category,technical_identity,purchasing_sku,"
-                "physical_stock_identity,unit,quantity,specification,source_trace) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s::jsonb,%s::jsonb) "
-                "RETURNING id",
-                [requirement_id, requirement.requirement_key, projection_id, project_id,
-                 version_id, org_id, bom_hash, snapshot_sha256,
-                 requirement.order_type.value, requirement.category,
-                 json_text({"authority_ids": requirement.authority_ids,
-                            "technical_skus": requirement.technical_skus}),
-                 requirement.purchasing_sku, requirement.physical_stock_identity,
-                 requirement.unit, requirement.quantity, json_text(specification),
-                 json_text(requirement.source_trace)],
-            )
+            projection_id = UUID(str(projection["id"]))
+            for requirement in purchase.requirements:
+                requirement_id = uuid5(
+                    NAMESPACE_URL, f"https://dekopen.local/requirement/{version_id}/{requirement.requirement_key}"
+                )
+                common = {
+                    "requirement_key", "order_type", "category", "authority_ids",
+                    "technical_skus", "purchasing_sku", "physical_stock_identity",
+                    "unit", "quantity", "source_trace",
+                }
+                payload = requirement.model_dump(mode="python")
+                specification = {
+                    key: value for key, value in payload.items()
+                    if key not in common and value is not None
+                }
+                one(
+                    "INSERT INTO public.purchase_requirement_lines("
+                    "id,requirement_key,projection_id,project_id,project_version_id,org_id,"
+                    "bom_hash,snapshot_sha256,order_type,category,technical_identity,purchasing_sku,"
+                    "physical_stock_identity,unit,quantity,specification,source_trace) "
+                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s::jsonb,%s::jsonb) "
+                    "RETURNING id",
+                    [requirement_id, requirement.requirement_key, projection_id, project_id,
+                     version_id, org_id, bom_hash, snapshot_sha256,
+                     requirement.order_type.value, requirement.category,
+                     json_text({"authority_ids": requirement.authority_ids,
+                                "technical_skus": requirement.technical_skus}),
+                     requirement.purchasing_sku, requirement.physical_stock_identity,
+                     requirement.unit, requirement.quantity, json_text(specification),
+                     json_text(requirement.source_trace)],
+                )
         with commercial_backend():
             one(
                 "UPDATE public.projects SET status='QUOTED',updated_at=clock_timestamp() "
@@ -654,7 +656,7 @@ def freeze_revision_a(
             "production_allowed": production_allowed,
             "documentary_complete": documentary_complete,
             "emitted_at": sealed_at,
-            "purchase_projection_hash": purchase.projection_hash,
+            "purchase_projection_hash": purchase.projection_hash if purchase else None,
         }
 
 
@@ -686,7 +688,7 @@ def prepare_documentary_inputs(
             "SELECT position_id,manufacturing_placement_policy_id,handle_requirement_policy_id,"
             "reinforcement_cut_policy_id,workshop_annotations::text,structural_inputs::text,"
             "glass_polishing::text,handle_intents::text,accessory_schedule::text,"
-            "legacy_handle_migration_confirmed FROM public.position_documentary_inputs "
+            "legacy_handle_migration_confirmed,calculation_hash FROM public.position_documentary_inputs "
             "WHERE project_id=%s AND org_id=%s",
             [project_id, org_id],
         )
@@ -748,6 +750,15 @@ def prepare_documentary_inputs(
             params=params,
         )
         computation = compute_geometry(root, params, diagnostic=True)
+        if computation.result is None:
+            raise DocumentaryError("documentary_geometry_incomplete")
+        identity_hash = calculation_response({
+            "system_id": system_id, "parametric_tree": tree,
+            "nominal_width_mm": D(str(position["width_mm"])),
+            "nominal_height_mm": D(str(position["height_mm"])), "color": color,
+        }, computation.result)["calculation_hash"]
+        if existing and existing["calculation_hash"] != identity_hash:
+            existing = None
         valid_bays = {opening.bay_id for opening in computation.openings}
         valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in computation.leaves}
         valid_spans = {span.target_id for span in computation.spans}
@@ -803,6 +814,7 @@ def prepare_documentary_inputs(
         prepared.append(
             {
                 "position_id": position["id"],
+                "calculation_hash": identity_hash,
                 "location_tag": position["location_tag"] or "",
                 "system_name": position["system_name"],
                 "placement_options": placement_options,
@@ -822,7 +834,7 @@ def prepare_documentary_inputs(
                 "glass_polishing": glass,
                 "handle_intents": intents,
                 "accessory_schedule": decoded(existing["accessory_schedule"])
-                if existing and existing["accessory_schedule"] is not None else {"schema_version": 1, "coverage": "NONE_REQUIRED", "items": []},
+                if existing and existing["accessory_schedule"] is not None else None,
                 "legacy_handle_migration_confirmed": bool(
                     existing and existing["legacy_handle_migration_confirmed"]
                 ),
@@ -884,6 +896,13 @@ def save_documentary_inputs(
             params=params,
         )
         comp = compute_geometry(root, params, diagnostic=True)
+        if comp.result is None:
+            raise DocumentaryError("documentary_geometry_incomplete")
+        identity_hash = calculation_response({
+            "system_id": str(system_id_uuid), "parametric_tree": tree,
+            "nominal_width_mm": D(str(pos["width_mm"])),
+            "nominal_height_mm": D(str(pos["height_mm"])), "color": color,
+        }, comp.result)["calculation_hash"]
         valid_bays = {opening.bay_id for opening in comp.openings}
         valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in comp.leaves}
         valid_spans = {span.target_id for span in comp.spans}
@@ -906,6 +925,8 @@ def save_documentary_inputs(
         for g in item_glass:
             if not isinstance(g, dict) or (g.get("bay_id"), g.get("leaf_id")) not in valid_glass:
                 raise DocumentaryError("glass_polishing_target_invalid")
+        if item.get("calculation_hash") != identity_hash:
+            raise DocumentaryError("documentary_calculation_identity_stale")
 
     with documentary_backend():
         if rows(
@@ -939,8 +960,8 @@ def save_documentary_inputs(
                 "position_id,project_id,org_id,manufacturing_placement_policy_id,"
                 "handle_requirement_policy_id,reinforcement_cut_policy_id,workshop_annotations,"
                 "structural_inputs,glass_polishing,handle_intents,accessory_schedule,"
-                "legacy_handle_migration_confirmed,created_by) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s) "
+                "legacy_handle_migration_confirmed,created_by,calculation_hash) "
+                "VALUES(%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s) "
                 "ON CONFLICT(position_id,org_id) DO UPDATE SET "
                 "manufacturing_placement_policy_id=EXCLUDED.manufacturing_placement_policy_id,"
                 "handle_requirement_policy_id=EXCLUDED.handle_requirement_policy_id,"
@@ -950,6 +971,7 @@ def save_documentary_inputs(
                 "glass_polishing=EXCLUDED.glass_polishing,"
                 "handle_intents=EXCLUDED.handle_intents,"
                 "accessory_schedule=EXCLUDED.accessory_schedule,"
+                "calculation_hash=EXCLUDED.calculation_hash,"
                 "legacy_handle_migration_confirmed=EXCLUDED.legacy_handle_migration_confirmed,"
                 "updated_at=now() RETURNING id",
                 [position_id, project_id, org_id,
@@ -957,8 +979,9 @@ def save_documentary_inputs(
                  item["handle_requirement_policy_id"],
                  item["reinforcement_cut_policy_id"], json_text(item["workshop_annotations"]),
                  json_text(item["structural_inputs"]), json_text(item["glass_polishing"]),
-                 json_text(item["handle_intents"]), json_text(item["accessory_schedule"]),
-                 item["legacy_handle_migration_confirmed"], actor_id],
+                 json_text(item["handle_intents"]),
+                 json_text(item["accessory_schedule"]) if item["accessory_schedule"] is not None else None,
+                 item["legacy_handle_migration_confirmed"], actor_id, item["calculation_hash"]],
             )
     return {"project_id": str(project_id), "positions_saved": len(supplied_values)}
 

@@ -37,6 +37,7 @@ import type {
   EngineCalculateResponse,
   EngineInspectRequestRequest,
   EngineInspectResponse,
+  EngineLayoutResponse,
   EngineOptimizeRequestRequest,
   EngineOptimizeResponse,
   EngineSystemsResponse,
@@ -63,6 +64,7 @@ import type {
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
+  ResetPricingRequest,
   SendOrderRequestRequest,
   SignedAccessResponse,
   SuccessorRequestRequest,
@@ -2126,6 +2128,43 @@ export const engineInspect = async (
   });
 };
 
+export type engineLayoutResponse200 = {
+  data: EngineLayoutResponse;
+  status: 200;
+};
+
+export type engineLayoutResponseSuccess = engineLayoutResponse200 & {
+  headers: Headers;
+};
+export type engineLayoutResponse = engineLayoutResponseSuccess;
+
+export const getEngineLayoutUrl = () => {
+  return `/api/v1/engine/layout/`;
+};
+
+/**
+ * Expose traversal dimensions without adding a second geometry implementation.
+ */
+export const engineLayout = async (
+  engineCalculateRequestRequest: EngineCalculateRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<engineLayoutResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<engineLayoutResponse>(getEngineLayoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineCalculateRequestRequest),
+  });
+};
+
 export type engineOptimizeCutResponse200 = {
   data: EngineOptimizeResponse;
   status: 200;
@@ -3521,6 +3560,89 @@ export const positionsCreate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(positionWriteRequest),
+  });
+};
+
+export type projectsResetPricingResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsResetPricingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsResetPricingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsResetPricingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsResetPricingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsResetPricingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsResetPricingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsResetPricingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsResetPricingResponseSuccess = projectsResetPricingResponse200 & {
+  headers: Headers;
+};
+export type projectsResetPricingResponseError = (
+  | projectsResetPricingResponse400
+  | projectsResetPricingResponse401
+  | projectsResetPricingResponse403
+  | projectsResetPricingResponse404
+  | projectsResetPricingResponse409
+  | projectsResetPricingResponse422
+  | projectsResetPricingResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsResetPricingResponse =
+  projectsResetPricingResponseSuccess | projectsResetPricingResponseError;
+
+export const getProjectsResetPricingUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/reset-pricing/`;
+};
+
+export const projectsResetPricing = async (
+  projectId: string,
+  resetPricingRequest: ResetPricingRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsResetPricingResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsResetPricingResponse>(getProjectsResetPricingUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(resetPricingRequest),
   });
 };
 

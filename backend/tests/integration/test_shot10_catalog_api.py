@@ -300,6 +300,17 @@ def test_own_global_child_allowed_foreign_parent_denied(real_rows):
     set_role(real_rows, "WORKSHOP_MANAGER", user="both", org="B")
 
     org_a = real_rows.organizations["A"]
+    # This permission test needs an unreferenced global catalog. DEMO may already
+    # be reserved by persisted technical work from earlier integration scenarios.
+    global_system = uuid4()
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO public.profile_systems SELECT (jsonb_populate_record("
+            "NULL::public.profile_systems,to_jsonb(source)||jsonb_build_object("
+            "'id',%s::uuid,'code',%s::text,'technical_locked',false,'is_demo',false))).* "
+            "FROM public.profile_systems source WHERE id=%s",
+            [global_system, f"GLOBAL-{global_system.hex}", real_rows.demo_system],
+        )
     with authenticated_rls_context(real_rows.tokens["both"].claims):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -307,7 +318,7 @@ def test_own_global_child_allowed_foreign_parent_denied(real_rows):
                 "(org_id,system_id,sku,name,role,face_width_mm) "
                 "VALUES(%s,%s,'TENANT-BEAD','Tenant bead','GLAZING_BEAD',20) "
                 "RETURNING id",
-                [org_a, real_rows.demo_system],
+                [org_a, global_system],
             )
             article_id = cursor.fetchone()[0]
 

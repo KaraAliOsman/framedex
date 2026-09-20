@@ -15,6 +15,7 @@ def test_openapi_contains_only_authorized_shot_10_paths_and_bearer_security() ->
         "/api/v1/projects/{project_id}/",
         "/api/v1/projects/{project_id}/clone/",
         "/api/v1/projects/{project_id}/successor/",
+        "/api/v1/projects/{project_id}/reset-pricing/",
         "/api/v1/projects/{project_id}/positions/",
         "/api/v1/projects/design-options/{system_id}/",
         "/api/v1/positions/{position_id}/",
@@ -28,6 +29,7 @@ def test_openapi_contains_only_authorized_shot_10_paths_and_bearer_security() ->
         "/api/v1/catalogs/hardware-kits/{row_id}/",
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
+        "/api/v1/engine/layout/",
         "/api/v1/engine/systems/",
         "/api/v1/engine/inspect/",
         "/api/v1/engine/optimize-cut/",
@@ -65,6 +67,7 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
     for path, method in (
         ("/api/v1/auth/me/", "get"),
         ("/api/v1/engine/calculate/", "post"),
+        ("/api/v1/engine/layout/", "post"),
         ("/api/v1/engine/systems/", "get"),
         ("/api/v1/engine/inspect/", "post"),
         ("/api/v1/engine/optimize-cut/", "post"),
@@ -83,6 +86,7 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
         ("/api/v1/purchasing/versions/{version_id}/eligibilities/", "post"),
         ("/api/v1/purchasing/versions/{version_id}/confirm/", "post"),
         ("/api/v1/projects/{project_id}/successor/", "post"),
+        ("/api/v1/projects/{project_id}/reset-pricing/", "post"),
         ("/api/v1/purchasing/requirements/{requirement_id}/allocation/", "put"),
         ("/api/v1/purchasing/orders/{order_id}/send/", "post"),
     ):

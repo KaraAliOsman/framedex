@@ -1,5 +1,6 @@
 /** SHOT-04 UI keys (Regla 14); no additional language/runtime dependency. */
 const messages = {
+  "projects.chooseProject": "Selecciona un proyecto",
   "projects.title": "Proyectos",
   "projects.metadata": "Datos del proyecto",
   "projects.name": "Nombre del proyecto",
@@ -70,6 +71,10 @@ const messages = {
   "projects.pieceWidth": "Ancho de pieza (mm)",
   "projects.pieceHeight": "Alto de pieza (mm)",
   "projects.leaveUnsaved": "Hay cambios sin guardar. ¿Quieres salir y descartarlos?",
+
+  "quotation.resetPricing": "Retirar precios y editar borrador",
+  "quotation.resetReason":
+    "Motivo para retirar los precios aplicados y volver a editar. Luego deberás cotizar y aplicar precios nuevamente.",
   "quotation.title": "Cotización y revisiones",
   "quotation.current": "Revisión actual",
   "quotation.prepare": "Preparar emisión",
@@ -99,6 +104,12 @@ const messages = {
     "Se abrirá una nueva revisión editable y el precio actual dejará de ser vigente. ¿Continuar?",
   "quotation.successorReady": "Nueva revisión lista para editar y volver a cotizar.",
   "quotation.successorError": "No se pudo abrir la nueva revisión. Recarga y vuelve a intentarlo.",
+
+  "intent.half": "50/50 (igualar)",
+
+  "intent.one_third": "1/3",
+
+  "intent.two_thirds": "2/3",
   "intent.title": "Configuración del vano",
   "intent.selectedBay": "Paño seleccionado",
   "intent.chooseBay": "Selecciona un paño",
@@ -423,6 +434,18 @@ const messages = {
   "purchasing.orderTypeHardware": "Herrajes",
   "purchasing.orderTypePanel": "Paneles",
   "nav.purchasing": "Compras",
+
+  "catalog.readinessUnknown": "Disponibilidad sin verificar",
+
+  "catalog.readyFixed": "Catálogo disponible para fijo blanco; validar diseño y precios",
+
+  "catalog.readiness.technical_catalog": "Completar serie, marco y junquillos compatibles",
+
+  "catalog.readiness.inspection": "Completar parámetros de inspección",
+
+  "catalog.readiness.manufacturing": "Completar políticas de fabricación",
+
+  "catalog.readiness.purchase": "Completar referencias y suministro de materiales",
   "catalog.title": "Catálogo técnico",
   "catalog.subtitle": "Series, perfiles y compatibilidades de tu taller.",
   "catalog.systems": "Ficha de serie",

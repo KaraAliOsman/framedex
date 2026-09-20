@@ -466,6 +466,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
         positions: [
           {
             position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
             location_tag: position.location_tag,
             system_name: "Demo 60",
             manufacturing_placement_policy_id: "placement-a",
@@ -526,4 +527,36 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
   expect(apiMutator).toHaveBeenCalledTimes(1);
   expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
   expect(window.confirm).toHaveBeenCalledWith(t("quotation.successorConfirm"));
+});
+
+it("explicitly retires current draft pricing with an audit reason before editing", async () => {
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    position_count: 1,
+    positions: [makePosition()],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(
+      response(200, makeProject({ position_count: 1, positions: [makePosition()] })),
+    );
+  vi.mocked(apiMutator).mockResolvedValue(response(200, {}) as never);
+  vi.spyOn(window, "prompt").mockReturnValue("Corregir medidas");
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.resetPricing") }));
+  await waitFor(() =>
+    expect(apiMutator).toHaveBeenCalledWith(
+      "/api/v1/projects/project-a/reset-pricing/",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          expected_operation_id: "operation-a",
+          reason: "Corregir medidas",
+          confirmed: true,
+        }),
+      }),
+    ),
+  );
+  expect(await screen.findByRole("link", { name: t("projects.addPosition") })).toBeInTheDocument();
 });

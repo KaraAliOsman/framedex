@@ -5,6 +5,19 @@ import { apiMutator } from "../../api/apiMutator";
 import { t } from "../../i18n/es-CL";
 import { CommercialPricingPage, PricingPage } from "./PricingPage";
 
+vi.mock("../../api/generated/dekopen", () => ({
+  projectsList: vi.fn().mockResolvedValue({
+    status: 200,
+    data: {
+      items: [
+        { id: "project-a", code: "P-001", name: "Casa", client_name: "Cliente" },
+        { id: "project-A", code: "P-A", name: "Casa A", client_name: "Cliente A" },
+        { id: "project-B", code: "P-B", name: "Casa B", client_name: "Cliente B" },
+      ],
+    },
+  }),
+}));
+
 const identity = vi.hoisted(() => ({ id: "tenant-a", role: "OWNER" }));
 vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({ me: { active_organization: identity } }),
@@ -167,9 +180,9 @@ it.each([false, true])(
     await settle(a, result("A"), failure);
     expect(previewButton()).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.queryByText("Proyecto: project-A")).not.toBeInTheDocument();
+    expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
     await settle(b, result("B"));
-    expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
+    expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
     expect(previewButton()).toBeEnabled();
   },
 );
@@ -186,8 +199,8 @@ it("preview B alone wins when B completes before A", async () => {
   submitPreview();
   await settle(b, result("B"));
   await settle(a, result("A"));
-  expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
-  expect(screen.queryByText("Proyecto: project-A")).not.toBeInTheDocument();
+  expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
+  expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
   expect(previewButton()).toBeEnabled();
 });
 
@@ -216,7 +229,7 @@ it.each(["apply", "reject"] as const)(
       .mockResolvedValueOnce({ data: [persisted] });
     render(<CommercialPricingPage />);
     submitPreview();
-    await screen.findByText("Proyecto: project-A");
+    await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
       screen.getByRole("button", {
@@ -227,15 +240,15 @@ it.each(["apply", "reject"] as const)(
     submitPreview();
     await settle(mutation, persisted);
     expect(previewButton()).toBeDisabled();
-    expect(screen.queryByText("Proyecto: project-A")).not.toBeInTheDocument();
+    expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
     await settle(next, result("B"));
-    expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
+    expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: t("pricing.reload") }));
     await screen.findByRole("button", { name: t("pricing.review") });
     expect(
       screen.getByText(t(action === "reject" ? "pricing.rejected" : "pricing.applied")),
     ).toBeInTheDocument();
-    expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
+    expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
   },
 );
 
@@ -250,7 +263,7 @@ it.each(["apply", "reject"] as const)(
       .mockImplementationOnce(() => next.promise);
     render(<CommercialPricingPage />);
     submitPreview();
-    await screen.findByText("Proyecto: project-A");
+    await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
       screen.getByRole("button", {
@@ -331,7 +344,7 @@ it.each([false, true])(
     expect(previewButton()).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     await settle(b, result("B"));
-    expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
+    expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
     expect(previewButton()).toBeEnabled();
     view.unmount();
   },
@@ -359,7 +372,7 @@ it.each(["reload", "apply", "reject"] as const)(
     render(<CommercialPricingPage />);
     if (action !== "reload") {
       submitPreview();
-      await screen.findByText("Proyecto: project-A");
+      await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
       fireEvent.change(screen.getByLabelText(t("pricing.reason")), {
         target: { value: "Reviewed" },
       });
@@ -475,7 +488,7 @@ it.each(["apply", "reject"] as const)(
       .mockResolvedValueOnce({ data: result("B") });
     render(<CommercialPricingPage />);
     submitPreview();
-    await screen.findByText("Proyecto: project-A");
+    await screen.findByText("Proyecto: P-A · Cliente A · Casa A");
     fireEvent.change(screen.getByLabelText(t("pricing.reason")), { target: { value: "Reviewed" } });
     fireEvent.click(
       screen.getByRole("button", {
@@ -484,10 +497,10 @@ it.each(["apply", "reject"] as const)(
     );
     changeFinancialInput();
     submitPreview();
-    await screen.findByText("Proyecto: project-B");
+    await screen.findByText("Proyecto: P-B · Cliente B · Casa B");
     await settle(task, result("A", action === "reject" ? "REJECTED" : "APPLIED"));
-    expect(screen.getByText("Proyecto: project-B")).toBeInTheDocument();
-    expect(screen.queryByText("Proyecto: project-A")).not.toBeInTheDocument();
+    expect(screen.getByText("Proyecto: P-B · Cliente B · Casa B")).toBeInTheDocument();
+    expect(screen.queryByText("Proyecto: P-A · Cliente A · Casa A")).not.toBeInTheDocument();
     expect(previewButton()).toBeEnabled();
   },
 );
@@ -724,3 +737,15 @@ it.each([false, true])(
     view.unmount();
   },
 );
+
+it("lists human project identities before any pricing operation and submits only the internal ID", async () => {
+  render(<CommercialPricingPage />);
+  const option = await screen.findByRole("option", { name: "P-001 \u00b7 Cliente \u00b7 Casa" });
+  expect(option).toHaveValue("project-a");
+  expect(screen.queryByRole("option", { name: "project-a" })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(t("pricing.projectId")), {
+    target: { value: "project-a" },
+  });
+  submitPreview();
+  expect(previewBodies()[0]?.project_id).toBe("project-a");
+});

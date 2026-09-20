@@ -186,6 +186,8 @@ def test_engine_systems_returns_only_the_minimal_contract(
         ),
     )
 
+    monkeypatch.setattr("catalogs.readiness.catalog_readiness",
+        lambda *_: {"quote_ready": False, "reasons": ["manufacturing"]})
     response = client.get("/api/v1/engine/systems/")
 
     assert response.status_code == 200
@@ -196,6 +198,8 @@ def test_engine_systems_returns_only_the_minimal_contract(
                 "code": "DEMO_60",
                 "name": "Sistema Demo 60mm PVC",
                 "is_demo": True,
+                "quote_ready": False,
+                "readiness_reasons": ["manufacturing"],
             }
         ]
     }
@@ -223,3 +227,16 @@ def test_engine_systems_enforces_owner_aal2(
         "detail": "OWNER requires aal2",
         "required_aal": "aal2",
     }
+
+
+def test_layout_api_binds_to_same_calculation_and_tenant(monkeypatch):
+    client = APIClient()
+    configure_api(client, monkeypatch)
+    request = g1_request()
+    response = client.post("/api/v1/engine/layout/", request, format="json")
+    calculated = client.post("/api/v1/engine/calculate/", request, format="json")
+    assert response.status_code == 200
+    assert response.json()["calculation_hash"] == calculated.json()["calculation_hash"]
+    assert response.json()["nodes"][0]["horizontal"]["half"] == "500.00"
+    request["color"] = "FOILED"
+    assert client.post("/api/v1/engine/layout/", request, format="json").status_code == 422

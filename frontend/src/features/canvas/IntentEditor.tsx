@@ -18,6 +18,8 @@ import {
   type SplitType,
 } from "./intentEditing";
 import { requestFromInputs } from "./useEngineCalculation";
+
+import { useEngineLayout } from "./useEngineLayout";
 import "./canvas.css";
 
 const openingLabels: Record<Opening, TranslationKey> = {
@@ -49,6 +51,8 @@ export function IntentEditor({
   onCalculated,
 }: Props): JSX.Element {
   const inputs = useCanvasStore((state) => state.inputs);
+
+  const layout = useEngineLayout(inputs, organizationId);
   const selection = useCanvasStore((state) => state.selection);
   const selectBay = useCanvasStore((state) => state.selectBay);
 
@@ -309,38 +313,47 @@ export function IntentEditor({
                     }}
                   />
                 </label>
-                <div style={{ display: "flex", gap: "0.25rem", margin: "0.25rem 0" }}>
-                  <button
-                    type="button"
-                    disabled={dimensionsPending}
-                    onClick={() => {
-                      setOffset((Number(width) * 0.5).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    50% (Centro)
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dimensionsPending}
-                    onClick={() => {
-                      setOffset(((Number(width) * 2) / 3).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    2/3
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dimensionsPending}
-                    onClick={() => {
-                      setOffset((Number(width) / 3).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    1/3 (Ecualizar)
-                  </button>
-                </div>
+
+                {(["SPLIT_V", "SPLIT_H"] as const)
+                  .filter((axis) => mullions[axis])
+                  .map((axis) => (
+                    <div key={axis}>
+                      {(["half", "one_third", "two_thirds"] as const).map((ratio) => {
+                        const candidate = layout.find((node) => node.node_id === selected.id)?.[
+                          axis === "SPLIT_V" ? "vertical" : "horizontal"
+                        ][ratio];
+
+                        return (
+                          <button
+                            key={ratio}
+                            type="button"
+                            disabled={dimensionsPending || !candidate}
+
+                            onClick={() =>
+                              void apply((base) => ({
+                                ...base,
+                                parametricTree: splitBay(
+                                  base.parametricTree,
+                                  selected.id,
+
+                                  {
+                                    type: axis,
+                                    offsetMm: candidate!,
+                                    mullionSku: mullions[axis]!.sku,
+                                  },
+
+                                  { split: crypto.randomUUID(), secondBay: crypto.randomUUID() },
+                                ),
+                              }))
+                            }
+                          >
+                            {t(axis === "SPLIT_V" ? "intent.vertical" : "intent.horizontal")} ·{" "}
+                            {t(`intent.${ratio}`)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
                 <p>{t("intent.offsetHelp")}</p>
                 {mullions.SPLIT_V ? (
                   <button
@@ -398,37 +411,30 @@ export function IntentEditor({
                     }}
                   />
                 </label>
-                <div style={{ display: "flex", gap: "0.25rem", margin: "0.25rem 0" }}>
-                  <button
-                    type="button"
-                    disabled={!divisionId}
-                    onClick={() => {
-                      setDivisionOffset((Number(width) * 0.5).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    Centrar 50%
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!divisionId}
-                    onClick={() => {
-                      setDivisionOffset(((Number(width) * 2) / 3).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    2/3
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!divisionId}
-                    onClick={() => {
-                      setDivisionOffset((Number(width) / 3).toFixed(2));
-                      onDraftChange?.();
-                    }}
-                  >
-                    1/3 (Ecualizar)
-                  </button>
+
+                <div>
+                  {(["half", "one_third", "two_thirds"] as const).map((ratio) => {
+                    const division = divisions.find((node) => node.id === divisionId);
+
+                    const candidate = layout.find((node) => node.node_id === divisionId)?.[
+                      division?.type === "SPLIT_V" ? "vertical" : "horizontal"
+                    ][ratio];
+
+                    return (
+                      <button
+                        key={ratio}
+                        type="button"
+                        disabled={!candidate}
+
+                        onClick={() => {
+                          setDivisionOffset(candidate!);
+                          onDraftChange?.();
+                        }}
+                      >
+                        {t(`intent.${ratio}`)}
+                      </button>
+                    );
+                  })}
                 </div>
                 <button
                   type="button"

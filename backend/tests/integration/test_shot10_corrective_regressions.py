@@ -20,6 +20,7 @@ from documents.service import (
     freeze_revision_a,
     prepare_documentary_inputs,
     save_documentary_inputs,
+    revision_snapshot,
 )
 from pricing.repository import commercial_backend
 from pricing.service import apply_operation, preview
@@ -340,3 +341,214 @@ def test_catalog_singleton_role_uniqueness(documentary_tenant):
             )
         assert exc_info.value.status_code == 409
         assert exc_info.value.contract_code == "catalog_write_conflict"
+
+
+@pytest.mark.parametrize("missing", ["accessories", "polishing", "both"])
+def test_absent_authority_is_never_synthesized(documentary_tenant, monkeypatch, missing):
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, _, operation_id = _seed_project(org, owner)
+    monkeypatch.setattr("documents.artifacts.SupabaseDocumentStorage", FakeStorage)
+    with as_user(owner), documentary_backend():
+        if missing in ("accessories", "both"):
+            one("UPDATE public.position_documentary_inputs SET accessory_schedule=NULL "
+                "WHERE project_id=%s RETURNING id", [project_id])
+        if missing in ("polishing", "both"):
+            one("UPDATE public.position_documentary_inputs SET glass_polishing='[]' "
+                "WHERE project_id=%s RETURNING id", [project_id])
+        prepared = prepare_documentary_inputs(org_id=org, project_id=project_id)
+        if missing in ("accessories", "both"):
+            assert prepared["positions"][0]["accessory_schedule"] is None
+        else:
+            assert prepared["positions"][0]["accessory_schedule"]["coverage"] == "NONE_REQUIRED"
+        with pytest.raises(DocumentaryError, match="purchase_authority_incomplete"):
+            freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                              pricing_operation_id=operation_id, confirmed=True)
+        frozen = freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                                  pricing_operation_id=operation_id, confirmed=True,
+                                  allow_incomplete_workshop=True)
+        assert not frozen["documentary_complete"] and not frozen["production_allowed"]
+        _, snapshot = revision_snapshot(UUID(frozen["id"]), org)
+        assert snapshot["purchase_requirements"] is None
+        if missing in ("polishing", "both"):
+            assert snapshot["positions"][0]["glass_polishing"] == []
+        if missing in ("accessories", "both"):
+            assert snapshot["positions"][0]["accessory_schedule"] is None
+        with documentary_backend():
+            assert one("SELECT count(*) AS n FROM public.purchase_projections "
+                       "WHERE project_version_id=%s", [frozen["id"]])["n"] == 0
+        artifact, _ = generate_artifact(org_id=org, actor_id=owner, role="OWNER",
+            project_version_id=UUID(frozen["id"]), order_id=None,
+            document_type="DOC-01", file_format="PDF")
+        assert artifact["document_type"] == "DOC-01"
+        for kind, fmt, order in (("DOC-02", "XLSX", uuid4()), ("DOC-04", "PDF", uuid4()),
+                                 ("DOC-03", "PDF", None), ("DOC-05", "PDF", None)):
+            with pytest.raises(DocumentaryError, match="production_document_blocked"):
+                generate_artifact(org_id=org, actor_id=owner, role="OWNER",
+                    project_version_id=UUID(frozen["id"]), order_id=order,
+                    document_type=kind, file_format=fmt)
+
+
+def test_same_bay_geometry_change_invalidates_documentary_authority(documentary_tenant):
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, operation_id = _seed_project(org, owner)
+    with as_user(owner):
+        freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                          pricing_operation_id=operation_id, confirmed=True)
+        service.start_successor(org, project_id, expected_current_revision="REV-A")
+        previous = prepare_documentary_inputs(org_id=org, project_id=project_id)
+        current = service.position_public(service.position_row(org, position_id))
+        design = dict(current["design"])
+        design["nominal_width_mm"] = D("1500")
+        design["nominal_height_mm"] = D(design["nominal_height_mm"])
+        service.save_position(org, project_id, {
+            "expected_updated_at": current["updated_at"], "location_tag": "FACHADA-NORTE",
+            "quantity": current["quantity"], "design": design,
+        }, position_id=position_id)
+        prepared = prepare_documentary_inputs(org_id=org, project_id=project_id)
+        evidence = prepared["positions"][0]
+        assert evidence["calculation_hash"] != previous["positions"][0]["calculation_hash"]
+        assert evidence["workshop_annotations"] == []
+        assert evidence["glass_polishing"] == []
+        assert evidence["accessory_schedule"] is None
+        assert prepared["payment_terms"] == previous["payment_terms"]
+        old_input = {key: value for key, value in previous["positions"][0].items()
+                     if key not in ("system_name", "placement_options", "handle_options", "reinforcement_options")}
+        with pytest.raises(DocumentaryError, match="documentary_calculation_identity_stale"):
+            save_documentary_inputs(org_id=org, actor_id=owner, project_id=project_id,
+                data={"payment_terms": previous["payment_terms"],
+                      "quotation_valid_until": previous["quotation_valid_until"],
+                      "positions": [old_input]})
+        operation = price_current(org, owner, "OWNER", project_id)
+        with pytest.raises(DocumentaryError, match="documentary_calculation_identity_stale"):
+            freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                              pricing_operation_id=operation, confirmed=True,
+                              allow_incomplete_workshop=True)
+
+
+def test_catalog_mutation_after_applied_cannot_strand_project(documentary_tenant):
+    from django.db import connection, DatabaseError, transaction
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, operation_id = _seed_project(org, owner)
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
+    with pytest.raises(DatabaseError, match="catalog_authority_referenced"), transaction.atomic():
+        one("UPDATE public.profile_articles SET welding_loss_mm=welding_loss_mm+1 "
+            "WHERE system_id=(SELECT system_id FROM public.project_positions WHERE id=%s) "
+            "AND role='FRAME' RETURNING id", [position_id])
+    with as_user(owner):
+        frozen = freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                                  pricing_operation_id=operation_id, confirmed=True)
+        assert frozen["documentary_complete"]
+        assert service.project_row(org, project_id)["status"] == "QUOTED"
+
+
+def test_applied_draft_recovery_preserves_history_and_requires_repricing(documentary_tenant):
+    from pricing.repository import rows
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, operation_id = _seed_project(org, owner)
+    with as_user(owner):
+        with commercial_backend():
+            previous = one("SELECT * FROM public.pricing_operations WHERE id=%s", [operation_id])
+        reset = service.reset_draft_pricing(org, project_id, operation_id, "Correct technical inputs")
+        assert not reset["pricing_current"]
+        with commercial_backend():
+            assert one("SELECT * FROM public.pricing_operations WHERE id=%s", [operation_id]) == previous
+        audit = rows("SELECT new_record->>'pricing_reset_at' AS reset_at FROM public.price_audit_logs WHERE entity_id=%s "
+                     "AND reason='Correct technical inputs'", [project_id])
+        assert audit and audit[-1]["reset_at"] is not None
+        service.editable(org, project_id)
+        with pytest.raises(DocumentaryError, match="applied_pricing_authority_required"):
+            freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                              pricing_operation_id=operation_id, confirmed=True)
+        operation = price_current(org, owner, "OWNER", project_id)
+        with pytest.raises(ContractAPIException, match="Recarga"):
+            service.reset_draft_pricing(org, project_id, operation_id, "Stale replay")
+        frozen = freeze_revision_a(org_id=org, actor_id=owner, project_id=project_id,
+                                  pricing_operation_id=operation, confirmed=True)
+        assert frozen["documentary_complete"]
+        with pytest.raises(ContractAPIException):
+            service.reset_draft_pricing(org, project_id, operation, "Cannot reset history")
+
+
+def test_backend_readiness_excludes_incomplete_system(documentary_tenant):
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, other, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    with as_user(users["OWNER"]):
+        readiness = catalog_readiness(system, org)
+        assert not readiness["quote_ready"]
+        assert "manufacturing" in readiness["reasons"]
+        assert "inspection" in readiness["reasons"]
+        assert not catalog_readiness(system, other)["quote_ready"]
+        demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+        assert catalog_readiness(demo, org)["quote_ready"]
+
+
+@pytest.mark.parametrize("coverage", ["NONE_REQUIRED", "DECLARED"])
+def test_explicit_accessory_coverage_survives_prepare_and_freeze(documentary_tenant, coverage):
+    from pricing.repository import json_text
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project, _, operation = _seed_project(org, owner)
+    schedule = {"schema_version": 1, "coverage": coverage, "items": []}
+    if coverage == "DECLARED":
+        schedule["items"] = [{"obligation_id": "seal", "obligation_kind": "SEALING",
+            "technical_sku": "SEAL", "purchasing_sku": "BUY-SEAL", "manufacturer_name": "Fixture",
+            "order_type": "SUPPLIER_PROFILE_PO", "unit": "EA", "quantity_per_position_unit": 1,
+            "description": "Explicit sealing"}]
+    with as_user(owner), documentary_backend():
+        one("UPDATE public.position_documentary_inputs SET accessory_schedule=%s::jsonb "
+            "WHERE project_id=%s RETURNING id", [json_text(schedule), project])
+        assert prepare_documentary_inputs(org_id=org, project_id=project)["positions"][0]["accessory_schedule"] == schedule
+        frozen = freeze_revision_a(org_id=org, actor_id=owner, project_id=project,
+                                  pricing_operation_id=operation, confirmed=True)
+        _, snapshot = revision_snapshot(UUID(frozen["id"]), org)
+        assert snapshot["positions"][0]["accessory_schedule"]["coverage"] == coverage
+
+
+def test_pricing_reset_marker_cannot_be_written_directly(documentary_tenant):
+    from django.db import DatabaseError, transaction
+    org, _, users, _ = documentary_tenant
+    project, _, _ = _seed_project(org, users["OWNER"])
+    with as_user(users["OWNER"]), pytest.raises(DatabaseError), transaction.atomic():
+        one("UPDATE public.projects SET pricing_reset_at=clock_timestamp() WHERE id=%s RETURNING id", [project])
+
+
+@pytest.mark.parametrize("case", ["null_tenant", "installer", "other_tenant"])
+def test_catalog_reservation_requires_editing_membership(documentary_tenant, case):
+    from django.db import DatabaseError, transaction
+    org, other, users, _ = documentary_tenant
+    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+    actor = users["INSTALLER"] if case == "installer" else users["OWNER"]
+    tenant = None if case == "null_tenant" else other if case == "other_tenant" else org
+    with as_user(actor), pytest.raises(DatabaseError), transaction.atomic():
+        one("SELECT private.reserve_catalog_authority(%s,%s)", [demo, tenant])
+
+
+def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
+    import json
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    from pricing.repository import rows, json_text
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+    for row in rows("SELECT * FROM public.glass_purchase_mappings WHERE system_id=%s", [demo]):
+        if isinstance(row["provenance"], str):
+            row["provenance"] = json.loads(row["provenance"])
+        row.update(id=uuid4(), system_id=system, org_id=org)
+        one("INSERT INTO public.glass_purchase_mappings SELECT "
+            "(jsonb_populate_record(NULL::public.glass_purchase_mappings,%s::jsonb)).* RETURNING id",
+            [json_text(row)])
+    one("UPDATE public.profile_articles SET reinforcement_sku=NULL "
+        "WHERE system_id=%s AND role='FRAME' RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "purchase" not in catalog_readiness(system, org)["reasons"]
+    rows("DELETE FROM public.reinforcement_articles WHERE system_id=%s RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "purchase" in catalog_readiness(system, org)["reasons"]

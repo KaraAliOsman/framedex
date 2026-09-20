@@ -306,7 +306,7 @@ def test_catalog_write_denied_in_postgresql(documentary_tenant, role):
             "SELECT (jsonb_populate_record(NULL::public.profile_systems, "
             "to_jsonb(s) || jsonb_build_object("
             "'id',%s::text,'org_id',%s::text,'code',%s::text,"
-            "'is_global',false,'is_demo',false))).* "
+            "'is_global',false,'is_demo',false,'technical_locked',false))).* "
             "FROM public.profile_systems s WHERE code='DEMO_60' AND is_global "
             "RETURNING id",
             [str(catalog_id), str(org), f"TEST-{catalog_id.hex}"],

@@ -6,6 +6,7 @@ from projects.views import (
     ProjectCloneView,
     ProjectPositionsView,
     ProjectSuccessorView,
+    ProjectResetPricingView,
     ProjectView,
     ProjectsView,
     PositionView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path("projects/<uuid:project_id>/", ProjectView.as_view()),
     path("projects/<uuid:project_id>/clone/", ProjectCloneView.as_view()),
     path("projects/<uuid:project_id>/successor/", ProjectSuccessorView.as_view()),
+    path("projects/<uuid:project_id>/reset-pricing/", ProjectResetPricingView.as_view()),
     path("projects/<uuid:project_id>/positions/", ProjectPositionsView.as_view()),
     path("positions/<uuid:position_id>/", PositionView.as_view()),
 ]

@@ -224,6 +224,8 @@ class DraftView(APIView):
                 if position['typology'] != typology:
                     raise contract_error(400,'typology_mismatch',
                                          'La tipología enviada no coincide con el diseño.')
+                with connection.cursor() as cursor:
+                    cursor.execute('SELECT private.reserve_catalog_authority(%s,%s)', [position['system_id'],org])
                 params = SystemParamsRepository().load_visible(position['system_id'],org)
                 arguments = {key:position[key] for key in ('parametric_tree','nominal_width_mm','nominal_height_mm','color')}
                 result = calculate_from_api(**arguments,params=params)

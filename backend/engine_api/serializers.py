@@ -106,7 +106,29 @@ class ProfileSystemSummarySerializer(serializers.Serializer):
     code = serializers.CharField()
     name = serializers.CharField()
     is_demo = serializers.BooleanField()
+    quote_ready = serializers.BooleanField()
+    readiness_reasons = serializers.ListField(child=serializers.CharField())
 
 
 class EngineSystemsResponseSerializer(serializers.Serializer):
     systems = ProfileSystemSummarySerializer(many=True)
+
+
+class AxisOffsetsSerializer(serializers.Serializer):
+    half = serializers.CharField()
+    one_third = serializers.CharField()
+    two_thirds = serializers.CharField()
+
+
+class NodeLayoutSerializer(serializers.Serializer):
+    node_id = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    vertical = AxisOffsetsSerializer()
+    horizontal = AxisOffsetsSerializer()
+    child_weights = serializers.ListField(child=serializers.CharField())
+
+
+class EngineLayoutResponseSerializer(serializers.Serializer):
+    calculation_hash = serializers.CharField()
+    nodes = NodeLayoutSerializer(many=True)

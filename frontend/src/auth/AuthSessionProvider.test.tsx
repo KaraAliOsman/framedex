@@ -32,7 +32,10 @@ vi.mock("./supabaseClient", () => ({
     },
   },
 }));
-vi.mock("../api/generated/dekopen", () => ({ authMe: vi.fn() }));
+vi.mock("../api/generated/dekopen", () => ({
+  authMe: vi.fn(),
+  projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+}));
 
 function sessionFor(userId: string, accessToken: string): Session {
   return {

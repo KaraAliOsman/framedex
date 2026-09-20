@@ -23,6 +23,17 @@ class ProjectWriteSerializer(StrictSerializer):
     notes_internal = serializers.CharField(required=False, allow_blank=True)
 
 
+class ResetPricingSerializer(StrictSerializer):
+    expected_operation_id = serializers.UUIDField()
+    reason = serializers.CharField(max_length=2000, allow_blank=False)
+    confirmed = serializers.BooleanField()
+
+    def validate_confirmed(self, value):
+        if value is not True:
+            raise serializers.ValidationError("Explicit confirmation required")
+        return value
+
+
 class ProjectUpdateSerializer(ProjectWriteSerializer):
     expected_updated_at = serializers.DateTimeField()
 

@@ -10,7 +10,12 @@ import {
   positionsUpdate,
   projectDesignOptions,
 } from "../../api/generated/dekopen";
-import type { EngineCalculateResponse, PositionResponse } from "../../api/generated/models";
+
+import type {
+  EngineCalculateResponse,
+  PositionResponse,
+  NodeLayout,
+} from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
@@ -20,6 +25,8 @@ import { IntentEditor } from "../canvas/IntentEditor";
 import { FixedPositionPreview } from "./FixedPositionPreview";
 import { intentBays, type IntentNode, type SplitType } from "../canvas/intentEditing";
 import { requestFromInputs } from "../canvas/useEngineCalculation";
+
+import { useEngineLayout } from "../canvas/useEngineLayout";
 import "./projects.css";
 
 export function ProjectPositionEditor(): JSX.Element {
@@ -84,6 +91,8 @@ function PositionWorkspace({
   const [uncertainCreate, setUncertainCreate] = useState(false);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
+
+  const layout = useEngineLayout(inputs, orgId);
   const selected = useCanvasStore((s) => s.selection);
   const bay = intentBays(inputs.parametricTree).find((item) => item.id === selected);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -121,11 +130,14 @@ function PositionWorkspace({
           if (response.status !== 200 || response.data.project_id !== projectId)
             throw new Error("unavailable");
           const item = response.data;
+
+          if (item.design.color !== "WHITE") throw new Error("unsupported color");
           useCanvasStore.getState().loadDesign({
             systemId: item.design.system_id,
             nominalWidthMm: item.design.nominal_width_mm,
             nominalHeightMm: item.design.nominal_height_mm,
-            color: (item.design.color === "FOILED" ? "FOILED" : "WHITE") as "WHITE" | "FOILED",
+
+            color: "WHITE",
             parametricTree: item.design.parametric_tree as IntentNode,
           });
           setSaved(copyId ? null : item);
@@ -298,10 +310,9 @@ function PositionWorkspace({
         <div className="position-design">
           <FixedPositionPreview inputs={inputs} result={result}>
             <div>
-              <div className="design-caption">
-                {t("projects.distribution")} (Esquemático · Proporcional)
-              </div>
+              <div className="design-caption">{t("projects.distribution")}</div>
               <DesignDiagram
+                layout={layout}
                 node={inputs.parametricTree}
                 selected={selected}
                 disabled={busy || pending || intentValidating || intentDraftPending}
@@ -353,28 +364,6 @@ function PositionWorkspace({
               />
             </label>
             <label>
-              Color
-              <select
-                value={inputs.color}
-                onChange={(e) => {
-                  const newColor = e.target.value as "WHITE" | "FOILED";
-                  const candidate = { ...inputs, color: newColor };
-                  useCanvasStore.getState().loadDesign(candidate);
-                  setDirty(true);
-                  if (systemId) {
-                    void engineCalculate(requestFromInputs(candidate), requestOptions)
-                      .then((res) => {
-                        if (res.status === 200) setResult(res.data);
-                      })
-                      .catch(() => {});
-                  }
-                }}
-              >
-                <option value="WHITE">Blanco (WHITE)</option>
-                <option value="FOILED">Foliado (FOILED)</option>
-              </select>
-            </label>
-            <label>
               {t("projects.system")}
               <select
                 value={systemId}
@@ -384,12 +373,16 @@ function PositionWorkspace({
                 }}
               >
                 <option value="">{t("projects.chooseSystem")}</option>
-                {systems.data?.map((system) => (
-                  <option key={system.id} value={system.id}>
-                    {system.name}
-                    {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
-                  </option>
-                ))}
+
+                {systems.data
+                  ?.filter((system) => system.quote_ready)
+                  .map((system) => (
+                    <option key={system.id} value={system.id}>
+                      {system.name}
+
+                      {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                    </option>
+                  ))}
               </select>
             </label>
             {(systems.isError || options.isError) && (
@@ -476,11 +469,15 @@ function PositionWorkspace({
 
 function DesignDiagram({
   node,
+
+  layout,
   selected,
   onSelect,
   disabled,
 }: {
   node: IntentNode;
+
+  layout: NodeLayout[];
   selected: string;
   onSelect(id: string): void;
   disabled: boolean;
@@ -490,6 +487,7 @@ function DesignDiagram({
       <>
         {node.children?.map((child) => (
           <DesignDiagram
+            layout={layout}
             key={child.id}
             node={child}
             selected={selected}
@@ -500,17 +498,15 @@ function DesignDiagram({
       </>
     );
   if (node.type === "SPLIT_V" || node.type === "SPLIT_H") {
-    const offset = Number(node.split_offset_mm);
+    const dimensions = layout.find((item) => item.node_id === node.id);
     return (
       <div className={`design-split ${node.type === "SPLIT_H" ? "is-horizontal" : ""}`}>
         {node.children?.map((child, idx) => {
-          const style =
-            node.children?.length === 2 && offset > 0
-              ? { flex: idx === 0 ? `${offset}` : `calc(1000 - ${offset})` }
-              : { flex: 1 };
+          const style = { flex: dimensions?.child_weights[idx] ?? 1 };
           return (
             <div key={child.id} style={style} className="design-proportional-child">
               <DesignDiagram
+                layout={layout}
                 node={child}
                 selected={selected}
                 onSelect={onSelect}

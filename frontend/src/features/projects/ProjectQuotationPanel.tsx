@@ -8,6 +8,7 @@ import {
   documentaryPrepareInputs,
   documentarySaveInputs,
   projectsStartSuccessor,
+  projectsResetPricing,
 } from "../../api/generated/dekopen";
 import type {
   DocumentaryPolicyOption,
@@ -122,6 +123,7 @@ export function ProjectQuotationPanel({
           quotation_valid_until: preparation.quotation_valid_until,
           positions: preparation.positions.map((position) => ({
             position_id: position.position_id,
+            calculation_hash: position.calculation_hash,
             location_tag: position.location_tag,
             manufacturing_placement_policy_id: position.manufacturing_placement_policy_id!,
             handle_requirement_policy_id: position.handle_requirement_policy_id!,
@@ -187,6 +189,31 @@ export function ProjectQuotationPanel({
     }
   }
 
+  async function resetPricing(): Promise<void> {
+    const reason = window.prompt(t("quotation.resetReason"));
+    if (!reason?.trim() || !project.current_pricing_operation_id) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectsResetPricing(
+        project.id,
+        {
+          expected_operation_id: project.current_pricing_operation_id,
+          reason,
+          confirmed: true,
+        },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setPreparation(null);
+      await onChanged();
+    } catch {
+      setMessage(t("quotation.conflict"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openEvidence(versionId: string): Promise<void> {
     const current = ++generation.current;
     setBusy(true);
@@ -236,6 +263,11 @@ export function ProjectQuotationPanel({
         {canEmit && !preparation && (
           <button disabled={busy} onClick={() => void loadPreparation()}>
             {t("quotation.prepare")}
+          </button>
+        )}
+        {canEmit && (
+          <button disabled={busy} onClick={() => void resetPricing()}>
+            {t("quotation.resetPricing")}
           </button>
         )}
         {canRevise && (

@@ -229,7 +229,7 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                        'total_price_gross=%s,updated_at=now() WHERE id=%s AND org_id=%s',
                        [sum(costs.values(),D('0')),output['project_net'],output['project_tax'],
                         output['project_gross'],project['id'],org_id])
-        cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=now(),reason=%s "
+        cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=clock_timestamp(),reason=%s "
                        'WHERE id=%s AND org_id=%s',[actor_id,reason,operation_id,org_id])
     operation['state'] = 'APPLIED'
     return operation_public(operation)

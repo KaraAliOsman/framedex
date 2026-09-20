@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CatalogReadiness } from "./catalogReadiness";
 import type { MaterialEnum } from "./materialEnum";
 import type { RailTypeEnum } from "./railTypeEnum";
 
@@ -61,6 +62,7 @@ export interface SystemResponse {
    */
   version: number;
   is_active: boolean;
+  readonly readiness: CatalogReadiness;
   readonly revision: string;
   read_only: boolean;
   id: string;
