@@ -70,7 +70,7 @@
 16. Archivos: Supabase Storage con path org_id/… y URLs firmadas con expiración.
 17. Prohibido inventar U_w / R_w. Solo desde ficha certificada o no se muestra.
 18. offcut_inventory: schema existe, producción prohibida hasta Fase 4.
-19. Cada PR cierra con: pytest ✓ · vitest ✓ · ruff ✓ · mypy engine ✓ · checklist DoD.
+19. VERIFICACIÓN POR SUPERFICIE: Cada cambio ejecuta las pruebas y gates que cubren su delta, con evidencia ligada al SHA y checklist DoD. El Gauntlet canónico (`python scripts/check_dod.py all`) es obligatorio para el head material final de implementación de un SHOT; un cambio documental o contenido no invalida evidencia no afectada. CI protegido conserva el veredicto independiente de integración.
 20. TRATAMIENTO DE GAPS:
     - MATERIAL GAP: Si la especificación omite o deja indefinido un aspecto que resulte MATERIAL according to Rule 0:
       DETENTE de inmediato y añade `[PENDIENTE-DECISIÓN]`. Rule 0 es la ÚNICA autoridad de materialidad.

@@ -1,7 +1,6 @@
 # PRD-08: COMPILADOR ASISTIDO DE CATÁLOGOS TÉCNICOS (v1.1.1)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.1 (Congelada y Bloqueada)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 2 (Inteligencia de Catálogo)  
 **Bloquea a:** PRD-09, PRD-10, PRD-13
 
@@ -14,7 +13,7 @@ El Compilador de Catálogos (Tool **T6** y Pantalla **S14**) permite a una carpi
 *Costo de consumo:* **25 + 2 créditos / página** (mínimo 25 créditos) según el tamaño del PDF (Parche P1-2).
 
 ```
-[ PDF / Excel ] ---> [ OCR Multimodal Gemini ] ---> [ Staging en DB ]
+[ PDF / Excel ] ---> [ OCR multimodal mediante la ruta T6 configurada ] ---> [ Staging en DB ]
                            (Tool T6)               (profile_systems_draft)
                                                             |
 [ Publicación v1 ] <--- [ Verif. /engine ] <--- [ Preguntas Quirúrgicas ]

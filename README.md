@@ -44,11 +44,11 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 
 | Documento | Ubicación | Propósito |
 |---|---|---|
-| **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap y mapa de autoridades para Astra, Codex, Claude Code y agentes de desarrollo |
+| **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap y mapa de autoridades para agentes de desarrollo |
 | **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 23 reglas inviolables de calidad, tipado y determinismo (v1.3 MASTER) |
 | **Doctrina Operativa de Agentes** | [`/docs/AGENT_OPERATING_MODEL.md`](./docs/AGENT_OPERATING_MODEL.md) | Guía operativa: calidad production-grade, eficiencia de tokens y verificación progresiva |
 | **Mapa de Calidad Operativo** | [`/docs/QUALITY_SCORE.md`](./docs/QUALITY_SCORE.md) | Mapa JIT de capacidades probadas (`PROVEN`) vs. en progreso o diferidas con evidencia real |
-| **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Guía paso a paso para planificar, ejecutar y cerrar cada shot |
+| **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Guía breve para elegir contexto, pruebas y cierre de cada shot |
 | **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-20) |
 | **Baseline de Superficies y Flujos** | [`/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md`](./docs/PRD/SCREENS_SPECIFICATION_S01_S28.md) | Baseline de superficies y flujos de usuario (Capability Map S01 a S28) |
 | **Plan Maestro de Shots** | [`/docs/PRD/PLAN_SHOTS.md`](./docs/PRD/PLAN_SHOTS.md) | Secuencia de ejecución canónica de los 24 shots y gates de cierre |
@@ -71,7 +71,7 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | **SHOT-07** | ✅ Cerrado |
 | **SHOT-08** | ✅ Cerrado |
 | **SHOT-09** | ✅ Cerrado |
-| **SHOT-10** | ⏳ Pendiente |
+| **SHOT-10** | ✅ Cerrado |
 | **SHOT-11** | ⏳ Pendiente |
 | **SHOT-12** | ⏳ Pendiente |
 | **SHOT-13** | ⏳ Pendiente |
@@ -86,3 +86,6 @@ Toda la documentación técnica normativa vive en `/docs/` y está dividida en m
 | **SHOT-22** | ⏳ Pendiente |
 | **SHOT-23** | ⏳ Pendiente |
 | **SHOT-24** | ⏳ Pendiente |
+
+
+SHOT-10 quedó fusionado en main mediante PR #34 (8712d67f66601cd63209128ee29fe2a043d9b755). El Gauntlet completo pasó en 85893c365a7228ef5805afe1e8292d1335ddc8dc; el refinamiento ejecutable posterior terminó en 4e1f7af367438f11a723e20f22fc771177a0ce40 y el cierre documental en 99f18562f0378712d0db668abcd6f47b15e9c5ff.

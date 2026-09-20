@@ -1,46 +1,38 @@
 # PRD-14: CERTIFICADO DE FABRICABILIDAD Y DOBLE VERIFICADOR (v1.2)
-**Estado:** Bloqueado / Congelado  
-**Versión:** 1.2 (Agent-Ready Bootstrap)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
-**Fase:** 3 (Garantía y Certificación)  
+**Estado:** Bloqueado / Congelado
+**Versión:** 1.2
+**Fase:** 3 (Garantía y Certificación)
 **Bloquea a:** PRD-15
 
 ---
 
-## 1. Misión del Certificado de Fabricabilidad
+## 1. Misión del certificado
 
-El Certificado de Fabricabilidad (Documento **DOC-08** y Tool **T8**) es una garantía técnica digital que valida que un proyecto cumple al 100% con las normas de resistencia mecánica al viento (NCh 432), seguridad en acristalamiento (NCh 132), límites dimensionales y capacidades de herrajes de los sistemas de perfiles utilizados.
+El Certificado de Fabricabilidad (DOC-08 y Tool T8) valida que un proyecto cumple las normas de
+resistencia al viento, seguridad de acristalamiento, límites dimensionales y capacidades de
+herrajes de los sistemas utilizados. La decisión usa únicamente datos técnicos certificados,
+la salida de /engine y reglas explícitas del contrato.
 
----
+## 2. Doble verificación cruzada
 
-## 2. Protocolo de Doble Verificación Cruzada (Tool T8 — 50 Créditos)
+T8 recibe el árbol paramétrico, BOM y memoria de cálculo y ejecuta dos evaluaciones mediante
+rutas de runtime independientes. Las rutas deben ser independientes para la evidencia del
+arbitraje; sus proveedores y modelos se configuran en ai_routes y no se congelan aquí.
 
-Para emitir el sello de certificación oficial sin quemar tokens innecesarios, el sistema ejecuta una auditoría de **doble ciego** entre dos arquitecturas independientes:
+Cada evaluación devuelve un resultado tipado. Un árbitro determinista compara las salidas:
 
-```
-                  [ Árbol Paramétrico + BOM + Memoria de Cálculo ]
-                                         │
-                 ┌───────────────────────┴───────────────────────┐
-                 ▼                                               ▼
-      [ Modelo A: Dekopen Neural Core™ ]          [ Modelo B: Dekopen Vision CAD™ / Titan ]
-         (GPT 5.6 Luna xHigh-Max)                      (Gemini 3.7 High / GPT 5.6 Sol)
-                 │                                               │
-                 └───────────────────────┬───────────────────────┘
-                                         ▼
-                             [ Árbitro Determinista ]
-                                (Concordancia 100%)
-                                         │
-                     ┌───────────────────┴───────────────────┐
-                     ▼                                       ▼
-        [ 🟢 Coincidencia Total ]               [ 🔴 Discrepancia > 0.00 mm ]
-        Sello DOC-08 + Hash + QR                Alerta Crítica + Bloqueo OT
-```
+- coincidencia total: emite DOC-08, hash y QR público sin costos ni despiece confidencial;
+- discrepancia superior a 0.00 mm en holguras o 0.1 kg en peso: bloquea la emisión y genera una
+  alerta para revisión del taller.
 
----
+## 3. Reglas normativas de T8
 
-## 3. Reglas Normativas de T8
-
-1. **Auditoría Estándar (Default 50 créditos):** Cruza **Dekopen Neural Core™ (GPT 5.6 Luna)** con **Dekopen Vision CAD™ (Gemini 3.7 High)**.
-2. **Modo Titan (Max Effort):** Si el usuario activa explícitamente el toggle de ultra-razonamiento, el segundo árbitro escala a **Dekopen Titan Engine™ (GPT 5.6 Sol)**.
-3. **Concordancia Matemática Obligatoria:** Cualquier desviación $> 0.00\text{ mm}$ en holguras o $> 0.1\text{ kg}$ en peso de hoja bloquea la emisión del certificado y alerta al taller.
-4. **Sello Criptográfico:** Al aprobarse, genera el documento **DOC-08** con código QR público que resuelve el estado de fabricación sin exponer costos ni despiece confidencial del taller.
+1. La operación estándar consume el crédito definido por el contrato de billing y utiliza dos
+   rutas independientes configuradas para doble verificación.
+2. Una ruta alternativa puede cambiarse por configuración operativa o fallback, siempre que se
+   conserve la independencia, la auditoría previa y el arbitraje determinista.
+3. La concordancia matemática es obligatoria: cualquier desviación sobre los umbrales definidos
+   bloquea el certificado.
+4. La emisión genera DOC-08 con identificador criptográfico y QR que solo expone el estado de
+   fabricación autorizado.
+5. Ninguna evaluación de IA sustituye al motor determinista ni escribe números directamente.

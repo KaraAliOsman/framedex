@@ -1,7 +1,6 @@
 # PRD-20: CATÁLOGO GLOBAL Y MODERACIÓN ADMINISTRATIVA (v1.3 MASTER)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.3 MASTER (Preservación Normativa SHOT-20 / Pantalla S28)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 3 (Comunidad y Red)  
 **Bloquea a:** Ninguno
 

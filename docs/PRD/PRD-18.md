@@ -1,7 +1,6 @@
 # PRD-18: ASSETS GO-TO-MARKET (GTM), LANDING Y PLAYBOOK DE CRECIMIENTO B2B (v1.1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.2 (Congelada y Bloqueada tras Auditoría Final)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 0 – 1 (Lanzamiento y Adquisición)  
 **Bloquea a:** Ninguno
 

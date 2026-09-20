@@ -1,69 +1,53 @@
-# PLAYBOOK POR SHOT — PROTOCOLO DE SESIÓN CON ALINEACIÓN GLOBAL (v1.3)
+# PLAYBOOK DE SHOTS
 
-> Este documento define el flujo de trabajo estándar para cada una de las 24 sesiones de construcción (**SHOT-01** a **SHOT-24**). Garantiza que el agente mantenga siempre una visión holística de cómo encaja su código en el sistema global y aplique la doctrina operativa de [`docs/AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md).
+> Guía breve de ejecución. La Constitución, los PRD activos y el roadmap son la autoridad; este
+> archivo no los duplica.
 
----
+## Antes de cambiar código
 
-## 1. Flujo de Trabajo Paso a Paso
+- Lee `AGENTS.md`, `docs/CONSTITUTION.md`, `docs/PRD/PLAN_SHOTS.md`, el plan del shot si
+  aplica y los archivos afectados.
+- Escribe o actualiza `docs/plans/PLAN_SHOT-XX.md` cuando la tarea tenga decisiones
+  materiales, varias superficies o un gate de shot que registrar. Un cambio reversible y
+  contenido puede avanzar sin un plan separado.
+- Identifica el contrato observable, la superficie de prueba y cualquier `[PENDIENTE-DECISIÓN]`.
 
-```
-[ 1. Iniciar Shot ] ──► make shot-XX (Crea branch y scaffold con upstream/downstream)
-       │
-[ 2. Contexto JIT ] ──► Leer AGENTS.md + CONSTITUTION.md + docs/PRD/PLAN_SHOTS.md + PRD afectado
-       │
-[ 3. Redactar Plan ]──► Completar docs/plans/PLAN_SHOT-XX.md (esperar OK de usuario)
-       │
-[ 4. Ejecución TDD ]──► Maker implementa + verificación progresiva (tests unitarios locales Nivel 1/2)
-       │
-[ 5. El Gauntlet ]  ──► python scripts/check_dod.py all (Gauntlet canónico completo Nivel 4)
-       │
-[ 6. Golden Check ] ──► python -m engine.scripts.regenerate_golden --check (Default READ-ONLY)
-       │
-[ 7. Cierre ]       ──► Commit convencional + PR protegido (4 checks CI) + merge ordenado + tag shot-XX
-```
+## Durante la implementación
 
----
+- Mantén el alcance del shot y la calidad de producción dentro de ese alcance.
+- Usa pruebas focalizadas y el checker determinista; corrige los fallos sin debilitar sus
+  aserciones.
+- Mantén Golden en modo lectura. Solo una modificación autorizada de fórmula permite
+  `make goldgen`.
+- Registra en el plan la evidencia relevante junto con el SHA y la superficie cubierta.
 
-## 2. Plantilla Obligatoria de `docs/plans/PLAN_SHOT-XX.md`
+## Verificación
 
-Antes de escribir código en cualquier sesión, el agente debe redactar y guardar el plan en `docs/plans/PLAN_SHOT-XX.md` utilizando esta estructura:
+Selecciona los gates por el delta:
 
-```markdown
-# Plan de Implementación — SHOT-XX: [Nombre del Shot]
+| Delta | Comprobación mínima |
+|---|---|
+| Documentación o harness | consistencia, formato y la herramienta modificada |
+| Frontend | tests afectados, lint/typecheck, build y E2E afectado |
+| Engine o matemática | regresión, suite engine, Golden `--check` y mutaciones afectadas |
+| DB/RLS | migraciones, pgTAP, RLS y backend afectado |
+| Transversal o cierre material de shot | gates afectados y Gauntlet canónico |
 
-## 1. Contexto y Visión Global del Sistema
-- **Shot ID:** `SHOT-XX`
-- **PRD Fuente:** `/docs/PRD/PRD-{XX}.md`
-- **Gate de Cierre Innegociable:** [Texto exacto del gate en PLAN_SHOTS.md]
-- **Objetivo Principal:** [Resumen de 1-2 párrafos]
+El Gauntlet (`python scripts/check_dod.py all`) es obligatorio para el head material final de
+implementación de un SHOT. No se repite por un commit documental, un merge limpio o una
+corrección contenida cuya evidencia SHA-bound siga vigente. Los cuatro checks protegidos de CI
+son la decisión independiente de integración.
 
-### 1.1. Conexión y Alineación con otros Shots (Cero Desconexión)
-- **Módulos Anteriores que Consume (Upstream):** [Qué modelos o contratos de shots previos usa este código]
-- **Módulos Futuros que Consumirán este Código (Downstream):** [Qué shots futuros dependerán de esta implementación]
+## Cierre
 
-## 2. Archivos a Crear y Modificar
-- `[NEW] ruta/del/archivo.py` — Propósito específico y dependencias.
-- `[MODIFY] ruta/del/archivo.ts` — Cambios puntuales a realizar.
-- `[PROHIBIDO]` — Módulos o funcionalidades explícitamente fuera de este shot.
+Verifica que el head del PR es el SHA probado, espera CI protegido verde, fusiona mediante PR y
+comprueba el CI de `main`. Una revisión adversarial completa basta; solo un cambio material
+nuevo o una preocupación concreta exige repetirla.
 
-## 3. Estrategia de Pruebas y Verificación Progresiva
-- Nivel 1: Tests unitarios focalizados en `engine/tests/` o `backend/tests/`.
-- Nivel 2: Suites de módulos estabilizados.
-- Nivel 3: Pruebas de integración, RLS y navegador real.
-- Nivel 4 (Cierre): `python scripts/check_dod.py all`.
+Para iniciar un scaffold mínimo usa:
 
-## 4. Riesgos y [PENDIENTE-DECISIÓN]
-- Identificación de cualquier ambigüedad material bajo Regla 0. Si existe, aplicar Regla 20.
+```text
+python scripts/new_shot.py SHOT-XX
 ```
 
----
-
-## 3. Criterios de Calidad Inviolables
-
-1. **Sin float en /engine:** Solo `Decimal` para dimensiones milimétricas y montos de dinero.
-2. **Sin hex crudo en Frontend:** Usar exclusivamente tokens semánticos `--theme-*`.
-3. **Aislamiento Multi-Tenant:** Toda consulta de negocio incluye `org_id` y respeta políticas RLS.
-4. **Trazabilidad:** Toda acción de IA registra fila en `ai_audit_logs`; todo cambio de precio en `price_audit_logs`.
-5. **Idempotencia:** Webhooks y pagos protegidos con restricciones `UNIQUE` contra reintentos.
-6. **Maker / Checker:** El Maker ejecuta checkers y auto-repara; la finalización la certifica mecánicamente el Gauntlet y el CI protegido.
-7. **Política Golden:** `GOLDEN = READ-ONLY` por defecto; `make goldgen` solo ante cambio material de fórmula autorizado.
+El scaffold no impone aprobación humana, un prompt universal ni un Gauntlet para cada commit.

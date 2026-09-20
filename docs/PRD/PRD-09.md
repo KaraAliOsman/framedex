@@ -1,7 +1,6 @@
 # PRD-09: INTÉRPRETE MULTIMODAL DE PLANOS Y CUADROS DE VANOS (v1.1.1)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.1 (Congelada y Bloqueada)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 2 (Inteligencia Operativa)  
 **Bloquea a:** PRD-10, PRD-15, PRD-17
 
@@ -15,7 +14,7 @@ El Intérprete de Planos (Tool **T1** `extract_positions` y Pantalla **S27** `/a
 
 ## 2. Esquema JSON de Salida y Semáforo Unificado (Enmienda C.3)
 
-Cada dato extraído por el modelo multimodal recibe un índice de confianza normalizado:
+Cada dato extraído por la ruta multimodal recibe un índice de confianza normalizado:
 - **Verde ($\ge 90\%$):** Coincidencia visual y textual nítida.
 - **Amarillo ($70\% - 89\%$):** Tipografía ambigua, manuscrito o inferencia por escala.
 - **Rojo ($< 70\%$):** Cota faltante o tipología incierta (requiere corrección obligatoria antes de importar).

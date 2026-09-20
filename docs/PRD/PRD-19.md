@@ -84,6 +84,6 @@ Estos elementos diferidos no amplían el alcance ni bloquean el gate de SHOT-04.
    - `org_id`: UUID del taller / organización.
    - `project_id` & `version_id`: Contexto de la cotización.
    - `engine_version`: Hash o versión del motor técnico.
-   - `model_route`: Modelo de IA utilizado (si aplica).
+   - `model_route`: Identificador de la ruta de runtime utilizada (si aplica).
    - `latency_ms`: Tiempo de ejecución en milisegundos.
    - `timestamp`: Marca de tiempo ISO-8601 UTC.

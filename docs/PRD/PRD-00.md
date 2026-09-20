@@ -1,7 +1,6 @@
 # PRD-00: CONTRATO MAESTRO, ARQUITECTURA Y PLAN DE EJECUCIÓN S1–S24 (v1.1.2)
 **Estado:** Bloqueado / Congelado  
 **Versión:** 1.1.2 (Congelada y Bloqueada tras Enmienda F1)  
-**Hash de Integridad Normativa:** `[HASH-RECALCULAR-AL-EMITIR]`  
 **Fase:** 0 (Fundacional)  
 **Bloquea a:** Todo el proyecto
 
@@ -38,7 +37,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-05** | Precios y Rentabilidad | 5 Modos de precio, listas de costo, FX buffer 5% | 6 | 1 |
 | **PRD-06** | Documentos de Salida | WeasyPrint PDF, Excel openpyxl, OT de taller, BOM Hash | — | 1 |
 | **PRD-07** | Inspector Técnico | Reglas R01–R14, semáforo, fixes en 1-clic | 6 | 1 |
-| **PRD-08** | Compilador de Catálogos | OCR Gemini multimodal, semáforo 90%, fixtures | 9,10 | 2 |
+| **PRD-08** | Compilador de Catálogos | OCR multimodal, semáforo 90%, fixtures | 9,10 | 2 |
 | **PRD-09** | Intérprete de Planos (S27) | Extracción de cuadros de vanos, bounding boxes | 10 | 2 |
 | **PRD-10** | Comandos de Diseño NLP | Diff paramétrico antes/después, Sacred Undo | — | 2 |
 | **PRD-11** | Plantillas PDF | 3 slots configurables, bloques protegidos | — | 2 |
@@ -49,7 +48,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 | **PRD-16** | Inventario de Retazos | Códigos QR térmicos, reserva en órdenes | — | 4 |
 | **PRD-17** | Bandeja Omnicanal | Captura automática Email y WhatsApp | — | 4 |
 | **PRD-18** | Go-To-Market (GTM) | Copy landing, cold outreach completo, Founding 50 | — | 0–1 |
-| **PRD-19** | NFR y Seguridad | RPO $\le 5\text{ min}$, RTO $\le 60\text{ min}$, Dumps Cloudflare R2 | Todo | 0 |
+| **PRD-19** | NFR y Seguridad | RPO $\le 1\text{h}$, RTO $\le 2\text{h}$, dumps cifrados diarios en Supabase Storage y simulacro de restauración | Todo | 0 |
 | [**PRD-20**](./PRD-20.md) | [Catálogo Global y Moderación](./PRD-20.md) | Publicación comunitaria sin precios privados, cola S28 (/admin/queue) | — | 3 |
 ---
 
@@ -106,9 +105,10 @@ Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se 
 
 ## 6. Manifiesto de Dependencias Base Aprobadas y Gobernanza de Dependencias (Regla 15)
 
-El repositorio se rige por la **Política de Dependencias de Dos Niveles** establecida en la Constitución (Regla 15):
-- **A) DEV/TOOLING LOW-RISK:** Dependencias de tooling, linters o testing pueden ser incorporadas por desarrolladores y agentes mediante PR siempre que tengan licencia compatible con la política de distribución, seguridad y compliance del proyecto (ej: MIT, Apache-2.0, BSD, ISC), proyecto activamente mantenido, sin duplicación injustificada, lockfile reproducible y tests verdes.
-- **B) PRODUCTION RUNTIME:** La incorporación de dependencias en producción requiere análisis de impacto y justificación técnica. Aprobación del Owner obligatoria exclusivamente para frameworks principales, bases de datos, proveedores cloud críticos o cambios arquitectónicos mayores.
+El repositorio se rige por la **Política de Dependencias de Tres Niveles** establecida en la Constitución (Regla 15):
+- **Tier A — DEV/TOOLING LOW RISK:** Puede incorporarse mediante PR con licencia compatible, mantenimiento razonable, revisión de seguridad, sin duplicación injustificada, lockfile reproducible y tests/gauntlet verdes.
+- **Tier B — ORDINARY RUNTIME:** Puede incorporarse mediante PR si no cambia la arquitectura principal, no crea un proveedor externo crítico ni altera DB/auth/infra; requiere rationale técnico, revisión de licencia/seguridad/mantenimiento, impacto medido y lockfile reproducible.
+- **Tier C — STRATEGIC / CRITICAL:** Requiere aprobación explícita del Owner para framework principal, base de datos, ORM, auth, pagos, cloud, cola, storage, observabilidad, motor mayor o cualquier dependencia que altere materialmente la arquitectura.
 
 ### Dependencias Base Aprobadas (Approved Baseline):
 
@@ -147,4 +147,3 @@ El repositorio se rige por la **Política de Dependencias de Dos Niveles** estab
   `@types/react-dom@18.3.7` como devDependencies exactas; no autoriza upgrades de
   React, ReactDOM ni TypeScript.
 * **Tooling Frontend:** `vitest >= 1.6`, `eslint >= 8.57`, `prettier >= 3.2`.
-

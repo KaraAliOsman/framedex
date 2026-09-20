@@ -1,44 +1,16 @@
-# ==============================================================================
-# DEKOPEN — CODEX & AGENTIC AI RULES (2026 LOOP ENGINEERING STANDARD)
-# Basado en la doctrina Cherny / Osmani / Steinberger & Agent Operating Model v1.0
-# ==============================================================================
+# DEKOPEN — Codex repository rules
 
-[SYSTEM INVARIANTS]
-project_name: "Dekopen OS"
-constitution: "docs/CONSTITUTION.md (v1.3 MASTER — 23 Rules)"
-operating_model: "docs/AGENT_OPERATING_MODEL.md (Production-Grade Doctrine & JIT Context)"
-core_tolerance: "0.00 mm"
-number_format: "Decimal everywhere (prohibit float in engine and money)"
-database: "PostgreSQL 16 with Row Level Security (RLS) on all business tables"
-engine_isolation: "engine/ is 100% pure Python without I/O, network or database"
-design_system: "Adobe Style Dual Theme (Light Studio / Dark Graphite), zero raw hex codes"
+Use `AGENTS.md` as the entry map and `docs/AGENT_OPERATING_MODEL.md` for non-normative
+execution guidance. The only product/system authority is `docs/CONSTITUTION.md`, followed by
+the active PRDs and `docs/PRD/PLAN_SHOTS.md`.
 
-[THE 4 LAWS OF LOOP ENGINEERING (2026)]
-1. SEPARACIÓN MAKER / CHECKER (Semántica de Osmani Corregida):
-   - The Maker may execute every deterministic checker and repair failures autonomously.
-   - The Maker does NOT define, weaken or override the checker's verdict.
-   - Protected CI provides the independent integration verdict.
-2. CONDICIÓN DE PARADA MECÁNICA (Stop Condition):
-   - Prohibido declarar una tarea completada en lenguaje natural ("todo se ve bien").
-   - La ÚNICA condición de parada válida es `exit code 0` devuelto por `scripts/check_dod.py`.
-3. MEMORIA PERSISTENTE EN DISCO ("The Repo Remembers"):
-   - El contexto del modelo es efímero; el repositorio es permanente.
-   - El estado de cada shot vive en `docs/plans/PLAN_SHOT-XX.md` y `docs/PRD/PLAN_SHOTS.md`.
-4. PROHIBICIÓN DE PRUEBAS VACÍAS (Anti-Vacuous Tests):
-   - Todo test unitario debe fallar si se introduce una mutación de ±0.01 mm en las fórmulas.
-   - Tests que pasan con código roto se consideran vacíos y violan la Constitución.
+Preserve Decimal-only dimensions and money, pure deterministic `/engine`, 0.00 mm tolerance,
+strict RLS, pre-write audit, idempotent payments, semantic CSS tokens and read-only Golden.
 
-[PROGRESSIVE VERIFICATION LADDER]
-level_1: "Targeted meaningful tests during changes (pytest engine/tests/test_x.py)"
-level_2: "Affected module suites during stabilization (pytest engine/ -q, npm run test)"
-level_3: "Relevant integration, DB and real browser tests (Playwright, RLS)"
-level_4: "Canonical full Gauntlet at shot closure (python scripts/check_dod.py all)"
+Choose checks by the proof surface changed. A full `python scripts/check_dod.py all` is required
+for the final material implementation head of a SHOT; it is not an automatic stop condition for
+every documentation-only or contained follow-up change. Protected CI is the independent
+integration verdict.
 
-[CANONICAL COMMANDS]
-gauntlet: "make gauntlet"
-validation: "make dod"
-testing: "make test"
-linting: "make lint"
-typecheck: "make typecheck"
-snapshot_regen: "make goldgen (authorized material formula changes only; default read-only)"
-branch_init: "make shot-XX"
+Stop for a material contradiction, a material gap marked `[PENDIENTE-DECISIÓN]`, or an
+unauthorized irreversible action. Do not weaken checkers, tests, Golden or branch protection.
