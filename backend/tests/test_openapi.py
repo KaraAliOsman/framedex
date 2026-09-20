@@ -62,6 +62,29 @@ def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
     }
 
 
+def test_persisted_quotation_color_is_white_without_narrowing_generic_engine_schema() -> None:
+    schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))["components"]["schemas"]
+    assert schema["WhiteColorEnum"]["enum"] == ["WHITE"]
+    assert schema["ColorEnum"]["enum"] == ["WHITE", "FOILED"]
+    assert schema["PositionDesignRequest"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["PositionDesign"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["PositionResponse"]["properties"]["design"] == {
+        "$ref": "#/components/schemas/PositionDesign"
+    }
+    assert schema["DraftPositionRequest"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    finish = schema["WorkshopAnnotationRequest"]["properties"]["finish_class"]
+    assert {item.get("$ref") for item in finish["oneOf"]} >= {
+        "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["EngineCalculateRequestRequest"]["properties"]["color"]["type"] == "string"
+
+
 def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     for path, method in (

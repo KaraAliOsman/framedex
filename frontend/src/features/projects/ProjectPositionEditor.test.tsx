@@ -754,6 +754,18 @@ it.each([
   },
 );
 
+it("refuses generic FOILED canvas state at the persisted project boundary", async () => {
+  mount();
+  await ready();
+  act(() => {
+    const inputs = useCanvasStore.getState().inputs;
+    useCanvasStore.getState().loadDesign({ ...inputs, color: "FOILED" });
+  });
+  save();
+  expect(update).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
+});
+
 it("does not offer FOILED or a catalog the backend marks incomplete", async () => {
   vi.mocked(engineSystems).mockResolvedValue(
     ok({

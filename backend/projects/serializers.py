@@ -43,7 +43,7 @@ class PositionDesignSerializer(EngineCalculateRequestSerializer, StrictSerialize
     nominal_height_mm = DecimalStringField(
         max_digits=10, decimal_places=2, min_value=Decimal("250")
     )
-    color = serializers.ChoiceField(choices=["WHITE", "FOILED"])
+    color = serializers.ChoiceField(choices=["WHITE"])
 
 
 class PositionWriteSerializer(StrictSerializer):
@@ -63,7 +63,7 @@ class PositionResponseSerializer(serializers.Serializer):
     location_tag = serializers.CharField(allow_null=True)
     quantity = serializers.IntegerField()
     typology = serializers.CharField()
-    design = EngineCalculateRequestSerializer()
+    design = PositionDesignSerializer()
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
 

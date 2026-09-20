@@ -30,7 +30,7 @@ class WorkshopAnnotationSerializer(StrictSerializer):
         allow_null=True, required=False, default=None,
     )
     finish_class = serializers.ChoiceField(
-        choices=["WHITE", "FOILED"], allow_null=True, required=False, default=None
+        choices=["WHITE"], allow_null=True, required=False, default=None
     )
     has_coupler = serializers.BooleanField(allow_null=True, required=False, default=None)
 

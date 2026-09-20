@@ -5,8 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { EngineCalculateRequest } from "./engineCalculateRequest";
 import type { EngineCalculateResponse } from "./engineCalculateResponse";
+import type { PositionDesign } from "./positionDesign";
 
 export interface PositionResponse {
   id: string;
@@ -16,7 +16,7 @@ export interface PositionResponse {
   location_tag: string | null;
   quantity: number;
   typology: string;
-  design: EngineCalculateRequest;
+  design: PositionDesign;
   bom: EngineCalculateResponse;
   updated_at: string;
 }

@@ -4986,9 +4986,7 @@ components:
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         color:
-          type: string
-          minLength: 1
-          maxLength: 50
+          $ref: '#/components/schemas/WhiteColorEnum'
         parametric_tree: {}
         position_index:
           type: integer
@@ -5137,30 +5135,6 @@ components:
       required:
       - content_hash
       - id
-    EngineCalculateRequest:
-      type: object
-      properties:
-        system_id:
-          type: string
-          format: uuid
-        nominal_width_mm:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        nominal_height_mm:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        color:
-          type: string
-          maxLength: 50
-        parametric_tree: {}
-      required:
-      - color
-      - nominal_height_mm
-      - nominal_width_mm
-      - parametric_tree
-      - system_id
     EngineCalculateRequestRequest:
       type: object
       properties:
@@ -6470,6 +6444,29 @@ components:
       - left
       - right
       - top
+    PositionDesign:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          $ref: '#/components/schemas/WhiteColorEnum'
+        parametric_tree: {}
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - parametric_tree
+      - system_id
     PositionDesignRequest:
       type: object
       properties:
@@ -6485,7 +6482,7 @@ components:
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         color:
-          $ref: '#/components/schemas/ColorEnum'
+          $ref: '#/components/schemas/WhiteColorEnum'
         parametric_tree: {}
       required:
       - color
@@ -6570,7 +6567,7 @@ components:
         typology:
           type: string
         design:
-          $ref: '#/components/schemas/EngineCalculateRequest'
+          $ref: '#/components/schemas/PositionDesign'
         bom:
           $ref: '#/components/schemas/EngineCalculateResponse'
         updated_at:
@@ -7542,6 +7539,11 @@ components:
         * `OUTER_BOTTOM` - OUTER_BOTTOM
         * `LEAF_TOP` - LEAF_TOP
         * `LEAF_BOTTOM` - LEAF_BOTTOM
+    WhiteColorEnum:
+      enum:
+      - WHITE
+      type: string
+      description: '* `WHITE` - WHITE'
     WorkshopAnnotation:
       type: object
       properties:
@@ -7574,7 +7576,7 @@ components:
         finish_class:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/ColorEnum'
+          - $ref: '#/components/schemas/WhiteColorEnum'
           - $ref: '#/components/schemas/NullEnum'
         has_coupler:
           type: boolean
@@ -7615,7 +7617,7 @@ components:
         finish_class:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/ColorEnum'
+          - $ref: '#/components/schemas/WhiteColorEnum'
           - $ref: '#/components/schemas/NullEnum'
         has_coupler:
           type: boolean

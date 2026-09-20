@@ -9,7 +9,10 @@ from rest_framework.exceptions import APIException
 
 from backend.tests.factories import ORG_A_ID, demo_60_params
 from backend.tests.test_engine_api import g1_request
+from documents.serializers import WorkshopAnnotationSerializer
 from engine_api.repository import SystemParamsRepository
+from engine_api.serializers import EngineCalculateRequestSerializer
+from pricing.serializers import DraftPositionSerializer
 from projects.serializers import PositionWriteSerializer, ProjectWriteSerializer
 from projects.service import calculate_design, next_revision_code, unchanged
 from projects import service
@@ -49,6 +52,20 @@ def test_position_rejects_client_bom():
         }
     )
     assert not serializer.is_valid()
+
+
+def test_persisted_quotation_inputs_are_white_only_without_narrowing_engine_types():
+    foiled = {**g1_request(), "color": "FOILED"}
+    assert EngineCalculateRequestSerializer(data=foiled).is_valid()
+    assert not PositionWriteSerializer(
+        data={"location_tag": "Cocina", "quantity": 1, "design": foiled}
+    ).is_valid()
+    assert not DraftPositionSerializer(
+        data={**foiled, "position_index": 1, "quantity": 1, "typology": "FIXED"}
+    ).is_valid()
+    assert not WorkshopAnnotationSerializer(
+        data={"bay_id": "B1", "finish_class": "FOILED"}
+    ).is_valid()
 
 
 def test_calculation_matches_engine_and_inputs_are_not_changed(monkeypatch):

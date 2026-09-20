@@ -105,6 +105,7 @@ SPECTACULAR_SETTINGS = {
         "InspectorRuleIdEnum": [f"R{i:02d}" for i in range(1, 15)],
         "DrainFixRuleIdEnum": ["R07"],
         "ColorEnum": ["WHITE", "FOILED"],
+        "WhiteColorEnum": ["WHITE"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",

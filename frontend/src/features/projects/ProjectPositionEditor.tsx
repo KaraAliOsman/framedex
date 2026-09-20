@@ -236,6 +236,7 @@ function PositionWorkspace({
       !result ||
       pending ||
       busy ||
+      inputs.color !== "WHITE" ||
       !/^[1-9]\d*$/.test(quantity) ||
       Number(quantity) > 2147483647
     )
