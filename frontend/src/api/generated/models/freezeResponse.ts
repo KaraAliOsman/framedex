@@ -5,13 +5,13 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { RevisionCodeEnum } from "./revisionCodeEnum";
 
 export interface FreezeResponse {
   id: string;
   pricing_operation_id: string;
   created: boolean;
-  revision_code: RevisionCodeEnum;
+  /** @pattern ^REV-[A-Z]+$ */
+  revision_code: string;
   /** @pattern ^[0-9a-f]{64}$ */
   bom_hash: string;
   /** @pattern ^[0-9a-f]{64}$ */
@@ -19,6 +19,9 @@ export interface FreezeResponse {
   production_allowed: boolean;
   documentary_complete: boolean;
   emitted_at: string;
-  /** @pattern ^[0-9a-f]{64}$ */
-  purchase_projection_hash?: string;
+  /**
+   * @nullable
+   * @pattern ^[0-9a-f]{64}$
+   */
+  purchase_projection_hash?: string | null;
 }

@@ -7,10 +7,10 @@
  */
 
 /**
- * * `REV-A` - REV-A
+ * * `WHITE` - WHITE
  */
-export type RevisionCodeEnum = (typeof RevisionCodeEnum)[keyof typeof RevisionCodeEnum];
+export type WhiteColorEnum = (typeof WhiteColorEnum)[keyof typeof WhiteColorEnum];
 
-export const RevisionCodeEnum = {
-  "REV-A": "REV-A",
+export const WhiteColorEnum = {
+  WHITE: "WHITE",
 } as const;

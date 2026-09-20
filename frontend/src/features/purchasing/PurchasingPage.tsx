@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { apiMutator } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -113,9 +113,18 @@ function usePurchasingRequest(orgId: string): {
 
 export function PurchasingPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
+  const [query] = useSearchParams();
   if (!org || !["OWNER", "WORKSHOP_MANAGER"].includes(org.role))
     return <p role="alert">{t("purchasing.denied")}</p>;
-  return <PurchasingWorkspace key={org.id} orgId={org.id} role={org.role} />;
+  const initialVersionId = query.get("version") ?? "";
+  return (
+    <PurchasingWorkspace
+      key={`${org.id}:${initialVersionId}`}
+      orgId={org.id}
+      role={org.role}
+      initialVersionId={initialVersionId}
+    />
+  );
 }
 
 function traceLine(entry: Record<string, unknown>): string {
@@ -163,10 +172,18 @@ function revisionDocuments(role: string): DocumentAction[] {
   ).filter((doc) => DOCUMENT_ROLES[doc.type]?.includes(role) === true);
 }
 
-function PurchasingWorkspace({ orgId, role }: { orgId: string; role: string }): JSX.Element {
+function PurchasingWorkspace({
+  orgId,
+  role,
+  initialVersionId,
+}: {
+  orgId: string;
+  role: string;
+  initialVersionId: string;
+}): JSX.Element {
   const { request } = usePurchasingRequest(orgId);
   const [versions, setVersions] = useState<VersionItem[]>([]);
-  const [versionId, setVersionId] = useState("");
+  const [versionId, setVersionId] = useState(initialVersionId);
   const [state, setState] = useState<PurchasingState | null>(null);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
@@ -188,7 +205,9 @@ function PurchasingWorkspace({ orgId, role }: { orgId: string; role: string }): 
         if (!current) return;
         const list = data.versions ?? [];
         setVersions(list);
-        setVersionId((previous) => previous || (list[0]?.id ?? ""));
+        setVersionId((previous) =>
+          list.some((item) => item.id === previous) ? previous : (list[0]?.id ?? ""),
+        );
         if (list.length === 0) setBusy(false);
       })
       .catch(() => {
@@ -293,7 +312,7 @@ function PurchasingWorkspace({ orgId, role }: { orgId: string; role: string }): 
           >
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.revision_code} · {item.bom_hash.slice(0, 12)} · {item.emitted_at}
+                {item.revision_code} · {item.emitted_at}
               </option>
             ))}
           </select>

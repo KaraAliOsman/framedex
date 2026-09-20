@@ -1,0 +1,1 @@
+"""Persisted manual quotation workspace."""

@@ -444,6 +444,10 @@ def _doc05(snapshot: dict[str, object]) -> str:
 
 
 def _doc06(snapshot: dict[str, object]) -> str:
+    if snapshot.get("production_allowed") is not True:
+        raise DocumentaryError("production_document_blocked")
+    if snapshot.get("documentary_complete") is not True:
+        raise DocumentaryError("manufacturing_document_incomplete")
     inspector = [_object(item, "invalid_inspector_evidence")
                  for item in _array(snapshot.get("inspector"), "invalid_frozen_revision_snapshot")]
     body, _ = _revision_header(snapshot, "Checklist de control final", workshop=True)

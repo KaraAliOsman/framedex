@@ -30,6 +30,7 @@ from pricing.serializers import (
 )
 from pricing.service import apply_operation, operation_public, preview
 from pricing.xlsx_import import import_rows, parse_xlsx
+from projects.typology import derive_typology
 
 logger = logging.getLogger(__name__)
 ERRORS = {code:OpenApiResponse(ErrorResponseSerializer) for code in (400,401,403,404,409,422,503)}
@@ -44,8 +45,8 @@ class DecimalJSONParser(JSONParser):
             raise contract_error(400,'invalid_json','Revisa el formato de los datos.') from error
 
 
-def validate(serializer_type, data):
-    serializer = serializer_type(data=data)
+def validate(serializer_type, data, *, partial=False):
+    serializer = serializer_type(data=data, partial=partial)
     if not serializer.is_valid():
         raise contract_error(400,'validation_error','Revisa los campos y los valores ingresados.')
     return serializer.validated_data
@@ -215,13 +216,23 @@ class DraftView(APIView):
                           'VALUES(%s,%s,%s,%s,%s) RETURNING id',
                           [org,data['code'],data['name'],data['client_name'],token.user_id])
             for position in data['positions']:
+                try:
+                    typology = derive_typology(position['parametric_tree'])
+                except ValueError as error:
+                    raise contract_error(400,'typology_derivation_failed',
+                                         'La apertura o división no permite determinar la tipología comercial.') from error
+                if position['typology'] != typology:
+                    raise contract_error(400,'typology_mismatch',
+                                         'La tipología enviada no coincide con el diseño.')
+                with connection.cursor() as cursor:
+                    cursor.execute('SELECT private.reserve_catalog_authority(%s,%s)', [position['system_id'],org])
                 params = SystemParamsRepository().load_visible(position['system_id'],org)
                 arguments = {key:position[key] for key in ('parametric_tree','nominal_width_mm','nominal_height_mm','color')}
                 result = calculate_from_api(**arguments,params=params)
                 one('INSERT INTO public.project_positions(project_id,org_id,position_index,quantity,typology,'
                     'system_id,width_mm,height_mm,parametric_tree,bom_snapshot,color_interior,color_exterior) '
                     'VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) RETURNING id',
-                    [project['id'],org,position['position_index'],position['quantity'],position['typology'],
+                    [project['id'],org,position['position_index'],position['quantity'],typology,
                      position['system_id'],position['nominal_width_mm'],position['nominal_height_mm'],
                      json_text(position['parametric_tree']),result.model_dump_json(),position['color'],position['color']])
         return Response({'id':str(project['id'])},status=201)

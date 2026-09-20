@@ -11,4 +11,6 @@ export interface ProfileSystemSummary {
   code: string;
   name: string;
   is_demo: boolean;
+  quote_ready: boolean;
+  readiness_reasons: string[];
 }

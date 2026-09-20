@@ -12,4 +12,4 @@ if hasattr(sys.stderr, "reconfigure"):
 
 
 if __name__ == "__main__":
-    run_auth_e2e(running_environment())
+    run_auth_e2e(running_environment(), *sys.argv[1:])

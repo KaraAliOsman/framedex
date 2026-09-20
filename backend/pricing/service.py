@@ -110,6 +110,15 @@ def preview(org_id, actor, request):
                   [request['project_id'],org_id],'project_not_found')
     if project['status'] != 'DRAFT':
         raise PricingError('commercial_revision_required')
+    if rows(
+        "SELECT operation.id FROM public.pricing_operations operation "
+        "JOIN public.projects project ON project.id=operation.project_id AND project.org_id=operation.org_id "
+        "WHERE operation.org_id=%s AND operation.project_id=%s AND operation.state='APPLIED' "
+        "AND COALESCE(operation.revision_code,'REV-A')=project.current_revision "
+        "AND (project.pricing_reset_at IS NULL OR operation.approved_at>project.pricing_reset_at) LIMIT 1",
+        [org_id, project['id']],
+    ):
+        raise PricingError('commercial_revision_required')
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
                      'ORDER BY position_index FOR UPDATE',[project['id'],org_id])
     if not positions:
@@ -168,19 +177,23 @@ def preview(org_id, actor, request):
     audit_reason(request['reason'])
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,request,input_snapshot,'
-        'result,source_revision,state,reason) VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s) RETURNING id',
+        'result,source_revision,revision_code,state,reason) '
+        'VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id',
         [org_id,project['id'],request['_actor_id'],
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
          json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines}),
-         json_text(asdict(output)),source_revision(project,positions),'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
+         json_text(asdict(output)),source_revision(project,positions),project['current_revision'],
+         'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
     return {'id':str(record['id']),'state':'PENDING' if state=='PENDING' else 'PREVIEW',
-            'project_id':str(project['id']),'discount_pct':str(discount),
+            'project_id':str(project['id']),'revision_code':project['current_revision'],
+            'discount_pct':str(discount),
             'currency':request['currency'],**asdict(output)}
 
 
 def operation_public(operation):
     return {'id':str(operation['id']),'state':operation['state'],
             'project_id':str(operation['project_id']),
+            'revision_code':operation.get('revision_code') or 'REV-A',
             'discount_pct':str(decoded(operation['request'])['discount_pct']),
             'currency':decoded(operation['request'])['currency'],**decoded(operation['result'])}
 
@@ -206,7 +219,9 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                   [operation['project_id'],org_id])
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
                      'ORDER BY position_index FOR UPDATE',[project['id'],org_id])
-    if project['status'] != 'DRAFT' or source_revision(project,positions) != operation['source_revision']:
+    if (project['status'] != 'DRAFT'
+            or (operation.get('revision_code') or 'REV-A') != project['current_revision']
+            or source_revision(project,positions) != operation['source_revision']):
         raise PricingError('stale_pricing_operation')
     output = decoded(operation['result'])
     snapshot = decoded(operation['input_snapshot'])
@@ -224,7 +239,7 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                        'total_price_gross=%s,updated_at=now() WHERE id=%s AND org_id=%s',
                        [sum(costs.values(),D('0')),output['project_net'],output['project_tax'],
                         output['project_gross'],project['id'],org_id])
-        cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=now(),reason=%s "
+        cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=clock_timestamp(),reason=%s "
                        'WHERE id=%s AND org_id=%s',[actor_id,reason,operation_id,org_id])
     operation['state'] = 'APPLIED'
     return operation_public(operation)

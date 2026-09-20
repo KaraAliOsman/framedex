@@ -30,7 +30,7 @@ class WorkshopAnnotationSerializer(StrictSerializer):
         allow_null=True, required=False, default=None,
     )
     finish_class = serializers.ChoiceField(
-        choices=["WHITE", "FOILED"], allow_null=True, required=False, default=None
+        choices=["WHITE"], allow_null=True, required=False, default=None
     )
     has_coupler = serializers.BooleanField(allow_null=True, required=False, default=None)
 
@@ -108,6 +108,7 @@ class AccessoryScheduleSerializer(StrictSerializer):
 
 class PositionDocumentaryInputSerializer(StrictSerializer):
     position_id = serializers.UUIDField()
+    calculation_hash = serializers.RegexField(r"^sha256:[0-9a-f]{64}$")
     location_tag = serializers.CharField(max_length=100, allow_blank=False, trim_whitespace=True)
     manufacturing_placement_policy_id = serializers.UUIDField()
     handle_requirement_policy_id = serializers.UUIDField()
@@ -116,7 +117,7 @@ class PositionDocumentaryInputSerializer(StrictSerializer):
     structural_inputs = DocumentaryStructuralInputSerializer(many=True)
     glass_polishing = GlassPolishingSerializer(many=True)
     handle_intents = HandleIntentSerializer(many=True)
-    accessory_schedule = AccessoryScheduleSerializer()
+    accessory_schedule = AccessoryScheduleSerializer(allow_null=True)
     legacy_handle_migration_confirmed = serializers.BooleanField(default=False)
 
 
@@ -131,6 +132,30 @@ class DocumentaryInputsResponseSerializer(serializers.Serializer):
     positions_saved = serializers.IntegerField()
 
 
+class DocumentaryPolicyOptionSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    label = serializers.CharField()
+    version = serializers.IntegerField()
+
+
+class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerializer):
+    system_name = serializers.CharField()
+    manufacturing_placement_policy_id = serializers.UUIDField(allow_null=True)
+    handle_requirement_policy_id = serializers.UUIDField(allow_null=True)
+    reinforcement_cut_policy_id = serializers.UUIDField(allow_null=True)
+    placement_options = DocumentaryPolicyOptionSerializer(many=True)
+    handle_options = DocumentaryPolicyOptionSerializer(many=True)
+    reinforcement_options = DocumentaryPolicyOptionSerializer(many=True)
+
+
+class DocumentaryPreparationResponseSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField()
+    revision_code = serializers.RegexField(r"^REV-[A-Z]+$")
+    payment_terms = serializers.CharField(allow_blank=True)
+    quotation_valid_until = serializers.DateField(allow_null=True)
+    positions = DocumentaryPreparationPositionSerializer(many=True)
+
+
 class FreezeRequestSerializer(StrictSerializer):
     pricing_operation_id = serializers.UUIDField()
     confirmed = serializers.BooleanField()
@@ -140,14 +165,14 @@ class FreezeResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     pricing_operation_id = serializers.UUIDField()
     created = serializers.BooleanField()
-    revision_code = serializers.ChoiceField(choices=["REV-A"])
+    revision_code = serializers.RegexField(r"^REV-[A-Z]+$")
     bom_hash = serializers.RegexField(r"^[0-9a-f]{64}$")
     snapshot_sha256 = serializers.RegexField(r"^[0-9a-f]{64}$")
     production_allowed = serializers.BooleanField()
     documentary_complete = serializers.BooleanField()
     emitted_at = serializers.DateTimeField()
     purchase_projection_hash = serializers.RegexField(
-        r"^[0-9a-f]{64}$", required=False
+        r"^[0-9a-f]{64}$", required=False, allow_null=True
     )
 
 

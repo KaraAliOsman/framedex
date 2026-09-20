@@ -724,6 +724,11 @@ def _walk_node(
     if not is_top and (node.width_mm is not None or node.height_mm is not None):
         raise ValueError("Child node dimensions are derived and must not be supplied")
 
+    accumulator.computation.node_dimensions[node.id] = (
+        (accumulator.nominal_width_mm, accumulator.nominal_height_mm)
+        if is_top else (rect.width_mm, rect.height_mm)
+    )
+
     if node.type is NodeType.BAY:
         _append_bay(
             accumulator,
@@ -754,6 +759,9 @@ def _walk_node(
         )
 
     half_mullion_face = mullion_article.face_width_mm / _TWO
+    accumulator.computation.split_axes[node.id] = (
+        node.type is NodeType.SPLIT_V, node.split_offset_mm,
+    )
     if node.type is NodeType.SPLIT_V:
         centerline_mm = local_origin_x_mm + node.split_offset_mm
         first_width_mm = centerline_mm - half_mullion_face - rect.x_mm
@@ -846,6 +854,7 @@ def compute_geometry(
     )
     top_path = f"root/{top.id}"
     if top.type is NodeType.BAY and top.opening_type is BayOpeningType.DOOR_ENTRY:
+        accumulator.computation.node_dimensions[top.id] = (nominal_width_mm, nominal_height_mm)
         _append_door(accumulator, node=top, topology_path=top_path, params=params,
                      nominal_width_mm=nominal_width_mm, nominal_height_mm=nominal_height_mm,
                      clearance_mm=clearance_mm)

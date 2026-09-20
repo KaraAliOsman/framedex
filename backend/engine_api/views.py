@@ -31,6 +31,7 @@ from engine_api.repository import (
     UnsupportedCatalogContract,
 )
 from engine_api.serializers import (
+    EngineLayoutResponseSerializer,
     EngineCalculateRequestSerializer,
     EngineCalculateResponseSerializer,
     EngineSystemsResponseSerializer,
@@ -64,15 +65,24 @@ class EngineSystemsView(APIView):
             systems = SystemParamsRepository().list_visible(
                 tenant.active_organization.organization_id
             )
+            from catalogs.readiness import catalog_readiness
+            items = []
+            for system in systems:
+                readiness = catalog_readiness(system.id, tenant.active_organization.organization_id)
+                items.append({**system.public_dict(), "quote_ready": readiness["quote_ready"],
+                              "readiness_reasons": readiness["reasons"]})
 
         return Response(
-            {"systems": [system.public_dict() for system in systems]},
+            {"systems": items},
             status=status.HTTP_200_OK,
         )
 
 
 class EngineCalculateView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def build_response(self, data, result, params):
+        return calculation_response({**data, "system_id": str(data["system_id"])}, result)
 
     @extend_schema(
         operation_id="engine_calculate",
@@ -118,9 +128,7 @@ class EngineCalculateView(APIView):
                     color=data["color"],
                     params=params,
                 )
-                response_payload = calculation_response(
-                    {**data, "system_id": str(data["system_id"])}, result,
-                )
+                response_payload = self.build_response(data, result, params)
         except SystemNotFound as error:
             raise contract_error(
                 status.HTTP_404_NOT_FOUND,
@@ -141,3 +149,32 @@ class EngineCalculateView(APIView):
             ) from error
 
         return Response(response_payload, status=status.HTTP_200_OK)
+
+
+class EngineLayoutView(EngineCalculateView):
+    """Expose traversal dimensions without adding a second geometry implementation."""
+
+    @extend_schema(
+        operation_id="engine_layout",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=EngineCalculateRequestSerializer,
+        responses={200: EngineLayoutResponseSerializer},
+        tags=["engine"],
+    )
+    def post(self, request):
+        return super().post(request)
+
+    def build_response(self, data, result, params):
+        from dekopen_engine.geometry import compute_geometry
+        from dekopen_engine.layout import node_layout
+        from engine_api.adapter import normalized_root_from_api
+
+        root = normalized_root_from_api(
+            parametric_tree=data["parametric_tree"],
+            nominal_width_mm=data["nominal_width_mm"],
+            nominal_height_mm=data["nominal_height_mm"], color=data["color"], params=params,
+        )
+        return {
+            "calculation_hash": super().build_response(data, result, params)["calculation_hash"],
+            "nodes": node_layout(compute_geometry(root, params)),
+        }

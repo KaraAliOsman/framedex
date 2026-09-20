@@ -25,6 +25,7 @@ from authentication.types import (
     VerifiedSupabaseToken,
 )
 from dekopen_engine.documentary_canonical import documentary_sha256_v1
+from dekopen_engine.snapshot import calculation_response
 from engine_api.adapter import calculate_from_api
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import admin_write, audit_reason, commercial_backend, json_text, one, rows
@@ -97,9 +98,9 @@ def _tenant(org: UUID, role: str) -> TenantContext:
     return TenantContext(active_organization=membership, memberships=(membership,))
 
 
-def _seed_project(org: UUID, owner: UUID, *, valid_annotations: bool = True) -> tuple[
-    UUID, UUID, UUID
-]:
+def _seed_project(
+    org: UUID, owner: UUID, *, valid_annotations: bool = True, apply_pricing: bool = True
+) -> tuple[UUID, UUID, UUID]:
     system_id = UUID(str(one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]))
     project_id = UUID(str(one(
         "INSERT INTO public.projects(org_id,code,name,client_name,client_rut,client_email,"
@@ -170,10 +171,11 @@ def _seed_project(org: UUID, owner: UUID, *, valid_annotations: bool = True) -> 
                 "reason": "SHOT-09 exact preview",
                 "_actor_id": owner,
             })
-            apply_operation(
-                org, owner, "OWNER", UUID(operation["id"]),
-                "SHOT-09 exact apply", False,
-            )
+            if apply_pricing:
+                apply_operation(
+                    org, owner, "OWNER", UUID(operation["id"]),
+                    "SHOT-09 exact apply", False,
+                )
     operation_id = UUID(operation["id"])
     with as_user(owner), documentary_backend():
         policies = one(
@@ -204,6 +206,9 @@ def _seed_project(org: UUID, owner: UUID, *, valid_annotations: bool = True) -> 
                 "quotation_valid_until": date(2026, 10, 14),
                 "positions": [{
                     "position_id": position_id,
+                    "calculation_hash": calculation_response({"system_id": str(system_id),
+                        "parametric_tree": tree, "nominal_width_mm": D("1000"),
+                        "nominal_height_mm": D("1000"), "color": "WHITE"}, result)["calculation_hash"],
                     "location_tag": "FACHADA-NORTE",
                     "manufacturing_placement_policy_id": policies["placement_id"],
                     "handle_requirement_policy_id": policies["handle_id"],
@@ -238,16 +243,11 @@ def _freeze(org: UUID, owner: UUID, project_id: UUID, operation_id: UUID):
 def test_exact_applied_freeze_is_idempotent_immutable_and_tenant_bound(documentary_tenant) -> None:
     org, other, users, other_user = documentary_tenant
     project_id, _, operation_id = _seed_project(org, users["OWNER"])
-    with as_user(users["OWNER"]), commercial_backend():
-        preview_only = preview(org, _tenant(org, "OWNER"), {
-            "project_id": project_id, "pricing_mode": "COST_PLUS_MARGIN",
-            "currency": "CLP", "effective_date": date(2026, 9, 10),
-            "context_code": "DEFAULT", "discount_pct": D("0"),
-            "target_margin": D("0.35"), "segment": "RETAIL", "confirmed": False,
-            "reason": "Unapplied operation must not freeze", "_actor_id": users["OWNER"],
-        })
+    unapplied_project, _, unapplied_operation = _seed_project(
+        org, users["OWNER"], apply_pricing=False
+    )
     with pytest.raises(DocumentaryError, match="applied_pricing_authority_required"):
-        _freeze(org, users["OWNER"], project_id, UUID(preview_only["id"]))
+        _freeze(org, users["OWNER"], unapplied_project, unapplied_operation)
     frozen = _freeze(org, users["OWNER"], project_id, operation_id)
     assert frozen["created"] is True and frozen["revision_code"] == "REV-A"
     assert frozen["bom_hash"] != frozen["snapshot_sha256"]

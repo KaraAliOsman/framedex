@@ -1,15 +1,22 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { AppRoutes } from "./App";
 import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSessionProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
+vi.mock("./api/generated/dekopen", () => ({
+  projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
+}));
 
 function authValue(status: AuthSessionContextValue["status"]): AuthSessionContextValue {
   return {
     status,
-    session: status === "anonymous" ? null : ({} as AuthSessionContextValue["session"]),
+    session:
+      status === "anonymous"
+        ? null
+        : ({ user: { id: "route-test-user" } } as AuthSessionContextValue["session"]),
     me:
       status === "ready"
         ? {
@@ -44,11 +51,15 @@ function authValue(status: AuthSessionContextValue["status"]): AuthSessionContex
 function renderRoute(path: string, auth: AuthSessionContextValue) {
   return render(
     <AuthSessionContext.Provider value={auth}>
-      <ThemeProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </ThemeProvider>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <ThemeProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
     </AuthSessionContext.Provider>,
   );
 }
@@ -59,13 +70,10 @@ describe("SHOT-04 application routes", () => {
     expect(await screen.findByTestId("login-page")).toBeInTheDocument();
   });
 
-  it("renders the navigable authenticated shell and placeholder routes", async () => {
+  it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Abrir Demo G1" })).toHaveAttribute(
-      "href",
-      "/projects/demo/positions/g1/edit",
-    );
+    expect(screen.getByLabelText("Proyectos")).toHaveAttribute("href", "/projects");
     fireEvent.click(screen.getByLabelText("Proyectos"));
     expect(await screen.findByRole("heading", { name: "Proyectos" })).toBeInTheDocument();
   });

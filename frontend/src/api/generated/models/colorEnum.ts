@@ -10,9 +10,9 @@
  * * `WHITE` - WHITE
  * * `FOILED` - FOILED
  */
-export type FinishClassEnum = (typeof FinishClassEnum)[keyof typeof FinishClassEnum];
+export type ColorEnum = (typeof ColorEnum)[keyof typeof ColorEnum];
 
-export const FinishClassEnum = {
+export const ColorEnum = {
   WHITE: "WHITE",
   FOILED: "FOILED",
 } as const;

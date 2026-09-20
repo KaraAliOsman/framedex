@@ -8,11 +8,28 @@ ROOT = Path(__file__).resolve().parents[2]
 OPENAPI = ROOT / "backend" / "openapi.yaml"
 
 
-def test_openapi_contains_only_authorized_shot_09_paths_and_bearer_security() -> None:
+def test_openapi_contains_only_authorized_shot_10_paths_and_bearer_security() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["paths"]) == {
+        "/api/v1/projects/",
+        "/api/v1/projects/{project_id}/",
+        "/api/v1/projects/{project_id}/clone/",
+        "/api/v1/projects/{project_id}/successor/",
+        "/api/v1/projects/{project_id}/reset-pricing/",
+        "/api/v1/projects/{project_id}/positions/",
+        "/api/v1/projects/design-options/{system_id}/",
+        "/api/v1/positions/{position_id}/",
+        "/api/v1/catalogs/systems/",
+        "/api/v1/catalogs/systems/{row_id}/",
+        "/api/v1/catalogs/articles/",
+        "/api/v1/catalogs/articles/{row_id}/",
+        "/api/v1/catalogs/glazing/",
+        "/api/v1/catalogs/glazing/{row_id}/",
+        "/api/v1/catalogs/hardware-kits/",
+        "/api/v1/catalogs/hardware-kits/{row_id}/",
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
+        "/api/v1/engine/layout/",
         "/api/v1/engine/systems/",
         "/api/v1/engine/inspect/",
         "/api/v1/engine/optimize-cut/",
@@ -45,11 +62,35 @@ def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
     }
 
 
+def test_persisted_quotation_color_is_white_without_narrowing_generic_engine_schema() -> None:
+    schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))["components"]["schemas"]
+    assert schema["WhiteColorEnum"]["enum"] == ["WHITE"]
+    assert schema["ColorEnum"]["enum"] == ["WHITE", "FOILED"]
+    assert schema["PositionDesignRequest"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["PositionDesign"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["PositionResponse"]["properties"]["design"] == {
+        "$ref": "#/components/schemas/PositionDesign"
+    }
+    assert schema["DraftPositionRequest"]["properties"]["color"] == {
+        "$ref": "#/components/schemas/WhiteColorEnum"
+    }
+    finish = schema["WorkshopAnnotationRequest"]["properties"]["finish_class"]
+    assert {item.get("$ref") for item in finish["oneOf"]} >= {
+        "#/components/schemas/WhiteColorEnum"
+    }
+    assert schema["EngineCalculateRequestRequest"]["properties"]["color"]["type"] == "string"
+
+
 def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     for path, method in (
         ("/api/v1/auth/me/", "get"),
         ("/api/v1/engine/calculate/", "post"),
+        ("/api/v1/engine/layout/", "post"),
         ("/api/v1/engine/systems/", "get"),
         ("/api/v1/engine/inspect/", "post"),
         ("/api/v1/engine/optimize-cut/", "post"),
@@ -67,6 +108,8 @@ def test_openapi_documents_active_org_and_mfa_selection_errors() -> None:
         ("/api/v1/purchasing/versions/{version_id}/", "get"),
         ("/api/v1/purchasing/versions/{version_id}/eligibilities/", "post"),
         ("/api/v1/purchasing/versions/{version_id}/confirm/", "post"),
+        ("/api/v1/projects/{project_id}/successor/", "post"),
+        ("/api/v1/projects/{project_id}/reset-pricing/", "post"),
         ("/api/v1/purchasing/requirements/{requirement_id}/allocation/", "put"),
         ("/api/v1/purchasing/orders/{order_id}/send/", "post"),
     ):

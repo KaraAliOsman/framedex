@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+
+import { projectsList } from "../../api/generated/dekopen";
+
+import type { ProjectResponse } from "../../api/generated/models";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
@@ -34,6 +39,7 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
   SLIDING_2L: "pricing.sliding",
   DOOR_ENTRY: "pricing.door",
   AWNING: "pricing.awning",
+  COMPOSITE: "pricing.composite",
   RETAIL: "pricing.retail",
   ARCHITECT: "pricing.architect",
   CONSTRUCTION: "pricing.construction",
@@ -82,7 +88,7 @@ const fields: Record<string, Field[]> = {
     {
       name: "typology",
       label: "pricing.typology",
-      options: ["FIXED", "TURN", "TILT_TURN", "SLIDING_2L", "DOOR_ENTRY", "AWNING"],
+      options: ["FIXED", "TURN", "TILT_TURN", "SLIDING_2L", "DOOR_ENTRY", "AWNING", "COMPOSITE"],
     },
     { name: "pricing_mode", label: "pricing.mode", options: modes },
     { name: "currency", label: "pricing.currency", options: ["CLP", "USD"] },
@@ -151,17 +157,34 @@ function usePricingRequest(orgId: string): RequestFn {
 }
 
 export function CommercialPricingPage(): JSX.Element {
+  const { id: projectId } = useParams();
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "ESTIMATOR"].includes(org.role))
     return <p role="alert">{t("pricing.commercialDenied")}</p>;
-  return <CommercialWorkspace key={org.id} orgId={org.id} owner={org.role === "OWNER"} />;
+  return (
+    <CommercialWorkspace
+      key={`${org.id}:${projectId ?? ""}`}
+      orgId={org.id}
+      owner={org.role === "OWNER"}
+      projectId={projectId}
+    />
+  );
 }
 
-function CommercialWorkspace({ orgId, owner }: { orgId: string; owner: boolean }): JSX.Element {
+function CommercialWorkspace({
+  orgId,
+  owner,
+  projectId,
+}: {
+  orgId: string;
+  owner: boolean;
+  projectId?: string;
+}): JSX.Element {
   const request = usePricingRequest(orgId);
   return (
     <section className="pricing-page">
-      <CommercialOperations request={request} owner={owner} />
+      {projectId && <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>}
+      <CommercialOperations request={request} owner={owner} boundProjectId={projectId} />
     </section>
   );
 }
@@ -613,19 +636,56 @@ type Operation = {
 function CommercialOperations({
   request,
   owner,
+  boundProjectId,
 }: {
   request: RequestFn;
   owner: boolean;
+  boundProjectId?: string;
 }): JSX.Element {
   const [operation, setOperation] = useState<Operation | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(boundProjectId ?? "");
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
   const [history, setHistory] = useState<Operation[]>([]);
   const generation = useRef(0);
+
+  const orgId = useAuthSession().me?.active_organization?.id;
+
+  const [projectOptions, setProjectOptions] = useState<ProjectResponse[]>([]);
+
+  const [projectsError, setProjectsError] = useState(false);
+
+  const [projectReload, setProjectReload] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    setProjectOptions([]);
+
+    setProjectsError(false);
+
+    if (orgId)
+      void projectsList({ headers: { "X-Organization-ID": orgId } })
+        .then((response) => {
+          if (response.status !== 200) throw new Error("projects unavailable");
+
+          if (active) setProjectOptions(response.data.items);
+        })
+        .catch(() => {
+          if (active) setProjectsError(true);
+        });
+
+    return () => {
+      active = false;
+    };
+  }, [orgId, projectReload]);
+
+  const projectLabel = (project: ProjectResponse) =>
+    [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
+
   useEffect(
     () => () => {
       generation.current += 1;
@@ -674,14 +734,27 @@ function CommercialOperations({
   return (
     <section>
       <h2>{t("pricing.calculate")}</h2>
-      <CommercialDraft
-        request={request}
-        onCreated={(id) => {
-          invalidate();
-          setOperation(null);
-          setProjectId(id);
-        }}
-      />
+
+      {projectsError && (
+        <p role="alert">
+          {t("projects.loadError")}{" "}
+          <button type="button" onClick={() => setProjectReload((value) => value + 1)}>
+            {t("pricing.reload")}
+          </button>
+        </p>
+      )}
+      {!boundProjectId && (
+        <CommercialDraft
+          request={request}
+          onCreated={(id) => {
+            invalidate();
+            setOperation(null);
+            setProjectId(id);
+
+            setProjectReload((value) => value + 1);
+          }}
+        />
+      )}
       <form
         onChange={(event) => {
           const target = event.target as HTMLInputElement;
@@ -700,15 +773,27 @@ function CommercialOperations({
           );
         }}
       >
-        <label>
-          {t("pricing.projectId")}
-          <input
-            name="project_id"
-            required
-            value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
-          />
-        </label>
+        {boundProjectId ? (
+          <input type="hidden" name="project_id" value={boundProjectId} />
+        ) : (
+          <label>
+            {t("pricing.projectId")}
+            <select
+              name="project_id"
+              required
+              value={projectId}
+              onChange={(event) => setProjectId(event.target.value)}
+            >
+              <option value="">{t("projects.chooseProject")}</option>
+
+              {projectOptions.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {projectLabel(project)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           {t("pricing.mode")}
           <select
@@ -787,9 +872,14 @@ function CommercialOperations({
       {error && <p role="alert">{error}</p>}
       {operation && (
         <article>
-          <p>
-            {t("pricing.projectId")}: {operation.project_id}
-          </p>
+          {!boundProjectId && (
+            <p>
+              {t("pricing.projectId")}:{" "}
+              {projectOptions.find((p) => p.id === operation.project_id)
+                ? projectLabel(projectOptions.find((p) => p.id === operation.project_id)!)
+                : t("projects.loadError")}
+            </p>
+          )}
           <p>
             {t("pricing.discount")}: {operation.discount_pct}
           </p>
@@ -824,36 +914,39 @@ function CommercialOperations({
       <button type="button" disabled={busy} onClick={() => void reload()}>
         {t("pricing.reload")}
       </button>
-      {history.map((item) => (
-        <article key={item.id}>
-          <p>
-            {item.project_net} {item.currency}
-          </p>
-          <p>
-            {t(
-              item.state === "PENDING"
-                ? "pricing.pending"
-                : item.state === "APPLIED"
-                  ? "pricing.applied"
-                  : item.state === "REJECTED"
-                    ? "pricing.rejected"
-                    : "pricing.notApplied",
-            )}
-          </p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              invalidate();
-              setOperation(item);
-              setReason("");
-              setConfirmed(false);
-            }}
-          >
-            {t("pricing.review")}
-          </button>
-        </article>
-      ))}
+      {Array.isArray(history) &&
+        history
+          .filter((item) => !boundProjectId || item.project_id === boundProjectId)
+          .map((item) => (
+            <article key={item.id}>
+              <p>
+                {item.project_net} {item.currency}
+              </p>
+              <p>
+                {t(
+                  item.state === "PENDING"
+                    ? "pricing.pending"
+                    : item.state === "APPLIED"
+                      ? "pricing.applied"
+                      : item.state === "REJECTED"
+                        ? "pricing.rejected"
+                        : "pricing.notApplied",
+                )}
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  invalidate();
+                  setOperation(item);
+                  setReason("");
+                  setConfirmed(false);
+                }}
+              >
+                {t("pricing.review")}
+              </button>
+            </article>
+          ))}
     </section>
   );
 }

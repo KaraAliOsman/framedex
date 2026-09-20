@@ -9,6 +9,7 @@ from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.writer.excel import ExcelWriter
 
 from documents.repository import DocumentaryError
 
@@ -195,7 +196,8 @@ def render_order_xlsx(document_type: str, snapshot: dict[str, object]) -> tuple[
     workbook.properties.created = fixed
     workbook.properties.modified = fixed
     raw = BytesIO()
-    workbook.save(raw)
+    with ZipFile(raw, "w", ZIP_DEFLATED, allowZip64=True) as archive:
+        ExcelWriter(workbook, archive).write_data()
     workbook.close()
     content = _normalize_archive(raw.getvalue())
     _verify_matrix(content, sheet_name, expected)

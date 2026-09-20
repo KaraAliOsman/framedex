@@ -11,12 +11,24 @@ import type {
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
+  ArticleList,
+  ArticleResponse,
+  ArticleWriteRequest,
   ArtifactRequestRequest,
   ArtifactResponse,
   AuthMeResponse,
+  BeadList,
+  BeadResponse,
+  BeadWriteRequest,
+  CatalogArticleListParams,
+  CatalogBeadListParams,
+  CatalogKitListParams,
+  CloneProjectRequest,
   ConfirmBatchRequestRequest,
+  DesignOptions,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
+  DocumentaryPreparationResponse,
   DraftProjectRequest,
   DraftResponse,
   EligibilityRequestRequest,
@@ -25,6 +37,7 @@ import type {
   EngineCalculateResponse,
   EngineInspectRequestRequest,
   EngineInspectResponse,
+  EngineLayoutResponse,
   EngineOptimizeRequestRequest,
   EngineOptimizeResponse,
   EngineSystemsResponse,
@@ -32,12 +45,32 @@ import type {
   FreezeRequestRequest,
   FreezeResponse,
   ImportRequestRequest,
+  KitList,
+  KitResponse,
+  KitWriteRequest,
   OrderResponse,
+  PatchedArticleWriteRequest,
+  PatchedBeadWriteRequest,
+  PatchedKitWriteRequest,
+  PatchedProjectUpdateRequest,
+  PatchedSystemWriteRequest,
+  PositionResponse,
+  PositionUpdateRequest,
+  PositionWriteRequest,
+  PositionsDestroyParams,
   PriceRequestRequest,
   PriceResponse,
+  ProjectListResponse,
+  ProjectResponse,
+  ProjectWriteRequest,
   PurchasingState,
+  ResetPricingRequest,
   SendOrderRequestRequest,
   SignedAccessResponse,
+  SuccessorRequestRequest,
+  SystemList,
+  SystemResponse,
+  SystemWriteRequest,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -87,6 +120,1443 @@ export const authMe = async (
   return apiMutator<authMeResponse>(getAuthMeUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type catalogArticleListResponse200 = {
+  data: ArticleList;
+  status: 200;
+};
+
+export type catalogArticleListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleListResponseSuccess = catalogArticleListResponse200 & {
+  headers: Headers;
+};
+export type catalogArticleListResponseError = (
+  | catalogArticleListResponse400
+  | catalogArticleListResponse401
+  | catalogArticleListResponse403
+  | catalogArticleListResponse404
+  | catalogArticleListResponse409
+  | catalogArticleListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleListResponse =
+  catalogArticleListResponseSuccess | catalogArticleListResponseError;
+
+export const getCatalogArticleListUrl = (params?: CatalogArticleListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/articles/?${stringifiedParams}`
+    : `/api/v1/catalogs/articles/`;
+};
+
+export const catalogArticleList = async (
+  params?: CatalogArticleListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleListResponse> => {
+  return apiMutator<catalogArticleListResponse>(getCatalogArticleListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogArticleCreateResponse201 = {
+  data: ArticleResponse;
+  status: 201;
+};
+
+export type catalogArticleCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleCreateResponseSuccess = catalogArticleCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogArticleCreateResponseError = (
+  | catalogArticleCreateResponse400
+  | catalogArticleCreateResponse401
+  | catalogArticleCreateResponse403
+  | catalogArticleCreateResponse404
+  | catalogArticleCreateResponse409
+  | catalogArticleCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleCreateResponse =
+  catalogArticleCreateResponseSuccess | catalogArticleCreateResponseError;
+
+export const getCatalogArticleCreateUrl = () => {
+  return `/api/v1/catalogs/articles/`;
+};
+
+export const catalogArticleCreate = async (
+  articleWriteRequest: ArticleWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogArticleCreateResponse>(getCatalogArticleCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(articleWriteRequest),
+  });
+};
+
+export type catalogArticleRetrieveResponse200 = {
+  data: ArticleResponse;
+  status: 200;
+};
+
+export type catalogArticleRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleRetrieveResponseSuccess = catalogArticleRetrieveResponse200 & {
+  headers: Headers;
+};
+export type catalogArticleRetrieveResponseError = (
+  | catalogArticleRetrieveResponse400
+  | catalogArticleRetrieveResponse401
+  | catalogArticleRetrieveResponse403
+  | catalogArticleRetrieveResponse404
+  | catalogArticleRetrieveResponse409
+  | catalogArticleRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleRetrieveResponse =
+  catalogArticleRetrieveResponseSuccess | catalogArticleRetrieveResponseError;
+
+export const getCatalogArticleRetrieveUrl = (rowId: string) => {
+  return `/api/v1/catalogs/articles/${rowId}/`;
+};
+
+export const catalogArticleRetrieve = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleRetrieveResponse> => {
+  return apiMutator<catalogArticleRetrieveResponse>(getCatalogArticleRetrieveUrl(rowId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogArticleUpdateResponse200 = {
+  data: ArticleResponse;
+  status: 200;
+};
+
+export type catalogArticleUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleUpdateResponseSuccess = catalogArticleUpdateResponse200 & {
+  headers: Headers;
+};
+export type catalogArticleUpdateResponseError = (
+  | catalogArticleUpdateResponse400
+  | catalogArticleUpdateResponse401
+  | catalogArticleUpdateResponse403
+  | catalogArticleUpdateResponse404
+  | catalogArticleUpdateResponse409
+  | catalogArticleUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleUpdateResponse =
+  catalogArticleUpdateResponseSuccess | catalogArticleUpdateResponseError;
+
+export const getCatalogArticleUpdateUrl = (rowId: string) => {
+  return `/api/v1/catalogs/articles/${rowId}/`;
+};
+
+export const catalogArticleUpdate = async (
+  rowId: string,
+  patchedArticleWriteRequest?: PatchedArticleWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogArticleUpdateResponse>(getCatalogArticleUpdateUrl(rowId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedArticleWriteRequest),
+  });
+};
+
+export type catalogArticleDeleteResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type catalogArticleDeleteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleDeleteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleDeleteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleDeleteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleDeleteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleDeleteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleDeleteResponseSuccess = catalogArticleDeleteResponse204 & {
+  headers: Headers;
+};
+export type catalogArticleDeleteResponseError = (
+  | catalogArticleDeleteResponse400
+  | catalogArticleDeleteResponse401
+  | catalogArticleDeleteResponse403
+  | catalogArticleDeleteResponse404
+  | catalogArticleDeleteResponse409
+  | catalogArticleDeleteResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleDeleteResponse =
+  catalogArticleDeleteResponseSuccess | catalogArticleDeleteResponseError;
+
+export const getCatalogArticleDeleteUrl = (rowId: string) => {
+  return `/api/v1/catalogs/articles/${rowId}/`;
+};
+
+export const catalogArticleDelete = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleDeleteResponse> => {
+  return apiMutator<catalogArticleDeleteResponse>(getCatalogArticleDeleteUrl(rowId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type catalogBeadListResponse200 = {
+  data: BeadList;
+  status: 200;
+};
+
+export type catalogBeadListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadListResponseSuccess = catalogBeadListResponse200 & {
+  headers: Headers;
+};
+export type catalogBeadListResponseError = (
+  | catalogBeadListResponse400
+  | catalogBeadListResponse401
+  | catalogBeadListResponse403
+  | catalogBeadListResponse404
+  | catalogBeadListResponse409
+  | catalogBeadListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadListResponse = catalogBeadListResponseSuccess | catalogBeadListResponseError;
+
+export const getCatalogBeadListUrl = (params?: CatalogBeadListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/glazing/?${stringifiedParams}`
+    : `/api/v1/catalogs/glazing/`;
+};
+
+export const catalogBeadList = async (
+  params?: CatalogBeadListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadListResponse> => {
+  return apiMutator<catalogBeadListResponse>(getCatalogBeadListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogBeadCreateResponse201 = {
+  data: BeadResponse;
+  status: 201;
+};
+
+export type catalogBeadCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadCreateResponseSuccess = catalogBeadCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogBeadCreateResponseError = (
+  | catalogBeadCreateResponse400
+  | catalogBeadCreateResponse401
+  | catalogBeadCreateResponse403
+  | catalogBeadCreateResponse404
+  | catalogBeadCreateResponse409
+  | catalogBeadCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadCreateResponse =
+  catalogBeadCreateResponseSuccess | catalogBeadCreateResponseError;
+
+export const getCatalogBeadCreateUrl = () => {
+  return `/api/v1/catalogs/glazing/`;
+};
+
+export const catalogBeadCreate = async (
+  beadWriteRequest: BeadWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogBeadCreateResponse>(getCatalogBeadCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(beadWriteRequest),
+  });
+};
+
+export type catalogBeadRetrieveResponse200 = {
+  data: BeadResponse;
+  status: 200;
+};
+
+export type catalogBeadRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadRetrieveResponseSuccess = catalogBeadRetrieveResponse200 & {
+  headers: Headers;
+};
+export type catalogBeadRetrieveResponseError = (
+  | catalogBeadRetrieveResponse400
+  | catalogBeadRetrieveResponse401
+  | catalogBeadRetrieveResponse403
+  | catalogBeadRetrieveResponse404
+  | catalogBeadRetrieveResponse409
+  | catalogBeadRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadRetrieveResponse =
+  catalogBeadRetrieveResponseSuccess | catalogBeadRetrieveResponseError;
+
+export const getCatalogBeadRetrieveUrl = (rowId: string) => {
+  return `/api/v1/catalogs/glazing/${rowId}/`;
+};
+
+export const catalogBeadRetrieve = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadRetrieveResponse> => {
+  return apiMutator<catalogBeadRetrieveResponse>(getCatalogBeadRetrieveUrl(rowId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogBeadUpdateResponse200 = {
+  data: BeadResponse;
+  status: 200;
+};
+
+export type catalogBeadUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadUpdateResponseSuccess = catalogBeadUpdateResponse200 & {
+  headers: Headers;
+};
+export type catalogBeadUpdateResponseError = (
+  | catalogBeadUpdateResponse400
+  | catalogBeadUpdateResponse401
+  | catalogBeadUpdateResponse403
+  | catalogBeadUpdateResponse404
+  | catalogBeadUpdateResponse409
+  | catalogBeadUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadUpdateResponse =
+  catalogBeadUpdateResponseSuccess | catalogBeadUpdateResponseError;
+
+export const getCatalogBeadUpdateUrl = (rowId: string) => {
+  return `/api/v1/catalogs/glazing/${rowId}/`;
+};
+
+export const catalogBeadUpdate = async (
+  rowId: string,
+  patchedBeadWriteRequest?: PatchedBeadWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogBeadUpdateResponse>(getCatalogBeadUpdateUrl(rowId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedBeadWriteRequest),
+  });
+};
+
+export type catalogBeadDeleteResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type catalogBeadDeleteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogBeadDeleteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogBeadDeleteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogBeadDeleteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogBeadDeleteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogBeadDeleteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogBeadDeleteResponseSuccess = catalogBeadDeleteResponse204 & {
+  headers: Headers;
+};
+export type catalogBeadDeleteResponseError = (
+  | catalogBeadDeleteResponse400
+  | catalogBeadDeleteResponse401
+  | catalogBeadDeleteResponse403
+  | catalogBeadDeleteResponse404
+  | catalogBeadDeleteResponse409
+  | catalogBeadDeleteResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogBeadDeleteResponse =
+  catalogBeadDeleteResponseSuccess | catalogBeadDeleteResponseError;
+
+export const getCatalogBeadDeleteUrl = (rowId: string) => {
+  return `/api/v1/catalogs/glazing/${rowId}/`;
+};
+
+export const catalogBeadDelete = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogBeadDeleteResponse> => {
+  return apiMutator<catalogBeadDeleteResponse>(getCatalogBeadDeleteUrl(rowId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type catalogKitListResponse200 = {
+  data: KitList;
+  status: 200;
+};
+
+export type catalogKitListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitListResponseSuccess = catalogKitListResponse200 & {
+  headers: Headers;
+};
+export type catalogKitListResponseError = (
+  | catalogKitListResponse400
+  | catalogKitListResponse401
+  | catalogKitListResponse403
+  | catalogKitListResponse404
+  | catalogKitListResponse409
+  | catalogKitListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitListResponse = catalogKitListResponseSuccess | catalogKitListResponseError;
+
+export const getCatalogKitListUrl = (params?: CatalogKitListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/catalogs/hardware-kits/?${stringifiedParams}`
+    : `/api/v1/catalogs/hardware-kits/`;
+};
+
+export const catalogKitList = async (
+  params?: CatalogKitListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitListResponse> => {
+  return apiMutator<catalogKitListResponse>(getCatalogKitListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogKitCreateResponse201 = {
+  data: KitResponse;
+  status: 201;
+};
+
+export type catalogKitCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitCreateResponseSuccess = catalogKitCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogKitCreateResponseError = (
+  | catalogKitCreateResponse400
+  | catalogKitCreateResponse401
+  | catalogKitCreateResponse403
+  | catalogKitCreateResponse404
+  | catalogKitCreateResponse409
+  | catalogKitCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitCreateResponse =
+  catalogKitCreateResponseSuccess | catalogKitCreateResponseError;
+
+export const getCatalogKitCreateUrl = () => {
+  return `/api/v1/catalogs/hardware-kits/`;
+};
+
+export const catalogKitCreate = async (
+  kitWriteRequest: KitWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogKitCreateResponse>(getCatalogKitCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(kitWriteRequest),
+  });
+};
+
+export type catalogKitRetrieveResponse200 = {
+  data: KitResponse;
+  status: 200;
+};
+
+export type catalogKitRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitRetrieveResponseSuccess = catalogKitRetrieveResponse200 & {
+  headers: Headers;
+};
+export type catalogKitRetrieveResponseError = (
+  | catalogKitRetrieveResponse400
+  | catalogKitRetrieveResponse401
+  | catalogKitRetrieveResponse403
+  | catalogKitRetrieveResponse404
+  | catalogKitRetrieveResponse409
+  | catalogKitRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitRetrieveResponse =
+  catalogKitRetrieveResponseSuccess | catalogKitRetrieveResponseError;
+
+export const getCatalogKitRetrieveUrl = (rowId: string) => {
+  return `/api/v1/catalogs/hardware-kits/${rowId}/`;
+};
+
+export const catalogKitRetrieve = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitRetrieveResponse> => {
+  return apiMutator<catalogKitRetrieveResponse>(getCatalogKitRetrieveUrl(rowId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogKitUpdateResponse200 = {
+  data: KitResponse;
+  status: 200;
+};
+
+export type catalogKitUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitUpdateResponseSuccess = catalogKitUpdateResponse200 & {
+  headers: Headers;
+};
+export type catalogKitUpdateResponseError = (
+  | catalogKitUpdateResponse400
+  | catalogKitUpdateResponse401
+  | catalogKitUpdateResponse403
+  | catalogKitUpdateResponse404
+  | catalogKitUpdateResponse409
+  | catalogKitUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitUpdateResponse =
+  catalogKitUpdateResponseSuccess | catalogKitUpdateResponseError;
+
+export const getCatalogKitUpdateUrl = (rowId: string) => {
+  return `/api/v1/catalogs/hardware-kits/${rowId}/`;
+};
+
+export const catalogKitUpdate = async (
+  rowId: string,
+  patchedKitWriteRequest?: PatchedKitWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogKitUpdateResponse>(getCatalogKitUpdateUrl(rowId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedKitWriteRequest),
+  });
+};
+
+export type catalogKitDeleteResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type catalogKitDeleteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitDeleteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitDeleteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitDeleteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitDeleteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitDeleteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitDeleteResponseSuccess = catalogKitDeleteResponse204 & {
+  headers: Headers;
+};
+export type catalogKitDeleteResponseError = (
+  | catalogKitDeleteResponse400
+  | catalogKitDeleteResponse401
+  | catalogKitDeleteResponse403
+  | catalogKitDeleteResponse404
+  | catalogKitDeleteResponse409
+  | catalogKitDeleteResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitDeleteResponse =
+  catalogKitDeleteResponseSuccess | catalogKitDeleteResponseError;
+
+export const getCatalogKitDeleteUrl = (rowId: string) => {
+  return `/api/v1/catalogs/hardware-kits/${rowId}/`;
+};
+
+export const catalogKitDelete = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitDeleteResponse> => {
+  return apiMutator<catalogKitDeleteResponse>(getCatalogKitDeleteUrl(rowId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type catalogSystemListResponse200 = {
+  data: SystemList;
+  status: 200;
+};
+
+export type catalogSystemListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemListResponseSuccess = catalogSystemListResponse200 & {
+  headers: Headers;
+};
+export type catalogSystemListResponseError = (
+  | catalogSystemListResponse400
+  | catalogSystemListResponse401
+  | catalogSystemListResponse403
+  | catalogSystemListResponse404
+  | catalogSystemListResponse409
+  | catalogSystemListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemListResponse =
+  catalogSystemListResponseSuccess | catalogSystemListResponseError;
+
+export const getCatalogSystemListUrl = () => {
+  return `/api/v1/catalogs/systems/`;
+};
+
+export const catalogSystemList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemListResponse> => {
+  return apiMutator<catalogSystemListResponse>(getCatalogSystemListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogSystemCreateResponse201 = {
+  data: SystemResponse;
+  status: 201;
+};
+
+export type catalogSystemCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemCreateResponseSuccess = catalogSystemCreateResponse201 & {
+  headers: Headers;
+};
+export type catalogSystemCreateResponseError = (
+  | catalogSystemCreateResponse400
+  | catalogSystemCreateResponse401
+  | catalogSystemCreateResponse403
+  | catalogSystemCreateResponse404
+  | catalogSystemCreateResponse409
+  | catalogSystemCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemCreateResponse =
+  catalogSystemCreateResponseSuccess | catalogSystemCreateResponseError;
+
+export const getCatalogSystemCreateUrl = () => {
+  return `/api/v1/catalogs/systems/`;
+};
+
+export const catalogSystemCreate = async (
+  systemWriteRequest: SystemWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSystemCreateResponse>(getCatalogSystemCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(systemWriteRequest),
+  });
+};
+
+export type catalogSystemRetrieveResponse200 = {
+  data: SystemResponse;
+  status: 200;
+};
+
+export type catalogSystemRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemRetrieveResponseSuccess = catalogSystemRetrieveResponse200 & {
+  headers: Headers;
+};
+export type catalogSystemRetrieveResponseError = (
+  | catalogSystemRetrieveResponse400
+  | catalogSystemRetrieveResponse401
+  | catalogSystemRetrieveResponse403
+  | catalogSystemRetrieveResponse404
+  | catalogSystemRetrieveResponse409
+  | catalogSystemRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemRetrieveResponse =
+  catalogSystemRetrieveResponseSuccess | catalogSystemRetrieveResponseError;
+
+export const getCatalogSystemRetrieveUrl = (rowId: string) => {
+  return `/api/v1/catalogs/systems/${rowId}/`;
+};
+
+export const catalogSystemRetrieve = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemRetrieveResponse> => {
+  return apiMutator<catalogSystemRetrieveResponse>(getCatalogSystemRetrieveUrl(rowId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type catalogSystemUpdateResponse200 = {
+  data: SystemResponse;
+  status: 200;
+};
+
+export type catalogSystemUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemUpdateResponseSuccess = catalogSystemUpdateResponse200 & {
+  headers: Headers;
+};
+export type catalogSystemUpdateResponseError = (
+  | catalogSystemUpdateResponse400
+  | catalogSystemUpdateResponse401
+  | catalogSystemUpdateResponse403
+  | catalogSystemUpdateResponse404
+  | catalogSystemUpdateResponse409
+  | catalogSystemUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemUpdateResponse =
+  catalogSystemUpdateResponseSuccess | catalogSystemUpdateResponseError;
+
+export const getCatalogSystemUpdateUrl = (rowId: string) => {
+  return `/api/v1/catalogs/systems/${rowId}/`;
+};
+
+export const catalogSystemUpdate = async (
+  rowId: string,
+  patchedSystemWriteRequest?: PatchedSystemWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<catalogSystemUpdateResponse>(getCatalogSystemUpdateUrl(rowId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedSystemWriteRequest),
+  });
+};
+
+export type catalogSystemDeleteResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type catalogSystemDeleteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemDeleteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemDeleteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemDeleteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemDeleteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemDeleteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemDeleteResponseSuccess = catalogSystemDeleteResponse204 & {
+  headers: Headers;
+};
+export type catalogSystemDeleteResponseError = (
+  | catalogSystemDeleteResponse400
+  | catalogSystemDeleteResponse401
+  | catalogSystemDeleteResponse403
+  | catalogSystemDeleteResponse404
+  | catalogSystemDeleteResponse409
+  | catalogSystemDeleteResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemDeleteResponse =
+  catalogSystemDeleteResponseSuccess | catalogSystemDeleteResponseError;
+
+export const getCatalogSystemDeleteUrl = (rowId: string) => {
+  return `/api/v1/catalogs/systems/${rowId}/`;
+};
+
+export const catalogSystemDelete = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemDeleteResponse> => {
+  return apiMutator<catalogSystemDeleteResponse>(getCatalogSystemDeleteUrl(rowId), {
+    ...options,
+    method: "DELETE",
   });
 };
 
@@ -347,6 +1817,78 @@ export const documentaryFreezeRevisionA = async (
   );
 };
 
+export type documentaryPrepareInputsResponse200 = {
+  data: DocumentaryPreparationResponse;
+  status: 200;
+};
+
+export type documentaryPrepareInputsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type documentaryPrepareInputsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type documentaryPrepareInputsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type documentaryPrepareInputsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type documentaryPrepareInputsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type documentaryPrepareInputsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type documentaryPrepareInputsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type documentaryPrepareInputsResponseSuccess = documentaryPrepareInputsResponse200 & {
+  headers: Headers;
+};
+export type documentaryPrepareInputsResponseError = (
+  | documentaryPrepareInputsResponse400
+  | documentaryPrepareInputsResponse401
+  | documentaryPrepareInputsResponse403
+  | documentaryPrepareInputsResponse404
+  | documentaryPrepareInputsResponse409
+  | documentaryPrepareInputsResponse422
+  | documentaryPrepareInputsResponse503
+) & {
+  headers: Headers;
+};
+
+export type documentaryPrepareInputsResponse =
+  documentaryPrepareInputsResponseSuccess | documentaryPrepareInputsResponseError;
+
+export const getDocumentaryPrepareInputsUrl = (projectId: string) => {
+  return `/api/v1/documents/projects/${projectId}/inputs/`;
+};
+
+export const documentaryPrepareInputs = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<documentaryPrepareInputsResponse> => {
+  return apiMutator<documentaryPrepareInputsResponse>(getDocumentaryPrepareInputsUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type documentarySaveInputsResponse200 = {
   data: DocumentaryInputsResponse;
   status: 200;
@@ -586,6 +2128,43 @@ export const engineInspect = async (
   });
 };
 
+export type engineLayoutResponse200 = {
+  data: EngineLayoutResponse;
+  status: 200;
+};
+
+export type engineLayoutResponseSuccess = engineLayoutResponse200 & {
+  headers: Headers;
+};
+export type engineLayoutResponse = engineLayoutResponseSuccess;
+
+export const getEngineLayoutUrl = () => {
+  return `/api/v1/engine/layout/`;
+};
+
+/**
+ * Expose traversal dimensions without adding a second geometry implementation.
+ */
+export const engineLayout = async (
+  engineCalculateRequestRequest: EngineCalculateRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<engineLayoutResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<engineLayoutResponse>(getEngineLayoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineCalculateRequestRequest),
+  });
+};
+
 export type engineOptimizeCutResponse200 = {
   data: EngineOptimizeResponse;
   status: 200;
@@ -717,6 +2296,245 @@ export const engineSystems = async (
   return apiMutator<engineSystemsResponse>(getEngineSystemsUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type positionsRetrieveResponse200 = {
+  data: PositionResponse;
+  status: 200;
+};
+
+export type positionsRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsRetrieveResponseSuccess = positionsRetrieveResponse200 & {
+  headers: Headers;
+};
+export type positionsRetrieveResponseError = (
+  | positionsRetrieveResponse400
+  | positionsRetrieveResponse401
+  | positionsRetrieveResponse403
+  | positionsRetrieveResponse404
+  | positionsRetrieveResponse409
+  | positionsRetrieveResponse422
+  | positionsRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsRetrieveResponse =
+  positionsRetrieveResponseSuccess | positionsRetrieveResponseError;
+
+export const getPositionsRetrieveUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/`;
+};
+
+export const positionsRetrieve = async (
+  positionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsRetrieveResponse> => {
+  return apiMutator<positionsRetrieveResponse>(getPositionsRetrieveUrl(positionId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type positionsUpdateResponse200 = {
+  data: PositionResponse;
+  status: 200;
+};
+
+export type positionsUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsUpdateResponseSuccess = positionsUpdateResponse200 & {
+  headers: Headers;
+};
+export type positionsUpdateResponseError = (
+  | positionsUpdateResponse400
+  | positionsUpdateResponse401
+  | positionsUpdateResponse403
+  | positionsUpdateResponse404
+  | positionsUpdateResponse409
+  | positionsUpdateResponse422
+  | positionsUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsUpdateResponse = positionsUpdateResponseSuccess | positionsUpdateResponseError;
+
+export const getPositionsUpdateUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/`;
+};
+
+export const positionsUpdate = async (
+  positionId: string,
+  positionUpdateRequest: PositionUpdateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionsUpdateResponse>(getPositionsUpdateUrl(positionId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(positionUpdateRequest),
+  });
+};
+
+export type positionsDestroyResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type positionsDestroyResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsDestroyResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsDestroyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsDestroyResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsDestroyResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsDestroyResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsDestroyResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsDestroyResponseSuccess = positionsDestroyResponse204 & {
+  headers: Headers;
+};
+export type positionsDestroyResponseError = (
+  | positionsDestroyResponse400
+  | positionsDestroyResponse401
+  | positionsDestroyResponse403
+  | positionsDestroyResponse404
+  | positionsDestroyResponse409
+  | positionsDestroyResponse422
+  | positionsDestroyResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsDestroyResponse =
+  positionsDestroyResponseSuccess | positionsDestroyResponseError;
+
+export const getPositionsDestroyUrl = (positionId: string, params: PositionsDestroyParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/positions/${positionId}/?${stringifiedParams}`
+    : `/api/v1/positions/${positionId}/`;
+};
+
+export const positionsDestroy = async (
+  positionId: string,
+  params: PositionsDestroyParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsDestroyResponse> => {
+  return apiMutator<positionsDestroyResponse>(getPositionsDestroyUrl(positionId, params), {
+    ...options,
+    method: "DELETE",
   });
 };
 
@@ -1273,6 +3091,720 @@ export const pricingPreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type projectsListResponse200 = {
+  data: ProjectListResponse;
+  status: 200;
+};
+
+export type projectsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsListResponseSuccess = projectsListResponse200 & {
+  headers: Headers;
+};
+export type projectsListResponseError = (
+  | projectsListResponse400
+  | projectsListResponse401
+  | projectsListResponse403
+  | projectsListResponse404
+  | projectsListResponse409
+  | projectsListResponse422
+  | projectsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsListResponse = projectsListResponseSuccess | projectsListResponseError;
+
+export const getProjectsListUrl = () => {
+  return `/api/v1/projects/`;
+};
+
+export const projectsList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsListResponse> => {
+  return apiMutator<projectsListResponse>(getProjectsListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectsCreateResponse201 = {
+  data: ProjectResponse;
+  status: 201;
+};
+
+export type projectsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsCreateResponseSuccess = projectsCreateResponse201 & {
+  headers: Headers;
+};
+export type projectsCreateResponseError = (
+  | projectsCreateResponse400
+  | projectsCreateResponse401
+  | projectsCreateResponse403
+  | projectsCreateResponse404
+  | projectsCreateResponse409
+  | projectsCreateResponse422
+  | projectsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsCreateResponse = projectsCreateResponseSuccess | projectsCreateResponseError;
+
+export const getProjectsCreateUrl = () => {
+  return `/api/v1/projects/`;
+};
+
+export const projectsCreate = async (
+  projectWriteRequest: ProjectWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsCreateResponse>(getProjectsCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(projectWriteRequest),
+  });
+};
+
+export type projectsRetrieveResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsRetrieveResponseSuccess = projectsRetrieveResponse200 & {
+  headers: Headers;
+};
+export type projectsRetrieveResponseError = (
+  | projectsRetrieveResponse400
+  | projectsRetrieveResponse401
+  | projectsRetrieveResponse403
+  | projectsRetrieveResponse404
+  | projectsRetrieveResponse409
+  | projectsRetrieveResponse422
+  | projectsRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsRetrieveResponse =
+  projectsRetrieveResponseSuccess | projectsRetrieveResponseError;
+
+export const getProjectsRetrieveUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/`;
+};
+
+export const projectsRetrieve = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsRetrieveResponse> => {
+  return apiMutator<projectsRetrieveResponse>(getProjectsRetrieveUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectsUpdateResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsUpdateResponseSuccess = projectsUpdateResponse200 & {
+  headers: Headers;
+};
+export type projectsUpdateResponseError = (
+  | projectsUpdateResponse400
+  | projectsUpdateResponse401
+  | projectsUpdateResponse403
+  | projectsUpdateResponse404
+  | projectsUpdateResponse409
+  | projectsUpdateResponse422
+  | projectsUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsUpdateResponse = projectsUpdateResponseSuccess | projectsUpdateResponseError;
+
+export const getProjectsUpdateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/`;
+};
+
+export const projectsUpdate = async (
+  projectId: string,
+  patchedProjectUpdateRequest?: PatchedProjectUpdateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsUpdateResponse>(getProjectsUpdateUrl(projectId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedProjectUpdateRequest),
+  });
+};
+
+export type projectsCloneResponse201 = {
+  data: ProjectResponse;
+  status: 201;
+};
+
+export type projectsCloneResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsCloneResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsCloneResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsCloneResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsCloneResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsCloneResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsCloneResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsCloneResponseSuccess = projectsCloneResponse201 & {
+  headers: Headers;
+};
+export type projectsCloneResponseError = (
+  | projectsCloneResponse400
+  | projectsCloneResponse401
+  | projectsCloneResponse403
+  | projectsCloneResponse404
+  | projectsCloneResponse409
+  | projectsCloneResponse422
+  | projectsCloneResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsCloneResponse = projectsCloneResponseSuccess | projectsCloneResponseError;
+
+export const getProjectsCloneUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/clone/`;
+};
+
+export const projectsClone = async (
+  projectId: string,
+  cloneProjectRequest: CloneProjectRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsCloneResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsCloneResponse>(getProjectsCloneUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(cloneProjectRequest),
+  });
+};
+
+export type positionsCreateResponse201 = {
+  data: PositionResponse;
+  status: 201;
+};
+
+export type positionsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsCreateResponseSuccess = positionsCreateResponse201 & {
+  headers: Headers;
+};
+export type positionsCreateResponseError = (
+  | positionsCreateResponse400
+  | positionsCreateResponse401
+  | positionsCreateResponse403
+  | positionsCreateResponse404
+  | positionsCreateResponse409
+  | positionsCreateResponse422
+  | positionsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsCreateResponse = positionsCreateResponseSuccess | positionsCreateResponseError;
+
+export const getPositionsCreateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/positions/`;
+};
+
+export const positionsCreate = async (
+  projectId: string,
+  positionWriteRequest: PositionWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionsCreateResponse>(getPositionsCreateUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(positionWriteRequest),
+  });
+};
+
+export type projectsResetPricingResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsResetPricingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsResetPricingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsResetPricingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsResetPricingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsResetPricingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsResetPricingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsResetPricingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsResetPricingResponseSuccess = projectsResetPricingResponse200 & {
+  headers: Headers;
+};
+export type projectsResetPricingResponseError = (
+  | projectsResetPricingResponse400
+  | projectsResetPricingResponse401
+  | projectsResetPricingResponse403
+  | projectsResetPricingResponse404
+  | projectsResetPricingResponse409
+  | projectsResetPricingResponse422
+  | projectsResetPricingResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsResetPricingResponse =
+  projectsResetPricingResponseSuccess | projectsResetPricingResponseError;
+
+export const getProjectsResetPricingUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/reset-pricing/`;
+};
+
+export const projectsResetPricing = async (
+  projectId: string,
+  resetPricingRequest: ResetPricingRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsResetPricingResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsResetPricingResponse>(getProjectsResetPricingUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(resetPricingRequest),
+  });
+};
+
+export type projectsStartSuccessorResponse200 = {
+  data: ProjectResponse;
+  status: 200;
+};
+
+export type projectsStartSuccessorResponse201 = {
+  data: ProjectResponse;
+  status: 201;
+};
+
+export type projectsStartSuccessorResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectsStartSuccessorResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectsStartSuccessorResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectsStartSuccessorResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectsStartSuccessorResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectsStartSuccessorResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectsStartSuccessorResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectsStartSuccessorResponseSuccess = (
+  projectsStartSuccessorResponse200 | projectsStartSuccessorResponse201
+) & {
+  headers: Headers;
+};
+export type projectsStartSuccessorResponseError = (
+  | projectsStartSuccessorResponse400
+  | projectsStartSuccessorResponse401
+  | projectsStartSuccessorResponse403
+  | projectsStartSuccessorResponse404
+  | projectsStartSuccessorResponse409
+  | projectsStartSuccessorResponse422
+  | projectsStartSuccessorResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectsStartSuccessorResponse =
+  projectsStartSuccessorResponseSuccess | projectsStartSuccessorResponseError;
+
+export const getProjectsStartSuccessorUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/successor/`;
+};
+
+export const projectsStartSuccessor = async (
+  projectId: string,
+  successorRequestRequest: SuccessorRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectsStartSuccessorResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectsStartSuccessorResponse>(getProjectsStartSuccessorUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(successorRequestRequest),
+  });
+};
+
+export type projectDesignOptionsResponse200 = {
+  data: DesignOptions;
+  status: 200;
+};
+
+export type projectDesignOptionsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectDesignOptionsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectDesignOptionsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectDesignOptionsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectDesignOptionsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectDesignOptionsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectDesignOptionsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectDesignOptionsResponseSuccess = projectDesignOptionsResponse200 & {
+  headers: Headers;
+};
+export type projectDesignOptionsResponseError = (
+  | projectDesignOptionsResponse400
+  | projectDesignOptionsResponse401
+  | projectDesignOptionsResponse403
+  | projectDesignOptionsResponse404
+  | projectDesignOptionsResponse409
+  | projectDesignOptionsResponse422
+  | projectDesignOptionsResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectDesignOptionsResponse =
+  projectDesignOptionsResponseSuccess | projectDesignOptionsResponseError;
+
+export const getProjectDesignOptionsUrl = (systemId: string) => {
+  return `/api/v1/projects/design-options/${systemId}/`;
+};
+
+export const projectDesignOptions = async (
+  systemId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectDesignOptionsResponse> => {
+  return apiMutator<projectDesignOptionsResponse>(getProjectDesignOptionsUrl(systemId), {
+    ...options,
+    method: "GET",
   });
 };
 

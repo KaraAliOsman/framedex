@@ -132,7 +132,7 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
     (response) =>
       new URL(response.url()).pathname === "/api/v1/engine/calculate/" && response.status() === 200,
   );
-  await page.getByRole("link", { name: "Abrir Demo G1" }).click();
+  await page.goto("/projects/demo/positions/g1/edit");
   const systemsResponse = await systemsResponsePromise;
   const systemsPayload = (await systemsResponse.json()) as {
     systems: Array<{ id: string; code: string; is_demo: boolean }>;
@@ -245,7 +245,7 @@ for (const theme of ["light", "dark"] as const) {
     page,
   }) => {
     await authenticate(page, await setupEstimator());
-    await page.getByRole("link", { name: "Abrir Demo G1" }).click();
+    await page.goto("/projects/demo/positions/g1/edit");
     await expect(page.getByTestId("technical-frame")).toHaveText("1006.00 mm");
     if (theme === "dark") await page.getByRole("button", { name: "Cambiar tema" }).click();
     const optimization = page.waitForResponse(

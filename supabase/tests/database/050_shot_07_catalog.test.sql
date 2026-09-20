@@ -58,12 +58,29 @@ SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='pu
 SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cutting_profiles' AND column_name='head_trim_mm' AND data_type='numeric' AND numeric_precision=10 AND numeric_scale=2 AND is_nullable='NO'),'exact cutting_profiles.head_trim_mm');
 SELECT ok(EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cutting_profiles' AND column_name='tail_trim_mm' AND data_type='numeric' AND numeric_precision=10 AND numeric_scale=2 AND is_nullable='NO'),'exact cutting_profiles.tail_trim_mm');
 SELECT is((SELECT count(*) FROM public.inspector_rule_configs),14::BIGINT,'all fourteen global configs');
-SELECT throws_ok($q$INSERT INTO public.inspector_rule_configs(system_id,rule_id,params) SELECT id,'R00','{}' FROM public.profile_systems WHERE code='DEMO_60'$q$,'23514',NULL,'reject R00');
-SELECT throws_ok($q$INSERT INTO public.inspector_rule_configs(system_id,rule_id,params) SELECT id,'R15','{}' FROM public.profile_systems WHERE code='DEMO_60'$q$,'23514',NULL,'reject R15');
-SELECT throws_ok($q$UPDATE public.inspector_rule_configs SET params='[]' WHERE rule_id='R01'$q$,'23514',NULL,'params must be object');
-SELECT throws_ok($q$UPDATE public.profile_systems SET chamber_clearance_mm=NULL WHERE code='DEMO_60'$q$,'P0001','Active Inspector requires chamber clearance','cannot remove live clearance');
+-- Exercise mutable catalog permissions on independent, unreferenced global rows.
+INSERT INTO public.profile_systems
+SELECT (jsonb_populate_record(NULL::public.profile_systems,to_jsonb(source)||
+ jsonb_build_object('id','55700000-0000-4000-8000-000000000001','code','PGTAP07','technical_locked',false,'is_demo',false))).*
+FROM public.profile_systems source WHERE code='DEMO_60';
+INSERT INTO public.profile_articles
+SELECT (jsonb_populate_record(NULL::public.profile_articles,to_jsonb(source)||
+ jsonb_build_object('id','55700000-0000-4000-8000-000000000002','system_id','55700000-0000-4000-8000-000000000001','sku','PGTAP07-FRAME'))).*
+FROM public.profile_articles source WHERE sku='MARCO';
+INSERT INTO public.inspector_rule_configs(system_id,rule_id,params)
+VALUES ('55700000-0000-4000-8000-000000000001','R01','{}');
+INSERT INTO public.profile_purchase_mappings(profile_article_id,commercial_sku,manufacturer_name,purchase_unit)
+VALUES ('55700000-0000-4000-8000-000000000002','PGTAP07-BAR','DEMO','BAR');
+INSERT INTO public.reinforcement_articles(system_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit)
+VALUES ('55700000-0000-4000-8000-000000000001','55700000-0000-4000-8000-000000000002','PGTAP07-STEEL','PGTAP07-STEEL','DEMO',6000,'BAR');
+INSERT INTO public.cutting_profiles(code,name,kerf_mm,head_trim_mm,tail_trim_mm)
+VALUES ('PGTAP07-SAW','DEMO',4,15,15);
+SELECT throws_ok($q$INSERT INTO public.inspector_rule_configs(system_id,rule_id,params) SELECT id,'R00','{}' FROM public.profile_systems WHERE code='PGTAP07'$q$,'23514',NULL,'reject R00');
+SELECT throws_ok($q$INSERT INTO public.inspector_rule_configs(system_id,rule_id,params) SELECT id,'R15','{}' FROM public.profile_systems WHERE code='PGTAP07'$q$,'23514',NULL,'reject R15');
+SELECT throws_ok($q$UPDATE public.inspector_rule_configs SET params='[]' WHERE rule_id='R01' AND system_id='55700000-0000-4000-8000-000000000001'$q$,'23514',NULL,'params must be object');
+SELECT throws_ok($q$UPDATE public.profile_systems SET chamber_clearance_mm=NULL WHERE code='PGTAP07'$q$,'P0001','Active Inspector requires chamber clearance','cannot remove live clearance');
 SELECT throws_ok($q$INSERT INTO public.profile_purchase_mappings(profile_article_id,commercial_sku,manufacturer_name,purchase_unit) VALUES ('00000000-0000-4000-8000-000000000000','INVALID','DEMO','BAR')$q$,'23503',NULL,'mapping parent FK');
-SELECT throws_ok($q$INSERT INTO public.reinforcement_articles(system_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit) SELECT id,'00000000-0000-4000-8000-000000000000','INVALID','INVALID','DEMO',6000,'BAR' FROM public.profile_systems WHERE code='DEMO_60'$q$,'23503',NULL,'steel parent FK');
+SELECT throws_ok($q$INSERT INTO public.reinforcement_articles(system_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit) SELECT id,'00000000-0000-4000-8000-000000000000','INVALID','INVALID','DEMO',6000,'BAR' FROM public.profile_systems WHERE code='PGTAP07'$q$,'23503',NULL,'steel parent FK');
 INSERT INTO public.tenancy_organizations(id,name,tax_id) VALUES
  ('11111111-1111-4111-8111-111111111111','A','SHOT07-A'),
  ('22222222-2222-4222-8222-222222222222','B','SHOT07-B');
@@ -71,21 +88,21 @@ INSERT INTO public.tenancy_memberships(org_id,user_id) VALUES
  ('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
  ('22222222-2222-4222-8222-222222222222','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
 INSERT INTO public.profile_purchase_mappings(profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit)
- SELECT id,'11111111-1111-4111-8111-111111111111','TENANT-BAR','DEMO','BAR' FROM public.profile_articles WHERE sku='MARCO';
+ SELECT id,'11111111-1111-4111-8111-111111111111','TENANT-BAR','DEMO','BAR' FROM public.profile_articles WHERE sku='PGTAP07-FRAME';
  INSERT INTO public.reinforcement_articles(system_id,org_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit,is_default)
- SELECT system_id,'11111111-1111-4111-8111-111111111111',id,'TENANT-STEEL','TENANT-STEEL-BAR','DEMO',5800,'BAR',TRUE FROM public.profile_articles WHERE sku='MARCO';
+ SELECT system_id,'11111111-1111-4111-8111-111111111111',id,'TENANT-STEEL','TENANT-STEEL-BAR','DEMO',5800,'BAR',TRUE FROM public.profile_articles WHERE sku='PGTAP07-FRAME';
  INSERT INTO public.cutting_profiles(org_id,code,name,kerf_mm,head_trim_mm,tail_trim_mm,is_default)
  VALUES ('11111111-1111-4111-8111-111111111111','TENANT-SAW','DEMO',4,15,15,TRUE);
  INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params)
- SELECT id,'11111111-1111-4111-8111-111111111111','R01','{}' FROM public.profile_systems WHERE code='DEMO_60';
+ SELECT id,'11111111-1111-4111-8111-111111111111','R01','{}' FROM public.profile_systems WHERE code='PGTAP07';
 INSERT INTO public.profile_purchase_mappings(profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit)
- SELECT id,'22222222-2222-4222-8222-222222222222','TENANT-BAR','DEMO','BAR' FROM public.profile_articles WHERE sku='MARCO';
+ SELECT id,'22222222-2222-4222-8222-222222222222','TENANT-BAR','DEMO','BAR' FROM public.profile_articles WHERE sku='PGTAP07-FRAME';
  INSERT INTO public.reinforcement_articles(system_id,org_id,parent_profile_article_id,sku,commercial_sku,name,stock_length_mm,purchase_unit,is_default)
- SELECT system_id,'22222222-2222-4222-8222-222222222222',id,'TENANT-STEEL','TENANT-STEEL-BAR','DEMO',5800,'BAR',TRUE FROM public.profile_articles WHERE sku='MARCO';
+ SELECT system_id,'22222222-2222-4222-8222-222222222222',id,'TENANT-STEEL','TENANT-STEEL-BAR','DEMO',5800,'BAR',TRUE FROM public.profile_articles WHERE sku='PGTAP07-FRAME';
  INSERT INTO public.cutting_profiles(org_id,code,name,kerf_mm,head_trim_mm,tail_trim_mm,is_default)
  VALUES ('22222222-2222-4222-8222-222222222222','TENANT-SAW','DEMO',4,15,15,TRUE);
  INSERT INTO public.inspector_rule_configs(system_id,org_id,rule_id,params)
- SELECT id,'22222222-2222-4222-8222-222222222222','R01','{}' FROM public.profile_systems WHERE code='DEMO_60';
+ SELECT id,'22222222-2222-4222-8222-222222222222','R01','{}' FROM public.profile_systems WHERE code='PGTAP07';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}',TRUE);
 SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',TRUE);
@@ -94,28 +111,28 @@ SELECT is((SELECT count(*) FROM public.profile_purchase_mappings WHERE org_id='1
 SELECT is((SELECT count(*) FROM public.profile_purchase_mappings WHERE org_id='22222222-2222-4222-8222-222222222222'),0::BIGINT,'A cannot read B profile_purchase_mappings');
 WITH changed AS (UPDATE public.profile_purchase_mappings SET is_active=FALSE WHERE org_id IS NULL RETURNING id) SELECT is((SELECT count(*) FROM changed),0::BIGINT,'tenant cannot modify global profile_purchase_mappings');
 SET LOCAL ROLE service_role;
-WITH changed AS (UPDATE public.profile_purchase_mappings SET is_active=is_active WHERE org_id IS NULL RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance profile_purchase_mappings');
+WITH changed AS (UPDATE public.profile_purchase_mappings SET is_active=is_active WHERE org_id IS NULL AND profile_article_id='55700000-0000-4000-8000-000000000002' RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance profile_purchase_mappings');
 SET LOCAL ROLE authenticated;
 SELECT ok((SELECT count(*)>0 FROM public.reinforcement_articles WHERE org_id IS NULL),'A reads global reinforcement_articles');
 SELECT is((SELECT count(*) FROM public.reinforcement_articles WHERE org_id='11111111-1111-4111-8111-111111111111'),1::BIGINT,'A reads own reinforcement_articles');
 SELECT is((SELECT count(*) FROM public.reinforcement_articles WHERE org_id='22222222-2222-4222-8222-222222222222'),0::BIGINT,'A cannot read B reinforcement_articles');
 WITH changed AS (UPDATE public.reinforcement_articles SET is_active=FALSE WHERE org_id IS NULL RETURNING id) SELECT is((SELECT count(*) FROM changed),0::BIGINT,'tenant cannot modify global reinforcement_articles');
 SET LOCAL ROLE service_role;
-WITH changed AS (UPDATE public.reinforcement_articles SET is_active=is_active WHERE org_id IS NULL RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance reinforcement_articles');
+WITH changed AS (UPDATE public.reinforcement_articles SET is_active=is_active WHERE org_id IS NULL AND system_id='55700000-0000-4000-8000-000000000001' RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance reinforcement_articles');
 SET LOCAL ROLE authenticated;
 SELECT ok((SELECT count(*)>0 FROM public.cutting_profiles WHERE org_id IS NULL),'A reads global cutting_profiles');
 SELECT is((SELECT count(*) FROM public.cutting_profiles WHERE org_id='11111111-1111-4111-8111-111111111111'),1::BIGINT,'A reads own cutting_profiles');
 SELECT is((SELECT count(*) FROM public.cutting_profiles WHERE org_id='22222222-2222-4222-8222-222222222222'),0::BIGINT,'A cannot read B cutting_profiles');
 WITH changed AS (UPDATE public.cutting_profiles SET is_active=FALSE WHERE org_id IS NULL RETURNING id) SELECT is((SELECT count(*) FROM changed),0::BIGINT,'tenant cannot modify global cutting_profiles');
 SET LOCAL ROLE service_role;
-WITH changed AS (UPDATE public.cutting_profiles SET is_active=is_active WHERE org_id IS NULL RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance cutting_profiles');
+WITH changed AS (UPDATE public.cutting_profiles SET is_active=is_active WHERE org_id IS NULL AND code='PGTAP07-SAW' RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance cutting_profiles');
 SET LOCAL ROLE authenticated;
 SELECT ok((SELECT count(*)>0 FROM public.inspector_rule_configs WHERE org_id IS NULL),'A reads global inspector_rule_configs');
 SELECT is((SELECT count(*) FROM public.inspector_rule_configs WHERE org_id='11111111-1111-4111-8111-111111111111'),1::BIGINT,'A reads own inspector_rule_configs');
 SELECT is((SELECT count(*) FROM public.inspector_rule_configs WHERE org_id='22222222-2222-4222-8222-222222222222'),0::BIGINT,'A cannot read B inspector_rule_configs');
 WITH changed AS (UPDATE public.inspector_rule_configs SET is_active=FALSE WHERE org_id IS NULL RETURNING id) SELECT is((SELECT count(*) FROM changed),0::BIGINT,'tenant cannot modify global inspector_rule_configs');
 SET LOCAL ROLE service_role;
-WITH changed AS (UPDATE public.inspector_rule_configs SET is_active=is_active WHERE org_id IS NULL RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance inspector_rule_configs');
+WITH changed AS (UPDATE public.inspector_rule_configs SET is_active=is_active WHERE org_id IS NULL AND system_id='55700000-0000-4000-8000-000000000001' RETURNING id) SELECT ok((SELECT count(*)>0 FROM changed),'service maintenance inspector_rule_configs');
 SET LOCAL ROLE authenticated;
 RESET ROLE;
 INSERT INTO public.profile_purchase_mappings SELECT (jsonb_populate_record(NULL::public.profile_purchase_mappings,to_jsonb(t)||jsonb_build_object('id',gen_random_uuid()))).* FROM public.profile_purchase_mappings t WHERE org_id='11111111-1111-4111-8111-111111111111' LIMIT 1;

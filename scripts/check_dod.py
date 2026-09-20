@@ -799,8 +799,20 @@ def check_tests(env: Mapping[str, str]) -> None:
     check_g_case_manifest()
     run_command([PYTHON, "-m", "engine.scripts.regenerate_golden", "--check"], env=env)
     run_command([PYTHON, "scripts/check_core_mutations.py"], env=env)
-    run_command([PYTHON, "-m", "pytest", "engine/", "-q", "-W", "error"], env=env)
-    run_command([PYTHON, "-m", "pytest", "backend/", "-q", "-W", "error"], env=env)
+    run_command(
+        [
+            PYTHON, "-m", "pytest", "engine/", "-q", "-W", "error",
+            "-W", "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+        ],
+        env=env,
+    )
+    run_command(
+        [
+            PYTHON, "-m", "pytest", "backend/", "-q", "-W", "error",
+            "-W", "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+        ],
+        env=env,
+    )
     run_command(npm_command("run", "test"), cwd=FRONTEND_DIR)
 
 
@@ -902,7 +914,10 @@ def check_live_gates(*, tests: bool, database: bool) -> None:
             local_gates.run([supabase, "test", "db"])
             if not tests:
                 local_gates.run(
-                    [PYTHON, "-m", "pytest", "backend/tests/integration/", "-q", "-W", "error"],
+                    [
+                        PYTHON, "-m", "pytest", "backend/tests/integration/", "-q", "-W", "error",
+                        "-W", "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+                    ],
                     env=env,
                 )
             local_gates.verify_postgres16()

@@ -103,7 +103,10 @@ function renderEditor(): void {
       <AuthSessionContext.Provider value={authValue()}>
         <MemoryRouter initialEntries={["/projects/demo/positions/g1/edit"]}>
           <Routes>
-            <Route path="/projects/:id/positions/:posId/edit" element={<CanvasEditor2DView />} />
+            <Route
+              path="/projects/demo/positions/g1/edit"
+              element={<CanvasEditor2DView demoRoute />}
+            />
           </Routes>
         </MemoryRouter>
       </AuthSessionContext.Provider>
@@ -126,6 +129,8 @@ describe("SHOT-05 transactional G1 editor", () => {
             code: "DEMO_60",
             name: "Sistema Demo 60mm PVC",
             is_demo: true,
+            quote_ready: true,
+            readiness_reasons: [],
           },
         ],
       },
@@ -211,8 +216,22 @@ describe("SHOT-05 transactional G1 editor", () => {
     [[], "demo_system_unavailable"],
     [
       [
-        { id: "one", code: "DEMO_60", name: "One", is_demo: true },
-        { id: "two", code: "DEMO_60", name: "Two", is_demo: true },
+        {
+          id: "one",
+          code: "DEMO_60",
+          name: "One",
+          is_demo: true,
+          quote_ready: true,
+          readiness_reasons: [],
+        },
+        {
+          id: "two",
+          code: "DEMO_60",
+          name: "Two",
+          is_demo: true,
+          quote_ready: true,
+          readiness_reasons: [],
+        },
       ],
       "demo_system_ambiguous",
     ],

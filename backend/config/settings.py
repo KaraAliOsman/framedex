@@ -96,16 +96,37 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
+        "CatalogProfileRoleEnum": ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "GLAZING_BEAD", "COUPLER", "ADDITIONAL", "THRESHOLD"],
+        "RoleEnum": ["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER", "INSTALLER"],
         "UnitEnum": ["kit"],
         "PurchaseUnitEnum": ["BAR"],
         "MaterialEnum": ["PVC", "ALUMINIUM"],
         "CutMaterialEnum": ["PVC", "ALUMINIUM", "STEEL"],
         "InspectorRuleIdEnum": [f"R{i:02d}" for i in range(1, 15)],
         "DrainFixRuleIdEnum": ["R07"],
+        "ColorEnum": ["WHITE", "FOILED"],
+        "WhiteColorEnum": ["WHITE"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
 }
