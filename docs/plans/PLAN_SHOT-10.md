@@ -1,6 +1,6 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `fa102cd`.
+Status: final material implementation complete; local Gauntlet PASS on `5553edc`.
 PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
@@ -205,14 +205,21 @@ fixed modified timestamp during its convenience save. Commit `b78f21f` uses the 
 without that timestamp mutation and makes the differing-clock regression deterministic.
 The same review round also surfaced that repeatable COUPLER/ADDITIONAL articles were legal
 catalog writes even though the engine loader rejects every duplicated non-bead role,
-poisoning all calculations for the system. Commit `fa102cd` extends singleton enforcement
+poisoning all calculations for the system. Commit `fa102cd` extended singleton enforcement
 to every non-bead role; glazing beads remain the sole multi-valued role via the bead matrix.
+The follow-up review then showed the partial indexes cannot express co-visibility: a global
+article is effective for every tenant, so a tenant row duplicating a global role passed both
+scopes and still poisoned the loader. Commit `5553edc` adds a database trigger that
+serializes writers per (system, role) and rejects any pair a single viewer could resolve
+ambiguously, plus a migration pre-check that fails loudly on pre-existing ambiguity instead
+of silently passing cross-scope duplicates or rewriting catalog authority.
 
-Focused proof: 45 catalog/corrective/concurrency integration tests (singleton uniqueness
-parametrized over all eight non-bead roles), 11 document contract tests and 339 pgTAP
-assertions passed; Ruff and PostgreSQL lint also passed. The canonical Gauntlet
-then passed on final material head `fa102cd574d2073d082a81fdb8f3bb7a95ee34e0` with exit code 0: 248 engine tests
-plus 5 existing deferred xfails, 356 backend tests, 215 frontend tests, 9 real Chromium
-suites and 339 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
+Focused proof: 64 catalog/corrective/concurrency integration tests (singleton uniqueness
+parametrized over all eight non-bead roles, plus direct-write cross-scope rejection through
+RLS), 11 document contract tests and 343 pgTAP assertions passed; Ruff and PostgreSQL lint
+also passed. The canonical Gauntlet then passed on final material head
+`5553edcd0088c145c801e08acba627da40c71b81` with exit code 0: 248 engine tests
+plus 5 existing deferred xfails, 357 backend tests, 215 frontend tests, 9 real Chromium
+suites and 343 pgTAP assertions. Golden remained read-only, 22/22 mutations were killed,
 PostgreSQL 16 clean bootstrap and historical upgrades passed, and the production frontend
 build completed without warnings. No executable change followed this run.
