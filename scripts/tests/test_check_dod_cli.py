@@ -69,6 +69,32 @@ class CheckDodCliTests(unittest.TestCase):
         self.assertIn("Repository live database gate completed", output)
         self.assertNotIn("SHOT-09", output)
 
+    def test_protected_test_phase_runs_tooling_regressions(self):
+        environment = {"CHECKER_TEST": "1"}
+        with (
+            patch.object(check_dod, "check_g_case_manifest"),
+            patch.object(check_dod, "run_command") as run_command,
+        ):
+            check_dod.check_tests(environment)
+
+        self.assertIn(
+            call(
+                [
+                    check_dod.PYTHON,
+                    "-m",
+                    "unittest",
+                    "discover",
+                    "-s",
+                    "scripts/tests",
+                    "-p",
+                    "test_*.py",
+                    "-v",
+                ],
+                env=environment,
+            ),
+            run_command.mock_calls,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

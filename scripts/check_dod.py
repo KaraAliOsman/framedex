@@ -797,6 +797,20 @@ def check_g_case_manifest() -> None:
 def check_tests(env: Mapping[str, str]) -> None:
     print("[4/6] Test suites", flush=True)
     check_g_case_manifest()
+    run_command(
+        [
+            PYTHON,
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "scripts/tests",
+            "-p",
+            "test_*.py",
+            "-v",
+        ],
+        env=env,
+    )
     run_command([PYTHON, "-m", "engine.scripts.regenerate_golden", "--check"], env=env)
     run_command([PYTHON, "scripts/check_core_mutations.py"], env=env)
     run_command(
