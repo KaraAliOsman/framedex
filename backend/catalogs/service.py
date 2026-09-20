@@ -198,9 +198,18 @@ def _parameters(values):
 SINGLETON_ROLES = {"FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "THRESHOLD"}
 
 
+def _lock_singleton_role(system_id):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+            [str(system_id)],
+        )
+
+
 def create(resource, org_id, values):
     _bind_parent(resource, org_id, values)
     if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
+        _lock_singleton_role(values["system_id"])
         with connection.cursor() as cursor:
             cursor.execute(
                 f"SELECT id FROM public.profile_articles "
@@ -249,6 +258,7 @@ def update(resource, org_id, row_id, values, expected_revision=None):
     target_role = values.get("role", current.get("role"))
     if resource is ARTICLES and target_role in SINGLETON_ROLES:
         target_system_id = values.get("system_id", current.get("system_id"))
+        _lock_singleton_role(target_system_id)
         with connection.cursor() as cursor:
             cursor.execute(
                 f"SELECT id FROM public.profile_articles "

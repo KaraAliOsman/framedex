@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path=public,extensions;
-SELECT plan(8);
+SELECT plan(10);
 SELECT has_column('public','pricing_operations','revision_code',
   'pricing operations expose revision-scoped authority');
 SELECT col_type_is('public','pricing_operations','revision_code','text',
@@ -34,5 +34,9 @@ SELECT ok(
     LIKE '%version.revision_code = project.current_revision%',
   'documentary inputs are sealed only for the emitted current revision'
 );
+SELECT ok(to_regclass('public.uk_tenant_system_singleton_profile_role') IS NOT NULL,
+  'tenant singleton profile roles have an atomic database constraint');
+SELECT ok(to_regclass('public.uk_global_system_singleton_profile_role') IS NOT NULL,
+  'global singleton profile roles have an atomic database constraint');
 SELECT * FROM finish();
 ROLLBACK;

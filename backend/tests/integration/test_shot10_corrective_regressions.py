@@ -14,6 +14,7 @@ from backend.tests.integration.test_shot09_documentary import (
     as_user,
     documentary_tenant as documentary_tenant,
 )
+from dekopen_engine.commercial import PricingError
 from documents.artifacts import generate_artifact
 from documents.repository import DocumentaryError, documentary_backend, one
 from documents.service import (
@@ -451,6 +452,8 @@ def test_applied_draft_recovery_preserves_history_and_requires_repricing(documen
     owner = users["OWNER"]
     project_id, position_id, operation_id = _seed_project(org, owner)
     with as_user(owner):
+        with pytest.raises(PricingError, match="commercial_revision_required"):
+            price_current(org, owner, "OWNER", project_id)
         with commercial_backend():
             previous = one("SELECT * FROM public.pricing_operations WHERE id=%s", [operation_id])
         reset = service.reset_draft_pricing(org, project_id, operation_id, "Correct technical inputs")

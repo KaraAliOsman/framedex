@@ -110,6 +110,15 @@ def preview(org_id, actor, request):
                   [request['project_id'],org_id],'project_not_found')
     if project['status'] != 'DRAFT':
         raise PricingError('commercial_revision_required')
+    if rows(
+        "SELECT operation.id FROM public.pricing_operations operation "
+        "JOIN public.projects project ON project.id=operation.project_id AND project.org_id=operation.org_id "
+        "WHERE operation.org_id=%s AND operation.project_id=%s AND operation.state='APPLIED' "
+        "AND COALESCE(operation.revision_code,'REV-A')=project.current_revision "
+        "AND (project.pricing_reset_at IS NULL OR operation.approved_at>project.pricing_reset_at) LIMIT 1",
+        [org_id, project['id']],
+    ):
+        raise PricingError('commercial_revision_required')
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
                      'ORDER BY position_index FOR UPDATE',[project['id'],org_id])
     if not positions:
