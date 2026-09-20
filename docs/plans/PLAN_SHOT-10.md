@@ -1,6 +1,8 @@
 # SHOT-10 — Manual quotation workflow
 
-Status: final material implementation complete; local Gauntlet PASS on `85893c3`.
+Status: final material implementation complete; local Gauntlet PASS on `85893c3`,
+followed by a focused clone-guard refinement `4e1f7af` verified by the full frontend
+suite and protected CI.
 PR remains open for protected CI; Owner authorized merge once its final head is clean.
 Base: `6f24fd55768f0ab557cfa314c6cf830d315227fe`.
 Branch: `codex/shot-10-manual-workflow`; isolated lead worktree.
