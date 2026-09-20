@@ -154,7 +154,6 @@ function ProjectWorkspace({
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
-  const [guardBypassed, setGuardBypassed] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -313,7 +312,6 @@ function ProjectWorkspace({
     const controller = lifetime.current;
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
     if ((draft !== null || quotationDirty) && !window.confirm(t("projects.leaveUnsaved"))) return;
-    setGuardBypassed(true);
     locked.current = true;
     setBusy(true);
     setError("");
@@ -326,6 +324,7 @@ function ProjectWorkspace({
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (controller.signal.aborted) return;
+      flushSync(() => setQuotationDirty(false));
       navigate(`/projects/${response.data.id}`);
     } catch (caught) {
       if (controller.signal.aborted) return;
@@ -334,7 +333,6 @@ function ProjectWorkspace({
       setMustReload(true);
     } finally {
       if (!controller.signal.aborted) {
-        setGuardBypassed(false);
         locked.current = false;
         setBusy(false);
       }
@@ -362,7 +360,7 @@ function ProjectWorkspace({
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
       <UnsavedChangesGuard
-        dirty={!guardBypassed && (draft !== null || quotationDirty)}
+        dirty={draft !== null || quotationDirty}
         message={t("projects.leaveUnsaved")}
       />
       <h1>{project ? `${project.code} · ${project.name}` : t("projects.title")}</h1>
