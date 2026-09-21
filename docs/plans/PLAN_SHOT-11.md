@@ -44,7 +44,7 @@ continues; this record does not authorize the proposed choices.
 
 ## Evidence and closure gates
 
-Current implementation checkpoint: `525f2f2ec252f98ff61cc856a299e410690540fb`.
+Current implementation checkpoint: `164c05a714f5daeb5d6c815d90a4a9fb698b4d44`.
 This is not the final material shot head: commercial orchestration remains unfinished.
 Draft [PR #38](https://github.com/KaraAliOsman/framedex/pull/38) targets protected main.
 Execute the canonical Gauntlet on the final material head only.
@@ -116,7 +116,7 @@ The canonical full Gauntlet remains due on the final material shot implementatio
 | `525f2f2ec252f98ff61cc856a299e410690540fb` | `python scripts/check_dod.py database` | Exit 0: 355 pgTAP, 205 real PostgreSQL integration cases, PostgreSQL 16 migration and populated-upgrade checks. RLS DDL was made explicit to satisfy the existing checker without weakening it. |
 | `525f2f2ec252f98ff61cc856a299e410690540fb` | `python scripts/check_restore_drill.py` | Fresh backup image; 48 tables restored in 0.912 s on synthetic PostgreSQL 16; all row hashes, relationships, RLS and ledger/lot balances consistent; populated target refused. |
 
-Latest drill ciphertext SHA-256:
+Checkpoint `525f2f2` drill ciphertext SHA-256:
 `551c94ab29fb1903877a0eede4476b41b87ac6e96bfc825a3c125038a3f398f0`.
 The script builds its own image and refuses a dirty tree, so stale images cannot stand
 in for the recorded source. The ephemeral synthetic backup is removed after the drill.
@@ -136,8 +136,28 @@ encrypted restore recovered 49 tables in 0.994 seconds, with ciphertext SHA-256
 `5249fadf12dfd7872fc82f06d8bcde5eeaa50948899fac9357a4f0320c8d48d5`.
 The Windows Docker probe needed explicit UTF-8 output decoding (`6653eab`); its fresh
 production image then passed readiness/dependency failure/non-root/security/quota checks.
-The customer-registration extension adds seven focused integration tests; it is not
-covered by those earlier checkpoint results. Its proof and current PR head remain distinct.
+Customer-registration checkpoint `164c05a714f5daeb5d6c815d90a4a9fb698b4d44`
+(verified across 2026-09-20/21, America/Santiago):
+
+| Command / surface | Result |
+|---|---|
+| `python -m pytest backend/tests engine/tests/test_billing.py -q` | 423 passed against real local Supabase PostgreSQL, no integration marker exclusions. Includes seven customer registration/recovery/callback/RLS cases. |
+| `python scripts/check_dod.py lint` | Exit 0; guards, lint, generated OpenAPI and frontend clients reproducible. |
+| `python scripts/check_production_boundary.py` | Fresh revision-labelled non-root image; readiness 200; Redis failure readiness 503/liveness 200; billing 401; security headers; shared quota 100 then 429. |
+| `python scripts/check_restore_drill.py` | 50 tables restored in 1.082 seconds on isolated synthetic PostgreSQL 16; row hashes, constraints, RLS and ledger/lot integrity pass; populated target refused. |
+| [Protected CI run 35550155086](https://github.com/KaraAliOsman/framedex/actions/runs/35550155086) | All four required contexts pass: Lint & Typecheck, Test Suite, Frontend Build, Database Gate. CodeRabbit skipped review because the PR is draft. |
+
+This checkpoint's encrypted-backup SHA-256 is
+`6b7d406dc5299388d61f3ed56537cf77947a2bf3c88e787d3ba11b19b6ab346d`.
+These are local operational proofs, not a Railway deployment or production RPO claim.
+A subsequent evidence-only commit does not change the tested implementation.
+
+External access checked 2026-09-21: the available in-app browser shows login screens
+for Railway, Supabase and Flow sandbox; no authenticated session is available there.
+Supabase and Railway connectors were discovered and offered for connection; neither
+was connected at this checkpoint. A Flow sandbox account and merchant configuration
+are still required for the real checkout gate. No production configuration, access,
+subscription or payment was changed during this access check.
 
 ### Unresolved owner decision boundary
 
