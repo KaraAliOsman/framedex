@@ -25,6 +25,11 @@ def run(arguments, *, env=None, input_text=None):
 
 
 def main():
+    sha = run(['git', 'rev-parse', 'HEAD'])
+    if run(['git', 'status', '--porcelain']):
+        raise RuntimeError('SHA-bound recovery proof requires a clean worktree')
+    run(['docker', 'build', '-f', 'scripts/Dockerfile.backup', '--label',
+         'org.opencontainers.image.revision=' + sha, '-t', 'dekopen-shot11-backup', '.'])
     identity = 'dekopen-drill-' + uuid4().hex[:12]
     containers = []
     environment = {**os.environ, 'POSTGRES_PASSWORD': secrets.token_hex(24),
@@ -83,7 +88,7 @@ def main():
                 raise RuntimeError('Restore did not refuse a populated target')
             restored['refuses_populated_target'] = True
             restored['source'] = 'synthetic isolated PostgreSQL 16; all repository migrations and seed'
-            restored['sha'] = run(['git', 'rev-parse', 'HEAD'])
+            restored['sha'] = sha
             print(json.dumps(restored, indent=2))
     finally:
         for container in reversed(containers):

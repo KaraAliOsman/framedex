@@ -25,6 +25,10 @@ def docker(*arguments, env=None):
 
 
 def main():
+    sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
+        raise RuntimeError('SHA-bound production proof requires a clean worktree')
+    docker('build', '--label', 'org.opencontainers.image.revision=' + sha, '-t', 'dekopen-shot11-app', '.')
     local = local_gates.running_environment()
     network = json.loads(docker('inspect', 'supabase_db_dekopen', '--format', '{{json .NetworkSettings.Networks}}'))
     network_name = next(iter(network))
@@ -80,7 +84,7 @@ def main():
             docker('stop', cache_name)
             assert client.get(base + '/health/ready/').status_code == 503
             assert client.get(base + '/health/live/').status_code == 200
-        print(json.dumps({'gunicorn_nonroot': True, 'production_readiness': 200,
+        print(json.dumps({'sha': sha, 'gunicorn_nonroot': True, 'production_readiness': 200,
                           'redis_failure_readiness': 503, 'redis_failure_liveness': 200,
                           'unauthenticated_billing': 401, 'security_headers': True,
                           'shared_quota_100_then_429': True,
