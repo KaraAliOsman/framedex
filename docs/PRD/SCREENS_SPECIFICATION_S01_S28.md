@@ -303,7 +303,7 @@
 - **User Goal:** Gestionar el plan mensual/anual de Dekopen, medios de pago y descargar facturas del servicio.
 - **Role Contract:** Rol exclusivo `OWNER` (`FIXED_BY_CONTRACT`).
 - **Route / Deep-Link Contract:** `/settings/billing` (`FIXED_BY_CONTRACT`).
-- **Security Contract:** Integración segura con pasarelas de pago (Flow en Chile, Paddle internacional) con webhooks HMAC.
+- **Security Contract:** Integración segura con pasarelas de pago. Flow (Chile) confirma mediante POST de token y consulta de estado servidor a servidor firmada con SecretKey (HMAC-SHA256); el callback no es autoridad de pago. Procesamiento idempotente y validación contra estado persistido. Paddle internacional conserva verificación de firma de webhook en SHOT-18.
 - **Required Information:** Plan activo, próximo cobro, método de pago y comprobantes fiscales.
 - **Current Surface Baseline:** Portal de planes con toggle mensual/anual y botón de checkout.
 - **Surface Flexibility:** Layout: `FLEXIBLE`, Composición: `FLEXIBLE`.

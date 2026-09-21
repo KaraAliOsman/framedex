@@ -8,6 +8,8 @@ import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 
 const navigation = [
+  ["/settings/wallet", "wallet.title"],
+  ["/settings/billing", "billing.title"],
   ["/dashboard", "nav.dashboard"],
   ["/projects", "nav.projects"],
   ["/catalogs/systems", "nav.systems"],
@@ -41,7 +43,12 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
         {navigation
           .filter(([to]) => {
             const role = auth.me?.active_organization?.role;
-            if (to === "/pricing/cost-lists") return role === "OWNER";
+            if (
+              to === "/pricing/cost-lists" ||
+              to === "/settings/wallet" ||
+              to === "/settings/billing"
+            )
+              return role === "OWNER";
             if (to === "/catalogs/systems") return role === "OWNER" || role === "WORKSHOP_MANAGER";
             if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
             if (to === "/purchasing") return role === "OWNER" || role === "WORKSHOP_MANAGER";

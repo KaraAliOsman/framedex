@@ -122,6 +122,7 @@ servicio runtime y la API canónicos de SHOT-04 son Mailpit. No se usa la antigu
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
+- **PD-11-01 (OWNER, 2026-09-20):** los precios USD de lista son netos. Total CLP = precio USD × tasa observada USD/CLP × 1,05 × 1,19, con redondeo HALF_UP único al CLP final entero. FX explícito con fuente, fecha, tasa y snapshot persistido según PD-08-02; sin fallback silencioso.
 - **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 
@@ -190,3 +191,12 @@ Los proveedores y modelos se seleccionan mediante `ai_routes` o configuración d
 conforme a [PRD-13](./PRD-13.md). Esta tabla no fija identificadores de rutas ni proveedores;
 mantiene las mismas funciones y estimaciones comerciales. T8 conserva el doble ciego entre
 modelos distintos de [PRD-14](./PRD-14.md).
+
+### 4.4. SHOT-11 lifecycle policy
+
+OWNER decisions PD-11-02/03 (2026-09-21) are frozen in
+[PLAN_SHOT-11](../plans/PLAN_SHOT-11.md#frozen-commercial-decisions): monthly credits
+expire per service cycle; purchased packs never expire; paid activation ends trial credit;
+Flow owns monetary upgrade proration; downgrades, frequency changes and voluntary
+cancellation occur at the paid boundary. Refunds require an authorized exceptional cause
+and preserve history through compensation. That plan contains the complete approved rules.

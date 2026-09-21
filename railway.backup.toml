@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "scripts/Dockerfile.backup"
+
+[deploy]
+startCommand = "python scripts/backup_database.py scheduled"
+cronSchedule = "0 3 * * *"
+restartPolicyType = "NEVER"

@@ -1,0 +1,44 @@
+.billing-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+  color: var(--theme-text-primary);
+}
+.billing-page header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.wallet-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 24px;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 8px;
+}
+.wallet-summary > div {
+  flex: 1;
+  min-width: 160px;
+}
+.wallet-summary p {
+  color: var(--theme-text-secondary);
+}
+.wallet-summary strong {
+  font-size: 1.75rem;
+}
+.wallet-table {
+  overflow-x: auto;
+}
+.billing-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.billing-page th,
+.billing-page td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}

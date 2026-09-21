@@ -7,6 +7,14 @@ from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from corsheaders.defaults import default_headers
+import structlog
+
+from config.production import validate_production, is_production
+
+validate_production(os.environ)
+PRODUCTION = is_production()
+REDIS_URL = os.environ.get('REDIS_URL', '')
+RELEASE_SHA = os.environ.get('RAILWAY_GIT_COMMIT_SHA', os.environ.get('RELEASE_SHA', 'local'))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -58,12 +66,22 @@ INSTALLED_APPS = [
     "engine_api.apps.EngineApiConfig",
     "documents.apps.DocumentsConfig",
     "purchasing.apps.PurchasingConfig",
+    "billing.apps.BillingConfig",
 ]
 
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "config.observability.RequestLogMiddleware",
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if PRODUCTION else None
+SECURE_SSL_REDIRECT = PRODUCTION
+SECURE_REDIRECT_EXEMPT = [r'^health/live/$', r'^health/ready/$']
+SECURE_HSTS_SECONDS = 31536000 if PRODUCTION else 0
+SESSION_COOKIE_SECURE = PRODUCTION
+CSRF_COOKIE_SECURE = PRODUCTION
 
 DATABASES = {"default": _database_config()}
 
@@ -84,7 +102,12 @@ if SUPABASE_STORAGE_BUCKET_DOCS != "documents":
 SUPABASE_JWT_VERIFY_MODE = os.environ.get("SUPABASE_JWT_VERIFY_MODE", "auth_server")
 SUPABASE_JWT_HTTP_TIMEOUT_SECONDS = 5
 
+FLOW_API_URL = os.environ.get('FLOW_API_URL', 'https://sandbox.flow.cl/api')
+FLOW_API_KEY = os.environ.get('FLOW_API_KEY', '')
+FLOW_SECRET_KEY = os.environ.get('FLOW_SECRET_KEY', '')
+
 REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_CLASSES": ["config.throttling.ProductionRateThrottle"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "authentication.backends.SupabaseJWTAuthentication",
     ],
@@ -130,3 +153,11 @@ LOGGING = {
         },
     },
 }
+
+structlog.configure(processors=[structlog.contextvars.merge_contextvars,
+                               structlog.processors.TimeStamper(fmt='iso', utc=True),
+                               structlog.processors.JSONRenderer()])
+
+BILLING_CALLBACK_ORIGIN = os.environ.get('BILLING_CALLBACK_ORIGIN', '')
+BILLING_FRONTEND_ORIGIN = os.environ.get('BILLING_FRONTEND_ORIGIN', '')
+FLOW_MERCHANT_TIMEZONE = os.environ.get('FLOW_MERCHANT_TIMEZONE', '')

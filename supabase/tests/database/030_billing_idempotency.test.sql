@@ -99,13 +99,13 @@ SELECT ok(pg_temp.negative_balance_is_blocked(), 'ledger balance cannot become n
 
 INSERT INTO public.credit_ledger (org_id, amount, balance_after, action_type)
 VALUES
-    ('11111111-1111-4111-8111-111111111111', 10, 10, 'test'),
-    ('22222222-2222-4222-8222-222222222222', 20, 20, 'test');
+    ('11111111-1111-4111-8111-111111111111', 10, 510, 'test'),
+    ('22222222-2222-4222-8222-222222222222', 20, 520, 'test');
 
 SET LOCAL ROLE authenticated;
 SELECT set_config(
     'request.jwt.claims',
-    '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}',
+    '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}',
     TRUE
 );
 SELECT set_config(
@@ -114,7 +114,7 @@ SELECT set_config(
     TRUE
 );
 
-SELECT is((SELECT count(*) FROM public.credit_ledger), 1::BIGINT, 'tenant A sees its ledger');
+SELECT is((SELECT count(*) FROM public.credit_ledger), 2::BIGINT, 'tenant A sees its trial grant and ledger entry');
 SELECT is(
     (
         SELECT count(*)

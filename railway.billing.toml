@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python backend/manage.py reconcile_billing"
+cronSchedule = "*/15 * * * *"
+restartPolicyType = "NEVER"

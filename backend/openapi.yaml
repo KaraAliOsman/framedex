@@ -50,6 +50,907 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/billing/:
+    get:
+      operationId: billing_retrieve
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Billing'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/change/abandon/:
+    post:
+      operationId: billing_change_abandon
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/change/confirm/:
+    post:
+      operationId: billing_change_confirm
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmChangeRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/change/preview/:
+    post:
+      operationId: billing_change_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeInputRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/checkout/:
+    post:
+      operationId: billing_checkout
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CheckoutInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CheckoutInputRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/commerce/:
+    get:
+      operationId: commerce_retrieve
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commerce'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/flow/confirm/{order_id}/:
+    post:
+      operationId: flow_payment_confirm
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/flow/plan/{offer_id}/:
+    post:
+      operationId: flow_subscription_confirm
+      parameters:
+      - in: path
+        name: offer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/flow/refund/{operation_id}/:
+    post:
+      operationId: flow_refund_confirm
+      parameters:
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/flow/register/{operation_id}/:
+    post:
+      operationId: flow_registration_confirm
+      parameters:
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/flow/registration-return/{operation_id}/:
+    post:
+      operationId: flow_registration_return
+      parameters:
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '303':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/sync/:
+    post:
+      operationId: billing_sync
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Billing'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/billing/wallet/:
+    get:
+      operationId: wallet_retrieve
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - billing
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/articles/:
     get:
       operationId: catalog_article_list
@@ -4488,6 +5389,28 @@ components:
       - glass_thickness_mm
       - is_active
       - system_id
+    Billing:
+      type: object
+      properties:
+        plan:
+          type: string
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        subscription:
+          allOf:
+          - $ref: '#/components/schemas/Subscription'
+          nullable: true
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+      required:
+      - payments
+      - plan
+      - subscription
+      - trial_ends_at
     CatalogHardwareComponent:
       type: object
       properties:
@@ -4562,6 +5485,105 @@ components:
       - quote_ready
       - reasons
       - scope
+    ChangeInputRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          format: uuid
+        offer_id:
+          type: string
+          format: uuid
+        cancel:
+          type: boolean
+          default: false
+      required:
+      - operation_key
+    ChangeResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+        kind:
+          type: string
+        effective_at:
+          type: string
+          format: date-time
+          nullable: true
+        amount:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        product_code:
+          type: string
+          nullable: true
+      required:
+      - amount
+      - currency
+      - effective_at
+      - id
+      - kind
+      - product_code
+      - state
+    CheckoutInputRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          format: uuid
+        offer_id:
+          type: string
+          format: uuid
+      required:
+      - offer_id
+      - operation_key
+    CheckoutRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_key:
+          type: string
+          format: uuid
+        offer_id:
+          type: string
+          format: uuid
+        product_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - id
+      - offer_id
+      - operation_key
+      - product_code
+    CheckoutResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_key:
+          type: string
+          format: uuid
+        state:
+          type: string
+        redirect_url:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - id
+      - operation_key
+      - redirect_url
+      - state
     CloneProjectRequest:
       type: object
       properties:
@@ -4582,6 +5604,37 @@ components:
       description: |-
         * `WHITE` - WHITE
         * `FOILED` - FOILED
+    Commerce:
+      type: object
+      properties:
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Offer'
+        checkouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckoutRecord'
+        registration_state:
+          type: string
+          nullable: true
+        pending_change:
+          allOf:
+          - $ref: '#/components/schemas/ChangeResult'
+          nullable: true
+        scheduled_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChangeResult'
+        reconciliation_required:
+          type: boolean
+      required:
+      - checkouts
+      - offers
+      - pending_change
+      - reconciliation_required
+      - registration_state
+      - scheduled_changes
     ConfirmBatchRequestRequest:
       type: object
       properties:
@@ -4592,6 +5645,14 @@ components:
       required:
       - confirmed
       - order_type
+    ConfirmChangeRequest:
+      type: object
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+      required:
+      - operation_id
     CoverageEnum:
       enum:
       - DECLARED
@@ -4600,6 +5661,30 @@ components:
       description: |-
         * `DECLARED` - DECLARED
         * `NONE_REQUIRED` - NONE_REQUIRED
+    CreditLot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        grant_id:
+          type: string
+          format: uuid
+        origin:
+          $ref: '#/components/schemas/OriginEnum'
+        remaining:
+          type: integer
+          minimum: 0
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - expires_at
+      - grant_id
+      - id
+      - origin
+      - remaining
     CurrencyEnum:
       enum:
       - CLP
@@ -5369,6 +6454,22 @@ components:
         * `AUTO_FIXABLE` - AUTO_FIXABLE
         * `SUGGESTION_ONLY` - SUGGESTION_ONLY
         * `BLOCKED_MISSING_AUTHORITY` - BLOCKED_MISSING_AUTHORITY
+    FlowAcknowledgement:
+      type: object
+      properties:
+        received:
+          type: boolean
+      required:
+      - received
+    FlowConfirmationRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 512
+      required:
+      - token
     FormatEnum:
       enum:
       - PDF
@@ -5976,6 +7077,38 @@ components:
       - steel_weight_kg
       - total_weight_kg
       - used_fallback
+    Ledger:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        balance_after:
+          type: integer
+          minimum: 0
+        action_type:
+          type: string
+        reference_id:
+          type: string
+          format: uuid
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - action_type
+      - amount
+      - balance_after
+      - created_at
+      - expires_at
+      - id
+      - reference_id
     LineResponse:
       type: object
       properties:
@@ -6055,6 +7188,41 @@ components:
         * `FASTENING` - FASTENING
         * `INSTALLATION_ACCESSORY` - INSTALLATION_ACCESSORY
         * `OTHER_DECLARED` - OTHER_DECLARED
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_code:
+          type: string
+        kind:
+          type: string
+        plan_tier:
+          type: string
+          nullable: true
+        billing_cycle:
+          type: string
+          nullable: true
+        credits:
+          type: integer
+        amount:
+          type: string
+        fx_source:
+          type: string
+        fx_observed_on:
+          type: string
+          format: date
+      required:
+      - amount
+      - billing_cycle
+      - credits
+      - fx_observed_on
+      - fx_source
+      - id
+      - kind
+      - plan_tier
+      - product_code
     OpeningTypeEnum:
       enum:
       - AWNING
@@ -6113,6 +7281,18 @@ components:
         * `SUPPLIER_GLASS_PO` - SUPPLIER_GLASS_PO
         * `SUPPLIER_HARDWARE_PO` - SUPPLIER_HARDWARE_PO
         * `SUPPLIER_PANEL_PO` - SUPPLIER_PANEL_PO
+    OriginEnum:
+      enum:
+      - trial
+      - monthly
+      - pack
+      - legacy
+      type: string
+      description: |-
+        * `trial` - trial
+        * `monthly` - monthly
+        * `pack` - pack
+        * `legacy` - legacy
     PanelPiece:
       type: object
       properties:
@@ -6412,6 +7592,37 @@ components:
           minimum: 1
         is_active:
           type: boolean
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          type: string
+        status:
+          type: string
+        tax_doc_type:
+          type: string
+          nullable: true
+        tax_doc_folio:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - created_at
+      - currency
+      - id
+      - status
+      - tax_doc_folio
+      - tax_doc_type
     PolishingEdges:
       type: object
       properties:
@@ -7218,6 +8429,32 @@ components:
           nullable: true
       required:
       - target_id
+    Subscription:
+      type: object
+      properties:
+        plan_tier:
+          type: string
+        billing_cycle:
+          type: string
+        status:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        current_period_end:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - amount
+      - billing_cycle
+      - currency
+      - current_period_end
+      - plan_tier
+      - status
     SuccessorRequestRequest:
       type: object
       properties:
@@ -7539,6 +8776,38 @@ components:
         * `OUTER_BOTTOM` - OUTER_BOTTOM
         * `LEAF_TOP` - LEAF_TOP
         * `LEAF_BOTTOM` - LEAF_BOTTOM
+    Wallet:
+      type: object
+      properties:
+        plan:
+          type: string
+        balance:
+          type: integer
+          minimum: 0
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        billing_cycle:
+          type: string
+        ai_available:
+          type: boolean
+        ledger:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ledger'
+        lots:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreditLot'
+      required:
+      - ai_available
+      - balance
+      - billing_cycle
+      - ledger
+      - lots
+      - plan
+      - trial_ends_at
     WhiteColorEnum:
       enum:
       - WHITE

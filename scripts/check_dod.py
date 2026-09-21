@@ -170,6 +170,18 @@ REQUIRED_DATABASE_PATHS = (
 )
 
 EXPECTED_DATABASE_TABLES = {
+    "billing_offers",
+    "billing_checkouts",
+    "billing_invoice_observations",
+    "credit_lot_movements",
+    "billing_periods",
+    "billing_lifecycle_events",
+    "flow_lifecycle_operations",
+    "credit_lots",
+    "billing_orders",
+    "billing_credit_grants",
+    "flow_subscription_intents",
+    "flow_customer_operations",
     "pricing_configurations",
     "pricing_matrix_cells",
     "pricing_fx_snapshots",

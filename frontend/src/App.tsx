@@ -12,6 +12,12 @@ import { useAuthSession } from "./auth/AuthSessionProvider";
 import { LoginPage } from "./auth/LoginPage";
 import { MfaPage } from "./auth/MfaPage";
 import { SelectOrganizationPage } from "./auth/SelectOrganizationPage";
+const WalletPage = lazy(async () => ({
+  default: (await import("./features/billing/WalletPage")).WalletPage,
+}));
+const BillingPage = lazy(async () => ({
+  default: (await import("./features/billing/BillingPage")).BillingPage,
+}));
 const PricingPage = lazy(async () => {
   const module = await import("./features/pricing/PricingPage");
   return { default: module.PricingPage };
@@ -78,6 +84,30 @@ function HomeRedirect(): JSX.Element {
 export function AppRoutes(): JSX.Element {
   return (
     <Routes>
+      <Route
+        path="/settings/billing"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+                <BillingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/settings/wallet"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+                <WalletPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
       <Route path="/projects/:id" element={<ProjectSurface />} />
       <Route path="/projects/:id/positions/new" element={<ProjectSurface editor />} />
       <Route
