@@ -27,6 +27,36 @@ reales de fabricante.
 
 ## 2. DDL Canónico Completo (PostgreSQL 16)
 
+### Enmienda SHOT-11 — autoridad de billing y wallet
+
+Las migraciones nuevas `20260921000000_shot_11_billing_boundary.sql` y
+`20260921000100_shot_11_wallet_trial.sql` extienden el DDL fundacional siguiente:
+S20/S24 permiten lectura únicamente OWNER activo con aal2, y ninguna escritura directa
+de cliente sobre clientes de pago, suscripciones, pagos, eventos, ledger o saldo.
+`billing_backend` es NOLOGIN/NOBYPASSRLS, sólo asumible por el backend confiable y limitado
+por organización en RLS, incluyendo política restrictiva frente a políticas heredadas.
+Los pagos vinculan la suscripción de su misma organización y rechazan CLP fraccional.
+
+El saldo inicial se contabiliza en ledger: TRIAL recibe una sola concesión de 500 con
+vencimiento created_at + 7 días; STARTER directo recibe 0. `credit_lots` conserva saldo
+remanente y vencimiento por concesión, con org_id/RLS; la expiración se reconcilia antes
+de leer billetera o debitar. `credit_ledger.operation_key` es único por organización;
+un movimiento actualiza saldo atómicamente y la evidencia no se puede editar.
+Un débito requiere auditoría IA previa de la misma organización y valor, y replay
+conflictivo se rechaza. No implementa los consumidores de SHOT-13.
+
+La vigencia comercial de créditos mensuales/recargas y los cambios de suscripción están
+pendientes de decisión PD-11-02/03 en PLAN_SHOT-11; no se infieren de la existencia de lotes.
+
+`billing_orders` freezes server-authored expected payment, FX source/date/rate/snapshot,
+provider environment and commercial operation identity. `billing_credit_grants` records
+explicitly authorized installments and expiry, bound to the same org/order/ledger by
+composite foreign keys. Both tables have RLS and no authenticated-client grants.
+The backend may update processing state but cannot rewrite frozen money or schedules.
+Callback status comes only from Flow's signed status lookup; its body supplies no financial
+authority. An uncertain dispatch requires status recovery and never a blind second POST.
+These primitives do not resolve or activate the pending commercial policies.
+
 ```sql
 -- Extensiones requeridas
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

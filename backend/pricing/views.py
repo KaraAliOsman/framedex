@@ -82,6 +82,7 @@ def scope(request, allowed=('OWNER',)):
             tenant = resolve_tenant_context(MembershipRepository().list_active_for_user(token.user_id),
                                             request.headers.get('X-Organization-ID'))
             enforce_owner_mfa(tenant,token.aal)
+            request._request.verified_org_id = str(tenant.active_organization.organization_id)
             if tenant.active_organization.role not in allowed:
                 raise PricingError('pricing_permission_denied')
             yield token,tenant,tenant.active_organization.organization_id

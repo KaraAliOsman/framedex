@@ -20,6 +20,7 @@ import type {
   BeadList,
   BeadResponse,
   BeadWriteRequest,
+  Billing,
   CatalogArticleListParams,
   CatalogBeadListParams,
   CatalogKitListParams,
@@ -42,6 +43,8 @@ import type {
   EngineOptimizeResponse,
   EngineSystemsResponse,
   ErrorResponse,
+  FlowAcknowledgement,
+  FlowConfirmationRequest,
   FreezeRequestRequest,
   FreezeResponse,
   ImportRequestRequest,
@@ -71,6 +74,7 @@ import type {
   SystemList,
   SystemResponse,
   SystemWriteRequest,
+  Wallet,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -118,6 +122,235 @@ export const authMe = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<authMeResponse> => {
   return apiMutator<authMeResponse>(getAuthMeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type billingRetrieveResponse200 = {
+  data: Billing;
+  status: 200;
+};
+
+export type billingRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingRetrieveResponseSuccess = billingRetrieveResponse200 & {
+  headers: Headers;
+};
+export type billingRetrieveResponseError = (
+  | billingRetrieveResponse400
+  | billingRetrieveResponse401
+  | billingRetrieveResponse403
+  | billingRetrieveResponse404
+  | billingRetrieveResponse409
+  | billingRetrieveResponse422
+  | billingRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingRetrieveResponse = billingRetrieveResponseSuccess | billingRetrieveResponseError;
+
+export const getBillingRetrieveUrl = () => {
+  return `/api/v1/billing/`;
+};
+
+export const billingRetrieve = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingRetrieveResponse> => {
+  return apiMutator<billingRetrieveResponse>(getBillingRetrieveUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type flowPaymentConfirmResponse200 = {
+  data: FlowAcknowledgement;
+  status: 200;
+};
+
+export type flowPaymentConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowPaymentConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowPaymentConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowPaymentConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowPaymentConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowPaymentConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowPaymentConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowPaymentConfirmResponseSuccess = flowPaymentConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowPaymentConfirmResponseError = (
+  | flowPaymentConfirmResponse400
+  | flowPaymentConfirmResponse401
+  | flowPaymentConfirmResponse403
+  | flowPaymentConfirmResponse404
+  | flowPaymentConfirmResponse409
+  | flowPaymentConfirmResponse422
+  | flowPaymentConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowPaymentConfirmResponse =
+  flowPaymentConfirmResponseSuccess | flowPaymentConfirmResponseError;
+
+export const getFlowPaymentConfirmUrl = (orderId: string) => {
+  return `/api/v1/billing/flow/confirm/${orderId}/`;
+};
+
+export const flowPaymentConfirm = async (
+  orderId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowPaymentConfirmResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowPaymentConfirmResponse>(getFlowPaymentConfirmUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
+export type walletRetrieveResponse200 = {
+  data: Wallet;
+  status: 200;
+};
+
+export type walletRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type walletRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type walletRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type walletRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type walletRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type walletRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type walletRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type walletRetrieveResponseSuccess = walletRetrieveResponse200 & {
+  headers: Headers;
+};
+export type walletRetrieveResponseError = (
+  | walletRetrieveResponse400
+  | walletRetrieveResponse401
+  | walletRetrieveResponse403
+  | walletRetrieveResponse404
+  | walletRetrieveResponse409
+  | walletRetrieveResponse422
+  | walletRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type walletRetrieveResponse = walletRetrieveResponseSuccess | walletRetrieveResponseError;
+
+export const getWalletRetrieveUrl = () => {
+  return `/api/v1/billing/wallet/`;
+};
+
+export const walletRetrieve = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<walletRetrieveResponse> => {
+  return apiMutator<walletRetrieveResponse>(getWalletRetrieveUrl(), {
     ...options,
     method: "GET",
   });

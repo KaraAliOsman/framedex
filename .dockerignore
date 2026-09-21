@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+scratch
+.worktrees
+frontend/node_modules
+**/__pycache__
+**/*.log
+.env*
+**/*.key
+**/*.pem
+**/*.dump
+**/*.aes

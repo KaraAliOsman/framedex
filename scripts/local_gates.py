@@ -36,7 +36,7 @@ def redact(output: str) -> str:
     output = re.sub(r"sb_secret_[A-Za-z0-9_-]+", "[local secret redacted]", output)
     output = re.sub(r"(postgres(?:ql)?://[^:\s]+:)[^@\s]+@", r"\1[redacted]@", output)
     return re.sub(
-        r"((?:JWT_SECRET|SECRET_KEY|secret key)[\"']?\s*[:=]\s*[\"']?)[^\s,\"'}]+",
+        r"((?:JWT_SECRET|SECRET_KEY|S3_PROTOCOL_ACCESS_KEY_SECRET|secret key)[\"']?\s*[:=]\s*[\"']?)[^\s,\"'}]+",
         r"\1[redacted]", output, flags=re.IGNORECASE,
     )
 

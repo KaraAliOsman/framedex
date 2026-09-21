@@ -122,6 +122,7 @@ servicio runtime y la API canónicos de SHOT-04 son Mailpit. No se usa la antigu
 ## 2. Facturación y Pasarelas de Pago Multi-Región
 
 - **Chile (CL):** **Flow.cl** (Suscripciones nativas con Webpay Plus, Servipag y Khipu). Moneda de cobro local CLP ajustada por tipo de cambio con buffer del 5% e IVA incluido.
+- **PD-11-01 (OWNER, 2026-09-20):** los precios USD de lista son netos. Total CLP = precio USD × tasa observada USD/CLP × 1,05 × 1,19, con redondeo HALF_UP único al CLP final entero. FX explícito con fuente, fecha, tasa y snapshot persistido según PD-08-02; sin fallback silencioso.
 - **Internacional (US/EU/Resto):** **Paddle** (Merchant of Record - MoR que gestiona automáticamente Sales Tax, VAT y facturación internacional sin carga impositiva para el taller). Moneda ancla oficial: **USD**.
 - **LatAm Expansión (MX, CO, PE, AR):** MercadoPago (Fase 2+).
 

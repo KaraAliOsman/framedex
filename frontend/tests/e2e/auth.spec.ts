@@ -51,7 +51,10 @@ function adminHeaders(): Record<string, string> {
   };
 }
 
-async function setupUser(role: "OWNER" | "ESTIMATOR"): Promise<FixtureUser> {
+async function setupUser(
+  role: "OWNER" | "ESTIMATOR",
+  tier: "TRIAL" | "STARTER" = "TRIAL",
+): Promise<FixtureUser> {
   const suffix = crypto.randomUUID();
   const email = `shot04-${role.toLowerCase()}-${suffix}@example.com`;
   const userResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
@@ -70,6 +73,7 @@ async function setupUser(role: "OWNER" | "ESTIMATOR"): Promise<FixtureUser> {
       id: organizationId,
       name: `E2E ${role}`,
       tax_id: `E2E-${suffix}`,
+      subscription_tier: tier,
     }),
   });
   expect(organizationResponse.ok).toBe(true);
@@ -574,3 +578,87 @@ test("OWNER must complete real TOTP enrollment and challenge after each Magic Li
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await assertRealIdentity(page, request, fixture, "aal2");
 });
+
+for (const tier of ["TRIAL", "STARTER"] as const) {
+  test(`SHOT-11 real OWNER ${tier} wallet, billing and manual calculation`, async ({
+    page,
+    request,
+  }, testInfo) => {
+    test.setTimeout(90_000);
+    const fixture = await setupUser("OWNER", tier);
+    await requestMagicLink(page, fixture.email);
+    await followRealMagicLink(page, (await latestMagicLink(fixture.email)).link);
+    const weakToken = await accessToken(page);
+    for (const path of ["billing/", "billing/wallet/"]) {
+      const blocked = await request.get(`${djangoUrl}/api/v1/${path}`, {
+        headers: {
+          Authorization: `Bearer ${weakToken}`,
+          "X-Organization-ID": fixture.organizationId,
+        },
+      });
+      expect(blocked.status()).toBe(403);
+    }
+    await page.getByRole("button", { name: "Configurar autenticador" }).click();
+    const secret = (await page.getByTestId("totp-secret").textContent())?.trim() ?? "";
+    const generator = new OTPAuth.TOTP({
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(secret),
+    });
+    await page.getByLabel("Código de seis dígitos").fill(generator.generate());
+    await page.getByRole("button", { name: "Verificar" }).click();
+    await expect(page.getByTestId("app-shell")).toBeVisible();
+    const headers = {
+      Authorization: `Bearer ${await accessToken(page)}`,
+      "X-Organization-ID": fixture.organizationId,
+    };
+    await page.goto("/settings/wallet");
+    await expect(page.getByRole("heading", { name: "Billetera de créditos IA" })).toBeVisible();
+    await expect(page.getByText("Créditos disponibles", { exact: true })).toBeVisible();
+    const walletResponse = await request.get(`${djangoUrl}/api/v1/billing/wallet/`, { headers });
+    expect(walletResponse.status()).toBe(200);
+    const wallet = await walletResponse.json();
+    expect(wallet.balance).toBe(tier === "TRIAL" ? 500 : 0);
+    expect(wallet.ledger.length).toBe(tier === "TRIAL" ? 1 : 0);
+    if (tier === "STARTER")
+      await expect(page.getByText(/Las funciones manuales siguen disponibles/)).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath(`wallet-${tier}.png`), fullPage: true });
+    await page.goto("/settings/billing");
+    await expect(page.getByRole("heading", { name: "Suscripción y facturación" })).toBeVisible();
+    await expect(page.getByText("No tienes una suscripción de pago registrada.")).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath(`billing-${tier}.png`), fullPage: true });
+    const systems = await request.get(
+      `${supabaseUrl}/rest/v1/profile_systems?code=eq.DEMO_60&select=id`,
+      { headers: adminHeaders() },
+    );
+    const systemId = (await systems.json())[0].id as string;
+    const calculation = await request.post(`${djangoUrl}/api/v1/engine/calculate/`, {
+      headers,
+      data: {
+        system_id: systemId,
+        nominal_width_mm: "1000.00",
+        nominal_height_mm: "1000.00",
+        color: "WHITE",
+        parametric_tree: {
+          id: "g1",
+          type: "BAY",
+          opening_type: "FIXED",
+          glass_thickness_mm: "4.00",
+          glass_spec: "4",
+        },
+      },
+    });
+    expect(calculation.status(), await calculation.text()).toBe(200);
+    expect((await calculation.json()).calculation_hash).toMatch(/^sha256:/);
+    const project = await request.post(`${djangoUrl}/api/v1/projects/`, {
+      headers,
+      data: { name: "SHOT-11 manual product", client_name: "Synthetic customer" },
+    });
+    expect(project.status(), await project.text()).toBe(201);
+    await page.goto(`/projects/${(await project.json()).id}`);
+    await expect(
+      page.getByRole("heading", { name: / · SHOT-11 manual product$/, level: 1 }),
+    ).toBeVisible();
+  });
+}

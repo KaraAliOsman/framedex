@@ -170,6 +170,9 @@ REQUIRED_DATABASE_PATHS = (
 )
 
 EXPECTED_DATABASE_TABLES = {
+    "credit_lots",
+    "billing_orders",
+    "billing_credit_grants",
     "pricing_configurations",
     "pricing_matrix_cells",
     "pricing_fx_snapshots",
