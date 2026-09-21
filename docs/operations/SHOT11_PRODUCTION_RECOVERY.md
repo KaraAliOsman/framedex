@@ -144,6 +144,14 @@ platform provisioning in a fresh target before an actual Supabase recovery.
 
 ## Clean restore drill
 
+When local Docker is unavailable, apply the PR label `shot-closure-verification` once
+to invoke `.github/workflows/shot-verification.yml`. It checks out the PR's exact head
+SHA, runs the unchanged canonical Gauntlet, probes the production container against
+synthetic Supabase and performs the existing encrypted clean-instance restore. The
+workflow uses read-only repository permissions and no production/provider secrets.
+It runs only on explicit label application, not every documentary commit. Record its
+run URL and tested SHA; a successful run does not prove external production gates.
+
 Retrieve the encrypted backup from private Storage using the server/operator credential
 into protected temporary storage. Verify its expected ciphertext hash. Provision a clean
 PostgreSQL instance with the same major and required extension binaries. Set
