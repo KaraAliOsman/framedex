@@ -18,7 +18,8 @@ import local_gates
 
 
 def docker(*arguments, env=None):
-    result = subprocess.run(['docker', *arguments], env=env, capture_output=True, text=True)
+    result = subprocess.run(['docker', *arguments], env=env, capture_output=True, text=True,
+                            encoding='utf-8', errors='replace')
     if result.returncode:
         raise RuntimeError('Docker production probe failed: ' + result.stderr[-1000:])
     return result.stdout.strip()
