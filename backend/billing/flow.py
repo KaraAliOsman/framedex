@@ -91,6 +91,9 @@ class FlowClient:
     def customer(self, customer_id: str) -> dict:
         return self._request("GET", "/customer/get", {"customerId": customer_id})
 
+    def customers(self, *, start: int = 0) -> dict:
+        return self._request('GET', '/customer/list', {'start': str(start), 'limit': '100'})
+
     def create_customer(self, *, external_id: str, name: str, email: str) -> dict:
         return self._request("POST", "/customer/create", {
             "externalId": external_id, "name": name, "email": email,

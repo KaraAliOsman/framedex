@@ -286,6 +286,95 @@ export const flowPaymentConfirm = async (
   });
 };
 
+export type flowRegistrationConfirmResponse200 = {
+  data: FlowAcknowledgement;
+  status: 200;
+};
+
+export type flowRegistrationConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowRegistrationConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowRegistrationConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowRegistrationConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowRegistrationConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowRegistrationConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowRegistrationConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowRegistrationConfirmResponseSuccess = flowRegistrationConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowRegistrationConfirmResponseError = (
+  | flowRegistrationConfirmResponse400
+  | flowRegistrationConfirmResponse401
+  | flowRegistrationConfirmResponse403
+  | flowRegistrationConfirmResponse404
+  | flowRegistrationConfirmResponse409
+  | flowRegistrationConfirmResponse422
+  | flowRegistrationConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowRegistrationConfirmResponse =
+  flowRegistrationConfirmResponseSuccess | flowRegistrationConfirmResponseError;
+
+export const getFlowRegistrationConfirmUrl = (operationId: string) => {
+  return `/api/v1/billing/flow/register/${operationId}/`;
+};
+
+export const flowRegistrationConfirm = async (
+  operationId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowRegistrationConfirmResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowRegistrationConfirmResponse>(getFlowRegistrationConfirmUrl(operationId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
 export type walletRetrieveResponse200 = {
   data: Wallet;
   status: 200;

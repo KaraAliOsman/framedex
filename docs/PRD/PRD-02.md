@@ -65,6 +65,12 @@ distinguishes a created provider subscription from a paid entitlement. Native in
 reconciliation verifies customer/subscription/amount before using the existing atomic
 payment settlement. Commercial terms and grant schedules remain explicit server inputs.
 
+`flow_customer_operations` freezes the verified OWNER identity used to create a Flow
+customer and persists its single dispatch claim. Ambiguous creation uses signed list/get
+reconciliation. Registration saves only the token SHA-256; its callback validates that
+digest and the signed `customer/getRegisterStatus` customer identity. Card numbers and
+raw registration tokens are not persisted. The operation table is server-only with RLS.
+
 ```sql
 -- Extensiones requeridas
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

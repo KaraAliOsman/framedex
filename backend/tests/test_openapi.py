@@ -14,6 +14,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/billing/wallet/",
         "/api/v1/billing/",
         "/api/v1/billing/flow/confirm/{order_id}/",
+        "/api/v1/billing/flow/register/{operation_id}/",
         "/api/v1/projects/",
         "/api/v1/projects/{project_id}/",
         "/api/v1/projects/{project_id}/clone/",

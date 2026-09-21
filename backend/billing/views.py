@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
-from billing import wallet
+from billing import wallet, customers
 from billing.serializers import WalletSerializer, BillingSerializer
 from pricing.views import scope, ERRORS
 from projects.views import response
@@ -50,4 +50,22 @@ class FlowConfirmationView(APIView):
         except FlowError as error:
             raise contract_error(404 if error.code == 'flow_unknown_order' else 503,
                                  error.code, 'El pago requiere confirmación del proveedor.') from None
+        return response({'received': True})
+
+
+class FlowRegistrationView(FlowConfirmationView):
+    @extend_schema(operation_id='flow_registration_confirm', tags=['billing'],
+                   request=FlowConfirmationSerializer,
+                   responses={200: FlowAcknowledgementSerializer, **ERRORS})
+    def post(self, request, operation_id):
+        data = FlowConfirmationSerializer(data=request.data)
+        if not data.is_valid() or len(request.data.getlist('token')) != 1:
+            raise contract_error(400, 'invalid_flow_callback', 'La confirmación requiere un token válido.')
+        try:
+            client = FlowClient(api_url=settings.FLOW_API_URL, api_key=settings.FLOW_API_KEY,
+                                secret_key=settings.FLOW_SECRET_KEY)
+            customers.confirm_callback(operation_id, data.validated_data['token'], client)
+        except FlowError as error:
+            raise contract_error(404 if error.code == 'flow_unknown_customer_operation' else 503,
+                                 error.code, 'El registro requiere confirmación del proveedor.') from None
         return response({'received': True})

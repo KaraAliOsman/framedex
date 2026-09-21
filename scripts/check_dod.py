@@ -174,6 +174,7 @@ EXPECTED_DATABASE_TABLES = {
     "billing_orders",
     "billing_credit_grants",
     "flow_subscription_intents",
+    "flow_customer_operations",
     "pricing_configurations",
     "pricing_matrix_cells",
     "pricing_fx_snapshots",

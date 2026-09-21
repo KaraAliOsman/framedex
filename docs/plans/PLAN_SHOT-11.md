@@ -69,10 +69,12 @@ main and the conventional `shot-11` tag. Do not mark closed from configuration o
 - Flow native customer/register/subscription/cancel/invoice transport follows the real API.
   Native subscription creation now has a persisted single-dispatch intent, immutable
   approved start terms, remote plan/customer validation and GET-only reconciliation
-  after a timeout or local failure. Native invoices are bound to their subscription,
+  after a timeout or local failure. Customer creation also has a persisted single-dispatch
+  claim and signed GET recovery. Registration callbacks bind the token hash and verified
+  provider customer; no card data or raw registration token is stored. Native invoices are bound to their subscription,
   customer and frozen quote before atomic settlement. These server primitives require
-  preprovisioned merchant plans/customers and explicit approved terms; no public client
-  chooses them. Customer registration orchestration, plan-selection/checkout UI, paid
+  preprovisioned merchant plans and explicit approved terms; no public client
+  chooses them. Plan-selection/checkout UI, paid
   entitlements, monthly allowances for annual plans, changes/cancellation and pack
   storefront remain unfinished. This is not evidence of a complete recurring checkout.
 - S20 and S24 expose real OWNER/aal2 wallet and billing read state through generated
@@ -122,9 +124,20 @@ Earlier proof remains valid for unchanged application surfaces; the two refineme
 only add strict test annotations and replace dynamic RLS enablement with equivalent
 explicit statements. No Golden snapshot or existing engine formula was changed.
 
-Protected CI is tracked on PR #38. At this evidence update its four required contexts
-are still running/finishing, so no all-green result or merge authorization is inferred.
+Protected CI passed all four required contexts on `370da59` and again on
+`6653eab3559bcb707edcf2ee57781fd8b0052df4` ([run](https://github.com/KaraAliOsman/framedex/actions/runs/35549762047)).
+This proves the corresponding checkpoints only, not subsequent code or shot closure.
 No canonical `check_dod.py all` run, merge SHA or `shot-11` tag exists for this shot.
+
+Native subscription checkpoint `f3015a4eaa05a2f5e07c1d828c1b6863a89c231c`:
+52 targeted native/payment/wallet/production/Flow tests passed against real PostgreSQL
+with HTTP simulated only at the provider boundary. Canonical lint passed. A fresh
+encrypted restore recovered 49 tables in 0.994 seconds, with ciphertext SHA-256
+`5249fadf12dfd7872fc82f06d8bcde5eeaa50948899fac9357a4f0320c8d48d5`.
+The Windows Docker probe needed explicit UTF-8 output decoding (`6653eab`); its fresh
+production image then passed readiness/dependency failure/non-root/security/quota checks.
+The customer-registration extension adds seven focused integration tests; it is not
+covered by those earlier checkpoint results. Its proof and current PR head remain distinct.
 
 ### Unresolved owner decision boundary
 
