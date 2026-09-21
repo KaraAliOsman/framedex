@@ -10,7 +10,7 @@
 
 | Dimensión | Métrica Objetivo | Umbral Crítico de Alarma | Estrategia de Mitigación / Infraestructura |
 |---|---|---|---|
-| **Disponibilidad (SLA)** | $\ge 99.9\%$ uptime mensual | $< 99.5\%$ | Railway con workers auto-restart + Supabase Pro PostgreSQL 16. |
+| **Disponibilidad (SLA)** | $\ge 99.9\%$ uptime mensual | $< 99.5\%$ | Railway con workers auto-restart + Supabase Pro PostgreSQL 17 (PD-11-04, aprobado por OWNER). |
 | **Latencia del Engine** | $< 50\text{ ms}$ por posición | $> 150\text{ ms}$ | Pureza del paquete `/engine` sin llamadas I/O ni red en caliente. |
 | **Fluidez del Canvas 2D** | $\ge 60\text{ FPS}$ en renderizado SVG | $< 30\text{ FPS}$ | React memoization de nodos, renderizado vectorial SVG nativo. |
 | **Generación de PDFs** | $< 2.5\text{ s}$ para cotización de 10 vanos | $> 5.0\text{ s}$ | WeasyPrint pre-compilado en workers asíncronos Huey. |

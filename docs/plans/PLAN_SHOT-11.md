@@ -66,6 +66,52 @@ The following rules are frozen by the OWNER's explicit decision:
 Regression obligations: idempotency, concurrency, renewal, upgrade, downgrade,
 cancellation, expiration, trial conversion and refund compensation.
 
+## Infrastructure and integration decisions, 2026-09-21
+
+`PD-11-04 RESOLVED_BY_OWNER`: "Autorizar PostgreSQL 17 con validación".
+Production Supabase and the operational backup/restore image target PostgreSQL 17.
+The independent PostgreSQL 16 compatibility gate remains intact. The existing local
+Supabase configuration already uses major 17; its complete integration/RLS/Auth suite
+and the clean PostgreSQL 17 encrypted restore must pass before integration.
+
+`PD-11-05 RESOLVED_BY_OWNER`: the OWNER will pay for the infrastructure later and
+explicitly requested "hasta mientras terminar y mergear asi". Integrate the tested
+implementation through protected PR #38 with production activation deferred. This
+supersedes earlier instructions in this plan to keep the PR draft until external gates
+pass. It does not declare GNG-09/10 passed, close SHOT-11, create a closure tag, or open
+SHOT-12. Preserve the external gates and known Flow reconciliation limitation below.
+
+The OWNER selected `KaraAliOsman's Org` for a separate DEKOPEN Supabase project.
+The connector quoted USD 0/month, completed its cost-confirmation flow, and created
+`DEKOPEN` (`lexvdshnblbtxdkadnhm`) in `sa-east-1`, on Free. Project inspection reports
+bundle `17.6.1.166`, PostgreSQL 17, `ACTIVE_HEALTHY`; a read-only SQL query confirms
+`server_version_num=170006`. No existing project was repurposed. No paid subscription,
+PITR add-on, live merchant credential, production schema rollout or recovered dataset
+is implied by this empty project.
+
+Railway authentication now works, but creating a separate private DEKOPEN project was
+rejected: "Your trial has expired. Please select a plan to continue using Railway."
+The existing `accurate-healing` project hosts unrelated OpenClaw code and was left intact.
+The OWNER deferred payment: no plan upgrades were purchased. OAuth connectivity is
+therefore resolved; paid capacity/activation and merchant credentials remain outstanding.
+
+The deployment target is Supabase Pro with Small compute and seven-day PITR, plus
+Railway Pro for resource monitors. The published one-project Supabase example is about
+USD 130/month; Railway Pro has USD 20/month minimum usage. Additional usage and temporary
+restore capacity can add cost. Recheck prices when the OWNER activates payment; the
+USD 0 Free-project quote is not a production/PITR quote.
+
+[Supabase PITR pricing](https://supabase.com/docs/guides/platform/manage-your-usage/point-in-time-recovery),
+[Railway pricing](https://railway.com/pricing).
+
+Checkout refinement: delayed card registration now freezes subscription start on the
+merchant-local date of native intent preparation, rather than reusing the selection
+date from days earlier. The organization lock serializes preparation; subsequent retries
+reuse the immutable intent, including GET recovery after a lost provider response.
+Four network-seam regressions cover delayed registration, UTC/Chile dates and lost replies.
+The attempted native local run was interrupted because its PostgreSQL endpoint was no
+longer responding; passing evidence must come from the exact-SHA runner below.
+
 ## Evidence and closure gates
 
 Previous implementation checkpoint: `fe3f57dd0437c833ede3b8aaad440793449465b6`.

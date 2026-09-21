@@ -31,7 +31,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 |---|---|---|---|---|
 | **PRD-00** | Contrato Maestro | Arquitectura, D1–D30, Plan SHOT-01..24, Criterios Go/No-Go | Todo | 0 |
 | **PRD-01** | Motor Técnico `/engine` | Fórmulas, dispatcher, `hardware_kits`, BFD 1D, Casos G1–G12 | 4,5,6,7 | 1 |
-| **PRD-02** | Modelo de Datos DDL | PostgreSQL 16, RLS, `hardware_kits`, billing, auditoría | Todo | 0 |
+| **PRD-02** | Modelo de Datos DDL | PostgreSQL 17 productivo (compatible con 16), RLS, `hardware_kits`, billing, auditoría | Todo | 0 |
 | **PRD-03** | Tenancy y Facturación | Planes Starter/Pro/Business, Trial 7d/500cr, Ledger | 5–11 | 0 |
 | **PRD-04** | Diseñador 2D SVG | Árbol paramétrico JSON, Canvas React, Atajos 8, 9, 0 | 6,7 | 1 |
 | **PRD-05** | Precios y Rentabilidad | 5 Modos de precio, listas de costo, FX buffer 5% | 6 | 1 |
@@ -117,7 +117,7 @@ Este manifiesto conserva la baseline aprobada y las decisiones congeladas de los
 * `djangorestframework >= 3.15`
 * `django-cors-headers >= 4.3`
 * `pydantic >= 2.7` & `pydantic-settings >= 2.2` (Esquemas tipados y settings validados)
-* `psycopg[binary] >= 3.1` (Conector nativo PostgreSQL 16)
+* `psycopg[binary] >= 3.1` (Conector nativo PostgreSQL 16/17)
 * `weasyprint >= 62.0` (Generación de PDFs DOC-01 a DOC-08)
 * `openpyxl >= 3.1` (Generación de listas de corte en Excel DOC-03)
 * `drf-spectacular >= 0.27` (Autogeneración OpenAPI 3.0 / TypeScript client)

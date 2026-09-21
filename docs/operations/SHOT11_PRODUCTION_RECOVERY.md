@@ -3,6 +3,34 @@
 Status: deployable configuration and local proofs; external production gates remain unproven.
 The shot plan records the resolved OWNER commercial decisions and current evidence.
 
+## Deferred paid activation (OWNER PD-11-04/05)
+
+The OWNER authorized merging tested code before paying for the required infrastructure.
+This is integration readiness, not SHOT-11 closure. Leave live billing and the production
+launch pending the real Flow, deployment, alert and recovery evidence below.
+
+Free Supabase project `DEKOPEN`, ref `lexvdshnblbtxdkadnhm`, is reserved in
+`KaraAliOsman's Org`, region `sa-east-1`. Actual PostgreSQL is 17.6 (bundle 17.6.1.166).
+The project is initially empty; do not use demo seed data for production. Apply reviewed
+repository migrations after protected integration and verify managed Auth/RLS before
+pointing an application at it. Preserve migration history and provision restricted
+runtime/backup credentials through server secrets, never through the browser.
+
+When payment is enabled, select Supabase Pro, Small compute and seven-day PITR; verify
+the real recovery window and Storage recovery. Railway requires an active paid workspace
+before even creating the separate DEKOPEN project; use Pro for resource monitors.
+Create API, billing reconciliation and backup services from `KaraAliOsman/framedex`'s
+verified release SHA using `railway.toml`, `railway.billing.toml` and
+`railway.backup.toml`, respectively. Provision Redis and private service networking,
+then the public Cloudflare boundary and the measured alert thresholds described below.
+Do not reuse the unrelated existing OpenClaw service or its secrets.
+
+No paid plan was activated and no Railway DEKOPEN project exists yet. The repository
+contains the service configuration; Flow credentials, production domains, secret
+provisioning, alert delivery and managed recovery remain activation work. Recheck prices
+at activation: the published estimates were about USD 130/month for the one-project
+Supabase configuration and USD 20/month Railway minimum, before additional usage.
+
 ## Merchant offers, checkout and reconciliation
 
 Set server-only `FLOW_API_KEY`, `FLOW_SECRET_KEY`, the exact approved `FLOW_API_URL`,
@@ -101,9 +129,9 @@ Sources checked 2026-09-20:
 ## Encrypted logical backup
 
 Build `docker build -f scripts/Dockerfile.backup -t dekopen-shot11-backup .`.
-This separate operational image supplies PostgreSQL 16 tools and the backup runtime.
-The database server major must match the image; a PostgreSQL 17 development stack is
-not evidence that a PostgreSQL 16 dump client can back it up.
+This separate operational image supplies PostgreSQL 17 tools and the backup runtime,
+matching the OWNER-approved production major. The database server major must match
+the image. Historical PostgreSQL 16 drill evidence does not establish recovery on 17.
 
 Provision `BACKUP_DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and
 `BACKUP_ENCRYPTION_KEY` through server secrets. The encryption key is 32 random bytes
@@ -171,7 +199,7 @@ and ledger balances, and rejects RTO over two hours. Re-enable required platform
 only after rotating credentials and verifying the managed Auth/service boundary.
 
 `python scripts/check_restore_drill.py` provides a repeatable **synthetic local** proof:
-two disposable PostgreSQL 16 instances, all migrations/seed, a trial wallet and payment
+two disposable PostgreSQL 17 instances, all migrations/seed, a trial wallet and payment
 evidence, backup, actual decryption/restore and refusal to overwrite the populated target.
 It deletes only its own containers/network and its own temporary artifacts. The result
 is not a production-sized RTO, remote Storage restore, or production PITR proof.

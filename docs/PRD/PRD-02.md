@@ -25,7 +25,10 @@ reales de fabricante.
 
 ---
 
-## 2. DDL Canónico Completo (PostgreSQL 16)
+## 2. DDL Canónico Completo (compatible con PostgreSQL 16; producción PostgreSQL 17)
+
+PD-11-04 autoriza PostgreSQL 17 para Supabase productivo. La prueba independiente de
+compatibilidad PostgreSQL 16 se conserva; no se reescriben migraciones históricas.
 
 ### Enmienda SHOT-11 — autoridad de billing y wallet
 

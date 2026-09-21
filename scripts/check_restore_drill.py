@@ -1,4 +1,4 @@
-"""Real clean-instance PostgreSQL 16 restore proof using disposable Docker resources.
+"""Real clean-instance PostgreSQL 17 restore proof using disposable Docker resources.
 
 Synthetic data only. Never connects to or modifies an existing database. Does not prove
 production PITR, Storage delivery, production-sized RTO, or authentication service recovery.
@@ -39,7 +39,7 @@ def main():
         for suffix in ('source', 'restore'):
             name = identity + '-' + suffix
             run(['docker', 'run', '-d', '--name', name, '--network', identity,
-                 '--network-alias', suffix, '-e', 'POSTGRES_PASSWORD', 'postgres:16-bookworm'],
+                 '--network-alias', suffix, '-e', 'POSTGRES_PASSWORD', 'postgres:17-bookworm'],
                 env=environment)
             containers.append(name)
             deadline = time.monotonic() + 60
@@ -93,7 +93,7 @@ def main():
             if repeated.returncode == 0 or b'clean database' not in repeated.stderr:
                 raise RuntimeError('Restore did not refuse a populated target')
             restored['refuses_populated_target'] = True
-            restored['source'] = 'synthetic isolated PostgreSQL 16; all repository migrations and seed'
+            restored['source'] = 'synthetic isolated PostgreSQL 17; all repository migrations and seed'
             restored['sha'] = sha
             print(json.dumps(restored, indent=2))
     finally:

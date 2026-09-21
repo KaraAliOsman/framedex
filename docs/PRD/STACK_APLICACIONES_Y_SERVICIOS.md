@@ -13,7 +13,7 @@ desplegados. El [roadmap](./PLAN_SHOTS.md) determina cuándo se introducen y
 
 | Servicio / baseline | Rol | Fuente contractual |
 |---|---|---|
-| Supabase PostgreSQL 16, Auth, Storage | Datos, RLS, Magic Link, archivos firmados | PRD-02, PRD-03, PRD-19; Constitución |
+| Supabase PostgreSQL 17, Auth, Storage | Datos, RLS, Magic Link, archivos firmados | PRD-02, PRD-03, PRD-19; PD-11-04; Constitución |
 | Railway, Django, Huey/Redis | API, workers, despliegue y salud | PRD-00, PRD-19; PLAN_SHOTS |
 | PostHog | Telemetría y embudos | PRD-19; SHOT-04/23 |
 | Intercom/Fin | Soporte | PLAN_SHOTS SHOT-23 |

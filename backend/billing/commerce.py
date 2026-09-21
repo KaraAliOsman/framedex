@@ -60,15 +60,20 @@ def checkout(org, user_id, *, operation_key, offer_id, customer_name, customer_e
     if customer['registration_state'] != 'registered':
         return dict(id=purchase['id'],operation_key=operation_key,state='registration_pending',redirect_url=None)
     with wallet.financial_transaction(org):
+        wallet.locked_org(org)
         prior_intents = rows('SELECT * FROM public.flow_subscription_intents WHERE org_id=%s AND operation_key=%s', [org,key])
-    if prior_intents:
-        intent = prior_intents[0]
-    else:
-        intent = native.prepare(org,operation_key=key,customer_id=customer['customer_id'],
+        if prior_intents:
+            intent = prior_intents[0]
+        else:
+            # Card registration can finish days after selection. Freeze the start
+            # only when preparing the native subscription, under the org lock so
+            # concurrent resumptions (including across midnight) reuse one intent.
+            intent = native.prepare(org,operation_key=key,customer_id=customer['customer_id'],
                             provider_plan_id=offer['provider_plan_id'],environment=environment,
                             plan_tier=offer['plan_tier'],billing_cycle=offer['billing_cycle'],net_usd=offer['net_usd'],
                             fx_rate=offer['fx_rate'],fx_source=offer['fx_source'],fx_observed_on=offer['fx_observed_on'],
-                            fx_snapshot_id=offer['fx_snapshot_id'],start_date=purchase['start_date'],trial_days=0,
+                            fx_snapshot_id=offer['fx_snapshot_id'],
+                            start_date=timezone.now().astimezone(ZoneInfo(provider_timezone)).date(),trial_days=0,
                             policy_reference=lifecycle.POLICY)
     if intent['state'] in ('dispatching','uncertain'):
         native.recover(org,intent['id'],client)

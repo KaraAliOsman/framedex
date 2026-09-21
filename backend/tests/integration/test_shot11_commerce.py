@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from urllib.parse import parse_qs
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from django.db import transaction, DatabaseError
 from django.utils import timezone
@@ -89,10 +90,62 @@ class CheckoutNetwork:
         return httpx.Response(200,json=value)
 
 
-def begin(org,user,offer,remote,key):
+def begin(org,user,offer,remote,key,provider_timezone='UTC'):
     return commerce.checkout(org,user,operation_key=key,offer_id=offer['id'],customer_name='Fixture owner',
         customer_email='owner@example.test',client=remote.client,callback_origin='https://api.example.test',
-        frontend_origin='https://app.example.test',provider_timezone='UTC')
+        frontend_origin='https://app.example.test',provider_timezone=provider_timezone)
+
+
+@pytest.mark.parametrize('provider_timezone', ['UTC','America/Santiago'])
+@pytest.mark.parametrize('lost_response', [False,True])
+def test_delayed_registration_freezes_start_once_at_subscription_preparation(
+        committed_commercial_rows,monkeypatch,provider_timezone,lost_response):
+    org,_,users=committed_commercial_rows
+    plan=offer(org)
+    remote=CheckoutNetwork(org,plan)
+    selected_at=timezone.now().replace(hour=1,minute=0,second=0,microsecond=0)
+    monkeypatch.setattr(timezone,'now',lambda:selected_at)
+    key=uuid4()
+    begin(org,users['OWNER'],plan,remote,key,provider_timezone)
+    customer=one('SELECT id FROM public.flow_customer_operations WHERE org_id=%s',[org])
+    customers.confirm_registration(org,customer['id'],remote.token,remote.client)
+
+    resumed_at=selected_at+timedelta(days=3)
+    monkeypatch.setattr(timezone,'now',lambda:resumed_at)
+    remote.start=resumed_at.astimezone(ZoneInfo(provider_timezone)).replace(hour=0)
+    remote.end=remote.start+timedelta(days=30)
+    expected_date=remote.start.date()
+    original=remote.handle
+    dispatched_dates=[]
+    def delayed_provider(request):
+        response=original(request)
+        if request.url.path=='/api/subscription/create':
+            dispatched_dates.append(parse_qs(request.content.decode())['subscription_start'][0])
+            if lost_response:
+                raise httpx.ReadTimeout('Synthetic lost response after remote subscription creation')
+        return response
+    remote.client=FlowClient(api_url='https://sandbox.flow.cl/api',api_key='fixture',secret_key='fixture',
+                             transport=httpx.MockTransport(delayed_provider))
+    if lost_response:
+        with pytest.raises(FlowError):
+            begin(org,users['OWNER'],plan,remote,key,provider_timezone)
+    else:
+        assert begin(org,users['OWNER'],plan,remote,key,provider_timezone)['state']=='pending'
+    intent=one('SELECT id,start_date FROM public.flow_subscription_intents WHERE org_id=%s',[org])
+    assert intent['start_date']==expected_date
+    assert intent['start_date']!=selected_at.astimezone(ZoneInfo(provider_timezone)).date()
+    assert dispatched_dates==[expected_date.isoformat()]
+
+    # A next-day retry must use the same immutable authority, including when only
+    # signed GET recovery can establish whether the prior POST was committed.
+    monkeypatch.setattr(timezone,'now',lambda:resumed_at+timedelta(days=1))
+    for _ in range(2):
+        assert begin(org,users['OWNER'],plan,remote,key,provider_timezone)['state']=='pending'
+    assert rows('SELECT id,start_date FROM public.flow_subscription_intents WHERE org_id=%s',[org])==[intent]
+    assert dispatched_dates==[expected_date.isoformat()]
+    assert remote.posts.count('/api/subscription/create')==1
+    assert rows('SELECT id FROM public.billing_periods WHERE org_id=%s',[org])==[]
+    assert_consistent(org,500)
 
 
 def test_registration_checkout_pending_confirmation_and_renewal(committed_commercial_rows,monkeypatch):
