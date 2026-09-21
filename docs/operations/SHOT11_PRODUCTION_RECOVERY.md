@@ -151,6 +151,9 @@ synthetic Supabase and performs the existing encrypted clean-instance restore. T
 workflow uses read-only repository permissions and no production/provider secrets.
 It runs only on explicit label application, not every documentary commit. Record its
 run URL and tested SHA; a successful run does not prove external production gates.
+For a narrow restore-tool refinement after a passing Gauntlet, the separate label
+`shot-recovery-verification` runs only the restore proof; record both SHAs according
+to Rule 19. It is not a replacement for the closure label's full verification.
 
 Retrieve the encrypted backup from private Storage using the server/operator credential
 into protected temporary storage. Verify its expected ciphertext hash. Provision a clean

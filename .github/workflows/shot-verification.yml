@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   closure:
-    if: github.event.label.name == 'shot-closure-verification'
+    if: contains(fromJSON('["shot-closure-verification", "shot-recovery-verification"]'), github.event.label.name)
     name: Canonical Gauntlet and recovery
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -65,11 +65,13 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run canonical Gauntlet without substitutions
+        if: github.event.label.name == 'shot-closure-verification'
         env:
           POSTGRES16_CONTAINER: ${{ job.services.postgres16.id }}
         run: python scripts/check_dod.py all
 
       - name: Probe production container on fresh synthetic Supabase
+        if: github.event.label.name == 'shot-closure-verification'
         run: |
           python -c "from scripts import local_gates; local_gates.start_clean_stack()"
           python scripts/check_production_boundary.py

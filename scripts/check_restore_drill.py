@@ -74,7 +74,13 @@ def main():
                            RESTORE_DATABASE_URL=f'postgresql://postgres:{password}@restore:5432/postgres')
         with tempfile.TemporaryDirectory(prefix='dekopen-drill-') as temporary:
             mount = ['--mount', f'type=bind,source={temporary},target=/backup']
-            common = ['docker', 'run', '--rm', '--network', identity, *mount,
+            # Linux bind mounts preserve the host's mode-0700 ownership. Run the
+            # disposable probe as its owning non-root user instead of opening the
+            # private directory to other users or running the image as root.
+            identity_flags = ['--user', f'{os.getuid()}:{os.getgid()}'] if os.name == 'posix' else []
+            if os.name == 'posix' and os.getuid() == 0:
+                raise RuntimeError('Run the synthetic restore probe as a non-root host user')
+            common = ['docker', 'run', '--rm', *identity_flags, '--network', identity, *mount,
                       '-e', 'BACKUP_DATABASE_URL', '-e', 'RESTORE_DATABASE_URL', '-e', 'BACKUP_ENCRYPTION_KEY',
                       'dekopen-shot11-backup']
             backup = json.loads(run([*common, 'backup', '/backup/drill.aes'], env=environment))
