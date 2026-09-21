@@ -29,7 +29,10 @@ def ready(request):
                            "AND to_regclass('public.credit_lot_movements') IS NOT NULL "
                            "AND to_regclass('public.billing_periods') IS NOT NULL "
                            "AND to_regclass('public.billing_lifecycle_events') IS NOT NULL "
-                           "AND to_regclass('public.flow_lifecycle_operations') IS NOT NULL")
+                           "AND to_regclass('public.flow_lifecycle_operations') IS NOT NULL "
+                           "AND to_regclass('public.billing_offers') IS NOT NULL "
+                           "AND to_regclass('public.billing_checkouts') IS NOT NULL "
+                           "AND to_regclass('public.billing_invoice_observations') IS NOT NULL")
             if not cursor.fetchone()[0]:
                 raise DatabaseError('Required migration is absent')
         if not settings.REDIS_URL:

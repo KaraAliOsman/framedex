@@ -61,3 +61,64 @@ class BillingSerializer(serializers.Serializer):
     trial_ends_at = serializers.DateTimeField(allow_null=True)
     subscription = SubscriptionSerializer(allow_null=True)
     payments = PaymentSerializer(many=True)
+
+
+class OfferSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    product_code = serializers.CharField()
+    kind = serializers.CharField()
+    plan_tier = serializers.CharField(allow_null=True)
+    billing_cycle = serializers.CharField(allow_null=True)
+    credits = serializers.IntegerField()
+    amount = serializers.CharField()
+    fx_source = serializers.CharField()
+    fx_observed_on = serializers.DateField()
+
+
+class CheckoutInputSerializer(serializers.Serializer):
+    operation_key = serializers.UUIDField()
+    offer_id = serializers.UUIDField()
+
+
+class CheckoutResultSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    operation_key = serializers.UUIDField()
+    state = serializers.CharField()
+    redirect_url = serializers.URLField(allow_null=True)
+
+
+class CheckoutRecordSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    operation_key = serializers.UUIDField()
+    offer_id = serializers.UUIDField()
+    product_code = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class ChangeResultSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    state = serializers.CharField()
+    kind = serializers.CharField()
+    effective_at = serializers.DateTimeField(allow_null=True)
+    amount = serializers.CharField(allow_null=True)
+    currency = serializers.CharField()
+    product_code = serializers.CharField(allow_null=True)
+
+
+class CommerceSerializer(serializers.Serializer):
+    offers = OfferSerializer(many=True)
+    checkouts = CheckoutRecordSerializer(many=True)
+    registration_state = serializers.CharField(allow_null=True)
+    pending_change = ChangeResultSerializer(allow_null=True)
+    scheduled_changes = ChangeResultSerializer(many=True)
+    reconciliation_required = serializers.BooleanField()
+
+
+class ChangeInputSerializer(serializers.Serializer):
+    operation_key = serializers.UUIDField()
+    offer_id = serializers.UUIDField(required=False)
+    cancel = serializers.BooleanField(default=False)
+
+
+class ConfirmChangeSerializer(serializers.Serializer):
+    operation_id = serializers.UUIDField()

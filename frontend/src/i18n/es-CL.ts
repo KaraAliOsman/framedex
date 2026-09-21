@@ -1,5 +1,35 @@
 /** SHOT-04 UI keys (Regla 14); no additional language/runtime dependency. */
 const messages = {
+  "billing.invoiceReconciliation":
+    "Hay un importe de Flow que requiere revisión administrativa. Los pagos y créditos confirmados se conservan; contacta a soporte.",
+  "billing.abandonChange": "Volver sin confirmar",
+  "billing.manage": "Planes y recargas",
+  "billing.commerceError":
+    "No se completó la operación. Actualiza su estado antes de volver a intentar; si continúa pendiente, contacta a soporte.",
+  "billing.awaitingProvider":
+    "La operación se está conciliando con Flow. El acceso y el saldo reflejan solo lo confirmado.",
+  "billing.verifyPayment": "Verificar estado con Flow",
+  "billing.noOffers": "Todavía no hay ofertas de pago habilitadas para esta organización.",
+  "billing.offerPolicy":
+    "Precios finales en CLP con IVA incluido. El plan anual se cobra una vez al año y entrega créditos cada mes.",
+  "billing.action": "Acción",
+  "billing.noExpiry": "Sin vencimiento",
+  "billing.monthlyAllowance": "Por ciclo de servicio mensual",
+  "billing.previewChange": "Revisar cambio",
+  "billing.buy": "Contratar con Flow",
+  "billing.cancelAtEnd": "Revisar cancelación al terminar el período",
+  "billing.previewTitle": "Confirmar cambio de suscripción",
+  "billing.effectiveAt": "Fecha efectiva",
+  "billing.immediateUpgrade": "El upgrade entra en vigor cuando Flow confirma el cambio.",
+  "billing.flowAdjustment": "Ajuste calculado por Flow",
+  "billing.noAutomaticRefund":
+    "Los cambios al final del período y la cancelación voluntaria no generan devolución automática. Los packs comprados se conservan.",
+  "billing.confirmChange": "Confirmar en Flow",
+  "billing.recentCheckouts": "Operaciones recientes",
+  "billing.continueCheckout": "Continuar o consultar",
+  "billing.PACK_1000": "Pack de 1.000 créditos",
+  "billing.PACK_3000": "Pack de 3.000 créditos",
+  "billing.PACK_7500": "Pack de 7.500 créditos",
   "billing.title": "Suscripción y facturación",
   "billing.periodEnd": "Fin del período actual",
   "billing.payments": "Pagos registrados",

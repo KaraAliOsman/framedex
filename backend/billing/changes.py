@@ -84,6 +84,10 @@ def _store(org, subscription_id, operation_key, kind, authority, preview=None):
         if rows("SELECT id FROM public.flow_lifecycle_operations WHERE org_id=%s AND kind IN ('change','cancel') "
                 "AND state IN ('prepared','dispatching','uncertain')", [org]):
             raise FlowError('flow_operation_pending')
+        if rows("SELECT id FROM public.billing_lifecycle_events WHERE org_id=%s AND subscription_id=%s "
+                "AND kind IN ('downgrade','frequency','cancel') AND effective_at>%s",
+                [org,subscription_id,timezone.now()]):
+            raise FlowError('flow_scheduled_operation_pending')
         return one('INSERT INTO public.flow_lifecycle_operations(org_id,subscription_id,operation_key,kind,authority,preview) '
                    'VALUES(%s,%s,%s,%s,%s::jsonb,%s::jsonb) RETURNING *',
                    [org, subscription_id, operation_key, kind, lifecycle.dump(authority),
@@ -163,6 +167,12 @@ def dispatch(org, operation_id, client):
         raise FlowError('flow_operation_binding_mismatch')
     if provider_time(authority['period_end'], authority['provider_timezone']) <= timezone.now():
         raise FlowError('flow_operation_period_changed')
+    remote = client.subscription(authority['subscription_id'])
+    if (remote.get('subscriptionId') != authority['subscription_id']
+            or remote.get('planId') != authority['old_plan_id'] or remote.get('status') != 1
+            or remote.get('customerId') != authority['customer_id']
+            or changes_period(remote, authority) is False):
+        raise FlowError('flow_operation_authority_changed')
     if operation['kind'] == 'change':
         preview = client.change_plan_preview(authority['subscription_id'], authority['target']['provider_plan_id'],
                                              start_date=authority['start_date'])
@@ -279,3 +289,20 @@ def recover(org, operation_id, client):
         # A lost POST response needs provider/admin reconciliation; never another POST.
         raise FlowError('flow_operation_reconciliation_required', uncertain=True)
     return accept(org, operation_id, client, operation['result'])
+
+
+
+def changes_period(remote, authority):
+    return (provider_time(remote.get('period_start'), authority['provider_timezone']) ==
+            provider_time(authority['period_start'], authority['provider_timezone']) and
+            provider_time(remote.get('period_end'), authority['provider_timezone']) ==
+            provider_time(authority['period_end'], authority['provider_timezone']))
+
+
+def abandon(org, operation_id):
+    with wallet.financial_transaction(org):
+        wallet.locked_org(org)
+        operation = one('SELECT * FROM public.flow_lifecycle_operations WHERE org_id=%s AND id=%s', [org,operation_id])
+        if operation['kind'] not in ('change','cancel') or operation['state'] not in ('prepared','abandoned'):
+            raise FlowError('flow_operation_already_dispatched')
+        one("UPDATE public.flow_lifecycle_operations SET state='abandoned' WHERE org_id=%s AND id=%s RETURNING id", [org,operation_id])

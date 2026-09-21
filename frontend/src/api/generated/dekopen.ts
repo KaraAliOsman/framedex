@@ -24,8 +24,14 @@ import type {
   CatalogArticleListParams,
   CatalogBeadListParams,
   CatalogKitListParams,
+  ChangeInputRequest,
+  ChangeResult,
+  CheckoutInputRequest,
+  CheckoutResult,
   CloneProjectRequest,
+  Commerce,
   ConfirmBatchRequestRequest,
+  ConfirmChangeRequest,
   DesignOptions,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
@@ -197,6 +203,404 @@ export const billingRetrieve = async (
   });
 };
 
+export type billingChangeAbandonResponse200 = {
+  data: ChangeResult;
+  status: 200;
+};
+
+export type billingChangeAbandonResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingChangeAbandonResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingChangeAbandonResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingChangeAbandonResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingChangeAbandonResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingChangeAbandonResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingChangeAbandonResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingChangeAbandonResponseSuccess = billingChangeAbandonResponse200 & {
+  headers: Headers;
+};
+export type billingChangeAbandonResponseError = (
+  | billingChangeAbandonResponse400
+  | billingChangeAbandonResponse401
+  | billingChangeAbandonResponse403
+  | billingChangeAbandonResponse404
+  | billingChangeAbandonResponse409
+  | billingChangeAbandonResponse422
+  | billingChangeAbandonResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingChangeAbandonResponse =
+  billingChangeAbandonResponseSuccess | billingChangeAbandonResponseError;
+
+export const getBillingChangeAbandonUrl = () => {
+  return `/api/v1/billing/change/abandon/`;
+};
+
+export const billingChangeAbandon = async (
+  confirmChangeRequest: ConfirmChangeRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingChangeAbandonResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<billingChangeAbandonResponse>(getBillingChangeAbandonUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(confirmChangeRequest),
+  });
+};
+
+export type billingChangeConfirmResponse200 = {
+  data: ChangeResult;
+  status: 200;
+};
+
+export type billingChangeConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingChangeConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingChangeConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingChangeConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingChangeConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingChangeConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingChangeConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingChangeConfirmResponseSuccess = billingChangeConfirmResponse200 & {
+  headers: Headers;
+};
+export type billingChangeConfirmResponseError = (
+  | billingChangeConfirmResponse400
+  | billingChangeConfirmResponse401
+  | billingChangeConfirmResponse403
+  | billingChangeConfirmResponse404
+  | billingChangeConfirmResponse409
+  | billingChangeConfirmResponse422
+  | billingChangeConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingChangeConfirmResponse =
+  billingChangeConfirmResponseSuccess | billingChangeConfirmResponseError;
+
+export const getBillingChangeConfirmUrl = () => {
+  return `/api/v1/billing/change/confirm/`;
+};
+
+export const billingChangeConfirm = async (
+  confirmChangeRequest: ConfirmChangeRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingChangeConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<billingChangeConfirmResponse>(getBillingChangeConfirmUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(confirmChangeRequest),
+  });
+};
+
+export type billingChangePreviewResponse200 = {
+  data: ChangeResult;
+  status: 200;
+};
+
+export type billingChangePreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingChangePreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingChangePreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingChangePreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingChangePreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingChangePreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingChangePreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingChangePreviewResponseSuccess = billingChangePreviewResponse200 & {
+  headers: Headers;
+};
+export type billingChangePreviewResponseError = (
+  | billingChangePreviewResponse400
+  | billingChangePreviewResponse401
+  | billingChangePreviewResponse403
+  | billingChangePreviewResponse404
+  | billingChangePreviewResponse409
+  | billingChangePreviewResponse422
+  | billingChangePreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingChangePreviewResponse =
+  billingChangePreviewResponseSuccess | billingChangePreviewResponseError;
+
+export const getBillingChangePreviewUrl = () => {
+  return `/api/v1/billing/change/preview/`;
+};
+
+export const billingChangePreview = async (
+  changeInputRequest: ChangeInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingChangePreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<billingChangePreviewResponse>(getBillingChangePreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeInputRequest),
+  });
+};
+
+export type billingCheckoutResponse200 = {
+  data: CheckoutResult;
+  status: 200;
+};
+
+export type billingCheckoutResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingCheckoutResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingCheckoutResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingCheckoutResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingCheckoutResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingCheckoutResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingCheckoutResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingCheckoutResponseSuccess = billingCheckoutResponse200 & {
+  headers: Headers;
+};
+export type billingCheckoutResponseError = (
+  | billingCheckoutResponse400
+  | billingCheckoutResponse401
+  | billingCheckoutResponse403
+  | billingCheckoutResponse404
+  | billingCheckoutResponse409
+  | billingCheckoutResponse422
+  | billingCheckoutResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingCheckoutResponse = billingCheckoutResponseSuccess | billingCheckoutResponseError;
+
+export const getBillingCheckoutUrl = () => {
+  return `/api/v1/billing/checkout/`;
+};
+
+export const billingCheckout = async (
+  checkoutInputRequest: CheckoutInputRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingCheckoutResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<billingCheckoutResponse>(getBillingCheckoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(checkoutInputRequest),
+  });
+};
+
+export type commerceRetrieveResponse200 = {
+  data: Commerce;
+  status: 200;
+};
+
+export type commerceRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type commerceRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type commerceRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type commerceRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type commerceRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type commerceRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type commerceRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type commerceRetrieveResponseSuccess = commerceRetrieveResponse200 & {
+  headers: Headers;
+};
+export type commerceRetrieveResponseError = (
+  | commerceRetrieveResponse400
+  | commerceRetrieveResponse401
+  | commerceRetrieveResponse403
+  | commerceRetrieveResponse404
+  | commerceRetrieveResponse409
+  | commerceRetrieveResponse422
+  | commerceRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type commerceRetrieveResponse =
+  commerceRetrieveResponseSuccess | commerceRetrieveResponseError;
+
+export const getCommerceRetrieveUrl = () => {
+  return `/api/v1/billing/commerce/`;
+};
+
+export const commerceRetrieve = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<commerceRetrieveResponse> => {
+  return apiMutator<commerceRetrieveResponse>(getCommerceRetrieveUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type flowPaymentConfirmResponse200 = {
   data: FlowAcknowledgement;
   status: 200;
@@ -276,6 +680,95 @@ export const flowPaymentConfirm = async (
     return h;
   };
   return apiMutator<flowPaymentConfirmResponse>(getFlowPaymentConfirmUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
+export type flowSubscriptionConfirmResponse200 = {
+  data: FlowAcknowledgement;
+  status: 200;
+};
+
+export type flowSubscriptionConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowSubscriptionConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowSubscriptionConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowSubscriptionConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowSubscriptionConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowSubscriptionConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowSubscriptionConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowSubscriptionConfirmResponseSuccess = flowSubscriptionConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowSubscriptionConfirmResponseError = (
+  | flowSubscriptionConfirmResponse400
+  | flowSubscriptionConfirmResponse401
+  | flowSubscriptionConfirmResponse403
+  | flowSubscriptionConfirmResponse404
+  | flowSubscriptionConfirmResponse409
+  | flowSubscriptionConfirmResponse422
+  | flowSubscriptionConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowSubscriptionConfirmResponse =
+  flowSubscriptionConfirmResponseSuccess | flowSubscriptionConfirmResponseError;
+
+export const getFlowSubscriptionConfirmUrl = (offerId: string) => {
+  return `/api/v1/billing/flow/plan/${offerId}/`;
+};
+
+export const flowSubscriptionConfirm = async (
+  offerId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowSubscriptionConfirmResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowSubscriptionConfirmResponse>(getFlowSubscriptionConfirmUrl(offerId), {
     ...options,
     method: "POST",
     headers: {
@@ -461,6 +954,162 @@ export const flowRegistrationConfirm = async (
       ...getHeaders(options?.headers),
     },
     body: formUrlEncoded,
+  });
+};
+
+export type flowRegistrationReturnResponse303 = {
+  data: void;
+  status: 303;
+};
+
+export type flowRegistrationReturnResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowRegistrationReturnResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowRegistrationReturnResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowRegistrationReturnResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowRegistrationReturnResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowRegistrationReturnResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowRegistrationReturnResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowRegistrationReturnResponseError = (
+  | flowRegistrationReturnResponse303
+  | flowRegistrationReturnResponse400
+  | flowRegistrationReturnResponse401
+  | flowRegistrationReturnResponse403
+  | flowRegistrationReturnResponse404
+  | flowRegistrationReturnResponse409
+  | flowRegistrationReturnResponse422
+  | flowRegistrationReturnResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowRegistrationReturnResponse = flowRegistrationReturnResponseError;
+
+export const getFlowRegistrationReturnUrl = (operationId: string) => {
+  return `/api/v1/billing/flow/registration-return/${operationId}/`;
+};
+
+export const flowRegistrationReturn = async (
+  operationId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowRegistrationReturnResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowRegistrationReturnResponse>(getFlowRegistrationReturnUrl(operationId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
+export type billingSyncResponse200 = {
+  data: Billing;
+  status: 200;
+};
+
+export type billingSyncResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type billingSyncResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type billingSyncResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type billingSyncResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type billingSyncResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type billingSyncResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type billingSyncResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type billingSyncResponseSuccess = billingSyncResponse200 & {
+  headers: Headers;
+};
+export type billingSyncResponseError = (
+  | billingSyncResponse400
+  | billingSyncResponse401
+  | billingSyncResponse403
+  | billingSyncResponse404
+  | billingSyncResponse409
+  | billingSyncResponse422
+  | billingSyncResponse503
+) & {
+  headers: Headers;
+};
+
+export type billingSyncResponse = billingSyncResponseSuccess | billingSyncResponseError;
+
+export const getBillingSyncUrl = () => {
+  return `/api/v1/billing/sync/`;
+};
+
+export const billingSync = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<billingSyncResponse> => {
+  return apiMutator<billingSyncResponse>(getBillingSyncUrl(), {
+    ...options,
+    method: "POST",
   });
 };
 

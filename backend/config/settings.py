@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "engine_api.apps.EngineApiConfig",
     "documents.apps.DocumentsConfig",
     "purchasing.apps.PurchasingConfig",
+    "billing.apps.BillingConfig",
 ]
 
 MIDDLEWARE = [
@@ -156,3 +157,7 @@ LOGGING = {
 structlog.configure(processors=[structlog.contextvars.merge_contextvars,
                                structlog.processors.TimeStamper(fmt='iso', utc=True),
                                structlog.processors.JSONRenderer()])
+
+BILLING_CALLBACK_ORIGIN = os.environ.get('BILLING_CALLBACK_ORIGIN', '')
+BILLING_FRONTEND_ORIGIN = os.environ.get('BILLING_FRONTEND_ORIGIN', '')
+FLOW_MERCHANT_TIMEZONE = os.environ.get('FLOW_MERCHANT_TIMEZONE', '')

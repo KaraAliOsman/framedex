@@ -76,6 +76,27 @@ def active(org):
     return intent, period
 
 
+def test_abandon_and_scheduled_cancel_survive_reload_without_another_mutation(committed_commercial_rows):
+    from backend.tests.integration.test_shot08_pricing import owner_client
+    org,_,users=committed_commercial_rows
+    intent,period=active(org)
+    remote=LifecycleNetwork(intent,period)
+    operation=changes.prepare_cancel(org,operation_key='abandon-first',client=remote.client,provider_timezone='UTC')
+    client=owner_client(users['OWNER'])
+    loaded=client.get('/api/v1/billing/commerce/')
+    assert loaded.status_code==200 and loaded.json()['pending_change']['id']==str(operation['id'])
+    changes.abandon(org,operation['id'])
+    assert client.get('/api/v1/billing/commerce/').json()['pending_change'] is None
+    assert remote.posts==0
+    confirmed=changes.prepare_cancel(org,operation_key='cancel-second',client=remote.client,provider_timezone='UTC')
+    changes.dispatch(org,confirmed['id'],remote.client)
+    scheduled=client.get('/api/v1/billing/commerce/').json()['scheduled_changes']
+    assert len(scheduled)==1 and scheduled[0]['id']==str(confirmed['id'])
+    with pytest.raises(FlowError,match='flow_scheduled_operation_pending'):
+        changes.prepare_cancel(org,operation_key='overlapping-cancel',client=remote.client,provider_timezone='UTC')
+    assert remote.posts==1
+
+
 def test_flow_upgrade_preview_confirm_and_single_dispatch(committed_commercial_rows):
     org, _, _ = committed_commercial_rows
     intent, period = active(org)

@@ -64,14 +64,15 @@ def reconcile(org):
     lifecycle.reconcile(org)
     from billing.settlement import grant_due
     grant_due(org)
+    now = timezone.now()
     expired = rows('SELECT * FROM public.credit_lots WHERE org_id=%s AND remaining>0 '
-                   'AND expires_at<=%s ORDER BY expires_at,id FOR UPDATE', [org, timezone.now()])
+                   'AND expires_at<=%s ORDER BY expires_at,id FOR UPDATE', [org, now])
     for lot in expired:
         expire_lot(org, lot)
     organization = locked_org(org)
     if organization['subscription_tier'] == 'TRIAL':
         rows("UPDATE public.tenancy_organizations SET subscription_tier='STARTER',updated_at=now() "
-             'WHERE id=%s AND trial_ends_at<=statement_timestamp() RETURNING id', [org])
+             'WHERE id=%s AND trial_ends_at<=%s RETURNING id', [org, now])
     return locked_org(org)
 
 

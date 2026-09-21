@@ -68,8 +68,8 @@ cancellation, expiration, trial conversion and refund compensation.
 
 ## Evidence and closure gates
 
-Current implementation checkpoint: `164c05a714f5daeb5d6c815d90a4a9fb698b4d44`.
-This is not the final material shot head: commercial orchestration remains unfinished.
+Previous implementation checkpoint: `fe3f57dd0437c833ede3b8aaad440793449465b6`.
+This is not a shot-closure declaration; checkout integration evidence follows below.
 Draft [PR #38](https://github.com/KaraAliOsman/framedex/pull/38) targets protected main.
 Execute the canonical Gauntlet on the final material head only.
 
@@ -77,7 +77,8 @@ External gates currently unproven: Flow sandbox credentials and real subscriptio
 production deployment, Cloudflare boundary and Railway alert delivery; Supabase PITR/RPO
 and encrypted Storage backup plus clean-instance restore. No Flow/Railway/production DB
 credentials were present in the process environment at initial inspection. GitHub access
-and the local Supabase Docker stack are available. This is not evidence of production access.
+is available. Docker Desktop is currently unavailable; the initial Supabase proofs below
+predate that failure. This is not evidence of production access.
 
 Closure requires all roadmap gates, protected PR CI, authorized protected merge, verified
 main and the conventional `shot-11` tag. Do not mark closed from configuration or mocks.
@@ -98,11 +99,11 @@ main and the conventional `shot-11` tag. Do not mark closed from configuration o
   provider customer; no card data or raw registration token is stored. Native invoices are bound to their subscription,
   customer and frozen quote before atomic settlement. These server primitives require
   preprovisioned merchant plans and explicit approved terms; no public client
-  chooses them. Plan-selection/checkout UI, paid
-  entitlements, monthly allowances for annual plans, changes/cancellation and pack
-  storefront remain unfinished. This is not evidence of a complete recurring checkout.
+  chooses them. The checkout checkpoint adds plan/pack selection, paid entitlements,
+  annual-plan monthly allowances and change/cancellation UI. Real Flow sandbox evidence
+  and administrative adjustment-invoice settlement remain outstanding.
 - S20 and S24 expose real OWNER/aal2 wallet and billing read state through generated
-  OpenAPI clients. S24 does not yet offer checkout or subscription management.
+  OpenAPI clients. S24 now provides checkout and subscription-management operations.
 - Non-root Gunicorn image, PostgreSQL/Redis readiness, shared rate limit, safe structured
   request logs, Railway deployment config and executable daily encrypted backup cron.
 - AES-256-GCM snapshot dump and clean-target restore verify all row hashes, constraints,
@@ -211,6 +212,41 @@ not the final material SHA or shot closure:
   PostgreSQL is a development test fallback, not a substitute for Supabase Auth E2E,
   production Docker probes or the final canonical Gauntlet.
 
-Checkout orchestration, renewal binding and public management UI are being integrated;
-these primitives alone do not satisfy the recurring checkout gate. External account
-access, production alerts/PITR/Storage and final shot closure remain unproven.
+Protected CI for `fe3f57dd0437c833ede3b8aaad440793449465b6` passed all four required
+contexts in [run 35627827812](https://github.com/KaraAliOsman/framedex/actions/runs/35627827812).
+CodeRabbit skipped its review because the PR is draft.
+
+## Checkout integration checkpoint, 2026-09-21
+
+- Audited, immutable per-organization offers use the PRD-03 engine catalogue and frozen
+  FX/IVA conversion. Browser requests contain only offer and operation IDs. OWNER/aal2
+  and tenant isolation are enforced before dispatch.
+- Native customer/card registration and recurring checkout resume persisted operations.
+  Signed invoice/payment lookup binds the customer, subscription, exact amount and
+  provider period before atomically settling a paid period. A renewal replaces expired
+  monthly credit; duplicate callbacks do not duplicate allowances. Pack checkout grants
+  non-expiring purchased credit once, including after returning from Flow or retrying.
+- S24 displays Flow's saved preview for a second human confirmation, restores pending
+  operations after reload, and shows deferred changes. An undispatched preview can be
+  abandoned. Overlapping scheduled changes are rejected instead of silently superseded.
+- An unmatched adjustment invoice is retained immutably and flagged for administrative
+  reconciliation without blocking valid renewals or granting another allowance. Automatic
+  adjustment settlement/resolution remains unfinished pending real merchant evidence.
+- Operator commands provision offers and prepare/dispatch exceptional refunds. The
+  Railway reconciliation cron is configured for signed GET recovery every 15 minutes.
+  No deployed cron or alert delivery is claimed from this configuration.
+- Trial credit expiration and Starter transition use the same reconciliation instant;
+  purchased lots remain intact and cannot enable AI on Starter.
+
+Local diagnostic checks: 59 financial integration cases on PostgreSQL 16.15 (including
+real locks/RLS/rollback), nine billing UI cases, 205 non-integration backend/engine cases,
+frontend build, canonical lint and typecheck pass. SHA-bound confirmation is recorded
+after committing this delta. The native database uses a local `auth.uid()` compatibility
+function; it does not provide Supabase Auth. An exploratory full-backend run on this
+incomplete environment had 351 passes, 31 failures and 63 setup errors (missing Auth
+fixtures/schema privileges); it is not passing full-suite evidence.
+
+Remaining closure work: real Flow sandbox checkout/change/refund response verification,
+adjustment reconciliation, current Supabase/Auth E2E and canonical Gauntlet, deployed
+production boundary and Railway alerts, encrypted Storage/PITR and clean managed restore.
+Keep PR #38 draft and SHOT-11 open until the actual gates pass; no merge or tag yet.

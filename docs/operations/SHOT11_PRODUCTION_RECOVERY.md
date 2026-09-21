@@ -1,7 +1,55 @@
 # SHOT-11 production and recovery runbook
 
 Status: deployable configuration and local proofs; external production gates remain unproven.
-The shot plan is the authority for evidence and pending commercial decisions.
+The shot plan records the resolved OWNER commercial decisions and current evidence.
+
+## Merchant offers, checkout and reconciliation
+
+Set server-only `FLOW_API_KEY`, `FLOW_SECRET_KEY`, the exact approved `FLOW_API_URL`,
+`FLOW_MERCHANT_TIMEZONE` matching the merchant account, `BILLING_CALLBACK_ORIGIN` and
+`BILLING_FRONTEND_ORIGIN` (public HTTPS origins without paths). Keep sandbox and production
+credentials separate. No public endpoint accepts FX, amounts, grants or provider plan IDs.
+
+Create the native recurring plan in the merchant account, then run the trusted operator
+command `python backend/manage.py provision_billing_offer --help`. Supply the organization,
+approved product/cycle, existing Flow plan ID, observed FX rate/source/date/snapshot UUID
+and audit reason. The command verifies the remote amount/currency/interval against the
+engine's net USD catalogue, 5% FX buffer and 19% IVA, records an immutable audited offer,
+and prints its callback URL. Configure that exact URL as the merchant plan's `urlCallback`
+before exposing the offer. Packs use `PACK_1000`, `PACK_3000` or `PACK_7500` without
+`--cycle` or `--flow-plan`. Provisioning requires a trusted database session; the runtime
+financial role cannot alter an offer's price. Retire an offer by setting `active=false`
+through an audited operator transaction; never rewrite frozen historical terms.
+
+An OWNER with aal2 selects an offer in S24. Flow handles payment/card registration.
+Registration alone never activates paid rights. The OWNER can resume a persisted checkout
+after returning from Flow. Each provider mutation has a committed dispatch claim; refreshes,
+callbacks and reconciliation must reuse that operation instead of posting a second charge.
+Plan changes display the saved Flow preview and need the separate confirmation action.
+Prepared previews may be abandoned; dispatched operations can only be reconciled.
+Scheduled changes remain visible after reload and prevent overlapping changes.
+
+Configure a separate Railway cron service with `railway.billing.toml` and the same server
+secrets. It runs `reconcile_billing` every 15 minutes using signed GETs, even if a callback
+was lost. `--org UUID` restricts an operator run. Expiry is also checked on each wallet
+read/debit, so a late cron cannot permit spending expired credits. Configure failed cron
+alerts; the TOML file itself is not evidence of an active schedule or alert delivery.
+
+An invoice whose amount cannot be matched to the frozen recurring offer is retained in
+`billing_invoice_observations`; it does not create an additional allowance or block other
+valid renewals. The UI and cron flag administrative reconciliation. Do not equate a Flow
+adjustment invoice with a full renewal or invent a second monetary proration formula.
+Automatic adjustment-invoice settlement and resolution of these observations remain
+unfinished; validate the real merchant responses before completing this surface.
+
+For an authorized exceptional refund, run `prepare_billing_refund --help` with the paid
+order, explicit CLP amount, permitted reason, administrative case reference and affected
+grant IDs. `--end-entitlement` requests the audited period reversal subject to unused-credit
+checks. Inspect the returned operation and its frozen authority before the separate
+`dispatch_billing_refund --help` action. That command sends one refund to Flow; the signed
+refund callback establishes completion. A lost dispatch response or consumed benefit
+requires administrative reconciliation. Never delete a payment, grant or ledger entry,
+and never retry an ambiguous refund POST with a new operation key.
 
 ## Application process
 

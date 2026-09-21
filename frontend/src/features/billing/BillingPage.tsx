@@ -4,6 +4,7 @@ import type { Billing } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import "./billing.css";
+import { CommercePanel } from "./CommercePanel";
 
 const label = (value: string) => t(`billing.${value}` as Parameters<typeof t>[0]);
 const date = (value: string) =>
@@ -76,6 +77,11 @@ function BillingWorkspace({ orgId }: { orgId: string }): JSX.Element {
             )}
           </div>
           {!billing.subscription && <p>{t("billing.noSubscription")}</p>}
+          <CommercePanel
+            orgId={orgId}
+            subscribed={billing.subscription?.status === "active"}
+            onRefresh={() => setRevision((value) => value + 1)}
+          />
           <h2>{t("billing.payments")}</h2>
           {billing.payments.length === 0 ? (
             <p>{t("billing.noPayments")}</p>

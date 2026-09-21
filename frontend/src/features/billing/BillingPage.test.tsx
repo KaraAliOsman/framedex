@@ -7,7 +7,20 @@ const identity = vi.hoisted(() => ({ id: "tenant-a", role: "OWNER" }));
 vi.mock("../../auth/AuthSessionProvider", () => ({
   useAuthSession: () => ({ me: { active_organization: identity } }),
 }));
-vi.mock("../../api/generated/dekopen", () => ({ billingRetrieve: vi.fn() }));
+vi.mock("../../api/generated/dekopen", () => ({
+  billingRetrieve: vi.fn(),
+  commerceRetrieve: vi.fn(async () => ({
+    status: 200,
+    data: {
+      offers: [],
+      checkouts: [],
+      registration_state: null,
+      pending_change: null,
+      scheduled_changes: [],
+      reconciliation_required: false,
+    },
+  })),
+}));
 
 beforeEach(() => {
   identity.role = "OWNER";

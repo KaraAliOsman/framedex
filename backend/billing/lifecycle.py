@@ -14,10 +14,10 @@ from django.utils import timezone
 
 from billing import wallet
 from billing.flow import FlowError
-from dekopen_engine.billing import upgrade_credits
+from dekopen_engine.billing import upgrade_credits, PLAN_ALLOWANCES
 from billing.repository import one, rows
 
-ALLOWANCES = {'STARTER': 0, 'PRO': 2000, 'BUSINESS': 6000, 'BUSINESS_2X': 12000}
+ALLOWANCES = PLAN_ALLOWANCES
 POLICY = 'PD-11-02/03 OWNER 2026-09-21'
 
 
@@ -190,15 +190,22 @@ def reconcile(org):
         one('UPDATE public.tenancy_organizations SET subscription_tier=%s,subscription_active=true,'
             'billing_cycle=%s,updated_at=now() WHERE id=%s RETURNING id',
             [plan['plan_tier'], period['billing_cycle'], org])
-        one("UPDATE public.subscriptions SET status='active',plan_tier=%s,billing_cycle=%s,"
+        charge = one('SELECT amount FROM public.billing_orders WHERE org_id=%s AND id=%s',
+                     [org, period['order_id']])['amount']
+        if 'evidence' in plan:
+            charge = plan['evidence'].get('provider_result', {}).get('new_amount', charge)
+        one("UPDATE public.subscriptions SET status='active',plan_tier=%s,billing_cycle=%s,amount=%s,"
             'current_period_start=%s,current_period_end=%s,updated_at=now() WHERE org_id=%s AND id=%s RETURNING id',
-            [plan['plan_tier'], period['billing_cycle'], period['period_start'], period['period_end'], org, period['subscription_id']])
+            [plan['plan_tier'], period['billing_cycle'], charge, period['period_start'], period['period_end'], org, period['subscription_id']])
     else:
         # No verified paid period remains. Packs remain owned, but Starter cannot use AI.
         _expire_origin(org, 'monthly', 'ended-monthly')
         one("UPDATE public.tenancy_organizations SET subscription_tier='STARTER',subscription_active=true,"
             'updated_at=now() WHERE id=%s RETURNING id', [org])
-        one("UPDATE public.subscriptions SET status='cancelled',updated_at=now() WHERE org_id=%s RETURNING id", [org])
+        ended = rows("SELECT id FROM public.billing_lifecycle_events WHERE org_id=%s AND kind IN ('cancel','refund') "
+                     'AND effective_at<=%s ORDER BY effective_at DESC LIMIT 1', [org, now])
+        one('UPDATE public.subscriptions SET status=%s,updated_at=now() WHERE org_id=%s RETURNING id',
+            ['cancelled' if ended else 'past_due', org])
 
 
 def plan_at_in_transaction(org, period, instant):
