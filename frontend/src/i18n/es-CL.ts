@@ -29,6 +29,13 @@ const messages = {
   "wallet.refresh": "Actualizar",
   "wallet.error": "No se pudo actualizar la billetera. Intenta nuevamente.",
   "wallet.loading": "Cargando billetera…",
+  "wallet.sources": "Saldo por origen",
+  "wallet.sourcePolicy":
+    "Los créditos mensuales vencen al terminar el ciclo y se consumen primero. Los packs no vencen; su uso requiere un plan con IA habilitada.",
+  "wallet.origin.trial": "Prueba gratuita",
+  "wallet.origin.monthly": "Incluidos en el ciclo",
+  "wallet.origin.pack": "Packs comprados",
+  "wallet.origin.legacy": "Saldo de apertura",
   "wallet.balance": "Créditos disponibles",
   "wallet.plan": "Plan actual",
   "wallet.trialEnd": "Tu prueba termina",

@@ -26,11 +26,14 @@ it("shows zero balance with continuing manual operation", async () => {
       billing_cycle: "annual",
       ai_available: false,
       ledger: [],
+      lots: [],
     },
   });
   render(<WalletPage />);
   expect(await screen.findByText(/Las funciones manuales siguen disponibles/)).toBeInTheDocument();
-  expect(screen.getByText("0")).toBeInTheDocument();
+  expect(
+    screen.getByText("Créditos disponibles").parentElement?.querySelector("strong"),
+  ).toHaveTextContent("0");
   expect(walletRetrieve).toHaveBeenCalledWith(
     expect.objectContaining({ headers: { "X-Organization-ID": "tenant-a" } }),
   );

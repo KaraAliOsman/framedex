@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CreditLot } from "./creditLot";
 import type { Ledger } from "./ledger";
 
 export interface Wallet {
@@ -16,4 +17,5 @@ export interface Wallet {
   billing_cycle: string;
   ai_available: boolean;
   ledger: Ledger[];
+  lots: CreditLot[];
 }

@@ -170,6 +170,10 @@ REQUIRED_DATABASE_PATHS = (
 )
 
 EXPECTED_DATABASE_TABLES = {
+    "credit_lot_movements",
+    "billing_periods",
+    "billing_lifecycle_events",
+    "flow_lifecycle_operations",
     "credit_lots",
     "billing_orders",
     "billing_credit_grants",

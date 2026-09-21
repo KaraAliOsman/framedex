@@ -66,6 +66,22 @@ function WalletWorkspace({ orgId }: { orgId: string }): JSX.Element {
             )}
           </div>
           {!wallet.ai_available && <p role="status">{t("wallet.manualAvailable")}</p>}
+          <h2>{t("wallet.sources")}</h2>
+          <p>{t("wallet.sourcePolicy")}</p>
+          <dl className="wallet-summary">
+            {(["trial", "monthly", "pack", "legacy"] as const).map((origin) => (
+              <div key={origin}>
+                <dt>{t(`wallet.origin.${origin}`)}</dt>
+                <dd>
+                  {number(
+                    wallet.lots
+                      .filter((lot) => lot.origin === origin)
+                      .reduce((sum, lot) => sum + lot.remaining, 0),
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
           <h2>{t("wallet.history")}</h2>
           <p>{t("wallet.historyLimit")}</p>
           {wallet.ledger.length === 0 ? (
@@ -95,7 +111,9 @@ function WalletWorkspace({ orgId }: { orgId: string }): JSX.Element {
                               ? "wallet.aiDebit"
                               : entry.action_type === "CREDIT_EXPIRY"
                                 ? "wallet.expiry"
-                                : entry.action_type === "PAYMENT_GRANT"
+                                : entry.action_type === "PAYMENT_GRANT" ||
+                                    entry.action_type === "MONTHLY_GRANT" ||
+                                    entry.action_type === "UPGRADE_GRANT"
                                   ? "wallet.paymentGrant"
                                   : "wallet.adjustment",
                         )}

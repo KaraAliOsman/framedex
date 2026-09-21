@@ -286,6 +286,95 @@ export const flowPaymentConfirm = async (
   });
 };
 
+export type flowRefundConfirmResponse200 = {
+  data: FlowAcknowledgement;
+  status: 200;
+};
+
+export type flowRefundConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type flowRefundConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type flowRefundConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type flowRefundConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type flowRefundConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type flowRefundConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type flowRefundConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type flowRefundConfirmResponseSuccess = flowRefundConfirmResponse200 & {
+  headers: Headers;
+};
+export type flowRefundConfirmResponseError = (
+  | flowRefundConfirmResponse400
+  | flowRefundConfirmResponse401
+  | flowRefundConfirmResponse403
+  | flowRefundConfirmResponse404
+  | flowRefundConfirmResponse409
+  | flowRefundConfirmResponse422
+  | flowRefundConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type flowRefundConfirmResponse =
+  flowRefundConfirmResponseSuccess | flowRefundConfirmResponseError;
+
+export const getFlowRefundConfirmUrl = (operationId: string) => {
+  return `/api/v1/billing/flow/refund/${operationId}/`;
+};
+
+export const flowRefundConfirm = async (
+  operationId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<flowRefundConfirmResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<flowRefundConfirmResponse>(getFlowRefundConfirmUrl(operationId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
 export type flowRegistrationConfirmResponse200 = {
   data: FlowAcknowledgement;
   status: 200;

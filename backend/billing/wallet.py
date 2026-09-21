@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from uuid import UUID
 
 from django.db import connection, transaction
+from django.utils import timezone
 
 from authentication.errors import contract_error
 from pricing.repository import one, rows
@@ -40,17 +41,34 @@ def append(org, amount, action, key, reference=None, expires=None):
                [org, amount, balance + amount, action, key, reference, expires])
 
 
+def consume_lot(org, lot, credits, entry):
+    """Caller holds the org lock; each debit is attributable to its grant lot."""
+    changed = one('UPDATE public.credit_lots SET remaining=remaining-%s '
+                  'WHERE org_id=%s AND id=%s AND remaining>=%s RETURNING remaining',
+                  [credits, org, lot['id'], credits])
+    one('INSERT INTO public.credit_lot_movements(org_id,lot_id,ledger_id,amount,remaining_after) '
+        'VALUES(%s,%s,%s,%s,%s) RETURNING id',
+        [org, lot['id'], entry['id'], -credits, changed['remaining']])
+
+
+def expire_lot(org, lot, *, key=None, action='CREDIT_EXPIRY'):
+    if lot['remaining']:
+        entry = append(org, -lot['remaining'], action, key or 'expiry:' + str(lot['id']), lot['grant_id'])
+        consume_lot(org, lot, lot['remaining'], entry)
+
+
 def reconcile(org):
     """Lazy and repeatable; no perfectly timed cron is required for entitlement safety."""
     organization = locked_org(org)
+    from billing import lifecycle
+    lifecycle.reconcile(org)
     from billing.settlement import grant_due
     grant_due(org)
     expired = rows('SELECT * FROM public.credit_lots WHERE org_id=%s AND remaining>0 '
-                   'AND expires_at<=statement_timestamp() ORDER BY expires_at,id FOR UPDATE', [org])
+                   'AND expires_at<=%s ORDER BY expires_at,id FOR UPDATE', [org, timezone.now()])
     for lot in expired:
-        append(org, -lot['remaining'], 'CREDIT_EXPIRY', 'expiry:' + str(lot['id']), lot['grant_id'])
-        one('UPDATE public.credit_lots SET remaining=0 WHERE org_id=%s AND id=%s RETURNING id',
-            [org, lot['id']])
+        expire_lot(org, lot)
+    organization = locked_org(org)
     if organization['subscription_tier'] == 'TRIAL':
         rows("UPDATE public.tenancy_organizations SET subscription_tier='STARTER',updated_at=now() "
              'WHERE id=%s AND trial_ends_at<=statement_timestamp() RETURNING id', [org])
@@ -78,19 +96,19 @@ def debit(org, credits: int, audit_id: UUID):
             raise contract_error(409, 'ai_entitlement_required', 'Tu plan conserva todas las funciones manuales.')
         if organization['credits_balance'] < credits:
             raise contract_error(409, 'insufficient_credits', 'No quedan créditos suficientes para esta operación de IA.')
+        entry = append(org, -credits, 'AI_DEBIT', key, audit_id)
         remaining = credits
         lots = rows('SELECT * FROM public.credit_lots WHERE org_id=%s AND remaining>0 '
                     'ORDER BY expires_at NULLS LAST,created_at,id FOR UPDATE', [org])
         for lot in lots:
             consumed = min(remaining, lot['remaining'])
-            one('UPDATE public.credit_lots SET remaining=remaining-%s '
-                'WHERE org_id=%s AND id=%s RETURNING id', [consumed, org, lot['id']])
+            consume_lot(org, lot, consumed, entry)
             remaining -= consumed
             if remaining == 0:
                 break
         if remaining:
             raise contract_error(409, 'wallet_lots_inconsistent', 'La billetera requiere conciliación.')
-        return append(org, -credits, 'AI_DEBIT', key, audit_id)
+        return entry
 
 
 def summary(org):
@@ -98,7 +116,9 @@ def summary(org):
         organization = reconcile(org)
         ledger = rows('SELECT id,amount,balance_after,action_type,reference_id,expires_at,created_at '
                       'FROM public.credit_ledger WHERE org_id=%s ORDER BY entry_number DESC LIMIT 100', [org])
-        return {'plan': organization['subscription_tier'], 'balance': organization['credits_balance'],
+        lots = rows('SELECT id,grant_id,origin,remaining,expires_at FROM public.credit_lots '
+                    'WHERE org_id=%s ORDER BY expires_at NULLS LAST,created_at,id', [org])
+        return {'lots': lots, 'plan': organization['subscription_tier'], 'balance': organization['credits_balance'],
                 'trial_ends_at': organization['trial_ends_at'], 'billing_cycle': organization['billing_cycle'],
                 'ai_available': organization['subscription_tier'] != 'STARTER'
                     and organization['subscription_active'] and organization['credits_balance'] > 0,

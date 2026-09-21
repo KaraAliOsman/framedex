@@ -92,3 +92,18 @@ def test_rejects_redirect_to_untrusted_or_wrong_environment_origin(url):
 def test_rejects_invalid_provider_response(body):
     with pytest.raises(FlowError):
         client(lambda _: httpx.Response(200, content=body)).payment_status('token')
+
+
+@pytest.mark.parametrize('operation,path,parameters', [
+    (lambda f: f.change_plan_preview('sus','plan'), '/api/subscription/changePlanPreview', {'subscriptionId':['sus'],'newPlanId':['plan']}),
+    (lambda f: f.change_plan('sus','plan',start_date='2026-10-01'), '/api/subscription/changePlan', {'startDateOfNewPlan':['2026-10-01']}),
+    (lambda f: f.create_refund(order='refund',payment_id='123',amount=Decimal('100'),email='test@example.test',callback_url='https://example.test/callback'),
+     '/api/refund/create', {'flowTrxId':['123'],'amount':['100'],'urlCallBack':['https://example.test/callback']}),
+])
+def test_lifecycle_native_endpoints(operation,path,parameters):
+    def handler(request):
+        assert request.method=='POST' and request.url.path==path
+        data=parse_qs(request.content.decode())
+        assert all(data[key]==value for key,value in parameters.items())
+        return httpx.Response(200,json={})
+    operation(client(handler))

@@ -24,23 +24,47 @@ clean restore drill. Preserve the modular monolith and all manual product functi
 - Existing credit balances cannot be silently rewritten as historical trial grants.
   Migration must preserve evidence and reject an unaccounted financial state.
 
-## Material decisions pending
+## Frozen commercial decisions
 
 `PD-11-01 RESOLVED_BY_OWNER`: USD list prices are net; add 19% IVA after conversion
 with the 5% FX buffer. OWNER answered on 2026-09-20: "USD netos; añadir IVA 19%".
 Total CLP = USD list amount × observed USD/CLP rate × 1.05 × 1.19, rounded once at
 the final CLP boundary using the existing commercial HALF_UP authority.
 
-`[PENDIENTE-DECISIÓN] PD-11-02`: monthly credit allowances are specified, but rollover
-and pack expiry are not. OWNER must define whether monthly balances expire or accumulate
-and whether packs expire, including annual plans with monthly credit delivery.
+`PD-11-02 RESOLVED_BY_OWNER` / `PD-11-03 RESOLVED_BY_OWNER`, 2026-09-21.
+The following rules are frozen by the OWNER's explicit decision:
 
-`[PENDIENTE-DECISIÓN] PD-11-03`: effective date of changes/cancellation and proration are
-unspecified. Proposed for decision: changes at paid-period end, no automatic proration
-or refunds. No dependent financial behavior may be implemented as an assumption.
+- Monthly subscription credits expire at the end of each service cycle; no rollover.
+  Purchased packs/top-ups never expire and survive downgrade or cancellation. Consume
+  expiring monthly credits before purchased credits. Persist origin, grant/debit,
+  expiration and attributable balance separately; the UI may aggregate balances.
+  Spending retained packs still requires the active plan's relevant AI entitlement.
+- Same-billing-cycle upgrades take effect only after Flow confirms the change. Call
+  `subscription/changePlanPreview` before confirmation and `subscription/changePlan`
+  to execute; persist Flow's monetary evidence without an independent money formula.
+  Additional monthly credits are `floor((new_allowance-old_allowance) * remaining_period
+  / total_period)` using authoritative subscription period boundaries. Grant only a
+  positive delta, once, as a separate ledger grant. Next renewal grants the new full allowance.
+- Downgrades take effect at the paid-period end, preserving paid benefits and monthly
+  credits until then; no automatic prorated refund. At the boundary, expire that cycle's
+  monthly credits, activate the new plan and grant only its allowance. Preserve packs.
+- Monthly/annual frequency changes take effect at the next renewal; no local monetary
+  proration between frequencies. Annual subscriptions deliver their allowance monthly.
+- Voluntary cancellation defaults to Flow `at_period_end=1`. Preserve paid rights until
+  the boundary; then end the subscription and expire monthly credits, preserving packs.
+  No automatic refund. Immediate cancellation is exceptional: incorrect/duplicate charge,
+  fraud, legal obligation or explicitly authorized administrative intervention.
+- Refunds are exceptional (duplicate/incorrect charge, paid service that could not activate,
+  legal obligation or authorized administrative decision) and use Flow's real refund flow.
+  Never delete payments or ledger history. Record refunds and entitlement reversals as
+  auditable idempotent compensation. Automatic credit reversal can remove only unused
+  credit from the affected grant; consumed/ambiguous benefit requires administrative
+  resolution, never negative credits or invented credit debt.
+- Successful paid activation during trial ends the trial and expires its remaining credits
+  before granting the paid period's allowance. Never stack unused trial credits on it.
 
-These decisions are requested under Constitution Rules 0/20. Independent implementation
-continues; this record does not authorize the proposed choices.
+Regression obligations: idempotency, concurrency, renewal, upgrade, downgrade,
+cancellation, expiration, trial conversion and refund compensation.
 
 ## Evidence and closure gates
 
@@ -159,19 +183,10 @@ was connected at this checkpoint. A Flow sandbox account and merchant configurat
 are still required for the real checkout gate. No production configuration, access,
 subscription or payment was changed during this access check.
 
-### Unresolved owner decision boundary
+### Owner decisions resolved
 
-**RULE SAYS:** Constitution Rule 20: "PROHIBIDO rellenar vacíos materiales con supuestos de la IA."
-
-**CURRENT REALITY:** PD-11-02 and PD-11-03 have no owner answer. PD-11-01 is resolved.
-
-**MATERIAL IMPACT:** expiry/rollover changes purchased credits; cancellation timing and
-proration change money and subscription entitlements. Only those dependent behaviors
-remain stopped; local wallet, settlement and infrastructure proof proceeded.
-
-**MINIMUM OWNER DECISION REQUIRED:** define whether monthly allowances expire or roll
-over, whether packs expire (and when), and whether changes/cancellation take effect at
-paid-period end without automatic proration/refunds or use an explicitly defined alternative.
+PD-11-01/02/03 are resolved. No further approval is required to implement the policies
+above. External account access and honest sandbox/production evidence remain necessary.
 
 ## Provider references checked 2026-09-20
 
@@ -179,3 +194,23 @@ paid-period end without automatic proration/refunds or use an explicitly defined
 - https://docs.railway.com/deployments/healthchecks (deployment readiness, not uptime monitoring)
 - https://docs.railway.com/guides/alerts-crashes-failed-deploys (deployment events and resource monitors)
 - https://supabase.com/docs/guides/platform/backups (PITR and database backup limitations)
+
+## OWNER policy implementation checkpoint, 2026-09-21
+
+PD-11-02/03 are implemented in the lifecycle reducer, per-lot debit/expiration
+attribution and native change/refund primitives. The wallet now exposes retained pack
+and expiring credit origins. Evidence below is working-tree diagnostic evidence,
+not the final material SHA or shot closure:
+
+- All migrations applied to isolated native PostgreSQL 16.15 using the repository's
+  PostgreSQL-16 compatibility bootstrap. 52 billing integration tests pass with real
+  locks, RLS, constraints and rollback; only Flow HTTP is simulated.
+- Twelve pure money/credit tests, 22 Flow/OpenAPI checks and five billing UI tests pass.
+- Canonical lint surface passes, including generated API reproducibility.
+- Docker Desktop remains unavailable because of its ingest socket startup error. Native
+  PostgreSQL is a development test fallback, not a substitute for Supabase Auth E2E,
+  production Docker probes or the final canonical Gauntlet.
+
+Checkout orchestration, renewal binding and public management UI are being integrated;
+these primitives alone do not satisfy the recurring checkout gate. External account
+access, production alerts/PITR/Storage and final shot closure remain unproven.

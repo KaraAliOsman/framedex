@@ -19,6 +19,14 @@ class LedgerSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField()
 
 
+class CreditLotSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    grant_id = serializers.UUIDField()
+    origin = serializers.ChoiceField(choices=['trial', 'monthly', 'pack', 'legacy'])
+    remaining = serializers.IntegerField(min_value=0)
+    expires_at = serializers.DateTimeField(allow_null=True)
+
+
 class WalletSerializer(serializers.Serializer):
     plan = serializers.CharField()
     balance = serializers.IntegerField(min_value=0)
@@ -26,6 +34,7 @@ class WalletSerializer(serializers.Serializer):
     billing_cycle = serializers.CharField()
     ai_available = serializers.BooleanField()
     ledger = LedgerSerializer(many=True)
+    lots = CreditLotSerializer(many=True)
 
 
 class SubscriptionSerializer(serializers.Serializer):

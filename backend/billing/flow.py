@@ -136,6 +136,30 @@ class FlowClient:
             "subscriptionId": subscription_id, "at_period_end": "1" if at_period_end else "0",
         })
 
+    def change_plan_preview(self, subscription_id: str, plan_id: str, *, start_date: str | None = None) -> dict:
+        values = {'subscriptionId': subscription_id, 'newPlanId': plan_id}
+        if start_date is not None:
+            values['startDateOfNewPlan'] = start_date
+        return self._request('POST', '/subscription/changePlanPreview', values)
+
+    def change_plan(self, subscription_id: str, plan_id: str, *, start_date: str | None = None) -> dict:
+        values = {'subscriptionId': subscription_id, 'newPlanId': plan_id}
+        if start_date is not None:
+            values['startDateOfNewPlan'] = start_date
+        return self._request('POST', '/subscription/changePlan', values)
+
+    def create_refund(self, *, order: str, payment_id: str, amount: Decimal,
+                      email: str, callback_url: str) -> dict:
+        if not amount.is_finite() or amount <= 0 or amount != amount.to_integral_value():
+            raise ValueError('Refund requires positive integer CLP')
+        return self._request('POST', '/refund/create', {
+            'refundCommerceOrder': order, 'flowTrxId': payment_id,
+            'amount': format(amount, '.0f'), 'receiverEmail': email, 'urlCallBack': callback_url,
+        })
+
+    def refund_status(self, token: str) -> dict:
+        return self._request('GET', '/refund/getStatus', {'token': token})
+
     def invoice(self, invoice_id: str) -> dict:
         return self._request("GET", "/invoice/get", {"invoiceId": invoice_id})
 

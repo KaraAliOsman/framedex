@@ -191,3 +191,12 @@ Los proveedores y modelos se seleccionan mediante `ai_routes` o configuración d
 conforme a [PRD-13](./PRD-13.md). Esta tabla no fija identificadores de rutas ni proveedores;
 mantiene las mismas funciones y estimaciones comerciales. T8 conserva el doble ciego entre
 modelos distintos de [PRD-14](./PRD-14.md).
+
+### 4.4. SHOT-11 lifecycle policy
+
+OWNER decisions PD-11-02/03 (2026-09-21) are frozen in
+[PLAN_SHOT-11](../plans/PLAN_SHOT-11.md#frozen-commercial-decisions): monthly credits
+expire per service cycle; purchased packs never expire; paid activation ends trial credit;
+Flow owns monetary upgrade proration; downgrades, frequency changes and voluntary
+cancellation occur at the paid boundary. Refunds require an authorized exceptional cause
+and preserve history through compensation. That plan contains the complete approved rules.

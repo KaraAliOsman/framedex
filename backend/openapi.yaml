@@ -183,6 +183,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/billing/flow/refund/{operation_id}/:
+    post:
+      operationId: flow_refund_confirm
+      parameters:
+      - in: path
+        name: operation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - billing
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/billing/flow/register/{operation_id}/:
     post:
       operationId: flow_registration_confirm
@@ -4888,6 +4957,30 @@ components:
       description: |-
         * `DECLARED` - DECLARED
         * `NONE_REQUIRED` - NONE_REQUIRED
+    CreditLot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        grant_id:
+          type: string
+          format: uuid
+        origin:
+          $ref: '#/components/schemas/OriginEnum'
+        remaining:
+          type: integer
+          minimum: 0
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - expires_at
+      - grant_id
+      - id
+      - origin
+      - remaining
     CurrencyEnum:
       enum:
       - CLP
@@ -6449,6 +6542,18 @@ components:
         * `SUPPLIER_GLASS_PO` - SUPPLIER_GLASS_PO
         * `SUPPLIER_HARDWARE_PO` - SUPPLIER_HARDWARE_PO
         * `SUPPLIER_PANEL_PO` - SUPPLIER_PANEL_PO
+    OriginEnum:
+      enum:
+      - trial
+      - monthly
+      - pack
+      - legacy
+      type: string
+      description: |-
+        * `trial` - trial
+        * `monthly` - monthly
+        * `pack` - pack
+        * `legacy` - legacy
     PanelPiece:
       type: object
       properties:
@@ -7952,11 +8057,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Ledger'
+        lots:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreditLot'
       required:
       - ai_available
       - balance
       - billing_cycle
       - ledger
+      - lots
       - plan
       - trial_ends_at
     WhiteColorEnum:
