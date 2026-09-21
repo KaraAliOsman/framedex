@@ -250,3 +250,28 @@ Remaining closure work: real Flow sandbox checkout/change/refund response verifi
 adjustment reconciliation, current Supabase/Auth E2E and canonical Gauntlet, deployed
 production boundary and Railway alerts, encrypted Storage/PITR and clean managed restore.
 Keep PR #38 draft and SHOT-11 open until the actual gates pass; no merge or tag yet.
+
+### SHA-bound checkout evidence
+
+Implementation SHA: `910934766b1ebee2b7de25f7716bc3490e44980f`.
+
+| Surface | Result |
+|---|---|
+| Seven SHOT-11 financial integration modules on native PostgreSQL 16.15 | 59 passed; real locks, RLS, constraints and transactions. |
+| Billing frontend components | 9 passed. |
+| [Protected CI run 35631264401](https://github.com/KaraAliOsman/framedex/actions/runs/35631264401) | All four required contexts pass. Includes 437 backend cases, 260 engine passes with 5 existing expected failures, 226 frontend tests, 11 browser tests, and the separate DB gate with 244 integration cases plus pgTAP and populated-upgrade validation. CodeRabbit skipped draft review. |
+| `python scripts/check_dod.py all` | Attempted once on this SHA. Lint, typechecks and source contracts passed; the live gate failed at `docker info` because the Docker Desktop Linux engine pipe is unavailable. This is not a successful Gauntlet. |
+| Current encrypted backup/restore implementation on two isolated native PostgreSQL 16.15 instances | All 57 tables restored in 1.565 seconds. Content hashes, constraints, ledger/lot balances and RLS pass; a populated target is refused. Synthetic local DB proof only, not Storage delivery, managed Auth recovery or production RPO. |
+
+The synthetic encrypted artifact SHA-256 was
+`0f07d255ebb9a070d690f4c990a680da430a5039874e7d7b65fc1c6496d339c4`.
+The native probe used all repository migrations and seed; its isolated source and restore
+instances were stopped after verification. An earlier probe remains stalled because of
+inherited Windows process handles; automatic approval review rejected stopping that
+probe and cleaning its directories (`blocked by policy`). The successful retry used
+independent output handles and separate instances, leaving the rejected targets intact.
+
+The current environment has no configured Flow API credentials, Railway token,
+Supabase access token or production database connection. Access was requested through
+the task UI without asking for secrets in chat. Commercial OWNER decisions remain resolved.
+This evidence-only update does not change the tested implementation or close the shot.
