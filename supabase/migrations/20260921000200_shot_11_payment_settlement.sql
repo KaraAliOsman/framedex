@@ -52,9 +52,11 @@ CREATE TABLE public.billing_credit_grants (
   CHECK(expires_at IS NULL OR expires_at>available_at)
 );
 
+ALTER TABLE public.billing_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.billing_credit_grants ENABLE ROW LEVEL SECURITY;
+
 DO $$ DECLARE target TEXT; BEGIN
   FOREACH target IN ARRAY ARRAY['billing_orders','billing_credit_grants'] LOOP
-    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',target);
     EXECUTE format('REVOKE ALL ON public.%I FROM PUBLIC,anon,authenticated',target);
     EXECUTE format('GRANT ALL ON public.%I TO service_role',target);
     EXECUTE format('GRANT SELECT,INSERT ON public.%I TO billing_backend',target);
