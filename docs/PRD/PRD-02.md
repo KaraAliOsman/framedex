@@ -57,6 +57,14 @@ Callback status comes only from Flow's signed status lookup; its body supplies n
 authority. An uncertain dispatch requires status recovery and never a blind second POST.
 These primitives do not resolve or activate the pending commercial policies.
 
+`flow_subscription_intents` persists explicit subscription start terms, customer/plan
+bindings and the single dispatch claim. Native creation uses Flow `subscription/create`;
+uncertain results are reconciled through complete signed customer-subscription queries,
+never another create. Client roles have no access. Local `subscriptions.status='pending'`
+distinguishes a created provider subscription from a paid entitlement. Native invoice
+reconciliation verifies customer/subscription/amount before using the existing atomic
+payment settlement. Commercial terms and grant schedules remain explicit server inputs.
+
 ```sql
 -- Extensiones requeridas
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

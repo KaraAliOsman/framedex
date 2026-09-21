@@ -66,11 +66,15 @@ main and the conventional `shot-11` tag. Do not mark closed from configuration o
   monotonic settlement, concurrent callback deduplication, transactional payment/event/lot
   writes and GET-only recovery after an ambiguous one-time pack dispatch. No public API
   accepts amounts, exchange rates, credit grants or provider customer identity.
-- Flow native customer/register/subscription/cancel/invoice transport methods follow the
-  real API. **Native subscription orchestration is not implemented yet.** Plan selection,
-  paid entitlements, monthly allowances for annual plans, changes/cancellation and pack
-  storefront remain unfinished pending the commercial policy decisions. Transport and
-  pack settlement are not evidence of a working recurring subscription checkout.
+- Flow native customer/register/subscription/cancel/invoice transport follows the real API.
+  Native subscription creation now has a persisted single-dispatch intent, immutable
+  approved start terms, remote plan/customer validation and GET-only reconciliation
+  after a timeout or local failure. Native invoices are bound to their subscription,
+  customer and frozen quote before atomic settlement. These server primitives require
+  preprovisioned merchant plans/customers and explicit approved terms; no public client
+  chooses them. Customer registration orchestration, plan-selection/checkout UI, paid
+  entitlements, monthly allowances for annual plans, changes/cancellation and pack
+  storefront remain unfinished. This is not evidence of a complete recurring checkout.
 - S20 and S24 expose real OWNER/aal2 wallet and billing read state through generated
   OpenAPI clients. S24 does not yet offer checkout or subscription management.
 - Non-root Gunicorn image, PostgreSQL/Redis readiness, shared rate limit, safe structured

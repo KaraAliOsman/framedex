@@ -23,7 +23,8 @@ def ready(request):
                            "AND tablename='payments' AND policyname='billing_owner_read') "
                            "AND to_regclass('public.credit_lots') IS NOT NULL "
                            "AND to_regclass('public.billing_orders') IS NOT NULL "
-                           "AND to_regclass('public.billing_credit_grants') IS NOT NULL")
+                           "AND to_regclass('public.billing_credit_grants') IS NOT NULL "
+                           "AND to_regclass('public.flow_subscription_intents') IS NOT NULL")
             if not cursor.fetchone()[0]:
                 raise DatabaseError('Required migration is absent')
         if not settings.REDIS_URL:

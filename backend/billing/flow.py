@@ -107,9 +107,25 @@ class FlowClient:
     def subscription(self, subscription_id: str) -> dict:
         return self._request("GET", "/subscription/get", {"subscriptionId": subscription_id})
 
-    def create_subscription(self, *, customer_id: str, plan_id: str) -> dict:
-        return self._request("POST", "/subscription/create", {
+    def create_subscription(self, *, customer_id: str, plan_id: str,
+                            start_date: str | None = None, trial_days: int | None = None) -> dict:
+        parameters = {
             "customerId": customer_id, "planId": plan_id,
+        }
+        if start_date is not None:
+            parameters['subscription_start'] = start_date
+        if trial_days is not None:
+            if type(trial_days) is not int or trial_days < 0:
+                raise ValueError('Explicit nonnegative trial days required')
+            parameters['trial_period_days'] = str(trial_days)
+        return self._request("POST", "/subscription/create", parameters)
+
+    def plan(self, plan_id: str) -> dict:
+        return self._request('GET', '/plans/get', {'planId': plan_id})
+
+    def customer_subscriptions(self, customer_id: str, *, start: int = 0) -> dict:
+        return self._request('GET', '/customer/getSubscriptions', {
+            'customerId': customer_id, 'start': str(start), 'limit': '100',
         })
 
     def cancel_subscription(self, subscription_id: str, *, at_period_end: bool) -> dict:
