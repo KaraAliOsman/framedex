@@ -44,8 +44,10 @@ continues; this record does not authorize the proposed choices.
 
 ## Evidence and closure gates
 
-No material head is proven yet. Record exact SHA, command, result and affected surface
-when evidence exists. Execute the canonical Gauntlet on the final material head only.
+Current implementation checkpoint: `525f2f2ec252f98ff61cc856a299e410690540fb`.
+This is not the final material shot head: commercial orchestration remains unfinished.
+Draft [PR #38](https://github.com/KaraAliOsman/framedex/pull/38) targets protected main.
+Execute the canonical Gauntlet on the final material head only.
 
 External gates currently unproven: Flow sandbox credentials and real subscription checkout;
 production deployment, Cloudflare boundary and Railway alert delivery; Supabase PITR/RPO
@@ -95,6 +97,44 @@ Flow/production/OpenAPI/money 29 passed; billing UI 5 passed; real Auth+TOTP bro
 TRIAL/Starter/manual-calculation 2 passed; Ruff, frontend lint/build and canonical lint
 surface passed. These working-tree runs are diagnostic, not SHA-bound closure evidence.
 The canonical full Gauntlet remains due on the final material shot implementation head.
+
+## SHA-bound evidence, 2026-09-20 (America/Santiago)
+
+| SHA | Command / surface | Result |
+|---|---|---|
+| `a0037014a2c6baf82c7c46a03b02c217cf2a0ff3` | `python -m pytest backend/tests engine/tests/test_billing.py -m "not rls_integration" -q` | 197 passed; 205 integration cases intentionally selected by the separate live DB gate. |
+| `a0037014a2c6baf82c7c46a03b02c217cf2a0ff3` | `npm --prefix frontend run test -- src/features/billing` | 5 passed; zero/manual state, OWNER boundary, pending payment and missing fiscal receipt. |
+| `a0037014a2c6baf82c7c46a03b02c217cf2a0ff3` | `local_gates.run_auth_e2e(local_gates.running_environment(), 'tests/e2e/auth.spec.ts', '--grep', 'SHOT-11')` | 2 passed; real Supabase Magic Link, TOTP, aal1 rejection, trial/Starter reads and actual manual engine calculation/project creation. |
+| `a0037014a2c6baf82c7c46a03b02c217cf2a0ff3` | `python scripts/check_production_boundary.py` | Fresh image; UID 10001; readiness 200; Redis failure readiness 503 and liveness 200; billing 401; CSP/HSTS; concurrent shared Redis quota: 100 requests accepted for validation, next 5 return 429. No Railway deployment proof. |
+| `737800124179941cf8d4077586e81a28764f0917` | `python scripts/check_dod.py typecheck`; `python -m pytest engine/tests/test_billing.py -q`; `python scripts/check_dod.py lint` | All exit 0; strict annotations corrected in three money tests; 7 money cases pass. Generated API reproducible. |
+| `525f2f2ec252f98ff61cc856a299e410690540fb` | `python scripts/check_dod.py database` | Exit 0: 355 pgTAP, 205 real PostgreSQL integration cases, PostgreSQL 16 migration and populated-upgrade checks. RLS DDL was made explicit to satisfy the existing checker without weakening it. |
+| `525f2f2ec252f98ff61cc856a299e410690540fb` | `python scripts/check_restore_drill.py` | Fresh backup image; 48 tables restored in 0.912 s on synthetic PostgreSQL 16; all row hashes, relationships, RLS and ledger/lot balances consistent; populated target refused. |
+
+Latest drill ciphertext SHA-256:
+`551c94ab29fb1903877a0eede4476b41b87ac6e96bfc825a3c125038a3f398f0`.
+The script builds its own image and refuses a dirty tree, so stale images cannot stand
+in for the recorded source. The ephemeral synthetic backup is removed after the drill.
+Earlier proof remains valid for unchanged application surfaces; the two refinements
+only add strict test annotations and replace dynamic RLS enablement with equivalent
+explicit statements. No Golden snapshot or existing engine formula was changed.
+
+Protected CI is tracked on PR #38. At this evidence update its four required contexts
+are still running/finishing, so no all-green result or merge authorization is inferred.
+No canonical `check_dod.py all` run, merge SHA or `shot-11` tag exists for this shot.
+
+### Unresolved owner decision boundary
+
+**RULE SAYS:** Constitution Rule 20: "PROHIBIDO rellenar vacíos materiales con supuestos de la IA."
+
+**CURRENT REALITY:** PD-11-02 and PD-11-03 have no owner answer. PD-11-01 is resolved.
+
+**MATERIAL IMPACT:** expiry/rollover changes purchased credits; cancellation timing and
+proration change money and subscription entitlements. Only those dependent behaviors
+remain stopped; local wallet, settlement and infrastructure proof proceeded.
+
+**MINIMUM OWNER DECISION REQUIRED:** define whether monthly allowances expire or roll
+over, whether packs expire (and when), and whether changes/cancellation take effect at
+paid-period end without automatic proration/refunds or use an explicitly defined alternative.
 
 ## Provider references checked 2026-09-20
 
