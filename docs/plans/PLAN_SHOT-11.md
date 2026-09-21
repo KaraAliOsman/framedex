@@ -71,7 +71,8 @@ cancellation, expiration, trial conversion and refund compensation.
 Previous implementation checkpoint: `fe3f57dd0437c833ede3b8aaad440793449465b6`.
 This is not a shot-closure declaration; checkout integration evidence follows below.
 Draft [PR #38](https://github.com/KaraAliOsman/framedex/pull/38) targets protected main.
-Execute the canonical Gauntlet on the final material head only.
+The canonical Gauntlet passed at `4eb2f2003f5ecedc81b6ecb921c0075282d5f667`;
+the narrow Linux restore-probe refinement is verified separately below under Rule 19.
 
 External gates currently unproven: Flow sandbox credentials and real subscription checkout;
 production deployment, Cloudflare boundary and Railway alert delivery; Supabase PITR/RPO
@@ -275,3 +276,39 @@ The current environment has no configured Flow API credentials, Railway token,
 Supabase access token or production database connection. Access was requested through
 the task UI without asking for secrets in chat. Commercial OWNER decisions remain resolved.
 This evidence-only update does not change the tested implementation or close the shot.
+
+## Canonical runner proof and Linux recovery refinement
+
+The OWNER explicitly authorized merging once SHOT-11 is finished. Actual external
+gates still govern completion; no additional merge permission needs to be requested.
+
+At SHA `4eb2f2003f5ecedc81b6ecb921c0075282d5f667`,
+[runner 35648999286](https://github.com/KaraAliOsman/framedex/actions/runs/35648999286)
+ran `python scripts/check_dod.py all` successfully (exit 0). This is the full canonical
+command on the exact PR head, not an aggregation of separate check names. The subsequent
+production-container probe also passed: UID 10001, readiness 200, Redis failure readiness
+503 with liveness 200, unauthenticated billing 401, security headers and shared quota
+100 requests then 429. All four protected CI contexts passed in
+[run 35648988631](https://github.com/KaraAliOsman/framedex/actions/runs/35648988631).
+
+That first closure workflow ended in failure only at the restore probe: Linux preserved
+the private host temporary directory's ownership, so image UID 10001 could not write
+the encrypted artifact. The fix in `4deafdc8fa6e0371d395f69bf78e7b4600209fc3` makes the
+disposable probe run as the owning non-root host UID/GID; it does not open directory
+permissions, change the production image, or bypass any restore assertion.
+
+[Focused recovery run 35650078507](https://github.com/KaraAliOsman/framedex/actions/runs/35650078507)
+passed on `4deafdc8fa6e0371d395f69bf78e7b4600209fc3`: all 57 tables restored in 0.524
+seconds; content hashes, constraints, ledger/lot balances and tenant RLS match; a populated
+target is refused. Ciphertext SHA-256:
+`4f0eea793a29067fd4474be3938b7210672eae1f6a2ca2f51afdf92bae76edfb`.
+The focused label intentionally reuses the prior unchanged Gauntlet/production proof
+under Rule 19; its successful job name does not claim a second Gauntlet execution.
+All four protected contexts also pass for `4deafdc8fa6e0371d395f69bf78e7b4600209fc3`
+in [CI run 35650062928](https://github.com/KaraAliOsman/framedex/actions/runs/35650062928).
+
+Remaining gates: authenticated Flow sandbox checkout, changes and refunds (including
+actual adjustment invoice and period-boundary binding); deployed Railway/Cloudflare
+boundary and delivered alerts; real Supabase private Storage, PITR/RPO and clean managed
+Auth/Storage recovery. Fresh browser checks still show sign-in screens for all three
+services. The synthetic runner proof does not establish those external facts.
