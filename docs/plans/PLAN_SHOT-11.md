@@ -112,6 +112,24 @@ Four network-seam regressions cover delayed registration, UTC/Chile dates and lo
 The attempted native local run was interrupted because its PostgreSQL endpoint was no
 longer responding; passing evidence must come from the exact-SHA runner below.
 
+## Final integration evidence before paid activation
+
+At exact implementation SHA `3d2b3ef7c561fd371fa35bdd2859c9b47df75a4e`, protected CI
+passed all required contexts in [run 35652483190](https://github.com/KaraAliOsman/framedex/actions/runs/35652483190):
+Lint & Typecheck, Test Suite, Frontend Build and Database Gate. The separate exact-head
+workflow [run 35652494282](https://github.com/KaraAliOsman/framedex/actions/runs/35652494282)
+also passed its canonical `python scripts/check_dod.py all`, fresh production-container
+probe and PostgreSQL 17 encrypted clean-instance restore. The current restore job
+verifies application row hashes, constraints, RLS/tenant isolation, ledger/lot balances
+and refusal to overwrite a populated target. This is the final tested integration head;
+documentation after it does not change executable behavior.
+
+PR #38 is ready and mergeable. The OWNER authorized protected integration while deferring
+paid activation (PD-11-05). Merge is therefore an integration checkpoint, not a claim that
+Flow sandbox, Cloudflare/Railway production alerts, Supabase Pro/PITR, private Storage
+delivery or managed Auth/Storage recovery have passed. Keep SHOT-11 `IN_PROGRESS` and do
+not create the `shot-11` closure tag until those external gates are evidenced.
+
 ## Evidence and closure gates
 
 Previous implementation checkpoint: `fe3f57dd0437c833ede3b8aaad440793449465b6`.
