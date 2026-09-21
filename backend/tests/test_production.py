@@ -8,11 +8,11 @@ from config.production import validate_production
 from scripts.backup_database import encrypt, decrypt
 
 
-def test_liveness_is_independent_and_readiness_rejects_missing_dependencies():
+def test_liveness_is_independent_and_readiness_rejects_missing_dependencies(django_db_blocker):
     client = Client()
     assert client.get('/health/live/').json() == {'status': 'alive'}
     assert client.post('/health/live/').status_code == 405
-    with override_settings(REDIS_URL=''):
+    with django_db_blocker.unblock(), override_settings(REDIS_URL=''):
         assert client.get('/health/ready/').status_code == 503
 
 
