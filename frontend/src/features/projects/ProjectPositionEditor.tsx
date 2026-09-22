@@ -235,6 +235,8 @@ function PositionWorkspace({
     } else {
       return;
     }
+    // The classic-mode draft lock must not follow the user into assembly mode.
+    if (mode === "bow") setPending(false);
     setResult(null);
     setAssemblyEval(null);
     setDirty(true);

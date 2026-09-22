@@ -58,7 +58,10 @@ function issueText(issue: ProductIssue): string {
   for (const [name, value] of Object.entries(issue.params)) {
     text = text.replace(`{${name}}`, value);
   }
-  return text.replace("{target}", issue.target.replace("coupling:", "").replace("module:", ""));
+  text = text.replace("{target}", issue.target.replace("coupling:", "").replace("module:", ""));
+  const reason = issue.params["reason"];
+  if (reason && !text.includes(reason)) text += ` — ${reason}`;
+  return text;
 }
 
 function normalizeMm(candidate: string): string | null {
