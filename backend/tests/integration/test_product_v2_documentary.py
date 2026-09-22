@@ -61,7 +61,9 @@ def documentary_tenant(django_db_blocker):
             transaction.set_rollback(True)
 
 
-def _bow_tree(coupler_sku: str = "COPLE-60") -> dict[str, object]:
+def _bow_tree(
+    coupler_sku: str = "COPLE-60", operable: bool = False
+) -> dict[str, object]:
     def module(index: int) -> dict[str, object]:
         return {
             "id": f"m{index}",
@@ -70,7 +72,7 @@ def _bow_tree(coupler_sku: str = "COPLE-60") -> dict[str, object]:
             "tree": {
                 "id": "B1",
                 "type": "BAY",
-                "opening_type": "FIXED",
+                "opening_type": "TURN_LEFT" if operable and index == 2 else "FIXED",
                 "glass_spec": "4-12-4 Float Incoloro",
                 "glass_thickness_mm": "24.00",
                 "glass_article_sku": "GLASS-BASE",
@@ -90,7 +92,11 @@ def _bow_tree(coupler_sku: str = "COPLE-60") -> dict[str, object]:
 
 
 def _seed_bow_project(
-    org: UUID, owner: UUID, *, workshop: dict[str, object] | None = None
+    org: UUID,
+    owner: UUID,
+    *,
+    workshop: dict[str, object] | None = None,
+    operable: bool = False,
 ) -> tuple[UUID, UUID, UUID, dict[str, object]]:
     system_id = UUID(str(one(
         "SELECT id FROM public.profile_systems WHERE code='DEMO_60'"
@@ -101,7 +107,7 @@ def _seed_bow_project(
         [org, f"P-{uuid4().hex[:8]}", "Proyecto bow", "Cliente Bow", "1-9",
          "bow@example.test", "+56900000000", "Obra Sur", owner],
     )["id"]))
-    tree = _bow_tree()
+    tree = _bow_tree(operable=operable)
     with as_user(owner):
         params = SystemParamsRepository().load_visible(system_id, org)
         evaluation = evaluate_assembly_from_api(
@@ -137,6 +143,9 @@ def _seed_bow_project(
             ("DEMO-BAR-JQ-24", "BAR"),
             ("DEMO-STEEL-BAR-MARCO", "BAR"),
             ("DEMO-BAR-COPLE-60", "BAR"),
+            ("DEMO-BAR-HOJA", "BAR"),
+            ("DEMO-STEEL-BAR-HOJA", "BAR"),
+            ("KIT-TURN", "KIT"),
             ("GLASS-BASE", "M2"),
         ):
             admin_write(
@@ -276,6 +285,34 @@ def test_assembly_position_prices_and_freezes_quote_only(documentary_tenant) -> 
     assert "<svg" in html and "m1" in html and "15°" in html
     with pytest.raises(DocumentaryError, match="production_document_blocked"):
         _doc03(snapshot)
+
+
+def test_assembly_freeze_tolerates_unsaved_handle_intents(documentary_tenant) -> None:
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, operation_id, _ = _seed_bow_project(
+        org, owner, operable=True
+    )
+
+    # m2 is an operable leaf with no saved handle intent: the quote-only
+    # freeze seals incomplete instead of blocking the commercial quote on
+    # manufacturing projection.
+    sealed = _freeze(org, owner, project_id, operation_id, incomplete=True)
+    version_id = UUID(str(sealed["id"]))
+    with as_user(owner):
+        _, snapshot = revision_snapshot(version_id, org)
+    assert snapshot["documentary_complete"] is False
+    assert snapshot["production_allowed"] is False
+    projected = {item["module_id"] for item in snapshot["manufacturing"]}
+    assert projected == {"m1", "m3"}
+    evidence = {
+        item["module_id"]
+        for item in snapshot["inspector"]
+        if item["position_id"] == str(position_id)
+    }
+    assert evidence == {"m1", "m2", "m3"}
+    html = _doc01(snapshot)
+    assert "<svg" in html
 
 
 def test_save_documentary_inputs_validates_namespaced_targets(documentary_tenant) -> None:

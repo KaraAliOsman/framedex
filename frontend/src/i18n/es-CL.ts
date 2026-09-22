@@ -436,8 +436,7 @@ const messages = {
   "dashboard.production": "Aprobados / producción",
   "dashboard.recent": "Proyectos recientes",
   "dashboard.viewAll": "Ver todos",
-  "dashboard.empty":
-    "Aún no hay proyectos. Crea el primero para empezar a cotizar vanos.",
+  "dashboard.empty": "Aún no hay proyectos. Crea el primero para empezar a cotizar vanos.",
   "dashboard.emptyCta": "Crear el primer proyecto",
   "page.projects": "Proyectos",
   "page.projectsDescription": "Placeholder navegable; la lógica llega en SHOT-10.",

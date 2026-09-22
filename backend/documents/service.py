@@ -24,9 +24,12 @@ from dekopen_engine.inspection_models import (
 )
 from dekopen_engine.inspector import inspect
 from dekopen_engine.manufacturing import (
+    HandleIntentV1,
+    HandleRequirementPolicyV1,
     ManufacturingFactsV1,
     project_manufacturing_facts_v1,
 )
+from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
 from dekopen_engine.models import EngineResult
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
@@ -156,6 +159,29 @@ def _module_scoped(
             )
         scoped.append(item.model_copy(update=updates))
     return scoped
+
+
+def _missing_handle_intents(
+    trace: GeometryManufacturingTraceV1,
+    handle_policy: HandleRequirementPolicyV1,
+    intents: list[HandleIntentV1],
+) -> bool:
+    available = {
+        (item.bay_id, item.leaf_id, item.handle_domain_slot) for item in intents
+    }
+    for leaf in trace.leaves:
+        for rule in handle_policy.slots:
+            if rule.opening_type is not leaf.opening_type or (
+                rule.leaf_slot is not None and rule.leaf_slot != leaf.leaf_slot
+            ):
+                continue
+            if (
+                leaf.bay_id,
+                leaf.leaf_id,
+                rule.handle_domain_slot,
+            ) not in available:
+                return True
+    return False
 
 
 def _tree_has_legacy_handle(value: object) -> bool:
@@ -547,6 +573,18 @@ def freeze_revision_a(
             quantity = int(position["quantity"])
             unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
             for module_id, computation, module_tree in calculations:
+                scoped_intents = _module_scoped(
+                    intents, module_id, "bay_id", "leaf_id"
+                )
+                if is_assembly and _missing_handle_intents(
+                    computation.manufacturing_trace,
+                    policies.handles,
+                    scoped_intents,
+                ):
+                    # Quote-only assemblies seal incomplete: a module whose
+                    # handle intents were never saved is not projected rather
+                    # than blocking the commercial freeze.
+                    continue
                 for repetition in range(1, quantity + 1):
                     unit_models.append((
                         module_id,
@@ -558,9 +596,7 @@ def freeze_revision_a(
                             placement_policy=policies.placement,
                             handle_policy=policies.handles,
                             reinforcement_policy=policies.reinforcement,
-                            handle_intents=_module_scoped(
-                                intents, module_id, "bay_id", "leaf_id"
-                            ),
+                            handle_intents=scoped_intents,
                             resolved_reinforcement_skus=cutting.reinforcement_skus,
                             legacy_handle_height_present=_tree_has_legacy_handle(module_tree),
                             legacy_handle_migration_confirmed=bool(

@@ -35,12 +35,8 @@ export function DashboardPage(): JSX.Element {
   });
 
   const items = query.data ?? [];
-  const recent = [...items]
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-    .slice(0, 8);
-  const active = items.filter(
-    (item) => item.status === "DRAFT" || item.status === "QUOTED",
-  );
+  const recent = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8);
+  const active = items.filter((item) => item.status === "DRAFT" || item.status === "QUOTED");
   const inProduction = items.filter(
     (item) => item.status === "APPROVED" || item.status === "IN_PRODUCTION",
   );
@@ -101,10 +97,7 @@ export function DashboardPage(): JSX.Element {
                   <span className="dashboard-row-code">{item.code}</span>
                   <span className="dashboard-row-name">{item.name}</span>
                   <span className="dashboard-row-client">{item.client_name}</span>
-                  <span
-                    className="status-chip"
-                    data-status={item.status.toLowerCase()}
-                  >
+                  <span className="status-chip" data-status={item.status.toLowerCase()}>
                     {t(statuses[item.status])}
                   </span>
                 </Link>

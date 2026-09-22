@@ -158,7 +158,10 @@ class TestEvaluation:
         assert len(coupler_cuts) == 2
         assert all(cut.sku == "ACOPLE-60" for cut in coupler_cuts)
         assert all(cut.length_mm == Decimal("1400") for cut in coupler_cuts)
-        assert all(cut.angle_left == Decimal("90") for cut in coupler_cuts)
+        # Coupler cuts serialize at the canonical 1dp angle scale so stored,
+        # priced and recomputed BOM payloads compare equal.
+        assert all(str(cut.angle_left) == "90.0" for cut in coupler_cuts)
+        assert all(str(cut.angle_right) == "90.0" for cut in coupler_cuts)
         reinf = [
             piece
             for piece in evaluation.bom.reinforcements
