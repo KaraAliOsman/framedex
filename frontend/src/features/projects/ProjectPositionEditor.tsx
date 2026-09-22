@@ -219,7 +219,7 @@ function PositionWorkspace({
     if (mode === "bow" && inputs.product === null) {
       // A pending system change lives only in local state — fold it into the
       // committed inputs so evaluation, options, and save see one system.
-      const inputsForBow = { ...inputs, systemId: systemId || inputs.systemId };
+      const inputsForBow = { ...inputs, systemId: systemId || null };
       store.commitInputs({
         ...inputsForBow,
         product: createBowFromInputs(
