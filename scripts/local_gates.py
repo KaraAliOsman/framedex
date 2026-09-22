@@ -111,9 +111,19 @@ def start_clean_stack() -> dict[str, str]:
     version = run([supabase, "--version"], capture=True).strip()
     if version != CLI_VERSION:
         raise RuntimeError(f"Supabase CLI must be exactly {CLI_VERSION}; found {version}")
-    run([supabase, "start"])
-    run([supabase, "db", "reset", "--local"])
-    return running_environment()
+    started = False
+    try:
+        run([supabase, "start"])
+        started = True
+        run([supabase, "db", "reset", "--local"])
+        return running_environment()
+    except BaseException:
+        if started:
+            try:
+                stop_stack()
+            except Exception as error:  # never mask the original startup failure
+                print(f"  warning: could not stop partially started stack: {error}", flush=True)
+        raise
 
 
 def stop_stack() -> None:
@@ -254,9 +264,13 @@ def verify_postgres16() -> None:
                 [docker, "exec", "-i", container, "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", "postgres"],
                 input_text=path.read_text(encoding="utf-8"),
             )
+        import check_documentary_upgrade
         import check_migration_upgrades
+        import check_pricing_upgrade
 
         check_migration_upgrades.verify(container)
+        check_pricing_upgrade.verify(container)
+        check_documentary_upgrade.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])

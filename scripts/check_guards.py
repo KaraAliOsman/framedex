@@ -7,6 +7,7 @@ The deeper proofs live in the test suites (engine purity tests, pgTAP).
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import sys
@@ -27,9 +28,17 @@ def fail(message: str) -> None:
 def check_no_float_in_engine() -> None:
     """Engine math is Decimal-only; a float literal or call breaks determinism."""
     for path in sorted(ENGINE_SRC.rglob("*.py")):
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        source = path.read_text(encoding="utf-8")
+        for lineno, line in enumerate(source.splitlines(), 1):
             if re.search(r"\bfloat\(", line):
                 fail(f"float() in engine source: {path}:{lineno}")
+        try:
+            tree = ast.parse(source, filename=str(path))
+        except SyntaxError:
+            continue  # syntax errors are reported by the compile/lint tooling
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, float):
+                fail(f"float literal in engine source: {path}:{node.lineno}")
 
 
 def check_no_hex_in_frontend() -> None:
