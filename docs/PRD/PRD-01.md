@@ -5,7 +5,7 @@
 **Bloquea a:** PRD-04, PRD-05, PRD-06, PRD-07, PRD-08, PRD-16
 
 **Enmienda SHOT-06:** resolución del owner PD-06-01…17 incorporada en
-`docs/plans/PLAN_SHOT-06.md`. Los nuevos SKU, rangos y pesos sin ficha de fabricante
+el plan de ejecución histórico (historial de Git). Los nuevos SKU, rangos y pesos sin ficha de fabricante
 son **DEMO_60 SYNTHETIC FIXTURE**, nunca especificaciones comerciales certificadas.
 **Regla 0 / Regla 20:** PD-06-19 y PD-06-20 resueltas por el owner.
 G3 standalone = 33.29 kg; golden compuesto bay_2 = 26.55 kg. G7 incluye
@@ -773,7 +773,7 @@ sin densidad/masa de vidrio. Beads siguen ProfileCut GLAZING_BEAD, no PanelBeadP
 
 ## SHOT-07 — contrato derivado autorizado (2026-09-06)
 
-Autoridad: resolución canónica PD-07-01…29 íntegra en `../plans/PLAN_SHOT-07.md`.
+Autoridad: resolución canónica PD-07-01…29 registrada en el plan de ejecución histórico (historial de Git).
 SHOT-07 consume geometría, masas y selección de herraje existentes sin alterar
 EngineResult, las siete claves de calculate, golden ni preimagen del hash.
 Inspector y BFD son Python/Decimal puros. El adapter aporta catálogo bajo RLS.

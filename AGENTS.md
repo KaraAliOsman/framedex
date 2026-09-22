@@ -1,55 +1,57 @@
-# DEKOPEN — mapa del repositorio
+# DEKOPEN — repository map
 
-## Autoridad y navegación
+DEKOPEN is a parametric engineering + quoting OS for PVC/aluminium fenestration:
+a deterministic pure engine, a Django modular monolith, Supabase/Postgres with RLS,
+and a Vite + React SPA.
 
-Precedencia: [Constitución](docs/CONSTITUTION.md) → [roadmap y gates](docs/PRD/PLAN_SHOTS.md)
-→ PRD de dominio en `docs/PRD/` → decisiones del plan de shot. El orden de lectura se adapta
-a la tarea: abre Constitución, gate y plan cuando afectes sus contratos; después, solo los PRD
-y código necesarios. No cargues todas las PRD ni compilaciones por defecto.
+## Layout
 
-- `docs/PRD-*.md` son punteros a las fuentes activas.
-- `docs/plans/PLAN_SHOT-XX.md` conserva decisiones aprobadas y evidencia. La flexibilidad futura
-  no reabre decisiones congeladas de shots activos/cerrados; consulta las que afecten al cambio.
-- `docs/QUALITY_SCORE.md` es un mapa informativo de lo probado, no un contrato.
-- `docs/AGENT_OPERATING_MODEL.md` es referencia de comandos, no otra política.
-- `docs/archive/**`, `docs/audits/**` y `DEKOPEN_BIBLIA_*.md` son históricos no normativos;
-  sus instrucciones de procedimiento no gobiernan trabajo nuevo.
-- `docs/PRD/STACK_APLICACIONES_Y_SERVICIOS.md` clasifica arquitectura, baseline y beneficios;
-  no convierte selecciones temporales en contratos nuevos.
+- `engine/src/dekopen_engine/` — pure calculation engine. No I/O, no Django, no HTTP.
+  All dimensions and money are `Decimal`; tolerance is `0.00 mm`.
+- `engine/tests/` — engine tests incl. golden cases (`test_gold_cases_*`) that freeze
+  proven manufacturing math.
+- `backend/` — Django apps by domain (`authentication`, `engine_api`, `projects`,
+  `pricing`, `documents`, `purchasing`, `billing`, `catalogs`). HTTP edge only;
+  numbers come from the engine.
+- `frontend/` — React 18 + TypeScript + Vite. Product UI lives in `src/features/`.
+  API client is generated from `backend/openapi.yaml` (orval).
+- `supabase/` — migrations (source of truth for schema), `seed.sql` (canonical
+  `DEMO_60` demo catalog), pgTAP tests.
+- `docs/PRD/` — domain specifications. `docs/ENGINEERING.md` — hard invariants.
+  `docs/PRODUCT.md` — product direction.
 
-## Invariantes locales
+## Working here
 
-- `/engine` es puro, sin I/O; dimensiones y dinero usan `Decimal`, con tolerancia `0.00 mm`.
-- Los números de salida provienen de `/engine` o de campos humanos explícitos.
-- RLS PostgreSQL y `current_user_org_ids()` aíslan tenants; auditoría de IA/precios precede
-  a escrituras. Emisión, fábrica y compras requieren la acción humana del contrato.
-- `DEMO_60` es sintético, nunca ficha certificada ni autoridad comercial.
-- UI mediante i18n ES-CL y tokens semánticos CSS; Golden es solo lectura por defecto.
-  Regenerarlo requiere cambio de fórmula autorizado y diff auditado (Regla 22).
-
-## Autonomía y finalización
-
-Resuelve decisiones reversibles no materiales sin aprobación adicional. Usa planes cuando
-ayuden a registrar alcance, dependencias o decisiones; no son un ritual de aprobación.
-Ante contradicción o vacío material, aplica Reglas 0/20 y registra `[PENDIENTE-DECISIÓN]`.
-Si una regla detiene el trabajo, cita archivo/texto (`RULE SAYS`) y efecto (`AGENT INTERPRETS`).
-Las acciones irreversibles necesitan autorización; no se elude PR ni CI protegido.
-
-Un escritor por worktree. El trabajo genuinamente independiente puede usar otros worktrees
-y ramas aislados; los cambios integrados conservan contratos y se verifican por su delta.
-
-La **Regla 19** es la política única de verificación: pruebas por superficie, evidencia ligada
-al SHA, Gauntlet al cierre material de un shot y CI protegido como veredicto de integración.
-Finaliza al satisfacer los gates aplicables y registrar evidencia vigente; no repitas pruebas
-por un commit documental o merge limpio. No debilites checkers, tests ni protección.
-
-## Comandos importantes
+The normal loop: understand → implement → exercise the affected capability →
+fix what is wrong → continue. Verify the surface you touched; run the full suite
+when the change is genuinely cross-cutting.
 
 ```text
-python scripts/check_dod.py all                 # Gauntlet de cierre material de SHOT
-python scripts/check_dod.py lint                # lint y guards constitucionales
-python -m engine.scripts.regenerate_golden --check
-python scripts/new_shot.py SHOT-XX              # scaffold opcional; no inicia el shot
+make lint           # ruff, ESLint, prettier, generated-API sync, source guards
+make typecheck      # mypy engine/, Django check, tsc
+make test           # engine + backend unit + frontend unit tests
+make test-db        # live Supabase gate (needs Docker + supabase CLI): pgTAP, RLS, auth e2e
+make test-mutations # 0.01mm formula mutation drill
+make build          # production frontend build
 ```
 
-Los comandos por superficie están en [el modelo operativo](docs/AGENT_OPERATING_MODEL.md).
+Frontend dev server: `npm --prefix frontend run dev`. Backend: `python backend/manage.py runserver`
+(uses sqlite without `DATABASE_URL`; real RLS behavior needs `make test-db`'s stack).
+
+## Hard invariants — see docs/ENGINEERING.md
+
+- Engine output is the only source of computed numbers. Never let free text,
+  templates, or an LLM manufacture a numeric result.
+- `Decimal` for mm and money — in engine, backend, and SQL (`NUMERIC`, never float types).
+- Every tenant table keeps `org_id` + RLS; cross-tenant reads are bugs, not features.
+- Issued revisions/documents and price/audit history are immutable.
+- Payments are idempotent; externally consequential actions require an explicit
+  human click.
+- Formula changes ship with a golden-case test. Regenerate goldens only via
+  `make goldgen` and review the diff.
+
+## Commits and PRs
+
+Changes land via pull request. CI jobs (Lint & Typecheck, Test Suite, Frontend
+Build, Database Gate) are the merge safety net — fix what they flag, don't weaken
+the checks.

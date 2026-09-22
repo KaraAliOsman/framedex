@@ -195,7 +195,7 @@ modelos distintos de [PRD-14](./PRD-14.md).
 ### 4.4. SHOT-11 lifecycle policy
 
 OWNER decisions PD-11-02/03 (2026-09-21) are frozen in
-[PLAN_SHOT-11](../plans/PLAN_SHOT-11.md#frozen-commercial-decisions): monthly credits
+plan de ejecución histórico (historial de Git): monthly credits
 expire per service cycle; purchased packs never expire; paid activation ends trial credit;
 Flow owns monetary upgrade proration; downgrades, frequency changes and voluntary
 cancellation occur at the paid boundary. Refunds require an authorized exceptional cause

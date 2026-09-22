@@ -1,5 +1,5 @@
-# DEKOPEN — entrada para Cursor
+# DEKOPEN — entry point for Cursor
 
-Lee AGENTS.md como mapa del repositorio. La autoridad normativa y la política de verificación
-están en docs/CONSTITUTION.md; los comandos por superficie, en docs/AGENT_OPERATING_MODEL.md.
-Este archivo no añade reglas ni condiciones de cierre.
+Read AGENTS.md for the repository map and workflow. Hard invariants live in
+docs/ENGINEERING.md; product direction in docs/PRODUCT.md.
+This file adds no rules of its own.

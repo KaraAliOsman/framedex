@@ -8,20 +8,19 @@ clientes conserva aislamiento multi-tenant. Una promoción no determina arquitec
 ## 1. Baseline de producto y fuentes
 
 Esta tabla reúne selecciones actuales y planificadas; no afirma que todos los servicios estén
-desplegados. El [roadmap](./PLAN_SHOTS.md) determina cuándo se introducen y
-[QUALITY_SCORE](../QUALITY_SCORE.md) indica qué capacidades están probadas.
+desplegados. La [dirección de producto](../PRODUCT.md) determina cuándo se introducen.
 
 | Servicio / baseline | Rol | Fuente contractual |
 |---|---|---|
 | Supabase PostgreSQL 17, Auth, Storage | Datos, RLS, Magic Link, archivos firmados | PRD-02, PRD-03, PRD-19; PD-11-04; Constitución |
-| Railway, Django, Huey/Redis | API, workers, despliegue y salud | PRD-00, PRD-19; PLAN_SHOTS |
+| Railway, Django, Huey/Redis | API, workers, despliegue y salud | PRD-00, PRD-19 |
 | PostHog | Telemetría y embudos | PRD-19; SHOT-04/23 |
-| Intercom/Fin | Soporte | PLAN_SHOTS SHOT-23 |
+| Intercom/Fin | Soporte | roadmap |
 | Customer.io | Baseline operativa de ciclo de vida | Sin gate adicional por esta mención |
 | Resend | Baseline de correo transaccional | El contrato de cada flujo de correo gobierna |
 | Jam.dev | Reporte de errores en SPA | PRD-19 §4 |
 | n8n Cloud | Baseline de orquestación interna | No sustituye pagos, auditoría ni idempotencia |
-| Framer | Landing | PLAN_SHOTS; PRD-18 |
+| Framer | Landing | PRD-18 |
 | Cloudflare | Perímetro y CDN | PRD-19 |
 | Flow.cl / Paddle | Pagos Chile / internacionales | PRD-03 |
 

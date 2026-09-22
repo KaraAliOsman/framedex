@@ -1,42 +1,56 @@
-.PHONY: test lint typecheck build database goldgen dod gauntlet shot-% help
+.PHONY: help lint typecheck test test-engine test-backend test-frontend test-mutations test-db build check goldgen
+
+PY := python
+NPM := npm --prefix frontend
 
 help:
-	@echo "Dekopen Builder Command Center (2026 Canonical Verification)"
-	@echo "  make dod        - Canonical full Definition of Done (Rule 19)"
-	@echo "  make gauntlet   - Compatibility alias for make dod; same evidence, never run both"
-	@echo "  make test       - Run all test suites (engine, backend, frontend)"
-	@echo "  make lint       - Run linters and constitutional anti-pattern guards"
-	@echo "  make typecheck  - Strict type checking (mypy strict + tsc)"
-	@echo "  make build      - Build the production frontend"
-	@echo "  make database   - Run the live Supabase reset/lint/pgTAP gate"
-	@echo "  make goldgen    - Regenerate engine golden snapshots (Rule 22)"
-	@echo "  make shot-XX    - Initialize shot branch and plan (e.g. make shot-01)"
-
-test:
-	python scripts/check_dod.py test
+	@echo "DEKOPEN — development commands"
+	@echo "  make lint           - ruff, ESLint, prettier, generated-API sync, source guards"
+	@echo "  make typecheck      - mypy engine, Django check, tsc"
+	@echo "  make test           - engine + backend (unit) + frontend unit tests"
+	@echo "  make test-db        - live DB gate (Docker + Supabase CLI): pgTAP, RLS, auth e2e"
+	@echo "  make test-mutations - 0.01mm formula mutation drill (engine)"
+	@echo "  make build          - production frontend build"
+	@echo "  make check          - lint + typecheck + test + build"
+	@echo "  make goldgen        - regenerate engine golden snapshots"
 
 lint:
-	python scripts/check_dod.py lint
+	$(PY) -m ruff check .
+	$(NPM) run lint
+	$(NPM) run format:check
+	$(PY) scripts/check_generated_api.py
+	$(PY) scripts/check_guards.py
 
 typecheck:
-	python scripts/check_dod.py typecheck
+	$(PY) -m mypy engine/
+	$(PY) backend/manage.py check
+	$(NPM) run typecheck
+
+test: test-engine test-backend test-frontend
+
+test-engine:
+	$(PY) -m pytest engine/ -q -W error \
+		-W "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning"
+	$(PY) -m engine.scripts.regenerate_golden --check
+
+test-backend:
+	$(PY) -m pytest backend/ -q -W error \
+		-W "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning" \
+		--ignore=backend/tests/integration
+
+test-frontend:
+	$(NPM) run test
+
+test-mutations:
+	$(PY) scripts/check_core_mutations.py
+
+test-db:
+	$(PY) scripts/db_gate.py
 
 build:
-	python scripts/check_dod.py build
+	$(NPM) run build
 
-database:
-	python scripts/check_dod.py database
+check: lint typecheck test build
 
 goldgen:
-	python -m engine.scripts.regenerate_golden
-
-dod:
-	python scripts/check_dod.py all
-
-gauntlet:
-	@echo "Compatibility alias: make gauntlet == make dod; do not run both."
-	$(MAKE) dod
-
-shot-%:
-	python scripts/new_shot.py SHOT-$*
-	git checkout -b shot-$* 2>/dev/null || git checkout shot-$*
+	$(PY) -m engine.scripts.regenerate_golden

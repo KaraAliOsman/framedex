@@ -20,7 +20,7 @@ Ningún hallazgo del inspector puede presentarse como un código de error crudo 
 
 ## 2. Reglas canónicas SHOT-07 — resolución owner 2026-09-06
 
-La resolución íntegra PD-07-01…29 en `../plans/PLAN_SHOT-07.md` sustituye las
+La resolución íntegra PD-07-01…29 registrada en el plan de ejecución histórico sustituye las
 fórmulas y acciones históricas de esta sección. Constantes configurables por
 sistema en inspector_rule_configs; tenant antes de global. Las14 configs son
 obligatorias, sin fallback hardcoded; JSON parseado con Decimal, modelo por R.

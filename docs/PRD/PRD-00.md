@@ -54,7 +54,7 @@ contenido ni cambio de autoridad propia, en `PRD-WEB-MOBILE-ESSENTIAL.md`.
 
 ## 4. Plan Maestro de Ejecución por Shots (SHOT-01 → SHOT-24)
 
-*(Ver detalle de gates y roadmap canónico en [`PLAN_SHOTS.md`](./PLAN_SHOTS.md))*
+*(Ver dirección de producto en [`../PRODUCT.md`](../PRODUCT.md))*
 
 - **SHOT-01:** Monorepo + CI + Constitución aplicada.
 - **SHOT-02:** Modelo de Datos DDL + RLS multi-tenant + Seed determinista DEMO_60.
@@ -106,7 +106,7 @@ Para evitar duplicidad o ambigüedades entre documentos, todo hito de cierre se 
 ## 6. Manifiesto de Dependencias Base Aprobadas y Gobernanza de Dependencias (Regla 15)
 
 La política de tres niveles y sus requisitos de aprobación y verificación se definen
-exclusivamente en la [Constitución, Reglas 15 y 19](../CONSTITUTION.md).
+exclusivamente en [`../ENGINEERING.md`](../ENGINEERING.md).
 Este manifiesto conserva la baseline aprobada y las decisiones congeladas de los shots.
 
 ### Dependencias Base Aprobadas (Approved Baseline):

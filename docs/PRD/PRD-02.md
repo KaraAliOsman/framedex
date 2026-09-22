@@ -49,7 +49,7 @@ Un débito requiere auditoría IA previa de la misma organización y valor, y re
 conflictivo se rechaza. No implementa los consumidores de SHOT-13.
 
 La vigencia comercial de créditos mensuales/recargas y los cambios de suscripción están
-pendientes de decisión PD-11-02/03 en PLAN_SHOT-11; no se infieren de la existencia de lotes.
+pendientes de decisión PD-11-02/03 registradas en el plan de ejecución histórico; no se infieren de la existencia de lotes.
 
 `billing_orders` freezes server-authored expected payment, FX source/date/rate/snapshot,
 provider environment and commercial operation identity. `billing_credit_grants` records
@@ -685,7 +685,7 @@ Panel G7 de24.00 usa regla24.00, beads705.00/1937.00 qty2, sin sumar masa bead a
 ## Autoridades adicionales SHOT-07 (resolución owner 2026-09-06)
 
 Migraciones NUEVAS; no modificar históricas. Contrato completo de campos en
-resolución PD-07-01/03/04/10/21/24 de `../plans/PLAN_SHOT-07.md`.
+resolución PD-07-01/03/04/10/21/24 registrada en el plan de ejecución histórico (historial de Git).
 
 | Autoridad | Contrato |
 |---|---|

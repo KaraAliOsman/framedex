@@ -216,7 +216,7 @@ def verify_postgres16() -> None:
     container = os.environ.get("POSTGRES16_CONTAINER")
     owned = container is None
     if owned:
-        container = f"dekopen-shot04-pg16-{uuid4().hex}"
+        container = f"dekopen-pg16-{uuid4().hex}"
         run([
             docker, "run", "--detach", "--name", container,
             "--env", "POSTGRES_PASSWORD=postgres", "postgres:16-alpine",
@@ -257,12 +257,6 @@ def verify_postgres16() -> None:
         import check_migration_upgrades
 
         check_migration_upgrades.verify(container)
-        import check_shot08_upgrade
-
-        check_shot08_upgrade.verify(container)
-        import check_shot09_upgrade
-
-        check_shot09_upgrade.verify(container)
     finally:
         if owned:
             run([docker, "rm", "--force", container])

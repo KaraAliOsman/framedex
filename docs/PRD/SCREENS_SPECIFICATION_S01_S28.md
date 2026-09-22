@@ -25,7 +25,7 @@
 
 3. **Precedencia Temporal del Shot Actual (Principio Inviolable):**
    > **`GLOBAL FLEXIBILITY DOES NOT RETROACTIVELY DESTABILIZE AN ACTIVE SHOT CONTRACT.`**
-   Si una decisión de interfaz ya quedó formalmente congelada en un plan de shot activo mediante resolución aprobada (ejemplo: `S07` congelado temporalmente como Modal contextual en `docs/plans/PLAN_SHOT-07.md` bajo `PD-07-27 — S07`), dicha decisión **se mantiene inmutable durante la ejecución de ese shot**. La flexibilidad global habilita la evolución futura, jamás la desestabilización del shot en curso.
+   Si una decisión de interfaz ya quedó formalmente congelada en un plan de shot activo mediante resolución aprobada (ejemplo: `S07` congelado temporalmente como Modal contextual en el plan de ejecución histórico bajo `PD-07-27 — S07`), dicha decisión **se mantiene inmutable durante la ejecución de ese shot**. La flexibilidad global habilita la evolución futura, jamás la desestabilización del shot en curso.
 
 ---
 
@@ -135,7 +135,7 @@
 - **Required Information:** Árbol geométrico y lista de infracciones técnicas emitidas por el Inspector.
 - **Current Surface Baseline:** Modal contextual disparado por botón de advertencias en S06.
 - **Surface Flexibility:**
-  - *Contrato Temporal de SHOT-07:* `MODAL` (congelado por `PD-07-27 — S07` en `PLAN_SHOT-07.md`).
+  - *Contrato Temporal de SHOT-07:* `MODAL` (congelado por `PD-07-27 — S07` en el plan de ejecución histórico).
   - *Flexibilidad Global Futura:* `FLEXIBLE` (puede evolucionar a drawer lateral, panel dockable o split view en shots posteriores).
 
 ### S08 · Explosión BOM de Materiales

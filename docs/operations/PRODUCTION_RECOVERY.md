@@ -1,7 +1,7 @@
-# SHOT-11 production and recovery runbook
+# Production and recovery runbook
 
 Status: deployable configuration and local proofs; external production gates remain unproven.
-The shot plan records the resolved OWNER commercial decisions and current evidence.
+Resolved OWNER commercial decisions are recorded in the historical execution plan (Git history).
 
 ## Deferred paid activation (OWNER PD-11-04/05)
 
@@ -172,16 +172,11 @@ platform provisioning in a fresh target before an actual Supabase recovery.
 
 ## Clean restore drill
 
-When local Docker is unavailable, apply the PR label `shot-closure-verification` once
-to invoke `.github/workflows/shot-verification.yml`. It checks out the PR's exact head
-SHA, runs the unchanged canonical Gauntlet, probes the production container against
-synthetic Supabase and performs the existing encrypted clean-instance restore. The
-workflow uses read-only repository permissions and no production/provider secrets.
-It runs only on explicit label application, not every documentary commit. Record its
-run URL and tested SHA; a successful run does not prove external production gates.
-For a narrow restore-tool refinement after a passing Gauntlet, the separate label
-`shot-recovery-verification` runs only the restore proof; record both SHAs according
-to Rule 19. It is not a replacement for the closure label's full verification.
+With Docker available locally, run `python scripts/check_restore_drill.py` to restore
+the encrypted backup into a clean PostgreSQL instance on synthetic data. The drill
+uses read-only repository permissions and no production/provider secrets. Record the
+tested SHA alongside the run output; a successful local drill does not prove external
+production gates.
 
 Retrieve the encrypted backup from private Storage using the server/operator credential
 into protected temporary storage. Verify its expected ciphertext hash. Provision a clean

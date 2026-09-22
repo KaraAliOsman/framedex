@@ -1,95 +1,39 @@
-# Dekopen — OS de Ingeniería y Cotización para Carpinterías de PVC
+# DEKOPEN — Engineering & Quoting OS for Fenestration
 
-> **Tolerancia Cero en PVC:** Sistema operativo paramétrico, motor de optimización 1D y cotizador comercial con tolerancia matemática garantizada de `0.00 mm`.
+Parametric product engine, 1D cutting optimizer, and commercial quoter for PVC
+window/door manufacturers, with `0.00 mm` deterministic tolerance.
 
----
+## Quickstart
 
-## ⚡ Quickstart
-
-Requisitos: Python 3.12+, Node.js 20.19+ y npm. El gate SQL real requiere además
-Docker y Supabase CLI 2.116.0; son herramientas de verificación, no dependencias del
-producto. Supabase local usa PostgreSQL 17 y CI aplica el mismo DDL adicionalmente sobre
-`postgres:16-alpine` para verificar el contrato de PRD-02.
+Requires Python 3.12+, Node.js 20.19+/22+, npm. The live DB gate additionally
+needs Docker and Supabase CLI 2.116.0.
 
 ```bash
-python -m venv .venv
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-# macOS/Linux: source .venv/bin/activate
-python -m pip install --requirement requirements-dev.txt
-cd frontend && npm ci && cd ..
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+npm ci --prefix frontend
 
-# Gauntlet canónico multiplataforma
-python scripts/check_dod.py all
-
-# Migración, seed, lint SQL y pgTAP sobre una stack Supabase limpia
-make database
+make lint typecheck test build    # unit surfaces
+make test-db                      # live gate: clean Supabase stack, pgTAP, RLS, auth e2e
 ```
 
-El checker rechaza herramientas o suites ausentes, warnings, tipos SQL flotantes, tablas
-sin RLS y cualquier comando con retorno no cero. La fuente de verdad vive en
-`supabase/migrations/`; el seed global determinista `DEMO_60` vive en
-`supabase/seed.sql`. Ningún comando del shot enlaza ni modifica una instancia remota.
+Run locally:
 
-## 🔒 Branch protection de `main`
+```bash
+python backend/manage.py runserver          # sqlite fallback without DATABASE_URL
+npm --prefix frontend run dev               # Vite dev server on :5173
+```
 
-La protección debe exigir pull request y los cuatro checks exactos `Lint & Typecheck`,
-`Test Suite`, `Frontend Build` y `Database Gate`, sin bypass ni force pushes. Los cambios se publican mediante PR; el merge necesita autorización del Owner, que puede
-formar parte de la solicitud inicial. El tag `shot-XX` identifica el cierre, no el nombre
-obligatorio de la rama. Tras el merge se verifica el CI de `main`.
+The schema of record lives in `supabase/migrations/`; the deterministic demo
+catalog `DEMO_60` lives in `supabase/seed.sql`.
 
----
+## Development
 
-## 🗺️ Mapa de Documentación y Arquitectura
+See [`AGENTS.md`](./AGENTS.md) for the repo map and workflow, and
+[`docs/ENGINEERING.md`](./docs/ENGINEERING.md) for the hard invariants
+(Decimal determinism, RLS tenancy, immutability, payment idempotency).
+Product direction lives in [`docs/PRODUCT.md`](./docs/PRODUCT.md); domain
+specifications in [`docs/PRD/`](./docs/PRD/).
 
-La Constitución y el roadmap/PRD activos definen los contratos. Las guías, inventario de
-stack, calidad y archivos históricos llevan su autoridad explícita:
-
-| Documento | Ubicación | Propósito |
-|---|---|---|
-| **Protocolo de Agentes** | [`/AGENTS.md`](./AGENTS.md) | Bootstrap y mapa de autoridades para agentes de desarrollo |
-| **Constitución del Builder** | [`/docs/CONSTITUTION.md`](./docs/CONSTITUTION.md) | 23 reglas inviolables de calidad, tipado y determinismo (v1.3 MASTER) |
-| **Doctrina Operativa de Agentes** | [`/docs/AGENT_OPERATING_MODEL.md`](./docs/AGENT_OPERATING_MODEL.md) | Comandos y evidencia por superficie; no añade políticas normativas |
-| **Mapa de Calidad Operativo** | [`/docs/QUALITY_SCORE.md`](./docs/QUALITY_SCORE.md) | Mapa JIT de capacidades probadas (`PROVEN`) vs. en progreso o diferidas con evidencia real |
-| **Playbook de Sesión** | [`/docs/PLAYBOOK_SHOTS.md`](./docs/PLAYBOOK_SHOTS.md) | Puntero retirado hacia las fuentes consolidadas |
-| **Especificaciones Técnicas (PRDs)** | [`/docs/PRD/`](./docs/PRD/) | Módulos funcionales del sistema (PRD-00 a PRD-20) |
-| **Baseline de Superficies y Flujos** | [`/docs/PRD/SCREENS_SPECIFICATION_S01_S28.md`](./docs/PRD/SCREENS_SPECIFICATION_S01_S28.md) | Baseline de superficies y flujos de usuario (Capability Map S01 a S28) |
-| **Plan Maestro de Shots** | [`/docs/PRD/PLAN_SHOTS.md`](./docs/PRD/PLAN_SHOTS.md) | Secuencia de ejecución canónica de los 24 shots y gates de cierre |
-| **Capacidades Futuras Protegidas** | [`/docs/PRD/FUTURE_CAPABILITIES.md`](./docs/PRD/FUTURE_CAPABILITIES.md) | Registro activo de arquitectura extensible (3D, CNC, geometría avanzada) |
-
----
-
-## 📊 Estado de Ejecución de Shots (SHOT-01 → SHOT-24)
-
-> El alcance, dependencias, entregables y gates de cada SHOT se definen exclusivamente en [`docs/PRD/PLAN_SHOTS.md`](./docs/PRD/PLAN_SHOTS.md). Esta tabla solo refleja estado de ejecución y no constituye una fuente normativa; no debe duplicar el roadmap.
-
-| Shot | Estado |
-|---|:---:|
-| **SHOT-01** | ✅ Cerrado |
-| **SHOT-02** | ✅ Cerrado |
-| **SHOT-03** | ✅ Cerrado |
-| **SHOT-04** | ✅ Cerrado |
-| **SHOT-05** | ✅ Cerrado |
-| **SHOT-06** | ✅ Cerrado |
-| **SHOT-07** | ✅ Cerrado |
-| **SHOT-08** | ✅ Cerrado |
-| **SHOT-09** | ✅ Cerrado |
-| **SHOT-10** | ✅ Cerrado |
-| **SHOT-11** | ⏳ Pendiente |
-| **SHOT-12** | ⏳ Pendiente |
-| **SHOT-13** | ⏳ Pendiente |
-| **SHOT-14** | ⏳ Pendiente |
-| **SHOT-15** | ⏳ Pendiente |
-| **SHOT-16** | ⏳ Pendiente |
-| **SHOT-17** | ⏳ Pendiente |
-| **SHOT-18** | ⏳ Pendiente |
-| **SHOT-19** | ⏳ Pendiente |
-| **SHOT-20** | ⏳ Pendiente |
-| **SHOT-21** | ⏳ Pendiente |
-| **SHOT-22** | ⏳ Pendiente |
-| **SHOT-23** | ⏳ Pendiente |
-| **SHOT-24** | ⏳ Pendiente |
-
-SHOT-10 está cerrado por [PR #34](https://github.com/KaraAliOsman/framedex/pull/34), merge y tag
-`shot-10` en `8712d67`. El [registro de cierre](./docs/plans/PLAN_SHOT-10.md) distingue el
-Gauntlet en `85893c3`, el refinamiento ejecutable `4e1f7af` y el head documental `99f1856`.
-SHOT-11 no se ha iniciado.
+Changes land via pull request. CI checks: **Lint & Typecheck**, **Test Suite**,
+**Frontend Build**, **Database Gate**.
