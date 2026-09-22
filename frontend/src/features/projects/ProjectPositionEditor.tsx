@@ -436,7 +436,9 @@ function PositionWorkspace({
               {t("assembly.type")}
               <select
                 value={inputs.product === null ? "single" : "bow"}
-                disabled={busy || pending || intentValidating}
+                // pending only locks classic-mode edits; the type switch itself
+                // stays available so setProductMode can discard the draft.
+                disabled={busy || intentValidating}
                 onChange={(event) =>
                   setProductMode(event.target.value === "bow" ? "bow" : "single")
                 }
