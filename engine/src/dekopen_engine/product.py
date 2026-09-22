@@ -162,6 +162,32 @@ def _seg_intersects(
     return (o1 * o2 < 0) and (o3 * o4 < 0)
 
 
+def _polygons_overlap(a: list[PlanPoint], b: list[PlanPoint]) -> bool:
+    """SAT overlap test for convex polygons.
+
+    Exact for our module rectangles and coupler wedges: any separating axis
+    (an edge normal of either polygon) means disjoint; otherwise the polygons
+    intersect — including containment and edge-touch, which both collide
+    physically.
+    """
+
+    def span(points: list[PlanPoint], nx: Decimal, ny: Decimal) -> tuple[Decimal, Decimal]:
+        values = [p.x_mm * nx + p.y_mm * ny for p in points]
+        return min(values), max(values)
+
+    for poly in (a, b):
+        count = len(poly)
+        for i in range(count):
+            edge = poly[(i + 1) % count]
+            ex = edge.x_mm - poly[i].x_mm
+            ey = edge.y_mm - poly[i].y_mm
+            lo_a, hi_a = span(a, -ey, ex)
+            lo_b, hi_b = span(b, -ey, ex)
+            if hi_a < lo_b or hi_b < lo_a:
+                return False
+    return True
+
+
 def _plan_geometry(
     assembly: CoupledAssembly, depth_mm: Decimal
 ) -> tuple[PlanGeometry, list[ProductIssue]]:
@@ -259,6 +285,35 @@ def _plan_geometry(
                             "first": modules[i].id,
                             "second": modules[j].id,
                         },
+                    )
+                )
+
+    # Depth polygons must not collide either: front chains can stay disjoint
+    # while two module rectangles or a coupler wedge overlap in depth.
+    rects = [(module.module_id, module.corners) for module in plan_modules]
+    for i, (id_a, poly_a) in enumerate(rects):
+        for j in range(i + 2, len(rects)):
+            id_b, poly_b = rects[j]
+            if _polygons_overlap(poly_a, poly_b):
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.PLAN_SELF_INTERSECTION.value,
+                        severity=Severity.ERROR,
+                        target=f"module:{id_b}",
+                        params={"other": id_a},
+                    )
+                )
+    for index, plan_coupling in enumerate(plan_couplings):
+        for j, (id_b, poly_b) in enumerate(rects):
+            if j in (index, index + 1):
+                continue
+            if _polygons_overlap(plan_coupling.polygon, poly_b):
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.PLAN_SELF_INTERSECTION.value,
+                        severity=Severity.ERROR,
+                        target=f"module:{id_b}",
+                        params={"other": f"coupling:{plan_coupling.coupling_id}"},
                     )
                 )
 

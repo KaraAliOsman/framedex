@@ -312,6 +312,47 @@ class TestEvaluation:
             for issue in evaluation.issues
         )
 
+    def test_plan_depth_overlap_is_invalid(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Three 200 mm modules folding -85°/-85° on a deep (300 mm) system:
+        # m3 swings back over m1 so their depth rectangles collide even
+        # though no front-chain segments cross.
+        deep = demo_60_params.model_copy(update={"depth_mm": Decimal("300.00")})
+        product = make_bow_assembly(
+            module_count=3,
+            width_mm=Decimal("600"),
+            height_mm=Decimal("1400"),
+            angle_deg=Decimal("-85"),
+            glass_thickness_mm=GLASS_4_MM,
+            glass_spec=GLASS_4_SPEC,
+        )
+        evaluation = evaluate_product(product, deep)
+        assert evaluation.status is ProductStatus.INVALID
+        assert any(
+            issue.code == IssueCode.PLAN_SELF_INTERSECTION.value
+            and issue.severity is Severity.ERROR
+            for issue in evaluation.issues
+        )
+
+    def test_plan_depth_no_false_positive_on_shallow_system(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Same fold on the real 60 mm depth: modules stay clear of each other.
+        product = make_bow_assembly(
+            module_count=3,
+            width_mm=Decimal("600"),
+            height_mm=Decimal("1400"),
+            angle_deg=Decimal("-85"),
+            glass_thickness_mm=GLASS_4_MM,
+            glass_spec=GLASS_4_SPEC,
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        assert not any(
+            issue.code == IssueCode.PLAN_SELF_INTERSECTION.value
+            for issue in evaluation.issues
+        )
+
     def test_plan_polygon_shape(self, demo_60_params: SystemParams) -> None:
         evaluation = evaluate_product(bow_3(), demo_60_params)
         plan = evaluation.plan
