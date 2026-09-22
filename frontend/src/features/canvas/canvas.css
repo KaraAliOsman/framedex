@@ -455,3 +455,337 @@
   color: var(--theme-text-primary);
   padding: 0.3rem 0.5rem;
 }
+
+/* Compositional editor — canvas-first workspace */
+.assembly-editor {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-areas:
+    "toolbar toolbar"
+    "canvas side";
+}
+
+.assembly-toolbar {
+  grid-area: toolbar;
+}
+
+.assembly-canvas {
+  display: grid;
+  gap: 0.5rem;
+  grid-area: canvas;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 26rem;
+  padding: 0;
+}
+
+.product-front-svg {
+  background: var(--theme-bg-canvas);
+  display: block;
+  min-height: 18rem;
+  width: 100%;
+}
+
+.front-module {
+  cursor: pointer;
+}
+
+.front-module .module-frame {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-text-secondary);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.front-module.is-selected .module-frame {
+  stroke: var(--theme-cyan-tool);
+}
+
+.front-module.has-error .module-frame {
+  stroke: var(--theme-crimson-alert);
+}
+
+.front-module.has-warning .module-frame {
+  stroke: var(--theme-amber-opening);
+}
+
+.module-glass {
+  fill: var(--theme-glass-tint);
+  stroke: none;
+}
+
+.module-divider {
+  fill: var(--theme-surface-card);
+}
+
+.module-bay {
+  pointer-events: none;
+}
+
+.opening-glyph polyline,
+.opening-glyph line,
+.opening-glyph path {
+  stroke: var(--theme-text-secondary);
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.opening-glyph circle {
+  fill: var(--theme-text-secondary);
+}
+
+.canvas-dim {
+  cursor: pointer;
+  fill: var(--theme-text-secondary);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.canvas-dim:hover {
+  fill: var(--theme-cyan-tool);
+}
+
+.canvas-dim-input {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-cyan-tool);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+  width: 100%;
+}
+
+.add-handle {
+  cursor: pointer;
+}
+
+.add-handle circle {
+  fill: var(--theme-surface-panel);
+  stroke: var(--theme-border-subtle);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.add-handle path {
+  stroke: var(--theme-cyan-tool);
+  stroke-width: 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.add-handle:hover circle,
+.add-handle:focus circle {
+  stroke: var(--theme-cyan-tool);
+}
+
+.assembly-plan {
+  border-top: 1px solid var(--theme-border-subtle);
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+}
+
+.assembly-plan figcaption {
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+}
+
+.assembly-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  grid-area: side;
+  min-width: 0;
+}
+
+.assembly-inspector {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.assembly-inspector__header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.assembly-inspector__header h4 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.assembly-hint {
+  color: var(--theme-text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.opening-grid {
+  display: grid;
+  gap: 0.3rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.opening-choice {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  cursor: pointer;
+  padding: 0.15rem;
+}
+
+.opening-choice.is-active {
+  border-color: var(--theme-cyan-tool);
+  outline: 1px solid var(--theme-cyan-tool);
+}
+
+.opening-choice svg {
+  display: block;
+  width: 100%;
+}
+
+.opening-choice__frame {
+  fill: var(--theme-glass-tint);
+  stroke: var(--theme-text-secondary);
+  stroke-width: 4;
+}
+
+.opening-choice .opening-glyph polyline,
+.opening-choice .opening-glyph line,
+.opening-choice .opening-glyph path {
+  stroke: var(--theme-text-primary);
+  stroke-width: 3;
+}
+
+.inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ghost-button {
+  background: transparent;
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.55rem;
+}
+
+.ghost-button:hover:not(:disabled) {
+  border-color: var(--theme-cyan-tool);
+}
+
+.ghost-button:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ghost-button.is-danger:hover:not(:disabled) {
+  border-color: var(--theme-crimson-alert);
+  color: var(--theme-crimson-alert);
+}
+
+.assembly-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.issue-chip {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-left-width: 3px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.issue-chip--error {
+  border-left-color: var(--theme-crimson-alert);
+}
+
+.issue-chip--warning {
+  border-left-color: var(--theme-amber-opening);
+}
+
+.plan-angle {
+  cursor: pointer;
+  fill: var(--theme-text-primary);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-angle:hover {
+  fill: var(--theme-cyan-tool);
+}
+
+.plan-coupling {
+  cursor: pointer;
+}
+
+.plan-coupling.is-selected {
+  stroke: var(--theme-cyan-tool);
+}
+
+.plan-coupling.has-issue {
+  stroke: var(--theme-crimson-alert);
+}
+
+.plan-issue-flag {
+  fill: var(--theme-crimson-alert);
+  font-weight: 700;
+}
+
+.starter-bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.starter-chip {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.starter-chip:hover:not(:disabled) {
+  border-color: var(--theme-cyan-tool);
+}
+
+.starter-chip:disabled {
+  color: var(--theme-text-muted);
+  opacity: 0.6;
+}
+
+.field-label {
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .assembly-editor {
+    grid-template-areas:
+      "toolbar"
+      "canvas"
+      "side";
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

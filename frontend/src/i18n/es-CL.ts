@@ -750,6 +750,23 @@ const messages = {
     "El acero del acoplador en {target} no es fabricable con su holgura.",
   "assembly.issue.couplerHeightMismatch":
     "El acoplador {sku} mide {coupler} mm pero el conjunto mide {module} mm de alto.",
+  "assembly.module": "Módulo",
+  "assembly.coupling": "Unión",
+  "assembly.addUnitLeft": "Agregar unidad a la izquierda",
+  "assembly.addUnitRight": "Agregar unidad a la derecha",
+  "assembly.removeUnit": "Eliminar unidad",
+  "assembly.splitV": "Dividir en vertical",
+  "assembly.splitH": "Dividir en horizontal",
+  "assembly.straighten": "Enderezar",
+  "assembly.elementHint": "Selecciona un módulo o una unión en el dibujo.",
+  "assembly.issues": "Observaciones",
+  "assembly.starters": "Empezar con",
+  "assembly.starter.fixed": "Fijo",
+  "assembly.starter.sash": "Una hoja",
+  "assembly.starter.twoSash": "Dos hojas",
+  "assembly.starter.doorSide": "Puerta + lateral",
+  "assembly.starter.bow3": "Bow ×3",
+  "assembly.starter.bow5": "Bow ×5",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

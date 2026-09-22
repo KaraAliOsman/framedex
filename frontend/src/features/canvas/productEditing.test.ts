@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import { createBowFromInputs } from "./AssemblyEditor";
 import {
+  addAdjacentUnit,
   equalizeCouplingAngles,
   equalizeModuleWidths,
   isProductModel,
+  isSingleUnit,
+  removeUnit,
   scaleModuleWidths,
   makeBowProduct,
   moduleGlassSku,
   moduleOpening,
   modulePanelSku,
   setModulePanel,
+  setAllCouplingAngles,
   setCouplerSku,
   setModuleGlass,
   setCouplerSkuAll,
@@ -19,7 +23,9 @@ import {
   setModuleOpening,
   setModuleWidth,
   setAllModuleHeights,
+  splitModuleBay,
   totalModuleWidth,
+  wrapTreeAsProduct,
 } from "./productEditing";
 import type { CanvasDesignInputs } from "./canvasStore";
 
@@ -41,6 +47,87 @@ describe("makeBowProduct", () => {
     expect(totalModuleWidth(product)).toBeCloseTo(2100, 5);
     expect(isProductModel(product)).toBe(true);
     expect(isProductModel({ version: "product-v1" })).toBe(false);
+  });
+});
+
+describe("addAdjacentUnit", () => {
+  it("appends a unit inheriting the edge module and outermost joint", () => {
+    const base = setCouplerSkuAll(bow(), "ACOPLE-60");
+    const grown = addAdjacentUnit(base, "right");
+    expect(grown.assembly.modules.map((m) => m.id)).toEqual(["m1", "m2", "m3", "m4"]);
+    expect(grown.assembly.couplings.map((c) => c.id)).toEqual(["c1", "c2", "c3"]);
+    const added = grown.assembly.modules.at(-1)!;
+    expect(added.width_mm).toBe(base.assembly.modules.at(-1)!.width_mm);
+    expect(added.height_mm).toBe(base.assembly.modules.at(-1)!.height_mm);
+    expect(grown.assembly.couplings.at(-1)!.angle_deg).toBe("15.0");
+    expect(grown.assembly.couplings.at(-1)!.coupler_profile_sku).toBe("ACOPLE-60");
+  });
+
+  it("prepends on the left and starts straight when no joint exists", () => {
+    const single = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED" },
+      "1000.00",
+      "1200.00",
+    );
+    expect(isSingleUnit(single)).toBe(true);
+    const grown = addAdjacentUnit(single, "left");
+    expect(grown.assembly.modules.map((m) => m.id)).toEqual(["m2", "m1"]);
+    expect(grown.assembly.couplings).toEqual([
+      { id: "c1", angle_deg: "0.0", coupler_profile_sku: null },
+    ]);
+    expect(isSingleUnit(grown)).toBe(false);
+    // the inherited unit is a deep copy, not a shared tree reference
+    expect(grown.assembly.modules[0]!.tree).not.toBe(grown.assembly.modules[1]!.tree);
+  });
+});
+
+describe("removeUnit", () => {
+  it("drops an edge module with its one adjacent coupling", () => {
+    const removed = removeUnit(bow(), "m1");
+    expect(removed.assembly.modules.map((m) => m.id)).toEqual(["m2", "m3"]);
+    expect(removed.assembly.couplings.map((c) => c.id)).toEqual(["c2"]);
+  });
+
+  it("heals interior removals by merging the deflection so orientation survives", () => {
+    const bent = setAllCouplingAngles(bow(), "10.0");
+    const removed = removeUnit(bent, "m2");
+    expect(removed.assembly.modules.map((m) => m.id)).toEqual(["m1", "m3"]);
+    // heading of m3 was 0 + 10 + 10 — the merged joint preserves it
+    expect(removed.assembly.couplings).toHaveLength(1);
+    expect(removed.assembly.couplings[0]!.angle_deg).toBe("20.0");
+  });
+
+  it("refuses to remove the last module or an unknown id", () => {
+    const single = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED" },
+      "1000.00",
+      "1200.00",
+    );
+    expect(removeUnit(single, "m1")).toBe(single);
+    expect(removeUnit(bow(), "nope")).toEqual(bow());
+  });
+});
+
+describe("splitModuleBay", () => {
+  it("splits the primary bay at the center with the given mullion", () => {
+    const split = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
+    const tree = split.assembly.modules[1]!.tree;
+    expect(tree.type).toBe("SPLIT_V");
+    expect(tree.split_offset_mm).toBe("350.00");
+    expect(tree.mullion_profile_sku).toBe("MULL-60");
+    expect(tree.children).toHaveLength(2);
+  });
+
+  it("generates unique node ids across repeated splits", () => {
+    const once = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
+    const twice = splitModuleBay(once, "m2", { type: "SPLIT_H", mullionSku: "MULL-60" });
+    expect(twice).not.toBe(once);
+  });
+
+  it("refuses door bays and missing mullions", () => {
+    const door = setModuleOpening(bow(), "m2", "DOOR_ENTRY");
+    expect(splitModuleBay(door, "m2", { type: "SPLIT_V", mullionSku: "MULL-60" })).toBe(door);
+    expect(splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "" })).toEqual(bow());
   });
 });
 

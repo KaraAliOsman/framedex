@@ -1,5 +1,5 @@
-import type { IntentNode, Opening } from "./intentEditing";
-import { intentBays } from "./intentEditing";
+import type { IntentNode, Opening, SplitType } from "./intentEditing";
+import { intentBays, splitBay, walkIntent } from "./intentEditing";
 
 /** Compositional product model (product-v2) — modules joined by couplings.
  *
@@ -136,6 +136,120 @@ function replaceCoupling(
       couplings: product.assembly.couplings.map((existing) =>
         existing.id === couplingId ? coupling : existing,
       ),
+    },
+  };
+}
+
+/** Next free module/coupling id — survives removals without collisions. */
+export function nextModuleId(product: ProductJson): string {
+  const used = new Set(product.assembly.modules.map((module) => module.id));
+  let index = product.assembly.modules.length + 1;
+  while (used.has(`m${index}`)) index += 1;
+  return `m${index}`;
+}
+
+export function nextCouplingId(product: ProductJson): string {
+  const used = new Set(product.assembly.couplings.map((coupling) => coupling.id));
+  let index = product.assembly.couplings.length + 1;
+  while (used.has(`c${index}`)) index += 1;
+  return `c${index}`;
+}
+
+function cloneTree(node: IntentNode): IntentNode {
+  return { ...node, children: node.children?.map(cloneTree) };
+}
+
+/** Direct-composition grow: attach a compatible unit on the left/right edge.
+ *
+ * Inherits the edge module's height and bay structure (same opening, glass,
+ * panel), a reasonable default width, and a coupling whose angle/coupler
+ * inherit the outermost existing joint — or straight (0°) for the first one.
+ */
+export function addAdjacentUnit(
+  product: ProductJson,
+  side: "left" | "right",
+  defaults: { widthMm?: string } = {},
+): ProductJson {
+  const { modules, couplings } = product.assembly;
+  const edge = side === "right" ? modules.at(-1) : modules[0];
+  if (!edge) return product;
+  const outerCoupling = side === "right" ? couplings.at(-1) : couplings[0];
+  const module: ProductModuleJson = {
+    id: nextModuleId(product),
+    width_mm: defaults.widthMm ?? edge.width_mm,
+    height_mm: edge.height_mm,
+    tree: cloneTree(edge.tree),
+  };
+  const coupling: CouplingJson = {
+    id: nextCouplingId(product),
+    angle_deg: outerCoupling?.angle_deg ?? "0.0",
+    coupler_profile_sku: outerCoupling?.coupler_profile_sku ?? null,
+  };
+  return {
+    ...product,
+    assembly:
+      side === "right"
+        ? { modules: [...modules, module], couplings: [...couplings, coupling] }
+        : { modules: [module, ...modules], couplings: [coupling, ...couplings] },
+  };
+}
+
+/** Remove a unit and heal the chain: when an interior module leaves, its two
+ * neighboring modules re-join with a merged deflection (c_left + c_right) so
+ * downstream modules keep their absolute orientation. */
+export function removeUnit(product: ProductJson, moduleId: string): ProductJson {
+  const { modules, couplings } = product.assembly;
+  const index = modules.findIndex((module) => module.id === moduleId);
+  if (index === -1 || modules.length === 1) return product;
+  const nextModules = modules.filter((_, position) => position !== index);
+  const nextCouplings = couplings.filter(
+    (_, position) => position !== index && position !== index - 1,
+  );
+  if (index > 0 && index < modules.length - 1) {
+    const merged = Number(couplings[index - 1]!.angle_deg) + Number(couplings[index]!.angle_deg);
+    nextCouplings.splice(index - 1, 0, {
+      ...couplings[index - 1]!,
+      angle_deg: merged.toFixed(1),
+    });
+  }
+  return {
+    ...product,
+    assembly: { modules: nextModules, couplings: nextCouplings },
+  };
+}
+
+/** Wrap a classic parametric tree as a degenerate one-module product so the
+ * compositional editor can edit legacy positions without a mode switch. */
+export function wrapTreeAsProduct(
+  tree: IntentNode,
+  widthMm: string,
+  heightMm: string,
+): ProductJson {
+  return {
+    version: "product-v2",
+    assembly: {
+      modules: [{ id: "m1", width_mm: widthMm, height_mm: heightMm, tree }],
+      couplings: [],
+    },
+  };
+}
+
+/** True when the product is a single uncoupled unit — i.e. it can persist in
+ * the classic design shape (which keeps the documentary/quotation path). */
+export function isSingleUnit(product: ProductJson): boolean {
+  return product.assembly.modules.length === 1 && product.assembly.couplings.length === 0;
+}
+
+/** Set the same deflection on every joint — "Distribuir arco" with an exact value. */
+export function setAllCouplingAngles(product: ProductJson, angleDeg: string): ProductJson {
+  return {
+    ...product,
+    assembly: {
+      ...product.assembly,
+      couplings: product.assembly.couplings.map((coupling) => ({
+        ...coupling,
+        angle_deg: angleDeg,
+      })),
     },
   };
 }
@@ -378,4 +492,45 @@ export function setModulePanel(
 
 export function modulePanelSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.panel_article_sku ?? null;
+}
+
+/** "Dividir" — split a module's bay region with a catalog mullion.
+ *
+ * The default split is centered (width / 2 for vertical, height / 2 for
+ * horizontal) so a single click produces two equal regions; the user can
+ * refine the divider afterwards. Returns the unchanged product when the
+ * module or split is invalid (door bays can't split).
+ */
+export function splitModuleBay(
+  product: ProductJson,
+  moduleId: string,
+  division: { type: SplitType; mullionSku: string },
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module || !division.mullionSku.trim()) return product;
+  const bay = modulePrimaryBay(module);
+  if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
+  const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
+  if (!Number.isFinite(size) || size <= 0) return product;
+  const offset = (size / 2).toFixed(2);
+  const used = new Set(walkIntent(module.tree).map((node) => node.id));
+  const freeId = (base: string): string => {
+    let index = 1;
+    while (used.has(`${base}${index}`)) index += 1;
+    return `${base}${index}`;
+  };
+  try {
+    const tree = splitBay(
+      module.tree.type === "ROOT" ? (module.tree.children?.[0] ?? module.tree) : module.tree,
+      bay.id,
+      { type: division.type, offsetMm: offset, mullionSku: division.mullionSku },
+      {
+        split: freeId(`${module.id}-s${division.type === "SPLIT_V" ? "v" : "h"}`),
+        secondBay: freeId(`${bay.id}-b`),
+      },
+    );
+    return replaceModule(product, moduleId, { ...module, tree });
+  } catch {
+    return product;
+  }
 }

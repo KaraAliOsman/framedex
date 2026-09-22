@@ -2,30 +2,36 @@ import { useEffect, useState } from "react";
 
 import "./canvas.css";
 
-import type { EngineAssemblyCalculateResponse, ProductIssue } from "../../api/generated/models";
+import type {
+  DesignOptions,
+  EngineAssemblyCalculateResponse,
+  ProductIssue,
+} from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
 import { BowPlanSvg } from "./BowPlanSvg";
+import { ProductFrontSvg, OpeningGlyph } from "./ProductFrontSvg";
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
+import type { SplitType } from "./intentEditing";
 import {
+  addAdjacentUnit,
   equalizeCouplingAngles,
   equalizeModuleWidths,
-  isProductModel,
   makeBowProduct,
   moduleGlassSku,
   moduleOpening,
   modulePanelSku,
+  removeUnit,
+  scaleModuleWidths,
   setAllModuleHeights,
   setModuleGlass,
   setModulePanel,
   setCouplerSku,
-  setCouplerSkuAll,
   setCouplingAngle,
-  setModuleCount,
   setModuleOpening,
-  scaleModuleWidths,
   setModuleWidth,
-  totalModuleWidth,
+  splitModuleBay,
+  type CouplingJson,
   type ProductJson,
 } from "./productEditing";
 
@@ -36,10 +42,9 @@ const OPENING_OPTIONS = [
   ["TILT_TURN_LEFT", "intent.tiltLeft"],
   ["TILT_TURN_RIGHT", "intent.tiltRight"],
   ["AWNING", "intent.awning"],
+  ["SLIDING_2L", "intent.sliding"],
   ["DOOR_ENTRY", "intent.door"],
 ] as const;
-
-const MODULE_COUNTS = [2, 3, 4, 5, 6];
 
 const ISSUE_KEYS: Record<string, TranslationKey> = {
   couplings_count_mismatch: "assembly.issue.couplingsCountMismatch",
@@ -135,11 +140,223 @@ export function createBowFromInputs(
   });
 }
 
+function statusKey(status: string | undefined): TranslationKey {
+  if (status === "VALID") return "assembly.statusValid";
+  if (status === "MANUFACTURING_INCOMPLETE") return "assembly.statusIncomplete";
+  return "assembly.statusInvalid";
+}
+
+function ModuleInspector({
+  module,
+  product,
+  glassSkus,
+  panelSkus,
+  mullionSkus,
+  busy,
+  commit,
+}: {
+  module: ProductJson["assembly"]["modules"][number];
+  product: ProductJson;
+  glassSkus: string[];
+  panelSkus: string[];
+  mullionSkus: Partial<Record<SplitType, string>>;
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const opening = moduleOpening(module);
+  const isDoor = opening === "DOOR_ENTRY";
+  return (
+    <section className="assembly-inspector" aria-label={t("assembly.module")}>
+      <header className="assembly-inspector__header">
+        <h4>
+          {t("assembly.module")} {module.id}
+        </h4>
+        <button
+          type="button"
+          className="ghost-button is-danger"
+          disabled={busy || product.assembly.modules.length <= 1}
+          title={t("assembly.removeUnit")}
+          aria-label={t("assembly.removeUnit")}
+          onClick={() => commit(removeUnit(product, module.id))}
+        >
+          ×
+        </button>
+      </header>
+      <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
+        {OPENING_OPTIONS.map(([value, labelKey]) => (
+          <button
+            key={value}
+            type="button"
+            className={`opening-choice${opening === value ? " is-active" : ""}`}
+            title={t(labelKey)}
+            aria-label={t(labelKey)}
+            aria-pressed={opening === value}
+            disabled={busy}
+            onClick={() => commit(setModuleOpening(product, module.id, value))}
+          >
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+              <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+            </svg>
+          </button>
+        ))}
+      </div>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
+          onClick={() =>
+            commit(
+              splitModuleBay(product, module.id, {
+                type: "SPLIT_V",
+                mullionSku: mullionSkus.SPLIT_V ?? "",
+              }),
+            )
+          }
+        >
+          {t("assembly.splitV")}
+        </button>
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
+          onClick={() =>
+            commit(
+              splitModuleBay(product, module.id, {
+                type: "SPLIT_H",
+                mullionSku: mullionSkus.SPLIT_H ?? "",
+              }),
+            )
+          }
+        >
+          {t("assembly.splitH")}
+        </button>
+      </div>
+      <DraftField
+        label={t("assembly.width")}
+        value={module.width_mm}
+        unit="mm"
+        disabled={busy}
+        normalize={normalizeMm}
+        onCommit={(value) => commit(setModuleWidth(product, module.id, value))}
+      />
+      <DraftField
+        label={t("assembly.height")}
+        value={module.height_mm}
+        unit="mm"
+        disabled={busy}
+        normalize={normalizeMm}
+        onCommit={(value) => commit(setAllModuleHeights(product, value))}
+      />
+      <label className="assembly-field">
+        <span>{t("assembly.glass")}</span>
+        <select
+          aria-label={t("assembly.glass")}
+          disabled={busy}
+          value={moduleGlassSku(module) ?? ""}
+          onChange={(event) =>
+            commit(setModuleGlass(product, module.id, event.target.value || null))
+          }
+        >
+          <option value="">{t("assembly.noGlass")}</option>
+          {glassSkus.map((sku) => (
+            <option key={sku} value={sku}>
+              {sku}
+            </option>
+          ))}
+        </select>
+      </label>
+      {isDoor && (
+        <label className="assembly-field">
+          <span>{t("assembly.panel")}</span>
+          <select
+            aria-label={t("assembly.panel")}
+            disabled={busy}
+            value={modulePanelSku(module) ?? ""}
+            onChange={(event) =>
+              commit(setModulePanel(product, module.id, event.target.value || null))
+            }
+          >
+            <option value="">{t("assembly.noPanel")}</option>
+            {panelSkus.map((sku) => (
+              <option key={sku} value={sku}>
+                {sku}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+    </section>
+  );
+}
+
+function CouplingInspector({
+  coupling,
+  product,
+  couplerSkus,
+  busy,
+  commit,
+}: {
+  coupling: CouplingJson;
+  product: ProductJson;
+  couplerSkus: string[];
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  return (
+    <section className="assembly-inspector" aria-label={t("assembly.coupling")}>
+      <header className="assembly-inspector__header">
+        <h4>
+          {t("assembly.coupling")} {coupling.id}
+        </h4>
+      </header>
+      <DraftField
+        label={t("assembly.angle")}
+        value={coupling.angle_deg}
+        unit="°"
+        disabled={busy}
+        normalize={normalizeAngle}
+        onCommit={(value) => commit(setCouplingAngle(product, coupling.id, value))}
+      />
+      <label className="assembly-field">
+        <span>{t("assembly.coupler")}</span>
+        <select
+          aria-label={t("assembly.coupler")}
+          disabled={busy}
+          value={coupling.coupler_profile_sku ?? ""}
+          onChange={(event) =>
+            commit(setCouplerSku(product, coupling.id, event.target.value || null))
+          }
+        >
+          <option value="">{t("assembly.noCoupler")}</option>
+          {couplerSkus.map((sku) => (
+            <option key={sku} value={sku}>
+              {sku}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy || Number(coupling.angle_deg) === 0}
+          onClick={() => commit(setCouplingAngle(product, coupling.id, "0"))}
+        >
+          {t("assembly.straighten")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function AssemblyEditor({
   organizationId,
   couplerSkus,
   glassSkus,
   panelSkus,
+  options,
   disabled,
   onChanged,
   onEvaluationChange,
@@ -148,292 +365,154 @@ export function AssemblyEditor({
   couplerSkus: string[];
   glassSkus: string[];
   panelSkus: string[];
+  options: DesignOptions | undefined;
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
 }): JSX.Element | null {
   const inputs = useCanvasStore((state) => state.inputs);
-  const selection = useCanvasStore((state) => state.selection);
   const commitInputs = useCanvasStore((state) => state.commitInputs);
-  const selectBay = useCanvasStore((state) => state.selectBay);
-  const product = isProductModel(inputs.product) ? inputs.product : null;
+  const selection = useCanvasStore((state) => state.selection);
+  const select = useCanvasStore((state) => state.select);
+  const product = inputs.product;
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
+  const issues = evaluation?.issues ?? [];
 
   useEffect(() => {
     onEvaluationChange(evaluation);
   }, [evaluation, onEvaluationChange]);
 
-  if (product === null) return null;
-  const { modules, couplings } = product.assembly;
-  const selected = modules.some((m) => m.id === selection) ? selection : (modules[0]?.id ?? "");
-
   function commit(next: ProductJson): void {
-    // Mutators return the same object when an edit is invalid — no history
-    // entry and no re-render churn for a rejected change.
     if (next === product) return;
     commitInputs({ ...inputs, product: next });
     onChanged();
   }
 
-  const statusKey =
-    evaluation === null
-      ? null
-      : evaluation.status === "VALID"
-        ? "assembly.statusValid"
-        : evaluation.status === "MANUFACTURING_INCOMPLETE"
-          ? "assembly.statusIncomplete"
-          : "assembly.statusInvalid";
+  if (!product) return null;
+  const modules = product.assembly.modules;
+  const couplings = product.assembly.couplings;
+  const selectedModule = modules.find((module) => module.id === selection);
+  const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
+  const busy = disabled || isPending;
+  const mullionSkus: Partial<Record<SplitType, string>> = {
+    SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
+    SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
+  };
 
   return (
-    <div className="assembly-editor" data-testid="assembly-editor">
-      <div className="assembly-toolbar">
-        <DraftField
-          label={t("assembly.totalWidth")}
-          value={totalModuleWidth(product).toFixed(2)}
-          unit="mm"
-          disabled={disabled}
-          normalize={normalizeMm}
-          onCommit={(value) => commit(scaleModuleWidths(product, value))}
-        />
-        <DraftField
-          label={t("assembly.height")}
-          value={modules[0]?.height_mm ?? ""}
-          unit="mm"
-          disabled={disabled}
-          normalize={normalizeMm}
-          onCommit={(value) => commit(setAllModuleHeights(product, value))}
-        />
-        <label className="assembly-field">
-          <span>{t("assembly.modules")}</span>
-          <select
-            value={modules.length}
-            disabled={disabled}
-            onChange={(event) => commit(setModuleCount(product, Number(event.target.value)))}
-          >
-            {MODULE_COUNTS.map((count) => (
-              <option key={count} value={count}>
-                {count}
-              </option>
-            ))}
-          </select>
-        </label>
+    <div className="assembly-editor" aria-label={t("assembly.frontView")}>
+      <div className="assembly-toolbar" role="toolbar">
         <button
           type="button"
-          disabled={disabled}
+          className="ghost-button"
+          disabled={busy || modules.length <= 1}
           onClick={() => commit(equalizeModuleWidths(product))}
         >
           {t("assembly.equalizeModules")}
         </button>
         <button
           type="button"
-          disabled={disabled}
+          className="ghost-button"
+          disabled={busy || couplings.length === 0}
           onClick={() => commit(equalizeCouplingAngles(product))}
         >
           {t("assembly.equalizeAngles")}
         </button>
+        <span
+          className={`assembly-status assembly-status--${(evaluation?.status ?? "INVALID").toLowerCase()}`}
+          data-testid="assembly-status"
+        >
+          {isPending
+            ? t("assembly.calculating")
+            : errorCode
+              ? t("assembly.calculateError")
+              : t(statusKey(evaluation?.status))}
+        </span>
       </div>
-
-      <div className="assembly-workspace">
-        <div className="assembly-canvas">
-          <div className="design-caption">{t("assembly.planView")}</div>
-          {evaluation?.plan ? (
+      <div className="assembly-canvas">
+        <ProductFrontSvg
+          product={product}
+          selectedId={selectedModule?.id ?? null}
+          issues={issues}
+          disabled={busy}
+          onSelectModule={select}
+          onAddUnit={(side) => {
+            const next = addAdjacentUnit(product, side);
+            commit(next);
+            select(
+              next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ??
+                null,
+            );
+          }}
+          onCommitModuleWidth={(moduleId, widthMm) =>
+            commit(setModuleWidth(product, moduleId, widthMm))
+          }
+          onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
+          onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
+        />
+        {couplings.length > 0 && evaluation?.plan && (
+          <figure className="assembly-plan">
+            <figcaption>{t("assembly.planView")}</figcaption>
             <BowPlanSvg
               plan={evaluation.plan}
-              selectedModuleId={selected}
-              onSelectModule={selectBay}
+              couplings={couplings}
+              selectedModuleId={selectedModule?.id ?? null}
+              selectedCouplingId={selectedCoupling?.id ?? null}
+              issues={issues}
+              disabled={busy}
+              onSelectModule={select}
+              onSelectCoupling={select}
+              onCommitAngle={(couplingId, angleDeg) =>
+                commit(setCouplingAngle(product, couplingId, angleDeg))
+              }
             />
-          ) : (
-            <p role="status">{isPending ? t("assembly.calculating") : t("assembly.noPlan")}</p>
-          )}
-          {errorCode && <p role="alert">{t("assembly.calculateError")}</p>}
-          <div className="design-caption">{t("assembly.frontView")}</div>
-          <div className="assembly-strip">
-            {modules.map((module) => (
-              <button
-                key={module.id}
-                type="button"
-                className={
-                  module.id === selected
-                    ? "assembly-strip-module is-selected"
-                    : "assembly-strip-module"
-                }
-                style={{ flexGrow: Number(module.width_mm) }}
-                onClick={() => selectBay(module.id)}
-              >
-                <span className="assembly-strip-id">{module.id}</span>
-                <span className="assembly-strip-opening">
-                  {t(
-                    OPENING_OPTIONS.find(([value]) => value === moduleOpening(module))?.[1] ??
-                      "intent.fixed",
-                  )}
-                </span>
-                <span className="assembly-strip-dims">
-                  {Math.round(Number(module.width_mm))} × {Math.round(Number(module.height_mm))}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div
-            className={`assembly-status assembly-status--${
-              evaluation?.status.toLowerCase() ?? "idle"
-            }`}
-            role="status"
-          >
-            {statusKey ? t(statusKey) : isPending ? t("assembly.calculating") : ""}
-          </div>
-          {evaluation && evaluation.issues.length > 0 && (
-            <ul className="assembly-issues">
-              {evaluation.issues.map((issue, index) => (
-                <li key={`${issue.code}-${index}`} className={`issue-${issue.severity}`}>
-                  {issueText(issue)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="assembly-controls">
-          <div className="design-caption">{t("assembly.modules")}</div>
-          <table className="assembly-table">
-            <thead>
-              <tr>
-                <th />
-                <th>{t("assembly.width")}</th>
-                <th>{t("assembly.opening")}</th>
-                <th>{t("assembly.glass")}</th>
-                <th>{t("assembly.panel")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modules.map((module) => (
-                <tr
-                  key={module.id}
-                  className={module.id === selected ? "is-selected" : ""}
-                  onClick={() => selectBay(module.id)}
+          </figure>
+        )}
+      </div>
+      <div className="assembly-side">
+        {selectedModule ? (
+          <ModuleInspector
+            module={selectedModule}
+            product={product}
+            glassSkus={glassSkus}
+            panelSkus={panelSkus}
+            mullionSkus={mullionSkus}
+            busy={busy}
+            commit={commit}
+          />
+        ) : selectedCoupling ? (
+          <CouplingInspector
+            coupling={selectedCoupling}
+            product={product}
+            couplerSkus={couplerSkus}
+            busy={busy}
+            commit={commit}
+          />
+        ) : (
+          <section className="assembly-inspector">
+            <p className="assembly-hint">{t("assembly.elementHint")}</p>
+          </section>
+        )}
+        {issues.length > 0 && (
+          <ul className="assembly-issues" aria-label={t("assembly.issues")}>
+            {issues.map((issue, index) => (
+              <li key={`${issue.code}-${index}`}>
+                <button
+                  type="button"
+                  className={`issue-chip issue-chip--${issue.severity}`}
+                  onClick={() => {
+                    const target = issue.target;
+                    if (target.startsWith("module:") || target.startsWith("coupling:")) {
+                      select(target.slice(target.indexOf(":") + 1));
+                    }
+                  }}
                 >
-                  <th scope="row">{module.id}</th>
-                  <td onClick={(event) => event.stopPropagation()}>
-                    <DraftField
-                      value={module.width_mm}
-                      unit="mm"
-                      disabled={disabled}
-                      normalize={normalizeMm}
-                      onCommit={(value) => commit(setModuleWidth(product, module.id, value))}
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={moduleOpening(module)}
-                      disabled={disabled}
-                      onClick={(event) => event.stopPropagation()}
-                      onChange={(event) =>
-                        commit(
-                          setModuleOpening(
-                            product,
-                            module.id,
-                            event.target.value as (typeof OPENING_OPTIONS)[number][0],
-                          ),
-                        )
-                      }
-                    >
-                      {OPENING_OPTIONS.map(([value, key]) => (
-                        <option key={value} value={value}>
-                          {t(key)}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <select
-                      value={moduleGlassSku(module) ?? ""}
-                      disabled={disabled}
-                      onClick={(event) => event.stopPropagation()}
-                      onChange={(event) =>
-                        commit(setModuleGlass(product, module.id, event.target.value || null))
-                      }
-                    >
-                      <option value="">{t("assembly.noGlass")}</option>
-                      {glassSkus.map((sku) => (
-                        <option key={sku} value={sku}>
-                          {sku}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <select
-                      value={modulePanelSku(module) ?? ""}
-                      disabled={disabled || moduleOpening(module) !== "DOOR_ENTRY"}
-                      onClick={(event) => event.stopPropagation()}
-                      onChange={(event) =>
-                        commit(setModulePanel(product, module.id, event.target.value || null))
-                      }
-                    >
-                      <option value="">{t("assembly.noPanel")}</option>
-                      {panelSkus.map((sku) => (
-                        <option key={sku} value={sku}>
-                          {sku}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="design-caption">{t("assembly.couplings")}</div>
-          <table className="assembly-table">
-            <thead>
-              <tr>
-                <th />
-                <th>{t("assembly.angle")}</th>
-                <th>{t("assembly.coupler")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {couplings.map((coupling) => (
-                <tr key={coupling.id}>
-                  <th scope="row">{coupling.id}</th>
-                  <td>
-                    <DraftField
-                      value={coupling.angle_deg}
-                      unit="°"
-                      disabled={disabled}
-                      normalize={normalizeAngle}
-                      onCommit={(value) => commit(setCouplingAngle(product, coupling.id, value))}
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={coupling.coupler_profile_sku ?? ""}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        commit(setCouplerSku(product, coupling.id, event.target.value || null))
-                      }
-                    >
-                      <option value="">{t("assembly.noCoupler")}</option>
-                      {couplerSkus.map((sku) => (
-                        <option key={sku} value={sku}>
-                          {sku}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {couplerSkus.length > 0 && (
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => commit(setCouplerSkuAll(product, couplerSkus[0] ?? null))}
-            >
-              {t("assembly.couplerAll").replace("{sku}", couplerSkus[0] ?? "")}
-            </button>
-          )}
-        </div>
+                  {issueText(issue)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

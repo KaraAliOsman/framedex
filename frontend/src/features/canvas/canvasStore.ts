@@ -45,6 +45,8 @@ type CanvasState = {
   draftDimension: DraftDimension;
   selection: string;
   selectBay(id: string): void;
+  /** Direct-manipulation selection: module, coupling, or null to clear. */
+  select(id: string | null): void;
   loadDesign(inputs: CanvasDesignInputs): void;
   acceptIntent(expected: CanvasDesignInputs, next: CanvasDesignInputs, selection: string): boolean;
   /** Typed design commands: record history, then apply. */
@@ -107,6 +109,21 @@ export const useCanvasStore = create<CanvasState>((set) => ({
         state.inputs.product.assembly.modules.some((m) => m.id === id)
       )
         return { selection: id };
+      return intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
+        ? { selection: id }
+        : state;
+    });
+  },
+  select(id) {
+    set((state) => {
+      if (id === null) return { selection: "" };
+      const product = state.inputs.product;
+      if (product !== null) {
+        if (product.assembly.modules.some((m) => m.id === id)) return { selection: id };
+        if (product.assembly.couplings.some((c) => c.id === id)) return { selection: id };
+        const bays = product.assembly.modules.flatMap((m) => intentBays(m.tree));
+        return bays.some((bay) => bay.id === id) ? { selection: id } : state;
+      }
       return intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
         ? { selection: id }
         : state;

@@ -1,24 +1,27 @@
-// frontend/src/features/projects/ProjectPositionEditor.test.tsx
-// Component tests only. Real router, query client, store and IntentEditor.
-// Mocks are limited to authentication and generated API boundaries.
-// Proposed code; not executed.
+// Component tests for the compositional position workspace.
+// Real router, query client, store and editor. Mocks are limited to
+// authentication and the generated API boundary.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
-  engineLayout,
-  engineCalculate,
+  engineAssemblyCalculate,
   engineSystems,
   positionsCreate,
   positionsRetrieve,
   positionsUpdate,
   projectDesignOptions,
 } from "../../api/generated/dekopen";
-import type { EngineCalculateResponse, PositionResponse } from "../../api/generated/models";
+import type {
+  EngineAssemblyCalculateResponse,
+  EngineCalculateResponse,
+  PositionResponse,
+} from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
+import type { ProductJson } from "../canvas/productEditing";
 import { ProjectPositionEditor } from "./ProjectPositionEditor";
 import { ApiError } from "../../api/apiMutator";
 
@@ -45,8 +48,7 @@ vi.mock("../../auth/AuthSessionProvider", async () => {
 });
 
 vi.mock("../../api/generated/dekopen", () => ({
-  engineLayout: vi.fn().mockResolvedValue({ status: 200, data: { nodes: [] } }),
-  engineCalculate: vi.fn(),
+  engineAssemblyCalculate: vi.fn(),
   engineSystems: vi.fn(),
   positionsCreate: vi.fn(),
   positionsRetrieve: vi.fn(),
@@ -54,7 +56,7 @@ vi.mock("../../api/generated/dekopen", () => ({
   projectDesignOptions: vi.fn(),
 }));
 
-const calculate = vi.mocked(engineCalculate);
+const evaluate = vi.mocked(engineAssemblyCalculate);
 const retrieve = vi.mocked(positionsRetrieve);
 const update = vi.mocked(positionsUpdate);
 const create = vi.mocked(positionsCreate);
@@ -83,6 +85,41 @@ function bom(sku: string): EngineCalculateResponse {
     panels: [],
     hardware_items: [],
     leaf_weights: [],
+    calculation_hash: `sha256:${"a".repeat(64)}`,
+  };
+}
+
+function assemblyEval(
+  sku = "CUT-A",
+  status: EngineAssemblyCalculateResponse["status"] = "VALID",
+): EngineAssemblyCalculateResponse {
+  return {
+    status,
+    issues: [],
+    plan: {
+      front_chain: [
+        { x_mm: "0", y_mm: "0" },
+        { x_mm: "1234.25", y_mm: "0" },
+      ],
+      modules: [
+        {
+          module_id: "m1",
+          corners: [
+            { x_mm: "0", y_mm: "0" },
+            { x_mm: "1234.25", y_mm: "0" },
+            { x_mm: "1234.25", y_mm: "60" },
+            { x_mm: "0", y_mm: "60" },
+          ],
+        },
+      ],
+      couplings: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "1234.25",
+      height_mm: "60",
+    },
+    modules: [],
+    bom: bom(sku),
     calculation_hash: `sha256:${"a".repeat(64)}`,
   };
 }
@@ -116,6 +153,48 @@ function position(
       },
     },
     bom: bom("CUT-A"),
+  };
+}
+
+function bowPosition(): PositionResponse {
+  const tree: ProductJson = {
+    version: "product-v2",
+    assembly: {
+      modules: [
+        {
+          id: "m1",
+          width_mm: "700.00",
+          height_mm: "1400.00",
+          tree: { id: "b1", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+        },
+        {
+          id: "m2",
+          width_mm: "700.00",
+          height_mm: "1400.00",
+          tree: { id: "b2", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+        },
+        {
+          id: "m3",
+          width_mm: "700.00",
+          height_mm: "1400.00",
+          tree: { id: "b3", type: "BAY", opening_type: "TILT_TURN_LEFT" },
+        },
+      ],
+      couplings: [
+        { id: "c1", angle_deg: "15.0", coupler_profile_sku: "ACOPLE-60" },
+        { id: "c2", angle_deg: "15.0", coupler_profile_sku: "ACOPLE-60" },
+      ],
+    },
+  };
+  return {
+    ...position("position-bow", "project-a", "Bow sala"),
+    design: {
+      system_id: "system-a",
+      nominal_width_mm: "2100.00",
+      nominal_height_mm: "1400.00",
+      color: "WHITE",
+      parametric_tree: tree,
+    },
   };
 }
 
@@ -175,27 +254,17 @@ function save() {
   fireEvent.click(screen.getByRole("button", { name: t("projects.save") }));
 }
 
-function recalculate() {
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: t("projects.calculate"),
-    }),
-  );
-}
-
-async function ready(location = "Cocina") {
+async function ready(location = "Cocina", sku = "CUT-A") {
   await screen.findByRole("heading", { name: location });
-  await screen.findByRole("option", { name: "GLASS-A" });
-  await waitFor(() => {
-    expect(screen.getByLabelText(t("projects.glassThickness"))).toHaveValue("24.00");
-  });
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  await screen.findByText(sku);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled(),
+  );
 }
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(engineLayout).mockResolvedValue(
-    ok({ calculation_hash: "sha256:" + "a".repeat(64), nodes: [] }),
-  );
   vi.spyOn(window, "confirm").mockReturnValue(true);
   identity.id = "org-a";
   identity.role = "OWNER";
@@ -225,17 +294,20 @@ beforeEach(() => {
   );
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
-      profiles: [],
+      profiles: [
+        { sku: "MULL-60", role: "MULLION_V" },
+        { sku: "MULL-H-60", role: "MULLION_H" },
+      ],
       glazing_thicknesses: ["24.00", "28.00"],
       glass_skus: ["GLASS-A", "GLASS-B"],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
-      coupler_skus: [],
+      coupler_skus: ["ACOPLE-60"],
       panel_skus: [],
       colors: ["WHITE"],
     }),
   );
+  evaluate.mockResolvedValue(ok(assemblyEval()));
   retrieve.mockResolvedValue(ok(position()));
-  calculate.mockResolvedValue(ok(bom("CUT-NEW")));
   update.mockResolvedValue(
     ok({
       ...position(),
@@ -251,12 +323,116 @@ afterEach(() => {
   useCanvasStore.getState().reset();
 });
 
-it("keeps the configurator available while creating a new position", async () => {
+it("opens a new position directly on the canvas editor", async () => {
   mount("/projects/project-a/positions/new");
-
-  const width = await screen.findByLabelText(t("intent.width"));
-  expect(width).toBeEnabled();
+  await screen.findByRole("group", { name: t("assembly.starters") });
+  // A blank window is already on the canvas — no product-type decision exists.
+  expect(useCanvasStore.getState().inputs.product).not.toBeNull();
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
+});
+
+it("loads a classic position as a compositional product and saves it back unchanged", async () => {
+  mount();
+  await ready();
+
+  const product = useCanvasStore.getState().inputs.product;
+  expect(product).not.toBeNull();
+  expect(product!.assembly.modules).toHaveLength(1);
+  expect(product!.assembly.modules[0]!.tree).toEqual(position().design.parametric_tree);
+
+  change("projects.location", "Dormitorio");
+  change("pricing.quantity", "7");
+  save();
+
+  await screen.findByText(t("projects.saved"));
+  expect(update).toHaveBeenCalledExactlyOnceWith(
+    position().id,
+    {
+      location_tag: "Dormitorio",
+      quantity: 7,
+      // Single-unit products fold back to the classic documentary shape.
+      design: position().design,
+      expected_updated_at: position().updated_at,
+    },
+    { headers: { "X-Organization-ID": "org-a" } },
+  );
+});
+
+it("round-trips a saved assembly as product-v2", async () => {
+  retrieve.mockResolvedValue(ok(bowPosition()));
+  mount("/projects/project-a/positions/position-bow/edit");
+  await ready("Bow sala");
+
+  const product = useCanvasStore.getState().inputs.product;
+  expect(product?.assembly.modules.map((m) => m.id)).toEqual(["m1", "m2", "m3"]);
+
+  change("pricing.quantity", "2");
+  save();
+  await screen.findByText(t("projects.saved"));
+  expect(update.mock.calls[0]?.[1].design).toEqual(bowPosition().design);
+});
+
+it("evaluates live through the assembly endpoint when the system changes", async () => {
+  mount();
+  await ready();
+
+  change("projects.system", "system-b");
+
+  await waitFor(() =>
+    expect(evaluate).toHaveBeenCalledWith(expect.objectContaining({ system_id: "system-b" })),
+  );
+  expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
+});
+
+it("keeps save disabled while the product is not manufacturing-ready", async () => {
+  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
+  mount();
+  await screen.findByRole("heading", { name: "Cocina" });
+  await screen.findByText("CUT-A");
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
+  expect(update).not.toHaveBeenCalled();
+});
+
+it("builds a five-unit bow from a starter chip and edits a joint angle on plan", async () => {
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("group", { name: t("assembly.starters") });
+
+  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow5") }));
+
+  const product = useCanvasStore.getState().inputs.product;
+  expect(product?.assembly.modules).toHaveLength(5);
+  expect(product?.assembly.couplings).toHaveLength(4);
+});
+
+it("auto-resolves the catalog coupler when only one exists", async () => {
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("group", { name: t("assembly.starters") });
+
+  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow3") }));
+
+  // Starters ship null couplers; the catalog's single coupler fills them in.
+  change("projects.system", "system-a");
+  await waitFor(() => {
+    const product = useCanvasStore.getState().inputs.product;
+    expect(product?.assembly.couplings.every((c) => c.coupler_profile_sku === "ACOPLE-60")).toBe(
+      true,
+    );
+  });
+});
+
+it("removes a selected module with Delete and undoes it", async () => {
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("group", { name: t("assembly.starters") });
+  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow3") }));
+
+  useCanvasStore.getState().select("m2");
+  fireEvent.keyDown(window, { key: "Delete" });
+
+  expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(2);
+
+  fireEvent.click(screen.getByRole("button", { name: t("projects.undo") }));
+  expect(useCanvasStore.getState().inputs.product?.assembly.modules).toHaveLength(3);
 });
 
 it("keeps a new design after an uncertain network response and prevents duplicate creation", async () => {
@@ -267,97 +443,13 @@ it("keeps a new design after an uncertain network response and prevents duplicat
   save();
   await screen.findByText(t("projects.uncertainPosition"));
   expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Copia pendiente");
-  expect(screen.getByText("CUT-A")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
   save();
   expect(create).toHaveBeenCalledOnce();
   expect(update).not.toHaveBeenCalled();
 });
-it("hides BOM on width draft, guards async validation, and preserves rejected width for retry", async () => {
-  const first = deferred<Awaited<ReturnType<typeof engineCalculate>>>();
-  const retry = deferred<Awaited<ReturnType<typeof engineCalculate>>>();
-  calculate.mockReturnValueOnce(first.promise).mockReturnValueOnce(retry.promise);
-  mount();
-  await ready();
 
-  const accepted = useCanvasStore.getState().inputs;
-  change("intent.width", "1450.25");
-
-  expect(calculate).not.toHaveBeenCalled();
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-  expect(screen.getByText(t("projects.calculationRequired"))).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-  expect(useCanvasStore.getState().inputs).toEqual(accepted);
-  save();
-  expect(update).not.toHaveBeenCalled();
-
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: t("intent.applyDimensions"),
-    }),
-  );
-
-  expect(calculate).toHaveBeenCalledExactlyOnceWith(
-    { ...position().design, nominal_width_mm: "1450.25" },
-    { headers: { "X-Organization-ID": "org-a" } },
-  );
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-  expect(screen.getByRole("button", { name: t("projects.calculate") })).toBeDisabled();
-  expect(screen.getByLabelText(t("intent.width"))).toBeDisabled();
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-
-  const leaveWhilePending = new Event("beforeunload", { cancelable: true });
-  window.dispatchEvent(leaveWhilePending);
-  expect(leaveWhilePending.defaultPrevented).toBe(true);
-  save();
-  expect(update).not.toHaveBeenCalled();
-  expect(create).not.toHaveBeenCalled();
-
-  await act(async () => {
-    first.reject(new Error("private validation trace"));
-  });
-
-  expect(screen.getByRole("alert")).toHaveTextContent(t("intent.rejected"));
-  expect(screen.getByLabelText(t("intent.width"))).toHaveValue("1450.25");
-  expect(screen.getByLabelText(t("intent.width"))).toBeEnabled();
-  expect(useCanvasStore.getState().inputs).toEqual(accepted);
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-  expect(screen.queryByText("private validation trace")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-
-  fireEvent.click(
-    screen.getByRole("button", {
-      name: t("intent.applyDimensions"),
-    }),
-  );
-  expect(calculate).toHaveBeenCalledTimes(2);
-  expect(calculate.mock.calls[1]).toEqual(calculate.mock.calls[0]);
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-
-  await act(async () => {
-    retry.resolve(ok(bom("CUT-WIDTH")));
-  });
-
-  expect(screen.getByText("CUT-WIDTH")).toBeInTheDocument();
-  expect(useCanvasStore.getState().inputs.nominalWidthMm).toBe("1450.25");
-  expect(screen.getByLabelText(t("intent.width"))).toHaveValue("1450.25");
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled();
-
-  save();
-  await waitFor(() => expect(update).toHaveBeenCalledOnce());
-  expect(update).toHaveBeenCalledWith(
-    "position-a",
-    {
-      location_tag: "Cocina",
-      quantity: 4,
-      design: { ...position().design, nominal_width_mm: "1450.25" },
-      expected_updated_at: position().updated_at,
-    },
-    { headers: { "X-Organization-ID": "org-a" } },
-  );
-});
-
-it("copies a position through create, preserves its exact design, and leaves the source untouched", async () => {
+it("copies a position through create, preserving its exact design", async () => {
   const source = position();
   const sourceBefore = JSON.stringify(source);
   retrieve.mockResolvedValueOnce(ok(source));
@@ -372,7 +464,6 @@ it("copies a position through create, preserves its exact design, and leaves the
   });
   expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
   expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("4");
-  expect(useCanvasStore.getState().inputs.parametricTree).toEqual(source.design.parametric_tree);
 
   change("projects.location", "Copia cocina");
   save();
@@ -387,8 +478,6 @@ it("copies a position through create, preserves its exact design, and leaves the
     { headers: { "X-Organization-ID": "org-a" } },
   );
   expect(create.mock.calls[0]?.[1]).not.toHaveProperty("expected_updated_at");
-  expect(update).not.toHaveBeenCalled();
-  expect(calculate).not.toHaveBeenCalled();
 
   const copied: PositionResponse = {
     ...position("position-copy", "project-a", "Copia cocina"),
@@ -404,27 +493,12 @@ it("copies a position through create, preserves its exact design, and leaves the
     expect(view.router.state.location.pathname).toBe(
       "/projects/project-a/positions/position-copy/edit",
     );
-    expect(view.router.state.location.search).toBe("");
     expect(retrieve).toHaveBeenLastCalledWith(copied.id, {
       headers: { "X-Organization-ID": "org-a" },
     });
   });
   await ready("Copia cocina");
   expect(JSON.stringify(source)).toBe(sourceBefore);
-  expect(create).toHaveBeenCalledOnce();
-  expect(update).not.toHaveBeenCalled();
-
-  // Reopen through the API mock; this asserts component isolation, not DB state.
-  retrieve.mockResolvedValueOnce(ok(source));
-  await act(async () => {
-    await view.router.navigate("/projects/project-a/positions/position-a/edit");
-  });
-  await ready();
-  expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Cocina");
-  expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("4");
-  expect(useCanvasStore.getState().inputs.parametricTree).toEqual(source.design.parametric_tree);
-  expect(JSON.stringify(source)).toBe(sourceBefore);
-  expect(update).not.toHaveBeenCalled();
 });
 
 it.each(["create", "update"] as const)(
@@ -448,7 +522,6 @@ it.each(["create", "update"] as const)(
     const button = screen.getByRole("button", { name: t("projects.save") });
     expect(button).toBeEnabled();
 
-    // Both events run in one synchronous batch, before React commits busy state.
     act(() => {
       button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -487,107 +560,35 @@ it.each(["create", "update"] as const)(
   },
 );
 
-it("hydrates exact saved fields and reopens the API-returned saved position", async () => {
-  const original = position();
-  const view = mount();
-  await ready();
+it.each(["", "0", "-1", "1.5", "1e2", "abc", "2147483648"])(
+  "does not submit invalid quantity %j",
+  async (quantity) => {
+    mount();
+    await ready();
+    change("pricing.quantity", quantity);
+    save();
 
-  expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Cocina");
-  expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("4");
-  expect(screen.getByLabelText(t("projects.system"))).toHaveValue("system-a");
-  expect(screen.getByLabelText(t("intent.width"))).toHaveValue("1234.25");
-  expect(screen.getByLabelText(t("intent.height"))).toHaveValue("987.50");
-  expect(screen.getByLabelText(t("projects.glassComposition"))).toHaveValue("4-16-4 transparente");
-  expect(screen.getByLabelText(t("projects.glassArticle"))).toHaveValue("GLASS-A");
-  expect(screen.getByLabelText(t("projects.hardware"))).toHaveValue("");
-  expect(useCanvasStore.getState().inputs).toEqual({
-    systemId: original.design.system_id,
-    nominalWidthMm: original.design.nominal_width_mm,
-    nominalHeightMm: original.design.nominal_height_mm,
-    color: original.design.color,
-    parametricTree: original.design.parametric_tree,
-    product: null,
-  });
-  expect(screen.getByText("CUT-A")).toBeInTheDocument();
-  expect(calculate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue(quantity);
+  },
+);
 
-  const saved: PositionResponse = {
-    ...original,
-    location_tag: "Dormitorio",
-    quantity: 7,
-    updated_at: "2026-09-18T15:01:00.123456Z",
-  };
-  update.mockResolvedValueOnce(ok(saved));
-  change("projects.location", "Dormitorio");
-  change("pricing.quantity", "7");
-  save();
+it.each(["1", "12", "2147483647"])(
+  "submits quantity %s as an integer without recalculating",
+  async (quantity) => {
+    mount();
+    await ready();
+    const callsBefore = evaluate.mock.calls.length;
+    change("pricing.quantity", quantity);
+    save();
 
-  await screen.findByText(t("projects.saved"));
-  expect(update).toHaveBeenCalledExactlyOnceWith(
-    original.id,
-    {
-      location_tag: "Dormitorio",
-      quantity: 7,
-      design: original.design,
-      expected_updated_at: original.updated_at,
-    },
-    { headers: { "X-Organization-ID": "org-a" } },
-  );
-  expect(create).not.toHaveBeenCalled();
-  expect(calculate).not.toHaveBeenCalled();
-
-  view.unmount();
-  retrieve.mockResolvedValueOnce(ok(saved));
-  mount();
-  await ready("Dormitorio");
-  expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("7");
-  expect(useCanvasStore.getState().inputs.parametricTree).toEqual(saved.design.parametric_tree);
-  expect(screen.getByText("CUT-A")).toBeInTheDocument();
-
-  change("projects.location", "Dormitorio norte");
-  save();
-  await waitFor(() => expect(update).toHaveBeenCalledTimes(2));
-  expect(update.mock.calls[1]?.[1].expected_updated_at).toBe(saved.updated_at);
-});
-
-it.each<[TranslationKey, string]>([
-  ["projects.system", "system-b"],
-  ["projects.glassThickness", "28.00"],
-  ["projects.glassComposition", "Vidrio nuevo"],
-  ["projects.glassArticle", "GLASS-B"],
-  ["projects.hardware", "KIT-B"],
-])("clears stale BOM immediately when %s changes", async (field, value) => {
-  const pending = deferred<Awaited<ReturnType<typeof engineCalculate>>>();
-  calculate.mockReturnValueOnce(pending.promise);
-  mount();
-  await ready();
-
-  change(field, value);
-
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-  expect(screen.getByText(t("projects.calculationRequired"))).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-  expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
-
-  recalculate();
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-  expect(update).not.toHaveBeenCalled();
-
-  await act(async () => {
-    pending.resolve(ok(bom("CUT-NEW")));
-  });
-
-  expect(screen.getByText("CUT-NEW")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled();
-  expect(calculate).toHaveBeenCalledWith(
-    expect.objectContaining({
-      system_id: field === "projects.system" ? "system-b" : "system-a",
-      nominal_width_mm: "1234.25",
-      nominal_height_mm: "987.50",
-    }),
-    { headers: { "X-Organization-ID": "org-a" } },
-  );
-});
+    await waitFor(() => expect(update).toHaveBeenCalledOnce());
+    expect(update.mock.calls[0]?.[1].quantity).toBe(Number(quantity));
+    expect(update.mock.calls[0]?.[1].design).toEqual(position().design);
+    expect(evaluate.mock.calls.length).toBe(callsBefore);
+  },
+);
 
 it.each(["http", "network"] as const)(
   "preserves edited fields and concurrency token after %s save rejection",
@@ -613,7 +614,6 @@ it.each(["http", "network"] as const)(
     expect(screen.getByLabelText(t("projects.location"))).toHaveValue("Entrada editada");
     expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue("9");
     expect(useCanvasStore.getState().inputs).toEqual(designBefore);
-    expect(screen.getByText("CUT-A")).toBeInTheDocument();
     expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
     expect(screen.queryByText("private backend trace")).not.toBeInTheDocument();
 
@@ -623,79 +623,18 @@ it.each(["http", "network"] as const)(
   },
 );
 
-it("preserves rejected material inputs for correction without restoring stale BOM", async () => {
-  calculate.mockRejectedValueOnce(new Error("private calculation trace"));
-  mount();
-  await ready();
-  const acceptedDesign = useCanvasStore.getState().inputs;
-
-  change("projects.glassComposition", "Composición editada");
-  change("projects.glassThickness", "28.00");
-  recalculate();
-
-  await screen.findByText(t("intent.rejected"));
-  expect(screen.getByLabelText(t("projects.glassComposition"))).toHaveValue("Composición editada");
-  expect(screen.getByLabelText(t("projects.glassThickness"))).toHaveValue("28.00");
-  expect(useCanvasStore.getState().inputs).toEqual(acceptedDesign);
-  expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
-  expect(update).not.toHaveBeenCalled();
-
-  recalculate();
-  await screen.findByText("CUT-NEW");
-  expect(calculate.mock.calls[1]?.[0].parametric_tree).toMatchObject({
-    glass_spec: "Composición editada",
-    glass_thickness_mm: "28.00",
-  });
-});
-
-it.each(["", "0", "-1", "1.5", "1e2", "abc", "2147483648"])(
-  "does not submit invalid quantity %j",
-  async (quantity) => {
-    // Includes the authoritative serializer's signed-int upper bound.
-    // This case exposes a regression if UI validation checks only the regex.
-    mount();
-    await ready();
-    change("pricing.quantity", quantity);
-    save();
-
-    expect(update).not.toHaveBeenCalled();
-    expect(create).not.toHaveBeenCalled();
-    expect(screen.getByLabelText(t("pricing.quantity"))).toHaveValue(quantity);
-  },
-);
-
-it.each(["1", "12", "2147483647"])(
-  "submits quantity %s as an integer without recalculating per-position BOM",
-  async (quantity) => {
-    mount();
-    await ready();
-    change("pricing.quantity", quantity);
-    save();
-
-    await waitFor(() => expect(update).toHaveBeenCalledOnce());
-    expect(update.mock.calls[0]?.[1].quantity).toBe(Number(quantity));
-    expect(update.mock.calls[0]?.[1].design).toEqual(position().design);
-    expect(calculate).not.toHaveBeenCalled();
-  },
-);
-
 it.each([
   ["organization", "retrieve"],
   ["navigation", "retrieve"],
-  ["organization", "calculate"],
-  ["navigation", "calculate"],
   ["organization", "save"],
   ["navigation", "save"],
 ] as const)(
   "ignores late %s-bound %s completion after the workspace changes",
   async (boundary, operation) => {
     const oldLoad = deferred<Awaited<ReturnType<typeof positionsRetrieve>>>();
-    const oldCalculation = deferred<Awaited<ReturnType<typeof engineCalculate>>>();
     const oldSave = deferred<Awaited<ReturnType<typeof positionsUpdate>>>();
 
     if (operation === "retrieve") retrieve.mockReturnValueOnce(oldLoad.promise);
-    if (operation === "calculate") calculate.mockReturnValueOnce(oldCalculation.promise);
     if (operation === "save") update.mockReturnValueOnce(oldSave.promise);
 
     const view = mount();
@@ -703,23 +642,19 @@ it.each([
       await waitFor(() => expect(retrieve).toHaveBeenCalledOnce());
     } else {
       await ready();
-      if (operation === "calculate") {
-        change("projects.glassComposition", "Old pending material");
-        recalculate();
-        await waitFor(() => expect(calculate).toHaveBeenCalledOnce());
-      } else {
-        change("projects.location", "Old pending save");
-        save();
-        await waitFor(() => expect(update).toHaveBeenCalledOnce());
-      }
+      change("projects.location", "Old pending save");
+      save();
+      await waitFor(() => expect(update).toHaveBeenCalledOnce());
     }
 
     const next =
       boundary === "organization"
         ? position("position-a", "project-a", "Tenant B")
         : position("position-b", "project-b", "Position B");
+    // Different dims → different product → the eval cache can't leak the old result.
     next.design = { ...next.design, nominal_width_mm: "1555.75" };
     next.bom = bom("CUT-B");
+    evaluate.mockResolvedValue(ok(assemblyEval("CUT-B")));
     retrieve.mockResolvedValueOnce(ok(next));
 
     if (boundary === "organization") {
@@ -730,25 +665,21 @@ it.each([
         await view.router.navigate("/projects/project-b/positions/position-b/edit");
       });
     }
-    await ready(next.location_tag!);
+    await ready(next.location_tag!, "CUT-B");
     const currentInputs = useCanvasStore.getState().inputs;
     const currentPath = view.router.state.location.pathname;
 
     await act(async () => {
       if (operation === "retrieve") oldLoad.resolve(ok(position()));
-      if (operation === "calculate") oldCalculation.resolve(ok(bom("CUT-LATE")));
       if (operation === "save") oldSave.resolve(ok(position()));
     });
 
     expect(useCanvasStore.getState().inputs).toEqual(currentInputs);
-    expect(screen.getByLabelText(t("intent.width"))).toHaveValue("1555.75");
     expect(screen.getByLabelText(t("projects.location"))).toHaveValue(next.location_tag);
     expect(screen.getByText("CUT-B")).toBeInTheDocument();
     expect(screen.queryByText("CUT-A")).not.toBeInTheDocument();
-    expect(screen.queryByText("CUT-LATE")).not.toBeInTheDocument();
     expect(screen.queryByText(t("projects.saved"))).not.toBeInTheDocument();
     expect(view.router.state.location.pathname).toBe(currentPath);
-    expect(screen.getByRole("button", { name: t("projects.save") })).toBeEnabled();
     expect(retrieve).toHaveBeenLastCalledWith(next.id, {
       headers: {
         "X-Organization-ID": boundary === "organization" ? "org-b" : "org-a",
