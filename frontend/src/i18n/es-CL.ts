@@ -722,6 +722,8 @@ const messages = {
   "assembly.noCoupler": "Sin acoplador asignado",
   "assembly.glass": "Vidrio",
   "assembly.noGlass": "Sin vidrio asignado",
+  "assembly.panel": "Panel",
+  "assembly.noPanel": "Sin panel asignado",
   "assembly.couplerAll": "Usar {sku} en todas las uniones",
   "assembly.equalizeModules": "Igualar anchos",
   "assembly.equalizeAngles": "Igualar ángulos",
@@ -744,6 +746,8 @@ const messages = {
   "assembly.issue.couplerProfileMissing": "La unión {target} no tiene acoplador asignado.",
   "assembly.issue.couplerProfileUnknown":
     "El acoplador {sku} de la unión {target} no existe en la serie seleccionada.",
+  "assembly.issue.couplerReinforcementNonpositive":
+    "El acero del acoplador en {target} no es fabricable con su holgura.",
   "assembly.issue.couplerHeightMismatch":
     "El acoplador {sku} mide {coupler} mm pero el conjunto mide {module} mm de alto.",
 } as const;

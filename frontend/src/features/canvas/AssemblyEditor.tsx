@@ -14,8 +14,10 @@ import {
   makeBowProduct,
   moduleGlassSku,
   moduleOpening,
+  modulePanelSku,
   setAllModuleHeights,
   setModuleGlass,
+  setModulePanel,
   setCouplerSku,
   setCouplerSkuAll,
   setCouplingAngle,
@@ -47,6 +49,7 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_profile_missing: "assembly.issue.couplerProfileMissing",
   coupler_profile_unknown: "assembly.issue.couplerProfileUnknown",
   coupler_height_mismatch: "assembly.issue.couplerHeightMismatch",
+  coupler_reinforcement_nonpositive: "assembly.issue.couplerReinforcementNonpositive",
 };
 
 function issueText(issue: ProductIssue): string {
@@ -133,6 +136,7 @@ export function AssemblyEditor({
   organizationId,
   couplerSkus,
   glassSkus,
+  panelSkus,
   disabled,
   onChanged,
   onEvaluationChange,
@@ -140,6 +144,7 @@ export function AssemblyEditor({
   organizationId: string;
   couplerSkus: string[];
   glassSkus: string[];
+  panelSkus: string[];
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
@@ -290,6 +295,7 @@ export function AssemblyEditor({
                 <th>{t("assembly.width")}</th>
                 <th>{t("assembly.opening")}</th>
                 <th>{t("assembly.glass")}</th>
+                <th>{t("assembly.panel")}</th>
               </tr>
             </thead>
             <tbody>
@@ -342,6 +348,29 @@ export function AssemblyEditor({
                     >
                       <option value="">{t("assembly.noGlass")}</option>
                       {glassSkus.map((sku) => (
+                        <option key={sku} value={sku}>
+                          {sku}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      value={modulePanelSku(module) ?? ""}
+                      disabled={disabled}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={(event) =>
+                        commit(
+                          setModulePanel(
+                            product,
+                            module.id,
+                            event.target.value || null,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">{t("assembly.noPanel")}</option>
+                      {panelSkus.map((sku) => (
                         <option key={sku} value={sku}>
                           {sku}
                         </option>

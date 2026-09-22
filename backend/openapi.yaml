@@ -5913,12 +5913,17 @@ components:
           type: array
           items:
             type: string
+        panel_skus:
+          type: array
+          items:
+            type: string
       required:
       - colors
       - coupler_skus
       - glass_skus
       - glazing_thicknesses
       - hardware_kits
+      - panel_skus
       - profiles
     DiffPreconditions:
       type: object

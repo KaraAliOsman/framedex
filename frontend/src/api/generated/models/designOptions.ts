@@ -15,4 +15,5 @@ export interface DesignOptions {
   glass_skus: string[];
   colors: string[];
   coupler_skus: string[];
+  panel_skus: string[];
 }

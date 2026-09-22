@@ -28,6 +28,7 @@ class DesignOptionsSerializer(serializers.Serializer):
     glass_skus = serializers.ListField(child=serializers.CharField())
     colors = serializers.ListField(child=serializers.CharField())
     coupler_skus = serializers.ListField(child=serializers.CharField())
+    panel_skus = serializers.ListField(child=serializers.CharField())
 
 
 class DesignOptionsView(APIView):
@@ -63,5 +64,6 @@ class DesignOptionsView(APIView):
                     "coupler_skus": sorted(
                         repository.load_coupler_articles(system_id, org)
                     ),
+                    "panel_skus": sorted(params.available_panel_rules),
                 }
             )

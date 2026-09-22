@@ -343,3 +343,22 @@ export function setModuleGlass(
 export function moduleGlassSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.glass_article_sku ?? null;
 }
+
+/** Catalog panel article for door modules (DOOR_ENTRY infill authority). */
+export function setModulePanel(
+  product: ProductJson,
+  moduleId: string,
+  panelArticleSku: string | null,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function withPanel(node: IntentNode): IntentNode {
+    if (node.type === "BAY") return { ...node, panel_article_sku: panelArticleSku };
+    return { ...node, children: node.children?.map(withPanel) };
+  }
+  return replaceModule(product, moduleId, { ...module, tree: withPanel(module.tree) });
+}
+
+export function modulePanelSku(module: ProductModuleJson): string | null {
+  return modulePrimaryBay(module)?.panel_article_sku ?? null;
+}

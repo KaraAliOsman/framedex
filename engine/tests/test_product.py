@@ -230,6 +230,50 @@ class TestEvaluation:
         codes = {issue.code for issue in evaluation.issues}
         assert IssueCode.ASSEMBLY_FOLDS_BACK.value in codes
 
+    def test_coupler_reinforcement_uses_gap_adjusted_length(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        coupler = COUPLER_ARTICLE.model_copy(
+            update={"reinforcement_gap_mm": Decimal("15.00")}
+        )
+        evaluation = evaluate_product(
+            with_couplers(bow_3()),
+            demo_60_params,
+            coupler_articles={"ACOPLE-60": coupler},
+        )
+        assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None
+        steel = [
+            piece
+            for piece in evaluation.bom.reinforcements
+            if piece.parent_profile_sku == "ACOPLE-60"
+        ]
+        assert len(steel) == 2
+        # height 1400 - 2*15 gap; coupler posts are square-cut (no weld loss)
+        assert {piece.length_mm for piece in steel} == {Decimal("1370.00")}
+
+    def test_coupler_reinforcement_nonpositive_is_flagged(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        coupler = COUPLER_ARTICLE.model_copy(
+            update={"reinforcement_gap_mm": Decimal("700.00")}
+        )
+        evaluation = evaluate_product(
+            with_couplers(bow_3()),
+            demo_60_params,
+            coupler_articles={"ACOPLE-60": coupler},
+        )
+        assert evaluation.status is ProductStatus.MANUFACTURING_INCOMPLETE
+        assert any(
+            issue.code == IssueCode.COUPLER_REINFORCEMENT_NONPOSITIVE.value
+            for issue in evaluation.issues
+        )
+        assert evaluation.bom is not None
+        assert not any(
+            piece.parent_profile_sku == "ACOPLE-60"
+            for piece in evaluation.bom.reinforcements
+        )
+
     def test_duplicate_coupling_ids_raise(
         self, demo_60_params: SystemParams
     ) -> None:

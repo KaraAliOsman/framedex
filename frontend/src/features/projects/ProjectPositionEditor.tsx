@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -239,6 +239,23 @@ function PositionWorkspace({
     setMessage("");
   }
 
+  const onAssemblyChanged = useCallback(() => {
+    setDirty(true);
+    setMessage("");
+  }, []);
+
+  const onAssemblyEvaluation = useCallback(
+    (evaluation: EngineAssemblyCalculateResponse | null) => {
+      setAssemblyEval(evaluation);
+      setResult(
+        evaluation?.bom
+          ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash }
+          : null,
+      );
+    },
+    [],
+  );
+
   function editTechnical(): void {
     setPending(true);
     setDirty(true);
@@ -468,22 +485,10 @@ function PositionWorkspace({
               organizationId={orgId}
               couplerSkus={options.data?.coupler_skus ?? []}
               glassSkus={options.data?.glass_skus ?? []}
+              panelSkus={options.data?.panel_skus ?? []}
               disabled={busy || pending}
-              onChanged={() => {
-                setDirty(true);
-                setMessage("");
-              }}
-              onEvaluationChange={(evaluation) => {
-                setAssemblyEval(evaluation);
-                setResult(
-                  evaluation?.bom
-                    ? {
-                        ...evaluation.bom,
-                        calculation_hash: evaluation.calculation_hash,
-                      }
-                    : null,
-                );
-              }}
+              onChanged={onAssemblyChanged}
+              onEvaluationChange={onAssemblyEvaluation}
             />
           )}
         </div>

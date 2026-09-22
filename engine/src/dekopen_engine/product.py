@@ -22,7 +22,10 @@ from typing import Literal
 
 from pydantic import Field
 
-from dekopen_engine.geometry import calculate_geometry
+from dekopen_engine.geometry import (
+    calculate_geometry,
+    reinforcement_cut_length,
+)
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
@@ -60,6 +63,7 @@ class IssueCode(str, Enum):
     COUPLER_PROFILE_MISSING = "coupler_profile_missing"
     COUPLER_PROFILE_UNKNOWN = "coupler_profile_unknown"
     COUPLER_HEIGHT_MISMATCH = "coupler_height_mismatch"
+    COUPLER_REINFORCEMENT_NONPOSITIVE = "coupler_reinforcement_nonpositive"
 
 
 class CouplingDef(EngineModel):
@@ -481,16 +485,27 @@ def evaluate_product(
             )
         )
         if article.reinforcement_sku:
-            coupler_reinforcements.append(
-                ReinforcementPiece(
-                    parent_profile_sku=article.sku,
-                    reinforcement_sku=article.reinforcement_sku,
-                    role=ProfileRole.COUPLER,
-                    length_mm=height,
-                    qty=1,
-                    bay_id=coupling.id,
+            steel_length = reinforcement_cut_length(height, article, 0)
+            if steel_length <= Decimal("0"):
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.COUPLER_REINFORCEMENT_NONPOSITIVE.value,
+                        severity=Severity.WARNING,
+                        target=f"coupling:{coupling.id}",
+                        params={"sku": article.sku},
+                    )
                 )
-            )
+            else:
+                coupler_reinforcements.append(
+                    ReinforcementPiece(
+                        parent_profile_sku=article.sku,
+                        reinforcement_sku=article.reinforcement_sku,
+                        role=ProfileRole.COUPLER,
+                        length_mm=steel_length,
+                        qty=1,
+                        bay_id=coupling.id,
+                    )
+                )
 
     bom: EngineResult | None = None
     if aggregated or coupler_cuts:

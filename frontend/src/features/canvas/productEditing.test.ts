@@ -9,6 +9,8 @@ import {
   makeBowProduct,
   moduleGlassSku,
   moduleOpening,
+  modulePanelSku,
+  setModulePanel,
   setCouplerSku,
   setModuleGlass,
   setCouplerSkuAll,
@@ -115,6 +117,12 @@ describe("module commands", () => {
     const glazed = setModuleGlass(bow(), "m2", "GLASS-A");
     expect(moduleGlassSku(glazed.assembly.modules[1]!)).toBe("GLASS-A");
     expect(moduleGlassSku(glazed.assembly.modules[0]!)).toBeNull();
+  });
+
+  it("assigns a panel sku to the matching module only", () => {
+    const paneled = setModulePanel(bow(), "m2", "PANEL-70");
+    expect(modulePanelSku(paneled.assembly.modules[1]!)).toBe("PANEL-70");
+    expect(modulePanelSku(paneled.assembly.modules[0]!)).toBeNull();
   });
 });
 
