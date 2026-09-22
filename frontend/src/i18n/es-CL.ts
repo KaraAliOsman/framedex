@@ -720,6 +720,8 @@ const messages = {
   "assembly.angle": "Ángulo",
   "assembly.coupler": "Acoplador",
   "assembly.noCoupler": "Sin acoplador asignado",
+  "assembly.glass": "Vidrio",
+  "assembly.noGlass": "Sin vidrio asignado",
   "assembly.couplerAll": "Usar {sku} en todas las uniones",
   "assembly.equalizeModules": "Igualar anchos",
   "assembly.equalizeAngles": "Igualar ángulos",

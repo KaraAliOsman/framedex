@@ -100,6 +100,22 @@ class TestAssemblyParse:
         with pytest.raises(InvalidEngineRequest):
             parse_product_model(product)
 
+    def test_rejects_duplicate_coupling_ids(self) -> None:
+        product = bow_product()
+        product["assembly"]["couplings"][1]["id"] = "c1"
+        with pytest.raises(InvalidEngineRequest):
+            parse_product_model(product)
+
+    def test_rejects_pipe_in_module_and_coupling_ids(self) -> None:
+        product = bow_product()
+        product["assembly"]["modules"][0]["id"] = "left|upper"
+        with pytest.raises(InvalidEngineRequest):
+            parse_product_model(product)
+        product = bow_product()
+        product["assembly"]["couplings"][0]["id"] = "c|1"
+        with pytest.raises(InvalidEngineRequest):
+            parse_product_model(product)
+
     def test_rejects_non_string_decimals(self) -> None:
         product = bow_product()
         product["assembly"]["modules"][0]["width_mm"] = 700
@@ -157,6 +173,34 @@ class TestAssemblyEndpoint:
             "1400.00",
             "1400.00",
         ]
+
+    def test_each_catalog_coupler_sku_is_selectable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        second = COUPLER_ARTICLE.model_copy(
+            update={"sku": "CP-15", "face_width_mm": Decimal("50.00")}
+        )
+        client = APIClient()
+        configure_assembly_api(
+            client,
+            monkeypatch,
+            couplers={"ACOPLE-60": COUPLER_ARTICLE, "CP-15": second},
+        )
+        product = bow_product(coupler_sku="ACOPLE-60")
+        product["assembly"]["couplings"][1]["coupler_profile_sku"] = "CP-15"
+        response = client.post(
+            "/api/v1/engine/assembly/calculate/",
+            bow_request(product),
+            format="json",
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "VALID"
+        coupler_cuts = [
+            cut
+            for cut in response.json()["bom"]["profile_cuts"]
+            if cut["role"] == "COUPLER"
+        ]
+        assert {cut["sku"] for cut in coupler_cuts} == {"ACOPLE-60", "CP-15"}
 
     def test_fold_back_geometry_returns_invalid_status_not_http_error(
         self, monkeypatch: pytest.MonkeyPatch

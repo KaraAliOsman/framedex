@@ -180,7 +180,9 @@ class SystemParamsRepository:
         result: dict[ProfileRole, EffectiveProfileArticle] = {}
         for row in rows:
             article = _article_from_row(row)
-            if article.role is ProfileRole.GLAZING_BEAD:
+            # GLAZING_BEAD resolves per glass thickness; COUPLER is multi-valued
+            # per system (assemblies pick any catalog SKU via load_coupler_articles).
+            if article.role in (ProfileRole.GLAZING_BEAD, ProfileRole.COUPLER):
                 continue
             if article.role in result:
                 raise UnsupportedCatalogContract(

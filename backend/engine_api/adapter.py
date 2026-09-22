@@ -203,6 +203,10 @@ def parse_product_model(payload: object) -> ProductModel:
                 f"module contains unsupported fields: {sorted(unexpected)}"
             )
         module_id = _require_str(module.get("id"), "module.id")
+        if "|" in module_id:
+            raise InvalidEngineRequest(
+                "module ids cannot contain '|' (reserved as BOM key separator)"
+            )
         if module_id in seen_ids:
             raise InvalidEngineRequest("module ids must be unique")
         seen_ids.add(module_id)
@@ -218,6 +222,7 @@ def parse_product_model(payload: object) -> ProductModel:
         )
 
     couplings: list[CouplingDef] = []
+    seen_coupling_ids: set[str] = set()
     for item in raw_couplers:
         coupling = _require_dict(item, "coupling")
         unexpected = set(coupling) - _COUPLING_FIELDS
@@ -228,9 +233,17 @@ def parse_product_model(payload: object) -> ProductModel:
         sku = coupling.get("coupler_profile_sku")
         if sku is not None and not isinstance(sku, str):
             raise InvalidEngineRequest("coupler_profile_sku must be a string")
+        coupling_id = _require_str(coupling.get("id"), "coupling.id")
+        if "|" in coupling_id:
+            raise InvalidEngineRequest(
+                "coupling ids cannot contain '|' (reserved as BOM key separator)"
+            )
+        if coupling_id in seen_coupling_ids:
+            raise InvalidEngineRequest("coupling ids must be unique")
+        seen_coupling_ids.add(coupling_id)
         couplings.append(
             CouplingDef(
-                id=_require_str(coupling.get("id"), "coupling.id"),
+                id=coupling_id,
                 angle_deg=_decimal_string(
                     coupling.get("angle_deg"), "coupling.angle_deg"
                 ),

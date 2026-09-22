@@ -217,7 +217,12 @@ function PositionWorkspace({
     if (mode === "bow" && inputs.product === null) {
       store.commitInputs({
         ...inputs,
-        product: createBowFromInputs(inputs, thickness || "4.00", glassSpec || "4"),
+        product: createBowFromInputs(
+          inputs,
+          thickness || "4.00",
+          glassSpec || "4",
+          (bay?.glass_article_sku ?? glassSku) || null,
+        ),
       });
     } else if (mode === "single" && inputs.product !== null) {
       store.commitInputs({
@@ -462,6 +467,7 @@ function PositionWorkspace({
             <AssemblyEditor
               organizationId={orgId}
               couplerSkus={options.data?.coupler_skus ?? []}
+              glassSkus={options.data?.glass_skus ?? []}
               disabled={busy || pending}
               onChanged={() => {
                 setDirty(true);

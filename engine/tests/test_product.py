@@ -230,6 +230,25 @@ class TestEvaluation:
         codes = {issue.code for issue in evaluation.issues}
         assert IssueCode.ASSEMBLY_FOLDS_BACK.value in codes
 
+    def test_duplicate_coupling_ids_raise(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = bow_3()
+        product = product.model_copy(
+            update={
+                "assembly": product.assembly.model_copy(
+                    update={
+                        "couplings": [
+                            product.assembly.couplings[0],
+                            product.assembly.couplings[0],
+                        ]
+                    }
+                )
+            }
+        )
+        with pytest.raises(ValueError, match="unique"):
+            evaluate_product(product, demo_60_params)
+
     def test_couplings_count_mismatch_is_invalid(
         self, demo_60_params: SystemParams
     ) -> None:

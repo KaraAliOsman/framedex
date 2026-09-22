@@ -12,8 +12,10 @@ import {
   equalizeModuleWidths,
   isProductModel,
   makeBowProduct,
+  moduleGlassSku,
   moduleOpening,
   setAllModuleHeights,
+  setModuleGlass,
   setCouplerSku,
   setCouplerSkuAll,
   setCouplingAngle,
@@ -114,6 +116,7 @@ export function createBowFromInputs(
   inputs: CanvasDesignInputs,
   glassThicknessMm = "4.00",
   glassSpec = "4",
+  glassArticleSku: string | null = null,
 ): ProductJson {
   return makeBowProduct({
     moduleCount: 3,
@@ -122,18 +125,21 @@ export function createBowFromInputs(
     angleDeg: 15,
     glassThicknessMm,
     glassSpec,
+    glassArticleSku,
   });
 }
 
 export function AssemblyEditor({
   organizationId,
   couplerSkus,
+  glassSkus,
   disabled,
   onChanged,
   onEvaluationChange,
 }: {
   organizationId: string;
   couplerSkus: string[];
+  glassSkus: string[];
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
@@ -283,6 +289,7 @@ export function AssemblyEditor({
                 <th />
                 <th>{t("assembly.width")}</th>
                 <th>{t("assembly.opening")}</th>
+                <th>{t("assembly.glass")}</th>
               </tr>
             </thead>
             <tbody>
@@ -320,6 +327,23 @@ export function AssemblyEditor({
                       {OPENING_OPTIONS.map(([value, key]) => (
                         <option key={value} value={value}>
                           {t(key)}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      value={moduleGlassSku(module) ?? ""}
+                      disabled={disabled}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={(event) =>
+                        commit(setModuleGlass(product, module.id, event.target.value || null))
+                      }
+                    >
+                      <option value="">{t("assembly.noGlass")}</option>
+                      {glassSkus.map((sku) => (
+                        <option key={sku} value={sku}>
+                          {sku}
                         </option>
                       ))}
                     </select>

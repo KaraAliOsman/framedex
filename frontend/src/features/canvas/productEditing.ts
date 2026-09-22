@@ -44,6 +44,7 @@ export function makeBayTree(
   opening: Opening,
   glassThicknessMm: string,
   glassSpec: string,
+  glassArticleSku: string | null = null,
 ): IntentNode {
   return {
     id,
@@ -51,6 +52,7 @@ export function makeBayTree(
     opening_type: opening,
     glass_thickness_mm: glassThicknessMm,
     glass_spec: glassSpec,
+    glass_article_sku: glassArticleSku,
   };
 }
 
@@ -62,6 +64,7 @@ export function makeBowProduct(options: {
   opening?: Opening;
   glassThicknessMm?: string;
   glassSpec?: string;
+  glassArticleSku?: string | null;
 }): ProductJson {
   const {
     moduleCount,
@@ -71,6 +74,7 @@ export function makeBowProduct(options: {
     opening = "FIXED",
     glassThicknessMm = "4.00",
     glassSpec = "4",
+    glassArticleSku = null,
   } = options;
   const share = Math.floor((widthMm / moduleCount) * 100) / 100;
   const modules: ProductModuleJson[] = [];
@@ -83,7 +87,7 @@ export function makeBowProduct(options: {
       id: `m${index}`,
       width_mm: width.toFixed(2),
       height_mm: heightMm.toFixed(2),
-      tree: makeBayTree(`m${index}`, opening, glassThicknessMm, glassSpec),
+      tree: makeBayTree(`m${index}`, opening, glassThicknessMm, glassSpec, glassArticleSku),
     });
     if (index > 1) {
       couplings.push({
@@ -319,4 +323,23 @@ export function modulePrimaryBay(module: ProductModuleJson): IntentNode | null {
 export function moduleOpening(module: ProductModuleJson): Opening {
   const bay = modulePrimaryBay(module);
   return bay?.opening_type ?? "FIXED";
+}
+
+/** Commercial glass SKU on every bay of a module — pricing authority. */
+export function setModuleGlass(
+  product: ProductJson,
+  moduleId: string,
+  glassArticleSku: string | null,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function withGlass(node: IntentNode): IntentNode {
+    if (node.type === "BAY") return { ...node, glass_article_sku: glassArticleSku };
+    return { ...node, children: node.children?.map(withGlass) };
+  }
+  return replaceModule(product, moduleId, { ...module, tree: withGlass(module.tree) });
+}
+
+export function moduleGlassSku(module: ProductModuleJson): string | null {
+  return modulePrimaryBay(module)?.glass_article_sku ?? null;
 }

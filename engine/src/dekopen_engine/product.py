@@ -380,6 +380,11 @@ def evaluate_product(
     couplings = assembly.couplings
     issues: list[ProductIssue] = []
 
+    if len({module.id for module in modules}) != len(modules) or len(
+        {coupling.id for coupling in couplings}
+    ) != len(couplings):
+        raise ValueError("module and coupling ids must be unique")
+
     if len(couplings) != len(modules) - 1:
         issues.append(
             ProductIssue(
