@@ -267,6 +267,7 @@ function PositionWorkspace({
   const [message, setMessage] = useState("");
   const [uncertainCreate, setUncertainCreate] = useState(false);
   const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
+  const [createdId, setCreatedId] = useState<string | null>(null);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
   const canUndo = useCanvasStore((s) => s.past.length > 0);
@@ -435,6 +436,11 @@ function PositionWorkspace({
     setMessage("");
   }, []);
 
+  useEffect(() => {
+    if (createdId === null) return;
+    navigate(`/projects/${projectId}/positions/${createdId}/edit`, { replace: true });
+  }, [createdId, navigate, projectId]);
+
   const onAssemblyEvaluation = useCallback((evaluation: EngineAssemblyCalculateResponse | null) => {
     setAssemblyEval(evaluation);
     setResult(
@@ -484,8 +490,9 @@ function PositionWorkspace({
       setResult(value.bom);
       setBaseline({ design: canonicalize(design), location, quantity });
       setMessage(t("projects.saved"));
-      if (!positionId)
-        navigate(`/projects/${projectId}/positions/${value.id}/edit`, { replace: true });
+      // The unsaved-changes blocker still sees dirty=true until the baseline
+      // commits, so the post-create navigation must wait for the next render.
+      if (!positionId) setCreatedId(value.id);
     } catch (error) {
       if (epoch === generation.current) {
         const uncertain = !saved && (!(error instanceof ApiError) || error.status >= 500);

@@ -127,25 +127,26 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   // Invalid intent cannot expose a previous result as the current calculation.
-  await page.getByLabel("Ancho", { exact: true }).fill("10.00");
+  await page.getByRole("textbox", { name: "Ancho mm" }).fill("10.00");
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByLabel("Ancho", { exact: true }).press("Enter"),
+    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
   );
   await expect(page.getByTestId("assembly-status")).toHaveText(/inválida|incompleta/);
-  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("10.00");
+  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("10.00");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
   await expect(page.locator("details.project-bom")).toHaveCount(0);
 
   // Exercise a real update, not only an unsaved creation preview.
-  await page.getByLabel("Ancho", { exact: true }).fill("1100.25");
+  await page.getByRole("textbox", { name: "Ancho mm" }).fill("1100.25");
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByLabel("Ancho", { exact: true }).press("Enter"),
+    page.getByRole("textbox", { name: "Ancho mm" }).press("Enter"),
   );
-  await page.getByLabel("Alto", { exact: true }).fill("1050.50");
-  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
+  // Drafts are uncommitted until blur/Enter — the live model (and its
+  // evaluation) is unchanged until the field commits.
+  await page.getByRole("textbox", { name: "Alto mm" }).fill("1050.50");
 
   await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
-    page.getByLabel("Alto", { exact: true }).press("Enter"),
+    page.getByRole("textbox", { name: "Alto mm" }).press("Enter"),
   );
   const editedBom = (
     await responseTo<EngineAssemblyCalculateResponse>(
@@ -166,7 +167,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await save();
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("1100.25");
+  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
   const beforeRetry = await manual.readRows(
     "project_positions",
     `id=eq.${initial.id}&select=width_mm::text`,
@@ -234,8 +235,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     card(page, "Cocina original").getByRole("link", { name: "Abrir diseño", exact: true }).click(),
   );
   expect(reopened).toEqual(saved);
-  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("1100.25");
-  await expect(page.getByLabel("Alto", { exact: true })).toHaveValue("1050.50");
+  await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
+  await expect(page.getByRole("textbox", { name: "Alto mm" })).toHaveValue("1050.50");
   await expect(page.getByRole("button", { name: "Abatible derecha", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
