@@ -338,6 +338,29 @@ ON CONFLICT (id) DO UPDATE SET
     reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm,
     reinforcement_sku = EXCLUDED.reinforcement_sku;
 
+INSERT INTO public.profile_articles (
+    id, system_id, org_id, sku, name, role, material,
+    face_width_mm, commercial_length_mm, welding_loss_mm, reinforcement_gap_mm,
+    weight_kg_m, steel_weight_kg_m
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60/' || coupler.sku),
+    system.id, NULL, coupler.sku, coupler.name, 'COUPLER', 'PVC',
+    coupler.face_mm, 6000.00, 6.00, 15.00, coupler.weight, 1.7000
+FROM public.profile_systems AS system
+CROSS JOIN (VALUES
+    ('COPLE-60', 'Acoplador Angular Demo 60/30', 30.00::numeric, 0.9000::numeric),
+    ('COPLE-90', 'Acoplador Angular Demo 60/34', 34.00::numeric, 1.1000::numeric)
+) AS coupler(sku, name, face_mm, weight)
+WHERE system.code = 'DEMO_60' AND system.is_global = TRUE
+ON CONFLICT (system_id, sku) DO UPDATE SET
+    name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
+    face_width_mm = EXCLUDED.face_width_mm,
+    commercial_length_mm = EXCLUDED.commercial_length_mm,
+    welding_loss_mm = EXCLUDED.welding_loss_mm,
+    reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm,
+    weight_kg_m = EXCLUDED.weight_kg_m,
+    steel_weight_kg_m = EXCLUDED.steel_weight_kg_m;
+
 INSERT INTO public.infill_articles (
     id, system_id, org_id, sku, name, kind, thickness_mm, weight_kg_m2
 )

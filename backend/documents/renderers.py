@@ -191,17 +191,67 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
 
 def _position_svg(position: dict[str, object]) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
-    width = _num(position.get("width_mm"))
-    height = _num(position.get("height_mm"))
-    if width <= 0 or height <= 0:
-        raise DocumentaryError("svg_dimension_invalid")
     marker = f"arrow-{_value(position.get('position_index'))}"
     elements: list[str] = [
         f'<defs><marker id="{marker}" markerWidth="8" markerHeight="8" refX="6" refY="3" '
         'orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#163b66" '
         'stroke-width="1"/></marker></defs>'
     ]
-    _svg_elements(tree, Decimal("0"), Decimal("0"), width, height, elements, marker)
+    if tree.get("version") == "product-v2":
+        # Assemblies draw every module's front view side by side; couplings
+        # become an orange joint line with the plan deflection annotated.
+        assembly = _object(tree.get("assembly"), "invalid_frozen_parametric_tree")
+        modules = [
+            _object(module, "invalid_frozen_parametric_tree")
+            for module in _array(assembly.get("modules"), "invalid_frozen_parametric_tree")
+        ]
+        couplings = [
+            _object(coupling, "invalid_frozen_parametric_tree")
+            for coupling in _array(
+                assembly.get("couplings", []), "invalid_frozen_parametric_tree"
+            )
+        ]
+        width = Decimal("0")
+        height = Decimal("0")
+        for index, module in enumerate(modules):
+            module_width = _num(module.get("width_mm"))
+            module_height = _num(module.get("height_mm"))
+            if module_width <= 0 or module_height <= 0:
+                raise DocumentaryError("svg_dimension_invalid")
+            if index > 0:
+                joint_width = module_width / Decimal("60")
+                elements.append(
+                    f'<line x1="{_pt(width)}" y1="0" x2="{_pt(width)}" '
+                    f'y2="{_pt(module_height)}" stroke="#E56A32" '
+                    f'stroke-width="{_pt(joint_width)}"/>'
+                )
+                if index - 1 < len(couplings):
+                    angle = couplings[index - 1].get("angle_deg")
+                    if angle is not None:
+                        elements.append(
+                            f'<text x="{_pt(width)}" y="{_pt(module_height / Decimal("18"))}" '
+                            f'font-size="{_pt(module_height / Decimal("16"))}" '
+                            f'fill="#E56A32" text-anchor="middle">'
+                            f'{escape(_value(angle))}°</text>'
+                        )
+            _svg_elements(
+                _object(module.get("tree"), "invalid_frozen_parametric_tree"),
+                width, Decimal("0"), module_width, module_height, elements, marker,
+            )
+            elements.append(
+                f'<text x="{_pt(width + module_width / Decimal("30"))}" '
+                f'y="{_pt(module_height - module_height / Decimal("30"))}" '
+                f'font-size="{_pt(module_height / Decimal("18"))}" '
+                f'fill="#64748b">{escape(_value(module.get("id")))}</text>'
+            )
+            width += module_width
+            height = max(height, module_height)
+    else:
+        width = _num(position.get("width_mm"))
+        height = _num(position.get("height_mm"))
+        if width <= 0 or height <= 0:
+            raise DocumentaryError("svg_dimension_invalid")
+        _svg_elements(tree, Decimal("0"), Decimal("0"), width, height, elements, marker)
     return (
         f'<svg viewBox="0 0 {_pt(width)} {_pt(height)}" '
         'xmlns="http://www.w3.org/2000/svg" role="img" '
@@ -224,6 +274,21 @@ def _glass_specs(node: object) -> list[str]:
     return result
 
 
+def _position_glass_specs(position: dict[str, object]) -> list[str]:
+    tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
+    if tree.get("version") == "product-v2":
+        assembly = _object(tree.get("assembly"), "invalid_frozen_parametric_tree")
+        specs: list[str] = []
+        for module in _array(assembly.get("modules"), "invalid_frozen_parametric_tree"):
+            specs.extend(
+                _glass_specs(
+                    _object(module, "invalid_frozen_parametric_tree").get("tree")
+                )
+            )
+        return specs
+    return _glass_specs(tree)
+
+
 def _revision_header(snapshot: dict[str, object], title: str, workshop: bool = False) -> tuple[str, str]:
     project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
     bom_hash = _value(snapshot.get("bom_hash"))
@@ -244,7 +309,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
                  for item in _array(snapshot.get("positions"), "invalid_frozen_revision_snapshot")]
     opening_rows = []
     for position in positions:
-        specs = _glass_specs(position.get("parametric_tree"))
+        specs = _position_glass_specs(position)
         opening_rows.append([
             position.get("position_index"), position.get("location_tag"),
             f"{_value(position.get('width_mm'))} × {_value(position.get('height_mm'))}",

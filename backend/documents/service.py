@@ -15,21 +15,30 @@ from dekopen_engine.documentary_canonical import (
     documentary_canonical_json_v1,
     snapshot_sha256_v1,
 )
-from dekopen_engine.geometry import compute_geometry
+from dekopen_engine.geometry import GeometryComputation, compute_geometry
 from dekopen_engine.inspection_models import (
     InspectionMode,
     InspectorInput,
+    InspectorResult,
     RuleEvaluationStatus,
 )
 from dekopen_engine.inspector import inspect
-from dekopen_engine.manufacturing import project_manufacturing_facts_v1
+from dekopen_engine.manufacturing import (
+    ManufacturingFactsV1,
+    project_manufacturing_facts_v1,
+)
+from dekopen_engine.models import EngineResult
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
 )
 from dekopen_engine.snapshot import calculation_response
-from engine_api.adapter import normalized_root_from_api
+from engine_api.adapter import (
+    evaluate_assembly_from_api,
+    normalized_root_from_api,
+    parse_product_model,
+)
 from engine_api.cutting_repository import CuttingRepository
 from engine_api.inspection_repository import InspectorRepository
 from engine_api.repository import SystemParamsRepository
@@ -124,6 +133,31 @@ def _pricing_state_matches(
         raise DocumentaryError("applied_pricing_binding_mismatch")
 
 
+def _module_scoped(
+    items: list[T], module_id: str | None, *id_fields: str
+) -> list[T]:
+    """Items whose ids are namespaced "<module_id>|<id>" belong to one module;
+    feed each module's classic computation only its own, prefix stripped."""
+    if module_id is None:
+        return items
+    prefix = f"{module_id}|"
+    scoped: list[T] = []
+    for item in items:
+        anchor = getattr(item, id_fields[0], None)
+        if not isinstance(anchor, str) or not anchor.startswith(prefix):
+            continue
+        updates = {}
+        for field in id_fields:
+            value = getattr(item, field, None)
+            updates[field] = (
+                value[len(prefix):]
+                if isinstance(value, str) and value.startswith(prefix)
+                else value
+            )
+        scoped.append(item.model_copy(update=updates))
+    return scoped
+
+
 def _tree_has_legacy_handle(value: object) -> bool:
     if not isinstance(value, dict):
         return False
@@ -146,6 +180,110 @@ def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
             raise DocumentaryError(code)
         result[identity] = item
     return [result[key] for key in sorted(result)]
+
+
+def _position_calculations(
+    *,
+    tree: dict[str, object],
+    width_mm: Decimal,
+    height_mm: Decimal,
+    color: str,
+    params: object,
+    system_id: UUID,
+    org_id: UUID,
+) -> tuple[list[tuple[str | None, GeometryComputation, dict[str, object]]], EngineResult]:
+    """Classic per-module geometry+trace for one persisted position.
+
+    Returns (calculations, result): classic positions compute once with a
+    ``None`` module id; product-v2 assemblies evaluate for the BOM and each
+    module recomputes on its own tree, the ``module.id`` becoming the
+    ``"<module_id>|<id>"`` namespace used by the persisted BOM.
+    """
+    calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
+    is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
+    if is_assembly:
+        product = parse_product_model(tree)
+        evaluation = evaluate_assembly_from_api(
+            product=product,
+            color=color,
+            params=params,
+            coupler_articles=SystemParamsRepository().load_coupler_articles(
+                system_id, org_id
+            ),
+        )
+        if evaluation.status.value != "VALID" or evaluation.bom is None:
+            raise DocumentaryError("documentary_geometry_incomplete")
+        result = evaluation.bom
+        module_specs = [
+            (module.id, module.tree.model_dump(mode="json"), module.width_mm, module.height_mm)
+            for module in product.assembly.modules
+        ]
+    else:
+        result = None
+        module_specs = [(None, tree, width_mm, height_mm)]
+    for module_id, module_tree, module_width, module_height in module_specs:
+        module_root = normalized_root_from_api(
+            parametric_tree=module_tree,
+            nominal_width_mm=module_width,
+            nominal_height_mm=module_height,
+            color=color,
+            params=params,
+        )
+        computation = compute_geometry(module_root, params, diagnostic=True)
+        if computation.result is None or computation.manufacturing_trace is None:
+            raise DocumentaryError("documentary_geometry_incomplete")
+        calculations.append((module_id, computation, module_tree))
+        if not is_assembly:
+            result = computation.result
+    if result is None:
+        raise DocumentaryError("documentary_geometry_incomplete")
+    return calculations, result
+
+
+def _valid_targets(
+    calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]],
+) -> tuple[
+    set[str],
+    set[tuple[str, str | None]],
+    set[str],
+    set[tuple[str, str | None]],
+]:
+    """Valid bays, (bay, leaf) pairs, span ids and glass targets for a
+    position, namespaced ``<module_id>|<id>`` exactly like the assembly BOM."""
+    bays: set[str] = set()
+    leaves: set[tuple[str, str | None]] = set()
+    spans: set[str] = set()
+    glass: set[tuple[str, str | None]] = set()
+    for module_id, computation, _ in calculations:
+        bays |= {
+            f"{module_id}|{opening.bay_id}" if module_id else opening.bay_id
+            for opening in computation.openings
+        }
+        leaves |= {
+            (
+                f"{module_id}|{leaf.bay_id}" if module_id else leaf.bay_id,
+                f"{module_id}|{leaf.leaf_id}"
+                if module_id and leaf.leaf_id is not None
+                else leaf.leaf_id,
+            )
+            for leaf in computation.leaves
+        }
+        spans |= {
+            f"{module_id}|{span.target_id}" if module_id else span.target_id
+            for span in computation.spans
+        }
+        trace = computation.manufacturing_trace
+        glass |= {
+            (
+                f"{module_id}|{infill.bay_id}" if module_id else infill.bay_id,
+                f"{module_id}|{infill.leaf_id}"
+                if module_id and infill.leaf_id is not None
+                else infill.leaf_id,
+            )
+            for infill in (trace.infills if trace else [])
+            if infill.kind == "GLASS"
+        }
+    return bays, leaves, spans, glass
 
 
 def _position_rows(project_id: UUID, org_id: UUID) -> list[dict[str, object]]:
@@ -291,8 +429,7 @@ def freeze_revision_a(
         for position in positions:
             position_id = str(position["id"])
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
-            if isinstance(tree, dict) and tree.get("version") == "product-v2":
-                raise DocumentaryError("assembly_positions_unsupported")
+            is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
             color = (
                 "WHITE"
                 if position["color_interior"] == "WHITE" and position["color_exterior"] == "WHITE"
@@ -300,17 +437,15 @@ def freeze_revision_a(
             )
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
-            root = normalized_root_from_api(
-                parametric_tree=tree,
-                nominal_width_mm=D(str(position["width_mm"])),
-                nominal_height_mm=D(str(position["height_mm"])),
+            calculations, result = _position_calculations(
+                tree=tree,
+                width_mm=D(str(position["width_mm"])),
+                height_mm=D(str(position["height_mm"])),
                 color=color,
                 params=params,
+                system_id=system_id,
+                org_id=org_id,
             )
-            computation = compute_geometry(root, params, diagnostic=True)
-            if computation.result is None or computation.manufacturing_trace is None:
-                raise DocumentaryError("documentary_geometry_incomplete")
-            result = computation.result
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
@@ -321,12 +456,25 @@ def freeze_revision_a(
 
             annotations = workshop_annotations(position["workshop_annotations"])
             structural = structural_inputs(position["structural_inputs"])
-            targets = {(opening.bay_id, None) for opening in computation.openings} | {
-                (leaf.bay_id, leaf.leaf_id) for leaf in computation.leaves
+            targets = {
+                (f"{module_id}|{opening.bay_id}" if module_id else opening.bay_id, None)
+                for module_id, computation, _ in calculations
+                for opening in computation.openings
+            } | {
+                (
+                    f"{module_id}|{leaf.bay_id}" if module_id else leaf.bay_id,
+                    f"{module_id}|{leaf.leaf_id}" if module_id else leaf.leaf_id,
+                )
+                for module_id, computation, _ in calculations
+                for leaf in computation.leaves
             }
             if any((item.bay_id, item.leaf_id) not in targets for item in annotations):
                 raise DocumentaryError("workshop_annotation_target_invalid")
-            spans = {span.target_id for span in computation.spans}
+            spans = {
+                f"{module_id}|{span.target_id}" if module_id else span.target_id
+                for module_id, computation, _ in calculations
+                for span in computation.spans
+            }
             if any(item.target_id not in spans for item in structural):
                 raise DocumentaryError("structural_input_target_invalid")
             if color != "WHITE" or any(item.finish_class not in (None, "WHITE") for item in annotations):
@@ -334,12 +482,6 @@ def freeze_revision_a(
 
             inspector_authorities = InspectorRepository().load(system_id, org_id)
             cutting = stock_repository.for_result(result, system_id, org_id, color)
-            inertias: dict[str, Decimal | None] = {}
-            for span in computation.spans:
-                _, inertia = stock_repository.reinforcement_stock(
-                    system_id, org_id, span.parent_profile_sku, None, color
-                )
-                inertias[span.target_id] = inertia
             calculation_request = {
                 "system_id": str(system_id),
                 "parametric_tree": tree,
@@ -350,27 +492,47 @@ def freeze_revision_a(
             source_hash = calculation_response(calculation_request, result)["calculation_hash"]
             if position["documentary_calculation_hash"] != source_hash:
                 raise DocumentaryError("documentary_calculation_identity_stale")
-            inspection = inspect(InspectorInput(
-                computation=computation,
-                chamber_clearance_mm=inspector_authorities.chamber_clearance_mm,
-                annotations=annotations,
-                structural_inputs=structural,
-                reinforcement_ix_by_target=inertias,
-                mode=InspectionMode.DESIGN,
-                source_calculation_hash=str(source_hash),
-            ), inspector_authorities.config)
-            has_failures = any(
-                evaluation.status is RuleEvaluationStatus.FAIL
-                for evaluation in inspection.evaluations
+            inspections: list[tuple[str | None, InspectorResult, bool, bool]] = []
+            has_failures = False
+            position_production_allowed = True
+            position_complete = True
+            for module_id, computation, _ in calculations:
+                inertias: dict[str, Decimal | None] = {}
+                for span in computation.spans:
+                    _, inertia = stock_repository.reinforcement_stock(
+                        system_id, org_id, span.parent_profile_sku, None, color
+                    )
+                    inertias[span.target_id] = inertia
+                inspection = inspect(InspectorInput(
+                    computation=computation,
+                    chamber_clearance_mm=inspector_authorities.chamber_clearance_mm,
+                    annotations=_module_scoped(annotations, module_id, "bay_id", "leaf_id"),
+                    structural_inputs=_module_scoped(structural, module_id, "target_id"),
+                    reinforcement_ix_by_target=inertias,
+                    mode=InspectionMode.DESIGN,
+                    source_calculation_hash=str(source_hash),
+                ), inspector_authorities.config)
+                module_allowed = inspection.production_allowed
+                module_complete = not any(
+                    evaluation.status is RuleEvaluationStatus.MISSING_INPUT
+                    for evaluation in inspection.evaluations
+                )
+                inspections.append(
+                    (module_id, inspection, module_complete, module_allowed)
+                )
+                has_failures = has_failures or any(
+                    evaluation.status is RuleEvaluationStatus.FAIL
+                    for evaluation in inspection.evaluations
+                )
+                position_production_allowed = (
+                    position_production_allowed and module_allowed
+                )
+                position_complete = position_complete and module_complete
+            is_red = not position_production_allowed or any(
+                inspection.status == "RED" for _, inspection, _, _ in inspections
             )
-            is_red = not inspection.production_allowed or inspection.status == "RED"
             if has_failures or (is_red and not allow_incomplete_workshop):
                 raise DocumentaryError("inspector_red_blocks_documentary_freeze")
-            position_production_allowed = inspection.production_allowed
-            position_complete = not any(
-                evaluation.status is RuleEvaluationStatus.MISSING_INPUT
-                for evaluation in inspection.evaluations
-            )
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
@@ -383,21 +545,30 @@ def freeze_revision_a(
             )
             intents = handle_intents(position["handle_intents"])
             quantity = int(position["quantity"])
-            units = [project_manufacturing_facts_v1(
-                trace=computation.manufacturing_trace,
-                position_id=position_id,
-                position_index=int(position["position_index"]),
-                repetition_index=repetition,
-                placement_policy=policies.placement,
-                handle_policy=policies.handles,
-                reinforcement_policy=policies.reinforcement,
-                handle_intents=intents,
-                resolved_reinforcement_skus=cutting.reinforcement_skus,
-                legacy_handle_height_present=_tree_has_legacy_handle(tree),
-                legacy_handle_migration_confirmed=bool(
-                    position["legacy_handle_migration_confirmed"]
-                ),
-            ) for repetition in range(1, quantity + 1)]
+            unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
+            for module_id, computation, module_tree in calculations:
+                for repetition in range(1, quantity + 1):
+                    unit_models.append((
+                        module_id,
+                        project_manufacturing_facts_v1(
+                            trace=computation.manufacturing_trace,
+                            position_id=position_id,
+                            position_index=int(position["position_index"]),
+                            repetition_index=repetition,
+                            placement_policy=policies.placement,
+                            handle_policy=policies.handles,
+                            reinforcement_policy=policies.reinforcement,
+                            handle_intents=_module_scoped(
+                                intents, module_id, "bay_id", "leaf_id"
+                            ),
+                            resolved_reinforcement_skus=cutting.reinforcement_skus,
+                            legacy_handle_height_present=_tree_has_legacy_handle(module_tree),
+                            legacy_handle_migration_confirmed=bool(
+                                position["legacy_handle_migration_confirmed"]
+                            ),
+                        ),
+                    ))
+            units = [unit for _, unit in unit_models]
             hardware = [HardwareSelectionV1(
                 repetition_index=repetition,
                 bay_id=item.bay_id,
@@ -409,8 +580,13 @@ def freeze_revision_a(
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
-                (infill.bay_id, infill.leaf_id)
-                for unit in units
+                (
+                    f"{module_id}|{infill.bay_id}" if module_id else infill.bay_id,
+                    f"{module_id}|{infill.leaf_id}"
+                    if module_id and infill.leaf_id is not None
+                    else infill.leaf_id,
+                )
+                for module_id, unit in unit_models
                 for infill in unit.infills
                 if infill.kind == "GLASS"
             }
@@ -422,6 +598,11 @@ def freeze_revision_a(
                 {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
                 and accessories is not None
             )
+            if is_assembly:
+                # Per-module purchase projection is not yet defined for
+                # assemblies: they freeze honestly as quote-only, never
+                # faking production completeness.
+                purchase_complete = False
             if not purchase_complete:
                 if not allow_incomplete_workshop:
                     raise DocumentaryError("purchase_authority_incomplete")
@@ -443,6 +624,8 @@ def freeze_revision_a(
                     glass_polishing=polishing,
                     accessory_schedule=accessories,
                 ))
+            # Module units cover every profile SKU the freeze needs: assembly
+            # coupler cuts are quote-level BOM evidence, not purchase evidence.
             profile_skus = {member.workshop_sku for unit in units for member in unit.members}
             reinforcement_skus = {
                 item.workshop_sku for unit in units for item in unit.reinforcements
@@ -501,16 +684,24 @@ def freeze_revision_a(
                 "engine_result": current_bom,
                 "calculation_hash": source_hash,
             })
-            manufacturing.extend(unit.model_dump(mode="python") for unit in units)
-            inspector_evidence.append({
-                "position_id": position_id,
-                "mode": "DESIGN",
-                "result": inspection.model_dump(mode="python"),
-                "config": inspector_authorities.config.model_dump(mode="python"),
-                "chamber_clearance_mm": inspector_authorities.chamber_clearance_mm,
-                "documentary_complete": position_complete,
-                "production_allowed": position_production_allowed,
-            })
+            manufacturing.extend(
+                {
+                    **unit.model_dump(mode="python"),
+                    **({"module_id": module_id} if module_id else {}),
+                }
+                for module_id, unit in unit_models
+            )
+            for module_id, inspection, module_complete, module_allowed in inspections:
+                inspector_evidence.append({
+                    "position_id": position_id,
+                    **({"module_id": module_id} if module_id else {}),
+                    "mode": "DESIGN",
+                    "result": inspection.model_dump(mode="python"),
+                    "config": inspector_authorities.config.model_dump(mode="python"),
+                    "chamber_clearance_mm": inspector_authorities.chamber_clearance_mm,
+                    "documentary_complete": module_complete,
+                    "production_allowed": module_allowed,
+                })
 
         if purchase_authorities is None:
             raise DocumentaryError("purchase_authorities_required")
@@ -738,39 +929,29 @@ def prepare_documentary_inputs(
         reinforcement_options = reinforcement.get(system_id, [])
 
         tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
-        if isinstance(tree, dict) and tree.get("version") == "product-v2":
-            raise DocumentaryError("assembly_positions_unsupported")
         color = (
             "WHITE"
             if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        root = normalized_root_from_api(
-            parametric_tree=tree,
-            nominal_width_mm=D(str(position["width_mm"])),
-            nominal_height_mm=D(str(position["height_mm"])),
+        calculations, result = _position_calculations(
+            tree=tree,
+            width_mm=D(str(position["width_mm"])),
+            height_mm=D(str(position["height_mm"])),
             color=color,
             params=params,
+            system_id=system_id_uuid,
+            org_id=org_id,
         )
-        computation = compute_geometry(root, params, diagnostic=True)
-        if computation.result is None:
-            raise DocumentaryError("documentary_geometry_incomplete")
         identity_hash = calculation_response({
             "system_id": system_id, "parametric_tree": tree,
             "nominal_width_mm": D(str(position["width_mm"])),
             "nominal_height_mm": D(str(position["height_mm"])), "color": color,
-        }, computation.result)["calculation_hash"]
+        }, result)["calculation_hash"]
         if existing and existing["calculation_hash"] != identity_hash:
             existing = None
-        valid_bays = {opening.bay_id for opening in computation.openings}
-        valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in computation.leaves}
-        valid_spans = {span.target_id for span in computation.spans}
-        valid_glass = {
-            (infill.bay_id, infill.leaf_id)
-            for infill in (computation.manufacturing_trace.infills if computation.manufacturing_trace else [])
-            if infill.kind == "GLASS"
-        }
+        valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
         existing_workshop = (
             decoded(existing["workshop_annotations"])
@@ -886,37 +1067,27 @@ def save_documentary_inputs(
         pos = positions_by_id[str(item["position_id"])]
         system_id_uuid = UUID(str(pos["system_id"]))
         tree = _json_object(pos["parametric_tree"], "invalid_parametric_tree")
-        if isinstance(tree, dict) and tree.get("version") == "product-v2":
-            raise DocumentaryError("assembly_positions_unsupported")
         color = (
             "WHITE"
             if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE"
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        root = normalized_root_from_api(
-            parametric_tree=tree,
-            nominal_width_mm=D(str(pos["width_mm"])),
-            nominal_height_mm=D(str(pos["height_mm"])),
+        calculations, result = _position_calculations(
+            tree=tree,
+            width_mm=D(str(pos["width_mm"])),
+            height_mm=D(str(pos["height_mm"])),
             color=color,
             params=params,
+            system_id=system_id_uuid,
+            org_id=org_id,
         )
-        comp = compute_geometry(root, params, diagnostic=True)
-        if comp.result is None:
-            raise DocumentaryError("documentary_geometry_incomplete")
         identity_hash = calculation_response({
             "system_id": str(system_id_uuid), "parametric_tree": tree,
             "nominal_width_mm": D(str(pos["width_mm"])),
             "nominal_height_mm": D(str(pos["height_mm"])), "color": color,
-        }, comp.result)["calculation_hash"]
-        valid_bays = {opening.bay_id for opening in comp.openings}
-        valid_leaves = {(leaf.bay_id, leaf.leaf_id) for leaf in comp.leaves}
-        valid_spans = {span.target_id for span in comp.spans}
-        valid_glass = {
-            (infill.bay_id, infill.leaf_id)
-            for infill in (comp.manufacturing_trace.infills if comp.manufacturing_trace else [])
-            if infill.kind == "GLASS"
-        }
+        }, result)["calculation_hash"]
+        valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
         item_workshop = item.get("workshop_annotations") or []
         for w in item_workshop:
             if not isinstance(w, dict) or w.get("bay_id") not in valid_bays or (

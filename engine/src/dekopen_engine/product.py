@@ -554,8 +554,8 @@ def evaluate_product(
                 role=ProfileRole.COUPLER,
                 material=article.material,
                 length_mm=height,
-                angle_left=Decimal("90"),
-                angle_right=Decimal("90"),
+                angle_left=Decimal("90.0"),
+                angle_right=Decimal("90.0"),
                 qty=1,
                 bay_id=coupling.id,
             )
