@@ -14,4 +14,6 @@ export interface DesignOptions {
   hardware_kits: KitChoice[];
   glass_skus: string[];
   colors: string[];
+  coupler_skus: string[];
+  panel_skus: string[];
 }

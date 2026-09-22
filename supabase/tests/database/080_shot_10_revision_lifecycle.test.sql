@@ -40,17 +40,17 @@ SELECT ok(to_regclass('public.uk_global_system_singleton_profile_role') IS NOT N
   'global singleton profile roles have an atomic database constraint');
 SELECT ok(
   pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
-    LIKE '%COUPLER%' AND
+    LIKE '%INVERSOR%' AND
   pg_get_indexdef('public.uk_tenant_system_singleton_profile_role'::regclass)
     LIKE '%ADDITIONAL%',
-  'tenant singleton index covers every non-bead profile role'
+  'tenant singleton index covers every singleton profile role'
 );
 SELECT ok(
   pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
-    LIKE '%COUPLER%' AND
+    LIKE '%INVERSOR%' AND
   pg_get_indexdef('public.uk_global_system_singleton_profile_role'::regclass)
     LIKE '%ADDITIONAL%',
-  'global singleton index covers every non-bead profile role'
+  'global singleton index covers every singleton profile role'
 );
 SELECT has_trigger('public','profile_articles','guard_singleton_profile_role',
   'singleton profile roles are enforced across global and tenant scopes');
@@ -74,11 +74,10 @@ SELECT lives_ok($$
   VALUES ('77000000-0000-4000-8000-0000000000AA','88000000-0000-4000-8000-000000000001',
           'PGTAP-TENANT-COUPLER','Tenant coupler','COUPLER',60.00)$$,
   'a tenant may extend a global system with a role the global catalog lacks');
-SELECT throws_ok($$
+SELECT lives_ok($$
   INSERT INTO public.profile_articles (system_id, org_id, sku, name, role, face_width_mm)
   VALUES ('77000000-0000-4000-8000-0000000000AA',NULL,
           'PGTAP-GLOBAL-COUPLER','Global coupler','COUPLER',60.00)$$,
-  '23505', 'catalog_singleton_role_conflict',
-  'a global row cannot duplicate a role a tenant already added to the same system');
+  'couplers are multi-valued: a second visible coupler on the same system is allowed');
 SELECT * FROM finish();
 ROLLBACK;

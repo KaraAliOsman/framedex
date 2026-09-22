@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import {
 } from "../../api/generated/dekopen";
 
 import type {
+  EngineAssemblyCalculateResponse,
   EngineCalculateResponse,
   PositionResponse,
   NodeLayout,
@@ -21,9 +22,11 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
+import { AssemblyEditor, createBowFromInputs } from "../canvas/AssemblyEditor";
 import { IntentEditor } from "../canvas/IntentEditor";
 import { FixedPositionPreview } from "./FixedPositionPreview";
 import { intentBays, type IntentNode, type SplitType } from "../canvas/intentEditing";
+import { isProductModel, totalModuleWidth } from "../canvas/productEditing";
 import { requestFromInputs } from "../canvas/useEngineCalculation";
 
 import { useEngineLayout } from "../canvas/useEngineLayout";
@@ -54,6 +57,7 @@ function initial(): CanvasDesignInputs {
     nominalHeightMm: "1000.00",
     color: "WHITE",
     parametricTree: { id: crypto.randomUUID(), type: "BAY", opening_type: "FIXED" },
+    product: null,
   };
 }
 
@@ -89,8 +93,11 @@ function PositionWorkspace({
   const mutationLock = useRef(false);
   const [message, setMessage] = useState("");
   const [uncertainCreate, setUncertainCreate] = useState(false);
+  const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
+  const canUndo = useCanvasStore((s) => s.past.length > 0);
+  const canRedo = useCanvasStore((s) => s.future.length > 0);
 
   const layout = useEngineLayout(inputs, orgId);
   const selected = useCanvasStore((s) => s.selection);
@@ -132,13 +139,19 @@ function PositionWorkspace({
           const item = response.data;
 
           if (item.design.color !== "WHITE") throw new Error("unsupported color");
+          const tree = item.design.parametric_tree;
+          const product = isProductModel(tree) ? tree : null;
           useCanvasStore.getState().loadDesign({
             systemId: item.design.system_id,
             nominalWidthMm: item.design.nominal_width_mm,
             nominalHeightMm: item.design.nominal_height_mm,
 
             color: "WHITE",
-            parametricTree: item.design.parametric_tree as IntentNode,
+            parametricTree: product
+              ? (product.assembly.modules.at(0)?.tree ??
+                ({ id: "m1", type: "BAY", opening_type: "FIXED" } as IntentNode))
+              : (tree as IntentNode),
+            product,
           });
           setSaved(copyId ? null : item);
           setDirty(!!copyId);
@@ -165,6 +178,85 @@ function PositionWorkspace({
     setGlassSku(bay?.glass_article_sku ?? "");
     setKitSku(bay?.hardware_set_sku ?? "");
   }, [bay]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent): void {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      )
+        return;
+      const key = event.key.toLowerCase();
+      if (key === "z") {
+        event.preventDefault();
+        applyHistory(event.shiftKey ? "redo" : "undo");
+      } else if (key === "y") {
+        event.preventDefault();
+        applyHistory("redo");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  function applyHistory(direction: "undo" | "redo"): void {
+    const store = useCanvasStore.getState();
+    if (direction === "undo") store.undo();
+    else store.redo();
+    // History restores inputs wholesale — keep component-local mirrors in sync.
+    setSystemId(useCanvasStore.getState().inputs.systemId ?? "");
+    setResult(null);
+    setAssemblyEval(null);
+    setDirty(true);
+    setMessage("");
+  }
+
+  function setProductMode(mode: "single" | "bow"): void {
+    const store = useCanvasStore.getState();
+    if (mode === "bow" && inputs.product === null) {
+      // A pending system change lives only in local state — fold it into the
+      // committed inputs so evaluation, options, and save see one system.
+      const inputsForBow = { ...inputs, systemId: systemId || null };
+      store.commitInputs({
+        ...inputsForBow,
+        product: createBowFromInputs(
+          inputsForBow,
+          thickness || "4.00",
+          glassSpec || "4",
+          (bay?.glass_article_sku ?? glassSku) || null,
+        ),
+      });
+    } else if (mode === "single" && inputs.product !== null) {
+      store.commitInputs({
+        ...inputs,
+        product: null,
+        parametricTree: inputs.product.assembly.modules.at(0)?.tree ?? inputs.parametricTree,
+      });
+    } else {
+      return;
+    }
+    // The classic-mode draft lock must not follow the user into assembly mode.
+    if (mode === "bow") setPending(false);
+    setResult(null);
+    setAssemblyEval(null);
+    setDirty(true);
+    setMessage("");
+  }
+
+  const onAssemblyChanged = useCallback(() => {
+    setDirty(true);
+    setMessage("");
+  }, []);
+
+  const onAssemblyEvaluation = useCallback((evaluation: EngineAssemblyCalculateResponse | null) => {
+    setAssemblyEval(evaluation);
+    setResult(
+      evaluation?.bom ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash } : null,
+    );
+  }, []);
 
   function editTechnical(): void {
     setPending(true);
@@ -237,6 +329,7 @@ function PositionWorkspace({
       pending ||
       busy ||
       inputs.color !== "WHITE" ||
+      (inputs.product !== null && assemblyEval?.status !== "VALID") ||
       !/^[1-9]\d*$/.test(quantity) ||
       Number(quantity) > 2147483647
     )
@@ -245,10 +338,23 @@ function PositionWorkspace({
     const epoch = ++generation.current;
     setBusy(true);
     setMessage("");
+    const product = inputs.product;
+    const design =
+      product !== null
+        ? {
+            system_id: systemId,
+            nominal_width_mm: totalModuleWidth(product).toFixed(2),
+            nominal_height_mm: Math.max(
+              ...product.assembly.modules.map((module) => Number(module.height_mm)),
+            ).toFixed(2),
+            color: inputs.color,
+            parametric_tree: product,
+          }
+        : { ...requestFromInputs(inputs), color: inputs.color };
     const body = {
       location_tag: location,
       quantity: Number(quantity),
-      design: { ...requestFromInputs(inputs), color: inputs.color },
+      design,
     };
     try {
       const response = saved
@@ -299,8 +405,27 @@ function PositionWorkspace({
         </div>
         <span role="status">{dirty ? t("projects.unsaved") : t("projects.savedState")}</span>
         <button
+          disabled={!canUndo || busy || pending || intentValidating}
+          onClick={() => applyHistory("undo")}
+        >
+          {t("projects.undo")}
+        </button>
+        <button
+          disabled={!canRedo || busy || pending || intentValidating}
+          onClick={() => applyHistory("redo")}
+        >
+          {t("projects.redo")}
+        </button>
+        <button
           className="primary-action"
-          disabled={uncertainCreate || busy || pending || intentValidating || !result}
+          disabled={
+            uncertainCreate ||
+            busy ||
+            pending ||
+            intentValidating ||
+            !result ||
+            (inputs.product !== null && assemblyEval?.status !== "VALID")
+          }
           onClick={() => void save()}
         >
           {t("projects.save")}
@@ -309,36 +434,67 @@ function PositionWorkspace({
       {message && <p role="status">{message}</p>}
       <div className="position-workspace">
         <div className="position-design">
-          <FixedPositionPreview inputs={inputs} result={result}>
-            <div>
-              <div className="design-caption">{t("projects.distribution")}</div>
-              <DesignDiagram
-                layout={layout}
-                node={inputs.parametricTree}
-                selected={selected}
-                disabled={busy || pending || intentValidating || intentDraftPending}
-                onSelect={(id) => useCanvasStore.getState().selectBay(id)}
+          <div className="position-type">
+            <label>
+              {t("assembly.type")}
+              <select
+                value={inputs.product === null ? "single" : "bow"}
+                // pending only locks classic-mode edits; the type switch itself
+                // stays available so setProductMode can discard the draft.
+                disabled={busy || intentValidating}
+                onChange={(event) =>
+                  setProductMode(event.target.value === "bow" ? "bow" : "single")
+                }
+              >
+                <option value="single">{t("assembly.single")}</option>
+                <option value="bow">{t("assembly.bow")}</option>
+              </select>
+            </label>
+          </div>
+          {inputs.product === null ? (
+            <>
+              <FixedPositionPreview inputs={inputs} result={result}>
+                <div>
+                  <div className="design-caption">{t("projects.distribution")}</div>
+                  <DesignDiagram
+                    layout={layout}
+                    node={inputs.parametricTree}
+                    selected={selected}
+                    disabled={busy || pending || intentValidating || intentDraftPending}
+                    onSelect={(id) => useCanvasStore.getState().selectBay(id)}
+                  />
+                </div>
+              </FixedPositionPreview>
+              <IntentEditor
+                organizationId={orgId}
+                onValidationChange={intentValidationChanged}
+                onDraftChange={() => {
+                  setIntentDraftPending(true);
+                  setDirty(true);
+                  setResult(null);
+                  setMessage("");
+                }}
+                disabled={busy || pending || !intentReady}
+                mullions={mullions}
+                onCalculated={(_, calculated) => {
+                  setIntentDraftPending(false);
+                  setResult(calculated);
+                  setDirty(true);
+                  setMessage("");
+                }}
               />
-            </div>
-          </FixedPositionPreview>
-          <IntentEditor
-            organizationId={orgId}
-            onValidationChange={intentValidationChanged}
-            onDraftChange={() => {
-              setIntentDraftPending(true);
-              setDirty(true);
-              setResult(null);
-              setMessage("");
-            }}
-            disabled={busy || pending || !intentReady}
-            mullions={mullions}
-            onCalculated={(_, calculated) => {
-              setIntentDraftPending(false);
-              setResult(calculated);
-              setDirty(true);
-              setMessage("");
-            }}
-          />
+            </>
+          ) : (
+            <AssemblyEditor
+              organizationId={orgId}
+              couplerSkus={options.data?.coupler_skus ?? []}
+              glassSkus={options.data?.glass_skus ?? []}
+              panelSkus={options.data?.panel_skus ?? []}
+              disabled={busy || pending}
+              onChanged={onAssemblyChanged}
+              onEvaluationChange={onAssemblyEvaluation}
+            />
+          )}
         </div>
         <aside className="position-materials">
           <fieldset disabled={busy || intentValidating || intentDraftPending}>
@@ -369,8 +525,19 @@ function PositionWorkspace({
               <select
                 value={systemId}
                 onChange={(e) => {
-                  editTechnical();
-                  setSystemId(e.target.value);
+                  const next = e.target.value;
+                  if (inputs.product !== null) {
+                    // Product designs evaluate live — a system switch is an
+                    // undoable inputs change, not a pending-lock draft.
+                    if (inputs.systemId !== next) {
+                      useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                    }
+                    setDirty(true);
+                    setMessage("");
+                  } else {
+                    editTechnical();
+                  }
+                  setSystemId(next);
                 }}
               >
                 <option value="">{t("projects.chooseSystem")}</option>
@@ -392,70 +559,74 @@ function PositionWorkspace({
             {(systems.isPending || (systemId && options.isPending)) && (
               <p role="status">{t("projects.loading")}</p>
             )}
-            <label>
-              {t("projects.glassThickness")}
-              <select
-                value={thickness}
-                onChange={(e) => {
-                  editTechnical();
-                  setThickness(e.target.value);
-                }}
-              >
-                <option value="">{t("projects.chooseGlass")}</option>
-                {options.data?.glazing_thicknesses.map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {t("projects.glassComposition")}
-              <input
-                value={glassSpec}
-                onChange={(e) => {
-                  editTechnical();
-                  setGlassSpec(e.target.value);
-                }}
-              />
-            </label>
-            <label>
-              {t("projects.glassArticle")}
-              <select
-                value={glassSku}
-                onChange={(e) => {
-                  editTechnical();
-                  setGlassSku(e.target.value);
-                }}
-              >
-                <option value="">{t("projects.chooseGlassArticle")}</option>
-                {options.data?.glass_skus.map((sku) => (
-                  <option key={sku}>{sku}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {t("projects.hardware")}
-              <select
-                value={kitSku}
-                onChange={(e) => {
-                  editTechnical();
-                  setKitSku(e.target.value);
-                }}
-              >
-                <option value="">{t("projects.automaticKit")}</option>
-                {options.data?.hardware_kits.map((kit) => (
-                  <option key={kit.sku} value={kit.sku}>
-                    {kit.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p>{t("projects.colorWhite")}</p>
-            <button
-              disabled={!systemId || !thickness || !glassSpec.trim()}
-              onClick={() => void applyMaterials()}
-            >
-              {t("projects.calculate")}
-            </button>
+            {inputs.product === null && (
+              <>
+                <label>
+                  {t("projects.glassThickness")}
+                  <select
+                    value={thickness}
+                    onChange={(e) => {
+                      editTechnical();
+                      setThickness(e.target.value);
+                    }}
+                  >
+                    <option value="">{t("projects.chooseGlass")}</option>
+                    {options.data?.glazing_thicknesses.map((value) => (
+                      <option key={value}>{value}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {t("projects.glassComposition")}
+                  <input
+                    value={glassSpec}
+                    onChange={(e) => {
+                      editTechnical();
+                      setGlassSpec(e.target.value);
+                    }}
+                  />
+                </label>
+                <label>
+                  {t("projects.glassArticle")}
+                  <select
+                    value={glassSku}
+                    onChange={(e) => {
+                      editTechnical();
+                      setGlassSku(e.target.value);
+                    }}
+                  >
+                    <option value="">{t("projects.chooseGlassArticle")}</option>
+                    {options.data?.glass_skus.map((sku) => (
+                      <option key={sku}>{sku}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {t("projects.hardware")}
+                  <select
+                    value={kitSku}
+                    onChange={(e) => {
+                      editTechnical();
+                      setKitSku(e.target.value);
+                    }}
+                  >
+                    <option value="">{t("projects.automaticKit")}</option>
+                    {options.data?.hardware_kits.map((kit) => (
+                      <option key={kit.sku} value={kit.sku}>
+                        {kit.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p>{t("projects.colorWhite")}</p>
+                <button
+                  disabled={!systemId || !thickness || !glassSpec.trim()}
+                  onClick={() => void applyMaterials()}
+                >
+                  {t("projects.calculate")}
+                </button>
+              </>
+            )}
           </fieldset>
         </aside>
       </div>

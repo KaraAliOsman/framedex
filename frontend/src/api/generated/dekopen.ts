@@ -40,6 +40,8 @@ import type {
   DraftResponse,
   EligibilityRequestRequest,
   EligibilityResponse,
+  EngineAssemblyCalculateRequest,
+  EngineAssemblyCalculateResponse,
   EngineCalculateRequestRequest,
   EngineCalculateResponse,
   EngineInspectRequestRequest,
@@ -3029,6 +3031,83 @@ export const documentarySaveInputs = async (
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(documentaryInputsRequest),
+  });
+};
+
+export type engineAssemblyCalculateResponse200 = {
+  data: EngineAssemblyCalculateResponse;
+  status: 200;
+};
+
+export type engineAssemblyCalculateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type engineAssemblyCalculateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type engineAssemblyCalculateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type engineAssemblyCalculateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type engineAssemblyCalculateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type engineAssemblyCalculateResponseSuccess = engineAssemblyCalculateResponse200 & {
+  headers: Headers;
+};
+export type engineAssemblyCalculateResponseError = (
+  | engineAssemblyCalculateResponse400
+  | engineAssemblyCalculateResponse401
+  | engineAssemblyCalculateResponse403
+  | engineAssemblyCalculateResponse404
+  | engineAssemblyCalculateResponse422
+) & {
+  headers: Headers;
+};
+
+export type engineAssemblyCalculateResponse =
+  engineAssemblyCalculateResponseSuccess | engineAssemblyCalculateResponseError;
+
+export const getEngineAssemblyCalculateUrl = () => {
+  return `/api/v1/engine/assembly/calculate/`;
+};
+
+/**
+ * Evaluate a compositional product (modules + couplings).
+ *
+ * Same auth/RLS flow as EngineCalculateView; all mathematics stay in
+ * /engine. The response separates geometry validity from manufacturing
+ * completeness and carries plan-view geometry for the editor.
+ */
+export const engineAssemblyCalculate = async (
+  engineAssemblyCalculateRequest: EngineAssemblyCalculateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<engineAssemblyCalculateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<engineAssemblyCalculateResponse>(getEngineAssemblyCalculateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(engineAssemblyCalculateRequest),
   });
 };
 

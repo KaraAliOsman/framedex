@@ -27,6 +27,8 @@ class DesignOptionsSerializer(serializers.Serializer):
     hardware_kits = KitChoiceSerializer(many=True)
     glass_skus = serializers.ListField(child=serializers.CharField())
     colors = serializers.ListField(child=serializers.CharField())
+    coupler_skus = serializers.ListField(child=serializers.CharField())
+    panel_skus = serializers.ListField(child=serializers.CharField())
 
 
 class DesignOptionsView(APIView):
@@ -37,7 +39,8 @@ class DesignOptionsView(APIView):
     )
     def get(self, request, system_id):
         with scope(request, READ_ROLES) as (_, _, org):
-            params = SystemParamsRepository().load_visible(system_id, org)
+            repository = SystemParamsRepository()
+            params = repository.load_visible(system_id, org)
             glass_rows = rows(
                 "SELECT DISTINCT technical_sku FROM public.glass_purchase_mappings "
                 "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) ORDER BY technical_sku",
@@ -58,5 +61,9 @@ class DesignOptionsView(APIView):
                     ],
                     "glass_skus": [item["technical_sku"] for item in glass_rows],
                     "colors": ["WHITE"],
+                    "coupler_skus": sorted(
+                        repository.load_coupler_articles(system_id, org)
+                    ),
+                    "panel_skus": sorted(params.available_panel_rules),
                 }
             )

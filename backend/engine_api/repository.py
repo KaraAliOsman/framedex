@@ -180,7 +180,9 @@ class SystemParamsRepository:
         result: dict[ProfileRole, EffectiveProfileArticle] = {}
         for row in rows:
             article = _article_from_row(row)
-            if article.role is ProfileRole.GLAZING_BEAD:
+            # GLAZING_BEAD resolves per glass thickness; COUPLER is multi-valued
+            # per system (assemblies pick any catalog SKU via load_coupler_articles).
+            if article.role in (ProfileRole.GLAZING_BEAD, ProfileRole.COUPLER):
                 continue
             if article.role in result:
                 raise UnsupportedCatalogContract(
@@ -188,6 +190,30 @@ class SystemParamsRepository:
                 )
             result[article.role] = article
         return result
+
+    def load_coupler_articles(
+        self, system_id: UUID, active_org_id: UUID
+    ) -> dict[str, EffectiveProfileArticle]:
+        """All catalog coupler profiles for a system, keyed by SKU.
+
+        Unlike effective articles (one per role), an assembly may reference
+        any coupler SKU the catalog offers for that system.
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT sku, role::text, face_width_mm, welding_loss_mm,
+                       reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
+                       reinforcement_sku, material::text
+                FROM public.profile_articles
+                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                  AND role = 'COUPLER'
+                ORDER BY sku
+                """,
+                [system_id, active_org_id],
+            )
+            rows = cursor.fetchall()
+        return {cast(str, row[0]): _article_from_row(row) for row in rows}
 
     def _load_glazing_rules(
         self, system_id: UUID, active_org_id: UUID

@@ -13,7 +13,12 @@ from dekopen_engine.documentary_canonical import documentary_canonical_json_v1
 from dekopen_engine.models import EngineResult
 from dekopen_engine.snapshot import calculation_response, calculation_hash, result_payload
 from documents.repository import documentary_backend
-from engine_api.adapter import calculate_from_api, UnsupportedEngineContract
+from engine_api.adapter import (
+    calculate_from_api,
+    evaluate_assembly_from_api,
+    parse_product_model,
+    UnsupportedEngineContract,
+)
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
 from pricing.repository import audit_reason, commercial_backend, json_text, rows
 from pricing.service import decoded
@@ -253,19 +258,52 @@ def position_row(org_id, position_id, *, lock=False):
 
 def calculate_design(org_id, design):
     try:
-        params = SystemParamsRepository().load_visible(design["system_id"], org_id)
-        result = calculate_from_api(
-            params=params,
-            **{
-                key: design[key]
-                for key in (
-                    "parametric_tree",
-                    "nominal_width_mm",
-                    "nominal_height_mm",
-                    "color",
+        repository = SystemParamsRepository()
+        params = repository.load_visible(design["system_id"], org_id)
+        tree = design["parametric_tree"]
+        if isinstance(tree, dict) and tree.get("version") == "product-v2":
+            model = parse_product_model(tree)
+            evaluation = evaluate_assembly_from_api(
+                product=model,
+                color=design["color"],
+                params=params,
+                coupler_articles=repository.load_coupler_articles(
+                    design["system_id"], org_id
+                ),
+            )
+            if evaluation.status.value != "VALID" or evaluation.bom is None:
+                # Persisted positions are production-bound: a partial BOM must
+                # never be stored or read back as authoritative.
+                raise contract_error(
+                    400,
+                    "manufacturing_incomplete",
+                    "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
                 )
-            },
-        )
+            if design["nominal_width_mm"] != sum(
+                (module.width_mm for module in model.assembly.modules),
+                Decimal("0"),
+            ) or design["nominal_height_mm"] != max(
+                module.height_mm for module in model.assembly.modules
+            ):
+                raise contract_error(
+                    400,
+                    "validation_error",
+                    "Request validation failed",
+                )
+            result = evaluation.bom
+        else:
+            result = calculate_from_api(
+                params=params,
+                **{
+                    key: design[key]
+                    for key in (
+                        "parametric_tree",
+                        "nominal_width_mm",
+                        "nominal_height_mm",
+                        "color",
+                    )
+                },
+            )
     except SystemNotFound as error:
         raise contract_error(
             404, "system_not_found", "La serie no está disponible para este taller."

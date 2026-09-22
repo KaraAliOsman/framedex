@@ -291,6 +291,8 @@ def freeze_revision_a(
         for position in positions:
             position_id = str(position["id"])
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
+            if isinstance(tree, dict) and tree.get("version") == "product-v2":
+                raise DocumentaryError("assembly_positions_unsupported")
             color = (
                 "WHITE"
                 if position["color_interior"] == "WHITE" and position["color_exterior"] == "WHITE"
@@ -736,6 +738,8 @@ def prepare_documentary_inputs(
         reinforcement_options = reinforcement.get(system_id, [])
 
         tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
+        if isinstance(tree, dict) and tree.get("version") == "product-v2":
+            raise DocumentaryError("assembly_positions_unsupported")
         color = (
             "WHITE"
             if position.get("color_interior") == "WHITE" and position.get("color_exterior") == "WHITE"
@@ -882,6 +886,8 @@ def save_documentary_inputs(
         pos = positions_by_id[str(item["position_id"])]
         system_id_uuid = UUID(str(pos["system_id"]))
         tree = _json_object(pos["parametric_tree"], "invalid_parametric_tree")
+        if isinstance(tree, dict) and tree.get("version") == "product-v2":
+            raise DocumentaryError("assembly_positions_unsupported")
         color = (
             "WHITE"
             if pos.get("color_interior") == "WHITE" and pos.get("color_exterior") == "WHITE"

@@ -1,12 +1,17 @@
 """Pure canonical response serialization and calculation identity; no file I/O."""
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 from decimal import Decimal
 import hashlib
 import json
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from dekopen_engine.models import EngineResult
+
+if TYPE_CHECKING:
+    from dekopen_engine.product import ProductEvaluation
 
 JsonValue: TypeAlias = None | bool | int | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -58,5 +63,17 @@ def result_payload(result: EngineResult) -> dict[str, JsonValue]:
 
 def calculation_response(request: Mapping[str, object], result: EngineResult) -> dict[str, JsonValue]:
     response = result_payload(result)
+    response["calculation_hash"] = calculation_hash(request, response)
+    return response
+
+
+def evaluation_payload(evaluation: ProductEvaluation) -> dict[str, JsonValue]:
+    value = _json_value(evaluation.model_dump())
+    assert isinstance(value, dict)
+    return value
+
+
+def evaluation_response(request: Mapping[str, object], evaluation: ProductEvaluation) -> dict[str, JsonValue]:
+    response = evaluation_payload(evaluation)
     response["calculation_hash"] = calculation_hash(request, response)
     return response

@@ -136,6 +136,7 @@ function expectResetCanvas(): void {
         glass_thickness_mm: "4.00",
         glass_spec: "4 Float Incoloro",
       },
+      product: null,
     },
     draftDimension: null,
     selection: "g1",

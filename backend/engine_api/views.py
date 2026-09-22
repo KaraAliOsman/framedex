@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dekopen_engine.snapshot import calculation_response
+from decimal import Decimal
 
+from dekopen_engine.snapshot import calculation_response, evaluation_response
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -22,8 +23,10 @@ from authentication.tenancy import (
 from authentication.views import verified_request_token
 from engine_api.adapter import (
     InvalidEngineRequest,
+    parse_product_model,
     UnsupportedEngineContract,
     calculate_from_api,
+    evaluate_assembly_from_api,
 )
 from engine_api.repository import (
     SystemNotFound,
@@ -31,6 +34,8 @@ from engine_api.repository import (
     UnsupportedCatalogContract,
 )
 from engine_api.serializers import (
+    EngineAssemblyCalculateResponseSerializer,
+    EngineAssemblyCalculateSerializer,
     EngineLayoutResponseSerializer,
     EngineCalculateRequestSerializer,
     EngineCalculateResponseSerializer,
@@ -178,3 +183,96 @@ class EngineLayoutView(EngineCalculateView):
             "calculation_hash": super().build_response(data, result, params)["calculation_hash"],
             "nodes": node_layout(compute_geometry(root, params)),
         }
+
+
+class EngineAssemblyCalculateView(APIView):
+    """Evaluate a compositional product (modules + couplings).
+
+    Same auth/RLS flow as EngineCalculateView; all mathematics stay in
+    /engine. The response separates geometry validity from manufacturing
+    completeness and carries plan-view geometry for the editor.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        operation_id="engine_assembly_calculate",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=EngineAssemblyCalculateSerializer,
+        responses={
+            200: EngineAssemblyCalculateResponseSerializer,
+            400: OpenApiResponse(ErrorResponseSerializer),
+            401: OpenApiResponse(ErrorResponseSerializer),
+            403: OpenApiResponse(ErrorResponseSerializer),
+            404: OpenApiResponse(ErrorResponseSerializer),
+            422: OpenApiResponse(ErrorResponseSerializer),
+        },
+        tags=["engine"],
+    )
+    def post(self, request: Request) -> Response:
+        request_serializer = EngineAssemblyCalculateSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise contract_error(
+                status.HTTP_400_BAD_REQUEST,
+                "validation_error",
+                "Request validation failed",
+            )
+        data = request_serializer.validated_data
+        token = verified_request_token(request)
+
+        try:
+            with authenticated_rls_context(token.claims):
+                memberships = MembershipRepository().list_active_for_user(token.user_id)
+                tenant = resolve_tenant_context(
+                    memberships,
+                    request.headers.get("X-Organization-ID"),
+                )
+                enforce_owner_mfa(tenant, token.aal)
+                repository = SystemParamsRepository()
+                params = repository.load_visible(
+                    data["system_id"], tenant.active_organization.organization_id
+                )
+                coupler_articles = repository.load_coupler_articles(
+                    data["system_id"], tenant.active_organization.organization_id
+                )
+                model = parse_product_model(data["product"])
+                modules = model.assembly.modules
+                if (
+                    data["nominal_width_mm"]
+                    != sum((module.width_mm for module in modules), Decimal("0"))
+                    or data["nominal_height_mm"]
+                    != max(module.height_mm for module in modules)
+                ):
+                    raise InvalidEngineRequest(
+                        "nominal dimensions must equal the sum of module widths "
+                        "and the tallest module height"
+                    )
+                evaluation = evaluate_assembly_from_api(
+                    product=model,
+                    color=data["color"],
+                    params=params,
+                    coupler_articles=coupler_articles,
+                )
+                response_payload = evaluation_response(
+                    {**data, "system_id": str(data["system_id"])}, evaluation
+                )
+        except SystemNotFound as error:
+            raise contract_error(
+                status.HTTP_404_NOT_FOUND,
+                "system_not_found",
+                "Profile system does not exist or is not visible",
+            ) from error
+        except (UnsupportedEngineContract, UnsupportedCatalogContract) as error:
+            raise contract_error(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "unsupported_engine_contract",
+                "Engine contract is not supported",
+            ) from error
+        except (InvalidEngineRequest, ValueError) as error:
+            raise contract_error(
+                status.HTTP_400_BAD_REQUEST,
+                "validation_error",
+                "Request validation failed",
+            ) from error
+
+        return Response(response_payload, status=status.HTTP_200_OK)

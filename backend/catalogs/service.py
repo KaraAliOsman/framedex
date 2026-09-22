@@ -195,15 +195,15 @@ def _parameters(values):
     ]
 
 
-# Every non-bead role resolves to a single effective article per system; glazing
-# beads stay multi-valued because glazing_bead_matrix selects them per thickness.
+# Every non-bead, non-coupler role resolves to a single effective article per
+# system; glazing beads stay multi-valued per thickness and couplers are
+# multi-valued per system (assemblies resolve any catalog SKU).
 SINGLETON_ROLES = {
     "FRAME",
     "SASH",
     "MULLION_V",
     "MULLION_H",
     "INVERSOR",
-    "COUPLER",
     "ADDITIONAL",
     "THRESHOLD",
 }

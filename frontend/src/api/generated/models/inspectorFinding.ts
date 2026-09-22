@@ -7,12 +7,12 @@
  */
 import type { FixabilityEnum } from "./fixabilityEnum";
 import type { InspectorDiff } from "./inspectorDiff";
+import type { InspectorFindingSeverityEnum } from "./inspectorFindingSeverityEnum";
 import type { InspectorRuleIdEnum } from "./inspectorRuleIdEnum";
-import type { SeverityEnum } from "./severityEnum";
 
 export interface InspectorFinding {
   rule_id: InspectorRuleIdEnum;
-  severity: SeverityEnum;
+  severity: InspectorFindingSeverityEnum;
   title: string;
   diagnosis: string;
   risk: string;

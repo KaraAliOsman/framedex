@@ -265,7 +265,7 @@ def test_partial_project_update_and_empty_delta(documentary_tenant):
 
 @pytest.mark.parametrize(
     "role",
-    ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "COUPLER", "ADDITIONAL", "THRESHOLD"],
+    ["FRAME", "SASH", "MULLION_V", "MULLION_H", "INVERSOR", "ADDITIONAL", "THRESHOLD"],
 )
 def test_catalog_singleton_role_uniqueness(documentary_tenant, role):
     org, _, users, _ = documentary_tenant
