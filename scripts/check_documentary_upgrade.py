@@ -41,7 +41,6 @@ def verify(container: str) -> None:
         if path.name >= FIRST_SHOT09:
             break
         sql(database, path.read_text(encoding="utf-8"))
-    sql(database, (ROOT / "supabase/seed.sql").read_text(encoding="utf-8"))
 
     # A legitimate pre-SHOT-09 revision: only the historical columns exist.
     sql(database, """
@@ -66,6 +65,11 @@ def verify(container: str) -> None:
         if path.name < FIRST_SHOT09:
             continue
         sql(database, path.read_text(encoding="utf-8"))
+
+    # seed.sql is a fresh-database fixture: on a real upgrade path it runs
+    # after every migration (same order as the clean PG16 replay), never
+    # between shot_07 and shot_10's singleton-role guard.
+    sql(database, (ROOT / "supabase/seed.sql").read_text(encoding="utf-8"))
 
     sql(database, """
       DO $$ DECLARE
