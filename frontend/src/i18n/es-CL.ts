@@ -432,6 +432,13 @@ const messages = {
   "page.dashboard": "Panel del taller",
   "page.dashboardDescription":
     "Crea un proyecto, configura sus vanos y prepara la cotización del taller.",
+  "dashboard.inProgress": "Cotización activa",
+  "dashboard.production": "Aprobados / producción",
+  "dashboard.recent": "Proyectos recientes",
+  "dashboard.viewAll": "Ver todos",
+  "dashboard.empty":
+    "Aún no hay proyectos. Crea el primero para empezar a cotizar vanos.",
+  "dashboard.emptyCta": "Crear el primer proyecto",
   "page.projects": "Proyectos",
   "page.projectsDescription": "Placeholder navegable; la lógica llega en SHOT-10.",
   "page.systems": "Sistemas de perfiles",

@@ -1,32 +1,55 @@
+/* DEKOPEN identity tokens.
+   Palette contract: ~75% graphite neutrals, ~20% teal accent, occasional
+   orange mark (#E56A32 — couplers/brand, never CTAs). Semantic colors carry
+   status only; never gradients, glow, or glassmorphism. */
+
 :root,
 :root[data-theme="light"] {
-  --theme-bg-canvas: #f4f5f7;
+  --theme-bg-canvas: #f5f6f6;
   --theme-surface-panel: #ffffff;
-  --theme-surface-card: #eaecef;
-  --theme-surface-hover: #dfe2e6;
-  --theme-border-subtle: #d1d5db;
-  --theme-text-primary: #0f172a;
-  --theme-text-secondary: #475569;
-  --theme-text-muted: #94a3b8;
-  --theme-cyan-tool: #0091ea;
-  --theme-amber-opening: #d97706;
-  --theme-emerald-action: #059669;
-  --theme-crimson-alert: #dc2626;
-  --theme-glass-tint: rgba(0, 145, 234, 0.06);
+  --theme-surface-card: #edf0ef;
+  --theme-surface-hover: #e2e8e7;
+  --theme-border-subtle: #d9dfde;
+  --theme-border-strong: #b9c4c2;
+  --theme-text-primary: #1f2a29;
+  --theme-text-secondary: #55635f;
+  --theme-text-muted: #93a29e;
+  --theme-accent: #0f817a;
+  --theme-accent-strong: #0b6b66;
+  --theme-accent-bright: #15968c;
+  --theme-accent-soft: #e4f3f1;
+  --theme-accent-ink: #0b4d49;
+  --theme-mark: #e56a32;
+  --theme-warning: #b25e09;
+  --theme-warning-soft: #fdf1e3;
+  --theme-success: #1e7a4c;
+  --theme-success-soft: #e3f2ea;
+  --theme-danger: #b3372f;
+  --theme-danger-soft: #fbe9e7;
+  --theme-glass-tint: rgba(15, 129, 122, 0.07);
 }
 
 :root[data-theme="dark"] {
-  --theme-bg-canvas: #121214;
-  --theme-surface-panel: #1a1a1e;
-  --theme-surface-card: #222228;
-  --theme-surface-hover: #2c2c34;
-  --theme-border-subtle: #3a3a46;
-  --theme-text-primary: #f8fafc;
-  --theme-text-secondary: #94a3b8;
-  --theme-text-muted: #626274;
-  --theme-cyan-tool: #00e5ff;
-  --theme-amber-opening: #ffb300;
-  --theme-emerald-action: #00c853;
-  --theme-crimson-alert: #ff1744;
-  --theme-glass-tint: rgba(0, 229, 255, 0.08);
+  --theme-bg-canvas: #14181a;
+  --theme-surface-panel: #1b2124;
+  --theme-surface-card: #232a2d;
+  --theme-surface-hover: #2c3539;
+  --theme-border-subtle: #323c40;
+  --theme-border-strong: #4a585d;
+  --theme-text-primary: #edf2f1;
+  --theme-text-secondary: #a4b6b3;
+  --theme-text-muted: #62736f;
+  --theme-accent: #2aa69b;
+  --theme-accent-strong: #45beb1;
+  --theme-accent-bright: #15968c;
+  --theme-accent-soft: #14312f;
+  --theme-accent-ink: #bfe6e0;
+  --theme-mark: #e8804a;
+  --theme-warning: #e09543;
+  --theme-warning-soft: #33231a;
+  --theme-success: #4caf7f;
+  --theme-success-soft: #16291f;
+  --theme-danger: #e06154;
+  --theme-danger-soft: #331d1a;
+  --theme-glass-tint: rgba(42, 166, 155, 0.1);
 }

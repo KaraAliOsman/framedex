@@ -15,8 +15,8 @@
 }
 
 .canvas-toolbar button.is-active {
-  border-color: var(--theme-cyan-tool);
-  color: var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
 }
 
 .canvas-layout {
@@ -83,7 +83,7 @@
 
 .glass-pane {
   fill: var(--theme-glass-tint);
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
   stroke-width: 3;
 }
 
@@ -137,7 +137,7 @@
 
 .resize-handle {
   cursor: ew-resize;
-  fill: var(--theme-amber-opening);
+  fill: var(--theme-warning);
   stroke: var(--theme-surface-panel);
   stroke-width: 5;
   vector-effect: non-scaling-stroke;
@@ -149,14 +149,14 @@
 
 .resize-handle:focus-visible {
   outline: none;
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
   stroke-width: 8;
 }
 
 .resize-preview {
   fill: none;
   pointer-events: none;
-  stroke: var(--theme-amber-opening);
+  stroke: var(--theme-warning);
   stroke-dasharray: 8 5;
   stroke-width: 3;
 }
@@ -164,7 +164,7 @@
 .snap-guide {
   fill: none;
   pointer-events: none;
-  stroke: var(--theme-emerald-action);
+  stroke: var(--theme-success);
   stroke-dasharray: 6 4;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
@@ -182,7 +182,7 @@
 
 .canvas-technical-results dl div {
   background: var(--theme-surface-card);
-  border-left: 3px solid var(--theme-cyan-tool);
+  border-left: 3px solid var(--theme-accent);
   padding: 0.75rem;
 }
 
@@ -303,7 +303,7 @@
 
 .plan-module.is-selected {
   fill: var(--theme-surface-card);
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
 }
 
 .plan-coupling {
@@ -314,7 +314,7 @@
 }
 
 .plan-front-chain {
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
   stroke-width: 2;
   stroke-dasharray: 6 4;
   vector-effect: non-scaling-stroke;
@@ -351,8 +351,8 @@
 }
 
 .assembly-strip-module.is-selected {
-  border-color: var(--theme-cyan-tool);
-  outline: 1px solid var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
+  outline: 1px solid var(--theme-accent);
 }
 
 .assembly-strip-id {
@@ -379,18 +379,18 @@
 }
 
 .assembly-status--valid {
-  border-color: var(--theme-emerald-action);
-  color: var(--theme-emerald-action);
+  border-color: var(--theme-success);
+  color: var(--theme-success);
 }
 
 .assembly-status--manufacturing_incomplete {
-  border-color: var(--theme-amber-opening);
-  color: var(--theme-amber-opening);
+  border-color: var(--theme-warning);
+  color: var(--theme-warning);
 }
 
 .assembly-status--invalid {
-  border-color: var(--theme-crimson-alert);
-  color: var(--theme-crimson-alert);
+  border-color: var(--theme-danger);
+  color: var(--theme-danger);
 }
 
 .assembly-issues {
@@ -401,11 +401,11 @@
 }
 
 .assembly-issues .issue-error {
-  color: var(--theme-crimson-alert);
+  color: var(--theme-danger);
 }
 
 .assembly-issues .issue-warning {
-  color: var(--theme-amber-opening);
+  color: var(--theme-warning);
 }
 
 .assembly-table {
@@ -427,7 +427,7 @@
 
 .assembly-table tbody tr.is-selected {
   background: var(--theme-surface-card);
-  outline: 1px solid var(--theme-cyan-tool);
+  outline: 1px solid var(--theme-accent);
 }
 
 .assembly-table input,
@@ -498,15 +498,15 @@
 }
 
 .front-module.is-selected .module-frame {
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
 }
 
 .front-module.has-error .module-frame {
-  stroke: var(--theme-crimson-alert);
+  stroke: var(--theme-danger);
 }
 
 .front-module.has-warning .module-frame {
-  stroke: var(--theme-amber-opening);
+  stroke: var(--theme-warning);
 }
 
 .module-glass {
@@ -542,12 +542,12 @@
 }
 
 .canvas-dim:hover {
-  fill: var(--theme-cyan-tool);
+  fill: var(--theme-accent);
 }
 
 .canvas-dim-input {
   background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-cyan-tool);
+  border: 1px solid var(--theme-accent);
   color: var(--theme-text-primary);
   font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
@@ -568,14 +568,14 @@
 }
 
 .add-handle path {
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
   stroke-width: 5;
   vector-effect: non-scaling-stroke;
 }
 
 .add-handle:hover circle,
 .add-handle:focus circle {
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
 }
 
 .assembly-plan {
@@ -639,8 +639,8 @@
 }
 
 .opening-choice.is-active {
-  border-color: var(--theme-cyan-tool);
-  outline: 1px solid var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
+  outline: 1px solid var(--theme-accent);
 }
 
 .opening-choice svg {
@@ -677,7 +677,7 @@
 }
 
 .ghost-button:hover:not(:disabled) {
-  border-color: var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
 }
 
 .ghost-button:disabled {
@@ -687,8 +687,8 @@
 }
 
 .ghost-button.is-danger:hover:not(:disabled) {
-  border-color: var(--theme-crimson-alert);
-  color: var(--theme-crimson-alert);
+  border-color: var(--theme-danger);
+  color: var(--theme-danger);
 }
 
 .assembly-issues {
@@ -713,11 +713,11 @@
 }
 
 .issue-chip--error {
-  border-left-color: var(--theme-crimson-alert);
+  border-left-color: var(--theme-danger);
 }
 
 .issue-chip--warning {
-  border-left-color: var(--theme-amber-opening);
+  border-left-color: var(--theme-warning);
 }
 
 .plan-angle {
@@ -728,7 +728,7 @@
 }
 
 .plan-angle:hover {
-  fill: var(--theme-cyan-tool);
+  fill: var(--theme-accent);
 }
 
 .plan-coupling {
@@ -736,15 +736,15 @@
 }
 
 .plan-coupling.is-selected {
-  stroke: var(--theme-cyan-tool);
+  stroke: var(--theme-accent);
 }
 
 .plan-coupling.has-issue {
-  stroke: var(--theme-crimson-alert);
+  stroke: var(--theme-danger);
 }
 
 .plan-issue-flag {
-  fill: var(--theme-crimson-alert);
+  fill: var(--theme-danger);
   font-weight: 700;
 }
 
@@ -766,7 +766,7 @@
 }
 
 .starter-chip:hover:not(:disabled) {
-  border-color: var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
 }
 
 .starter-chip:disabled {

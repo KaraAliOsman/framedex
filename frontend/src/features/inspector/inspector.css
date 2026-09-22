@@ -40,7 +40,7 @@
   cursor: not-allowed;
 }
 .inspector-modal button[aria-pressed="true"] {
-  border-color: var(--theme-cyan-tool);
+  border-color: var(--theme-accent);
 }
 .inspector-modal fieldset {
   display: grid;
@@ -71,16 +71,16 @@
     color 150ms;
 }
 .inspector-semaphore[data-status="RED"] {
-  border-color: var(--theme-crimson-alert);
-  color: var(--theme-crimson-alert);
+  border-color: var(--theme-danger);
+  color: var(--theme-danger);
 }
 .inspector-semaphore[data-status="YELLOW"] {
-  border-color: var(--theme-amber-opening);
-  color: var(--theme-amber-opening);
+  border-color: var(--theme-warning);
+  color: var(--theme-warning);
 }
 .inspector-semaphore[data-status="GREEN"] {
-  border-color: var(--theme-emerald-action);
-  color: var(--theme-emerald-action);
+  border-color: var(--theme-success);
+  color: var(--theme-success);
 }
 .is-corrected {
   animation: inspector-corrected 300ms ease-out;

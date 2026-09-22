@@ -52,14 +52,14 @@
   resize: vertical;
 }
 .projects-page :focus-visible {
-  outline: 2px solid var(--theme-cyan-tool);
+  outline: 2px solid var(--theme-accent);
   outline-offset: 2px;
 }
 .projects-page a {
-  color: var(--theme-cyan-tool);
+  color: var(--theme-accent);
 }
 .projects-page [role="alert"] {
-  color: var(--theme-crimson-alert);
+  color: var(--theme-danger);
 }
 .projects-page button:disabled {
   opacity: 0.55;
@@ -194,7 +194,7 @@
   justify-items: center;
 }
 .design-bay.is-selected {
-  outline: 2px solid var(--theme-cyan-tool);
+  outline: 2px solid var(--theme-accent);
   outline-offset: -2px;
 }
 .design-bay svg {

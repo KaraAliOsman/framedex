@@ -12,7 +12,7 @@
   color: var(--theme-text-secondary);
 }
 .purchasing-page [role="alert"] {
-  color: var(--theme-crimson-alert);
+  color: var(--theme-danger);
 }
 .purchasing-version {
   color: var(--theme-text-secondary);
@@ -44,7 +44,7 @@
   opacity: 0.6;
 }
 .purchasing-blockers {
-  border: 1px solid var(--theme-crimson-alert);
+  border: 1px solid var(--theme-danger);
   border-radius: 0.5rem;
   padding: 1rem;
   margin: 1rem 0;
@@ -62,8 +62,8 @@
   margin-left: 0.75rem;
   padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
-  border: 1px solid var(--theme-cyan-tool);
-  color: var(--theme-cyan-tool);
+  border: 1px solid var(--theme-accent);
+  color: var(--theme-accent);
   font-size: 0.8rem;
 }
 .purchasing-page table {

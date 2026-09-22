@@ -18,7 +18,7 @@
   margin: 1rem 0;
 }
 .pricing-tabs [aria-pressed="true"] {
-  outline: 2px solid var(--theme-cyan-tool);
+  outline: 2px solid var(--theme-accent);
 }
 .pricing-grid {
   display: grid;
@@ -64,7 +64,7 @@
   opacity: 0.6;
 }
 .pricing-page [role="alert"] {
-  color: var(--theme-crimson-alert);
+  color: var(--theme-danger);
 }
 .pricing-page dl div {
   display: flex;
