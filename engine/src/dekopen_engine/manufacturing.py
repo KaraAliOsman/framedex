@@ -319,9 +319,13 @@ def project_manufacturing_facts_v1(
     resolved_reinforcement_skus: dict[str, str],
     legacy_handle_height_present: bool = False,
     legacy_handle_migration_confirmed: bool = False,
+    module_id: str | None = None,
 ) -> ManufacturingFactsV1:
     if legacy_handle_height_present and not legacy_handle_migration_confirmed:
         raise ManufacturingAuthorityError("Legacy handle height requires explicit migration confirmation")
+    # Assembly modules share local topology, so the module namespaces every
+    # minted identity; classic positions keep byte-identical ids (no key added).
+    scope = {"module_id": module_id} if module_id is not None else {}
 
     leaf_rects: dict[str, TraceRectV1] = {}
     leaf_by_target: dict[tuple[str, str | None], str] = {}
@@ -346,6 +350,7 @@ def project_manufacturing_facts_v1(
         leaf_by_target[target] = leaf.semantic_leaf_id
         leaf_fact_id = documentary_sha256_v1({
             "kind": "leaf",
+            **scope,
             "position_id": position_id,
             "position_index": position_index,
             "repetition_index": repetition_index,
@@ -389,6 +394,7 @@ def project_manufacturing_facts_v1(
         infill_rects[infill.semantic_infill_id] = rect
         infill_identity = {
             "kind": "infill",
+            **scope,
             "position_id": position_id,
             "position_index": position_index,
             "repetition_index": repetition_index,
@@ -448,7 +454,7 @@ def project_manufacturing_facts_v1(
             physical_member_slot=trace_member.physical_member_slot,
         )
         member_id = documentary_sha256_v1({
-            "kind": "physical_member", **physical_identity.model_dump()
+            "kind": "physical_member", **scope, **physical_identity.model_dump()
         })
         member_facts.append(PhysicalMemberFactV1(
             member_id=member_id,
@@ -563,7 +569,7 @@ def project_manufacturing_facts_v1(
                 raise ManufacturingAuthorityError("Handle point is outside its mounting region")
             x_mm = host.start.x_mm + handle_rule.horizontal_offset_mm
             handle_id = documentary_sha256_v1({
-                "kind": "handle", "position_id": position_id,
+                "kind": "handle", **scope, "position_id": position_id,
                 "position_index": position_index, "repetition_index": repetition_index,
                 "bay_id": leaf.bay_id, "leaf_id": leaf.leaf_id,
                 "handle_domain_slot": handle_rule.handle_domain_slot,

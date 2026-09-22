@@ -68,7 +68,7 @@ def _bow_tree(coupler_sku: str = "COPLE-60") -> dict[str, object]:
             "width_mm": "700.00",
             "height_mm": "1400.00",
             "tree": {
-                "id": f"m{index}",
+                "id": "B1",
                 "type": "BAY",
                 "opening_type": "FIXED",
                 "glass_spec": "4-12-4 Float Incoloro",
@@ -262,6 +262,15 @@ def test_assembly_position_prices_and_freezes_quote_only(documentary_tenant) -> 
     ]
     assert {item["module_id"] for item in manufacturing} == {"m1", "m2", "m3"}
 
+    # Modules share an identical local tree, so manufacturing identities must be
+    # namespaced per module: every physical member is a distinct frozen part.
+    member_ids = [
+        member["member_id"]
+        for unit in snapshot["manufacturing"]
+        for member in unit["members"]
+    ]
+    assert len(member_ids) == len(set(member_ids))
+
     # The commercial quote renders; the workshop order stays honestly blocked.
     html = _doc01(snapshot)
     assert "<svg" in html and "m1" in html and "15°" in html
@@ -321,6 +330,17 @@ def test_save_documentary_inputs_validates_namespaced_targets(documentary_tenant
             "legacy_handle_migration_confirmed": False,
         }
         with pytest.raises(DocumentaryError, match="workshop_annotation_target_invalid"):
+            save_documentary_inputs(
+                org_id=org, actor_id=owner, project_id=project_id,
+                data={
+                    "payment_terms": "",
+                    "quotation_valid_until": date(2026, 10, 14),
+                    "positions": [bad],
+                },
+            )
+        bad["workshop_annotations"] = []
+        bad["handle_intents"] = [{"bay_id": "m1|B1", "leaf_id": None}]
+        with pytest.raises(DocumentaryError, match="handle_intent_target_invalid"):
             save_documentary_inputs(
                 org_id=org, actor_id=owner, project_id=project_id,
                 data={

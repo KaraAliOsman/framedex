@@ -566,6 +566,7 @@ def freeze_revision_a(
                             legacy_handle_migration_confirmed=bool(
                                 position["legacy_handle_migration_confirmed"]
                             ),
+                            module_id=module_id,
                         ),
                     ))
             units = [unit for _, unit in unit_models]
@@ -1102,6 +1103,9 @@ def save_documentary_inputs(
         for g in item_glass:
             if not isinstance(g, dict) or (g.get("bay_id"), g.get("leaf_id")) not in valid_glass:
                 raise DocumentaryError("glass_polishing_target_invalid")
+        for h in item.get("handle_intents") or []:
+            if not isinstance(h, dict) or (h.get("bay_id"), h.get("leaf_id")) not in valid_leaves:
+                raise DocumentaryError("handle_intent_target_invalid")
         if item.get("calculation_hash") != identity_hash:
             raise DocumentaryError("documentary_calculation_identity_stale")
 
