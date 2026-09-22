@@ -230,6 +230,7 @@ beforeEach(() => {
       glass_skus: ["GLASS-A", "GLASS-B"],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
       coupler_skus: [],
+      panel_skus: [],
       colors: ["WHITE"],
     }),
   );

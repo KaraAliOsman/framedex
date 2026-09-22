@@ -279,13 +279,17 @@ def calculate_design(org_id, design):
                     "manufacturing_incomplete",
                     "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
                 )
-            design["nominal_width_mm"] = sum(
+            if design["nominal_width_mm"] != sum(
                 (module.width_mm for module in model.assembly.modules),
                 Decimal("0"),
-            )
-            design["nominal_height_mm"] = max(
+            ) or design["nominal_height_mm"] != max(
                 module.height_mm for module in model.assembly.modules
-            )
+            ):
+                raise contract_error(
+                    400,
+                    "validation_error",
+                    "Request validation failed",
+                )
             result = evaluation.bom
         else:
             result = calculate_from_api(

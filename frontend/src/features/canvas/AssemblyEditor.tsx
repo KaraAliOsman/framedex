@@ -357,16 +357,10 @@ export function AssemblyEditor({
                   <td>
                     <select
                       value={modulePanelSku(module) ?? ""}
-                      disabled={disabled}
+                      disabled={disabled || moduleOpening(module) !== "DOOR_ENTRY"}
                       onClick={(event) => event.stopPropagation()}
                       onChange={(event) =>
-                        commit(
-                          setModulePanel(
-                            product,
-                            module.id,
-                            event.target.value || null,
-                          ),
-                        )
+                        commit(setModulePanel(product, module.id, event.target.value || null))
                       }
                     >
                       <option value="">{t("assembly.noPanel")}</option>

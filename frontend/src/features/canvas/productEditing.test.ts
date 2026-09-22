@@ -124,6 +124,13 @@ describe("module commands", () => {
     expect(modulePanelSku(paneled.assembly.modules[1]!)).toBe("PANEL-70");
     expect(modulePanelSku(paneled.assembly.modules[0]!)).toBeNull();
   });
+
+  it("clears the panel sku when the module leaves DOOR_ENTRY", () => {
+    const doored = setModuleOpening(setModulePanel(bow(), "m2", "PANEL-70"), "m2", "DOOR_ENTRY");
+    const fixed = setModuleOpening(doored, "m2", "FIXED");
+    expect(modulePanelSku(doored.assembly.modules[1]!)).toBe("PANEL-70");
+    expect(modulePanelSku(fixed.assembly.modules[1]!)).toBeNull();
+  });
 });
 
 describe("createBowFromInputs", () => {

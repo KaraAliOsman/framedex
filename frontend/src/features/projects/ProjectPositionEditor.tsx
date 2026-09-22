@@ -206,6 +206,8 @@ function PositionWorkspace({
     const store = useCanvasStore.getState();
     if (direction === "undo") store.undo();
     else store.redo();
+    // History restores inputs wholesale — keep component-local mirrors in sync.
+    setSystemId(useCanvasStore.getState().inputs.systemId ?? "");
     setResult(null);
     setAssemblyEval(null);
     setDirty(true);
@@ -244,17 +246,12 @@ function PositionWorkspace({
     setMessage("");
   }, []);
 
-  const onAssemblyEvaluation = useCallback(
-    (evaluation: EngineAssemblyCalculateResponse | null) => {
-      setAssemblyEval(evaluation);
-      setResult(
-        evaluation?.bom
-          ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash }
-          : null,
-      );
-    },
-    [],
-  );
+  const onAssemblyEvaluation = useCallback((evaluation: EngineAssemblyCalculateResponse | null) => {
+    setAssemblyEval(evaluation);
+    setResult(
+      evaluation?.bom ? { ...evaluation.bom, calculation_hash: evaluation.calculation_hash } : null,
+    );
+  }, []);
 
   function editTechnical(): void {
     setPending(true);

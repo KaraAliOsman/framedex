@@ -302,7 +302,13 @@ export function setModuleOpening(
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
   function withOpening(node: IntentNode): IntentNode {
-    if (node.type === "BAY") return { ...node, opening_type: opening };
+    if (node.type === "BAY") {
+      // Panels are only an engine input for DOOR_ENTRY; a stale panel sku on a
+      // non-door bay would linger invisibly after switching back.
+      return opening === "DOOR_ENTRY"
+        ? { ...node, opening_type: opening }
+        : { ...node, opening_type: opening, panel_article_sku: null };
+    }
     return { ...node, children: node.children?.map(withOpening) };
   }
   const singleChild = module.tree.children?.at(0);
