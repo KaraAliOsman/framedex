@@ -1,7 +1,7 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
 import type {
-  EngineCalculateResponse,
+  EngineAssemblyCalculateResponse,
   PositionResponse,
   ProjectResponse,
 } from "../../src/api/generated/models";
@@ -96,24 +96,21 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       .getByRole("combobox", { name: "Serie de perfiles", exact: true })
       .selectOption(manual.systemId),
   );
-  await page
-    .getByRole("combobox", { name: "Espesor del vidrio (mm)", exact: true })
-    .selectOption("20.00");
-  await page.getByLabel("Composición del vidrio", { exact: true }).fill("4-12-4 Float Incoloro");
 
-  const fixedBom = await responseTo<EngineCalculateResponse>(
-    page,
-    "POST",
-    "/api/v1/engine/calculate/",
-    200,
-    () =>
-      page
-        .getByRole("button", {
-          name: "Validar diseño y materiales",
-          exact: true,
-        })
-        .click(),
-  );
+  // The compositional canvas evaluates live: picking the glazing thickness in
+  // the contextual inspector is enough to reach VALID (the spec seeds itself).
+  const fixedBom = (
+    await responseTo<EngineAssemblyCalculateResponse>(
+      page,
+      "POST",
+      "/api/v1/engine/assembly/calculate/",
+      200,
+      () =>
+        page
+          .getByRole("combobox", { name: "Espesor de vidrio", exact: true })
+          .selectOption("20.00"),
+    )
+  ).bom;
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
   const initial = await responseTo<PositionResponse>(
@@ -131,33 +128,35 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   // Invalid intent cannot expose a previous result as the current calculation.
-  await page.getByLabel("Ancho nominal (mm)", { exact: true }).fill("10.00");
-  await responseTo(page, "POST", "/api/v1/engine/calculate/", 400, () =>
-    page.getByRole("button", { name: "Aplicar medidas", exact: true }).click(),
+  await page.getByLabel("Ancho", { exact: true }).fill("10.00");
+  await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
+    page.getByLabel("Ancho", { exact: true }).press("Enter"),
   );
-  await expect(page.getByRole("alert")).toBeVisible();
-  await expect(page.getByLabel("Ancho nominal (mm)", { exact: true })).toHaveValue("10.00");
+  await expect(page.getByTestId("assembly-status")).toHaveText(/inválida|incompleta/);
+  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("10.00");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
   await expect(page.locator("details.project-bom")).toHaveCount(0);
 
   // Exercise a real update, not only an unsaved creation preview.
-  await page.getByLabel("Ancho nominal (mm)", { exact: true }).fill("1100.25");
-  await page.getByLabel("Alto nominal (mm)", { exact: true }).fill("1050.50");
+  await page.getByLabel("Ancho", { exact: true }).fill("1100.25");
+  await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
+    page.getByLabel("Ancho", { exact: true }).press("Enter"),
+  );
+  await page.getByLabel("Alto", { exact: true }).fill("1050.50");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeDisabled();
 
-  await responseTo(page, "POST", "/api/v1/engine/calculate/", 200, () =>
-    page.getByRole("button", { name: "Aplicar medidas", exact: true }).click(),
+  await responseTo(page, "POST", "/api/v1/engine/assembly/calculate/", 200, () =>
+    page.getByLabel("Alto", { exact: true }).press("Enter"),
   );
-  const editedBom = await responseTo<EngineCalculateResponse>(
-    page,
-    "POST",
-    "/api/v1/engine/calculate/",
-    200,
-    () =>
-      page
-        .getByRole("combobox", { name: "Apertura y sentido", exact: true })
-        .selectOption("TURN_RIGHT"),
-  );
+  const editedBom = (
+    await responseTo<EngineAssemblyCalculateResponse>(
+      page,
+      "POST",
+      "/api/v1/engine/assembly/calculate/",
+      200,
+      () => page.getByRole("button", { name: "Abatible derecha", exact: true }).click(),
+    )
+  ).bom!;
   expect(editedBom.hardware_items).toHaveLength(1);
   expect(editedBom.hardware_items[0]!.kit_sku).toBe("KIT-TURN");
 
@@ -169,7 +168,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await save();
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
-  await expect(page.getByLabel("Ancho nominal (mm)", { exact: true })).toHaveValue("1100.25");
+  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("1100.25");
   const beforeRetry = await manual.readRows(
     "project_positions",
     `id=eq.${initial.id}&select=width_mm::text`,
@@ -236,10 +235,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     card(page, "Cocina original").getByRole("link", { name: "Abrir diseño", exact: true }).click(),
   );
   expect(reopened).toEqual(saved);
-  await expect(page.getByLabel("Ancho nominal (mm)", { exact: true })).toHaveValue("1100.25");
-  await expect(page.getByLabel("Alto nominal (mm)", { exact: true })).toHaveValue("1050.50");
-  await expect(page.getByRole("combobox", { name: "Apertura y sentido", exact: true })).toHaveValue(
-    "TURN_RIGHT",
+  await expect(page.getByLabel("Ancho", { exact: true })).toHaveValue("1100.25");
+  await expect(page.getByLabel("Alto", { exact: true })).toHaveValue("1050.50");
+  await expect(page.getByRole("button", { name: "Abatible derecha", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
   );
   await bom.locator("summary").click();
   await bom.scrollIntoViewIfNeeded();

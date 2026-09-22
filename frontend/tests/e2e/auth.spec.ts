@@ -316,14 +316,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
     .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
-  await page
-    .getByRole("combobox", { name: "Espesor del vidrio (mm)", exact: true })
-    .selectOption("4.00");
-  await page.getByLabel("Composición del vidrio", { exact: true }).fill("4 Float Incoloro");
-  await page
-    .getByRole("combobox", { name: "Artículo comercial de vidrio", exact: true })
-    .selectOption("GLASS-BASE");
-  await page.getByRole("button", { name: "Validar diseño y materiales", exact: true }).click();
+  // Canvas-first editor: the single module is already selected on the drawing;
+  // glazing choices live in its contextual inspector, not a separate form.
+  await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
+  await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("GLASS-BASE");
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
@@ -483,21 +479,14 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
     .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
-  await page
-    .getByRole("combobox", { name: "Espesor del vidrio (mm)", exact: true })
-    .selectOption("4.00");
-  await page.getByLabel("Composición del vidrio", { exact: true }).fill("4 Float Incoloro");
-  await page
-    .getByRole("combobox", { name: "Artículo comercial de vidrio", exact: true })
-    .selectOption("GLASS-BASE");
-  await page.getByRole("button", { name: "Validar diseño y materiales", exact: true }).click();
-  await page.getByLabel("Distancia al eje del poste (mm)", { exact: true }).fill("500.00");
+  await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
+  await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("GLASS-BASE");
   const dividedCalculation = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/engine/calculate/",
+      new URL(response.url()).pathname === "/api/v1/engine/assembly/calculate/",
   );
-  await page.getByRole("button", { name: "Añadir división vertical", exact: true }).click();
+  await page.getByRole("button", { name: "Dividir en vertical", exact: true }).click();
   expect((await dividedCalculation).status()).toBe(200);
   const compositeSave = page.waitForResponse(
     (response) =>
@@ -512,8 +501,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.reload();
   await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
-  await expect(page.getByLabel("Paño seleccionado")).toBeVisible();
-  await expect(page.locator(".design-bay")).toHaveCount(2);
+  await expect(page.locator(".module-divider")).toHaveCount(1);
+  await expect(page.locator(".module-glass")).toHaveCount(2);
   await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
