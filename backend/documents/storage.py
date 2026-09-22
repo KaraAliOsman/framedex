@@ -76,4 +76,10 @@ class SupabaseDocumentStorage:
         signed = payload.get("signedURL") if isinstance(payload, dict) else None
         if not isinstance(signed, str) or not signed:
             raise DocumentaryError("document_storage_sign_failed")
-        return signed if signed.startswith("http") else urljoin(self.base_url + "/", signed.lstrip("/"))
+        if signed.startswith("http"):
+            return signed
+        # signedURL is relative to the storage API root (/storage/v1).
+        path = signed.lstrip("/")
+        if path.startswith("storage/v1/"):
+            path = path.removeprefix("storage/v1/")
+        return urljoin(self.base_url + "/storage/v1/", path)
