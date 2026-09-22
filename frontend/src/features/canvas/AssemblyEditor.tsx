@@ -19,6 +19,7 @@ import {
   setCouplingAngle,
   setModuleCount,
   setModuleOpening,
+  scaleModuleWidths,
   setModuleWidth,
   totalModuleWidth,
   type ProductJson,
@@ -175,20 +176,7 @@ export function AssemblyEditor({
           unit="mm"
           disabled={disabled}
           normalize={normalizeMm}
-          onCommit={(value) => {
-            const factor = Number(value) / totalModuleWidth(product);
-            if (!Number.isFinite(factor) || factor <= 0) return;
-            commit({
-              ...product,
-              assembly: {
-                ...product.assembly,
-                modules: modules.map((module) => ({
-                  ...module,
-                  width_mm: (Number(module.width_mm) * factor).toFixed(2),
-                })),
-              },
-            });
-          }}
+          onCommit={(value) => commit(scaleModuleWidths(product, value))}
         />
         <DraftField
           label={t("assembly.height")}

@@ -5,6 +5,7 @@ import {
   equalizeCouplingAngles,
   equalizeModuleWidths,
   isProductModel,
+  scaleModuleWidths,
   makeBowProduct,
   moduleOpening,
   setCouplerSku,
@@ -64,6 +65,23 @@ describe("equalizeModuleWidths", () => {
     const widths = equalized.assembly.modules.map((m) => Number(m.width_mm));
     expect(widths[0]).toBeCloseTo(766.67, 2);
     expect(widths[2]).toBeCloseTo(766.66, 2);
+  });
+});
+
+describe("scaleModuleWidths", () => {
+  it("scales so widths sum back to the requested total exactly", () => {
+    const scaled = scaleModuleWidths(bow(), "2000.00");
+    const widths = scaled.assembly.modules.map((module) => Number(module.width_mm));
+    expect(widths.reduce((sum, width) => sum + width, 0)).toBeCloseTo(2000, 9);
+    // proportional shares plus remainder on the last module
+    expect(widths[0]).toBeCloseTo(666.67, 2);
+    expect(widths[2]).toBeCloseTo(666.66, 2);
+  });
+
+  it("rejects non-positive totals", () => {
+    const product = bow();
+    expect(scaleModuleWidths(product, "0")).toBe(product);
+    expect(scaleModuleWidths(product, "abc")).toBe(product);
   });
 });
 

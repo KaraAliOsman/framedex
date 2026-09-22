@@ -12,7 +12,7 @@ from dekopen_engine.commercial import (
     finish_lines, target_project, unit_price, validate_segment,
 )
 from dekopen_engine.glass import exact_glass_area_m2
-from engine_api.adapter import calculate_from_api
+from engine_api.adapter import engine_result_from_api
 from engine_api.cutting_repository import CuttingRepository
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import PricingRepository, audit_reason, json_text, one, rows
@@ -33,6 +33,19 @@ def glass_sku(tree, bay_id):
             if error.code != 'glass_bay_not_found':
                 raise
     raise PricingError('glass_bay_not_found')
+
+
+def design_glass_sku(tree, bay_id):
+    # Assembly BOM items carry 'module_id|bay_id' — resolve inside the module tree.
+    if isinstance(tree, dict) and tree.get('version') == 'product-v2':
+        module_id, separator, inner_id = bay_id.partition('|')
+        if not separator:
+            raise PricingError('glass_bay_not_found')
+        for module in tree.get('assembly', {}).get('modules', []):
+            if module.get('id') == module_id:
+                return glass_sku(module.get('tree', {}), inner_id)
+        raise PricingError('glass_bay_not_found')
+    return glass_sku(tree, bay_id)
 
 
 def decoded(value):
@@ -65,8 +78,13 @@ def position_cost(repo, position, rules):
         steel_stocks = {}
         tree = decoded(position['parametric_tree'])
         color = 'WHITE' if position['color_interior']=='WHITE' and position['color_exterior']=='WHITE' else 'FOILED'
-        result = calculate_from_api(parametric_tree=tree, nominal_width_mm=position['width_mm'],
-                                    nominal_height_mm=position['height_mm'],color=color,params=params)
+        result = engine_result_from_api(
+            tree=tree, color=color, params=params,
+            nominal_width_mm=position['width_mm'],
+            nominal_height_mm=position['height_mm'],
+            coupler_articles=SystemParamsRepository().load_coupler_articles(
+                position['system_id'], repo.org_id),
+        )
         for cut in result.profile_cuts:
             profile_stocks[cut.sku] = stock_repo.profile_stock(position['system_id'],repo.org_id,cut.sku,color)
         for steel in result.reinforcements:
@@ -94,7 +112,7 @@ def position_cost(repo, position, rules):
         materials.append(linear_cost(repo,stock.commercial_sku,steel.length_mm*steel.qty,stock.stock_length_mm))
     for glass in result.glasses:
         # The selected commercial glass SKU is explicit in the persisted tree.
-        sku = glass_sku(tree,glass.bay_id)
+        sku = design_glass_sku(tree,glass.bay_id)
         materials.append(repo.cost(sku,'M2') * exact_glass_area_m2(glass.width_mm,glass.height_mm))
     for panel in result.panels:
         materials.append(repo.cost(panel.sku,'M2') * exact_glass_area_m2(panel.width_mm,panel.height_mm))
@@ -156,7 +174,7 @@ def preview(org_id, actor, request):
                 if mode == PricingMode.PRICE_PER_M2_BY_TYPOLOGY:
                     if not config['base_glass_sku'] or not result.glasses:
                         raise PricingError('missing_glass_authority')
-                    selected = {glass_sku(decoded(position['parametric_tree']),glass.bay_id)
+                    selected = {design_glass_sku(decoded(position['parametric_tree']),glass.bay_id)
                                 for glass in result.glasses}
                     if len(selected) != 1:
                         raise PricingError('ambiguous_selected_glass')

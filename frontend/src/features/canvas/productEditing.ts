@@ -207,6 +207,24 @@ export function equalizeModuleWidths(product: ProductJson): ProductJson {
   return { ...product, assembly: { ...product.assembly, modules: nextModules } };
 }
 
+export function scaleModuleWidths(product: ProductJson, totalMm: string): ProductJson {
+  const modules = product.assembly.modules;
+  const totalCents = Math.round(Number(totalMm) * 100);
+  const currentCents = Math.round(totalModuleWidth(product) * 100);
+  if (!Number.isFinite(totalCents) || totalCents <= 0 || currentCents <= 0) return product;
+  const widths = modules.map((module) =>
+    Math.round((Number(module.width_mm) * 100 * totalCents) / currentCents),
+  );
+  // The last module absorbs the rounding remainder so the widths always sum
+  // back to the requested total (0.00 mm tolerance).
+  const last = totalCents - widths.slice(0, -1).reduce((sum, width) => sum + width, 0);
+  const nextModules = modules.map((module, index) => ({
+    ...module,
+    width_mm: ((index === modules.length - 1 ? last : widths[index]!) / 100).toFixed(2),
+  }));
+  return { ...product, assembly: { ...product.assembly, modules: nextModules } };
+}
+
 export function setCouplingAngle(
   product: ProductJson,
   couplingId: string,

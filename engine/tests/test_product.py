@@ -282,6 +282,55 @@ class TestEvaluation:
         assert any(bay_id.startswith("m1|") for bay_id in bay_ids)
         assert {"c1", "c2"} <= bay_ids
 
+    def test_bom_prefixes_panel_leaf_ids(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = make_bow_assembly(
+            module_count=3,
+            width_mm=Decimal("2100"),
+            height_mm=Decimal("2000"),
+            angle_deg=Decimal("15"),
+            glass_thickness_mm=GLASS_4_MM,
+            glass_spec=GLASS_4_SPEC,
+        )
+        product = set_module_opening(product, "m2", BayOpeningType.DOOR_ENTRY)
+        product = set_module_width(product, "m2", Decimal("950"))
+        modules = [
+            module.model_copy(
+                update={
+                    "tree": module.tree.model_copy(
+                        update={
+                            "panel_article_sku": "PANEL-SANDWICH-DEMO-24",
+                            "glass_thickness_mm": None,
+                            "glass_spec": None,
+                        }
+                    )
+                }
+            )
+            if module.id == "m2"
+            else module
+            for module in product.assembly.modules
+        ]
+        product = product.model_copy(
+            update={
+                "assembly": product.assembly.model_copy(
+                    update={"modules": modules}
+                )
+            }
+        )
+        evaluation = evaluate_product(
+            with_couplers(product),
+            demo_60_params,
+            coupler_articles={"ACOPLE-60": COUPLER_ARTICLE},
+        )
+        assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None and evaluation.bom.panels
+        assert all(
+            panel.bay_id.startswith("m2|")
+            and (panel.leaf_id is None or panel.leaf_id.startswith("m2|"))
+            for panel in evaluation.bom.panels
+        )
+
 
 class TestCommands:
     def test_set_module_count_grows_and_shrinks(self) -> None:

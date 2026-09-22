@@ -271,15 +271,18 @@ def calculate_design(org_id, design):
                     design["system_id"], org_id
                 ),
             )
-            if evaluation.status.value == "INVALID" or evaluation.bom is None:
+            if evaluation.status.value != "VALID" or evaluation.bom is None:
+                # Persisted positions are production-bound: a partial BOM must
+                # never be stored or read back as authoritative.
                 raise contract_error(
                     400,
-                    "validation_error",
-                    "La geometría del conjunto no es válida. Revisa módulos y ángulos.",
+                    "manufacturing_incomplete",
+                    "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
                 )
-            # Authoritative envelope: plan bbox width and tallest module height.
-            if evaluation.plan is not None:
-                design["nominal_width_mm"] = evaluation.plan.width_mm
+            design["nominal_width_mm"] = sum(
+                (module.width_mm for module in model.assembly.modules),
+                Decimal("0"),
+            )
             design["nominal_height_mm"] = max(
                 module.height_mm for module in model.assembly.modules
             )

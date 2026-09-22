@@ -266,3 +266,47 @@ def evaluate_assembly_from_api(
     return evaluate_product(
         model, params, coupler_articles=coupler_articles, is_foiled=False
     )
+
+
+def is_product_tree(payload: object) -> bool:
+    return (
+        isinstance(payload, dict)
+        and payload.get("version") == "product-v2"
+    )
+
+
+def engine_result_from_api(
+    *,
+    tree: object,
+    color: str,
+    params: SystemParams,
+    nominal_width_mm: Decimal | None = None,
+    nominal_height_mm: Decimal | None = None,
+    coupler_articles: dict[str, EffectiveProfileArticle] | None = None,
+) -> EngineResult:
+    """Persisted-design evaluator shared by saving, pricing, and documentary checks.
+
+    Classic trees evaluate directly; product-v2 assemblies must evaluate VALID —
+    a partial BOM is never authoritative downstream.
+    """
+    if is_product_tree(tree):
+        evaluation = evaluate_assembly_from_api(
+            product=tree,
+            color=color,
+            params=params,
+            coupler_articles=coupler_articles or {},
+        )
+        if evaluation.status.value != "VALID" or evaluation.bom is None:
+            raise UnsupportedEngineContract(
+                "assembly is not manufacturing-complete"
+            )
+        return evaluation.bom
+    if nominal_width_mm is None or nominal_height_mm is None:
+        raise InvalidEngineRequest("classic designs require nominal dimensions")
+    return calculate_from_api(
+        parametric_tree=tree,
+        nominal_width_mm=nominal_width_mm,
+        nominal_height_mm=nominal_height_mm,
+        color=color,
+        params=params,
+    )

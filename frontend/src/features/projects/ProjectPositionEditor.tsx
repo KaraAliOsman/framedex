@@ -305,7 +305,7 @@ function PositionWorkspace({
       pending ||
       busy ||
       inputs.color !== "WHITE" ||
-      (inputs.product !== null && assemblyEval?.status === "INVALID") ||
+      (inputs.product !== null && assemblyEval?.status !== "VALID") ||
       !/^[1-9]\d*$/.test(quantity) ||
       Number(quantity) > 2147483647
     )
@@ -319,10 +319,7 @@ function PositionWorkspace({
       product !== null
         ? {
             system_id: systemId,
-            nominal_width_mm: (assemblyEval?.plan
-              ? Number(assemblyEval.plan.width_mm)
-              : totalModuleWidth(product)
-            ).toFixed(2),
+            nominal_width_mm: totalModuleWidth(product).toFixed(2),
             nominal_height_mm: Math.max(
               ...product.assembly.modules.map((module) => Number(module.height_mm)),
             ).toFixed(2),
@@ -397,7 +394,14 @@ function PositionWorkspace({
         </button>
         <button
           className="primary-action"
-          disabled={uncertainCreate || busy || pending || intentValidating || !result}
+          disabled={
+            uncertainCreate ||
+            busy ||
+            pending ||
+            intentValidating ||
+            !result ||
+            (inputs.product !== null && assemblyEval?.status !== "VALID")
+          }
           onClick={() => void save()}
         >
           {t("projects.save")}
@@ -506,8 +510,19 @@ function PositionWorkspace({
               <select
                 value={systemId}
                 onChange={(e) => {
-                  editTechnical();
-                  setSystemId(e.target.value);
+                  const next = e.target.value;
+                  if (inputs.product !== null) {
+                    // Product designs evaluate live — a system switch is an
+                    // undoable inputs change, not a pending-lock draft.
+                    if (inputs.systemId !== next) {
+                      useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                    }
+                    setDirty(true);
+                    setMessage("");
+                  } else {
+                    editTechnical();
+                  }
+                  setSystemId(next);
                 }}
               >
                 <option value="">{t("projects.chooseSystem")}</option>

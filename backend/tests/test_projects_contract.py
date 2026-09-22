@@ -144,3 +144,53 @@ def test_revision_sequence_is_excel_style_without_skips():
     assert next_revision_code("REV-A") == "REV-B"
     assert next_revision_code("REV-Z") == "REV-AA"
     assert next_revision_code("REV-AA") == "REV-AB"
+
+
+def test_assembly_save_requires_manufacturing_complete(monkeypatch):
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2100.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": bow_product(),
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert "acopladores" in str(caught.value)
+
+
+def test_valid_assembly_saves_with_prefixed_bom(monkeypatch):
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import COUPLER_ARTICLE, bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository,
+        "load_coupler_articles",
+        lambda *_: {"ACOPLE-60": COUPLER_ARTICLE},
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2100.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": bow_product(coupler_sku="ACOPLE-60"),
+    }
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
+    assert design["nominal_width_mm"] == Decimal("2100.00")
+    assert any(
+        (cut["bay_id"] or "").startswith("m1|") for cut in result["profile_cuts"]
+    )

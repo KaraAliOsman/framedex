@@ -171,6 +171,22 @@ class TestAssemblyEndpoint:
         assert response.status_code == 200
         assert response.json()["status"] == "INVALID"
 
+    def test_nominal_dimensions_must_match_product_envelope(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = APIClient()
+        configure_assembly_api(client, monkeypatch)
+        for field, value in (
+            ("nominal_width_mm", "2200.00"),
+            ("nominal_height_mm", "1500.00"),
+        ):
+            response = client.post(
+                "/api/v1/engine/assembly/calculate/",
+                {**bow_request(), field: value},
+                format="json",
+            )
+            assert response.status_code == 400
+
     def test_malformed_product_is_400(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

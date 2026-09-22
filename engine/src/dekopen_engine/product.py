@@ -341,7 +341,9 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
             for piece in result.glasses
         ],
         panels=[
-            piece.model_copy(update={"bay_id": bay(piece.bay_id)})
+            piece.model_copy(
+                update={"bay_id": bay(piece.bay_id), "leaf_id": leaf(piece.leaf_id)}
+            )
             for piece in result.panels
         ],
         hardware_items=[
