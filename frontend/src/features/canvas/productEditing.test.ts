@@ -77,15 +77,38 @@ describe("scaleModuleWidths", () => {
     const scaled = scaleModuleWidths(bow(), "2000.00");
     const widths = scaled.assembly.modules.map((module) => Number(module.width_mm));
     expect(widths.reduce((sum, width) => sum + width, 0)).toBeCloseTo(2000, 9);
-    // proportional shares plus remainder on the last module
+    // proportional shares — largest-remainder allocation keeps the 0.00 mm sum
     expect(widths[0]).toBeCloseTo(666.67, 2);
     expect(widths[2]).toBeCloseTo(666.66, 2);
   });
 
-  it("rejects non-positive totals", () => {
+  it("never produces zero-width modules on tiny totals", () => {
+    const scaled = scaleModuleWidths(bow(), "0.05");
+    const widths = scaled.assembly.modules.map((module) => Number(module.width_mm));
+    expect(widths.reduce((sum, width) => sum + width, 0)).toBeCloseTo(0.05, 9);
+    expect(widths.every((width) => width >= 0.01)).toBe(true);
+    // unequal proportions still honor the positive floor for every module
+    const skewed = scaleModuleWidths(
+      {
+        ...bow(),
+        assembly: {
+          ...bow().assembly,
+          modules: bow().assembly.modules.map((module, index) => ({
+            ...module,
+            width_mm: index === 0 ? "10.00" : index === 1 ? "100.00" : "190.00",
+          })),
+        },
+      },
+      "0.03",
+    );
+    expect(skewed.assembly.modules.every((module) => Number(module.width_mm) >= 0.01)).toBe(true);
+  });
+
+  it("rejects totals too small to keep every module positive", () => {
     const product = bow();
     expect(scaleModuleWidths(product, "0")).toBe(product);
     expect(scaleModuleWidths(product, "abc")).toBe(product);
+    expect(scaleModuleWidths(product, "0.02")).toBe(product);
   });
 });
 

@@ -338,12 +338,13 @@ class TestEvaluation:
     def test_plan_depth_no_false_positive_on_shallow_system(
         self, demo_60_params: SystemParams
     ) -> None:
-        # Same fold on the real 60 mm depth: modules stay clear of each other.
+        # Same fold magnitude in the positive direction on the real 60 mm
+        # depth: the assembly fans outward so modules stay clear of each other.
         product = make_bow_assembly(
             module_count=3,
             width_mm=Decimal("600"),
             height_mm=Decimal("1400"),
-            angle_deg=Decimal("-85"),
+            angle_deg=Decimal("85"),
             glass_thickness_mm=GLASS_4_MM,
             glass_spec=GLASS_4_SPEC,
         )
@@ -352,6 +353,48 @@ class TestEvaluation:
             issue.code == IssueCode.PLAN_SELF_INTERSECTION.value
             for issue in evaluation.issues
         )
+
+    def test_plan_adjacent_negative_angle_is_invalid(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A negative deflection swings the next module's depth rectangle into
+        # the previous one — a real collision at the joint even on the shallow
+        # 60 mm system, with no front-chain crossing.
+        product = make_bow_assembly(
+            module_count=2,
+            width_mm=Decimal("400"),
+            height_mm=Decimal("1400"),
+            angle_deg=Decimal("-20"),
+            glass_thickness_mm=GLASS_4_MM,
+            glass_spec=GLASS_4_SPEC,
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        assert evaluation.status is ProductStatus.INVALID
+        assert any(
+            issue.code == IssueCode.PLAN_SELF_INTERSECTION.value
+            and issue.severity is Severity.ERROR
+            for issue in evaluation.issues
+        )
+
+    def test_plan_straight_and_positive_joints_stay_clean(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Adjacent rectangles share only their joint boundary at 0° and fan
+        # apart at positive angles — neither is a collision.
+        for angle in (Decimal("0"), Decimal("20")):
+            product = make_bow_assembly(
+                module_count=2,
+                width_mm=Decimal("400"),
+                height_mm=Decimal("1400"),
+                angle_deg=angle,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            )
+            evaluation = evaluate_product(product, demo_60_params)
+            assert not any(
+                issue.code == IssueCode.PLAN_SELF_INTERSECTION.value
+                for issue in evaluation.issues
+            ), f"angle {angle} must not collide"
 
     def test_plan_polygon_shape(self, demo_60_params: SystemParams) -> None:
         evaluation = evaluate_product(bow_3(), demo_60_params)

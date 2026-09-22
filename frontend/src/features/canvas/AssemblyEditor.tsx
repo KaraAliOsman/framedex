@@ -168,6 +168,9 @@ export function AssemblyEditor({
   const selected = modules.some((m) => m.id === selection) ? selection : (modules[0]?.id ?? "");
 
   function commit(next: ProductJson): void {
+    // Mutators return the same object when an edit is invalid — no history
+    // entry and no re-render churn for a rejected change.
+    if (next === product) return;
     commitInputs({ ...inputs, product: next });
     onChanged();
   }

@@ -162,13 +162,17 @@ def _seg_intersects(
     return (o1 * o2 < 0) and (o3 * o4 < 0)
 
 
-def _polygons_overlap(a: list[PlanPoint], b: list[PlanPoint]) -> bool:
+def _polygons_overlap(
+    a: list[PlanPoint], b: list[PlanPoint], *, interior_only: bool = False
+) -> bool:
     """SAT overlap test for convex polygons.
 
     Exact for our module rectangles and coupler wedges: any separating axis
     (an edge normal of either polygon) means disjoint; otherwise the polygons
     intersect — including containment and edge-touch, which both collide
-    physically.
+    physically. With `interior_only`, touching at a vertex or edge does not
+    count: only positive-area overlap is reported (adjacent modules always
+    share their joint boundary, so only interior penetration is a collision).
     """
 
     def span(points: list[PlanPoint], nx: Decimal, ny: Decimal) -> tuple[Decimal, Decimal]:
@@ -183,7 +187,10 @@ def _polygons_overlap(a: list[PlanPoint], b: list[PlanPoint]) -> bool:
             ey = edge.y_mm - poly[i].y_mm
             lo_a, hi_a = span(a, -ey, ex)
             lo_b, hi_b = span(b, -ey, ex)
-            if hi_a < lo_b or hi_b < lo_a:
+            if interior_only:
+                if hi_a <= lo_b or hi_b <= lo_a:
+                    return False
+            elif hi_a < lo_b or hi_b < lo_a:
                 return False
     return True
 
@@ -291,6 +298,20 @@ def _plan_geometry(
     # Depth polygons must not collide either: front chains can stay disjoint
     # while two module rectangles or a coupler wedge overlap in depth.
     rects = [(module.module_id, module.corners) for module in plan_modules]
+    # Adjacent rectangles share their joint boundary by construction — but a
+    # negative deflection folds the next rectangle back into the previous one,
+    # producing positive-area overlap the front-chain check cannot see.
+    for i, (id_a, poly_a) in enumerate(rects[:-1]):
+        id_b, poly_b = rects[i + 1]
+        if _polygons_overlap(poly_a, poly_b, interior_only=True):
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.PLAN_SELF_INTERSECTION.value,
+                    severity=Severity.ERROR,
+                    target=f"module:{id_b}",
+                    params={"other": id_a},
+                )
+            )
     for i, (id_a, poly_a) in enumerate(rects):
         for j in range(i + 2, len(rects)):
             id_b, poly_b = rects[j]

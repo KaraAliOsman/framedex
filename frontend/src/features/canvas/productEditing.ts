@@ -215,16 +215,27 @@ export function scaleModuleWidths(product: ProductJson, totalMm: string): Produc
   const modules = product.assembly.modules;
   const totalCents = Math.round(Number(totalMm) * 100);
   const currentCents = Math.round(totalModuleWidth(product) * 100);
-  if (!Number.isFinite(totalCents) || totalCents <= 0 || currentCents <= 0) return product;
-  const widths = modules.map((module) =>
-    Math.round((Number(module.width_mm) * 100 * totalCents) / currentCents),
-  );
-  // The last module absorbs the rounding remainder so the widths always sum
-  // back to the requested total (0.00 mm tolerance).
-  const last = totalCents - widths.slice(0, -1).reduce((sum, width) => sum + width, 0);
+  // Every module must stay ≥0.01 mm or the product fails engine validation.
+  if (!Number.isFinite(totalCents) || totalCents < modules.length || currentCents <= 0)
+    return product;
+  // Integer-hundredth allocation: 1 cent baseline each, remaining cents
+  // distributed proportionally by largest remainder so shares never hit zero.
+  const extra = totalCents - modules.length;
+  const currentTotal = totalModuleWidth(product);
+  const exact = modules.map((module) => (Number(module.width_mm) * extra) / currentTotal);
+  const shares = exact.map(Math.floor);
+  let remainder = extra - shares.reduce((sum, share) => sum + share, 0);
+  const order = modules
+    .map((_, index) => index)
+    .sort((a, b) => exact[b]! - shares[b]! - (exact[a]! - shares[a]!));
+  for (const index of order) {
+    if (remainder <= 0) break;
+    shares[index]! += 1;
+    remainder -= 1;
+  }
   const nextModules = modules.map((module, index) => ({
     ...module,
-    width_mm: ((index === modules.length - 1 ? last : widths[index]!) / 100).toFixed(2),
+    width_mm: ((1 + shares[index]!) / 100).toFixed(2),
   }));
   return { ...product, assembly: { ...product.assembly, modules: nextModules } };
 }
