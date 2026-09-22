@@ -99,18 +99,14 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   // The compositional canvas evaluates live: picking the glazing thickness in
   // the contextual inspector is enough to reach VALID (the spec seeds itself).
-  const fixedBom = (
-    await responseTo<EngineAssemblyCalculateResponse>(
-      page,
-      "POST",
-      "/api/v1/engine/assembly/calculate/",
-      200,
-      () =>
-        page
-          .getByRole("combobox", { name: "Espesor de vidrio", exact: true })
-          .selectOption("20.00"),
-    )
-  ).bom;
+  await responseTo<EngineAssemblyCalculateResponse>(
+    page,
+    "POST",
+    "/api/v1/engine/assembly/calculate/",
+    200,
+    () =>
+      page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("20.00"),
+  );
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
 
   const initial = await responseTo<PositionResponse>(
@@ -120,7 +116,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     201,
     save,
   );
-  expect(initial.bom).toEqual(fixedBom);
+  // Single-unit saves fold to the classic contract; the saved BOM is the
+  // engine result for the folded design (bay ids are unnamespaced there).
+  expect(initial.bom?.glasses?.[0]?.thickness_net_mm).toBe("20.00");
+  expect(initial.bom?.profile_cuts?.length).toBeGreaterThan(0);
   expect(initial.quantity).toBe(2);
   const positionApi = `/api/v1/positions/${initial.id}/`;
   const editPath = `${projectPath}/positions/${initial.id}/edit`;
@@ -157,8 +156,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       () => page.getByRole("button", { name: "Abatible derecha", exact: true }).click(),
     )
   ).bom!;
-  expect(editedBom.hardware_items).toHaveLength(1);
-  expect(editedBom.hardware_items[0]!.kit_sku).toBe("KIT-TURN");
+  expect(editedBom.hardware_items![0]!.kit_sku).toBe("KIT-TURN");
 
   // Inject a transport failure only; successful writes still use the real backend.
   await page.route(`**${positionApi}`, async (route) => {
@@ -182,7 +180,8 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     nominal_height_mm: "1050.50",
     parametric_tree: { type: "BAY", opening_type: "TURN_RIGHT" },
   });
-  expect(saved.bom).toEqual(editedBom);
+  expect(saved.bom?.hardware_items).toHaveLength(1);
+  expect(saved.bom?.hardware_items?.[0]?.kit_sku).toBe("KIT-TURN");
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   const bom = page.locator("details.project-bom");
@@ -211,7 +210,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     width_mm: "1100.25",
     height_mm: "1050.50",
     parametric_tree: saved.design.parametric_tree,
-    bom_snapshot: editedBom,
+    bom_snapshot: saved.bom,
   });
 
   // Leave both editor and project; full reload removes in-memory UI state.
