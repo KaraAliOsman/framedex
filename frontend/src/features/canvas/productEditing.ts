@@ -475,6 +475,33 @@ export function moduleGlassSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.glass_article_sku ?? null;
 }
 
+/** Glazing thickness on every bay of a module (bead slot + monolithic spec
+ * fallback). An existing glass composition is preserved — the thickness is
+ * the physical slot, the spec the pane recipe. */
+export function setModuleGlassThickness(
+  product: ProductJson,
+  moduleId: string,
+  glassThicknessMm: string | null,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function withThickness(node: IntentNode): IntentNode {
+    if (node.type === "BAY") {
+      return {
+        ...node,
+        glass_thickness_mm: glassThicknessMm,
+        glass_spec: node.glass_spec ?? glassThicknessMm,
+      };
+    }
+    return { ...node, children: node.children?.map(withThickness) };
+  }
+  return replaceModule(product, moduleId, { ...module, tree: withThickness(module.tree) });
+}
+
+export function moduleGlassThicknessMm(module: ProductModuleJson): string | null {
+  return modulePrimaryBay(module)?.glass_thickness_mm ?? null;
+}
+
 /** Catalog panel article for door modules (DOOR_ENTRY infill authority). */
 export function setModulePanel(
   product: ProductJson,

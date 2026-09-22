@@ -126,14 +126,17 @@ function starters(current: ProductJson | null): Record<StarterKey, () => Product
   };
 }
 
-/** Fill catalog-driven SKUs that are uniquely determined: a coupling without
+/** Fill catalog-driven values that are uniquely determined: a coupling without
  * a coupler gets the catalog's only coupler; splits without a mullion get the
- * catalog's only mullion of that direction. Ambiguity stays unresolved —
- * the choice is then surfaced in the inspector, never guessed. */
+ * catalog's only mullion of that direction; bays without glazing get the
+ * catalog's only thickness (the spec defaults to the same monolithic value).
+ * Ambiguity stays unresolved — the choice is surfaced in the inspector,
+ * never guessed. */
 function resolveDefaults(
   product: ProductJson,
   couplerSkus: string[],
   mullionSkus: { SPLIT_V?: string; SPLIT_H?: string },
+  glassThicknessMm?: string,
 ): ProductJson {
   let next = product;
   if (couplerSkus.length === 1) {
@@ -152,32 +155,41 @@ function resolveDefaults(
       }
     }
   }
-  function fillMullions(node: IntentNode): IntentNode {
+  const needsFill = (node: IntentNode): boolean => {
+    const missingMullion =
+      (node.type === "SPLIT_V" || node.type === "SPLIT_H") &&
+      !node.mullion_profile_sku &&
+      mullionSkus[node.type] !== undefined;
+    const missingGlass =
+      node.type === "BAY" &&
+      glassThicknessMm !== undefined &&
+      (!node.glass_thickness_mm || !node.glass_spec);
+    return missingMullion || missingGlass || (node.children?.some(needsFill) ?? false);
+  };
+  const fill = (node: IntentNode): IntentNode => {
+    let updated = node;
     if (
       (node.type === "SPLIT_V" || node.type === "SPLIT_H") &&
-      (node.mullion_profile_sku === null || node.mullion_profile_sku === undefined)
+      !node.mullion_profile_sku &&
+      mullionSkus[node.type] !== undefined
     ) {
-      const sku = mullionSkus[node.type];
-      if (sku !== undefined) return { ...node, mullion_profile_sku: sku };
+      updated = { ...updated, mullion_profile_sku: mullionSkus[node.type] };
     }
-    return { ...node, children: node.children?.map(fillMullions) };
-  }
-  const hasMissingMullion = next.assembly.modules.some((module) => {
-    const walk = (node: IntentNode): boolean =>
-      ((node.type === "SPLIT_V" || node.type === "SPLIT_H") &&
-        (node.mullion_profile_sku === null || node.mullion_profile_sku === undefined) &&
-        mullionSkus[node.type] !== undefined) ||
-      (node.children?.some(walk) ?? false);
-    return walk(module.tree);
-  });
-  if (hasMissingMullion) {
+    if (updated.type === "BAY" && glassThicknessMm !== undefined) {
+      if (!updated.glass_thickness_mm)
+        updated = { ...updated, glass_thickness_mm: glassThicknessMm };
+      if (!updated.glass_spec) updated = { ...updated, glass_spec: glassThicknessMm };
+    }
+    return { ...updated, children: node.children?.map(fill) };
+  };
+  if (next.assembly.modules.some((module) => needsFill(module.tree))) {
     next = {
       ...next,
       assembly: {
         ...next.assembly,
         modules: next.assembly.modules.map((module) => ({
           ...module,
-          tree: fillMullions(module.tree),
+          tree: fill(module.tree),
         })),
       },
     };
@@ -289,10 +301,17 @@ function PositionWorkspace({
   useEffect(() => {
     const product = inputs.product;
     if (!product || !options.data) return;
-    const resolved = resolveDefaults(product, options.data.coupler_skus, {
-      SPLIT_V: options.data.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
-      SPLIT_H: options.data.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
-    });
+    const resolved = resolveDefaults(
+      product,
+      options.data.coupler_skus,
+      {
+        SPLIT_V: options.data.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
+        SPLIT_H: options.data.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
+      },
+      options.data.glazing_thicknesses.length === 1
+        ? options.data.glazing_thicknesses[0]
+        : undefined,
+    );
     if (resolved !== product) {
       useCanvasStore.getState().commitInputs({ ...inputs, product: resolved });
     }

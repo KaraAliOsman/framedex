@@ -19,12 +19,14 @@ import {
   equalizeModuleWidths,
   makeBowProduct,
   moduleGlassSku,
+  moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
   removeUnit,
   scaleModuleWidths,
   setAllModuleHeights,
   setModuleGlass,
+  setModuleGlassThickness,
   setModulePanel,
   setCouplerSku,
   setCouplingAngle,
@@ -150,6 +152,7 @@ function ModuleInspector({
   module,
   product,
   glassSkus,
+  glazingThicknesses,
   panelSkus,
   mullionSkus,
   busy,
@@ -158,6 +161,7 @@ function ModuleInspector({
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
   glassSkus: string[];
+  glazingThicknesses: string[];
   panelSkus: string[];
   mullionSkus: Partial<Record<SplitType, string>>;
   busy: boolean;
@@ -249,6 +253,24 @@ function ModuleInspector({
         normalize={normalizeMm}
         onCommit={(value) => commit(setAllModuleHeights(product, value))}
       />
+      <label className="assembly-field">
+        <span>{t("assembly.glassThickness")}</span>
+        <select
+          aria-label={t("assembly.glassThickness")}
+          disabled={busy}
+          value={moduleGlassThicknessMm(module) ?? ""}
+          onChange={(event) =>
+            commit(setModuleGlassThickness(product, module.id, event.target.value || null))
+          }
+        >
+          <option value="">{t("assembly.chooseThickness")}</option>
+          {glazingThicknesses.map((thickness) => (
+            <option key={thickness} value={thickness}>
+              {thickness} mm
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="assembly-field">
         <span>{t("assembly.glass")}</span>
         <select
@@ -475,6 +497,7 @@ export function AssemblyEditor({
             module={selectedModule}
             product={product}
             glassSkus={glassSkus}
+            glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}
             mullionSkus={mullionSkus}
             busy={busy}

@@ -421,6 +421,45 @@ it("auto-resolves the catalog coupler when only one exists", async () => {
   });
 });
 
+it("fills glass defaults when the catalog has a single glazing thickness", async () => {
+  vi.mocked(projectDesignOptions).mockResolvedValue(
+    ok({
+      profiles: [],
+      glazing_thicknesses: ["4.00"],
+      hardware_kits: [],
+      glass_skus: ["GLASS-A"],
+      coupler_skus: [],
+      panel_skus: [],
+      colors: ["WHITE"],
+    }),
+  );
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("group", { name: t("assembly.starters") });
+  // The system <select> only commits once its options exist.
+  await screen.findByRole("option", { name: /Sistema A/ });
+
+  change("projects.system", "system-a");
+
+  await waitFor(() =>
+    expect(evaluate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        product: expect.objectContaining({
+          assembly: expect.objectContaining({
+            modules: [
+              expect.objectContaining({
+                tree: expect.objectContaining({
+                  glass_thickness_mm: "4.00",
+                  glass_spec: "4.00",
+                }),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ),
+  );
+});
+
 it("removes a selected module with Delete and undoes it", async () => {
   mount("/projects/project-a/positions/new");
   await screen.findByRole("group", { name: t("assembly.starters") });

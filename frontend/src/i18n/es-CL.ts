@@ -721,6 +721,8 @@ const messages = {
   "assembly.coupler": "Acoplador",
   "assembly.noCoupler": "Sin acoplador asignado",
   "assembly.glass": "Vidrio",
+  "assembly.glassThickness": "Espesor de vidrio",
+  "assembly.chooseThickness": "Elegir espesor",
   "assembly.noGlass": "Sin vidrio asignado",
   "assembly.panel": "Panel",
   "assembly.noPanel": "Sin panel asignado",
