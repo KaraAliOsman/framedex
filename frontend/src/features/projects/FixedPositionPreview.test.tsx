@@ -18,6 +18,7 @@ function design(): CanvasDesignInputs {
       type: "BAY",
       opening_type: "FIXED",
     },
+    product: null,
   };
 }
 

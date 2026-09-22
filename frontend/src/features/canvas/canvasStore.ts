@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { AnnotationRequest, InspectorDiff } from "../../api/generated/models";
 import { intentBays, type IntentNode } from "./intentEditing";
+import type { ProductJson } from "./productEditing";
 
 export type DimensionAxis = "width" | "height";
 
@@ -18,7 +19,11 @@ export type CanvasDesignInputs = {
   nominalHeightMm: string;
   color: "WHITE" | "FOILED";
   parametricTree: IntentNode;
+  /** Compositional product (product-v2). null = classic single unit. */
+  product: ProductJson | null;
 };
+
+const HISTORY_LIMIT = 100;
 
 type DraftDimension = {
   axis: DimensionAxis;
@@ -42,6 +47,12 @@ type CanvasState = {
   selectBay(id: string): void;
   loadDesign(inputs: CanvasDesignInputs): void;
   acceptIntent(expected: CanvasDesignInputs, next: CanvasDesignInputs, selection: string): boolean;
+  /** Typed design commands: record history, then apply. */
+  commitInputs(next: CanvasDesignInputs): void;
+  past: CanvasDesignInputs[];
+  future: CanvasDesignInputs[];
+  undo(): void;
+  redo(): void;
   viewport: ViewportState;
   snapEnabled: boolean;
   setSystemId(systemId: string): void;
@@ -67,6 +78,7 @@ function initialInputs(): CanvasDesignInputs {
     nominalHeightMm: "1000.00",
     color: "WHITE",
     parametricTree: G1_TREE,
+    product: null,
   };
 }
 
@@ -89,20 +101,30 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   draftDimension: null,
   selection: "g1",
   selectBay(id) {
-    set((state) =>
-      intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
+    set((state) => {
+      if (
+        state.inputs.product !== null &&
+        state.inputs.product.assembly.modules.some((m) => m.id === id)
+      )
+        return { selection: id };
+      return intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
         ? { selection: id }
-        : state,
-    );
+        : state;
+    });
   },
   loadDesign(inputs) {
     set({
       inputs,
-      selection: intentBays(inputs.parametricTree)[0]?.id ?? "",
+      selection:
+        inputs.product !== null
+          ? (inputs.product.assembly.modules[0]?.id ?? "")
+          : (intentBays(inputs.parametricTree)[0]?.id ?? ""),
       annotations: [],
       previewDiff: null,
       draftDimension: null,
       viewport: INITIAL_VIEWPORT,
+      past: [],
+      future: [],
     });
   },
   acceptIntent(expected, next, selection) {
@@ -114,9 +136,51 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       )
         return state;
       accepted = true;
-      return { inputs: next, selection, draftDimension: null, previewDiff: null };
+      return {
+        inputs: next,
+        selection,
+        draftDimension: null,
+        previewDiff: null,
+        past: [...state.past.slice(-(HISTORY_LIMIT - 1)), state.inputs],
+        future: [],
+      };
     });
     return accepted;
+  },
+  commitInputs(next) {
+    set((state) => ({
+      inputs: next,
+      past: [...state.past.slice(-(HISTORY_LIMIT - 1)), state.inputs],
+      future: [],
+      draftDimension: null,
+      previewDiff: null,
+    }));
+  },
+  past: [],
+  future: [],
+  undo() {
+    set((state) => {
+      const previous = state.past[state.past.length - 1];
+      if (previous === undefined) return state;
+      return {
+        inputs: previous,
+        past: state.past.slice(0, -1),
+        future: [...state.future, state.inputs],
+        draftDimension: null,
+      };
+    });
+  },
+  redo() {
+    set((state) => {
+      const next = state.future[state.future.length - 1];
+      if (next === undefined) return state;
+      return {
+        inputs: next,
+        past: [...state.past, state.inputs],
+        future: state.future.slice(0, -1),
+        draftDimension: null,
+      };
+    });
   },
   viewport: INITIAL_VIEWPORT,
   snapEnabled: true,
@@ -132,6 +196,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
         ...state.inputs,
         ...(axis === "width" ? { nominalWidthMm: value } : { nominalHeightMm: value }),
       },
+      past: [...state.past.slice(-(HISTORY_LIMIT - 1)), state.inputs],
+      future: [],
       draftDimension: null,
     }));
   },
@@ -150,6 +216,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       selection: "g1",
       viewport: INITIAL_VIEWPORT,
       snapEnabled: true,
+      past: [],
+      future: [],
     });
   },
 }));

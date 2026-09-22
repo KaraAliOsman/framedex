@@ -26,6 +26,18 @@ _OPENING_TYPOLOGIES = {
 
 
 def derive_typology(tree: Mapping[str, object]) -> str:
+    if tree.get("version") == "product-v2":
+        assembly = tree.get("assembly")
+        if isinstance(assembly, Mapping):
+            modules = assembly.get("modules")
+            if (
+                isinstance(modules, list)
+                and len(modules) == 1
+                and isinstance(modules[0], Mapping)
+                and isinstance(modules[0].get("tree"), Mapping)
+            ):
+                return derive_typology(modules[0]["tree"])
+        return "COMPOSITE"
     node: object = tree
     if tree.get("type") == "ROOT":
         children = tree.get("children")

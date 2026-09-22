@@ -91,13 +91,73 @@ class LeafWeightSerializer(serializers.Serializer):
     used_fallback = serializers.BooleanField()
 
 
-class EngineCalculateResponseSerializer(serializers.Serializer):
+class EngineResultPayloadSerializer(serializers.Serializer):
     profile_cuts = ProfileCutSerializer(many=True)
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)
     panels = PanelPieceSerializer(many=True)
     hardware_items = HardwareItemSerializer(many=True)
     leaf_weights = LeafWeightSerializer(many=True)
+
+
+class EngineCalculateResponseSerializer(EngineResultPayloadSerializer):
+    calculation_hash = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
+
+
+class EngineAssemblyCalculateSerializer(serializers.Serializer):
+    system_id = serializers.UUIDField()
+    nominal_width_mm = DecimalStringField(max_digits=10, decimal_places=2)
+    nominal_height_mm = DecimalStringField(max_digits=10, decimal_places=2)
+    color = serializers.CharField(max_length=50)
+    product = serializers.JSONField()
+
+
+class PlanPointSerializer(serializers.Serializer):
+    x_mm = serializers.CharField()
+    y_mm = serializers.CharField()
+
+
+class PlanModuleSerializer(serializers.Serializer):
+    module_id = serializers.CharField()
+    corners = PlanPointSerializer(many=True)
+
+
+class PlanCouplingSerializer(serializers.Serializer):
+    coupling_id = serializers.CharField()
+    polygon = PlanPointSerializer(many=True)
+
+
+class PlanGeometrySerializer(serializers.Serializer):
+    front_chain = PlanPointSerializer(many=True)
+    modules = PlanModuleSerializer(many=True)
+    couplings = PlanCouplingSerializer(many=True)
+    min_x_mm = serializers.CharField()
+    min_y_mm = serializers.CharField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+
+
+class ProductIssueSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    severity = serializers.ChoiceField(choices=["error", "warning"])
+    target = serializers.CharField()
+    params = serializers.DictField(child=serializers.CharField())
+
+
+class ModuleEvaluationSerializer(serializers.Serializer):
+    module_id = serializers.CharField()
+    issues = ProductIssueSerializer(many=True)
+    result = EngineResultPayloadSerializer(allow_null=True)
+
+
+class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=["VALID", "MANUFACTURING_INCOMPLETE", "INVALID"]
+    )
+    issues = ProductIssueSerializer(many=True)
+    plan = PlanGeometrySerializer(allow_null=True)
+    modules = ModuleEvaluationSerializer(many=True)
+    bom = EngineResultPayloadSerializer(allow_null=True)
     calculation_hash = serializers.RegexField(regex=r"^sha256:[0-9a-f]{64}$")
 
 

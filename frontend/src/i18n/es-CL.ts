@@ -705,6 +705,45 @@ const messages = {
   "intent.moveDivision": "Aplicar distancia",
   "projects.uncertainPosition":
     "No pudimos confirmar si el vano se guardó. Conservamos los datos en pantalla. Revisa los vanos del proyecto antes de volver a crearlo.",
+  "projects.undo": "Deshacer",
+  "projects.redo": "Rehacer",
+
+  "assembly.type": "Tipo de producto",
+  "assembly.single": "Vano único",
+  "assembly.bow": "Ventana bow / conjunto",
+  "assembly.totalWidth": "Ancho total",
+  "assembly.height": "Alto",
+  "assembly.width": "Ancho",
+  "assembly.opening": "Apertura",
+  "assembly.modules": "Módulos",
+  "assembly.couplings": "Uniones",
+  "assembly.angle": "Ángulo",
+  "assembly.coupler": "Acoplador",
+  "assembly.noCoupler": "Sin acoplador asignado",
+  "assembly.couplerAll": "Usar {sku} en todas las uniones",
+  "assembly.equalizeModules": "Igualar anchos",
+  "assembly.equalizeAngles": "Igualar ángulos",
+  "assembly.planView": "Vista en planta",
+  "assembly.frontView": "Vista frontal",
+  "assembly.calculating": "Calculando el conjunto…",
+  "assembly.noPlan": "Aún no hay geometría de planta.",
+  "assembly.calculateError": "No pudimos calcular el conjunto. Revisa los datos.",
+  "assembly.statusValid": "Geometría válida — conjunto completo",
+  "assembly.statusIncomplete": "Geometría válida — fabricación incompleta",
+  "assembly.statusInvalid": "Geometría inválida",
+  "assembly.issue.couplingsCountMismatch":
+    "El conjunto tiene {modules} módulos pero {couplings} uniones (se esperan {expected}).",
+  "assembly.issue.assemblyFoldsBack":
+    "El conjunto se repliega sobre sí mismo en {target}: reduce el ángulo acumulado.",
+  "assembly.issue.planSelfIntersection":
+    "Los módulos se intersectan en planta ({target}): ajusta anchos o ángulos.",
+  "assembly.issue.moduleGeometryFailed":
+    "El módulo {target} no pudo evaluarse con la serie seleccionada.",
+  "assembly.issue.couplerProfileMissing": "La unión {target} no tiene acoplador asignado.",
+  "assembly.issue.couplerProfileUnknown":
+    "El acoplador {sku} de la unión {target} no existe en la serie seleccionada.",
+  "assembly.issue.couplerHeightMismatch":
+    "El acoplador {sku} mide {coupler} mm pero el conjunto mide {module} mm de alto.",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

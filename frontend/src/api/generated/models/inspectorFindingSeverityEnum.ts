@@ -10,9 +10,10 @@
  * * `YELLOW` - YELLOW
  * * `RED` - RED
  */
-export type SeverityEnum = (typeof SeverityEnum)[keyof typeof SeverityEnum];
+export type InspectorFindingSeverityEnum =
+  (typeof InspectorFindingSeverityEnum)[keyof typeof InspectorFindingSeverityEnum];
 
-export const SeverityEnum = {
+export const InspectorFindingSeverityEnum = {
   YELLOW: "YELLOW",
   RED: "RED",
 } as const;

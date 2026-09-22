@@ -37,6 +37,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/catalogs/hardware-kits/{row_id}/",
         "/api/v1/auth/me/",
         "/api/v1/engine/calculate/",
+        "/api/v1/engine/assembly/calculate/",
         "/api/v1/engine/layout/",
         "/api/v1/engine/systems/",
         "/api/v1/engine/inspect/",

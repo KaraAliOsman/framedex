@@ -231,3 +231,227 @@
     min-height: 32rem;
   }
 }
+
+.assembly-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.assembly-toolbar {
+  align-items: end;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.assembly-field {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.assembly-field > span {
+  color: var(--theme-text-secondary);
+  font-size: 0.85rem;
+}
+
+.assembly-field input {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+  width: 5.5rem;
+}
+
+.assembly-unit {
+  color: var(--theme-text-muted);
+  font-size: 0.8rem;
+}
+
+.assembly-workspace {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+}
+
+.assembly-canvas,
+.assembly-controls {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  padding: 0.5rem 0.75rem;
+}
+
+.bow-plan-svg {
+  background: var(--theme-bg-canvas);
+  display: block;
+  min-height: 16rem;
+  width: 100%;
+}
+
+.plan-module {
+  cursor: pointer;
+  fill: var(--theme-glass-tint);
+  stroke: var(--theme-text-primary);
+  stroke-width: 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan-module.is-selected {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-cyan-tool);
+}
+
+.plan-coupling {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-text-secondary);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan-front-chain {
+  stroke: var(--theme-cyan-tool);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan-dimension {
+  fill: var(--theme-text-secondary);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plan-dimension--total {
+  fill: var(--theme-text-primary);
+}
+
+.assembly-strip {
+  display: flex;
+  gap: 2px;
+  min-height: 4.5rem;
+}
+
+.assembly-strip-module {
+  align-items: center;
+  background: var(--theme-glass-tint);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  justify-content: center;
+  min-width: 3rem;
+  padding: 0.25rem;
+}
+
+.assembly-strip-module.is-selected {
+  border-color: var(--theme-cyan-tool);
+  outline: 1px solid var(--theme-cyan-tool);
+}
+
+.assembly-strip-id {
+  color: var(--theme-text-muted);
+  font-size: 0.7rem;
+}
+
+.assembly-strip-opening {
+  font-size: 0.75rem;
+}
+
+.assembly-strip-dims {
+  color: var(--theme-text-secondary);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.assembly-status {
+  border: 1px solid var(--theme-border-subtle);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.assembly-status--valid {
+  border-color: var(--theme-emerald-action);
+  color: var(--theme-emerald-action);
+}
+
+.assembly-status--manufacturing_incomplete {
+  border-color: var(--theme-amber-opening);
+  color: var(--theme-amber-opening);
+}
+
+.assembly-status--invalid {
+  border-color: var(--theme-crimson-alert);
+  color: var(--theme-crimson-alert);
+}
+
+.assembly-issues {
+  color: var(--theme-text-secondary);
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.assembly-issues .issue-error {
+  color: var(--theme-crimson-alert);
+}
+
+.assembly-issues .issue-warning {
+  color: var(--theme-amber-opening);
+}
+
+.assembly-table {
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.assembly-table th,
+.assembly-table td {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding: 0.2rem 0.3rem;
+  text-align: left;
+}
+
+.assembly-table tbody tr {
+  cursor: pointer;
+}
+
+.assembly-table tbody tr.is-selected {
+  background: var(--theme-surface-card);
+  outline: 1px solid var(--theme-cyan-tool);
+}
+
+.assembly-table input,
+.assembly-table select {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  max-width: 100%;
+  padding: 0.15rem 0.3rem;
+}
+
+.position-type {
+  margin-bottom: 0.5rem;
+}
+
+.position-type label {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.position-type select {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  padding: 0.3rem 0.5rem;
+}

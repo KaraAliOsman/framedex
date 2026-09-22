@@ -229,6 +229,7 @@ beforeEach(() => {
       glazing_thicknesses: ["24.00", "28.00"],
       glass_skus: ["GLASS-A", "GLASS-B"],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
+      coupler_skus: [],
       colors: ["WHITE"],
     }),
   );
@@ -504,6 +505,7 @@ it("hydrates exact saved fields and reopens the API-returned saved position", as
     nominalHeightMm: original.design.nominal_height_mm,
     color: original.design.color,
     parametricTree: original.design.parametric_tree,
+    product: null,
   });
   expect(screen.getByText("CUT-A")).toBeInTheDocument();
   expect(calculate).not.toHaveBeenCalled();

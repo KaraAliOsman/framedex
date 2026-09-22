@@ -2653,6 +2653,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/engine/assembly/calculate/:
+    post:
+      operationId: engine_assembly_calculate
+      description: |-
+        Evaluate a compositional product (modules + couplings).
+
+        Same auth/RLS flow as EngineCalculateView; all mathematics stay in
+        /engine. The response separates geometry validity from manufacturing
+        completeness and carries plan-view geometry for the editor.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - engine
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EngineAssemblyCalculateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EngineAssemblyCalculateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EngineAssemblyCalculateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineAssemblyCalculateResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/engine/calculate/:
     post:
       operationId: engine_calculate
@@ -5839,8 +5909,13 @@ components:
           type: array
           items:
             type: string
+        coupler_skus:
+          type: array
+          items:
+            type: string
       required:
       - colors
+      - coupler_skus
       - glass_skus
       - glazing_thicknesses
       - hardware_kits
@@ -6220,6 +6295,72 @@ components:
       required:
       - content_hash
       - id
+    EngineAssemblyCalculateRequest:
+      type: object
+      properties:
+        system_id:
+          type: string
+          format: uuid
+        nominal_width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        nominal_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        color:
+          type: string
+          minLength: 1
+          maxLength: 50
+        product: {}
+      required:
+      - color
+      - nominal_height_mm
+      - nominal_width_mm
+      - product
+      - system_id
+    EngineAssemblyCalculateResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/EngineAssemblyCalculateResponseStatusEnum'
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductIssue'
+        plan:
+          allOf:
+          - $ref: '#/components/schemas/PlanGeometry'
+          nullable: true
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleEvaluation'
+        bom:
+          allOf:
+          - $ref: '#/components/schemas/EngineResultPayload'
+          nullable: true
+        calculation_hash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+      required:
+      - bom
+      - calculation_hash
+      - issues
+      - modules
+      - plan
+      - status
+    EngineAssemblyCalculateResponseStatusEnum:
+      enum:
+      - VALID
+      - MANUFACTURING_INCOMPLETE
+      - INVALID
+      type: string
+      description: |-
+        * `VALID` - VALID
+        * `MANUFACTURING_INCOMPLETE` - MANUFACTURING_INCOMPLETE
+        * `INVALID` - INVALID
     EngineCalculateRequestRequest:
       type: object
       properties:
@@ -6412,6 +6553,40 @@ components:
       - purchase_list
       - source_calculation_hash
       - workshop_cut_plan
+    EngineResultPayload:
+      type: object
+      properties:
+        profile_cuts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileCut'
+        reinforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reinforcement'
+        glasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassPiece'
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelPiece'
+        hardware_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/HardwareItem'
+        leaf_weights:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeafWeight'
+      required:
+      - glasses
+      - hardware_items
+      - leaf_weights
+      - panels
+      - profile_cuts
+      - reinforcements
     EngineSystemsResponse:
       type: object
       properties:
@@ -6771,7 +6946,7 @@ components:
         rule_id:
           $ref: '#/components/schemas/InspectorRuleIdEnum'
         severity:
-          $ref: '#/components/schemas/SeverityEnum'
+          $ref: '#/components/schemas/InspectorFindingSeverityEnum'
         title:
           type: string
         diagnosis:
@@ -6803,6 +6978,14 @@ components:
       - rule_id
       - severity
       - title
+    InspectorFindingSeverityEnum:
+      enum:
+      - YELLOW
+      - RED
+      type: string
+      description: |-
+        * `YELLOW` - YELLOW
+        * `RED` - RED
     InspectorRuleIdEnum:
       enum:
       - R01
@@ -7149,6 +7332,23 @@ components:
       description: |-
         * `DESIGN` - DESIGN
         * `WORKSHOP_QC` - WORKSHOP_QC
+    ModuleEvaluation:
+      type: object
+      properties:
+        module_id:
+          type: string
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductIssue'
+        result:
+          allOf:
+          - $ref: '#/components/schemas/EngineResultPayload'
+          nullable: true
+      required:
+      - issues
+      - module_id
+      - result
     NodeLayout:
       type: object
       properties:
@@ -7623,6 +7823,71 @@ components:
       - status
       - tax_doc_folio
       - tax_doc_type
+    PlanCoupling:
+      type: object
+      properties:
+        coupling_id:
+          type: string
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPoint'
+      required:
+      - coupling_id
+      - polygon
+    PlanGeometry:
+      type: object
+      properties:
+        front_chain:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPoint'
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanModule'
+        couplings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanCoupling'
+        min_x_mm:
+          type: string
+        min_y_mm:
+          type: string
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+      required:
+      - couplings
+      - front_chain
+      - height_mm
+      - min_x_mm
+      - min_y_mm
+      - modules
+      - width_mm
+    PlanModule:
+      type: object
+      properties:
+        module_id:
+          type: string
+        corners:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPoint'
+      required:
+      - corners
+      - module_id
+    PlanPoint:
+      type: object
+      properties:
+        x_mm:
+          type: string
+        y_mm:
+          type: string
+      required:
+      - x_mm
+      - y_mm
     PolishingEdges:
       type: object
       properties:
@@ -7932,6 +8197,32 @@ components:
         * `FIXED_PRICE_MATRIX_DIMENSIONAL` - FIXED_PRICE_MATRIX_DIMENSIONAL
         * `TARGET_GROSS_MARGIN_PROJECT` - TARGET_GROSS_MARGIN_PROJECT
         * `COMMERCIAL_LIST_WITH_DISCOUNTS` - COMMERCIAL_LIST_WITH_DISCOUNTS
+    ProductIssue:
+      type: object
+      properties:
+        code:
+          type: string
+        severity:
+          $ref: '#/components/schemas/ProductIssueSeverityEnum'
+        target:
+          type: string
+        params:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - code
+      - params
+      - severity
+      - target
+    ProductIssueSeverityEnum:
+      enum:
+      - error
+      - warning
+      type: string
+      description: |-
+        * `error` - error
+        * `warning` - warning
     ProfileChoice:
       type: object
       properties:
@@ -8368,14 +8659,6 @@ components:
           type: boolean
       required:
       - confirmed
-    SeverityEnum:
-      enum:
-      - YELLOW
-      - RED
-      type: string
-      description: |-
-        * `YELLOW` - YELLOW
-        * `RED` - RED
     SignedAccessResponse:
       type: object
       properties:
