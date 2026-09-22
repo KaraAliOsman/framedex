@@ -217,10 +217,13 @@ function PositionWorkspace({
   function setProductMode(mode: "single" | "bow"): void {
     const store = useCanvasStore.getState();
     if (mode === "bow" && inputs.product === null) {
+      // A pending system change lives only in local state — fold it into the
+      // committed inputs so evaluation, options, and save see one system.
+      const inputsForBow = { ...inputs, systemId: systemId || inputs.systemId };
       store.commitInputs({
-        ...inputs,
+        ...inputsForBow,
         product: createBowFromInputs(
-          inputs,
+          inputsForBow,
           thickness || "4.00",
           glassSpec || "4",
           (bay?.glass_article_sku ?? glassSku) || null,
