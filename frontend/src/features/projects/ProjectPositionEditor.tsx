@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,6 +12,7 @@ import {
 import type {
   EngineAssemblyCalculateResponse,
   EngineCalculateResponse,
+  PositionDesignRequest,
   PositionResponse,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -197,6 +197,48 @@ function resolveDefaults(
   return next;
 }
 
+/** The design object that save() would send — used both by save and by the
+ * dirty baseline, so they can never disagree about what "unchanged" means. */
+function designPayload(inputs: CanvasDesignInputs): PositionDesignRequest | null {
+  const product = inputs.product;
+  if (product === null || !inputs.systemId || inputs.color !== "WHITE") return null;
+  const single = isSingleUnit(product) ? product.assembly.modules[0] : undefined;
+  return single !== undefined
+    ? {
+        system_id: inputs.systemId,
+        nominal_width_mm: single.width_mm,
+        nominal_height_mm: single.height_mm,
+        color: inputs.color,
+        parametric_tree: single.tree,
+      }
+    : {
+        system_id: inputs.systemId,
+        nominal_width_mm: totalModuleWidth(product).toFixed(2),
+        nominal_height_mm: Math.max(
+          ...product.assembly.modules.map((module) => Number(module.height_mm)),
+        ).toFixed(2),
+        color: inputs.color,
+        parametric_tree: product,
+      };
+}
+
+/** JSON.stringify with recursively sorted keys — a stable identity for
+ * comparing loaded/saved designs against the live inputs. */
+function canonicalize(value: unknown): string {
+  const order = (node: unknown): unknown => {
+    if (Array.isArray(node)) return node.map(order);
+    if (node !== null && typeof node === "object") {
+      return Object.fromEntries(
+        Object.keys(node as Record<string, unknown>)
+          .sort()
+          .map((key) => [key, order((node as Record<string, unknown>)[key])]),
+      );
+    }
+    return node;
+  };
+  return JSON.stringify(order(value));
+}
+
 function PositionWorkspace({
   orgId,
   projectId,
@@ -214,7 +256,12 @@ function PositionWorkspace({
   const [result, setResult] = useState<EngineCalculateResponse | null>(null);
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("1");
-  const [dirty, setDirty] = useState(false);
+  // null baseline = nothing persisted yet for this route (copy) → always dirty.
+  const [baseline, setBaseline] = useState<{
+    design: string;
+    location: string;
+    quantity: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const mutationLock = useRef(false);
   const [message, setMessage] = useState("");
@@ -250,7 +297,9 @@ function PositionWorkspace({
   useEffect(() => {
     let active = true;
     if (!positionId && !copyId) {
-      useCanvasStore.getState().loadDesign(initial());
+      const blank = initial();
+      useCanvasStore.getState().loadDesign(blank);
+      setBaseline({ design: canonicalize(designPayload(blank)), location: "", quantity: "1" });
       setLoaded(true);
     } else
       void positionsRetrieve(positionId || copyId, { headers: { "X-Organization-ID": orgId } })
@@ -280,7 +329,15 @@ function PositionWorkspace({
             product,
           });
           setSaved(copyId ? null : item);
-          setDirty(!!copyId);
+          setBaseline(
+            copyId
+              ? null
+              : {
+                  design: canonicalize(item.design),
+                  location: item.location_tag ?? "",
+                  quantity: String(item.quantity),
+                },
+          );
           setLocation(item.location_tag ?? "");
           setQuantity(String(item.quantity));
           setResult(item.bom);
@@ -344,7 +401,6 @@ function PositionWorkspace({
             product: removeUnit(product, state.selection),
           });
           state.select(null);
-          setDirty(true);
           setResult(null);
           setAssemblyEval(null);
         }
@@ -370,12 +426,10 @@ function PositionWorkspace({
     else store.redo();
     setResult(null);
     setAssemblyEval(null);
-    setDirty(true);
     setMessage("");
   }
 
   const onAssemblyChanged = useCallback(() => {
-    setDirty(true);
     setResult(null);
     setAssemblyEval(null);
     setMessage("");
@@ -406,28 +460,9 @@ function PositionWorkspace({
     const epoch = ++generation.current;
     setBusy(true);
     setMessage("");
-    const product = inputs.product;
-    const single = isSingleUnit(product) ? product.assembly.modules[0] : undefined;
     // A lone unit persists in the classic documentary shape; real assemblies
     // save as product-v2. The in-canvas model is always compositional.
-    const design =
-      single !== undefined
-        ? {
-            system_id: systemId,
-            nominal_width_mm: single.width_mm,
-            nominal_height_mm: single.height_mm,
-            color: inputs.color,
-            parametric_tree: single.tree,
-          }
-        : {
-            system_id: systemId,
-            nominal_width_mm: totalModuleWidth(product).toFixed(2),
-            nominal_height_mm: Math.max(
-              ...product.assembly.modules.map((module) => Number(module.height_mm)),
-            ).toFixed(2),
-            color: inputs.color,
-            parametric_tree: product,
-          };
+    const design = designPayload(inputs) as PositionDesignRequest;
     const body = {
       location_tag: location,
       quantity: Number(quantity),
@@ -447,7 +482,7 @@ function PositionWorkspace({
       const value = response.data as PositionResponse;
       setSaved(value);
       setResult(value.bom);
-      flushSync(() => setDirty(false));
+      setBaseline({ design: canonicalize(design), location, quantity });
       setMessage(t("projects.saved"));
       if (!positionId)
         navigate(`/projects/${projectId}/positions/${value.id}/edit`, { replace: true });
@@ -464,6 +499,12 @@ function PositionWorkspace({
   }
 
   if (!loaded) return <p role={message ? "alert" : "status"}>{message || t("projects.loading")}</p>;
+  const dirty =
+    baseline === null
+      ? true
+      : canonicalize(designPayload(inputs)) !== baseline.design ||
+        location !== baseline.location ||
+        quantity !== baseline.quantity;
   const product = inputs.product;
   const starterList = starters(product);
   return (
@@ -528,23 +569,14 @@ function PositionWorkspace({
             <legend>{t("projects.positionData")}</legend>
             <label>
               {t("projects.location")}
-              <input
-                value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  setDirty(true);
-                }}
-              />
+              <input value={location} onChange={(e) => setLocation(e.target.value)} />
             </label>
             <label>
               {t("pricing.quantity")}
               <input
                 inputMode="numeric"
                 value={quantity}
-                onChange={(e) => {
-                  setQuantity(e.target.value);
-                  setDirty(true);
-                }}
+                onChange={(e) => setQuantity(e.target.value)}
               />
             </label>
             <label>
@@ -555,7 +587,6 @@ function PositionWorkspace({
                   const next = e.target.value || null;
                   if (inputs.systemId !== next) {
                     useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                    setDirty(true);
                     setMessage("");
                   }
                 }}

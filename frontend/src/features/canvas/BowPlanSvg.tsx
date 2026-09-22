@@ -185,6 +185,8 @@ export function BowPlanSvg({
                 coupling.coupling_id === selectedCouplingId ? " is-selected" : ""
               }${flagged ? " has-issue" : ""}`}
               points={polygonPoints(coupling.polygon)}
+              stroke="transparent"
+              strokeWidth={fontSize * 1.4}
               data-testid={`plan-coupling-${coupling.coupling_id}`}
               role="button"
               aria-label={`${t("assembly.coupling")} ${coupling.coupling_id}`}

@@ -344,9 +344,9 @@ export function ProductFrontSvg({
         disabled={disabled}
         onCommit={onCommitTotalWidth}
       />
-      <g transform={`rotate(-90 ${-80} ${midY})`}>
+      <g transform={`rotate(-90 ${-140} ${midY})`}>
         <SvgDim
-          x={-80}
+          x={-140}
           y={midY}
           value={height.toFixed(2)}
           unit=" mm"
