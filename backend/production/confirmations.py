@@ -434,17 +434,11 @@ def confirm_delivery(
                     payment=payment_row,
                     actor_id=actor_id,
                     deal=deal,
+                    # The receipt object registers into this transaction's
+                    # compensation set the moment its upload lands — no extra
+                    # query between issuance and rollback coverage.
+                    compensation_keys=object_keys,
                 )
-                # The receipt object joins the compensation set: a
-                # commit-time failure rolls its row back while the PDF
-                # would stay orphaned otherwise.
-                receipt_key = rows(
-                    "SELECT storage_object_key FROM public.payment_receipts "
-                    "WHERE payment_id=%s AND org_id=%s",
-                    [str(payment_row["id"]), org_id_s],
-                )
-                if receipt_key:
-                    object_keys.append(receipt_key[0]["storage_object_key"])
         # Cleared only after commit: a commit-time failure still purges.
         object_keys = []
     except Exception:

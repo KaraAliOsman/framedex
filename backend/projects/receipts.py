@@ -60,11 +60,15 @@ def issue_receipt(
     payment: dict,
     actor_id: UUID,
     deal: dict,
+    compensation_keys: list | None = None,
 ) -> dict:
     """Seal the comprobante for a freshly inserted payment. Must run inside
     the caller's transaction: an org-scoped advisory lock serializes the
     receipt sequence, which is per-organization — the code must satisfy
-    UNIQUE (org_id, receipt_code) across every project."""
+    UNIQUE (org_id, receipt_code) across every project. Callers that run
+    their own post-rollback object compensation pass ``compensation_keys``:
+    the uploaded object key is registered the moment upload succeeds, so a
+    later failure in the caller's transaction still purges the orphan."""
     org_id_s, project_id_s = str(org_id), str(payment["project_id"])
     existing = rows(
         "SELECT * FROM public.payment_receipts WHERE payment_id=%s AND org_id=%s",
@@ -127,6 +131,8 @@ def issue_receipt(
     storage = SupabaseDocumentStorage()
     try:
         storage.upload_immutable(object_key, content, media_type)
+        if compensation_keys is not None:
+            compensation_keys.append(object_key)
         row = one(
             "INSERT INTO public.payment_receipts("
             "org_id,project_id,payment_id,receipt_code,payload_json,storage_bucket,"
