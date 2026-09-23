@@ -58,7 +58,7 @@
 
 .canvas-system {
   color: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
 }
 
 .cad-svg {
@@ -90,7 +90,7 @@
 .opening-label,
 .glass-dimension {
   fill: var(--theme-text-primary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-size: 28px;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
@@ -118,7 +118,7 @@
   border: 1px solid var(--theme-border-subtle);
   color: var(--theme-text-primary);
   display: flex;
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   gap: 0.25rem;
   height: 36px;
   justify-content: center;
@@ -195,7 +195,7 @@
 }
 
 .canvas-technical-results dd {
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
   margin: 0.25rem 0 0;
 }
@@ -322,7 +322,7 @@
 
 .plan-dimension {
   fill: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -366,7 +366,7 @@
 
 .assembly-strip-dims {
   color: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
@@ -490,36 +490,99 @@
   cursor: pointer;
 }
 
-.front-module .module-frame {
-  fill: var(--theme-surface-card);
-  stroke: var(--theme-text-secondary);
-  stroke-width: 4;
+.member {
   vector-effect: non-scaling-stroke;
 }
 
-.front-module.is-selected .module-frame {
+.front-module .member-frame {
+  stroke-width: 4;
+}
+
+.front-module.is-selected .member-frame {
   stroke: var(--theme-accent);
+  stroke-width: 6;
 }
 
-.front-module.has-error .module-frame {
+.front-module.has-error .member-frame {
   stroke: var(--theme-danger);
+  stroke-width: 6;
 }
 
-.front-module.has-warning .module-frame {
+.front-module.has-warning .member-frame {
   stroke: var(--theme-warning);
+  stroke-width: 6;
+}
+
+.module-opening {
+  fill: none;
+}
+
+.member-sash {
+  stroke-width: 2;
+}
+
+.member-mullion,
+.member-coupler,
+.member-threshold {
+  stroke-width: 2.5;
+}
+
+.member-bead {
+  fill: none;
+  stroke: var(--member-pvc-edge);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
 }
 
 .module-glass {
   fill: var(--theme-glass-tint);
-  stroke: none;
+  stroke: var(--theme-border-subtle);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
 }
 
-.module-divider {
-  fill: var(--theme-surface-card);
+.glass-sheen {
+  stroke: var(--member-pvc-highlight);
+  stroke-width: 7;
+  opacity: 0.75;
+}
+
+.bay-panel {
+  fill: var(--member-panel-fill);
+  stroke: var(--member-panel-edge);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.handle-lever line {
+  stroke: var(--theme-accent-ink);
+  vector-effect: non-scaling-stroke;
 }
 
 .module-bay {
   pointer-events: none;
+}
+
+.dim-run {
+  pointer-events: none;
+}
+
+.dim-extension {
+  stroke: var(--theme-border-subtle);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dim-line {
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dim-tick {
+  stroke: var(--theme-text-secondary);
+  stroke-width: 2.6;
+  vector-effect: non-scaling-stroke;
 }
 
 .opening-glyph polyline,
@@ -537,12 +600,17 @@
 .canvas-dim {
   cursor: pointer;
   fill: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 
 .canvas-dim:hover {
   fill: var(--theme-accent);
+}
+
+.canvas-dim.is-active {
+  fill: var(--theme-accent-ink);
+  font-weight: 500;
 }
 
 .canvas-dim-input {
@@ -723,7 +791,7 @@
 .plan-angle {
   cursor: pointer;
   fill: var(--theme-text-primary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 

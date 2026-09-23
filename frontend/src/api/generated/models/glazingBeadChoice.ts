@@ -6,10 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProfileChoice {
+export interface GlazingBeadChoice {
+  glass_thickness_mm: string;
+  bead_width_mm: string;
   sku: string;
-  role: string;
-  name: string;
-  material: string;
-  face_width_mm: string;
 }

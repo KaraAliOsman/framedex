@@ -3,12 +3,15 @@ import { useEffect, useState } from "react";
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
+import { memberSurface, type MemberSurface } from "./materials";
+import type { MemberGeometry } from "./members";
 import type { ProductJson } from "./productEditing";
 
-/** Front elevation of the compositional product: real module proportions,
- * opening glyphs, click-to-edit dimensions, and add/remove affordances.
- * The engine stays the authority — this view only renders and dispatches
- * typed edits. */
+/** Front elevation of the compositional product as a real fenestration
+ * drawing: frame/sash/mullion/bead/threshold members at their catalog face
+ * widths, glass and panel infills, handle levers, signature dimension chains
+ * with extension lines and ticks. The engine stays the authority — this view
+ * only renders and dispatches typed edits. */
 
 type SeverityMap = Map<string, "error" | "warning">;
 
@@ -29,16 +32,16 @@ function SvgDim({
   x,
   y,
   value,
-  unit,
   label,
+  active,
   disabled,
   onCommit,
 }: {
   x: number;
   y: number;
   value: string;
-  unit: string;
   label: string;
+  active?: boolean;
   disabled: boolean;
   onCommit(normalized: string): void;
 }): JSX.Element {
@@ -47,15 +50,16 @@ function SvgDim({
   useEffect(() => {
     if (!editing) setDraft(value);
   }, [value, editing]);
-  const fontSize = 42;
+  const fontSize = 34;
   if (!editing || disabled) {
     return (
       <text
-        className="canvas-dim"
+        className={`canvas-dim${active ? " is-active" : ""}`}
         x={x}
         y={y}
         fontSize={fontSize}
         textAnchor="middle"
+        dominantBaseline="central"
         role="button"
         aria-label={label}
         tabIndex={disabled ? -1 : 0}
@@ -68,7 +72,6 @@ function SvgDim({
         }}
       >
         {value}
-        {unit}
       </text>
     );
   }
@@ -152,19 +155,7 @@ export function OpeningGlyph({
           />
         </>
       )}
-      {kind === "DOOR_ENTRY" && (
-        <>
-          <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.35} />
-          <line
-            x1={x}
-            y1={y + h - h * 0.05}
-            x2={x + w}
-            y2={y + h - h * 0.05}
-            strokeWidth={h * 0.02}
-          />
-          <circle cx={x + w * 0.82} cy={cy} r={Math.max(w, h) * 0.018} />
-        </>
-      )}
+      {kind === "DOOR_ENTRY" && <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.35} />}
       {kind === "FIXED" && <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.18} />}
     </g>
   );
@@ -172,20 +163,207 @@ export function OpeningGlyph({
 
 type Region = { x: number; y: number; w: number; h: number };
 
-/** Render a module's parametric tree inside a region: bays get opening
- * glyphs, splits become divider bars. Nested splits divide their region at
- * `split_offset_mm` when present, else evenly. */
+/** Rectangular member drawn as a filled ring segment: outer rect minus inner
+ * rect (evenodd) — frame, sash, mullion, threshold and coupler all share it. */
+function Member({
+  x,
+  y,
+  w,
+  h,
+  surface,
+  className,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  surface: MemberSurface;
+  className: string;
+}): JSX.Element {
+  return (
+    <rect
+      className={`member ${className}`}
+      x={x}
+      y={y}
+      width={w}
+      height={h}
+      fill={surface.fill}
+      stroke={surface.edge}
+      strokeWidth={2.5}
+    />
+  );
+}
+
+/** Handle lever on the sash's handle edge (≈55% up, EN convention). */
+function HandleLever({
+  x,
+  y,
+  side,
+}: {
+  x: number;
+  y: number;
+  side: "left" | "right";
+}): JSX.Element {
+  const dir = side === "left" ? 1 : -1;
+  return (
+    <g className="handle-lever" aria-hidden="true">
+      <line x1={x} y1={y - 10} x2={x} y2={y + 16} strokeWidth={5} strokeLinecap="round" />
+      <line x1={x} y1={y} x2={x + dir * 18} y2={y} strokeWidth={5} strokeLinecap="round" />
+    </g>
+  );
+}
+
+/** A leaf bay: sash ring (when operable), glazing bead sightline, glass or
+ * panel infill, opening glyph and handle lever. */
+function Bay({
+  node,
+  region,
+  members,
+}: {
+  node: IntentNode;
+  region: Region;
+  members: MemberGeometry;
+}): JSX.Element {
+  const opening = node.opening_type ?? "FIXED";
+  const isDoor = opening === "DOOR_ENTRY";
+  const operable = opening !== "FIXED" && opening !== "SLIDING_2L";
+  const bead = members.beadFor(node.glass_thickness_mm ?? null);
+  const reveal = 3;
+
+  const thresholdH = isDoor ? (members.threshold?.faceWidthMm ?? 30) : 0;
+  const sashArea: Region = operable
+    ? {
+        x: region.x + reveal,
+        y: region.y + reveal,
+        w: region.w - reveal * 2,
+        h: region.h - reveal * 2 - thresholdH,
+      }
+    : region;
+  const sashT = members.sash.faceWidthMm;
+  const glass: Region = operable
+    ? {
+        x: sashArea.x + sashT,
+        y: sashArea.y + sashT,
+        w: sashArea.w - sashT * 2,
+        h: sashArea.h - sashT * 2,
+      }
+    : {
+        x: region.x + bead,
+        y: region.y + bead,
+        w: region.w - bead * 2,
+        h: region.h - bead * 2,
+      };
+  const pane: Region = operable
+    ? { x: glass.x + bead, y: glass.y + bead, w: glass.w - bead * 2, h: glass.h - bead * 2 }
+    : glass;
+  const sashSurface = memberSurface(members.sash.material);
+  const isPanel = Boolean(node.panel_article_sku);
+  const handleSide = opening.includes("LEFT")
+    ? "right"
+    : opening.includes("RIGHT") || isDoor
+      ? "left"
+      : null;
+
+  return (
+    <g className="module-bay">
+      {operable && (
+        <>
+          <Member
+            x={sashArea.x}
+            y={sashArea.y}
+            w={sashArea.w}
+            h={Math.max(sashArea.h, 0)}
+            surface={sashSurface}
+            className="member-sash"
+          />
+          {/* glazing beads: sightline ring inside the sash */}
+          <rect
+            className="member-bead"
+            x={glass.x}
+            y={glass.y}
+            width={Math.max(glass.w, 0)}
+            height={Math.max(glass.h, 0)}
+          />
+        </>
+      )}
+      {isPanel ? (
+        <rect
+          className="bay-panel"
+          x={pane.x}
+          y={pane.y}
+          width={Math.max(pane.w, 0)}
+          height={Math.max(pane.h, 0)}
+        />
+      ) : (
+        <g>
+          <rect
+            className="module-glass"
+            x={pane.x}
+            y={pane.y}
+            width={Math.max(pane.w, 0)}
+            height={Math.max(pane.h, 0)}
+          />
+          {pane.w > 30 && pane.h > 30 && (
+            <line
+              className="glass-sheen"
+              x1={pane.x + pane.w * 0.18}
+              y1={pane.y + pane.h * 0.82}
+              x2={pane.x + pane.w * 0.82}
+              y2={pane.y + pane.h * 0.18}
+            />
+          )}
+        </g>
+      )}
+      {isDoor && thresholdH > 0 && (
+        <Member
+          x={region.x}
+          y={region.y + region.h - thresholdH}
+          w={region.w}
+          h={thresholdH}
+          surface={memberSurface(members.threshold?.material ?? members.frame.material)}
+          className="member-threshold"
+        />
+      )}
+      {pane.w > 60 && pane.h > 60 && (
+        <OpeningGlyph opening={node.opening_type} x={pane.x} y={pane.y} w={pane.w} h={pane.h} />
+      )}
+      {handleSide && operable && (
+        <HandleLever
+          x={
+            handleSide === "right"
+              ? sashArea.x + sashArea.w - sashT * 0.55
+              : sashArea.x + sashT * 0.55
+          }
+          y={sashArea.y + sashArea.h * 0.55}
+          side={handleSide}
+        />
+      )}
+    </g>
+  );
+}
+
+/** Render a module's parametric tree inside a region: splits become mullion
+ * members at their catalog face width, bays render the full member hierarchy. */
 function ModuleTree({
   node,
   region,
   moduleWidth,
+  members,
 }: {
   node: IntentNode;
   region: Region;
   moduleWidth: number;
+  members: MemberGeometry;
 }): JSX.Element {
   if (node.type === "ROOT" && node.children?.length === 1 && node.children[0]) {
-    return <ModuleTree node={node.children[0]} region={region} moduleWidth={moduleWidth} />;
+    return (
+      <ModuleTree
+        node={node.children[0]}
+        region={region}
+        moduleWidth={moduleWidth}
+        members={members}
+      />
+    );
   }
   if ((node.type === "SPLIT_V" || node.type === "SPLIT_H") && node.children?.length === 2) {
     const [first, second] = node.children;
@@ -196,64 +374,138 @@ function ModuleTree({
     if (Number.isFinite(offset) && offset > 0) {
       ratio = Math.min(Math.max(offset / basis, 0.1), 0.9);
     }
-    const divider = Math.max(Math.min(region.w, region.h) * 0.025, 10);
+    const mullion = node.type === "SPLIT_V" ? members.mullionV : members.mullionH;
+    const barW = mullion?.faceWidthMm ?? Math.max(Math.min(region.w, region.h) * 0.05, 20);
+    const axis =
+      node.type === "SPLIT_V" ? region.x + region.w * ratio : region.y + region.h * ratio;
     const firstRegion: Region =
       node.type === "SPLIT_V"
-        ? { x: region.x, y: region.y, w: region.w * ratio, h: region.h }
-        : { x: region.x, y: region.y, w: region.w, h: region.h * ratio };
+        ? { x: region.x, y: region.y, w: region.w * ratio - barW / 2, h: region.h }
+        : { x: region.x, y: region.y, w: region.w, h: region.h * ratio - barW / 2 };
     const secondRegion: Region =
       node.type === "SPLIT_V"
         ? {
-            x: region.x + region.w * ratio + divider,
+            x: axis + barW / 2,
             y: region.y,
-            w: region.w * (1 - ratio) - divider,
+            w: region.x + region.w - (axis + barW / 2),
             h: region.h,
           }
         : {
             x: region.x,
-            y: region.y + region.h * ratio + divider,
+            y: axis + barW / 2,
             w: region.w,
-            h: region.h * (1 - ratio) - divider,
+            h: region.y + region.h - (axis + barW / 2),
           };
     const bar: Region =
       node.type === "SPLIT_V"
-        ? { x: region.x + region.w * ratio, y: region.y, w: divider, h: region.h }
-        : { x: region.x, y: region.y + region.h * ratio, w: region.w, h: divider };
+        ? { x: axis - barW / 2, y: region.y, w: barW, h: region.h }
+        : { x: region.x, y: axis - barW / 2, w: region.w, h: barW };
     return (
       <>
-        <rect className="module-divider" x={bar.x} y={bar.y} width={bar.w} height={bar.h} />
-        <ModuleTree node={first!} region={firstRegion} moduleWidth={moduleWidth} />
-        <ModuleTree node={second!} region={secondRegion} moduleWidth={moduleWidth} />
+        <ModuleTree
+          node={first!}
+          region={firstRegion}
+          moduleWidth={moduleWidth}
+          members={members}
+        />
+        <Member
+          x={bar.x}
+          y={bar.y}
+          w={Math.max(bar.w, 0)}
+          h={Math.max(bar.h, 0)}
+          surface={memberSurface(mullion?.material ?? members.frame.material)}
+          className="member-mullion"
+        />
+        <ModuleTree
+          node={second!}
+          region={secondRegion}
+          moduleWidth={moduleWidth}
+          members={members}
+        />
       </>
     );
   }
+  return <Bay node={node} region={region} members={members} />;
+}
+
+const TOP_GUTTER = 150;
+const SIDE_GUTTER = 130;
+const BOTTOM_GUTTER = 120;
+const LEFT_GUTTER = 170;
+
+/** Architectural dimension run: extension lines from the measured edge out
+ * to the dim line (overshooting it slightly), diagonal ticks at each mark,
+ * mono labels placed by the caller between them. */
+function DimRun({
+  marks,
+  edge,
+  at,
+  vertical,
+}: {
+  /** axis positions (x for horizontal runs, y for vertical) of each measured edge */
+  marks: number[];
+  /** cross-axis coordinate where the measured edge sits (extensions start here) */
+  edge: number;
+  /** cross-axis coordinate of the dim line itself */
+  at: number;
+  vertical: boolean;
+}): JSX.Element {
+  const first = Math.min(...marks);
+  const last = Math.max(...marks);
+  const direction = at > edge ? 1 : -1;
+  const overshoot = at + direction * 14;
   return (
-    <g className="module-bay">
-      <rect
-        className="module-glass"
-        x={region.x}
-        y={region.y}
-        width={Math.max(region.w, 0)}
-        height={Math.max(region.h, 0)}
-      />
-      {region.w > 60 && region.h > 60 && (
-        <OpeningGlyph
-          opening={node.opening_type}
-          x={region.x}
-          y={region.y}
-          w={region.w}
-          h={region.h}
-        />
+    <g className="dim-run" aria-hidden="true">
+      {marks.map((mark, index) =>
+        vertical ? (
+          <line
+            key={`ext-${index}`}
+            className="dim-extension"
+            x1={edge}
+            y1={mark}
+            x2={overshoot}
+            y2={mark}
+          />
+        ) : (
+          <line
+            key={`ext-${index}`}
+            className="dim-extension"
+            x1={mark}
+            y1={edge}
+            x2={mark}
+            y2={overshoot}
+          />
+        ),
+      )}
+      {vertical ? (
+        <line className="dim-line" x1={at} y1={first} x2={at} y2={last} />
+      ) : (
+        <line className="dim-line" x1={first} y1={at} x2={last} y2={at} />
+      )}
+      {marks.map((mark, index) =>
+        vertical ? (
+          <line
+            key={`tick-${index}`}
+            className="dim-tick"
+            x1={at - 8}
+            y1={mark + 8}
+            x2={at + 8}
+            y2={mark - 8}
+          />
+        ) : (
+          <line
+            key={`tick-${index}`}
+            className="dim-tick"
+            x1={mark - 8}
+            y1={at + 8}
+            x2={mark + 8}
+            y2={at - 8}
+          />
+        ),
       )}
     </g>
   );
 }
-
-const FRAME = 40;
-const TOP_GUTTER = 150;
-const SIDE_GUTTER = 130;
-const BOTTOM_GUTTER = 110;
-const LEFT_GUTTER = 170;
 
 function AddHandle({
   x,
@@ -290,6 +542,7 @@ function AddHandle({
 
 export function ProductFrontSvg({
   product,
+  members,
   selectedId,
   issues,
   disabled,
@@ -300,6 +553,7 @@ export function ProductFrontSvg({
   onCommitHeight,
 }: {
   product: ProductJson;
+  members: MemberGeometry;
   selectedId: string | null;
   issues: ProductIssue[];
   disabled: boolean;
@@ -309,23 +563,25 @@ export function ProductFrontSvg({
   onCommitTotalWidth(totalMm: string): void;
   onCommitHeight(heightMm: string): void;
 }): JSX.Element {
-  const { modules } = product.assembly;
-  const totalW = modules.reduce((total, module) => total + Number(module.width_mm), 0);
+  const { modules, couplings } = product.assembly;
+  const frameT = members.frame.faceWidthMm;
+  const frameSurface = memberSurface(members.frame.material);
   const height = Math.max(...modules.map((module) => Number(module.height_mm)));
   const issueMap = severityByModule(issues);
-  const selectedModule = modules.find((module) => module.id === selectedId);
   const midY = height / 2;
+
+  // Layout: module frames abut directly; each joint draws the coupler member
+  // at its catalog face width centered on the boundary.
   let cursor = 0;
-  const rects = modules.map((module) => {
+  const rects = modules.map((module, index) => {
     const width = Number(module.width_mm);
     const rect = { module, x: cursor, w: width };
     cursor += width;
+    const coupling = couplings[index];
+    if (coupling) cursor += members.couplerFor(coupling.coupler_profile_sku)?.faceWidthMm ?? 60;
     return rect;
   });
-
-  function moduleX(moduleId: string): number {
-    return rects.find((rect) => rect.module.id === moduleId)?.x ?? 0;
-  }
+  const totalW = cursor;
 
   return (
     <svg
@@ -335,26 +591,47 @@ export function ProductFrontSvg({
       data-testid="product-front"
       aria-label={t("assembly.frontView")}
     >
+      {/* overall width chain */}
+      <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
       <SvgDim
         x={totalW / 2}
         y={-70}
         value={totalW.toFixed(2)}
-        unit=" mm"
         label={t("assembly.totalWidth")}
         disabled={disabled}
         onCommit={onCommitTotalWidth}
       />
-      <g transform={`rotate(-90 ${-140} ${midY})`}>
+      {/* height chain */}
+      <DimRun marks={[0, height]} edge={0} at={-110} vertical={true} />
+      <g transform={`rotate(-90 ${-110} ${midY})`}>
         <SvgDim
-          x={-140}
+          x={-110}
           y={midY}
           value={height.toFixed(2)}
-          unit=" mm"
           label={t("assembly.height")}
           disabled={disabled}
           onCommit={onCommitHeight}
         />
       </g>
+      {/* per-module width chain */}
+      <DimRun
+        marks={rects.flatMap(({ x, w }) => [x, x + w])}
+        edge={height}
+        at={height + 80}
+        vertical={false}
+      />
+      {rects.map(({ module, x, w }) => (
+        <SvgDim
+          key={`dim-${module.id}`}
+          x={x + w / 2}
+          y={height + 80}
+          value={w.toFixed(2)}
+          label={`${t("assembly.module")} ${module.id} ${t("assembly.width")}`}
+          active={module.id === selectedId}
+          disabled={disabled}
+          onCommit={(value) => onCommitModuleWidth(module.id, value)}
+        />
+      ))}
       <AddHandle
         x={-70}
         y={midY}
@@ -385,25 +662,41 @@ export function ProductFrontSvg({
             }
           }}
         >
-          <rect className="module-frame" x={x} y={0} width={w} height={height} />
+          <Member x={x} y={0} w={w} h={height} surface={frameSurface} className="member-frame" />
+          <rect
+            className="module-opening"
+            x={x + frameT}
+            y={frameT}
+            width={Math.max(w - frameT * 2, 0)}
+            height={Math.max(height - frameT * 2, 0)}
+          />
           <ModuleTree
             node={module.tree}
-            region={{ x: x + FRAME, y: FRAME, w: w - FRAME * 2, h: height - FRAME * 2 }}
+            region={{ x: x + frameT, y: frameT, w: w - frameT * 2, h: height - frameT * 2 }}
             moduleWidth={w}
+            members={members}
           />
         </g>
       ))}
-      {selectedModule && (
-        <SvgDim
-          x={moduleX(selectedModule.id) + Number(selectedModule.width_mm) / 2}
-          y={height + 70}
-          value={Number(selectedModule.width_mm).toFixed(2)}
-          unit=" mm"
-          label={`${t("assembly.module")} ${selectedModule.id} ${t("assembly.width")}`}
-          disabled={disabled}
-          onCommit={(value) => onCommitModuleWidth(selectedModule.id, value)}
-        />
-      )}
+      {couplings.map((coupling, index) => {
+        const prev = rects[index];
+        if (!prev) return null;
+        const width = members.couplerFor(coupling.coupler_profile_sku)?.faceWidthMm ?? 60;
+        const x = prev.x + prev.w;
+        return (
+          <Member
+            key={coupling.id}
+            x={x}
+            y={0}
+            w={width}
+            h={height}
+            surface={memberSurface(
+              members.couplerFor(coupling.coupler_profile_sku)?.material ?? members.frame.material,
+            )}
+            className="member-coupler"
+          />
+        );
+      })}
     </svg>
   );
 }

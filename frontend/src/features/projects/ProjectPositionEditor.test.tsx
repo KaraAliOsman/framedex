@@ -295,15 +295,34 @@ beforeEach(() => {
   vi.mocked(projectDesignOptions).mockResolvedValue(
     ok({
       profiles: [
-        { sku: "MULL-60", role: "MULLION_V" },
-        { sku: "MULL-H-60", role: "MULLION_H" },
+        {
+          sku: "MULL-60",
+          role: "MULLION_V",
+          name: "Mullión 60",
+          material: "PVC",
+          face_width_mm: "70.00",
+        },
+        {
+          sku: "MULL-H-60",
+          role: "MULLION_H",
+          name: "Travesaño 60",
+          material: "PVC",
+          face_width_mm: "70.00",
+        },
       ],
       glazing_thicknesses: ["24.00", "28.00"],
       glass_skus: ["GLASS-A", "GLASS-B"],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
       coupler_skus: ["ACOPLE-60"],
+      coupler_profiles: [
+        { sku: "ACOPLE-60", name: "Coplana 60", material: "PVC", face_width_mm: "90.00" },
+      ],
+      glazing_beads: [{ glass_thickness_mm: "24.00", bead_width_mm: "18.00", sku: "BEAD-24" }],
       panel_skus: [],
       colors: ["WHITE"],
+      rebate_depth_mm: "20.00",
+      sash_overlap_mm: "8.00",
+      depth_mm: "60.00",
     }),
   );
   evaluate.mockResolvedValue(ok(assemblyEval()));
@@ -429,8 +448,13 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
       hardware_kits: [],
       glass_skus: ["GLASS-A"],
       coupler_skus: [],
+      coupler_profiles: [],
+      glazing_beads: [],
       panel_skus: [],
       colors: ["WHITE"],
+      rebate_depth_mm: "20.00",
+      sash_overlap_mm: "8.00",
+      depth_mm: "60.00",
     }),
   );
   mount("/projects/project-a/positions/new");

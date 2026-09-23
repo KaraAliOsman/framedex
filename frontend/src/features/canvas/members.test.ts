@@ -1,0 +1,61 @@
+import { expect, it } from "vitest";
+
+import type { DesignOptions } from "../../api/generated/models";
+import { resolveMembers } from "./members";
+
+const CATALOG: DesignOptions = {
+  profiles: [
+    { sku: "FRAME-70", role: "FRAME", name: "Marco 70", material: "PVC", face_width_mm: "70.00" },
+    { sku: "SASH-80", role: "SASH", name: "Hoja 80", material: "PVC", face_width_mm: "80.00" },
+    { sku: "MULL-70", role: "MULLION_V", name: "Mullión", material: "PVC", face_width_mm: "70.00" },
+    {
+      sku: "THR-30",
+      role: "THRESHOLD",
+      name: "Umbral",
+      material: "ALUMINIUM",
+      face_width_mm: "30.00",
+    },
+  ],
+  glazing_thicknesses: ["24.00", "28.00"],
+  hardware_kits: [],
+  glass_skus: [],
+  coupler_skus: ["CPL-90"],
+  coupler_profiles: [{ sku: "CPL-90", name: "Coplana", material: "PVC", face_width_mm: "90.00" }],
+  glazing_beads: [
+    { glass_thickness_mm: "24.00", bead_width_mm: "18.00", sku: "BEAD-24" },
+    { glass_thickness_mm: "28.00", bead_width_mm: "15.00", sku: "BEAD-28" },
+  ],
+  panel_skus: [],
+  colors: ["WHITE"],
+  rebate_depth_mm: "20.00",
+  sash_overlap_mm: "8.00",
+  depth_mm: "70.00",
+};
+
+it("resolves member face widths and materials from the catalog", () => {
+  const members = resolveMembers(CATALOG);
+  expect(members.frame.faceWidthMm).toBe(70);
+  expect(members.sash.faceWidthMm).toBe(80);
+  expect(members.mullionV?.faceWidthMm).toBe(70);
+  expect(members.mullionH).toBeNull(); // no H mullion article in this catalog
+  expect(members.threshold?.material).toBe("ALUMINIUM");
+  expect(members.beadFor("28.00")).toBe(15);
+  expect(members.couplerFor("CPL-90")?.faceWidthMm).toBe(90);
+  expect(members.rebateMm).toBe(20);
+  expect(members.sashOverlapMm).toBe(8);
+});
+
+it("falls back to drawing conventions when options are missing", () => {
+  const members = resolveMembers(undefined);
+  expect(members.frame.faceWidthMm).toBeGreaterThan(0);
+  expect(members.sash.faceWidthMm).toBeGreaterThan(0);
+  expect(members.mullionV).toBeNull();
+  expect(members.beadFor(null)).toBeGreaterThan(0);
+  expect(members.couplerFor("CPL-90")).toBeNull();
+});
+
+it("falls back to the first coupler/bead when the key is absent", () => {
+  const members = resolveMembers(CATALOG);
+  expect(members.couplerFor(null)?.sku).toBe("CPL-90");
+  expect(members.beadFor("999.00")).toBe(18);
+});

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import "./canvas.css";
 
@@ -10,6 +10,7 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
 import { BowPlanSvg } from "./BowPlanSvg";
+import { resolveMembers } from "./members";
 import { ProductFrontSvg, OpeningGlyph } from "./ProductFrontSvg";
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { SplitType } from "./intentEditing";
@@ -399,6 +400,7 @@ export function AssemblyEditor({
   const product = inputs.product;
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
+  const members = useMemo(() => resolveMembers(options), [options]);
 
   useEffect(() => {
     onEvaluationChange(evaluation);
@@ -454,6 +456,7 @@ export function AssemblyEditor({
       <div className="assembly-canvas">
         <ProductFrontSvg
           product={product}
+          members={members}
           selectedId={selectedModule?.id ?? null}
           issues={issues}
           disabled={busy}
@@ -478,6 +481,7 @@ export function AssemblyEditor({
             <BowPlanSvg
               plan={evaluation.plan}
               couplings={couplings}
+              members={members}
               selectedModuleId={selectedModule?.id ?? null}
               selectedCouplingId={selectedCoupling?.id ?? null}
               issues={issues}

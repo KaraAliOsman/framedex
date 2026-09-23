@@ -13,6 +13,22 @@ from projects.views import READ_ROLES, SCHEMA, response
 class ProfileChoiceSerializer(serializers.Serializer):
     sku = serializers.CharField()
     role = serializers.CharField()
+    name = serializers.CharField()
+    material = serializers.CharField()
+    face_width_mm = serializers.CharField()
+
+
+class CouplerChoiceSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    material = serializers.CharField()
+    face_width_mm = serializers.CharField()
+
+
+class GlazingBeadChoiceSerializer(serializers.Serializer):
+    glass_thickness_mm = serializers.CharField()
+    bead_width_mm = serializers.CharField()
+    sku = serializers.CharField()
 
 
 class KitChoiceSerializer(serializers.Serializer):
@@ -28,7 +44,12 @@ class DesignOptionsSerializer(serializers.Serializer):
     glass_skus = serializers.ListField(child=serializers.CharField())
     colors = serializers.ListField(child=serializers.CharField())
     coupler_skus = serializers.ListField(child=serializers.CharField())
+    coupler_profiles = CouplerChoiceSerializer(many=True)
+    glazing_beads = GlazingBeadChoiceSerializer(many=True)
     panel_skus = serializers.ListField(child=serializers.CharField())
+    rebate_depth_mm = serializers.CharField()
+    sash_overlap_mm = serializers.CharField()
+    depth_mm = serializers.CharField()
 
 
 class DesignOptionsView(APIView):
@@ -49,7 +70,13 @@ class DesignOptionsView(APIView):
             return response(
                 {
                     "profiles": [
-                        {"sku": item.sku, "role": item.role.value}
+                        {
+                            "sku": item.sku,
+                            "role": item.role.value,
+                            "name": item.name,
+                            "material": item.material.value,
+                            "face_width_mm": str(item.face_width_mm),
+                        }
                         for item in params.effective_profile_articles.values()
                     ],
                     "glazing_thicknesses": [
@@ -64,6 +91,29 @@ class DesignOptionsView(APIView):
                     "coupler_skus": sorted(
                         repository.load_coupler_articles(system_id, org)
                     ),
+                    "coupler_profiles": [
+                        {
+                            "sku": item.sku,
+                            "name": item.name,
+                            "material": item.material.value,
+                            "face_width_mm": str(item.face_width_mm),
+                        }
+                        for item in sorted(
+                            repository.load_coupler_articles(system_id, org).values(),
+                            key=lambda article: article.sku,
+                        )
+                    ],
+                    "glazing_beads": [
+                        {
+                            "glass_thickness_mm": str(thickness),
+                            "bead_width_mm": str(rule.bead_width_mm),
+                            "sku": rule.bead_article.sku,
+                        }
+                        for thickness, rule in sorted(params.glazing_bead_rules.items())
+                    ],
                     "panel_skus": sorted(params.available_panel_rules),
+                    "rebate_depth_mm": str(params.rebate_depth_mm),
+                    "sash_overlap_mm": str(params.sash_overlap_mm),
+                    "depth_mm": str(params.depth_mm),
                 }
             )

@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 
 import type { PlanGeometry, PlanPoint, ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import { memberSurface } from "./materials";
+import type { MemberGeometry } from "./members";
 import type { CouplingJson } from "./productEditing";
 
 type BowPlanSvgProps = {
   plan: PlanGeometry;
   couplings: CouplingJson[];
+  members: MemberGeometry;
   selectedModuleId: string | null;
   selectedCouplingId: string | null;
   issues: ProductIssue[];
@@ -127,6 +130,7 @@ function JointAngle({
 export function BowPlanSvg({
   plan,
   couplings,
+  members,
   selectedModuleId,
   selectedCouplingId,
   issues,
@@ -161,6 +165,7 @@ export function BowPlanSvg({
           className={
             module.module_id === selectedModuleId ? "plan-module is-selected" : "plan-module"
           }
+          style={{ fill: memberSurface(members.frame.material).fill }}
           points={polygonPoints(module.corners)}
           role="button"
           aria-label={`${t("assembly.module")} ${module.module_id}`}
@@ -178,12 +183,16 @@ export function BowPlanSvg({
         const spec = couplings.find((item) => item.id === coupling.coupling_id);
         const flagged = flaggedCouplings.has(coupling.coupling_id);
         const [cx, cy] = centroid(coupling.polygon);
+        const surface = memberSurface(
+          members.couplerFor(spec?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
+        );
         return (
           <g key={coupling.coupling_id}>
             <polygon
               className={`plan-coupling${
                 coupling.coupling_id === selectedCouplingId ? " is-selected" : ""
               }${flagged ? " has-issue" : ""}`}
+              style={{ fill: surface.fill }}
               points={polygonPoints(coupling.polygon)}
               stroke="transparent"
               strokeWidth={fontSize * 1.4}

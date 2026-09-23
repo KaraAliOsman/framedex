@@ -5,6 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CouplerChoice } from "./couplerChoice";
+import type { GlazingBeadChoice } from "./glazingBeadChoice";
 import type { KitChoice } from "./kitChoice";
 import type { ProfileChoice } from "./profileChoice";
 
@@ -15,5 +17,10 @@ export interface DesignOptions {
   glass_skus: string[];
   colors: string[];
   coupler_skus: string[];
+  coupler_profiles: CouplerChoice[];
+  glazing_beads: GlazingBeadChoice[];
   panel_skus: string[];
+  rebate_depth_mm: string;
+  sash_overlap_mm: string;
+  depth_mm: string;
 }

@@ -6,9 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProfileChoice {
+export interface CouplerChoice {
   sku: string;
-  role: string;
   name: string;
   material: string;
   face_width_mm: string;

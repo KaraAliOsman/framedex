@@ -5723,6 +5723,22 @@ components:
           format: uuid
       required:
       - operation_id
+    CouplerChoice:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        material:
+          type: string
+        face_width_mm:
+          type: string
+      required:
+      - face_width_mm
+      - material
+      - name
+      - sku
     CoverageEnum:
       enum:
       - DECLARED
@@ -5913,18 +5929,37 @@ components:
           type: array
           items:
             type: string
+        coupler_profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CouplerChoice'
+        glazing_beads:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlazingBeadChoice'
         panel_skus:
           type: array
           items:
             type: string
+        rebate_depth_mm:
+          type: string
+        sash_overlap_mm:
+          type: string
+        depth_mm:
+          type: string
       required:
       - colors
+      - coupler_profiles
       - coupler_skus
+      - depth_mm
       - glass_skus
+      - glazing_beads
       - glazing_thicknesses
       - hardware_kits
       - panel_skus
       - profiles
+      - rebate_depth_mm
+      - sash_overlap_mm
     DiffPreconditions:
       type: object
       properties:
@@ -6793,6 +6828,19 @@ components:
       required:
       - bay_id
       - edges
+    GlazingBeadChoice:
+      type: object
+      properties:
+        glass_thickness_mm:
+          type: string
+        bead_width_mm:
+          type: string
+        sku:
+          type: string
+      required:
+      - bead_width_mm
+      - glass_thickness_mm
+      - sku
     HandleIntent:
       type: object
       properties:
@@ -8327,7 +8375,16 @@ components:
           type: string
         role:
           type: string
+        name:
+          type: string
+        material:
+          type: string
+        face_width_mm:
+          type: string
       required:
+      - face_width_mm
+      - material
+      - name
       - role
       - sku
     ProfileCut:
