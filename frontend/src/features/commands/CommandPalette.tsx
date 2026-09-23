@@ -45,6 +45,7 @@ export function CommandPalette({
     paramIndex: number;
     args: Record<string, string>;
   } | null>(null);
+  const [invalidParam, setInvalidParam] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const surface = useCommandSurface();
 
@@ -85,6 +86,9 @@ export function CommandPalette({
         run: () => {
           if (command.params?.length) {
             setPending({ command, paramIndex: 0, args: {} });
+            setQuery("");
+            setCursor(0);
+            setInvalidParam(false);
           } else {
             command.run({});
             close();
@@ -112,6 +116,11 @@ export function CommandPalette({
     ? pending.command.params?.[pending.paramIndex]
     : undefined;
 
+  const filteredOptions: { value: string; label: string }[] =
+    pending && currentParam?.kind === "choice"
+      ? currentParam.options.filter((option) => matches(query, option.label, [option.value]))
+      : [];
+
   function advanceParam(value: string): void {
     if (!pending || !currentParam) return;
     const args = { ...pending.args, [currentParam.id]: value };
@@ -120,6 +129,7 @@ export function CommandPalette({
       setPending({ command: pending.command, paramIndex: nextIndex, args });
       setQuery("");
       setCursor(0);
+      setInvalidParam(false);
     } else {
       pending.command.run(args);
       close();
@@ -129,15 +139,27 @@ export function CommandPalette({
   function onInputKeyDown(event: React.KeyboardEvent): void {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setCursor((value) => Math.min(value + 1, items.length - 1));
+      const limit = pending ? filteredOptions.length - 1 : items.length - 1;
+      setCursor((value) => Math.min(value + 1, Math.max(limit, 0)));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setCursor((value) => Math.max(value - 1, 0));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      if (pending && currentParam?.kind === "number") {
-        const value = (event.target as HTMLInputElement).value.trim();
-        if (value) advanceParam(value);
+      if (pending && currentParam) {
+        if (currentParam.kind === "number") {
+          const raw = (event.target as HTMLInputElement).value.trim();
+          if (!raw) return;
+          const value = currentParam.validate ? currentParam.validate(raw) : raw;
+          if (value === null) {
+            setInvalidParam(true);
+            return;
+          }
+          advanceParam(value);
+        } else {
+          const option = filteredOptions[Math.min(cursor, filteredOptions.length - 1)];
+          if (option) advanceParam(option.value);
+        }
         return;
       }
       const item = items[Math.min(cursor, items.length - 1)];
@@ -165,9 +187,11 @@ export function CommandPalette({
             value={query}
             placeholder={pending && currentParam ? currentParam.label : t("cmd.placeholder")}
             aria-label={pending && currentParam ? currentParam.label : t("cmd.placeholder")}
+            aria-invalid={invalidParam || undefined}
             onChange={(event) => {
               setQuery(event.target.value);
               setCursor(0);
+              setInvalidParam(false);
             }}
             onKeyDown={onInputKeyDown}
           />
@@ -176,22 +200,20 @@ export function CommandPalette({
         {pending && currentParam ? (
           <ul className="command-palette-list" role="listbox">
             {currentParam.kind === "choice" ? (
-              currentParam.options
-                .filter((option) => matches(query, option.label, [option.value]))
-                .map((option, index) => (
-                  <li key={option.value}>
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={index === cursor}
-                      className={`command-palette-item${index === cursor ? " active" : ""}`}
-                      onMouseEnter={() => setCursor(index)}
-                      onClick={() => advanceParam(option.value)}
-                    >
-                      {option.label}
-                    </button>
-                  </li>
-                ))
+              filteredOptions.map((option, index) => (
+                <li key={option.value}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={index === cursor}
+                    className={`command-palette-item${index === cursor ? " active" : ""}`}
+                    onMouseEnter={() => setCursor(index)}
+                    onClick={() => advanceParam(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                </li>
+              ))
             ) : (
               <li className="command-palette-hint">
                 {currentParam.unit
@@ -200,9 +222,14 @@ export function CommandPalette({
                 {currentParam.defaultValue ? ` · ${currentParam.defaultValue}` : ""}
               </li>
             )}
-            {currentParam.kind === "choice" &&
-              currentParam.options.filter((option) => matches(query, option.label, [option.value]))
-                .length === 0 && <li className="command-palette-hint">{t("cmd.noResults")}</li>}
+            {currentParam.kind === "choice" && filteredOptions.length === 0 && (
+              <li className="command-palette-hint">{t("cmd.noResults")}</li>
+            )}
+            {invalidParam && (
+              <li className="command-palette-hint command-palette-invalid">
+                {t("cmd.invalidValue")}
+              </li>
+            )}
           </ul>
         ) : (
           <>

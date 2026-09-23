@@ -781,6 +781,7 @@ const messages = {
   "cmd.needsParams": "pide datos",
   "cmd.goTo": "Ir a",
   "cmd.noResults": "Sin resultados",
+  "cmd.invalidValue": "Valor inválido",
   "cmd.addUnitRight": "Agregar unidad a la derecha",
   "cmd.addUnitLeft": "Agregar unidad a la izquierda",
   "cmd.removeUnit": "Eliminar unidad seleccionada",

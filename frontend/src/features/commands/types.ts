@@ -10,6 +10,9 @@ export type CommandParam =
       label: string;
       unit?: string;
       defaultValue?: string;
+      /** Normalize or reject the typed value (returns the committed string or
+       * null to keep the parameter step open with an invalid hint). */
+      validate?(raw: string): string | null;
     }
   | {
       kind: "choice";

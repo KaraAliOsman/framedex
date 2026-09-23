@@ -404,7 +404,7 @@ export function AssemblyEditor({
 
   const surface = useMemo(
     () =>
-      product
+      product && !disabled
         ? {
             commands: assemblyCommands({
               product,
@@ -418,7 +418,17 @@ export function AssemblyEditor({
           }
         : null,
     // `commit` is re-declared per render and always sees the deps below.
-    [product, selection, select, commitInputs, onChanged, options, glassSkus, couplerSkus],
+    [
+      product,
+      disabled,
+      selection,
+      select,
+      commitInputs,
+      onChanged,
+      options,
+      glassSkus,
+      couplerSkus,
+    ],
   );
   useRegisterCommands(surface);
 

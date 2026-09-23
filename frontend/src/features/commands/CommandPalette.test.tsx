@@ -115,6 +115,83 @@ it("collects a choice parameter through the option list", () => {
   expect(run).toHaveBeenCalledWith({ opening: "TURN_LEFT" });
 });
 
+it("keeps a rejected number entry open and submits the normalized value", () => {
+  const run = vi.fn();
+  render(
+    <Harness
+      commands={[
+        {
+          id: "x.width",
+          title: "Definir ancho",
+          params: [
+            {
+              kind: "number",
+              id: "width",
+              label: "Ancho",
+              validate: (raw) => {
+                const value = Number(raw);
+                return Number.isFinite(value) && value > 0 ? value.toFixed(2) : null;
+              },
+            },
+          ],
+          run,
+        },
+      ]}
+    />,
+  );
+  openPalette();
+  fireEvent.click(screen.getByRole("option", { name: /Definir ancho/ }));
+  const input = screen.getByPlaceholderText("Ancho");
+
+  // Invalid input keeps the step open and runs nothing.
+  fireEvent.change(input, { target: { value: "abc" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(run).not.toHaveBeenCalled();
+  expect(screen.getByText(t("cmd.invalidValue"))).toBeTruthy();
+
+  // A valid entry runs with the normalized string and closes.
+  fireEvent.change(input, { target: { value: "750" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(run).toHaveBeenCalledWith({ width: "750.00" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+it("Enter selects the highlighted choice option, not a top-level item", () => {
+  const run = vi.fn();
+  const navSpy = vi.fn();
+  render(
+    <Harness
+      commands={[
+        { id: "x.decoy", title: "Añadir unidad", run: vi.fn() },
+        {
+          id: "x.opening",
+          title: "Cambiar apertura",
+          params: [
+            {
+              kind: "choice",
+              id: "opening",
+              label: "Apertura",
+              options: [
+                { value: "FIXED", label: "Fijo" },
+                { value: "TURN_LEFT", label: "Abatible izquierda" },
+              ],
+            },
+          ],
+          run,
+        },
+      ]}
+    />,
+  );
+  void navSpy;
+  openPalette();
+  fireEvent.click(screen.getByRole("option", { name: /Cambiar apertura/ }));
+  const input = screen.getByPlaceholderText("Apertura");
+  fireEvent.keyDown(input, { key: "ArrowDown" });
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(run).toHaveBeenCalledWith({ opening: "TURN_LEFT" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
 it("closes on Escape and arrows move the cursor", () => {
   render(<Harness commands={[{ id: "x.a", title: "Primero", run: vi.fn() }]} />);
   openPalette();

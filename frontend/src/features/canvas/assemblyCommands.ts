@@ -20,6 +20,20 @@ import {
   type ProductJson,
 } from "./productEditing";
 
+/** Same presentation rules as the canvas DraftFields: positive dimensions
+ * commit at 0.01mm, joint angles stay strictly inside ±90° at 0.1°. */
+function normalizeMm(raw: string): string | null {
+  const value = Number(raw.replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return value.toFixed(2);
+}
+
+function normalizeAngle(raw: string): string | null {
+  const value = Number(raw.replace(",", "."));
+  if (!Number.isFinite(value) || Math.abs(value) >= 90) return null;
+  return value.toFixed(1);
+}
+
 /** Editor commands for the Ctrl+K palette. Every definition captures the live
  * product/selection/commit; `available` is folded into the list itself — the
  * caller rebuilds it whenever those inputs change, so the palette only lists
@@ -92,6 +106,7 @@ export function assemblyCommands({
           label: t("cmd.heightLabel"),
           unit: "mm",
           defaultValue: modules[0]?.height_mm,
+          validate: normalizeMm,
         },
       ],
       run: (args) => commit(setAllModuleHeights(product, args.height ?? "")),
@@ -119,6 +134,7 @@ export function assemblyCommands({
             label: t("cmd.widthLabel"),
             unit: "mm",
             defaultValue: selectedModule.width_mm,
+            validate: normalizeMm,
           },
         ],
         run: (args) => commit(setModuleWidth(product, selectedModule.id, args.width ?? "")),
@@ -202,6 +218,7 @@ export function assemblyCommands({
             label: t("cmd.angleLabel"),
             unit: "°",
             defaultValue: selectedCoupling.angle_deg,
+            validate: normalizeAngle,
           },
         ],
         describe: (args) =>
