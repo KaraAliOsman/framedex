@@ -217,6 +217,7 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                     WHERE org_id = %s AND project_version_id = %s
                       AND order_type = 'WORKSHOP_OT'
                       AND payload_json->>'position_id' = %s
+                      AND NOT (payload_json ? 'remake_of')
                     """,
                     [str(org_id), str(version_id), payload["position_id"]],
                     "work_order_not_found",
@@ -573,7 +574,10 @@ def create_remake(
             [str(org_id), str(source["id"])],
             "remake_count_unknown",
         )
-        order_code = f"{source['order_code']}-RM-{int(prior['n']) + 1:02d}"[:50]
+        # Truncate the source portion, not the suffix — the -RM-nn counter is
+        # what distinguishes remakes under the org-unique order_code.
+        suffix = f"-RM-{int(prior['n']) + 1:02d}"
+        order_code = f"{str(source['order_code'])[: 50 - len(suffix)]}{suffix}"
         remake = one(
             """
             INSERT INTO public.orders(
