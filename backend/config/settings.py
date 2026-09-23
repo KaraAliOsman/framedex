@@ -144,6 +144,7 @@ SPECTACULAR_SETTINGS = {
             "AWNING", "DOOR_ENTRY", "FIXED", "SLIDING_2L",
             "TILT_TURN_LEFT", "TILT_TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT",
         ],
+        "SiiEnvioStatusEnum": ["PENDING", "ACCEPTED", "REJECTED"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",

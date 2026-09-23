@@ -27,6 +27,8 @@ from projects.views import (
     PositionDesignAssistView,
     PositionView,
     SiiCafsView,
+    SiiCertificateView,
+    ProjectInvoiceDteEnvioView,
 )
 from projects.options import DesignOptionsView
 
@@ -65,6 +67,11 @@ urlpatterns = [
         ProjectInvoiceDteView.as_view(),
     ),
     path("sii/cafs/", SiiCafsView.as_view()),
+    path("sii/certificate/", SiiCertificateView.as_view()),
+    path(
+        "projects/<uuid:project_id>/invoices/<uuid:invoice_id>/dte-envio/",
+        ProjectInvoiceDteEnvioView.as_view(),
+    ),
     path(
         "projects/<uuid:project_id>/credit-notes/<uuid:credit_note_id>/",
         ProjectCreditNoteAccessView.as_view(),
