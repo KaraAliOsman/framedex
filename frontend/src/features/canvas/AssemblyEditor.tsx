@@ -9,9 +9,17 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
-import { BowPlanSvg } from "./BowPlanSvg";
+import { BowPlanContent, planBounds } from "./BowPlanSvg";
+import { CanvasViewport } from "./CanvasViewport";
 import { resolveMembers } from "./members";
-import { ProductFrontSvg, OpeningGlyph } from "./ProductFrontSvg";
+import {
+  frontBounds,
+  frontLayout,
+  frontModuleBox,
+  OpeningGlyph,
+  ProductFrontContent,
+} from "./ProductFrontSvg";
+import { unionBox } from "./viewport";
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { SplitType } from "./intentEditing";
 import {
@@ -423,6 +431,30 @@ export function AssemblyEditor({
     SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
   };
 
+  // One drawing sheet: front elevation on top, plan below it centered,
+  // sharing a single pan/zoom space so both views stay aligned.
+  const PLAN_GAP = 160;
+  const front = frontLayout(product);
+  const frontBox = frontBounds(product);
+  const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
+  const planOffset = planBox
+    ? {
+        x: frontBox.x + (frontBox.w - planBox.w) / 2 - planBox.x,
+        y: frontBox.y + frontBox.h + PLAN_GAP - planBox.y,
+      }
+    : null;
+  const sheetBox =
+    planBox && planOffset
+      ? unionBox(frontBox, {
+          x: planBox.x + planOffset.x,
+          y: planBox.y + planOffset.y,
+          w: planBox.w,
+          h: planBox.h,
+        })
+      : frontBox;
+  const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
+  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm${selection ? ` · ${selection}` : ""}`;
+
   return (
     <div className="assembly-editor" aria-label={t("assembly.frontView")}>
       <div className="assembly-toolbar" role="toolbar">
@@ -454,46 +486,47 @@ export function AssemblyEditor({
         </span>
       </div>
       <div className="assembly-canvas">
-        <ProductFrontSvg
-          product={product}
-          members={members}
-          selectedId={selectedModule?.id ?? null}
-          issues={issues}
-          disabled={busy}
-          onSelectModule={select}
-          onAddUnit={(side) => {
-            const next = addAdjacentUnit(product, side);
-            commit(next);
-            select(
-              next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ??
-                null,
-            );
-          }}
-          onCommitModuleWidth={(moduleId, widthMm) =>
-            commit(setModuleWidth(product, moduleId, widthMm))
-          }
-          onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
-          onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
-        />
-        {couplings.length > 0 && evaluation?.plan && (
-          <figure className="assembly-plan">
-            <figcaption>{t("assembly.planView")}</figcaption>
-            <BowPlanSvg
-              plan={evaluation.plan}
-              couplings={couplings}
-              members={members}
-              selectedModuleId={selectedModule?.id ?? null}
-              selectedCouplingId={selectedCoupling?.id ?? null}
-              issues={issues}
-              disabled={busy}
-              onSelectModule={select}
-              onSelectCoupling={select}
-              onCommitAngle={(couplingId, angleDeg) =>
-                commit(setCouplingAngle(product, couplingId, angleDeg))
-              }
-            />
-          </figure>
-        )}
+        <CanvasViewport contentBox={sheetBox} selectionBox={selectionBox} status={statusText}>
+          <ProductFrontContent
+            product={product}
+            members={members}
+            selectedId={selectedModule?.id ?? null}
+            issues={issues}
+            disabled={busy}
+            onSelectModule={select}
+            onAddUnit={(side) => {
+              const next = addAdjacentUnit(product, side);
+              commit(next);
+              select(
+                next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ??
+                  null,
+              );
+            }}
+            onCommitModuleWidth={(moduleId, widthMm) =>
+              commit(setModuleWidth(product, moduleId, widthMm))
+            }
+            onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
+            onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
+          />
+          {couplings.length > 0 && evaluation?.plan && planOffset && (
+            <g transform={`translate(${planOffset.x} ${planOffset.y})`}>
+              <BowPlanContent
+                plan={evaluation.plan}
+                couplings={couplings}
+                members={members}
+                selectedModuleId={selectedModule?.id ?? null}
+                selectedCouplingId={selectedCoupling?.id ?? null}
+                issues={issues}
+                disabled={busy}
+                onSelectModule={select}
+                onSelectCoupling={select}
+                onCommitAngle={(couplingId, angleDeg) =>
+                  commit(setCouplingAngle(product, couplingId, angleDeg))
+                }
+              />
+            </g>
+          )}
+        </CanvasViewport>
       </div>
       <div className="assembly-side">
         {selectedModule ? (

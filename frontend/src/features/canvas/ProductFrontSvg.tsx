@@ -225,9 +225,71 @@ function Bay({
   members: MemberGeometry;
 }): JSX.Element {
   const opening = node.opening_type ?? "FIXED";
-  const isDoor = opening === "DOOR_ENTRY";
-  const operable = opening !== "FIXED" && opening !== "SLIDING_2L";
   const bead = members.beadFor(node.glass_thickness_mm ?? null);
+  const sashSurface = memberSurface(members.sash.material);
+
+  // Two-track slider: two sash leaves with their meeting-stile interlock —
+  // the rear leaf draws first, the front leaf covers the overlap.
+  if (opening === "SLIDING_2L") {
+    const interlock = members.sash.faceWidthMm;
+    const leafW = (region.w + interlock) / 2;
+    const leaves: Region[] = [
+      { x: region.x, y: region.y, w: leafW, h: region.h },
+      { x: region.x + region.w - leafW, y: region.y, w: leafW, h: region.h },
+    ];
+    return (
+      <g className="module-bay module-bay--sliding">
+        {leaves.map((leaf, index) => {
+          const leafSashT = members.sash.faceWidthMm;
+          const beadX = leaf.x + leafSashT;
+          const beadY = leaf.y + leafSashT;
+          const beadW = leaf.w - leafSashT * 2;
+          const beadH = leaf.h - leafSashT * 2;
+          return (
+            <g
+              key={`leaf-${index}`}
+              className={`sliding-leaf sliding-leaf--${index === 0 ? "rear" : "front"}`}
+            >
+              <Member
+                x={leaf.x}
+                y={leaf.y}
+                w={leaf.w}
+                h={leaf.h}
+                surface={sashSurface}
+                className="member-sash"
+              />
+              <rect
+                className="member-bead"
+                x={beadX}
+                y={beadY}
+                width={Math.max(beadW, 0)}
+                height={Math.max(beadH, 0)}
+              />
+              <rect
+                className="module-glass"
+                x={beadX + bead}
+                y={beadY + bead}
+                width={Math.max(beadW - bead * 2, 0)}
+                height={Math.max(beadH - bead * 2, 0)}
+              />
+            </g>
+          );
+        })}
+        {region.w > 60 && region.h > 60 && (
+          <OpeningGlyph
+            opening={node.opening_type}
+            x={region.x}
+            y={region.y}
+            w={region.w}
+            h={region.h}
+          />
+        )}
+      </g>
+    );
+  }
+
+  const isDoor = opening === "DOOR_ENTRY";
+  const operable = opening !== "FIXED";
   const reveal = 3;
 
   const thresholdH = isDoor ? (members.threshold?.faceWidthMm ?? 30) : 0;
@@ -256,7 +318,6 @@ function Bay({
   const pane: Region = operable
     ? { x: glass.x + bead, y: glass.y + bead, w: glass.w - bead * 2, h: glass.h - bead * 2 }
     : glass;
-  const sashSurface = memberSurface(members.sash.material);
   const isPanel = Boolean(node.panel_article_sku);
   const handleSide = opening.includes("LEFT")
     ? "right"
@@ -540,7 +601,58 @@ function AddHandle({
   );
 }
 
-export function ProductFrontSvg({
+export interface FrontModuleRect {
+  module: ProductJson["assembly"]["modules"][number];
+  x: number;
+  w: number;
+}
+
+export interface FrontLayout {
+  rects: FrontModuleRect[];
+  totalW: number;
+  height: number;
+}
+
+/** Module frame rectangles: frames abut and the drawn width stays the
+ * domain's nominal Σ-module width (couplers overlay their joint instead of
+ * widening the elevation). */
+export function frontLayout(product: ProductJson): FrontLayout {
+  const { modules } = product.assembly;
+  let cursor = 0;
+  const rects = modules.map((module) => {
+    const width = Number(module.width_mm);
+    const rect = { module, x: cursor, w: width };
+    cursor += width;
+    return rect;
+  });
+  return {
+    rects,
+    totalW: cursor,
+    height: Math.max(...modules.map((module) => Number(module.height_mm))),
+  };
+}
+
+/** The drawable extent of the front elevation including gutters and chains. */
+export function frontBounds(product: ProductJson) {
+  const { totalW, height } = frontLayout(product);
+  return {
+    x: -LEFT_GUTTER,
+    y: -TOP_GUTTER,
+    w: totalW + LEFT_GUTTER + SIDE_GUTTER,
+    h: height + TOP_GUTTER + BOTTOM_GUTTER,
+  };
+}
+
+/** Sheet-space box of a module's frame — the Shift+2 / zoom-to-selection target. */
+export function frontModuleBox(product: ProductJson, moduleId: string | null) {
+  if (!moduleId) return null;
+  const rect = frontLayout(product).rects.find((item) => item.module.id === moduleId);
+  if (!rect) return null;
+  const height = frontLayout(product).height;
+  return { x: rect.x - 30, y: -60, w: rect.w + 60, h: height + 150 };
+}
+
+export function ProductFrontContent({
   product,
   members,
   selectedId,
@@ -563,34 +675,15 @@ export function ProductFrontSvg({
   onCommitTotalWidth(totalMm: string): void;
   onCommitHeight(heightMm: string): void;
 }): JSX.Element {
-  const { modules, couplings } = product.assembly;
+  const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
   const frameSurface = memberSurface(members.frame.material);
-  const height = Math.max(...modules.map((module) => Number(module.height_mm)));
+  const { rects, totalW, height } = frontLayout(product);
   const issueMap = severityByModule(issues);
   const midY = height / 2;
 
-  // Layout: module frames abut directly; each joint draws the coupler member
-  // at its catalog face width centered on the boundary.
-  let cursor = 0;
-  const rects = modules.map((module, index) => {
-    const width = Number(module.width_mm);
-    const rect = { module, x: cursor, w: width };
-    cursor += width;
-    const coupling = couplings[index];
-    if (coupling) cursor += members.couplerFor(coupling.coupler_profile_sku)?.faceWidthMm ?? 60;
-    return rect;
-  });
-  const totalW = cursor;
-
   return (
-    <svg
-      className="product-front-svg"
-      viewBox={`${-LEFT_GUTTER} ${-TOP_GUTTER} ${totalW + LEFT_GUTTER + SIDE_GUTTER} ${height + TOP_GUTTER + BOTTOM_GUTTER}`}
-      role="img"
-      data-testid="product-front"
-      aria-label={t("assembly.frontView")}
-    >
+    <g className="product-front-svg" data-testid="product-front">
       {/* overall width chain */}
       <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
       <SvgDim
@@ -682,7 +775,7 @@ export function ProductFrontSvg({
         const prev = rects[index];
         if (!prev) return null;
         const width = members.couplerFor(coupling.coupler_profile_sku)?.faceWidthMm ?? 60;
-        const x = prev.x + prev.w;
+        const x = prev.x + prev.w - width / 2;
         return (
           <Member
             key={coupling.id}
@@ -697,6 +790,23 @@ export function ProductFrontSvg({
           />
         );
       })}
+    </g>
+  );
+}
+
+/** Standalone front elevation with its own viewBox — the sheet viewer
+ * (CanvasViewport) renders `ProductFrontContent` inside its own transform
+ * instead; this wrapper stays for any consumer that just wants an SVG. */
+export function ProductFrontSvg(props: Parameters<typeof ProductFrontContent>[0]): JSX.Element {
+  const bounds = frontBounds(props.product);
+  return (
+    <svg
+      className="product-front-svg"
+      viewBox={`${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}`}
+      role="img"
+      aria-label={t("assembly.frontView")}
+    >
+      <ProductFrontContent {...props} />
     </svg>
   );
 }

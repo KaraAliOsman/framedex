@@ -127,7 +127,18 @@ function JointAngle({
   );
 }
 
-export function BowPlanSvg({
+/** Drawable extent of the plan view in its own mm space (engine y is already
+ * mirrored into SVG space by `toSvg`). */
+export function planBounds(plan: PlanGeometry) {
+  return {
+    x: Number(plan.min_x_mm) - PAD_MM,
+    y: -(Number(plan.min_y_mm) + Number(plan.height_mm)) - PAD_MM,
+    w: Number(plan.width_mm) + PAD_MM * 2,
+    h: Number(plan.height_mm) + PAD_MM * 2,
+  };
+}
+
+export function BowPlanContent({
   plan,
   couplings,
   members,
@@ -139,10 +150,9 @@ export function BowPlanSvg({
   onSelectCoupling,
   onCommitAngle,
 }: BowPlanSvgProps): JSX.Element {
-  const minX = Number(plan.min_x_mm) - PAD_MM;
-  const minY = -(Number(plan.min_y_mm) + Number(plan.height_mm)) - PAD_MM;
-  const width = Number(plan.width_mm) + PAD_MM * 2;
-  const height = Number(plan.height_mm) + PAD_MM * 2;
+  const bounds = planBounds(plan);
+  const width = bounds.w;
+  const height = bounds.h;
   const fontSize = Math.max(width, height) * 0.035;
   const dimOffset = Math.max(width, height) * 0.06;
   const chain = plan.front_chain;
@@ -153,12 +163,7 @@ export function BowPlanSvg({
   );
 
   return (
-    <svg
-      className="bow-plan-svg"
-      viewBox={`${minX} ${minY} ${width} ${height}`}
-      role="img"
-      data-testid="bow-plan"
-    >
+    <g className="bow-plan-svg" data-testid="bow-plan">
       {plan.modules.map((module) => (
         <polygon
           key={module.module_id}
@@ -270,6 +275,21 @@ export function BowPlanSvg({
       >
         {Math.round(Number(plan.width_mm))} mm
       </text>
+    </g>
+  );
+}
+
+/** Standalone plan with its own viewBox — the sheet viewer renders
+ * `BowPlanContent` inside its own transform instead. */
+export function BowPlanSvg(props: BowPlanSvgProps): JSX.Element {
+  const bounds = planBounds(props.plan);
+  return (
+    <svg
+      className="bow-plan-svg"
+      viewBox={`${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}`}
+      role="img"
+    >
+      <BowPlanContent {...props} />
     </svg>
   );
 }

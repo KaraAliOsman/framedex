@@ -472,17 +472,129 @@
 
 .assembly-canvas {
   display: grid;
-  gap: 0.5rem;
   grid-area: canvas;
-  grid-template-rows: minmax(0, 1fr) auto;
-  min-height: 26rem;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 30rem;
   padding: 0;
 }
 
-.product-front-svg {
+.canvas-viewport {
   background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
   display: block;
-  min-height: 18rem;
+  height: 100%;
+  min-height: 30rem;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+}
+
+.canvas-viewport:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: -2px;
+}
+
+.canvas-viewport .canvas-sheet {
+  cursor: grab;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.canvas-viewport.is-panning .canvas-sheet {
+  cursor: grabbing;
+}
+
+/* Floating zoom cluster — bottom-left island chrome */
+.viewport-island {
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: 0.75rem;
+  display: flex;
+  left: 0.75rem;
+  padding: 2px;
+  position: absolute;
+  z-index: 2;
+}
+
+.viewport-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.72rem;
+  height: 1.6rem;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0 0.35rem;
+}
+
+.viewport-button:hover {
+  background: var(--theme-surface-hover);
+  color: var(--theme-text-primary);
+}
+
+.viewport-button--percent {
+  min-width: 3rem;
+}
+
+.viewport-menu {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: calc(100% + 6px);
+  box-shadow: 0 6px 20px rgba(16, 26, 25, 0.12);
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  min-width: 10.5rem;
+  padding: 3px;
+  position: absolute;
+}
+
+.viewport-menu__item {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.viewport-menu__item:hover:not(:disabled) {
+  background: var(--theme-accent-soft);
+}
+
+.viewport-menu__item:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+}
+
+.viewport-status {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 5px;
+  bottom: 0.75rem;
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.72rem;
+  padding: 0.3rem 0.55rem;
+  position: absolute;
+  right: 0.75rem;
+  z-index: 2;
+}
+
+.product-front-svg {
+  display: block;
   width: 100%;
 }
 

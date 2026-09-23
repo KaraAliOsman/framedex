@@ -1,0 +1,57 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
+
+import { CanvasViewport } from "./CanvasViewport";
+import { fitTransform, panBy, unionBox, zoomAt } from "./viewport";
+
+const BOX = { x: -170, y: -150, w: 2100, h: 1670 };
+
+it("fit centers the content box with padding", () => {
+  const view = fitTransform(BOX, 1000, 700);
+  // Centered: screen center = container center.
+  expect(view.tx + (BOX.x + BOX.w / 2) * view.scale).toBeCloseTo(500, 1);
+  expect(view.ty + (BOX.y + BOX.h / 2) * view.scale).toBeCloseTo(350, 1);
+  expect(view.scale).toBeCloseTo(Math.min(904 / 2100, 604 / 1670), 4);
+});
+
+it("zoomAt keeps the anchor point fixed on screen", () => {
+  const view = { scale: 0.4, tx: 100, ty: 50 };
+  const zoomed = zoomAt(view, 300, 200, 1.5);
+  // mm point under (300,200) before = same after.
+  const mmX = (300 - view.tx) / view.scale;
+  const mmY = (200 - view.ty) / view.scale;
+  expect(zoomed.tx + mmX * zoomed.scale).toBeCloseTo(300, 4);
+  expect(zoomed.ty + mmY * zoomed.scale).toBeCloseTo(200, 4);
+});
+
+it("zoom clamps at the bounds and pan translates", () => {
+  const view = { scale: 0.4, tx: 0, ty: 0 };
+  expect(zoomAt(view, 0, 0, 1e6).scale).toBeLessThanOrEqual(6);
+  expect(zoomAt(view, 0, 0, 1e-6).scale).toBeGreaterThanOrEqual(0.03);
+  const moved = panBy(view, 10, -20);
+  expect(moved).toMatchObject({ tx: 10, ty: -20 });
+});
+
+it("unionBox wraps both boxes", () => {
+  const union = unionBox({ x: -10, y: -20, w: 100, h: 50 }, { x: 50, y: 10, w: 80, h: 120 });
+  expect(union).toMatchObject({ x: -10, y: -20, w: 140, h: 150 });
+});
+
+it("renders the island controls and opens the zoom menu", () => {
+  render(
+    <CanvasViewport contentBox={BOX} selectionBox={null} status="2.100 × 1.400 mm">
+      <rect data-testid="content" width={10} height={10} />
+    </CanvasViewport>,
+  );
+  expect(screen.getByTestId("assembly-sheet")).toBeTruthy();
+  expect(screen.getByTestId("content")).toBeTruthy();
+  expect(screen.getByLabelText("Alejar")).toBeTruthy();
+  expect(screen.getByLabelText("Acercar")).toBeTruthy();
+  expect(screen.getByText("2.100 × 1.400 mm")).toBeTruthy();
+  // Pre-fit state renders at 100%.
+  expect(screen.getByLabelText("Opciones de zoom").textContent).toBe(`${Math.round(100)}%`);
+  fireEvent.click(screen.getByLabelText("Opciones de zoom"));
+  expect(screen.getByRole("menuitem", { name: /Ajustar a la vista/ })).toBeTruthy();
+  const selection = screen.getByRole("menuitem", { name: /Ajustar a la selección/ });
+  expect((selection as HTMLButtonElement).disabled).toBe(true);
+});
