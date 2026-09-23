@@ -435,7 +435,18 @@ def confirm_delivery(
                     actor_id=actor_id,
                     deal=deal,
                 )
-            object_keys = []
+                # The receipt object joins the compensation set: a
+                # commit-time failure rolls its row back while the PDF
+                # would stay orphaned otherwise.
+                receipt_key = rows(
+                    "SELECT storage_object_key FROM public.payment_receipts "
+                    "WHERE payment_id=%s AND org_id=%s",
+                    [str(payment_row["id"]), org_id_s],
+                )
+                if receipt_key:
+                    object_keys.append(receipt_key[0]["storage_object_key"])
+        # Cleared only after commit: a commit-time failure still purges.
+        object_keys = []
     except Exception:
         for key in object_keys:
             _purge_unreferenced_confirmation(org_id=org_id, object_key=key)
@@ -445,8 +456,9 @@ def confirm_delivery(
 
 def _purge_unreferenced_confirmation(*, org_id: UUID, object_key: str) -> None:
     """Compensating delete for a rolled-back confirmation: the org slot
-    serializes against confirm_delivery — a committed row referencing the
-    key wins, an orphan is removed without masking the original failure."""
+    serializes against confirm_delivery — a committed row (confirmation or
+    receipt) referencing the key wins, an orphan is removed without masking
+    the original failure."""
     import logging
 
     try:
@@ -461,6 +473,12 @@ def _purge_unreferenced_confirmation(*, org_id: UUID, object_key: str) -> None:
                 "WHERE org_id=%s AND (storage_object_key=%s OR signature_object_key=%s)",
                 [str(org_id), object_key, object_key],
             )
+            if not referenced:
+                referenced = rows(
+                    "SELECT id FROM public.payment_receipts "
+                    "WHERE org_id=%s AND storage_object_key=%s",
+                    [str(org_id), object_key],
+                )
             if referenced:
                 return
             SupabaseDocumentStorage().delete_object(object_key)
