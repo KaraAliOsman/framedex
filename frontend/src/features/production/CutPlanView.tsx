@@ -164,7 +164,7 @@ function CutPlanBarSvg({
         <rect x={xSc} y={8} width={Math.max(wSc, 1)} height={barH - 16} rx={2} />
         {wSc > 52 ? (
           <text x={mid} y={30} textAnchor="middle" className="cutplan-cut-id">
-            {cut.piece_id}
+            {pieceLabel(cut)}
           </text>
         ) : null}
         {wSc > 40 ? (
@@ -294,7 +294,7 @@ function CutPlanSheetSvg({
             <rect x={px} y={py} width={pw} height={ph} rx={1} />
             {pw > 30 && ph > 12 ? (
               <text x={px + pw / 2} y={py + ph / 2} textAnchor="middle" dominantBaseline="middle">
-                {piece.piece_id}
+                {pieceLabel(piece)}
                 {piece.rotated ? " ⟳" : ""}
               </text>
             ) : null}
@@ -307,6 +307,14 @@ function CutPlanSheetSvg({
 
 function shortId(value: string | null | undefined): string {
   return value ? value.slice(0, 8) : "—";
+}
+
+/** Human piece identity for the workshop: the workshop SKU the printed
+ * manifest carries plus the unit index — never the sha256 piece_id. */
+function pieceLabel(piece: CutPlacement | NestPlacement): string {
+  return piece.workshop_sku
+    ? `${piece.workshop_sku} · u${piece.unit_index ?? 1}`
+    : shortId(piece.piece_id);
 }
 
 export function CutPlanView({ optimization }: { optimization: WorkOrderOptimization }) {
@@ -326,7 +334,7 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
         ? `${cut.angle_left ?? "90"}° / ${cut.angle_right ?? "90"}°`
         : null;
     return {
-      id: piece.piece_id,
+      id: pieceLabel(piece),
       kind: selected.kind,
       sku: piece.workshop_sku ?? "—",
       material: cut.material ?? "—",
