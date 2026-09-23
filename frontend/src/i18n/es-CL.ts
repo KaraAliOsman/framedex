@@ -1034,6 +1034,52 @@ const messages = {
   "catalog.option.AWNING": "Proyectante",
   "catalog.option.SLIDING": "Corredera",
   "catalog.option.DOOR": "Puerta",
+  "catalog.importsTitle": "Importar catálogo",
+  "catalog.importsHelp":
+    "Sube una lista de precios o ficha técnica del proveedor; cada línea revisada se convierte en un artículo del sistema.",
+  "catalog.importsUpload": "Subir PDF, XLSX o imagen",
+  "catalog.importsUploading": "Subiendo…",
+  "catalog.importsEmpty": "Sin importaciones de catálogo.",
+  "catalog.importsLoadError": "No pudimos cargar las importaciones.",
+  "catalog.importsUploadError": "No pudimos subir el documento.",
+  "catalog.importsConfirmError": "No pudimos confirmar la importación.",
+  "catalog.importsConfirmMissing":
+    "Marca al menos un artículo, elige el sistema destino y completa SKU y ancho de cara en cada fila.",
+  "catalog.importsCandidates": "Artículos",
+  "catalog.importsSystem": "Sistema destino",
+  "catalog.importsSystemChoose": "Selecciona el sistema",
+  "catalog.importsReviewHint":
+    "Revisa cada artículo antes de crearlo — solo las filas marcadas pasan al sistema elegido.",
+  "catalog.importsConfirm": "Crear artículos marcados",
+  "catalog.importsConfirmed": "{count} artículos creados en el sistema.",
+  "catalog.importsFieldSku": "SKU",
+  "catalog.importsFieldName": "Nombre",
+  "catalog.importsFieldRole": "Rol",
+  "catalog.importsFieldFace": "Ancho cara",
+  "catalog.importsFieldLength": "Largo (mm)",
+  "catalog.importsFieldWeld": "Soldadura",
+  "catalog.importsFieldReinforcement": "Refuerzo",
+  "catalog.importsFieldWeight": "kg/m",
+  "catalog.importsFieldSteelWeight": "Acero kg/m",
+  "catalog.importsWarnParse":
+    "El documento no entregó texto legible; se intentó lectura visual.",
+  "catalog.importsWarnCompileEmpty":
+    "La lectura visual no encontró artículos. Revisa el documento.",
+  "catalog.importsWarnCompileFailed":
+    "La lectura visual no pudo procesar el documento.",
+  "catalog.importsWarnNoCandidates":
+    "No se detectaron artículos en el documento.",
+  "catalog.importsWarnCapped":
+    "El documento tenía más de 200 artículos; se conservaron los primeros 200 para revisión.",
+  "catalog.importsWarnNameMissing": "Sin nombre",
+  "catalog.importsWarnRoleUnknown": "Rol no reconocido",
+  "catalog.importsWarnFaceMissing": "Sin ancho de cara",
+  "catalog.importsErrorItemUnknown":
+    "La fila no corresponde a un candidato del documento.",
+  "catalog.importsErrorRoleInvalid": "El rol elegido no es válido.",
+  "catalog.importsErrorSkuConflict": "El SKU ya existe en el sistema; se omitió la fila.",
+  "catalog.importsErrorUnknown":
+    "No se pudo completar la operación. Revisa los datos e inténtalo de nuevo.",
   "projects.reinforcements": "Refuerzos",
   "projects.panels": "Paneles",
   "projects.article": "Artículo",

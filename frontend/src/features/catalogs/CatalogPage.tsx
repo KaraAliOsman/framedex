@@ -3,6 +3,7 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import {
   catalogApi,
   initialDraft,
@@ -61,11 +62,18 @@ export function CatalogPage(): JSX.Element {
     <CatalogWorkspace
       key={`${session?.user.id}:${organization.id}:${organization.role}`}
       orgId={organization.id}
+      role={organization.role}
     />
   );
 }
 
-function CatalogWorkspace({ orgId }: { orgId: string }): JSX.Element {
+function CatalogWorkspace({
+  orgId,
+  role,
+}: {
+  orgId: string;
+  role: string;
+}): JSX.Element {
   const api = useMemo(() => catalogApi(orgId), [orgId]);
   const [data, setData] = useState<CatalogData | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -183,6 +191,15 @@ function CatalogWorkspace({ orgId }: { orgId: string }): JSX.Element {
       <p className="catalog-status" role="status" aria-live="polite">
         {notice}
       </p>
+
+      <CatalogImportsPanel
+        orgId={orgId}
+        canWrite={role === "OWNER" || role === "ESTIMATOR"}
+        systems={data.systems
+          .filter((system) => !system.is_global)
+          .map((system) => ({ id: system.id, name: system.name, code: system.code }))}
+        onConfirmed={() => setReload((value) => value + 1)}
+      />
 
       <div className="catalog-layout">
         <aside className="catalog-master" aria-label={ct("systems")}>

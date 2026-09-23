@@ -11,6 +11,7 @@ from rest_framework import serializers
 
 from documents.serializers import StrictSerializer
 from engine_api.serializers import DecimalStringField
+from ingest.catalog_parser import ROLES
 from ingest.parser import _OPENING_TYPES
 
 
@@ -89,6 +90,82 @@ ImportConfirmResponseSerializer = type(
     (serializers.Serializer,),
     {
         "import": ImportResponseSerializer(),
+        "created": serializers.ListField(child=serializers.DictField()),
+        "errors": serializers.ListField(child=serializers.DictField()),
+    },
+)
+
+
+class CatalogImportResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    file_name = serializers.CharField()
+    kind = serializers.CharField()
+    status = serializers.CharField()
+    system_id = serializers.UUIDField(allow_null=True)
+    candidates = serializers.ListField(child=serializers.DictField())
+    warnings = serializers.ListField(child=serializers.CharField())
+    result = serializers.ListField(child=serializers.DictField())
+    error_code = serializers.CharField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+CatalogImportDetailResponseSerializer = type(
+    "CatalogImportDetailResponseSerializer",
+    (serializers.Serializer,),
+    {"import": CatalogImportResponseSerializer()},
+)
+
+
+class CatalogImportListResponseSerializer(serializers.Serializer):
+    imports = CatalogImportResponseSerializer(many=True)
+
+
+CatalogImportCreateResponseSerializer = type(
+    "CatalogImportCreateResponseSerializer",
+    (serializers.Serializer,),
+    {
+        "import": CatalogImportResponseSerializer(),
+        "job": serializers.DictField(),
+    },
+)
+
+
+class CatalogItemSerializer(StrictSerializer):
+    key = serializers.CharField(max_length=40)
+    sku = serializers.CharField(max_length=100)
+    name = serializers.CharField(max_length=255, allow_blank=True, default="")
+    role = serializers.ChoiceField(choices=sorted(ROLES))
+    face_width_mm = DecimalStringField(
+        max_digits=10, decimal_places=2, min_value=Decimal("0.5")
+    )
+    commercial_length_mm = DecimalStringField(
+        max_digits=10, decimal_places=2, min_value=Decimal("1"), required=False
+    )
+    welding_loss_mm = DecimalStringField(
+        max_digits=10, decimal_places=2, min_value=Decimal("0"), required=False
+    )
+    reinforcement_sku = serializers.CharField(
+        max_length=100, allow_blank=True, required=False, default=""
+    )
+    weight_kg_m = DecimalStringField(
+        max_digits=8, decimal_places=4, min_value=Decimal("0.0001"), required=False
+    )
+    steel_weight_kg_m = DecimalStringField(
+        max_digits=8, decimal_places=4, min_value=Decimal("0.0001"), required=False
+    )
+
+
+class CatalogImportConfirmSerializer(StrictSerializer):
+    system_id = serializers.UUIDField()
+    items = CatalogItemSerializer(many=True, min_length=1, max_length=200)
+
+
+CatalogImportConfirmResponseSerializer = type(
+    "CatalogImportConfirmResponseSerializer",
+    (serializers.Serializer,),
+    {
+        "import": CatalogImportResponseSerializer(),
         "created": serializers.ListField(child=serializers.DictField()),
         "errors": serializers.ListField(child=serializers.DictField()),
     },

@@ -20,9 +20,15 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 
-from ingest import service
+from ingest import catalog_service, service
+from ingest.catalog_service import CatalogImportError
 from ingest.service import ImportError_
 from ingest.serializers import (
+    CatalogImportConfirmResponseSerializer,
+    CatalogImportConfirmSerializer,
+    CatalogImportCreateResponseSerializer,
+    CatalogImportDetailResponseSerializer,
+    CatalogImportListResponseSerializer,
     ImportConfirmResponseSerializer,
     ImportConfirmSerializer,
     ImportCreateResponseSerializer,
@@ -147,3 +153,110 @@ class ProjectImportConfirmView(APIView):
             PydanticValidationError,
         ) as error:
             _translate(error)
+
+
+def _translate_catalog(error: Exception):
+    code = getattr(error, "code", None) or getattr(
+        error, "contract_code", "catalog_import_failed"
+    )
+    known = {
+        "catalog_import_not_found": (
+            404, "catalog_import_not_found", "La importación no existe.",
+        ),
+        "catalog_import_status_invalid": (
+            409, "catalog_import_status_invalid",
+            "La importación cambió de estado. Recarga e intenta de nuevo.",
+        ),
+        "catalog_membership_revoked": (
+            403, "catalog_membership_revoked",
+            "Tu membresía en esta organización fue revocada.",
+        ),
+    }
+    if code in known:
+        status, contract, message = known[code]
+        raise contract_error(status, contract, message)
+    raise error
+
+
+class CatalogImportsView(APIView):
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        operation_id="catalog_imports_list",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: CatalogImportListResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request):
+        try:
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                return _payload(catalog_service.list_catalog_imports(org_id=org_id))
+        except (CatalogImportError, DocumentaryError) as error:
+            _translate_catalog(error)
+
+    @extend_schema(
+        operation_id="catalog_imports_create",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=ImportUploadSerializer,
+        responses={200: CatalogImportCreateResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def post(self, request):
+        try:
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                data = validate(ImportUploadSerializer, request.data)
+                upload = data["file"]
+                return _payload(
+                    catalog_service.create_catalog_import(
+                        org_id=org_id,
+                        actor_id=token.user_id,
+                        file_name=upload.name,
+                        content=upload.read(catalog_service.MAX_UPLOAD_BYTES + 1),
+                        content_type=upload.content_type or "",
+                    )
+                )
+        except (CatalogImportError, DocumentaryError) as error:
+            _translate_catalog(error)
+
+
+class CatalogImportDetailView(APIView):
+    @extend_schema(
+        operation_id="catalog_import_get",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: CatalogImportDetailResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request, import_id: UUID):
+        try:
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                return _payload(
+                    catalog_service.get_catalog_import(
+                        org_id=org_id, import_id=import_id
+                    )
+                )
+        except (CatalogImportError, DocumentaryError) as error:
+            _translate_catalog(error)
+
+
+class CatalogImportConfirmView(APIView):
+    @extend_schema(
+        operation_id="catalog_import_confirm",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=CatalogImportConfirmSerializer,
+        responses={200: CatalogImportConfirmResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def post(self, request, import_id: UUID):
+        try:
+            with documentary_scope(request, _WRITERS) as (_, _, org_id):
+                data = validate(CatalogImportConfirmSerializer, request.data)
+                return _payload(
+                    catalog_service.confirm_catalog_import(
+                        org_id=org_id,
+                        import_id=import_id,
+                        system_id=data["system_id"],
+                        items=data["items"],
+                    )
+                )
+        except (CatalogImportError, DocumentaryError, DatabaseError) as error:
+            _translate_catalog(error)
