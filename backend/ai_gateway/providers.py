@@ -117,6 +117,7 @@ class HttpProvider:
         route: dict,
         capability: str,
         input_payload: dict,
+        provider_options: dict,
         host_header: str,
         port_suffix: str,
         operation_key: str | None,
@@ -134,7 +135,7 @@ class HttpProvider:
             # The operation key doubles as the provider-level idempotency key
             # so a retry ambiguous to us can still dedupe provider-side.
             headers["Idempotency-Key"] = operation_key
-        path, body = self._wire_request(route, capability, input_payload)
+        path, body = self._wire_request(route, capability, input_payload, provider_options)
         with client.stream(
             "POST",
             f"https://{url_host}{port_suffix}{path}",
@@ -156,6 +157,7 @@ class HttpProvider:
         route: dict,
         capability: str,
         input_payload: dict,
+        provider_options: dict,
         client: httpx.Client | None = None,
         operation_key: str | None = None,
     ) -> bytes:
@@ -174,6 +176,7 @@ class HttpProvider:
                     route,
                     capability,
                     input_payload,
+                    provider_options,
                     host_header,
                     port_suffix,
                     operation_key,
@@ -183,6 +186,7 @@ class HttpProvider:
             route,
             capability,
             input_payload,
+            provider_options,
             host_header,
             port_suffix,
             operation_key,
@@ -194,6 +198,7 @@ class HttpProvider:
         route: dict,
         capability: str,
         input_payload: dict,
+        provider_options: dict,
         host_header: str,
         port_suffix: str,
         operation_key: str | None,
@@ -207,6 +212,7 @@ class HttpProvider:
                     route=route,
                     capability=capability,
                     input_payload=input_payload,
+                    provider_options=provider_options,
                     host_header=host_header,
                     port_suffix=port_suffix,
                     operation_key=operation_key,
@@ -221,10 +227,18 @@ class HttpProvider:
         route: dict,
         capability: str,
         input_payload: dict,
+        provider_options: dict | None = None,
         client: httpx.Client | None = None,
         operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
+        options = provider_options or {}
+        # The model must fit the provenance column BEFORE the paid call runs —
+        # an env override longer than VARCHAR(120) would otherwise fail the
+        # sealed audit after inference already happened.
+        requested_model = self._requested_model(route)
+        if not (0 < len(requested_model) <= 120):
+            raise ProviderError("ai_provider_error")
         try:
             # Ephemeral fetch URLs are resolved at wire time, never carried in
             # input_payload: the audited input hash must stay identical across
@@ -244,6 +258,7 @@ class HttpProvider:
                 route=route,
                 capability=capability,
                 input_payload=wire_input,
+                provider_options=options,
                 client=client,
                 operation_key=operation_key,
             )
@@ -261,22 +276,34 @@ class HttpProvider:
             raise
         except (httpx.HTTPError, TypeError, ValueError) as error:
             raise ProviderError("ai_provider_error") from error
+        response_model = parsed.get("model")
         return {
             "output": parsed["output"],
             "tokens_prompt": tokens_prompt,
             "tokens_completion": tokens_completion,
             "latency_ms": int((time.monotonic() - started) * 1000),
             # The model the request actually ran on — the response's own model
-            # field wins when the provider reports it, else what we asked for.
+            # field wins when it is a sane string that fits the provenance
+            # column; an overlong or absent value falls back to what we sent.
             # Sealed into audit provenance, which must never re-attribute.
-            "model": parsed.get("model") or self._requested_model(route),
+            "model": (
+                response_model
+                if isinstance(response_model, str) and 0 < len(response_model) <= 120
+                else requested_model
+            ),
         }
 
     def _requested_model(self, route: dict) -> str:
         """Model the request will run on; subclasses may override the route."""
         return str(route["provider_model"])
 
-    def _wire_request(self, route: dict, capability: str, input_payload: dict) -> tuple[str, dict]:
+    def _wire_request(
+        self,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+    ) -> tuple[str, dict]:
         """(path, json body) the subclass's protocol posts on the pinned host."""
         return f"{self._base_path}/invoke", {
             "model": route["provider_model"],
@@ -319,16 +346,25 @@ class OpenAICompatibleProvider(HttpProvider):
       AI_GATEWAY_{P}_BASE_URL  — https endpoint, e.g. https://api.ximimio…/v1
       AI_GATEWAY_{P}_MODEL     — overrides the route's provider_model when set
 
-    The caller may steer the conversation through input_payload keys:
+    Server-side callers may steer the conversation through provider_options
+    (never input_payload — that is client-supplied and audited verbatim, so
+    honoring control keys inside it would let any authenticated caller replace
+    the platform's system prompt and would pollute the replay hash):
       "system"      — system-prompt text (defaults to a JSON-only endpoint prompt)
       "json_output" — truthy requests response_format={"type": "json_object"}
-    Everything else in input_payload is serialized as the user message."""
+    input_payload is serialized whole as the user message."""
 
     def __init__(self, *, provider: str):
         super().__init__(provider=provider)
         self._model = os.environ.get(f"AI_GATEWAY_{provider}_MODEL", "")
 
-    def _wire_request(self, route: dict, capability: str, input_payload: dict) -> tuple[str, dict]:
+    def _wire_request(
+        self,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+    ) -> tuple[str, dict]:
         # An operator may point BASE_URL straight at the completions path —
         # don't double-append it.
         path = (
@@ -336,26 +372,21 @@ class OpenAICompatibleProvider(HttpProvider):
             if self._base_path.endswith("/chat/completions")
             else f"{self._base_path}/chat/completions"
         )
-        system = input_payload.get("system")
-        # Control keys steer the request itself — the model only ever sees the
-        # capability's actual input.
-        user_content = {
-            key: value
-            for key, value in input_payload.items()
-            if key not in ("system", "json_output")
-        }
         body: dict[str, Any] = {
-            "model": self._model or route["provider_model"],
+            "model": self._requested_model(route),
             "messages": [
-                {"role": "system", "content": str(system or _DEFAULT_SYSTEM)},
+                {
+                    "role": "system",
+                    "content": str(provider_options.get("system") or _DEFAULT_SYSTEM),
+                },
                 {
                     "role": "user",
-                    "content": json.dumps(user_content, ensure_ascii=False, default=str),
+                    "content": json.dumps(input_payload, ensure_ascii=False, default=str),
                 },
             ],
             "temperature": 0,
         }
-        if input_payload.get("json_output"):
+        if provider_options.get("json_output"):
             body["response_format"] = {"type": "json_object"}
         return path, body
 
@@ -460,6 +491,7 @@ class MockProvider:
         route: dict,
         capability: str,
         input_payload: dict,
+        provider_options: dict | None = None,
         operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()

@@ -8,6 +8,7 @@ never silently dropped: low-confidence intent must not mutate a position."""
 from __future__ import annotations
 
 import json
+import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
@@ -65,6 +66,7 @@ Operaciones:
 Reglas:
 - Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
 - Índices válidos: 0..len(modules)-1 y 0..len(couplings)-1.
+- Las medidas numéricas (count, width_mm, height_mm, angle_deg, mm) solo pueden citar números que el usuario escribió en "prompt"; si el usuario no declaró una medida, no la inventes — explícalo en "notes".
 - Si la intención es ambigua, propón menos ops y explícalo en "notes"; nunca adivines medidas que el usuario no pidió.
 - Sin texto fuera del JSON."""
 
@@ -137,7 +139,80 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict:
     }
 
 
-def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], list[dict]]:
+_NUMBER_WORDS = {
+    "un": 1,
+    "uno": 1,
+    "una": 1,
+    "dos": 2,
+    "tres": 3,
+    "cuatro": 4,
+    "cinco": 5,
+    "seis": 6,
+    "siete": 7,
+    "ocho": 8,
+    "nueve": 9,
+    "diez": 10,
+    "once": 11,
+    "doce": 12,
+}
+_MEASURE_RE = re.compile(
+    r"(\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
+    re.IGNORECASE,
+)
+_BARE_NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
+_WORD_NUMBER_RE = re.compile(
+    r"\b(uno?|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b",
+    re.IGNORECASE,
+)
+
+
+def _parse_number(token: str) -> Decimal | None:
+    """Chilean-locale number: '.' groups thousands (2.400 → 2400), ',' is the
+    decimal mark (2,4 → 2.4). A lone '.' with three trailing digits reads as
+    thousands so '2.400' means 2400, matching how users write medidas."""
+    try:
+        if "." in token and "," in token:
+            normalized = token.replace(".", "").replace(",", ".")
+        elif token.count(".") == 1 and len(token.rsplit(".", 1)[1]) == 3:
+            normalized = token.replace(".", "")
+        else:
+            normalized = token.replace(",", ".")
+        value = Decimal(normalized)
+    except ArithmeticError:
+        return None
+    return value if value.is_finite() else None
+
+
+def _declared_values(prompt: str) -> set[Decimal]:
+    """Every number the user actually wrote — the grounding set numeric ops
+    must cite. The model proposes structure; it may never introduce a
+    measurement the request did not contain. Unit-suffixed measures normalize
+    to mm, bare numbers count literally, number words cover counts."""
+    values: set[Decimal] = set()
+    for token, unit in _MEASURE_RE.findall(prompt):
+        number = _parse_number(token)
+        if number is None:
+            continue
+        unit = unit.lower()
+        if unit == "cm":
+            factor = Decimal(10)
+        elif unit.startswith("mm") or unit.startswith("mil"):
+            factor = Decimal(1)
+        else:  # m, mt, mts, metro, metros
+            factor = Decimal(1000)
+        values.add(number * factor)
+    for token in _BARE_NUMBER_RE.findall(prompt):
+        number = _parse_number(token)
+        if number is not None:
+            values.add(number)
+    for word in _WORD_NUMBER_RE.findall(prompt):
+        values.add(Decimal(_NUMBER_WORDS[word.lower()]))
+    return values
+
+
+def _validate_ops(
+    ops: Any, summary: dict, catalog: dict, declared: set[Decimal]
+) -> tuple[list[dict], list[dict]]:
     """Validate each op against a simulated assembly that evolves in op order —
     structural ops mutate the module/coupling counts every later op is checked
     against, so a proposal can never address a module that stopped existing or
@@ -169,11 +244,13 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             continue
         name = item["op"]
         if name == "set_module_count":
-            if (
+            if not (
                 isinstance(item.get("count"), int)
                 and not isinstance(item["count"], bool)
-                and 1 <= item["count"] <= MAX_MODULE_COUNT
+                and Decimal(item["count"]) in declared
             ):
+                rejected.append(reject(item, "cantidad_no_declarada"))
+            elif 1 <= item["count"] <= MAX_MODULE_COUNT:
                 accepted.append({"op": name, "count": item["count"]})
                 state["modules"] = item["count"]
                 state["couplings"] = max(0, item["count"] - 1)
@@ -194,7 +271,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "modulo_invalido"))
         elif name == "set_module_width":
-            if module_index(item.get("module")) and _in_range(
+            if _number(item.get("width_mm")) not in declared:
+                rejected.append(reject(item, "ancho_no_declarado"))
+            elif module_index(item.get("module")) and _in_range(
                 item.get("width_mm"), Decimal("150"), Decimal("6000")
             ):
                 accepted.append(
@@ -207,7 +286,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_total_width":
-            if _in_range(
+            if _number(item.get("width_mm")) not in declared:
+                rejected.append(reject(item, "ancho_no_declarado"))
+            elif _in_range(
                 item.get("width_mm"),
                 Decimal("150") * state["modules"],
                 Decimal("30000"),
@@ -216,7 +297,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_height":
-            if _in_range(item.get("height_mm"), Decimal("200"), Decimal("4000")):
+            if _number(item.get("height_mm")) not in declared:
+                rejected.append(reject(item, "alto_no_declarado"))
+            elif _in_range(item.get("height_mm"), Decimal("200"), Decimal("4000")):
                 accepted.append({"op": name, "height_mm": str(_number(item["height_mm"]))})
             else:
                 rejected.append(reject(item, "alto_invalido"))
@@ -305,9 +388,14 @@ def assist(
         capability=CAPABILITY,
         operation_key=operation_key,
         tool_name="design_assist",
-        input_payload={
+        # Transport controls ride in provider_options — they are server-side
+        # config, not client input, so they never touch the audited payload or
+        # its replay hash (a prompt edit must not break idempotent retries).
+        provider_options={
             "system": DESIGN_ASSIST_SYSTEM,
             "json_output": True,
+        },
+        input_payload={
             "prompt": prompt,
             "position_id": str(position["id"]),
             "system_id": str(system_id),
@@ -352,7 +440,7 @@ def assist(
             "design_assist_bad_output",
             "El asistente devolvió una respuesta inválida.",
         )
-    ops, rejected = _validate_ops(document.get("ops"), summary, catalog)
+    ops, rejected = _validate_ops(document.get("ops"), summary, catalog, _declared_values(prompt))
     return {
         "audit_id": envelope["audit_id"],
         "model": envelope["model"],
