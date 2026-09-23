@@ -62,6 +62,7 @@ export function ProjectPaymentLinksPanel({
   const [amount, setAmount] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [subject, setSubject] = useState("");
+  const [baseline, setBaseline] = useState(kind);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const generation = useRef(0);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -93,7 +94,10 @@ export function ProjectPaymentLinksPanel({
 
   const formDirty =
     showForm &&
-    (amount.trim() !== "" || payerEmail.trim() !== "" || subject.trim() !== "");
+    (kind !== baseline ||
+      amount.trim() !== "" ||
+      payerEmail.trim() !== "" ||
+      subject.trim() !== "");
   useEffect(() => {
     onDirtyChange?.(formDirty);
   }, [formDirty, onDirtyChange]);
@@ -167,7 +171,10 @@ export function ProjectPaymentLinksPanel({
           <button
             type="button"
             className="primary-action"
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setBaseline(kind);
+              setShowForm(true);
+            }}
             disabled={busy}
           >
             {t("projects.paymentLinkCreate")}
