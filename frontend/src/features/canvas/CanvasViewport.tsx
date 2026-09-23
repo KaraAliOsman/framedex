@@ -167,9 +167,13 @@ export function CanvasViewport({
       fit();
     } else if (event.shiftKey && (event.key === "@" || event.key === '"')) {
       event.preventDefault();
-      if (selectionBox) setView(fitTransform(selectionBox, size.w, size.h));
+      if (selectionBox) {
+        userInteractedRef.current = true;
+        setView(fitTransform(selectionBox, size.w, size.h));
+      }
     } else if (event.shiftKey && event.key === ")") {
       event.preventDefault();
+      userInteractedRef.current = true;
       setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
     } else if (event.key === "ArrowLeft") {
       userInteractedRef.current = true;
@@ -199,8 +203,10 @@ export function CanvasViewport({
     () => [
       {
         label: `${t("canvas.zoomActual")} (100%)`,
-        run: () =>
-          setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale)),
+        run: () => {
+          userInteractedRef.current = true;
+          setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
+        },
         disabled: false,
       },
       {
@@ -210,7 +216,12 @@ export function CanvasViewport({
       },
       {
         label: t("canvas.zoomSelection"),
-        run: () => selectionBox && setView(fitTransform(selectionBox, size.w, size.h)),
+        run: () => {
+          if (selectionBox) {
+            userInteractedRef.current = true;
+            setView(fitTransform(selectionBox, size.w, size.h));
+          }
+        },
         disabled: !selectionBox,
       },
     ],
