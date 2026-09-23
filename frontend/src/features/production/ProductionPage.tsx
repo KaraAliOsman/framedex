@@ -639,11 +639,7 @@ export function ProductionPage(): JSX.Element {
                     polishing={polishing}
                     quantity={quantity}
                     onExport={(groups) =>
-                      downloadCnc(
-                        detail.order_code,
-                        `${detail.order_code}-glass.csv`,
-                        glassSummaryCsv(groups, quantity),
-                      )
+                      downloadCnc(detail.order_code, `glass.csv`, glassSummaryCsv(groups, quantity))
                     }
                   />
                 );
