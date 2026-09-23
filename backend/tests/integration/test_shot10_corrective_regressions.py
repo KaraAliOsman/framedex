@@ -558,3 +558,18 @@ def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
     rows("DELETE FROM public.reinforcement_articles WHERE system_id=%s RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "purchase" in catalog_readiness(system, org)["reasons"]
+
+
+@pytest.mark.parametrize("column", ["welding_loss_mm", "reinforcement_gap_mm"])
+def test_readiness_flags_missing_fabrication_authority(documentary_tenant, column):
+    """A PVC catalog that never declared weld loss or reinforcement gap must
+    read as incomplete — the alternative is a quote that fails mid-geometry."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows(f"UPDATE public.profile_articles SET {column}=NULL "
+         "WHERE system_id=%s RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" in catalog_readiness(system, org)["reasons"]

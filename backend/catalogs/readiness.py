@@ -42,6 +42,23 @@ def catalog_readiness(system_id, org_id):
         except (DocumentaryError, ValueError):
             reasons.append("manufacturing")
     if params is not None:
+        # Fabrication authorities the fixed geometry actually consumes:
+        # every welded PVC cut member needs declared weld loss + reinforcement
+        # gap; every non-PVC member needs a real mass (PVC has a declared
+        # system fallback). UNKNOWN must surface here — not mid-calculation.
+        fabrication_missing = (
+            any(
+                article.welding_loss_mm is None or article.reinforcement_gap_mm is None
+                for article in params.effective_profile_articles.values()
+            )
+            if params.material is MaterialType.PVC
+            else any(
+                article.weight_kg_m is None
+                for article in params.effective_profile_articles.values()
+            )
+        )
+        if fabrication_missing:
+            reasons.append("fabrication")
         try:
             frame = params.effective_profile_articles[ProfileRole.FRAME]
             profiles = [frame,

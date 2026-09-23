@@ -1000,6 +1000,8 @@ const messages = {
 
   "catalog.readiness.manufacturing": "Completar políticas de fabricación",
 
+  "catalog.readiness.fabrication": "Declarar soldadura, refuerzo y masa de la serie",
+
   "catalog.readiness.purchase": "Completar referencias y suministro de materiales",
   "catalog.title": "Catálogo técnico",
   "catalog.subtitle": "Series, perfiles y compatibilidades de tu taller.",
