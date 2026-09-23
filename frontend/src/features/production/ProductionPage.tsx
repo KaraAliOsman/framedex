@@ -35,6 +35,7 @@ import type {
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import "./production.css";
 
@@ -46,57 +47,6 @@ type WorkOrderMaterials = {
 };
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
-
-type CutPlacement = {
-  piece_id: string;
-  length_mm: string;
-  unit_index?: number;
-  bay_id?: string | null;
-  leaf_id?: string | null;
-};
-type CutBar = {
-  bar_index: number;
-  commercial_sku: string;
-  stock_length_mm: string;
-  remainder_mm: string;
-  yield_pct: string;
-  cuts: CutPlacement[];
-};
-type PurchaseLine = { commercial_sku: string; qty_bars: number; stock_length_mm: string };
-type SheetPurchase = { purchasing_sku: string; qty_sheets: number };
-type NestPlacement = {
-  piece_id: string;
-  x_mm: string;
-  y_mm: string;
-  width_mm: string;
-  height_mm: string;
-  rotated: boolean;
-  unit_index?: number;
-};
-type SheetLayout = {
-  sheet_index: number;
-  purchasing_sku: string;
-  sheet_width_mm: string;
-  sheet_height_mm: string;
-  yield_pct: string;
-  placements: NestPlacement[];
-};
-type UnnestedPiece = {
-  kind: string;
-  group: string;
-  width_mm: string;
-  height_mm: string;
-  quantity: number;
-};
-type WorkOrderOptimization = {
-  color?: string;
-  units?: number;
-  optimized_at?: string;
-  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
-  sheets?: SheetLayout[];
-  sheet_purchases?: SheetPurchase[];
-  unnested?: UnnestedPiece[];
-};
 
 type CncExport = {
   exported_at?: string;
@@ -771,6 +721,9 @@ export function ProductionPage(): JSX.Element {
                       <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
                     ) : (
                       <>
+                        {cutPlan.length || layouts.length ? (
+                          <CutPlanView optimization={optimization} />
+                        ) : null}
                         {cutPlan.length ? (
                           <table className="production-plan">
                             <thead>

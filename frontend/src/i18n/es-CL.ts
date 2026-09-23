@@ -958,6 +958,21 @@ const messages = {
   "production.optimizePurchaseSheet": "plancha(s)",
   "production.optimizeRotated": "rotada",
   "production.optimizeRunAt": "Optimizado",
+  "production.cutplanYield": "aprovechamiento",
+  "production.cutplanRemainder": "retazo",
+  "production.cutplanDetail": "Detalle de la pieza",
+  "production.cutplanDetailHint":
+    "Haz clic en una pieza del plan para ver su origen y destacar su miembro.",
+  "production.cutplanPiece": "Pieza",
+  "production.cutplanRole": "Función",
+  "production.cutplanMeasure": "Medida",
+  "production.cutplanAngles": "Ángulos",
+  "production.cutplanMaterial": "Material",
+  "production.cutplanOrigin": "Origen",
+  "production.cutplanPosition": "posición",
+  "production.cutplanBay": "paño",
+  "production.cutplanLeaf": "hoja",
+  "production.cutplanMemberCuts": "Piezas del miembro",
 
   "catalog.readinessUnknown": "Disponibilidad sin verificar",
 
