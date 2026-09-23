@@ -1083,7 +1083,7 @@ class TestSlidingTopologyEvaluation:
             cut.leaf_id for cut in (module.result.profile_cuts if module.result else [])
             if cut.leaf_id
         }
-        assert leaf_ids == {"s:L2", "s:L3"}
+        assert leaf_ids == {"s:L2", "s:L3", "s:fijo"}
 
     def test_sliding_layout_errors_surface_as_issues(
         self, demo_60_params: SystemParams

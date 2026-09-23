@@ -253,16 +253,27 @@ function angleInSweep(a0: number, sweep: number, target: number): boolean {
   return rel - Math.PI * 2 >= sweep - 1e-9;
 }
 
-/** Vertical overshoot of a contour beyond its vertex bounding box, in
- * engine y-up mm: only arcs extend past the corners (an arch crown rises
- * above the springline). The layout lifts the drawing band by `top`. */
-export function contourOutset(contour: ContourJson): { top: number; bottom: number } {
+/** Overshoot of a contour beyond its vertex bounding box, in engine y-up mm:
+ * only arcs extend past the corners (an arch crown rises above the
+ * springline, a side bow passes its nominal edge). The layout lifts/dips
+ * the drawing band by `top`/`bottom` and widens it by `left`/`right`. */
+export function contourOutset(contour: ContourJson): {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+} {
   const n = contour.vertices.length;
+  const xs = contour.vertices.map((v) => Number(v.x_mm));
   const ys = contour.vertices.map((v) => Number(v.y_mm));
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
   let top = 0;
   let bottom = 0;
+  let left = 0;
+  let right = 0;
   for (let i = 0; i < n; i += 1) {
     const s = bulgeOf(contour, i);
     if (s === 0) continue;
@@ -274,8 +285,12 @@ export function contourOutset(contour: ContourJson): { top: number; bottom: numb
     const sweep = sweepBetween(a0, a1, s > 0 ? 1 : -1);
     const apex = angleInSweep(a0, sweep, Math.PI / 2) ? cy + r : Math.max(p0.y, p1.y);
     const dip = angleInSweep(a0, sweep, -Math.PI / 2) ? cy - r : Math.min(p0.y, p1.y);
+    const east = angleInSweep(a0, sweep, 0) ? cx + r : Math.max(p0.x, p1.x);
+    const west = angleInSweep(a0, sweep, Math.PI) ? cx - r : Math.min(p0.x, p1.x);
     top = Math.max(top, apex - maxY);
     bottom = Math.max(bottom, minY - dip);
+    right = Math.max(right, east - maxX);
+    left = Math.max(left, minX - west);
   }
-  return { top, bottom };
+  return { top, bottom, left, right };
 }

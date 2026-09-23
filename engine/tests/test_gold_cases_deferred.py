@@ -75,7 +75,9 @@ def test_g10_monorail_evaluates_a_single_track_layout(
     params = demo_60_params.model_copy(update={"rail_type": RailType.MONO})
     result = calculate_geometry(node, params)
     leaf_ids = {cut.leaf_id for cut in result.profile_cuts if cut.leaf_id}
-    assert leaf_ids == {"G10:L2"}
+    # Fixed panes carry their own {bay}:{slot} identity — two fixed panes
+    # sharing (bay, None) would collide downstream.
+    assert leaf_ids == {"G10:L2", "G10:left", "G10:right"}
     assert [(item.kit_sku, item.leaf_id) for item in result.hardware_items] == [
         ("KIT-SLIDING-MONO", "G10:L2")
     ]

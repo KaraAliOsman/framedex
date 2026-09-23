@@ -41,6 +41,16 @@ from dekopen_engine.geometry import (
     resolved_sliding_layout,
 )
 from dekopen_engine.glass import derive_net_glass_thickness
+from dekopen_engine.manufacturing_trace import (
+    Axis,
+    GeometryManufacturingTraceV1,
+    PlacementDomain,
+    SemanticInfillTraceV1,
+    SemanticMemberTraceV1,
+    TracePointV1,
+    TraceRectV1,
+    TraceSegmentV1,
+)
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
@@ -56,6 +66,11 @@ from dekopen_engine.models import (
     ReinforcementPiece,
     SlidingPanelKind,
     SystemParams,
+)
+from dekopen_engine.technical_facts import (
+    GeometryComputation,
+    InfillTechnicalFacts,
+    OpeningTechnicalFacts,
 )
 from dekopen_engine.trig import cos_degrees, sin_degrees
 
@@ -978,7 +993,7 @@ def _evaluate_contour_module(
     params: SystemParams,
     *,
     is_foiled: bool,
-) -> tuple[EngineResult | None, list[ProductIssue]]:
+) -> tuple[EngineResult | None, list[ProductIssue], GeometryComputation | None]:
     """Evaluate a non-rectangular module: frame follows the contour, one
     inward-offset fill region per module.
 
@@ -1003,7 +1018,7 @@ def _evaluate_contour_module(
                 params={"reason": "; ".join(problems)},
             )
         )
-        return None, issues
+        return None, issues, None
 
     leaf = _single_region_leaf(module.tree)
     if leaf is None:
@@ -1014,7 +1029,7 @@ def _evaluate_contour_module(
                 target=target,
             )
         )
-        return None, issues
+        return None, issues, None
 
     opening = leaf.opening_type or BayOpeningType.FIXED
     if opening is not BayOpeningType.FIXED:
@@ -1042,23 +1057,31 @@ def _evaluate_contour_module(
     frame = params.effective_profile_articles[ProfileRole.FRAME]
     per_end = joint_adjustment_per_end(params, frame)
     n = len(contour.vertices)
+    topology_path = f"BAY:{leaf.id}"
+    assembly = f"BAY:{leaf.id}:CONTOUR"
 
     profile_cuts: list[ProfileCut] = []
     reinforcements: list[ReinforcementPiece] = []
     glasses: list[GlassPiece] = []
+    trace_members: list[SemanticMemberTraceV1] = []
+    trace_infills: list[SemanticInfillTraceV1] = []
+    technical_infills: list[InfillTechnicalFacts] = []
 
     for i in range(n):
         bulge = contour.bulges[i]
         length = contour_edge_length(contour, i) + 2 * per_end
         sagitta = bulge if bulge else None
+        cut_length = _q(length)
+        angle_left = _qa(interior_angle(contour, i) / 2)
+        angle_right = _qa(interior_angle(contour, (i + 1) % n) / 2)
         profile_cuts.append(
             ProfileCut(
                 sku=frame.sku,
                 role=ProfileRole.FRAME,
                 material=frame.material,
-                length_mm=_q(length),
-                angle_left=_qa(interior_angle(contour, i) / 2),
-                angle_right=_qa(interior_angle(contour, (i + 1) % n) / 2),
+                length_mm=cut_length,
+                angle_left=angle_left,
+                angle_right=angle_right,
                 qty=1,
                 bay_id=leaf.id,
                 sagitta_mm=_q(sagitta) if sagitta is not None else None,
@@ -1093,6 +1116,45 @@ def _evaluate_contour_module(
                 )
             )
 
+        start = contour.vertices[i]
+        end = contour.vertices[(i + 1) % n]
+        steel = _q(steel_length) if frame.material is MaterialType.PVC else None
+        trace_members.append(
+            SemanticMemberTraceV1(
+                semantic_member_id=f"{topology_path}/member/E{i}",
+                topology_path=topology_path,
+                assembly=assembly,
+                bay_id=leaf.id,
+                leaf_id=None,
+                leaf_slot=None,
+                role=ProfileRole.FRAME,
+                physical_member_slot=f"E{i}",
+                workshop_sku=frame.sku,
+                material=frame.material,
+                cut_length_mm=cut_length,
+                angle_left=angle_left,
+                angle_right=angle_right,
+                axis=(
+                    Axis.HORIZONTAL
+                    if abs(end.x_mm - start.x_mm) >= abs(end.y_mm - start.y_mm)
+                    else Axis.VERTICAL
+                ),
+                sagitta_mm=_q(sagitta) if sagitta is not None else None,
+                placement_domain=PlacementDomain.DIRECT,
+                direct_segment=TraceSegmentV1(
+                    start=TracePointV1(x_mm=start.x_mm, y_mm=start.y_mm),
+                    end=TracePointV1(x_mm=end.x_mm, y_mm=end.y_mm),
+                ),
+                reinforcement_required=frame.material is MaterialType.PVC,
+                reinforcement_sku=(
+                    frame.reinforcement_sku
+                    if frame.material is MaterialType.PVC
+                    else None
+                ),
+                reinforcement_length_mm=steel,
+            )
+        )
+
     clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     # Inward offset that lands exactly on the rect-path pocket math:
     # pocket = finished - 2*face + 2*rebate - 2*clearance.
@@ -1108,7 +1170,7 @@ def _evaluate_contour_module(
                 params={"reason": str(error)},
             )
         )
-        return None, issues
+        return None, issues, None
 
     fill_area_mm2 = contour_area(fill.vertices, fill.bulges)
     # A collapsed offset inverts the pocket (negative shoelace area) or
@@ -1122,7 +1184,7 @@ def _evaluate_contour_module(
                 params={"reason": "frame inset collapsed the glass pocket"},
             )
         )
-        return None, issues
+        return None, issues, None
 
     if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
         raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
@@ -1140,11 +1202,14 @@ def _evaluate_contour_module(
     fill_points = contour_points(fill)
     xs = [point.x_mm for point in fill_points]
     ys = [point.y_mm for point in fill_points]
+    glass_width = _q(max(xs) - min(xs))
+    glass_height = _q(max(ys) - min(ys))
+    glass_shape = None if _is_axis_rect(fill) else fill_points
     glasses.append(
         GlassPiece(
             bay_id=leaf.id,
-            width_mm=_q(max(xs) - min(xs)),
-            height_mm=_q(max(ys) - min(ys)),
+            width_mm=glass_width,
+            height_mm=glass_height,
             area_m2=area_m2,
             weight_kg=weight_kg,
             thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
@@ -1152,7 +1217,48 @@ def _evaluate_contour_module(
             article_sku=leaf.glass_article_sku,
             # An axis-aligned rect fill is the classic rectangle — `shape`
             # stays None so production sheet-nests it like any other pane.
-            shape=None if _is_axis_rect(fill) else fill_points,
+            shape=glass_shape,
+        )
+    )
+    infill_id = f"{topology_path}/infill"
+    trace_infills.append(
+        SemanticInfillTraceV1(
+            semantic_infill_id=infill_id,
+            topology_path=topology_path,
+            assembly=assembly,
+            bay_id=leaf.id,
+            leaf_id=None,
+            leaf_slot=None,
+            kind="GLASS",
+            technical_sku=leaf.glass_article_sku or "",
+            composition=leaf.glass_spec,
+            width_mm=glass_width,
+            height_mm=glass_height,
+            shape=(
+                [TracePointV1(x_mm=point.x_mm, y_mm=point.y_mm) for point in fill_points]
+                if glass_shape is not None
+                else None
+            ),
+            placement_domain=PlacementDomain.DIRECT,
+            direct_rect=TraceRectV1(
+                x_mm=min(xs),
+                y_mm=min(ys),
+                width_mm=glass_width,
+                height_mm=glass_height,
+            ),
+        )
+    )
+    technical_infills.append(
+        InfillTechnicalFacts(
+            bay_id=leaf.id,
+            leaf_id=None,
+            kind="GLASS",
+            thickness_mm=leaf.glass_thickness_mm,
+            glass_spec=leaf.glass_spec,
+            width_mm=glass_width,
+            height_mm=glass_height,
+            exact_area_m2=fill_area_mm2 / Decimal("1000000"),
+            bead_supported=leaf.glass_thickness_mm in params.glazing_bead_rules,
         )
     )
 
@@ -1161,17 +1267,47 @@ def _evaluate_contour_module(
     fill_n = len(fill.vertices)
     for i in range(fill_n):
         bulge = fill.bulges[i]
+        bead_length = _q(contour_edge_length(fill, i) + rule.cut_add_mm)
+        bead_left = _qa(interior_angle(fill, i) / 2)
+        bead_right = _qa(interior_angle(fill, (i + 1) % fill_n) / 2)
         profile_cuts.append(
             ProfileCut(
                 sku=rule.bead_article.sku,
                 role=ProfileRole.GLAZING_BEAD,
                 material=rule.bead_article.material,
-                length_mm=_q(contour_edge_length(fill, i) + rule.cut_add_mm),
-                angle_left=_qa(interior_angle(fill, i) / 2),
-                angle_right=_qa(interior_angle(fill, (i + 1) % fill_n) / 2),
+                length_mm=bead_length,
+                angle_left=bead_left,
+                angle_right=bead_right,
                 qty=1,
                 bay_id=leaf.id,
                 sagitta_mm=_q(bulge) if bulge else None,
+            )
+        )
+        bstart = fill.vertices[i]
+        bend = fill.vertices[(i + 1) % fill_n]
+        trace_members.append(
+            SemanticMemberTraceV1(
+                semantic_member_id=f"{infill_id}/bead-set/E{i}",
+                topology_path=topology_path,
+                assembly=assembly,
+                bay_id=leaf.id,
+                leaf_id=None,
+                leaf_slot=None,
+                role=ProfileRole.GLAZING_BEAD,
+                physical_member_slot=f"E{i}",
+                workshop_sku=rule.bead_article.sku,
+                material=rule.bead_article.material,
+                cut_length_mm=bead_length,
+                angle_left=bead_left,
+                angle_right=bead_right,
+                axis=(
+                    Axis.HORIZONTAL
+                    if abs(bend.x_mm - bstart.x_mm) >= abs(bend.y_mm - bstart.y_mm)
+                    else Axis.VERTICAL
+                ),
+                sagitta_mm=_q(bulge) if bulge else None,
+                placement_domain=PlacementDomain.BEAD_SET,
+                parent_infill_id=infill_id,
             )
         )
         if bulge:
@@ -1184,14 +1320,47 @@ def _evaluate_contour_module(
                 )
             )
 
-    return (
-        EngineResult(
-            profile_cuts=profile_cuts,
-            reinforcements=reinforcements,
-            glasses=glasses,
-        ),
-        issues,
+    result = EngineResult(
+        profile_cuts=profile_cuts,
+        reinforcements=reinforcements,
+        glasses=glasses,
     )
+    computation = GeometryComputation(
+        result=result,
+        manufacturing_trace=GeometryManufacturingTraceV1(
+            nominal_width_mm=module.width_mm,
+            nominal_height_mm=module.height_mm,
+            members=trace_members,
+            leaves=[],
+            infills=trace_infills,
+        ),
+        openings=[
+            OpeningTechnicalFacts(
+                bay_id=leaf.id,
+                width_mm=module.width_mm,
+                height_mm=module.height_mm,
+            )
+        ],
+        infills=technical_infills,
+        node_dimensions={leaf.id: (module.width_mm, module.height_mm)},
+    )
+    return result, issues, computation
+
+
+def contour_module_computation(
+    module: ProductModule,
+    params: SystemParams,
+    *,
+    is_foiled: bool = False,
+) -> tuple[GeometryComputation | None, list[ProductIssue]]:
+    """Documentary-sealing entry for a contour module: the same evaluation
+    the BOM path runs, returned as a GeometryComputation whose manufacturing
+    trace carries the real contour members, glass polygon and bead sets
+    instead of a rectangular approximation."""
+    _result, issues, computation = _evaluate_contour_module(
+        module, params, is_foiled=is_foiled
+    )
+    return computation, issues
 
 
 def evaluate_product(
@@ -1239,7 +1408,7 @@ def evaluate_product(
         result: EngineResult | None = None
         try:
             if module.contour is not None:
-                result, contour_issues = _evaluate_contour_module(
+                result, contour_issues, _computation = _evaluate_contour_module(
                     module, params, is_foiled=is_foiled
                 )
                 module_issues.extend(contour_issues)

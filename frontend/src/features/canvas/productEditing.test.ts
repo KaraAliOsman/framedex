@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addAdjacentUnit,
+  elevationLayoutMm,
   equalizeCouplingAngles,
   equalizeModuleWidths,
   isProductModel,
@@ -300,6 +301,44 @@ describe("scaleModuleWidths", () => {
     expect(scaleModuleWidths(product, "0")).toBe(product);
     expect(scaleModuleWidths(product, "abc")).toBe(product);
     expect(scaleModuleWidths(product, "0.02")).toBe(product);
+  });
+
+  it("scales the elevation envelope, not the stacked width sum", () => {
+    // Door + transom share one column: widths sum 1800 but the elevation is
+    // 900 wide — a 1200 request must produce a 1200 mm envelope, not 600 mm
+    // of column plus a 600 mm overhang.
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const door = base.assembly.modules[0]!;
+    const transom = wrapTreeAsProduct(
+      makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 400, angleDeg: 0 }).assembly
+        .modules[0]!.tree,
+      "900.00",
+      "400.00",
+    ).assembly.modules[0]!;
+    const stacked: ProductJson = {
+      ...base,
+      assembly: {
+        modules: [door, { ...transom, id: "t1" }],
+        couplings: [
+          {
+            id: "c1",
+            modules: [door.id, "t1"],
+            edges: ["top", "bottom"],
+            kind: "STACKED",
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const scaled = scaleModuleWidths(stacked, "1200.00");
+    const layout = elevationLayoutMm(scaled);
+    const envelope =
+      Math.max(...layout.members.map((member) => member.x + member.w)) -
+      Math.min(...layout.members.map((member) => member.x));
+    expect(envelope).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[0]!.width_mm)).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[1]!.width_mm)).toBeCloseTo(1200, 2);
   });
 });
 

@@ -396,15 +396,6 @@ function Bay({
             </g>
           );
         })}
-        {region.w > 60 && region.h > 60 && (
-          <OpeningGlyph
-            opening={node.opening_type}
-            x={region.x}
-            y={region.y}
-            w={region.w}
-            h={region.h}
-          />
-        )}
       </g>
     );
   }
@@ -834,6 +825,9 @@ export interface FrontLayout {
   /** mm the drawing band lifts/dips for arc overshoot past the vertex box. */
   lift: number;
   dip: number;
+  /** mm side bows extend past the nominal member extents (0 when none). */
+  leftOver: number;
+  rightOver: number;
 }
 
 /** Front elevation layout — mirrors the engine's `elevation_layout`: front
@@ -927,22 +921,38 @@ export function frontLayout(product: ProductJson): FrontLayout {
       : 0;
   let lift = 0;
   let dip = 0;
+  let leftOver = 0;
+  let rightOver = 0;
   for (const rect of rects) {
     if (!rect.module.contour) continue;
     const outset = contourOutset(rect.module.contour);
     lift = Math.max(lift, rect.sill + rect.h + outset.top - height);
     dip = Math.max(dip, outset.bottom - rect.sill);
+    // A side-bowed edge bulges past the module's nominal side — expand the
+    // drawing band horizontally like lift/dip expand it vertically.
+    leftOver = Math.max(leftOver, outset.left - rect.x);
+    rightOver = Math.max(rightOver, rect.x + rect.w + outset.right - (right - left));
   }
-  return { rects, columns, joints, totalW: right - left, height, lift, dip };
+  return {
+    rects,
+    columns,
+    joints,
+    totalW: right - left,
+    height,
+    lift,
+    dip,
+    leftOver,
+    rightOver,
+  };
 }
 
 /** The drawable extent of the front elevation including gutters and chains. */
 export function frontBounds(product: ProductJson) {
-  const { totalW, height, lift, dip } = frontLayout(product);
+  const { totalW, height, lift, dip, leftOver, rightOver } = frontLayout(product);
   return {
-    x: -LEFT_GUTTER,
+    x: -LEFT_GUTTER - leftOver,
     y: -TOP_GUTTER,
-    w: totalW + LEFT_GUTTER + SIDE_GUTTER,
+    w: totalW + LEFT_GUTTER + SIDE_GUTTER + leftOver + rightOver,
     h: height + TOP_GUTTER + BOTTOM_GUTTER + lift + dip,
   };
 }

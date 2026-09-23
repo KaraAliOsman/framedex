@@ -711,36 +711,67 @@ export function equalizeModuleWidths(product: ProductJson): ProductJson {
 export function scaleModuleWidths(product: ProductJson, totalMm: string): ProductJson {
   const modules = product.assembly.modules;
   const totalCents = Math.round(Number(totalMm) * 100);
-  const currentCents = Math.round(totalModuleWidth(product) * 100);
-  // Every module must stay ≥0.01 mm or the product fails engine validation.
+  // The control edits the elevation envelope, so the factor must come from
+  // `elevationLayoutMm` member extents — a stacked member shares its root's
+  // column and must not count twice against the requested total.
+  const layout = elevationLayoutMm(product);
+  if (layout.members.length === 0) return product;
+  const envelopeCents = (candidate: ElevationLayoutMm) =>
+    Math.round(
+      (Math.max(...candidate.members.map((member) => member.x + member.w)) -
+        Math.min(...candidate.members.map((member) => member.x))) *
+        100,
+    );
+  const currentCents = envelopeCents(layout);
   if (!Number.isFinite(totalCents) || totalCents < modules.length || currentCents <= 0)
     return product;
-  // Integer-hundredth allocation: 1 cent baseline each, remaining cents
-  // distributed proportionally by largest remainder so shares never hit zero.
-  const extra = totalCents - modules.length;
-  const currentTotal = totalModuleWidth(product);
-  const exact = modules.map((module) => (Number(module.width_mm) * extra) / currentTotal);
-  const shares = exact.map(Math.floor);
-  let remainder = extra - shares.reduce((sum, share) => sum + share, 0);
-  const order = modules
-    .map((_, index) => index)
-    .sort((a, b) => exact[b]! - shares[b]! - (exact[a]! - shares[a]!));
-  for (const index of order) {
-    if (remainder <= 0) break;
-    shares[index]! += 1;
-    remainder -= 1;
-  }
-  const nextModules = modules.map((module, index) => {
-    const widthMm = ((1 + shares[index]!) / 100).toFixed(2);
-    return {
-      ...module,
-      width_mm: widthMm,
-      ...(module.contour
-        ? { contour: scaledContour(module.contour, widthMm, module.height_mm) }
-        : {}),
-    };
+  // Uniform factor scaling: every member width follows the same factor, so
+  // columns, centred stacks and protrusions all track the envelope exactly.
+  const factor = totalCents / currentCents;
+  const widths = new Map(
+    modules.map((module) => [
+      module.id,
+      Math.max(1, Math.round(Number(module.width_mm) * 100 * factor)),
+    ]),
+  );
+  const build = (map: Map<string, number>): ProductJson => ({
+    ...product,
+    assembly: {
+      ...product.assembly,
+      modules: modules.map((module) => {
+        const widthMm = ((map.get(module.id) ?? 1) / 100).toFixed(2);
+        return {
+          ...module,
+          width_mm: widthMm,
+          ...(module.contour
+            ? { contour: scaledContour(module.contour, widthMm, module.height_mm) }
+            : {}),
+        };
+      }),
+    },
   });
-  return { ...product, assembly: { ...product.assembly, modules: nextModules } };
+  // Per-member cent rounding drifts the envelope by a few cents — hand the
+  // residual to the module owning the right edge (a centred stack moves
+  // that edge only half a cent per cent, so double the delta there) until
+  // the elevation lands on the requested width.
+  let next = build(widths);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const diff = totalCents - envelopeCents(elevationLayoutMm(next));
+    if (diff === 0) return next;
+    const right = Math.max(...elevationLayoutMm(next).members.map((member) => member.x + member.w));
+    const edgeOwner = elevationLayoutMm(next).members.find(
+      (member) => member.x + member.w === right,
+    );
+    if (edgeOwner === undefined) break;
+    const id = edgeOwner.module.id;
+    const centred = !elevationLayoutMm(next).columns.some((column) => column.rootId === id);
+    const delta = centred ? diff * 2 : diff;
+    const adjusted = (widths.get(id) ?? 1) + delta;
+    if (adjusted < 1) break;
+    widths.set(id, adjusted);
+    next = build(widths);
+  }
+  return next;
 }
 
 export function setCouplingAngle(
@@ -831,19 +862,23 @@ export function setModuleOpening(
   return replaceModule(product, moduleId, { ...module, tree });
 }
 
-/** Author the primary bay's sliding topology (mandate §12). Any manual
- * layout edit makes the bay layout-driven (`opening_type: "SLIDING"` —
- * presets resolve without a declared layout). */
+/** Author one bay's sliding topology (mandate §12). Only the addressed bay
+ * changes — a manual layout edit makes that bay layout-driven
+ * (`opening_type: "SLIDING"` — presets resolve without a declared layout),
+ * and sibling bays keep their own opening and BOM. */
 export function setModuleSlidingLayout(
   product: ProductJson,
   moduleId: string,
   layout: SlidingLayout,
+  bayId: string,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
   function withLayout(node: IntentNode): IntentNode {
     if (node.type === "BAY") {
-      return { ...node, opening_type: "SLIDING", sliding_layout: layout };
+      return node.id === bayId
+        ? { ...node, opening_type: "SLIDING", sliding_layout: layout }
+        : node;
     }
     return { ...node, children: node.children?.map(withLayout) };
   }

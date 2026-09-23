@@ -25,6 +25,7 @@ from dekopen_engine.product import (
     IssueCode,
     ProductModel,
     ProductStatus,
+    contour_module_computation,
     evaluate_product,
 )
 
@@ -362,3 +363,56 @@ class TestContourEvaluation:
         )
         assert ev.status == ProductStatus.INVALID
         assert any(i.code == IssueCode.CONTOUR_INVALID.value for i in ev.issues)
+
+    def test_documentary_trace_carries_contour_geometry(self) -> None:
+        """The freeze path must seal real contour members + glass polygon —
+        never the rectangular approximation compute_geometry would emit."""
+        product = _product(Contour.trapezoid(D("2400"), D("1400"), D("200"), D("200")))
+        computation, issues = contour_module_computation(
+            product.assembly.modules[0], demo_60_params()
+        )
+        assert not [i for i in issues if i.severity.value == "error"]
+        assert computation is not None
+        assert computation.result is not None
+        trace = computation.manufacturing_trace
+        assert trace is not None
+        frames = [m for m in trace.members if m.role.value == "FRAME"]
+        beads = [m for m in trace.members if m.role.value == "GLAZING_BEAD"]
+        assert len(frames) == 4 and len(beads) == 4
+        # Each frame member seals its own contour edge as a direct segment —
+        # the slanted sides have non-axis-aligned chords.
+        chords = {
+            (
+                m.direct_segment.start.x_mm,
+                m.direct_segment.start.y_mm,
+                m.direct_segment.end.x_mm,
+                m.direct_segment.end.y_mm,
+            )
+            for m in frames
+            if m.direct_segment is not None
+        }
+        assert len(chords) == 4
+        assert any(x0 != x1 and y0 != y1 for (x0, y0, x1, y1) in chords)
+        # PVC authority → reinforcement declared with its emitted length.
+        assert all(m.reinforcement_required for m in frames)
+        assert all(
+            m.reinforcement_length_mm is not None and m.reinforcement_length_mm > 0
+            for m in frames
+        )
+        (infill,) = trace.infills
+        assert infill.kind == "GLASS" and infill.bay_id == "B1"
+        assert infill.width_mm > 0 and infill.height_mm > 0
+        assert [i.bay_id for i in computation.infills] == ["B1"]
+        assert [o.bay_id for o in computation.openings] == ["B1"]
+
+    def test_arch_trace_seals_sagitta_and_sampled_shape(self) -> None:
+        product = _product(Contour.arch_top(D("2400"), D("1400"), D("300")))
+        computation, _issues = contour_module_computation(
+            product.assembly.modules[0], demo_60_params()
+        )
+        assert computation is not None
+        trace = computation.manufacturing_trace
+        arc_members = [m for m in trace.members if m.sagitta_mm is not None]
+        assert arc_members
+        (infill,) = trace.infills
+        assert infill.shape is not None and len(infill.shape) > 4

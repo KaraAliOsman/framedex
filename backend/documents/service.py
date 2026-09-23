@@ -37,6 +37,7 @@ from dekopen_engine.manufacturing_trace import (
     SemanticLeafTraceV1,
 )
 from dekopen_engine.models import EngineResult
+from dekopen_engine.product import contour_module_computation
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
@@ -355,24 +356,31 @@ def _position_calculations(
         if evaluation.status.value != "VALID" or evaluation.bom is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         result = evaluation.bom
-        module_specs = [
-            (module.id, module.tree.model_dump(mode="json"), module.width_mm, module.height_mm)
-            for module in product.assembly.modules
-        ]
+        module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None
-        module_specs = [(None, tree, width_mm, height_mm)]
-    for module_id, module_tree, module_width, module_height in module_specs:
-        module_root = normalized_root_from_api(
-            parametric_tree=module_tree,
-            nominal_width_mm=module_width,
-            nominal_height_mm=module_height,
-            color=color,
-            params=params,
-        )
-        computation = compute_geometry(module_root, params, diagnostic=True)
+        module_specs = [(None, None)]
+    for module_id, module in module_specs:
+        if module is not None and module.contour is not None:
+            computation, _contour_issues = contour_module_computation(module, params)
+            if computation is None:
+                raise DocumentaryError("documentary_geometry_incomplete")
+        else:
+            module_root = normalized_root_from_api(
+                parametric_tree=(
+                    module.tree.model_dump(mode="json") if module is not None else tree
+                ),
+                nominal_width_mm=module.width_mm if module is not None else width_mm,
+                nominal_height_mm=(
+                    module.height_mm if module is not None else height_mm
+                ),
+                color=color,
+                params=params,
+            )
+            computation = compute_geometry(module_root, params, diagnostic=True)
         if computation.result is None or computation.manufacturing_trace is None:
             raise DocumentaryError("documentary_geometry_incomplete")
+        module_tree = module.tree.model_dump(mode="json") if module is not None else tree
         calculations.append((module_id, computation, module_tree))
         if not is_assembly:
             result = computation.result

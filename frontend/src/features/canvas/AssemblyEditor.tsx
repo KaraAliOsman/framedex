@@ -347,8 +347,11 @@ function ModuleInspector({
   const slidingBay = isSlidingOpening(opening) ? modulePrimaryBay(module) : null;
   const slidingLayout = slidingBay ? resolvedSlidingLayout(slidingBay) : null;
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
-  const commitSlidingLayout = (layout: SlidingLayout) =>
-    commit(setModuleSlidingLayout(product, module.id, layout));
+  const commitSlidingLayout = (layout: SlidingLayout) => {
+    if (slidingBay) {
+      commit(setModuleSlidingLayout(product, module.id, layout, slidingBay.id));
+    }
+  };
   return (
     <section className="assembly-inspector" aria-label={t("assembly.module")}>
       <header className="assembly-inspector__header">

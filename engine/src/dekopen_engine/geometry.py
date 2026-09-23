@@ -935,14 +935,20 @@ def _append_frame_glazed_pane(
     """Glazing sealed directly into the frame region — a FIXED bay or a fixed
     "O" panel of a sliding unit. The pane extends `rebate_depth_mm` under the
     member covering each edge (frame rebate, or the neighbouring leaf's
-    meeting stile for sliding slots) minus the glass clearance."""
+    meeting stile for sliding slots) minus the glass clearance.
+
+    Sliding "O" slots share the bay id, so the pane takes the slot-scoped
+    leaf identity moving leaves already use — downstream targets
+    (polishing, workshop annotations) can address each fixed pane."""
     if node.glass_thickness_mm is None or node.glass_spec is None:
         raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
+    leaf_id = f"{node.id}:{leaf_slot}" if leaf_slot is not None else None
     width = rect.width_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
     height = rect.height_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
     accumulator.glasses.append(
         build_glass_piece(
             bay_id=node.id,
+            leaf_id=leaf_id,
             width_mm=width,
             height_mm=height,
             glass_spec=node.glass_spec,
@@ -953,7 +959,7 @@ def _append_frame_glazed_pane(
     accumulator.computation.infills.append(
         InfillTechnicalFacts(
             bay_id=node.id,
-            leaf_id=None,
+            leaf_id=leaf_id,
             kind="GLASS",
             thickness_mm=node.glass_thickness_mm,
             glass_spec=node.glass_spec,
@@ -975,7 +981,7 @@ def _append_frame_glazed_pane(
             topology_path=topology_path,
             assembly=assembly,
             bay_id=node.id,
-            leaf_id=None,
+            leaf_id=leaf_id,
             leaf_slot=leaf_slot,
             kind="GLASS",
             technical_sku=node.glass_article_sku or "",
@@ -990,7 +996,7 @@ def _append_frame_glazed_pane(
         accumulator,
         params=params,
         bay_id=node.id,
-        leaf_id=None,
+        leaf_id=leaf_id,
         leaf_slot=leaf_slot,
         topology_path=topology_path,
         assembly=assembly,
