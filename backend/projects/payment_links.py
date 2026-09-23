@@ -64,15 +64,24 @@ def _client(integration: dict) -> FlowClient:
 
 
 def _client_for_link(link: dict) -> FlowClient:
-    """The link's own credential version — a dispatched charge settles with the
-    credentials that signed it even after the org rotates or disables them."""
-    if not link.get("flow_api_url") or not link.get("flow_api_key") or not link.get("flow_secret_key"):
+    """Credentials that signed the dispatch while the charge is in flight;
+    once the link is terminal the snapshot is deleted and the org's current
+    integration answers recovery reads instead."""
+    if link.get("flow_api_url") and link.get("flow_api_key") and link.get("flow_secret_key"):
+        return FlowClient(
+            api_url=link["flow_api_url"],
+            api_key=link["flow_api_key"],
+            secret_key=link["flow_secret_key"],
+        )
+    with documentary_backend():
+        integration = rows(
+            "SELECT api_url, api_key, secret_key FROM public.org_payment_integrations "
+            "WHERE org_id=%s AND provider='FLOW' AND enabled",
+            [str(link["org_id"])],
+        )
+    if not integration:
         raise FlowError("flow_not_configured")
-    return FlowClient(
-        api_url=link["flow_api_url"],
-        api_key=link["flow_api_key"],
-        secret_key=link["flow_secret_key"],
-    )
+    return _client(integration[0])
 
 
 def get_integration(*, org_id: UUID) -> dict:
@@ -177,70 +186,80 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             "Los links Flow solo cobran en CLP — el trato del proyecto usa otra moneda.",
         )
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
-    with transaction.atomic(), documentary_backend():
-        integration = rows(
-            "SELECT * FROM public.org_payment_integrations "
-            "WHERE org_id=%s AND provider='FLOW' AND enabled",
-            [str(org_id)],
-        )
-        if not integration:
+    with transaction.atomic():
+        # Serialize against reset_draft_pricing, which holds the same project
+        # lock while clearing pricing — a reset that commits first must not let
+        # this claim outlive the deal it was priced against. Locking as the
+        # request role: documentary_backend cannot take FOR UPDATE on projects.
+        project_row(org_id, project_id, lock=True)
+        if payments._deal(org_id, project_id, project) is None:
             raise contract_error(
-                422,
-                "flow_not_configured",
-                "Configura la integración Flow en Ajustes primero.",
+                422, "payment_requires_deal", "El proyecto necesita un precio aplicado para cobrar."
             )
-        # Conflict-tolerant claim: concurrent replays converge on the one row the
-        # unique key allows; the loser reads and validates the winner instead of
-        # erroring out of the idempotency contract.
-        inserted = rows(
-            """
-            INSERT INTO public.project_payment_links(
-                org_id, project_id, operation_key, kind, amount, payer_email,
-                subject, status, environment, created_by)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s)
-            ON CONFLICT (org_id, operation_key) DO NOTHING
-            RETURNING *
-            """,
-            [
-                str(org_id),
-                str(project_id),
-                data["operation_key"],
-                kind,
-                str(amount),
-                data["payer_email"].strip(),
-                subject[:200],
-                _environment(integration[0]["api_url"]),
-                str(actor_id),
-            ],
-        )
-        if inserted:
-            link = inserted[0]
-        else:
-            existing = rows(
-                "SELECT * FROM public.project_payment_links WHERE org_id=%s AND operation_key=%s",
-                [str(org_id), data["operation_key"]],
+        with documentary_backend():
+            integration = rows(
+                "SELECT * FROM public.org_payment_integrations "
+                "WHERE org_id=%s AND provider='FLOW' AND enabled",
+                [str(org_id)],
             )
-            link = existing[0]
-            if str(link["project_id"]) != str(project_id):
+            if not integration:
                 raise contract_error(
-                    409, "payment_operation_conflict", "La operación ya existe en otro proyecto."
+                    422,
+                    "flow_not_configured",
+                    "Configura la integración Flow en Ajustes primero.",
                 )
-            return {"link": _public_link(link)}
-        integration = integration[0]
-        # The credential version that signs this dispatch travels in a
-        # backend-only row — never on the tenant-readable links table.
-        rows(
-            "INSERT INTO public.project_payment_link_credentials("
-            "link_id, org_id, flow_api_url, flow_api_key, flow_secret_key) "
-            "VALUES (%s,%s,%s,%s,%s)",
-            [
-                str(link["id"]),
-                str(org_id),
-                integration["api_url"],
-                integration["api_key"],
-                integration["secret_key"],
-            ],
-        )
+            # Conflict-tolerant claim: concurrent replays converge on the one row the
+            # unique key allows; the loser reads and validates the winner instead of
+            # erroring out of the idempotency contract.
+            inserted = rows(
+                """
+                INSERT INTO public.project_payment_links(
+                    org_id, project_id, operation_key, kind, amount, payer_email,
+                    subject, status, environment, created_by)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s)
+                ON CONFLICT (org_id, operation_key) DO NOTHING
+                RETURNING *
+                """,
+                [
+                    str(org_id),
+                    str(project_id),
+                    data["operation_key"],
+                    kind,
+                    str(amount),
+                    data["payer_email"].strip(),
+                    subject[:200],
+                    _environment(integration[0]["api_url"]),
+                    str(actor_id),
+                ],
+            )
+            if inserted:
+                link = inserted[0]
+            else:
+                existing = rows(
+                    "SELECT * FROM public.project_payment_links WHERE org_id=%s AND operation_key=%s",
+                    [str(org_id), data["operation_key"]],
+                )
+                link = existing[0]
+                if str(link["project_id"]) != str(project_id):
+                    raise contract_error(
+                        409, "payment_operation_conflict", "La operación ya existe en otro proyecto."
+                    )
+                return {"link": _public_link(link)}
+            integration = integration[0]
+            # The credential version that signs this dispatch travels in a
+            # backend-only row — never on the tenant-readable links table.
+            rows(
+                "INSERT INTO public.project_payment_link_credentials("
+                "link_id, org_id, flow_api_url, flow_api_key, flow_secret_key) "
+                "VALUES (%s,%s,%s,%s,%s)",
+                [
+                    str(link["id"]),
+                    str(org_id),
+                    integration["api_url"],
+                    integration["api_key"],
+                    integration["secret_key"],
+                ],
+            )
     # The claim is committed — now the provider mutation. An uncertain outcome
     # marks the link UNCERTAIN; recovery is a GET, never a second POST.
     client = _client(integration)
@@ -340,6 +359,10 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
                 "WHERE org_id=%s AND id=%s AND status<>'PAID' RETURNING *",
                 [verified["flowOrder"], str(org_id), str(link_id)],
             )[0]
+            rows(
+                "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
+                [str(link_id)],
+            )
             return {"link": _public_link(link)}
         # status 2 — settled. The ledger's UNIQUE (org_id, operation_key) is the
         # dedup boundary: webhook retries and recoveries converge on one row.
@@ -390,6 +413,12 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             "WHERE org_id=%s AND id=%s RETURNING *",
             [verified["flowOrder"], str(payment[0]["id"]), str(org_id), str(link_id)],
         )[0]
+    # The credential version only needs to outlive an in-flight charge —
+    # terminal links drop the snapshot so plaintext creds never accumulate.
+    rows(
+        "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
+        [str(link_id)],
+    )
     return {"link": _public_link(link)}
 
 

@@ -645,3 +645,101 @@ def test_save_integration_requires_api_key_for_new_org(monkeypatch):
             },
         )
     assert failure.value.contract_code == "flow_api_key_required"
+
+
+def test_settle_drops_credentials_once_paid(monkeypatch):
+    """A settled link must not keep the dispatch credential snapshot around."""
+    link = _link()
+    deletes = []
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql:
+            return [link]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        if "DELETE FROM public.project_payment_link_credentials" in sql:
+            deletes.append(params)
+            return []
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert deletes == [[str(link["id"])]]
+
+
+def test_terminal_link_falls_back_to_current_integration(monkeypatch):
+    """Once the snapshot is gone, recovery uses the org's live integration."""
+    link = _link(
+        status="FAILED",
+        flow_api_url=None,
+        flow_api_key=None,
+        flow_secret_key=None,
+    )
+    client = _Client()
+    built = []
+    monkeypatch.setattr(
+        payment_links, "FlowClient", lambda **kw: built.append(kw) or client
+    )
+    integration = _integration(api_key="CURRENT-KEY")
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql:
+            return [link]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        if "DELETE FROM public.project_payment_link_credentials" in sql:
+            return []
+        return []
+
+    _patch_env(monkeypatch, fake_rows)
+    out = payment_links.recover_link(
+        org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+    )
+    assert out["link"]["status"] == "PAID"
+    assert built[0]["api_key"] == "CURRENT-KEY"
+
+
+def test_reset_pricing_blocked_by_outstanding_link(monkeypatch):
+    """reset_draft_pricing refuses while a collectible link exists."""
+    from projects import service as projects_service
+
+    project = {
+        "id": uuid4(),
+        "org_id": uuid4(),
+        "name": "P-1",
+        "status": "DRAFT",
+        "current_revision": "REV-A",
+    }
+    op_id = uuid4()
+    monkeypatch.setattr(projects_service, "project_row", lambda *a, **k: project)
+    monkeypatch.setattr(
+        projects_service, "_pricing_authority", lambda *a, **k: {"id": op_id}
+    )
+    monkeypatch.setattr(projects_service, "audit_reason", lambda reason: None)
+    monkeypatch.setattr(projects_service, "commercial_backend", _noop)
+    monkeypatch.setattr(
+        projects_service, "project_public", lambda *a, **k: {"id": project["id"]}
+    )
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_versions" in sql:
+            return []  # revision not yet emitted
+        if "FROM public.project_payment_links" in sql:
+            return [{"id": uuid4()}]  # an outstanding collectible link
+        return []
+
+    monkeypatch.setattr(projects_service, "rows", fake_rows)
+    with pytest.raises(APIException) as failure:
+        projects_service.reset_draft_pricing(
+            project["org_id"], project["id"], op_id, "reprice"
+        )
+    assert failure.value.contract_code == "payment_links_outstanding"

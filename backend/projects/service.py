@@ -585,6 +585,16 @@ def reset_draft_pricing(org_id, project_id, expected_operation_id, reason):
         raise contract_error(409, "stale_pricing_operation", "Recarga los precios del proyecto.")
     if not reason.strip():
         raise contract_error(400, "audit_reason_required", "Indica el motivo para revisar precios.")
+    if rows(
+        "SELECT id FROM public.project_payment_links WHERE org_id=%s AND project_id=%s "
+        "AND status IN ('DISPATCHING','PENDING','UNCERTAIN') LIMIT 1",
+        [org_id, project_id],
+    ):
+        raise contract_error(
+            409,
+            "payment_links_outstanding",
+            "Hay links de cobro vigentes — resuélvelos o cancela antes de revisar precios.",
+        )
     audit_reason(reason)
     with commercial_backend():
         rows("UPDATE public.project_positions SET cost_net=0,price_net=0,discount_pct=0,"

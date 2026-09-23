@@ -77,17 +77,21 @@ export function ProjectPaymentLinksPanel({
   const load = useCallback(async () => {
     const current = ++generation.current;
     try {
+      // Integration status is a writer-only endpoint — read-only roles keep
+      // their readable links instead of losing the whole panel to one 403.
       const [linksResponse, statusResponse] = await Promise.all([
         projectPaymentLinksList(projectId, requestOptions),
-        projectPaymentIntegrationStatus(requestOptions),
+        canWrite
+          ? projectPaymentIntegrationStatus(requestOptions)
+          : Promise.resolve(null),
       ]);
       if (generation.current !== current) return;
       if (linksResponse.status === 200) setLinks(linksResponse.data.links);
-      if (statusResponse.status === 200) setIntegration(statusResponse.data);
+      if (statusResponse?.status === 200) setIntegration(statusResponse.data);
     } catch {
       if (generation.current === current) setMessage(t("projects.paymentLinksLoadError"));
     }
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId, canWrite]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     void load();
