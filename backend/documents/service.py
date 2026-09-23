@@ -278,6 +278,26 @@ def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
 
+_GLASS_ADDITIVE_KEYS = frozenset({"glass_spec", "article_sku"})
+
+
+def _without_additive_glass_fields(bom: object) -> object:
+    # glass_spec/article_sku are output-additive metadata derived from the
+    # same inputs; the authoritative values are sealed in computation.infills.
+    # BOMs persisted before the fields existed must not read as drift.
+    if not isinstance(bom, dict) or not isinstance(bom.get("glasses"), list):
+        return bom
+    return {
+        **bom,
+        "glasses": [
+            {key: value for key, value in item.items() if key not in _GLASS_ADDITIVE_KEYS}
+            if isinstance(item, dict)
+            else item
+            for item in bom["glasses"]
+        ],
+    }
+
+
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
     result: dict[str, T] = {}
     for item in items:
@@ -617,9 +637,12 @@ def freeze_revision_a(
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
+            comparable_current = _without_additive_glass_fields(current_bom)
             if position_id not in priced_bom or not _same_documentary_value(
-                current_bom, priced_bom[position_id]
-            ) or not _same_documentary_value(current_bom, stored_bom):
+                comparable_current, _without_additive_glass_fields(priced_bom[position_id])
+            ) or not _same_documentary_value(
+                comparable_current, _without_additive_glass_fields(stored_bom)
+            ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
             annotations = workshop_annotations(position["workshop_annotations"])

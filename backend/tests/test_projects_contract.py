@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from uuid import uuid4
 from decimal import Decimal
 
 import pytest
@@ -219,3 +220,112 @@ def test_assembly_save_rejects_conflicting_nominal_dimensions(monkeypatch):
         calculate_design(ORG_A_ID, design)
     assert caught.value.status_code == 400
     assert caught.value.get_codes() == "validation_error"
+
+
+def test_position_public_preserves_pre_upgrade_glass_metadata_hash():
+    """BOMs sealed before GlassPiece carried spec/sku must still validate:
+    absent keys stay absent (canonical identity unchanged)."""
+    import json as _json
+    from dekopen_engine.snapshot import calculation_hash
+
+    stored_glasses = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": None,
+            "width_mm": "680.00",
+            "height_mm": "1310.00",
+            "area_m2": "0.8908",
+            "weight_kg": "17.82",
+            "thickness_net_mm": "8.00",
+        }
+    ]
+    stored_bom = {
+        "profile_cuts": [],
+        "reinforcements": [],
+        "glasses": stored_glasses,
+        "panels": [],
+        "hardware_items": [],
+        "leaf_weights": [],
+    }
+    design = {
+        "system_id": str(uuid4()),
+        "nominal_width_mm": "1400.00",
+        "nominal_height_mm": "1200.00",
+        "color": "WHITE",
+        "parametric_tree": {"kind": "window", "width_mm": "1400", "height_mm": "1200"},
+    }
+    expected = calculation_hash(design, stored_bom)
+    row = {
+        "id": uuid4(),
+        "project_id": uuid4(),
+        "position_index": 0,
+        "location_tag": "",
+        "quantity": 1,
+        "typology": "FIXED",
+        "system_id": design["system_id"],
+        "width_mm": Decimal("1400.00"),
+        "height_mm": Decimal("1200.00"),
+        "color_interior": "WHITE",
+        "color_exterior": "WHITE",
+        "parametric_tree": _json.dumps(design["parametric_tree"]),
+        "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "updated_at": "2026-09-23T00:00:00Z",
+    }
+    public = service.position_public(row)
+    assert public["bom"]["calculation_hash"] == expected
+    assert public["bom"]["glasses"] == stored_glasses  # no injected null keys
+
+
+def test_position_public_reads_new_glass_metadata_fields():
+    """Post-upgrade BOMs hash with their explicit spec/sku keys present."""
+    import json as _json
+    from dekopen_engine.snapshot import calculation_hash
+
+    stored_glasses = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": "leaf_1",
+            "width_mm": "680.00",
+            "height_mm": "1310.00",
+            "area_m2": "0.8908",
+            "weight_kg": "17.82",
+            "thickness_net_mm": "8.00",
+            "glass_spec": "4-16-4 Float Incoloro",
+            "article_sku": "GLS-441",
+        }
+    ]
+    stored_bom = {
+        "profile_cuts": [],
+        "reinforcements": [],
+        "glasses": stored_glasses,
+        "panels": [],
+        "hardware_items": [],
+        "leaf_weights": [],
+    }
+    design = {
+        "system_id": str(uuid4()),
+        "nominal_width_mm": "1400.00",
+        "nominal_height_mm": "1200.00",
+        "color": "WHITE",
+        "parametric_tree": {"kind": "window", "width_mm": "1400", "height_mm": "1200"},
+    }
+    expected = calculation_hash(design, stored_bom)
+    row = {
+        "id": uuid4(),
+        "project_id": uuid4(),
+        "position_index": 0,
+        "location_tag": "",
+        "quantity": 1,
+        "typology": "FIXED",
+        "system_id": design["system_id"],
+        "width_mm": Decimal("1400.00"),
+        "height_mm": Decimal("1200.00"),
+        "color_interior": "WHITE",
+        "color_exterior": "WHITE",
+        "parametric_tree": _json.dumps(design["parametric_tree"]),
+        "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "updated_at": "2026-09-23T00:00:00Z",
+    }
+    public = service.position_public(row)
+    assert public["bom"]["calculation_hash"] == expected
+    assert public["bom"]["glasses"] == stored_glasses

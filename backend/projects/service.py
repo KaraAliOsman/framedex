@@ -138,7 +138,9 @@ def position_public(row):
     try:
         payload = {key: value for key, value in stored.items() if key != "calculation_hash"}
         result = EngineResult.model_validate_json(json_text(payload))
-        safe = result_payload(result)
+        # Re-validation of a pre-upgrade BOM must hash the persisted field
+        # presence: optional fields the model gained later stay absent.
+        safe = result_payload(result, exclude_unset=True)
         expected = calculation_hash({**design, "system_id": str(design["system_id"])}, safe)
         # SHOT-08 stored EngineResult before calculation_hash was part of this
         # persistence boundary. Preserve that exact result; do not recalculate.
