@@ -305,11 +305,22 @@ def confirm_catalog_import(
                 "catalog_import_not_review_ready",
                 "La importación aún está procesándose. Espera a que termine.",
             )
+        # A retried confirm continues the same target: earlier keys already
+        # became articles in the stored system, so switching systems now would
+        # split one import across two catalogs.
+        if row["system_id"] and str(row["system_id"]) != str(system_id):
+            raise contract_error(
+                409,
+                "catalog_system_changed",
+                "La importación ya tiene artículos en otro sistema; "
+                "confirma sobre el mismo sistema.",
+            )
         # Articles on a global/shared system would be visible to every tenant
         # (the select policy opens global systems to all members) — the target
         # must be a system the organization owns.
         system = rows(
-            "SELECT id FROM public.profile_systems WHERE id=%s AND org_id=%s",
+            "SELECT id, material FROM public.profile_systems "
+            "WHERE id=%s AND org_id=%s",
             [str(system_id), str(org_id)],
         )
         if not system:
@@ -318,6 +329,7 @@ def confirm_catalog_import(
                 "catalog_system_not_tenant",
                 "El sistema destino debe pertenecer a tu organización.",
             )
+        material = system[0]["material"]
         candidate_keys = {
             candidate.get("key") for candidate in _as_list(row["candidates"])
         }
@@ -344,10 +356,10 @@ def confirm_catalog_import(
                 with transaction.atomic():
                     inserted = rows(
                         "INSERT INTO public.profile_articles("
-                        "system_id, org_id, sku, name, role, face_width_mm,"
+                        "system_id, org_id, sku, name, role, material, face_width_mm,"
                         " commercial_length_mm, welding_loss_mm, reinforcement_sku,"
                         " weight_kg_m, steel_weight_kg_m)"
-                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                         " ON CONFLICT (system_id, sku) DO NOTHING"
                         " RETURNING id",
                         [
@@ -356,6 +368,7 @@ def confirm_catalog_import(
                             sku,
                             name,
                             role,
+                            material,
                             str(item["face_width_mm"]),
                             str(item.get("commercial_length_mm")
                                 or DEFAULT_LENGTH_MM),

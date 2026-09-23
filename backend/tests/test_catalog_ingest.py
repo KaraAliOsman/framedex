@@ -151,7 +151,11 @@ def _confirm_patches(monkeypatch, row, system_found=True, insert_return=True):
         if "FROM public.catalog_imports" in sql:
             return [row]
         if "FROM public.profile_systems" in sql:
-            return [{"id": params[0]}] if system_found else []
+            return (
+                [{"id": params[0], "material": "ALUMINIUM"}]
+                if system_found
+                else []
+            )
         if "INSERT INTO public.profile_articles" in sql:
             inserts.append(params)
             return [{"id": article_id}] if insert_return else []
@@ -180,7 +184,9 @@ def test_confirm_inserts_articles_and_seals(monkeypatch):
     # Org-scoped insert: org_id written on the article row.
     assert inserts[0][1] == str(row["org_id"])
     # Decimal string passed as text — engine purity preserved.
-    assert inserts[0][5] == "78"
+    assert inserts[0][6] == "78"
+    # The article inherits the owned system's material, never the PVC default.
+    assert inserts[0][5] == "ALUMINIUM"
     # CONFIRMED is inline in the seal SQL; params carry result, system, import.
     assert updates[0][1] == str(system_id)
 
@@ -251,10 +257,10 @@ def test_confirm_defaults_apply_to_null_fields(monkeypatch):
         system_id=uuid4(),
         items=[item],
     )
-    assert inserts[0][6] == str(Decimal("6000"))
-    assert inserts[0][7] == str(Decimal("6"))
-    assert inserts[0][9] == str(Decimal("1.2"))
-    assert inserts[0][10] == str(Decimal("1.7"))
+    assert inserts[0][7] == str(Decimal("6000"))
+    assert inserts[0][8] == str(Decimal("6"))
+    assert inserts[0][10] == str(Decimal("1.2"))
+    assert inserts[0][11] == str(Decimal("1.7"))
 
 
 def test_parse_article_line_threshold_role():
@@ -279,7 +285,7 @@ def _failing_insert(monkeypatch, row, error):
         if "FROM public.catalog_imports" in sql:
             return [row]
         if "FROM public.profile_systems" in sql:
-            return [{"id": params[0]}]
+            return [{"id": params[0], "material": "PVC"}]
         if "INSERT INTO public.profile_articles" in sql:
             raise error
         if "UPDATE public.catalog_imports" in sql:
@@ -353,3 +359,34 @@ def test_mark_failed_only_updates_inflight(monkeypatch):
     sql, params = statements[0]
     assert "UPLOADED" in sql and "EXTRACTING" in sql
     assert len(params[0]) == 80
+
+
+def test_parse_article_line_name_strips_measurements():
+    candidate = parse_article_line("ABC-1 Marco 78 mm", "r0")
+    assert candidate["name"] == "Marco"
+    candidate = parse_article_line(
+        "MRC-100 Marco oscilobatiente 78 mm 1.45 kg/m refuerzo AC-55", "r1"
+    )
+    assert candidate["name"] == "Marco oscilobatiente"
+    candidate = parse_article_line("MON-2 Montante 1.10 kg/m", "r2")
+    assert candidate["name"] == "Montante"
+
+
+def test_confirm_retry_rejects_other_system(monkeypatch):
+    system_a = uuid4()
+    row = _import_row(
+        system_id=system_a,
+        result=[{"key": "c0", "article_id": str(uuid4())}],
+    )
+    monkeypatch.setattr(
+        catalog_service, "rows", lambda sql, params=None: [row]
+    )
+    monkeypatch.setattr(catalog_service, "documentary_backend", _backend)
+    with pytest.raises(APIException) as failure:
+        catalog_service.confirm_catalog_import(
+            org_id=row["org_id"],
+            import_id=row["id"],
+            system_id=uuid4(),
+            items=[_item(key="c1")],
+        )
+    assert failure.value.contract_code == "catalog_system_changed"

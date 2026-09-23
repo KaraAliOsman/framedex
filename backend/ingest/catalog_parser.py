@@ -74,13 +74,12 @@ def parse_article_line(line: str, key: str) -> dict[str, Any] | None:
     rest = " ".join(tokens[1:])
 
     warnings: list[str] = []
-    name_parts: list[str] = []
     numeric_spans: list[tuple[int, int]] = []
 
     kg_match = _KG_M.search(rest)
     weight = _decimal(kg_match.group(1)) if kg_match else None
     if kg_match:
-        numeric_spans.append(kg_match.span(1))
+        numeric_spans.append(kg_match.span(0))
 
     reinforcement = _REINFORCEMENT.search(rest)
     reinforcement_sku = reinforcement.group(1).upper() if reinforcement else None
@@ -100,15 +99,19 @@ def parse_article_line(line: str, key: str) -> dict[str, Any] | None:
             span[0] < other[1] and span[1] > other[0] for other in numeric_spans
         )
 
+    # The name ends at the first recognized measurement or metadata field —
+    # "Marco 78 mm" is named "Marco", never "Marco 78 mm".
+    boundaries = [span[0] for span in numeric_spans]
+    if reinforcement:
+        boundaries.append(reinforcement.start(0))
     for match in _NUMBER.finditer(rest):
         if _masked(match.span(0)):
             continue
-        start, end = match.span(0)
-        if start > 0 and not name_parts:
-            name_parts.append(rest[:start])
+        boundaries.append(match.start())
         break
 
-    name = re.sub(r"[|,;:\s]+$", "", (name_parts[0] if name_parts else rest).strip(" |,;:"))
+    end = min(boundaries) if boundaries else len(rest)
+    name = re.sub(r"[|,;:\s]+$", "", rest[:end].strip(" |,;:"))
     name = re.sub(r"\s{2,}", " ", name).strip()
     if len(name) > 120:
         name = name[:117].rstrip() + "..."
