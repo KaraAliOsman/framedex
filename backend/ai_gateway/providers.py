@@ -134,16 +134,13 @@ class HttpProvider:
             # The operation key doubles as the provider-level idempotency key
             # so a retry ambiguous to us can still dedupe provider-side.
             headers["Idempotency-Key"] = operation_key
+        path, body = self._wire_request(route, capability, input_payload)
         with client.stream(
             "POST",
-            f"https://{url_host}{port_suffix}{self._base_path}/invoke",
+            f"https://{url_host}{port_suffix}{path}",
             headers=headers,
             extensions={"sni_hostname": self._host},
-            json={
-                "model": route["provider_model"],
-                "capability": capability,
-                "input": input_payload,
-            },
+            json=body,
         ) as response:
             response.raise_for_status()
             content = bytearray()
@@ -242,17 +239,9 @@ class HttpProvider:
                 client=client,
                 operation_key=operation_key,
             )
-            body = json.loads(content)
-            if not isinstance(body, dict):
-                raise TypeError("provider body is not an object")
-            usage = body.get("usage") or {}
-            if not isinstance(usage, dict):
-                raise TypeError("provider usage is not an object")
-            output = body.get("output") if "output" in body else body.get("text")
-            if not isinstance(output, str):
-                raise TypeError("provider output is not a string")
-            tokens_prompt = int(usage.get("prompt_tokens") or 0)
-            tokens_completion = int(usage.get("completion_tokens") or 0)
+            parsed = self._parse_response(content)
+            tokens_prompt = int(parsed["tokens_prompt"])
+            tokens_completion = int(parsed["tokens_completion"])
             # Usage feeds an INT4 audit column — a malformed or impossible count
             # is a provider error, not an audit-time database exception raised
             # after the paid call already succeeded.
@@ -266,10 +255,121 @@ class HttpProvider:
         except (httpx.HTTPError, TypeError, ValueError) as error:
             raise ProviderError("ai_provider_error") from error
         return {
-            "output": output,
+            "output": parsed["output"],
             "tokens_prompt": tokens_prompt,
             "tokens_completion": tokens_completion,
             "latency_ms": int((time.monotonic() - started) * 1000),
+        }
+
+    def _wire_request(
+        self, route: dict, capability: str, input_payload: dict
+    ) -> tuple[str, dict]:
+        """(path, json body) the subclass's protocol posts on the pinned host."""
+        return f"{self._base_path}/invoke", {
+            "model": route["provider_model"],
+            "capability": capability,
+            "input": input_payload,
+        }
+
+    def _parse_response(self, content: bytes) -> dict[str, Any]:
+        """Generic envelope: {output|text, usage:{prompt_tokens,completion_tokens}}."""
+        body = json.loads(content)
+        if not isinstance(body, dict):
+            raise TypeError("provider body is not an object")
+        usage = body.get("usage") or {}
+        if not isinstance(usage, dict):
+            raise TypeError("provider usage is not an object")
+        output = body.get("output") if "output" in body else body.get("text")
+        if not isinstance(output, str):
+            raise TypeError("provider output is not a string")
+        return {
+            "output": output,
+            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
+            "tokens_completion": int(usage.get("completion_tokens") or 0),
+        }
+
+
+_DEFAULT_SYSTEM = (
+    "You are the backend endpoint of a professional design tool. "
+    "Respond with a single JSON document only — no prose, no markdown fences."
+)
+
+
+class OpenAICompatibleProvider(HttpProvider):
+    """OpenAI-compatible chat-completions transport (Xiaomi MiMo, OpenAI,
+    OpenRouter, …). Inherits the pinned-host request machinery; only the wire
+    contract differs: POST {base}/chat/completions with {model, messages}.
+
+    Configuration (all env, per provider name):
+      AI_GATEWAY_{P}_API_KEY   — bearer token (required)
+      AI_GATEWAY_{P}_BASE_URL  — https endpoint, e.g. https://api.ximimio…/v1
+      AI_GATEWAY_{P}_MODEL     — overrides the route's provider_model when set
+
+    The caller may steer the conversation through input_payload keys:
+      "system"      — system-prompt text (defaults to a JSON-only endpoint prompt)
+      "json_output" — truthy requests response_format={"type": "json_object"}
+    Everything else in input_payload is serialized as the user message."""
+
+    def __init__(self, *, provider: str):
+        super().__init__(provider=provider)
+        self._model = os.environ.get(f"AI_GATEWAY_{provider}_MODEL", "")
+
+    def _wire_request(
+        self, route: dict, capability: str, input_payload: dict
+    ) -> tuple[str, dict]:
+        # An operator may point BASE_URL straight at the completions path —
+        # don't double-append it.
+        path = (
+            self._base_path
+            if self._base_path.endswith("/chat/completions")
+            else f"{self._base_path}/chat/completions"
+        )
+        system = input_payload.get("system")
+        # Control keys steer the request itself — the model only ever sees the
+        # capability's actual input.
+        user_content = {
+            key: value
+            for key, value in input_payload.items()
+            if key not in ("system", "json_output")
+        }
+        body: dict[str, Any] = {
+            "model": self._model or route["provider_model"],
+            "messages": [
+                {"role": "system", "content": str(system or _DEFAULT_SYSTEM)},
+                {
+                    "role": "user",
+                    "content": json.dumps(user_content, ensure_ascii=False, default=str),
+                },
+            ],
+            "temperature": 0,
+        }
+        if input_payload.get("json_output"):
+            body["response_format"] = {"type": "json_object"}
+        return path, body
+
+    def _parse_response(self, content: bytes) -> dict[str, Any]:
+        """OpenAI envelope: choices[0].message.content + usage."""
+        body = json.loads(content)
+        if not isinstance(body, dict):
+            raise TypeError("provider body is not an object")
+        # Some compatible gateways answer 200 with an error envelope — that is
+        # a provider answer, not a successful completion.
+        if body.get("error"):
+            raise TypeError("provider returned an error envelope")
+        choices = body.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise TypeError("provider returned no choices")
+        message = choices[0].get("message") if isinstance(choices[0], dict) else None
+        output = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(output, str):
+            raise TypeError("provider output is not a string")
+        usage = body.get("usage") or {}
+        if not isinstance(usage, dict):
+            raise TypeError("provider usage is not an object")
+        return {
+            "output": output,
+            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
+            "tokens_completion": int(usage.get("completion_tokens") or 0),
         }
 
 
@@ -363,8 +463,16 @@ class MockProvider:
         }
 
 
+# Providers that speak the OpenAI chat-completions protocol out of the box;
+# AI_GATEWAY_{P}_PROTOCOL = openai|http overrides the registry either way.
+_OPENAI_PROTOCOL_PROVIDERS = {"MIMO", "OPENAI", "OPENROUTER", "DEEPSEEK", "QWEN"}
+
+
 def provider_for(route: dict):
     name = str(route["provider"]).upper()
     if name == "MOCK":
         return MockProvider()
+    protocol = os.environ.get(f"AI_GATEWAY_{name}_PROTOCOL", "").lower()
+    if protocol == "openai" or (not protocol and name in _OPENAI_PROTOCOL_PROVIDERS):
+        return OpenAICompatibleProvider(provider=name)
     return HttpProvider(provider=name)

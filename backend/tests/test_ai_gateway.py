@@ -879,3 +879,230 @@ def test_storage_signing_failure_is_a_provider_error(monkeypatch):
             input_payload={"storage_path": "imports/o/p/f.pdf"},
         )
     assert failure.value.code == "ai_provider_unavailable"
+
+
+def _openai_body(content: str, **extra):
+    body = {
+        "choices": [{"message": {"role": "assistant", "content": content}}],
+        "usage": {"prompt_tokens": 11, "completion_tokens": 7},
+    }
+    body.update(extra)
+    return body
+
+
+def test_openai_provider_posts_chat_completions(monkeypatch):
+    import socket as _socket
+
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    calls = []
+
+    def _handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=_openai_body('{"ops": [], "notes": "listo"}'))
+
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://mimo.example/v1")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_MODEL", "mimo-v1-pro")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+        ],
+    )
+    result = OpenAICompatibleProvider(provider="MIMO").invoke(
+        route=_route(provider="MIMO", provider_model="route-model"),
+        capability="design_assist",
+        input_payload={
+            "system": "Eres el asistente de DEKOPEN.",
+            "json_output": True,
+            "prompt": "3 módulos",
+        },
+        client=_client(_handler),
+    )
+    request = calls[0]
+    assert str(request.url) == "https://93.184.216.34/v1/chat/completions"
+    assert request.headers["Authorization"] == "Bearer k"
+    assert request.headers["Host"] == "mimo.example"
+    body = json.loads(request.content)
+    # The env model overrides the route's provider_model.
+    assert body["model"] == "mimo-v1-pro"
+    assert body["temperature"] == 0
+    assert body["response_format"] == {"type": "json_object"}
+    assert body["messages"][0] == {
+        "role": "system",
+        "content": "Eres el asistente de DEKOPEN.",
+    }
+    user = json.loads(body["messages"][1]["content"])
+    # Control keys never reach the model.
+    assert user == {"prompt": "3 módulos"}
+    assert result["output"] == '{"ops": [], "notes": "listo"}'
+    assert result["tokens_prompt"] == 11
+    assert result["tokens_completion"] == 7
+
+
+def test_openai_provider_route_model_fallback_and_default_system(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    calls = []
+
+    def _handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=_openai_body("ok"))
+
+    monkeypatch.setenv("AI_GATEWAY_OPENAI_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_OPENAI_BASE_URL", "https://o.example")
+    monkeypatch.delenv("AI_GATEWAY_OPENAI_MODEL", raising=False)
+    _allow_dns(monkeypatch)
+    OpenAICompatibleProvider(provider="OPENAI").invoke(
+        route=_route(provider_model="route-model"),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+    )
+    body = json.loads(calls[0].content)
+    assert body["model"] == "route-model"
+    assert body["messages"][0]["role"] == "system"
+    # No json_output flag → no response_format request.
+    assert "response_format" not in body
+
+
+def test_openai_provider_base_url_already_on_completions_path(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    calls = []
+
+    def _handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=_openai_body("ok"))
+
+    monkeypatch.setenv("AI_GATEWAY_DS_API_KEY", "k")
+    monkeypatch.setenv(
+        "AI_GATEWAY_DS_BASE_URL", "https://ds.example/v1/chat/completions"
+    )
+    _allow_dns(monkeypatch)
+    OpenAICompatibleProvider(provider="DS").invoke(
+        route=_route(provider_model="m"),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+    )
+    assert str(calls[0].url) == "https://93.184.216.34/v1/chat/completions"
+
+
+def test_openai_provider_error_envelope_is_a_provider_error(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    monkeypatch.setenv("AI_GATEWAY_ERR_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_ERR_BASE_URL", "https://err.example")
+    _allow_dns(monkeypatch)
+    client = _client(
+        lambda request: httpx.Response(
+            200, json={"error": {"message": "rate limited", "type": "rate_limit"}}
+        )
+    )
+    with pytest.raises(ProviderError) as failure:
+        OpenAICompatibleProvider(provider="ERR").invoke(
+            route=_route(provider_model="m"),
+            capability="nlp_command",
+            input_payload={},
+            client=client,
+        )
+    assert failure.value.code == "ai_provider_error"
+
+
+def test_openai_provider_rejects_empty_choices(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    monkeypatch.setenv("AI_GATEWAY_EC_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_EC_BASE_URL", "https://ec.example")
+    _allow_dns(monkeypatch)
+    client = _client(lambda request: httpx.Response(200, json={"choices": []}))
+    with pytest.raises(ProviderError) as failure:
+        OpenAICompatibleProvider(provider="EC").invoke(
+            route=_route(provider_model="m"),
+            capability="nlp_command",
+            input_payload={},
+            client=client,
+        )
+    assert failure.value.code == "ai_provider_error"
+
+
+def test_provider_for_routes_openai_protocol_providers(monkeypatch):
+    from ai_gateway.providers import (
+        HttpProvider,
+        MockProvider,
+        OpenAICompatibleProvider,
+        provider_for,
+    )
+
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://mimo.example")
+    _allow_dns(monkeypatch)
+    assert isinstance(
+        provider_for(_route(provider="MIMO")), OpenAICompatibleProvider
+    )
+    assert isinstance(provider_for(_route(provider="MOCK")), MockProvider)
+    monkeypatch.setenv("AI_GATEWAY_CUSTOM_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_CUSTOM_BASE_URL", "https://c.example")
+    # Unknown provider names default to the generic JSON transport.
+    assert isinstance(provider_for(_route(provider="CUSTOM")), HttpProvider)
+    # …unless the operator pins the OpenAI protocol for them.
+    monkeypatch.setenv("AI_GATEWAY_CUSTOM_PROTOCOL", "openai")
+    assert isinstance(
+        provider_for(_route(provider="CUSTOM")), OpenAICompatibleProvider
+    )
+
+
+def test_design_assist_payload_carries_system_and_json_mode(monkeypatch):
+    """assist() must send the ops-contract system prompt and request JSON
+    mode — that is what makes a real OpenAI-compatible provider answer in
+    the whitelisted document shape."""
+    import json as _json
+
+    from projects import design_assist
+
+    captured = {}
+
+    def fake_invoke(**kwargs):
+        captured.update(kwargs)
+        return {
+            "output": _json.dumps({"ops": [], "notes": "n"}),
+            "audit_id": uuid4(),
+            "model": "m",
+            "credits_debited": 10,
+        }
+
+    monkeypatch.setattr(design_assist.gateway, "invoke", fake_invoke)
+    monkeypatch.setattr(
+        design_assist,
+        "_catalog",
+        lambda system_id, org_id: {
+            "glass_skus": set(),
+            "panel_skus": set(),
+            "thicknesses": set(),
+        },
+    )
+    design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position={"id": uuid4()},
+        product={"modules": [{"width_mm": "900"}], "couplings": []},
+        prompt="ancho total 2400",
+        operation_key="k",
+        system_id=uuid4(),
+    )
+    payload = captured["input_payload"]
+    assert payload["system"] == design_assist.DESIGN_ASSIST_SYSTEM
+    assert payload["json_output"] is True
+    assert "ops_contract" in payload and "catalog" in payload

@@ -33,6 +33,41 @@ OPENINGS = {
 MAX_MODULE_COUNT = 12
 MAX_OPS = 50
 
+# The ops contract the provider must emit — sent as the system prompt so any
+# OpenAI-compatible model produces exactly this document shape. Every op the
+# model returns is validated server-side against the live product before it
+# reaches the client, so the prompt constrains intent, never trust.
+DESIGN_ASSIST_SYSTEM = """Eres el asistente de diseño de DEKOPEN, un editor profesional de ventanas y puertas de aluminio/PVC.
+
+Recibes un JSON con:
+- "prompt": la intención del usuario en lenguaje natural (español chileno).
+- "product": el conjunto actual — "modules" (unidades) y "couplings" (uniones entre unidades), índices 0-based.
+- "ops_contract": la lista de operaciones permitidas.
+- "catalog": los SKU y espesores que existen en el catálogo del cliente.
+
+Respondes SOLO un JSON: {"ops": [...], "notes": "resumen breve en español"}.
+
+Operaciones:
+- set_module_count {count}: redefine la cantidad de unidades (reparte el ancho).
+- add_unit {side}: agrega una unidad, side "left"|"right".
+- remove_unit {module}: elimina la unidad en ese índice.
+- set_module_width {module, width_mm}: ancho de una unidad en mm.
+- set_total_width {width_mm}: ancho total, reparte proporcional.
+- set_height {height_mm}: alto de todas las unidades.
+- equalize_widths: anchos iguales.
+- equalize_angles: ángulos iguales entre uniones.
+- set_coupling_angle {coupling, angle_deg}: ángulo de una unión (0 = recto).
+- set_opening {module, opening}: apertura — FIXED, TURN_LEFT, TURN_RIGHT, TILT_TURN_LEFT, TILT_TURN_RIGHT, SLIDING_2L, AWNING, DOOR_ENTRY.
+- set_glass {module, sku}: vidrio del catálogo.
+- set_glass_thickness {module, thickness_mm}: espesor del catálogo.
+- set_panel {module, sku|null}: panel del catálogo, null lo quita.
+
+Reglas:
+- Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
+- Índices válidos: 0..len(modules)-1 y 0..len(couplings)-1.
+- Si la intención es ambigua, propón menos ops y explícalo en "notes"; nunca adivines medidas que el usuario no pidió.
+- Sin texto fuera del JSON."""
+
 
 def _number(value: Any) -> Decimal | None:
     if isinstance(value, bool):
@@ -282,6 +317,8 @@ def assist(
         operation_key=operation_key,
         tool_name="design_assist",
         input_payload={
+            "system": DESIGN_ASSIST_SYSTEM,
+            "json_output": True,
             "prompt": prompt,
             "position_id": str(position["id"]),
             "system_id": str(system_id),
