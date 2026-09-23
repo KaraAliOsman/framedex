@@ -66,6 +66,7 @@ export function ProjectPaymentsPanel({
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
+  const [baseline, setBaseline] = useState({ kind, method });
   const generation = useRef(0);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
   useEffect(
@@ -96,13 +97,18 @@ export function ProjectPaymentsPanel({
 
   const formDirty =
     showForm &&
-    (amount.trim() !== "" || reference.trim() !== "" || note.trim() !== "");
+    (kind !== baseline.kind ||
+      method !== baseline.method ||
+      amount.trim() !== "" ||
+      reference.trim() !== "" ||
+      note.trim() !== "");
   useEffect(() => {
     onDirtyChange?.(formDirty);
   }, [formDirty, onDirtyChange]);
 
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
+    setBaseline({ kind, method });
     setShowForm(true);
   }
 
