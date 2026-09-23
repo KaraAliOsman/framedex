@@ -96,6 +96,8 @@ export * from "./fixabilityEnum";
 export * from "./flowAcknowledgement";
 export * from "./flowConfirmationRequest";
 export * from "./formatEnum";
+export * from "./freezeFailure";
+export * from "./freezeFailureStatusEnum";
 export * from "./freezeRequestRequest";
 export * from "./freezeResponse";
 export * from "./glassPiece";

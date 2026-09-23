@@ -27,6 +27,8 @@ import type {
   WorkshopAnnotation,
   WorkshopGlassTarget,
 } from "../../api/generated/models";
+import type { ErrorDetail } from "../../api/generated/models/errorDetail";
+import type { FreezeFailure } from "../../api/generated/models/freezeFailure";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import {
   addDecimal,
@@ -165,14 +167,6 @@ function GlassPolishingRow({
   );
 }
 
-interface FreezeFailure {
-  rule_id: string;
-  status: string;
-  bay_id: string | null;
-  leaf_id: string | null;
-  position_id: string | null;
-}
-
 const RULE_HINT_KEYS: Record<string, TranslationKey> = {
   R05: "quotation.ruleR05",
   R07: "quotation.ruleR07",
@@ -189,10 +183,7 @@ function freezeTargetLabel(
   failure: FreezeFailure,
 ): string {
   if (preparation) {
-    const scoped =
-      failure.position_id != null
-        ? preparation.positions.filter((item) => item.position_id === failure.position_id)
-        : preparation.positions;
+    const scoped = preparation.positions.filter((item) => item.position_id === failure.position_id);
     for (const position of scoped) {
       const targets = position.workshop_targets;
       if (!targets) continue;
@@ -618,7 +609,7 @@ export function ProjectQuotationPanel({
       if (generation.current !== current) return;
       const payload =
         error instanceof ApiError
-          ? (error.payload as { error?: { code?: string; failures?: FreezeFailure[] } } | undefined)
+          ? (error.payload as { error?: ErrorDetail } | undefined)
           : undefined;
       setFailures(
         payload?.error?.code === "inspector_red_blocks_documentary_freeze"

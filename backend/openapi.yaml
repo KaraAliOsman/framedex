@@ -6653,6 +6653,10 @@ components:
           type: string
         required_aal:
           $ref: '#/components/schemas/RequiredAalEnum'
+        failures:
+          type: array
+          items:
+            $ref: '#/components/schemas/FreezeFailure'
       required:
       - code
       - detail
@@ -6701,6 +6705,33 @@ components:
       description: |-
         * `PDF` - PDF
         * `XLSX` - XLSX
+    FreezeFailure:
+      type: object
+      properties:
+        rule_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/FreezeFailureStatusEnum'
+        position_id:
+          type: string
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - position_id
+      - rule_id
+      - status
+    FreezeFailureStatusEnum:
+      enum:
+      - FAIL
+      - MISSING_INPUT
+      type: string
+      description: |-
+        * `FAIL` - FAIL
+        * `MISSING_INPUT` - MISSING_INPUT
     FreezeRequestRequest:
       type: object
       properties:
