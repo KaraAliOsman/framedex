@@ -706,6 +706,7 @@ def freeze_revision_a(
                         {
                             "rule_id": evaluation.rule_id.value,
                             "status": evaluation.status.value,
+                            "position_id": position_id,
                             "bay_id": (
                                 f"{prefix}{evaluation.bay_id}"
                                 if evaluation.bay_id is not None

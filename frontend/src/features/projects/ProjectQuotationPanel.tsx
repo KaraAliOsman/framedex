@@ -170,6 +170,7 @@ interface FreezeFailure {
   status: string;
   bay_id: string | null;
   leaf_id: string | null;
+  position_id: string | null;
 }
 
 const RULE_HINT_KEYS: Record<string, TranslationKey> = {
@@ -179,17 +180,29 @@ const RULE_HINT_KEYS: Record<string, TranslationKey> = {
   R09: "quotation.ruleR09",
 };
 
+// Rules recorded against (bay_id, leaf_id) — leaf_id may be null for the
+// single leaf of an operable bay, so the pair still selects it.
+const LEAF_RULES = new Set(["R01", "R03", "R04", "R06", "R08", "R11", "R12", "R13", "R14"]);
+
 function freezeTargetLabel(
   preparation: DocumentaryPreparationResponse | null,
   failure: FreezeFailure,
 ): string {
   if (preparation) {
-    for (const position of preparation.positions) {
+    const scoped =
+      failure.position_id != null
+        ? preparation.positions.filter((item) => item.position_id === failure.position_id)
+        : preparation.positions;
+    for (const position of scoped) {
       const targets = position.workshop_targets;
       if (!targets) continue;
-      const leaf =
-        failure.leaf_id != null && targets.leaves.find((item) => item.leaf_id === failure.leaf_id);
-      if (leaf) return leaf.leaf_label;
+      if (LEAF_RULES.has(failure.rule_id)) {
+        const leaf = targets.leaves.find(
+          (item) => item.bay_id === failure.bay_id && (item.leaf_id ?? null) === failure.leaf_id,
+        );
+        if (leaf) return leaf.leaf_label;
+      }
+      // R05 records span.target_id in the evaluation's bay_id field.
       const span =
         failure.bay_id != null && targets.spans.find((item) => item.target_id === failure.bay_id);
       if (span) return span.label;
@@ -221,7 +234,11 @@ function parseMmList(text: string): string[] | null {
     .filter(Boolean);
   if (parts.length === 0) return [];
   if (!parts.every((part) => /^\d+(?:\.\d{1,4})?$/.test(part))) return null;
-  return parts;
+  // Canonical decimal spelling so "100" and "100.0" count as one coordinate;
+  // the inspector model rejects duplicated targets at freeze time.
+  const normalized = parts.map((part) => String(Number(part)));
+  if (new Set(normalized).size !== normalized.length) return null;
+  return normalized;
 }
 
 function CsvMmField({
@@ -458,7 +475,11 @@ export function ProjectQuotationPanel({
       (item) => item.bay_id === bayId && (item.leaf_id ?? null) === leafId,
     );
     if (existing) {
-      annotations[annotations.indexOf(existing)] = { ...existing, ...patch };
+      annotations[annotations.indexOf(existing)] = {
+        ...existing,
+        finish_class: existing.finish_class ?? "WHITE",
+        ...patch,
+      };
     } else {
       annotations.push({
         bay_id: bayId,
