@@ -35,6 +35,7 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         qty: 4,
         bay_id: "g1",
         leaf_id: null,
+        sagitta_mm: null,
       },
       {
         sku: "BEAD",
@@ -46,6 +47,7 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         qty: 4,
         bay_id: "g1",
         leaf_id: null,
+        sagitta_mm: null,
       },
     ],
     reinforcements: [
@@ -57,6 +59,7 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         qty: 4,
         bay_id: "g1",
         leaf_id: null,
+        sagitta_mm: null,
       },
     ],
     glasses: [
@@ -65,9 +68,12 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         leaf_id: null,
         width_mm: request.nominal_width_mm === "1000.00" ? "910.00" : "1010.25",
         height_mm: request.nominal_height_mm === "1000.00" ? "910.00" : "1060.50",
+        shape: null,
         area_m2: "1.1775",
         weight_kg: "11.78",
         thickness_net_mm: "4.00",
+        glass_spec: null,
+        article_sku: null,
       },
     ],
     hardware_items: [],

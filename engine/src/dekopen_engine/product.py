@@ -95,6 +95,7 @@ class IssueCode(str, Enum):
     CONNECTION_TYPE_UNSUPPORTED = "connection_type_unsupported"
     ASSEMBLY_DISCONNECTED = "assembly_disconnected"
     STACKED_CYCLE = "stacked_cycle"
+    INLINE_NOT_ADJACENT = "inline_not_adjacent"
     SLIDING_LAYOUT_INVALID = "sliding_layout_invalid"
     SLIDING_TRACKS_UNSUPPORTED = "sliding_tracks_unsupported"
 
@@ -608,6 +609,29 @@ def _plan_geometry(
         front_indices[position]: front_indices[position + 1]
         for position in range(len(front_indices) - 1)
     }
+
+    # An INLINE coupling is the seam between two columns that are adjacent on
+    # the front: only consecutive root pairs have a physical joint. A coupling
+    # bridging non-consecutive columns (a–c over b) has no seam — the plan
+    # would silently drop it while the BOM still cut its coupler.
+    consecutive_pairs = {
+        frozenset({modules[first].id, modules[second].id})
+        for first, second in next_front.items()
+    }
+    for coupling, pair in resolved_pairs:
+        if coupling.kind is not ConnectionKind.INLINE:
+            continue
+        root_pair = frozenset(
+            {stack_root.get(pair[0], pair[0]), stack_root.get(pair[1], pair[1])}
+        )
+        if len(root_pair) == 2 and root_pair not in consecutive_pairs:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.INLINE_NOT_ADJACENT.value,
+                    severity=Severity.ERROR,
+                    target=f"coupling:{coupling.id}",
+                )
+            )
 
     # Headings belong to the resolved front joints, not to declaration order:
     # an INLINE edge's angle applies at the joint it binds, wherever in the

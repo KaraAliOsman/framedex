@@ -78,6 +78,7 @@ function bom(sku: string): EngineCalculateResponse {
         qty: 2,
         bay_id: "bay-1",
         leaf_id: null,
+        sagitta_mm: null,
       },
     ],
     reinforcements: [],

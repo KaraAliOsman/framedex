@@ -28,6 +28,9 @@ class ProfileCutSerializer(serializers.Serializer):
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
     leaf_id = serializers.CharField(allow_null=True)
+    sagitta_mm = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
 
 
 class ReinforcementSerializer(serializers.Serializer):
@@ -38,6 +41,14 @@ class ReinforcementSerializer(serializers.Serializer):
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
     leaf_id = serializers.CharField(allow_null=True)
+    sagitta_mm = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+
+
+class PlanPointSerializer(serializers.Serializer):
+    x_mm = serializers.CharField()
+    y_mm = serializers.CharField()
 
 
 class GlassPieceSerializer(serializers.Serializer):
@@ -45,11 +56,14 @@ class GlassPieceSerializer(serializers.Serializer):
     leaf_id = serializers.CharField(allow_null=True)
     width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    shape = PlanPointSerializer(many=True, allow_null=True)
     area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
     weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     thickness_net_mm = serializers.DecimalField(
         max_digits=12, decimal_places=2, coerce_to_string=True
     )
+    glass_spec = serializers.CharField(allow_null=True)
+    article_sku = serializers.CharField(allow_null=True)
 
 
 class PanelPieceSerializer(serializers.Serializer):
@@ -110,11 +124,6 @@ class EngineAssemblyCalculateSerializer(serializers.Serializer):
     nominal_height_mm = DecimalStringField(max_digits=10, decimal_places=2)
     color = serializers.CharField(max_length=50)
     product = serializers.JSONField()
-
-
-class PlanPointSerializer(serializers.Serializer):
-    x_mm = serializers.CharField()
-    y_mm = serializers.CharField()
 
 
 class PlanModuleSerializer(serializers.Serializer):

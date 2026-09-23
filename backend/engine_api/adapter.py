@@ -325,8 +325,8 @@ def parse_product_model(payload: object) -> ProductModel:
             if (
                 min(xs) != Decimal("0")
                 or min(ys) != Decimal("0")
-                or abs(max(xs) - min(xs) - width_mm) > Decimal("0.01")
-                or abs(max(ys) - min(ys) - height_mm) > Decimal("0.01")
+                or max(xs) - min(xs) != width_mm
+                or max(ys) - min(ys) != height_mm
             ):
                 raise InvalidEngineRequest(
                     "contour vertices must be zero-based and bound "

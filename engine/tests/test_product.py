@@ -964,6 +964,66 @@ class TestConnections:
         assert evaluation.status is ProductStatus.INVALID
         assert IssueCode.STACKED_CYCLE.value in {issue.code for issue in evaluation.issues}
 
+    def test_nonadjacent_inline_coupling_is_invalid(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # a–c bridges over b: the front lays columns a,b,c so a–c has no
+        # physical seam — connectivity alone would accept it and the BOM would
+        # still cut a coupler for a joint that cannot exist.
+        product = self._product(
+            [
+                self._module("a", "1000", "2000"),
+                self._module("b", "800", "2000"),
+                self._module("c", "1000", "2000"),
+            ],
+            [
+                CouplingDef(
+                    id="ac",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "c"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="bc",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "c"],
+                    edges=[EdgeSide.LEFT, EdgeSide.RIGHT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.INVALID
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.INLINE_NOT_ADJACENT.value
+        }
+        assert flagged == {"coupling:ac"}
+
+    def test_adjacent_inline_couplings_still_validate(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ab",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+
 
 class TestSlidingTopologyEvaluation:
     def _sliding_module(self, layout: "SlidingLayout | None") -> ProductModule:

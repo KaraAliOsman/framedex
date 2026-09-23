@@ -83,6 +83,7 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
   assembly_disconnected: "assembly.issue.assemblyDisconnected",
   stacked_cycle: "assembly.issue.stackedCycle",
+  inline_not_adjacent: "assembly.issue.inlineNotAdjacent",
   sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
   sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
 };

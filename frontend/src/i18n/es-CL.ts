@@ -1302,6 +1302,8 @@ const messages = {
     "El conjunto queda en {roots} partes sin unir — cada módulo debe conectarse por una unión.",
   "assembly.issue.stackedCycle":
     "{target} se apoya sobre sí mismo en un ciclo — ningún módulo de la pila tiene base.",
+  "assembly.issue.inlineNotAdjacent":
+    "{target} une columnas no consecutivas — una unión en línea sólo cierra columnas vecinas del frente.",
   "assembly.issue.slidingLayoutInvalid": "La distribución corredera de {target} no es fabricable",
   "assembly.issue.slidingTracksUnsupported":
     "La serie no admite {tracks} rieles — el máximo es {rails}",

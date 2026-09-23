@@ -173,7 +173,10 @@ def arc_params(
     else:
         cx, cy = mid_x - nx * offset, mid_y - ny * offset
     span = _TWO * asin_degrees(half / radius)
-    return _pt(cx, cy), radius, span
+    # The center is internal computation state — quantizing it here would move
+    # the circle while the radius stays exact, shifting tangents, offsets and
+    # circle-line intersections. Quantization happens at output boundaries.
+    return PlanPoint(x_mm=cx, y_mm=cy), radius, span
 
 
 def arc_length(p0: PlanPoint, p1: PlanPoint, sagitta: Decimal) -> Decimal:
