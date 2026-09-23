@@ -250,14 +250,33 @@ def parse_product_model(payload: object) -> ProductModel:
         if module_id in seen_ids:
             raise InvalidEngineRequest("module ids must be unique")
         seen_ids.add(module_id)
+        width_mm = _decimal_string(module.get("width_mm"), "module.width_mm")
+        height_mm = _decimal_string(
+            module.get("height_mm"), "module.height_mm"
+        )
+        contour = parse_contour(module.get("contour"))
+        if contour is not None:
+            xs = [vertex.x_mm for vertex in contour.vertices]
+            ys = [vertex.y_mm for vertex in contour.vertices]
+            # The contour is module-local: its vertex bounding box IS the
+            # nominal footprint (arc apexes may overshoot it). A mismatched
+            # or translated bbox would conflict with plan layout and labels.
+            if (
+                min(xs) != Decimal("0")
+                or min(ys) != Decimal("0")
+                or abs(max(xs) - min(xs) - width_mm) > Decimal("0.01")
+                or abs(max(ys) - min(ys) - height_mm) > Decimal("0.01")
+            ):
+                raise InvalidEngineRequest(
+                    "contour vertices must be zero-based and bound "
+                    "module.width_mm x module.height_mm"
+                )
         modules.append(
             ProductModule(
                 id=module_id,
-                width_mm=_decimal_string(module.get("width_mm"), "module.width_mm"),
-                height_mm=_decimal_string(
-                    module.get("height_mm"), "module.height_mm"
-                ),
-                contour=parse_contour(module.get("contour")),
+                width_mm=width_mm,
+                height_mm=height_mm,
+                contour=contour,
                 tree=parse_parametric_node(module.get("tree")),
             )
         )

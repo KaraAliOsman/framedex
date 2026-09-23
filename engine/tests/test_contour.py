@@ -112,6 +112,26 @@ class TestContourMath:
         assert max(p.y_mm for p in points) > D("1690")
         assert min(p.y_mm for p in points) == D("0")
 
+    def test_cw_input_with_curved_closing_edge_flips_sagitta(self) -> None:
+        # Wound CW, the arch's curved edge travels rightward and its bulge is
+        # left-of-edge (inward): sagitta reads -300. Normalization must give
+        # the same geometric arc back: +300 on the top edge.
+        cw = Contour(
+            vertices=[
+                PlanPoint(x_mm=D("0"), y_mm=D("0")),
+                PlanPoint(x_mm=D("0"), y_mm=D("1400")),
+                PlanPoint(x_mm=D("2400"), y_mm=D("1400")),
+                PlanPoint(x_mm=D("2400"), y_mm=D("0")),
+            ],
+            bulges=[None, D("-300"), None, None],
+        )
+        normalized = ensure_ccw(cw)
+        assert normalized.bulges == [None, None, D("300"), None]
+        assert contour_area(normalized.vertices, normalized.bulges) == contour_area(
+            Contour.arch_top(D("2400"), D("1400"), D("300")).vertices,
+            [None, None, D("300"), None],
+        )
+
     def test_offset_rect_is_exact_inset(self) -> None:
         fill = offset_contour(Contour.rect(D("1000"), D("500")), D("20"))
         xs = sorted(v.x_mm for v in fill.vertices)

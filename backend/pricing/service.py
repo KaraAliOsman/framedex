@@ -113,7 +113,9 @@ def position_cost(repo, position, rules):
     for glass in result.glasses:
         # The selected commercial glass SKU is explicit in the persisted tree.
         sku = design_glass_sku(tree,glass.bay_id)
-        materials.append(repo.cost(sku,'M2') * exact_glass_area_m2(glass.width_mm,glass.height_mm))
+        # engine area_m2 is exact — for contoured (non-rectangular) glass it
+        # is the polygon area, not the bounding box.
+        materials.append(repo.cost(sku,'M2') * glass.area_m2)
     for panel in result.panels:
         materials.append(repo.cost(panel.sku,'M2') * exact_glass_area_m2(panel.width_mm,panel.height_mm))
     for kit in result.hardware_items:

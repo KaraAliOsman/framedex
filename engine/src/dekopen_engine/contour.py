@@ -134,10 +134,9 @@ def ensure_ccw(contour: Contour) -> Contour:
     vertices = [contour.vertices[0]] + [contour.vertices[i] for i in range(n - 1, 0, -1)]
     # Reversed edge i runs vertices[n-i] -> vertices[n-i-1] of the original,
     # i.e. original edge (n-i-1); its sagitta flips sign (same arc, other
-    # travel direction mirrors the bulge side).
-    bulges = [contour.bulges[n - 1]] + [
-        -b if b is not None else None for b in reversed(contour.bulges[: n - 1])
-    ]
+    # travel direction mirrors the bulge side) — including the closing edge.
+    order = [contour.bulges[n - 1], *reversed(contour.bulges[: n - 1])]
+    bulges = [-b if b is not None else None for b in order]
     return Contour(vertices=vertices, bulges=bulges)
 
 

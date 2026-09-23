@@ -360,8 +360,11 @@ export function setModuleCount(product: ProductJson, moduleCount: number): Produ
   };
 }
 
-/** Rescale a contour to a new bounding box — x and y scale independently,
- * so an arch chord stays circular (same sagitta, new radius). */
+/** Rescale a contour to a new bounding box — x and y scale independently.
+ * An arc cannot stay circular under unequal scaling, so each edge's sagitta
+ * rescales by the perpendicular component of the scale to its chord: the
+ * rebuilt arc keeps the intended rise relative to the new outline (an arch
+ * keeps its flecha; a bowed side wall keeps its lateral bow). */
 export function scaledContour(
   contour: ContourJson,
   widthMm: string,
@@ -375,15 +378,23 @@ export function scaledContour(
   const sy = Number(heightMm) / (bh || 1);
   const minX = Math.min(...xs);
   const minY = Math.min(...ys);
+  const n = contour.vertices.length;
   return {
     vertices: contour.vertices.map((v) => ({
       x_mm: ((Number(v.x_mm) - minX) * sx).toFixed(2),
       y_mm: ((Number(v.y_mm) - minY) * sy).toFixed(2),
     })),
-    // y-scale stretches the rise; the chord rescales inside arc_params
-    bulges: contour.bulges.map((b) =>
-      b === null || b === undefined ? null : (Number(b) * sy).toFixed(2),
-    ),
+    bulges: contour.bulges.map((b, i) => {
+      if (b === null || b === undefined) return null;
+      const a = contour.vertices[i]!;
+      const c = contour.vertices[(i + 1) % n]!;
+      const dx = Number(c.x_mm) - Number(a.x_mm);
+      const dy = Number(c.y_mm) - Number(a.y_mm);
+      const len = Math.hypot(dx, dy) || 1;
+      // unit normal of the chord, scaled: |(-dy,dx)/len ⊙ (sx,sy)|
+      const factor = Math.hypot((-dy / len) * sx, (dx / len) * sy);
+      return (Number(b) * factor).toFixed(2);
+    }),
   };
 }
 

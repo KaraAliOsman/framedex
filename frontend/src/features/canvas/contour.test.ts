@@ -104,6 +104,25 @@ describe("contour editing", () => {
     expect(scaledArch.bulges[2]).toBe("150.00");
   });
 
+  it("keeps an arch's rise under width-only scaling (no y squash)", () => {
+    // Horizontal chord: the rise scales with y, so a width-only resize
+    // preserves the flecha instead of falsely squashing it.
+    const wider = scaledContour(arch.contour!, "4800.00", "1400.00");
+    expect(wider.bulges[2]).toBe("300.00");
+    // A bowed side wall (vertical chord) scales its sagitta with x instead.
+    const sideBow: ContourJson = {
+      vertices: [
+        { x_mm: "0", y_mm: "0" },
+        { x_mm: "1200", y_mm: "0" },
+        { x_mm: "1200", y_mm: "1500" },
+        { x_mm: "0", y_mm: "1500" },
+      ],
+      bulges: [null, "100.00", null, null],
+    };
+    const stretched = scaledContour(sideBow, "2400.00", "1500.00");
+    expect(stretched.bulges[1]).toBe("200.00");
+  });
+
   it("scales the contour when the module width commits", () => {
     const next = setModuleWidth(product(trapezoid), "m1", "1200.00");
     expect(next.assembly.modules[0]!.contour!.vertices[2]!.x_mm).toBe("1050.00");
