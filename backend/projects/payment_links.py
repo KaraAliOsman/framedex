@@ -339,17 +339,19 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
         # Every ledger payment seals a comprobante — manual and online alike.
         # A replayed settle finds the existing receipt via UNIQUE(payment_id).
         # A verified payment must never be rejected over missing pricing
-        # authority: fall back to the deal frozen on the link at creation, and
-        # to an empty snapshot for links minted before that freeze existed.
+        # authority: the comprobante always reflects the total the link
+        # presented to the payer — the deal frozen at creation — then the
+        # live deal for links minted before the freeze, else an empty
+        # snapshot.
         project = project_row(org_id, link["project_id"])
         live_deal = _deal(org_id, link["project_id"], project)
-        if live_deal is not None:
-            deal = live_deal
-        elif link.get("deal_total") is not None:
+        if link.get("deal_total") is not None:
             deal = {
                 "total": Decimal(str(link["deal_total"])),
                 "currency": link["deal_currency"] or "CLP",
             }
+        elif live_deal is not None:
+            deal = live_deal
         else:
             deal = {"total": None, "currency": "CLP"}
         issue_receipt(
