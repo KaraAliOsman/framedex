@@ -14,6 +14,7 @@ from dekopen_engine.contour import (
     offset_contour,
     validate_contour,
 )
+from dekopen_engine.trig import asin_degrees
 from dekopen_engine.models import (
     BayOpeningType,
     NodeType,
@@ -230,6 +231,36 @@ class TestContourEvaluation:
         # face 60 - rebate 20 + clearance 5 (demo catalog) → inset 45 per side
         assert glass.width_mm == D("1110.00")
         assert glass.height_mm == D("710.00")
+        # A rectangular fill stays shape=None so production sheet-nests it.
+        assert glass.shape is None
+
+    def test_arch_corner_angles_follow_the_arc(self) -> None:
+        c = Contour.arch_top(D("2400"), D("1400"), D("300"))
+        # r=2550 → span = 2·asin(1200/2550) ≈ 56.14°; each springline corner
+        # = 90° + span/2, the bottom stays square.
+        span = D("2") * asin_degrees(D("1200") / D("2550"))
+        expected = D("90") + span / D("2")
+        assert abs(interior_angle(c, 2) - expected) < D("0.01")
+        assert abs(interior_angle(c, 3) - expected) < D("0.01")
+        assert interior_angle(c, 0) == D("90")
+        assert interior_angle(c, 1) == D("90")
+
+    def test_degenerate_arc_edge_reports_not_crashes(self) -> None:
+        bad = Contour(
+            vertices=[_pt("0", "0"), _pt("0", "0"), _pt("100", "100")],
+            bulges=[D("300"), None, None],
+        )
+        problems = validate_contour(bad)
+        assert problems and "zero-length" in problems[0]
+
+    def test_narrow_contour_collapses_fill_honestly(self) -> None:
+        # 80 mm wide module with a 45 mm per-side inset: the pocket inverts.
+        ev = evaluate_product(
+            _product(Contour.rect(D("80"), D("800"))), demo_60_params()
+        )
+        assert ev.status is ProductStatus.INVALID
+        codes = [i.code for i in ev.issues]
+        assert codes == [IssueCode.CONTOUR_INVALID.value]
 
     def test_split_tree_rejected(self) -> None:
         tree = ParametricNode.model_validate(

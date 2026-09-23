@@ -22,6 +22,7 @@ from dekopen_engine import (
 )
 from dekopen_engine.contour import Contour
 from dekopen_engine.models import PlanPoint
+from dekopen_engine.product import ConnectionKind, EdgeSide
 
 
 class InvalidEngineRequest(ValueError):
@@ -193,7 +194,14 @@ def calculate_from_api(
 _PRODUCT_FIELDS = {"version", "assembly"}
 _ASSEMBLY_FIELDS = {"modules", "couplings"}
 _MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree", "contour"}
-_COUPLING_FIELDS = {"id", "angle_deg", "coupler_profile_sku"}
+_COUPLING_FIELDS = {
+    "id",
+    "angle_deg",
+    "coupler_profile_sku",
+    "kind",
+    "modules",
+    "edges",
+}
 
 
 def _require_dict(payload: object, field_name: str) -> dict[str, object]:
@@ -301,13 +309,53 @@ def parse_product_model(payload: object) -> ProductModel:
         if coupling_id in seen_coupling_ids:
             raise InvalidEngineRequest("coupling ids must be unique")
         seen_coupling_ids.add(coupling_id)
+        kind_raw = coupling.get("kind")
+        if kind_raw is not None and kind_raw not in ConnectionKind._value2member_map_:
+            raise InvalidEngineRequest(
+                "coupling.kind must be one of "
+                + ", ".join(member.value for member in ConnectionKind)
+            )
+        modules_raw = coupling.get("modules")
+        if modules_raw is not None:
+            if (
+                not isinstance(modules_raw, list)
+                or len(modules_raw) != 2
+                or not all(isinstance(m, str) for m in modules_raw)
+            ):
+                raise InvalidEngineRequest(
+                    "coupling.modules must be an array of two module ids"
+                )
+        edges_raw = coupling.get("edges")
+        if edges_raw is not None:
+            if (
+                not isinstance(edges_raw, list)
+                or len(edges_raw) != 2
+                or any(e not in EdgeSide._value2member_map_ for e in edges_raw)
+            ):
+                raise InvalidEngineRequest(
+                    "coupling.edges must be two sides from "
+                    + ", ".join(side.value for side in EdgeSide)
+                )
         couplings.append(
             CouplingDef(
                 id=coupling_id,
                 angle_deg=_decimal_string(
-                    coupling.get("angle_deg"), "coupling.angle_deg"
+                    coupling.get("angle_deg") if "angle_deg" in coupling else "0",
+                    "coupling.angle_deg",
                 ),
                 coupler_profile_sku=cast(str | None, sku),
+                kind=(
+                    ConnectionKind(kind_raw)
+                    if kind_raw is not None
+                    else ConnectionKind.INLINE
+                ),
+                modules=cast(list[str] | None, modules_raw),
+                edges=cast(
+                    list[EdgeSide] | None,
+                    [EdgeSide(e) for e in edges_raw]
+                    if edges_raw is not None
+                    else None,
+                ),
             )
         )
 

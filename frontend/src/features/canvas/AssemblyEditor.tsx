@@ -73,6 +73,11 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   contour_opening_unsupported: "assembly.issue.contourOpening",
   contour_panel_unsupported: "assembly.issue.contourPanel",
   member_bending_required: "assembly.issue.memberBending",
+  coupler_width_mismatch: "assembly.issue.couplerWidthMismatch",
+  coupler_module_unknown: "assembly.issue.couplerModuleUnknown",
+  coupler_edge_invalid: "assembly.issue.couplerEdgeInvalid",
+  coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
+  connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field
@@ -141,6 +146,14 @@ function normalizeAngle(candidate: string): string | null {
   return value.toFixed(1);
 }
 
+/** Contour coordinates are signed: zero/negative carry meaning (a vertical
+ * side, an inward arc). Bounds keep the corner ordering the engine requires. */
+function normalizeRange(candidate: string, min: number, max: number): string | null {
+  const value = Number(candidate.replace(",", "."));
+  if (!Number.isFinite(value) || value < min || value >= max) return null;
+  return value.toFixed(2);
+}
+
 type DraftFieldProps = {
   label?: string;
   value: string;
@@ -207,6 +220,16 @@ function ContourShapeSection({
   const corners = contourTopCorners(contour);
   const hasBulges = contour.bulges.some((bulge) => bulge !== null && bulge !== undefined);
   const widthMm = Number(module.width_mm);
+  const leftBound = corners ? Number(contour.vertices[corners.rightIndex]!.x_mm) : 0;
+  const rightBound = corners ? widthMm - Number(contour.vertices[corners.leftIndex]!.x_mm) : 0;
+  // Sagitta is signed and bounded by half the chord (minor arcs only);
+  // zero straightens the edge back to a line.
+  const edgeChordMm = (edgeIndex: number): number => {
+    const n = contour.vertices.length;
+    const a = contour.vertices[edgeIndex % n]!;
+    const b = contour.vertices[(edgeIndex + 1) % n]!;
+    return Math.hypot(Number(b.x_mm) - Number(a.x_mm), Number(b.y_mm) - Number(a.y_mm));
+  };
   return (
     <details className="inspector-section" open>
       <summary>{t("assembly.shape")}</summary>
@@ -217,7 +240,7 @@ function ContourShapeSection({
             value={Number(contour.vertices[corners.leftIndex]!.x_mm).toFixed(2)}
             unit="mm"
             disabled={busy}
-            normalize={normalizeMm}
+            normalize={(candidate) => normalizeRange(candidate, 0, leftBound)}
             onCommit={(value) =>
               commit(
                 setContourVertex(
@@ -235,7 +258,7 @@ function ContourShapeSection({
             value={(widthMm - Number(contour.vertices[corners.rightIndex]!.x_mm)).toFixed(2)}
             unit="mm"
             disabled={busy}
-            normalize={normalizeMm}
+            normalize={(candidate) => normalizeRange(candidate, 0, rightBound)}
             onCommit={(value) =>
               commit(
                 setContourVertex(
@@ -260,7 +283,13 @@ function ContourShapeSection({
               value={bulge}
               unit="mm"
               disabled={busy}
-              normalize={normalizeMm}
+              normalize={(candidate) =>
+                normalizeRange(
+                  candidate,
+                  -edgeChordMm(edgeIndex) / 2,
+                  edgeChordMm(edgeIndex) / 2 + 0.01,
+                )
+              }
               onCommit={(value) => commit(setContourBulge(product, module.id, edgeIndex, value))}
             />
           ),

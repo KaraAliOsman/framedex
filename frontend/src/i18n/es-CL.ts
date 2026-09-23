@@ -1286,6 +1286,15 @@ const messages = {
     "El panel {sku} no se apoya aún en contornos — el marco y el vidrio sí se calculan",
   "assembly.issue.memberBending":
     "El miembro {edge} de {target} necesita curvado (flecha {sagitta_mm} mm) — sin regla de curvado declarada",
+  "assembly.issue.couplerWidthMismatch":
+    "El acoplador horizontal en {target} une módulos de {below_mm} y {above_mm} mm de ancho.",
+  "assembly.issue.couplerModuleUnknown":
+    "La unión {target} referencia un módulo que no existe en el conjunto.",
+  "assembly.issue.couplerEdgeInvalid": "La unión {target} declara caras incompatibles con su tipo.",
+  "assembly.issue.couplerEdgeConflict":
+    "La unión {target} reclama una cara ya ocupada por otra unión.",
+  "assembly.issue.connectionTypeUnsupported":
+    "La unión tipo {kind} en {target} se declara pero aún no es fabricable.",
   "assembly.module": "Módulo",
   "assembly.coupling": "Unión",
   "assembly.wholeAssembly": "el conjunto",

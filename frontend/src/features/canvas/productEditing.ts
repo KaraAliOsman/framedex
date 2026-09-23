@@ -14,6 +14,12 @@ export type CouplingJson = {
   id: string;
   angle_deg: string;
   coupler_profile_sku: string | null;
+  /** Structural class of the joint — absent means the inline chain default. */
+  kind?: "INLINE" | "STACKED" | "TEE" | "CORNER";
+  /** Explicit endpoints: modules[i]'s edges[i] side meets modules[j]'s
+   * edges[j] side. Absent = legacy positional binding (i right, i+1 left). */
+  modules?: [string, string];
+  edges?: ["left" | "right" | "top" | "bottom", "left" | "right" | "top" | "bottom"];
 };
 
 /** Closed elevation outline of a module — mirrors dekopen_engine.contour.

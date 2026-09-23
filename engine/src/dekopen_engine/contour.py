@@ -198,12 +198,13 @@ def _edge_tangent(contour: Contour, index: int, *, at_end: bool) -> tuple[Decima
     center, _, _ = arc_params(p0, p1, bulge)
     point = p1 if at_end else p0
     rx, ry = _sub(point, center)
-    # Positive sagitta = right bulge = clockwise travel around the center;
-    # CW tangent rotates the radius vector (x,y) -> (y,-x). CCW uses (-y,x).
+    # Positive sagitta travels counter-clockwise around the center (the
+    # convention edge_points uses); CCW tangent rotates (x,y) -> (-y,x),
+    # CW (negative sagitta) uses (y,-x).
     if bulge > 0:
-        tx, ty = ry, -rx
-    else:
         tx, ty = -ry, rx
+    else:
+        tx, ty = ry, -rx
     length = _length(tx, ty)
     return tx / length, ty / length
 
@@ -233,6 +234,10 @@ def validate_contour(contour: Contour) -> list[str]:
         if bulge:
             if abs(bulge) * _TWO > chord:
                 problems.append(f"edge {i}: arc sagitta exceeds half the chord")
+    # Structural failures already reject the contour — sampling below would
+    # invoke arc math on edges whose preconditions are false (div/0).
+    if problems:
+        return problems
     # Segment intersection: lines exact, arcs chord-sampled at 1 mm.
     samples = [edge_points(contour, i, step_mm=Decimal("1")) for i in range(n)]
     for i in range(n):

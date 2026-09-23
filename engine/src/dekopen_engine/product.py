@@ -84,19 +84,48 @@ class IssueCode(str, Enum):
     CONTOUR_OPENING_UNSUPPORTED = "contour_opening_unsupported"
     CONTOUR_PANEL_UNSUPPORTED = "contour_panel_unsupported"
     MEMBER_BENDING_REQUIRED = "member_bending_required"
+    COUPLER_WIDTH_MISMATCH = "coupler_width_mismatch"
+    COUPLER_MODULE_UNKNOWN = "coupler_module_unknown"
+    COUPLER_EDGE_INVALID = "coupler_edge_invalid"
+    COUPLER_EDGE_CONFLICT = "coupler_edge_conflict"
+    CONNECTION_TYPE_UNSUPPORTED = "connection_type_unsupported"
+
+
+class ConnectionKind(str, Enum):
+    """Structural class of a module-to-module joint (mandate §6)."""
+
+    INLINE = "INLINE"  # vertical post between same-height neighbors (any plan angle)
+    STACKED = "STACKED"  # horizontal member — module on top of module
+    TEE = "TEE"  # member landing mid-edge (declared; evaluated as unsupported)
+    CORNER = "CORNER"  # framed corner assembly (declared; evaluated as unsupported)
+
+
+class EdgeSide(str, Enum):
+    LEFT = "left"
+    RIGHT = "right"
+    TOP = "top"
+    BOTTOM = "bottom"
 
 
 class CouplingDef(EngineModel):
-    """Angled joint between two adjacent modules.
+    """Joint between two modules of an assembly.
 
     `angle_deg` is the signed deflection of the front chain at the joint:
     positive turns the next module counterclockwise (plan view). Zero is a
     coplanar coupling.
+
+    `modules`/`edges` name the two endpoints explicitly — `modules[i]`'s
+    `edges[i]` side joins `modules[j]`'s `edges[j]` side. When absent the
+    coupling keeps the legacy positional binding: modules[i] right to
+    modules[i+1] left, in declaration order.
     """
 
     id: str
-    angle_deg: Decimal
+    angle_deg: Decimal = Decimal("0")
     coupler_profile_sku: str | None = None
+    kind: ConnectionKind = ConnectionKind.INLINE
+    modules: list[str] | None = None
+    edges: list[EdgeSide] | None = None
 
 
 class ProductModule(EngineModel):
@@ -248,13 +277,55 @@ def _plan_geometry(
     while len(headings) < len(modules):
         headings.append(headings[-1])
 
+    # Modules joined by a STACKED coupling project onto their lower partner's
+    # plan footprint (same front slot, same depth) — they are not a new chain
+    # segment. Anchor = the endpoint whose TOP edge is the contact (lower),
+    # resolved transitively for towers; cycles degrade to "no anchor".
+    stack_parent: dict[str, str] = {}
+    coupling_pairs: set[frozenset[str]] = set()
+    for index, coupling in enumerate(couplings):
+        pair = coupling.modules
+        if pair is None and index < len(modules) - 1:
+            pair = [modules[index].id, modules[index + 1].id]
+        if pair is not None and len(pair) == 2:
+            coupling_pairs.add(frozenset(pair))
+        if coupling.kind is not ConnectionKind.STACKED:
+            continue
+        edges = coupling.edges or [EdgeSide.TOP, EdgeSide.BOTTOM]
+        if pair is not None and len(pair) == 2 and len(edges) == 2:
+            top_index = (
+                0
+                if edges[0] is EdgeSide.TOP
+                else (1 if edges[1] is EdgeSide.TOP else None)
+            )
+            if top_index is not None:
+                stack_parent[pair[1 - top_index]] = pair[top_index]
+
+    def _anchor(module_id: str) -> str | None:
+        seen: set[str] = set()
+        current = module_id
+        while current in stack_parent and current not in seen:
+            seen.add(current)
+            current = stack_parent[current]
+        return None if current in stack_parent else current
+
     front: list[PlanPoint] = [PlanPoint(x_mm=Decimal(0), y_mm=Decimal(0))]
     normals: list[PlanPoint] = []
     plan_modules: list[PlanModule] = []
     plan_couplings: list[PlanCoupling] = []
     all_points: list[PlanPoint] = []
+    corners_by_module: dict[str, list[PlanPoint]] = {}
+    stack_root: dict[str, str] = {}
+    front_module_ids: list[str] = []
 
     for index, module in enumerate(modules):
+        anchor = _anchor(module.id) if module.id in stack_parent else None
+        if anchor is not None and anchor in corners_by_module:
+            corners = corners_by_module[anchor]
+            plan_modules.append(PlanModule(module_id=module.id, corners=corners))
+            stack_root[module.id] = anchor
+            continue
+        front_module_ids.append(module.id)
         theta = headings[index]
         cos_t = cos_degrees(theta)
         sin_t = sin_degrees(theta)
@@ -274,32 +345,39 @@ def _plan_geometry(
             x_mm=end.x_mm - depth_mm * normal.x_mm,
             y_mm=end.y_mm - depth_mm * normal.y_mm,
         )
+        corners = [start, end, back_end, back_start]
+        corners_by_module[module.id] = corners
         plan_modules.append(
             PlanModule(
                 module_id=module.id,
-                corners=[start, end, back_end, back_start],
+                corners=corners,
             )
         )
         all_points.extend([start, end, back_start, back_end])
 
         if index < len(modules) - 1 and index < len(couplings):
             coupling = couplings[index]
-            next_theta = headings[index + 1]
-            next_normal = PlanPoint(
-                x_mm=-sin_degrees(next_theta), y_mm=cos_degrees(next_theta)
-            )
-            joint = end
-            back_left = PlanPoint(
-                x_mm=joint.x_mm - depth_mm * next_normal.x_mm,
-                y_mm=joint.y_mm - depth_mm * next_normal.y_mm,
-            )
-            plan_couplings.append(
-                PlanCoupling(
-                    coupling_id=coupling.id,
-                    polygon=[joint, back_end, back_left],
+            adjacent = coupling.modules is None or coupling.modules == [
+                modules[index].id,
+                modules[index + 1].id,
+            ]
+            if coupling.kind is ConnectionKind.INLINE and adjacent:
+                next_theta = headings[index + 1]
+                next_normal = PlanPoint(
+                    x_mm=-sin_degrees(next_theta), y_mm=cos_degrees(next_theta)
                 )
-            )
-            all_points.extend([back_left])
+                joint = end
+                back_left = PlanPoint(
+                    x_mm=joint.x_mm - depth_mm * next_normal.x_mm,
+                    y_mm=joint.y_mm - depth_mm * next_normal.y_mm,
+                )
+                plan_couplings.append(
+                    PlanCoupling(
+                        coupling_id=coupling.id,
+                        polygon=[joint, back_end, back_left],
+                    )
+                )
+                all_points.extend([back_left])
 
     # Non-adjacent front segments must not cross.
     for i in range(len(front) - 1):
@@ -311,33 +389,36 @@ def _plan_geometry(
                         severity=Severity.ERROR,
                         target="assembly",
                         params={
-                            "first": modules[i].id,
-                            "second": modules[j].id,
+                            "first": front_module_ids[i],
+                            "second": front_module_ids[j],
                         },
                     )
                 )
 
     # Depth polygons must not collide either: front chains can stay disjoint
     # while two module rectangles or a coupler wedge overlap in depth.
+    # Modules stacked on one anchor share the footprint by design — excluded,
+    # and coupling-declared endpoint pairs legitimately share a boundary.
+    def _co_stacked(id_a: str, id_b: str) -> bool:
+        return (
+            id_a in stack_root
+            and id_b in stack_root
+            and stack_root[id_a] == stack_root[id_b]
+        ) or stack_root.get(id_a) == id_b or stack_root.get(id_b) == id_a
+
     rects = [(module.module_id, module.corners) for module in plan_modules]
-    # Adjacent rectangles share their joint boundary by construction — but a
-    # negative deflection folds the next rectangle back into the previous one,
-    # producing positive-area overlap the front-chain check cannot see.
-    for i, (id_a, poly_a) in enumerate(rects[:-1]):
-        id_b, poly_b = rects[i + 1]
-        if _polygons_overlap(poly_a, poly_b, interior_only=True):
-            issues.append(
-                ProductIssue(
-                    code=IssueCode.PLAN_SELF_INTERSECTION.value,
-                    severity=Severity.ERROR,
-                    target=f"module:{id_b}",
-                    params={"other": id_a},
-                )
-            )
     for i, (id_a, poly_a) in enumerate(rects):
-        for j in range(i + 2, len(rects)):
+        for j in range(i + 1, len(rects)):
             id_b, poly_b = rects[j]
-            if _polygons_overlap(poly_a, poly_b):
+            if _co_stacked(id_a, id_b):
+                continue
+            # Adjacent chain slots touch; coupling-declared columns touch —
+            # including anchored siblings stacked over declared partners.
+            root_a, root_b = stack_root.get(id_a, id_a), stack_root.get(id_b, id_b)
+            expected_contact = (
+                j == i + 1 or frozenset({root_a, root_b}) in coupling_pairs
+            )
+            if _polygons_overlap(poly_a, poly_b, interior_only=expected_contact):
                 issues.append(
                     ProductIssue(
                         code=IssueCode.PLAN_SELF_INTERSECTION.value,
@@ -475,6 +556,26 @@ def _single_region_leaf(tree: ParametricNode) -> ParametricNode | None:
     return top if top.type is NodeType.BAY and not top.children else None
 
 
+_ANGLE_Q = Decimal("0.1")
+
+
+def _qa(value: Decimal) -> Decimal:
+    """Canonical cut-angle quantum — serializer accepts angles at 0.1° only."""
+    return value.quantize(_ANGLE_Q, rounding=ROUND_HALF_UP)
+
+
+def _is_axis_rect(contour: Contour) -> bool:
+    """Four straight axis-aligned edges — the classic glass rectangle."""
+    if len(contour.vertices) != 4 or any(contour.bulges):
+        return False
+    n = 4
+    return all(
+        contour.vertices[i].x_mm == contour.vertices[(i + 1) % n].x_mm
+        or contour.vertices[i].y_mm == contour.vertices[(i + 1) % n].y_mm
+        for i in range(n)
+    )
+
+
 def _evaluate_contour_module(
     module: ProductModule,
     params: SystemParams,
@@ -559,11 +660,11 @@ def _evaluate_contour_module(
                 role=ProfileRole.FRAME,
                 material=frame.material,
                 length_mm=_q(length),
-                angle_left=_q(interior_angle(contour, i) / 2),
-                angle_right=_q(interior_angle(contour, (i + 1) % n) / 2),
+                angle_left=_qa(interior_angle(contour, i) / 2),
+                angle_right=_qa(interior_angle(contour, (i + 1) % n) / 2),
                 qty=1,
                 bay_id=leaf.id,
-                sagitta_mm=sagitta,
+                sagitta_mm=_q(sagitta) if sagitta is not None else None,
             )
         )
         if sagitta is not None:
@@ -572,7 +673,7 @@ def _evaluate_contour_module(
                     code=IssueCode.MEMBER_BENDING_REQUIRED.value,
                     severity=Severity.WARNING,
                     target=target,
-                    params={"edge": str(i), "sagitta_mm": str(sagitta)},
+                    params={"edge": str(i), "sagitta_mm": str(_q(sagitta))},
                 )
             )
         if frame.reinforcement_sku is not None:
@@ -584,7 +685,7 @@ def _evaluate_contour_module(
                     length_mm=_q(reinforcement_cut_length(length, frame, 2)),
                     qty=1,
                     bay_id=leaf.id,
-                    sagitta_mm=sagitta,
+                    sagitta_mm=_q(sagitta) if sagitta is not None else None,
                 )
             )
 
@@ -605,11 +706,24 @@ def _evaluate_contour_module(
         )
         return None, issues
 
+    fill_area_mm2 = contour_area(fill.vertices, fill.bulges)
+    # A collapsed offset inverts the pocket (negative shoelace area) or
+    # self-intersects — both are structural failures, not a small glass.
+    if fill_area_mm2 <= 0 or validate_contour(fill):
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_INVALID.value,
+                severity=Severity.ERROR,
+                target=target,
+                params={"reason": "frame inset collapsed the glass pocket"},
+            )
+        )
+        return None, issues
+
     if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
         raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
 
     thickness_net = derive_net_glass_thickness(leaf.glass_spec, leaf.glass_thickness_mm)
-    fill_area_mm2 = contour_area(fill.vertices, fill.bulges)
     area_m2 = (fill_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
@@ -628,7 +742,9 @@ def _evaluate_contour_module(
             thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
             glass_spec=leaf.glass_spec,
             article_sku=leaf.glass_article_sku,
-            shape=contour_points(fill),
+            # An axis-aligned rect fill is the classic rectangle — `shape`
+            # stays None so production sheet-nests it like any other pane.
+            shape=None if _is_axis_rect(fill) else contour_points(fill),
         )
     )
 
@@ -643,11 +759,11 @@ def _evaluate_contour_module(
                 role=ProfileRole.GLAZING_BEAD,
                 material=rule.bead_article.material,
                 length_mm=_q(contour_edge_length(fill, i) + rule.cut_add_mm),
-                angle_left=_q(interior_angle(fill, i) / 2),
-                angle_right=_q(interior_angle(fill, (i + 1) % fill_n) / 2),
+                angle_left=_qa(interior_angle(fill, i) / 2),
+                angle_right=_qa(interior_angle(fill, (i + 1) % fill_n) / 2),
                 qty=1,
                 bay_id=leaf.id,
-                sagitta_mm=bulge if bulge else None,
+                sagitta_mm=_q(bulge) if bulge else None,
             )
         )
         if bulge:
@@ -656,7 +772,7 @@ def _evaluate_contour_module(
                     code=IssueCode.MEMBER_BENDING_REQUIRED.value,
                     severity=Severity.WARNING,
                     target=target,
-                    params={"edge": f"bead-{i}", "sagitta_mm": str(bulge)},
+                    params={"edge": f"bead-{i}", "sagitta_mm": str(_q(bulge))},
                 )
             )
 
@@ -688,7 +804,11 @@ def evaluate_product(
     ) != len(couplings):
         raise ValueError("module and coupling ids must be unique")
 
-    if len(couplings) != len(modules) - 1:
+    # The modules-1 chain count only constrains positional couplings — their
+    # endpoints ARE the chain slots. Explicit-endpoint couplings declare a
+    # structured graph (stacked towers, TEE joins) where any count is legal.
+    positional = [c for c in couplings if c.modules is None]
+    if positional and len(couplings) != len(modules) - 1:
         issues.append(
             ProductIssue(
                 code=IssueCode.COUPLINGS_COUNT_MISMATCH.value,
@@ -740,9 +860,87 @@ def evaluate_product(
     coupler_cuts: list[ProfileCut] = []
     coupler_reinforcements: list[ReinforcementPiece] = []
     coupler_articles = coupler_articles or {}
-    for index, coupling in enumerate(couplings[: len(modules) - 1]):
-        left = modules[index]
-        right = modules[index + 1]
+    module_by_id = {module.id: module for module in modules}
+    claimed_edges: set[tuple[str, EdgeSide]] = set()
+    for index, coupling in enumerate(couplings):
+        target = f"coupling:{coupling.id}"
+        if coupling.kind in (ConnectionKind.TEE, ConnectionKind.CORNER):
+            # Declared in the model, honestly not yet manufacturable — a T or
+            # framed-corner joint needs machining consequences we don't have.
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.CONNECTION_TYPE_UNSUPPORTED.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                    params={"kind": coupling.kind.value},
+                )
+            )
+            continue
+        # Endpoint resolution: explicit ids win; absent endpoints keep the
+        # legacy positional binding (module i right to module i+1 left).
+        if coupling.modules is not None:
+            first = module_by_id.get(coupling.modules[0])
+            second = (
+                module_by_id.get(coupling.modules[1])
+                if len(coupling.modules) > 1
+                else None
+            )
+        elif index < len(modules) - 1:
+            first, second = modules[index], modules[index + 1]
+        else:
+            first = second = None
+        if first is None or second is None or first.id == second.id:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.COUPLER_MODULE_UNKNOWN.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                )
+            )
+            continue
+        edges = coupling.edges
+        if edges is None:
+            edges = (
+                [EdgeSide.RIGHT, EdgeSide.LEFT]
+                if coupling.kind is ConnectionKind.INLINE
+                else [EdgeSide.TOP, EdgeSide.BOTTOM]
+            )
+        if len(edges) != 2:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.COUPLER_EDGE_INVALID.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                )
+            )
+            continue
+        sides = set(edges)
+        valid = (
+            sides <= {EdgeSide.LEFT, EdgeSide.RIGHT}
+            if coupling.kind is ConnectionKind.INLINE
+            else sides <= {EdgeSide.TOP, EdgeSide.BOTTOM}
+        )
+        if not valid or len(sides) != 2:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.COUPLER_EDGE_INVALID.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                    params={"kind": coupling.kind.value},
+                )
+            )
+            continue
+        pair_claims = {(first.id, edges[0]), (second.id, edges[1])}
+        if claimed_edges & pair_claims:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.COUPLER_EDGE_CONFLICT.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                )
+            )
+            continue
+        claimed_edges |= pair_claims
         sku = coupling.coupler_profile_sku
         article = coupler_articles.get(sku) if sku is not None else None
         if sku is None:
@@ -750,7 +948,7 @@ def evaluate_product(
                 ProductIssue(
                     code=IssueCode.COUPLER_PROFILE_MISSING.value,
                     severity=Severity.WARNING,
-                    target=f"coupling:{coupling.id}",
+                    target=target,
                 )
             )
             continue
@@ -759,31 +957,47 @@ def evaluate_product(
                 ProductIssue(
                     code=IssueCode.COUPLER_PROFILE_UNKNOWN.value,
                     severity=Severity.WARNING,
-                    target=f"coupling:{coupling.id}",
+                    target=target,
                     params={"sku": sku},
                 )
             )
             continue
-        if left.height_mm != right.height_mm:
-            issues.append(
-                ProductIssue(
-                    code=IssueCode.COUPLER_HEIGHT_MISMATCH.value,
-                    severity=Severity.WARNING,
-                    target=f"coupling:{coupling.id}",
-                    params={
-                        "left_mm": str(left.height_mm),
-                        "right_mm": str(right.height_mm),
-                    },
+        if coupling.kind is ConnectionKind.INLINE:
+            if first.height_mm != second.height_mm:
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.COUPLER_HEIGHT_MISMATCH.value,
+                        severity=Severity.WARNING,
+                        target=target,
+                        params={
+                            "left_mm": str(first.height_mm),
+                            "right_mm": str(second.height_mm),
+                        },
+                    )
                 )
-            )
-            continue
-        height = left.height_mm
+                continue
+            span = first.height_mm
+        else:
+            if first.width_mm != second.width_mm:
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.COUPLER_WIDTH_MISMATCH.value,
+                        severity=Severity.WARNING,
+                        target=target,
+                        params={
+                            "below_mm": str(first.width_mm),
+                            "above_mm": str(second.width_mm),
+                        },
+                    )
+                )
+                continue
+            span = first.width_mm
         coupler_cuts.append(
             ProfileCut(
                 sku=article.sku,
                 role=ProfileRole.COUPLER,
                 material=article.material,
-                length_mm=height,
+                length_mm=span,
                 angle_left=Decimal("90.0"),
                 angle_right=Decimal("90.0"),
                 qty=1,
@@ -791,13 +1005,13 @@ def evaluate_product(
             )
         )
         if article.reinforcement_sku:
-            steel_length = reinforcement_cut_length(height, article, 0)
+            steel_length = reinforcement_cut_length(span, article, 0)
             if steel_length <= Decimal("0"):
                 issues.append(
                     ProductIssue(
                         code=IssueCode.COUPLER_REINFORCEMENT_NONPOSITIVE.value,
                         severity=Severity.WARNING,
-                        target=f"coupling:{coupling.id}",
+                        target=target,
                         params={"sku": article.sku},
                     )
                 )
