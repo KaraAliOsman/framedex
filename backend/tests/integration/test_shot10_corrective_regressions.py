@@ -573,3 +573,51 @@ def test_readiness_flags_missing_fabrication_authority(documentary_tenant, colum
          "WHERE system_id=%s RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "fabrication" in catalog_readiness(system, org)["reasons"]
+
+
+def test_readiness_skips_unwelded_and_fabrication_free_articles(documentary_tenant):
+    """Readiness mirrors the engine's consumption rules: a THRESHOLD is appended
+    unwelded, and leaf weight never reads profile mass on a welded system — so
+    UNKNOWN there must not block an otherwise complete PVC catalog."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET welding_loss_mm=NULL,"
+         "reinforcement_gap_mm=NULL WHERE system_id=%s AND role='THRESHOLD'"
+         " RETURNING id", [system])
+    rows("UPDATE public.profile_articles SET weight_kg_m=NULL"
+         " WHERE system_id=%s RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" not in catalog_readiness(system, org)["reasons"]
+
+
+def test_readiness_flags_reinforced_coupler_fabrication(documentary_tenant):
+    """A reinforced coupler runs reinforcement_cut_length even though it loads
+    outside the effective role map — UNKNOWN weld/gap on it must block."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET reinforcement_sku='ST-TEST',"
+         " reinforcement_gap_mm=NULL WHERE system_id=%s AND role='COUPLER'"
+         " RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" in catalog_readiness(system, org)["reasons"]
+
+
+@pytest.mark.parametrize("role,flagged", [("SASH", True), ("FRAME", False)])
+def test_readiness_nonpvc_weight_scoped_to_leaf_articles(documentary_tenant, role, flagged):
+    """Non-PVC mass is consumed only by leaf weight, so only the effective
+    SASH's missing density flags fabrication — a frame's does not."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org, code="ALU_65")
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET weight_kg_m=NULL"
+         " WHERE system_id=%s AND role=%s RETURNING id", [system, role])
+    with as_user(users["OWNER"]):
+        assert ("fabrication" in catalog_readiness(system, org)["reasons"]) is flagged
