@@ -99,16 +99,17 @@ def _audit(
         "org_id, user_id, tool_name, model_used, prompt_version, retention_until,"
         " input_payload, output_payload, points_debited,"
         " tokens_prompt, tokens_completion, latency_ms, state_hash_before,"
-        " operation_key)"
-        " VALUES(%s,%s,%s,%s,%s, now() + %s * interval '1 day',%s,%s,%s,%s,%s,%s,%s,%s)"
+        " operation_key, route_id)"
+        " VALUES(%s,%s,%s,%s,%s, now() + %s * interval '1 day',%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         " ON CONFLICT (org_id, operation_key) WHERE operation_key IS NOT NULL DO NOTHING"
         " RETURNING *",
         [
             str(org_id),
             str(user_id),
             tool_name,
-            # Audit rows are tenant-readable — store the white-label name,
-            # never the sealed provider/model internals.
+            # Audit rows are tenant-readable — model_used stores the white-label
+            # name. Provider provenance lives behind route_id, an opaque FK only
+            # the backend role can join to the sealed provider/model internals.
             str(route["public_name"]),
             str(route["prompt_version"]),
             RETENTION_DAYS,
@@ -120,6 +121,7 @@ def _audit(
             int(result["latency_ms"]),
             _input_hash(input_payload),
             operation_key,
+            str(route["id"]),
         ],
     )
     return inserted[0] if inserted else None
@@ -177,7 +179,10 @@ def invoke(
             route=route,
             capability=capability,
             input_payload=input_payload,
-            operation_key=operation_key,
+            # The wire key is org-namespaced: a real provider dedupes on the
+            # header globally, so the raw org-scoped key alone would collide
+            # across tenants sharing a capability-level key prefix.
+            operation_key=f"{org_id}:{operation_key}",
         )
         if len(str(result["output"])) > MAX_OUTPUT_CHARS:
             raise ProviderError("ai_provider_output_too_large")

@@ -12,7 +12,10 @@ class AiInvokeRequestSerializer(serializers.Serializer):
     input_payload = serializers.DictField()
 
     def validate_input_payload(self, value):
-        if len(json.dumps(value, default=str).encode()) > MAX_INPUT_BYTES:
+        # Measure the real UTF-8 wire size — ensure_ascii would count the
+        # \uXXXX escapes and reject unicode-heavy payloads far below 64 KB.
+        encoded = json.dumps(value, default=str, ensure_ascii=False).encode("utf-8")
+        if len(encoded) > MAX_INPUT_BYTES:
             raise serializers.ValidationError(
                 "input_payload excede el límite de 64 KB."
             )

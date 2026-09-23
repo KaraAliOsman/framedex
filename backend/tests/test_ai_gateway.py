@@ -93,15 +93,18 @@ def test_invoke_debits_and_returns_white_label(monkeypatch):
 
 def test_invoke_binds_audit_to_debit(monkeypatch):
     audit_id = uuid4()
+    route = _route()
 
     def fake_rows(sql, params=None):
         if "FROM public.ai_routes" in sql:
-            return [_route()]
+            return [route]
         if "INSERT INTO public.ai_audit_logs" in sql:
             # model_used is the white-label name — audit rows are tenant-readable.
             assert params[3] == "DEKOPEN Neural Core™"
             assert params[8] == 5  # points_debited
             assert len(params[12]) == 64  # state hash
+            # Provider provenance rides the backend-only route FK.
+            assert params[14] == str(route["id"])
             return [{"id": audit_id}]
         return []
 
@@ -116,6 +119,34 @@ def test_invoke_binds_audit_to_debit(monkeypatch):
     )
     assert out["audit_id"] == str(audit_id)
     assert debited[0]["audit_id"] == audit_id
+
+
+def test_invoke_namespaces_provider_operation_key(monkeypatch):
+    org_id = uuid4()
+    seen = []
+
+    def spy(**kwargs):
+        seen.append(kwargs)
+        return {
+            "output": "ok",
+            "tokens_prompt": 1,
+            "tokens_completion": 1,
+            "latency_ms": 1,
+        }
+
+    _patch_env(
+        monkeypatch,
+        provider=type("P", (), {"invoke": staticmethod(spy)})(),
+    )
+    service.invoke(
+        org_id=org_id,
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-1",
+        input_payload={},
+    )
+    # A real provider dedupes on the key globally — it must be org-namespaced.
+    assert seen[0]["operation_key"] == f"{org_id}:op-1"
 
 
 def test_unknown_capability_rejected(monkeypatch):
