@@ -12,10 +12,14 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pydantic import ValidationError as PydanticValidationError
+
 from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
+from dekopen_engine.cutting import InvalidCutContract
 from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
+from engine_api.repository import SystemNotFound
 from production import service
 from production.serializers import (
     ProductionOrderDetailSerializer,
@@ -47,6 +51,17 @@ def public_production_errors():
             status_code,
             error.code,
             "La operación de producción fue rechazada; revisa la orden y el paso.",
+        ) from error
+    except (InvalidCutContract, SystemNotFound, PydanticValidationError) as error:
+        logger.warning(
+            "Production authority resolution failed (%s: %s)",
+            type(error).__name__,
+            error,
+        )
+        raise contract_error(
+            422,
+            "documentary_authority_required",
+            "Falta o no coincide una autoridad técnica necesaria para optimizar la orden.",
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(

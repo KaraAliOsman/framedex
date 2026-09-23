@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
@@ -50,10 +51,12 @@ def _version_row(snapshot: dict) -> dict:
     }
 
 
+_POSITION_ID = str(uuid4())
 _SNAPSHOT = {
+    "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
     "bom": [
         {
-            "position_id": str(uuid4()),
+            "position_id": _POSITION_ID,
             "quantity": 1,
             "engine_result": {
                 "profile_cuts": [{"sku": "MARCO", "length_mm": "900"}],
@@ -513,10 +516,68 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
         )
     assert output["optimization"]["color"] == "BLANCO"
     assert output["optimization"]["units"] == 2
-    assert len(cut.call_args[0][0]) == 4  # qty 2 per unit x 2 units
+    pieces_arg = cut.call_args[0][0]
+    assert len(pieces_arg) == 4  # qty 2 per unit x 2 units
+    assert len({p.unit_index for p in pieces_arg}) == 4  # unique per-unit identity
     writes = seen["writes"]
     assert any("payload_json" in q for q in writes)
     assert any("WO_OPTIMIZED" in q for q in writes)
+
+
+def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
+    from decimal import Decimal
+
+    rules = _sheet_rules_fake(
+        [("BIG", "3000", "2000"), ("MID", "2000", "1500"), ("SML", "1200", "900")]
+    )
+    picked = service._pick_sheet_rule(rules, Decimal("1100"), Decimal("800"))
+    assert picked is not None and picked.workshop_sku == "SML"
+    rotated = service._pick_sheet_rule(rules, Decimal("800"), Decimal("1300"))
+    assert rotated is not None and rotated.workshop_sku == "MID"
+    too_big = service._pick_sheet_rule(rules, Decimal("4000"), Decimal("500"))
+    assert too_big is not None and too_big.workshop_sku == "BIG"  # largest fallback
+    assert service._pick_sheet_rule([], Decimal("10"), Decimal("10")) is None
+
+
+def _sheet_rules_fake(rows_spec):
+    from decimal import Decimal
+
+    from dekopen_engine.nesting import SheetRule
+
+    return [
+        SheetRule(
+            workshop_sku=sku, purchasing_sku=sku,
+            sheet_width_mm=Decimal(w), sheet_height_mm=Decimal(h),
+        )
+        for sku, w, h in sorted(rows_spec, key=lambda r: Decimal(r[1]) * Decimal(r[2]))
+    ]
+
+
+def test_release_seals_system_from_snapshot_positions() -> None:
+    seen = {}
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return _version_row(_SNAPSHOT)
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "INSERT INTO public.orders" in query:
+            seen["payload"] = params[3]
+            return [{"id": uuid4()}]
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service._ensure_work_centers", return_value={}
+    ):
+        service.release_production(
+            org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
+        )
+    assert json.loads(seen["payload"])["system_id"] == _SNAPSHOT["positions"][0]["system_id"]
 
 
 def test_optimize_rejects_completed_order() -> None:

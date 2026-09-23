@@ -172,17 +172,11 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         project_code = str(
             (snapshot.get("project") or {}).get("code") or version["project_id"]
         )
-        position_ids = [str(p.get("position_id") or "") for p in bom if p.get("position_id")]
         position_systems = {
-            str(row["id"]): str(row["system_id"])
-            for row in rows(
-                """
-                SELECT id, system_id FROM public.project_positions
-                WHERE org_id = %s AND id = ANY(%s::uuid[])
-                """,
-                [str(org_id), position_ids],
-            )
-        } if position_ids else {}
+            str(pos.get("id")): str(pos.get("system_id"))
+            for pos in snapshot.get("positions") or []
+            if pos.get("id") and pos.get("system_id")
+        }
         for position in bom:
             position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
         centers = _ensure_work_centers(org_id)
@@ -600,11 +594,35 @@ def _sheet_rules(org_id: UUID) -> dict[str, list[SheetRule]]:
             )
         except Exception:
             continue
-        by_sku[rule.workshop_sku] = rule
+        by_sku.setdefault(rule.workshop_sku, []).append(rule)
         thickness = attributes.get("sheet_thickness_mm")
         if thickness is not None:
-            by_thickness[str(Decimal(str(thickness)))] = rule
+            by_thickness.setdefault(str(Decimal(str(thickness))), []).append(rule)
+    # Deterministic authority order: smallest physical sheet first, sku as the
+    # tiebreak, so variants never depend on database row order.
+    for candidates in (by_sku | by_thickness).values():
+        candidates.sort(
+            key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku)
+        )
     return {"by_sku": by_sku, "by_thickness": by_thickness}
+
+
+def _pick_sheet_rule(
+    candidates: list[SheetRule], width_mm: Decimal, height_mm: Decimal
+) -> SheetRule | None:
+    """Smallest declared sheet that holds the piece (either orientation, since
+    sheet pieces allow rotation); falls back to the largest sheet so oversized
+    pieces still land honestly under ``unnested``."""
+    if not candidates:
+        return None
+    for rule in candidates:
+        usable_w = rule.sheet_width_mm - rule.edge_trim_mm * 2
+        usable_h = rule.sheet_height_mm - rule.edge_trim_mm * 2
+        if (width_mm <= usable_w and height_mm <= usable_h) or (
+            height_mm <= usable_w and width_mm <= usable_h
+        ):
+            return rule
+    return candidates[-1]
 
 
 def _decoded(payload: object) -> dict[str, object]:
@@ -644,15 +662,24 @@ def optimize_work_order(
         position_id = payload.get("position_id")
         system_id = payload.get("system_id")
         if not system_id:
-            position = one(
+            # Old orders lack system_id: recover the frozen mapping from the
+            # referenced version's immutable snapshot, never the live position.
+            version_row = one(
                 """
-                SELECT system_id FROM public.project_positions
-                WHERE id = %s AND org_id = %s
+                SELECT pv.snapshot_json FROM public.project_versions pv
+                JOIN public.orders o ON o.project_version_id = pv.id
+                WHERE o.id = %s AND o.org_id = %s
                 """,
-                [str(position_id), str(org_id)],
+                [str(order_id), str(org_id)],
                 "work_order_missing_system",
             )
-            system_id = str(position["system_id"])
+            version_snapshot = _decoded(version_row["snapshot_json"])
+            for pos in version_snapshot.get("positions") or []:
+                if str(pos.get("id")) == str(position_id) and pos.get("system_id"):
+                    system_id = str(pos["system_id"])
+                    break
+            if not system_id:
+                raise DocumentaryError("work_order_missing_system")
         quantity = int(payload.get("quantity") or 1)
         # payload was produced by model_dump(mode="json") — Decimals are strings,
         # so validate non-strictly to round them back.
@@ -700,7 +727,9 @@ def optimize_work_order(
                 group = (
                     str(entry.thickness_net_mm) if kind == "GLASS" else entry.sku
                 )
-                rule = rules[group_key].get(group)
+                rule = _pick_sheet_rule(
+                    rules[group_key].get(group) or [], entry.width_mm, entry.height_mm
+                )
                 label = f"V-{index:02d}" if kind == "GLASS" else f"PAN-{index:02d}"
                 if rule is None:
                     unnested.append({
@@ -779,7 +808,7 @@ def optimize_work_order(
                 json.dumps({
                     "order_code": order["order_code"],
                     "color": color,
-                    "bars": len(bars.get("bars") or []),
+                    "bars": len(bars.get("workshop_cut_plan") or []),
                     "sheets": len(sheets),
                     "unnested": len(unnested),
                 }),
