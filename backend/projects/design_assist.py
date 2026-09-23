@@ -201,7 +201,9 @@ def _declared_values(prompt: str) -> set[Decimal]:
         else:  # m, mt, mts, metro, metros
             factor = Decimal(1000)
         values.add(number * factor)
-    for token in _BARE_NUMBER_RE.findall(prompt):
+    # Unit-suffixed spans are consumed by the first pass — their raw tokens
+    # must not re-enter the set unconverted ('240 cm' declares 2400mm, not 240).
+    for token in _BARE_NUMBER_RE.findall(_MEASURE_RE.sub("", prompt)):
         number = _parse_number(token)
         if number is not None:
             values.add(number)

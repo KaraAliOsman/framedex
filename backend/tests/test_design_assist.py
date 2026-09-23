@@ -445,3 +445,23 @@ def test_declared_units_ground_numeric_ops(monkeypatch):
         "set_height",
     ]
     assert out["rejected"] == []
+
+
+def test_unit_suffixed_literal_does_not_declare_its_raw_value(monkeypatch):
+    """'240 cm' declares 2400 mm only — a provider proposing width 240 must
+    not pass grounding on the token's unconverted literal."""
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "set_total_width", "width_mm": "240"}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=1, couplings=0),
+        prompt="ancho total 240 cm",
+        system_id=uuid4(),
+        operation_key="assist-g3",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "ancho_no_declarado"

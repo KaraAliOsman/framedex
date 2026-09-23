@@ -343,7 +343,7 @@ class OpenAICompatibleProvider(HttpProvider):
 
     Configuration (all env, per provider name):
       AI_GATEWAY_{P}_API_KEY   — bearer token (required)
-      AI_GATEWAY_{P}_BASE_URL  — https endpoint, e.g. https://api.ximimio…/v1
+      AI_GATEWAY_{P}_BASE_URL  — https endpoint, e.g. https://api.xiaomimimo…/v1
       AI_GATEWAY_{P}_MODEL     — overrides the route's provider_model when set
 
     Server-side callers may steer the conversation through provider_options

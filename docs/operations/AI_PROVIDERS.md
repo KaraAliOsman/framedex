@@ -18,7 +18,7 @@ deterministic default and performs no network I/O.
 
 ```text
 AI_GATEWAY_{P}_API_KEY    bearer token (required)
-AI_GATEWAY_{P}_BASE_URL   https endpoint; e.g. https://api.ximimio…/v1
+AI_GATEWAY_{P}_BASE_URL   https endpoint; e.g. https://api.xiaomimimo…/v1
 AI_GATEWAY_{P}_MODEL      optional — overrides the route's provider_model
 AI_GATEWAY_{P}_PROTOCOL   optional — openai | http
 ```
@@ -30,7 +30,10 @@ Everything else is serialized as the user message.
 ## Activate MiMo for design_assist
 
 1. Set `AI_GATEWAY_MIMO_API_KEY`, `AI_GATEWAY_MIMO_BASE_URL`
-   (e.g. `https://api.ximimio.com/v1`), `AI_GATEWAY_MIMO_MODEL`.
+   (pay-as-you-go `sk-` keys use `https://api.xiaomimimo.com/v1`;
+   Token Plan `tp-` keys use the dedicated base URL shown on the plan
+   page, e.g. `https://token-plan-cn.xiaomimimo.com/v1`),
+   `AI_GATEWAY_MIMO_MODEL`.
 2. Point the capability route at the provider — a privileged operational
    statement (routes are backend-read-only):
 
