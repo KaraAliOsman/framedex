@@ -22,8 +22,12 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
+from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
 from production.serializers import (
+    DeliveryConfirmRequestSerializer,
+    DeliveryConfirmResponseSerializer,
+    DeliveryConfirmationAccessSerializer,
     DeliveryResponseSerializer,
     DeliveryScheduleRequestSerializer,
     DeliveryTransitionRequestSerializer,
@@ -58,7 +62,7 @@ def public_production_errors():
     try:
         yield
     except DocumentaryError as error:
-        status_code = 404 if error.code in ("version_not_found", "work_order_not_found", "production_step_not_found", "delivery_not_found") else 422
+        status_code = 404 if error.code in ("version_not_found", "work_order_not_found", "production_step_not_found", "delivery_not_found", "delivery_confirmation_not_found") else 422
         raise contract_error(
             status_code,
             error.code,
@@ -408,6 +412,51 @@ class ProductionOrderDeliveryView(APIView):
                     installer_name=data.get("installer_name"),
                     notes=data.get("notes"),
                 )
+        return Response(output)
+
+
+class ProductionOrderDeliveryConfirmView(APIView):
+    @extend_schema(
+        operation_id="production_order_delivery_confirm",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=DeliveryConfirmRequestSerializer,
+        responses={200: DeliveryConfirmResponseSerializer, 201: DeliveryConfirmResponseSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(DeliveryConfirmRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _STEP_ACTORS) as (token, _, org_id):
+                confirmation = confirm_delivery(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    receiver_name=data["receiver_name"],
+                    receiver_rut=data.get("receiver_rut"),
+                    signature_b64=data["signature_png"],
+                    payment=data.get("payment"),
+                )
+                output = {
+                    "confirmation": confirmation,
+                    "delivery": service.get_delivery(
+                        org_id=org_id, order_id=order_id
+                    )["delivery"],
+                }
+        return Response(output, status=201)
+
+
+class ProductionOrderDeliveryConfirmationView(APIView):
+    @extend_schema(
+        operation_id="production_order_delivery_confirmation",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: DeliveryConfirmationAccessSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = confirmation_access(org_id=org_id, order_id=order_id)
         return Response(output)
 
 

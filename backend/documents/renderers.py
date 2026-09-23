@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from decimal import Decimal
 from html import escape
 from pathlib import Path
@@ -142,6 +143,12 @@ def _url_fetcher(url: str, *args: object, **kwargs: object) -> object:
     Every other URL — remote or local — is denied so emitted documents can
     never exfiltrate or depend on network state.
     """
+    if url.startswith("data:"):
+        # Embedded bytes we generated server-side (e.g. a sealed signature
+        # PNG) — no fetch happens, so the frozen-authority contract holds.
+        from weasyprint import URLFetcher
+
+        return URLFetcher(allowed_protocols={"data"}).fetch(url)
     if url.startswith("file://"):
         target = Path(url.removeprefix("file://")).resolve()
         if target.parent == _FONTS_DIR and target.suffix == ".ttf":
@@ -1257,6 +1264,124 @@ def render_credit_note(
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
         f"<style>{_CSS}</style></head><body>{_credit_note_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
+    order = _object(payload.get("order"), "invalid_pod_order")
+    project = _object(payload.get("project"), "invalid_pod_project")
+    delivery = _object(payload.get("delivery"), "invalid_pod_delivery")
+    receiver = _object(payload.get("receiver"), "invalid_pod_receiver")
+    totals = _object(payload.get("totals"), "invalid_pod_totals")
+    units = payload.get("units") or []
+    payment = payload.get("payment")
+    issued_at = _value(payload.get("issued_at"))
+    confirmation_code = _value(payload.get("confirmation_code"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Comprobante de entrega</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Comprobante</span>'
+        f'<span class="tb-value">{escape(confirmation_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
+        f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(confirmation_code)}</strong><br>"
+        f"Comprobante de entrega<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Comprobante de entrega</h1>"
+        '<section class="hero"><p>Recibido por</p>'
+        f"<h2>{escape(_value(receiver.get('name')))}</h2>"
+        f"<p>RUT: {escape(_value(receiver.get('rut')))}</p>"
+        f"<p>{escape(_value(delivery.get('address')))} · "
+        f"{escape(_value(delivery.get('scheduled_date')))} "
+        f"{escape(_value(delivery.get('time_window')))}</p>"
+        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+    )
+    if units:
+        body += (
+            "<h2>Bultos entregados</h2>"
+            + _table(
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+                [
+                    [
+                        unit.get("label_code"),
+                        unit.get("profiles"),
+                        unit.get("reinforcements"),
+                        unit.get("glasses"),
+                        unit.get("panels"),
+                        unit.get("hardware"),
+                    ]
+                    for unit in units
+                ],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension"],
+            )
+        )
+    contact = _value(delivery.get("contact_name"))
+    installer = _value(delivery.get("installer_name"))
+    detail_rows = [
+        ["Entrega programada", f"{_value(delivery.get('scheduled_date'))} · {_value(delivery.get('time_window'))}"],
+        ["Contacto en sitio", contact],
+        ["Cuadrilla", installer],
+    ]
+    body += "<h2>Entrega</h2>" + _table(
+        ["Campo", "Valor"], detail_rows, ["", ""]
+    )
+    if payment:
+        body += (
+            "<h2>Cobro contra entrega</h2>"
+            + _table(
+                ["Medio", "Tipo", "Monto", "Referencia"],
+                [
+                    [
+                        payment.get("method"),
+                        payment.get("kind"),
+                        payment.get("amount"),
+                        payment.get("reference"),
+                    ]
+                ],
+                ["", "", "dimension", ""],
+            )
+        )
+    body += (
+        "<h2>Firma del receptor</h2>"
+        f'<img class="pod-signature" src="data:image/png;base64,{signature_b64}" alt="Firma">'
+        '<div class="signoff"><div class="signature"></div>'
+        f'<p class="muted">{escape(_value(receiver.get("name")))} — Recibido conforme</p></div></main>'
+    )
+    return body
+
+
+def render_delivery_pod(
+    payload: dict[str, object], *, signature_png: bytes, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    signature_b64 = base64.b64encode(signature_png).decode("ascii")
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}"
+        ".pod-signature{max-width:70mm;max-height:28mm;border:0.4pt solid "
+        "#e5e7eb;border-radius:4px;padding:2mm;background:#fff}"
+        f"</style></head><body>{_delivery_pod_body(payload, signature_b64)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=pdf_identifier,

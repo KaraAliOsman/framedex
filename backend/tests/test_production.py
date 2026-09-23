@@ -1383,6 +1383,7 @@ def test_delivery_schedule_upserts_and_records_event(monkeypatch) -> None:
 
     monkeypatch.setattr("production.service.one", fake_one)
     monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr("production.confirmations.rows", lambda *_a, **_k: [])
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
@@ -1423,6 +1424,7 @@ def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
         lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"},
     )
     monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr("production.confirmations.rows", lambda *_a, **_k: [])
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):

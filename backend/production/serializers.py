@@ -183,6 +183,20 @@ class WorkOrderOptimizeSerializer(serializers.Serializer):
     optimization = serializers.DictField()
 
 
+class DeliveryConfirmationSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    confirmation_code = serializers.CharField()
+    order_id = serializers.UUIDField()
+    delivery_id = serializers.UUIDField()
+    payment_id = serializers.UUIDField(allow_null=True)
+    issued_at = serializers.DateTimeField()
+
+
+class DeliveryConfirmationAccessSerializer(DeliveryConfirmationSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
 class DeliverySerializer(serializers.Serializer):
     id = serializers.UUIDField()
     order_id = serializers.UUIDField()
@@ -197,6 +211,7 @@ class DeliverySerializer(serializers.Serializer):
     status = serializers.ChoiceField(
         choices=("SCHEDULED", "ON_ROUTE", "DELIVERED", "FAILED")
     )
+    confirmation = DeliveryConfirmationSerializer(allow_null=True)
     scheduled_by = serializers.UUIDField(allow_null=True)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
@@ -220,3 +235,27 @@ class DeliveryScheduleRequestSerializer(StrictSerializer):
 
 class DeliveryTransitionRequestSerializer(StrictSerializer):
     status = serializers.ChoiceField(choices=("ON_ROUTE", "DELIVERED", "FAILED"))
+
+
+class DeliveryPaymentRequestSerializer(StrictSerializer):
+    amount = serializers.CharField()
+    method = serializers.ChoiceField(
+        choices=("TRANSFER", "CASH", "CARD", "CHECK", "OTHER")
+    )
+    kind = serializers.ChoiceField(
+        choices=("ANTICIPO", "PARCIAL", "SALDO"), required=False, default="SALDO"
+    )
+    reference = serializers.CharField(required=False, allow_blank=True, max_length=120)
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class DeliveryConfirmRequestSerializer(StrictSerializer):
+    receiver_name = serializers.CharField(max_length=200)
+    receiver_rut = serializers.CharField(required=False, allow_blank=True, max_length=30)
+    signature_png = serializers.CharField()
+    payment = DeliveryPaymentRequestSerializer(required=False, allow_null=True)
+
+
+class DeliveryConfirmResponseSerializer(serializers.Serializer):
+    confirmation = DeliveryConfirmationSerializer()
+    delivery = DeliverySerializer()

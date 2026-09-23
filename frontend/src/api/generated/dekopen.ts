@@ -44,6 +44,9 @@ import type {
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
   DecideRequestRequest,
+  DeliveryConfirmRequestRequest,
+  DeliveryConfirmResponse,
+  DeliveryConfirmationAccess,
   DeliveryResponse,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestRequest,
@@ -6322,6 +6325,176 @@ export const productionOrderDeliverySchedule = async (
       method: "PUT",
       headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
       body: JSON.stringify(deliveryScheduleRequestRequest),
+    },
+  );
+};
+
+export type productionOrderDeliveryConfirmResponse200 = {
+  data: DeliveryConfirmResponse;
+  status: 200;
+};
+
+export type productionOrderDeliveryConfirmResponse201 = {
+  data: DeliveryConfirmResponse;
+  status: 201;
+};
+
+export type productionOrderDeliveryConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDeliveryConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDeliveryConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDeliveryConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDeliveryConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDeliveryConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDeliveryConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDeliveryConfirmResponseSuccess = (
+  productionOrderDeliveryConfirmResponse200 | productionOrderDeliveryConfirmResponse201
+) & {
+  headers: Headers;
+};
+export type productionOrderDeliveryConfirmResponseError = (
+  | productionOrderDeliveryConfirmResponse400
+  | productionOrderDeliveryConfirmResponse401
+  | productionOrderDeliveryConfirmResponse403
+  | productionOrderDeliveryConfirmResponse404
+  | productionOrderDeliveryConfirmResponse409
+  | productionOrderDeliveryConfirmResponse422
+  | productionOrderDeliveryConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDeliveryConfirmResponse =
+  productionOrderDeliveryConfirmResponseSuccess | productionOrderDeliveryConfirmResponseError;
+
+export const getProductionOrderDeliveryConfirmUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/delivery/confirm/`;
+};
+
+export const productionOrderDeliveryConfirm = async (
+  orderId: string,
+  deliveryConfirmRequestRequest: DeliveryConfirmRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDeliveryConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDeliveryConfirmResponse>(
+    getProductionOrderDeliveryConfirmUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(deliveryConfirmRequestRequest),
+    },
+  );
+};
+
+export type productionOrderDeliveryConfirmationResponse200 = {
+  data: DeliveryConfirmationAccess;
+  status: 200;
+};
+
+export type productionOrderDeliveryConfirmationResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDeliveryConfirmationResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDeliveryConfirmationResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDeliveryConfirmationResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDeliveryConfirmationResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDeliveryConfirmationResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDeliveryConfirmationResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDeliveryConfirmationResponseSuccess =
+  productionOrderDeliveryConfirmationResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDeliveryConfirmationResponseError = (
+  | productionOrderDeliveryConfirmationResponse400
+  | productionOrderDeliveryConfirmationResponse401
+  | productionOrderDeliveryConfirmationResponse403
+  | productionOrderDeliveryConfirmationResponse404
+  | productionOrderDeliveryConfirmationResponse409
+  | productionOrderDeliveryConfirmationResponse422
+  | productionOrderDeliveryConfirmationResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDeliveryConfirmationResponse =
+  | productionOrderDeliveryConfirmationResponseSuccess
+  | productionOrderDeliveryConfirmationResponseError;
+
+export const getProductionOrderDeliveryConfirmationUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/delivery/confirmation/`;
+};
+
+export const productionOrderDeliveryConfirmation = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDeliveryConfirmationResponse> => {
+  return apiMutator<productionOrderDeliveryConfirmationResponse>(
+    getProductionOrderDeliveryConfirmationUrl(orderId),
+    {
+      ...options,
+      method: "GET",
     },
   );
 };

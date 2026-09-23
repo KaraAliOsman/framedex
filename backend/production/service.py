@@ -24,6 +24,7 @@ from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
+from production.confirmations import confirmation_summary
 from production.dispatch_notes import issue_dispatch_note
 from projects.service import project_row
 
@@ -1447,7 +1448,9 @@ _DELIVERY_EVENT = {
 }
 
 
-def _public_delivery(delivery: dict[str, object]) -> dict[str, object]:
+def _public_delivery(
+    delivery: dict[str, object], *, confirmation: dict | None = None
+) -> dict[str, object]:
     return {
         "id": str(delivery["id"]),
         "order_id": str(delivery["order_id"]),
@@ -1460,6 +1463,7 @@ def _public_delivery(delivery: dict[str, object]) -> dict[str, object]:
         "installer_name": delivery["installer_name"],
         "notes": delivery["notes"],
         "status": str(delivery["status"]),
+        "confirmation": confirmation,
         "scheduled_by": str(delivery["scheduled_by"]) if delivery["scheduled_by"] else None,
         "created_at": delivery["created_at"].isoformat(),
         "updated_at": delivery["updated_at"].isoformat(),
@@ -1480,7 +1484,17 @@ def get_delivery(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         )
         if not found:
             raise DocumentaryError("work_order_not_found")
-    return {"delivery": _public_delivery(found[0]) if found[0].get("id") else None}
+    delivery = found[0]
+    if not delivery.get("id"):
+        return {"delivery": None}
+    return {
+        "delivery": _public_delivery(
+            delivery,
+            confirmation=confirmation_summary(
+                org_id=org_id, order_id=order_id
+            ),
+        )
+    }
 
 
 def schedule_delivery(

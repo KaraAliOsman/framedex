@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import {
   productionOrderCncExport,
   productionOrderDelivery,
+  productionOrderDeliveryConfirm,
+  productionOrderDeliveryConfirmation,
   productionOrderDeliverySchedule,
   productionOrderDeliveryTransition,
   productionOrderDetail,
@@ -21,13 +23,16 @@ import type {
   Delivery,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestStatusEnum,
+  MethodEnum,
   PackingLabel,
+  PaymentKindEnum,
   ProductionOrder,
   ProductionOrderDetail,
   ProductionStep,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import "./production.css";
 
 type WorkOrderMaterials = {
@@ -143,6 +148,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_DELIVERY_SCHEDULED: "production.eventDeliveryScheduled",
   WO_DELIVERY_ON_ROUTE: "production.eventDeliveryOnRoute",
   WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
+  WO_DELIVERY_CONFIRMED: "production.eventDeliveryConfirmed",
   WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
 };
 
@@ -193,6 +199,15 @@ export function ProductionPage(): JSX.Element {
   const [labels, setLabels] = useState<PackingLabel[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryForm, setDeliveryForm] = useState<DeliveryScheduleRequestRequest | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
+  const [confirmRut, setConfirmRut] = useState("");
+  const [collectPayment, setCollectPayment] = useState(false);
+  const [collectAmount, setCollectAmount] = useState("");
+  const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
+  const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
+  const [sigDrawn, setSigDrawn] = useState(false);
+  const sigRef = useRef<SignaturePadHandle | null>(null);
   const labelsGeneration = useRef(0);
   const selectedIdRef = useRef("");
   const mounted = useRef(true);
@@ -226,6 +241,7 @@ export function ProductionPage(): JSX.Element {
       }
       setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
       setDeliveryForm(null);
+      setConfirmOpen(false);
     }
   }, []);
 
@@ -240,6 +256,7 @@ export function ProductionPage(): JSX.Element {
       setDetail(null);
       setDelivery(null);
       setDeliveryForm(null);
+      setConfirmOpen(false);
       return;
     }
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
@@ -384,6 +401,63 @@ export function ProductionPage(): JSX.Element {
 
   function install(orderId: string): void {
     void action(productionOrderInstall(orderId, { note: note || undefined }), orderId);
+  }
+
+  function openConfirmForm(): void {
+    setConfirmName(delivery?.contact_name ?? "");
+    setConfirmRut("");
+    setCollectPayment(false);
+    setCollectAmount("");
+    setCollectMethod("CASH");
+    setCollectKind("SALDO");
+    setSigDrawn(false);
+    setConfirmOpen(true);
+  }
+
+  async function submitConfirmation(orderId: string): Promise<void> {
+    const dataUrl = sigRef.current?.dataURL();
+    if (!dataUrl || !confirmName.trim()) return;
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliveryConfirm(orderId, {
+        receiver_name: confirmName.trim(),
+        receiver_rut: confirmRut.trim() || undefined,
+        signature_png: dataUrl.split(",")[1] ?? "",
+        payment: collectPayment
+          ? {
+              amount: collectAmount,
+              method: collectMethod,
+              kind: collectKind,
+            }
+          : null,
+      });
+      if (response.status === 201 || response.status === 200) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.deliveryConfirmError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryConfirmError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openConfirmation(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dispatchNoteError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDeliveryConfirmation(orderId);
+      if (response.status !== 200) throw new Error("confirmation_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dispatchNoteError"));
+    }
   }
 
   async function openDispatchNote(orderId: string): Promise<void> {
@@ -858,7 +932,7 @@ export function ProductionPage(): JSX.Element {
                           {t("production.deliveryOnRoute")}
                         </button>
                       ) : null}
-                      {canStep && delivery?.status === "ON_ROUTE" ? (
+                      {canStep && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
                         <>
                           <button
                             type="button"
@@ -876,6 +950,24 @@ export function ProductionPage(): JSX.Element {
                             {t("production.deliveryFailed")}
                           </button>
                         </>
+                      ) : null}
+                      {canStep &&
+                      delivery &&
+                      (delivery.status === "ON_ROUTE" || delivery.status === "DELIVERED") &&
+                      !delivery.confirmation &&
+                      !confirmOpen ? (
+                        <button type="button" disabled={busy} onClick={openConfirmForm}>
+                          {t("production.deliveryConfirm")}
+                        </button>
+                      ) : null}
+                      {delivery?.confirmation ? (
+                        <button
+                          type="button"
+                          className="production-chip delivery-delivered"
+                          onClick={() => void openConfirmation(detail.id)}
+                        >
+                          {delivery.confirmation.confirmation_code}
+                        </button>
                       ) : null}
                     </header>
                     {delivery ? (
@@ -913,6 +1005,113 @@ export function ProductionPage(): JSX.Element {
                           </div>
                         ) : null}
                       </dl>
+                    ) : null}
+                    {confirmOpen && canStep && delivery ? (
+                      <form
+                        className="production-delivery-form production-confirm-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void submitConfirmation(detail.id);
+                        }}
+                      >
+                        <label>
+                          {t("production.deliveryReceiver")}
+                          <input
+                            type="text"
+                            required
+                            maxLength={200}
+                            value={confirmName}
+                            onChange={(event) => setConfirmName(event.target.value)}
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryReceiverRut")}
+                          <input
+                            type="text"
+                            maxLength={30}
+                            value={confirmRut}
+                            onChange={(event) => setConfirmRut(event.target.value)}
+                          />
+                        </label>
+                        <div className="production-delivery-wide">
+                          {t("production.deliverySignature")}
+                          <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                        </div>
+                        <label className="production-confirm-collect">
+                          <input
+                            type="checkbox"
+                            checked={collectPayment}
+                            onChange={(event) => setCollectPayment(event.target.checked)}
+                          />
+                          {t("production.deliveryCollect")}
+                        </label>
+                        {collectPayment ? (
+                          <>
+                            <label>
+                              {t("production.deliveryCollectAmount")}
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                required
+                                value={collectAmount}
+                                onChange={(event) => setCollectAmount(event.target.value)}
+                              />
+                            </label>
+                            <label>
+                              {t("projects.paymentMethod")}
+                              <select
+                                value={collectMethod}
+                                onChange={(event) =>
+                                  setCollectMethod(event.target.value as MethodEnum)
+                                }
+                              >
+                                <option value="CASH">{t("projects.paymentMethodCash")}</option>
+                                <option value="TRANSFER">
+                                  {t("projects.paymentMethodTransfer")}
+                                </option>
+                                <option value="CARD">{t("projects.paymentMethodCard")}</option>
+                                <option value="CHECK">{t("projects.paymentMethodCheck")}</option>
+                                <option value="OTHER">{t("projects.paymentMethodOther")}</option>
+                              </select>
+                            </label>
+                            <label>
+                              {t("projects.paymentKind")}
+                              <select
+                                value={collectKind}
+                                onChange={(event) =>
+                                  setCollectKind(event.target.value as PaymentKindEnum)
+                                }
+                              >
+                                <option value="ANTICIPO">
+                                  {t("projects.paymentKindAnticipo")}
+                                </option>
+                                <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
+                                <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
+                              </select>
+                            </label>
+                          </>
+                        ) : null}
+                        <div className="production-delivery-actions">
+                          <button type="submit" disabled={busy || !sigDrawn || !confirmName.trim()}>
+                            {t("production.deliveryConfirmSubmit")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => sigRef.current?.clear()}
+                          >
+                            {t("production.deliverySignatureClear")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setConfirmOpen(false)}
+                          >
+                            {t("production.deliveryCancel")}
+                          </button>
+                        </div>
+                      </form>
                     ) : null}
                     {!delivery && deliveryForm === null ? (
                       <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
