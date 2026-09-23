@@ -5,7 +5,7 @@ import { t } from "./i18n/es-CL";
 
 import { AppShell } from "./app/AppShell";
 import { DashboardPage } from "./app/DashboardPage";
-import { PlaceholderPage } from "./app/PlaceholderPage";
+import { SettingsPage } from "./app/SettingsPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
 import { useAuthSession } from "./auth/AuthSessionProvider";
@@ -58,16 +58,6 @@ const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
   return { default: module.PurchasingPage };
 });
-
-function ProtectedPage({ title, description }: { title: string; description: string }) {
-  return (
-    <ReadyGuard>
-      <AppShell>
-        <PlaceholderPage title={title} description={description} />
-      </AppShell>
-    </ReadyGuard>
-  );
-}
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -227,7 +217,11 @@ export function AppRoutes(): JSX.Element {
       <Route
         path="/settings/general"
         element={
-          <ProtectedPage title={t("page.settings")} description={t("page.settingsDescription")} />
+          <ReadyGuard>
+            <AppShell>
+              <SettingsPage />
+            </AppShell>
+          </ReadyGuard>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
