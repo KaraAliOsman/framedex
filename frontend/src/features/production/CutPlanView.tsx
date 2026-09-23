@@ -191,7 +191,10 @@ function CutPlanBarSvg({
       </g>
     );
   });
-  const usedEnd = cursor - (bar.cuts.length ? kerf : 0);
+  // The engine charges kerf after every cut (process_consumed_mm) — the
+  // trailing kerf is part of the consumed span, so the drawn remainder
+  // matches the sealed remainder_mm.
+  const usedEnd = cursor;
   const remainder = Math.max(stock - tail - usedEnd, 0);
   return (
     <svg
@@ -200,6 +203,15 @@ function CutPlanBarSvg({
       role="group"
       aria-label={`${t("production.optimizeBar")} #${bar.bar_index}`}
     >
+      <rect
+        className="cutplan-frame"
+        x={0}
+        y={8}
+        width={1000}
+        height={barH - 16}
+        rx={2}
+        pointerEvents="none"
+      />
       {head > 0 ? (
         <rect
           className="cutplan-trim"
@@ -228,7 +240,6 @@ function CutPlanBarSvg({
           height={barH - 16}
         />
       ) : null}
-      <rect className="cutplan-frame" x={0} y={8} width={1000} height={barH - 16} rx={2} />
     </svg>
   );
 }

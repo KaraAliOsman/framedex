@@ -722,7 +722,10 @@ export function ProductionPage(): JSX.Element {
                     ) : (
                       <>
                         {cutPlan.length || layouts.length ? (
-                          <CutPlanView optimization={optimization} />
+                          <CutPlanView
+                            key={optimization.optimized_at ?? "optimization"}
+                            optimization={optimization}
+                          />
                         ) : null}
                         {cutPlan.length ? (
                           <table className="production-plan">

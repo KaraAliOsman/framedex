@@ -136,6 +136,10 @@ describe("CutPlanView", () => {
     // two pieces on bar 1 + one on bar 2 + two placements on the sheet
     expect(container.querySelectorAll(".cutplan-cut")).toHaveLength(3);
     expect(container.querySelectorAll(".cutplan-nest")).toHaveLength(2);
+    // remainder starts after the trailing kerf, matching the engine's
+    // process_consumed_mm: head 10 + (2000+5) + (3035+5) = 5055 of 6000.
+    const remainder = container.querySelector(".cutplan-remainder") as Element;
+    expect(Number(remainder.getAttribute("x"))).toBeCloseTo((5055 / 6000) * 1000);
   });
 
   it("clicking a piece shows its detail and cross-highlights the member", () => {
