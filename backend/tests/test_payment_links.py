@@ -79,6 +79,8 @@ def _link(**over):
         "flow_token": "tok-1",
         "url": "https://sandbox.flow.cl/pay?token=tok-1",
         "project_payment_id": None,
+        "deal_total": Decimal("250000"),
+        "deal_currency": "CLP",
         "created_by": uuid4(),
         "created_at": "2026-09-23T10:00:00+00:00",
         "updated_at": "2026-09-23T10:00:00+00:00",
@@ -260,6 +262,62 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
     assert "ON CONFLICT" in inserts[0]
     assert len(receipts) == 1
     assert receipts[0]["actor_id"] == link["created_by"]
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_settles_on_frozen_deal_when_pricing_reset(monkeypatch):
+    """A verified payment must never strand: if the live deal is gone, the
+    receipt falls back to the snapshot frozen on the link at creation."""
+    link = _link()
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "SELECT org_id FROM public.project_payment_links" in sql:
+            return [{"org_id": link["org_id"]}]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(payment_links, "_deal", lambda *a, **k: None)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert len(receipts) == 1
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_settles_without_any_deal(monkeypatch):
+    """Links minted before the deal freeze carry no snapshot — the charge
+    still settles and the comprobante renders an empty balance."""
+    link = _link(deal_total=None, deal_currency=None)
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "SELECT org_id FROM public.project_payment_links" in sql:
+            return [{"org_id": link["org_id"]}]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(payment_links, "_deal", lambda *a, **k: None)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert receipts[0]["deal"] == {"total": None, "currency": "CLP"}
 
 
 def test_confirm_rejects_binding_mismatch(monkeypatch):

@@ -108,9 +108,11 @@ def issue_receipt(
             "operation_key": payment["operation_key"],
         },
         "balance": {
-            "deal_total": str(deal["total"]),
+            "deal_total": str(deal["total"]) if deal["total"] is not None else None,
             "collected": str(collected),
-            "remaining": str(deal["total"] - collected),
+            "remaining": str(deal["total"] - collected)
+            if deal["total"] is not None
+            else None,
         },
     }
     identifier = hashlib.sha256(

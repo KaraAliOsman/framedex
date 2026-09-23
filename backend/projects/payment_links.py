@@ -160,6 +160,11 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
     if kind not in _LINK_KINDS:
         raise contract_error(422, "payment_kind_invalid", "Tipo de cobro no válido.")
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
+    # Freeze the deal the payer agrees to — settlement must be able to seal a
+    # comprobante even if pricing is reset while the customer is paying.
+    deal = _deal(org_id, project_id, project)
+    deal_total = str(deal["total"]) if deal else None
+    deal_currency = deal["currency"] if deal else None
     with transaction.atomic(), documentary_backend():
         integration = rows(
             "SELECT * FROM public.org_payment_integrations "
@@ -187,8 +192,8 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             """
             INSERT INTO public.project_payment_links(
                 org_id, project_id, operation_key, kind, amount, payer_email,
-                subject, status, environment, created_by)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s)
+                subject, status, environment, created_by, deal_total, deal_currency)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s,%s,%s)
             RETURNING *
             """,
             [
@@ -201,6 +206,8 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 subject[:200],
                 _environment(integration[0]["api_url"]),
                 str(actor_id),
+                deal_total,
+                deal_currency,
             ],
         )[0]
         integration = integration[0]
@@ -331,14 +338,20 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             )
         # Every ledger payment seals a comprobante — manual and online alike.
         # A replayed settle finds the existing receipt via UNIQUE(payment_id).
+        # A verified payment must never be rejected over missing pricing
+        # authority: fall back to the deal frozen on the link at creation, and
+        # to an empty snapshot for links minted before that freeze existed.
         project = project_row(org_id, link["project_id"])
-        deal = _deal(org_id, link["project_id"], project)
-        if deal is None:
-            raise contract_error(
-                422,
-                "payment_requires_deal",
-                "Registra cobros solo sobre un proyecto cotizado.",
-            )
+        live_deal = _deal(org_id, link["project_id"], project)
+        if live_deal is not None:
+            deal = live_deal
+        elif link.get("deal_total") is not None:
+            deal = {
+                "total": Decimal(str(link["deal_total"])),
+                "currency": link["deal_currency"] or "CLP",
+            }
+        else:
+            deal = {"total": None, "currency": "CLP"}
         issue_receipt(
             org_id=org_id,
             project=project,
