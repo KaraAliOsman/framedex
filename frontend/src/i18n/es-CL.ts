@@ -1270,11 +1270,10 @@ const messages = {
     "El conjunto se repliega sobre sí mismo en {target}: reduce el ángulo acumulado.",
   "assembly.issue.planSelfIntersection":
     "Los módulos se intersectan en planta ({target}): ajusta anchos o ángulos.",
-  "assembly.issue.moduleGeometryFailed":
-    "El módulo {target} no pudo evaluarse con la serie seleccionada.",
-  "assembly.issue.couplerProfileMissing": "La unión {target} no tiene acoplador asignado.",
+  "assembly.issue.moduleGeometryFailed": "No se pudo evaluar {target} con la serie seleccionada.",
+  "assembly.issue.couplerProfileMissing": "No hay acoplador asignado en {target}.",
   "assembly.issue.couplerProfileUnknown":
-    "El acoplador {sku} de la unión {target} no existe en la serie seleccionada.",
+    "El acoplador {sku} de {target} no existe en la serie seleccionada.",
   "assembly.issue.couplerReinforcementNonpositive":
     "El acero del acoplador en {target} no es fabricable con su holgura.",
   "assembly.issue.couplerHeightMismatch":

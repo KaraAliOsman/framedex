@@ -202,7 +202,18 @@ export function BowPlanContent({
           members.couplerFor(spec?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
         );
         return (
-          <g key={coupling.coupling_id}>
+          <g
+            key={coupling.coupling_id}
+            onContextMenu={(event) => {
+              if (!onContextMenuElement) return;
+              event.preventDefault();
+              event.stopPropagation();
+              onContextMenuElement(coupling.coupling_id, {
+                x: event.clientX,
+                y: event.clientY,
+              });
+            }}
+          >
             <polygon
               className={`plan-coupling${
                 coupling.coupling_id === selectedCouplingId ? " is-selected" : ""
@@ -216,15 +227,6 @@ export function BowPlanContent({
               aria-label={`${t("assembly.coupling")} ${coupling.coupling_id}`}
               tabIndex={0}
               onClick={() => onSelectCoupling(coupling.coupling_id)}
-              onContextMenu={(event) => {
-                if (!onContextMenuElement) return;
-                event.preventDefault();
-                event.stopPropagation();
-                onContextMenuElement(coupling.coupling_id, {
-                  x: event.clientX,
-                  y: event.clientY,
-                });
-              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();

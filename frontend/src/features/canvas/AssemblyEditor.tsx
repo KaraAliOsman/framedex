@@ -99,14 +99,16 @@ export function issueText(
       : kind === "coupling"
         ? couplings.findIndex((item) => item.id === id)
         : -1;
+  const noun =
+    kind === "coupling"
+      ? `la ${t("assembly.coupling").toLowerCase()}`
+      : `el ${t("assembly.module").toLowerCase()}`;
   const target =
     ordinal >= 0
-      ? `${t(kind === "module" ? "assembly.module" : "assembly.coupling")} ${ordinal + 1}`
+      ? `${noun} ${ordinal + 1}`
       : kind === "assembly"
         ? t("assembly.wholeAssembly")
-        : kind === "coupling"
-          ? t("assembly.coupling")
-          : t("assembly.module");
+        : noun;
   text = text.replace("{target}", target);
   const reason = issue.params["reason"];
   if (reason && !text.includes(reason)) {

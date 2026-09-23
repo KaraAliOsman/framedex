@@ -24,7 +24,7 @@ describe("issueText — human-readable, internals never leak", () => {
       `BAY 6c60197a-1234 requires glass_thickness_mm and glass_spec`,
     );
     const text = issueText(issue, modules, couplings);
-    expect(text).toContain("Módulo 2");
+    expect(text).toContain("el módulo 2");
     expect(text).not.toContain(modules[1].id);
     expect(text).not.toContain("6c60197a");
     expect(text).not.toContain("glass_thickness_mm");
@@ -46,7 +46,7 @@ describe("issueText — human-readable, internals never leak", () => {
       params: {},
     } as ProductIssue;
     const text = issueText(issue, modules, couplings);
-    expect(text).toContain("Unión 2");
+    expect(text).toContain("la unión 2");
     expect(text).not.toContain(couplings[1].id);
   });
 });
