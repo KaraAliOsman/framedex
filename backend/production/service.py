@@ -575,9 +575,16 @@ def create_remake(
             "remake_count_unknown",
         )
         # Truncate the source portion, not the suffix — the -RM-nn counter is
-        # what distinguishes remakes under the org-unique order_code.
+        # what distinguishes remakes under the org-unique order_code. When the
+        # source fills the 50-char bound, embed a stable id fragment so two
+        # long sources sharing the retained prefix still get distinct codes.
         suffix = f"-RM-{int(prior['n']) + 1:02d}"
-        order_code = f"{str(source['order_code'])[: 50 - len(suffix)]}{suffix}"
+        source_code = str(source["order_code"])
+        if len(source_code) + len(suffix) <= 50:
+            order_code = f"{source_code}{suffix}"
+        else:
+            marker = str(source["id"]).replace("-", "")[:8].upper()
+            order_code = f"{source_code[: 50 - len(suffix) - 9]}-{marker}{suffix}"
         remake = one(
             """
             INSERT INTO public.orders(
