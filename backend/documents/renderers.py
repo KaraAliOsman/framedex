@@ -116,7 +116,10 @@ def _value(value: object) -> str:
 
 def _cell(value: object, class_name: str = "") -> str:
     css = f' class="{escape(class_name)}"' if class_name else ""
-    return f"<td{css}>{escape(_value(value))}</td>"
+    rendered = _value(value)
+    if class_name == "hash" and len(rendered) > 16:
+        rendered = f"{rendered[:12]}…"
+    return f"<td{css}>{escape(rendered)}</td>"
 
 
 def _row(values: list[object], classes: list[str] | None = None) -> str:
