@@ -564,6 +564,7 @@ def clone_project(org_id, actor_id, project_id, data):
     source_positions = positions(org_id, project_id)
     metadata = {key: source[key] or "" for key in METADATA}
     metadata["name"] = data.get("name", "Copia de " + source["name"][:246])
+    metadata["client_id"] = source["client_id"]
     copied = create_project(org_id, actor_id, metadata)
     for position in source_positions:
         serializer = PositionWriteSerializer(

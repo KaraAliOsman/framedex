@@ -11,6 +11,7 @@ from uuid import uuid4
 from django.db import IntegrityError
 
 from authentication.errors import contract_error
+from documents.repository import documentary_backend
 from pricing.repository import rows
 
 COLUMNS = (
@@ -70,14 +71,15 @@ def list_clients(org_id):
 def create_client(org_id, actor_id, data):
     try:
         identity = uuid4()
-        rows(
-            "INSERT INTO public.clients(id,org_id,created_by,"
-            + ",".join(FIELDS)
-            + ") VALUES("
-            + ",".join(["%s"] * (3 + len(FIELDS)))
-            + ") RETURNING id",
-            [identity, org_id, actor_id, *[_clean(data.get(key)) for key in FIELDS]],
-        )
+        with documentary_backend():
+            rows(
+                "INSERT INTO public.clients(id,org_id,created_by,"
+                + ",".join(FIELDS)
+                + ") VALUES("
+                + ",".join(["%s"] * (3 + len(FIELDS)))
+                + ") RETURNING id",
+                [identity, org_id, actor_id, *[_clean(data.get(key)) for key in FIELDS]],
+            )
     except IntegrityError as error:
         raise contract_error(
             409, "client_rut_conflict", "Ya existe un cliente con ese RUT."
@@ -97,12 +99,13 @@ def update_client(org_id, client_id, data):
     if not values:
         return _public(row)
     try:
-        rows(
-            "UPDATE public.clients SET "
-            + ",".join(f"{key}=%s" for key in values)
-            + ",updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
-            [*values.values(), client_id, org_id],
-        )
+        with documentary_backend():
+            rows(
+                "UPDATE public.clients SET "
+                + ",".join(f"{key}=%s" for key in values)
+                + ",updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
+                [*values.values(), client_id, org_id],
+            )
     except IntegrityError as error:
         raise contract_error(
             409, "client_rut_conflict", "Ya existe un cliente con ese RUT."
@@ -112,11 +115,12 @@ def update_client(org_id, client_id, data):
 
 def deactivate_client(org_id, client_id):
     row = client_row(org_id, client_id)
-    rows(
-        "UPDATE public.clients SET is_active=FALSE,updated_at=clock_timestamp() "
-        "WHERE id=%s AND org_id=%s RETURNING id",
-        [row["id"], org_id],
-    )
+    with documentary_backend():
+        rows(
+            "UPDATE public.clients SET is_active=FALSE,updated_at=clock_timestamp() "
+            "WHERE id=%s AND org_id=%s RETURNING id",
+            [row["id"], org_id],
+        )
 
 
 def linkable_client(org_id, client_id):

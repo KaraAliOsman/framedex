@@ -101,6 +101,12 @@ function ProjectMetadataForm({
               value={draft.value.client_id ?? ""}
               onChange={(event) => {
                 const picked = clients.find((item) => item.id === event.target.value) ?? null;
+                const previous = clients.find((item) => item.id === draft.value.client_id) ?? null;
+                // Replace an auto-filled address when the selection changes; keep
+                // one the user typed (it differs from the previous pick's address).
+                const autoFilled =
+                  !draft.value.delivery_address ||
+                  (previous !== null && draft.value.delivery_address === previous.address);
                 onChange({
                   ...draft,
                   value: {
@@ -112,7 +118,9 @@ function ProjectMetadataForm({
                           client_rut: picked.rut,
                           client_email: picked.email,
                           client_phone: picked.phone,
-                          delivery_address: draft.value.delivery_address || picked.address,
+                          delivery_address: autoFilled
+                            ? picked.address
+                            : draft.value.delivery_address,
                         }
                       : {}),
                   },

@@ -1,5 +1,6 @@
 """Client registry: org-scoped CRUD, snapshot semantics on projects."""
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -8,6 +9,16 @@ from django.db import IntegrityError
 from rest_framework.exceptions import APIException
 
 from projects import clients, service
+
+
+@contextmanager
+def _noop():
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _backend_off(monkeypatch):
+    monkeypatch.setattr(clients, "documentary_backend", _noop)
 
 
 def _row(**over):

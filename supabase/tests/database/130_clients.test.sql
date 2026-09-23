@@ -1,7 +1,16 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(9);
+SELECT plan(10);
+
+-- Writes must not reach tenant-authenticated sessions.
+SELECT ok(
+    (SELECT pol.polcmd = 'r' FROM pg_policy pol
+     WHERE pol.polrelid = 'public.clients'::regclass
+       AND pol.polname = 'clients_read')
+    AND NOT has_table_privilege('authenticated', 'public.clients', 'INSERT'),
+    'tenant role policy is SELECT-only and inserts are revoked'
+);
 
 SELECT has_table(
     'public', 'clients',
@@ -28,13 +37,13 @@ SELECT has_column(
     'projects.client_id column exists'
 );
 SELECT col_is_fk(
-    'public', 'projects', 'client_id',
-    'projects.client_id references clients'
+    'public', 'projects', ARRAY['org_id', 'client_id'],
+    'projects link is org-scoped composite foreign key'
 );
 SELECT policies_are(
     'public', 'clients',
-    ARRAY['clients_isolation'],
-    'exactly the org isolation policy'
+    ARRAY['clients_read', 'clients_backend'],
+    'read for members, writes only for the backend role'
 );
 SELECT ok(
     (SELECT relrowsecurity FROM pg_class
