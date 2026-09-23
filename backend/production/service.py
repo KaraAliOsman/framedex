@@ -1594,8 +1594,6 @@ def transition_delivery(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
-        if str(order["status"]) == "INSTALLED":
-            raise DocumentaryError("order_already_installed")
         delivery = one(
             """
             SELECT * FROM public.deliveries
@@ -1606,7 +1604,11 @@ def transition_delivery(
         )
         current = str(delivery["status"])
         if current == target:
+            # Idempotent replay stays successful after installation — the
+            # retry asks for the stored state and must get it, not an error.
             return get_delivery(org_id=org_id, order_id=order_id)
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("order_already_installed")
         if current not in _DELIVERY_NEXT[target]:
             raise DocumentaryError("delivery_transition_invalid")
         if target == "ON_ROUTE" and str(order["status"]) != "DISPATCHED":

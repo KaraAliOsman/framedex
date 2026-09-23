@@ -1455,6 +1455,45 @@ def test_delivery_transition_rejected_after_installation(monkeypatch) -> None:
             )
 
 
+def test_delivery_transition_replays_stored_state_after_installation(monkeypatch) -> None:
+    org_id, order_id, delivery_id = uuid4(), uuid4(), uuid4()
+    calls = {"one": 0}
+
+    def fake_one(sql, _params, error_code):
+        calls["one"] += 1
+        if calls["one"] == 1:
+            assert error_code == "work_order_not_found"
+            return {"id": str(order_id), "order_code": "OT-1", "status": "INSTALLED"}
+        assert error_code == "delivery_not_found"
+        return {"id": delivery_id, "status": "DELIVERED"}
+
+    delivery_row = {
+        "id": delivery_id,
+        "order_id": order_id,
+        "order_code": "OT-1",
+        "scheduled_date": date(2026, 9, 30),
+        "time_window": "AM",
+        "address": "Av. Test 123",
+        "contact_name": None,
+        "contact_phone": None,
+        "installer_name": "Equipo 2",
+        "notes": None,
+        "status": "DELIVERED",
+        "scheduled_by": None,
+        "created_at": datetime(2026, 9, 23, 12, 0),
+        "updated_at": datetime(2026, 9, 23, 12, 0),
+    }
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [delivery_row])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        result = service.transition_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+        )
+    assert result["delivery"]["status"] == "DELIVERED"
+
+
 def test_get_delivery_rejects_unknown_order(monkeypatch) -> None:
     monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
     with patch("production.service.documentary_backend", side_effect=_atomic):
