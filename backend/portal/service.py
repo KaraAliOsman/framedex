@@ -189,6 +189,11 @@ def portal_quote(token: str) -> dict[str, object]:
             "total_price_tax": str(sealed.get("total_price_tax") or "0"),
             "total_price_gross": str(sealed.get("total_price_gross") or "0"),
             "valid_until": sealed.get("quotation_valid_until"),
+            "validity_expired": bool(
+                sealed.get("quotation_valid_until")
+                and date.fromisoformat(str(sealed["quotation_valid_until"]))
+                < datetime.now(timezone.utc).date()
+            ),
             "superseded": str(project["current_revision"]) != str(version["revision_code"]),
             "expires_at": approval["expires_at"].isoformat(),
             "approval_status": approval["status"],

@@ -10293,6 +10293,8 @@ components:
         valid_until:
           type: string
           nullable: true
+        validity_expired:
+          type: boolean
         superseded:
           type: boolean
         expires_at:
@@ -10332,6 +10334,7 @@ components:
       - total_price_net
       - total_price_tax
       - valid_until
+      - validity_expired
     PositionDesign:
       type: object
       properties:

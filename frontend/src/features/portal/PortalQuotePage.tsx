@@ -154,6 +154,10 @@ export function PortalQuotePage(): JSX.Element {
           <p className="portal-decided" role="status">
             {t("portal.superseded")}
           </p>
+        ) : quote.validity_expired ? (
+          <p className="portal-decided" role="status">
+            {t("portal.validityExpired")}
+          </p>
         ) : (
           <form
             className="portal-decision"

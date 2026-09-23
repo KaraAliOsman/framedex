@@ -493,6 +493,7 @@ const messages = {
   "portal.net": "Neto",
   "portal.tax": "IVA",
   "portal.gross": "Total",
+  "portal.validityExpired": "Esta cotización ya no está vigente.",
   "portal.superseded": "Esta cotización fue reemplazada por una revisión nueva.",
   "portal.validUntil": "Válida hasta",
   "portal.openPdf": "Abrir cotización (PDF)",
