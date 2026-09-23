@@ -127,7 +127,8 @@ it("expands to list imports and confirms marked candidates into positions", asyn
   expect(items[0]).toMatchObject({
     key: "r1",
     system_id: "sys-1",
-    glass_spec: "4-12-4 Float Incoloro",
+    glass_spec: "20.00",
+    glass_article_sku: "4-12-4 Float Incoloro",
   });
   await screen.findByText(t("projects.importsConfirmed").replace("{count}", "1"));
 });

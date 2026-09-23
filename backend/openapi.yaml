@@ -9382,12 +9382,17 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        glass_article_sku:
+          type: string
+          minLength: 1
+          maxLength: 120
         panel_article_sku:
           type: string
           default: ''
           maxLength: 120
       required:
       - color
+      - glass_article_sku
       - glass_spec
       - glass_thickness_mm
       - height_mm
