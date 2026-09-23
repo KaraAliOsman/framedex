@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "analytics.apps.AnalyticsConfig",
     "portal.apps.PortalConfig",
     "billing.apps.BillingConfig",
+    "ai_gateway.apps.AiGatewayConfig",
 ]
 
 MIDDLEWARE = [

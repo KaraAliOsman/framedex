@@ -8,6 +8,8 @@
 import type {
   AdminResponse,
   AdminWriteRequest,
+  AiInvokeRequestRequest,
+  AiInvokeResponse,
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
@@ -128,6 +130,87 @@ import type {
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
+export type aiInvokeResponse200 = {
+  data: AiInvokeResponse;
+  status: 200;
+};
+
+export type aiInvokeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiInvokeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiInvokeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiInvokeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiInvokeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiInvokeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiInvokeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiInvokeResponseSuccess = aiInvokeResponse200 & {
+  headers: Headers;
+};
+export type aiInvokeResponseError = (
+  | aiInvokeResponse400
+  | aiInvokeResponse401
+  | aiInvokeResponse403
+  | aiInvokeResponse404
+  | aiInvokeResponse409
+  | aiInvokeResponse422
+  | aiInvokeResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiInvokeResponse = aiInvokeResponseSuccess | aiInvokeResponseError;
+
+export const getAiInvokeUrl = () => {
+  return `/api/v1/ai/invoke/`;
+};
+
+export const aiInvoke = async (
+  aiInvokeRequestRequest: AiInvokeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiInvokeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiInvokeResponse>(getAiInvokeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiInvokeRequestRequest),
+  });
+};
+
 export type analyticsOperationalSummaryResponse200 = {
   data: OperationalSummary;
   status: 200;

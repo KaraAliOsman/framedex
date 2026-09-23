@@ -4,6 +4,82 @@ info:
   version: 1.0.0
   description: Authenticated tenant and engine API boundary.
 paths:
+  /api/v1/ai/invoke/:
+    post:
+      operationId: ai_invoke
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiInvokeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiInvokeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiInvokeRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiInvokeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/analytics/summary/:
     get:
       operationId: analytics_operational_summary
@@ -7742,6 +7818,50 @@ components:
       required:
       - reason
       - values
+    AiInvokeRequestRequest:
+      type: object
+      properties:
+        capability:
+          type: string
+          minLength: 2
+          maxLength: 100
+        tool_name:
+          type: string
+          maxLength: 100
+        input_payload:
+          type: object
+          additionalProperties: {}
+      required:
+      - capability
+      - input_payload
+    AiInvokeResponse:
+      type: object
+      properties:
+        audit_id:
+          type: string
+        capability:
+          type: string
+        model:
+          type: string
+        output:
+          type: string
+        tokens_prompt:
+          type: integer
+        tokens_completion:
+          type: integer
+        latency_ms:
+          type: integer
+        credits_debited:
+          type: integer
+      required:
+      - audit_id
+      - capability
+      - credits_debited
+      - latency_ms
+      - model
+      - output
+      - tokens_completion
+      - tokens_prompt
     AllocationRequestRequest:
       type: object
       properties:
