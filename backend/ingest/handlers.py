@@ -99,9 +99,12 @@ def extract_catalog_job(
                     "SELECT set_config('request.jwt.claims', %s, true)",
                     [json.dumps(_claims_for(str(context.created_by), context))],
                 )
+                # Any active membership is not enough — a demoted uploader must
+                # not spend compile credits or write articles through a queued job.
                 cursor.execute(
                     "SELECT 1 FROM public.tenancy_memberships "
-                    "WHERE user_id=%s AND org_id=%s AND is_active",
+                    "WHERE user_id=%s AND org_id=%s AND is_active "
+                    "AND role IN ('OWNER','ESTIMATOR')",
                     [str(context.created_by), str(context.org_id)],
                 )
                 member = cursor.fetchone()

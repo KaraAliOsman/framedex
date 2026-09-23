@@ -115,12 +115,12 @@ export function CatalogImportsPanel({
   const fileInput = useRef<HTMLInputElement>(null);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const [expanded, setExpanded] = useState(false);
 
