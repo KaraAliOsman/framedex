@@ -456,6 +456,8 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
                 "id": order_id, "order_code": "OT-P-REV-A-01",
                 "status": "RELEASED", "payload_json": payload,
             }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
         raise AssertionError(query)
 
     def fake_rows(query, params=()):
@@ -975,3 +977,73 @@ def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
     other_id = uuid4()
     other_marker = str(other_id).replace("-", "").upper()
     assert code != f"{source_code[:50-len('-RM-01')-33]}-{other_marker}-RM-01"
+
+
+def test_reinforcement_angles_flow_into_bars_csv() -> None:
+    # The sealed manufacturing facts are the only authority for steel end
+    # angles: PVC mitred 45/45 -> square-cut steel 90/90.
+    snapshot = {
+        "manufacturing": [
+            {
+                "position_id": "pos-1",
+                "members": [
+                    {
+                        "member_id": "m1",
+                        "role": "FRAME",
+                        "bay_id": "b1",
+                        "leaf_id": None,
+                        "workshop_sku": "MARCO-60",
+                    }
+                ],
+                "reinforcements": [
+                    {
+                        "parent_member_id": "m1",
+                        "workshop_sku": "ACERO-35",
+                        "cut_length_mm": "880.00",
+                        "angle_left": "90.0",
+                        "angle_right": "90.0",
+                    }
+                ],
+            }
+        ]
+    }
+    angle_map = service._reinforcement_angle_map(snapshot, "pos-1")
+    assert angle_map == {("ACERO-35", "880.00", "FRAME", "b1", None): ("90.0", "90.0")}
+
+    # Conflicting facts on the same key mark it ambiguous (None).
+    snapshot["manufacturing"][0]["reinforcements"].append(
+        {
+            "parent_member_id": "m1",
+            "workshop_sku": "ACERO-35",
+            "cut_length_mm": "880.00",
+            "angle_left": "45.0",
+            "angle_right": "45.0",
+        }
+    )
+    assert service._reinforcement_angle_map(snapshot, "pos-1")[
+        ("ACERO-35", "880.00", "FRAME", "b1", None)
+    ] is None
+
+
+def test_bars_csv_rejects_reinforcement_without_angles() -> None:
+    optimization = {
+        "bars": {
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "ACERO-35",
+                    "stock_length_mm": "6500",
+                    "cuts": [
+                        {
+                            "piece_id": "R-01",
+                            "source_kind": "REINFORCEMENT",
+                            "length_mm": "880",
+                            "sequence": 1,
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    with pytest.raises(DocumentaryError, match="cnc_incomplete_cut_angles"):
+        service._cnc_bars_csv(optimization)

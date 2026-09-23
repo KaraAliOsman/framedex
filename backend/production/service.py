@@ -649,6 +649,46 @@ def list_work_centers(*, org_id: UUID) -> dict[str, object]:
     }
 
 
+def _reinforcement_angle_map(
+    version_snapshot: dict[str, object], position_id: str | None
+) -> dict[tuple[str, str, str, str | None, str | None], tuple[str, str] | None]:
+    """Authoritative reinforcement end angles from the sealed manufacturing
+    facts: fact -> parent member gives (role, bay, leaf); the key joins on
+    (workshop_sku, cut_length_mm, role, bay_id, leaf_id). A key reached by
+    conflicting facts is marked ambiguous (None) so the export refuses to
+    invent an angle."""
+    angle_map: dict[
+        tuple[str, str, str, str | None, str | None], tuple[str, str] | None
+    ] = {}
+    for unit in version_snapshot.get("manufacturing") or []:
+        if position_id and str(unit.get("position_id")) != position_id:
+            continue
+        members = {
+            str(member.get("member_id")): member
+            for member in unit.get("members") or []
+        }
+        for reinforcement in unit.get("reinforcements") or []:
+            parent = members.get(str(reinforcement.get("parent_member_id")))
+            if parent is None:
+                continue
+            key = (
+                str(reinforcement.get("workshop_sku")),
+                str(reinforcement.get("cut_length_mm")),
+                str(parent.get("role")),
+                parent.get("bay_id"),
+                parent.get("leaf_id"),
+            )
+            angles = (
+                str(reinforcement.get("angle_left")),
+                str(reinforcement.get("angle_right")),
+            )
+            if key in angle_map and angle_map[key] != angles:
+                angle_map[key] = None  # ambiguous — must not be guessed
+            else:
+                angle_map[key] = angles
+    return angle_map
+
+
 def _csv_cell(value: object) -> str:
     text = "" if value is None else str(value)
     escaped = text.replace('"', '""')
@@ -669,6 +709,11 @@ def _cnc_bars_csv(optimization: dict[str, object]) -> str:
             bar.get("cuts") or [],
             key=lambda c: int(c.get("sequence") or 0),
         ):
+            if (
+                str(cut.get("source_kind") or "") == "REINFORCEMENT"
+                and (cut.get("angle_left") is None or cut.get("angle_right") is None)
+            ):
+                raise DocumentaryError("cnc_incomplete_cut_angles")
             rows_out.append(",".join(_csv_cell(v) for v in (
                 bar.get("bar_index"),
                 bar.get("commercial_sku"),
@@ -937,19 +982,22 @@ def optimize_work_order(
         materials = payload.get("materials") or {}
         position_id = payload.get("position_id")
         system_id = payload.get("system_id")
+        # The frozen version snapshot is the only honest source for both the
+        # system mapping and the sealed manufacturing facts (reinforcement cut
+        # angles live there, not in the BOM rows).
+        version_row = one(
+            """
+            SELECT pv.snapshot_json FROM public.project_versions pv
+            JOIN public.orders o ON o.project_version_id = pv.id
+            WHERE o.id = %s AND o.org_id = %s
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_missing_system",
+        )
+        version_snapshot = _decoded(version_row["snapshot_json"])
         if not system_id:
             # Old orders lack system_id: recover the frozen mapping from the
             # referenced version's immutable snapshot, never the live position.
-            version_row = one(
-                """
-                SELECT pv.snapshot_json FROM public.project_versions pv
-                JOIN public.orders o ON o.project_version_id = pv.id
-                WHERE o.id = %s AND o.org_id = %s
-                """,
-                [str(order_id), str(org_id)],
-                "work_order_missing_system",
-            )
-            version_snapshot = _decoded(version_row["snapshot_json"])
             for pos in version_snapshot.get("positions") or []:
                 if str(pos.get("id")) == str(position_id) and pos.get("system_id"):
                     system_id = str(pos["system_id"])
@@ -978,6 +1026,9 @@ def optimize_work_order(
             color=color,
             source_position_id=str(position_id) if position_id else None,
             reinforcement_skus=authorities.reinforcement_skus,
+            reinforcement_angles=_reinforcement_angle_map(
+                version_snapshot, str(position_id) if position_id else None
+            ),
         )
         # pieces_from_result already expands each unit's qty via unit_index;
         # offset by the per-unit count so the identity stays unique per unit.
