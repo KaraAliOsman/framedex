@@ -94,7 +94,7 @@ def _project():
     }
 
 
-def _patch_env(monkeypatch, storage, *, invoice=None, existing=None, count=0):
+def _patch_env(monkeypatch, storage, *, invoice=None, existing=None, count=0, stamped=None):
     one_calls = []
 
     def fake_one(sql, params=None, **kw):
@@ -111,6 +111,8 @@ def _patch_env(monkeypatch, storage, *, invoice=None, existing=None, count=0):
     def fake_rows(sql, params=None):
         if "FROM public.project_invoices" in sql:
             return [invoice] if invoice else []
+        if "FROM public.project_dtes" in sql:
+            return list(stamped or [])
         if "FROM public.project_credit_notes" in sql:
             return list(existing or [])
         return []
@@ -213,3 +215,21 @@ def test_credit_note_access_missing_raises_404(monkeypatch):
             org_id=uuid4(), project_id=uuid4(), credit_note_id=uuid4()
         )
     assert excinfo.value.contract_code == "credit_note_not_found"
+
+
+def test_issue_credit_note_refuses_stamped_invoice(monkeypatch):
+    from authentication.errors import ContractAPIException
+
+    storage = _Storage()
+    invoice = _invoice_row()
+    _patch_env(monkeypatch, storage, invoice=invoice, stamped=[{"id": uuid4()}])
+    with pytest.raises(ContractAPIException) as excinfo:
+        credit_notes.issue_credit_note(
+            org_id=invoice["org_id"],
+            project=_project(),
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+            reason="Error",
+        )
+    assert excinfo.value.contract_code == "invoice_already_stamped"
+    assert storage.uploads == []

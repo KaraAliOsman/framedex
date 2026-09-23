@@ -558,7 +558,7 @@ export function ProjectPaymentsPanel({
                           {t("projects.dteEmit")}
                         </button>
                       )}
-                      {canWrite && !invoice.credit_note && (
+                      {canWrite && !invoice.credit_note && !invoice.dte && (
                         <button
                           type="button"
                           onClick={() => void annulInvoice(invoice)}

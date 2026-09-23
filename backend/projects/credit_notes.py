@@ -83,6 +83,24 @@ def issue_credit_note(
                 "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                 [f"project_credit_notes:{org_id_s}"],
             )
+            # Share the DTE-33 folio lock before the stamped check: a timbraje
+            # in flight can't race this annulment decision.
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"sii_folios:{org_id_s}:33"],
+            )
+            stamped = rows(
+                "SELECT id FROM public.project_dtes "
+                "WHERE org_id=%s AND invoice_id=%s LIMIT 1",
+                [org_id_s, str(invoice_id)],
+            )
+            if stamped:
+                raise contract_error(
+                    409,
+                    "invoice_already_stamped",
+                    "La factura ya tiene un DTE-33 — se anula timbrando una nota "
+                    "de crédito electrónica (DTE-61), no con una nota interna.",
+                )
             existing = rows(
                 "SELECT * FROM public.project_credit_notes "
                 "WHERE invoice_id=%s AND org_id=%s",

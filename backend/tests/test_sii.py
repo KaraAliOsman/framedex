@@ -277,6 +277,7 @@ def test_emit_dte_allocates_folio_and_stamps_ted(monkeypatch):
     assert media == "application/xml"
     text = content.decode("iso-8859-1")
     assert '<?xml version="1.0" encoding="ISO-8859-1"?>' in text
+    assert '<DTE version="1.0" xmlns="http://www.sii.cl/SiiDte">' in text
     assert "<TipoDTE>33</TipoDTE>" in text
     assert "<Folio>1</Folio>" in text
     assert "<RUTEmisor>76123456-0</RUTEmisor>" in text
@@ -292,6 +293,8 @@ def test_emit_dte_allocates_folio_and_stamps_ted(monkeypatch):
     # TSTED is Chilean wall time at second precision — no offset, no µs.
     tsted = re.search(r"<TSTED>([^<]+)</TSTED>", text).group(1)
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", tsted)
+    tmst = re.search(r"<TmstFirma>([^<]+)</TmstFirma>", text).group(1)
+    assert tmst == tsted
     assert "<MntNeto>1000000</MntNeto>" in text
     assert "<MntTotal>1190000</MntTotal>" in text
     assert 'FRMT algoritmo="SHA1withRSA"' in text
@@ -299,9 +302,12 @@ def test_emit_dte_allocates_folio_and_stamps_ted(monkeypatch):
     import defusedxml.ElementTree as ET
 
     root = ET.fromstring(text)
-    dd = ET.tostring(root.find(".//TED/DD"), encoding="unicode")
-    dd = dd[dd.index("<DD>") : dd.index("</DD>") + len("</DD>")]
-    frmt = base64.b64decode(root.findtext(".//TED/FRMT"))
+    dd = text[text.index("<DD>") : text.index("</DD>") + len("</DD>")]
+    frmt = base64.b64decode(
+        root.findtext(
+            ".//{http://www.sii.cl/SiiDte}TED/{http://www.sii.cl/SiiDte}FRMT"
+        )
+    )
     m = base64.b64decode(caf["rsapk_m"])
     e = base64.b64decode(caf["rsapk_e"])
     public = rsa.RSAPublicNumbers(
@@ -537,7 +543,6 @@ def test_register_caf_rejects_malformed_rsask_base64(monkeypatch):
 
 
 def test_dtes_by_invoice_returns_public_shape(monkeypatch):
-    storage = _Storage()
     invoice_id = uuid4()
     row = _dte_row(invoice_id, folio=9)
     monkeypatch.setattr(sii, "rows", lambda sql, params=None: [row])
@@ -546,3 +551,66 @@ def test_dtes_by_invoice_returns_public_shape(monkeypatch):
     assert badge["invoice_id"] == str(invoice_id)
     assert badge["issued_at"] == row["issued_at"]
     assert badge["folio"] == 9
+
+
+def test_register_caf_rejects_org_without_rut(monkeypatch):
+    storage = _Storage()
+    org = {"id": uuid4(), "tax_id": "BOW-TEST-1", "name": "Org"}
+    _patch_env(monkeypatch, storage, org=org)
+    xml, _ = _caf_xml()
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.register_caf(org_id=org["id"], actor_id=uuid4(), caf_xml=xml)
+    assert excinfo.value.contract_code == "sii_org_rut_missing"
+
+
+def test_emit_dte_upgrades_plaintext_rsask(monkeypatch):
+    storage = _Storage()
+    org = {"id": uuid4(), "tax_id": "76123456-0", "name": "Org"}
+    invoice = _invoice_row()
+    caf = _caf_row(_parse(), org_id=invoice["org_id"])
+    _patch_env(monkeypatch, storage, org=org, cafs=[caf], invoice=invoice)
+    updates = []
+    original_rows = sii.rows
+    monkeypatch.setattr(
+        sii,
+        "rows",
+        lambda sql, params=None: updates.append(sql) or original_rows(sql, params),
+    )
+    sii.emit_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    assert any("SET rsask" in sql for sql in updates)
+
+
+def test_emit_dte_rejects_nonstandard_tax_rate(monkeypatch):
+    storage = _Storage()
+    org = {"id": uuid4(), "tax_id": "76123456-0", "name": "Org"}
+    invoice = _invoice_row(
+        {
+            "payload_json": {
+                "deal": {
+                    "currency": "CLP",
+                    "total_net": "1000000",
+                    "total_tax": "100000",
+                    "total_gross": "1100000",
+                },
+                "project": _invoice_row()["payload_json"]["project"],
+                "positions": [],
+                "revision_code": "REV-A",
+            }
+        }
+    )
+    caf = _caf_row(_parse(), org_id=invoice["org_id"])
+    _patch_env(monkeypatch, storage, org=org, cafs=[caf], invoice=invoice)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_tax_rate_unsupported"
+    assert storage.uploads == []

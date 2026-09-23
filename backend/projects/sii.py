@@ -20,7 +20,7 @@ import json
 import os
 import re
 from datetime import timedelta, timezone as utc_timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 from xml.sax.saxutils import escape
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -223,6 +223,22 @@ def _unwrap_rsask(stored: str) -> str:
         ) from error
 
 
+def _ensure_rsask_wrapped(caf: dict, org_id: str) -> dict:
+    """A plaintext RSASK row predates envelope encryption: re-wrap it now,
+    inside the folio transaction, so no fiscal key is ever *used* from
+    cleartext storage. Without a KEK it fails closed — plaintext never
+    signs."""
+    if caf["rsask"].startswith("enc:v1:"):
+        return caf
+    wrapped = _wrap_rsask(caf["rsask"])
+    rows(
+        "UPDATE public.sii_cafs SET rsask=%s "
+        "WHERE id=%s AND org_id=%s RETURNING id",
+        [wrapped, str(caf["id"]), org_id],
+    )
+    return {**caf, "rsask": wrapped}
+
+
 def _assert_key_pair(parsed: dict) -> None:
     """The uploaded RSASK must be a valid RSA key matching the declared
     RSAPK modulus/exponent — a malformed or mismatched pool must never
@@ -319,7 +335,13 @@ def register_caf(
             "org_not_found",
         )
         org_rut = _rut_normalize(org["tax_id"])
-        if org_rut is not None and org_rut != parsed["rut_emisor"]:
+        if org_rut is None:
+            raise contract_error(
+                422,
+                "sii_org_rut_missing",
+                "Configure el RUT de la organización antes de registrar un CAF.",
+            )
+        if org_rut != parsed["rut_emisor"]:
             raise contract_error(
                 409,
                 "sii_caf_org_mismatch",
@@ -395,6 +417,17 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
             "truncarlos.",
         )
     total, neto, iva = (int(amount) for amount in amounts)
+    # This renderer only supports the standard 19% IVA: an invoice priced
+    # under a different rate would emit contradictory fiscal fields, so it
+    # is refused rather than stamped with a wrong TasaIVA.
+    if iva != int(
+        (neto * Decimal("0.19")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    ) or total != neto + iva:
+        raise contract_error(
+            422,
+            "sii_tax_rate_unsupported",
+            "La factura no lleva IVA 19% — el DTE-33 no puede timbrarla.",
+        )
     receptor = _rut_normalize(project.get("client_rut"))
     if receptor is None:
         raise contract_error(
@@ -457,7 +490,8 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
     frmt = _sign_dd(dd, caf["rsask"])
     return (
         '<?xml version="1.0" encoding="ISO-8859-1"?>'
-        f'<DTE version="1.0"><Documento ID="F{DTE_FACTURA}T{folio}">'
+        f'<DTE version="1.0" xmlns="http://www.sii.cl/SiiDte">'
+        f'<Documento ID="F{DTE_FACTURA}T{folio}">'
         f"<Encabezado><IdDoc><TipoDTE>{DTE_FACTURA}</TipoDTE>"
         f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis></IdDoc>"
         f"<Emisor><RUTEmisor>{caf['rut_emisor']}</RUTEmisor>"
@@ -469,7 +503,7 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
         f"<MontoItem>{neto}</MontoItem></Detalle>"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
-        f"</Documento></DTE>"
+        f"<TmstFirma>{tsted}</TmstFirma></Documento></DTE>"
     )
 
 
@@ -537,7 +571,7 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                     "sii_caf_exhausted",
                     "No hay folios CAF disponibles — cargue un CAF en Configuración.",
                 )
-            caf = cafs[0]
+            caf = _ensure_rsask_wrapped(cafs[0], org_id_s)
             folio = int(caf["folio_actual"]) + 1
             if folio > int(caf["folio_hasta"]):
                 raise contract_error(
