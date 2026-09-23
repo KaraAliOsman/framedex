@@ -10,7 +10,7 @@ SELECT ok(
     EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'public' AND tablename = 'customer_approvals'
-          AND policyname = 'customer_approvals_portal'
+          AND policyname = 'customer_approvals_portal_read'
     ),
     'portal role reaches approvals without org claims'
 );

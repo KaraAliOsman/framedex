@@ -1,5 +1,6 @@
 """Customer approval links: token mint, public read, idempotent decide."""
 
+import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -83,6 +84,59 @@ def _approval(status="PENDING", expired=False):
     }
 
 
+def _version(snapshot: dict | None = None, revision="REV-A"):
+    return {
+        "revision_code": revision,
+        "emitted_at": datetime.now(timezone.utc),
+        "snapshot_json": json.dumps(
+            snapshot
+            or {
+                "project": {
+                    "code": "P-1",
+                    "name": "Casa",
+                    "client_name": "Ana",
+                    "total_price_net": "10.00",
+                    "total_price_tax": "1.90",
+                    "total_price_gross": "11.90",
+                    "quotation_valid_until": "2999-01-01",
+                }
+            }
+        ),
+    }
+
+
+def _live(status="QUOTED", revision="REV-A"):
+    return {"status": status, "current_revision": revision}
+
+
+def _install_fakes(monkeypatch, approval, version=None, live=None, calls=None):
+    calls = calls if calls is not None else []
+
+    def fake_rows(sql_text, params=()):
+        lowered = " ".join(sql_text.lower().split())
+        calls.append(lowered)
+        if "token_hash" in lowered:
+            return [approval]
+        if lowered.startswith("update public.customer_approvals"):
+            return [{"id": approval["id"]}]
+        if lowered.startswith("update public.projects"):
+            return [{"id": approval["project_id"]}]
+        return []
+
+    def fake_one(sql_text, params, code="not_found"):
+        lowered = " ".join(sql_text.lower().split())
+        calls.append(lowered)
+        if "project_versions" in lowered:
+            return version or _version()
+        if "public.projects" in lowered:
+            return live or _live()
+        raise AssertionError(lowered)
+
+    monkeypatch.setattr("portal.service.rows", fake_rows)
+    monkeypatch.setattr("portal.service.one", fake_one)
+    return calls
+
+
 def test_portal_quote_unknown_and_expired_tokens(monkeypatch) -> None:
     _roles(monkeypatch)
     monkeypatch.setattr("portal.service.rows", lambda *a, **k: [])
@@ -94,43 +148,43 @@ def test_portal_quote_unknown_and_expired_tokens(monkeypatch) -> None:
         service.portal_quote("expired-token")
 
 
+def test_portal_quote_reads_sealed_snapshot_not_live_totals(monkeypatch) -> None:
+    """After a successor resets live totals, the link still shows REV-A's."""
+    _roles(monkeypatch)
+    approval = _approval()
+    sealed = {
+        "project": {
+            "code": "P-1",
+            "name": "Casa",
+            "client_name": "Ana",
+            "total_price_net": "1190000.00",
+            "total_price_tax": "226100.00",
+            "total_price_gross": "1416100.00",
+            "quotation_valid_until": "2999-01-01",
+        }
+    }
+    # the live project moved on to a draft REV-B with zeroed totals
+    _install_fakes(
+        monkeypatch,
+        approval,
+        version=_version(snapshot=sealed),
+        live=_live(status="DRAFT", revision="REV-B"),
+    )
+    with patch("portal.service.SupabaseDocumentStorage"):
+        out = service.portal_quote("tok")
+
+    assert out["total_price_gross"] == "1416100.00"
+    assert out["project_name"] == "Casa"
+    assert out["revision_code"] == "REV-A"
+    assert out["superseded"] is True
+    assert out["valid_until"] == "2999-01-01"
+
+
 def test_decide_approves_project_and_replays(monkeypatch) -> None:
     _roles(monkeypatch)
     approval = _approval()
-    calls: list[str] = []
+    calls = _install_fakes(monkeypatch, approval)
 
-    def fake_rows(sql_text, params=()):
-        lowered = " ".join(sql_text.lower().split())
-        calls.append(lowered)
-        if "token_hash" in lowered:
-            return [approval]
-        return []
-
-    def fake_one(sql_text, params, code="not_found"):
-        lowered = " ".join(sql_text.lower().split())
-        calls.append(lowered)
-        if lowered.startswith("update public.customer_approvals"):
-            return {"id": approval["id"]}
-        if lowered.startswith("select code,name"):
-            return {
-                "code": "P-1",
-                "name": "Casa",
-                "client_name": "Ana",
-                "status": "APPROVED",
-                "total_price_net": "10.00",
-                "total_price_tax": "1.90",
-                "total_price_gross": "11.90",
-                "current_revision": "REV-A",
-            }
-        if lowered.startswith("select revision_code"):
-            return {
-                "revision_code": "REV-A",
-                "emitted_at": datetime.now(timezone.utc),
-            }
-        raise AssertionError(lowered)
-
-    monkeypatch.setattr("portal.service.rows", fake_rows)
-    monkeypatch.setattr("portal.service.one", fake_one)
     role_calls: list[str] = []
 
     class _FakeCursor:
@@ -157,47 +211,72 @@ def test_decide_approves_project_and_replays(monkeypatch) -> None:
 
     assert any("pricing_backend" in c for c in role_calls)
     assert any("request.jwt.claims" in c for c in role_calls)
-
+    # the portal role bound itself to the approval's tenant first
+    assert any("app.portal_org_id" in c for c in calls)
     assert out["approval_status"] in {"PENDING", "APPROVED"}
     assert any("status='approved'" in c for c in calls)
     # every SQL statement stayed parameterized (never interpolated the token)
     assert all("token" not in c or "token_hash" in c for c in calls)
-    # the approval row itself was updated via one()/RETURNING
     assert any("update public.customer_approvals" in c for c in calls)
+    assert any("update public.projects" in c for c in calls)
+
+
+def test_decide_rejects_stale_link(monkeypatch) -> None:
+    """A successor draft resets the project — the old link cannot approve it."""
+    _roles(monkeypatch)
+    approval = _approval()
+    calls = _install_fakes(
+        monkeypatch, approval, live=_live(status="DRAFT", revision="REV-B")
+    )
+    with patch("portal.service.SupabaseDocumentStorage"):
+        with pytest.raises(DocumentaryError, match="quote_link_stale"):
+            service.decide_quote(
+                token="tok", decision="APPROVED", decided_by="Ana", note=None
+            )
+    # nothing was written — no stale approval seal, no project transition
+    assert not any(c.startswith("update") for c in calls)
+
+
+def test_decide_confirm_on_already_approved_project(monkeypatch) -> None:
+    """A second link on the same sealed revision still seals its approval."""
+    _roles(monkeypatch)
+    approval = _approval()
+    calls = _install_fakes(monkeypatch, approval, live=_live(status="APPROVED"))
+    with patch("portal.service.SupabaseDocumentStorage"):
+        out = service.decide_quote(
+            token="tok", decision="APPROVED", decided_by="Ana", note=None
+        )
+    # the approval seals, but the project is not transitioned again
+    assert any("update public.customer_approvals" in c for c in calls)
+    assert not any("update public.projects" in c for c in calls)
+    assert out["approval_status"] in {"PENDING", "APPROVED"}
+
+
+def test_decide_rejects_expired_quote_validity(monkeypatch) -> None:
+    _roles(monkeypatch)
+    approval = _approval()
+    stale_validity = {
+        "project": {"quotation_valid_until": "2000-01-01"}
+    }
+    calls = _install_fakes(
+        monkeypatch, approval, version=_version(snapshot=stale_validity)
+    )
+    with patch("portal.service.SupabaseDocumentStorage"):
+        with pytest.raises(DocumentaryError, match="quote_validity_expired"):
+            service.decide_quote(
+                token="tok", decision="APPROVED", decided_by="Ana", note=None
+            )
+    assert not any(c.startswith("update") for c in calls)
 
 
 def test_decide_replay_keeps_sealed_state(monkeypatch) -> None:
     _roles(monkeypatch)
     approval = _approval(status="APPROVED")
-    calls: list[str] = []
-
-    def fake_rows(sql_text, params=()):
-        lowered = " ".join(sql_text.lower().split())
-        calls.append(lowered)
-        if "token_hash" in lowered:
-            return [approval]
-        return []
-
-    monkeypatch.setattr("portal.service.rows", fake_rows)
-    monkeypatch.setattr(
-        "portal.service.one",
-        lambda sql_text, params, code="not_found": {
-            "code": "P-1",
-            "name": "Casa",
-            "client_name": "Ana",
-            "status": "APPROVED",
-            "total_price_net": "10.00",
-            "total_price_tax": "1.90",
-            "total_price_gross": "11.90",
-            "current_revision": "REV-A",
-            "revision_code": "REV-A",
-            "emitted_at": datetime.now(timezone.utc),
-        },
-    )
+    calls = _install_fakes(monkeypatch, approval, live=_live(status="APPROVED"))
     with patch("portal.service.SupabaseDocumentStorage"):
         out = service.decide_quote(
             token="tok", decision="DECLINED", decided_by="Otro", note=None
         )
     # a second decision never rewrites the approval row or the project
-    assert not any("update" in c for c in calls)
+    assert not any(c.startswith("update") for c in calls)
     assert out["approval_status"] == "APPROVED"
