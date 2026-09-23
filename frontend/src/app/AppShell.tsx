@@ -12,6 +12,7 @@ const navigation = [
   ["/settings/billing", "billing.title"],
   ["/dashboard", "nav.dashboard"],
   ["/projects", "nav.projects"],
+  ["/clients", "nav.clients"],
   ["/catalogs/systems", "nav.systems"],
   ["/settings/general", "nav.settings"],
   ["/pricing/cost-lists", "pricing.title"],

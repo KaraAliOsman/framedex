@@ -22,6 +22,7 @@ from engine_api.adapter import (
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
 from pricing.repository import audit_reason, commercial_backend, json_text, rows
 from pricing.service import decoded
+from projects.clients import linkable_client
 from projects.serializers import PositionWriteSerializer
 from projects.typology import derive_typology
 
@@ -44,6 +45,7 @@ PROJECT_COLUMNS = (
     "total_price_net",
     "total_price_tax",
     "total_price_gross",
+    "client_id",
     "updated_at",
 )
 POSITION_COLUMNS = (
@@ -221,10 +223,13 @@ def create_project(org_id, actor_id, data):
     # The code is an opaque human-readable reference, never an internal DB ID input.
     code = f"P-{identity.hex[:12].upper()}"
     values = {key: data.get(key, "") for key in METADATA}
+    client_id = data.get("client_id")
+    if client_id:
+        linkable_client(org_id, client_id)
     rows(
-        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ") "
-        "VALUES(" + ",".join(["%s"] * (4 + len(METADATA))) + ") RETURNING id",
-        [identity, org_id, code, actor_id, *values.values()],
+        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ",client_id) "
+        "VALUES(" + ",".join(["%s"] * (5 + len(METADATA))) + ") RETURNING id",
+        [identity, org_id, code, actor_id, *values.values(), client_id],
     )
     return project_public(org_id, project_row(org_id, identity), detail=True)
 
@@ -233,6 +238,10 @@ def update_project(org_id, project_id, data):
     current = editable(org_id, project_id)
     unchanged(current, data["expected_updated_at"])
     values = {key: data[key] for key in METADATA if key in data}
+    if "client_id" in data:
+        if data["client_id"]:
+            linkable_client(org_id, data["client_id"])
+        values["client_id"] = data["client_id"] or None
     if not values:
         return project_public(org_id, current, detail=True)
     query = sql.SQL(

@@ -17,8 +17,12 @@ from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import design_assist, payment_links, payments, service
+from projects import clients, design_assist, payment_links, payments, service
 from projects.serializers import (
+    ClientListResponseSerializer,
+    ClientResponseSerializer,
+    ClientUpdateSerializer,
+    ClientWriteSerializer,
     PaymentIntegrationSerializer,
     PaymentIntegrationStatusSerializer,
     PaymentLinkCreateSerializer,
@@ -400,3 +404,63 @@ class ProjectPaymentView(APIView):
                     data=data,
                 )
             )
+
+
+class ClientsView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="clients_list",
+        responses={200: ClientListResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response({"items": clients.list_clients(org)})
+
+    @extend_schema(
+        operation_id="clients_create",
+        request=ClientWriteSerializer,
+        responses={201: ClientResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request):
+        data = validate(ClientWriteSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            return response(clients.create_client(org, token.user_id, data), status=201)
+
+
+class ClientView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="clients_retrieve",
+        responses={200: ClientResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, client_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(clients.client_public(org, client_id))
+
+    @extend_schema(
+        operation_id="clients_update",
+        request=ClientUpdateSerializer,
+        responses={200: ClientResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def patch(self, request, client_id):
+        if not isinstance(request.data, dict) or "expected_updated_at" not in request.data:
+            raise contract_error(400, "validation_error", "expected_updated_at es obligatorio.")
+        data = validate(ClientUpdateSerializer, request.data, partial=True)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(clients.update_client(org, client_id, data))
+
+    @extend_schema(
+        operation_id="clients_deactivate",
+        responses={204: None, **ERRORS},
+        **SCHEMA,
+    )
+    def delete(self, request, client_id):
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            clients.deactivate_client(org, client_id)
+            return Response(status=204)

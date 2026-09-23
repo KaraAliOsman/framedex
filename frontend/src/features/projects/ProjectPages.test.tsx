@@ -129,6 +129,7 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
 function expectedMetadata(project: ProjectResponse): ProjectWriteRequest {
   return {
     name: project.name,
+    client_id: project.client_id ?? null,
     client_name: project.client_name,
     client_rut: project.client_rut ?? "",
     client_email: project.client_email ?? "",
@@ -252,6 +253,7 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   const [body, options] = vi.mocked(projectsCreate).mock.calls[0]!;
   expect(body).toEqual({
     name: "Nombre ingresado",
+    client_id: null,
     client_name: "Cliente ingresado",
     client_rut: "",
     client_email: "ingresado@example.test",

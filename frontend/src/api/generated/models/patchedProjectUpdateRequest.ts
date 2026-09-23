@@ -22,6 +22,8 @@ export interface PatchedProjectUpdateRequest {
   client_email?: string;
   /** @maxLength 50 */
   client_phone?: string;
+  /** @nullable */
+  client_id?: string | null;
   delivery_address?: string;
   notes_commercial?: string;
   notes_internal?: string;

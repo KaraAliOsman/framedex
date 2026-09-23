@@ -35,6 +35,9 @@ import type {
   ChangeResult,
   CheckoutInputRequest,
   CheckoutResult,
+  ClientListResponse,
+  ClientResponse,
+  ClientWriteRequest,
   CloneProjectRequest,
   CncExport,
   Commerce,
@@ -97,6 +100,7 @@ import type {
   PackingManifest,
   PatchedArticleWriteRequest,
   PatchedBeadWriteRequest,
+  PatchedClientUpdateRequest,
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedSystemWriteRequest,
@@ -3128,6 +3132,382 @@ export const catalogSystemDelete = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<catalogSystemDeleteResponse> => {
   return apiMutator<catalogSystemDeleteResponse>(getCatalogSystemDeleteUrl(rowId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type clientsListResponse200 = {
+  data: ClientListResponse;
+  status: 200;
+};
+
+export type clientsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientsListResponseSuccess = clientsListResponse200 & {
+  headers: Headers;
+};
+export type clientsListResponseError = (
+  | clientsListResponse400
+  | clientsListResponse401
+  | clientsListResponse403
+  | clientsListResponse404
+  | clientsListResponse409
+  | clientsListResponse422
+  | clientsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientsListResponse = clientsListResponseSuccess | clientsListResponseError;
+
+export const getClientsListUrl = () => {
+  return `/api/v1/clients/`;
+};
+
+export const clientsList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientsListResponse> => {
+  return apiMutator<clientsListResponse>(getClientsListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type clientsCreateResponse201 = {
+  data: ClientResponse;
+  status: 201;
+};
+
+export type clientsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientsCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientsCreateResponseSuccess = clientsCreateResponse201 & {
+  headers: Headers;
+};
+export type clientsCreateResponseError = (
+  | clientsCreateResponse400
+  | clientsCreateResponse401
+  | clientsCreateResponse403
+  | clientsCreateResponse404
+  | clientsCreateResponse409
+  | clientsCreateResponse422
+  | clientsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientsCreateResponse = clientsCreateResponseSuccess | clientsCreateResponseError;
+
+export const getClientsCreateUrl = () => {
+  return `/api/v1/clients/`;
+};
+
+export const clientsCreate = async (
+  clientWriteRequest: ClientWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientsCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientsCreateResponse>(getClientsCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientWriteRequest),
+  });
+};
+
+export type clientsRetrieveResponse200 = {
+  data: ClientResponse;
+  status: 200;
+};
+
+export type clientsRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientsRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientsRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientsRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientsRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientsRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientsRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientsRetrieveResponseSuccess = clientsRetrieveResponse200 & {
+  headers: Headers;
+};
+export type clientsRetrieveResponseError = (
+  | clientsRetrieveResponse400
+  | clientsRetrieveResponse401
+  | clientsRetrieveResponse403
+  | clientsRetrieveResponse404
+  | clientsRetrieveResponse409
+  | clientsRetrieveResponse422
+  | clientsRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientsRetrieveResponse = clientsRetrieveResponseSuccess | clientsRetrieveResponseError;
+
+export const getClientsRetrieveUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/`;
+};
+
+export const clientsRetrieve = async (
+  clientId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientsRetrieveResponse> => {
+  return apiMutator<clientsRetrieveResponse>(getClientsRetrieveUrl(clientId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type clientsUpdateResponse200 = {
+  data: ClientResponse;
+  status: 200;
+};
+
+export type clientsUpdateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientsUpdateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientsUpdateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientsUpdateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientsUpdateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientsUpdateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientsUpdateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientsUpdateResponseSuccess = clientsUpdateResponse200 & {
+  headers: Headers;
+};
+export type clientsUpdateResponseError = (
+  | clientsUpdateResponse400
+  | clientsUpdateResponse401
+  | clientsUpdateResponse403
+  | clientsUpdateResponse404
+  | clientsUpdateResponse409
+  | clientsUpdateResponse422
+  | clientsUpdateResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientsUpdateResponse = clientsUpdateResponseSuccess | clientsUpdateResponseError;
+
+export const getClientsUpdateUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/`;
+};
+
+export const clientsUpdate = async (
+  clientId: string,
+  patchedClientUpdateRequest?: PatchedClientUpdateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientsUpdateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<clientsUpdateResponse>(getClientsUpdateUrl(clientId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(patchedClientUpdateRequest),
+  });
+};
+
+export type clientsDeactivateResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type clientsDeactivateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type clientsDeactivateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type clientsDeactivateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type clientsDeactivateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type clientsDeactivateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type clientsDeactivateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type clientsDeactivateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type clientsDeactivateResponseSuccess = clientsDeactivateResponse204 & {
+  headers: Headers;
+};
+export type clientsDeactivateResponseError = (
+  | clientsDeactivateResponse400
+  | clientsDeactivateResponse401
+  | clientsDeactivateResponse403
+  | clientsDeactivateResponse404
+  | clientsDeactivateResponse409
+  | clientsDeactivateResponse422
+  | clientsDeactivateResponse503
+) & {
+  headers: Headers;
+};
+
+export type clientsDeactivateResponse =
+  clientsDeactivateResponseSuccess | clientsDeactivateResponseError;
+
+export const getClientsDeactivateUrl = (clientId: string) => {
+  return `/api/v1/clients/${clientId}/`;
+};
+
+export const clientsDeactivate = async (
+  clientId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<clientsDeactivateResponse> => {
+  return apiMutator<clientsDeactivateResponse>(getClientsDeactivateUrl(clientId), {
     ...options,
     method: "DELETE",
   });

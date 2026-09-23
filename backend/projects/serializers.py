@@ -18,6 +18,7 @@ class ProjectWriteSerializer(StrictSerializer):
     client_rut = serializers.CharField(max_length=50, required=False, allow_blank=True)
     client_email = serializers.EmailField(required=False, allow_blank=True)
     client_phone = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    client_id = serializers.UUIDField(required=False, allow_null=True)
     delivery_address = serializers.CharField(required=False, allow_blank=True)
     notes_commercial = serializers.CharField(required=False, allow_blank=True)
     notes_internal = serializers.CharField(required=False, allow_blank=True)
@@ -66,6 +67,35 @@ class PositionResponseSerializer(serializers.Serializer):
     design = PositionDesignSerializer()
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
+
+
+class ClientWriteSerializer(StrictSerializer):
+    name = serializers.CharField(max_length=255, allow_blank=False)
+    rut = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class ClientUpdateSerializer(ClientWriteSerializer):
+    expected_updated_at = serializers.DateTimeField()
+
+
+class ClientResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    rut = serializers.CharField()
+    email = serializers.CharField()
+    phone = serializers.CharField()
+    address = serializers.CharField()
+    notes = serializers.CharField()
+    is_active = serializers.BooleanField()
+    updated_at = serializers.DateTimeField()
+
+
+class ClientListResponseSerializer(serializers.Serializer):
+    items = ClientResponseSerializer(many=True)
 
 
 class ProjectVersionResponseSerializer(serializers.Serializer):

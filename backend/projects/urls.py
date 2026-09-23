@@ -3,6 +3,8 @@
 from django.urls import path
 
 from projects.views import (
+    ClientView,
+    ClientsView,
     FlowPaymentConfirmView,
     ProjectCloneView,
     ProjectPaymentIntegrationView,
@@ -24,6 +26,8 @@ urlpatterns = [
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
     path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),
     path("projects/payment-integration/", ProjectPaymentIntegrationView.as_view()),
+    path("clients/", ClientsView.as_view()),
+    path("clients/<uuid:client_id>/", ClientView.as_view()),
     path("projects/", ProjectsView.as_view()),
     path("projects/<uuid:project_id>/", ProjectView.as_view()),
     path("projects/<uuid:project_id>/clone/", ProjectCloneView.as_view()),
