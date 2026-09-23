@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
+  projectCreditNoteAccess,
+  projectCreditNoteEmit,
   projectInvoiceAccess,
   projectInvoiceEmit,
   projectPaymentsList,
@@ -12,6 +14,7 @@ import type {
   MethodEnum,
   PaymentKindEnum,
   PaymentsSummary,
+  ProjectCreditNote,
   ProjectInvoice,
   ProjectPayment,
 } from "../../api/generated/models";
@@ -237,6 +240,56 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function annulInvoice(invoice: ProjectInvoice): Promise<void> {
+    if (!window.confirm(t("projects.creditNoteAnnulConfirm"))) return;
+    const reason = window.prompt(t("projects.creditNoteReason"));
+    if (reason === null) return;
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteEmit(
+        projectId,
+        invoice.id,
+        reason.trim() ? { reason: reason.trim() } : {},
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.creditNoteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditNote(note: ProjectCreditNote): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.creditNoteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteAccess(projectId, note.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.creditNoteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   const payments = summary?.payments ?? [];
   const invoiceList = summary?.invoices ?? [];
   const percent =
@@ -410,6 +463,7 @@ export function ProjectPaymentsPanel({
                   <th>{t("projects.invoiceDate")}</th>
                   <th>{t("projects.invoiceCode")}</th>
                   <th>{t("projects.invoiceRevision")}</th>
+                  <th>{t("projects.invoiceStatus")}</th>
                   <th />
                 </tr>
               </thead>
@@ -420,6 +474,23 @@ export function ProjectPaymentsPanel({
                     <td>{invoice.invoice_code}</td>
                     <td>{invoice.revision_code ?? "—"}</td>
                     <td>
+                      {invoice.credit_note ? (
+                        <button
+                          type="button"
+                          className="production-chip delivery-cancelled"
+                          title={invoice.credit_note.credit_code}
+                          onClick={() => {
+                            if (invoice.credit_note) void openCreditNote(invoice.credit_note);
+                          }}
+                          disabled={busy}
+                        >
+                          {`${t("projects.invoiceStatusAnnulled")} · ${invoice.credit_note.credit_code}`}
+                        </button>
+                      ) : (
+                        <span className="production-chip">{t("projects.invoiceStatusIssued")}</span>
+                      )}
+                    </td>
+                    <td>
                       <button
                         type="button"
                         onClick={() => void openInvoice(invoice)}
@@ -427,6 +498,15 @@ export function ProjectPaymentsPanel({
                       >
                         {t("projects.invoiceOpen")}
                       </button>
+                      {canWrite && !invoice.credit_note && (
+                        <button
+                          type="button"
+                          onClick={() => void annulInvoice(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.creditNoteAnnul")}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

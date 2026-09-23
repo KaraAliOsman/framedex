@@ -99,6 +99,22 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 [str(org_id), str(project_id)],
             )
         }
+        credit_notes = {
+            str(note["invoice_id"]): {
+                "id": str(note["id"]),
+                "credit_code": note["credit_code"],
+                "invoice_id": str(note["invoice_id"]),
+                "created_at": note["created_at"].isoformat()
+                if hasattr(note["created_at"], "isoformat")
+                else note["created_at"],
+            }
+            for note in rows(
+                "SELECT id,invoice_id,credit_code,created_at "
+                "FROM public.project_credit_notes "
+                "WHERE org_id=%s AND project_id=%s",
+                [str(org_id), str(project_id)],
+            )
+        }
         invoices = [
             {
                 "id": str(invoice["id"]),
@@ -109,6 +125,13 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                     if isinstance(invoice["payload_json"], dict)
                     else json.loads(invoice["payload_json"])
                 ).get("revision_code"),
+                "credit_note": {
+                    **credit_notes[str(invoice["id"])],
+                    "invoice_code": invoice["invoice_code"],
+                    "project_id": str(project_id),
+                }
+                if str(invoice["id"]) in credit_notes
+                else None,
                 "created_at": invoice["created_at"].isoformat()
                 if hasattr(invoice["created_at"], "isoformat")
                 else invoice["created_at"],

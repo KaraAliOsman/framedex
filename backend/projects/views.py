@@ -19,6 +19,7 @@ from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import (
     clients,
+    credit_notes,
     design_assist,
     invoices,
     payment_links,
@@ -41,6 +42,9 @@ from projects.serializers import (
     PaymentRecordSerializer,
     PaymentsSummarySerializer,
     PaymentVoidSerializer,
+    ProjectCreditNoteAccessSerializer,
+    ProjectCreditNoteEmitSerializer,
+    ProjectCreditNoteSerializer,
     ProjectInvoiceAccessSerializer,
     ProjectInvoiceSerializer,
     CloneProjectSerializer,
@@ -467,6 +471,49 @@ class ProjectInvoiceAccessView(APIView):
             return response(
                 invoices.invoice_access(
                     org_id=org, project_id=project_id, invoice_id=invoice_id
+                )
+            )
+
+
+class ProjectCreditNotesView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_emit",
+        request=ProjectCreditNoteEmitSerializer,
+        responses={201: ProjectCreditNoteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                credit_notes.issue_credit_note(
+                    org_id=org,
+                    project=project,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                    reason=(request.data or {}).get("reason"),
+                ),
+                status=201,
+            )
+
+
+class ProjectCreditNoteAccessView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_access",
+        responses={200: ProjectCreditNoteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, credit_note_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                credit_notes.credit_note_access(
+                    org_id=org,
+                    project_id=project_id,
+                    credit_note_id=credit_note_id,
                 )
             )
 

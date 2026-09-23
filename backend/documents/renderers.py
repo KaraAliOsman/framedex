@@ -1149,3 +1149,118 @@ def render_project_invoice(
     if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
         raise DocumentaryError("pdf_generation_failed")
     return content, _PDF_MEDIA
+
+
+def _credit_note_body(payload: dict[str, object]) -> str:
+    invoice = _object(payload.get("invoice"), "invalid_credit_note_invoice")
+    project = _object(payload.get("project"), "invalid_credit_note_project")
+    deal = _object(payload.get("deal"), "invalid_credit_note_deal")
+    positions = payload.get("positions") or []
+    issued_at = _value(payload.get("issued_at"))
+    credit_code = _value(payload.get("credit_code"))
+    invoice_code = _value(invoice.get("invoice_code"))
+    revision = _value(payload.get("revision_code"))
+    currency = _value((deal or {}).get("currency")) or _value(project.get("currency"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Nota de crédito</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">N. de crédito</span>'
+        f'<span class="tb-value">{escape(credit_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
+        f'<span class="tb-value">{escape(revision)}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(credit_code)}</strong><br>"
+        f"Nota de crédito<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Nota de crédito</h1>"
+        '<section class="hero"><p>Acreditar a</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
+        f'<p class="total">Crédito: {escape(currency)} '
+        f'{escape(_value(deal.get("total_gross")))}</p></section>'
+    )
+    body += (
+        f"<p><strong>Referencia:</strong> anula Factura {escape(invoice_code)}"
+        + (
+            f" emitida el {escape(str(invoice.get('issued_at'))[:10])}"
+            if invoice.get("issued_at")
+            else ""
+        )
+        + "</p>"
+    )
+    reason = _value(payload.get("reason"))
+    if reason != "—":
+        body += f"<p><strong>Motivo:</strong> {escape(reason)}</p>"
+    if positions:
+        body += (
+            "<h2>Detalle</h2>"
+            + _table(
+                ["Posición", "Tipología", "Medidas (mm)", "Cantidad"],
+                [
+                    [
+                        position.get("position_index"),
+                        _TYPOLOGY_ES.get(
+                            _value(position.get("typology")),
+                            _value(position.get("typology")),
+                        ),
+                        f"{_value(position.get('width_mm'))} × "
+                        f"{_value(position.get('height_mm'))}"
+                        + (
+                            f" · {_value(position.get('location_tag'))}"
+                            if _value(position.get("location_tag")) != "—"
+                            else ""
+                        ),
+                        position.get("quantity"),
+                    ]
+                    for position in positions
+                ],
+                ["dimension", "", "", "dimension"],
+            )
+        )
+    body += (
+        "<h2>Totales acreditados</h2>"
+        + _table(
+            ["Neto", "IVA", "Total"],
+            [
+                [
+                    f"{currency} {_value(deal.get('total_net'))}",
+                    f"{currency} {_value(deal.get('total_tax'))}",
+                    f"{currency} {_value(deal.get('total_gross'))}",
+                ]
+            ],
+            ["dimension", "dimension", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Emitido por / Recibido conforme</p></div></main>"
+    )
+    return body
+
+
+def render_credit_note(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_credit_note_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA

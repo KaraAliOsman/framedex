@@ -6917,6 +6917,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/credit-notes/{credit_note_id}/:
+    get:
+      operationId: project_credit_note_access
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: credit_note_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectCreditNoteAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/imports/:
     get:
       operationId: project_imports_list
@@ -7329,6 +7405,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectInvoiceAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/invoices/{invoice_id}/credit-note/:
+    post:
+      operationId: project_credit_note_emit
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: invoice_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreditNoteEmitRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectCreditNote'
           description: ''
         '400':
           content:
@@ -14395,6 +14552,69 @@ components:
       - name
       - quote_ready
       - readiness_reasons
+    ProjectCreditNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        credit_code:
+          type: string
+        invoice_id:
+          type: string
+          format: uuid
+        invoice_code:
+          type: string
+          nullable: true
+        project_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+      required:
+      - created_at
+      - credit_code
+      - id
+      - invoice_code
+      - invoice_id
+      - project_id
+    ProjectCreditNoteAccess:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        credit_code:
+          type: string
+        invoice_id:
+          type: string
+          format: uuid
+        invoice_code:
+          type: string
+          nullable: true
+        project_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+        signed_url:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - created_at
+      - credit_code
+      - expires_in
+      - id
+      - invoice_code
+      - invoice_id
+      - project_id
+      - signed_url
+    ProjectCreditNoteEmitRequest:
+      type: object
+      properties:
+        reason:
+          type: string
     ProjectInvoice:
       type: object
       properties:
@@ -14409,10 +14629,15 @@ components:
         revision_code:
           type: string
           nullable: true
+        credit_note:
+          allOf:
+          - $ref: '#/components/schemas/ProjectCreditNote'
+          nullable: true
         created_at:
           type: string
       required:
       - created_at
+      - credit_note
       - id
       - invoice_code
       - project_id
@@ -14431,6 +14656,10 @@ components:
         revision_code:
           type: string
           nullable: true
+        credit_note:
+          allOf:
+          - $ref: '#/components/schemas/ProjectCreditNote'
+          nullable: true
         created_at:
           type: string
         signed_url:
@@ -14439,6 +14668,7 @@ components:
           type: integer
       required:
       - created_at
+      - credit_note
       - expires_in
       - id
       - invoice_code

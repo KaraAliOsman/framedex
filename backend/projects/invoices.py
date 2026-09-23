@@ -40,6 +40,7 @@ def _invoice_public(row) -> dict:
         "revision_code": row["payload_json"].get("revision_code")
         if isinstance(row["payload_json"], dict)
         else json.loads(row["payload_json"]).get("revision_code"),
+        "credit_note": None,
         "created_at": row["created_at"].isoformat()
         if hasattr(row["created_at"], "isoformat")
         else row["created_at"],

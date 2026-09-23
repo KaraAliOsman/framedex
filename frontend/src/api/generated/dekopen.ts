@@ -125,6 +125,9 @@ import type {
   ProductionOrderDetail,
   ProductionOrderList,
   ProductionRelease,
+  ProjectCreditNote,
+  ProjectCreditNoteAccess,
+  ProjectCreditNoteEmitRequest,
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
@@ -7670,6 +7673,82 @@ export const projectsClone = async (
   });
 };
 
+export type projectCreditNoteAccessResponse200 = {
+  data: ProjectCreditNoteAccess;
+  status: 200;
+};
+
+export type projectCreditNoteAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteAccessResponseSuccess = projectCreditNoteAccessResponse200 & {
+  headers: Headers;
+};
+export type projectCreditNoteAccessResponseError = (
+  | projectCreditNoteAccessResponse400
+  | projectCreditNoteAccessResponse401
+  | projectCreditNoteAccessResponse403
+  | projectCreditNoteAccessResponse404
+  | projectCreditNoteAccessResponse409
+  | projectCreditNoteAccessResponse422
+  | projectCreditNoteAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteAccessResponse =
+  projectCreditNoteAccessResponseSuccess | projectCreditNoteAccessResponseError;
+
+export const getProjectCreditNoteAccessUrl = (projectId: string, creditNoteId: string) => {
+  return `/api/v1/projects/${projectId}/credit-notes/${creditNoteId}/`;
+};
+
+export const projectCreditNoteAccess = async (
+  projectId: string,
+  creditNoteId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteAccessResponse> => {
+  return apiMutator<projectCreditNoteAccessResponse>(
+    getProjectCreditNoteAccessUrl(projectId, creditNoteId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type projectImportsListResponse200 = {
   data: ImportListResponse;
   status: 200;
@@ -8120,6 +8199,93 @@ export const projectInvoiceAccess = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export type projectCreditNoteEmitResponse201 = {
+  data: ProjectCreditNote;
+  status: 201;
+};
+
+export type projectCreditNoteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteEmitResponseSuccess = projectCreditNoteEmitResponse201 & {
+  headers: Headers;
+};
+export type projectCreditNoteEmitResponseError = (
+  | projectCreditNoteEmitResponse400
+  | projectCreditNoteEmitResponse401
+  | projectCreditNoteEmitResponse403
+  | projectCreditNoteEmitResponse404
+  | projectCreditNoteEmitResponse409
+  | projectCreditNoteEmitResponse422
+  | projectCreditNoteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteEmitResponse =
+  projectCreditNoteEmitResponseSuccess | projectCreditNoteEmitResponseError;
+
+export const getProjectCreditNoteEmitUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/credit-note/`;
+};
+
+export const projectCreditNoteEmit = async (
+  projectId: string,
+  invoiceId: string,
+  projectCreditNoteEmitRequest?: ProjectCreditNoteEmitRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectCreditNoteEmitResponse>(
+    getProjectCreditNoteEmitUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(projectCreditNoteEmitRequest),
     },
   );
 };
