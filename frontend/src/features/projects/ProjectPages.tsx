@@ -66,6 +66,10 @@ function metadata(project?: ProjectResponse): ProjectWriteRequest {
 type Draft = {
   value: ProjectWriteRequest;
   expectedUpdatedAt?: string;
+  /** Whether the user typed the delivery address themselves. A client pick
+   * auto-fills it only while this is false; the flag starts true when the
+   * draft opens on a saved address (saved data counts as user-authored). */
+  addressEdited: boolean;
 };
 
 function ProjectMetadataForm({
@@ -101,12 +105,6 @@ function ProjectMetadataForm({
               value={draft.value.client_id ?? ""}
               onChange={(event) => {
                 const picked = clients.find((item) => item.id === event.target.value) ?? null;
-                const previous = clients.find((item) => item.id === draft.value.client_id) ?? null;
-                // Replace an auto-filled address when the selection changes; keep
-                // one the user typed (it differs from the previous pick's address).
-                const autoFilled =
-                  !draft.value.delivery_address ||
-                  (previous !== null && draft.value.delivery_address === previous.address);
                 onChange({
                   ...draft,
                   value: {
@@ -118,9 +116,9 @@ function ProjectMetadataForm({
                           client_rut: picked.rut,
                           client_email: picked.email,
                           client_phone: picked.phone,
-                          delivery_address: autoFilled
-                            ? picked.address
-                            : draft.value.delivery_address,
+                          delivery_address: draft.addressEdited
+                            ? draft.value.delivery_address
+                            : picked.address,
                         }
                       : {}),
                   },
@@ -148,6 +146,7 @@ function ProjectMetadataForm({
             onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
               onChange({
                 ...draft,
+                addressEdited: draft.addressEdited || name === "delivery_address",
                 value: { ...draft.value, [name]: event.target.value },
               }),
           };
@@ -475,6 +474,7 @@ function ProjectWorkspace({
                 setDraft({
                   value: metadata(project!),
                   expectedUpdatedAt: project!.updated_at,
+                  addressEdited: (project!.delivery_address ?? "") !== "",
                 })
               }
             >
@@ -487,7 +487,10 @@ function ProjectWorkspace({
             </button>
           )}
           {!project && canWrite && (
-            <button disabled={disabled} onClick={() => setDraft({ value: metadata() })}>
+            <button
+              disabled={disabled}
+              onClick={() => setDraft({ value: metadata(), addressEdited: false })}
+            >
               {t("projects.create")}
             </button>
           )}
