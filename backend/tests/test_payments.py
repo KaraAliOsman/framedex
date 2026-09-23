@@ -67,7 +67,7 @@ def _runner(captured, existing=None, payments_list=None, sealed_gross=None,
                     }
                 }
             ]
-        if "FROM public.pricing_operations" in sql:
+        if "private.applied_pricing_currency" in sql:
             return [{"currency": "CLP"}] if applied else []
         if "FROM public.tenancy_organizations" in sql:
             return [{"currency": "CLP"}]
@@ -126,7 +126,7 @@ def test_record_payment_inserts_and_returns_sealed_balance(monkeypatch, env):
     assert out["payment"]["kind"] == "ANTICIPO"
 
 
-def test_record_payment_replay_returns_existing_via_conflict(monkeypatch, env):
+def test_record_payment_replay_returns_existing_without_insert(monkeypatch, env):
     existing = _payment_row()
     _patch_rows(monkeypatch, env, existing=[existing], payments_list=[existing])
     out = payments.record_payment(
@@ -137,10 +137,54 @@ def test_record_payment_replay_returns_existing_via_conflict(monkeypatch, env):
               "amount": Decimal("400000"), "method": "TRANSFER"},
     )
     inserts = [sql for sql, _ in env if "INSERT INTO public.project_payments" in sql]
-    # The conflict-safe insert ran once and found the stored row — no duplicate.
-    assert len(inserts) == 1
-    assert "ON CONFLICT" in inserts[0]
+    assert inserts == []
     assert out["payment"]["id"] == str(existing["id"])
+
+
+def test_record_payment_replay_survives_pricing_reset(monkeypatch, env):
+    existing = _payment_row()
+    # applied=False: the live deal retired after the payment was recorded —
+    # the replay still returns the committed row instead of payment_requires_deal.
+    _patch_rows(
+        monkeypatch, env, existing=[existing], payments_list=[existing], applied=False
+    )
+    out = payments.record_payment(
+        org_id=uuid4(),
+        project_id=existing["project_id"],
+        actor_id=uuid4(),
+        data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+              "amount": Decimal("400000"), "method": "TRANSFER"},
+    )
+    assert out["payment"]["id"] == str(existing["id"])
+
+
+def test_record_payment_rejects_fractional_clp(monkeypatch, env):
+    _patch_rows(monkeypatch, env, sealed_gross=Decimal("800000"))
+    with pytest.raises(APIException) as failure:
+        payments.record_payment(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+                  "amount": Decimal("0.01"), "method": "TRANSFER"},
+        )
+    assert failure.value.contract_code == "payment_fractional_currency"
+
+
+def test_record_payment_allows_fractional_usd(monkeypatch, env):
+    _patch_rows(
+        monkeypatch, env, sealed_gross=Decimal("1250.50"), sealed_currency="USD"
+    )
+    out = payments.record_payment(
+        org_id=uuid4(),
+        project_id=uuid4(),
+        actor_id=uuid4(),
+        data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+              "amount": Decimal("250.50"), "method": "TRANSFER"},
+    )
+    assert out["payment"]["amount"] == "400000"  # row written by the mock
+    inserts = [sql for sql, _ in env if "INSERT INTO public.project_payments" in sql]
+    assert len(inserts) == 1
 
 
 def test_record_payment_operation_key_conflict_on_other_project(monkeypatch, env):
