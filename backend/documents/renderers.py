@@ -140,9 +140,9 @@ def _url_fetcher(url: str, *args: object, **kwargs: object) -> object:
     if url.startswith("file://"):
         target = Path(url.removeprefix("file://")).resolve()
         if target.parent == _FONTS_DIR and target.suffix == ".ttf":
-            from weasyprint import default_url_fetcher
+            from weasyprint import URLFetcher
 
-            return default_url_fetcher(url, *args, **kwargs)
+            return URLFetcher(allowed_protocols={"file"}).fetch(url)
     raise DocumentaryError(f"External PDF resource forbidden: {url}")
 
 
