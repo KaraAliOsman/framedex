@@ -128,6 +128,9 @@ export function ProductionPage(): JSX.Element {
   }
 
   function transition(stepId: string, stepAction: StepAction, orderId: string): void {
+    if (stepAction === "NOTE" && !note.trim()) {
+      return;
+    }
     const noteValue =
       stepAction === "NOTE" || stepAction === "BLOCK" ? note || undefined : undefined;
     void action(

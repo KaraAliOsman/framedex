@@ -87,4 +87,4 @@ GRANT SELECT, INSERT ON public.production_step_events TO authenticated, document
 GRANT ALL ON public.work_centers TO service_role;
 GRANT ALL ON public.production_steps TO service_role;
 GRANT ALL ON public.production_step_events TO service_role;
-REVOKE UPDATE, DELETE, TRUNCATE ON public.production_step_events FROM authenticated, documentary_backend;
+REVOKE UPDATE, DELETE, TRUNCATE ON public.production_step_events FROM authenticated, documentary_backend, service_role;

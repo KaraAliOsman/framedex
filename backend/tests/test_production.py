@@ -171,11 +171,24 @@ def test_release_replay_returns_existing() -> None:
     assert output["released"] == 1 and output["created"] == 0
 
 
-def test_transition_step_rejects_invalid_state() -> None:
-    step = {
+def _transition_fakes(step: dict, order_status: str):
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": order_status}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    return fake_one
+
+
+def _step_row(**overrides) -> dict:
+    base = {
         "id": uuid4(),
         "order_id": uuid4(),
-        "status": "DONE",
+        "status": "READY",
         "sequence": 1,
         "code": "CUT",
         "label": "x",
@@ -185,13 +198,13 @@ def test_transition_step_rejects_invalid_state() -> None:
         "actor_id": None,
         "note": None,
     }
+    base.update(overrides)
+    return base
 
-    def fake_one(query, params=(), code=None):
-        if "FOR UPDATE" in query:
-            return step
-        if "FROM public.orders" in query:
-            return {"status": "IN_PROGRESS"}
-        raise AssertionError(query)
+
+def test_transition_step_rejects_invalid_state() -> None:
+    step = _step_row(status="DONE")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.transaction.atomic", return_value=_atomic()
@@ -205,26 +218,8 @@ def test_transition_step_rejects_invalid_state() -> None:
 
 
 def test_transition_step_completed_order_blocked() -> None:
-    step = {
-        "id": uuid4(),
-        "order_id": uuid4(),
-        "status": "READY",
-        "sequence": 1,
-        "code": "CUT",
-        "label": "x",
-        "work_center_id": None,
-        "started_at": None,
-        "finished_at": None,
-        "actor_id": None,
-        "note": None,
-    }
-
-    def fake_one(query, params=(), code=None):
-        if "FOR UPDATE" in query:
-            return step
-        if "FROM public.orders" in query:
-            return {"status": "COMPLETED"}
-        raise AssertionError(query)
+    step = _step_row()
+    fake_one = _transition_fakes(step, "COMPLETED")
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.transaction.atomic", return_value=_atomic()
@@ -235,6 +230,128 @@ def test_transition_step_completed_order_blocked() -> None:
                 actor_id=uuid4(), note=None,
             )
     assert error.value.code == "work_order_completed"
+
+
+def test_start_from_blocked_step_is_rejected() -> None:
+    step = _step_row(status="BLOCKED")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "step_transition_invalid"
+
+
+def test_note_action_requires_text() -> None:
+    with pytest.raises(DocumentaryError) as error:
+        service.transition_step(
+            org_id=uuid4(), step_id=uuid4(), action="NOTE",
+            actor_id=uuid4(), note="   ",
+        )
+    assert error.value.code == "step_note_required"
+
+
+def test_hold_event_only_appended_once() -> None:
+    captured = []
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT status::text" in query:
+            return {"status": "HOLD"}
+        if "production_steps" in query:
+            return {"total": 2, "done": 0, "blocked": 1, "in_progress": 0}
+        if "UPDATE public.orders" in query:
+            return {"status": "HOLD"}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        captured.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ):
+        status = service._refresh_order_status(
+            org_id=uuid4(), order_id=uuid4(), actor_id=uuid4()
+        )
+    assert status == "HOLD"
+    assert not any("WO_HOLD" in query for query in captured)
+
+
+def test_hold_event_appended_on_transition_into_hold() -> None:
+    captured = []
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT status::text" in query:
+            return {"status": "IN_PROGRESS"}
+        if "production_steps" in query:
+            return {"total": 2, "done": 0, "blocked": 1, "in_progress": 0}
+        if "UPDATE public.orders" in query:
+            return {"status": "HOLD"}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        captured.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ):
+        service._refresh_order_status(
+            org_id=uuid4(), order_id=uuid4(), actor_id=uuid4()
+        )
+    assert any("WO_HOLD" in query for query in captured)
+
+
+def test_order_code_scopes_to_project() -> None:
+    snapshot = {
+        "project": {"code": "PRO-77"},
+        "bom": _SNAPSHOT["bom"],
+    }
+    version = _version_row(snapshot)
+    seen = {}
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "INSERT INTO public.orders" in query:
+            seen["order_code"] = params[2]
+            return [{"id": uuid4()}]
+        if "GROUP BY" in query:
+            return []
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service._ensure_work_centers", return_value={}
+    ):
+        service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    assert seen["order_code"] == "OT-PRO-77-REV-A-01"
+
+
+def test_work_center_upsert_reports_created() -> None:
+    row = {
+        "id": uuid4(), "code": "X", "name": "x", "kind": "CUT",
+        "display_order": 0, "active": True, "created": False,
+    }
+    with patch("production.service.one", return_value=row):
+        center, created = service.create_work_center(
+            org_id=uuid4(), code="X", name="x", kind="CUT", display_order=0
+        )
+    assert created is False
+    assert center["code"] == "X"
 
 
 def test_release_post_forwards_scope(monkeypatch) -> None:

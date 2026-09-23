@@ -12,10 +12,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
-from typing import Any
 from uuid import UUID
 
-from django.db import connection, transaction
+from django.db import transaction
 
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 
@@ -53,7 +52,7 @@ _EVENTS = {
 }
 
 _TRANSITIONS = {
-    "START": ("IN_PROGRESS", {"PENDING", "READY", "BLOCKED"}),
+    "START": ("IN_PROGRESS", {"PENDING", "READY"}),
     "COMPLETE": ("DONE", {"IN_PROGRESS"}),
     "BLOCK": ("BLOCKED", {"PENDING", "READY", "IN_PROGRESS"}),
     "UNBLOCK": ("READY", {"BLOCKED"}),
@@ -163,12 +162,15 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         if isinstance(snapshot, str):
             snapshot = json.loads(snapshot)
         bom = snapshot.get("bom") or []
+        project_code = str(
+            (snapshot.get("project") or {}).get("code") or version["project_id"]
+        )
         centers = _ensure_work_centers(org_id)
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
             payload = _work_order_payload(position)
-            order_code = f"OT-{version['revision_code']}-{index + 1:02d}"
+            order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
                 """
                 INSERT INTO public.orders(
@@ -207,7 +209,8 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             order_ids.append(order_id)
             if inserted:
                 center_by_step = {
-                    code: centers.get(_STEP_CODE_FOR_CENTER[code]) for code in set(_STEP_CODE_FOR_CENTER)
+                    step_code: centers.get(center_kind)
+                    for center_kind, step_code in _STEP_CODE_FOR_CENTER.items()
                 }
                 for seq, code in enumerate(payload["routing"], start=1):
                     center = center_by_step.get(code)
@@ -329,6 +332,14 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
 
 
 def _refresh_order_status(*, org_id: UUID, order_id: UUID, actor_id: UUID) -> str:
+    previous = one(
+        """
+        SELECT status::text AS status FROM public.orders
+        WHERE id = %s AND org_id = %s
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
     totals = one(
         """
         SELECT COUNT(*) AS total,
@@ -371,7 +382,7 @@ def _refresh_order_status(*, org_id: UUID, order_id: UUID, actor_id: UUID) -> st
             """,
             [str(org_id), str(order_id), str(actor_id), str(order_id)],
         )
-    elif new_status == "HOLD":
+    elif new_status == "HOLD" and str(previous["status"]) != "HOLD":
         rows(
             """
             INSERT INTO public.production_step_events(org_id, order_id, event, actor_id)
@@ -393,7 +404,28 @@ def transition_step(
 ) -> dict[str, object]:
     if action not in _TRANSITIONS:
         raise DocumentaryError("step_action_unknown")
+    if action == "NOTE" and not (note or "").strip():
+        raise DocumentaryError("step_note_required")
     with transaction.atomic():
+        step_ref = one(
+            """
+            SELECT order_id FROM public.production_steps
+            WHERE id = %s AND org_id = %s
+            """,
+            [str(step_id), str(org_id)],
+            "production_step_not_found",
+        )
+        # Lock the parent order before any step mutation so all transitions on
+        # this order serialize — the status aggregate then sees prior commits.
+        order = one(
+            """
+            SELECT id, status::text FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(step_ref["order_id"]), str(org_id)],
+            "work_order_not_found",
+        )
         step = one(
             """
             SELECT s.id, s.order_id, s.status, s.sequence, s.code, s.label,
@@ -406,14 +438,6 @@ def transition_step(
             [str(step_id), str(org_id)],
             "production_step_not_found",
         )
-        order = one(
-            """
-            SELECT status::text FROM public.orders
-            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
-            """,
-            [str(step["order_id"]), str(org_id)],
-            "work_order_not_found",
-        )
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
         new_status, allowed = _TRANSITIONS[action]
@@ -424,7 +448,7 @@ def transition_step(
             updates = {
                 "status": new_status,
                 "updated_at": now,
-                "note": note if note is not None else step.get("note"),
+                "note": note.strip() if note is not None else step.get("note"),
             }
             if new_status == "IN_PROGRESS":
                 updates["started_at"] = step.get("started_at") or now
@@ -471,7 +495,7 @@ def transition_step(
                 str(step_id),
                 _EVENTS[action],
                 str(actor_id),
-                json.dumps({"note": note} if note else {}),
+                json.dumps({"note": note.strip()} if note else {}),
             ],
         )
         order_status = _refresh_order_status(
@@ -491,7 +515,7 @@ def transition_step(
 
 
 def list_work_centers(*, org_id: UUID) -> dict[str, object]:
-    centers = _ensure_work_centers(org_id)
+    _ensure_work_centers(org_id)
     return {
         "centers": rows(
             """
@@ -515,8 +539,9 @@ def create_work_center(
         ON CONFLICT (org_id, code) DO UPDATE SET
             name = EXCLUDED.name, kind = EXCLUDED.kind,
             display_order = EXCLUDED.display_order, active = TRUE
-        RETURNING id, code, name, kind, display_order, active
+        RETURNING id, code, name, kind, display_order, active, (xmax = 0) AS created
         """,
         [str(org_id), code, name, kind, display_order],
     )
-    return center
+    created = bool(center.pop("created"))
+    return center, created

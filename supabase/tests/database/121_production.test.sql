@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(11);
+SELECT plan(12);
 
 SELECT has_table('public', 'work_centers', 'work centers table exists');
 SELECT has_table('public', 'production_steps', 'routing steps table exists');
@@ -30,6 +30,11 @@ SELECT ok(
     has_table_privilege('authenticated', 'public.production_step_events', 'INSERT')
     AND has_table_privilege('authenticated', 'public.production_step_events', 'SELECT'),
     'tenant roles can append and read step events'
+);
+SELECT ok(
+    NOT has_table_privilege('service_role', 'public.production_step_events', 'UPDATE')
+    AND NOT has_table_privilege('service_role', 'public.production_step_events', 'DELETE'),
+    'step events are append-only for service_role too'
 );
 SELECT ok(
     EXISTS (

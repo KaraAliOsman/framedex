@@ -153,11 +153,11 @@ class WorkCenterListView(APIView):
         data = validate(WorkCenterRequestSerializer, request.data)
         with public_production_errors():
             with documentary_scope(request, _WRITERS) as (_, _, org_id):
-                output = service.create_work_center(
+                output, created = service.create_work_center(
                     org_id=org_id,
                     code=data["code"],
                     name=data["name"],
                     kind=data["kind"],
                     display_order=data.get("display_order", 0),
                 )
-        return Response(output, status=201)
+        return Response(output, status=201 if created else 200)
