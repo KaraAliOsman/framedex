@@ -153,7 +153,11 @@ def test_unknown_capability_rejected(monkeypatch):
     _patch_env(monkeypatch, rows_impl=lambda sql, params=None: [])
     with pytest.raises(APIException) as failure:
         service.invoke(
-            org_id=uuid4(), user_id=uuid4(), capability="nonexistent", operation_key="op-1", input_payload={}
+            org_id=uuid4(),
+            user_id=uuid4(),
+            capability="nonexistent",
+            operation_key="op-1",
+            input_payload={},
         )
     assert failure.value.contract_code == "ai_capability_unknown"
 
@@ -233,16 +237,12 @@ def test_no_debit_when_provider_fails(monkeypatch):
     assert debited == []
 
 
-
-
 def _allow_dns(monkeypatch):
     import socket as _socket
 
     monkeypatch.setattr(
         "ai_gateway.providers.socket.getaddrinfo",
-        lambda *a, **k: [
-            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
-        ],
+        lambda *a, **k: [(_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))],
     )
 
 
@@ -252,6 +252,7 @@ def _client(handler):
     import httpx
 
     return httpx.Client(transport=httpx.MockTransport(handler))
+
 
 def test_http_provider_requires_environment(monkeypatch):
     from ai_gateway.providers import HttpProvider
@@ -395,9 +396,7 @@ def test_malformed_provider_body_is_a_provider_error(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_TESTP_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_TESTP_BASE_URL", "https://p.example")
     _allow_dns(monkeypatch)
-    client = _client(
-        lambda request: httpx.Response(200, content=b'["not", "an", "object"]')
-    )
+    client = _client(lambda request: httpx.Response(200, content=b'["not", "an", "object"]'))
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="TESTP").invoke(
             route=_route(), capability="nlp_command", input_payload={}, client=client
@@ -427,9 +426,7 @@ def test_http_provider_caps_body_size(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_TESTP2_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_TESTP2_BASE_URL", "https://p.example")
     _allow_dns(monkeypatch)
-    client = _client(
-        lambda request: httpx.Response(200, content=b"x" * (MAX_BODY_BYTES + 1))
-    )
+    client = _client(lambda request: httpx.Response(200, content=b"x" * (MAX_BODY_BYTES + 1)))
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="TESTP2").invoke(
             route=_route(), capability="nlp_command", input_payload={}, client=client
@@ -469,8 +466,13 @@ def test_http_provider_rejects_internal_urls(monkeypatch):
     from ai_gateway.providers import HttpProvider
 
     monkeypatch.setenv("AI_GATEWAY_INT_API_KEY", "k")
-    for bad in ("http://provider.example", "https://127.0.0.1", "https://10.0.0.4",
-                "https://[fd00::1]", "provider.example"):
+    for bad in (
+        "http://provider.example",
+        "https://127.0.0.1",
+        "https://10.0.0.4",
+        "https://[fd00::1]",
+        "provider.example",
+    ):
         monkeypatch.setenv("AI_GATEWAY_INT_BASE_URL", bad)
         with pytest.raises(ProviderError) as failure:
             HttpProvider(provider="INT")
@@ -506,9 +508,7 @@ def test_http_provider_rejects_private_dns_answers(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_DNS_BASE_URL", "https://provider.example")
     monkeypatch.setattr(
         "ai_gateway.providers.socket.getaddrinfo",
-        lambda *a, **k: [
-            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("192.168.1.10", 443))
-        ],
+        lambda *a, **k: [(_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("192.168.1.10", 443))],
     )
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="DNS")
@@ -536,17 +536,13 @@ def test_http_provider_pins_resolved_ip_with_host_and_sni(monkeypatch):
 
     def _handler(request):
         calls.append(request)
-        return httpx.Response(
-            200, content=b'{"output": "ok", "usage": {"prompt_tokens": 1}}'
-        )
+        return httpx.Response(200, content=b'{"output": "ok", "usage": {"prompt_tokens": 1}}')
 
     monkeypatch.setenv("AI_GATEWAY_PIN_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_PIN_BASE_URL", "https://provider.example")
     monkeypatch.setattr(
         "ai_gateway.providers.socket.getaddrinfo",
-        lambda *a, **k: [
-            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
-        ],
+        lambda *a, **k: [(_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))],
     )
     HttpProvider(provider="PIN").invoke(
         route=_route(),
@@ -716,9 +712,7 @@ def test_http_provider_connect_failure_all_addresses_is_provider_error(monkeypat
         ],
     )
     client = _client(
-        lambda request: (_ for _ in ()).throw(
-            httpx.ConnectTimeout("timeout", request=request)
-        )
+        lambda request: (_ for _ in ()).throw(httpx.ConnectTimeout("timeout", request=request))
     )
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="DOWN").invoke(
@@ -908,9 +902,7 @@ def test_openai_provider_posts_chat_completions(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_MIMO_MODEL", "mimo-v1-pro")
     monkeypatch.setattr(
         "ai_gateway.providers.socket.getaddrinfo",
-        lambda *a, **k: [
-            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
-        ],
+        lambda *a, **k: [(_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))],
     )
     result = OpenAICompatibleProvider(provider="MIMO").invoke(
         route=_route(provider="MIMO", provider_model="route-model"),
@@ -983,9 +975,7 @@ def test_openai_provider_base_url_already_on_completions_path(monkeypatch):
         return httpx.Response(200, json=_openai_body("ok"))
 
     monkeypatch.setenv("AI_GATEWAY_DS_API_KEY", "k")
-    monkeypatch.setenv(
-        "AI_GATEWAY_DS_BASE_URL", "https://ds.example/v1/chat/completions"
-    )
+    monkeypatch.setenv("AI_GATEWAY_DS_BASE_URL", "https://ds.example/v1/chat/completions")
     _allow_dns(monkeypatch)
     OpenAICompatibleProvider(provider="DS").invoke(
         route=_route(provider_model="m"),
@@ -1049,9 +1039,7 @@ def test_provider_for_routes_openai_protocol_providers(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://mimo.example")
     _allow_dns(monkeypatch)
-    assert isinstance(
-        provider_for(_route(provider="MIMO")), OpenAICompatibleProvider
-    )
+    assert isinstance(provider_for(_route(provider="MIMO")), OpenAICompatibleProvider)
     assert isinstance(provider_for(_route(provider="MOCK")), MockProvider)
     monkeypatch.setenv("AI_GATEWAY_CUSTOM_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_CUSTOM_BASE_URL", "https://c.example")
@@ -1059,9 +1047,7 @@ def test_provider_for_routes_openai_protocol_providers(monkeypatch):
     assert isinstance(provider_for(_route(provider="CUSTOM")), HttpProvider)
     # …unless the operator pins the OpenAI protocol for them.
     monkeypatch.setenv("AI_GATEWAY_CUSTOM_PROTOCOL", "openai")
-    assert isinstance(
-        provider_for(_route(provider="CUSTOM")), OpenAICompatibleProvider
-    )
+    assert isinstance(provider_for(_route(provider="CUSTOM")), OpenAICompatibleProvider)
 
 
 def test_design_assist_payload_carries_system_and_json_mode(monkeypatch):
@@ -1106,3 +1092,88 @@ def test_design_assist_payload_carries_system_and_json_mode(monkeypatch):
     assert payload["system"] == design_assist.DESIGN_ASSIST_SYSTEM
     assert payload["json_output"] is True
     assert "ops_contract" in payload and "catalog" in payload
+
+
+def test_audit_seals_effective_model_not_route_label(monkeypatch):
+    """An env-model override must reach provenance — sealing the route's
+    provider_model would permanently mis-attribute the invocation."""
+    captured = {}
+
+    def capture(sql, params=None):
+        if "FROM public.ai_routes" in sql:
+            return [_route(provider="MIMO", provider_model="route-model")]
+        if "ai_audit_provenance" in sql:
+            captured["provenance"] = params
+            return [{"audit_id": uuid4()}]
+        if "INSERT INTO public.ai_audit_logs" in sql:
+            return [{"id": uuid4()}]
+        return []
+
+    class _Overridden:
+        def invoke(self, **kwargs):
+            return {
+                "output": "ok",
+                "tokens_prompt": 1,
+                "tokens_completion": 1,
+                "latency_ms": 1,
+                "model": "mimo-v2-pro",
+            }
+
+    _patch_env(
+        monkeypatch,
+        route=_route(provider="MIMO", provider_model="route-model"),
+        provider=_Overridden(),
+        rows_impl=capture,
+    )
+    service.invoke(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-1",
+        input_payload={},
+    )
+    assert captured["provenance"][1] == "MIMO"
+    assert captured["provenance"][2] == "mimo-v2-pro"
+
+
+def test_openai_provider_response_model_wins_provenance(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    def _handler(request):
+        return httpx.Response(200, json=_openai_body("ok", model="mimo-serving-0125"))
+
+    monkeypatch.setenv("AI_GATEWAY_RM_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_RM_BASE_URL", "https://rm.example")
+    monkeypatch.setenv("AI_GATEWAY_RM_MODEL", "env-model")
+    _allow_dns(monkeypatch)
+    result = OpenAICompatibleProvider(provider="RM").invoke(
+        route=_route(provider_model="route-model"),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+    )
+    # The server's own model field is the truest attribution.
+    assert result["model"] == "mimo-serving-0125"
+
+
+def test_openai_provider_env_model_when_server_silent(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    def _handler(request):
+        return httpx.Response(200, json=_openai_body("ok"))
+
+    monkeypatch.setenv("AI_GATEWAY_EM_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_EM_BASE_URL", "https://em.example")
+    monkeypatch.setenv("AI_GATEWAY_EM_MODEL", "env-model")
+    _allow_dns(monkeypatch)
+    result = OpenAICompatibleProvider(provider="EM").invoke(
+        route=_route(provider_model="route-model"),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+    )
+    assert result["model"] == "env-model"

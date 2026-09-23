@@ -135,7 +135,10 @@ def _audit(
             [
                 str(inserted[0]["id"]),
                 str(route["provider"]),
-                str(route["provider_model"]),
+                # The model the request actually ran on (provider-reported or
+                # its configured override) — never the route's label when the
+                # transport selected another model behind it.
+                str(result.get("model") or route["provider_model"]),
                 str(route["prompt_version"]),
             ],
         )

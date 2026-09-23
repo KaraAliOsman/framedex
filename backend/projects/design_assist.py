@@ -59,7 +59,7 @@ Operaciones:
 - set_coupling_angle {coupling, angle_deg}: ángulo de una unión (0 = recto).
 - set_opening {module, opening}: apertura — FIXED, TURN_LEFT, TURN_RIGHT, TILT_TURN_LEFT, TILT_TURN_RIGHT, SLIDING_2L, AWNING, DOOR_ENTRY.
 - set_glass {module, sku}: vidrio del catálogo.
-- set_glass_thickness {module, thickness_mm}: espesor del catálogo.
+- set_glass_thickness {module, mm}: espesor del catálogo.
 - set_panel {module, sku|null}: panel del catálogo, null lo quita.
 
 Reglas:
@@ -146,9 +146,7 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
 
     def module_index(value: Any) -> bool:
         return (
-            isinstance(value, int)
-            and not isinstance(value, bool)
-            and 0 <= value < state["modules"]
+            isinstance(value, int) and not isinstance(value, bool) and 0 <= value < state["modules"]
         )
 
     def coupling_index(value: Any) -> bool:
@@ -171,9 +169,11 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             continue
         name = item["op"]
         if name == "set_module_count":
-            if isinstance(item.get("count"), int) and not isinstance(
-                item["count"], bool
-            ) and 1 <= item["count"] <= MAX_MODULE_COUNT:
+            if (
+                isinstance(item.get("count"), int)
+                and not isinstance(item["count"], bool)
+                and 1 <= item["count"] <= MAX_MODULE_COUNT
+            ):
                 accepted.append({"op": name, "count": item["count"]})
                 state["modules"] = item["count"]
                 state["couplings"] = max(0, item["count"] - 1)
@@ -212,16 +212,12 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
                 Decimal("150") * state["modules"],
                 Decimal("30000"),
             ):
-                accepted.append(
-                    {"op": name, "width_mm": str(_number(item["width_mm"]))}
-                )
+                accepted.append({"op": name, "width_mm": str(_number(item["width_mm"]))})
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_height":
             if _in_range(item.get("height_mm"), Decimal("200"), Decimal("4000")):
-                accepted.append(
-                    {"op": name, "height_mm": str(_number(item["height_mm"]))}
-                )
+                accepted.append({"op": name, "height_mm": str(_number(item["height_mm"]))})
             else:
                 rejected.append(reject(item, "alto_invalido"))
         elif name == "equalize_widths":
@@ -267,22 +263,15 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "espesor_invalido"))
         elif name == "set_glass":
-            if (
-                module_index(item.get("module"))
-                and item.get("sku") in catalog["glass_skus"]
-            ):
-                accepted.append(
-                    {"op": name, "module": item["module"], "sku": item["sku"]}
-                )
+            if module_index(item.get("module")) and item.get("sku") in catalog["glass_skus"]:
+                accepted.append({"op": name, "module": item["module"], "sku": item["sku"]})
             else:
                 rejected.append(reject(item, "vidrio_invalido"))
         elif name == "set_panel":
             if module_index(item.get("module")) and (
                 item.get("sku") is None or item["sku"] in catalog["panel_skus"]
             ):
-                accepted.append(
-                    {"op": name, "module": item["module"], "sku": item.get("sku")}
-                )
+                accepted.append({"op": name, "module": item["module"], "sku": item.get("sku")})
             else:
                 rejected.append(reject(item, "panel_invalido"))
         else:

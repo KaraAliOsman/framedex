@@ -166,17 +166,25 @@ class HttpProvider:
         httpx request path (extensions, streaming) is exercised."""
         port_suffix = "" if self._port == 443 else f":{self._port}"
         header_host = f"[{self._host}]" if ":" in self._host else self._host
-        host_header = (
-            header_host if self._port == 443 else f"{header_host}:{self._port}"
-        )
+        host_header = header_host if self._port == 443 else f"{header_host}:{self._port}"
         if client is None:
             with httpx.Client(timeout=60.0) as owned:
                 return self._attempts(
-                    owned, route, capability, input_payload, host_header, port_suffix,
+                    owned,
+                    route,
+                    capability,
+                    input_payload,
+                    host_header,
+                    port_suffix,
                     operation_key,
                 )
         return self._attempts(
-            client, route, capability, input_payload, host_header, port_suffix,
+            client,
+            route,
+            capability,
+            input_payload,
+            host_header,
+            port_suffix,
             operation_key,
         )
 
@@ -246,8 +254,7 @@ class HttpProvider:
             # is a provider error, not an audit-time database exception raised
             # after the paid call already succeeded.
             if not (
-                0 <= tokens_prompt <= 2_147_483_647
-                and 0 <= tokens_completion <= 2_147_483_647
+                0 <= tokens_prompt <= 2_147_483_647 and 0 <= tokens_completion <= 2_147_483_647
             ):
                 raise TypeError("provider token usage is outside the audit range")
         except ProviderError:
@@ -259,11 +266,17 @@ class HttpProvider:
             "tokens_prompt": tokens_prompt,
             "tokens_completion": tokens_completion,
             "latency_ms": int((time.monotonic() - started) * 1000),
+            # The model the request actually ran on — the response's own model
+            # field wins when the provider reports it, else what we asked for.
+            # Sealed into audit provenance, which must never re-attribute.
+            "model": parsed.get("model") or self._requested_model(route),
         }
 
-    def _wire_request(
-        self, route: dict, capability: str, input_payload: dict
-    ) -> tuple[str, dict]:
+    def _requested_model(self, route: dict) -> str:
+        """Model the request will run on; subclasses may override the route."""
+        return str(route["provider_model"])
+
+    def _wire_request(self, route: dict, capability: str, input_payload: dict) -> tuple[str, dict]:
         """(path, json body) the subclass's protocol posts on the pinned host."""
         return f"{self._base_path}/invoke", {
             "model": route["provider_model"],
@@ -286,6 +299,7 @@ class HttpProvider:
             "output": output,
             "tokens_prompt": int(usage.get("prompt_tokens") or 0),
             "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "model": body["model"] if isinstance(body.get("model"), str) else None,
         }
 
 
@@ -314,9 +328,7 @@ class OpenAICompatibleProvider(HttpProvider):
         super().__init__(provider=provider)
         self._model = os.environ.get(f"AI_GATEWAY_{provider}_MODEL", "")
 
-    def _wire_request(
-        self, route: dict, capability: str, input_payload: dict
-    ) -> tuple[str, dict]:
+    def _wire_request(self, route: dict, capability: str, input_payload: dict) -> tuple[str, dict]:
         # An operator may point BASE_URL straight at the completions path —
         # don't double-append it.
         path = (
@@ -347,6 +359,11 @@ class OpenAICompatibleProvider(HttpProvider):
             body["response_format"] = {"type": "json_object"}
         return path, body
 
+    def _requested_model(self, route: dict) -> str:
+        # AI_GATEWAY_{P}_MODEL is an operational override — the audit must
+        # seal this effective model, not the route's, or provenance lies.
+        return self._model or str(route["provider_model"])
+
     def _parse_response(self, content: bytes) -> dict[str, Any]:
         """OpenAI envelope: choices[0].message.content + usage."""
         body = json.loads(content)
@@ -370,6 +387,7 @@ class OpenAICompatibleProvider(HttpProvider):
             "output": output,
             "tokens_prompt": int(usage.get("prompt_tokens") or 0),
             "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "model": body["model"] if isinstance(body.get("model"), str) else None,
         }
 
 
@@ -378,9 +396,7 @@ _WIDTH_RE = re.compile(
     r"(?:ancho\s+(?:total\s+)?(?:de\s+)?|medida\s+de\s+)(\d{3,5})(?:\s*mm)?"
     r"|(\d{3,5})\s*mm\s+de\s+ancho"
 )
-_HEIGHT_RE = re.compile(
-    r"alto\s+(?:de\s+)?(\d{3,4})(?:\s*mm)?|(\d{3,4})\s*mm\s+de\s+alto"
-)
+_HEIGHT_RE = re.compile(r"alto\s+(?:de\s+)?(\d{3,4})(?:\s*mm)?|(\d{3,4})\s*mm\s+de\s+alto")
 _OPENING_KEYWORDS = (
     (re.compile(r"corred"), "SLIDING_2L"),
     (re.compile(r"puerta|door"), "DOOR_ENTRY"),
@@ -430,9 +446,7 @@ def _design_assist_output(input_payload: dict) -> dict:
     return {
         "ops": ops,
         "notes": (
-            "; ".join(notes)
-            if notes
-            else "No reconocí una acción de diseño en la instrucción."
+            "; ".join(notes) if notes else "No reconocí una acción de diseño en la instrucción."
         ),
     }
 
@@ -441,7 +455,11 @@ class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
     def invoke(
-        self, *, route: dict, capability: str, input_payload: dict,
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
         operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
@@ -451,8 +469,7 @@ class MockProvider:
         output = (
             json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
             if capability == "design_assist"
-            else f"{route['public_name']} [{capability}] "
-            f"respuesta determinista para {digest}"
+            else f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
         )
         serialized = json.dumps(input_payload, default=str)
         return {
