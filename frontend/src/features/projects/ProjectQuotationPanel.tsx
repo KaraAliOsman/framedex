@@ -407,7 +407,10 @@ export function ProjectQuotationPanel({
     try {
       const response = await documentaryPrepareInputs(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) setPreparation(response.data);
+      if (generation.current === current) {
+        setPreparation(response.data);
+        setFailures([]);
+      }
     } catch {
       if (generation.current === current) setMessage(t("quotation.loadError"));
     } finally {
@@ -418,6 +421,7 @@ export function ProjectQuotationPanel({
   function updatePosition(index: number, update: Partial<DocumentaryPreparationPosition>): void {
     if (!preparation) return;
     setDirty(true);
+    setFailures([]);
     setPreparation({
       ...preparation,
       positions: preparation.positions.map((position, positionIndex) =>
@@ -766,6 +770,7 @@ export function ProjectQuotationPanel({
             value={preparation.payment_terms}
             onChange={(event) => {
               setDirty(true);
+              setFailures([]);
               setPreparation({ ...preparation, payment_terms: event.target.value });
             }}
           />
@@ -778,6 +783,7 @@ export function ProjectQuotationPanel({
             value={preparation.quotation_valid_until ?? ""}
             onChange={(event) => {
               setDirty(true);
+              setFailures([]);
               setPreparation({ ...preparation, quotation_valid_until: event.target.value });
             }}
           />
@@ -955,7 +961,7 @@ export function ProjectQuotationPanel({
                               type="number"
                               inputMode="decimal"
                               step="any"
-                              min="0"
+                              min="0.0001"
                               disabled={busy}
                               value={annotation?.continuous_width_mm ?? ""}
                               onChange={(event) =>
@@ -1041,7 +1047,7 @@ export function ProjectQuotationPanel({
                                   type="number"
                                   inputMode="decimal"
                                   step="any"
-                                  min="0"
+                                  min="0.0001"
                                   disabled={busy}
                                   value={structural?.required_ix_cm4 ?? ""}
                                   onChange={(event) =>
@@ -1295,6 +1301,7 @@ export function ProjectQuotationPanel({
                 setPreparation(null);
                 setConfirmed(false);
                 setDirty(false);
+                setFailures([]);
               }}
             >
               {t("projects.cancel")}
