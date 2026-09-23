@@ -9,8 +9,9 @@
 /**
  * * `ADD_BOTTOM_DRAIN_HOLE` - ADD_BOTTOM_DRAIN_HOLE
  */
-export type KindEnum = (typeof KindEnum)[keyof typeof KindEnum];
+export type DrainOperationKindEnum =
+  (typeof DrainOperationKindEnum)[keyof typeof DrainOperationKindEnum];
 
-export const KindEnum = {
+export const DrainOperationKindEnum = {
   ADD_BOTTOM_DRAIN_HOLE: "ADD_BOTTOM_DRAIN_HOLE",
 } as const;

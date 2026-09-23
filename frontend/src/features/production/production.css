@@ -1,0 +1,204 @@
+.production-page {
+  padding: 1.5rem;
+  color: var(--theme-text-primary);
+  max-width: 90rem;
+  margin: auto;
+}
+.production-page h1,
+.production-page h2,
+.production-page h3 {
+  margin-bottom: 0.75rem;
+}
+.production-page header p {
+  color: var(--theme-text-secondary);
+}
+.production-page [role="alert"] {
+  color: var(--theme-danger);
+}
+.production-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+.production-orders,
+.production-detail {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--theme-surface-panel);
+}
+.production-orders ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.production-order {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.375rem;
+  background: var(--theme-bg-canvas);
+  color: var(--theme-text-primary);
+}
+.production-order.active {
+  border-color: var(--theme-accent);
+}
+.production-order-code {
+  font-family: var(--theme-font-mono);
+  font-weight: 600;
+}
+.production-order-progress {
+  font-size: 0.85rem;
+  color: var(--theme-text-secondary);
+}
+.production-chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-secondary);
+}
+.production-chip.status-done,
+.production-chip.status-completed {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+.production-chip.status-in_progress {
+  color: var(--theme-info, var(--theme-accent));
+  border-color: currentColor;
+}
+.production-chip.status-blocked,
+.production-chip.status-hold {
+  color: var(--theme-warning, #e56a32);
+  border-color: currentColor;
+}
+.production-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.production-materials {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.375rem;
+}
+.production-materials div {
+  display: grid;
+  gap: 0.15rem;
+}
+.production-materials dt {
+  font-size: 0.8rem;
+  color: var(--theme-text-secondary);
+}
+.production-materials dd {
+  margin: 0;
+  font-family: var(--theme-font-mono);
+  font-size: 1.1rem;
+}
+.production-steps {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.production-step {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  background: var(--theme-bg-canvas);
+}
+.production-step.step-done {
+  opacity: 0.75;
+}
+.production-step.step-blocked {
+  border-color: var(--theme-warning, #e56a32);
+}
+.production-step-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.production-step-seq {
+  font-family: var(--theme-font-mono);
+  color: var(--theme-text-secondary);
+}
+.production-step-label {
+  font-weight: 600;
+}
+.production-step-center {
+  font-size: 0.8rem;
+  color: var(--theme-text-secondary);
+}
+.production-step-note {
+  margin: 0.5rem 0 0;
+  color: var(--theme-text-secondary);
+  font-size: 0.9rem;
+}
+.production-step-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.production-step-actions button,
+.production-order {
+  cursor: pointer;
+}
+.production-step-actions button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.25rem;
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+}
+.production-step-actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.production-note {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.75rem 0;
+}
+.production-note input {
+  background: var(--theme-bg-canvas);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border-subtle);
+  padding: 0.6rem;
+  border-radius: 0.25rem;
+}
+.production-events ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.production-events li {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+.production-events time {
+  color: var(--theme-text-secondary);
+  font-family: var(--theme-font-mono);
+}
+.production-pick {
+  color: var(--theme-text-secondary);
+}
+@media (max-width: 60rem) {
+  .production-layout {
+    grid-template-columns: 1fr;
+  }
+}

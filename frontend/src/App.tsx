@@ -59,6 +59,11 @@ const PurchasingPage = lazy(async () => {
   return { default: module.PurchasingPage };
 });
 
+const ProductionPage = lazy(async () => {
+  const module = await import("./features/production/ProductionPage");
+  return { default: module.ProductionPage };
+});
+
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
   if (auth.status === "loading" || auth.status === "resolving") {
@@ -184,6 +189,18 @@ export function AppRoutes(): JSX.Element {
             <AppShell>
               <Suspense fallback={<p role="status">{t("purchasing.loading")}</p>}>
                 <PurchasingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/production"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("production.loading")}</p>}>
+                <ProductionPage />
               </Suspense>
             </AppShell>
           </ReadyGuard>

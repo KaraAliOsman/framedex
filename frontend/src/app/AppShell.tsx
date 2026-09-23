@@ -17,6 +17,7 @@ const navigation = [
   ["/pricing/cost-lists", "pricing.title"],
   ["/pricing/commercial", "pricing.calculate"],
   ["/purchasing", "nav.purchasing"],
+  ["/production", "nav.production"],
 ] as const;
 
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
@@ -52,6 +53,8 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
             if (to === "/catalogs/systems") return role === "OWNER" || role === "WORKSHOP_MANAGER";
             if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
             if (to === "/purchasing") return role === "OWNER" || role === "WORKSHOP_MANAGER";
+            if (to === "/production")
+              return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
             return true;
           })
           .map(([to, label]) => (

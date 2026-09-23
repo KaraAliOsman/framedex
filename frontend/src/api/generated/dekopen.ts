@@ -81,6 +81,9 @@ import type {
   PositionsDestroyParams,
   PriceRequestRequest,
   PriceResponse,
+  ProductionOrderDetail,
+  ProductionOrderList,
+  ProductionRelease,
   ProjectListResponse,
   ProjectResponse,
   ProjectWriteRequest,
@@ -88,11 +91,16 @@ import type {
   ResetPricingRequest,
   SendOrderRequestRequest,
   SignedAccessResponse,
+  StepTransition,
+  StepTransitionRequestRequest,
   SuccessorRequestRequest,
   SystemList,
   SystemResponse,
   SystemWriteRequest,
   Wallet,
+  WorkCenter,
+  WorkCenterList,
+  WorkCenterRequestRequest,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -4735,6 +4743,471 @@ export const pricingPreview = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(priceRequestRequest),
+  });
+};
+
+export type productionOrdersResponse200 = {
+  data: ProductionOrderList;
+  status: 200;
+};
+
+export type productionOrdersResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrdersResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrdersResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrdersResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrdersResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrdersResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrdersResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrdersResponseSuccess = productionOrdersResponse200 & {
+  headers: Headers;
+};
+export type productionOrdersResponseError = (
+  | productionOrdersResponse400
+  | productionOrdersResponse401
+  | productionOrdersResponse403
+  | productionOrdersResponse404
+  | productionOrdersResponse409
+  | productionOrdersResponse422
+  | productionOrdersResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrdersResponse =
+  productionOrdersResponseSuccess | productionOrdersResponseError;
+
+export const getProductionOrdersUrl = () => {
+  return `/api/v1/production/orders/`;
+};
+
+export const productionOrders = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrdersResponse> => {
+  return apiMutator<productionOrdersResponse>(getProductionOrdersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionOrderDetailResponse200 = {
+  data: ProductionOrderDetail;
+  status: 200;
+};
+
+export type productionOrderDetailResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDetailResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDetailResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDetailResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDetailResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDetailResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDetailResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDetailResponseSuccess = productionOrderDetailResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDetailResponseError = (
+  | productionOrderDetailResponse400
+  | productionOrderDetailResponse401
+  | productionOrderDetailResponse403
+  | productionOrderDetailResponse404
+  | productionOrderDetailResponse409
+  | productionOrderDetailResponse422
+  | productionOrderDetailResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDetailResponse =
+  productionOrderDetailResponseSuccess | productionOrderDetailResponseError;
+
+export const getProductionOrderDetailUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/`;
+};
+
+export const productionOrderDetail = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDetailResponse> => {
+  return apiMutator<productionOrderDetailResponse>(getProductionOrderDetailUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionStepTransitionResponse200 = {
+  data: StepTransition;
+  status: 200;
+};
+
+export type productionStepTransitionResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionStepTransitionResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionStepTransitionResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionStepTransitionResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionStepTransitionResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionStepTransitionResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionStepTransitionResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionStepTransitionResponseSuccess = productionStepTransitionResponse200 & {
+  headers: Headers;
+};
+export type productionStepTransitionResponseError = (
+  | productionStepTransitionResponse400
+  | productionStepTransitionResponse401
+  | productionStepTransitionResponse403
+  | productionStepTransitionResponse404
+  | productionStepTransitionResponse409
+  | productionStepTransitionResponse422
+  | productionStepTransitionResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionStepTransitionResponse =
+  productionStepTransitionResponseSuccess | productionStepTransitionResponseError;
+
+export const getProductionStepTransitionUrl = (stepId: string) => {
+  return `/api/v1/production/steps/${stepId}/transition/`;
+};
+
+export const productionStepTransition = async (
+  stepId: string,
+  stepTransitionRequestRequest: StepTransitionRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionStepTransitionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionStepTransitionResponse>(getProductionStepTransitionUrl(stepId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(stepTransitionRequestRequest),
+  });
+};
+
+export type productionReleaseResponse200 = {
+  data: ProductionRelease;
+  status: 200;
+};
+
+export type productionReleaseResponse201 = {
+  data: ProductionRelease;
+  status: 201;
+};
+
+export type productionReleaseResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionReleaseResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionReleaseResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionReleaseResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionReleaseResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionReleaseResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionReleaseResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionReleaseResponseSuccess = (
+  productionReleaseResponse200 | productionReleaseResponse201
+) & {
+  headers: Headers;
+};
+export type productionReleaseResponseError = (
+  | productionReleaseResponse400
+  | productionReleaseResponse401
+  | productionReleaseResponse403
+  | productionReleaseResponse404
+  | productionReleaseResponse409
+  | productionReleaseResponse422
+  | productionReleaseResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionReleaseResponse =
+  productionReleaseResponseSuccess | productionReleaseResponseError;
+
+export const getProductionReleaseUrl = (versionId: string) => {
+  return `/api/v1/production/versions/${versionId}/release/`;
+};
+
+export const productionRelease = async (
+  versionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionReleaseResponse> => {
+  return apiMutator<productionReleaseResponse>(getProductionReleaseUrl(versionId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type productionWorkCentersResponse200 = {
+  data: WorkCenterList;
+  status: 200;
+};
+
+export type productionWorkCentersResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionWorkCentersResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionWorkCentersResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionWorkCentersResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionWorkCentersResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionWorkCentersResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionWorkCentersResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionWorkCentersResponseSuccess = productionWorkCentersResponse200 & {
+  headers: Headers;
+};
+export type productionWorkCentersResponseError = (
+  | productionWorkCentersResponse400
+  | productionWorkCentersResponse401
+  | productionWorkCentersResponse403
+  | productionWorkCentersResponse404
+  | productionWorkCentersResponse409
+  | productionWorkCentersResponse422
+  | productionWorkCentersResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionWorkCentersResponse =
+  productionWorkCentersResponseSuccess | productionWorkCentersResponseError;
+
+export const getProductionWorkCentersUrl = () => {
+  return `/api/v1/production/work-centers/`;
+};
+
+export const productionWorkCenters = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionWorkCentersResponse> => {
+  return apiMutator<productionWorkCentersResponse>(getProductionWorkCentersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionWorkCentersCreateResponse200 = {
+  data: WorkCenter;
+  status: 200;
+};
+
+export type productionWorkCentersCreateResponse201 = {
+  data: WorkCenter;
+  status: 201;
+};
+
+export type productionWorkCentersCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionWorkCentersCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionWorkCentersCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionWorkCentersCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionWorkCentersCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionWorkCentersCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionWorkCentersCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionWorkCentersCreateResponseSuccess = (
+  productionWorkCentersCreateResponse200 | productionWorkCentersCreateResponse201
+) & {
+  headers: Headers;
+};
+export type productionWorkCentersCreateResponseError = (
+  | productionWorkCentersCreateResponse400
+  | productionWorkCentersCreateResponse401
+  | productionWorkCentersCreateResponse403
+  | productionWorkCentersCreateResponse404
+  | productionWorkCentersCreateResponse409
+  | productionWorkCentersCreateResponse422
+  | productionWorkCentersCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionWorkCentersCreateResponse =
+  productionWorkCentersCreateResponseSuccess | productionWorkCentersCreateResponseError;
+
+export const getProductionWorkCentersCreateUrl = () => {
+  return `/api/v1/production/work-centers/`;
+};
+
+export const productionWorkCentersCreate = async (
+  workCenterRequestRequest: WorkCenterRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionWorkCentersCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionWorkCentersCreateResponse>(getProductionWorkCentersCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(workCenterRequestRequest),
   });
 };
 

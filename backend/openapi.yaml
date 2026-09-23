@@ -4231,6 +4231,443 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/:
+    get:
+      operationId: production_orders
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/orders/{order_id}/:
+    get:
+      operationId: production_order_detail
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/steps/{step_id}/transition/:
+    post:
+      operationId: production_step_transition
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: step_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepTransitionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StepTransitionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StepTransitionRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StepTransition'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/versions/{version_id}/release/:
+    post:
+      operationId: production_release
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionRelease'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionRelease'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/work-centers/:
+    get:
+      operationId: production_work_centers
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCenterList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: production_work_centers_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkCenterRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkCenterRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkCenterRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCenter'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCenter'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/:
     get:
       operationId: projects_list
@@ -5496,6 +5933,20 @@ components:
       required:
       - coverage
       - items
+    ActionEnum:
+      enum:
+      - START
+      - COMPLETE
+      - BLOCK
+      - UNBLOCK
+      - NOTE
+      type: string
+      description: |-
+        * `START` - START
+        * `COMPLETE` - COMPLETE
+        * `BLOCK` - BLOCK
+        * `UNBLOCK` - UNBLOCK
+        * `NOTE` - NOTE
     ActiveOrganization:
       type: object
       properties:
@@ -6755,7 +7206,7 @@ components:
       type: object
       properties:
         kind:
-          $ref: '#/components/schemas/KindEnum'
+          $ref: '#/components/schemas/DrainOperationKindEnum'
         target:
           $ref: '#/components/schemas/InspectorTarget'
         old_value:
@@ -6771,6 +7222,11 @@ components:
       - new_value
       - old_value
       - target
+    DrainOperationKindEnum:
+      enum:
+      - ADD_BOTTOM_DRAIN_HOLE
+      type: string
+      description: '* `ADD_BOTTOM_DRAIN_HOLE` - ADD_BOTTOM_DRAIN_HOLE'
     EligibilityEvidenceRequest:
       type: object
       properties:
@@ -7908,11 +8364,6 @@ components:
         * `SUCCEEDED` - SUCCEEDED
         * `FAILED` - FAILED
         * `CANCELED` - CANCELED
-    KindEnum:
-      enum:
-      - ADD_BOTTOM_DRAIN_HOLE
-      type: string
-      description: '* `ADD_BOTTOM_DRAIN_HOLE` - ADD_BOTTOM_DRAIN_HOLE'
     KitChoice:
       type: object
       properties:
@@ -9219,6 +9670,219 @@ components:
       description: |-
         * `error` - error
         * `warning` - warning
+    ProductionOrder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        order_type:
+          type: string
+        status:
+          type: string
+        position_id:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        steps_done:
+          type: integer
+        steps_total:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        project_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: {}
+      required:
+      - created_at
+      - id
+      - order_code
+      - order_type
+      - position_id
+      - quantity
+      - status
+      - steps_done
+      - steps_total
+    ProductionOrderDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        order_type:
+          type: string
+        status:
+          type: string
+        position_id:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        steps_done:
+          type: integer
+        steps_total:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        project_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: {}
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionStep'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionStepEvent'
+      required:
+      - created_at
+      - events
+      - id
+      - order_code
+      - order_type
+      - position_id
+      - quantity
+      - status
+      - steps
+      - steps_done
+      - steps_total
+    ProductionOrderList:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionOrder'
+      required:
+      - orders
+    ProductionRelease:
+      type: object
+      properties:
+        version_id:
+          type: string
+          format: uuid
+        released:
+          type: integer
+        created:
+          type: integer
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionOrder'
+      required:
+      - created
+      - orders
+      - released
+      - version_id
+    ProductionStep:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sequence:
+          type: integer
+        code:
+          type: string
+        label:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProductionStepStatusEnum'
+        work_center_id:
+          type: string
+          format: uuid
+          nullable: true
+        work_center_code:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+        note:
+          type: string
+          nullable: true
+      required:
+      - actor_id
+      - code
+      - finished_at
+      - id
+      - label
+      - note
+      - sequence
+      - started_at
+      - status
+      - work_center_code
+      - work_center_id
+    ProductionStepEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        step_id:
+          type: string
+          format: uuid
+          nullable: true
+        event:
+          type: string
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: {}
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - actor_id
+      - created_at
+      - event
+      - id
+      - payload
+      - step_id
+    ProductionStepStatusEnum:
+      enum:
+      - PENDING
+      - READY
+      - IN_PROGRESS
+      - DONE
+      - BLOCKED
+      type: string
+      description: |-
+        * `PENDING` - PENDING
+        * `READY` - READY
+        * `IN_PROGRESS` - IN_PROGRESS
+        * `DONE` - DONE
+        * `BLOCKED` - BLOCKED
     ProfileChoice:
       type: object
       properties:
@@ -9722,6 +10386,28 @@ components:
       description: |-
         * `PROFILE` - PROFILE
         * `REINFORCEMENT` - REINFORCEMENT
+    StepTransition:
+      type: object
+      properties:
+        step:
+          $ref: '#/components/schemas/ProductionStep'
+        order_status:
+          type: string
+      required:
+      - order_status
+      - step
+    StepTransitionRequestRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+      required:
+      - action
     StructuralInputRequest:
       type: object
       properties:
@@ -10122,6 +10808,72 @@ components:
       - WHITE
       type: string
       description: '* `WHITE` - WHITE'
+    WorkCenter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        display_order:
+          type: integer
+        active:
+          type: boolean
+      required:
+      - active
+      - code
+      - display_order
+      - id
+      - kind
+      - name
+    WorkCenterList:
+      type: object
+      properties:
+        centers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkCenter'
+      required:
+      - centers
+    WorkCenterRequestKindEnum:
+      enum:
+      - CUT
+      - ASSEMBLY
+      - GLAZING
+      - QC
+      - PACK
+      type: string
+      description: |-
+        * `CUT` - CUT
+        * `ASSEMBLY` - ASSEMBLY
+        * `GLAZING` - GLAZING
+        * `QC` - QC
+        * `PACK` - PACK
+    WorkCenterRequestRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        kind:
+          $ref: '#/components/schemas/WorkCenterRequestKindEnum'
+        display_order:
+          type: integer
+          default: 0
+      required:
+      - code
+      - kind
+      - name
     WorkshopAnnotation:
       type: object
       properties:
