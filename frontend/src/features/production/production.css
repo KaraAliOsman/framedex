@@ -370,16 +370,24 @@
   color: var(--ink-muted, #6b7280);
 }
 @media print {
-  .app-shell .sidebar,
-  .app-shell .topbar,
-  .production-orders,
-  .production-detail-head,
-  .production-steps,
-  .production-events,
-  .production-note,
-  .production-optimize,
-  .production-optimize-head button,
-  .production-plan {
+  .app-shell > :not(.workspace),
+  .production-page > :not(.production-layout),
+  .production-layout > :not(.production-detail),
+  .production-detail > :not(.production-packing),
+  .production-packing > :not(.production-labels) {
     display: none !important;
+  }
+  .app-shell,
+  .production-layout,
+  .production-detail,
+  .production-packing {
+    display: block;
+  }
+  .production-page {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
   }
 }

@@ -173,6 +173,8 @@ export function ProductionPage(): JSX.Element {
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
+  const labelsGeneration = useRef(0);
+  const selectedIdRef = useRef("");
   const mounted = useRef(true);
   useEffect(
     () => () => {
@@ -182,6 +184,7 @@ export function ProductionPage(): JSX.Element {
   );
 
   const selectedId = params.get("order") ?? "";
+  selectedIdRef.current = selectedId;
 
   const loadOrders = useCallback(async () => {
     const response = await productionOrders();
@@ -270,17 +273,24 @@ export function ProductionPage(): JSX.Element {
   }
 
   async function showLabels(orderId: string): Promise<void> {
+    const generation = ++labelsGeneration.current;
     setLabels([]);
     setBusy(true);
     try {
       const response = await productionOrderLabels(orderId);
+      if (generation !== labelsGeneration.current) return;
       if (response.status !== 200) {
         setMessage(t("production.labelsError"));
         return;
       }
+      // A selection change may have landed while the request was in flight:
+      // only apply labels that still belong to the displayed order.
+      if (selectedIdRef.current !== orderId) return;
       setLabels(response.data.labels);
     } catch {
-      setMessage(t("production.labelsError"));
+      if (generation === labelsGeneration.current) {
+        setMessage(t("production.labelsError"));
+      }
     } finally {
       setBusy(false);
     }
