@@ -1,6 +1,17 @@
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 
-import type { Membership, RoleEnum } from "../api/generated/models";
+import { ApiError } from "../api/apiMutator";
+import {
+  projectPaymentIntegrationSave,
+  projectPaymentIntegrationStatus,
+} from "../api/generated/dekopen";
+import type {
+  ApiUrlEnum,
+  Membership,
+  PaymentIntegrationStatus,
+  RoleEnum,
+} from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { useTheme } from "../theme/ThemeProvider";
@@ -18,6 +29,134 @@ function MembershipRow({ membership }: { membership: Membership }): JSX.Element 
       <span>{membership.organization_name}</span>
       <span className="settings-role">{t(ROLE_KEYS[membership.role])}</span>
     </li>
+  );
+}
+
+function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
+  const [status, setStatus] = useState<PaymentIntegrationStatus | null>(null);
+  const [apiUrl, setApiUrl] = useState<ApiUrlEnum>("https://sandbox.flow.cl/api");
+  const [apiKey, setApiKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [returnUrl, setReturnUrl] = useState("");
+  const [enabled, setEnabled] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+
+  const load = useCallback(async () => {
+    try {
+      const response = await projectPaymentIntegrationStatus(requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setStatus(response.data);
+      if (response.data.configured) {
+        setApiUrl(response.data.api_url as ApiUrlEnum);
+        setReturnUrl(response.data.payer_return_url ?? "");
+        setEnabled(response.data.enabled ?? true);
+      }
+    } catch {
+      setMessage({ text: t("settings.flowLoadError"), error: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function save(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await projectPaymentIntegrationSave(
+        {
+          api_url: apiUrl,
+          api_key: apiKey.trim() || (status?.api_key_preview ?? "").replace("…", ""),
+          ...(secretKey.trim() ? { secret_key: secretKey.trim() } : {}),
+          payer_return_url: returnUrl.trim(),
+          enabled,
+        },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setStatus(response.data);
+      setSecretKey("");
+      setMessage({ text: t("settings.flowSaved"), error: false });
+    } catch {
+      setMessage({ text: t("settings.flowSaveError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-card">
+      <h2 className="eyebrow">{t("settings.flow")}</h2>
+      <p className="settings-hint">{t("settings.flowHint")}</p>
+      <p>
+        <span
+          className={`production-chip ${status?.configured ? "delivery-delivered" : "delivery-scheduled"}`}
+        >
+          {status?.configured ? t("settings.flowConfigured") : t("settings.flowNotConfigured")}
+        </span>
+        {status?.api_key_preview && (
+          <span className="settings-mono"> · {status.api_key_preview}</span>
+        )}
+      </p>
+      {message && (
+        <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>
+      )}
+      <form className="payments-form" onSubmit={save}>
+        <label>
+          {t("settings.flowEnv")}
+          <select
+            value={apiUrl}
+            onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}
+          >
+            <option value="https://sandbox.flow.cl/api">{t("settings.flowSandbox")}</option>
+            <option value="https://www.flow.cl/api">{t("settings.flowProduction")}</option>
+          </select>
+        </label>
+        <label>
+          {t("settings.flowApiKey")}
+          <input
+            required={!status?.configured}
+            value={apiKey}
+            onChange={(event) => setApiKey(event.target.value)}
+            placeholder={status?.api_key_preview ?? "AB12CD34EF56"}
+          />
+        </label>
+        <label>
+          {t("settings.flowSecret")}
+          <input
+            type="password"
+            value={secretKey}
+            onChange={(event) => setSecretKey(event.target.value)}
+            placeholder={status?.configured ? t("settings.flowSecretKeep") : ""}
+          />
+        </label>
+        <label>
+          {t("settings.flowReturnUrl")}
+          <input
+            value={returnUrl}
+            onChange={(event) => setReturnUrl(event.target.value)}
+            placeholder="https://taller.cl/pago/retorno"
+          />
+        </label>
+        <label className="settings-inline">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(event) => setEnabled(event.target.checked)}
+          />
+          {t("settings.flowEnabled")}
+        </label>
+        <div className="payments-form-actions">
+          <button type="submit" className="primary-action" disabled={busy}>
+            {t("settings.flowSave")}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -87,6 +226,8 @@ export function SettingsPage(): JSX.Element {
             </ul>
           </div>
         )}
+
+        {isOwner && org !== undefined && <FlowIntegrationCard orgId={org.id} />}
 
         {isOwner && (
           <div className="settings-card">

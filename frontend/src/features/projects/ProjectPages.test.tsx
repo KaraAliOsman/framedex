@@ -7,6 +7,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   positionsDestroy,
+  projectPaymentIntegrationStatus,
+  projectPaymentLinksList,
   projectPaymentsList,
   projectsClone,
   projectsCreate,
@@ -54,6 +56,10 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectPaymentsList: vi.fn(),
     projectPaymentsRecord: vi.fn(),
     projectPaymentVoid: vi.fn(),
+    projectPaymentLinksList: vi.fn(),
+    projectPaymentIntegrationStatus: vi.fn(),
+    projectPaymentLinkCreate: vi.fn(),
+    projectPaymentLinkRecover: vi.fn(),
   };
 });
 
@@ -196,6 +202,12 @@ beforeEach(() => {
       currency: "CLP",
       status: "NO_DEAL",
     }),
+  );
+  vi.mocked(projectPaymentLinksList).mockResolvedValue(
+    response(200, { links: [] }),
+  );
+  vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
+    response(200, { configured: false, enabled: false }),
   );
 });
 

@@ -85,6 +85,11 @@ import type {
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedSystemWriteRequest,
+  PaymentIntegrationRequest,
+  PaymentIntegrationStatus,
+  PaymentLinkCreateRequest,
+  PaymentLinkResponse,
+  PaymentLinksResponse,
   PaymentRecordRequest,
   PaymentRecordResponse,
   PaymentVoidRequest,
@@ -6719,6 +6724,237 @@ export const projectsClone = async (
   });
 };
 
+export type projectPaymentLinksListResponse200 = {
+  data: PaymentLinksResponse;
+  status: 200;
+};
+
+export type projectPaymentLinksListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentLinksListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentLinksListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentLinksListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentLinksListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentLinksListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentLinksListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentLinksListResponseSuccess = projectPaymentLinksListResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentLinksListResponseError = (
+  | projectPaymentLinksListResponse400
+  | projectPaymentLinksListResponse401
+  | projectPaymentLinksListResponse403
+  | projectPaymentLinksListResponse404
+  | projectPaymentLinksListResponse409
+  | projectPaymentLinksListResponse422
+  | projectPaymentLinksListResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentLinksListResponse =
+  projectPaymentLinksListResponseSuccess | projectPaymentLinksListResponseError;
+
+export const getProjectPaymentLinksListUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/payment-links/`;
+};
+
+export const projectPaymentLinksList = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentLinksListResponse> => {
+  return apiMutator<projectPaymentLinksListResponse>(getProjectPaymentLinksListUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectPaymentLinkCreateResponse201 = {
+  data: PaymentLinkResponse;
+  status: 201;
+};
+
+export type projectPaymentLinkCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentLinkCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentLinkCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentLinkCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentLinkCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentLinkCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentLinkCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentLinkCreateResponseSuccess = projectPaymentLinkCreateResponse201 & {
+  headers: Headers;
+};
+export type projectPaymentLinkCreateResponseError = (
+  | projectPaymentLinkCreateResponse400
+  | projectPaymentLinkCreateResponse401
+  | projectPaymentLinkCreateResponse403
+  | projectPaymentLinkCreateResponse404
+  | projectPaymentLinkCreateResponse409
+  | projectPaymentLinkCreateResponse422
+  | projectPaymentLinkCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentLinkCreateResponse =
+  projectPaymentLinkCreateResponseSuccess | projectPaymentLinkCreateResponseError;
+
+export const getProjectPaymentLinkCreateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/payment-links/`;
+};
+
+export const projectPaymentLinkCreate = async (
+  projectId: string,
+  paymentLinkCreateRequest: PaymentLinkCreateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentLinkCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectPaymentLinkCreateResponse>(getProjectPaymentLinkCreateUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(paymentLinkCreateRequest),
+  });
+};
+
+export type projectPaymentLinkRecoverResponse200 = {
+  data: PaymentLinkResponse;
+  status: 200;
+};
+
+export type projectPaymentLinkRecoverResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentLinkRecoverResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentLinkRecoverResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentLinkRecoverResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentLinkRecoverResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentLinkRecoverResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentLinkRecoverResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentLinkRecoverResponseSuccess = projectPaymentLinkRecoverResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentLinkRecoverResponseError = (
+  | projectPaymentLinkRecoverResponse400
+  | projectPaymentLinkRecoverResponse401
+  | projectPaymentLinkRecoverResponse403
+  | projectPaymentLinkRecoverResponse404
+  | projectPaymentLinkRecoverResponse409
+  | projectPaymentLinkRecoverResponse422
+  | projectPaymentLinkRecoverResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentLinkRecoverResponse =
+  projectPaymentLinkRecoverResponseSuccess | projectPaymentLinkRecoverResponseError;
+
+export const getProjectPaymentLinkRecoverUrl = (projectId: string, linkId: string) => {
+  return `/api/v1/projects/${projectId}/payment-links/${linkId}/recover/`;
+};
+
+export const projectPaymentLinkRecover = async (
+  projectId: string,
+  linkId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentLinkRecoverResponse> => {
+  return apiMutator<projectPaymentLinkRecoverResponse>(
+    getProjectPaymentLinkRecoverUrl(projectId, linkId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type projectPaymentsListResponse200 = {
   data: PaymentsSummary;
   status: 200;
@@ -7357,6 +7593,256 @@ export const projectDesignOptions = async (
   return apiMutator<projectDesignOptionsResponse>(getProjectDesignOptionsUrl(systemId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type projectPaymentFlowConfirmResponse200 = {
+  data: FlowAcknowledgement;
+  status: 200;
+};
+
+export type projectPaymentFlowConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentFlowConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentFlowConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentFlowConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentFlowConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentFlowConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentFlowConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentFlowConfirmResponseSuccess = projectPaymentFlowConfirmResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentFlowConfirmResponseError = (
+  | projectPaymentFlowConfirmResponse400
+  | projectPaymentFlowConfirmResponse401
+  | projectPaymentFlowConfirmResponse403
+  | projectPaymentFlowConfirmResponse404
+  | projectPaymentFlowConfirmResponse409
+  | projectPaymentFlowConfirmResponse422
+  | projectPaymentFlowConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentFlowConfirmResponse =
+  projectPaymentFlowConfirmResponseSuccess | projectPaymentFlowConfirmResponseError;
+
+export const getProjectPaymentFlowConfirmUrl = (linkId: string) => {
+  return `/api/v1/projects/flow/confirm/${linkId}/`;
+};
+
+/**
+ * Flow urlConfirmation webhook — public, verified server-side.
+ */
+export const projectPaymentFlowConfirm = async (
+  linkId: string,
+  flowConfirmationRequest: FlowConfirmationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentFlowConfirmResponse> => {
+  const formUrlEncoded = new URLSearchParams();
+  formUrlEncoded.append(`token`, flowConfirmationRequest.token);
+
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectPaymentFlowConfirmResponse>(getProjectPaymentFlowConfirmUrl(linkId), {
+    ...options,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(options?.headers),
+    },
+    body: formUrlEncoded,
+  });
+};
+
+export type projectPaymentIntegrationStatusResponse200 = {
+  data: PaymentIntegrationStatus;
+  status: 200;
+};
+
+export type projectPaymentIntegrationStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentIntegrationStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentIntegrationStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentIntegrationStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentIntegrationStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentIntegrationStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentIntegrationStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentIntegrationStatusResponseSuccess =
+  projectPaymentIntegrationStatusResponse200 & {
+    headers: Headers;
+  };
+export type projectPaymentIntegrationStatusResponseError = (
+  | projectPaymentIntegrationStatusResponse400
+  | projectPaymentIntegrationStatusResponse401
+  | projectPaymentIntegrationStatusResponse403
+  | projectPaymentIntegrationStatusResponse404
+  | projectPaymentIntegrationStatusResponse409
+  | projectPaymentIntegrationStatusResponse422
+  | projectPaymentIntegrationStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentIntegrationStatusResponse =
+  projectPaymentIntegrationStatusResponseSuccess | projectPaymentIntegrationStatusResponseError;
+
+export const getProjectPaymentIntegrationStatusUrl = () => {
+  return `/api/v1/projects/payment-integration/`;
+};
+
+export const projectPaymentIntegrationStatus = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentIntegrationStatusResponse> => {
+  return apiMutator<projectPaymentIntegrationStatusResponse>(
+    getProjectPaymentIntegrationStatusUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectPaymentIntegrationSaveResponse200 = {
+  data: PaymentIntegrationStatus;
+  status: 200;
+};
+
+export type projectPaymentIntegrationSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentIntegrationSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentIntegrationSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentIntegrationSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentIntegrationSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentIntegrationSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentIntegrationSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentIntegrationSaveResponseSuccess =
+  projectPaymentIntegrationSaveResponse200 & {
+    headers: Headers;
+  };
+export type projectPaymentIntegrationSaveResponseError = (
+  | projectPaymentIntegrationSaveResponse400
+  | projectPaymentIntegrationSaveResponse401
+  | projectPaymentIntegrationSaveResponse403
+  | projectPaymentIntegrationSaveResponse404
+  | projectPaymentIntegrationSaveResponse409
+  | projectPaymentIntegrationSaveResponse422
+  | projectPaymentIntegrationSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentIntegrationSaveResponse =
+  projectPaymentIntegrationSaveResponseSuccess | projectPaymentIntegrationSaveResponseError;
+
+export const getProjectPaymentIntegrationSaveUrl = () => {
+  return `/api/v1/projects/payment-integration/`;
+};
+
+export const projectPaymentIntegrationSave = async (
+  paymentIntegrationRequest: PaymentIntegrationRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentIntegrationSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectPaymentIntegrationSaveResponse>(getProjectPaymentIntegrationSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(paymentIntegrationRequest),
   });
 };
 

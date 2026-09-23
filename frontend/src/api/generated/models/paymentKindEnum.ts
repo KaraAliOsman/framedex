@@ -11,10 +11,9 @@
  * * `PARCIAL` - PARCIAL
  * * `SALDO` - SALDO
  */
-export type PaymentRecordKindEnum =
-  (typeof PaymentRecordKindEnum)[keyof typeof PaymentRecordKindEnum];
+export type PaymentKindEnum = (typeof PaymentKindEnum)[keyof typeof PaymentKindEnum];
 
-export const PaymentRecordKindEnum = {
+export const PaymentKindEnum = {
   ANTICIPO: "ANTICIPO",
   PARCIAL: "PARCIAL",
   SALDO: "SALDO",

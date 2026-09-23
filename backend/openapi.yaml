@@ -6062,6 +6062,227 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/payment-links/:
+    get:
+      operationId: project_payment_links_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinksResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: project_payment_link_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentLinkCreateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinkResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/payment-links/{link_id}/recover/:
+    post:
+      operationId: project_payment_link_recover
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLinkResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/payments/:
     get:
       operationId: project_payments_list
@@ -6619,6 +6840,209 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DesignOptions'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/flow/confirm/{link_id}/:
+    post:
+      operationId: project_payment_flow_confirm
+      description: Flow urlConfirmation webhook — public, verified server-side.
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FlowConfirmationRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowAcknowledgement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/payment-integration/:
+    get:
+      operationId: project_payment_integration_status
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentIntegrationStatus'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: project_payment_integration_save
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentIntegrationRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentIntegrationStatus'
           description: ''
         '400':
           content:
@@ -7391,6 +7815,14 @@ components:
           nullable: true
       required:
       - bay_id
+    ApiUrlEnum:
+      enum:
+      - https://sandbox.flow.cl/api
+      - https://www.flow.cl/api
+      type: string
+      description: |-
+        * `https://sandbox.flow.cl/api` - https://sandbox.flow.cl/api
+        * `https://www.flow.cl/api` - https://www.flow.cl/api
     ApplyRequest:
       type: object
       properties:
@@ -9097,6 +9529,14 @@ components:
             $ref: '#/components/schemas/ProfileSystemSummary'
       required:
       - systems
+    EnvironmentEnum:
+      enum:
+      - sandbox
+      - production
+      type: string
+      description: |-
+        * `sandbox` - sandbox
+        * `production` - production
     ErrorDetail:
       type: object
       properties:
@@ -10889,7 +11329,51 @@ components:
       - status
       - tax_doc_folio
       - tax_doc_type
-    PaymentRecordKindEnum:
+    PaymentIntegrationRequest:
+      type: object
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ApiUrlEnum'
+        api_key:
+          type: string
+          minLength: 10
+          maxLength: 100
+        secret_key:
+          writeOnly: true
+          oneOf:
+          - type: string
+            maxLength: 100
+            minLength: 10
+          - type: string
+            maxLength: 0
+        payer_return_url:
+          type: string
+          maxLength: 500
+        enabled:
+          type: boolean
+          default: true
+      required:
+      - api_key
+      - api_url
+    PaymentIntegrationStatus:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        api_url:
+          type: string
+        api_key_preview:
+          type: string
+        payer_return_url:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        updated_at:
+          type: string
+      required:
+      - configured
+    PaymentKindEnum:
       enum:
       - ANTICIPO
       - PARCIAL
@@ -10899,6 +11383,107 @@ components:
         * `ANTICIPO` - ANTICIPO
         * `PARCIAL` - PARCIAL
         * `SALDO` - SALDO
+    PaymentLink:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        operation_key:
+          type: string
+        kind:
+          type: string
+        amount:
+          type: string
+        payer_email:
+          type: string
+        subject:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentLinkStatusEnum'
+        environment:
+          $ref: '#/components/schemas/EnvironmentEnum'
+        url:
+          type: string
+          nullable: true
+        project_payment_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required:
+      - amount
+      - created_at
+      - environment
+      - id
+      - kind
+      - operation_key
+      - payer_email
+      - project_payment_id
+      - status
+      - subject
+      - updated_at
+      - url
+    PaymentLinkCreateRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 80
+        kind:
+          $ref: '#/components/schemas/PaymentKindEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,0})?$
+        payer_email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 200
+        subject:
+          type: string
+          maxLength: 200
+      required:
+      - amount
+      - kind
+      - operation_key
+      - payer_email
+    PaymentLinkResponse:
+      type: object
+      properties:
+        link:
+          $ref: '#/components/schemas/PaymentLink'
+      required:
+      - link
+    PaymentLinkStatusEnum:
+      enum:
+      - DISPATCHING
+      - PENDING
+      - PAID
+      - FAILED
+      - UNCERTAIN
+      - CANCELLED
+      type: string
+      description: |-
+        * `DISPATCHING` - DISPATCHING
+        * `PENDING` - PENDING
+        * `PAID` - PAID
+        * `FAILED` - FAILED
+        * `UNCERTAIN` - UNCERTAIN
+        * `CANCELLED` - CANCELLED
+    PaymentLinksResponse:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentLink'
+      required:
+      - links
     PaymentRecordRequest:
       type: object
       properties:
@@ -10907,7 +11492,7 @@ components:
           minLength: 8
           maxLength: 80
         kind:
-          $ref: '#/components/schemas/PaymentRecordKindEnum'
+          $ref: '#/components/schemas/PaymentKindEnum'
         amount:
           type: string
           format: decimal

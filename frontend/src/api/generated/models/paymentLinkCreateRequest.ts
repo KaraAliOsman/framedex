@@ -5,22 +5,22 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { MethodEnum } from "./methodEnum";
 import type { PaymentKindEnum } from "./paymentKindEnum";
 
-export interface PaymentRecordRequest {
+export interface PaymentLinkCreateRequest {
   /**
    * @minLength 8
    * @maxLength 80
    */
   operation_key: string;
   kind: PaymentKindEnum;
-  /** @pattern ^-?\d{0,12}(?:\.\d{0,2})?$ */
+  /** @pattern ^-?\d{0,14}(?:\.\d{0,0})?$ */
   amount: string;
-  method: MethodEnum;
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
+  payer_email: string;
   /** @maxLength 200 */
-  reference?: string;
-  /** @maxLength 2000 */
-  note?: string;
-  recorded_at?: string;
+  subject?: string;
 }

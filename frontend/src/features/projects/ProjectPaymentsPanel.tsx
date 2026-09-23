@@ -7,11 +7,12 @@ import {
 } from "../../api/generated/dekopen";
 import type {
   MethodEnum,
-  PaymentRecordKindEnum,
+  PaymentKindEnum,
   PaymentsSummary,
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -59,7 +60,7 @@ export function ProjectPaymentsPanel({
   const [message, setMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [operationKey, setOperationKey] = useState("");
-  const [kind, setKind] = useState<PaymentRecordKindEnum>("ANTICIPO");
+  const [kind, setKind] = useState<PaymentKindEnum>("ANTICIPO");
   const [method, setMethod] = useState<MethodEnum>("TRANSFER");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
@@ -197,7 +198,7 @@ export function ProjectPaymentsPanel({
             {t("projects.paymentKind")}
             <select
               value={kind}
-              onChange={(event) => setKind(event.target.value as PaymentRecordKindEnum)}
+              onChange={(event) => setKind(event.target.value as PaymentKindEnum)}
             >
               <option value="ANTICIPO">{t("projects.paymentKindAnticipo")}</option>
               <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
@@ -289,6 +290,12 @@ export function ProjectPaymentsPanel({
         </table>
       )}
       {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
+      <ProjectPaymentLinksPanel
+        projectId={projectId}
+        orgId={orgId}
+        canWrite={canWrite}
+        onChanged={load}
+      />
     </section>
   );
 }

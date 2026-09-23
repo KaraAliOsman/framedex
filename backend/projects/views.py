@@ -7,12 +7,22 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from rest_framework.parsers import FormParser
+from rest_framework.permissions import AllowAny
+
 from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
+from billing.flow import FlowError
+from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import payments, service
+from projects import payment_links, payments, service
 from projects.serializers import (
+    PaymentIntegrationSerializer,
+    PaymentIntegrationStatusSerializer,
+    PaymentLinkCreateSerializer,
+    PaymentLinkResponseSerializer,
+    PaymentLinksResponseSerializer,
     PaymentRecordResponseSerializer,
     PaymentRecordSerializer,
     PaymentsSummarySerializer,
@@ -230,6 +240,108 @@ class ProjectPaymentsView(APIView):
                 ),
                 status=201,
             )
+
+
+class ProjectPaymentLinksView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_payment_links_list",
+        responses={200: PaymentLinksResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(payment_links.list_links(org_id=org, project_id=project_id))
+
+    @extend_schema(
+        operation_id="project_payment_link_create",
+        request=PaymentLinkCreateSerializer,
+        responses={201: PaymentLinkResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id):
+        data = validate(PaymentLinkCreateSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            return response(
+                payment_links.create_link(
+                    org_id=org, project_id=project_id, actor_id=token.user_id, data=data
+                ),
+                status=201,
+            )
+
+
+class ProjectPaymentLinkRecoverView(APIView):
+    @extend_schema(
+        operation_id="project_payment_link_recover",
+        request=None,
+        responses={200: PaymentLinkResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, link_id):
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            try:
+                return response(
+                    payment_links.recover_link(org_id=org, link_id=link_id)
+                )
+            except FlowError as error:
+                raise contract_error(
+                    503, error.code, "El link requiere verificación del proveedor."
+                ) from None
+
+
+class ProjectPaymentIntegrationView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_payment_integration_status",
+        responses={200: PaymentIntegrationStatusSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(payment_links.get_integration(org_id=org))
+
+    @extend_schema(
+        operation_id="project_payment_integration_save",
+        request=PaymentIntegrationSerializer,
+        responses={200: PaymentIntegrationStatusSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def put(self, request):
+        data = validate(PaymentIntegrationSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(payment_links.save_integration(org_id=org, data=data))
+
+
+class FlowPaymentConfirmView(APIView):
+    """Flow urlConfirmation webhook — public, verified server-side."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    parser_classes = [FormParser]
+
+    @extend_schema(
+        operation_id="project_payment_flow_confirm",
+        tags=["projects"],
+        request=FlowConfirmationSerializer,
+        responses={200: FlowAcknowledgementSerializer, **ERRORS},
+    )
+    def post(self, request, link_id):
+        data = FlowConfirmationSerializer(data=request.data)
+        if not data.is_valid() or len(request.data.getlist("token")) != 1:
+            raise contract_error(
+                400, "invalid_flow_callback", "La confirmación requiere un token válido."
+            )
+        try:
+            payment_links.confirm_link(link_id=link_id, token=data.validated_data["token"])
+        except FlowError as error:
+            raise contract_error(
+                404 if error.code == "payment_link_not_found" else 503,
+                error.code,
+                "El cobro requiere confirmación del proveedor.",
+            ) from None
+        return response({"received": True})
 
 
 class ProjectPaymentView(APIView):

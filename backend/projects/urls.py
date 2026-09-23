@@ -3,7 +3,11 @@
 from django.urls import path
 
 from projects.views import (
+    FlowPaymentConfirmView,
     ProjectCloneView,
+    ProjectPaymentIntegrationView,
+    ProjectPaymentLinkRecoverView,
+    ProjectPaymentLinksView,
     ProjectPaymentsView,
     ProjectPaymentView,
     ProjectPositionsView,
@@ -17,6 +21,8 @@ from projects.options import DesignOptionsView
 
 urlpatterns = [
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
+    path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),
+    path("projects/payment-integration/", ProjectPaymentIntegrationView.as_view()),
     path("projects/", ProjectsView.as_view()),
     path("projects/<uuid:project_id>/", ProjectView.as_view()),
     path("projects/<uuid:project_id>/clone/", ProjectCloneView.as_view()),
@@ -27,6 +33,14 @@ urlpatterns = [
     path(
         "projects/<uuid:project_id>/payments/<uuid:payment_id>/",
         ProjectPaymentView.as_view(),
+    ),
+    path(
+        "projects/<uuid:project_id>/payment-links/",
+        ProjectPaymentLinksView.as_view(),
+    ),
+    path(
+        "projects/<uuid:project_id>/payment-links/<uuid:link_id>/recover/",
+        ProjectPaymentLinkRecoverView.as_view(),
     ),
     path("positions/<uuid:position_id>/", PositionView.as_view()),
 ]
