@@ -57,7 +57,7 @@ CREATE TABLE public.production_step_events (
     event TEXT NOT NULL CHECK (event IN (
         'WO_RELEASED', 'STEP_STARTED', 'STEP_COMPLETED', 'STEP_BLOCKED',
         'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD', 'WO_OPTIMIZED',
-        'QC_FAILED', 'WO_REMADE'
+        'QC_FAILED', 'WO_REMADE', 'WO_CNC_EXPORTED'
     )),
     actor_id UUID,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'),

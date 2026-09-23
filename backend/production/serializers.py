@@ -83,6 +83,13 @@ class StepTransitionRequestSerializer(StrictSerializer):
         return data
 
 
+class CncExportSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    exported_at = serializers.CharField()
+    files = serializers.DictField(child=serializers.CharField())
+
+
 class RemakeRequestSerializer(StrictSerializer):
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
 

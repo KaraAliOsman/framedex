@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
+  productionOrderCncExport,
   productionOrderDetail,
   productionOrderOptimize,
   productionOrderRemake,
@@ -77,6 +78,11 @@ type WorkOrderOptimization = {
   unnested?: UnnestedPiece[];
 };
 
+type CncExport = {
+  exported_at?: string;
+  files?: Record<string, string>;
+};
+
 const stepStatusKey: Record<string, Parameters<typeof t>[0]> = {
   PENDING: "production.stepPending",
   READY: "production.stepReady",
@@ -102,6 +108,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_OPTIMIZED: "production.eventOptimized",
   QC_FAILED: "production.eventQcFailed",
   WO_REMADE: "production.eventRemade",
+  WO_CNC_EXPORTED: "production.eventCncExported",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -230,6 +237,20 @@ export function ProductionPage(): JSX.Element {
   function optimize(orderId: string): void {
     if (!optColor.trim()) return;
     void action(productionOrderOptimize(orderId, { color: optColor.trim() }), orderId);
+  }
+
+  function exportCnc(orderId: string): void {
+    void action(productionOrderCncExport(orderId), orderId);
+  }
+
+  function downloadCnc(orderCode: string, filename: string, content: string): void {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${orderCode}-${filename}`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
@@ -361,6 +382,34 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       </div>
                     ) : null}
+                    {(() => {
+                      const cncExport = detail.payload?.cnc_export as CncExport | undefined;
+                      const files = Object.entries(cncExport?.files ?? {});
+                      if (!optimization) return null;
+                      return (
+                        <div className="production-cnc">
+                          {canOptimize && detail.status !== "COMPLETED" ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => exportCnc(detail.id)}
+                            >
+                              {t("production.cncExportButton")}
+                            </button>
+                          ) : null}
+                          {files.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                     {!optimization ? (
                       <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
                     ) : (

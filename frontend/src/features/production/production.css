@@ -175,6 +175,30 @@
   font-weight: 600;
   cursor: pointer;
 }
+.production-cnc {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.production-cnc button {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.25rem;
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+  font-family: var(--theme-font-mono, monospace);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.production-cnc button:hover:not(:disabled) {
+  border-color: var(--theme-accent, #0f817a);
+}
+.production-cnc button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .production-remake:hover:not(:disabled) {
   background: color-mix(in srgb, #e56a32 12%, transparent);
 }

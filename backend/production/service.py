@@ -636,6 +636,158 @@ def list_work_centers(*, org_id: UUID) -> dict[str, object]:
     }
 
 
+def _csv_cell(value: object) -> str:
+    text = "" if value is None else str(value)
+    return f'"{text}"' if any(c in text for c in '",\n') else text
+
+
+def _cnc_bars_csv(optimization: dict[str, object]) -> str:
+    """DEKOPEN-CNC-BARS-V1: one row per cut placement, ordered by bar then
+    position inside the bar — deterministic output for the saw operator."""
+    rows_out = [
+        "bar_index,stock_sku,stock_length_mm,sequence_in_bar,piece_id,"
+        "cut_length_mm,unit_index,bay_id,leaf_id,source_position_id"
+    ]
+    bars = (optimization.get("bars") or {}).get("workshop_cut_plan") or []
+    for bar in sorted(bars, key=lambda b: int(b.get("bar_index") or 0)):
+        for sequence, cut in enumerate(
+            sorted(
+                bar.get("cuts") or [],
+                key=lambda c: str(c.get("piece_id") or ""),
+            ),
+            start=1,
+        ):
+            rows_out.append(",".join(_csv_cell(v) for v in (
+                bar.get("bar_index"),
+                bar.get("commercial_sku"),
+                bar.get("stock_length_mm"),
+                sequence,
+                cut.get("piece_id"),
+                cut.get("length_mm"),
+                cut.get("unit_index"),
+                cut.get("bay_id"),
+                cut.get("leaf_id"),
+                cut.get("source_position_id"),
+            )))
+    return "\n".join(rows_out) + "\n"
+
+
+def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
+    """DEKOPEN-CNC-SHEETS-V1: one row per nested placement, ordered by sheet
+    then Y then X — deterministic input for a panel saw / glass table."""
+    rows_out = [
+        "sheet_index,purchasing_sku,sheet_width_mm,sheet_height_mm,"
+        "x_mm,y_mm,width_mm,height_mm,rotated,piece_id,unit_index,bay_id,leaf_id"
+    ]
+    for sheet in sorted(
+        optimization.get("sheets") or [], key=lambda s: int(s.get("sheet_index") or 0)
+    ):
+        for placement in sorted(
+            sheet.get("placements") or [],
+            key=lambda p: (
+                Decimal(str(p.get("y_mm") or 0)), Decimal(str(p.get("x_mm") or 0))
+            ),
+        ):
+            rows_out.append(",".join(_csv_cell(v) for v in (
+                sheet.get("sheet_index"),
+                sheet.get("purchasing_sku"),
+                sheet.get("sheet_width_mm"),
+                sheet.get("sheet_height_mm"),
+                placement.get("x_mm"),
+                placement.get("y_mm"),
+                placement.get("width_mm"),
+                placement.get("height_mm"),
+                placement.get("rotated"),
+                placement.get("piece_id"),
+                placement.get("unit_index"),
+                placement.get("bay_id"),
+                placement.get("leaf_id"),
+            )))
+    return "\n".join(rows_out) + "\n"
+
+
+def export_cnc_files(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """Machine handoff: renders the stored optimization plan into deterministic
+    CSV cut files (bars + sheets), stores them on the order, and records a
+    ``WO_CNC_EXPORTED`` event. Requires a prior optimization run."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization")
+        if not isinstance(optimization, dict) or not optimization.get("bars"):
+            raise DocumentaryError("cnc_requires_optimization")
+        files = {"bars.csv": _cnc_bars_csv(optimization)}
+        if optimization.get("sheets"):
+            files["sheets.csv"] = _cnc_sheets_csv(optimization)
+        export = {
+            "schema": "work_order_cnc_export_v1",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "files": files,
+        }
+        new_payload = {**payload, "cnc_export": export}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_CNC_EXPORTED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "files": sorted(files),
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "exported_at": export["exported_at"],
+            "files": files,
+        }
+
+
+def cnc_file_content(
+    *, org_id: UUID, order_id: UUID, filename: str
+) -> tuple[str, str] | None:
+    order = one(
+        """
+        SELECT order_code, payload_json FROM public.orders
+        WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    export = _decoded(order["payload_json"]).get("cnc_export") or {}
+    files = export.get("files") or {}
+    content = files.get(filename)
+    if content is None:
+        return None
+    return f"{order['order_code']}-{filename}", content
+
+
 def create_work_center(
     *, org_id: UUID, code: str, name: str, kind: str, display_order: int
 ) -> dict[str, object]:

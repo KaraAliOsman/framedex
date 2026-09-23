@@ -48,6 +48,8 @@ export * from "./checkoutInputRequest";
 export * from "./checkoutRecord";
 export * from "./checkoutResult";
 export * from "./cloneProjectRequest";
+export * from "./cncExport";
+export * from "./cncExportFiles";
 export * from "./colorEnum";
 export * from "./commerce";
 export * from "./confirmBatchRequestRequest";

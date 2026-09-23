@@ -7,6 +7,7 @@ import logging
 from uuid import UUID
 
 from django.db import DatabaseError
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
 from production.serializers import (
+    CncExportSerializer,
     ProductionOrderDetailSerializer,
     RemakeRequestSerializer,
     ProductionOrderListSerializer,
@@ -166,6 +168,51 @@ class ProductionOrderRemakeView(APIView):
                     note=data.get("note"),
                 )
         return Response(output, status=201)
+
+
+class ProductionOrderCncExportView(APIView):
+    @extend_schema(
+        operation_id="production_order_cnc_export",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={201: CncExportSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.export_cnc_files(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                )
+        return Response(output, status=201)
+
+
+class ProductionOrderCncFileView(APIView):
+    @extend_schema(
+        operation_id="production_order_cnc_file",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: None, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID, filename: str):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                found = service.cnc_file_content(
+                    org_id=org_id, order_id=order_id, filename=filename
+                )
+        if found is None:
+            raise contract_error(
+                404,
+                "cnc_file_not_found",
+                "No hay un archivo CNC generado con ese nombre en la orden.",
+            )
+        download_name, content = found
+        response = HttpResponse(content, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        return response
 
 
 class WorkCenterListView(APIView):

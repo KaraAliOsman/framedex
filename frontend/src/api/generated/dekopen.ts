@@ -29,6 +29,7 @@ import type {
   CheckoutInputRequest,
   CheckoutResult,
   CloneProjectRequest,
+  CncExport,
   Commerce,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
@@ -4890,6 +4891,154 @@ export const productionOrderDetail = async (
     ...options,
     method: "GET",
   });
+};
+
+export type productionOrderCncExportResponse201 = {
+  data: CncExport;
+  status: 201;
+};
+
+export type productionOrderCncExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderCncExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderCncExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderCncExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderCncExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderCncExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderCncExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderCncExportResponseSuccess = productionOrderCncExportResponse201 & {
+  headers: Headers;
+};
+export type productionOrderCncExportResponseError = (
+  | productionOrderCncExportResponse400
+  | productionOrderCncExportResponse401
+  | productionOrderCncExportResponse403
+  | productionOrderCncExportResponse404
+  | productionOrderCncExportResponse409
+  | productionOrderCncExportResponse422
+  | productionOrderCncExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderCncExportResponse =
+  productionOrderCncExportResponseSuccess | productionOrderCncExportResponseError;
+
+export const getProductionOrderCncExportUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/cnc-export/`;
+};
+
+export const productionOrderCncExport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderCncExportResponse> => {
+  return apiMutator<productionOrderCncExportResponse>(getProductionOrderCncExportUrl(orderId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type productionOrderCncFileResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type productionOrderCncFileResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderCncFileResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderCncFileResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderCncFileResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderCncFileResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderCncFileResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderCncFileResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderCncFileResponseSuccess = productionOrderCncFileResponse200 & {
+  headers: Headers;
+};
+export type productionOrderCncFileResponseError = (
+  | productionOrderCncFileResponse400
+  | productionOrderCncFileResponse401
+  | productionOrderCncFileResponse403
+  | productionOrderCncFileResponse404
+  | productionOrderCncFileResponse409
+  | productionOrderCncFileResponse422
+  | productionOrderCncFileResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderCncFileResponse =
+  productionOrderCncFileResponseSuccess | productionOrderCncFileResponseError;
+
+export const getProductionOrderCncFileUrl = (orderId: string, filename: string) => {
+  return `/api/v1/production/orders/${orderId}/cnc-export/${filename}`;
+};
+
+export const productionOrderCncFile = async (
+  orderId: string,
+  filename: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderCncFileResponse> => {
+  return apiMutator<productionOrderCncFileResponse>(
+    getProductionOrderCncFileUrl(orderId, filename),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type productionOrderOptimizeResponse200 = {

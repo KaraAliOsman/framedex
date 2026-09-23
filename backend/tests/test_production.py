@@ -835,3 +835,97 @@ def test_create_remake_requires_hold(monkeypatch) -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), pytest.raises(DocumentaryError, match="remake_requires_hold"):
         service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
+
+
+def test_export_cnc_files_writes_deterministic_csv(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    optimization = {
+        "bars": {
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "MARCO-60",
+                    "stock_length_mm": "6500",
+                    "cuts": [
+                        {"piece_id": "M-02", "length_mm": "1200", "unit_index": 1,
+                         "bay_id": "b1", "leaf_id": None,
+                         "source_position_id": str(_POSITION_ID)},
+                        {"piece_id": "M-01", "length_mm": "1500", "unit_index": 1,
+                         "bay_id": "b1", "leaf_id": None,
+                         "source_position_id": str(_POSITION_ID)},
+                    ],
+                }
+            ]
+        },
+        "sheets": [
+            {
+                "sheet_index": 2,
+                "purchasing_sku": "GLASS-4",
+                "sheet_width_mm": "3210",
+                "sheet_height_mm": "2250",
+                "placements": [
+                    {"piece_id": "V-01", "x_mm": "100", "y_mm": "50",
+                     "width_mm": "800", "height_mm": "600", "rotated": False,
+                     "unit_index": 1, "bay_id": "b1", "leaf_id": "l1"}
+                ],
+            },
+            {
+                "sheet_index": 1,
+                "purchasing_sku": "GLASS-4",
+                "sheet_width_mm": "3210",
+                "sheet_height_mm": "2250",
+                "placements": [],
+            },
+        ],
+    }
+    writes: list[tuple[str, list]] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-P-AAA-01",
+                "status": "IN_PROGRESS",
+                "payload_json": {"optimization": optimization},
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, params=(): writes.append(
+            (" ".join(sql_text.lower().split()), list(params))
+        ) or [{"id": str(order_id)}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.export_cnc_files(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    update = next(p2 for s2, p2 in writes if "update public.orders" in s2)
+    stored = json.loads(update[0])["cnc_export"]
+    assert sorted(out["files"]) == ["bars.csv", "sheets.csv"]
+    bars_csv = stored["files"]["bars.csv"]
+    lines = bars_csv.strip().split("\n")
+    assert lines[0].startswith("bar_index,")
+    assert "M-01" in lines[1] and "M-02" in lines[2]  # sorted per bar
+    assert ",1," in lines[1]
+    sheets_csv = stored["files"]["sheets.csv"]
+    assert "GLASS-4" in sheets_csv and "V-01" in sheets_csv
+    assert any("wo_cnc_exported" in s2 for s2, _ in writes)
+
+
+def test_export_cnc_requires_optimization(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": "o",
+            "order_code": "OT",
+            "status": "RELEASED",
+            "payload_json": {},
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="cnc_requires_optimization"):
+        service.export_cnc_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
