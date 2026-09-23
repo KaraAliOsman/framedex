@@ -5,7 +5,7 @@
 -- * project_payments becomes one-way voidable: DELETE is rejected and UPDATE
 --   may only transition the void columns on a never-voided row; every other
 --   column is frozen at insert.
--- Append-only on top of 20260926000000_payment_links.sql.
+-- Append-only on top of 20260925000000_project_payments.sql.
 
 CREATE FUNCTION private.applied_pricing_currency(target_org uuid, target_project uuid)
 RETURNS TABLE(currency text)

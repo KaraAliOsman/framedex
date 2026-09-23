@@ -153,6 +153,13 @@ def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict
                     "payment_fractional_currency",
                     "Los montos en CLP no llevan decimales.",
                 )
+            recorded_at = data.get("recorded_at")
+            if recorded_at is not None and recorded_at > timezone.now():
+                raise contract_error(
+                    422,
+                    "payment_recorded_in_future",
+                    "La fecha del cobro no puede ser futura.",
+                )
             payment = rows(
                 "INSERT INTO public.project_payments"
                 "(org_id,project_id,operation_key,kind,amount,method,reference,note,"

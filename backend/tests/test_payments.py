@@ -1,11 +1,13 @@
 """Cobranza ledger: idempotent recording, voiding, and sealed-deal balance."""
 
 from contextlib import contextmanager
+from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from django.utils import timezone
 from rest_framework.exceptions import APIException
 from rest_framework.test import APIClient
 
@@ -185,6 +187,24 @@ def test_record_payment_allows_fractional_usd(monkeypatch, env):
     assert out["payment"]["amount"] == "400000"  # row written by the mock
     inserts = [sql for sql, _ in env if "INSERT INTO public.project_payments" in sql]
     assert len(inserts) == 1
+
+
+def test_record_payment_rejects_future_recorded_at(monkeypatch, env):
+    _patch_rows(monkeypatch, env, sealed_gross=Decimal("800000"))
+    with pytest.raises(APIException) as failure:
+        payments.record_payment(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={
+                "operation_key": "op-12345678",
+                "kind": "ANTICIPO",
+                "amount": Decimal("400000"),
+                "method": "TRANSFER",
+                "recorded_at": timezone.now() + timedelta(days=1),
+            },
+        )
+    assert failure.value.contract_code == "payment_recorded_in_future"
 
 
 def test_record_payment_operation_key_conflict_on_other_project(monkeypatch, env):

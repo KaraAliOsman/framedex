@@ -156,6 +156,7 @@ function ProjectWorkspace({
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
+  const [paymentsDirty, setPaymentsDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -313,7 +314,11 @@ function ProjectWorkspace({
   async function clone(project: ProjectResponse): Promise<void> {
     const controller = lifetime.current;
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
-    if ((draft !== null || quotationDirty) && !window.confirm(t("projects.leaveUnsaved"))) return;
+    if (
+      (draft !== null || quotationDirty || paymentsDirty) &&
+      !window.confirm(t("projects.leaveUnsaved"))
+    )
+      return;
     locked.current = true;
     setBusy(true);
     setError("");
@@ -326,7 +331,10 @@ function ProjectWorkspace({
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (controller.signal.aborted) return;
-      flushSync(() => setQuotationDirty(false));
+      flushSync(() => {
+        setQuotationDirty(false);
+        setPaymentsDirty(false);
+      });
       navigate(`/projects/${response.data.id}`);
     } catch (caught) {
       if (controller.signal.aborted) return;
@@ -362,7 +370,7 @@ function ProjectWorkspace({
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
       <UnsavedChangesGuard
-        dirty={draft !== null || quotationDirty}
+        dirty={draft !== null || quotationDirty || paymentsDirty}
         message={t("projects.leaveUnsaved")}
       />
       <h1>{project ? `${project.code} · ${project.name}` : t("projects.title")}</h1>
@@ -473,7 +481,12 @@ function ProjectWorkspace({
             onChanged={() => query.refetch()}
             onDirtyChange={setQuotationDirty}
           />
-          <ProjectPaymentsPanel projectId={project.id} orgId={orgId} canWrite={canWrite} />
+          <ProjectPaymentsPanel
+            projectId={project.id}
+            orgId={orgId}
+            canWrite={canWrite}
+            onDirtyChange={setPaymentsDirty}
+          />
           <section>
             <div className="projects-actions">
               <h2>{t("projects.positions")}</h2>
