@@ -479,6 +479,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
     ]
     positions_by_index = {item.get("position_index"): item for item in positions_list}
     annotated_positions: set[object] = set()
+    labels = _piece_labels(snapshot)
     body, _ = _revision_header(snapshot, "Orden de trabajo de taller", "DOC-03", workshop=True)
     for fact in facts:
         members = [_object(item, "invalid_manufacturing_member")
@@ -495,9 +496,9 @@ def _doc03(snapshot: dict[str, object]) -> str:
             f'<p class="dimension">{escape(_value(fact.get("nominal_width_mm")))} × '
             f'{escape(_value(fact.get("nominal_height_mm")))} mm</p>'
             + _table(
-                ["Miembro físico", "Rol / slot", "SKU taller", "Corte mm", "Ángulos", "Referencia X/Y"],
+                ["Pieza", "Rol / slot", "SKU taller", "Corte mm", "Ángulos", "Referencia X/Y"],
                 [[
-                    member.get("member_id"),
+                    labels["member"].get(member.get("member_id"), member.get("member_id")),
                     f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('role'))} / "
                     f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('physical_member_slot'))}",
                     member.get("workshop_sku"), member.get("cut_length_mm"),
@@ -511,8 +512,9 @@ def _doc03(snapshot: dict[str, object]) -> str:
         )
         if reinforcements:
             body += _table(
-                ["Refuerzo", "Miembro padre", "SKU acero", "Corte mm", "Ángulos"],
-                [[item.get("reinforcement_id"), item.get("parent_member_id"),
+                ["Refuerzo", "Pieza padre", "SKU acero", "Corte mm", "Ángulos"],
+                [[labels["reinforcement"].get(item.get("reinforcement_id"), item.get("reinforcement_id")),
+                  labels["member"].get(item.get("parent_member_id"), item.get("parent_member_id")),
                   item.get("workshop_sku"), item.get("cut_length_mm"),
                   f"{_value(item.get('angle_left'))}° / {_value(item.get('angle_right'))}°"]
                  for item in reinforcements], ["hash", "hash", "", "dimension", ""]
@@ -520,7 +522,8 @@ def _doc03(snapshot: dict[str, object]) -> str:
         if infills:
             body += _table(
                 ["Relleno", "Vano / hoja", "Especificación", "Dimensiones mm", "Retención"],
-                [[item.get("infill_id"), f"{_value(item.get('bay_id'))} / {_value(item.get('leaf_id'))}",
+                [[labels["infill"].get(item.get("infill_id"), item.get("infill_id")),
+                  _location(labels, item.get("bay_id"), item.get("leaf_id")),
                   item.get("composition"),
                   f"{_value(_object(item.get('rect'), 'invalid_infill_rect').get('width_mm'))} × "
                   f"{_value(_object(item.get('rect'), 'invalid_infill_rect').get('height_mm'))}",
@@ -529,10 +532,11 @@ def _doc03(snapshot: dict[str, object]) -> str:
             )
         if handles:
             body += _table(
-                ["Manilla", "Vano / hoja", "Miembro host", "Punto X/Y mm",
+                ["Manilla", "Vano / hoja", "Pieza host", "Punto X/Y mm",
                  "Altura solicitada mm", "Referencia vertical"],
-                [[item.get("handle_id"), f"{_value(item.get('bay_id'))} / {_value(item.get('leaf_id'))}",
-                  item.get("host_member_id"),
+                [[labels["handle"].get(item.get("handle_id"), item.get("handle_id")),
+                  _location(labels, item.get("bay_id"), item.get("leaf_id")),
+                  labels["member"].get(item.get("host_member_id"), item.get("host_member_id")),
                   f"{_value(_object(item.get('point'), 'invalid_handle_point').get('x_mm'))} / "
                   f"{_value(_object(item.get('point'), 'invalid_handle_point').get('y_mm'))}",
                   item.get("requested_height_mm"),
@@ -580,12 +584,66 @@ def _doc03(snapshot: dict[str, object]) -> str:
         if relationships:
             body += "<h3>Matriz de ensamble</h3>" + _table(
                 ["Relación", "Pieza origen", "Pieza destino"],
-                [[item.get("relationship"), item.get("source_id"), item.get("target_id")]
+                [[item.get("relationship"),
+                  labels["member"].get(item.get("source_id"), item.get("source_id")),
+                  labels["member"].get(item.get("target_id"), item.get("target_id"))]
                  for item in relationships],
                 ["", "hash", "hash"],
             )
         body += "</section>"
     return body + "</main>"
+
+
+def _piece_labels(
+    snapshot: dict[str, object],
+) -> dict[str, dict[object, str]]:
+    """Sequential workshop-facing piece codes (M-01, R-01, I-01, MAN-01) plus
+    location codes (P-01, V-01, H-01) so emitted documents never print raw
+    engineering ids. The frozen snapshot keeps the full identities."""
+    member: dict[object, str] = {}
+    reinforcement: dict[object, str] = {}
+    infill: dict[object, str] = {}
+    handle: dict[object, str] = {}
+    bay: dict[object, str] = {}
+    leaf: dict[object, str] = {}
+    for fact in _array(snapshot.get("manufacturing"), "invalid_frozen_revision_snapshot"):
+        for item in _array(fact.get("members"), "invalid_manufacturing_fact"):
+            member.setdefault(item.get("member_id"), f"M-{len(member) + 1:02d}")
+            if item.get("bay_id") is not None:
+                bay.setdefault(item.get("bay_id"), f"V-{len(bay) + 1:02d}")
+        for item in _array(fact.get("reinforcements"), "invalid_manufacturing_fact"):
+            reinforcement.setdefault(item.get("reinforcement_id"), f"R-{len(reinforcement) + 1:02d}")
+        for item in _array(fact.get("infills"), "invalid_manufacturing_fact"):
+            infill.setdefault(item.get("infill_id"), f"I-{len(infill) + 1:02d}")
+        for item in _array(fact.get("handles"), "invalid_manufacturing_fact"):
+            handle.setdefault(item.get("handle_id"), f"MAN-{len(handle) + 1:02d}")
+        for item in [
+            *_array(fact.get("infills"), "invalid_manufacturing_fact"),
+            *_array(fact.get("handles"), "invalid_manufacturing_fact"),
+        ]:
+            if item.get("bay_id") is not None:
+                bay.setdefault(item.get("bay_id"), f"V-{len(bay) + 1:02d}")
+            if item.get("leaf_id") is not None:
+                leaf.setdefault(item.get("leaf_id"), f"H-{len(leaf) + 1:02d}")
+    position: dict[object, str] = {}
+    for item in _array(snapshot.get("positions"), "invalid_frozen_revision_snapshot"):
+        position[item.get("id")] = f"P{item.get('position_index')}"
+    return {
+        "member": member,
+        "reinforcement": reinforcement,
+        "infill": infill,
+        "handle": handle,
+        "bay": bay,
+        "leaf": leaf,
+        "position": position,
+    }
+
+
+def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: object) -> str:
+    bay = labels["bay"].get(bay_id, _value(bay_id))
+    if leaf_id is None:
+        return str(bay)
+    return f"{bay} / {labels['leaf'].get(leaf_id, _value(leaf_id))}"
 
 
 def _doc05(snapshot: dict[str, object]) -> str:
@@ -596,6 +654,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
     purchase = _object(snapshot.get("purchase_requirements"), "invalid_purchase_projection")
     groups = [_object(item, "invalid_stock_group")
               for item in _array(purchase.get("stock_groups"), "invalid_purchase_projection")]
+    labels = _piece_labels(snapshot)
     body, _ = _revision_header(snapshot, "Plan de corte 1D", "DOC-05", workshop=True)
     for group in groups:
         body += (
@@ -614,8 +673,11 @@ def _doc05(snapshot: dict[str, object]) -> str:
                 f"{escape(_value(bar.get('remainder_mm')))} mm</h3>"
                 + _table(
                     ["Sec.", "Pieza física", "Posición", "Vano / hoja", "SKU taller", "Corte mm", "Ángulos"],
-                    [[cut.get("sequence"), cut.get("piece_id"), cut.get("source_position_id"),
-                      f"{_value(cut.get('bay_id'))} / {_value(cut.get('leaf_id'))}",
+                    [[cut.get("sequence"),
+                      labels["member"].get(cut.get("piece_id"),
+                                           labels["reinforcement"].get(cut.get("piece_id"), cut.get("piece_id"))),
+                      labels["position"].get(cut.get("source_position_id"), cut.get("source_position_id")),
+                      _location(labels, cut.get("bay_id"), cut.get("leaf_id")),
                       cut.get("workshop_sku"), cut.get("length_mm"),
                       f"{_value(cut.get('angle_left'))}° / {_value(cut.get('angle_right'))}°"]
                      for cut in cuts], ["", "hash", "", "", "", "dimension", ""]
