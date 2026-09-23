@@ -299,19 +299,34 @@ def _vertical_coordinate(
     return leaf_rect.y_mm + leaf_rect.height_mm - intent.requested_height_mm
 
 
-def _matching_reinforcement_rule(
-    policy: ReinforcementCutPolicyV1, member: SemanticMemberTraceV1
+def _reinforcement_rule_for(
+    policy: ReinforcementCutPolicyV1,
+    *,
+    role: ProfileRole,
+    profile_angle_left: Decimal,
+    profile_angle_right: Decimal,
 ) -> ReinforcementCutRuleV1:
     matches = [
         rule
         for rule in policy.rules
-        if rule.role is member.role
-        and rule.profile_angle_left == member.angle_left
-        and rule.profile_angle_right == member.angle_right
+        if rule.role is role
+        and rule.profile_angle_left == profile_angle_left
+        and rule.profile_angle_right == profile_angle_right
     ]
     if len(matches) != 1:
         raise ManufacturingAuthorityError("Reinforcement cut authority is missing or ambiguous")
     return matches[0]
+
+
+def _matching_reinforcement_rule(
+    policy: ReinforcementCutPolicyV1, member: SemanticMemberTraceV1
+) -> ReinforcementCutRuleV1:
+    return _reinforcement_rule_for(
+        policy,
+        role=member.role,
+        profile_angle_left=member.angle_left,
+        profile_angle_right=member.angle_right,
+    )
 
 
 def project_manufacturing_facts_v1(
@@ -661,6 +676,7 @@ def project_coupling_facts_v1(
     *,
     coupler_cuts: list[ProfileCut],
     coupler_reinforcements: list[ReinforcementPiece],
+    coupling_wedges: dict[str, list[TracePointV1]],
     position_id: str,
     position_index: int,
     repetition_index: int,
@@ -676,10 +692,22 @@ def project_coupling_facts_v1(
     manufacturing trace. This mints them into the same physical-evidence
     contract so purchase projection and DOC-03 cover the joint pieces
     exactly once per repetition.
+
+    `coupling_wedges` maps coupling id to its plan wedge polygon
+    (``[front apex, back end, back left]`` from the assembly plan
+    geometry). Coupler members have no module-local elevation segment;
+    their ``start``/``end`` carry plan-frame coordinates — the front-chain
+    joint apex and the wedge's back-edge midpoint.
     """
     member_facts: list[PhysicalMemberFactV1] = []
     member_by_target: dict[tuple[str | None, str], PhysicalMemberFactV1] = {}
     for cut in sorted(coupler_cuts, key=lambda item: (item.bay_id or "", item.sku)):
+        wedge = coupling_wedges.get(cut.bay_id or "")
+        if wedge is None or len(wedge) < 3:
+            raise ManufacturingAuthorityError(
+                "Coupling plan wedge is missing for a BOM coupler cut"
+            )
+        apex = wedge[0]
         physical_identity = PhysicalMemberIdentityV1(
             position_id=position_id,
             position_index=position_index,
@@ -705,8 +733,11 @@ def project_coupling_facts_v1(
             angle_left=cut.angle_left,
             angle_right=cut.angle_right,
             axis=Axis.VERTICAL,
-            start=TracePointV1(x_mm=Decimal("0"), y_mm=Decimal("0")),
-            end=TracePointV1(x_mm=Decimal("0"), y_mm=cut.length_mm),
+            start=apex,
+            end=TracePointV1(
+                x_mm=(wedge[1].x_mm + wedge[2].x_mm) / 2,
+                y_mm=(wedge[1].y_mm + wedge[2].y_mm) / 2,
+            ),
         )
         member_facts.append(member)
         member_by_target[(cut.bay_id, cut.sku)] = member
@@ -725,6 +756,12 @@ def project_coupling_facts_v1(
         sku = piece.reinforcement_sku
         if not sku:
             raise ManufacturingAuthorityError("Coupler reinforcement stock identity is unresolved")
+        reinforcement_rule = _reinforcement_rule_for(
+            reinforcement_policy,
+            role=ProfileRole.COUPLER,
+            profile_angle_left=parent.angle_left,
+            profile_angle_right=parent.angle_right,
+        )
         reinforcement_id = documentary_sha256_v1(
             {
                 "kind": "reinforcement",
@@ -738,11 +775,8 @@ def project_coupling_facts_v1(
                 parent_member_id=parent.member_id,
                 workshop_sku=sku,
                 cut_length_mm=piece.length_mm,
-                # Reinforcement cut rules are keyed per member role; couplers
-                # are square-cut profiles, so the steel follows the profile's
-                # own angles.
-                angle_left=parent.angle_left,
-                angle_right=parent.angle_right,
+                angle_left=reinforcement_rule.reinforcement_angle_left,
+                angle_right=reinforcement_rule.reinforcement_angle_right,
                 policy_id=reinforcement_policy.policy_id,
                 policy_version=reinforcement_policy.version,
             )

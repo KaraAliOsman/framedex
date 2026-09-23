@@ -35,8 +35,10 @@ from dekopen_engine.manufacturing_trace import (
     GeometryManufacturingTraceV1,
     PlacementDomain,
     SemanticLeafTraceV1,
+    TracePointV1,
 )
 from dekopen_engine.models import EngineResult, ProfileRole
+from dekopen_engine.product import PlanGeometry
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
@@ -298,13 +300,19 @@ def _position_calculations(
     params: object,
     system_id: UUID,
     org_id: UUID,
-) -> tuple[list[tuple[str | None, GeometryComputation, dict[str, object]]], EngineResult]:
+) -> tuple[
+    list[tuple[str | None, GeometryComputation, dict[str, object]]],
+    EngineResult,
+    PlanGeometry | None,
+]:
     """Classic per-module geometry+trace for one persisted position.
 
-    Returns (calculations, result): classic positions compute once with a
-    ``None`` module id; product-v2 assemblies evaluate for the BOM and each
-    module recomputes on its own tree, the ``module.id`` becoming the
-    ``"<module_id>|<id>"`` namespace used by the persisted BOM.
+    Returns (calculations, result, plan): classic positions compute once
+    with a ``None`` module id; product-v2 assemblies evaluate for the BOM
+    and each module recomputes on its own tree, the ``module.id`` becoming
+    the ``"<module_id>|<id>"`` namespace used by the persisted BOM. ``plan``
+    is the assembly plan geometry (coupling wedges included) or ``None``
+    for classic positions.
     """
     calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
     is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
@@ -344,7 +352,7 @@ def _position_calculations(
             result = computation.result
     if result is None:
         raise DocumentaryError("documentary_geometry_incomplete")
-    return calculations, result
+    return calculations, result, evaluation.plan if is_assembly else None
 
 
 def _valid_targets(
@@ -605,7 +613,7 @@ def freeze_revision_a(
             )
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
-            calculations, result = _position_calculations(
+            calculations, result, plan = _position_calculations(
                 tree=tree,
                 width_mm=D(str(position["width_mm"])),
                 height_mm=D(str(position["height_mm"])),
@@ -784,12 +792,22 @@ def freeze_revision_a(
                 if piece.role is ProfileRole.COUPLER
             ]
             if is_assembly and (coupler_cuts or coupler_reinforcements):
+                if plan is None:
+                    raise DocumentaryError("documentary_geometry_incomplete")
+                coupling_wedges = {
+                    wedge.coupling_id: [
+                        TracePointV1(x_mm=point.x_mm, y_mm=point.y_mm)
+                        for point in wedge.polygon
+                    ]
+                    for wedge in plan.couplings
+                }
                 for repetition in range(1, quantity + 1):
                     unit_models.append((
                         None,
                         project_coupling_facts_v1(
                             coupler_cuts=coupler_cuts,
                             coupler_reinforcements=coupler_reinforcements,
+                            coupling_wedges=coupling_wedges,
                             position_id=position_id,
                             position_index=int(position["position_index"]),
                             repetition_index=repetition,
@@ -1179,7 +1197,7 @@ def prepare_documentary_inputs(
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        calculations, result = _position_calculations(
+        calculations, result, _plan = _position_calculations(
             tree=tree,
             width_mm=D(str(position["width_mm"])),
             height_mm=D(str(position["height_mm"])),
@@ -1367,7 +1385,7 @@ def save_documentary_inputs(
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        calculations, result = _position_calculations(
+        calculations, result, _plan = _position_calculations(
             tree=tree,
             width_mm=D(str(pos["width_mm"])),
             height_mm=D(str(pos["height_mm"])),
