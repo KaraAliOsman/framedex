@@ -24,9 +24,13 @@ import {
   type ProductModuleJson,
 } from "./productEditing";
 
+/** Assemblies cap at the product contract's module bound — shared by every
+ * count/size command so no path can mint a product the contract rejects. */
+export const MAX_MODULES = 12;
+
 /** Same presentation rules as the canvas DraftFields: positive dimensions
- * commit at 0.01mm, joint angles stay strictly inside ±90° at 0.1°, module
- * counts are positive integers bounded by the product contract. */
+ * commit at 0.01mm, joint angles commit at 0.1° within the wire contract's
+ * inclusive ±90° bound, module counts are bounded positive integers. */
 function normalizeMm(raw: string): string | null {
   const value = Number(raw.replace(",", "."));
   if (!Number.isFinite(value) || value <= 0) return null;
@@ -35,13 +39,13 @@ function normalizeMm(raw: string): string | null {
 
 function normalizeAngle(raw: string): string | null {
   const value = Number(raw.replace(",", "."));
-  if (!Number.isFinite(value) || Math.abs(value) >= 90) return null;
+  if (!Number.isFinite(value) || Math.abs(value) > 90) return null;
   return value.toFixed(1);
 }
 
 function normalizeCount(raw: string): string | null {
   const value = Number(raw.replace(",", "."));
-  if (!Number.isInteger(value) || value < 1 || value > 12) return null;
+  if (!Number.isInteger(value) || value < 1 || value > MAX_MODULES) return null;
   return String(value);
 }
 
@@ -108,7 +112,11 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     id: "product.add-right",
     title: "cmd.addUnitRight",
     keywords: ["añadir", "unidad", "vano", "hoja", "derecha", "modulo", "agregar"],
-    apply: (ctx) => addAdjacentUnit(ctx.product, "right"),
+    applicable: (ctx) => ctx.product.assembly.modules.length < MAX_MODULES,
+    apply: (ctx) =>
+      ctx.product.assembly.modules.length < MAX_MODULES
+        ? addAdjacentUnit(ctx.product, "right")
+        : ctx.product,
     describe: () => "agregar unidad a la derecha",
     ai: { op: "add_unit", decode: (op) => (op.side === "left" ? null : { side: "right" }) },
   },
@@ -116,7 +124,11 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     id: "product.add-left",
     title: "cmd.addUnitLeft",
     keywords: ["añadir", "unidad", "vano", "hoja", "izquierda", "modulo", "agregar"],
-    apply: (ctx) => addAdjacentUnit(ctx.product, "left"),
+    applicable: (ctx) => ctx.product.assembly.modules.length < MAX_MODULES,
+    apply: (ctx) =>
+      ctx.product.assembly.modules.length < MAX_MODULES
+        ? addAdjacentUnit(ctx.product, "left")
+        : ctx.product,
     describe: () => "agregar unidad a la izquierda",
     ai: { op: "add_unit", decode: (op) => (op.side === "left" ? { side: "left" } : null) },
   },

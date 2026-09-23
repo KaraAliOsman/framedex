@@ -106,6 +106,33 @@ it("commits typed mutations with collected args", () => {
   expect(modulePrimaryBay(opened.assembly.modules[0]!)?.opening_type).toBe("TURN_LEFT");
 });
 
+it("applies wire angles at the inclusive ±90° bound the contract accepts", async () => {
+  const { applyDesignOps } = await import("./designOps");
+  const product = makeBowProduct({ moduleCount: 3, widthMm: 2100, heightMm: 1400, angleDeg: 10 });
+  const next = applyDesignOps(product, [
+    { op: "set_coupling_angle", coupling: 0, angle_deg: "90" },
+    { op: "set_coupling_angle", coupling: 1, angle_deg: "-90" },
+  ]);
+  expect(next.assembly.couplings[0]!.angle_deg).toBe("90.0");
+  expect(next.assembly.couplings[1]!.angle_deg).toBe("-90.0");
+});
+
+it("refuses to mint a thirteenth module — cap is shared with the contract", async () => {
+  const { applyDesignOps } = await import("./designOps");
+  const full = makeBowProduct({ moduleCount: 12, widthMm: 8400, heightMm: 1400, angleDeg: 0 });
+  const { commands, commit } = harness(full);
+  expect(commands.find((item) => item.id === "product.add-right")).toBeUndefined();
+  expect(commands.find((item) => item.id === "product.add-left")).toBeUndefined();
+  // Even a direct wire dispatch cannot exceed the bound.
+  const next = applyDesignOps(full, [{ op: "add_unit", side: "right" }]);
+  expect(next.assembly.modules).toHaveLength(12);
+  // …and neither can set_module_count through the same registry.
+  expect(
+    applyDesignOps(full, [{ op: "set_module_count", count: 13 }]).assembly.modules,
+  ).toHaveLength(12);
+  expect(commit).not.toHaveBeenCalled();
+});
+
 it("dispatches AI wire ops through the same command apply as the palette", async () => {
   const { applyDesignOps } = await import("./designOps");
   const product = makeBowProduct({ moduleCount: 3, widthMm: 2100, heightMm: 1400, angleDeg: 10 });
