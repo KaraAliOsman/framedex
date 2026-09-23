@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(14);
+SELECT plan(15);
 
 SELECT has_table('public', 'work_centers', 'work centers table exists');
 SELECT has_table('public', 'production_steps', 'routing steps table exists');
@@ -85,6 +85,15 @@ SELECT ok(
         WHERE schemaname = 'public' AND indexname LIKE 'work_centers%code%'
     ),
     'work center codes unique per org'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public' AND tablename = 'orders'
+          AND policyname = 'workshop_orders_backend_access'
+          AND 'documentary_backend' = ANY(roles)
+    ),
+    'workshop orders stay visible to floor transitions under the backend role'
 );
 SELECT * FROM finish();
 ROLLBACK;

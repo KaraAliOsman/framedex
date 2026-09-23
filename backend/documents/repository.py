@@ -92,7 +92,16 @@ def one(
 
 @contextmanager
 def documentary_backend() -> Iterator[None]:
+    """Switch to the documentary role, restoring the caller's role on exit.
+
+    Nested contexts are safe: the previous role is captured rather than
+    hard-resetting to ``authenticated`` (an unset role restores to
+    ``authenticated``, matching the request context every caller starts in)."""
     with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        previous = str(cursor.fetchone()[0])
+        if previous == "none":
+            previous = "authenticated"
         cursor.execute("SET LOCAL ROLE documentary_backend")
     try:
         yield
@@ -101,12 +110,16 @@ def documentary_backend() -> Iterator[None]:
     except BaseException:
         if not connection.needs_rollback:
             with connection.cursor() as cursor:
-                cursor.execute("SET LOCAL ROLE authenticated")
+                cursor.execute(
+                    sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                )
         raise
     else:
         if not connection.needs_rollback:
             with connection.cursor() as cursor:
-                cursor.execute("SET LOCAL ROLE authenticated")
+                cursor.execute(
+                    sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                )
 
 
 def effective_scope(
