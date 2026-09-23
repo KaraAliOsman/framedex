@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
+import hashlib
 import json
 from uuid import UUID
 
@@ -565,6 +566,7 @@ def create_remake(
             raise DocumentaryError("remake_requires_hold")
         payload = _decoded(source["payload_json"])
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
+        payload.pop("cnc_export", None)
         payload["remake_of"] = str(source["id"])
         prior = one(
             """
@@ -649,7 +651,8 @@ def list_work_centers(*, org_id: UUID) -> dict[str, object]:
 
 def _csv_cell(value: object) -> str:
     text = "" if value is None else str(value)
-    return f'"{text}"' if any(c in text for c in '",\n') else text
+    escaped = text.replace('"', '""')
+    return f'"{escaped}"' if any(c in text for c in '",\n') else text
 
 
 def _cnc_bars_csv(optimization: dict[str, object]) -> str:
@@ -657,24 +660,24 @@ def _cnc_bars_csv(optimization: dict[str, object]) -> str:
     position inside the bar — deterministic output for the saw operator."""
     rows_out = [
         "bar_index,stock_sku,stock_length_mm,sequence_in_bar,piece_id,"
-        "cut_length_mm,unit_index,bay_id,leaf_id,source_position_id"
+        "cut_length_mm,angle_left_deg,angle_right_deg,"
+        "unit_index,bay_id,leaf_id,source_position_id"
     ]
     bars = (optimization.get("bars") or {}).get("workshop_cut_plan") or []
     for bar in sorted(bars, key=lambda b: int(b.get("bar_index") or 0)):
-        for sequence, cut in enumerate(
-            sorted(
-                bar.get("cuts") or [],
-                key=lambda c: str(c.get("piece_id") or ""),
-            ),
-            start=1,
+        for cut in sorted(
+            bar.get("cuts") or [],
+            key=lambda c: int(c.get("sequence") or 0),
         ):
             rows_out.append(",".join(_csv_cell(v) for v in (
                 bar.get("bar_index"),
                 bar.get("commercial_sku"),
                 bar.get("stock_length_mm"),
-                sequence,
+                cut.get("sequence"),
                 cut.get("piece_id"),
                 cut.get("length_mm"),
+                cut.get("angle_left"),
+                cut.get("angle_right"),
                 cut.get("unit_index"),
                 cut.get("bay_id"),
                 cut.get("leaf_id"),
@@ -717,6 +720,11 @@ def _cnc_sheets_csv(optimization: dict[str, object]) -> str:
     return "\n".join(rows_out) + "\n"
 
 
+def _optimization_fingerprint(optimization: dict[str, object]) -> str:
+    canonical = json.dumps(optimization, sort_keys=True, default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def export_cnc_files(
     *, org_id: UUID, order_id: UUID, actor_id: UUID
 ) -> dict[str, object]:
@@ -741,7 +749,8 @@ def export_cnc_files(
         if optimization.get("sheets"):
             files["sheets.csv"] = _cnc_sheets_csv(optimization)
         export = {
-            "schema": "work_order_cnc_export_v1",
+            "schema": "work_order_cnc_export_v2",
+            "optimization_fingerprint": _optimization_fingerprint(optimization),
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "actor_id": str(actor_id),
             "files": files,
@@ -791,7 +800,15 @@ def cnc_file_content(
         [str(order_id), str(org_id)],
         "work_order_not_found",
     )
-    export = _decoded(order["payload_json"]).get("cnc_export") or {}
+    payload = _decoded(order["payload_json"])
+    export = payload.get("cnc_export") or {}
+    optimization = payload.get("optimization")
+    if (
+        export.get("optimization_fingerprint")
+        and _optimization_fingerprint(optimization if isinstance(optimization, dict) else {})
+        != export["optimization_fingerprint"]
+    ):
+        return None
     files = export.get("files") or {}
     content = files.get(filename)
     if content is None:
@@ -1058,7 +1075,9 @@ def optimize_work_order(
             "sheet_purchases": sheet_purchases,
             "unnested": unnested,
         }
+        # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
+        new_payload.pop("cnc_export", None)
         rows(
             """
             UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s

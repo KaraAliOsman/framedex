@@ -847,11 +847,13 @@ def test_export_cnc_files_writes_deterministic_csv(monkeypatch) -> None:
                     "commercial_sku": "MARCO-60",
                     "stock_length_mm": "6500",
                     "cuts": [
-                        {"piece_id": "M-02", "length_mm": "1200", "unit_index": 1,
-                         "bay_id": "b1", "leaf_id": None,
+                        {"piece_id": "M-02", "length_mm": "1200", "sequence": 1,
+                         "angle_left": "45.0", "angle_right": "45.0",
+                         "unit_index": 1, "bay_id": "b1", "leaf_id": None,
                          "source_position_id": str(_POSITION_ID)},
-                        {"piece_id": "M-01", "length_mm": "1500", "unit_index": 1,
-                         "bay_id": "b1", "leaf_id": None,
+                        {"piece_id": "M-01", "length_mm": "1500", "sequence": 2,
+                         "angle_left": "90.0", "angle_right": "45.0",
+                         "unit_index": 1, "bay_id": "b1", "leaf_id": None,
                          "source_position_id": str(_POSITION_ID)},
                     ],
                 }
@@ -908,8 +910,11 @@ def test_export_cnc_files_writes_deterministic_csv(monkeypatch) -> None:
     bars_csv = stored["files"]["bars.csv"]
     lines = bars_csv.strip().split("\n")
     assert lines[0].startswith("bar_index,")
-    assert "M-01" in lines[1] and "M-02" in lines[2]  # sorted per bar
-    assert ",1," in lines[1]
+    assert "M-02" in lines[1] and "M-01" in lines[2]  # stored cut sequence
+    assert lines[1].split(",")[3] == "1"  # sequence_in_bar column
+    assert "45.0" in lines[1] and "90.0" in lines[2]  # saw angles exported
+    assert stored["schema"] == "work_order_cnc_export_v2"
+    assert stored["optimization_fingerprint"]
     sheets_csv = stored["files"]["sheets.csv"]
     assert "GLASS-4" in sheets_csv and "V-01" in sheets_csv
     assert any("wo_cnc_exported" in s2 for s2, _ in writes)
