@@ -789,6 +789,8 @@ def export_cnc_files(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
         payload = _decoded(order["payload_json"])
         optimization = payload.get("optimization")
         if not isinstance(optimization, dict) or not optimization.get("bars"):
@@ -1111,6 +1113,8 @@ def optimize_work_order(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
         payload = _decoded(order["payload_json"])

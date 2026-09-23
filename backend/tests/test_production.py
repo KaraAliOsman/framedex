@@ -1210,3 +1210,26 @@ def test_remake_drops_source_packing(monkeypatch) -> None:
     ):
         service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
     assert "packing" not in json.loads(captured[0][3])
+
+
+
+def test_dispatched_order_rejects_mutation_actions(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    order = {
+        "id": str(order_id),
+        "order_code": "OT-1",
+        "status": "DISPATCHED",
+        "payload_json": {"optimization": {"bars": {"workshop_cut_plan": []}}},
+    }
+    monkeypatch.setattr("production.service.one", lambda *_a, **_k: order)
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="work_order_dispatched"):
+            service.export_cnc_files(
+                org_id=org_id, order_id=order_id, actor_id=uuid4()
+            )
+        with pytest.raises(DocumentaryError, match="work_order_dispatched"):
+            service.optimize_work_order(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), color="BLANCO"
+            )
