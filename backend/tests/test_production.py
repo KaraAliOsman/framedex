@@ -1423,6 +1423,10 @@ def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
         lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"},
     )
     monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr(
+        "production.service.sealed_delivery_address",
+        lambda **kw: "Av. Norte 100",
+    )
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
@@ -1433,6 +1437,82 @@ def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
         )
     assert events == []
     assert out["delivery"]["status"] == "SCHEDULED"
+
+
+def test_schedule_delivery_rejects_address_change_after_dispatch(monkeypatch) -> None:
+    """The issued guía sealed the destination — the paper the driver holds
+    can't drift. Dates/contacts may still move; the address may not."""
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"},
+    )
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda *_a, **_k: [
+            {"status": "SCHEDULED", "address": "Av. Norte 100"}
+        ],
+    )
+    monkeypatch.setattr(
+        "production.service.sealed_delivery_address",
+        lambda **kw: "Av. Norte 100",
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="delivery_address_sealed"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="2026-10-01", time_window=None,
+                address="Otra Calle 55",
+            )
+
+
+def test_dispatch_purges_orphaned_pdf_on_transaction_failure(monkeypatch) -> None:
+    """A failure after the guía's upload rolls back the row but not the
+    storage object — the compensating purge must remove the orphan."""
+    org_id, order_id, project_id = uuid4(), uuid4(), uuid4()
+    purged: list[str] = []
+
+    def fake_issue(**kwargs):
+        return {
+            "note_code": "GD-0001",
+            "storage_object_key": "org_x/gd.pdf",
+            "uploaded": True,
+        }
+
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": str(order_id), "order_code": "OT-1",
+            "status": "COMPLETED", "payload_json": {},
+            "project_id": str(project_id),
+        },
+    )
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "insert into public.production_step_events" in lowered:
+            raise DocumentaryError("event_insert_failed")
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr("production.service.issue_dispatch_note", fake_issue)
+    monkeypatch.setattr(
+        "production.service.project_row", lambda *a, **k: {"code": "P-1"}
+    )
+    monkeypatch.setattr(
+        "production.service.purge_unreferenced_note_object",
+        lambda **kw: purged.append(kw["object_key"]),
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="event_insert_failed"):
+            service.dispatch_work_order(
+                org_id=org_id, order_id=order_id, actor_id=uuid4()
+            )
+    assert purged == ["org_x/gd.pdf"]
 
 
 def test_installation_requires_delivered_delivery(monkeypatch) -> None:

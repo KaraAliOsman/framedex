@@ -929,6 +929,7 @@ def render_payment_receipt(
 def _dispatch_note_body(payload: dict[str, object]) -> str:
     order = _object(payload.get("order"), "invalid_dispatch_note_order")
     project = _object(payload.get("project"), "invalid_dispatch_note_project")
+    delivery = _object(payload.get("delivery"), "invalid_dispatch_note_delivery")
     totals = _object(payload.get("totals"), "invalid_dispatch_note_totals")
     dispatch = _object(payload.get("dispatch"), "invalid_dispatch_note_dispatch")
     units = payload.get("units") or []
@@ -964,9 +965,19 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         '<section class="hero"><p>Destinatario</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
-        f"<p>{escape(_value(project.get('delivery_address')))}</p>"
+        f"<p>{escape(_value(delivery.get('address')))}</p>"
         f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
     )
+    scheduled = _value(delivery.get("scheduled_date"))
+    if scheduled != "—":
+        window = _value(delivery.get("time_window"))
+        contact = _value(delivery.get("contact_name"))
+        body += (
+            f"<p><strong>Entrega programada:</strong> {escape(scheduled)}"
+            + (f" · {escape(window)}" if window != "—" else "")
+            + (f" · {escape(contact)}" if contact != "—" else "")
+            + "</p>"
+        )
     if units:
         body += (
             "<h2>Bultos</h2>"

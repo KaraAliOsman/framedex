@@ -13,8 +13,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from uuid import UUID
 
+from django.db import connection, transaction
 from django.utils import timezone
 
 from authentication.errors import contract_error
@@ -22,6 +24,8 @@ from documents.repository import documentary_backend
 from documents.renderers import render_dispatch_note
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+
+logger = logging.getLogger(__name__)
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -80,7 +84,7 @@ def issue_dispatch_note(
         [order_id_s, org_id_s],
     )
     if existing:
-        return _note_public(existing[0])
+        return existing[0]
 
     one(
         "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
@@ -95,6 +99,20 @@ def issue_dispatch_note(
     note_code = f"GD-{sequence + 1:04d}"
     order_payload = order["payload_json"] if isinstance(order["payload_json"], dict) else json.loads(order["payload_json"] or "{}")
     units = _manifest_units(order_payload)
+    # The destination the shipment actually goes to: a scheduled delivery's
+    # stored address wins over the project default — once sealed, the guía is
+    # the paper the driver holds, so schedule_delivery locks the address after
+    # dispatch (dates and contacts may still change).
+    delivery = rows(
+        "SELECT scheduled_date,time_window,address,contact_name,contact_phone,"
+        "installer_name FROM public.deliveries "
+        "WHERE order_id=%s AND org_id=%s",
+        [order_id_s, org_id_s],
+    )
+    delivery = delivery[0] if delivery else None
+    sealed_address = (
+        delivery["address"] if delivery else project["delivery_address"]
+    )
     payload = {
         "note_code": note_code,
         "issued_at": timezone.now().isoformat(),
@@ -109,7 +127,16 @@ def issue_dispatch_note(
             "name": project["name"],
             "client_name": project["client_name"],
             "client_rut": project["client_rut"],
-            "delivery_address": project["delivery_address"],
+        },
+        "delivery": {
+            "address": sealed_address,
+            "scheduled_date": delivery["scheduled_date"].isoformat()
+            if delivery and hasattr(delivery["scheduled_date"], "isoformat")
+            else (delivery["scheduled_date"] if delivery else None),
+            "time_window": delivery["time_window"] if delivery else None,
+            "contact_name": delivery["contact_name"] if delivery else None,
+            "contact_phone": delivery["contact_phone"] if delivery else None,
+            "installer_name": delivery["installer_name"] if delivery else None,
         },
         "units": units,
         "totals": {
@@ -161,7 +188,37 @@ def issue_dispatch_note(
         except Exception:  # noqa: BLE001 — evidence cleanup must not mask the real failure
             pass
         raise
-    return _note_public(row)
+    row["uploaded"] = True
+    return row
+
+
+def purge_unreferenced_note_object(
+    *, org_id: UUID, object_key: str
+) -> None:
+    """Compensating delete for a rolled-back dispatch: the storage upload
+    outlives the transaction that sealed it. Serialize on the same org slot
+    as issue_dispatch_note — a committed row that references the key wins,
+    an orphan is removed without masking the original failure."""
+    try:
+        with transaction.atomic(), documentary_backend():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                    [f"dispatch_notes:{org_id}"],
+                )
+            referenced = rows(
+                "SELECT id FROM public.dispatch_notes "
+                "WHERE org_id=%s AND storage_object_key=%s",
+                [str(org_id), object_key],
+            )
+            if referenced:
+                return
+            SupabaseDocumentStorage().delete_object(object_key)
+    except Exception as cleanup_error:  # noqa: BLE001
+        logger.warning(
+            "dispatch_note_cleanup_failed",
+            extra={"storage_object_key": object_key, "cleanup_error": str(cleanup_error)},
+        )
 
 
 def dispatch_note_access(*, org_id: UUID, order_id: UUID) -> dict:
@@ -184,3 +241,29 @@ def dispatch_note_access(*, org_id: UUID, order_id: UUID) -> dict:
         "signed_url": signed_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }
+
+
+def sealed_delivery_address(*, org_id: UUID, order_id: UUID) -> str | None:
+    """The destination the issued guía carries — post-dispatch address edits
+    must not drift from the paper the driver holds."""
+    note = rows(
+        "SELECT payload_json::text AS payload_json FROM public.dispatch_notes "
+        "WHERE org_id=%s AND work_order_id=%s",
+        [str(org_id), str(order_id)],
+    )
+    if not note:
+        return None
+    payload = note[0]["payload_json"]
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    if not isinstance(payload, dict):
+        return None
+    delivery = payload.get("delivery")
+    if isinstance(delivery, dict) and delivery.get("address"):
+        return delivery["address"]
+    # Notes issued before the delivery block existed sealed the destination
+    # under project.delivery_address — still the paper the driver holds.
+    project = payload.get("project")
+    if isinstance(project, dict):
+        return project.get("delivery_address")
+    return None

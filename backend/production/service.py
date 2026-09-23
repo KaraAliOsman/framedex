@@ -24,7 +24,11 @@ from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
-from production.dispatch_notes import issue_dispatch_note
+from production.dispatch_notes import (
+    issue_dispatch_note,
+    purge_unreferenced_note_object,
+    sealed_delivery_address,
+)
 from projects.service import project_row
 
 
@@ -1077,54 +1081,65 @@ def dispatch_work_order(
     """Ship the finished order: requires COMPLETED (all routing done); sets
     DISPATCHED and records WO_DISPATCHED. Idempotent — re-dispatching an
     already dispatched order returns its current state."""
-    with transaction.atomic(), documentary_backend():
-        order = one(
-            """
-            SELECT id, order_code, status::text, payload_json, project_id
-            FROM public.orders
-            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
-            FOR UPDATE
-            """,
-            [str(order_id), str(org_id)],
-            "work_order_not_found",
-        )
-        if str(order["status"]) == "DISPATCHED":
+    note_row: dict | None = None
+    try:
+        with transaction.atomic(), documentary_backend():
+            order = one(
+                """
+                SELECT id, order_code, status::text, payload_json, project_id
+                FROM public.orders
+                WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+                FOR UPDATE
+                """,
+                [str(order_id), str(org_id)],
+                "work_order_not_found",
+            )
+            if str(order["status"]) == "DISPATCHED":
+                return get_work_order(org_id=org_id, order_id=order_id)
+            if str(order["status"]) != "COMPLETED":
+                raise DocumentaryError("dispatch_requires_completed")
+            rows(
+                """
+                UPDATE public.orders SET status = 'DISPATCHED', updated_at = %s
+                WHERE id = %s AND org_id = %s
+                RETURNING id
+                """,
+                [datetime.now(timezone.utc), str(order_id), str(org_id)],
+            )
+            note_row = issue_dispatch_note(
+                org_id=org_id,
+                order=order,
+                project=project_row(org_id, order["project_id"]),
+                actor_id=actor_id,
+                note=(note or "").strip() or None,
+            )
+            rows(
+                """
+                INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+                VALUES (%s, %s, 'WO_DISPATCHED', %s, %s::jsonb)
+                RETURNING id
+                """,
+                [
+                    str(org_id),
+                    str(order_id),
+                    str(actor_id),
+                    json.dumps({
+                        "order_code": order["order_code"],
+                        "note": (note or "").strip() or None,
+                        "dispatch_note": note_row["note_code"],
+                    }),
+                ],
+            )
             return get_work_order(org_id=org_id, order_id=order_id)
-        if str(order["status"]) != "COMPLETED":
-            raise DocumentaryError("dispatch_requires_completed")
-        rows(
-            """
-            UPDATE public.orders SET status = 'DISPATCHED', updated_at = %s
-            WHERE id = %s AND org_id = %s
-            RETURNING id
-            """,
-            [datetime.now(timezone.utc), str(order_id), str(org_id)],
-        )
-        note_row = issue_dispatch_note(
-            org_id=org_id,
-            order=order,
-            project=project_row(org_id, order["project_id"]),
-            actor_id=actor_id,
-            note=(note or "").strip() or None,
-        )
-        rows(
-            """
-            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
-            VALUES (%s, %s, 'WO_DISPATCHED', %s, %s::jsonb)
-            RETURNING id
-            """,
-            [
-                str(org_id),
-                str(order_id),
-                str(actor_id),
-                json.dumps({
-                    "order_code": order["order_code"],
-                    "note": (note or "").strip() or None,
-                    "dispatch_note": note_row["note_code"],
-                }),
-            ],
-        )
-        return get_work_order(org_id=org_id, order_id=order_id)
+    except Exception:
+        # A later failure rolls back the sealed row but not the storage
+        # upload — purge the unreferenced object so a retry is the only
+        # guía that exists.
+        if note_row is not None and note_row.get("uploaded"):
+            purge_unreferenced_note_object(
+                org_id=org_id, object_key=str(note_row["storage_object_key"])
+            )
+        raise
 
 
 def create_work_center(
@@ -1534,6 +1549,15 @@ def schedule_delivery(
             "installer_name": (installer_name or "").strip() or None,
             "notes": (notes or "").strip() or None,
         }
+        if str(order["status"]) == "DISPATCHED":
+            # The guía de despacho already sealed a destination — the paper
+            # the driver holds can't be edited after the fact. Dates,
+            # windows and contacts may still move; the address may not.
+            sealed_address = sealed_delivery_address(
+                org_id=org_id, order_id=order_id
+            )
+            if sealed_address is not None and normalized["address"] != sealed_address:
+                raise DocumentaryError("delivery_address_sealed")
         if (
             existing
             and str(existing[0]["status"]) == "SCHEDULED"

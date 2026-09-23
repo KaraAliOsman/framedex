@@ -91,12 +91,14 @@ def _project():
     }
 
 
-def _patch_env(monkeypatch, storage, *, existing=None, count=0):
+def _patch_env(monkeypatch, storage, *, existing=None, count=0, delivery=None):
     one_calls = []
 
     def fake_rows(sql, params=None):
         if "FROM public.dispatch_notes WHERE work_order_id" in sql:
             return [existing] if existing else []
+        if "FROM public.deliveries" in sql:
+            return [delivery] if delivery else []
         return []
 
     def fake_one(sql, params=None, **kw):
@@ -167,7 +169,7 @@ def test_issue_dispatch_note_payload_seals_manifest_and_destination(monkeypatch)
     )
     payload = json.loads(insert[4])
     assert payload["note_code"] == "GD-0001"
-    assert payload["project"]["delivery_address"] == "Av. Providencia 1234"
+    assert payload["delivery"]["address"] == "Av. Providencia 1234"
     assert payload["order"]["code"] == "OT-P-1-REV-A-01"
     assert len(payload["units"]) == 2
     assert payload["units"][0]["label_code"] == "OT-P-1-REV-A-01-U01"
@@ -197,6 +199,36 @@ def test_issue_dispatch_note_without_manifest_still_seals(monkeypatch):
     assert len(storage.uploads) == 1
 
 
+def test_issue_dispatch_note_seals_scheduled_delivery_address(monkeypatch):
+    """A scheduled delivery's stored address wins over the project default —
+    the guía carries the destination the shipment actually goes to."""
+    storage = _Storage()
+    one_calls = _patch_env(
+        monkeypatch,
+        storage,
+        delivery={
+            "scheduled_date": "2026-10-05",
+            "time_window": "AM",
+            "address": "Bodega Sur 500",
+            "contact_name": "Recepción",
+            "contact_phone": "+56 2 2345 6789",
+            "installer_name": None,
+        },
+    )
+    dispatch_notes.issue_dispatch_note(
+        org_id=uuid4(), order=_order(), project=_project(), actor_id=uuid4(), note=None
+    )
+    insert = next(
+        params
+        for sql, params in one_calls
+        if "INSERT INTO public.dispatch_notes" in sql
+    )
+    payload = json.loads(insert[4])
+    assert payload["delivery"]["address"] == "Bodega Sur 500"
+    assert payload["delivery"]["scheduled_date"] == "2026-10-05"
+    assert payload["delivery"]["time_window"] == "AM"
+
+
 def test_issue_dispatch_note_replay_returns_existing_without_upload(monkeypatch):
     storage = _Storage()
     existing = _note_row()
@@ -210,6 +242,19 @@ def test_issue_dispatch_note_replay_returns_existing_without_upload(monkeypatch)
     )
     assert out["note_code"] == "GD-0001"
     assert storage.uploads == []
+    assert "uploaded" not in out
+
+
+def test_issue_dispatch_note_marks_fresh_upload_for_compensation(monkeypatch):
+    """dispatch_work_order needs the object key to purge an orphan when the
+    surrounding transaction rolls back after the upload."""
+    storage = _Storage()
+    _patch_env(monkeypatch, storage)
+    out = dispatch_notes.issue_dispatch_note(
+        org_id=uuid4(), order=_order(), project=_project(), actor_id=uuid4(), note=None
+    )
+    assert out["uploaded"] is True
+    assert out["storage_object_key"]
 
 
 def test_dispatch_note_access_signs_the_stored_object(monkeypatch):
