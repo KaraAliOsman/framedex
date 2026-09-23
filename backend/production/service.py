@@ -298,6 +298,47 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
     return {"orders": [_public_order(order) for order in orders]}
 
 
+def confirm_installation(
+    org_id: str, order_id: str, actor_id: str, note: str | None = None
+) -> dict:
+    """Mark a dispatched order installed — the physical install is done.
+
+    Idempotent: replaying on an INSTALLED order returns the current state.
+    """
+    with transaction.atomic(), documentary_backend():
+            order = one(
+                "SELECT id, order_code, status, payload_json FROM public.orders "
+                "WHERE id = %s AND organization_id = %s FOR UPDATE",
+                [str(order_id), org_id],
+            )
+            if order["status"] == "INSTALLED":
+                return get_work_order(org_id=org_id, order_id=order_id)
+            if order["status"] != "DISPATCHED":
+                raise DocumentaryError("installation_requires_dispatched")
+            rows(
+                "UPDATE public.orders SET status = 'INSTALLED' "
+                "WHERE id = %s AND organization_id = %s",
+                [str(order_id), org_id],
+            )
+            rows(
+                """INSERT INTO public.production_step_events
+                       (organization_id, order_id, event, actor_id, payload)
+                   VALUES (%s, %s, 'WO_INSTALLED', %s, %s)""",
+                [
+                    org_id,
+                    str(order_id),
+                    actor_id,
+                    json.dumps(
+                        {
+                            "order_code": order["order_code"],
+                            "note": (note or "").strip() or None,
+                        }
+                    ),
+                ],
+            )
+    return get_work_order(org_id=org_id, order_id=order_id)
+
+
 def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     order = one(
         """
@@ -456,6 +497,8 @@ def transition_step(
             [str(step_id), str(org_id)],
             "production_step_not_found",
         )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
         if str(order["status"]) == "DISPATCHED":
             raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
@@ -880,6 +923,8 @@ def generate_packing_manifest(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
         if str(order["status"]) == "DISPATCHED":
             raise DocumentaryError("work_order_dispatched")
         payload = _decoded(order["payload_json"])

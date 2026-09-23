@@ -1210,3 +1210,51 @@ def test_remake_drops_source_packing(monkeypatch) -> None:
     ):
         service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
     assert "packing" not in json.loads(captured[0][3])
+
+
+
+def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    statuses = iter(["IN_PROGRESS", "DISPATCHED", "INSTALLED"])
+    captured: dict[str, str] = {}
+    events: list[tuple[str, list]] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        return {
+            "id": str(order_id),
+            "order_code": "OT-1",
+            "status": captured.get("status") or next(statuses),
+            "payload_json": {},
+        }
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "update public.orders set status" in lowered:
+            captured["status"] = "INSTALLED"
+        if "insert into public.production_step_events" in lowered:
+            events.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr(
+        "production.service.get_work_order",
+        lambda **kw: {"order": {"status": captured.get("status", "?")}},
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="installation_requires_dispatched"):
+            service.confirm_installation(
+                org_id=org_id, order_id=order_id, actor_id=uuid4()
+            )
+        service.confirm_installation(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), note="Obra Norte"
+        )
+        # replay on INSTALLED returns the order without writing again
+        out = service.confirm_installation(
+            org_id=org_id, order_id=order_id, actor_id=uuid4()
+        )
+    assert "'wo_installed'" in events[0][0]
+    assert len(events) == 1
+    assert out["order"]["status"] == "INSTALLED"

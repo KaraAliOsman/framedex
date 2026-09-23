@@ -25,6 +25,7 @@ from production import service
 from production.serializers import (
     CncExportSerializer,
     DispatchRequestSerializer,
+    InstallationRequestSerializer,
     PackingManifestSerializer,
     ProductionOrderDetailSerializer,
     RemakeRequestSerializer,
@@ -215,6 +216,27 @@ class ProductionOrderCncFileView(APIView):
         response = HttpResponse(content, content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{download_name}"'
         return response
+
+
+class ProductionOrderInstallationView(APIView):
+    @extend_schema(
+        operation_id="production_order_install",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=InstallationRequestSerializer,
+        responses={200: ProductionOrderDetailSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(InstallationRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _STEP_ACTORS) as (token, _, org_id):
+                output = service.confirm_installation(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    note=data.get("note"),
+                )
+        return Response(output)
 
 
 class ProductionOrderPackingView(APIView):

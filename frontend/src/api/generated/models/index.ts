@@ -121,6 +121,7 @@ export * from "./inspectorFinding";
 export * from "./inspectorFindingSeverityEnum";
 export * from "./inspectorRuleIdEnum";
 export * from "./inspectorTarget";
+export * from "./installationRequestRequest";
 export * from "./inventoryMovement";
 export * from "./inventoryMovementMovementTypeEnum";
 export * from "./inventoryMovementRequestMovementTypeEnum";

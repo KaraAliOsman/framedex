@@ -58,6 +58,7 @@ import type {
   FreezeRequestRequest,
   FreezeResponse,
   ImportRequestRequest,
+  InstallationRequestRequest,
   InventoryMovement,
   InventoryMovementRequestRequest,
   InventoryMovements,
@@ -5123,6 +5124,89 @@ export const productionOrderDispatch = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(dispatchRequestRequest),
+  });
+};
+
+export type productionOrderInstallResponse200 = {
+  data: ProductionOrderDetail;
+  status: 200;
+};
+
+export type productionOrderInstallResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderInstallResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderInstallResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderInstallResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderInstallResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderInstallResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderInstallResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderInstallResponseSuccess = productionOrderInstallResponse200 & {
+  headers: Headers;
+};
+export type productionOrderInstallResponseError = (
+  | productionOrderInstallResponse400
+  | productionOrderInstallResponse401
+  | productionOrderInstallResponse403
+  | productionOrderInstallResponse404
+  | productionOrderInstallResponse409
+  | productionOrderInstallResponse422
+  | productionOrderInstallResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderInstallResponse =
+  productionOrderInstallResponseSuccess | productionOrderInstallResponseError;
+
+export const getProductionOrderInstallUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/install/`;
+};
+
+export const productionOrderInstall = async (
+  orderId: string,
+  installationRequestRequest?: InstallationRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderInstallResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderInstallResponse>(getProductionOrderInstallUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(installationRequestRequest),
   });
 };
 

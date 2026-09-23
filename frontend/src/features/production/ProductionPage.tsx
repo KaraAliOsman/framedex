@@ -5,6 +5,7 @@ import {
   productionOrderCncExport,
   productionOrderDetail,
   productionOrderDispatch,
+  productionOrderInstall,
   productionOrderOptimize,
   productionOrderPacking,
   productionOrderRemake,
@@ -112,6 +113,7 @@ const orderStatusKey: Record<string, Parameters<typeof t>[0]> = {
   HOLD: "production.orderHold",
   COMPLETED: "production.orderCompleted",
   DISPATCHED: "production.orderDispatched",
+  INSTALLED: "production.orderInstalled",
 };
 const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_RELEASED: "production.eventReleased",
@@ -128,6 +130,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_CNC_EXPORTED: "production.eventCncExported",
   WO_PACKED: "production.eventPacked",
   WO_DISPATCHED: "production.eventDispatched",
+  WO_INSTALLED: "production.eventInstalled",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -270,6 +273,10 @@ export function ProductionPage(): JSX.Element {
     void action(productionOrderDispatch(orderId, { note: note || undefined }), orderId);
   }
 
+  function install(orderId: string): void {
+    void action(productionOrderInstall(orderId, { note: note || undefined }), orderId);
+  }
+
   function downloadCnc(orderCode: string, filename: string, content: string): void {
     const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -282,6 +289,7 @@ export function ProductionPage(): JSX.Element {
 
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
   const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
+  const canStep = canWrite || role === "INSTALLER";
   if (!canAct) {
     return (
       <section className="production-page">
@@ -345,6 +353,16 @@ export function ProductionPage(): JSX.Element {
                     onClick={() => dispatch(detail.id)}
                   >
                     {t("production.dispatchButton")}
+                  </button>
+                ) : null}
+                {canStep && detail.status === "DISPATCHED" ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-install"
+                    disabled={busy}
+                    onClick={() => install(detail.id)}
+                  >
+                    {t("production.installButton")}
                   </button>
                 ) : null}
                 {canWrite && detail.status === "HOLD" ? (
@@ -562,7 +580,7 @@ export function ProductionPage(): JSX.Element {
                           {new Date(packing.generated_at).toLocaleString("es-CL")}
                         </time>
                       ) : null}
-                      {canWrite && detail.status !== "DISPATCHED" ? (
+                      {canWrite && detail.status !== "DISPATCHED" && detail.status !== "INSTALLED" ? (
                         <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
                           {packing
                             ? t("production.packingRegenerate")
@@ -615,7 +633,9 @@ export function ProductionPage(): JSX.Element {
                       </span>
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                    {detail.status !== "COMPLETED" && detail.status !== "DISPATCHED" ? (
+                    {detail.status !== "COMPLETED" &&
+                        detail.status !== "DISPATCHED" &&
+                        detail.status !== "INSTALLED" ? (
                       <div className="production-step-actions">
                         {stepActions(step).map((stepAction) => (
                           <button

@@ -100,6 +100,10 @@ class DispatchRequestSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=500)
 
 
+class InstallationRequestSerializer(serializers.Serializer):
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
 class RemakeRequestSerializer(StrictSerializer):
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
 
