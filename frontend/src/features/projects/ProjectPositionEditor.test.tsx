@@ -312,6 +312,10 @@ beforeEach(() => {
       ],
       glazing_thicknesses: ["24.00", "28.00"],
       glass_skus: ["GLASS-A", "GLASS-B"],
+      glass_specs: [
+        { sku: "GLASS-A", spec: "4-16-4" },
+        { sku: "GLASS-B", spec: null },
+      ],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
       coupler_skus: ["ACOPLE-60"],
       coupler_profiles: [
@@ -447,6 +451,7 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
       glazing_thicknesses: ["4.00"],
       hardware_kits: [],
       glass_skus: ["GLASS-A"],
+      glass_specs: [{ sku: "GLASS-A", spec: "4" }],
       coupler_skus: [],
       coupler_profiles: [],
       glazing_beads: [],

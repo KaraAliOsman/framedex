@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 
 from django.db import transaction
 
-from authentication.errors import contract_error
+from authentication.errors import ContractAPIException, contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from ingest.extract import extract, kind_for
@@ -173,6 +173,14 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
     # audit+debit independently of candidate writes, or a retry re-bills the
     # wallet. `documentary_backend` needs a live transaction for SET LOCAL ROLE.
     with transaction.atomic():
+        # Paid OCR must not outlive the drafting contract — re-check inside the
+        # claim transaction so a pricing application that raced the upload
+        # still wins before the job's first charge. Confirm re-locks the
+        # project authoritatively; this window is the worker's own creation.
+        try:
+            projects_service.editable(org_id, row["project_id"])
+        except ContractAPIException as error:
+            raise ImportError_("import_project_closed") from error
         with documentary_backend():
             claimed = rows(
                 "UPDATE public.document_imports SET status='EXTRACTING', updated_at=now() "
@@ -316,6 +324,7 @@ def confirm_import(
         created = _as_list(row["result"])
         done = {str(entry.get("key")) for entry in created}
         errors: list[dict] = []
+        glass_cache: dict[str, dict] = {}
         for item in items:
             key = str(item["key"])
             if key in done:
@@ -323,13 +332,40 @@ def confirm_import(
             if key not in candidate_keys:
                 errors.append({"key": key, "code": "import_item_unknown"})
                 continue
+            # The technical SKU must resolve against the system's purchase
+            # mappings — an unknown article can never seed a BOM.
+            sku = str(item["glass_article_sku"]).strip()
+            mapping = glass_cache.get(str(item["system_id"]))
+            if mapping is None:
+                mapping = {
+                    str(entry["technical_sku"]): entry.get("glass_spec")
+                    for entry in rows(
+                        "SELECT DISTINCT ON (technical_sku) technical_sku, glass_spec "
+                        "FROM public.glass_purchase_mappings "
+                        "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) "
+                        "ORDER BY technical_sku, org_id NULLS LAST, version DESC",
+                        [str(item["system_id"]), str(org_id)],
+                    )
+                }
+                glass_cache[str(item["system_id"])] = mapping
+            if sku not in mapping:
+                errors.append({"key": key, "code": "glass_article_unknown"})
+                continue
+            # The catalog recipe wins; only a spec-less mapping falls back to
+            # the reviewer's submitted spec — never to the slot thickness.
+            spec = str(mapping.get(sku) or "").strip() or str(
+                item.get("glass_spec") or ""
+            ).strip()
+            if not spec:
+                errors.append({"key": key, "code": "glass_spec_required"})
+                continue
             parametric_tree = {
                 "id": "imported",
                 "type": "BAY",
                 "opening_type": item["opening_type"],
                 "glass_thickness_mm": item["glass_thickness_mm"],
-                "glass_spec": item["glass_spec"],
-                "glass_article_sku": item["glass_article_sku"],
+                "glass_spec": spec,
+                "glass_article_sku": sku,
             }
             if item["opening_type"] == "DOOR_ENTRY":
                 panel_sku = str(item.get("panel_article_sku") or "").strip()

@@ -73,9 +73,13 @@ class ConfirmItemSerializer(StrictSerializer):
         max_digits=10, decimal_places=2, min_value=Decimal("1")
     )
     # glass_spec is the physical composition; glass_article_sku is the
-    # catalog/technical SKU — a saved position carries both, and omitting
-    # either leaves the BOM without glass weight or pricing authority.
-    glass_spec = serializers.CharField(max_length=120)
+    # catalog/technical SKU — a saved position carries both. The spec is
+    # optional on the request: the purchase mapping's recipe wins when the
+    # catalog declares one, and only a mapping without a spec falls back to
+    # this field — so the glazing-bead slot can never masquerade as panes.
+    glass_spec = serializers.CharField(
+        max_length=120, required=False, allow_blank=True
+    )
     glass_article_sku = serializers.CharField(max_length=120)
     # Doors need the panel authority — required by the engine for DOOR_ENTRY,
     # enforced at confirm time only for that opening type.

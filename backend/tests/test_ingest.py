@@ -123,6 +123,10 @@ def _item(**overrides):
     return item
 
 
+def _glass_map(spec="4-12-4"):
+    return [{"technical_sku": "GLASS-A", "glass_spec": spec}]
+
+
 def test_confirm_creates_positions_and_stores_result(monkeypatch):
     row = _import_row()
     saved = []
@@ -145,6 +149,8 @@ def test_confirm_creates_positions_and_stores_result(monkeypatch):
             if "UPDATE public.document_imports" in sql
             else [row]
             if "FROM public.document_imports" in sql
+            else _glass_map()
+            if "FROM public.glass_purchase_mappings" in sql
             else []
         ),
     )
@@ -199,6 +205,8 @@ def test_confirm_collects_item_errors_without_blocking(monkeypatch):
             return [row | {"result": params[0]}]
         if "FROM public.document_imports" in sql:
             return [row]
+        if "FROM public.glass_purchase_mappings" in sql:
+            return _glass_map()
         return []
 
     monkeypatch.setattr(service, "rows", _rows)
@@ -238,6 +246,8 @@ def test_confirm_partial_failure_stays_retryable_then_seals(monkeypatch):
             return [row | {"result": params[0]}]
         if "FROM public.document_imports" in sql:
             return [row | {"result": stored["result"]}]
+        if "FROM public.glass_purchase_mappings" in sql:
+            return _glass_map()
         return []
 
     monkeypatch.setattr(service, "rows", _rows)
@@ -400,6 +410,7 @@ def test_extract_deterministic_path_never_calls_provider(monkeypatch):
             return None
 
     monkeypatch.setattr(service, "documentary_backend", lambda: _Backend())
+    monkeypatch.setattr(service.projects_service, "editable", lambda *a, **k: {"id": "p"})
     monkeypatch.setattr(
         service,
         "rows",
@@ -446,6 +457,7 @@ def test_extract_vision_fallback_when_no_text(monkeypatch):
             return None
 
     monkeypatch.setattr(service, "documentary_backend", lambda: _Backend())
+    monkeypatch.setattr(service.projects_service, "editable", lambda *a, **k: {"id": "p"})
     monkeypatch.setattr(
         service,
         "rows",
@@ -553,6 +565,8 @@ def test_confirm_door_requires_panel_and_uses_it(monkeypatch):
         lambda sql, params=None: (
             [row | {"result": params[0]}]
             if "UPDATE public.document_imports" in sql
+            else _glass_map()
+            if "FROM public.glass_purchase_mappings" in sql
             else [row]
         ),
     )
@@ -673,6 +687,7 @@ def test_extract_replays_when_row_sealed_during_extract(monkeypatch):
     )
     monkeypatch.setattr(service, "documentary_backend", _backend)
     monkeypatch.setattr(service, "rows", _rows)
+    monkeypatch.setattr(service.projects_service, "editable", lambda *a, **k: {"id": "p"})
     out = service.extract_for_import(
         org_id=row["org_id"], import_id=row["id"], actor_id=uuid4()
     )
@@ -754,6 +769,7 @@ def test_extract_caps_candidates_at_confirm_limit(monkeypatch):
         return []
 
     monkeypatch.setattr(service, "rows", _rows)
+    monkeypatch.setattr(service.projects_service, "editable", lambda *a, **k: {"id": "p"})
     out = service.extract_for_import(
         org_id=row["org_id"], import_id=row["id"], actor_id=uuid4()
     )
@@ -867,6 +883,8 @@ def test_confirm_positions_carry_glass_article_authority(monkeypatch):
         lambda sql, params=None: (
             [row | {"status": "CONFIRMED", "result": []}]
             if "UPDATE public.document_imports" in sql
+            else _glass_map()
+            if "FROM public.glass_purchase_mappings" in sql
             else [row]
         ),
     )
@@ -879,3 +897,128 @@ def test_confirm_positions_carry_glass_article_authority(monkeypatch):
     tree = saved[0]["design"]["parametric_tree"]
     assert tree["glass_spec"] == "4-12-4"
     assert tree["glass_article_sku"] == "GLASS-A"
+
+
+def _confirm_rows(row, stored):
+    def _rows(sql, params=None):
+        if "UPDATE public.document_imports" in sql:
+            stored["result"] = params[0]
+            if "SET status='CONFIRMED'" in sql:
+                return [row | {"status": "CONFIRMED", "result": params[0]}]
+            return [row | {"result": params[0]}]
+        if "FROM public.document_imports" in sql:
+            return [row | {"result": stored["result"]}]
+        if "FROM public.glass_purchase_mappings" in sql:
+            return stored["glass"]
+        return []
+
+    return _rows
+
+
+def test_confirm_unknown_glass_sku_is_item_error(monkeypatch):
+    row = _import_row()
+    stored = {"result": [], "glass": _glass_map()}
+    saved = []
+    monkeypatch.setattr(service, "rows", _confirm_rows(row, stored))
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: saved.append(data) or {"id": uuid4()},
+    )
+    out = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item(glass_article_sku="GHOST-SKU")],
+    )
+    assert out["errors"] == [{"key": "r0", "code": "glass_article_unknown"}]
+    assert saved == []
+
+
+def test_confirm_mapping_spec_wins_over_submitted(monkeypatch):
+    # The purchase mapping is the composition authority — a submitted spec
+    # can never override the recipe the catalog declares for the SKU.
+    row = _import_row()
+    stored = {"result": [], "glass": _glass_map("4-20-4")}
+    saved = []
+    monkeypatch.setattr(service, "rows", _confirm_rows(row, stored))
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: saved.append(data) or {"id": uuid4()},
+    )
+    out = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item(glass_spec="bogus-spec")],
+    )
+    assert out["errors"] == []
+    assert saved[0]["design"]["parametric_tree"]["glass_spec"] == "4-20-4"
+
+
+def test_confirm_specless_mapping_falls_back_to_submitted_spec(monkeypatch):
+    row = _import_row()
+    stored = {"result": [], "glass": _glass_map(None)}
+    saved = []
+    monkeypatch.setattr(service, "rows", _confirm_rows(row, stored))
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: saved.append(data) or {"id": uuid4()},
+    )
+    service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item(glass_spec="4-12-4")],
+    )
+    assert saved[0]["design"]["parametric_tree"]["glass_spec"] == "4-12-4"
+
+
+def test_confirm_specless_mapping_without_submitted_spec_errors(monkeypatch):
+    row = _import_row()
+    stored = {"result": [], "glass": _glass_map(None)}
+    saved = []
+    monkeypatch.setattr(service, "rows", _confirm_rows(row, stored))
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: saved.append(data) or {"id": uuid4()},
+    )
+    out = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item(glass_spec="")],
+    )
+    assert out["errors"] == [{"key": "r0", "code": "glass_spec_required"}]
+    assert saved == []
+
+
+def test_extract_fails_closed_when_project_closed_before_run(monkeypatch):
+    # Pricing applied between upload and job start — the OCR charge must
+    # never run; the job turns it into a terminal FAILED import.
+    row = _import_row(status="UPLOADED", candidates=[])
+
+    def _closed(*a, **k):
+        raise contract_error(409, "commercial_revision_required", "cerrado")
+
+    monkeypatch.setattr(service.projects_service, "editable", _closed)
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service,
+        "rows",
+        lambda sql, params=None: [row]
+        if "FROM public.document_imports" in sql
+        else [],
+    )
+    with pytest.raises(service.ImportError_) as failure:
+        service.extract_for_import(
+            org_id=row["org_id"], import_id=row["id"], actor_id=uuid4()
+        )
+    assert failure.value.code == "import_project_closed"
