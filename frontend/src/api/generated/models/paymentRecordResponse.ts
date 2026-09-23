@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CurrencyEnum } from "./currencyEnum";
 import type { PaymentStatusEnum } from "./paymentStatusEnum";
 import type { ProjectPayment } from "./projectPayment";
 
@@ -15,6 +16,7 @@ export interface PaymentRecordResponse {
   quote_total_gross: string | null;
   /** @nullable */
   balance: string | null;
+  currency: CurrencyEnum;
   status: PaymentStatusEnum;
   payment: ProjectPayment;
 }

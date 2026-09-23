@@ -160,8 +160,65 @@ class PaymentsSummarySerializer(serializers.Serializer):
     collected = serializers.CharField()
     quote_total_gross = serializers.CharField(allow_null=True)
     balance = serializers.CharField(allow_null=True)
+    currency = serializers.ChoiceField(choices=("CLP", "USD"))
     status = serializers.ChoiceField(choices=("NO_DEAL", "PENDING", "PARTIAL", "PAID"))
 
 
 class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
     payment = ProjectPaymentSerializer()
+
+
+class PaymentLinkCreateSerializer(StrictSerializer):
+    operation_key = serializers.CharField(min_length=8, max_length=80)
+    kind = serializers.ChoiceField(choices=("ANTICIPO", "PARCIAL", "SALDO"))
+    amount = serializers.DecimalField(max_digits=14, decimal_places=0, min_value=Decimal("1"))
+    payer_email = serializers.EmailField(max_length=200)
+    subject = serializers.CharField(max_length=200, required=False, allow_blank=True)
+
+
+class PaymentLinkSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    operation_key = serializers.CharField()
+    kind = serializers.CharField()
+    amount = serializers.CharField()
+    payer_email = serializers.CharField()
+    subject = serializers.CharField()
+    status = serializers.ChoiceField(
+        choices=("DISPATCHING", "PENDING", "PAID", "FAILED", "UNCERTAIN", "CANCELLED")
+    )
+    environment = serializers.ChoiceField(choices=("sandbox", "production"))
+    url = serializers.CharField(allow_null=True)
+    project_payment_id = serializers.CharField(allow_null=True)
+    created_at = serializers.CharField()
+    updated_at = serializers.CharField()
+
+
+class PaymentLinksResponseSerializer(serializers.Serializer):
+    links = PaymentLinkSerializer(many=True)
+
+
+class PaymentLinkResponseSerializer(serializers.Serializer):
+    link = PaymentLinkSerializer()
+
+
+class PaymentIntegrationSerializer(StrictSerializer):
+    api_url = serializers.ChoiceField(
+        choices=("https://sandbox.flow.cl/api", "https://www.flow.cl/api")
+    )
+    api_key = serializers.CharField(min_length=10, max_length=100)
+    secret_key = serializers.CharField(
+        min_length=10, max_length=100, required=False, write_only=True, allow_blank=True
+    )
+    payer_return_url = serializers.CharField(
+        max_length=500, required=False, allow_blank=True
+    )
+    enabled = serializers.BooleanField(required=False, default=True)
+
+
+class PaymentIntegrationStatusSerializer(serializers.Serializer):
+    configured = serializers.BooleanField()
+    api_url = serializers.CharField(required=False)
+    api_key_preview = serializers.CharField(required=False)
+    payer_return_url = serializers.CharField(required=False, allow_null=True)
+    enabled = serializers.BooleanField(required=False)
+    updated_at = serializers.CharField(required=False)

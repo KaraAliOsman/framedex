@@ -32,12 +32,12 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PAID: "projects.paymentStatusPaid",
 };
 
-function formatMoney(value: string | null): string {
+function formatMoney(value: string | null, currency: string): string {
   if (value === null) return "—";
   return new Intl.NumberFormat("es-CL", {
     style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
+    currency,
+    maximumFractionDigits: currency === "CLP" ? 0 : 2,
   }).format(Number(value));
 }
 
@@ -107,7 +107,7 @@ export function ProjectPaymentsPanel({
         {
           operation_key: operationKey,
           kind,
-          amount,
+          amount: amount.replace(",", "."),
           method,
           ...(reference.trim() ? { reference: reference.trim() } : {}),
           ...(note.trim() ? { note: note.trim() } : {}),
@@ -167,15 +167,15 @@ export function ProjectPaymentsPanel({
           <dl className="payments-summary-facts">
             <div>
               <dt>{t("projects.paymentCollected")}</dt>
-              <dd>{formatMoney(summary.collected)}</dd>
+              <dd>{formatMoney(summary.collected, summary.currency)}</dd>
             </div>
             <div>
               <dt>{t("projects.paymentDealTotal")}</dt>
-              <dd>{formatMoney(summary.quote_total_gross)}</dd>
+              <dd>{formatMoney(summary.quote_total_gross, summary.currency)}</dd>
             </div>
             <div>
               <dt>{t("projects.paymentBalance")}</dt>
-              <dd>{formatMoney(summary.balance)}</dd>
+              <dd>{formatMoney(summary.balance, summary.currency)}</dd>
             </div>
           </dl>
           {percent !== null && (
@@ -208,7 +208,7 @@ export function ProjectPaymentsPanel({
             {t("projects.paymentAmount")}
             <input
               required
-              inputMode="numeric"
+              inputMode="decimal"
               pattern="[0-9]+([.,][0-9]{1,2})?"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
@@ -264,7 +264,9 @@ export function ProjectPaymentsPanel({
               <tr key={payment.id} className={payment.voided_at ? "payments-voided" : undefined}>
                 <td>{formatDate(payment.recorded_at)}</td>
                 <td>{t(KIND_LABEL[payment.kind] ?? "projects.paymentKindParcial")}</td>
-                <td className="num">{formatMoney(payment.amount)}</td>
+                <td className="num">
+                  {formatMoney(payment.amount, summary?.currency ?? "CLP")}
+                </td>
                 <td>{t(METHOD_LABEL[payment.method] ?? "projects.paymentMethodOther")}</td>
                 <td>{payment.reference ?? "—"}</td>
                 <td>

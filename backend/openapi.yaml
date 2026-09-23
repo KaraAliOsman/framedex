@@ -10943,6 +10943,8 @@ components:
         balance:
           type: string
           nullable: true
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
         status:
           $ref: '#/components/schemas/PaymentStatusEnum'
         payment:
@@ -10950,6 +10952,7 @@ components:
       required:
       - balance
       - collected
+      - currency
       - payment
       - payments
       - quote_total_gross
@@ -10987,11 +10990,14 @@ components:
         balance:
           type: string
           nullable: true
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
         status:
           $ref: '#/components/schemas/PaymentStatusEnum'
       required:
       - balance
       - collected
+      - currency
       - payments
       - quote_total_gross
       - status

@@ -41,8 +41,10 @@ def _payment_public(row):
     }
 
 
-def _deal_total(org_id: UUID, project_id: UUID, project: dict) -> Decimal | None:
-    """The deal amount: latest sealed revision's gross total, else live totals."""
+def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
+    """The commercial deal: latest sealed revision's gross total and currency,
+    else live totals when an applied pricing authority proves the project was
+    priced. Zero-valued live totals without that authority are not a deal."""
     with documentary_backend():
         versions = rows(
             "SELECT snapshot_json::text AS snapshot_json FROM public.project_versions "
@@ -56,9 +58,29 @@ def _deal_total(org_id: UUID, project_id: UUID, project: dict) -> Decimal | None
         sealed_project = snapshot.get("project") if isinstance(snapshot, dict) else None
         gross = (sealed_project or {}).get("total_price_gross")
         if gross is not None:
-            return Decimal(str(gross))
-    gross = project.get("total_price_gross")
-    return Decimal(str(gross)) if gross is not None else None
+            return {
+                "total": Decimal(str(gross)),
+                "currency": (sealed_project or {}).get("currency") or "CLP",
+            }
+    with documentary_backend():
+        applied = rows(
+            "SELECT o.result->>'currency' AS currency FROM public.pricing_operations o "
+            "JOIN public.projects p ON p.id = o.project_id AND p.org_id = o.org_id "
+            "WHERE o.org_id=%s AND o.project_id=%s AND o.state='APPLIED' "
+            "AND o.approved_at IS NOT NULL AND o.approved_at > "
+            "COALESCE(p.pricing_reset_at, '-infinity'::timestamptz) "
+            "ORDER BY o.created_at DESC, o.id DESC LIMIT 1",
+            [str(org_id), str(project_id)],
+        )
+        if not applied:
+            return None
+        org = rows(
+            "SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)]
+        )
+    return {
+        "total": Decimal(str(project["total_price_gross"])),
+        "currency": applied[0]["currency"] or (org[0]["currency"] if org else "CLP"),
+    }
 
 
 def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
@@ -72,9 +94,10 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
         (Decimal(str(p["amount"])) for p in payments if p["voided_at"] is None),
         Decimal("0"),
     )
-    total = _deal_total(org_id, project_id, project)
+    deal = _deal(org_id, project_id, project)
+    total = deal["total"] if deal else None
     balance = (total - collected) if total is not None else None
-    if total is None:
+    if deal is None:
         status = "NO_DEAL"
     elif collected <= 0:
         status = "PENDING"
@@ -87,6 +110,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
         "collected": str(collected),
         "quote_total_gross": str(total) if total is not None else None,
         "balance": str(balance) if balance is not None else None,
+        "currency": deal["currency"] if deal else "CLP",
         "status": status,
     }
 
@@ -98,36 +122,43 @@ def list_payments(*, org_id: UUID, project_id: UUID) -> dict:
 
 def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -> dict:
     project = project_row(org_id, project_id)
-    with transaction.atomic(), documentary_backend():
-        existing = rows(
-            "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
-            [str(org_id), data["operation_key"]],
+    if _deal(org_id, project_id, project) is None:
+        raise contract_error(
+            422,
+            "payment_requires_deal",
+            "Registra cobros solo sobre un proyecto cotizado.",
         )
-        if existing:
-            payment = existing[0]
-            if str(payment["project_id"]) != str(project_id):
-                raise contract_error(
-                    409, "payment_operation_conflict", "La operación ya fue registrada en otro proyecto."
-                )
-        else:
+    with transaction.atomic(), documentary_backend():
+        payment = rows(
+            "INSERT INTO public.project_payments"
+            "(org_id,project_id,operation_key,kind,amount,method,reference,note,"
+            " recorded_by,recorded_at) "
+            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+            "ON CONFLICT (org_id, operation_key) DO NOTHING RETURNING *",
+            [
+                str(org_id),
+                str(project_id),
+                data["operation_key"],
+                data["kind"],
+                data["amount"],
+                data["method"],
+                data.get("reference") or None,
+                data.get("note") or None,
+                str(actor_id),
+                data.get("recorded_at") or timezone.now(),
+            ],
+        )
+        if not payment:
+            # Replay or lost race — the unique key converges on one row.
             payment = rows(
-                "INSERT INTO public.project_payments"
-                "(org_id,project_id,operation_key,kind,amount,method,reference,note,"
-                " recorded_by,recorded_at) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
-                [
-                    str(org_id),
-                    str(project_id),
-                    data["operation_key"],
-                    data["kind"],
-                    data["amount"],
-                    data["method"],
-                    data.get("reference") or None,
-                    data.get("note") or None,
-                    str(actor_id),
-                    data.get("recorded_at") or timezone.now(),
-                ],
-            )[0]
+                "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
+                [str(org_id), data["operation_key"]],
+            )
+        payment = payment[0]
+        if str(payment["project_id"]) != str(project_id):
+            raise contract_error(
+                409, "payment_operation_conflict", "La operación ya fue registrada en otro proyecto."
+            )
     return {"payment": _payment_public(payment), **_summary(org_id, project_id, project)}
 
 

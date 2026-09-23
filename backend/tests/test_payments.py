@@ -48,7 +48,8 @@ def _payment_row(**over):
     }
 
 
-def _runner(captured, existing=None, payments_list=None, sealed_gross=None):
+def _runner(captured, existing=None, payments_list=None, sealed_gross=None,
+            sealed_currency="CLP", applied=True):
     def fake_rows(sql, params=None):
         captured.append((sql, params))
         if "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s" in sql:
@@ -59,14 +60,21 @@ def _runner(captured, existing=None, payments_list=None, sealed_gross=None):
             return [
                 {
                     "snapshot_json": {
-                        "project": {"total_price_gross": str(sealed_gross)}
+                        "project": {
+                            "total_price_gross": str(sealed_gross),
+                            "currency": sealed_currency,
+                        }
                     }
                 }
             ]
+        if "FROM public.pricing_operations" in sql:
+            return [{"currency": "CLP"}] if applied else []
+        if "FROM public.tenancy_organizations" in sql:
+            return [{"currency": "CLP"}]
         if "FROM public.project_payments" in sql and "ORDER BY recorded_at,id" in sql:
             return list(payments_list or [])
         if "INSERT INTO public.project_payments" in sql:
-            return [_payment_row()]
+            return [] if existing else [_payment_row(project_id=params[1])]
         if "UPDATE public.project_payments" in sql:
             return [_payment_row(voided_at="2026-09-21T10:00:00+00:00")]
         return []
@@ -118,7 +126,7 @@ def test_record_payment_inserts_and_returns_sealed_balance(monkeypatch, env):
     assert out["payment"]["kind"] == "ANTICIPO"
 
 
-def test_record_payment_replay_returns_existing_without_insert(monkeypatch, env):
+def test_record_payment_replay_returns_existing_via_conflict(monkeypatch, env):
     existing = _payment_row()
     _patch_rows(monkeypatch, env, existing=[existing], payments_list=[existing])
     out = payments.record_payment(
@@ -128,7 +136,10 @@ def test_record_payment_replay_returns_existing_without_insert(monkeypatch, env)
         data={"operation_key": "op-12345678", "kind": "ANTICIPO",
               "amount": Decimal("400000"), "method": "TRANSFER"},
     )
-    assert not any("INSERT INTO public.project_payments" in sql for sql, _ in env)
+    inserts = [sql for sql, _ in env if "INSERT INTO public.project_payments" in sql]
+    # The conflict-safe insert ran once and found the stored row — no duplicate.
+    assert len(inserts) == 1
+    assert "ON CONFLICT" in inserts[0]
     assert out["payment"]["id"] == str(existing["id"])
 
 
@@ -181,6 +192,34 @@ def test_balance_uses_live_totals_when_no_sealed_version(monkeypatch, env):
     assert out["quote_total_gross"] == "1000000"  # live project total
     assert out["balance"] == "0"
     assert out["status"] == "PAID"
+
+
+def test_project_without_pricing_authority_reports_no_deal(monkeypatch, env):
+    _patch_rows(monkeypatch, env, applied=False)
+    out = payments.list_payments(org_id=uuid4(), project_id=uuid4())
+    assert out["status"] == "NO_DEAL"
+    assert out["quote_total_gross"] is None
+    assert out["balance"] is None
+
+
+def test_record_payment_rejected_without_pricing_authority(monkeypatch, env):
+    _patch_rows(monkeypatch, env, applied=False)
+    with pytest.raises(APIException) as failure:
+        payments.record_payment(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+                  "amount": Decimal("100"), "method": "TRANSFER"},
+        )
+    assert failure.value.contract_code == "payment_requires_deal"
+
+
+def test_deal_currency_comes_from_sealed_snapshot(monkeypatch, env):
+    _patch_rows(monkeypatch, env, sealed_gross=Decimal("1250.50"), sealed_currency="USD")
+    out = payments.list_payments(org_id=uuid4(), project_id=uuid4())
+    assert out["currency"] == "USD"
+    assert out["quote_total_gross"] == "1250.50"
 
 
 @pytest.mark.parametrize(

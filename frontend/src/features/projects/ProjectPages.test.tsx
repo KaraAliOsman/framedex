@@ -193,6 +193,7 @@ beforeEach(() => {
       collected: "0",
       quote_total_gross: null,
       balance: null,
+      currency: "CLP",
       status: "NO_DEAL",
     }),
   );
