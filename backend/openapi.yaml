@@ -4447,6 +4447,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/remake/:
+    post:
+      operationId: production_order_remake
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemakeRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemakeRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemakeRequestRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/steps/{step_id}/transition/:
     post:
       operationId: production_step_transition
@@ -10292,6 +10373,14 @@ components:
           items:
             type: object
             additionalProperties: {}
+    QcResultEnum:
+      enum:
+      - PASS
+      - FAIL
+      type: string
+      description: |-
+        * `PASS` - PASS
+        * `FAIL` - FAIL
     RailTypeEnum:
       enum:
       - dual
@@ -10363,6 +10452,14 @@ components:
       - qty
       - reinforcement_sku
       - role
+    RemakeRequestRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
     RequiredAalEnum:
       enum:
       - aal2
@@ -10488,6 +10585,11 @@ components:
           nullable: true
           minLength: 1
           maxLength: 500
+        qc_result:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/QcResultEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - action
     StructuralInputRequest:

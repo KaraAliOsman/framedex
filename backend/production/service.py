@@ -195,6 +195,7 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                 WHERE order_type = 'WORKSHOP_OT'
                   AND project_version_id IS NOT NULL
                   AND payload_json ? 'position_id'
+                  AND NOT (payload_json ? 'remake_of')
                 DO NOTHING
                 RETURNING id
                 """,
@@ -415,6 +416,7 @@ def transition_step(
     action: str,
     actor_id: UUID,
     note: str | None,
+    qc_result: str | None = None,
 ) -> dict[str, object]:
     if action not in _TRANSITIONS:
         raise DocumentaryError("step_action_unknown")
@@ -454,9 +456,18 @@ def transition_step(
         )
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
+        if qc_result is not None and not (
+            action == "COMPLETE" and str(step["code"]) == "QC"
+        ):
+            raise DocumentaryError("step_transition_invalid")
         new_status, allowed = _TRANSITIONS[action]
+        if action == "COMPLETE" and qc_result == "FAIL":
+            new_status = "BLOCKED"
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
+        event_name = "QC_FAILED" if (
+            action == "COMPLETE" and qc_result == "FAIL"
+        ) else _EVENTS[action]
         now = datetime.now(timezone.utc)
         if new_status is not None:
             updates = {
@@ -507,9 +518,12 @@ def transition_step(
                 str(org_id),
                 str(step["order_id"]),
                 str(step_id),
-                _EVENTS[action],
+                event_name,
                 str(actor_id),
-                json.dumps({"note": note.strip()} if note else {}),
+                json.dumps({
+                    **({"note": note.strip()} if note else {}),
+                    **({"qc_result": qc_result} if qc_result else {}),
+                }),
             ],
         )
         order_status = _refresh_order_status(
@@ -526,6 +540,87 @@ def transition_step(
             [str(step_id)],
         )
         return {"step": _public_step(fresh), "order_status": order_status}
+
+
+def create_remake(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None
+) -> dict[str, object]:
+    """Remake work order for a unit that failed QC: copies the sealed material
+    projection and routing from a HOLD order into a new ``-RM-`` order. The
+    unique release index excludes remakes (``remake_of`` in payload)."""
+    with transaction.atomic(), documentary_backend():
+        source = one(
+            """
+            SELECT id, order_code, status::text, payload_json, project_id,
+                   project_version_id
+            FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(source["status"]) != "HOLD":
+            raise DocumentaryError("remake_requires_hold")
+        payload = _decoded(source["payload_json"])
+        payload.pop("optimization", None)  # stale plan — re-optimize the remake
+        payload["remake_of"] = str(source["id"])
+        prior = one(
+            """
+            SELECT COUNT(*) AS n FROM public.orders
+            WHERE org_id = %s AND payload_json->>'remake_of' = %s
+            """,
+            [str(org_id), str(source["id"])],
+            "remake_count_unknown",
+        )
+        order_code = f"{source['order_code']}-RM-{int(prior['n']) + 1:02d}"[:50]
+        remake = one(
+            """
+            INSERT INTO public.orders(
+                org_id, project_id, order_type, order_code, status,
+                payload_json, project_version_id)
+            VALUES (%s, %s, 'WORKSHOP_OT', %s, 'RELEASED', %s::jsonb, %s)
+            RETURNING id, order_code
+            """,
+            [
+                str(org_id),
+                str(source["project_id"]),
+                order_code,
+                json.dumps(payload),
+                str(source["project_version_id"]) if source["project_version_id"] else None,
+            ],
+            "remake_not_created",
+        )
+        rows(
+            """
+            INSERT INTO public.production_steps(
+                org_id, order_id, sequence, work_center_id, code, label)
+            SELECT %s, %s, sequence, work_center_id, code, label
+            FROM public.production_steps
+            WHERE order_id = %s AND org_id = %s ORDER BY sequence
+            RETURNING id
+            """,
+            [str(org_id), str(remake["id"]), str(source["id"]), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(
+                org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_REMADE', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(remake["id"]),
+                str(actor_id),
+                json.dumps({
+                    "remake_of": str(source["id"]),
+                    "source_order_code": source["order_code"],
+                    "note": (note or "").strip() or None,
+                }),
+            ],
+        )
+        return get_work_order(org_id=org_id, order_id=UUID(str(remake["id"])))
 
 
 def list_work_centers(*, org_id: UUID) -> dict[str, object]:

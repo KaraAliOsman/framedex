@@ -4,6 +4,7 @@ from production.views import (
     ProductionOrderDetailView,
     ProductionOrderListView,
     ProductionOrderOptimizeView,
+    ProductionOrderRemakeView,
     ProductionReleaseView,
     ProductionStepTransitionView,
     WorkCenterListView,
@@ -20,6 +21,11 @@ urlpatterns = [
         "orders/<uuid:order_id>/optimize/",
         ProductionOrderOptimizeView.as_view(),
         name="production-order-optimize",
+    ),
+    path(
+        "orders/<uuid:order_id>/remake/",
+        ProductionOrderRemakeView.as_view(),
+        name="production-order-remake",
     ),
     path(
         "steps/<uuid:step_id>/transition/",

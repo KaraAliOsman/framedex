@@ -23,6 +23,7 @@ from engine_api.repository import SystemNotFound
 from production import service
 from production.serializers import (
     ProductionOrderDetailSerializer,
+    RemakeRequestSerializer,
     ProductionOrderListSerializer,
     ProductionReleaseSerializer,
     StepTransitionRequestSerializer,
@@ -141,8 +142,30 @@ class ProductionStepTransitionView(APIView):
                     action=data["action"],
                     actor_id=token.user_id,
                     note=data.get("note"),
+                    qc_result=data.get("qc_result"),
                 )
         return Response(output)
+
+
+class ProductionOrderRemakeView(APIView):
+    @extend_schema(
+        operation_id="production_order_remake",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=RemakeRequestSerializer,
+        responses={201: ProductionOrderDetailSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(RemakeRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.create_remake(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    note=data.get("note"),
+                )
+        return Response(output, status=201)
 
 
 class WorkCenterListView(APIView):

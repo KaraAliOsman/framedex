@@ -635,3 +635,203 @@ def test_optimize_post_rejects_blank_color(monkeypatch) -> None:
         {"color": " "}, format="json",
     )
     assert response.status_code == 400
+
+
+
+
+
+
+def test_qc_fail_blocks_step_and_holds_order(monkeypatch) -> None:
+    org_id, step_id, order_id = uuid4(), uuid4(), uuid4()
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "from public.production_steps" in lowered and "for update" in lowered:
+            return {
+                "id": str(step_id),
+                "org_id": str(org_id),
+                "order_id": str(order_id),
+                "sequence": 5,
+                "code": "QC",
+                "label": "Control de calidad",
+                "status": "IN_PROGRESS",
+                "work_center_id": None,
+                "work_center_code": "QC",
+                "started_at": "2026-09-23T00:00:00+00:00",
+                "finished_at": None,
+                "actor_id": None,
+                "note": None,
+            }
+        if "from public.orders" in lowered and "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "status": "RELEASED",
+                "order_type": "WORKSHOP_OT",
+                "payload_json": {},
+            }
+        if "order_id from public.production_steps" in lowered:
+            return {"order_id": str(order_id)}
+        if "from public.production_steps" in lowered:
+            return {
+                "id": str(step_id),
+                "sequence": 5,
+                "code": "QC",
+                "label": "Control de calidad",
+                "status": "BLOCKED",
+                "work_center_id": None,
+                "work_center_code": "QC",
+                "started_at": "2026-09-23T00:00:00+00:00",
+                "finished_at": None,
+                "actor_id": None,
+                "note": "rotura en esmerilado",
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    writes: list[tuple[str, object]] = []
+
+    def fake_rows(sql_text: str, params: object = ()) -> list[dict]:
+        lowered = " ".join(sql_text.lower().split())
+        writes.append((lowered, params))
+        return [{"id": str(step_id)}] if "returning" in lowered else []
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr("production.service._refresh_order_status", lambda **kw: "HOLD")
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        result = service.transition_step(
+            org_id=org_id,
+            step_id=step_id,
+            action="COMPLETE",
+            actor_id=uuid4(),
+            note="rotura en esmerilado",
+            qc_result="FAIL",
+        )
+    step_update = next(
+        p2 for s2, p2 in writes if "update public.production_steps" in s2
+    )
+    assert step_update["status"] == "BLOCKED"
+    event_insert = next(
+        p2 for s2, p2 in writes if "insert into public.production_step_events" in s2
+    )
+    assert event_insert[3] == "QC_FAILED"
+    assert result["order_status"] == "HOLD"
+    assert result["step"]["status"] == "BLOCKED"
+
+
+def test_qc_result_rejected_on_non_qc_step(monkeypatch) -> None:
+    org_id, step_id, order_id = uuid4(), uuid4(), uuid4()
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "order_id from public.production_steps" in lowered:
+            return {"order_id": str(order_id)}
+        if "from public.orders" in lowered:
+            return {"id": str(order_id), "status": "RELEASED"}
+        if "from public.production_steps" in lowered:
+            return {
+                "id": str(step_id),
+                "org_id": str(org_id),
+                "order_id": str(order_id),
+                "sequence": 2,
+                "code": "ASSEMBLE",
+                "label": "Ensamble",
+                "status": "IN_PROGRESS",
+                "work_center_id": None,
+                "work_center_code": "ASSEMBLY",
+                "started_at": None,
+                "finished_at": None,
+                "actor_id": None,
+                "note": None,
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="step_transition_invalid"):
+        service.transition_step(
+            org_id=org_id,
+            step_id=step_id,
+            action="COMPLETE",
+            actor_id=uuid4(),
+            note=None,
+            qc_result="FAIL",
+        )
+
+
+def test_create_remake_clones_order_and_steps(monkeypatch) -> None:
+    org_id, order_id, version_id, remake_id = uuid4(), uuid4(), uuid4(), uuid4()
+    writes: list[tuple[str, list]] = []
+    detail_calls: list[str] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-P-AAA-01",
+                "status": "HOLD",
+                "project_id": str(uuid4()),
+                "project_version_id": str(version_id),
+                "payload_json": {
+                    "position_id": str(_POSITION_ID),
+                    "quantity": 1,
+                    "materials": {"profile_cuts": [{"a": 1}]},
+                    "optimization": {"stale": True},
+                },
+            }
+        if "count(*)" in lowered:
+            return {"n": 1}
+        if "insert into public.orders" in lowered:
+            writes.append((lowered, list(params)))
+            return {"id": str(remake_id), "order_code": "OT-P-AAA-01-RM-02"}
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    def fake_rows(sql_text: str, params: object = ()) -> list[dict]:
+        lowered = " ".join(sql_text.lower().split())
+        writes.append((lowered, list(params)))
+        return [{"id": str(remake_id)}]
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr(
+        "production.service.get_work_order",
+        lambda **kw: detail_calls.append(str(kw["order_id"])) or {"id": str(kw["order_id"])},
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        result = service.create_remake(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), note="rehacer por QC"
+        )
+    order_insert = next(p2 for s2, p2 in writes if "insert into public.orders" in s2)
+    payload = json.loads(order_insert[3])
+    assert "optimization" not in payload
+    assert payload["remake_of"] == str(order_id)
+    assert order_insert[2] == "OT-P-AAA-01-RM-02"
+    steps_copy = next(
+        s2 for s2, _ in writes if "insert into public.production_steps" in s2 and "select" in s2
+    )
+    assert "from public.production_steps" in steps_copy
+    assert any("wo_remade" in s2 for s2, _ in writes)
+    assert detail_calls and result["id"] == str(remake_id)
+
+
+def test_create_remake_requires_hold(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": str(order_id),
+            "order_code": "OT-P-AAA-01",
+            "status": "RELEASED",
+            "payload_json": {},
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="remake_requires_hold"):
+        service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())

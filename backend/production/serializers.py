@@ -70,12 +70,21 @@ class ProductionOrderDetailSerializer(ProductionOrderSerializer):
 class StepTransitionRequestSerializer(StrictSerializer):
     action = serializers.ChoiceField(choices=("START", "COMPLETE", "BLOCK", "UNBLOCK", "NOTE"))
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
+    qc_result = serializers.ChoiceField(choices=("PASS", "FAIL"), required=False, allow_null=True)
 
     def validate(self, data):
         data = super().validate(data)
         if data["action"] == "NOTE" and not (data.get("note") or "").strip():
             raise serializers.ValidationError({"note": "Note text is required for NOTE"})
+        if data.get("qc_result") and data["action"] != "COMPLETE":
+            raise serializers.ValidationError(
+                {"qc_result": "QC outcome only applies to COMPLETE"}
+            )
         return data
+
+
+class RemakeRequestSerializer(StrictSerializer):
+    note = serializers.CharField(required=False, allow_null=True, max_length=500)
 
 
 class StepTransitionSerializer(serializers.Serializer):

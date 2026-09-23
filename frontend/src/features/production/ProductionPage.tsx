@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   productionOrderDetail,
   productionOrderOptimize,
+  productionOrderRemake,
   productionOrders,
   productionStepTransition,
 } from "../../api/generated/dekopen";
@@ -23,7 +24,7 @@ type WorkOrderMaterials = {
   hardware_items?: unknown[];
 };
 
-type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE";
+type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
 
 type CutPlacement = {
   piece_id: string;
@@ -99,6 +100,8 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_COMPLETED: "production.eventCompleted",
   WO_HOLD: "production.eventHold",
   WO_OPTIMIZED: "production.eventOptimized",
+  QC_FAILED: "production.eventQcFailed",
+  WO_REMADE: "production.eventRemade",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -107,7 +110,9 @@ function stepActions(step: ProductionStep): StepAction[] {
     case "PENDING":
       return ["START", "BLOCK", "NOTE"];
     case "IN_PROGRESS":
-      return ["COMPLETE", "BLOCK", "NOTE"];
+      return step.code === "QC"
+        ? ["COMPLETE", "QC_FAIL", "BLOCK", "NOTE"]
+        : ["COMPLETE", "BLOCK", "NOTE"];
     case "BLOCKED":
       return ["UNBLOCK", "NOTE"];
     case "DONE":
@@ -123,6 +128,7 @@ const actionLabel: Record<StepAction, Parameters<typeof t>[0]> = {
   BLOCK: "production.actionBlock",
   UNBLOCK: "production.actionUnblock",
   NOTE: "production.actionNote",
+  QC_FAIL: "production.actionQcFail",
 };
 
 export function ProductionPage(): JSX.Element {
@@ -192,11 +198,33 @@ export function ProductionPage(): JSX.Element {
       return;
     }
     const noteValue =
-      stepAction === "NOTE" || stepAction === "BLOCK" ? note || undefined : undefined;
-    void action(
-      productionStepTransition(stepId, { action: stepAction, note: noteValue ?? null }),
-      orderId,
-    );
+      stepAction === "NOTE" || stepAction === "BLOCK" || stepAction === "QC_FAIL"
+        ? note || undefined
+        : undefined;
+    const body =
+      stepAction === "QC_FAIL"
+        ? { action: "COMPLETE" as const, qc_result: "FAIL" as const, note: noteValue ?? null }
+        : { action: stepAction, note: noteValue ?? null };
+    void action(productionStepTransition(stepId, body), orderId);
+  }
+
+  function remake(orderId: string): void {
+    setBusy(true);
+    setMessage("");
+    productionOrderRemake(orderId, { note: note || undefined })
+      .then(async (response) => {
+        if (response.status === 201 && mounted.current) {
+          setNote("");
+          setParams({ order: response.data.id });
+          await loadOrders();
+        }
+      })
+      .catch(() => {
+        if (mounted.current) setMessage(t("production.actionError"));
+      })
+      .finally(() => {
+        if (mounted.current) setBusy(false);
+      });
   }
 
   function optimize(orderId: string): void {
@@ -205,6 +233,7 @@ export function ProductionPage(): JSX.Element {
   }
 
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
+  const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
   if (!canAct) {
     return (
       <section className="production-page">
@@ -259,6 +288,16 @@ export function ProductionPage(): JSX.Element {
                   <span className="production-order-progress">
                     {detail.quantity} {t("production.units")}
                   </span>
+                ) : null}
+                {canWrite && detail.status === "HOLD" ? (
+                  <button
+                    type="button"
+                    className="production-remake"
+                    disabled={busy}
+                    onClick={() => remake(detail.id)}
+                  >
+                    {t("production.remakeButton")}
+                  </button>
                 ) : null}
               </header>
               {(() => {

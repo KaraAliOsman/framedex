@@ -88,6 +88,7 @@ import type {
   ProjectResponse,
   ProjectWriteRequest,
   PurchasingState,
+  RemakeRequestRequest,
   ResetPricingRequest,
   SendOrderRequestRequest,
   SignedAccessResponse,
@@ -4971,6 +4972,89 @@ export const productionOrderOptimize = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(workOrderOptimizeRequestRequest),
+  });
+};
+
+export type productionOrderRemakeResponse201 = {
+  data: ProductionOrderDetail;
+  status: 201;
+};
+
+export type productionOrderRemakeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderRemakeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderRemakeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderRemakeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderRemakeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderRemakeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderRemakeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderRemakeResponseSuccess = productionOrderRemakeResponse201 & {
+  headers: Headers;
+};
+export type productionOrderRemakeResponseError = (
+  | productionOrderRemakeResponse400
+  | productionOrderRemakeResponse401
+  | productionOrderRemakeResponse403
+  | productionOrderRemakeResponse404
+  | productionOrderRemakeResponse409
+  | productionOrderRemakeResponse422
+  | productionOrderRemakeResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderRemakeResponse =
+  productionOrderRemakeResponseSuccess | productionOrderRemakeResponseError;
+
+export const getProductionOrderRemakeUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/remake/`;
+};
+
+export const productionOrderRemake = async (
+  orderId: string,
+  remakeRequestRequest?: RemakeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderRemakeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderRemakeResponse>(getProductionOrderRemakeUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remakeRequestRequest),
   });
 };
 

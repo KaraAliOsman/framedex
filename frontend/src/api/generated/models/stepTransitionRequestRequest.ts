@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ActionEnum } from "./actionEnum";
+import type { StepTransitionRequestRequestQcResult } from "./stepTransitionRequestRequestQcResult";
 
 export interface StepTransitionRequestRequest {
   action: ActionEnum;
@@ -15,4 +16,7 @@ export interface StepTransitionRequestRequest {
    * @nullable
    */
   note?: string | null;
+  qc_result?:
+    | (typeof StepTransitionRequestRequestQcResult)[keyof typeof StepTransitionRequestRequestQcResult]
+    | null;
 }
