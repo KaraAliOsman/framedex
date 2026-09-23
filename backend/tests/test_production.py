@@ -970,3 +970,106 @@ def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
     other_id = uuid4()
     other_marker = str(other_id).replace("-", "")[:8].upper()
     assert other_marker != marker or code != f"{source_code[:50-len('-RM-01')-9]}-{other_marker}-RM-01"
+
+
+def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
+    org_id, order_id, actor_id = uuid4(), uuid4(), uuid4()
+    events: list[list] = []
+    payload = {
+        "position_id": str(_POSITION_ID),
+        "quantity": 2,
+        "materials": {
+            "profile_cuts": [{"a": 1}, {"b": 2}],
+            "glasses": [{"g": 1}],
+        },
+    }
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-1",
+                "status": "IN_PROGRESS",
+                "payload_json": payload,
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "insert into public.production_step_events" in lowered:
+            events.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        output = service.generate_packing_manifest(
+            org_id=org_id, order_id=order_id, actor_id=actor_id
+        )
+    units = output["packing"]["units"]
+    assert [u["unit_index"] for u in units] == [1, 2]
+    assert units[0]["label_code"] == "OT-1-U01"
+    assert units[0]["profiles"] == 2 and units[0]["glasses"] == 1
+    assert units[0]["panels"] == 0 and units[0]["hardware"] == 0
+    assert "'wo_packed'" in events[0][0]
+
+
+def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    updates: list[list] = []
+    calls = {"n": 0}
+    statuses = iter(["IN_PROGRESS"])
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        return {
+            "id": str(order_id),
+            "order_code": "OT-1",
+            "status": next(statuses, "IN_PROGRESS"),
+            "payload_json": {},
+        }
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [{"id": "ok"}])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="dispatch_requires_completed"):
+        service.dispatch_work_order(org_id=org_id, order_id=order_id, actor_id=uuid4())
+
+    # Completed path updates status and emits the event; replay returns detail.
+    captured_status: dict[str, dict] = {"row": {"status": "COMPLETED"}}
+
+    def fake_one_completed(sql_text: str, params: list, code: str = "not_found") -> dict:
+        return {
+            "id": str(order_id),
+            "order_code": "OT-1",
+            "status": captured_status["row"]["status"],
+            "payload_json": {},
+        }
+
+    def fake_rows_dispatch(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "update public.orders set status" in lowered:
+            captured_status["row"]["status"] = "DISPATCHED"
+        if "insert into public.production_step_events" in lowered:
+            updates.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.one", fake_one_completed)
+    monkeypatch.setattr("production.service.rows", fake_rows_dispatch)
+    monkeypatch.setattr(
+        "production.service.get_work_order",
+        lambda **kw: {"order": {"status": captured_status["row"]["status"]}},
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.dispatch_work_order(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), note="Camión 12"
+        )
+        assert captured_status["row"]["status"] == "DISPATCHED"
+        out2 = service.dispatch_work_order(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    assert "'wo_dispatched'" in updates[0][0]
+    assert out2["order"]["status"] == "DISPATCHED"

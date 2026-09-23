@@ -24,6 +24,8 @@ from engine_api.repository import SystemNotFound
 from production import service
 from production.serializers import (
     CncExportSerializer,
+    DispatchRequestSerializer,
+    PackingManifestSerializer,
     ProductionOrderDetailSerializer,
     RemakeRequestSerializer,
     ProductionOrderListSerializer,
@@ -213,6 +215,46 @@ class ProductionOrderCncFileView(APIView):
         response = HttpResponse(content, content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{download_name}"'
         return response
+
+
+class ProductionOrderPackingView(APIView):
+    @extend_schema(
+        operation_id="production_order_packing",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={201: PackingManifestSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.generate_packing_manifest(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                )
+        return Response(output, status=201)
+
+
+class ProductionOrderDispatchView(APIView):
+    @extend_schema(
+        operation_id="production_order_dispatch",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=DispatchRequestSerializer,
+        responses={200: ProductionOrderDetailSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(DispatchRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.dispatch_work_order(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    note=data.get("note"),
+                )
+        return Response(output)
 
 
 class WorkCenterListView(APIView):

@@ -90,6 +90,16 @@ class CncExportSerializer(serializers.Serializer):
     files = serializers.DictField(child=serializers.CharField())
 
 
+class PackingManifestSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    packing = serializers.DictField()
+
+
+class DispatchRequestSerializer(serializers.Serializer):
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
 class RemakeRequestSerializer(StrictSerializer):
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
 

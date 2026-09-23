@@ -991,6 +991,20 @@ const messages = {
   "assembly.issueCount": "{count} observaciones",
   "assembly.pickStarter": "Elige un sistema y un diseño inicial para comenzar.",
   "assembly.chooseSystemHint": "Elige una serie para calcular el conjunto.",
+  "production.orderDispatched": "Despachada",
+  "production.eventPacked": "Packing generado",
+  "production.eventDispatched": "Orden despachada",
+  "production.dispatchButton": "Despachar",
+  "production.packingTitle": "Packing",
+  "production.packingGenerate": "Generar packing",
+  "production.packingRegenerate": "Regenerar packing",
+  "production.packingLabel": "Etiqueta",
+  "production.packingProfiles": "Perfiles",
+  "production.packingReinforcements": "Refuerzos",
+  "production.packingGlasses": "Vidrios",
+  "production.packingPanels": "Paneles",
+  "production.packingHardware": "Herrajes",
+  "production.packingEmpty": "Genera el manifiesto de packing para etiquetar las unidades.",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

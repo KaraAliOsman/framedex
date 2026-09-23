@@ -455,6 +455,8 @@ def transition_step(
             [str(step_id), str(org_id)],
             "production_step_not_found",
         )
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
         if qc_result is not None and not (
@@ -797,6 +799,129 @@ def cnc_file_content(
     if content is None:
         return None
     return f"{order['order_code']}-{filename}", content
+
+
+def generate_packing_manifest(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """Per-unit packing manifest: deterministic label codes
+    ``<order_code>-U<nn>`` plus piece counts per material kind, so each
+    finished unit gets a scannable label and the pack step has a checklist."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
+        payload = _decoded(order["payload_json"])
+        materials = payload.get("materials") or {}
+        quantity = int(payload.get("quantity") or 1)
+        kind_counts = {
+            "profiles": len(materials.get("profile_cuts") or []),
+            "reinforcements": len(materials.get("reinforcements") or []),
+            "glasses": len(materials.get("glasses") or []),
+            "panels": len(materials.get("panels") or []),
+            "hardware": len(materials.get("hardware_items") or []),
+        }
+        units = [
+            {
+                "unit_index": unit,
+                "label_code": f"{order['order_code']}-U{unit:02d}"[:50],
+                "position_id": payload.get("position_id"),
+                **kind_counts,
+            }
+            for unit in range(1, quantity + 1)
+        ]
+        packing = {
+            "schema": "work_order_packing_v1",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "units": units,
+        }
+        new_payload = {**payload, "packing": packing}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_PACKED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "units": len(units),
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "packing": packing,
+        }
+
+
+def dispatch_work_order(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, note: str | None = None
+) -> dict[str, object]:
+    """Ship the finished order: requires COMPLETED (all routing done); sets
+    DISPATCHED and records WO_DISPATCHED. Idempotent — re-dispatching an
+    already dispatched order returns its current state."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "DISPATCHED":
+            return get_work_order(org_id=org_id, order_id=order_id)
+        if str(order["status"]) != "COMPLETED":
+            raise DocumentaryError("dispatch_requires_completed")
+        rows(
+            """
+            UPDATE public.orders SET status = 'DISPATCHED', updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [datetime.now(timezone.utc), str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_DISPATCHED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "note": (note or "").strip() or None,
+                }),
+            ],
+        )
+        return get_work_order(org_id=org_id, order_id=order_id)
 
 
 def create_work_center(

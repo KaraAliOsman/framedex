@@ -34,6 +34,7 @@ import type {
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
   DesignOptions,
+  DispatchRequestRequest,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
   DocumentaryPreparationResponse,
@@ -71,6 +72,7 @@ import type {
   OrderReceiptRequestRequest,
   OrderReceiving,
   OrderResponse,
+  PackingManifest,
   PatchedArticleWriteRequest,
   PatchedBeadWriteRequest,
   PatchedKitWriteRequest,
@@ -5041,6 +5043,89 @@ export const productionOrderCncFile = async (
   );
 };
 
+export type productionOrderDispatchResponse200 = {
+  data: ProductionOrderDetail;
+  status: 200;
+};
+
+export type productionOrderDispatchResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchResponseSuccess = productionOrderDispatchResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDispatchResponseError = (
+  | productionOrderDispatchResponse400
+  | productionOrderDispatchResponse401
+  | productionOrderDispatchResponse403
+  | productionOrderDispatchResponse404
+  | productionOrderDispatchResponse409
+  | productionOrderDispatchResponse422
+  | productionOrderDispatchResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchResponse =
+  productionOrderDispatchResponseSuccess | productionOrderDispatchResponseError;
+
+export const getProductionOrderDispatchUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch/`;
+};
+
+export const productionOrderDispatch = async (
+  orderId: string,
+  dispatchRequestRequest?: DispatchRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDispatchResponse>(getProductionOrderDispatchUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(dispatchRequestRequest),
+  });
+};
+
 export type productionOrderOptimizeResponse200 = {
   data: WorkOrderOptimize;
   status: 200;
@@ -5121,6 +5206,78 @@ export const productionOrderOptimize = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(workOrderOptimizeRequestRequest),
+  });
+};
+
+export type productionOrderPackingResponse201 = {
+  data: PackingManifest;
+  status: 201;
+};
+
+export type productionOrderPackingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderPackingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderPackingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderPackingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderPackingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderPackingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderPackingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderPackingResponseSuccess = productionOrderPackingResponse201 & {
+  headers: Headers;
+};
+export type productionOrderPackingResponseError = (
+  | productionOrderPackingResponse400
+  | productionOrderPackingResponse401
+  | productionOrderPackingResponse403
+  | productionOrderPackingResponse404
+  | productionOrderPackingResponse409
+  | productionOrderPackingResponse422
+  | productionOrderPackingResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderPackingResponse =
+  productionOrderPackingResponseSuccess | productionOrderPackingResponseError;
+
+export const getProductionOrderPackingUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/packing/`;
+};
+
+export const productionOrderPacking = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderPackingResponse> => {
+  return apiMutator<productionOrderPackingResponse>(getProductionOrderPackingUrl(orderId), {
+    ...options,
+    method: "POST",
   });
 };
 

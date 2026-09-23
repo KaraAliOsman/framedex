@@ -324,3 +324,18 @@
   color: var(--theme-warning, #b45309);
   margin: 0.6rem 0 0;
 }
+
+.production-dispatch {
+  border: 1px solid var(--accent, #0f817a);
+  background: var(--accent, #0f817a);
+  color: #fff;
+}
+
+.production-packing {
+  margin-block: var(--space-4, 16px);
+}
+
+.production-label-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.85em;
+}

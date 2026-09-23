@@ -2,10 +2,12 @@ from django.urls import path
 
 from production.views import (
     ProductionOrderCncExportView,
+    ProductionOrderDispatchView,
     ProductionOrderCncFileView,
     ProductionOrderDetailView,
     ProductionOrderListView,
     ProductionOrderOptimizeView,
+    ProductionOrderPackingView,
     ProductionOrderRemakeView,
     ProductionReleaseView,
     ProductionStepTransitionView,
@@ -33,6 +35,16 @@ urlpatterns = [
         "orders/<uuid:order_id>/cnc-export/<str:filename>",
         ProductionOrderCncFileView.as_view(),
         name="production-order-cnc-file",
+    ),
+    path(
+        "orders/<uuid:order_id>/packing/",
+        ProductionOrderPackingView.as_view(),
+        name="production-order-packing",
+    ),
+    path(
+        "orders/<uuid:order_id>/dispatch/",
+        ProductionOrderDispatchView.as_view(),
+        name="production-order-dispatch",
     ),
     path(
         "orders/<uuid:order_id>/remake/",

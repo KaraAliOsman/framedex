@@ -4,7 +4,9 @@ import { useSearchParams } from "react-router-dom";
 import {
   productionOrderCncExport,
   productionOrderDetail,
+  productionOrderDispatch,
   productionOrderOptimize,
+  productionOrderPacking,
   productionOrderRemake,
   productionOrders,
   productionStepTransition,
@@ -83,6 +85,20 @@ type CncExport = {
   files?: Record<string, string>;
 };
 
+type PackingUnit = {
+  unit_index: number;
+  label_code: string;
+  profiles?: number;
+  reinforcements?: number;
+  glasses?: number;
+  panels?: number;
+  hardware?: number;
+};
+type WorkOrderPacking = {
+  generated_at?: string;
+  units?: PackingUnit[];
+};
+
 const stepStatusKey: Record<string, Parameters<typeof t>[0]> = {
   PENDING: "production.stepPending",
   READY: "production.stepReady",
@@ -95,6 +111,7 @@ const orderStatusKey: Record<string, Parameters<typeof t>[0]> = {
   IN_PROGRESS: "production.orderInProgress",
   HOLD: "production.orderHold",
   COMPLETED: "production.orderCompleted",
+  DISPATCHED: "production.orderDispatched",
 };
 const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_RELEASED: "production.eventReleased",
@@ -109,6 +126,8 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   QC_FAILED: "production.eventQcFailed",
   WO_REMADE: "production.eventRemade",
   WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_PACKED: "production.eventPacked",
+  WO_DISPATCHED: "production.eventDispatched",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -243,6 +262,14 @@ export function ProductionPage(): JSX.Element {
     void action(productionOrderCncExport(orderId), orderId);
   }
 
+  function pack(orderId: string): void {
+    void action(productionOrderPacking(orderId), orderId);
+  }
+
+  function dispatch(orderId: string): void {
+    void action(productionOrderDispatch(orderId, { note: note || undefined }), orderId);
+  }
+
   function downloadCnc(orderCode: string, filename: string, content: string): void {
     const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -309,6 +336,16 @@ export function ProductionPage(): JSX.Element {
                   <span className="production-order-progress">
                     {detail.quantity} {t("production.units")}
                   </span>
+                ) : null}
+                {canWrite && detail.status === "COMPLETED" ? (
+                  <button
+                    type="button"
+                    className="production-dispatch"
+                    disabled={busy}
+                    onClick={() => dispatch(detail.id)}
+                  >
+                    {t("production.dispatchButton")}
+                  </button>
                 ) : null}
                 {canWrite && detail.status === "HOLD" ? (
                   <button
@@ -513,6 +550,57 @@ export function ProductionPage(): JSX.Element {
                   </section>
                 );
               })()}
+              {(() => {
+                const packing = detail.payload?.packing as WorkOrderPacking | undefined;
+                const units = packing?.units ?? [];
+                return (
+                  <section className="production-packing" aria-label={t("production.packingTitle")}>
+                    <header className="production-optimize-head">
+                      <h3>{t("production.packingTitle")}</h3>
+                      {packing?.generated_at ? (
+                        <time dateTime={packing.generated_at}>
+                          {new Date(packing.generated_at).toLocaleString("es-CL")}
+                        </time>
+                      ) : null}
+                      {canWrite && detail.status !== "DISPATCHED" ? (
+                        <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
+                          {packing
+                            ? t("production.packingRegenerate")
+                            : t("production.packingGenerate")}
+                        </button>
+                      ) : null}
+                    </header>
+                    {units.length ? (
+                      <table className="production-plan">
+                        <thead>
+                          <tr>
+                            <th>{t("production.packingLabel")}</th>
+                            <th>{t("production.packingProfiles")}</th>
+                            <th>{t("production.packingReinforcements")}</th>
+                            <th>{t("production.packingGlasses")}</th>
+                            <th>{t("production.packingPanels")}</th>
+                            <th>{t("production.packingHardware")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {units.map((unit) => (
+                            <tr key={unit.unit_index}>
+                              <td className="production-label-code">{unit.label_code}</td>
+                              <td>{unit.profiles ?? 0}</td>
+                              <td>{unit.reinforcements ?? 0}</td>
+                              <td>{unit.glasses ?? 0}</td>
+                              <td>{unit.panels ?? 0}</td>
+                              <td>{unit.hardware ?? 0}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="production-optimize-empty">{t("production.packingEmpty")}</p>
+                    )}
+                  </section>
+                );
+              })()}
               <ol className="production-steps">
                 {detail.steps.map((step) => (
                   <li key={step.id} className={`production-step step-${step.status.toLowerCase()}`}>
@@ -527,7 +615,7 @@ export function ProductionPage(): JSX.Element {
                       </span>
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                    {detail.status !== "COMPLETED" ? (
+                    {detail.status !== "COMPLETED" && detail.status !== "DISPATCHED" ? (
                       <div className="production-step-actions">
                         {stepActions(step).map((stepAction) => (
                           <button
