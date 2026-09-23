@@ -28,6 +28,7 @@ from dekopen_engine.manufacturing import (
     HandleRequirementPolicyV1,
     ManufacturingFactsV1,
     ManufacturingPlacementPolicyV1,
+    project_coupling_facts_v1,
     project_manufacturing_facts_v1,
 )
 from dekopen_engine.manufacturing_trace import (
@@ -35,7 +36,7 @@ from dekopen_engine.manufacturing_trace import (
     PlacementDomain,
     SemanticLeafTraceV1,
 )
-from dekopen_engine.models import EngineResult
+from dekopen_engine.models import EngineResult, ProfileRole
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
@@ -774,6 +775,31 @@ def freeze_revision_a(
                             module_id=module_id,
                         ),
                     ))
+            coupler_cuts = [
+                cut for cut in result.profile_cuts if cut.role is ProfileRole.COUPLER
+            ]
+            coupler_reinforcements = [
+                piece
+                for piece in result.reinforcements
+                if piece.role is ProfileRole.COUPLER
+            ]
+            if is_assembly and (coupler_cuts or coupler_reinforcements):
+                for repetition in range(1, quantity + 1):
+                    unit_models.append((
+                        None,
+                        project_coupling_facts_v1(
+                            coupler_cuts=coupler_cuts,
+                            coupler_reinforcements=coupler_reinforcements,
+                            position_id=position_id,
+                            position_index=int(position["position_index"]),
+                            repetition_index=repetition,
+                            nominal_width_mm=D(str(position["width_mm"])),
+                            nominal_height_mm=D(str(position["height_mm"])),
+                            placement_policy=policies.placement,
+                            handle_policy=policies.handles,
+                            reinforcement_policy=policies.reinforcement,
+                        ),
+                    ))
             units = [unit for _, unit in unit_models]
             hardware = [HardwareSelectionV1(
                 repetition_index=repetition,
@@ -824,8 +850,8 @@ def freeze_revision_a(
                     glass_polishing=polishing,
                     accessory_schedule=accessories,
                 ))
-            # Module units cover every profile SKU the freeze needs: assembly
-            # coupler cuts are quote-level BOM evidence, not purchase evidence.
+            # Unit members now cover every profile SKU the BOM carries:
+            # assembly coupler cuts are minted as position-level sources too.
             profile_skus = {member.workshop_sku for unit in units for member in unit.members}
             reinforcement_skus = {
                 item.workshop_sku for unit in units for item in unit.reinforcements

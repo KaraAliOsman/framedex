@@ -19,7 +19,14 @@ from dekopen_engine.manufacturing_trace import (
     TraceRectV1,
     TraceSegmentV1,
 )
-from dekopen_engine.models import BayOpeningType, EngineModel, MaterialType, ProfileRole
+from dekopen_engine.models import (
+    BayOpeningType,
+    EngineModel,
+    MaterialType,
+    ProfileCut,
+    ProfileRole,
+    ReinforcementPiece,
+)
 
 
 class ManufacturingAuthorityError(ValueError):
@@ -646,5 +653,125 @@ def project_manufacturing_facts_v1(
         leaves=leaf_facts,
         infills=infill_facts,
         handles=handles,
+        relationships=relationships,
+    )
+
+
+def project_coupling_facts_v1(
+    *,
+    coupler_cuts: list[ProfileCut],
+    coupler_reinforcements: list[ReinforcementPiece],
+    position_id: str,
+    position_index: int,
+    repetition_index: int,
+    nominal_width_mm: Decimal,
+    nominal_height_mm: Decimal,
+    placement_policy: ManufacturingPlacementPolicyV1,
+    handle_policy: HandleRequirementPolicyV1,
+    reinforcement_policy: ReinforcementCutPolicyV1,
+) -> ManufacturingFactsV1:
+    """Position-level coupling sources for an assembly repetition.
+
+    Coupler cuts live in the aggregate BOM, outside every module's
+    manufacturing trace. This mints them into the same physical-evidence
+    contract so purchase projection and DOC-03 cover the joint pieces
+    exactly once per repetition.
+    """
+    member_facts: list[PhysicalMemberFactV1] = []
+    member_by_target: dict[tuple[str | None, str], PhysicalMemberFactV1] = {}
+    for cut in sorted(coupler_cuts, key=lambda item: (item.bay_id or "", item.sku)):
+        physical_identity = PhysicalMemberIdentityV1(
+            position_id=position_id,
+            position_index=position_index,
+            repetition_index=repetition_index,
+            topology_path=f"coupling:{cut.bay_id}",
+            assembly="COUPLER",
+            leaf_slot=None,
+            role=ProfileRole.COUPLER,
+            physical_member_slot="COUPLER",
+        )
+        member_id = documentary_sha256_v1(
+            {"kind": "physical_member", **physical_identity.model_dump()}
+        )
+        member = PhysicalMemberFactV1(
+            member_id=member_id,
+            semantic_member_id=f"coupler:{cut.bay_id}",
+            identity=physical_identity,
+            bay_id=cut.bay_id,
+            leaf_id=None,
+            workshop_sku=cut.sku,
+            material=cut.material,
+            cut_length_mm=cut.length_mm,
+            angle_left=cut.angle_left,
+            angle_right=cut.angle_right,
+            axis=Axis.VERTICAL,
+            start=TracePointV1(x_mm=Decimal("0"), y_mm=Decimal("0")),
+            end=TracePointV1(x_mm=Decimal("0"), y_mm=cut.length_mm),
+        )
+        member_facts.append(member)
+        member_by_target[(cut.bay_id, cut.sku)] = member
+
+    reinforcements: list[ReinforcementFactV1] = []
+    relationships: list[PhysicalRelationshipV1] = []
+    for piece in sorted(
+        coupler_reinforcements, key=lambda item: (item.bay_id or "", item.reinforcement_sku or "")
+    ):
+        try:
+            parent = member_by_target[(piece.bay_id, piece.parent_profile_sku)]
+        except KeyError as error:
+            raise ManufacturingAuthorityError(
+                "Coupler reinforcement parent member is missing"
+            ) from error
+        sku = piece.reinforcement_sku
+        if not sku:
+            raise ManufacturingAuthorityError("Coupler reinforcement stock identity is unresolved")
+        reinforcement_id = documentary_sha256_v1(
+            {
+                "kind": "reinforcement",
+                "parent_member_id": parent.member_id,
+                "workshop_sku": sku,
+            }
+        )
+        reinforcements.append(
+            ReinforcementFactV1(
+                reinforcement_id=reinforcement_id,
+                parent_member_id=parent.member_id,
+                workshop_sku=sku,
+                cut_length_mm=piece.length_mm,
+                # Reinforcement cut rules are keyed per member role; couplers
+                # are square-cut profiles, so the steel follows the profile's
+                # own angles.
+                angle_left=parent.angle_left,
+                angle_right=parent.angle_right,
+                policy_id=reinforcement_policy.policy_id,
+                policy_version=reinforcement_policy.version,
+            )
+        )
+        relationships.append(
+            PhysicalRelationshipV1(
+                relationship="REINFORCES",
+                source_id=reinforcement_id,
+                target_id=parent.member_id,
+            )
+        )
+    relationships.sort(key=lambda item: (item.relationship, item.source_id, item.target_id))
+    return ManufacturingFactsV1(
+        position_id=position_id,
+        position_index=position_index,
+        repetition_index=repetition_index,
+        module_id=None,
+        nominal_width_mm=nominal_width_mm,
+        nominal_height_mm=nominal_height_mm,
+        placement_policy_id=placement_policy.policy_id,
+        placement_policy_version=placement_policy.version,
+        handle_policy_id=handle_policy.policy_id,
+        handle_policy_version=handle_policy.version,
+        reinforcement_policy_id=reinforcement_policy.policy_id,
+        reinforcement_policy_version=reinforcement_policy.version,
+        members=member_facts,
+        reinforcements=reinforcements,
+        leaves=[],
+        infills=[],
+        handles=[],
         relationships=relationships,
     )

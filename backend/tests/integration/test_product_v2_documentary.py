@@ -304,7 +304,9 @@ def test_assembly_freeze_tolerates_unsaved_handle_intents(documentary_tenant) ->
     assert snapshot["documentary_complete"] is False
     assert snapshot["production_allowed"] is False
     projected = {item["module_id"] for item in snapshot["manufacturing"]}
-    assert projected == {"m1", "m3"}
+    # m2's units are absent (unsaved intents), but the position-level
+    # coupling sources (module_id=None) still seal as physical evidence.
+    assert projected == {"m1", "m3", None}
     evidence = {
         item["module_id"]
         for item in snapshot["inspector"]
@@ -401,6 +403,18 @@ def test_assembly_freeze_seals_complete_with_full_evidence(documentary_tenant) -
     # The workshop order renders for a complete assembly too.
     html = _doc03(snapshot)
     assert "m1" in html
+    # Coupler pieces reach purchase evidence: every BOM coupling SKU must
+    # appear as a technical sku in the projected requirements.
+    coupler_skus = {
+        cut.sku for cut in evaluation.bom.profile_cuts if cut.role.value == "COUPLER"
+    }
+    assert coupler_skus
+    required_skus = {
+        sku
+        for requirement in snapshot["purchase_requirements"]["requirements"]
+        for sku in requirement["technical_skus"]
+    }
+    assert coupler_skus <= required_skus
 
 
 def test_save_documentary_inputs_validates_namespaced_targets(documentary_tenant) -> None:

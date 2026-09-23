@@ -163,6 +163,8 @@ class PositionPurchaseInputV1(EngineModel):
     def quantity_and_sources_reconcile(self) -> PositionPurchaseInputV1:
         if not self.location_tag.strip():
             raise ValueError("Purchasing requires an explicit location tag")
+        if not self.manufacturing_units:
+            raise ValueError("Purchasing requires at least one manufacturing unit")
         repetitions_by_module: dict[str | None, list[int]] = {}
         for unit in self.manufacturing_units:
             repetitions_by_module.setdefault(unit.module_id, []).append(
