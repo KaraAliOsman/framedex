@@ -501,6 +501,9 @@ def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
         "ángulo entre 30 -20 grados",
         "ángulo entre 30 - 20 grados",
         "ángulo 30-20 grados",
+        "ángulo entre 30° - 20°",
+        "ángulo 30 grados - 20 grados",
+        "30 mm - 20 mm",
     ):
         declared = values(prompt)
         assert Decimal("-20") not in declared

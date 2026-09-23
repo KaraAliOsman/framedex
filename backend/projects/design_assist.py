@@ -155,11 +155,25 @@ _NUMBER_WORDS = {
     "once": 11,
     "doce": 12,
 }
-# '-' is a sign only when it does not subtract from a preceding number —
-# spaced or not: '30-20', '30 -20' and '30 - 20' all keep {30, 20} positive,
-# while 'ángulo -30' declares -30. Ranges are normalized first because a
-# regex lookbehind cannot see past whitespace.
-_RANGE_DASH_RE = re.compile(r"(\d)\s+-\s*(?=\d)")
+# '-' signs a number only when its left context is not a number or a unit:
+# 'ángulo -30' declares -30 while '30-20', '30 -20', '30 mm - 20 mm' and
+# '30° - 20°' all keep both endpoints positive.
+_UNITS = {
+    "mm",
+    "milimetro",
+    "milimetros",
+    "milímetro",
+    "milímetros",
+    "cm",
+    "m",
+    "mt",
+    "mts",
+    "metro",
+    "metros",
+    "grado",
+    "grados",
+}
+_LEFT_TOKEN_RE = re.compile(r"°|\d[\d.,]*|[\wáéíóúñü]+", re.IGNORECASE)
 _MEASURE_RE = re.compile(
     r"(?<![\d.,])(-?\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
     re.IGNORECASE,
@@ -188,18 +202,34 @@ def _parse_number(token: str) -> Decimal | None:
     return value if value.is_finite() else None
 
 
+def _unary_minus(text: str, start: int) -> bool:
+    """Whether the '-' before `start` signs the number rather than separating
+    a range or subtraction: it is a sign unless the token on its left is a
+    number, a degree mark, or a unit ('30 mm - 20' keeps both positive)."""
+    left = None
+    for token in _LEFT_TOKEN_RE.finditer(text[:start]):
+        left = token.group(0)
+    if left is None:
+        return True
+    if left == "°" or left.lower() in _UNITS:
+        return False
+    return not left[0].isdigit()
+
+
 def _declared_values(prompt: str) -> set[Decimal]:
     """Every number the user actually wrote — the grounding set numeric ops
     must cite. The model proposes structure; it may never introduce a
     measurement the request did not contain. Unit-suffixed measures normalize
     to mm, bare numbers count literally, number words cover counts."""
     values: set[Decimal] = set()
-    prompt = _RANGE_DASH_RE.sub(r"\1-", prompt)
-    for token, unit in _MEASURE_RE.findall(prompt):
+    for match in _MEASURE_RE.finditer(prompt):
+        token = match.group(1)
+        if token.startswith("-") and not _unary_minus(prompt, match.start(1)):
+            token = token[1:]
         number = _parse_number(token)
         if number is None:
             continue
-        unit = unit.lower()
+        unit = match.group(2).lower()
         if unit == "cm":
             factor = Decimal(10)
         elif unit.startswith("mm") or unit.startswith("mil"):
@@ -209,7 +239,11 @@ def _declared_values(prompt: str) -> set[Decimal]:
         values.add(number * factor)
     # Unit-suffixed spans are consumed by the first pass — their raw tokens
     # must not re-enter the set unconverted ('240 cm' declares 2400mm, not 240).
-    for token in _BARE_NUMBER_RE.findall(_MEASURE_RE.sub("", prompt)):
+    scan = _MEASURE_RE.sub("", prompt)
+    for match in _BARE_NUMBER_RE.finditer(scan):
+        token = match.group(0)
+        if token.startswith("-") and not _unary_minus(scan, match.start()):
+            token = token[1:]
         number = _parse_number(token)
         if number is not None:
             values.add(number)
