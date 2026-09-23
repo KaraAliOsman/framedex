@@ -110,8 +110,20 @@ def _patch_env(monkeypatch, rows_impl, client=None):
     monkeypatch.setattr(
         payment_links, "project_row", staticmethod(lambda *a, **k: {"name": "P-1"})
     )
+    monkeypatch.setattr(
+        payment_links,
+        "_deal",
+        lambda *a, **k: {"total": Decimal("250000"), "currency": "CLP"},
+    )
+    receipts = []
+    monkeypatch.setattr(
+        payment_links,
+        "issue_receipt",
+        lambda **kwargs: receipts.append(kwargs) or {},
+    )
     if client is not None:
         monkeypatch.setattr(payment_links, "_client", lambda integration: client)
+    return receipts
 
 
 def test_create_link_requires_integration(monkeypatch):
@@ -241,11 +253,13 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
         return []
 
     client = _Client()
-    _patch_env(monkeypatch, fake_rows, client=client)
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
     out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
     assert out["link"]["status"] == "PAID"
     assert len(inserts) == 1
     assert "ON CONFLICT" in inserts[0]
+    assert len(receipts) == 1
+    assert receipts[0]["actor_id"] == link["created_by"]
 
 
 def test_confirm_rejects_binding_mismatch(monkeypatch):

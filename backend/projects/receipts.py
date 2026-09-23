@@ -62,8 +62,9 @@ def issue_receipt(
     deal: dict,
 ) -> dict:
     """Seal the comprobante for a freshly inserted payment. Must run inside
-    the caller's transaction — the project row lock is already held, so the
-    receipt sequence is serialized per project."""
+    the caller's transaction: an org-scoped advisory lock serializes the
+    receipt sequence, which is per-organization — the code must satisfy
+    UNIQUE (org_id, receipt_code) across every project."""
     org_id_s, project_id_s = str(org_id), str(payment["project_id"])
     existing = rows(
         "SELECT * FROM public.payment_receipts WHERE payment_id=%s AND org_id=%s",
@@ -72,11 +73,14 @@ def issue_receipt(
     if existing:
         return _receipt_public(existing[0])
 
+    one(
+        "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+        [f"payment_receipts:{org_id_s}"],
+    )
     sequence = int(
         one(
-            "SELECT COUNT(*) AS n FROM public.payment_receipts "
-            "WHERE org_id=%s AND project_id=%s",
-            [org_id_s, project_id_s],
+            "SELECT COUNT(*) AS n FROM public.payment_receipts WHERE org_id=%s",
+            [org_id_s],
         )["n"]
     )
     receipt_code = f"RC-{sequence + 1:04d}"
@@ -163,7 +167,7 @@ def receipt_access(
             )
         receipt = receipt[0]
         signed_url = SupabaseDocumentStorage().signed_url(
-            str(receipt["storage_object_key"])
+            str(receipt["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
         )
     return {
         **_receipt_public(receipt),

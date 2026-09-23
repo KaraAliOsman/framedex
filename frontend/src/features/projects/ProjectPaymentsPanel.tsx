@@ -165,15 +165,26 @@ export function ProjectPaymentsPanel({
   }
 
   async function openReceipt(payment: ProjectPayment): Promise<void> {
+    // Open during the click activation — a tab opened after the await is blocked.
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.paymentReceiptError"));
+      return;
+    }
     const current = generation.current;
     setBusy(true);
     setMessage("");
     try {
       const response = await projectPaymentReceipt(projectId, payment.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current !== current) return;
-      window.open(response.data.signed_url, "_blank", "noopener,noreferrer");
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
     } catch {
+      tab.close();
       if (generation.current === current) setMessage(t("projects.paymentReceiptError"));
     } finally {
       if (generation.current === current) setBusy(false);

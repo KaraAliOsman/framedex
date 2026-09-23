@@ -19,7 +19,7 @@ class _Storage:
     def delete_object(self, object_key):
         self.deleted.append(object_key)
 
-    def signed_url(self, object_key):
+    def signed_url(self, object_key, expires_in=None):
         return f"https://signed.example/{object_key}"
 
 
@@ -119,6 +119,17 @@ def test_issue_receipt_renders_uploads_and_inserts(monkeypatch):
         if "INSERT INTO public.payment_receipts" in sql
     )
     assert "payload_json" in insert[0]
+
+    # The sequence is organization-wide — the code must satisfy
+    # UNIQUE (org_id, receipt_code) across every project — and it is
+    # serialized by an org-scoped advisory lock, not the project row.
+    lock = next(s for s, _ in one_calls if "pg_advisory_xact_lock" in s)
+    assert lock is not None
+    count_sql, count_params = next(
+        (s, p) for s, p in one_calls if "COUNT(*)" in s
+    )
+    assert "project_id" not in count_sql
+    assert count_params == [str(org)]
 
 
 def test_issue_receipt_replay_returns_existing_without_upload(monkeypatch):
