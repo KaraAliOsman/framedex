@@ -18,6 +18,9 @@ class ProjectWriteSerializer(StrictSerializer):
     client_rut = serializers.CharField(max_length=50, required=False, allow_blank=True)
     client_email = serializers.EmailField(required=False, allow_blank=True)
     client_phone = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    client_giro = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    client_comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    client_address = serializers.CharField(max_length=70, required=False, allow_blank=True)
     client_id = serializers.UUIDField(required=False, allow_null=True)
     delivery_address = serializers.CharField(required=False, allow_blank=True)
     notes_commercial = serializers.CharField(required=False, allow_blank=True)
@@ -75,6 +78,8 @@ class ClientWriteSerializer(StrictSerializer):
     email = serializers.EmailField(required=False, allow_blank=True)
     phone = serializers.CharField(max_length=50, required=False, allow_blank=True)
     address = serializers.CharField(required=False, allow_blank=True)
+    giro = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    comuna = serializers.CharField(max_length=20, required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
 
 
@@ -89,6 +94,8 @@ class ClientResponseSerializer(serializers.Serializer):
     email = serializers.CharField()
     phone = serializers.CharField()
     address = serializers.CharField()
+    giro = serializers.CharField(allow_null=True)
+    comuna = serializers.CharField(allow_null=True)
     notes = serializers.CharField()
     is_active = serializers.BooleanField()
     updated_at = serializers.DateTimeField()
@@ -255,6 +262,7 @@ class SiiCafSerializer(serializers.Serializer):
     remaining = serializers.IntegerField()
     rut_emisor = serializers.CharField()
     razon_social = serializers.CharField()
+    acteco = serializers.IntegerField(allow_null=True)
     created_at = serializers.CharField()
 
 
@@ -263,10 +271,11 @@ class SiiCafListSerializer(serializers.Serializer):
 
 
 class SiiCafUploadSerializer(serializers.Serializer):
-    caf_xml = serializers.CharField()
-    giro_emis = serializers.CharField(required=False, allow_blank=True)
-    dir_origen = serializers.CharField(required=False, allow_blank=True)
-    cmna_origen = serializers.CharField(required=False, allow_blank=True)
+    caf_xml = serializers.CharField(max_length=131072)
+    giro_emis = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    dir_origen = serializers.CharField(max_length=70, required=False, allow_blank=True)
+    cmna_origen = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    acteco = serializers.IntegerField(required=False, allow_null=True)
 
 
 class PaymentsSummarySerializer(serializers.Serializer):

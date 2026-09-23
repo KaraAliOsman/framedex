@@ -15,5 +15,7 @@ export interface SiiCaf {
   remaining: number;
   rut_emisor: string;
   razon_social: string;
+  /** @nullable */
+  acteco: number | null;
   created_at: string;
 }

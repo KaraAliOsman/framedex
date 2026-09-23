@@ -7,9 +7,17 @@
  */
 
 export interface SiiCafUploadRequest {
-  /** @minLength 1 */
+  /**
+   * @minLength 1
+   * @maxLength 131072
+   */
   caf_xml: string;
+  /** @maxLength 80 */
   giro_emis?: string;
+  /** @maxLength 70 */
   dir_origen?: string;
+  /** @maxLength 20 */
   cmna_origen?: string;
+  /** @nullable */
+  acteco?: number | null;
 }

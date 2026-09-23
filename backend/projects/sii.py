@@ -17,14 +17,18 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
-from decimal import Decimal
+from datetime import timedelta, timezone as utc_timezone
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 from xml.sax.saxutils import escape
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import defusedxml.ElementTree as ET
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.db import connection, transaction
 from django.utils import timezone
 
@@ -40,11 +44,28 @@ DTE_CREDIT_NOTE = 61
 _RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
 
 
+try:
+    # SII timestamps are continental-Chile wall time.
+    _SII_TZ = ZoneInfo("America/Santiago")
+except ZoneInfoNotFoundError:  # pragma: no cover - container without tzdata
+    _SII_TZ = utc_timezone(timedelta(hours=-3))
+
+
+def _rut_dv(body: str) -> str:
+    """Modulo-11 verifier digit of a RUT body ('76123456' → '0')."""
+    total = sum(int(digit) * (2 + index % 6) for index, digit in enumerate(reversed(body)))
+    dv = 11 - total % 11
+    return "0" if dv == 11 else "K" if dv == 10 else str(dv)
+
+
 def _rut_normalize(raw) -> str | None:
-    """'12.345.678-k' → '12345678-K'; None when the value is not a RUT."""
+    """'12.345.678-k' → '12345678-K'; None when the shape or the verifier
+    digit is wrong — a shape-valid bad RUT must never enter a sealed DTE."""
     compact = re.sub(r"[.\-\s]", "", str(raw or "")).upper()
     match = _RUT_COMPACT.match(compact)
-    return f"{match.group(1)}-{match.group(2)}" if match else None
+    if match is None or _rut_dv(match.group(1)) != match.group(2):
+        return None
+    return f"{match.group(1)}-{match.group(2)}"
 
 
 def _sha256(content: bytes) -> str:
@@ -117,7 +138,12 @@ def _parse_caf(xml_text: str) -> dict:
 
 def _caf_private_key(rsask: str):
     """SII ships RSASK as base64 DER PKCS#1; PEM/base64 fallbacks tolerated."""
-    blob = base64.b64decode(rsask, validate=True)
+    try:
+        blob = base64.b64decode(rsask, validate=True)
+    except Exception as error:
+        raise contract_error(
+            422, "sii_caf_key_invalid", "La llave RSASK del CAF no es RSA válida."
+        ) from error
     loaders = (
         lambda: serialization.load_der_private_key(blob, password=None),
         lambda: serialization.load_pem_private_key(blob, password=None),
@@ -133,9 +159,106 @@ def _caf_private_key(rsask: str):
 
 
 def _sign_dd(dd_xml: str, rsask: str) -> str:
-    key = _caf_private_key(rsask)
-    signature = key.sign(dd_xml.encode("utf-8"), padding.PKCS1v15(), hashes.SHA1())
+    key = _caf_private_key(_unwrap_rsask(rsask))
+    # The SII signs the DD as ISO-8859-1 bytes — UTF-8 would verify locally
+    # and fail the SII verifier on every accented character.
+    signature = key.sign(
+        dd_xml.encode("iso-8859-1"), padding.PKCS1v15(), hashes.SHA1()
+    )
     return base64.b64encode(signature).decode("ascii")
+
+
+def _kek() -> bytes | None:
+    """Key-encryption key for stored RSASK material: 32 bytes hex in
+    ``SII_CAF_KEK`` — the fiscal signing key never persists as plaintext."""
+    raw = os.environ.get("SII_CAF_KEK", "").strip()
+    if not raw:
+        return None
+    try:
+        key = bytes.fromhex(raw)
+    except ValueError:
+        return None
+    return key if len(key) == 32 else None
+
+
+def _wrap_rsask(rsask: str) -> str:
+    """Envelope-encrypt the CAF private key (AES-256-GCM, fresh nonce) for
+    storage. Refuses to persist plaintext — an unconfigured KEK fails closed."""
+    kek = _kek()
+    if kek is None:
+        raise contract_error(
+            503,
+            "sii_kek_unconfigured",
+            "SII_CAF_KEK no está configurado — las claves CAF no se almacenan en claro.",
+        )
+    nonce = os.urandom(12)
+    blob = AESGCM(kek).encrypt(nonce, rsask.encode("utf-8"), None)
+    return (
+        f"enc:v1:{base64.b64encode(nonce).decode()}"
+        f":{base64.b64encode(blob).decode()}"
+    )
+
+
+def _unwrap_rsask(stored: str) -> str:
+    """Inverse of ``_wrap_rsask``; rows stored before encryption existed are
+    still readable so a KEK rollout never strands an older pool."""
+    if not stored.startswith("enc:v1:"):
+        return stored
+    kek = _kek()
+    if kek is None:
+        raise contract_error(
+            503,
+            "sii_kek_unconfigured",
+            "SII_CAF_KEK no está configurado — no se puede descifrar la clave CAF.",
+        )
+    _, _, nonce_b64, blob_b64 = stored.split(":", 3)
+    try:
+        return AESGCM(kek).decrypt(
+            base64.b64decode(nonce_b64), base64.b64decode(blob_b64), None
+        ).decode("utf-8")
+    except Exception as error:
+        raise contract_error(
+            422,
+            "sii_caf_key_invalid",
+            "La clave CAF almacenada no se pudo descifrar.",
+        ) from error
+
+
+def _ensure_rsask_wrapped(caf: dict, org_id: str) -> dict:
+    """A plaintext RSASK row predates envelope encryption: re-wrap it now,
+    inside the folio transaction, so no fiscal key is ever *used* from
+    cleartext storage. Without a KEK it fails closed — plaintext never
+    signs."""
+    if caf["rsask"].startswith("enc:v1:"):
+        return caf
+    wrapped = _wrap_rsask(caf["rsask"])
+    rows(
+        "UPDATE public.sii_cafs SET rsask=%s "
+        "WHERE id=%s AND org_id=%s RETURNING id",
+        [wrapped, str(caf["id"]), org_id],
+    )
+    return {**caf, "rsask": wrapped}
+
+
+def _assert_key_pair(parsed: dict) -> None:
+    """The uploaded RSASK must be a valid RSA key matching the declared
+    RSAPK modulus/exponent — a malformed or mismatched pool must never
+    reach the folio registry."""
+    key = _caf_private_key(parsed["rsask"])
+    public = key.public_key().public_numbers()
+    try:
+        declared_n = int.from_bytes(base64.b64decode(parsed["rsapk_m"]), "big")
+        declared_e = int.from_bytes(base64.b64decode(parsed["rsapk_e"]), "big")
+    except Exception as error:
+        raise contract_error(
+            422, "sii_caf_invalid", "La clave pública RSAPK del CAF no es válida."
+        ) from error
+    if declared_n != public.n or declared_e != public.e:
+        raise contract_error(
+            422,
+            "sii_caf_key_mismatch",
+            "La llave privada del CAF no corresponde a la clave pública declarada.",
+        )
 
 
 def _caf_public(row) -> dict:
@@ -149,6 +272,7 @@ def _caf_public(row) -> dict:
         "remaining": hasta - actual,
         "rut_emisor": row["rut_emisor"],
         "razon_social": row["razon_social"],
+        "acteco": row["acteco"],
         "created_at": row["created_at"].isoformat()
         if hasattr(row["created_at"], "isoformat")
         else row["created_at"],
@@ -187,12 +311,18 @@ def register_caf(
     giro_emis: str | None = None,
     dir_origen: str | None = None,
     cmna_origen: str | None = None,
+    acteco: int | None = None,
 ) -> dict:
     """Register a CAF uploaded by the tenant. The CAF's own RUT/razón social
     are the emisor identity — the org's tax_id only guards a real-RUT
     mismatch, and overlapping folio ranges for the same DTE type are refused
     so allocation can never double-stamp."""
+    if len((caf_xml or "").encode("utf-8")) > 131072:
+        raise contract_error(
+            422, "sii_caf_invalid", "El archivo CAF es demasiado grande."
+        )
     parsed = _parse_caf(caf_xml)
+    _assert_key_pair(parsed)
     file_hash = _sha256((caf_xml or "").encode("utf-8"))
     org_id_s = str(org_id)
     with transaction.atomic(), documentary_backend():
@@ -206,7 +336,13 @@ def register_caf(
             "org_not_found",
         )
         org_rut = _rut_normalize(org["tax_id"])
-        if org_rut is not None and org_rut != parsed["rut_emisor"]:
+        if org_rut is None:
+            raise contract_error(
+                422,
+                "sii_org_rut_missing",
+                "Configure el RUT de la organización antes de registrar un CAF.",
+            )
+        if org_rut != parsed["rut_emisor"]:
             raise contract_error(
                 409,
                 "sii_caf_org_mismatch",
@@ -226,9 +362,9 @@ def register_caf(
         row = one(
             "INSERT INTO public.sii_cafs("
             "org_id,tipo_dte,folio_desde,folio_hasta,folio_actual,rut_emisor,"
-            "razon_social,giro_emis,dir_origen,cmna_origen,caf_xml,rsask,"
+            "razon_social,giro_emis,dir_origen,cmna_origen,acteco,caf_xml,rsask,"
             "rsapk_m,rsapk_e,file_sha256,uploaded_by) "
-            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
+            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
             [
                 org_id_s,
                 parsed["tipo_dte"],
@@ -240,8 +376,9 @@ def register_caf(
                 (giro_emis or "").strip() or None,
                 (dir_origen or "").strip() or None,
                 (cmna_origen or "").strip() or None,
+                acteco,
                 parsed["caf_xml"],
-                parsed["rsask"],
+                _wrap_rsask(parsed["rsask"]),
                 parsed["rsapk_m"],
                 parsed["rsapk_e"],
                 file_hash,
@@ -257,54 +394,111 @@ def _render_dte(
     folio: int,
     receptor: str,
     receptor_name: str,
+    receptor_extra: str,
     deal: dict,
     item: str,
     caf: dict,
     issued_at,
-    dir_recep: str = "",
     referencia: str = "",
-) -> bytes:
+) -> str:
     """Minimal DTE skeleton shared by 33/61: Encabezado + one Detalle + the
     TED (DD + FRMT SHA1withRSA stamped by the CAF key)."""
-    total = int(Decimal(str(deal["total_gross"])))
-    neto = int(Decimal(str(deal["total_net"])))
-    iva = int(Decimal(str(deal["total_tax"])))
-    fecha = issued_at.date().isoformat()
-    emisor_extra = ""
-    for tag, value in (
-        ("GiroEmis", caf.get("giro_emis")),
-        ("DirOrigen", caf.get("dir_origen")),
-        ("CmnaOrigen", caf.get("cmna_origen")),
+    # A DTE is a peso document: a foreign-currency deal would lose its
+    # currency entirely, so it refuses here rather than emitting wrong numbers.
+    if str(deal.get("currency") or "CLP").upper() != "CLP":
+        raise contract_error(
+            422,
+            "sii_currency_unsupported",
+            "El DTE sólo timbra documentos en CLP — este está en "
+            f"{deal.get('currency')}.",
+        )
+    amounts = [
+        Decimal(str(deal[key]))
+        for key in ("total_gross", "total_net", "total_tax")
+    ]
+    if any(amount != amount.to_integral_value() for amount in amounts):
+        raise contract_error(
+            422,
+            "sii_amount_fractional",
+            "Los totales del documento no son enteros — el DTE no puede "
+            "truncarlos.",
+        )
+    total, neto, iva = (int(amount) for amount in amounts)
+    # This renderer only supports the standard 19% IVA: a document priced
+    # under a different rate would emit contradictory fiscal fields, so it
+    # is refused rather than stamped with a wrong TasaIVA.
+    if iva != int(
+        (neto * Decimal("0.19")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    ) or total != neto + iva:
+        raise contract_error(
+            422,
+            "sii_tax_rate_unsupported",
+            "El documento no lleva IVA 19% — el DTE no puede timbrarlo.",
+        )
+    # A DTE is rejected by the SII schema without the emisor's activity code
+    # and business address — refuse before a folio is ever allocated.
+    if not all(
+        caf.get(key)
+        for key in ("giro_emis", "dir_origen", "cmna_origen", "acteco")
     ):
-        if value:
-            emisor_extra += f"<{tag}>{escape(str(value))}</{tag}>"
-
+        raise contract_error(
+            422,
+            "sii_emisor_incomplete",
+            "El CAF no trae giro, dirección, comuna ni acteco del emisor.",
+        )
+    local = issued_at.astimezone(_SII_TZ)
+    fecha = local.date().isoformat()
+    tsted = local.strftime("%Y-%m-%dT%H:%M:%S")
+    emisor_extra = "".join(
+        f"<{tag}>{escape(str(caf[key]))}</{tag}>"
+        for tag, key in (
+            ("GiroEmis", "giro_emis"),
+            ("Acteco", "acteco"),
+            ("DirOrigen", "dir_origen"),
+            ("CmnaOrigen", "cmna_origen"),
+        )
+    )
     # The DD is signed as serialized — build it once, byte-exact.
     dd = (
         f"<DD><RE>{caf['rut_emisor']}</RE><TD>{tipo}</TD><F>{folio}</F>"
         f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name)}</RSR>"
         f"<MNT>{total}</MNT><IT1>{escape(item)}</IT1>{caf['caf_xml']}"
-        f"<TSTED>{issued_at.isoformat()}</TSTED></DD>"
+        f"<TSTED>{tsted}</TSTED></DD>"
     )
     frmt = _sign_dd(dd, caf["rsask"])
     return (
-        f'<DTE version="1.0"><Documento ID="F{tipo}T{folio}">'
+        '<?xml version="1.0" encoding="ISO-8859-1"?>'
+        f'<DTE version="1.0" xmlns="http://www.sii.cl/SiiDte">'
+        f'<Documento ID="F{tipo}T{folio}">'
         f"<Encabezado><IdDoc><TipoDTE>{tipo}</TipoDTE>"
         f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis></IdDoc>"
         f"<Emisor><RUTEmisor>{caf['rut_emisor']}</RUTEmisor>"
         f"<RznSoc>{escape(caf['razon_social'])}</RznSoc>{emisor_extra}</Emisor>"
         f"<Receptor><RUTRecep>{receptor}</RUTRecep>"
-        f"<RznSocRecep>{escape(receptor_name)}</RznSocRecep>{dir_recep}</Receptor>"
+        f"<RznSocRecep>{escape(receptor_name)}</RznSocRecep>{receptor_extra}</Receptor>"
         f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
         f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales></Encabezado>"
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
         f"<MontoItem>{neto}</MontoItem></Detalle>{referencia}"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
-        f"</Documento></DTE>"
-    ).encode("utf-8")
+        f"<TmstFirma>{tsted}</TmstFirma></Documento></DTE>"
+    )
 
 
-def _receptor(payload: dict) -> tuple[str, str]:
+def _encode_dte(xml: str) -> bytes:
+    """DTE files are ISO-8859-1 per the SII convention — anything outside
+    latin-1 can't be stamped and is refused rather than silently mangled."""
+    try:
+        return xml.encode("iso-8859-1")
+    except UnicodeEncodeError as error:
+        raise contract_error(
+            422,
+            "sii_dte_unrepresentable",
+            "El DTE contiene caracteres no representables en ISO-8859-1.",
+        ) from error
+
+
+def _receptor(payload: dict) -> tuple[str, str, str]:
     project = payload["project"]
     receptor = _rut_normalize(project.get("client_rut"))
     if receptor is None:
@@ -313,42 +507,51 @@ def _receptor(payload: dict) -> tuple[str, str]:
             "sii_receptor_missing",
             "El documento no tiene un RUT de receptor válido para timbrar.",
         )
-    return receptor, str(project.get("client_name") or "Cliente").strip()
+    receptor_fields = ("client_giro", "client_comuna", "client_address")
+    if not all(str(project.get(key) or "").strip() for key in receptor_fields):
+        raise contract_error(
+            422,
+            "sii_receptor_incomplete",
+            "Faltan giro, comuna y dirección del receptor para timbrar.",
+        )
+    receptor_extra = "".join(
+        f"<{tag}>{escape(str(project[key]).strip())}</{tag}>"
+        for tag, key in (
+            ("GiroRecep", "client_giro"),
+            ("DirRecep", "client_address"),
+            ("CmnaRecep", "client_comuna"),
+        )
+    )
+    return receptor, str(project.get("client_name") or "Cliente").strip(), receptor_extra
 
 
-def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
+def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
     """DTE-33: one Detalle referencing the sealed quotation."""
     payload = (
         invoice["payload_json"]
         if isinstance(invoice["payload_json"], dict)
         else json.loads(invoice["payload_json"])
     )
-    receptor, receptor_name = _receptor(payload)
-    project = payload["project"]
+    receptor, receptor_name, receptor_extra = _receptor(payload)
     revision = payload.get("revision_code") or "REV-A"
     positions = payload.get("positions") or []
-    item = f"Según cotización {revision} — {len(positions)} posición(es)"
-    dir_recep = (
-        f"<DirRecep>{escape(str(project['delivery_address']))}</DirRecep>"
-        if project.get("delivery_address")
-        else ""
-    )
+    item = f"Según cotización {revision} - {len(positions)} posición(es)"
     return _render_dte(
         tipo=DTE_FACTURA,
         folio=folio,
         receptor=receptor,
         receptor_name=receptor_name,
+        receptor_extra=receptor_extra,
         deal=payload["deal"],
         item=item,
         caf=caf,
         issued_at=issued_at,
-        dir_recep=dir_recep,
     )
 
 
 def _dte_xml_credit_note(
     *, folio: int, credit_note: dict, parent_dte: dict, caf: dict, issued_at
-) -> bytes:
+) -> str:
     """DTE-61: annuls a factura — its <Referencia> points at the parent's
     stamped folio (CodRef=1)."""
     payload = (
@@ -356,10 +559,10 @@ def _dte_xml_credit_note(
         if isinstance(credit_note["payload_json"], dict)
         else json.loads(credit_note["payload_json"])
     )
-    receptor, receptor_name = _receptor(payload)
+    receptor, receptor_name, receptor_extra = _receptor(payload)
     item = f"Anula factura {payload['invoice']['invoice_code']}"
     if payload.get("reason"):
-        item = f"{item} — {payload['reason']}"
+        item = f"{item} - {payload['reason']}"
     referencia = (
         f"<Referencia><TpoDocRef>{DTE_FACTURA}</TpoDocRef>"
         f"<FolioRef>{int(parent_dte['folio'])}</FolioRef>"
@@ -372,6 +575,7 @@ def _dte_xml_credit_note(
         folio=folio,
         receptor=receptor,
         receptor_name=receptor_name,
+        receptor_extra=receptor_extra,
         deal=payload["deal"],
         item=item,
         caf=caf,
@@ -408,6 +612,17 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
             )
             if existing:
                 return _dte_public(existing[0])
+            annulled = rows(
+                "SELECT id FROM public.project_credit_notes "
+                "WHERE org_id=%s AND invoice_id=%s LIMIT 1",
+                [org_id_s, invoice_id_s],
+            )
+            if annulled:
+                raise contract_error(
+                    409,
+                    "invoice_already_annulled",
+                    "La factura está anulada por una nota de crédito — timbre el DTE-61 sobre la nota.",
+                )
             cafs = rows(
                 "SELECT * FROM public.sii_cafs "
                 "WHERE org_id=%s AND tipo_dte=%s AND folio_actual < folio_hasta "
@@ -420,7 +635,7 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                     "sii_caf_exhausted",
                     "No hay folios CAF disponibles — cargue un CAF en Configuración.",
                 )
-            caf = cafs[0]
+            caf = _ensure_rsask_wrapped(cafs[0], org_id_s)
             folio = int(caf["folio_actual"]) + 1
             if folio > int(caf["folio_hasta"]):
                 raise contract_error(
@@ -431,7 +646,9 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
             issued_at = timezone.now()
             # The DD is stamped before the cursor commits: a receptor/XML
             # failure aborts the transaction with the folio still untouched.
-            content = _dte_xml(folio=folio, invoice=invoice, caf=caf, issued_at=issued_at)
+            content = _encode_dte(
+                _dte_xml(folio=folio, invoice=invoice, caf=caf, issued_at=issued_at)
+            )
             moved = rows(
                 "UPDATE public.sii_cafs SET folio_actual=%s "
                 "WHERE id=%s AND org_id=%s AND folio_actual=%s "
@@ -558,13 +775,9 @@ def _purge_unreferenced_dte(
 def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
     """invoice_id → light DTE badge for the cobranza invoice listing."""
     return {
-        str(row["invoice_id"]): {
-            "id": str(row["id"]),
-            "dte_type": int(row["dte_type"]),
-            "folio": int(row["folio"]),
-        }
+        str(row["invoice_id"]): _dte_public(row)
         for row in rows(
-            "SELECT id, invoice_id, dte_type, folio FROM public.project_dtes "
+            "SELECT * FROM public.project_dtes "
             "WHERE org_id=%s AND project_id=%s",
             [str(org_id), str(project_id)],
         )
@@ -628,7 +841,7 @@ def emit_credit_note_dte(
                     "sii_caf_exhausted",
                     "No hay folios CAF tipo 61 disponibles — cargue un CAF en Configuración.",
                 )
-            caf = cafs[0]
+            caf = _ensure_rsask_wrapped(cafs[0], org_id_s)
             folio = int(caf["folio_actual"]) + 1
             if folio > int(caf["folio_hasta"]):
                 raise contract_error(
@@ -637,12 +850,14 @@ def emit_credit_note_dte(
                     "No hay folios CAF tipo 61 disponibles — cargue un CAF en Configuración.",
                 )
             issued_at = timezone.now()
-            content = _dte_xml_credit_note(
-                folio=folio,
-                credit_note=credit_note,
-                parent_dte=parent_dte,
-                caf=caf,
-                issued_at=issued_at,
+            content = _encode_dte(
+                _dte_xml_credit_note(
+                    folio=folio,
+                    credit_note=credit_note,
+                    parent_dte=parent_dte,
+                    caf=caf,
+                    issued_at=issued_at,
+                )
             )
             moved = rows(
                 "UPDATE public.sii_cafs SET folio_actual=%s "
@@ -747,15 +962,11 @@ def credit_note_dte_access(*, org_id: UUID, project_id: UUID, credit_note_id: UU
 
 
 def dtes_by_credit_note(*, org_id: UUID, project_id: UUID) -> dict:
-    """credit_note_id → light DTE badge for the cobranza listing."""
+    """credit_note_id → DTE badge for the cobranza listing."""
     return {
-        str(row["credit_note_id"]): {
-            "id": str(row["id"]),
-            "dte_type": int(row["dte_type"]),
-            "folio": int(row["folio"]),
-        }
+        str(row["credit_note_id"]): _dte_public(row)
         for row in rows(
-            "SELECT id, credit_note_id, dte_type, folio FROM public.project_dtes "
+            "SELECT * FROM public.project_dtes "
             "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NOT NULL",
             [str(org_id), str(project_id)],
         )

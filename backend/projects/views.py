@@ -619,7 +619,9 @@ class SiiCafsView(APIView):
     )
     def post(self, request):
         data = validate(SiiCafUploadSerializer, request.data)
-        with scope(request, WRITE_ROLES) as (token, _, org):
+        # CAF registration installs fiscal signing keys — owner-only, never
+        # the estimator scope that manages quotes and documents.
+        with scope(request, ("OWNER",)) as (token, _, org):
             return response(
                 sii.register_caf(
                     org_id=org,
@@ -628,6 +630,7 @@ class SiiCafsView(APIView):
                     giro_emis=data.get("giro_emis"),
                     dir_origen=data.get("dir_origen"),
                     cmna_origen=data.get("cmna_origen"),
+                    acteco=data.get("acteco"),
                 ),
                 status=201,
             )
