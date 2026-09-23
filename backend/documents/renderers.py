@@ -4,14 +4,87 @@ from __future__ import annotations
 
 from decimal import Decimal
 from html import escape
-from typing import NoReturn
+from pathlib import Path
 
 from documents.repository import DocumentaryError
 
 _PDF_MEDIA = "application/pdf"
-_CSS = """
-@page { size: letter portrait; margin: 14mm 12mm 18mm; @bottom-left { content: string(bom-identity); font: 7pt monospace; color: #64748b; } @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 8pt sans-serif; color: #64748b; } }
-* { box-sizing: border-box; } body { color: #172033; font: 9.5pt Arial, sans-serif; margin: 0; } main { string-set: bom-identity attr(data-bom); } h1 { font-size: 23pt; margin: 0 0 4mm; letter-spacing: -0.5pt; } h2 { font-size: 13pt; margin: 7mm 0 2mm; border-bottom: 1px solid #bcc6d6; padding-bottom: 1.5mm; } h3 { font-size: 10pt; margin: 4mm 0 1.5mm; } p { margin: 1.5mm 0; } .masthead { display: flex; justify-content: space-between; border-bottom: 3px solid #163b66; padding-bottom: 4mm; margin-bottom: 6mm; } .brand { color: #163b66; font-weight: 800; letter-spacing: 1px; } .meta { text-align: right; color: #475569; } .hero { background: #eef3f8; border-left: 4px solid #163b66; padding: 5mm; margin: 4mm 0 7mm; } .total { font-size: 18pt; font-weight: 800; color: #163b66; } table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; table-layout: fixed; } th { background: #e7edf4; color: #1e293b; font-size: 8pt; text-transform: uppercase; letter-spacing: .25pt; } th, td { border: 1px solid #cbd5e1; padding: 1.8mm; vertical-align: top; overflow-wrap: anywhere; } .workshop h1 { font-size: 18pt; } .workshop th { background: #20262f; color: #ffffff; } .dimension { font-size: 12pt; font-weight: 800; } .hash { font: 7.5pt monospace; overflow-wrap: anywhere; } .break-avoid { break-inside: avoid; } .blank { display: inline-block; width: 5mm; height: 5mm; border: 1.2px solid #111827; vertical-align: middle; } .confidential { color: #991b1b; font-weight: 800; } .muted { color: #64748b; } .signature { height: 18mm; border-bottom: 1px solid #334155; margin-top: 8mm; } svg { width: 100%; height: auto; display: block; }
+_FONTS_DIR = Path(__file__).resolve().parent / "fonts"
+
+# DEKOPEN document language — teal/graphite tokens from the visual-identity
+# study: #075F5A teal-800, #0B7770 teal-700, #E6F4F2 teal-50, graphite ramp
+# #161C1F..#FCFDFC, Plex Sans + Plex Mono, hairline rules instead of tinted
+# boxes, ISO-7200-style title block in the bottom margin.
+_TEAL_800 = "#075F5A"
+_TEAL_700 = "#0B7770"
+_TEAL_50 = "#E6F4F2"
+_G_950 = "#161C1F"
+_G_800 = "#252D31"
+_G_700 = "#465158"
+_G_500 = "#727D82"
+_G_300 = "#CDD5D6"
+_G_50 = "#F5F7F6"
+_PAPER = "#FCFDFC"
+_MARK = "#E56A32"
+_DANGER = "#991B1B"
+
+
+def _font_face(family: str, weight: int, filename: str) -> str:
+    uri = (_FONTS_DIR / filename).as_uri()
+    return (
+        "@font-face {"
+        f" font-family: '{family}'; font-style: normal; font-weight: {weight};"
+        f" src: url('{uri}') format('truetype');"
+        " }"
+    )
+
+
+_FONTS = "".join(
+    [
+        _font_face("IBM Plex Sans", 400, "IBMPlexSans-400.ttf"),
+        _font_face("IBM Plex Sans", 500, "IBMPlexSans-500.ttf"),
+        _font_face("IBM Plex Sans", 600, "IBMPlexSans-600.ttf"),
+        _font_face("IBM Plex Sans", 700, "IBMPlexSans-700.ttf"),
+        _font_face("IBM Plex Mono", 400, "IBMPlexMono-400.ttf"),
+        _font_face("IBM Plex Mono", 500, "IBMPlexMono-500.ttf"),
+    ]
+)
+
+_CSS = _FONTS + """
+@page { size: letter portrait; margin: 13mm 12mm 22mm; @bottom-center { content: element(titleblock); } }
+* { box-sizing: border-box; } body { color: #161C1F; font: 9.5pt 'IBM Plex Sans', sans-serif; margin: 0; }
+.titleblock { position: running(titleblock); display: table; width: 100%; border-collapse: collapse; border-top: 1.5pt solid #075F5A; font-family: 'IBM Plex Mono', monospace; }
+.titleblock .tb-cell { display: table-cell; border-left: 0.5pt solid #CDD5D6; border-bottom: 0.5pt solid #CDD5D6; padding: 1.2mm 2mm; vertical-align: top; }
+.titleblock .tb-cell:first-child { border-left: none; padding-left: 0; }
+.titleblock .tb-wide { width: 34%; }
+.tb-label { display: block; font: 6.5pt 'IBM Plex Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5pt; color: #727D82; margin-bottom: 0.6mm; }
+.tb-value { display: block; font: 8pt 'IBM Plex Mono', monospace; color: #252D31; overflow-wrap: anywhere; }
+.pg::after { content: counter(page) " / " counter(pages); }
+h1 { font-size: 16pt; font-weight: 600; margin: 0 0 4mm; letter-spacing: -0.2pt; color: #161C1F; }
+h2 { font-size: 11pt; font-weight: 600; margin: 5mm 0 2mm; border-bottom: 0.75pt solid #465158; padding-bottom: 1.2mm; color: #161C1F; }
+h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } p { margin: 1.5mm 0; }
+.masthead { position: relative; display: flex; justify-content: space-between; padding-bottom: 4mm; margin-bottom: 1.6mm; }
+.brand { color: #075F5A; font-weight: 600; font-size: 12pt; letter-spacing: 2.4pt; }
+.brand .mark { display: inline-block; width: 2.4mm; height: 2.4mm; background: #E56A32; margin-left: 1.6mm; }
+.meta { text-align: right; color: #727D82; font: 8pt 'IBM Plex Mono', monospace; padding-right: 9mm; }
+.meta strong { color: #252D31; font-weight: 500; }
+.rule-stack { border-top: 1.5pt solid #075F5A; border-bottom: 0.5pt solid #CDD5D6; height: 1.2mm; margin-bottom: 6mm; }
+.miter { position: absolute; top: 0; right: 0; width: 8mm; height: 8mm; }
+.hero { position: relative; background: #E6F4F2; border-left: 3px solid #0B7770; padding: 4mm 5mm; margin: 3mm 0 5mm; }
+.hero p { color: #465158; } .total { font-size: 14pt; font-weight: 600; color: #075F5A; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; table-layout: fixed; }
+thead { border-top: 0.9pt solid #465158; }
+th { color: #465158; font: 6.5pt 'IBM Plex Sans', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; border-bottom: 0.9pt solid #465158; padding: 1.4mm 1.8mm; }
+td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: anywhere; }
+tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
+.workshop h1 { font-size: 14pt; } .workshop th { background: #252D31; color: #FCFDFC; }
+.dimension { font: 11pt 'IBM Plex Mono', monospace; font-weight: 500; color: #161C1F; }
+.hash { font: 6.5pt 'IBM Plex Mono', monospace; color: #465158; overflow-wrap: anywhere; }
+.break-avoid { break-inside: avoid; } .blank { display: inline-block; width: 5mm; height: 5mm; border: 1px solid #252D31; vertical-align: middle; }
+.confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
+.muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
+.signoff { break-inside: avoid; }
+svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
 """
 
 
@@ -58,8 +131,27 @@ def _table(headers: list[str], rows: list[list[object]], classes: list[str] | No
     ) + "</tbody></table>"
 
 
-def _deny_url_fetch(url: str, *args: object, **kwargs: object) -> NoReturn:
+def _url_fetcher(url: str, *args: object, **kwargs: object) -> object:
+    """Frozen-authority fetcher: only the bundled Plex TTFs may load.
+
+    Every other URL — remote or local — is denied so emitted documents can
+    never exfiltrate or depend on network state.
+    """
+    if url.startswith("file://"):
+        target = Path(url.removeprefix("file://")).resolve()
+        if target.parent == _FONTS_DIR and target.suffix == ".ttf":
+            from weasyprint import default_url_fetcher
+
+            return default_url_fetcher(url, *args, **kwargs)
     raise DocumentaryError(f"External PDF resource forbidden: {url}")
+
+
+_MITER = (
+    '<svg class="miter" width="8mm" height="8mm" viewBox="0 0 32 32" '
+    'xmlns="http://www.w3.org/2000/svg">'
+    f'<path d="M0,0 L32,0 L32,32 Z" fill="{_PAPER}" stroke="{_TEAL_800}" '
+    'stroke-width="2"/></svg>'
+)
 
 
 _SVG_INSET = Decimal("0.06")
@@ -107,7 +199,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
         if node_type == "SPLIT_V":
             out.append(
                 f'<line x1="{_pt(x + split)}" y1="{_pt(y)}" x2="{_pt(x + split)}" '
-                f'y2="{_pt(y + height)}" stroke="#334155" stroke-width="'
+                f'y2="{_pt(y + height)}" stroke="#465158" stroke-width="'
                 f'{_pt(height / Decimal("60"))}"/>'
             )
             _svg_elements(first, x, y, split, height, out, marker)
@@ -115,7 +207,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
         else:
             out.append(
                 f'<line x1="{_pt(x)}" y1="{_pt(y + split)}" x2="{_pt(x + width)}" '
-                f'y2="{_pt(y + split)}" stroke="#334155" stroke-width="'
+                f'y2="{_pt(y + split)}" stroke="#465158" stroke-width="'
                 f'{_pt(width / Decimal("60"))}"/>'
             )
             _svg_elements(first, x, y, width, split, out, marker)
@@ -130,36 +222,36 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
     stroke = _pt(min(width, height) / Decimal("120"))
     out.append(
         f'<rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" height="{_pt(height)}" '
-        'fill="none" stroke="#163b66" stroke-width="' + _pt(min(width, height) / Decimal("40"))
+        'fill="none" stroke="#075F5A" stroke-width="' + _pt(min(width, height) / Decimal("40"))
         + '"/>'
     )
     out.append(
         f'<rect x="{_pt(ix)}" y="{_pt(iy)}" width="{_pt(iw)}" height="{_pt(ih)}" '
-        f'fill="#eef3f8" stroke="#163b66" stroke-width="{stroke}"/>'
+        f'fill="#E6F4F2" stroke="#075F5A" stroke-width="{stroke}"/>'
     )
     opening = node.get("opening_type")
     mx, my = ix + iw / 2, iy + ih / 2
     if opening in ("TURN_LEFT", "TILT_TURN_LEFT"):
         out.append(
             f'<polygon points="{_pt(ix)},{_pt(iy)} {_pt(ix)},{_pt(iy + ih)} '
-            f'{_pt(ix + iw)},{_pt(my)}" fill="none" stroke="#163b66" '
+            f'{_pt(ix + iw)},{_pt(my)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
     elif opening in ("TURN_RIGHT", "TILT_TURN_RIGHT"):
         out.append(
             f'<polygon points="{_pt(ix + iw)},{_pt(iy)} {_pt(ix + iw)},{_pt(iy + ih)} '
-            f'{_pt(ix)},{_pt(my)}" fill="none" stroke="#163b66" '
+            f'{_pt(ix)},{_pt(my)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
     if opening in ("TILT_TURN_LEFT", "TILT_TURN_RIGHT"):
         out.append(
             f'<polygon points="{_pt(ix)},{_pt(iy + ih)} {_pt(ix + iw)},{_pt(iy + ih)} '
-            f'{_pt(mx)},{_pt(iy)}" fill="none" stroke="#163b66" stroke-width="{stroke}"/>'
+            f'{_pt(mx)},{_pt(iy)}" fill="none" stroke="#075F5A" stroke-width="{stroke}"/>'
         )
     elif opening == "AWNING":
         out.append(
             f'<polygon points="{_pt(ix)},{_pt(iy)} {_pt(ix + iw)},{_pt(iy)} '
-            f'{_pt(mx)},{_pt(iy + ih)}" fill="none" stroke="#163b66" '
+            f'{_pt(mx)},{_pt(iy + ih)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
     elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L"):
@@ -169,23 +261,23 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             lx = ix + leaf_w * index
             out.append(
                 f'<rect x="{_pt(lx)}" y="{_pt(iy)}" width="{_pt(leaf_w)}" '
-                f'height="{_pt(ih)}" fill="none" stroke="#163b66" '
+                f'height="{_pt(ih)}" fill="none" stroke="#075F5A" '
                 f'stroke-width="{stroke}"/>'
             )
             out.append(
                 f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
-                f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#163b66" '
+                f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
                 f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
             )
     elif opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         out.append(
             f'<line x1="{_pt(ix)}" y1="{_pt(iy + ih)}" x2="{_pt(ix + iw)}" '
-            f'y2="{_pt(iy + ih)}" stroke="#991b1b" stroke-width="{stroke}"/>'
+            f'y2="{_pt(iy + ih)}" stroke="#E56A32" stroke-width="{stroke}"/>'
         )
         if opening == "DOOR_DOUBLE":
             out.append(
                 f'<line x1="{_pt(mx)}" y1="{_pt(iy)}" x2="{_pt(mx)}" '
-                f'y2="{_pt(iy + ih)}" stroke="#163b66" stroke-width="{stroke}"/>'
+                f'y2="{_pt(iy + ih)}" stroke="#075F5A" stroke-width="{stroke}"/>'
             )
 
 
@@ -194,7 +286,7 @@ def _position_svg(position: dict[str, object]) -> str:
     marker = f"arrow-{_value(position.get('position_index'))}"
     elements: list[str] = [
         f'<defs><marker id="{marker}" markerWidth="8" markerHeight="8" refX="6" refY="3" '
-        'orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#163b66" '
+        'orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#075F5A" '
         'stroke-width="1"/></marker></defs>'
     ]
     if tree.get("version") == "product-v2":
@@ -242,7 +334,7 @@ def _position_svg(position: dict[str, object]) -> str:
                 f'<text x="{_pt(width + module_width / Decimal("30"))}" '
                 f'y="{_pt(module_height - module_height / Decimal("30"))}" '
                 f'font-size="{_pt(module_height / Decimal("18"))}" '
-                f'fill="#64748b">{escape(_value(module.get("id")))}</text>'
+                f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
             width += module_width
             height = max(height, module_height)
@@ -289,18 +381,42 @@ def _position_glass_specs(position: dict[str, object]) -> list[str]:
     return _glass_specs(tree)
 
 
-def _revision_header(snapshot: dict[str, object], title: str, workshop: bool = False) -> tuple[str, str]:
+def _revision_header(
+    snapshot: dict[str, object], title: str, doc_code: str, workshop: bool = False
+) -> tuple[str, str]:
     project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
     bom_hash = _value(snapshot.get("bom_hash"))
     class_name = "workshop" if workshop else ""
-    header = (
-        f'<div class="masthead"><div><div class="brand">DEKOPEN</div>'
-        f"<h1>{escape(title)}</h1></div><div class=\"meta\">"
-        f"<strong>{escape(_value(project.get('code')))}</strong><br>"
-        f"Revisión {escape(_value(snapshot.get('revision')))}<br>"
-        f"{escape(_value(snapshot.get('sealed_at')))}</div></div>"
+    sealed_at = _value(snapshot.get("sealed_at"))
+    revision = _value(snapshot.get("revision"))
+    project_code = _value(project.get("code"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(project_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        f'<span class="tb-value">{escape(doc_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Rev.</span>'
+        f'<span class="tb-value">{escape(revision)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(sealed_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Huella BOM</span>'
+        f'<span class="tb-value">{escape(bom_hash)}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
     )
-    return f'<main class="{class_name}" data-bom="{escape(bom_hash)}">{header}', bom_hash
+    header = (
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(project_code)}</strong><br>"
+        f"{escape(doc_code)} · Rev. {escape(revision)}<br>"
+        f"{escape(sealed_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        f"<h1>{escape(title)}</h1>"
+    )
+    return f'<main class="{class_name}">{titleblock}{header}', bom_hash
 
 
 def _doc01(snapshot: dict[str, object]) -> str:
@@ -316,7 +432,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             position.get("quantity"), ", ".join(specs) or "Panel declarado",
             f"{_value(position.get('color_interior'))} / {_value(position.get('color_exterior'))}",
         ])
-    body, _ = _revision_header(snapshot, "Cotización comercial")
+    body, _ = _revision_header(snapshot, "Cotización comercial", "DOC-01")
     body += (
         '<section class="hero"><p>Preparado para</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
@@ -345,7 +461,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         + f"<h2>Condiciones</h2><p><strong>Pago:</strong> {escape(_value(project.get('payment_terms')))}</p>"
         + f"<p><strong>Oferta válida hasta:</strong> {escape(_value(project.get('quotation_valid_until')))}</p>"
         + f"<p>{escape(_value(project.get('notes_commercial')))}</p>"
-        + "<div class=\"signature\"></div><p class=\"muted\">Aceptación del cliente</p></main>"
+        + "<div class=\"signoff\"><div class=\"signature\"></div><p class=\"muted\">Aceptación del cliente</p></div></main>"
     )
     return body
 
@@ -363,7 +479,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
     ]
     positions_by_index = {item.get("position_index"): item for item in positions_list}
     annotated_positions: set[object] = set()
-    body, _ = _revision_header(snapshot, "Orden de trabajo de taller", workshop=True)
+    body, _ = _revision_header(snapshot, "Orden de trabajo de taller", "DOC-03", workshop=True)
     for fact in facts:
         members = [_object(item, "invalid_manufacturing_member")
                    for item in _array(fact.get("members"), "invalid_manufacturing_fact")]
@@ -480,7 +596,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
     purchase = _object(snapshot.get("purchase_requirements"), "invalid_purchase_projection")
     groups = [_object(item, "invalid_stock_group")
               for item in _array(purchase.get("stock_groups"), "invalid_purchase_projection")]
-    body, _ = _revision_header(snapshot, "Plan de corte 1D", workshop=True)
+    body, _ = _revision_header(snapshot, "Plan de corte 1D", "DOC-05", workshop=True)
     for group in groups:
         body += (
             f"<h2>{escape(_value(group.get('purchasing_sku')))} · "
@@ -515,7 +631,7 @@ def _doc06(snapshot: dict[str, object]) -> str:
         raise DocumentaryError("manufacturing_document_incomplete")
     inspector = [_object(item, "invalid_inspector_evidence")
                  for item in _array(snapshot.get("inspector"), "invalid_frozen_revision_snapshot")]
-    body, _ = _revision_header(snapshot, "Checklist de control final", workshop=True)
+    body, _ = _revision_header(snapshot, "Checklist de control final", "DOC-06", workshop=True)
     tolerance = "—"
     if inspector:
         config = _object(inspector[0].get("config"), "invalid_inspector_evidence")
@@ -543,7 +659,7 @@ def _doc07(snapshot: dict[str, object]) -> str:
     input_snapshot = _object(pricing.get("input_snapshot"), "invalid_pricing_evidence")
     costs = _array(input_snapshot.get("cost_lines"), "invalid_pricing_evidence")
     realized = _object(snapshot.get("realized_waste"), "invalid_frozen_revision_snapshot")
-    body, _ = _revision_header(snapshot, "Informe ejecutivo de costos y margen")
+    body, _ = _revision_header(snapshot, "Informe ejecutivo de costos y margen", "DOC-07")
     body += '<p class="confidential">CONFIDENCIAL · SOLO PROPIETARIO</p>'
     body += _table(
         ["Posición", "Costo capturado"],
@@ -577,7 +693,7 @@ def _doc04(snapshot: dict[str, object]) -> str:
         "sealed_at": order.get("confirmed_at"),
         "bom_hash": revision.get("bom_hash"),
     }
-    body, _ = _revision_header(pseudo_revision, "Pedido de perfiles", workshop=True)
+    body, _ = _revision_header(pseudo_revision, "Pedido de perfiles", "DOC-04", workshop=True)
     body += (
         f"<p><strong>Orden:</strong> {escape(_value(order.get('order_code')))} · "
         f"<strong>Proveedor:</strong> {escape(_value(order.get('supplier_name')))}</p>"
@@ -616,7 +732,7 @@ def render_pdf_document(
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
         f"<style>{_CSS}</style></head><body>{body}</body></html>"
     )
-    content = HTML(string=html, url_fetcher=_deny_url_fetch).write_pdf(
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=pdf_identifier,
     )
     if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):

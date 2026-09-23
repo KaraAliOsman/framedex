@@ -35,6 +35,7 @@ class RLSFixtures:
     organizations: dict[str, UUID]
     systems: dict[str, UUID]
     demo_system: UUID
+    global_systems: dict[str, UUID]
 
 
 @pytest.fixture(scope="module")
@@ -114,9 +115,17 @@ def real_rows(django_db_blocker: DjangoDbBlocker) -> Iterator[RLSFixtures]:
                         "(org_id, user_id, role, is_active) VALUES (%s, %s, 'ESTIMATOR', %s)",
                         [organizations[org], tokens[user].user_id, active],
                     )
-                cursor.execute("SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'")
+                cursor.execute(
+                    "SELECT id FROM public.profile_systems WHERE code = 'DEMO_60'"
+                )
                 demo_system = cursor.fetchone()[0]
-            yield RLSFixtures(tokens, organizations, systems, demo_system)
+                cursor.execute(
+                    "SELECT code, id FROM public.profile_systems WHERE is_global = TRUE"
+                )
+                global_systems = {code: row_id for code, row_id in cursor.fetchall()}
+            yield RLSFixtures(
+                tokens, organizations, systems, demo_system, global_systems
+            )
         finally:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -319,7 +328,8 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
 
     assert response.status_code == 200
     systems = response.json()["systems"]
-    assert systems[0] == {
+    demo = next(system for system in systems if system["code"] == "DEMO_60")
+    assert demo == {
         "id": str(real_rows.demo_system),
         "code": "DEMO_60",
         "name": "Sistema Demo 60mm PVC",
@@ -328,7 +338,7 @@ def test_engine_system_discovery_is_rls_visible_and_deterministic(
         "readiness_reasons": [],
     }
     assert {system["id"] for system in systems} == {
-        str(real_rows.demo_system),
+        *(str(row_id) for row_id in real_rows.global_systems.values()),
         str(real_rows.systems[tenant]),
     }
     assert all(set(system) == {
@@ -351,7 +361,10 @@ def test_multi_org_system_discovery_honors_active_organization(
 
     assert response.status_code == 200
     ids = {system["id"] for system in response.json()["systems"]}
-    assert ids == {str(real_rows.demo_system), str(real_rows.systems["A"])}
+    assert ids == {
+        *(str(row_id) for row_id in real_rows.global_systems.values()),
+        str(real_rows.systems["A"]),
+    }
     assert str(real_rows.systems["B"]) not in ids
     assert_no_context()
 
