@@ -35,4 +35,6 @@ export interface ConfirmItemRequest {
    * @maxLength 120
    */
   glass_spec: string;
+  /** @maxLength 120 */
+  panel_article_sku?: string;
 }

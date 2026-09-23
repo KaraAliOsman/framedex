@@ -12,6 +12,12 @@ from decimal import Decimal, InvalidOperation
 _LABEL = re.compile(r"\b([A-Za-z]{1,4}[-_]?[A-Za-z]?\d{1,3}|\d{1,3}[A-Za-z])\b")
 _DIMENSION = re.compile(r"\b(\d{3,5})\s*[x×]\s*(\d{3,5})\b")
 _INTEGER = re.compile(r"\b(\d{1,3})\b")
+# Insulated-glass compositions (4-12-4, 4+16+4, 4/12/4) read as integers —
+# they must be masked before quantity scanning or the pane count lands in
+# quantity (a "DVH 4-12-4" row is one unit, not four).
+_GLASS_COMPOSITION = re.compile(
+    r"\b\d{1,3}\s*[-+/]\s*\d{1,3}(?:\s*[-+/]\s*\d{1,3})?\b"
+)
 
 # es-CL schedule vocabulary → canonical opening hints (TURN direction is
 # ambiguous on paper — TURN_LEFT is the placeholder the estimator corrects).
@@ -81,6 +87,7 @@ def parse_line(line: str) -> dict | None:
     spans = [dimension.span(0)]
     if label_match:
         spans.append(label_match.span(1))
+    spans.extend(match.span(0) for match in _GLASS_COMPOSITION.finditer(line))
     for lo, hi in spans:
         for index in range(lo, hi):
             mask[index] = " "

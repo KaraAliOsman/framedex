@@ -50,6 +50,24 @@ const OPENING_LABEL: Record<string, TranslationKey> = {
 const OPENING_CHOICES = Object.keys(OPENING_LABEL) as ImportOpeningTypeEnum[];
 const PENDING_STATUSES = new Set(["UPLOADED", "EXTRACTING"]);
 
+// Import warnings and per-item errors travel as codes — the UI owes the
+// estimator workshop language, never raw enum identifiers.
+const WARNING_LABEL: Record<string, TranslationKey> = {
+  "import.source_parse_failed": "projects.importsWarnParse",
+  "import.vision_no_candidates": "projects.importsWarnVisionEmpty",
+  "import.no_candidates": "projects.importsWarnNoCandidates",
+};
+const ITEM_ERROR_LABEL: Record<string, TranslationKey> = {
+  import_item_unknown: "projects.importsErrorItemUnknown",
+  panel_article_required: "projects.importsErrorPanelRequired",
+  save_failed: "projects.importsErrorSave",
+};
+
+function codeText(code: string): string {
+  if (code.startsWith("import.vision_failed")) return t("projects.importsWarnVisionFailed");
+  return t(WARNING_LABEL[code] ?? ITEM_ERROR_LABEL[code] ?? "projects.importsErrorUnknown");
+}
+
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", {
     dateStyle: "medium",
@@ -76,11 +94,13 @@ export function ProjectImportsPanel({
   orgId,
   canWrite,
   onChanged,
+  onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
   onChanged?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [imports, setImports] = useState<ImportResponse[]>([]);
   const [busy, setBusy] = useState(false);
@@ -90,6 +110,8 @@ export function ProjectImportsPanel({
   const [systemId, setSystemId] = useState("");
   const [glassSpec, setGlassSpec] = useState("");
   const [glassThickness, setGlassThickness] = useState("");
+  const [panelSku, setPanelSku] = useState("");
+  const [reviewDirty, setReviewDirty] = useState(false);
   const [itemErrors, setItemErrors] = useState<{ key: string; code: string }[]>([]);
   const mounted = useRef(true);
   const listGeneration = useRef(0);
@@ -155,25 +177,35 @@ export function ProjectImportsPanel({
     if (!systemId && first) setSystemId(first.id);
   }, [systems.data, systemId]);
 
-  // A system change invalidates the previous catalog's glass selection —
-  // clear it so the options effect re-derives values for the new system.
+  // Edited candidate rows belong to the page's unsaved-changes guard —
+  // navigating away mid-review must warn instead of silently discarding.
+  useEffect(() => {
+    onDirtyChange?.(reviewDirty);
+  }, [reviewDirty, onDirtyChange]);
+
+  // A system change invalidates the previous catalog's glass and panel
+  // selection — clear them so the options effect re-derives values.
   useEffect(() => {
     setGlassSpec("");
     setGlassThickness("");
+    setPanelSku("");
   }, [systemId]);
 
   useEffect(() => {
     if (!options.data) return;
     const [sku] = options.data.glass_skus;
     const [thickness] = options.data.glazing_thicknesses;
+    const [panel] = options.data.panel_skus ?? [];
     if (!glassSpec && sku) setGlassSpec(sku);
     if (!glassThickness && thickness) setGlassThickness(thickness);
-  }, [options.data, glassSpec, glassThickness]);
+    if (!panelSku && panel) setPanelSku(panel);
+  }, [options.data, glassSpec, glassThickness, panelSku]);
 
   function startReview(entry: ImportResponse): void {
     setReviewId(entry.id);
     setItemErrors([]);
     setMessage("");
+    setReviewDirty(false);
     setRows(
       entry.candidates.map((raw) => {
         const candidate = asCandidate(raw);
@@ -203,10 +235,17 @@ export function ProjectImportsPanel({
   }
 
   function patchRow(key: string, patch: Partial<EditableRow>): void {
+    setReviewDirty(true);
     setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   }
 
+  function closeReview(): void {
+    setReviewId(null);
+    setReviewDirty(false);
+  }
+
   async function confirm(entry: ImportResponse): Promise<void> {
+    const hasDoors = rows.some((row) => row.include && row.opening_type === "DOOR_ENTRY");
     const items: ConfirmItemRequest[] = rows
       .filter((row) => row.include)
       .map((row) => ({
@@ -220,12 +259,15 @@ export function ProjectImportsPanel({
         color: "WHITE",
         glass_thickness_mm: glassThickness,
         glass_spec: glassSpec,
+        ...(row.opening_type === "DOOR_ENTRY" ? { panel_article_sku: panelSku } : {}),
       }));
     const glassValid =
       !!options.data &&
       options.data.glass_skus.includes(glassSpec) &&
       options.data.glazing_thicknesses.includes(glassThickness);
-    if (!items.length || !systemId || !glassSpec || !glassThickness || !glassValid) {
+    const panelValid =
+      !hasDoors || (!!options.data && (options.data.panel_skus ?? []).includes(panelSku));
+    if (!items.length || !systemId || !glassSpec || !glassThickness || !glassValid || !panelValid) {
       setMessage(t("projects.importsConfirmMissing"));
       return;
     }
@@ -244,7 +286,7 @@ export function ProjectImportsPanel({
           setMessage(t("projects.importsConfirmError"));
           await load();
         } else {
-          setReviewId(null);
+          closeReview();
           setMessage(
             t("projects.importsConfirmed").replace("{count}", String(response.data.created.length)),
           );
@@ -324,7 +366,7 @@ export function ProjectImportsPanel({
                     {t(STATUS_LABEL[entry.status] ?? "projects.importsStatusUploaded")}
                   </span>
                   {entry.status === "FAILED" && entry.error_code && (
-                    <span className="imports-warning">{entry.error_code}</span>
+                    <span className="imports-warning">{codeText(entry.error_code)}</span>
                   )}
                 </td>
                 <td>{entry.candidates.length}</td>
@@ -352,7 +394,7 @@ export function ProjectImportsPanel({
           {reviewImport.warnings.length > 0 && (
             <ul className="imports-warning">
               {reviewImport.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
+                <li key={warning}>{codeText(warning)}</li>
               ))}
             </ul>
           )}
@@ -390,6 +432,18 @@ export function ProjectImportsPanel({
                 ))}
               </select>
             </label>
+            {rows.some((row) => row.include && row.opening_type === "DOOR_ENTRY") && (
+              <label>
+                {t("projects.importsPanel")}
+                <select value={panelSku} onChange={(event) => setPanelSku(event.target.value)}>
+                  {(options.data?.panel_skus ?? []).map((sku) => (
+                    <option key={sku} value={sku}>
+                      {sku}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <table className="payments-table">
             <thead>
@@ -475,7 +529,9 @@ export function ProjectImportsPanel({
                           ? t("projects.importsConfidenceHigh")
                           : t("projects.importsConfidenceReview")}
                       </span>
-                      {itemError && <span className="imports-warning">{itemError.code}</span>}
+                      {itemError && (
+                        <span className="imports-warning">{codeText(itemError.code)}</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -494,7 +550,7 @@ export function ProjectImportsPanel({
             <button
               type="button"
 
-              onClick={() => setReviewId(null)}
+              onClick={closeReview}
             >
               {t("projects.importsCancel")}
             </button>

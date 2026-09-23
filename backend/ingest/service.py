@@ -93,26 +93,41 @@ def create_import(
         raise contract_error(
             422, "import_file_invalid", "El archivo está vacío o supera 15 MB."
         )
+    if len(file_name) > 200 or len(file_name) == 0:
+        raise contract_error(
+            422,
+            "import_file_invalid",
+            "El nombre del archivo es demasiado largo o está vacío.",
+        )
     import_id = uuid4()
     storage_path = f"imports/{org_id}/{project_id}/{import_id}/{file_name}"
-    SupabaseDocumentStorage().upload_immutable(
+    storage = SupabaseDocumentStorage()
+    storage.upload_immutable(
         storage_path, content, content_type or "application/octet-stream"
     )
-    with documentary_backend():
-        row = rows(
-            "INSERT INTO public.document_imports("
-            "id, org_id, project_id, file_name, kind, storage_path, created_by)"
-            " VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *",
-            [str(import_id), str(org_id), str(project_id), file_name, kind,
-             storage_path, str(actor_id)],
-        )[0]
-        job, _ = jobs_service.enqueue(
-            org_id=org_id,
-            job_type=JOB_TYPE,
-            payload={"import_id": str(import_id)},
-            idempotency_key=f"import-extract:{import_id}",
-            created_by=actor_id,
-        )
+    try:
+        with documentary_backend():
+            row = rows(
+                "INSERT INTO public.document_imports("
+                "id, org_id, project_id, file_name, kind, storage_path, created_by)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *",
+                [str(import_id), str(org_id), str(project_id), file_name, kind,
+                 storage_path, str(actor_id)],
+            )[0]
+            job, _ = jobs_service.enqueue(
+                org_id=org_id,
+                job_type=JOB_TYPE,
+                payload={"import_id": str(import_id)},
+                idempotency_key=f"import-extract:{import_id}",
+                created_by=actor_id,
+            )
+    except Exception:
+        # The row or the enqueue failed — the immutable upload would orphan.
+        try:
+            storage.delete_object(storage_path)
+        except Exception:
+            pass
+        raise
     return {"import": _public(row), "job": job}
 
 
@@ -194,6 +209,12 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
                     "file_name": row["file_name"],
                     "kind": row["kind"],
                     "storage_path": row["storage_path"],
+                    # A signed URL (1h TTL) so the provider can fetch the
+                    # private object — a bare storage path is unreachable
+                    # from outside the platform.
+                    "document_url": SupabaseDocumentStorage().signed_url(
+                        row["storage_path"]
+                    ),
                 },
             )
             audit_id = vision["audit_id"]
@@ -213,15 +234,29 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
         updated = rows(
             "UPDATE public.document_imports SET status='REVIEW_READY', "
             "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s, updated_at=now() "
-            "WHERE id=%s RETURNING *",
+            "WHERE id=%s AND status='EXTRACTING' RETURNING *",
             [
                 json.dumps(candidates),
                 json.dumps(warnings),
                 audit_id,
                 str(import_id),
             ],
+        )
+    if not updated:
+        # The import moved on while this extract ran (a concurrent confirm
+        # sealed it, or a newer attempt wrote REVIEW_READY) — replay the
+        # committed state instead of overwriting it.
+        current = rows(
+            "SELECT * FROM public.document_imports WHERE id=%s",
+            [str(import_id)],
         )[0]
-    return {"import": _public(updated), "candidate_count": len(candidates)}
+        if current["status"] in ("REVIEW_READY", "CONFIRMED"):
+            return {
+                "import": _public(current),
+                "candidate_count": len(_as_list(current["candidates"])),
+            }
+        raise ImportError_("import_status_invalid")
+    return {"import": _public(updated[0]), "candidate_count": len(candidates)}
 
 
 def confirm_import(
@@ -266,21 +301,28 @@ def confirm_import(
             key = str(item["key"])
             if key in done:
                 continue
-            if candidate_keys and key not in candidate_keys:
+            if key not in candidate_keys:
                 errors.append({"key": key, "code": "import_item_unknown"})
                 continue
+            parametric_tree = {
+                "id": "imported",
+                "type": "BAY",
+                "opening_type": item["opening_type"],
+                "glass_thickness_mm": item["glass_thickness_mm"],
+                "glass_spec": item["glass_spec"],
+            }
+            if item["opening_type"] == "DOOR_ENTRY":
+                panel_sku = str(item.get("panel_article_sku") or "").strip()
+                if not panel_sku:
+                    errors.append({"key": key, "code": "panel_article_required"})
+                    continue
+                parametric_tree["panel_article_sku"] = panel_sku
             design = {
                 "system_id": str(item["system_id"]),
                 "nominal_width_mm": Decimal(str(item["width_mm"])),
                 "nominal_height_mm": Decimal(str(item["height_mm"])),
                 "color": item["color"],
-                "parametric_tree": {
-                    "id": "imported",
-                    "type": "BAY",
-                    "opening_type": item["opening_type"],
-                    "glass_thickness_mm": item["glass_thickness_mm"],
-                    "glass_spec": item["glass_spec"],
-                },
+                "parametric_tree": parametric_tree,
             }
             try:
                 with transaction.atomic():

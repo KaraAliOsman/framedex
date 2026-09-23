@@ -158,6 +158,7 @@ function ProjectWorkspace({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
+  const [importsDirty, setImportsDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -316,7 +317,7 @@ function ProjectWorkspace({
     const controller = lifetime.current;
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
     if (
-      (draft !== null || quotationDirty || paymentsDirty) &&
+      (draft !== null || quotationDirty || paymentsDirty || importsDirty) &&
       !window.confirm(t("projects.leaveUnsaved"))
     )
       return;
@@ -371,7 +372,7 @@ function ProjectWorkspace({
   return (
     <section className="projects-page" aria-busy={busy || query.isFetching}>
       <UnsavedChangesGuard
-        dirty={draft !== null || quotationDirty || paymentsDirty}
+        dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty}
         message={t("projects.leaveUnsaved")}
       />
       <h1>{project ? `${project.code} · ${project.name}` : t("projects.title")}</h1>
@@ -493,6 +494,7 @@ function ProjectWorkspace({
             orgId={orgId}
             canWrite={canWrite && editable}
             onChanged={() => query.refetch()}
+            onDirtyChange={setImportsDirty}
           />
           <section>
             <div className="projects-actions">

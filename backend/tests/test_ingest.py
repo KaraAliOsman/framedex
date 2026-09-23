@@ -426,6 +426,9 @@ def test_extract_vision_fallback_when_no_text(monkeypatch):
         def download(self, path):
             return b"\x89PNG"
 
+        def signed_url(self, path):
+            return "https://files.example/signed/foto.png"
+
     monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
     monkeypatch.setattr(service, "extract", lambda kind, content: ("", None))
 
@@ -458,4 +461,195 @@ def test_extract_vision_fallback_when_no_text(monkeypatch):
     )
     assert seen[0]["capability"] == "vision_ocr"
     assert seen[0]["operation_key"] == f"import:{row['id']}:vision"
+    # The provider receives a fetchable URL — a bare storage path is
+    # unreachable from outside the platform.
+    assert seen[0]["input_payload"]["document_url"].endswith("foto.png")
     assert out["candidate_count"] == 1
+
+
+def test_parse_line_glass_composition_is_not_quantity():
+    # "4-12-4" is the insulated-glass recipe, not a count.
+    candidate = parse_line("V-01 fijo 1200x1000 vidrio 4-12-4")
+    assert candidate is not None
+    assert candidate["quantity"] == 1
+    candidate = parse_line("V-02 fijo 1200x1000 DVH 4+16+4 3 un")
+    assert candidate is not None
+    assert candidate["quantity"] == 3
+
+
+def test_confirm_rejects_items_when_import_has_no_candidates(monkeypatch):
+    row = _import_row(candidates=[])
+    calls = []
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service,
+        "rows",
+        lambda sql, params=None: (
+            [row | {"result": params[0]}]
+            if "UPDATE public.document_imports" in sql
+            else [row]
+        ),
+    )
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda *a, **k: calls.append(a) or {"id": uuid4()},
+    )
+    out = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item()],
+    )
+    assert calls == []
+    assert out["errors"] == [{"key": "r0", "code": "import_item_unknown"}]
+
+
+def test_confirm_door_requires_panel_and_uses_it(monkeypatch):
+    row = _import_row(
+        candidates=[
+            {
+                "key": "r0",
+                "label": "P-01",
+                "width_mm": "900",
+                "height_mm": "2100",
+                "quantity": 1,
+                "opening_type": "DOOR_ENTRY",
+                "confidence": "HIGH",
+                "warnings": [],
+            }
+        ]
+    )
+    designs = []
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service,
+        "rows",
+        lambda sql, params=None: (
+            [row | {"result": params[0]}]
+            if "UPDATE public.document_imports" in sql
+            else [row]
+        ),
+    )
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: designs.append(data["design"]) or {"id": uuid4()},
+    )
+    door = _item(opening_type="DOOR_ENTRY", width_mm="900", height_mm="2100")
+    missing = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[door],
+    )
+    assert missing["errors"] == [{"key": "r0", "code": "panel_article_required"}]
+    assert designs == []
+
+    with_panel = dict(door, panel_article_sku="PANEL-40")
+    sealed = service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[with_panel],
+    )
+    assert sealed["errors"] == []
+    assert designs[0]["parametric_tree"]["panel_article_sku"] == "PANEL-40"
+
+
+def test_create_import_removes_orphaned_upload_on_insert_failure(monkeypatch):
+    stored = []
+    deleted = []
+
+    class _Storage:
+        def upload_immutable(self, key, content, content_type):
+            stored.append(key)
+
+        def delete_object(self, key):
+            deleted.append(key)
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service.projects_service, "project_row", lambda *a, **k: {"id": "p"}
+    )
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service,
+        "rows",
+        lambda sql, params=None: (_ for _ in ()).throw(RuntimeError("db down")),
+    )
+    with pytest.raises(RuntimeError):
+        service.create_import(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            file_name="lista.pdf",
+            content=b"%PDF",
+            content_type="application/pdf",
+        )
+    assert len(stored) == 1
+    assert deleted == stored
+
+
+def test_create_import_rejects_long_filename(monkeypatch):
+    uploads = []
+
+    class _Storage:
+        def upload_immutable(self, *a):
+            uploads.append(a)
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service.projects_service, "project_row", lambda *a, **k: {"id": "p"}
+    )
+    with pytest.raises(Exception) as caught:
+        service.create_import(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            file_name="x" * 250 + ".pdf",
+            content=b"%PDF",
+            content_type="application/pdf",
+        )
+    assert getattr(caught.value, "contract_code", None) == "import_file_invalid"
+    assert uploads == []
+
+
+def test_extract_replays_when_row_sealed_during_extract(monkeypatch):
+    # Claim won (UPLOADED→EXTRACTING) but a confirm sealed the import before
+    # the terminal write — replay the committed state, never overwrite it.
+    row = _import_row(status="UPLOADED", candidates=[])
+    sealed = row | {
+        "status": "CONFIRMED",
+        "candidates": [{"key": "r0"}, {"key": "r1"}],
+    }
+
+    class _Storage:
+        def download(self, path):
+            return b"%PDF"
+
+        def signed_url(self, path):
+            return "https://files.example/signed/lista.pdf"
+
+    def _rows(sql, params=None):
+        if "UPDATE public.document_imports" in sql:
+            if "status='REVIEW_READY'" in sql:
+                return []  # sealed mid-run — the write is refused
+            return [row | {"status": "EXTRACTING"}]
+        if "FROM public.document_imports" in sql:
+            if "WHERE id=%s AND org_id=%s" in sql:
+                return [row]
+            return [sealed]
+        return []
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service, "extract", lambda kind, content: ("V-01 fijo 1200x1000", None)
+    )
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(service, "rows", _rows)
+    out = service.extract_for_import(
+        org_id=row["org_id"], import_id=row["id"], actor_id=uuid4()
+    )
+    assert out["import"]["status"] == "CONFIRMED"
+    assert out["candidate_count"] == 2

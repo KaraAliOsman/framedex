@@ -192,7 +192,8 @@ const messages = {
   "projects.importsLoadError": "No pudimos cargar las importaciones.",
   "projects.importsUploadError": "No pudimos subir el documento.",
   "projects.importsConfirmError": "No pudimos confirmar la importación.",
-  "projects.importsConfirmMissing": "Revisa el sistema, el vidrio y marca al menos una posición.",
+  "projects.importsConfirmMissing":
+    "Revisa el sistema, el vidrio, el panel si hay puertas, y marca al menos una posición.",
   "projects.importsStatusUploaded": "Recibido",
   "projects.importsStatusExtracting": "Extrayendo…",
   "projects.importsStatusReviewReady": "Por revisar",
@@ -221,6 +222,18 @@ const messages = {
   "projects.importsConfirm": "Importar posiciones marcadas",
   "projects.importsCancel": "Cerrar revisión",
   "projects.importsConfirmed": "{count} posiciones importadas.",
+  "projects.importsPanel": "Panel de puerta",
+  "projects.importsWarnParse": "El documento no entregó texto legible; se intentó lectura visual.",
+  "projects.importsWarnVisionEmpty":
+    "La lectura visual no encontró posiciones. Revisa el documento.",
+  "projects.importsWarnVisionFailed": "La lectura visual no pudo procesar el documento.",
+  "projects.importsWarnNoCandidates": "No se detectaron posiciones en el documento.",
+  "projects.importsErrorItemUnknown": "La fila no corresponde a un candidato del documento.",
+  "projects.importsErrorPanelRequired": "Las puertas requieren seleccionar un panel.",
+  "projects.importsErrorSave":
+    "La posición no pudo guardarse; revisa las medidas y el sistema elegido.",
+  "projects.importsErrorUnknown":
+    "No se pudo completar la operación. Revisa los datos e inténtalo de nuevo.",
   "projects.back": "Volver al proyecto",
   "projects.position": "Nuevo vano",
   "projects.positionThumb": "Vista del vano",

@@ -73,6 +73,11 @@ class ConfirmItemSerializer(StrictSerializer):
         max_digits=10, decimal_places=2, min_value=Decimal("1")
     )
     glass_spec = serializers.CharField(max_length=120)
+    # Doors need the panel authority — required by the engine for DOOR_ENTRY,
+    # enforced at confirm time only for that opening type.
+    panel_article_sku = serializers.CharField(
+        max_length=120, required=False, allow_blank=True, default=""
+    )
 
 
 class ImportConfirmSerializer(StrictSerializer):
