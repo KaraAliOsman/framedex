@@ -989,7 +989,7 @@ def test_reinforcement_angles_flow_into_bars_csv() -> None:
                 "members": [
                     {
                         "member_id": "m1",
-                        "role": "FRAME",
+                        "identity": {"role": "FRAME"},
                         "bay_id": "b1",
                         "leaf_id": None,
                         "workshop_sku": "MARCO-60",

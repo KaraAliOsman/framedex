@@ -674,7 +674,7 @@ def _reinforcement_angle_map(
             key = (
                 str(reinforcement.get("workshop_sku")),
                 str(reinforcement.get("cut_length_mm")),
-                str(parent.get("role")),
+                str((parent.get("identity") or {}).get("role")),
                 parent.get("bay_id"),
                 parent.get("leaf_id"),
             )
