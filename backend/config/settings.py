@@ -129,6 +129,7 @@ SPECTACULAR_SETTINGS = {
         "DrainFixRuleIdEnum": ["R07"],
         "ColorEnum": ["WHITE", "FOILED"],
         "WhiteColorEnum": ["WHITE"],
+        "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",

@@ -479,6 +479,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },
@@ -543,6 +544,7 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },
@@ -586,6 +588,111 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   await waitFor(() => expect(router.state.location.pathname).toBe("/projects"));
 });
 
+it("saves handle placement intents for operable leaves before emitting", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  const quoted = makeProject({
+    ...priced,
+    status: "QUOTED",
+    versions: [
+      {
+        id: "version-a",
+        revision_code: "REV-A",
+        authority_version: "SHOT10_V1",
+        bom_hash: "a".repeat(64),
+        snapshot_sha256: "b".repeat(64),
+        production_allowed: true,
+        documentary_complete: true,
+        emitted_at: "2026-09-19T12:00:00Z",
+      },
+    ],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(response(200, quoted));
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [{ id: "handle-a", label: "Manillas v1", version: 1 }],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            handle_intents: [],
+            handle_requirements: [
+              {
+                policy_id: "handle-a",
+                requirements: [
+                  {
+                    bay_id: "B1",
+                    leaf_id: null,
+                    leaf_label: "Hoja 1",
+                    opening_type: "TURN_LEFT",
+                    handle_domain_slot: "PRIMARY",
+                    host_member_side: "LEFT",
+                    mounting_min_from_leaf_top_mm: "900.00",
+                    mounting_max_from_leaf_top_mm: "1100.00",
+                    permitted_vertical_references: ["LEAF_TOP", "OUTER_BOTTOM"],
+                  },
+                ],
+              },
+            ],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    if (url.endsWith("/inputs/") && options.method === "PUT")
+      return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
+    if (url.endsWith("/freeze/") && options.method === "POST")
+      return response(201, { revision_code: "REV-A" }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
+  expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
+  fireEvent.change(heightInput, { target: { value: "1050" } });
+  change("quotation.paymentTerms", "50% anticipo");
+  change("quotation.validUntil", "2026-10-19");
+  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+
+  await screen.findByText(t("projects.quoted"));
+  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
+  expect(body.positions[0].handle_intents).toEqual([
+    {
+      bay_id: "B1",
+      leaf_id: null,
+      handle_domain_slot: "PRIMARY",
+      requested_height_mm: "1050",
+      vertical_reference: "LEAF_TOP",
+    },
+  ]);
+});
+
 it("asks before cloning away from dirty quotation preparation edits", async () => {
   const position = makePosition();
   const priced = makeProject({
@@ -624,6 +731,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },

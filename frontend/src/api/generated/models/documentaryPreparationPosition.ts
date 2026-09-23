@@ -10,6 +10,7 @@ import type { DocumentaryPolicyOption } from "./documentaryPolicyOption";
 import type { DocumentaryStructuralInput } from "./documentaryStructuralInput";
 import type { GlassPolishing } from "./glassPolishing";
 import type { HandleIntent } from "./handleIntent";
+import type { HandlePolicyRequirements } from "./handlePolicyRequirements";
 import type { WorkshopAnnotation } from "./workshopAnnotation";
 
 export interface DocumentaryPreparationPosition {
@@ -34,4 +35,5 @@ export interface DocumentaryPreparationPosition {
   placement_options: DocumentaryPolicyOption[];
   handle_options: DocumentaryPolicyOption[];
   reinforcement_options: DocumentaryPolicyOption[];
+  handle_requirements: HandlePolicyRequirements[];
 }

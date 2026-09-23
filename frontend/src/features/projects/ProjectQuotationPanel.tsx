@@ -14,9 +14,41 @@ import type {
   DocumentaryPolicyOption,
   DocumentaryPreparationPosition,
   DocumentaryPreparationResponse,
+  HandleIntent,
+  HandleRequirement,
   ProjectResponse,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+
+function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
+  const group = position.handle_requirements.find(
+    (entry) => entry.policy_id === position.handle_requirement_policy_id,
+  );
+  return group?.requirements ?? [];
+}
+
+function intentFor(
+  position: DocumentaryPreparationPosition,
+  requirement: HandleRequirement,
+): HandleIntent | undefined {
+  return position.handle_intents.find(
+    (intent) =>
+      intent.bay_id === requirement.bay_id &&
+      (intent.leaf_id ?? null) === requirement.leaf_id &&
+      intent.handle_domain_slot === requirement.handle_domain_slot,
+  );
+}
+
+function intentKey(requirement: HandleRequirement): string {
+  return `${requirement.bay_id}|${requirement.leaf_id ?? ""}|${requirement.handle_domain_slot}`;
+}
+
+const REFERENCE_KEYS = {
+  OUTER_TOP: "quotation.refOuterTop",
+  OUTER_BOTTOM: "quotation.refOuterBottom",
+  LEAF_TOP: "quotation.refLeafTop",
+  LEAF_BOTTOM: "quotation.refLeafBottom",
+} as const;
 
 function selectedPolicy(
   options: DocumentaryPolicyOption[],
@@ -102,6 +134,32 @@ export function ProjectQuotationPanel({
         positionIndex === index ? { ...position, ...update } : position,
       ),
     });
+  }
+
+  function updateIntent(
+    index: number,
+    requirement: HandleRequirement,
+    patch: Partial<HandleIntent>,
+  ): void {
+    if (!preparation) return;
+    const position = preparation.positions[index];
+    if (!position) return;
+    const intents = [...position.handle_intents];
+    const existing = intentFor(position, requirement);
+    if (existing) {
+      intents[intents.indexOf(existing)] = { ...existing, ...patch };
+    } else {
+      const reference = patch.vertical_reference ?? requirement.permitted_vertical_references[0];
+      if (!reference) return;
+      intents.push({
+        bay_id: requirement.bay_id,
+        leaf_id: requirement.leaf_id,
+        handle_domain_slot: requirement.handle_domain_slot,
+        requested_height_mm: patch.requested_height_mm ?? "",
+        vertical_reference: reference,
+      });
+    }
+    updatePosition(index, { handle_intents: intents });
   }
 
   async function emit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -354,6 +412,101 @@ export function ProjectQuotationPanel({
                 t("quotation.reinforcementPolicy"),
                 busy,
                 `reinforcement-policy-${position.position_id}`,
+              )}
+              {requirementsFor(position).length > 0 && (
+                <div className="handle-inputs">
+                  <h4>{t("quotation.handleInputs")}</h4>
+                  {requirementsFor(position).map((requirement) => {
+                    const intent = intentFor(position, requirement);
+                    const height = Number(intent?.requested_height_mm ?? "");
+                    const outOfBounds =
+                      intent !== undefined &&
+                      intent.requested_height_mm !== "" &&
+                      (height < Number(requirement.mounting_min_from_leaf_top_mm) ||
+                        height > Number(requirement.mounting_max_from_leaf_top_mm));
+                    return (
+                      <div className="handle-row" key={intentKey(requirement)}>
+                        <div className="handle-leaf">
+                          <strong>{requirement.leaf_label}</strong>
+                          <span>
+                            {requirement.host_member_side === "LEFT"
+                              ? t("quotation.sideLeft")
+                              : t("quotation.sideRight")}
+                            {requirement.handle_domain_slot !== "PRIMARY" &&
+                              ` · ${requirement.handle_domain_slot}`}
+                          </span>
+                        </div>
+                        <div className="handle-field">
+                          <label
+                            htmlFor={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                          >
+                            {t("quotation.handleHeight")}
+                          </label>
+                          <input
+                            id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
+                            type="number"
+                            inputMode="decimal"
+                            min={Number(requirement.mounting_min_from_leaf_top_mm)}
+                            max={Number(requirement.mounting_max_from_leaf_top_mm)}
+                            step={1}
+                            disabled={busy}
+                            aria-invalid={outOfBounds || undefined}
+                            placeholder={`${requirement.mounting_min_from_leaf_top_mm}–${requirement.mounting_max_from_leaf_top_mm}`}
+                            value={intent?.requested_height_mm ?? ""}
+                            onChange={(event) =>
+                              updateIntent(index, requirement, {
+                                requested_height_mm: event.target.value,
+                              })
+                            }
+                          />
+                          <span className="handle-bounds">
+                            {t("quotation.handleBounds")}{" "}
+                            {requirement.mounting_min_from_leaf_top_mm}–
+                            {requirement.mounting_max_from_leaf_top_mm} mm
+                          </span>
+                        </div>
+                        <div className="handle-field">
+                          <label
+                            htmlFor={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                          >
+                            {t("quotation.handleReference")}
+                          </label>
+                          <select
+                            id={`handle-ref-${position.position_id}-${intentKey(requirement)}`}
+                            disabled={
+                              busy || requirement.permitted_vertical_references.length === 1
+                            }
+                            value={
+                              intent?.vertical_reference ??
+                              requirement.permitted_vertical_references[0]
+                            }
+                            onChange={(event) =>
+                              updateIntent(index, requirement, {
+                                requested_height_mm: intent?.requested_height_mm ?? "",
+                                vertical_reference: event.target
+                                  .value as HandleIntent["vertical_reference"],
+                              })
+                            }
+                          >
+                            {requirement.permitted_vertical_references.map((reference) => (
+                              <option key={reference} value={reference}>
+                                {t(REFERENCE_KEYS[reference])}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {!intent?.requested_height_mm && (
+                          <span className="handle-pending">{t("quotation.handlePending")}</span>
+                        )}
+                        {outOfBounds && (
+                          <span className="handle-pending" role="alert">
+                            {t("quotation.handleOutOfBounds")}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </fieldset>
           ))}

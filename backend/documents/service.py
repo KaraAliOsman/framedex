@@ -50,6 +50,7 @@ from pricing.repository import commercial_backend
 from documents.repository import (
     DocumentaryError,
     PurchaseAuthorities,
+    _handle_policy,
     accessory_schedule,
     decoded,
     documentary_backend,
@@ -182,6 +183,44 @@ def _missing_handle_intents(
             ) not in available:
                 return True
     return False
+
+
+def _handle_policy_requirements(
+    trace_leaves: list[dict[str, object]],
+    handle_policy: HandleRequirementPolicyV1,
+) -> list[dict[str, object]]:
+    """Leaf-matched handle requirements of a policy for the preparation UI:
+    the editor needs to know which (bay, leaf) pairs need an intent and the
+    policy bounds that govern it before a position can freeze completely."""
+    requirements: list[dict[str, object]] = []
+    for item in trace_leaves:
+        leaf = item["leaf"]
+        for rule in handle_policy.slots:
+            if rule.opening_type is not leaf.opening_type or (
+                rule.leaf_slot is not None and rule.leaf_slot != leaf.leaf_slot
+            ):
+                continue
+            requirements.append(
+                {
+                    "bay_id": item["bay_id"],
+                    "leaf_id": item["leaf_id"],
+                    "leaf_label": item["leaf_label"],
+                    "opening_type": leaf.opening_type.value,
+                    "handle_domain_slot": rule.handle_domain_slot,
+                    "host_member_side": rule.host_member_side.value,
+                    "mounting_min_from_leaf_top_mm": str(
+                        rule.mounting_min_from_leaf_top_mm
+                    ),
+                    "mounting_max_from_leaf_top_mm": str(
+                        rule.mounting_max_from_leaf_top_mm
+                    ),
+                    "permitted_vertical_references": [
+                        reference.value
+                        for reference in rule.permitted_vertical_references
+                    ],
+                }
+            )
+    return requirements
 
 
 def _tree_has_legacy_handle(value: object) -> bool:
@@ -949,6 +988,15 @@ def prepare_documentary_inputs(
     placement = policy_options("manufacturing_placement_policies")
     handles = policy_options("handle_requirement_policies")
     reinforcement = policy_options("reinforcement_cut_policies")
+    handle_authorities: dict[str, HandleRequirementPolicyV1] = {}
+    if systems:
+        placeholders = ",".join(["%s"] * len(systems))
+        for value in rows(
+            "SELECT id,authority::text FROM public.handle_requirement_policies "
+            f"WHERE system_id IN ({placeholders}) AND (org_id IS NULL OR org_id=%s)",
+            [*systems, org_id],
+        ):
+            handle_authorities[str(value["id"])] = _handle_policy(value["authority"])
 
     def selected(existing, key, options):
         if existing and existing[key] is not None:
@@ -989,6 +1037,36 @@ def prepare_documentary_inputs(
         if existing and existing["calculation_hash"] != identity_hash:
             existing = None
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
+
+        trace_leaves: list[dict[str, object]] = []
+        leaf_counts: dict[str | None, int] = {}
+        for module_id, computation, _module_tree in calculations:
+            trace = computation.manufacturing_trace
+            if trace is None:
+                continue
+            for leaf in trace.leaves:
+                leaf_counts[module_id] = leaf_counts.get(module_id, 0) + 1
+                number = leaf_counts[module_id]
+                trace_leaves.append(
+                    {
+                        "bay_id": (
+                            f"{module_id}|{leaf.bay_id}"
+                            if module_id
+                            else leaf.bay_id
+                        ),
+                        "leaf_id": (
+                            f"{module_id}|{leaf.leaf_id}"
+                            if module_id and leaf.leaf_id is not None
+                            else leaf.leaf_id
+                        ),
+                        "leaf_label": (
+                            f"Unidad {module_id} · hoja {number}"
+                            if module_id
+                            else f"Hoja {number}"
+                        ),
+                        "leaf": leaf,
+                    }
+                )
 
         existing_workshop = (
             decoded(existing["workshop_annotations"])
@@ -1055,6 +1133,17 @@ def prepare_documentary_inputs(
                 "structural_inputs": structural,
                 "glass_polishing": glass,
                 "handle_intents": intents,
+                "handle_requirements": [
+                    {
+                        "policy_id": option["id"],
+                        "requirements": _handle_policy_requirements(
+                            trace_leaves,
+                            handle_authorities[str(option["id"])],
+                        ),
+                    }
+                    for option in handle_options
+                    if str(option["id"]) in handle_authorities
+                ],
                 "accessory_schedule": decoded(existing["accessory_schedule"])
                 if existing and existing["accessory_schedule"] is not None else None,
                 "legacy_handle_migration_confirmed": bool(

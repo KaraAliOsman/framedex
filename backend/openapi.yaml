@@ -6059,6 +6059,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentaryPolicyOption'
+        handle_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandlePolicyRequirements'
       required:
       - accessory_schedule
       - calculation_hash
@@ -6066,6 +6070,7 @@ components:
       - handle_intents
       - handle_options
       - handle_requirement_policy_id
+      - handle_requirements
       - location_tag
       - manufacturing_placement_policy_id
       - placement_options
@@ -6849,6 +6854,57 @@ components:
       - handle_domain_slot
       - requested_height_mm
       - vertical_reference
+    HandlePolicyRequirements:
+      type: object
+      properties:
+        policy_id:
+          type: string
+          format: uuid
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandleRequirement'
+      required:
+      - policy_id
+      - requirements
+    HandleRequirement:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        leaf_label:
+          type: string
+        opening_type:
+          type: string
+        handle_domain_slot:
+          type: string
+        host_member_side:
+          $ref: '#/components/schemas/HostMemberSideEnum'
+        mounting_min_from_leaf_top_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        mounting_max_from_leaf_top_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        permitted_vertical_references:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerticalReferenceEnum'
+      required:
+      - bay_id
+      - handle_domain_slot
+      - host_member_side
+      - leaf_id
+      - leaf_label
+      - mounting_max_from_leaf_top_mm
+      - mounting_min_from_leaf_top_mm
+      - opening_type
+      - permitted_vertical_references
     HardwareComponent:
       type: object
       properties:
@@ -6894,6 +6950,14 @@ components:
       - name
       - qty
       - unit
+    HostMemberSideEnum:
+      enum:
+      - LEFT
+      - RIGHT
+      type: string
+      description: |-
+        * `LEFT` - LEFT
+        * `RIGHT` - RIGHT
     ImportRequestRequest:
       type: object
       properties:
