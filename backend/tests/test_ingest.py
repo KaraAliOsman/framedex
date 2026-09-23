@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from decimal import Decimal
 from uuid import uuid4
 
@@ -18,7 +19,7 @@ from ingest.parser import (
 
 
 def test_parse_line_finds_label_dimensions_and_opening():
-    candidate = parse_line("V-01 oscilobatiente 1200x1000 2")
+    candidate = parse_line("V-01 oscilobatiente 1200x1000 2 un")
     assert candidate is not None
     assert candidate["label"] == "V-01"
     assert candidate["width_mm"] == "1200"
@@ -305,6 +306,9 @@ class _FakeConnection:
             def execute(self, *a):
                 return None
 
+            def fetchone(self):
+                return (1,)
+
         return _Cursor()
 
 
@@ -473,6 +477,23 @@ def test_parse_line_glass_composition_is_not_quantity():
     assert candidate is not None
     assert candidate["quantity"] == 1
     candidate = parse_line("V-02 fijo 1200x1000 DVH 4+16+4 3 un")
+    assert candidate is not None
+    assert candidate["quantity"] == 3
+
+
+def test_parse_line_technical_numbers_are_not_quantity():
+    # A bare thickness tail is ambiguous — never promoted to a count.
+    candidate = parse_line("V-01 fijo 1200x1000 2 unidades vidrio 6 mm")
+    assert candidate is not None
+    assert candidate["quantity"] == 2
+    candidate = parse_line("V-02 fijo 1200x1000 espesor 20")
+    assert candidate is not None
+    assert candidate["quantity"] == 1
+    candidate = parse_line("V-03 fijo 1200x1000 vidrio 6")
+    assert candidate is not None
+    assert candidate["quantity"] == 1
+    # Schedule style where the count leads the row.
+    candidate = parse_line("3 V-04 fijo 1200x1000")
     assert candidate is not None
     assert candidate["quantity"] == 3
 
@@ -653,3 +674,138 @@ def test_extract_replays_when_row_sealed_during_extract(monkeypatch):
     )
     assert out["import"]["status"] == "CONFIRMED"
     assert out["candidate_count"] == 2
+
+
+def test_create_import_enqueues_under_service_role(monkeypatch):
+    # job_runs grants belong to service_role only — the enqueue must run
+    # inside job_backend, not the documentary role.
+    entered = []
+    enqueued = []
+
+    class _Storage:
+        def upload_immutable(self, path, content, content_type):
+            return None
+
+        def delete_object(self, path):
+            return None
+
+    class _Backend:
+        def __init__(self, tag):
+            self.tag = tag
+
+        def __enter__(self):
+            entered.append(self.tag)
+            return None
+
+        def __exit__(self, *a):
+            return None
+
+    row = _import_row(status="UPLOADED")
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(service.projects_service, "project_row", lambda *a, **k: {"id": "p"})
+    monkeypatch.setattr(service, "documentary_backend", lambda: _Backend("doc"))
+    monkeypatch.setattr(service.jobs_service, "job_backend", lambda: _Backend("job"))
+    monkeypatch.setattr(
+        service.jobs_service,
+        "enqueue",
+        lambda **kw: enqueued.append(kw) or ({"id": uuid4()}, True),
+    )
+    monkeypatch.setattr(service, "rows", lambda sql, params=None: [row])
+    out = service.create_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        actor_id=uuid4(),
+        file_name="lista.pdf",
+        content=b"%PDF",
+        content_type="application/pdf",
+    )
+    assert entered == ["doc", "job"]
+    assert enqueued[0]["job_type"] == service.JOB_TYPE
+    assert out["job"]["id"] is not None
+
+
+def test_extract_caps_candidates_at_confirm_limit(monkeypatch):
+    row = _import_row(status="UPLOADED", candidates=[])
+    updates = []
+    many = [{"key": f"r{i}", "label": f"V-{i}"} for i in range(service.MAX_CANDIDATES + 7)]
+
+    class _Storage:
+        def download(self, path):
+            return b"%PDF"
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(service, "extract", lambda kind, content: ("x", None))
+    monkeypatch.setattr(service, "candidates_from_rows", lambda rows: [])
+    monkeypatch.setattr(service, "candidates_from_text", lambda text: many)
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+
+    def _rows(sql, params=None):
+        if "UPDATE public.document_imports" in sql and "RETURNING" in sql:
+            if "status='REVIEW_READY'" in sql:
+                updates.append(params)
+                return [row | {"status": "REVIEW_READY"}]
+            return [row | {"status": "EXTRACTING"}]
+        if "FROM public.document_imports" in sql:
+            return [row]
+        return []
+
+    monkeypatch.setattr(service, "rows", _rows)
+    out = service.extract_for_import(
+        org_id=row["org_id"], import_id=row["id"], actor_id=uuid4()
+    )
+    written = json.loads(updates[0][0])
+    assert len(written) == service.MAX_CANDIDATES
+    assert "import.candidates_capped" in json.loads(updates[0][1])
+    assert out["candidate_count"] == service.MAX_CANDIDATES
+
+
+def test_extract_membership_revoked_marks_import_failed(monkeypatch):
+    import ingest.handlers as handlers
+
+    calls = []
+
+    class _NoMembership:
+        def cursor(self):
+            class _Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *a):
+                    return None
+
+                def execute(self, *a):
+                    return None
+
+                def fetchone(self):
+                    return None
+
+            return _Cursor()
+
+    monkeypatch.setattr(handlers, "transaction", _NullAtomic())
+    monkeypatch.setattr(handlers, "connection", _NoMembership())
+    monkeypatch.setattr(
+        "ingest.service.extract_for_import",
+        lambda **kw: (_ for _ in ()).throw(AssertionError("must not extract")),
+    )
+    monkeypatch.setattr(
+        "ingest.service.mark_import_failed", lambda **kw: calls.append(kw)
+    )
+    ctx = type(
+        "Ctx",
+        (),
+        {
+            "created_by": uuid4(),
+            "org_id": uuid4(),
+            "attempt": 1,
+            "max_attempts": 3,
+            "job_id": uuid4(),
+        },
+    )()
+    import pytest as _pytest
+
+    with _pytest.raises(Exception) as raised:
+        handlers.extract_document_job(
+            {"import_id": str(uuid4())}, ctx, lambda progress: None
+        )
+    assert raised.type.__name__ == "JobPermanentError"
+    assert calls[0]["code"] == "import_membership_revoked"

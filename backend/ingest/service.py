@@ -23,6 +23,7 @@ from pricing.repository import rows
 from projects import service as projects_service
 
 MAX_UPLOAD_BYTES = 15_000_000
+MAX_CANDIDATES = 200
 JOB_TYPE = "ingest.document.extract"
 
 
@@ -106,21 +107,26 @@ def create_import(
         storage_path, content, content_type or "application/octet-stream"
     )
     try:
-        with documentary_backend():
-            row = rows(
-                "INSERT INTO public.document_imports("
-                "id, org_id, project_id, file_name, kind, storage_path, created_by)"
-                " VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *",
-                [str(import_id), str(org_id), str(project_id), file_name, kind,
-                 storage_path, str(actor_id)],
-            )[0]
-            job, _ = jobs_service.enqueue(
-                org_id=org_id,
-                job_type=JOB_TYPE,
-                payload={"import_id": str(import_id)},
-                idempotency_key=f"import-extract:{import_id}",
-                created_by=actor_id,
-            )
+        with transaction.atomic():
+            with documentary_backend():
+                row = rows(
+                    "INSERT INTO public.document_imports("
+                    "id, org_id, project_id, file_name, kind, storage_path, created_by)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING *",
+                    [str(import_id), str(org_id), str(project_id), file_name, kind,
+                     storage_path, str(actor_id)],
+                )[0]
+            # job_runs is a service-owned table — only service_role holds its
+            # grants; job_backend switches role inside the atomic so the row
+            # and the job still commit together.
+            with jobs_service.job_backend():
+                job, _ = jobs_service.enqueue(
+                    org_id=org_id,
+                    job_type=JOB_TYPE,
+                    payload={"import_id": str(import_id)},
+                    idempotency_key=f"import-extract:{import_id}",
+                    created_by=actor_id,
+                )
     except Exception:
         # The row or the enqueue failed — the immutable upload would orphan.
         try:
@@ -157,12 +163,16 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
     if not found:
         raise ImportError_("import_not_found")
     row = found[0]
-    with documentary_backend():
-        claimed = rows(
-            "UPDATE public.document_imports SET status='EXTRACTING', updated_at=now() "
-            "WHERE id=%s AND status='UPLOADED' RETURNING *",
-            [str(import_id)],
-        )
+    # Claim in its own transaction: the provider call below must commit its
+    # audit+debit independently of candidate writes, or a retry re-bills the
+    # wallet. `documentary_backend` needs a live transaction for SET LOCAL ROLE.
+    with transaction.atomic():
+        with documentary_backend():
+            claimed = rows(
+                "UPDATE public.document_imports SET status='EXTRACTING', updated_at=now() "
+                "WHERE id=%s AND status='UPLOADED' RETURNING *",
+                [str(import_id)],
+            )
     if not claimed:
         # A job retry on an already-extracted import replays its stored state —
         # never rewrites candidates a reviewer may have seen nor reverts a
@@ -230,18 +240,24 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
             warnings.append(f"import.vision_failed:{code}")
     if not candidates:
         warnings.append("import.no_candidates")
-    with documentary_backend():
-        updated = rows(
-            "UPDATE public.document_imports SET status='REVIEW_READY', "
-            "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s, updated_at=now() "
-            "WHERE id=%s AND status='EXTRACTING' RETURNING *",
-            [
-                json.dumps(candidates),
-                json.dumps(warnings),
-                audit_id,
-                str(import_id),
-            ],
-        )
+    if len(candidates) > MAX_CANDIDATES:
+        # A confirm request accepts at most MAX_CANDIDATES items — hold the
+        # excess at review instead of letting a subset seal the import.
+        candidates = candidates[:MAX_CANDIDATES]
+        warnings.append("import.candidates_capped")
+    with transaction.atomic():
+        with documentary_backend():
+            updated = rows(
+                "UPDATE public.document_imports SET status='REVIEW_READY', "
+                "candidates=%s::jsonb, warnings=%s::jsonb, audit_id=%s, updated_at=now() "
+                "WHERE id=%s AND status='EXTRACTING' RETURNING *",
+                [
+                    json.dumps(candidates),
+                    json.dumps(warnings),
+                    audit_id,
+                    str(import_id),
+                ],
+            )
     if not updated:
         # The import moved on while this extract ran (a concurrent confirm
         # sealed it, or a newer attempt wrote REVIEW_READY) — replay the

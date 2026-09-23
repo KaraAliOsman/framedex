@@ -56,6 +56,7 @@ const WARNING_LABEL: Record<string, TranslationKey> = {
   "import.source_parse_failed": "projects.importsWarnParse",
   "import.vision_no_candidates": "projects.importsWarnVisionEmpty",
   "import.no_candidates": "projects.importsWarnNoCandidates",
+  "import.candidates_capped": "projects.importsWarnCapped",
 };
 const ITEM_ERROR_LABEL: Record<string, TranslationKey> = {
   import_item_unknown: "projects.importsErrorItemUnknown",

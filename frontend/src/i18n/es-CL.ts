@@ -228,6 +228,8 @@ const messages = {
     "La lectura visual no encontró posiciones. Revisa el documento.",
   "projects.importsWarnVisionFailed": "La lectura visual no pudo procesar el documento.",
   "projects.importsWarnNoCandidates": "No se detectaron posiciones en el documento.",
+  "projects.importsWarnCapped":
+    "El documento tenía más de 200 posiciones; se conservaron las primeras 200 para revisión.",
   "projects.importsErrorItemUnknown": "La fila no corresponde a un candidato del documento.",
   "projects.importsErrorPanelRequired": "Las puertas requieren seleccionar un panel.",
   "projects.importsErrorSave":

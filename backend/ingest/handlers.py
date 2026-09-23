@@ -27,17 +27,29 @@ def extract_document_job(
         raise ValueError("job_requires_actor")
     report(10)
     try:
+        # Re-verify the uploader's membership at run time — a queued job must
+        # not outlive revoked access. Claims stay scoped to this transaction.
         with transaction.atomic():
             with connection.cursor() as cursor:
                 cursor.execute(
                     "SELECT set_config('request.jwt.claims', %s, true)",
                     [json.dumps(_claims_for(str(context.created_by), context))],
                 )
-            output = extract_for_import(
-                org_id=context.org_id,
-                import_id=payload["import_id"],
-                actor_id=context.created_by,
-            )
+                cursor.execute(
+                    "SELECT 1 FROM public.tenancy_memberships "
+                    "WHERE user_id=%s AND org_id=%s AND is_active",
+                    [str(context.created_by), str(context.org_id)],
+                )
+                member = cursor.fetchone()
+        if member is None:
+            raise ImportError_("import_membership_revoked")
+        # The provider call and its audit/debit commit independently — no
+        # handler-wide transaction may wrap them, or a retry re-bills OCR.
+        output = extract_for_import(
+            org_id=context.org_id,
+            import_id=payload["import_id"],
+            actor_id=context.created_by,
+        )
     except Exception as error:
         permanent = isinstance(error, ImportError_)
         if permanent or context.attempt >= context.max_attempts:

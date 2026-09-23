@@ -11,13 +11,15 @@ from decimal import Decimal, InvalidOperation
 
 _LABEL = re.compile(r"\b([A-Za-z]{1,4}[-_]?[A-Za-z]?\d{1,3}|\d{1,3}[A-Za-z])\b")
 _DIMENSION = re.compile(r"\b(\d{3,5})\s*[x×]\s*(\d{3,5})\b")
-_INTEGER = re.compile(r"\b(\d{1,3})\b")
-# Insulated-glass compositions (4-12-4, 4+16+4, 4/12/4) read as integers —
-# they must be masked before quantity scanning or the pane count lands in
-# quantity (a "DVH 4-12-4" row is one unit, not four).
-_GLASS_COMPOSITION = re.compile(
-    r"\b\d{1,3}\s*[-+/]\s*\d{1,3}(?:\s*[-+/]\s*\d{1,3})?\b"
+# A quantity needs a unit marker (`3 un`, `2 unidades`, `10 und`, `4 pzas`,
+# `2 cant`) — any other integer on the row is glass composition or thickness
+# and must never promote into a count.
+_QUANTITY_MARKER = re.compile(
+    r"\b(\d{1,3})\s*(?:un(?:idades?)?|und|uds\.?|pza?s?\.?|piezas?|cant)\b",
+    re.IGNORECASE,
 )
+# Schedule style where the count leads the row: "3 V-1 fijo 1200x1000".
+_LEADING_QUANTITY = re.compile(r"^\s*(\d{1,3})\s+")
 
 # es-CL schedule vocabulary → canonical opening hints (TURN direction is
 # ambiguous on paper — TURN_LEFT is the placeholder the estimator corrects).
@@ -80,23 +82,16 @@ def parse_line(line: str) -> dict | None:
     label_match = _LABEL.search(line)
     label = label_match.group(1) if label_match else None
     opening = opening_hint(line)
-    # Quantity: a bare small integer that is not part of the WxH pair nor of
-    # the label (V-10 fijo 1200x1000 is one window, not ten).
+    # Quantity: only a unit marker ("3 un") or a leading count identifies one;
+    # a bare trailing integer is ambiguous with glass thickness and defaults
+    # to one — review data must err low, never high.
     quantity = 1
-    mask = list(line)
-    spans = [dimension.span(0)]
-    if label_match:
-        spans.append(label_match.span(1))
-    spans.extend(match.span(0) for match in _GLASS_COMPOSITION.finditer(line))
-    for lo, hi in spans:
-        for index in range(lo, hi):
-            mask[index] = " "
-    rest = "".join(mask)
-    quantity_candidates = [
-        int(found) for found in _INTEGER.findall(rest) if 0 < int(found) < 100
-    ]
-    if quantity_candidates:
-        quantity = quantity_candidates[-1]
+    marker = _QUANTITY_MARKER.search(line)
+    leading = _LEADING_QUANTITY.match(line)
+    if marker:
+        quantity = int(marker.group(1))
+    elif leading and not _LABEL.fullmatch(leading.group(0).strip()):
+        quantity = int(leading.group(1))
     if label is None:
         warnings.append("import.candidate_no_label")
     if opening is None:
