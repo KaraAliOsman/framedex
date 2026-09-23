@@ -262,7 +262,7 @@ class SiiCafListSerializer(serializers.Serializer):
 
 
 class SiiCafUploadSerializer(serializers.Serializer):
-    caf_xml = serializers.CharField()
+    caf_xml = serializers.CharField(max_length=131072)
     giro_emis = serializers.CharField(required=False, allow_blank=True)
     dir_origen = serializers.CharField(required=False, allow_blank=True)
     cmna_origen = serializers.CharField(required=False, allow_blank=True)

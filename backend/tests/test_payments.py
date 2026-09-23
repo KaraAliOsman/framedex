@@ -94,6 +94,11 @@ def env(monkeypatch):
         payments, "project_row", staticmethod(lambda org_id, project_id, **kw: _project())
     )
     monkeypatch.setattr(
+        payments.sii,
+        "dtes_by_invoice",
+        lambda *, org_id, project_id: {},
+    )
+    monkeypatch.setattr(
         payments,
         "issue_receipt",
         lambda **kw: {

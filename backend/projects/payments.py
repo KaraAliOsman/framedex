@@ -16,6 +16,7 @@ from django.utils import timezone
 from authentication.errors import contract_error
 from documents.repository import documentary_backend
 from pricing.repository import rows
+from projects import sii
 from projects.receipts import _receipt_public, issue_receipt
 from projects.service import project_row
 
@@ -115,6 +116,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 [str(org_id), str(project_id)],
             )
         }
+        dtes = sii.dtes_by_invoice(org_id=org_id, project_id=project_id)
         invoices = [
             {
                 "id": str(invoice["id"]),
@@ -132,6 +134,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 }
                 if str(invoice["id"]) in credit_notes
                 else None,
+                "dte": dtes.get(str(invoice["id"])),
                 "created_at": invoice["created_at"].isoformat()
                 if hasattr(invoice["created_at"], "isoformat")
                 else invoice["created_at"],

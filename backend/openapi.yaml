@@ -16008,6 +16008,7 @@ components:
         caf_xml:
           type: string
           minLength: 1
+          maxLength: 131072
         giro_emis:
           type: string
         dir_origen:

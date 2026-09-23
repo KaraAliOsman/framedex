@@ -17,6 +17,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
 from decimal import Decimal
 from uuid import UUID
@@ -25,6 +26,7 @@ from xml.sax.saxutils import escape
 import defusedxml.ElementTree as ET
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.db import connection, transaction
 from django.utils import timezone
 
@@ -132,9 +134,90 @@ def _caf_private_key(rsask: str):
 
 
 def _sign_dd(dd_xml: str, rsask: str) -> str:
-    key = _caf_private_key(rsask)
-    signature = key.sign(dd_xml.encode("utf-8"), padding.PKCS1v15(), hashes.SHA1())
+    key = _caf_private_key(_unwrap_rsask(rsask))
+    # The SII signs the DD as ISO-8859-1 bytes — UTF-8 would verify locally
+    # and fail the SII verifier on every accented character.
+    signature = key.sign(
+        dd_xml.encode("iso-8859-1"), padding.PKCS1v15(), hashes.SHA1()
+    )
     return base64.b64encode(signature).decode("ascii")
+
+
+def _kek() -> bytes | None:
+    """Key-encryption key for stored RSASK material: 32 bytes hex in
+    ``SII_CAF_KEK`` — the fiscal signing key never persists as plaintext."""
+    raw = os.environ.get("SII_CAF_KEK", "").strip()
+    if not raw:
+        return None
+    try:
+        key = bytes.fromhex(raw)
+    except ValueError:
+        return None
+    return key if len(key) == 32 else None
+
+
+def _wrap_rsask(rsask: str) -> str:
+    """Envelope-encrypt the CAF private key (AES-256-GCM, fresh nonce) for
+    storage. Refuses to persist plaintext — an unconfigured KEK fails closed."""
+    kek = _kek()
+    if kek is None:
+        raise contract_error(
+            503,
+            "sii_kek_unconfigured",
+            "SII_CAF_KEK no está configurado — las claves CAF no se almacenan en claro.",
+        )
+    nonce = os.urandom(12)
+    blob = AESGCM(kek).encrypt(nonce, rsask.encode("utf-8"), None)
+    return (
+        f"enc:v1:{base64.b64encode(nonce).decode()}"
+        f":{base64.b64encode(blob).decode()}"
+    )
+
+
+def _unwrap_rsask(stored: str) -> str:
+    """Inverse of ``_wrap_rsask``; rows stored before encryption existed are
+    still readable so a KEK rollout never strands an older pool."""
+    if not stored.startswith("enc:v1:"):
+        return stored
+    kek = _kek()
+    if kek is None:
+        raise contract_error(
+            503,
+            "sii_kek_unconfigured",
+            "SII_CAF_KEK no está configurado — no se puede descifrar la clave CAF.",
+        )
+    _, _, nonce_b64, blob_b64 = stored.split(":", 3)
+    try:
+        return AESGCM(kek).decrypt(
+            base64.b64decode(nonce_b64), base64.b64decode(blob_b64), None
+        ).decode("utf-8")
+    except Exception as error:
+        raise contract_error(
+            422,
+            "sii_caf_key_invalid",
+            "La clave CAF almacenada no se pudo descifrar.",
+        ) from error
+
+
+def _assert_key_pair(parsed: dict) -> None:
+    """The uploaded RSASK must be a valid RSA key matching the declared
+    RSAPK modulus/exponent — a malformed or mismatched pool must never
+    reach the folio registry."""
+    key = _caf_private_key(parsed["rsask"])
+    public = key.public_key().public_numbers()
+    try:
+        declared_n = int.from_bytes(base64.b64decode(parsed["rsapk_m"]), "big")
+        declared_e = int.from_bytes(base64.b64decode(parsed["rsapk_e"]), "big")
+    except Exception as error:
+        raise contract_error(
+            422, "sii_caf_invalid", "La clave pública RSAPK del CAF no es válida."
+        ) from error
+    if declared_n != public.n or declared_e != public.e:
+        raise contract_error(
+            422,
+            "sii_caf_key_mismatch",
+            "La llave privada del CAF no corresponde a la clave pública declarada.",
+        )
 
 
 def _caf_public(row) -> dict:
@@ -191,7 +274,12 @@ def register_caf(
     are the emisor identity — the org's tax_id only guards a real-RUT
     mismatch, and overlapping folio ranges for the same DTE type are refused
     so allocation can never double-stamp."""
+    if len((caf_xml or "").encode("utf-8")) > 131072:
+        raise contract_error(
+            422, "sii_caf_invalid", "El archivo CAF es demasiado grande."
+        )
     parsed = _parse_caf(caf_xml)
+    _assert_key_pair(parsed)
     file_hash = _sha256((caf_xml or "").encode("utf-8"))
     org_id_s = str(org_id)
     with transaction.atomic(), documentary_backend():
@@ -240,7 +328,7 @@ def register_caf(
                 (dir_origen or "").strip() or None,
                 (cmna_origen or "").strip() or None,
                 parsed["caf_xml"],
-                parsed["rsask"],
+                _wrap_rsask(parsed["rsask"]),
                 parsed["rsapk_m"],
                 parsed["rsapk_e"],
                 file_hash,
@@ -250,7 +338,7 @@ def register_caf(
     return _caf_public(row)
 
 
-def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
+def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
     """Render the minimal DTE-33: Encabezado + one Detalle referencing the
     sealed quotation + TED (DD + FRMT SHA1withRSA stamped by the CAF key)."""
     payload = (
@@ -272,7 +360,8 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
     receptor_name = str(project.get("client_name") or "Cliente").strip()
     revision = payload.get("revision_code") or "REV-A"
     positions = payload.get("positions") or []
-    item = f"Según cotización {revision} — {len(positions)} posición(es)"
+    # The DD is ISO-8859-1 — a plain hyphen, not an em-dash.
+    item = f"Según cotización {revision} - {len(positions)} posición(es)"
     fecha = issued_at.date().isoformat()
     emisor_extra = ""
     for tag, value in (
@@ -295,6 +384,7 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
     )
     frmt = _sign_dd(dd, caf["rsask"])
     return (
+        '<?xml version="1.0" encoding="ISO-8859-1"?>'
         f'<DTE version="1.0"><Documento ID="F{DTE_FACTURA}T{folio}">'
         f"<Encabezado><IdDoc><TipoDTE>{DTE_FACTURA}</TipoDTE>"
         f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis></IdDoc>"
@@ -308,7 +398,20 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
         f"<MontoItem>{neto}</MontoItem></Detalle>"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
         f"</Documento></DTE>"
-    ).encode("utf-8")
+    )
+
+
+def _encode_dte(xml: str) -> bytes:
+    """DTE files are ISO-8859-1 per the SII convention — anything outside
+    latin-1 can't be stamped and is refused rather than silently mangled."""
+    try:
+        return xml.encode("iso-8859-1")
+    except UnicodeEncodeError as error:
+        raise contract_error(
+            422,
+            "sii_dte_unrepresentable",
+            "El DTE contiene caracteres no representables en ISO-8859-1.",
+        ) from error
 
 
 def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -> dict:
@@ -339,6 +442,17 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
             )
             if existing:
                 return _dte_public(existing[0])
+            annulled = rows(
+                "SELECT id FROM public.project_credit_notes "
+                "WHERE org_id=%s AND invoice_id=%s LIMIT 1",
+                [org_id_s, invoice_id_s],
+            )
+            if annulled:
+                raise contract_error(
+                    409,
+                    "invoice_already_annulled",
+                    "La factura está anulada por una nota de crédito — timbre el DTE-61 sobre la nota.",
+                )
             cafs = rows(
                 "SELECT * FROM public.sii_cafs "
                 "WHERE org_id=%s AND tipo_dte=%s AND folio_actual < folio_hasta "
@@ -362,7 +476,9 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
             issued_at = timezone.now()
             # The DD is stamped before the cursor commits: a receptor/XML
             # failure aborts the transaction with the folio still untouched.
-            content = _dte_xml(folio=folio, invoice=invoice, caf=caf, issued_at=issued_at)
+            content = _encode_dte(
+                _dte_xml(folio=folio, invoice=invoice, caf=caf, issued_at=issued_at)
+            )
             moved = rows(
                 "UPDATE public.sii_cafs SET folio_actual=%s "
                 "WHERE id=%s AND org_id=%s AND folio_actual=%s "

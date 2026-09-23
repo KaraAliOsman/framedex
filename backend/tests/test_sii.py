@@ -145,6 +145,7 @@ def _patch_env(
     invoice=None,
     existing=None,
     insert_row=None,
+    annulled=None,
 ):
     def fake_one(sql, params=None, *args, **kw):
         text = str(sql)
@@ -175,12 +176,15 @@ def _patch_env(
             return list(cafs or [])
         if "FROM public.project_dtes" in sql:
             return list(existing or [])
+        if "FROM public.project_credit_notes" in sql:
+            return list(annulled or [])
         if "UPDATE public.sii_cafs" in sql:
             return [{"folio_actual": 1}]
         return []
 
     monkeypatch.setattr(sii, "one", fake_one)
     monkeypatch.setattr(sii, "rows", fake_rows)
+    monkeypatch.setattr(sii, "_kek", lambda: b"\x01" * 32)
     monkeypatch.setattr(sii, "SupabaseDocumentStorage", lambda: storage)
     monkeypatch.setattr(sii.transaction, "atomic", _noop)
     monkeypatch.setattr(sii, "documentary_backend", _noop)
@@ -266,7 +270,8 @@ def test_emit_dte_allocates_folio_and_stamps_ted(monkeypatch):
     object_key, content, media = storage.uploads[0]
     assert object_key.endswith(".xml") and "dte33-1_" in object_key
     assert media == "application/xml"
-    text = content.decode()
+    text = content.decode("iso-8859-1")
+    assert '<?xml version="1.0" encoding="ISO-8859-1"?>' in text
     assert "<TipoDTE>33</TipoDTE>" in text
     assert "<Folio>1</Folio>" in text
     assert "<RUTEmisor>76123456-7</RUTEmisor>" in text
@@ -286,7 +291,9 @@ def test_emit_dte_allocates_folio_and_stamps_ted(monkeypatch):
     public = rsa.RSAPublicNumbers(
         int.from_bytes(e, "big"), int.from_bytes(m, "big")
     ).public_key()
-    public.verify(frmt, dd.encode(), padding.PKCS1v15(), hashes.SHA1())
+    public.verify(
+        frmt, dd.encode("iso-8859-1"), padding.PKCS1v15(), hashes.SHA1()
+    )
 
 
 def test_emit_dte_replay_returns_existing(monkeypatch):
@@ -364,3 +371,62 @@ def test_dte_access_missing_raises_404(monkeypatch):
     with pytest.raises(ContractAPIException) as excinfo:
         sii.dte_access(org_id=uuid4(), project_id=uuid4(), invoice_id=uuid4())
     assert excinfo.value.contract_code == "dte_not_found"
+
+
+def test_emit_dte_refuses_annulled_invoice(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(
+        monkeypatch,
+        storage,
+        cafs=[caf],
+        invoice=invoice,
+        annulled=[{"id": uuid4()}],
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "invoice_already_annulled"
+    assert storage.uploads == []
+
+
+def test_register_caf_rejects_mismatched_key_pair(monkeypatch):
+    storage = _Storage()
+    org = {"id": uuid4(), "tax_id": "76123456-7", "name": "Org"}
+    _patch_env(monkeypatch, storage, org=org)
+    xml, _ = _caf_xml()
+    # A CAF whose RSASK belongs to a different key than its declared RSAPK.
+    foreign_rsask = sii._parse_caf(_caf_xml()[0])["rsask"]
+    mismatched = xml.replace(
+        f"<RSASK>{sii._parse_caf(xml)['rsask']}</RSASK>",
+        f"<RSASK>{foreign_rsask}</RSASK>",
+    )
+    assert mismatched != xml
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.register_caf(org_id=org["id"], actor_id=uuid4(), caf_xml=mismatched)
+    assert excinfo.value.contract_code == "sii_caf_key_mismatch"
+
+
+def test_register_caf_fails_closed_without_kek(monkeypatch):
+    storage = _Storage()
+    org = {"id": uuid4(), "tax_id": "76123456-7", "name": "Org"}
+    _patch_env(monkeypatch, storage, org=org)
+    monkeypatch.setattr(sii, "_kek", lambda: None)
+    xml, _ = _caf_xml()
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.register_caf(org_id=org["id"], actor_id=uuid4(), caf_xml=xml)
+    assert excinfo.value.contract_code == "sii_kek_unconfigured"
+
+
+def test_rsask_roundtrip_wrap_unwrap(monkeypatch):
+    monkeypatch.setattr(sii, "_kek", lambda: b"\x02" * 32)
+    wrapped = sii._wrap_rsask("aGFzc2R1aWFzZA==")
+    assert wrapped.startswith("enc:v1:")
+    assert sii._unwrap_rsask(wrapped) == "aGFzc2R1aWFzZA=="
+    # Legacy plaintext rows stay readable without a KEK.
+    assert sii._unwrap_rsask("b3RoZXJwbGFpbg==") == "b3RoZXJwbGFpbg=="
