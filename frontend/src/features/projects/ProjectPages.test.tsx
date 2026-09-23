@@ -650,14 +650,14 @@ it("saves handle placement intents for operable leaves before emitting", async (
                     opening_type: "TURN_LEFT",
                     handle_domain_slot: "PRIMARY",
                     host_member_side: "LEFT",
-                    outer_height_mm: "1400.00",
-                    mounting_min_from_leaf_top_mm: "900.00",
-                    mounting_max_from_leaf_top_mm: "1100.00",
+                    outer_height_mm: "1400.10",
+                    mounting_min_from_leaf_top_mm: "900.30",
+                    mounting_max_from_leaf_top_mm: "1100.40",
                     permitted_vertical_references: ["LEAF_TOP", "OUTER_BOTTOM"],
                     leaf_rects: [
                       {
                         placement_policy_id: "placement-a",
-                        leaf_top_from_outer_top_mm: "100.00",
+                        leaf_top_from_outer_top_mm: "100.20",
                         leaf_height_mm: "1150.00",
                       },
                     ],
@@ -681,14 +681,19 @@ it("saves handle placement intents for operable leaves before emitting", async (
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
-  expect(heightInput.getAttribute("min")).toBe("900");
-  expect(heightInput.getAttribute("max")).toBe("1100");
+  expect(heightInput.getAttribute("min")).toBe("900.3");
+  expect(heightInput.getAttribute("max")).toBe("1100.4");
   const referenceSelect = screen.getByLabelText(t("quotation.handleReference"));
   fireEvent.change(referenceSelect, { target: { value: "OUTER_BOTTOM" } });
-  // OUTER_BOTTOM bounds transform: outer 1400 − leafTop 100 − leaf-top bounds.
-  expect(heightInput.getAttribute("min")).toBe("200");
-  expect(heightInput.getAttribute("max")).toBe("400");
+  // OUTER_BOTTOM: outer 1400.10 − leafTop 100.20 − leaf-top bounds. Float math
+  // would emit 399.599… and reject the exact boundary value the engine accepts.
+  expect(heightInput.getAttribute("min")).toBe("199.5");
+  expect(heightInput.getAttribute("max")).toBe("399.6");
   fireEvent.change(heightInput, { target: { value: "1050" } });
+  expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
+  fireEvent.change(heightInput, { target: { value: "399.6" } });
+  expect(screen.queryByText(t("quotation.handleOutOfBounds"))).toBeNull();
+  fireEvent.change(heightInput, { target: { value: "399.61" } });
   expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
   fireEvent.change(heightInput, { target: { value: "300" } });
   expect(screen.queryByText(t("quotation.handleOutOfBounds"))).toBeNull();

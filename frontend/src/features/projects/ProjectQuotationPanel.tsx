@@ -19,6 +19,13 @@ import type {
   ProjectResponse,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import {
+  addDecimal,
+  compareDecimal,
+  formatDecimal,
+  parseDecimal,
+  subtractDecimal,
+} from "./decimal";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -53,30 +60,38 @@ const REFERENCE_KEYS = {
 /** Valid input range for the entered height under its vertical reference.
  * The policy bounds describe the final handle coordinate measured from the
  * leaf's top edge; the engine converts each reference into that coordinate
- * before comparing, so the input's own range depends on the reference. */
+ * before comparing, so the input's own range depends on the reference.
+ * All math stays in exact decimals — binary floats would reject boundary
+ * entries the engine accepts. */
 function heightBounds(
   position: DocumentaryPreparationPosition,
   requirement: HandleRequirement,
   reference: HandleIntent["vertical_reference"],
-): [number, number] | null {
+): [string, string] | null {
   const rect = requirement.leaf_rects.find(
     (entry) => entry.placement_policy_id === position.manufacturing_placement_policy_id,
   );
-  if (!rect) return null;
-  const min = Number(requirement.mounting_min_from_leaf_top_mm);
-  const max = Number(requirement.mounting_max_from_leaf_top_mm);
-  const leafTop = Number(rect.leaf_top_from_outer_top_mm);
-  const leafHeight = Number(rect.leaf_height_mm);
-  const outerHeight = Number(requirement.outer_height_mm);
+  const min = parseDecimal(requirement.mounting_min_from_leaf_top_mm);
+  const max = parseDecimal(requirement.mounting_max_from_leaf_top_mm);
+  const leafTop = rect ? parseDecimal(rect.leaf_top_from_outer_top_mm) : null;
+  const leafHeight = rect ? parseDecimal(rect.leaf_height_mm) : null;
+  const outerHeight = parseDecimal(requirement.outer_height_mm);
+  if (!min || !max || !leafTop || !leafHeight || !outerHeight) return null;
   switch (reference) {
     case "LEAF_TOP":
-      return [min, max];
+      return [formatDecimal(min), formatDecimal(max)];
     case "LEAF_BOTTOM":
-      return [leafHeight - max, leafHeight - min];
+      return [
+        formatDecimal(subtractDecimal(leafHeight, max)),
+        formatDecimal(subtractDecimal(leafHeight, min)),
+      ];
     case "OUTER_TOP":
-      return [leafTop + min, leafTop + max];
+      return [formatDecimal(addDecimal(leafTop, min)), formatDecimal(addDecimal(leafTop, max))];
     case "OUTER_BOTTOM":
-      return [outerHeight - leafTop - max, outerHeight - leafTop - min];
+      return [
+        formatDecimal(subtractDecimal(subtractDecimal(outerHeight, leafTop), max)),
+        formatDecimal(subtractDecimal(subtractDecimal(outerHeight, leafTop), min)),
+      ];
   }
 }
 
@@ -478,12 +493,19 @@ export function ProjectQuotationPanel({
                     const bounds = reference
                       ? heightBounds(position, requirement, reference)
                       : null;
-                    const height = Number(intent?.requested_height_mm ?? "");
+                    const height =
+                      intent?.requested_height_mm !== undefined && intent.requested_height_mm !== ""
+                        ? parseDecimal(intent.requested_height_mm)
+                        : null;
+                    const boundMin = bounds?.[0] ? parseDecimal(bounds[0]) : null;
+                    const boundMax = bounds?.[1] ? parseDecimal(bounds[1]) : null;
                     const outOfBounds =
                       bounds !== null &&
-                      intent !== undefined &&
-                      intent.requested_height_mm !== "" &&
-                      (height < bounds[0] || height > bounds[1]);
+                      height !== null &&
+                      boundMin !== null &&
+                      boundMax !== null &&
+                      (compareDecimal(height, boundMin) < 0 ||
+                        compareDecimal(height, boundMax) > 0);
                     return (
                       <div className="handle-row" key={intentKey(requirement)}>
                         <div className="handle-leaf">
