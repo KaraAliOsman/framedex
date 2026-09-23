@@ -66,6 +66,7 @@ class ProductionOrderDetailSerializer(ProductionOrderSerializer):
     steps = ProductionStepSerializer(many=True)
     events = ProductionStepEventSerializer(many=True)
     dispatch_note_code = serializers.CharField(allow_null=True, required=False)
+    dispatch_note_dte = serializers.DictField(allow_null=True, required=False)
 
 
 class StepTransitionRequestSerializer(StrictSerializer):
@@ -120,6 +121,24 @@ class DispatchNoteSerializer(serializers.Serializer):
 
 
 class DispatchNoteAccessSerializer(DispatchNoteSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
+class DispatchNoteDteEmitSerializer(StrictSerializer):
+    # 1 = venta (goods delivered under a sale); 5 = traslado interno.
+    ind_traslado = serializers.ChoiceField(choices=(1, 5), default=1)
+
+
+class DispatchNoteDteSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    dispatch_note_id = serializers.UUIDField()
+    dte_type = serializers.IntegerField()
+    folio = serializers.IntegerField()
+    issued_at = serializers.CharField()
+
+
+class DispatchNoteDteAccessSerializer(DispatchNoteDteSerializer):
     signed_url = serializers.CharField()
     expires_in = serializers.IntegerField()
 

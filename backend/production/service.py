@@ -386,7 +386,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         [str(order_id), str(org_id)],
     )
     dispatch_note = rows(
-        "SELECT note_code FROM public.dispatch_notes "
+        "SELECT id, note_code FROM public.dispatch_notes "
         "WHERE org_id=%s AND work_order_id=%s",
         [str(org_id), str(order_id)],
     )
@@ -394,6 +394,23 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     output["dispatch_note_code"] = (
         dispatch_note[0]["note_code"] if dispatch_note else None
     )
+    if dispatch_note:
+        dte = rows(
+            "SELECT dte_type, folio, issued_at FROM public.project_dtes "
+            "WHERE org_id=%s AND dispatch_note_id=%s",
+            [str(org_id), str(dispatch_note[0]["id"])],
+        )
+        output["dispatch_note_dte"] = (
+            {
+                "dte_type": int(dte[0]["dte_type"]),
+                "folio": int(dte[0]["folio"]),
+                "issued_at": dte[0]["issued_at"],
+            }
+            if dte
+            else None
+        )
+    else:
+        output["dispatch_note_dte"] = None
     output["steps"] = [_public_step(step) for step in steps]
     output["events"] = [
         {

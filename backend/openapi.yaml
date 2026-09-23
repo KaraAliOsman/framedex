@@ -6039,6 +6039,156 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/dispatch-note-dte/:
+    get:
+      operationId: production_order_dispatch_note_dte
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchNoteDteAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: production_order_dispatch_note_dte_emit
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchNoteDteEmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DispatchNoteDteEmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DispatchNoteDteEmitRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchNoteDte'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/orders/{order_id}/dxf-export/:
     post:
       operationId: production_order_dxf_export
@@ -11676,6 +11826,61 @@ components:
       - note_code
       - signed_url
       - work_order_id
+    DispatchNoteDte:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dispatch_note_id:
+          type: string
+          format: uuid
+        dte_type:
+          type: integer
+        folio:
+          type: integer
+        issued_at:
+          type: string
+      required:
+      - dispatch_note_id
+      - dte_type
+      - folio
+      - id
+      - issued_at
+    DispatchNoteDteAccess:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dispatch_note_id:
+          type: string
+          format: uuid
+        dte_type:
+          type: integer
+        folio:
+          type: integer
+        issued_at:
+          type: string
+        signed_url:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - dispatch_note_id
+      - dte_type
+      - expires_in
+      - folio
+      - id
+      - issued_at
+      - signed_url
+    DispatchNoteDteEmitRequest:
+      type: object
+      properties:
+        ind_traslado:
+          allOf:
+          - $ref: '#/components/schemas/IndTrasladoEnum'
+          default: 1
     DispatchRequestRequest:
       type: object
       properties:
@@ -12949,6 +13154,14 @@ components:
           format: binary
       required:
       - file
+    IndTrasladoEnum:
+      enum:
+      - 1
+      - 5
+      type: integer
+      description: |-
+        * `1` - 1
+        * `5` - 5
     InspectorDiff:
       type: object
       properties:
@@ -15250,6 +15463,10 @@ components:
             $ref: '#/components/schemas/ProductionStepEvent'
         dispatch_note_code:
           type: string
+          nullable: true
+        dispatch_note_dte:
+          type: object
+          additionalProperties: {}
           nullable: true
       required:
       - created_at

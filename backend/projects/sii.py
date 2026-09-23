@@ -42,6 +42,7 @@ SIGNED_URL_TTL_SECONDS = 600
 
 DTE_FACTURA = 33
 DTE_CREDIT_NOTE = 61
+DTE_GUIA = 52
 _RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
 
 
@@ -313,7 +314,13 @@ def _caf_public(row) -> dict:
 def _dte_public(row) -> dict:
     return {
         "id": str(row["id"]),
-        "invoice_id": str(row["invoice_id"]),
+        "invoice_id": str(row["invoice_id"]) if row["invoice_id"] else None,
+        "credit_note_id": str(row["credit_note_id"])
+        if row.get("credit_note_id")
+        else None,
+        "dispatch_note_id": str(row["dispatch_note_id"])
+        if row.get("dispatch_note_id")
+        else None,
         "dte_type": int(row["dte_type"]),
         "folio": int(row["folio"]),
         "issued_at": row["issued_at"].isoformat()
@@ -434,46 +441,57 @@ def _render_dte(
     receptor: str,
     receptor_name: str,
     receptor_extra: str,
-    deal: dict,
+    deal: dict | None,
     item: str,
     caf: dict,
     issued_at,
     referencia: str = "",
+    iddoc_extra: str = "",
+    qty_item: int | None = None,
 ) -> str:
-    """Minimal DTE skeleton shared by 33/61: Encabezado + one Detalle + the
-    TED (DD + FRMT SHA1withRSA stamped by the CAF key)."""
-    # A DTE is a peso document: a foreign-currency deal would lose its
-    # currency entirely, so it refuses here rather than emitting wrong numbers.
-    if str(deal.get("currency") or "CLP").upper() != "CLP":
-        raise contract_error(
-            422,
-            "sii_currency_unsupported",
-            "El DTE sólo timbra documentos en CLP — este está en "
-            f"{deal.get('currency')}.",
-        )
-    amounts = [
-        Decimal(str(deal[key]))
-        for key in ("total_gross", "total_net", "total_tax")
-    ]
-    if any(amount != amount.to_integral_value() for amount in amounts):
-        raise contract_error(
-            422,
-            "sii_amount_fractional",
-            "Los totales del documento no son enteros — el DTE no puede "
-            "truncarlos.",
-        )
-    total, neto, iva = (int(amount) for amount in amounts)
-    # This renderer only supports the standard 19% IVA: a document priced
-    # under a different rate would emit contradictory fiscal fields, so it
-    # is refused rather than stamped with a wrong TasaIVA.
-    if iva != int(
-        (neto * Decimal("0.19")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-    ) or total != neto + iva:
-        raise contract_error(
-            422,
-            "sii_tax_rate_unsupported",
-            "El documento no lleva IVA 19% — el DTE no puede timbrarlo.",
-        )
+    """Minimal DTE skeleton shared by 33/52/61: Encabezado + one Detalle +
+    the TED (DD + FRMT SHA1withRSA stamped by the CAF key). A None deal
+    emits the amount-less shape a guía de despacho carries — no Totales,
+    MNT 0, QtyItem in place of MontoItem."""
+    if deal is not None:
+        # A DTE is a peso document: a foreign-currency deal would lose its
+        # currency entirely, so it refuses here rather than emitting wrong
+        # numbers.
+        if str(deal.get("currency") or "CLP").upper() != "CLP":
+            raise contract_error(
+                422,
+                "sii_currency_unsupported",
+                "El DTE sólo timbra documentos en CLP — este está en "
+                f"{deal.get('currency')}.",
+            )
+        amounts = [
+            Decimal(str(deal[key]))
+            for key in ("total_gross", "total_net", "total_tax")
+        ]
+        if any(amount != amount.to_integral_value() for amount in amounts):
+            raise contract_error(
+                422,
+                "sii_amount_fractional",
+                "Los totales del documento no son enteros — el DTE no puede "
+                "truncarlos.",
+            )
+        total, neto, iva = (int(amount) for amount in amounts)
+        # This renderer only supports the standard 19% IVA: a document
+        # priced under a different rate would emit contradictory fiscal
+        # fields, so it is refused rather than stamped with a wrong
+        # TasaIVA.
+        if iva != int(
+            (neto * Decimal("0.19")).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+        ) or total != neto + iva:
+            raise contract_error(
+                422,
+                "sii_tax_rate_unsupported",
+                "El documento no lleva IVA 19% — el DTE no puede timbrarlo.",
+            )
+    else:
+        total = neto = iva = 0
     # A DTE is rejected by the SII schema without the emisor's activity code
     # and business address — refuse before a folio is ever allocated.
     if not all(
@@ -510,15 +528,30 @@ def _render_dte(
         f'<DTE version="1.0" xmlns="http://www.sii.cl/SiiDte">'
         f'<Documento ID="F{tipo}T{folio}">'
         f"<Encabezado><IdDoc><TipoDTE>{tipo}</TipoDTE>"
-        f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis></IdDoc>"
+        f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis>{iddoc_extra}</IdDoc>"
         f"<Emisor><RUTEmisor>{caf['rut_emisor']}</RUTEmisor>"
         f"<RznSoc>{escape(caf['razon_social'])}</RznSoc>{emisor_extra}</Emisor>"
         f"<Receptor><RUTRecep>{receptor}</RUTRecep>"
         f"<RznSocRecep>{escape(receptor_name)}</RznSocRecep>{receptor_extra}</Receptor>"
-        f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
-        f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales></Encabezado>"
+        + (
+            f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
+            f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales>"
+            if deal is not None
+            else ""
+        )
+        + "</Encabezado>"
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
-        f"<MontoItem>{neto}</MontoItem></Detalle>{referencia}"
+        + (
+            f"<QtyItem>{qty_item}</QtyItem>"
+            if qty_item is not None
+            else ""
+        )
+        + (
+            f"<MontoItem>{neto}</MontoItem>"
+            if deal is not None
+            else ""
+        )
+        + f"</Detalle>{referencia}"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
         f"<TmstFirma>{tsted}</TmstFirma></Documento></DTE>"
     )
@@ -820,7 +853,8 @@ def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
         str(row["invoice_id"]): _dte_public(row)
         for row in rows(
             "SELECT * FROM public.project_dtes "
-            "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NULL",
+            "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NULL "
+            "AND invoice_id IS NOT NULL",
             [str(org_id), str(project_id)],
         )
     }
@@ -1047,4 +1081,245 @@ def dtes_by_credit_note(*, org_id: UUID, project_id: UUID) -> dict:
             "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NOT NULL",
             [str(org_id), str(project_id)],
         )
+    }
+
+
+def _receptor_guia(project: dict) -> tuple[str, str, str]:
+    """Receptor of a guía electrónica: the goods ship to the sealed
+    destination, so DirRecep is the delivery address — never the
+    commercial header address."""
+    receptor = _rut_normalize(project.get("client_rut"))
+    if receptor is None:
+        raise contract_error(
+            422,
+            "sii_receptor_missing",
+            "La guía no tiene un RUT de receptor válido para timbrar.",
+        )
+    address = str(project.get("delivery_address") or "").strip()
+    if not address:
+        raise contract_error(
+            422,
+            "sii_receptor_incomplete",
+            "La guía no tiene dirección de entrega para timbrar.",
+        )
+    return (
+        receptor,
+        str(project.get("client_name") or "Cliente").strip(),
+        f"<DirRecep>{escape(address)}</DirRecep>",
+    )
+
+
+def _dte_xml_dispatch_note(
+    *, folio: int, note: dict, caf: dict, issued_at, ind_traslado: int
+) -> str:
+    """DTE-52: an amount-less traslado whose <Referencia> points back at
+    the work order it ships."""
+    payload = (
+        note["payload_json"]
+        if isinstance(note["payload_json"], dict)
+        else json.loads(note["payload_json"])
+    )
+    receptor, receptor_name, receptor_extra = _receptor_guia(payload["project"])
+    order_code = str(payload["order"]["code"])
+    units = int(payload["totals"]["units"] or payload["order"].get("quantity") or 1)
+    item = f"Traslado OT {order_code} ({units} u)"[:80]
+    note_issued = payload["issued_at"]
+    if isinstance(note_issued, str):
+        note_issued = datetime.fromisoformat(note_issued)
+    fch_ref = note_issued.astimezone(_SII_TZ).date().isoformat()
+    referencia = (
+        f"<Referencia><NroLinRef>1</NroLinRef>"
+        f"<TpoDocRef>OT</TpoDocRef>"
+        f"<FolioRef>{escape(order_code[:18])}</FolioRef>"
+        f"<FchRef>{fch_ref}</FchRef>"
+        f"<RazonRef>Orden de trabajo</RazonRef></Referencia>"
+    )
+    return _render_dte(
+        tipo=DTE_GUIA,
+        folio=folio,
+        receptor=receptor,
+        receptor_name=receptor_name,
+        receptor_extra=receptor_extra,
+        deal=None,
+        item=item,
+        caf=caf,
+        issued_at=issued_at,
+        referencia=referencia,
+        iddoc_extra=f"<IndTraslado>{ind_traslado}</IndTraslado>",
+        qty_item=units,
+    )
+
+
+def emit_dispatch_note_dte(
+    *,
+    org_id: UUID,
+    order_id: UUID,
+    actor_id: UUID,
+    ind_traslado: int = 1,
+) -> dict:
+    """Timbra the electronic guía (DTE-52) of a sealed dispatch note. The
+    guía already exists — issue_dispatch_note sealed it at dispatch — so
+    this only consumes a CAF-52 folio after the XML renders. UNIQUE
+    (org_id, dispatch_note_id) makes a retried emit replay the same
+    artifact."""
+    org_id_s, order_id_s = str(org_id), str(order_id)
+    object_key: str | None = None
+    try:
+        with transaction.atomic(), documentary_backend():
+            order = one(
+                "SELECT id, project_id, order_code FROM public.orders "
+                "WHERE id=%s AND org_id=%s",
+                [order_id_s, org_id_s],
+                "work_order_not_found",
+            )
+            note = rows(
+                "SELECT * FROM public.dispatch_notes "
+                "WHERE work_order_id=%s AND org_id=%s",
+                [order_id_s, org_id_s],
+            )
+            if not note:
+                raise contract_error(
+                    409,
+                    "dispatch_note_missing",
+                    "La orden debe despacharse antes de timbrar la guía electrónica.",
+                )
+            note = note[0]
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"sii_folios:{org_id_s}:{DTE_GUIA}"],
+            )
+            existing = rows(
+                "SELECT * FROM public.project_dtes "
+                "WHERE org_id=%s AND dispatch_note_id=%s",
+                [org_id_s, str(note["id"])],
+            )
+            if existing:
+                return _dte_public(existing[0])
+            cafs = rows(
+                "SELECT * FROM public.sii_cafs "
+                "WHERE org_id=%s AND tipo_dte=%s AND folio_actual < folio_hasta "
+                "ORDER BY folio_desde LIMIT 1 FOR UPDATE",
+                [org_id_s, DTE_GUIA],
+            )
+            if not cafs:
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 52 disponibles — cargue un CAF en Configuración.",
+                )
+            caf = _ensure_rsask_wrapped(cafs[0], org_id_s)
+            folio = int(caf["folio_actual"]) + 1
+            if folio > int(caf["folio_hasta"]):
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 52 disponibles — cargue un CAF en Configuración.",
+                )
+            issued_at = timezone.now()
+            content = _encode_dte(
+                _dte_xml_dispatch_note(
+                    folio=folio,
+                    note=note,
+                    caf=caf,
+                    issued_at=issued_at,
+                    ind_traslado=ind_traslado,
+                )
+            )
+            moved = rows(
+                "UPDATE public.sii_cafs SET folio_actual=%s "
+                "WHERE id=%s AND org_id=%s AND folio_actual=%s "
+                "RETURNING folio_actual",
+                [folio, str(caf["id"]), org_id_s, folio - 1],
+            )
+            if not moved:
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 52 disponibles — cargue un CAF en Configuración.",
+                )
+            content_hash = _sha256(content)
+            payload = {
+                "dte_type": DTE_GUIA,
+                "folio": folio,
+                "issued_at": issued_at.isoformat(),
+                "note_code": note["note_code"],
+                "ind_traslado": ind_traslado,
+                "referenced": {
+                    "order_code": order["order_code"],
+                },
+                "caf": {
+                    "id": str(caf["id"]),
+                    "folio_desde": int(caf["folio_desde"]),
+                    "folio_hasta": int(caf["folio_hasta"]),
+                },
+                "emisor": {
+                    "rut": caf["rut_emisor"],
+                    "razon_social": caf["razon_social"],
+                },
+            }
+            object_key = (
+                f"org_{org_id_s}/projects/{order['project_id']}/dtes/"
+                f"dte{DTE_GUIA}-{folio}_{content_hash[:16]}.xml"
+            )
+            storage = SupabaseDocumentStorage()
+            try:
+                storage.upload_immutable(object_key, content, "application/xml")
+                row = one(
+                    "INSERT INTO public.project_dtes("
+                    "org_id,project_id,dispatch_note_id,caf_id,dte_type,folio,"
+                    "payload_json,storage_bucket,storage_object_key,file_sha256,"
+                    "media_type,byte_size,issued_by,issued_at) "
+                    "VALUES(%s,%s,%s,%s,%s,%s,%s::jsonb,'documents',%s,%s,"
+                    "'application/xml',%s,%s,%s) RETURNING *",
+                    [
+                        org_id_s,
+                        str(order["project_id"]),
+                        str(note["id"]),
+                        str(caf["id"]),
+                        DTE_GUIA,
+                        folio,
+                        json.dumps(payload),
+                        object_key,
+                        content_hash,
+                        len(content),
+                        str(actor_id),
+                        issued_at,
+                    ],
+                )
+            except Exception:
+                try:
+                    storage.delete_object(object_key)
+                    object_key = None
+                except Exception:  # noqa: BLE001 — cleanup must not mask the real failure
+                    pass
+                raise
+    except Exception:
+        if object_key is not None:
+            _purge_unreferenced_dte(
+                org_id=org_id, object_key=object_key, tipo=DTE_GUIA
+            )
+        raise
+    return _dte_public(row)
+
+
+def dispatch_note_dte_access(*, org_id: UUID, order_id: UUID) -> dict:
+    with documentary_backend():
+        found = rows(
+            "SELECT d.* FROM public.project_dtes d "
+            "JOIN public.dispatch_notes n ON n.id = d.dispatch_note_id "
+            "WHERE d.org_id=%s AND n.work_order_id=%s",
+            [str(org_id), str(order_id)],
+        )
+        if not found:
+            raise contract_error(
+                404, "dte_not_found", "La guía no tiene DTE emitido."
+            )
+        found = found[0]
+        signed_url = SupabaseDocumentStorage().signed_url(
+            str(found["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
+        )
+    return {
+        **_dte_public(found),
+        "signed_url": signed_url,
+        "expires_in": SIGNED_URL_TTL_SECONDS,
     }

@@ -54,6 +54,9 @@ import type {
   DesignAssistResponse,
   DesignOptions,
   DispatchNoteAccess,
+  DispatchNoteDte,
+  DispatchNoteDteAccess,
+  DispatchNoteDteEmitRequest,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
@@ -6746,6 +6749,170 @@ export const productionOrderDispatchNote = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export type productionOrderDispatchNoteDteResponse200 = {
+  data: DispatchNoteDteAccess;
+  status: 200;
+};
+
+export type productionOrderDispatchNoteDteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteResponseSuccess =
+  productionOrderDispatchNoteDteResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteResponseError = (
+  | productionOrderDispatchNoteDteResponse400
+  | productionOrderDispatchNoteDteResponse401
+  | productionOrderDispatchNoteDteResponse403
+  | productionOrderDispatchNoteDteResponse404
+  | productionOrderDispatchNoteDteResponse409
+  | productionOrderDispatchNoteDteResponse422
+  | productionOrderDispatchNoteDteResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteResponse =
+  productionOrderDispatchNoteDteResponseSuccess | productionOrderDispatchNoteDteResponseError;
+
+export const getProductionOrderDispatchNoteDteUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-dte/`;
+};
+
+export const productionOrderDispatchNoteDte = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteResponse> => {
+  return apiMutator<productionOrderDispatchNoteDteResponse>(
+    getProductionOrderDispatchNoteDteUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type productionOrderDispatchNoteDteEmitResponse201 = {
+  data: DispatchNoteDte;
+  status: 201;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteEmitResponseSuccess =
+  productionOrderDispatchNoteDteEmitResponse201 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteEmitResponseError = (
+  | productionOrderDispatchNoteDteEmitResponse400
+  | productionOrderDispatchNoteDteEmitResponse401
+  | productionOrderDispatchNoteDteEmitResponse403
+  | productionOrderDispatchNoteDteEmitResponse404
+  | productionOrderDispatchNoteDteEmitResponse409
+  | productionOrderDispatchNoteDteEmitResponse422
+  | productionOrderDispatchNoteDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse =
+  | productionOrderDispatchNoteDteEmitResponseSuccess
+  | productionOrderDispatchNoteDteEmitResponseError;
+
+export const getProductionOrderDispatchNoteDteEmitUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-dte/`;
+};
+
+export const productionOrderDispatchNoteDteEmit = async (
+  orderId: string,
+  dispatchNoteDteEmitRequest?: DispatchNoteDteEmitRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDispatchNoteDteEmitResponse>(
+    getProductionOrderDispatchNoteDteEmitUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(dispatchNoteDteEmitRequest),
     },
   );
 };

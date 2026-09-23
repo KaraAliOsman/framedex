@@ -11,6 +11,8 @@ import {
   productionOrderDetail,
   productionOrderDispatch,
   productionOrderDispatchNote,
+  productionOrderDispatchNoteDte,
+  productionOrderDispatchNoteDteEmit,
   productionOrderDxfExport,
   productionOrderInstall,
   productionOrderLabels,
@@ -467,6 +469,42 @@ export function ProductionPage(): JSX.Element {
     }
   }
 
+  async function emitDispatchNoteDte(orderId: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionOrderDispatchNoteDteEmit(orderId, {
+        ind_traslado: 1,
+      });
+      if (response.status === 201) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.dteEmitError"));
+      }
+    } catch {
+      setMessage(t("production.dteEmitError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openDispatchNoteDte(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dteOpenError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNoteDte(orderId);
+      if (response.status !== 200) throw new Error("dte_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dteOpenError"));
+    }
+  }
+
   async function openDispatchNote(orderId: string): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
@@ -581,6 +619,25 @@ export function ProductionPage(): JSX.Element {
                     onClick={() => void openDispatchNote(detail.id)}
                   >
                     {detail.dispatch_note_code}
+                  </button>
+                ) : null}
+                {detail.dispatch_note_dte ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-note-dte"
+                    title={`${t("production.dteStatus")} · folio ${detail.dispatch_note_dte.folio}`}
+                    onClick={() => void openDispatchNoteDte(detail.id)}
+                  >
+                    {`${t("production.dteStatus")} · ${detail.dispatch_note_dte.folio}`}
+                  </button>
+                ) : canWrite && detail.dispatch_note_code ? (
+                  <button
+                    type="button"
+                    className="production-dispatch"
+                    disabled={busy}
+                    onClick={() => void emitDispatchNoteDte(detail.id)}
+                  >
+                    {t("production.dteEmit")}
                   </button>
                 ) : null}
                 {canWrite && detail.status === "HOLD" ? (
