@@ -317,6 +317,12 @@ def confirm_installation(
             return get_work_order(org_id=org_id, order_id=order_id)
         if order["status"] != "DISPATCHED":
             raise DocumentaryError("installation_requires_dispatched")
+        delivery = rows(
+            "SELECT status FROM public.deliveries WHERE order_id = %s AND org_id = %s",
+            [str(order_id), str(org_id)],
+        )
+        if delivery and str(delivery[0]["status"]) != "DELIVERED":
+            raise DocumentaryError("installation_requires_delivered")
         rows(
             "UPDATE public.orders SET status = 'INSTALLED', updated_at = %s "
             "WHERE id = %s AND org_id = %s RETURNING id",
@@ -1442,16 +1448,20 @@ def _public_delivery(delivery: dict[str, object]) -> dict[str, object]:
 
 
 def get_delivery(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+    """Delivery for a valid WORKSHOP_OT — `delivery: null` only when the order
+    genuinely exists but was never scheduled; bad ids raise work_order_not_found."""
     with documentary_backend():
         found = rows(
             """
-            SELECT d.*, o.order_code FROM public.deliveries d
-            JOIN public.orders o ON o.id = d.order_id
-            WHERE d.order_id = %s AND d.org_id = %s
+            SELECT d.*, o.order_code FROM public.orders o
+            LEFT JOIN public.deliveries d ON d.order_id = o.id
+            WHERE o.id = %s AND o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
             """,
             [str(order_id), str(org_id)],
         )
-    return {"delivery": _public_delivery(found[0]) if found else None}
+        if not found:
+            raise DocumentaryError("work_order_not_found")
+    return {"delivery": _public_delivery(found[0]) if found[0].get("id") else None}
 
 
 def schedule_delivery(
@@ -1491,11 +1501,27 @@ def schedule_delivery(
         if str(order["status"]) not in ("COMPLETED", "DISPATCHED"):
             raise DocumentaryError("delivery_requires_completed")
         existing = rows(
-            "SELECT status FROM public.deliveries WHERE order_id = %s AND org_id = %s",
+            "SELECT * FROM public.deliveries WHERE order_id = %s AND org_id = %s",
             [str(order_id), str(org_id)],
         )
         if existing and str(existing[0]["status"]) == "DELIVERED":
             raise DocumentaryError("delivery_already_delivered")
+        normalized = {
+            "scheduled_date": day,
+            "time_window": window,
+            "address": address.strip(),
+            "contact_name": (contact_name or "").strip() or None,
+            "contact_phone": (contact_phone or "").strip() or None,
+            "installer_name": (installer_name or "").strip() or None,
+            "notes": (notes or "").strip() or None,
+        }
+        if (
+            existing
+            and str(existing[0]["status"]) == "SCHEDULED"
+            and all(existing[0][key] == value for key, value in normalized.items())
+        ):
+            # Identical schedule replay — one row, no duplicate audit event.
+            return get_delivery(org_id=org_id, order_id=order_id)
         delivery = one(
             """
             INSERT INTO public.deliveries(
@@ -1568,6 +1594,8 @@ def transition_delivery(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("order_already_installed")
         delivery = one(
             """
             SELECT * FROM public.deliveries

@@ -214,13 +214,15 @@ export function ProductionPage(): JSX.Element {
 
   const loadDetail = useCallback(async (orderId: string) => {
     const generation = ++detailGeneration.current;
-    const response = await productionOrderDetail(orderId);
-    if (response.status === 200 && generation === detailGeneration.current) {
-      setDetail(response.data);
-      setLabels([]);
-    }
-    const deliveryResponse = await productionOrderDelivery(orderId);
+    const [response, deliveryResponse] = await Promise.all([
+      productionOrderDetail(orderId),
+      productionOrderDelivery(orderId),
+    ]);
     if (generation === detailGeneration.current) {
+      if (response.status === 200) {
+        setDetail(response.data);
+        setLabels([]);
+      }
       setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
       setDeliveryForm(null);
     }
@@ -329,8 +331,7 @@ export function ProductionPage(): JSX.Element {
     try {
       const response = await productionOrderDeliverySchedule(orderId, deliveryForm);
       if (response.status === 200) {
-        setDelivery(response.data.delivery);
-        setDeliveryForm(null);
+        await loadDetail(orderId);
       } else {
         setMessage(t("production.deliveryError"));
       }
@@ -349,7 +350,7 @@ export function ProductionPage(): JSX.Element {
     try {
       const response = await productionOrderDeliveryTransition(orderId, { status });
       if (response.status === 200) {
-        setDelivery(response.data.delivery);
+        await loadDetail(orderId);
       } else {
         setMessage(t("production.deliveryError"));
       }
@@ -462,7 +463,9 @@ export function ProductionPage(): JSX.Element {
                     {t("production.dispatchButton")}
                   </button>
                 ) : null}
-                {canStep && detail.status === "DISPATCHED" ? (
+                {canStep &&
+                detail.status === "DISPATCHED" &&
+                (!delivery || delivery.status === "DELIVERED") ? (
                   <button
                     type="button"
                     className="production-dispatch production-install"

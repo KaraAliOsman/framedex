@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import date, datetime
 import json
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -1279,6 +1280,8 @@ def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None
 
     def fake_rows(sql_text: str, params: list) -> list:
         lowered = " ".join(sql_text.lower().split())
+        if "from public.deliveries" in lowered:
+            return []
         if "update public.orders set status" in lowered:
             captured["status"] = "INSTALLED"
         if "insert into public.production_step_events" in lowered:
@@ -1355,9 +1358,9 @@ def test_delivery_schedule_upserts_and_records_event(monkeypatch) -> None:
 
     def fake_rows(sql_text: str, params: list) -> list:
         lowered = " ".join(sql_text.lower().split())
-        if "from public.deliveries d" in lowered:
+        if "left join public.deliveries d" in lowered:
             return [dict(delivery_row)]
-        if "select status from public.deliveries" in lowered:
+        if "from public.deliveries" in lowered:
             return []
         if "insert into public.production_step_events" in lowered:
             events.append((lowered, list(params)))
@@ -1377,6 +1380,86 @@ def test_delivery_schedule_upserts_and_records_event(monkeypatch) -> None:
     assert delivery["status"] == "SCHEDULED"
     assert delivery["time_window"] == "PM"
     assert "wo_delivery_scheduled" in events[0][0]
+
+
+def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    events: list[tuple[str, list]] = []
+    stored = {
+        "id": uuid4(), "org_id": org_id, "order_id": order_id,
+        "order_code": "OT-1", "scheduled_date": date(2026, 9, 25),
+        "time_window": "PM", "address": "Av. Norte 100",
+        "contact_name": None, "contact_phone": None,
+        "installer_name": "Cuadrilla 2", "notes": None,
+        "status": "SCHEDULED", "scheduled_by": uuid4(),
+        "created_at": datetime(2026, 9, 23), "updated_at": datetime(2026, 9, 23),
+    }
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "left join public.deliveries d" in lowered or "from public.deliveries" in lowered:
+            return [dict(stored)]
+        if "insert into public.production_step_events" in lowered:
+            events.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"},
+    )
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.schedule_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(),
+            scheduled_date="2026-09-25", time_window="PM",
+            address="Av. Norte 100", installer_name="Cuadrilla 2",
+        )
+    assert events == []
+    assert out["delivery"]["status"] == "SCHEDULED"
+
+
+def test_installation_requires_delivered_delivery(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": str(order_id), "order_code": "OT-1",
+            "status": "DISPATCHED", "payload_json": {},
+        },
+    )
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda *_a, **_k: [{"status": "ON_ROUTE"}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="installation_requires_delivered"):
+            service.confirm_installation(org_id=org_id, order_id=order_id, actor_id=uuid4())
+
+
+def test_delivery_transition_rejected_after_installation(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "INSTALLED"},
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="order_already_installed"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            )
+
+
+def test_get_delivery_rejects_unknown_order(monkeypatch) -> None:
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    with patch("production.service.documentary_backend", side_effect=_atomic):
+        with pytest.raises(DocumentaryError, match="work_order_not_found"):
+            service.get_delivery(org_id=uuid4(), order_id=uuid4())
 
 
 def test_delivery_schedule_guards_order_state_and_inputs(monkeypatch) -> None:
