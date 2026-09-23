@@ -81,17 +81,20 @@ WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 -- Floor roles (INSTALLER included) drive step transitions through the API,
 -- which switches to documentary_backend for writes; the shot-09
 -- workshop_orders_inherited_access policy only covers `authenticated`, so
--- mirror it for the backend role on WORKSHOP_OT rows. API role checks still
--- decide WHO may transition — the DB layer only enforces tenancy.
+-- mirror it for the backend role on WORKSHOP_OT rows — but only for the
+-- roles the API's actor contract allows (_STEP_ACTORS/_WRITERS), so a
+-- shared backend context cannot widen order access to e.g. ESTIMATOR.
 CREATE POLICY workshop_orders_backend_access
 ON public.orders FOR ALL TO documentary_backend
 USING (
     order_type = 'WORKSHOP_OT'
-    AND org_id IN (SELECT private.current_user_org_ids())
+    AND private.documentary_role(
+        org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER', 'INSTALLER'])
 )
 WITH CHECK (
     order_type = 'WORKSHOP_OT'
-    AND org_id IN (SELECT private.current_user_org_ids())
+    AND private.documentary_role(
+        org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER', 'INSTALLER'])
 );
 
 REVOKE ALL ON public.work_centers FROM anon;
