@@ -23,9 +23,14 @@ import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
 import type { IntentNode, Opening } from "../canvas/intentEditing";
 import {
+  starterContextSize,
+  type StarterDefinition,
+} from "../canvas/designLibrary";
+import { resolveMembers } from "../canvas/members";
+import { StarterGallery } from "../canvas/StarterGallery";
+import {
   isProductModel,
   isSingleUnit,
-  makeBowProduct,
   removeUnit,
   totalModuleWidth,
   wrapTreeAsProduct,
@@ -68,63 +73,7 @@ function initial(): CanvasDesignInputs {
   };
 }
 
-const STARTER_LIST = [
-  ["fixed", "assembly.starter.fixed"],
-  ["sash", "assembly.starter.sash"],
-  ["twoSash", "assembly.starter.twoSash"],
-  ["doorSide", "assembly.starter.doorSide"],
-  ["bow3", "assembly.starter.bow3"],
-  ["bow5", "assembly.starter.bow5"],
-] as const;
-type StarterKey = (typeof STARTER_LIST)[number][0];
 
-/** Visual starters: creation recipes that produce a compositional product.
- * They are not product types — everything they build is editable on canvas. */
-function starters(current: ProductJson | null): Record<StarterKey, () => ProductJson> {
-  const width = current ? totalModuleWidth(current) : 1500;
-  const height = current
-    ? Math.max(...current.assembly.modules.map((module) => Number(module.height_mm)))
-    : 1200;
-  return {
-    fixed: () => wrapTreeAsProduct(starterTree("FIXED"), width.toFixed(2), height.toFixed(2)),
-    sash: () =>
-      wrapTreeAsProduct(starterTree("TILT_TURN_LEFT"), width.toFixed(2), height.toFixed(2)),
-    twoSash: () =>
-      wrapTreeAsProduct(
-        {
-          id: crypto.randomUUID(),
-          type: "SPLIT_V",
-          split_offset_mm: (width / 2).toFixed(2),
-          mullion_profile_sku: null,
-          children: [starterTree("TILT_TURN_LEFT"), starterTree("TILT_TURN_RIGHT")],
-        },
-        width.toFixed(2),
-        height.toFixed(2),
-      ),
-    doorSide: () => ({
-      version: "product-v2",
-      assembly: {
-        modules: [
-          {
-            id: "m1",
-            width_mm: (width * 0.4).toFixed(2),
-            height_mm: height.toFixed(2),
-            tree: starterTree("DOOR_ENTRY"),
-          },
-          {
-            id: "m2",
-            width_mm: (width * 0.6).toFixed(2),
-            height_mm: height.toFixed(2),
-            tree: starterTree("FIXED"),
-          },
-        ],
-        couplings: [{ id: "c1", angle_deg: "0.0", coupler_profile_sku: null }],
-      },
-    }),
-    bow3: () => makeBowProduct({ moduleCount: 3, widthMm: width, heightMm: height, angleDeg: 15 }),
-    bow5: () => makeBowProduct({ moduleCount: 5, widthMm: width, heightMm: height, angleDeg: 15 }),
-  };
-}
 
 /** Fill catalog-driven values that are uniquely determined: a coupling without
  * a coupler gets the catalog's only coupler; splits without a mullion get the
@@ -513,7 +462,14 @@ function PositionWorkspace({
         location !== baseline.location ||
         quantity !== baseline.quantity;
   const product = inputs.product;
-  const starterList = starters(product);
+  const pickStarter = (definition: StarterDefinition) => {
+    const { widthMm, heightMm } = starterContextSize(product);
+    useCanvasStore.getState().commitInputs({
+      ...inputs,
+      product: definition.build(widthMm, heightMm),
+    });
+    onAssemblyChanged();
+  };
   return (
     <section className="projects-page position-editor">
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
@@ -540,26 +496,14 @@ function PositionWorkspace({
       {message && <p role="status">{message}</p>}
       <div className="position-workspace">
         <div className="position-design">
-          <div className="starter-bar" role="group" aria-label={t("assembly.starters")}>
-            <span className="field-label">{t("assembly.starters")}</span>
-            {STARTER_LIST.map(([key, labelKey]) => (
-              <button
-                key={key}
-                type="button"
-                className="starter-chip"
-                disabled={busy}
-                onClick={() => {
-                  useCanvasStore.getState().commitInputs({
-                    ...inputs,
-                    product: starterList[key](),
-                  });
-                  onAssemblyChanged();
-                }}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
+          <details className="starter-library" open>
+            <summary>{t("assembly.starterLibrary")}</summary>
+            <StarterGallery
+              members={resolveMembers(options.data)}
+              disabled={busy}
+              onPick={pickStarter}
+            />
+          </details>
           <AssemblyEditor
             organizationId={orgId}
             couplerSkus={options.data?.coupler_skus ?? []}
