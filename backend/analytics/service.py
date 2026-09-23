@@ -86,11 +86,14 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             count(*) FILTER (WHERE scheduled_date < local_today
                 AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS overdue
         FROM public.deliveries,
-            LATERAL (SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'America/Santiago')::date
-                     AS local_today) AS zone
+            LATERAL (
+                SELECT (CURRENT_TIMESTAMP AT TIME ZONE org.timezone)::date AS local_today
+                FROM public.tenancy_organizations AS org
+                WHERE org.id = %s
+            ) AS zone
         WHERE org_id = %s
         """,
-        [str(org_id)],
+        [str(org_id), str(org_id)],
     )
     documents = {
         str(row["document_type"]): int(row["n"])
