@@ -488,8 +488,9 @@ def test_backend_readiness_excludes_incomplete_system(documentary_tenant):
     with as_user(users["OWNER"]):
         readiness = catalog_readiness(system, org)
         assert not readiness["quote_ready"]
-        assert "manufacturing" in readiness["reasons"]
-        assert "inspection" in readiness["reasons"]
+        # The clone carries the full technical catalog — only fabrication
+        # authorities and manufacturing policies stay incomplete.
+        assert readiness["reasons"] == ["manufacturing"]
         assert not catalog_readiness(system, other)["quote_ready"]
         demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
         assert catalog_readiness(demo, org)["quote_ready"]
@@ -537,20 +538,12 @@ def test_catalog_reservation_requires_editing_membership(documentary_tenant, cas
 
 
 def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
-    import json
     from backend.tests.integration.catalog_fixture import copy_fixed_catalog
     from catalogs.readiness import catalog_readiness
-    from pricing.repository import rows, json_text
+    from pricing.repository import rows
     org, _, users, _ = documentary_tenant
+    # The clone already carries the system's glass purchase authorities.
     system = copy_fixed_catalog(org)
-    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
-    for row in rows("SELECT * FROM public.glass_purchase_mappings WHERE system_id=%s", [demo]):
-        if isinstance(row["provenance"], str):
-            row["provenance"] = json.loads(row["provenance"])
-        row.update(id=uuid4(), system_id=system, org_id=org)
-        one("INSERT INTO public.glass_purchase_mappings SELECT "
-            "(jsonb_populate_record(NULL::public.glass_purchase_mappings,%s::jsonb)).* RETURNING id",
-            [json_text(row)])
     one("UPDATE public.profile_articles SET reinforcement_sku=NULL "
         "WHERE system_id=%s AND role='FRAME' RETURNING id", [system])
     with as_user(users["OWNER"]):

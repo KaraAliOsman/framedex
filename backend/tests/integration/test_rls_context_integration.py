@@ -423,13 +423,18 @@ def test_inactive_panel_is_not_loaded_and_missing_weight_cannot_fallback(real_ro
     from dekopen_engine.weight import MissingWeightAuthority
     from engine.tests.test_shot06_core import core_node
 
+    # The global demo system can be technical_locked once positions reference
+    # it — mutations run against an org-owned clone instead.
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+
     for assignment in ("weight_kg_m2 = NULL", "is_active = FALSE"):
         with transaction.atomic():
+            clone = copy_fixed_catalog(real_rows.organizations["A"], global_scope=True)
             with connection.cursor() as cursor:
-                cursor.execute(f"UPDATE public.infill_articles SET {assignment} WHERE system_id = %s", [real_rows.demo_system])
+                cursor.execute(f"UPDATE public.infill_articles SET {assignment} WHERE system_id = %s", [clone])
                 assert cursor.rowcount == 1
             with authenticated_rls_context(real_rows.tokens["A"].claims):
-                params = SystemParamsRepository().load_visible(real_rows.demo_system, real_rows.organizations["A"])
+                params = SystemParamsRepository().load_visible(clone, real_rows.organizations["A"])
                 if assignment == "weight_kg_m2 = NULL":
                     with pytest.raises(MissingWeightAuthority):
                         calculate_geometry(core_node("G7"), params)
