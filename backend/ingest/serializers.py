@@ -72,7 +72,11 @@ class ConfirmItemSerializer(StrictSerializer):
     glass_thickness_mm = DecimalStringField(
         max_digits=10, decimal_places=2, min_value=Decimal("1")
     )
+    # glass_spec is the physical composition; glass_article_sku is the
+    # catalog/technical SKU — a saved position carries both, and omitting
+    # either leaves the BOM without glass weight or pricing authority.
     glass_spec = serializers.CharField(max_length=120)
+    glass_article_sku = serializers.CharField(max_length=120)
     # Doors need the panel authority — required by the engine for DOOR_ENTRY,
     # enforced at confirm time only for that opening type.
     panel_article_sku = serializers.CharField(

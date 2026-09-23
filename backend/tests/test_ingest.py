@@ -9,6 +9,7 @@ from uuid import uuid4
 import pytest
 from rest_framework.exceptions import APIException
 
+from authentication.errors import contract_error
 from ingest import service
 from ingest.extract import kind_for
 from ingest.parser import (
@@ -116,6 +117,7 @@ def _item(**overrides):
         "color": "WHITE",
         "glass_thickness_mm": "20.00",
         "glass_spec": "4-12-4",
+        "glass_article_sku": "GLASS-A",
     }
     item.update(overrides)
     return item
@@ -593,7 +595,7 @@ def test_create_import_removes_orphaned_upload_on_insert_failure(monkeypatch):
 
     monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
     monkeypatch.setattr(
-        service.projects_service, "project_row", lambda *a, **k: {"id": "p"}
+        service.projects_service, "editable", lambda *a, **k: {"id": "p"}
     )
     monkeypatch.setattr(service, "documentary_backend", _backend)
     monkeypatch.setattr(
@@ -623,7 +625,7 @@ def test_create_import_rejects_long_filename(monkeypatch):
 
     monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
     monkeypatch.setattr(
-        service.projects_service, "project_row", lambda *a, **k: {"id": "p"}
+        service.projects_service, "editable", lambda *a, **k: {"id": "p"}
     )
     with pytest.raises(Exception) as caught:
         service.create_import(
@@ -704,7 +706,7 @@ def test_create_import_enqueues_under_service_role(monkeypatch):
 
     row = _import_row(status="UPLOADED")
     monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
-    monkeypatch.setattr(service.projects_service, "project_row", lambda *a, **k: {"id": "p"})
+    monkeypatch.setattr(service.projects_service, "editable", lambda *a, **k: {"id": "p"})
     monkeypatch.setattr(service, "documentary_backend", lambda: _Backend("doc"))
     monkeypatch.setattr(service.jobs_service, "job_backend", lambda: _Backend("job"))
     monkeypatch.setattr(
@@ -811,3 +813,69 @@ def test_extract_membership_revoked_marks_import_failed(monkeypatch):
         )
     assert raised.type.__name__ == "JobPermanentError"
     assert calls[0]["code"] == "import_membership_revoked"
+
+
+def test_create_import_rejects_non_editable_project(monkeypatch):
+    # A quoted/sealed/priced project must not pay for extraction — confirm
+    # would refuse every item anyway, so the gate fires before the upload.
+    uploads = []
+    deleted = []
+
+    class _Storage:
+        def upload_immutable(self, *a):
+            uploads.append(a)
+
+        def delete_object(self, key):
+            deleted.append(key)
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service.projects_service,
+        "editable",
+        lambda *a, **k: (_ for _ in ()).throw(
+            contract_error(409, "commercial_revision_required", "cerrado")
+        ),
+    )
+    with pytest.raises(APIException) as caught:
+        service.create_import(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            file_name="lista.pdf",
+            content=b"%PDF",
+            content_type="application/pdf",
+        )
+    assert caught.value.contract_code == "commercial_revision_required"
+    assert uploads == []
+
+
+def test_confirm_positions_carry_glass_article_authority(monkeypatch):
+    # glass_spec is the physical composition; glass_article_sku is the
+    # technical SKU — the saved tree must carry both or the BOM loses
+    # glass weight and pricing authority.
+    row = _import_row()
+    saved = []
+    monkeypatch.setattr(
+        service.projects_service,
+        "save_position",
+        lambda org, proj, data: saved.append(data) or {"id": uuid4()},
+    )
+    monkeypatch.setattr(service, "documentary_backend", _backend)
+    monkeypatch.setattr(
+        service,
+        "rows",
+        lambda sql, params=None: (
+            [row | {"status": "CONFIRMED", "result": []}]
+            if "UPDATE public.document_imports" in sql
+            else [row]
+        ),
+    )
+    service.confirm_import(
+        org_id=row["org_id"],
+        project_id=row["project_id"],
+        import_id=row["id"],
+        items=[_item()],
+    )
+    tree = saved[0]["design"]["parametric_tree"]
+    assert tree["glass_spec"] == "4-12-4"
+    assert tree["glass_article_sku"] == "GLASS-A"

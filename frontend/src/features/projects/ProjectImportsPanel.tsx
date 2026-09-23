@@ -119,12 +119,12 @@ export function ProjectImportsPanel({
   const fileInput = useRef<HTMLInputElement>(null);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const [expanded, setExpanded] = useState(false);
 
@@ -259,7 +259,10 @@ export function ProjectImportsPanel({
         system_id: systemId,
         color: "WHITE",
         glass_thickness_mm: glassThickness,
-        glass_spec: glassSpec,
+        // Same authority pair a normal save carries: the slot thickness is
+        // the physical (monolithic) spec, the catalog SKU is the article.
+        glass_spec: glassThickness,
+        glass_article_sku: glassSpec,
         ...(row.opening_type === "DOOR_ENTRY" ? { panel_article_sku: panelSku } : {}),
       }));
     const glassValid =

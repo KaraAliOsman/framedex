@@ -82,7 +82,6 @@ def create_import(
     *, org_id: UUID, project_id: UUID, actor_id: UUID, file_name: str,
     content: bytes, content_type: str,
 ) -> dict:
-    projects_service.project_row(org_id, project_id)
     kind = kind_for(file_name)
     if kind is None:
         raise contract_error(
@@ -100,6 +99,9 @@ def create_import(
             "import_file_invalid",
             "El nombre del archivo es demasiado largo o está vacío.",
         )
+    # Fast-fail before the storage write; the authoritative gate re-locks the
+    # row inside the atomic block below.
+    projects_service.editable(org_id, project_id)
     import_id = uuid4()
     storage_path = f"imports/{org_id}/{project_id}/{import_id}/{file_name}"
     storage = SupabaseDocumentStorage()
@@ -108,6 +110,10 @@ def create_import(
     )
     try:
         with transaction.atomic():
+            # The editable gate is part of the committed decision: its
+            # FOR UPDATE holds the project row so a concurrent pricing or
+            # revision transition cannot strand a paid extraction.
+            projects_service.editable(org_id, project_id)
             with documentary_backend():
                 row = rows(
                     "INSERT INTO public.document_imports("
@@ -323,6 +329,7 @@ def confirm_import(
                 "opening_type": item["opening_type"],
                 "glass_thickness_mm": item["glass_thickness_mm"],
                 "glass_spec": item["glass_spec"],
+                "glass_article_sku": item["glass_article_sku"],
             }
             if item["opening_type"] == "DOOR_ENTRY":
                 panel_sku = str(item.get("panel_article_sku") or "").strip()
