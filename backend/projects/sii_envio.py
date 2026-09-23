@@ -127,6 +127,26 @@ def _load_pfx(pfx: bytes, password: str | None) -> tuple:
         raise contract_error(
             422, "sii_cert_not_rsa", "El certificado debe tener una llave RSA."
         )
+    if cert.issuer == cert.subject:
+        raise contract_error(
+            422,
+            "sii_cert_self_signed",
+            "El certificado debe ser emitido por una autoridad, no autofirmado.",
+        )
+    try:
+        usage = cert.extensions.get_extension_for_oid(
+            x509.ExtensionOID.KEY_USAGE
+        ).value
+    except x509.ExtensionNotFound:
+        usage = None
+    if usage is not None and not (
+        usage.digital_signature or usage.content_commitment
+    ):
+        raise contract_error(
+            422,
+            "sii_cert_usage",
+            "El certificado no está habilitado para firmar documentos.",
+        )
     return key, cert
 
 
@@ -146,9 +166,13 @@ def _cert_public(row: dict) -> dict:
 
 
 def certificate_status(*, org_id: UUID) -> dict | None:
-    """Public metadata of the org's active certificate — never key material."""
+    """Public metadata of the org's active certificate — never key material.
+    Reads only the column-granted metadata set so the tenant-scoped query never
+    touches the wrapped blobs (which authenticated has no privilege on)."""
     found = rows(
-        "SELECT * FROM public.sii_certificates WHERE org_id=%s AND active",
+        "SELECT id,subject,rut_firma,serial_number,valid_from,valid_to,"
+        "nro_resol,fch_resol,active,created_at FROM public.sii_certificates "
+        "WHERE org_id=%s AND active",
         [str(org_id)],
     )
     return _cert_public(found[0]) if found else None
@@ -436,7 +460,7 @@ class _HttpSiiClient:
         match = re.search(r"<TRACKID>(\d+)</TRACKID>", response.text or "")
         if match is None:
             raise contract_error(
-                502,
+                503,
                 "sii_envio_bad_response",
                 "La respuesta del SII no trae TRACKID — el envío quedó pendiente.",
             )
@@ -482,7 +506,22 @@ class _HttpSiiClient:
 
         glosa = _field("GLOSA", "GLOSA_ESTADO", "GLOSA_ERR")
         code = (_field("ESTADO", "STATUS", "COD_ESTATUS") or "").upper()
-        if code in {"RPR", "RECHAZADO", "DNK", "FAU", "FAN"}:
+
+        def _count(*names: str) -> int | None:
+            raw = _field(*names)
+            if raw is None:
+                return None
+            try:
+                return int(raw)
+            except ValueError:
+                return None
+
+        # EPR means "processed", not "accepted" — the outcome counters decide:
+        # a rejected DTE inside a processed envelope is a REJECTED envío.
+        rejected = _count("RECHAZADOS")
+        if code in {"RPR", "RECHAZADO", "DNK", "FAU", "FAN"} or (
+            rejected is not None and rejected > 0
+        ):
             return {"status": "REJECTED", "glosa": glosa}
         if code in {"EPR", "ACEPTADO", "FOK", "ENC", "FIN"}:
             return {"status": "ACCEPTED", "glosa": glosa}
@@ -546,6 +585,15 @@ def _payload(row: dict) -> dict:
     as raw text depending on the connection; normalize once."""
     payload = row.get("payload_json")
     return json.loads(payload) if isinstance(payload, str) else (payload or {})
+
+
+def _ts(value) -> datetime | None:
+    """ISO timestamp from the sealed payload — missing or malformed → None."""
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return None
+    return parsed.replace(tzinfo=utc_timezone.utc) if parsed.tzinfo is None else parsed
 
 
 def _envio_public(row: dict) -> dict:
@@ -758,8 +806,11 @@ def send_invoice_envio(
             # the mock is exempt (its track id is a pure function of the same
             # bytes, so a retry cannot duplicate), everything else requires the
             # explicit human recovery decision (`resubmit`).
-            if payload.get("submit_attempted_at") and (
-                client.adapter != "mock" and not resubmit
+            attempted_at = _ts(payload.get("submit_attempted_at"))
+            if (
+                attempted_at is not None
+                and client.adapter != "mock"
+                and not resubmit
             ):
                 raise contract_error(
                     409,
@@ -767,22 +818,39 @@ def send_invoice_envio(
                     "El intento anterior no confirmó recepción — confirme el "
                     "reintento para enviar el mismo sobre nuevamente.",
                 )
-            row = one(
+            # Atomic claim: only the request that lands this guarded lease may
+            # submit — the advisory lock ends before the network call, so a
+            # racing resubmit must be excluded *here*, at the row. A loser
+            # reports the current state instead of posting a duplicate.
+            claimed = rows(
                 "UPDATE public.sii_envios "
                 "SET payload_json = payload_json || %s::jsonb "
-                "WHERE id=%s RETURNING *",
+                "WHERE id=%s AND status='PENDING' AND track_id IS NULL AND ("
+                "payload_json->>'submit_inflight_until' IS NULL OR "
+                "(payload_json->>'submit_inflight_until')::timestamptz < %s"
+                ") RETURNING *",
                 [
                     json.dumps(
                         {
                             "submit_attempted_at": timezone.now().isoformat(),
-                            "submit_resubmitted": bool(
-                                payload.get("submit_attempted_at")
-                            ),
+                            "submit_resubmitted": attempted_at is not None,
+                            "submit_inflight_until": (
+                                timezone.now() + timedelta(seconds=90)
+                            ).isoformat(),
                         }
                     ),
                     str(row["id"]),
+                    timezone.now().isoformat(),
                 ],
             )
+            if not claimed:
+                row = one(
+                    "SELECT * FROM public.sii_envios WHERE id=%s",
+                    [str(row["id"])],
+                    "sii_envio_missing",
+                )
+                return _envio_public(row)
+            row = claimed[0]
     row_payload = _payload(row)
     if not row["track_id"]:
         if envelope is None:

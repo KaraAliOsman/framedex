@@ -48,6 +48,63 @@ def _rsa_key():
     return rsa.generate_private_key(3, 2048)
 
 
+# A fake issuing authority — the service rejects self-signed certificates, so
+# test leaves are always CA-signed, mirroring SII-issued personal certs.
+_CA_KEY = _rsa_key()
+
+
+def _ca_cert():
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Autoridad Prueba SII")])
+    now = datetime.now(utc_timezone.utc)
+    return (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(_CA_KEY.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - timedelta(days=400))
+        .not_valid_after(now + timedelta(days=3650))
+        .sign(_CA_KEY, hashes.SHA256())
+    )
+
+
+_CA_CERT = _ca_cert()
+
+
+def _leaf(key, rut="13037614-2", expired=False, signing=True):
+    name = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COMMON_NAME, "Firmante Prueba"),
+            x509.NameAttribute(NameOID.SERIAL_NUMBER, rut),
+        ]
+    )
+    now = datetime.now(utc_timezone.utc)
+    builder = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(_CA_CERT.subject)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - timedelta(days=400 if expired else 1))
+        .not_valid_after(now - timedelta(days=1) if expired else now + timedelta(days=365))
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=signing,
+                content_commitment=signing,
+                key_encipherment=not signing,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
+    )
+    return builder.sign(_CA_KEY, hashes.SHA256())
+
+
 def _self_signed(key, rut="13037614-2", expired=False):
     name = x509.Name(
         [
@@ -68,9 +125,9 @@ def _self_signed(key, rut="13037614-2", expired=False):
     return builder.sign(key, hashes.SHA256())
 
 
-def _pfx(password=b"secret", rut="13037614-2", key=None, expired=False):
+def _pfx(password=b"secret", rut="13037614-2", key=None, expired=False, signing=True):
     key = key or _rsa_key()
-    cert = _self_signed(key, rut=rut, expired=expired)
+    cert = _leaf(key, rut=rut, expired=expired, signing=signing)
     encryption = (
         serialization.BestAvailableEncryption(password)
         if password
@@ -231,18 +288,27 @@ def _patch_envio(
             return found
         if "UPDATE public.sii_envios" in sql:
             row = dict(state["inserted"] or (existing_envio or [{}])[0])
+            payload = row.get("payload_json") or {}
+            if isinstance(payload, str):
+                payload = json.loads(payload)
             if "SET track_id" in sql:
                 if row.get("status") != "PENDING" or row.get("track_id"):
                     return []
                 row.update({"track_id": params[0], "glosa": params[1]})
-                payload = row.get("payload_json") or {}
-                if isinstance(payload, str):
-                    payload = json.loads(payload)
                 row["payload_json"] = {**payload, **json.loads(params[2])}
             elif "SET status" in sql:
                 if row.get("status") != "PENDING":
                     return []
                 row.update({"status": params[0], "glosa": params[1]})
+            elif "submit_inflight_until" in sql:
+                # The atomic submission claim honors the same guards the real
+                # WHERE carries: pending, untracked, and no live lease.
+                if row.get("status") != "PENDING" or row.get("track_id"):
+                    return []
+                until = payload.get("submit_inflight_until")
+                if until and until >= str(params[2]):
+                    return []
+                row["payload_json"] = {**payload, **json.loads(params[0])}
             state["inserted"] = row
             return [row]
         if "FROM public.sii_envios" in sql:
@@ -318,12 +384,12 @@ def test_upload_certificate_rejects_no_rut_cert():
     cert = (
         x509.CertificateBuilder()
         .subject_name(name)
-        .issuer_name(name)
+        .issuer_name(_CA_CERT.subject)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - timedelta(days=1))
         .not_valid_after(now + timedelta(days=365))
-        .sign(key, hashes.SHA256())
+        .sign(_CA_KEY, hashes.SHA256())
     )
     pfx = pkcs12.serialize_key_and_certificates(
         name=b"c",
@@ -364,7 +430,7 @@ def test_upload_certificate_rejects_expired():
 
 def test_upload_certificate_rejects_non_rsa():
     key = ec.generate_private_key(ec.SECP256R1())
-    cert = _self_signed(key)
+    cert = _leaf(key)
     pfx = pkcs12.serialize_key_and_certificates(
         name=b"c",
         key=key,
@@ -814,15 +880,13 @@ def test_http_client_posts_sii_multipart_contract():
 def _attempted_pending(dte, **over):
     """A PENDING envío whose first submit attempt already ran but never
     confirmed a receipt — the uncertain-attempt state."""
-    return _pending_envio(
-        dte,
-        payload_json={
-            "emisor": {"rut": "76123456-0"},
-            "envia": "13037614-2",
-            "submit_attempted_at": "2026-10-03T10:00:00+00:00",
-        },
-        **over,
-    )
+    payload = {
+        "emisor": {"rut": "76123456-0"},
+        "envia": "13037614-2",
+        "submit_attempted_at": "2026-10-03T10:00:00+00:00",
+    }
+    payload.update(over.pop("payload", {}))
+    return _pending_envio(dte, payload_json=payload, **over)
 
 
 class _WsClient(_RecordingClient):
@@ -894,6 +958,49 @@ def test_send_envio_resubmit_is_the_explicit_recovery():
     assert result["status"] == "ACCEPTED"
     payload = state["inserted"]["payload_json"]
     assert payload["submit_resubmitted"] is True
+
+
+def test_send_envio_concurrent_resubmit_never_duplicates():
+    """Two resubmits racing the same uncertain row: the atomic claim lets only
+    one through — the loser gets the current state, never a second SII post."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    pending = _attempted_pending(
+        dte,
+        dte_id=dte["id"],
+        project_id=dte["project_id"],
+        payload={
+            "submit_inflight_until": (
+                datetime.now(utc_timezone.utc) + timedelta(minutes=5)
+            ).isoformat(),
+        },
+    )
+    client = _WsClient()
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf, client=client)
+        cert_row = _cert_row(org_id, pfx)
+        _patch_envio(
+            mp,
+            storage,
+            dte=[dte],
+            existing_envio=[pending],
+            certs=[cert_row],
+            caf=caf,
+            client=client,
+        )
+        result = sii_envio.send_invoice_envio(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
+            resubmit=True,
+        )
+    assert result["status"] == "PENDING"
+    assert client.submits == 0
+    assert client.queries == 0
 
 
 def test_send_envio_attempt_is_marked_before_submit():
@@ -1035,3 +1142,114 @@ def test_envio_entity_references_are_never_expanded():
             )
     assert error.value.contract_code == "sii_dte_unreadable"
     assert storage.uploads == []
+
+
+def test_query_status_epr_with_rejected_dte_is_rejected():
+    """EPR means "processed", not "accepted" — a rejection counter inside the
+    verdict makes the envío REJECTED even though the envelope code passed."""
+
+    def fake_post(url, **kw):
+        class _R:
+            status_code = 200
+            content = (
+                b"<RESP_STATUS><TRACKID>9</TRACKID><ESTADO>EPR</ESTADO>"
+                b"<GLOSA>procesado</GLOSA><ACEPTADOS>0</ACEPTADOS>"
+                b"<RECHAZADOS>1</RECHAZADOS></RESP_STATUS>"
+            )
+
+        return _R()
+
+    client = sii_envio._HttpSiiClient(
+        "https://palena.sii.cl/cgi-bin/UploadEnvio",
+        "https://palena.sii.cl/cgi-bin/QueryEstUp",
+        "TOK",
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio.httpx, "post", fake_post)
+        verdict = client.query_status(track_id="9", rut_emisor="76123456-0")
+    assert verdict["status"] == "REJECTED"
+
+
+def test_query_status_epr_with_reparos_only_is_accepted():
+    """REPAROS are accepted-with-corrections — the envelope is accepted."""
+
+    def fake_post(url, **kw):
+        class _R:
+            status_code = 200
+            content = (
+                b"<RESP_STATUS><TRACKID>9</TRACKID><ESTADO>EPR</ESTADO>"
+                b"<ACEPTADOS>0</ACEPTADOS><REPAROS>1</REPAROS>"
+                b"<RECHAZADOS>0</RECHAZADOS></RESP_STATUS>"
+            )
+
+        return _R()
+
+    client = sii_envio._HttpSiiClient(
+        "https://palena.sii.cl/cgi-bin/UploadEnvio",
+        "https://palena.sii.cl/cgi-bin/QueryEstUp",
+        "TOK",
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio.httpx, "post", fake_post)
+        verdict = client.query_status(track_id="9", rut_emisor="76123456-0")
+    assert verdict["status"] == "ACCEPTED"
+
+
+def test_upload_certificate_rejects_self_signed():
+    """An org's signer must be issued by an authority — a self-signed blob can
+    never become the active certificate."""
+    key = _rsa_key()
+    cert = _self_signed(key)
+    pfx = pkcs12.serialize_key_and_certificates(
+        name=b"c",
+        key=key,
+        cert=cert,
+        cas=None,
+        encryption_algorithm=serialization.BestAvailableEncryption(b"secret"),
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, _Storage())
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.upload_certificate(
+                org_id=uuid4(),
+                actor_id=uuid4(),
+                pfx_b64=base64.b64encode(pfx).decode("ascii"),
+                password="secret",
+                nro_resol=0,
+                fch_resol="2026-10-01",
+            )
+    assert error.value.contract_code == "sii_cert_self_signed"
+
+
+def test_upload_certificate_rejects_non_signing_usage():
+    pfx, _key, _cert = _pfx(signing=False)
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, _Storage())
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.upload_certificate(
+                org_id=uuid4(),
+                actor_id=uuid4(),
+                pfx_b64=base64.b64encode(pfx).decode("ascii"),
+                password="secret",
+                nro_resol=0,
+                fch_resol="2026-10-01",
+            )
+    assert error.value.contract_code == "sii_cert_usage"
+
+
+def test_certificate_status_reads_only_granted_columns():
+    """The tenant-visible read must never touch the wrapped key material —
+    authenticated only holds column grants on the metadata set."""
+    seen = {}
+
+    def fake_rows(sql, params=None):
+        seen["sql"] = sql
+        return []
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio, "rows", fake_rows)
+        assert sii_envio.certificate_status(org_id=uuid4()) is None
+    sql = seen["sql"]
+    assert "SELECT *" not in sql
+    assert "pfx_wrapped" not in sql
+    assert "password_wrapped" not in sql

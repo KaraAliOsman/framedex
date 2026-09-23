@@ -63,11 +63,13 @@ export function ProjectPaymentsPanel({
   projectId,
   orgId,
   canWrite,
+  canSendEnvio = false,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  canSendEnvio?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -698,7 +700,7 @@ export function ProjectPaymentsPanel({
                           {t("projects.dteCreditEmit")}
                         </button>
                       )}
-                      {canWrite && invoice.dte && !invoice.dte.envio && (
+                      {canSendEnvio && invoice.dte && !invoice.dte.envio && (
                         <button
                           type="button"
                           onClick={() => void sendEnvio(invoice)}
@@ -707,7 +709,7 @@ export function ProjectPaymentsPanel({
                           {t("projects.envioSend")}
                         </button>
                       )}
-                      {canWrite && invoice.dte?.envio?.status === "PENDING" && (
+                      {canSendEnvio && invoice.dte?.envio?.status === "PENDING" && (
                         <button
                           type="button"
                           onClick={() =>
