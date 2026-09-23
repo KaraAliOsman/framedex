@@ -62,7 +62,7 @@ def share_quote(
     *, org_id: UUID, project_id: UUID, actor_id: UUID, role: str
 ) -> dict[str, object]:
     """Mint a fresh approval link for the project's latest sealed version."""
-    with transaction.atomic(), documentary_backend():
+    with documentary_backend():
         project = one(
             "SELECT id,status FROM public.projects WHERE id=%s AND org_id=%s",
             [project_id, org_id],
@@ -77,8 +77,21 @@ def share_quote(
         )
         if not versions:
             raise DocumentaryError("version_not_found")
-        token = secrets.token_urlsafe(_TOKEN_BYTES)
-        expires_at = datetime.now(timezone.utc) + timedelta(days=_APPROVAL_TTL_DAYS)
+    # The client-facing quotation is DOC-01 (the commercial offer). Generate it
+    # before minting: generation is slot-idempotent, and a failure must not
+    # strand an approval whose token nobody ever saw.
+    generate_artifact(
+        org_id=org_id,
+        actor_id=actor_id,
+        role=role,
+        project_version_id=versions[0]["id"],
+        order_id=None,
+        document_type="DOC-01",
+        file_format="PDF",
+    )
+    token = secrets.token_urlsafe(_TOKEN_BYTES)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=_APPROVAL_TTL_DAYS)
+    with transaction.atomic(), documentary_backend():
         one(
             "INSERT INTO public.customer_approvals "
             "(org_id,project_id,project_version_id,token_hash,expires_at,created_by) "
@@ -92,18 +105,6 @@ def share_quote(
                 str(actor_id),
             ],
         )
-    # The client-facing quotation is DOC-01 (the commercial offer) — minting
-    # a link guarantees it exists; generation is slot-idempotent so an
-    # already-emitted DOC-01 is reused.
-    generate_artifact(
-        org_id=org_id,
-        actor_id=actor_id,
-        role=role,
-        project_version_id=versions[0]["id"],
-        order_id=None,
-        document_type="DOC-01",
-        file_format="PDF",
-    )
     return {"token": token, "expires_at": expires_at}
 
 
