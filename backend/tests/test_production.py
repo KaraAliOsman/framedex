@@ -1092,7 +1092,7 @@ def test_reinforcement_angles_flow_into_bars_csv() -> None:
                 "members": [
                     {
                         "member_id": "m1",
-                        "role": "FRAME",
+                        "identity": {"role": "FRAME"},
                         "bay_id": "b1",
                         "leaf_id": None,
                         "workshop_sku": "MARCO-60",
@@ -1258,3 +1258,26 @@ def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None
     assert "'wo_installed'" in events[0][0]
     assert len(events) == 1
     assert out["order"]["status"] == "INSTALLED"
+
+
+
+def test_dispatched_order_rejects_mutation_actions(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    order = {
+        "id": str(order_id),
+        "order_code": "OT-1",
+        "status": "DISPATCHED",
+        "payload_json": {"optimization": {"bars": {"workshop_cut_plan": []}}},
+    }
+    monkeypatch.setattr("production.service.one", lambda *_a, **_k: order)
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="work_order_dispatched"):
+            service.export_cnc_files(
+                org_id=org_id, order_id=order_id, actor_id=uuid4()
+            )
+        with pytest.raises(DocumentaryError, match="work_order_dispatched"):
+            service.optimize_work_order(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), color="BLANCO"
+            )

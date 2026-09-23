@@ -720,7 +720,7 @@ def _reinforcement_angle_map(
             key = (
                 str(reinforcement.get("workshop_sku")),
                 str(reinforcement.get("cut_length_mm")),
-                str(parent.get("role")),
+                str((parent.get("identity") or {}).get("role")),
                 parent.get("bay_id"),
                 parent.get("leaf_id"),
             )
@@ -832,6 +832,10 @@ def export_cnc_files(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
         payload = _decoded(order["payload_json"])
         optimization = payload.get("optimization")
         if not isinstance(optimization, dict) or not optimization.get("bars"):
@@ -1156,6 +1160,10 @@ def optimize_work_order(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
         payload = _decoded(order["payload_json"])

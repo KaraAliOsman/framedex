@@ -419,7 +419,9 @@ export function ProductionPage(): JSX.Element {
                         </time>
                       ) : null}
                     </header>
-                    {canOptimize && detail.status !== "COMPLETED" ? (
+                    {canOptimize &&
+                    detail.status !== "COMPLETED" &&
+                    detail.status !== "DISPATCHED" ? (
                       <div className="production-optimize-controls">
                         <input
                           type="text"
@@ -443,7 +445,9 @@ export function ProductionPage(): JSX.Element {
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
-                          {canOptimize && detail.status !== "COMPLETED" ? (
+                          {canOptimize &&
+                          detail.status !== "COMPLETED" &&
+                          detail.status !== "DISPATCHED" ? (
                             <button
                               type="button"
                               disabled={busy}
@@ -580,7 +584,9 @@ export function ProductionPage(): JSX.Element {
                           {new Date(packing.generated_at).toLocaleString("es-CL")}
                         </time>
                       ) : null}
-                      {canWrite && detail.status !== "DISPATCHED" && detail.status !== "INSTALLED" ? (
+                      {canWrite &&
+                      detail.status !== "DISPATCHED" &&
+                      detail.status !== "INSTALLED" ? (
                         <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
                           {packing
                             ? t("production.packingRegenerate")
@@ -634,8 +640,8 @@ export function ProductionPage(): JSX.Element {
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
                     {detail.status !== "COMPLETED" &&
-                        detail.status !== "DISPATCHED" &&
-                        detail.status !== "INSTALLED" ? (
+                    detail.status !== "DISPATCHED" &&
+                    detail.status !== "INSTALLED" ? (
                       <div className="production-step-actions">
                         {stepActions(step).map((stepAction) => (
                           <button
