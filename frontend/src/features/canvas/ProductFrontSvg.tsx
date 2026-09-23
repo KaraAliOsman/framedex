@@ -408,12 +408,15 @@ function Bay({
 function ModuleTree({
   node,
   region,
-  moduleWidth,
+  localOrigin,
   members,
 }: {
   node: IntentNode;
   region: Region;
-  moduleWidth: number;
+  /** Sheet-space origin the node's split_offset_mm measures from — engine
+   * parity: (0,0) = module outer edge for the top node, the node's own rect
+   * origin for children. */
+  localOrigin: { x: number; y: number };
   members: MemberGeometry;
 }): JSX.Element {
   if (node.type === "ROOT" && node.children?.length === 1 && node.children[0]) {
@@ -421,42 +424,44 @@ function ModuleTree({
       <ModuleTree
         node={node.children[0]}
         region={region}
-        moduleWidth={moduleWidth}
+        localOrigin={localOrigin}
         members={members}
       />
     );
   }
   if ((node.type === "SPLIT_V" || node.type === "SPLIT_H") && node.children?.length === 2) {
     const [first, second] = node.children;
-    const split = node as IntentNode;
-    let ratio = 0.5;
-    const offset = Number(split.split_offset_mm);
-    const basis = node.type === "SPLIT_V" ? moduleWidth : region.h;
-    if (Number.isFinite(offset) && offset > 0) {
-      ratio = Math.min(Math.max(offset / basis, 0.1), 0.9);
-    }
-    const mullion = node.type === "SPLIT_V" ? members.mullionV : members.mullionH;
+    const vertical = node.type === "SPLIT_V";
+    const mullion = vertical ? members.mullionV : members.mullionH;
     const barW = mullion?.faceWidthMm ?? Math.max(Math.min(region.w, region.h) * 0.05, 20);
+    const lo = vertical ? region.x : region.y;
+    const extent = vertical ? region.w : region.h;
+    const offset = Number(node.split_offset_mm);
+    // Engine parity (geometry._walk_node): the mullion centerline sits at
+    // local-origin + split_offset_mm. The top node's origin is the module's
+    // outer edge; each child's origin is its own rect's origin. Clamped into
+    // the region for display only — the engine flags out-of-range offsets.
+    const desired = (vertical ? localOrigin.x : localOrigin.y) + offset;
     const axis =
-      node.type === "SPLIT_V" ? region.x + region.w * ratio : region.y + region.h * ratio;
-    const firstRegion: Region =
-      node.type === "SPLIT_V"
-        ? { x: region.x, y: region.y, w: region.w * ratio - barW / 2, h: region.h }
-        : { x: region.x, y: region.y, w: region.w, h: region.h * ratio - barW / 2 };
-    const secondRegion: Region =
-      node.type === "SPLIT_V"
-        ? {
-            x: axis + barW / 2,
-            y: region.y,
-            w: region.x + region.w - (axis + barW / 2),
-            h: region.h,
-          }
-        : {
-            x: region.x,
-            y: axis + barW / 2,
-            w: region.w,
-            h: region.y + region.h - (axis + barW / 2),
-          };
+      Number.isFinite(offset) && offset > 0
+        ? Math.min(Math.max(desired, lo + barW / 2), lo + extent - barW / 2)
+        : lo + extent / 2;
+    const firstRegion: Region = vertical
+      ? { x: region.x, y: region.y, w: axis - barW / 2 - region.x, h: region.h }
+      : { x: region.x, y: region.y, w: region.w, h: axis - barW / 2 - region.y };
+    const secondRegion: Region = vertical
+      ? {
+          x: axis + barW / 2,
+          y: region.y,
+          w: region.x + region.w - (axis + barW / 2),
+          h: region.h,
+        }
+      : {
+          x: region.x,
+          y: axis + barW / 2,
+          w: region.w,
+          h: region.y + region.h - (axis + barW / 2),
+        };
     const bar: Region =
       node.type === "SPLIT_V"
         ? { x: axis - barW / 2, y: region.y, w: barW, h: region.h }
@@ -466,7 +471,7 @@ function ModuleTree({
         <ModuleTree
           node={first!}
           region={firstRegion}
-          moduleWidth={moduleWidth}
+          localOrigin={{ x: firstRegion.x, y: firstRegion.y }}
           members={members}
         />
         <Member
@@ -480,7 +485,7 @@ function ModuleTree({
         <ModuleTree
           node={second!}
           region={secondRegion}
-          moduleWidth={moduleWidth}
+          localOrigin={{ x: secondRegion.x, y: secondRegion.y }}
           members={members}
         />
       </>
@@ -766,7 +771,7 @@ export function ProductFrontContent({
           <ModuleTree
             node={module.tree}
             region={{ x: x + frameT, y: frameT, w: w - frameT * 2, h: height - frameT * 2 }}
-            moduleWidth={w}
+            localOrigin={{ x, y: 0 }}
             members={members}
           />
         </g>

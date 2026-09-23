@@ -53,8 +53,13 @@ export function CanvasViewport({
   const fittedRef = useRef(false);
   const spaceRef = useRef(false);
   const dragRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  // Auto-fit bookkeeping: once the user manually pans/zooms we stop following
+  // contentBox changes (the async plan arriving later must not jump the view).
+  const userInteractedRef = useRef(false);
+  const lastFitBoxRef = useRef<Box | null>(null);
 
   const fit = useCallback(() => {
+    lastFitBoxRef.current = contentBox;
     setView(fitTransform(contentBox, size.w, size.h));
   }, [contentBox, size.w, size.h]);
 
@@ -72,11 +77,24 @@ export function CanvasViewport({
   }, []);
 
   useEffect(() => {
-    if (!fittedRef.current && size.w > 0 && size.h > 0) {
+    if (size.w <= 0 || size.h <= 0) return;
+    if (!fittedRef.current) {
       fittedRef.current = true;
       fit();
+      return;
     }
-  }, [fit, size]);
+    // Sheet grew (e.g. the plan arrived after the first fit): refit only
+    // while the user has not taken manual control of the view. Compared by
+    // value — contentBox is rebuilt each render.
+    const last = lastFitBoxRef.current;
+    const sameBox =
+      last !== null &&
+      last.x === contentBox.x &&
+      last.y === contentBox.y &&
+      last.w === contentBox.w &&
+      last.h === contentBox.h;
+    if (!sameBox && !userInteractedRef.current) fit();
+  }, [fit, size, contentBox]);
 
   // Space held → pan mode. Listen on window so it works wherever focus sits.
   useEffect(() => {
@@ -101,6 +119,7 @@ export function CanvasViewport({
     if (!host) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
+      userInteractedRef.current = true;
       const rect = host.getBoundingClientRect();
       if (event.ctrlKey || event.metaKey) {
         const factor = Math.pow(1.0015, -event.deltaY);
@@ -120,6 +139,7 @@ export function CanvasViewport({
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button === 1 || (event.button === 0 && spaceRef.current)) {
       event.preventDefault();
+      userInteractedRef.current = true;
       dragRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
       event.currentTarget.setPointerCapture(event.pointerId);
       setPanning(true);
@@ -152,18 +172,23 @@ export function CanvasViewport({
       event.preventDefault();
       setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
     } else if (event.key === "ArrowLeft") {
+      userInteractedRef.current = true;
       setView((current) => panBy(current, PAN_STEP, 0));
     } else if (event.key === "ArrowRight") {
+      userInteractedRef.current = true;
       setView((current) => panBy(current, -PAN_STEP, 0));
     } else if (event.key === "ArrowUp") {
+      userInteractedRef.current = true;
       setView((current) => panBy(current, 0, PAN_STEP));
     } else if (event.key === "ArrowDown") {
+      userInteractedRef.current = true;
       setView((current) => panBy(current, 0, -PAN_STEP));
     }
   }
 
   const zoomStep = useCallback(
     (factor: number) => {
+      userInteractedRef.current = true;
       setView((current) => zoomAt(current, size.w / 2, size.h / 2, factor));
     },
     [size.w, size.h],
