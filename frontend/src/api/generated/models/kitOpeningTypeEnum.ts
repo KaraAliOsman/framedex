@@ -13,9 +13,9 @@
  * * `TILT_TURN` - TILT_TURN
  * * `TURN` - TURN
  */
-export type OpeningTypeEnum = (typeof OpeningTypeEnum)[keyof typeof OpeningTypeEnum];
+export type KitOpeningTypeEnum = (typeof KitOpeningTypeEnum)[keyof typeof KitOpeningTypeEnum];
 
-export const OpeningTypeEnum = {
+export const KitOpeningTypeEnum = {
   AWNING: "AWNING",
   DOOR: "DOOR",
   SLIDING: "SLIDING",

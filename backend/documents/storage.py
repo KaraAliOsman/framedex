@@ -53,6 +53,13 @@ class SupabaseDocumentStorage:
                     return
             raise DocumentaryError("document_storage_upload_failed")
 
+    def download(self, object_key: str) -> bytes:
+        with httpx.Client(timeout=30) as client:
+            response = client.get(self._object_url(object_key), headers=self._headers())
+        if response.status_code != 200:
+            raise DocumentaryError("document_storage_download_failed")
+        return response.content
+
     def delete_object(self, object_key: str) -> None:
         with httpx.Client(timeout=10) as client:
             response = client.delete(

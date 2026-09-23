@@ -24,6 +24,7 @@ import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
 import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
+import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
 
 const fields = [
@@ -486,6 +487,12 @@ function ProjectWorkspace({
             orgId={orgId}
             canWrite={canWrite}
             onDirtyChange={setPaymentsDirty}
+          />
+          <ProjectImportsPanel
+            projectId={project.id}
+            orgId={orgId}
+            canWrite={canWrite && editable}
+            onChanged={() => query.refetch()}
           />
           <section>
             <div className="projects-actions">

@@ -63,7 +63,13 @@ import type {
   FlowConfirmationRequest,
   FreezeRequestRequest,
   FreezeResponse,
+  ImportConfirmRequest,
+  ImportConfirmResponse,
+  ImportCreateResponse,
+  ImportDetailResponse,
+  ImportListResponse,
   ImportRequestRequest,
+  ImportUploadRequest,
   InstallationRequestRequest,
   InventoryMovement,
   InventoryMovementRequestRequest,
@@ -6804,6 +6810,312 @@ export const projectsClone = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(cloneProjectRequest),
+  });
+};
+
+export type projectImportsListResponse200 = {
+  data: ImportListResponse;
+  status: 200;
+};
+
+export type projectImportsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectImportsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectImportsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectImportsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectImportsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectImportsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectImportsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectImportsListResponseSuccess = projectImportsListResponse200 & {
+  headers: Headers;
+};
+export type projectImportsListResponseError = (
+  | projectImportsListResponse400
+  | projectImportsListResponse401
+  | projectImportsListResponse403
+  | projectImportsListResponse404
+  | projectImportsListResponse409
+  | projectImportsListResponse422
+  | projectImportsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectImportsListResponse =
+  projectImportsListResponseSuccess | projectImportsListResponseError;
+
+export const getProjectImportsListUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/imports/`;
+};
+
+export const projectImportsList = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectImportsListResponse> => {
+  return apiMutator<projectImportsListResponse>(getProjectImportsListUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectImportsCreateResponse200 = {
+  data: ImportCreateResponse;
+  status: 200;
+};
+
+export type projectImportsCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectImportsCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectImportsCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectImportsCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectImportsCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectImportsCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectImportsCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectImportsCreateResponseSuccess = projectImportsCreateResponse200 & {
+  headers: Headers;
+};
+export type projectImportsCreateResponseError = (
+  | projectImportsCreateResponse400
+  | projectImportsCreateResponse401
+  | projectImportsCreateResponse403
+  | projectImportsCreateResponse404
+  | projectImportsCreateResponse409
+  | projectImportsCreateResponse422
+  | projectImportsCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectImportsCreateResponse =
+  projectImportsCreateResponseSuccess | projectImportsCreateResponseError;
+
+export const getProjectImportsCreateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/imports/`;
+};
+
+export const projectImportsCreate = async (
+  projectId: string,
+  importUploadRequest: ImportUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectImportsCreateResponse> => {
+  const formData = new FormData();
+  formData.append(`file`, importUploadRequest.file);
+
+  return apiMutator<projectImportsCreateResponse>(getProjectImportsCreateUrl(projectId), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export type projectImportGetResponse200 = {
+  data: ImportDetailResponse;
+  status: 200;
+};
+
+export type projectImportGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectImportGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectImportGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectImportGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectImportGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectImportGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectImportGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectImportGetResponseSuccess = projectImportGetResponse200 & {
+  headers: Headers;
+};
+export type projectImportGetResponseError = (
+  | projectImportGetResponse400
+  | projectImportGetResponse401
+  | projectImportGetResponse403
+  | projectImportGetResponse404
+  | projectImportGetResponse409
+  | projectImportGetResponse422
+  | projectImportGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectImportGetResponse =
+  projectImportGetResponseSuccess | projectImportGetResponseError;
+
+export const getProjectImportGetUrl = (projectId: string, importId: string) => {
+  return `/api/v1/projects/${projectId}/imports/${importId}/`;
+};
+
+export const projectImportGet = async (
+  projectId: string,
+  importId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectImportGetResponse> => {
+  return apiMutator<projectImportGetResponse>(getProjectImportGetUrl(projectId, importId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectImportConfirmResponse200 = {
+  data: ImportConfirmResponse;
+  status: 200;
+};
+
+export type projectImportConfirmResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectImportConfirmResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectImportConfirmResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectImportConfirmResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectImportConfirmResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectImportConfirmResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectImportConfirmResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectImportConfirmResponseSuccess = projectImportConfirmResponse200 & {
+  headers: Headers;
+};
+export type projectImportConfirmResponseError = (
+  | projectImportConfirmResponse400
+  | projectImportConfirmResponse401
+  | projectImportConfirmResponse403
+  | projectImportConfirmResponse404
+  | projectImportConfirmResponse409
+  | projectImportConfirmResponse422
+  | projectImportConfirmResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectImportConfirmResponse =
+  projectImportConfirmResponseSuccess | projectImportConfirmResponseError;
+
+export const getProjectImportConfirmUrl = (projectId: string, importId: string) => {
+  return `/api/v1/projects/${projectId}/imports/${importId}/confirm/`;
+};
+
+export const projectImportConfirm = async (
+  projectId: string,
+  importId: string,
+  importConfirmRequest: ImportConfirmRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectImportConfirmResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectImportConfirmResponse>(getProjectImportConfirmUrl(projectId, importId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(importConfirmRequest),
   });
 };
 

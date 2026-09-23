@@ -1,0 +1,487 @@
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "../../api/apiMutator";
+import {
+  engineSystems,
+  projectDesignOptions,
+  projectImportConfirm,
+  projectImportsCreate,
+  projectImportsList,
+} from "../../api/generated/dekopen";
+import type {
+  ConfirmItemRequest,
+  DesignOptions,
+  ImportOpeningTypeEnum,
+  ImportResponse,
+} from "../../api/generated/models";
+import { t, type TranslationKey } from "../../i18n/es-CL";
+
+type Candidate = {
+  key: string;
+  label: string | null;
+  width_mm: string;
+  height_mm: string;
+  quantity: number;
+  opening_type: string | null;
+  confidence: string;
+  warnings: string[];
+  source_text: string;
+};
+
+type EditableRow = Candidate & { include: boolean };
+
+const STATUS_LABEL: Record<string, TranslationKey> = {
+  UPLOADED: "projects.importsStatusUploaded",
+  EXTRACTING: "projects.importsStatusExtracting",
+  REVIEW_READY: "projects.importsStatusReviewReady",
+  CONFIRMED: "projects.importsStatusConfirmed",
+  FAILED: "projects.importsStatusFailed",
+};
+const OPENING_LABEL: Record<string, TranslationKey> = {
+  FIXED: "intent.fixed",
+  TURN_LEFT: "intent.turnLeft",
+  TURN_RIGHT: "intent.turnRight",
+  TILT_TURN_LEFT: "intent.tiltLeft",
+  TILT_TURN_RIGHT: "intent.tiltRight",
+  SLIDING_2L: "intent.sliding",
+  AWNING: "intent.awning",
+  DOOR_ENTRY: "intent.door",
+};
+const OPENING_CHOICES = Object.keys(OPENING_LABEL) as ImportOpeningTypeEnum[];
+const PENDING_STATUSES = new Set(["UPLOADED", "EXTRACTING"]);
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function asCandidate(raw: Record<string, unknown>): Candidate {
+  return {
+    key: String(raw.key ?? ""),
+    label: (raw.label as string | null) ?? null,
+    width_mm: String(raw.width_mm ?? ""),
+    height_mm: String(raw.height_mm ?? ""),
+    quantity: Number(raw.quantity ?? 1),
+    opening_type: (raw.opening_type as string | null) ?? null,
+    confidence: String(raw.confidence ?? "REVIEW_REQUIRED"),
+    warnings: Array.isArray(raw.warnings) ? (raw.warnings as string[]) : [],
+    source_text: String(raw.source_text ?? ""),
+  };
+}
+
+export function ProjectImportsPanel({
+  projectId,
+  orgId,
+  canWrite,
+  onChanged,
+}: {
+  projectId: string;
+  orgId: string;
+  canWrite: boolean;
+  onChanged?: () => void;
+}): JSX.Element {
+  const [imports, setImports] = useState<ImportResponse[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [rows, setRows] = useState<EditableRow[]>([]);
+  const [systemId, setSystemId] = useState("");
+  const [glassSpec, setGlassSpec] = useState("");
+  const [glassThickness, setGlassThickness] = useState("");
+  const [itemErrors, setItemErrors] = useState<{ key: string; code: string }[]>([]);
+  const generation = useRef(0);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    [],
+  );
+
+  const [expanded, setExpanded] = useState(false);
+
+  const load = useCallback(async () => {
+    const current = ++generation.current;
+    try {
+      const response = await projectImportsList(projectId, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current === current) setImports(response.data.imports);
+    } catch {
+      if (generation.current === current) setMessage(t("projects.importsLoadError"));
+    }
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (expanded) void load();
+  }, [expanded, load]);
+
+  // Extraction runs in the job worker — poll while anything is in flight so
+  // the UI shows progress without the estimator refreshing manually.
+  useEffect(() => {
+    if (!imports.some((entry) => PENDING_STATUSES.has(entry.status))) return;
+    const timer = window.setTimeout(() => void load(), 2500);
+    return () => window.clearTimeout(timer);
+  }, [imports, load]);
+
+  const systems = useQuery({
+    queryKey: ["project-systems", orgId],
+    queryFn: async () => {
+      const response = await engineSystems(requestOptions);
+      if (response.status !== 200) throw new Error("load");
+      return response.data.systems;
+    },
+    enabled: expanded && canWrite,
+    retry: false,
+  });
+  const options = useQuery({
+    queryKey: ["project-design-options", orgId, systemId],
+    queryFn: async () => {
+      const response = await projectDesignOptions(systemId, requestOptions);
+      if (response.status !== 200) throw new Error("load");
+      return response.data as DesignOptions;
+    },
+    enabled: expanded && !!systemId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const first = systems.data?.[0];
+    if (!systemId && first) setSystemId(first.id);
+  }, [systems.data, systemId]);
+
+  useEffect(() => {
+    if (!options.data) return;
+    const [sku] = options.data.glass_skus;
+    const [thickness] = options.data.glazing_thicknesses;
+    if (!glassSpec && sku) setGlassSpec(sku);
+    if (!glassThickness && thickness) setGlassThickness(thickness);
+  }, [options.data, glassSpec, glassThickness]);
+
+  function startReview(entry: ImportResponse): void {
+    setReviewId(entry.id);
+    setItemErrors([]);
+    setMessage("");
+    setRows(
+      entry.candidates.map((raw) => {
+        const candidate = asCandidate(raw);
+        return { ...candidate, include: candidate.confidence === "HIGH" };
+      }),
+    );
+  }
+
+  async function upload(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectImportsCreate(projectId, { file }, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      await load();
+      if (generation.current === current && response.data.import.status === "REVIEW_READY") {
+        startReview(response.data.import);
+      }
+    } catch {
+      if (generation.current === current) setMessage(t("projects.importsUploadError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  function patchRow(key: string, patch: Partial<EditableRow>): void {
+    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  }
+
+  async function confirm(entry: ImportResponse): Promise<void> {
+    const current = ++generation.current;
+    const items: ConfirmItemRequest[] = rows
+      .filter((row) => row.include)
+      .map((row) => ({
+        key: row.key,
+        label: row.label ?? "",
+        width_mm: row.width_mm,
+        height_mm: row.height_mm,
+        quantity: row.quantity,
+        opening_type: (row.opening_type ?? "FIXED") as ImportOpeningTypeEnum,
+        system_id: systemId,
+        color: "WHITE",
+        glass_thickness_mm: glassThickness,
+        glass_spec: glassSpec,
+      }));
+    if (!items.length || !systemId || !glassSpec || !glassThickness) {
+      setMessage(t("projects.importsConfirmMissing"));
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    setItemErrors([]);
+    try {
+      const response = await projectImportConfirm(projectId, entry.id, { items }, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current === current) {
+        setItemErrors(response.data.errors as { key: string; code: string }[]);
+        setReviewId(null);
+        setMessage(
+          t("projects.importsConfirmed").replace("{count}", String(response.data.created.length)),
+        );
+        await load();
+        onChanged?.();
+      }
+    } catch {
+      if (generation.current === current) setMessage(t("projects.importsConfirmError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  const reviewImport = imports.find((entry) => entry.id === reviewId) ?? null;
+
+  if (!expanded) {
+    return (
+      <section className="projects-payments" aria-label={t("projects.importsTitle")}>
+        <div className="projects-actions">
+          <button
+            type="button"
+            className="imports-toggle"
+            aria-expanded="false"
+            onClick={() => setExpanded(true)}
+          >
+            {t("projects.importsTitle")}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="projects-payments" aria-label={t("projects.importsTitle")}>
+      <div className="projects-actions">
+        <h3>{t("projects.importsTitle")}</h3>
+        {canWrite && (
+          <>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".pdf,.xlsx,.xlsm,.png,.jpg,.jpeg,.webp"
+              className="imports-file-input"
+              onChange={(event) => void upload(event)}
+            />
+            <button
+              type="button"
+
+              disabled={busy}
+              onClick={() => fileInput.current?.click()}
+            >
+              {busy ? t("projects.importsUploading") : t("projects.importsUpload")}
+            </button>
+          </>
+        )}
+      </div>
+      {message && <p className="form-error">{message}</p>}
+      {imports.length === 0 && <p className="imports-empty">{t("projects.importsEmpty")}</p>}
+      {imports.length > 0 && (
+        <table className="payments-table">
+          <thead>
+            <tr>
+              <th>{t("projects.importsFile")}</th>
+              <th>{t("projects.importsStatus")}</th>
+              <th>{t("projects.importsCandidates")}</th>
+              <th>{t("projects.importsCreated")}</th>
+              <th aria-label={t("projects.importsActions")} />
+            </tr>
+          </thead>
+          <tbody>
+            {imports.map((entry) => (
+              <tr key={entry.id}>
+                <td title={entry.file_name}>{entry.file_name}</td>
+                <td>
+                  <span className={`production-chip imports-status-${entry.status.toLowerCase()}`}>
+                    {t(STATUS_LABEL[entry.status] ?? "projects.importsStatusUploaded")}
+                  </span>
+                  {entry.status === "FAILED" && entry.error_code && (
+                    <span className="imports-warning">{entry.error_code}</span>
+                  )}
+                </td>
+                <td>{entry.candidates.length}</td>
+                <td>{formatDate(entry.created_at)}</td>
+                <td>
+                  {entry.status === "REVIEW_READY" && canWrite && (
+                    <button
+                      type="button"
+
+                      onClick={() => startReview(entry)}
+                    >
+                      {t("projects.importsReview")}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {reviewImport && (
+        <div className="imports-review">
+          <p className="imports-hint">{t("projects.importsReviewHint")}</p>
+          {reviewImport.warnings.length > 0 && (
+            <ul className="imports-warning">
+              {reviewImport.warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          )}
+          <div className="imports-review-fields">
+            <label>
+              {t("projects.importsSystem")}
+              <select value={systemId} onChange={(event) => setSystemId(event.target.value)}>
+                {(systems.data ?? []).map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t("projects.importsGlass")}
+              <select value={glassSpec} onChange={(event) => setGlassSpec(event.target.value)}>
+                {(options.data?.glass_skus ?? []).map((sku) => (
+                  <option key={sku} value={sku}>
+                    {sku}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t("projects.importsThickness")}
+              <select
+                value={glassThickness}
+                onChange={(event) => setGlassThickness(event.target.value)}
+              >
+                {(options.data?.glazing_thicknesses ?? []).map((thickness) => (
+                  <option key={thickness} value={thickness}>
+                    {thickness} mm
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <table className="payments-table">
+            <thead>
+              <tr>
+                <th>{t("projects.importsInclude")}</th>
+                <th>{t("projects.importsLabel")}</th>
+                <th>{t("projects.importsWidth")}</th>
+                <th>{t("projects.importsHeight")}</th>
+                <th>{t("projects.importsQty")}</th>
+                <th>{t("projects.importsOpening")}</th>
+                <th>{t("projects.importsConfidence")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const itemError = itemErrors.find((entry) => entry.key === row.key);
+                return (
+                  <tr key={row.key} className={itemError ? "imports-row-error" : undefined}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={row.include}
+                        onChange={(event) => patchRow(row.key, { include: event.target.checked })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        value={row.label ?? ""}
+                        maxLength={100}
+                        onChange={(event) => patchRow(row.key, { label: event.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        value={row.width_mm}
+                        inputMode="decimal"
+                        size={7}
+                        onChange={(event) => patchRow(row.key, { width_mm: event.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        value={row.height_mm}
+                        inputMode="decimal"
+                        size={7}
+                        onChange={(event) => patchRow(row.key, { height_mm: event.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        value={row.quantity}
+                        inputMode="numeric"
+                        size={4}
+                        onChange={(event) =>
+                          patchRow(row.key, { quantity: Number(event.target.value) || 1 })
+                        }
+                      />
+                    </td>
+                    <td>
+                      <select
+                        value={row.opening_type ?? "FIXED"}
+                        onChange={(event) =>
+                          patchRow(row.key, {
+                            opening_type: event.target.value,
+                          })
+                        }
+                      >
+                        {OPENING_CHOICES.map((opening) => {
+                          const label = OPENING_LABEL[opening];
+                          return (
+                            <option key={opening} value={opening}>
+                              {label ? t(label) : opening}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </td>
+                    <td title={row.source_text}>
+                      <span
+                        className={`production-chip imports-confidence-${row.confidence.toLowerCase()}`}
+                      >
+                        {row.confidence === "HIGH"
+                          ? t("projects.importsConfidenceHigh")
+                          : t("projects.importsConfidenceReview")}
+                      </span>
+                      {itemError && <span className="imports-warning">{itemError.code}</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="payments-form-actions">
+            <button
+              type="button"
+              className="primary-action"
+              disabled={busy || !rows.some((row) => row.include)}
+              onClick={() => void confirm(reviewImport)}
+            >
+              {t("projects.importsConfirm")}
+            </button>
+            <button
+              type="button"
+
+              onClick={() => setReviewId(null)}
+            >
+              {t("projects.importsCancel")}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

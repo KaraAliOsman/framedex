@@ -6138,6 +6138,315 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/imports/:
+    get:
+      operationId: project_imports_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportListResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: project_imports_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportUploadRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportCreateResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/imports/{import_id}/:
+    get:
+      operationId: project_import_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportDetailResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/imports/{import_id}/confirm/:
+    post:
+      operationId: project_import_confirm
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: import_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportConfirmRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImportConfirmRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportConfirmRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportConfirmResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/payment-links/:
     get:
       operationId: project_payment_links_list
@@ -8575,6 +8884,54 @@ components:
           format: uuid
       required:
       - operation_id
+    ConfirmItemRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 40
+        label:
+          type: string
+          maxLength: 100
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        quantity:
+          type: integer
+          maximum: 999
+          minimum: 1
+        opening_type:
+          $ref: '#/components/schemas/ImportOpeningTypeEnum'
+        system_id:
+          type: string
+          format: uuid
+        color:
+          $ref: '#/components/schemas/WhiteColorEnum'
+        glass_thickness_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        glass_spec:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - color
+      - glass_spec
+      - glass_thickness_mm
+      - height_mm
+      - key
+      - label
+      - opening_type
+      - quantity
+      - system_id
+      - width_mm
     CouplerChoice:
       type: object
       properties:
@@ -10055,6 +10412,81 @@ components:
       description: |-
         * `LEFT` - LEFT
         * `RIGHT` - RIGHT
+    ImportConfirmRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfirmItemRequest'
+      required:
+      - items
+    ImportConfirmResponse:
+      type: object
+      properties:
+        import:
+          $ref: '#/components/schemas/ImportResponse'
+        created:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - created
+      - errors
+      - import
+    ImportCreateResponse:
+      type: object
+      properties:
+        import:
+          $ref: '#/components/schemas/ImportResponse'
+        job:
+          type: object
+          additionalProperties: {}
+      required:
+      - import
+      - job
+    ImportDetailResponse:
+      type: object
+      properties:
+        import:
+          $ref: '#/components/schemas/ImportResponse'
+      required:
+      - import
+    ImportListResponse:
+      type: object
+      properties:
+        imports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportResponse'
+      required:
+      - imports
+    ImportOpeningTypeEnum:
+      enum:
+      - AWNING
+      - DOOR_ENTRY
+      - FIXED
+      - SLIDING_2L
+      - TILT_TURN_LEFT
+      - TILT_TURN_RIGHT
+      - TURN_LEFT
+      - TURN_RIGHT
+      type: string
+      description: |-
+        * `AWNING` - AWNING
+        * `DOOR_ENTRY` - DOOR_ENTRY
+        * `FIXED` - FIXED
+        * `SLIDING_2L` - SLIDING_2L
+        * `TILT_TURN_LEFT` - TILT_TURN_LEFT
+        * `TILT_TURN_RIGHT` - TILT_TURN_RIGHT
+        * `TURN_LEFT` - TURN_LEFT
+        * `TURN_RIGHT` - TURN_RIGHT
     ImportRequestRequest:
       type: object
       properties:
@@ -10085,6 +10517,60 @@ components:
       - file
       - mapping
       - reason
+    ImportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        file_name:
+          type: string
+        kind:
+          type: string
+        status:
+          type: string
+        candidates:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        warnings:
+          type: array
+          items:
+            type: string
+        result:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        error_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - candidates
+      - created_at
+      - error_code
+      - file_name
+      - id
+      - kind
+      - result
+      - status
+      - updated_at
+      - warnings
+    ImportUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     InspectorDiff:
       type: object
       properties:
@@ -10460,6 +10946,20 @@ components:
             $ref: '#/components/schemas/KitResponse'
       required:
       - items
+    KitOpeningTypeEnum:
+      enum:
+      - AWNING
+      - DOOR
+      - SLIDING
+      - TILT_TURN
+      - TURN
+      type: string
+      description: |-
+        * `AWNING` - AWNING
+        * `DOOR` - DOOR
+        * `SLIDING` - SLIDING
+        * `TILT_TURN` - TILT_TURN
+        * `TURN` - TURN
     KitResponse:
       type: object
       properties:
@@ -10474,7 +10974,7 @@ components:
           type: string
           maxLength: 255
         opening_type:
-          $ref: '#/components/schemas/OpeningTypeEnum'
+          $ref: '#/components/schemas/KitOpeningTypeEnum'
         min_leaf_width_mm:
           type: string
           format: decimal
@@ -10563,7 +11063,7 @@ components:
           minLength: 1
           maxLength: 255
         opening_type:
-          $ref: '#/components/schemas/OpeningTypeEnum'
+          $ref: '#/components/schemas/KitOpeningTypeEnum'
         min_leaf_width_mm:
           type: string
           format: decimal
@@ -10841,20 +11341,6 @@ components:
       - kind
       - plan_tier
       - product_code
-    OpeningTypeEnum:
-      enum:
-      - AWNING
-      - DOOR
-      - SLIDING
-      - TILT_TURN
-      - TURN
-      type: string
-      description: |-
-        * `AWNING` - AWNING
-        * `DOOR` - DOOR
-        * `SLIDING` - SLIDING
-        * `TILT_TURN` - TILT_TURN
-        * `TURN` - TURN
     OperationalSummary:
       type: object
       properties:
@@ -11254,7 +11740,7 @@ components:
           minLength: 1
           maxLength: 255
         opening_type:
-          $ref: '#/components/schemas/OpeningTypeEnum'
+          $ref: '#/components/schemas/KitOpeningTypeEnum'
         min_leaf_width_mm:
           type: string
           format: decimal

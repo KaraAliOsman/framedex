@@ -7,6 +7,7 @@ from config.health import live, ready
 urlpatterns: list[URLPattern | URLResolver] = [
     path('api/v1/billing/', include('billing.urls')),
     path('api/v1/ai/', include('ai_gateway.urls')),
+    path('api/v1/', include('ingest.urls')),
     path('health/live/', live),
     path('health/ready/', ready),
     path("api/v1/catalogs/", include("catalogs.urls")),
