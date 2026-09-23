@@ -918,6 +918,52 @@ class TestConnections:
         )
         assert corners["d"][1].y_mm == expected_d
 
+    def test_stacked_wider_member_widens_the_envelope(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A stacked member wider than its column centre-and-protrudes: the
+        # nominal envelope spans the member extent, not the column band.
+        product = self._product(
+            [self._module("door", "900", "2100"), self._module("tr", "1200", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1200"),
+            Decimal("2500"),
+        )
+
+    def test_stacked_cycle_is_invalid(self, demo_60_params: SystemParams) -> None:
+        # a hangs over b's top while b hangs over a's top — neither module has
+        # a physical bottom. The union sees one connected assembly, so without
+        # a dedicated error the impossible stack would evaluate VALID.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                ),
+                CouplingDef(
+                    id="s2",
+                    kind=ConnectionKind.STACKED,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.BOTTOM, EdgeSide.TOP],
+                ),
+            ],
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        assert evaluation.status is ProductStatus.INVALID
+        assert IssueCode.STACKED_CYCLE.value in {issue.code for issue in evaluation.issues}
+
 
 class TestSlidingTopologyEvaluation:
     def _sliding_module(self, layout: "SlidingLayout | None") -> ProductModule:

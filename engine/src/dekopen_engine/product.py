@@ -47,6 +47,7 @@ from dekopen_engine.models import (
     EngineModel,
     EngineResult,
     GlassPiece,
+    MaterialType,
     NodeType,
     ParametricNode,
     PlanPoint,
@@ -93,6 +94,7 @@ class IssueCode(str, Enum):
     COUPLER_EDGE_CONFLICT = "coupler_edge_conflict"
     CONNECTION_TYPE_UNSUPPORTED = "connection_type_unsupported"
     ASSEMBLY_DISCONNECTED = "assembly_disconnected"
+    STACKED_CYCLE = "stacked_cycle"
     SLIDING_LAYOUT_INVALID = "sliding_layout_invalid"
     SLIDING_TRACKS_UNSUPPORTED = "sliding_tracks_unsupported"
 
@@ -567,8 +569,21 @@ def _plan_geometry(
         )
 
     # Stack roots resolve BEFORE layout, so an upper module declared ahead of
-    # its column produces the same plan as one declared after it.
+    # its column produces the same plan as one declared after it. A member
+    # whose STACKED parent chain lands on a cycle has no physical bottom —
+    # that is an error, not a layout variant: the union saw it as connected,
+    # so nothing else would stop a cyclic stack from validating.
+    stack_parent = _stack_parents(resolved_pairs)
     stack_root = _resolve_stack_roots(modules, resolved_pairs)
+    for member_id in stack_parent:
+        if member_id not in stack_root:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.STACKED_CYCLE.value,
+                    severity=Severity.ERROR,
+                    target=f"module:{member_id}",
+                )
+            )
 
     coupling_pairs: set[frozenset[str]] = set()
     pair_coupling: dict[frozenset[str], CouplingDef] = {}
@@ -1034,13 +1049,20 @@ def _evaluate_contour_module(
                     params={"edge": str(i), "sagitta_mm": str(_q(sagitta))},
                 )
             )
-        if frame.reinforcement_sku is not None:
+        if frame.material is MaterialType.PVC:
+            # Same rule as _append_profile: a welded PVC member is reinforced
+            # whether or not the catalog resolved the steel article yet — the
+            # cutting authority resolves the SKU downstream. A missing
+            # reinforcement_gap_mm raises honestly instead of skipping.
+            steel_length = reinforcement_cut_length(length, frame, 2)
+            if steel_length <= Decimal("0"):
+                raise ValueError("Reinforcement cut must be positive")
             reinforcements.append(
                 ReinforcementPiece(
                     parent_profile_sku=frame.sku,
                     reinforcement_sku=frame.reinforcement_sku,
                     role=ProfileRole.FRAME,
-                    length_mm=_q(reinforcement_cut_length(length, frame, 2)),
+                    length_mm=_q(steel_length),
                     qty=1,
                     bay_id=leaf.id,
                     sagitta_mm=_q(sagitta) if sagitta is not None else None,
@@ -1088,8 +1110,12 @@ def _evaluate_contour_module(
     weight_kg = (fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
-    xs = [v.x_mm for v in fill.vertices]
-    ys = [v.y_mm for v in fill.vertices]
+    # Bounds come from the sampled fill boundary, not the vertex box — an
+    # arc bulging past its endpoints would otherwise shrink the reported
+    # bounding box while `shape` still carried the bigger outline.
+    fill_points = contour_points(fill)
+    xs = [point.x_mm for point in fill_points]
+    ys = [point.y_mm for point in fill_points]
     glasses.append(
         GlassPiece(
             bay_id=leaf.id,
@@ -1102,7 +1128,7 @@ def _evaluate_contour_module(
             article_sku=leaf.glass_article_sku,
             # An axis-aligned rect fill is the classic rectangle — `shape`
             # stays None so production sheet-nests it like any other pane.
-            shape=None if _is_axis_rect(fill) else contour_points(fill),
+            shape=None if _is_axis_rect(fill) else fill_points,
         )
     )
 

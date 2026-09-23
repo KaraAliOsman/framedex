@@ -259,6 +259,18 @@ class TestContourEvaluation:
         assert arc_cuts and all(c.length_mm > D("2400") for c in arc_cuts)
         glass = ev.bom.glasses[0]
         assert glass.shape is not None and len(glass.shape) > 4  # arc sampled
+        # Bounds come from the sampled arc, not the vertex box: the crown
+        # overshoots the springline, so the reported height must cover it
+        # (springline ~1400 − inset + ~300 rise − inset ≫ the vertex span).
+        assert glass.height_mm > D("1400")
+        assert glass.height_mm == D(
+            max(p.y_mm for p in glass.shape) - min(p.y_mm for p in glass.shape)
+        ).quantize(D("0.01"))
+        # Welded PVC contour frames carry reinforcement like the rect path —
+        # even when the catalog leaves the steel SKU for downstream to resolve.
+        bom = ev.bom
+        assert bom is not None
+        assert any(piece.role.value == "FRAME" for piece in bom.reinforcements)
 
     def test_rect_contour_matches_rect_convention(self) -> None:
         # A rectangular contour must reproduce the classic frame: 4 members,

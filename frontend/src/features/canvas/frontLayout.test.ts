@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ProductJson } from "./productEditing";
-import { makeBowProduct, wrapTreeAsProduct } from "./productEditing";
+import { elevationEnvelopeMm, makeBowProduct, wrapTreeAsProduct } from "./productEditing";
 import { frontLayout } from "./ProductFrontSvg";
 
 function doorWithTransom(transomWidthMm = 900): ProductJson {
@@ -112,5 +112,20 @@ describe("frontLayout", () => {
     // column top is the taller column's own top — the seam stops at the
     // shorter column's top, not the elevation top.
     expect(seam.top).toBeCloseTo(1400, 5);
+  });
+
+  it("widens layout and envelope for a stacked member wider than its column", () => {
+    // Mirror of the engine's elevation_envelope: a 1200 transom on a 900 door
+    // centres and protrudes, so bounds span member extent — 1200, not 900.
+    const product = doorWithTransom(1200);
+    const layout = frontLayout(product);
+    expect(layout.totalW).toBeCloseTo(1200, 5);
+    const transom = layout.rects.find((r) => r.module.id === "t1")!;
+    expect(transom.x).toBeCloseTo(0, 5);
+    const door = layout.rects.find((r) => r.module.id !== "t1")!;
+    expect(door.x).toBeCloseTo(150, 5);
+    const envelope = elevationEnvelopeMm(product);
+    expect(envelope.width).toBeCloseTo(1200, 5);
+    expect(envelope.height).toBeCloseTo(2500, 5);
   });
 });

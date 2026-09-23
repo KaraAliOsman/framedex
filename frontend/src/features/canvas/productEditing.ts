@@ -234,17 +234,78 @@ export function resolveStacks(product: ProductJson): StackResolution {
   return { pairs, stackParent, stackRoot };
 }
 
-export function elevationEnvelopeMm(product: ProductJson): { width: number; height: number } {
+export interface ElevationMemberMm {
+  module: ProductJson["assembly"]["modules"][number];
+  x: number;
+  w: number;
+  sill: number;
+  h: number;
+}
+
+export interface ElevationColumnMm {
+  rootId: string;
+  x: number;
+  w: number;
+  top: number;
+}
+
+export interface ElevationLayoutMm {
+  members: ElevationMemberMm[];
+  columns: ElevationColumnMm[];
+}
+
+/** Member placement mirroring the engine's `elevation_layout` exactly:
+ * non-stacked roots become front columns in declaration order at their
+ * declared widths; a stacked member projects into its root column centred,
+ * sill = partner's top edge (cycle-safe, degrades to the baseline). */
+export function elevationLayoutMm(product: ProductJson): ElevationLayoutMm {
   const modules = product.assembly.modules;
-  const { stackRoot } = resolveStacks(product);
-  let width = 0;
-  const columns = new Map<string, number>();
-  for (const module of modules) {
-    const root = stackRoot.get(module.id) ?? module.id;
-    if (!stackRoot.has(module.id)) width += Number(module.width_mm);
-    columns.set(root, (columns.get(root) ?? 0) + Number(module.height_mm));
+  const { stackParent, stackRoot } = resolveStacks(product);
+  const byId = new Map(modules.map((module) => [module.id, module]));
+  const sills = new Map<string, number>();
+  const memberSill = (id: string, seen: Set<string>): number => {
+    const cached = sills.get(id);
+    if (cached !== undefined) return cached;
+    const parent = stackParent.get(id);
+    let sill = 0;
+    if (parent !== undefined && byId.has(parent) && !seen.has(parent)) {
+      sill = memberSill(parent, new Set([...seen, id])) + Number(byId.get(parent)!.height_mm);
+    }
+    sills.set(id, sill);
+    return sill;
+  };
+  const members: ElevationMemberMm[] = [];
+  const columns: ElevationColumnMm[] = [];
+  let cursor = 0;
+  for (const root of modules) {
+    if (stackRoot.has(root.id)) continue;
+    const columnW = Number(root.width_mm);
+    let top = 0;
+    for (const member of modules) {
+      if (member.id !== root.id && stackRoot.get(member.id) !== root.id) continue;
+      const w = Number(member.width_mm);
+      const h = Number(member.height_mm);
+      const sill = memberSill(member.id, new Set([member.id]));
+      top = Math.max(top, sill + h);
+      members.push({ module: member, x: cursor + (columnW - w) / 2, w, sill, h });
+    }
+    columns.push({ rootId: root.id, x: cursor, w: columnW, top });
+    cursor += columnW;
   }
-  return { width, height: columns.size > 0 ? Math.max(...columns.values()) : 0 };
+  return { members, columns };
+}
+
+/** The nominal envelope the API validates — member-extent bounds over the
+ * placed layout, so a stacked member wider than its column widens the
+ * envelope exactly like the engine's `elevation_envelope`. */
+export function elevationEnvelopeMm(product: ProductJson): { width: number; height: number } {
+  const { members } = elevationLayoutMm(product);
+  if (members.length === 0) return { width: 0, height: 0 };
+  const left = Math.min(...members.map((member) => member.x));
+  const right = Math.max(...members.map((member) => member.x + member.w));
+  const top = Math.max(...members.map((member) => member.sill + member.h));
+  const bottom = Math.min(...members.map((member) => member.sill));
+  return { width: right - left, height: top - bottom };
 }
 
 function replaceModule(

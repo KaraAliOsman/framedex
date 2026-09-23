@@ -7,7 +7,12 @@ import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import { memberSurface, type MemberSurface } from "./materials";
 import { contourOutset, contourPathD, insetContourPoints, pointsPathD } from "./contourGeometry";
 import type { MemberGeometry } from "./members";
-import { MIN_MODULE_WIDTH_MM, resolveStacks, type ProductJson } from "./productEditing";
+import {
+  elevationLayoutMm,
+  MIN_MODULE_WIDTH_MM,
+  resolveStacks,
+  type ProductJson,
+} from "./productEditing";
 import { useViewportScale } from "./CanvasViewport";
 
 /** Front elevation of the compositional product as a real fenestration
@@ -838,40 +843,26 @@ export interface FrontLayout {
  * INLINE seam draws vertically between columns, a STACKED contact draws
  * horizontally across the hanging member. */
 export function frontLayout(product: ProductJson): FrontLayout {
-  const { modules } = product.assembly;
   const { pairs, stackParent, stackRoot } = resolveStacks(product);
-  const byId = new Map(modules.map((module) => [module.id, module]));
+  const layoutMm = elevationLayoutMm(product);
+  const rects: FrontModuleRect[] = layoutMm.members.map((member) => ({
+    module: member.module,
+    x: member.x,
+    w: member.w,
+    sill: member.sill,
+    h: member.h,
+  }));
+  const columns: FrontColumn[] = layoutMm.columns;
 
-  const sills = new Map<string, number>();
-  const memberSill = (id: string, seen: Set<string>): number => {
-    const cached = sills.get(id);
-    if (cached !== undefined) return cached;
-    const parent = stackParent.get(id);
-    let sill = 0;
-    if (parent !== undefined && byId.has(parent) && !seen.has(parent)) {
-      sill = memberSill(parent, new Set([...seen, id])) + Number(byId.get(parent)!.height_mm);
-    }
-    sills.set(id, sill);
-    return sill;
-  };
-
-  const rects: FrontModuleRect[] = [];
-  const columns: FrontColumn[] = [];
-  let cursor = 0;
-  for (const root of modules) {
-    if (stackRoot.has(root.id)) continue;
-    const columnW = Number(root.width_mm);
-    let top = 0;
-    for (const member of modules) {
-      if (member.id !== root.id && stackRoot.get(member.id) !== root.id) continue;
-      const w = Number(member.width_mm);
-      const h = Number(member.height_mm);
-      const sill = memberSill(member.id, new Set([member.id]));
-      top = Math.max(top, sill + h);
-      rects.push({ module: member, x: cursor + (columnW - w) / 2, w, sill, h });
-    }
-    columns.push({ rootId: root.id, x: cursor, w: columnW, top });
-    cursor += columnW;
+  // A stacked member wider than its column protrudes past the column band —
+  // shift the whole layout so the leftmost member edge lands at x=0 and
+  // totalW spans member extents (mirrors the engine's envelope).
+  const left = rects.length > 0 ? Math.min(...rects.map((rect) => rect.x)) : 0;
+  const right = rects.length > 0 ? Math.max(...rects.map((rect) => rect.x + rect.w)) : 0;
+  const shift = -left;
+  if (shift !== 0) {
+    for (const rect of rects) rect.x += shift;
+    for (const column of columns) column.x += shift;
   }
 
   // Column seams carry the bound INLINE coupling's angle; stack contacts
@@ -929,7 +920,11 @@ export function frontLayout(product: ProductJson): FrontLayout {
 
   // Arc crowns overshoot the springline band; the whole drawing lifts so
   // the silhouette stays inside the bounds instead of clipping the gutter.
-  const height = rects.length > 0 ? Math.max(...rects.map((rect) => rect.sill + rect.h)) : 0;
+  const height =
+    rects.length > 0
+      ? Math.max(...rects.map((rect) => rect.sill + rect.h)) -
+        Math.min(...rects.map((rect) => rect.sill))
+      : 0;
   let lift = 0;
   let dip = 0;
   for (const rect of rects) {
@@ -938,7 +933,7 @@ export function frontLayout(product: ProductJson): FrontLayout {
     lift = Math.max(lift, rect.sill + rect.h + outset.top - height);
     dip = Math.max(dip, outset.bottom - rect.sill);
   }
-  return { rects, columns, joints, totalW: cursor, height, lift, dip };
+  return { rects, columns, joints, totalW: right - left, height, lift, dip };
 }
 
 /** The drawable extent of the front elevation including gutters and chains. */

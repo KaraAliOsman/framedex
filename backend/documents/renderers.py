@@ -308,16 +308,17 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
 
 
-def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal, Decimal]:
-    """Sampled SVG `d` for a stored module contour, plus its sill offset and
-    its lowest drawn point.
+def _contour_svg_path(
+    contour_payload: object,
+) -> tuple[str, Decimal, Decimal, Decimal, Decimal]:
+    """Sampled SVG `d` for a stored module contour, plus its sampled extrema.
 
     The boundary comes from the engine's own sampler (vertices exact, arcs
     chord-sampled), so issued documents render the same shape the geometry
-    evaluated — never a bounding-box stand-in. Points are emitted in screen
-    space normalized to the highest sampled point, so the module's nominal
-    sill (local y=0) lands at `top` and any downward arc overshoot lands
-    below it."""
+    evaluated — never a bounding-box stand-in. Returns (path_d, top, bottom,
+    left, right) — the sampled bounds in module-local coordinates. An arc
+    can overshoot the vertex box on any side, so the caller must bound the
+    viewBox from these extrema, not the nominal dims."""
     raw = _object(contour_payload, "invalid_frozen_parametric_tree")
     vertices = [
         PlanPoint(
@@ -338,11 +339,13 @@ def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal, Decimal]:
         raise DocumentaryError("svg_dimension_invalid")
     top = max(point.y_mm for point in points)
     bottom = min(point.y_mm for point in points)
+    left = min(point.x_mm for point in points)
+    right = max(point.x_mm for point in points)
     commands = [
         f"{'M' if index == 0 else 'L'}{_pt(point.x_mm)},{_pt(top - point.y_mm)}"
         for index, point in enumerate(points)
     ]
-    return " ".join(commands) + " Z", top, bottom
+    return " ".join(commands) + " Z", top, bottom, left, right
 
 
 def _position_svg(position: dict[str, object]) -> str:
@@ -377,7 +380,9 @@ def _position_svg(position: dict[str, object]) -> str:
         ] = []
         top_edge = Decimal("0")
         bottom_edge = Decimal("0")
-        for member in layout.members:
+        left_edge = Decimal("0")
+        right_edge = Decimal("0")
+        for index, member in enumerate(layout.members):
             module = modules_by_id.get(member.module_id)
             if module is None:
                 raise DocumentaryError("invalid_frozen_parametric_tree")
@@ -386,25 +391,24 @@ def _position_svg(position: dict[str, object]) -> str:
             path_d: str | None = None
             member_top = member.height_mm
             member_bottom = Decimal("0")
+            member_left = member.x_mm
+            member_right = member.x_mm + member.width_mm
             contour_payload = module.get("contour")
             if contour_payload is not None:
-                path_d, ctop, cbottom = _contour_svg_path(contour_payload)
+                path_d, ctop, cbottom, cleft, cright = _contour_svg_path(contour_payload)
                 member_top = ctop
                 member_bottom = cbottom
+                member_left = member.x_mm + cleft
+                member_right = member.x_mm + cright
             draws.append(
                 (module, member, member.width_mm, member.height_mm, member_top, path_d)
             )
             top_edge = max(top_edge, member.sill_mm + member_top)
             bottom_edge = min(bottom_edge, member.sill_mm + member_bottom)
+            left_edge = member_left if index == 0 else min(left_edge, member_left)
+            right_edge = member_right if index == 0 else max(right_edge, member_right)
         height = top_edge - bottom_edge
-        left_edge = (
-            min(member.x_mm for member in layout.members) if layout.members else Decimal("0")
-        )
-        width = (
-            max(member.x_mm + member.width_mm for member in layout.members) - left_edge
-            if layout.members
-            else Decimal("0")
-        )
+        width = right_edge - left_edge if layout.members else Decimal("0")
 
         for module, member, module_width, module_height, member_top, path_d in draws:
             x = member.x_mm - left_edge

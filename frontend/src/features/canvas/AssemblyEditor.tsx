@@ -82,6 +82,7 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
   connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
   assembly_disconnected: "assembly.issue.assemblyDisconnected",
+  stacked_cycle: "assembly.issue.stackedCycle",
   sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
   sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
 };

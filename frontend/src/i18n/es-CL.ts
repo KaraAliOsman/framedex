@@ -1300,6 +1300,8 @@ const messages = {
     "La unión tipo {kind} en {target} se declara pero aún no es fabricable.",
   "assembly.issue.assemblyDisconnected":
     "El conjunto queda en {roots} partes sin unir — cada módulo debe conectarse por una unión.",
+  "assembly.issue.stackedCycle":
+    "{target} se apoya sobre sí mismo en un ciclo — ningún módulo de la pila tiene base.",
   "assembly.issue.slidingLayoutInvalid": "La distribución corredera de {target} no es fabricable",
   "assembly.issue.slidingTracksUnsupported":
     "La serie no admite {tracks} rieles — el máximo es {rails}",
