@@ -62,6 +62,8 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/portal/quotes/{token}/",
         "/api/v1/portal/quotes/{token}/decide/",
         "/api/v1/projects/{project_id}/quote-link/",
+        "/api/v1/projects/{project_id}/payments/",
+        "/api/v1/projects/{project_id}/payments/{payment_id}/",
         "/api/v1/production/orders/",
         "/api/v1/production/orders/{order_id}/",
         "/api/v1/production/orders/{order_id}/optimize/",

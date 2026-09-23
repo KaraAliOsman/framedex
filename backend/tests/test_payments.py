@@ -1,0 +1,241 @@
+"""Cobranza ledger: idempotent recording, voiding, and sealed-deal balance."""
+
+from contextlib import contextmanager
+from decimal import Decimal
+from types import SimpleNamespace
+from uuid import uuid4
+
+import pytest
+from rest_framework.exceptions import APIException
+from rest_framework.test import APIClient
+
+from projects import payments, views as project_views
+from projects.serializers import PaymentRecordSerializer
+
+
+@contextmanager
+def _noop():
+    yield
+
+
+def _project(**over):
+    return {
+        "id": uuid4(),
+        "status": "APPROVED",
+        "total_price_gross": Decimal("1000000"),
+        **over,
+    }
+
+
+def _payment_row(**over):
+    return {
+        "id": uuid4(),
+        "org_id": uuid4(),
+        "project_id": uuid4(),
+        "operation_key": "op-12345678",
+        "kind": "ANTICIPO",
+        "amount": Decimal("400000"),
+        "method": "TRANSFER",
+        "reference": "TRX-1",
+        "note": None,
+        "recorded_by": uuid4(),
+        "recorded_at": "2026-09-20T10:00:00+00:00",
+        "voided_at": None,
+        "voided_by": None,
+        "void_reason": None,
+        "created_at": "2026-09-20T10:00:00+00:00",
+        **over,
+    }
+
+
+def _runner(captured, existing=None, payments_list=None, sealed_gross=None):
+    def fake_rows(sql, params=None):
+        captured.append((sql, params))
+        if "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s" in sql:
+            return list(existing or [])
+        if "FROM public.project_versions" in sql:
+            if sealed_gross is None:
+                return []
+            return [
+                {
+                    "snapshot_json": {
+                        "project": {"total_price_gross": str(sealed_gross)}
+                    }
+                }
+            ]
+        if "FROM public.project_payments" in sql and "ORDER BY recorded_at,id" in sql:
+            return list(payments_list or [])
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payments" in sql:
+            return [_payment_row(voided_at="2026-09-21T10:00:00+00:00")]
+        return []
+
+    return fake_rows
+
+
+@pytest.fixture
+def env(monkeypatch):
+    captured = []
+    monkeypatch.setattr(payments, "documentary_backend", _noop)
+    monkeypatch.setattr(payments.transaction, "atomic", _noop)
+    monkeypatch.setattr(
+        payments, "project_row", staticmethod(lambda org_id, project_id, **kw: _project())
+    )
+    return captured
+
+
+def _patch_rows(monkeypatch, captured, **kwargs):
+    monkeypatch.setattr(payments, "rows", _runner(captured, **kwargs))
+
+
+def test_record_payment_inserts_and_returns_sealed_balance(monkeypatch, env):
+    sealed_row = _payment_row()
+    _patch_rows(
+        monkeypatch,
+        env,
+        payments_list=[sealed_row],
+        sealed_gross=Decimal("800000"),
+    )
+    out = payments.record_payment(
+        org_id=uuid4(),
+        project_id=uuid4(),
+        actor_id=uuid4(),
+        data={
+            "operation_key": "op-12345678",
+            "kind": "ANTICIPO",
+            "amount": Decimal("400000"),
+            "method": "TRANSFER",
+            "reference": "TRX-1",
+        },
+    )
+    inserts = [sql for sql, _ in env if "INSERT INTO public.project_payments" in sql]
+    assert len(inserts) == 1
+    assert out["collected"] == "400000"
+    assert out["quote_total_gross"] == "800000"
+    assert out["balance"] == "400000"
+    assert out["status"] == "PARTIAL"
+    assert out["payment"]["kind"] == "ANTICIPO"
+
+
+def test_record_payment_replay_returns_existing_without_insert(monkeypatch, env):
+    existing = _payment_row()
+    _patch_rows(monkeypatch, env, existing=[existing], payments_list=[existing])
+    out = payments.record_payment(
+        org_id=uuid4(),
+        project_id=existing["project_id"],
+        actor_id=uuid4(),
+        data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+              "amount": Decimal("400000"), "method": "TRANSFER"},
+    )
+    assert not any("INSERT INTO public.project_payments" in sql for sql, _ in env)
+    assert out["payment"]["id"] == str(existing["id"])
+
+
+def test_record_payment_operation_key_conflict_on_other_project(monkeypatch, env):
+    existing = _payment_row()
+    _patch_rows(monkeypatch, env, existing=[existing])
+    with pytest.raises(APIException) as failure:
+        payments.record_payment(
+            org_id=uuid4(),
+            project_id=uuid4(),  # a different project than the stored row
+            actor_id=uuid4(),
+            data={"operation_key": "op-12345678", "kind": "ANTICIPO",
+                  "amount": Decimal("400000"), "method": "TRANSFER"},
+        )
+    assert failure.value.contract_code == "payment_operation_conflict"
+
+
+def test_void_excludes_payment_from_collected(monkeypatch, env):
+    voided = _payment_row(voided_at="2026-09-21T10:00:00+00:00")
+    _patch_rows(monkeypatch, env, payments_list=[voided])
+    out = payments.void_payment(
+        org_id=uuid4(),
+        project_id=voided["project_id"],
+        payment_id=voided["id"],
+        actor_id=uuid4(),
+        data={"reason": "Duplicado"},
+    )
+    assert out["collected"] == "0"
+    assert out["status"] == "PENDING"
+    assert out["payments"][0]["voided_at"] is not None
+
+
+def test_void_missing_payment_raises_404(monkeypatch, env):
+    def no_rows(sql, params=None):
+        env.append((sql, params))
+        return []
+
+    monkeypatch.setattr(payments, "rows", no_rows)
+    with pytest.raises(APIException) as failure:
+        payments.void_payment(
+            org_id=uuid4(), project_id=uuid4(), payment_id=uuid4(),
+            actor_id=uuid4(), data={},
+        )
+    assert failure.value.contract_code == "payment_not_found"
+
+
+def test_balance_uses_live_totals_when_no_sealed_version(monkeypatch, env):
+    _patch_rows(monkeypatch, env, payments_list=[_payment_row(amount=Decimal("1000000"))])
+    out = payments.list_payments(org_id=uuid4(), project_id=uuid4())
+    assert out["quote_total_gross"] == "1000000"  # live project total
+    assert out["balance"] == "0"
+    assert out["status"] == "PAID"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"kind": "ANTICIPO", "amount": Decimal("100"), "method": "TRANSFER"},
+        {"operation_key": "op-12345678", "kind": "BAD", "amount": Decimal("100"), "method": "TRANSFER"},
+        {"operation_key": "op-12345678", "kind": "ANTICIPO", "amount": Decimal("0"), "method": "TRANSFER"},
+        {"operation_key": "op-12345678", "kind": "ANTICIPO", "amount": Decimal("100"), "method": "GOLD"},
+        {"operation_key": "op-12345678", "kind": "ANTICIPO", "amount": Decimal("100"), "method": "TRANSFER", "org_id": str(uuid4())},
+    ],
+)
+def test_record_serializer_rejects_invalid(data):
+    assert not PaymentRecordSerializer(data=data).is_valid()
+
+
+def _client(monkeypatch, role: str):
+    org_id = uuid4()
+    token = SimpleNamespace(user_id=uuid4(), claims={}, aal="aal1")
+
+    @contextmanager
+    def fake_scope(request, allowed):
+        if role not in allowed:
+            raise APIException(code="pricing_permission_denied", detail="denied")
+        yield token, SimpleNamespace(), org_id
+
+    monkeypatch.setattr(project_views, "scope", fake_scope)
+    client = APIClient()
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True), token=object())
+    return client, token, org_id
+
+
+def test_payments_list_requires_reader_role(monkeypatch):
+    client, _, org_id = _client(monkeypatch, "WORKSHOP_MANAGER")
+    monkeypatch.setattr(
+        payments, "list_payments", lambda **kw: {"payments": [], "collected": "0"}
+    )
+    assert client.get(f"/api/v1/projects/{uuid4()}/payments/").status_code == 200
+
+
+def test_payments_record_forbidden_for_installer(monkeypatch):
+    client, _, org_id = _client(monkeypatch, "INSTALLER")
+    calls = []
+    monkeypatch.setattr(
+        payments, "record_payment", lambda **kw: calls.append(kw) or {}
+    )
+    response = client.post(
+        f"/api/v1/projects/{uuid4()}/payments/",
+        {
+            "operation_key": "op-12345678",
+            "kind": "ANTICIPO",
+            "amount": "100.00",
+            "method": "CASH",
+        },
+        format="json",
+    )
+    assert calls == []
+    assert response.status_code >= 400

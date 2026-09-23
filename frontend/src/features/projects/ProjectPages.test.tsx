@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   positionsDestroy,
+  projectPaymentsList,
   projectsClone,
   projectsCreate,
   projectsList,
@@ -50,6 +51,9 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectsUpdate: vi.fn(),
     projectsClone: vi.fn(),
     positionsDestroy: vi.fn(),
+    projectPaymentsList: vi.fn(),
+    projectPaymentsRecord: vi.fn(),
+    projectPaymentVoid: vi.fn(),
   };
 });
 
@@ -183,6 +187,15 @@ beforeEach(() => {
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, makeProject()));
+  vi.mocked(projectPaymentsList).mockResolvedValue(
+    response(200, {
+      payments: [],
+      collected: "0",
+      quote_total_gross: null,
+      balance: null,
+      status: "NO_DEAL",
+    }),
+  );
 });
 
 afterEach(() => {

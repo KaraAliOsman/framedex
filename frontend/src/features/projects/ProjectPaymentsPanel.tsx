@@ -1,0 +1,292 @@
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { ApiError } from "../../api/apiMutator";
+import {
+  projectPaymentsList,
+  projectPaymentsRecord,
+  projectPaymentVoid,
+} from "../../api/generated/dekopen";
+import type {
+  MethodEnum,
+  PaymentRecordKindEnum,
+  PaymentsSummary,
+  ProjectPayment,
+} from "../../api/generated/models";
+import { t, type TranslationKey } from "../../i18n/es-CL";
+
+const KIND_LABEL: Record<string, TranslationKey> = {
+  ANTICIPO: "projects.paymentKindAnticipo",
+  PARCIAL: "projects.paymentKindParcial",
+  SALDO: "projects.paymentKindSaldo",
+};
+const METHOD_LABEL: Record<string, TranslationKey> = {
+  TRANSFER: "projects.paymentMethodTransfer",
+  CASH: "projects.paymentMethodCash",
+  CARD: "projects.paymentMethodCard",
+  CHECK: "projects.paymentMethodCheck",
+  OTHER: "projects.paymentMethodOther",
+};
+const STATUS_LABEL: Record<string, TranslationKey> = {
+  NO_DEAL: "projects.paymentStatusNoDeal",
+  PENDING: "projects.paymentStatusPending",
+  PARTIAL: "projects.paymentStatusPartial",
+  PAID: "projects.paymentStatusPaid",
+};
+
+function formatMoney(value: string | null): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  }).format(Number(value));
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(value));
+}
+
+export function ProjectPaymentsPanel({
+  projectId,
+  orgId,
+  canWrite,
+}: {
+  projectId: string;
+  orgId: string;
+  canWrite: boolean;
+}): JSX.Element {
+  const [summary, setSummary] = useState<PaymentsSummary | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [operationKey, setOperationKey] = useState("");
+  const [kind, setKind] = useState<PaymentRecordKindEnum>("ANTICIPO");
+  const [method, setMethod] = useState<MethodEnum>("TRANSFER");
+  const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
+  const generation = useRef(0);
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    [],
+  );
+
+  const load = useCallback(async () => {
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentsList(projectId, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current === current) setSummary(response.data);
+    } catch {
+      if (generation.current === current) setMessage(t("projects.paymentsLoadError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  function openForm(): void {
+    setOperationKey(crypto.randomUUID());
+    setShowForm(true);
+  }
+
+  async function record(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentsRecord(
+        projectId,
+        {
+          operation_key: operationKey,
+          kind,
+          amount,
+          method,
+          ...(reference.trim() ? { reference: reference.trim() } : {}),
+          ...(note.trim() ? { note: note.trim() } : {}),
+        },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      setSummary(response.data);
+      setShowForm(false);
+      setAmount("");
+      setReference("");
+      setNote("");
+    } catch {
+      setMessage(t("projects.paymentsRecordError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function voidPayment(payment: ProjectPayment): Promise<void> {
+    if (!window.confirm(t("projects.paymentVoidConfirm"))) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentVoid(projectId, payment.id, {}, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setSummary(response.data);
+    } catch {
+      setMessage(t("projects.paymentsVoidError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const payments = summary?.payments ?? [];
+  const percent =
+    summary?.quote_total_gross && Number(summary.quote_total_gross) > 0
+      ? Math.min(100, (Number(summary.collected) / Number(summary.quote_total_gross)) * 100)
+      : null;
+
+  return (
+    <section className="projects-payments">
+      <div className="projects-actions">
+        <h2>{t("projects.paymentsTitle")}</h2>
+        {canWrite && !showForm && (
+          <button type="button" className="primary-action" onClick={openForm} disabled={busy}>
+            {t("projects.paymentRecord")}
+          </button>
+        )}
+      </div>
+      {message && <p className="form-error">{message}</p>}
+      {summary && (
+        <div className="payments-summary">
+          <span className={`production-chip delivery-${summary.status.toLowerCase()}`}>
+            {t(STATUS_LABEL[summary.status] ?? "projects.paymentStatusNoDeal")}
+          </span>
+          <dl className="payments-summary-facts">
+            <div>
+              <dt>{t("projects.paymentCollected")}</dt>
+              <dd>{formatMoney(summary.collected)}</dd>
+            </div>
+            <div>
+              <dt>{t("projects.paymentDealTotal")}</dt>
+              <dd>{formatMoney(summary.quote_total_gross)}</dd>
+            </div>
+            <div>
+              <dt>{t("projects.paymentBalance")}</dt>
+              <dd>{formatMoney(summary.balance)}</dd>
+            </div>
+          </dl>
+          {percent !== null && (
+            <div
+              className="payments-progress"
+              role="progressbar"
+              aria-valuenow={Math.round(percent)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div style={{ width: `${percent}%` }} />
+            </div>
+          )}
+        </div>
+      )}
+      {showForm && (
+        <form className="payments-form" onSubmit={record}>
+          <label>
+            {t("projects.paymentKind")}
+            <select
+              value={kind}
+              onChange={(event) => setKind(event.target.value as PaymentRecordKindEnum)}
+            >
+              <option value="ANTICIPO">{t("projects.paymentKindAnticipo")}</option>
+              <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
+              <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
+            </select>
+          </label>
+          <label>
+            {t("projects.paymentAmount")}
+            <input
+              required
+              inputMode="numeric"
+              pattern="[0-9]+([.,][0-9]{1,2})?"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder="500000"
+            />
+          </label>
+          <label>
+            {t("projects.paymentMethod")}
+            <select
+              value={method}
+              onChange={(event) => setMethod(event.target.value as MethodEnum)}
+            >
+              <option value="TRANSFER">{t("projects.paymentMethodTransfer")}</option>
+              <option value="CASH">{t("projects.paymentMethodCash")}</option>
+              <option value="CARD">{t("projects.paymentMethodCard")}</option>
+              <option value="CHECK">{t("projects.paymentMethodCheck")}</option>
+              <option value="OTHER">{t("projects.paymentMethodOther")}</option>
+            </select>
+          </label>
+          <label>
+            {t("projects.paymentReference")}
+            <input value={reference} onChange={(event) => setReference(event.target.value)} />
+          </label>
+          <label className="payments-form-wide">
+            {t("projects.paymentNote")}
+            <input value={note} onChange={(event) => setNote(event.target.value)} />
+          </label>
+          <div className="payments-form-actions">
+            <button type="submit" className="primary-action" disabled={busy}>
+              {t("projects.paymentSave")}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} disabled={busy}>
+              {t("projects.paymentCancel")}
+            </button>
+          </div>
+        </form>
+      )}
+      {payments.length > 0 && (
+        <table className="payments-table">
+          <thead>
+            <tr>
+              <th>{t("projects.paymentDate")}</th>
+              <th>{t("projects.paymentKind")}</th>
+              <th className="num">{t("projects.paymentAmount")}</th>
+              <th>{t("projects.paymentMethod")}</th>
+              <th>{t("projects.paymentReference")}</th>
+              <th>{t("projects.paymentNote")}</th>
+              {canWrite && <th />}
+            </tr>
+          </thead>
+          <tbody>
+            {payments.map((payment) => (
+              <tr key={payment.id} className={payment.voided_at ? "payments-voided" : undefined}>
+                <td>{formatDate(payment.recorded_at)}</td>
+                <td>{t(KIND_LABEL[payment.kind] ?? "projects.paymentKindParcial")}</td>
+                <td className="num">{formatMoney(payment.amount)}</td>
+                <td>{t(METHOD_LABEL[payment.method] ?? "projects.paymentMethodOther")}</td>
+                <td>{payment.reference ?? "—"}</td>
+                <td>
+                  {payment.voided_at
+                    ? `${t("projects.paymentVoided")}${payment.void_reason ? ` — ${payment.void_reason}` : ""}`
+                    : (payment.note ?? "—")}
+                </td>
+                {canWrite && (
+                  <td>
+                    {!payment.voided_at && (
+                      <button type="button" onClick={() => voidPayment(payment)} disabled={busy}>
+                        {t("projects.paymentVoid")}
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
+    </section>
+  );
+}

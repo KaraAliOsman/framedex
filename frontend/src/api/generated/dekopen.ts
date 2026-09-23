@@ -85,6 +85,10 @@ import type {
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedSystemWriteRequest,
+  PaymentRecordRequest,
+  PaymentRecordResponse,
+  PaymentVoidRequest,
+  PaymentsSummary,
   PortalQuote,
   PositionResponse,
   PositionUpdateRequest,
@@ -6712,6 +6716,245 @@ export const projectsClone = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(cloneProjectRequest),
+  });
+};
+
+export type projectPaymentsListResponse200 = {
+  data: PaymentsSummary;
+  status: 200;
+};
+
+export type projectPaymentsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentsListResponseSuccess = projectPaymentsListResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentsListResponseError = (
+  | projectPaymentsListResponse400
+  | projectPaymentsListResponse401
+  | projectPaymentsListResponse403
+  | projectPaymentsListResponse404
+  | projectPaymentsListResponse409
+  | projectPaymentsListResponse422
+  | projectPaymentsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentsListResponse =
+  projectPaymentsListResponseSuccess | projectPaymentsListResponseError;
+
+export const getProjectPaymentsListUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/payments/`;
+};
+
+export const projectPaymentsList = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentsListResponse> => {
+  return apiMutator<projectPaymentsListResponse>(getProjectPaymentsListUrl(projectId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type projectPaymentsRecordResponse201 = {
+  data: PaymentRecordResponse;
+  status: 201;
+};
+
+export type projectPaymentsRecordResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentsRecordResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentsRecordResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentsRecordResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentsRecordResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentsRecordResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentsRecordResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentsRecordResponseSuccess = projectPaymentsRecordResponse201 & {
+  headers: Headers;
+};
+export type projectPaymentsRecordResponseError = (
+  | projectPaymentsRecordResponse400
+  | projectPaymentsRecordResponse401
+  | projectPaymentsRecordResponse403
+  | projectPaymentsRecordResponse404
+  | projectPaymentsRecordResponse409
+  | projectPaymentsRecordResponse422
+  | projectPaymentsRecordResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentsRecordResponse =
+  projectPaymentsRecordResponseSuccess | projectPaymentsRecordResponseError;
+
+export const getProjectPaymentsRecordUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/payments/`;
+};
+
+export const projectPaymentsRecord = async (
+  projectId: string,
+  paymentRecordRequest: PaymentRecordRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentsRecordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectPaymentsRecordResponse>(getProjectPaymentsRecordUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(paymentRecordRequest),
+  });
+};
+
+export type projectPaymentVoidResponse200 = {
+  data: PaymentsSummary;
+  status: 200;
+};
+
+export type projectPaymentVoidResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentVoidResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentVoidResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentVoidResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentVoidResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentVoidResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentVoidResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentVoidResponseSuccess = projectPaymentVoidResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentVoidResponseError = (
+  | projectPaymentVoidResponse400
+  | projectPaymentVoidResponse401
+  | projectPaymentVoidResponse403
+  | projectPaymentVoidResponse404
+  | projectPaymentVoidResponse409
+  | projectPaymentVoidResponse422
+  | projectPaymentVoidResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentVoidResponse =
+  projectPaymentVoidResponseSuccess | projectPaymentVoidResponseError;
+
+export const getProjectPaymentVoidUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/`;
+};
+
+export const projectPaymentVoid = async (
+  projectId: string,
+  paymentId: string,
+  paymentVoidRequest?: PaymentVoidRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentVoidResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectPaymentVoidResponse>(getProjectPaymentVoidUrl(projectId, paymentId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(paymentVoidRequest),
   });
 };
 

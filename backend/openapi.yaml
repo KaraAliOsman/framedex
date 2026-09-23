@@ -6062,6 +6062,232 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/payments/:
+    get:
+      operationId: project_payments_list
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentsSummary'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: project_payments_record
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRecordRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRecordResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/payments/{payment_id}/:
+    post:
+      operationId: project_payment_void
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: payment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentVoidRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentsSummary'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/positions/:
     post:
       operationId: positions_create
@@ -9937,6 +10163,20 @@ components:
       - organization_id
       - organization_name
       - role
+    MethodEnum:
+      enum:
+      - TRANSFER
+      - CASH
+      - CARD
+      - CHECK
+      - OTHER
+      type: string
+      description: |-
+        * `TRANSFER` - TRANSFER
+        * `CASH` - CASH
+        * `CARD` - CARD
+        * `CHECK` - CHECK
+        * `OTHER` - OTHER
     ModeEnum:
       enum:
       - DESIGN
@@ -10649,6 +10889,112 @@ components:
       - status
       - tax_doc_folio
       - tax_doc_type
+    PaymentRecordKindEnum:
+      enum:
+      - ANTICIPO
+      - PARCIAL
+      - SALDO
+      type: string
+      description: |-
+        * `ANTICIPO` - ANTICIPO
+        * `PARCIAL` - PARCIAL
+        * `SALDO` - SALDO
+    PaymentRecordRequest:
+      type: object
+      properties:
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 80
+        kind:
+          $ref: '#/components/schemas/PaymentRecordKindEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        reference:
+          type: string
+          maxLength: 200
+        note:
+          type: string
+          maxLength: 2000
+        recorded_at:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - kind
+      - method
+      - operation_key
+    PaymentRecordResponse:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectPayment'
+        collected:
+          type: string
+        quote_total_gross:
+          type: string
+          nullable: true
+        balance:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PaymentStatusEnum'
+        payment:
+          $ref: '#/components/schemas/ProjectPayment'
+      required:
+      - balance
+      - collected
+      - payment
+      - payments
+      - quote_total_gross
+      - status
+    PaymentStatusEnum:
+      enum:
+      - NO_DEAL
+      - PENDING
+      - PARTIAL
+      - PAID
+      type: string
+      description: |-
+        * `NO_DEAL` - NO_DEAL
+        * `PENDING` - PENDING
+        * `PARTIAL` - PARTIAL
+        * `PAID` - PAID
+    PaymentVoidRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    PaymentsSummary:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectPayment'
+        collected:
+          type: string
+        quote_total_gross:
+          type: string
+          nullable: true
+        balance:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PaymentStatusEnum'
+      required:
+      - balance
+      - collected
+      - payments
+      - quote_total_gross
+      - status
     PlanCoupling:
       type: object
       properties:
@@ -11435,6 +11781,49 @@ components:
             $ref: '#/components/schemas/ProjectResponse'
       required:
       - items
+    ProjectPayment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        amount:
+          type: string
+        method:
+          type: string
+        reference:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        recorded_by:
+          type: string
+          nullable: true
+        recorded_at:
+          type: string
+        voided_at:
+          type: string
+          nullable: true
+        void_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+      required:
+      - amount
+      - created_at
+      - id
+      - kind
+      - method
+      - note
+      - recorded_at
+      - recorded_by
+      - reference
+      - void_reason
+      - voided_at
     ProjectResponse:
       type: object
       properties:

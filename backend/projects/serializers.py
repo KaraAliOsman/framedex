@@ -125,3 +125,43 @@ class SuccessorRequestSerializer(StrictSerializer):
 
 class DeletePositionSerializer(StrictSerializer):
     expected_updated_at = serializers.DateTimeField()
+
+
+class PaymentRecordSerializer(StrictSerializer):
+    operation_key = serializers.CharField(min_length=8, max_length=80)
+    kind = serializers.ChoiceField(choices=("ANTICIPO", "PARCIAL", "SALDO"))
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
+    method = serializers.ChoiceField(choices=("TRANSFER", "CASH", "CARD", "CHECK", "OTHER"))
+    reference = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    note = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    recorded_at = serializers.DateTimeField(required=False)
+
+
+class PaymentVoidSerializer(StrictSerializer):
+    reason = serializers.CharField(max_length=500, required=False, allow_blank=True)
+
+
+class ProjectPaymentSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    kind = serializers.CharField()
+    amount = serializers.CharField()
+    method = serializers.CharField()
+    reference = serializers.CharField(allow_null=True)
+    note = serializers.CharField(allow_null=True)
+    recorded_by = serializers.CharField(allow_null=True)
+    recorded_at = serializers.CharField()
+    voided_at = serializers.CharField(allow_null=True)
+    void_reason = serializers.CharField(allow_null=True)
+    created_at = serializers.CharField()
+
+
+class PaymentsSummarySerializer(serializers.Serializer):
+    payments = ProjectPaymentSerializer(many=True)
+    collected = serializers.CharField()
+    quote_total_gross = serializers.CharField(allow_null=True)
+    balance = serializers.CharField(allow_null=True)
+    status = serializers.ChoiceField(choices=("NO_DEAL", "PENDING", "PARTIAL", "PAID"))
+
+
+class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
+    payment = ProjectPaymentSerializer()

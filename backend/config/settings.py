@@ -134,6 +134,7 @@ SPECTACULAR_SETTINGS = {
         "DrainFixRuleIdEnum": ["R07"],
         "ColorEnum": ["WHITE", "FOILED"],
         "WhiteColorEnum": ["WHITE"],
+        "PaymentStatusEnum": ["NO_DEAL", "PENDING", "PARTIAL", "PAID"],
         "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
     },
     "TITLE": "Dekopen API",

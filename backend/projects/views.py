@@ -11,8 +11,12 @@ from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import service
+from projects import payments, service
 from projects.serializers import (
+    PaymentRecordResponseSerializer,
+    PaymentRecordSerializer,
+    PaymentsSummarySerializer,
+    PaymentVoidSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
     PositionResponseSerializer,
@@ -197,3 +201,55 @@ class PositionView(APIView):
         with scope(request, WRITE_ROLES) as (_, _, org):
             service.delete_position(org, position_id, data["expected_updated_at"])
         return Response(status=204)
+
+
+class ProjectPaymentsView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_payments_list",
+        responses={200: PaymentsSummarySerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(payments.list_payments(org_id=org, project_id=project_id))
+
+    @extend_schema(
+        operation_id="project_payments_record",
+        request=PaymentRecordSerializer,
+        responses={201: PaymentRecordResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id):
+        data = validate(PaymentRecordSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            return response(
+                payments.record_payment(
+                    org_id=org, project_id=project_id, actor_id=token.user_id, data=data
+                ),
+                status=201,
+            )
+
+
+class ProjectPaymentView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_payment_void",
+        request=PaymentVoidSerializer,
+        responses={200: PaymentsSummarySerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, payment_id):
+        data = validate(PaymentVoidSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            return response(
+                payments.void_payment(
+                    org_id=org,
+                    project_id=project_id,
+                    payment_id=payment_id,
+                    actor_id=token.user_id,
+                    data=data,
+                )
+            )

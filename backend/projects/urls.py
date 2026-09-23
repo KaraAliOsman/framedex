@@ -4,6 +4,8 @@ from django.urls import path
 
 from projects.views import (
     ProjectCloneView,
+    ProjectPaymentsView,
+    ProjectPaymentView,
     ProjectPositionsView,
     ProjectSuccessorView,
     ProjectResetPricingView,
@@ -21,5 +23,10 @@ urlpatterns = [
     path("projects/<uuid:project_id>/successor/", ProjectSuccessorView.as_view()),
     path("projects/<uuid:project_id>/reset-pricing/", ProjectResetPricingView.as_view()),
     path("projects/<uuid:project_id>/positions/", ProjectPositionsView.as_view()),
+    path("projects/<uuid:project_id>/payments/", ProjectPaymentsView.as_view()),
+    path(
+        "projects/<uuid:project_id>/payments/<uuid:payment_id>/",
+        ProjectPaymentView.as_view(),
+    ),
     path("positions/<uuid:position_id>/", PositionView.as_view()),
 ]
