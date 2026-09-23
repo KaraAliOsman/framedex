@@ -118,6 +118,9 @@ def test_invalid_engine_geometry_returns_domain_error_without_raw_tree_details(m
         ("TILT_TURN_LEFT", "TILT_TURN"),
         ("TILT_TURN_RIGHT", "TILT_TURN"),
         ("SLIDING_2L", "SLIDING_2L"),
+        ("SLIDING_3L", "SLIDING_3L"),
+        ("SLIDING_4L", "SLIDING_4L"),
+        ("SLIDING", "SLIDING"),
         ("AWNING", "AWNING"),
         ("DOOR_ENTRY", "DOOR_ENTRY"),
     ],
@@ -398,3 +401,86 @@ def test_invalid_assembly_still_refuses_to_save(monkeypatch):
         calculate_design(ORG_A_ID, design)
     assert caught.value.status_code == 400
     assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
+def test_module_geometry_failure_refuses_to_save(monkeypatch):
+    """A module whose evaluation produced no result is absent from the
+    aggregated BOM — saving it would persist a partial BOM as complete.
+    MANUFACTURING_INCOMPLETE only tolerates warnings that leave every
+    module's output whole (couplers, bending, unsupported contour leaves)."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = bow_product()
+    product["assembly"]["modules"].append(
+        {
+            "id": "m4",
+            "width_mm": "700.00",
+            "height_mm": "1400.00",
+            "tree": {
+                "id": "m4",
+                "type": "BAY",
+                "opening_type": "FIXED",
+                "glass_thickness_mm": "4.00",
+                # no glass_spec — the leaf cannot resolve a recipe
+            },
+        }
+    )
+    # A module added but never coupled stays disconnected → INVALID covers
+    # it; couple it so only the geometry failure remains.
+    product["assembly"]["couplings"].append(
+        {"id": "c4", "kind": "INLINE", "modules": ["m3", "m4"], "angle_deg": "0"}
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2800.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
+@pytest.mark.parametrize(
+    "opening,expected",
+    [
+        ("SLIDING_3L", "SLIDING_3L"),
+        ("SLIDING_4L", "SLIDING_4L"),
+        ("SLIDING", "SLIDING"),
+    ],
+)
+def test_sliding_openings_survive_save_typology(opening, expected, monkeypatch):
+    """New sliding openings must reach persistence: a successful calculation
+    whose typology previously fell to 422 now derives a real label."""
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    design = g1_request()
+    # Wide enough that every preset's leaf lands inside the sliding kit's
+    # 400–1500 mm range (KIT-SLIDING on DEMO_60).
+    design["nominal_width_mm"] = Decimal("2400.00")
+    design["nominal_height_mm"] = Decimal("1400.00")
+    design["parametric_tree"]["opening_type"] = opening
+    if opening == "SLIDING":
+        design["parametric_tree"]["sliding_layout"] = {
+            "tracks": 2,
+            "panels": [
+                {"slot": "izq", "kind": "MOVING", "track": 0},
+                {"slot": "der", "kind": "MOVING", "track": 1},
+            ],
+        }
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
+    assert service._typology(design["parametric_tree"]) == expected

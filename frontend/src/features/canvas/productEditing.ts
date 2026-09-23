@@ -182,7 +182,24 @@ export function totalModuleWidth(product: ProductJson): number {
  * column, so width sums across columns only and height is the tallest
  * column's stacked sum. Nominal dims are a contract between this request
  * body and the server's validation — keep the resolution rules identical. */
-export function elevationEnvelopeMm(product: ProductJson): { width: number; height: number } {
+interface ResolvedPair {
+  coupling: ProductJson["assembly"]["couplings"][number];
+  pair: readonly [string, string];
+}
+
+export interface StackResolution {
+  /** Every coupling with its resolved module pair (explicit ids, else the
+   * positional index→index+1 binding). */
+  pairs: ResolvedPair[];
+  /** Stacked member id → the partner it hangs over. */
+  stackParent: Map<string, string>;
+  /** Stacked member id → its root column id. */
+  stackRoot: Map<string, string>;
+}
+
+/** Resolved stack graph of an assembly — shared by the envelope, the front
+ * layout and any consumer that must agree with the engine's rules. */
+export function resolveStacks(product: ProductJson): StackResolution {
   const modules = product.assembly.modules;
   const pairs = product.assembly.couplings.flatMap((coupling, index) => {
     const pair =
@@ -214,6 +231,12 @@ export function elevationEnvelopeMm(product: ProductJson): { width: number; heig
     const anchor = stackParent.has(current) ? undefined : current;
     if (anchor !== undefined && moduleIds.has(anchor)) stackRoot.set(member, anchor);
   }
+  return { pairs, stackParent, stackRoot };
+}
+
+export function elevationEnvelopeMm(product: ProductJson): { width: number; height: number } {
+  const modules = product.assembly.modules;
+  const { stackRoot } = resolveStacks(product);
   let width = 0;
   const columns = new Map<string, number>();
   for (const module of modules) {
@@ -472,8 +495,9 @@ export function setModuleWidth(
  * meaningless for any catalog (engine minimums sit higher, ~400mm). */
 export const MIN_MODULE_WIDTH_MM = 150;
 
-/** Drag a module seam: the left module grows by `deltaMm`, the right module
- * shrinks by the same amount, so the overall width is preserved. Both sides
+/** Drag a column seam: the left column's root grows by `deltaMm`, the right
+ * column's root shrinks by the same amount, so the overall width is
+ * preserved — stacked members keep their own declared widths. Both sides
  * are clamped to MIN_MODULE_WIDTH_MM; returns the unchanged product when the
  * seam doesn't exist or would cross a minimum. */
 export function resizeModuleSeam(
@@ -482,14 +506,16 @@ export function resizeModuleSeam(
   deltaMm: number,
 ): ProductJson {
   const modules = product.assembly.modules;
-  const left = modules[seamIndex];
-  const right = modules[seamIndex + 1];
+  const { stackRoot } = resolveStacks(product);
+  const columns = modules.filter((module) => !stackRoot.has(module.id));
+  const left = columns[seamIndex];
+  const right = columns[seamIndex + 1];
   if (!left || !right || !Number.isFinite(deltaMm)) return product;
   const leftMm = Number(left.width_mm) + deltaMm;
   const rightMm = Number(right.width_mm) - deltaMm;
   if (leftMm < MIN_MODULE_WIDTH_MM || rightMm < MIN_MODULE_WIDTH_MM) return product;
-  const nextModules = modules.map((module, index) =>
-    index === seamIndex
+  const nextModules = modules.map((module) =>
+    module.id === left.id
       ? {
           ...module,
           width_mm: leftMm.toFixed(2),
@@ -497,7 +523,7 @@ export function resizeModuleSeam(
             ? { contour: scaledContour(module.contour, leftMm.toFixed(2), module.height_mm) }
             : {}),
         }
-      : index === seamIndex + 1
+      : module.id === right.id
         ? {
             ...module,
             width_mm: rightMm.toFixed(2),

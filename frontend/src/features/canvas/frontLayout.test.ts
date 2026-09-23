@@ -1,0 +1,116 @@
+import { describe, expect, it } from "vitest";
+
+import type { ProductJson } from "./productEditing";
+import { makeBowProduct, wrapTreeAsProduct } from "./productEditing";
+import { frontLayout } from "./ProductFrontSvg";
+
+function doorWithTransom(transomWidthMm = 900): ProductJson {
+  const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+  const door = base.assembly.modules[0]!;
+  const transom = wrapTreeAsProduct(
+    makeBowProduct({ moduleCount: 1, widthMm: transomWidthMm, heightMm: 400, angleDeg: 0 }).assembly
+      .modules[0]!.tree,
+    transomWidthMm.toFixed(2),
+    "400.00",
+  ).assembly.modules[0]!;
+  return {
+    ...base,
+    assembly: {
+      modules: [door, { ...transom, id: "t1" }],
+      couplings: [
+        {
+          id: "c1",
+          modules: [door.id, "t1"],
+          edges: ["top", "bottom"],
+          kind: "STACKED",
+          coupler_profile_sku: null,
+          angle_deg: "0.00",
+        },
+      ],
+    },
+  } as ProductJson;
+}
+
+describe("frontLayout", () => {
+  it("lays flat modules left-to-right like before", () => {
+    const layout = frontLayout(
+      makeBowProduct({ moduleCount: 3, widthMm: 2100, heightMm: 1400, angleDeg: 15 }),
+    );
+    expect(layout.rects.map((r) => r.x)).toEqual([0, 700, 1400]);
+    expect(layout.rects.map((r) => r.sill)).toEqual([0, 0, 0]);
+    expect(layout.columns).toHaveLength(3);
+    expect(layout.totalW).toBeCloseTo(2100, 5);
+    expect(layout.height).toBeCloseTo(1400, 5);
+    // two column seams, no stack joints
+    expect(layout.joints.filter((j) => j.kind === "column")).toHaveLength(2);
+    expect(layout.joints.filter((j) => j.kind === "stack")).toHaveLength(0);
+  });
+
+  it("stacks a member over its parent in the same column", () => {
+    const layout = frontLayout(doorWithTransom());
+    expect(layout.columns).toHaveLength(1);
+    expect(layout.totalW).toBeCloseTo(900, 5);
+    expect(layout.height).toBeCloseTo(2500, 5);
+    const transom = layout.rects.find((r) => r.module.id === "t1")!;
+    expect(transom.x).toBeCloseTo(0, 5);
+    expect(transom.sill).toBeCloseTo(2100, 5);
+    expect(transom.h).toBeCloseTo(400, 5);
+    // a horizontal stack joint sits on the member's sill line
+    const stack = layout.joints.find((j) => j.kind === "stack")!;
+    expect(stack.x).toBeCloseTo(0, 5);
+    expect(stack.y).toBeCloseTo(2100, 5);
+    expect(stack.w).toBeCloseTo(900, 5);
+    expect(layout.joints.filter((j) => j.kind === "column")).toHaveLength(0);
+  });
+
+  it("centres a narrower stacked member inside its column", () => {
+    const layout = frontLayout(doorWithTransom(600));
+    const transom = layout.rects.find((r) => r.module.id === "t1")!;
+    expect(transom.x).toBeCloseTo(150, 5);
+    const stack = layout.joints.find((j) => j.kind === "stack")!;
+    expect(stack.x).toBeCloseTo(150, 5);
+    expect(stack.w).toBeCloseTo(600, 5);
+  });
+
+  it("keeps a stack inside its own column when neighbours exist", () => {
+    const base = makeBowProduct({ moduleCount: 2, widthMm: 1400, heightMm: 1400, angleDeg: 0 });
+    const [a, b] = base.assembly.modules;
+    const transom = {
+      ...wrapTreeAsProduct(
+        makeBowProduct({ moduleCount: 1, widthMm: 700, heightMm: 300, angleDeg: 0 }).assembly
+          .modules[0]!.tree,
+        "700.00",
+        "300.00",
+      ).assembly.modules[0]!,
+      id: "t2",
+    };
+    const product = {
+      ...base,
+      assembly: {
+        modules: [a!, b!, transom],
+        couplings: [
+          base.assembly.couplings[0]!,
+          {
+            id: "cs",
+            modules: [b!.id, "t2"],
+            edges: ["top", "bottom"],
+            kind: "STACKED",
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const layout = frontLayout(product);
+    expect(layout.columns).toHaveLength(2);
+    const member = layout.rects.find((r) => r.module.id === "t2")!;
+    expect(member.x).toBeCloseTo(700, 5);
+    expect(member.sill).toBeCloseTo(1400, 5);
+    expect(layout.height).toBeCloseTo(1700, 5);
+    const seam = layout.joints.find((j) => j.kind === "column")!;
+    expect(seam.x).toBeCloseTo(700, 5);
+    // column top is the taller column's own top — the seam stops at the
+    // shorter column's top, not the elevation top.
+    expect(seam.top).toBeCloseTo(1400, 5);
+  });
+});

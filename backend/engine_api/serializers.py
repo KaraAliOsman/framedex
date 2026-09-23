@@ -144,10 +144,24 @@ class ProductIssueSerializer(serializers.Serializer):
     params = serializers.DictField(child=serializers.CharField())
 
 
+class SlidingPanelFactsSerializer(serializers.Serializer):
+    slot = serializers.CharField()
+    kind = serializers.ChoiceField(choices=["MOVING", "FIXED"])
+    track = serializers.IntegerField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
+
+
+class SlidingLayoutFactsSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    tracks = serializers.IntegerField()
+    panels = SlidingPanelFactsSerializer(many=True)
+
+
 class ModuleEvaluationSerializer(serializers.Serializer):
     module_id = serializers.CharField()
     issues = ProductIssueSerializer(many=True)
     result = EngineResultPayloadSerializer(allow_null=True)
+    sliding = SlidingLayoutFactsSerializer(many=True)
 
 
 class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):

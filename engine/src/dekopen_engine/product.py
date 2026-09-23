@@ -288,15 +288,13 @@ def _resolved_pairs(
     return resolved
 
 
-def _resolve_stack_roots(
-    modules: list[ProductModule],
+def _stack_parents(
     resolved: list[tuple[CouplingDef, list[str]]],
 ) -> dict[str, str]:
-    """Map each stacked member id → its root column id.
+    """Map each stacked member id → the partner it hangs over.
 
-    Modules joined by a STACKED coupling project onto their lower partner —
-    the endpoint whose TOP edge is the contact. Anchors resolve transitively
-    for towers; cycles degrade to "no anchor" and lay out front-wise.
+    A STACKED coupling binds one member's TOP edge to the other member's
+    BOTTOM edge; the member offering the TOP edge is the lower partner.
     """
     stack_parent: dict[str, str] = {}
     for coupling, pair in resolved:
@@ -312,6 +310,20 @@ def _resolve_stack_roots(
         )
         if top_index is not None:
             stack_parent[pair[1 - top_index]] = pair[top_index]
+    return stack_parent
+
+
+def _resolve_stack_roots(
+    modules: list[ProductModule],
+    resolved: list[tuple[CouplingDef, list[str]]],
+) -> dict[str, str]:
+    """Map each stacked member id → its root column id.
+
+    Modules joined by a STACKED coupling project onto their lower partner —
+    the endpoint whose TOP edge is the contact. Anchors resolve transitively
+    for towers; cycles degrade to "no anchor" and lay out front-wise.
+    """
+    stack_parent = _stack_parents(resolved)
     module_ids = {module.id for module in modules}
     roots: dict[str, str] = {}
     for member_id in stack_parent:
@@ -326,27 +338,189 @@ def _resolve_stack_roots(
     return roots
 
 
+class ElevationMember(EngineModel):
+    """A module's placement in the front elevation (mandate §6).
+
+    `x_mm` is the member's left edge in assembly elevation coordinates and
+    `sill_mm` its bottom edge above the common baseline — a member narrower
+    than its column centres; a wider one overhangs honestly.
+    """
+
+    module_id: str
+    x_mm: Decimal
+    sill_mm: Decimal
+    width_mm: Decimal
+    height_mm: Decimal
+
+
+class ElevationColumnJoint(EngineModel):
+    """The vertical seam between two adjacent front columns."""
+
+    coupling_id: str | None = None
+    x_mm: Decimal
+    top_mm: Decimal
+    width_mm: Decimal
+    angle_deg: Decimal | None = None
+
+
+class ElevationStackJoint(EngineModel):
+    """The horizontal contact a stacked member makes on its column."""
+
+    coupling_id: str
+    x_mm: Decimal
+    y_mm: Decimal
+    width_mm: Decimal
+
+
+class ElevationLayout(EngineModel):
+    members: list[ElevationMember]
+    column_joints: list[ElevationColumnJoint] = Field(default_factory=list)
+    stack_joints: list[ElevationStackJoint] = Field(default_factory=list)
+
+
+def elevation_layout(assembly: CoupledAssembly) -> ElevationLayout:
+    """The assembly's front-elevation layout (mandate §6).
+
+    Front columns advance left→right in declaration order at each root's
+    declared width. STACKED members share their root column, stacking
+    bottom-up: a member's sill is its partner's top edge, towers resolving
+    transitively (cycles degrade to the baseline, matching the plan's
+    "no anchor" rule). Column seams carry the bound INLINE coupling's
+    declared angle; stack contacts carry the coupling that declared them.
+    """
+    modules = assembly.modules
+    by_id = {module.id: module for module in modules}
+    resolved = _resolved_pairs(modules, assembly.couplings)
+    stack_parent = _stack_parents(resolved)
+    stack_root = _resolve_stack_roots(modules, resolved)
+
+    sills: dict[str, Decimal] = {}
+
+    def member_sill(module_id: str, seen: frozenset[str]) -> Decimal:
+        if module_id in sills:
+            return sills[module_id]
+        parent = stack_parent.get(module_id)
+        if parent is None or parent not in by_id or parent in seen:
+            sills[module_id] = Decimal("0")
+        else:
+            sills[module_id] = member_sill(
+                parent, seen | {module_id}
+            ) + by_id[parent].height_mm
+        return sills[module_id]
+
+    members: list[ElevationMember] = []
+    column_roots: list[ProductModule] = []
+    column_tops: list[Decimal] = []
+    cursor = Decimal("0")
+    for column_root in modules:
+        if column_root.id in stack_root:
+            continue
+        column_roots.append(column_root)
+        top = Decimal("0")
+        for member in modules:
+            if member.id != column_root.id and stack_root.get(member.id) != column_root.id:
+                continue
+            sill = member_sill(member.id, frozenset({member.id}))
+            top = max(top, sill + member.height_mm)
+            members.append(
+                ElevationMember(
+                    module_id=member.id,
+                    x_mm=cursor + (column_root.width_mm - member.width_mm) / Decimal("2"),
+                    sill_mm=sill,
+                    width_mm=member.width_mm,
+                    height_mm=member.height_mm,
+                )
+            )
+        column_tops.append(top)
+        cursor += column_root.width_mm
+
+    # Column seams: the INLINE coupling that binds the root pair carries the
+    # declared angle; an undeclared seam is a straight joint.
+    pair_coupling: dict[frozenset[str], CouplingDef] = {}
+    for coupling, pair in resolved:
+        root_pair = frozenset(
+            {stack_root.get(pair[0], pair[0]), stack_root.get(pair[1], pair[1])}
+        )
+        if len(root_pair) == 2:
+            pair_coupling.setdefault(root_pair, coupling)
+    column_joints: list[ElevationColumnJoint] = []
+    boundary = Decimal("0")
+    for index, column_root in enumerate(column_roots):
+        boundary += column_root.width_mm
+        if index + 1 == len(column_roots):
+            break
+        seam_coupling = pair_coupling.get(
+            frozenset({column_root.id, column_roots[index + 1].id})
+        )
+        column_joints.append(
+            ElevationColumnJoint(
+                coupling_id=seam_coupling.id if seam_coupling is not None else None,
+                x_mm=boundary,
+                top_mm=min(column_tops[index], column_tops[index + 1]),
+                width_mm=min(
+                    column_root.width_mm, column_roots[index + 1].width_mm
+                ),
+                angle_deg=(
+                    seam_coupling.angle_deg
+                    if seam_coupling is not None
+                    and seam_coupling.kind is ConnectionKind.INLINE
+                    else None
+                ),
+            )
+        )
+
+    # Stack contacts: every stacked member hangs on the coupling that
+    # declared it — the seam is the member's own sill line.
+    member_coupling: dict[str, str] = {}
+    for coupling, pair in resolved:
+        if coupling.kind is not ConnectionKind.STACKED:
+            continue
+        edges = coupling.edges or [EdgeSide.TOP, EdgeSide.BOTTOM]
+        if len(edges) != 2:
+            continue
+        top_index = (
+            0
+            if edges[0] is EdgeSide.TOP
+            else (1 if edges[1] is EdgeSide.TOP else None)
+        )
+        if top_index is not None:
+            member_coupling[pair[1 - top_index]] = coupling.id
+    by_member = {member.module_id: member for member in members}
+    stack_joints = [
+        ElevationStackJoint(
+            coupling_id=member_coupling[member_id],
+            x_mm=by_member[member_id].x_mm,
+            y_mm=by_member[member_id].sill_mm,
+            width_mm=by_member[member_id].width_mm,
+        )
+        for member_id in member_coupling
+        if member_id in by_member
+    ]
+    return ElevationLayout(
+        members=members,
+        column_joints=column_joints,
+        stack_joints=stack_joints,
+    )
+
+
 def elevation_envelope(assembly: CoupledAssembly) -> tuple[Decimal, Decimal]:
     """The assembly's nominal front-elevation envelope (mandate §6).
 
-    Stacked members project into their root column: width sums across the
+    Stacked members project into their root column: width spans across the
     front columns only, and each column's height is the sum of its members —
     a 1000×2200 door carrying a 1000×400 transom is 1000×2600, not
     2000×2200. This is THE nominal-dimension contract the API validates
     and the frontend sends.
     """
-    modules = assembly.modules
-    stack_root = _resolve_stack_roots(modules, _resolved_pairs(modules, assembly.couplings))
-    width = sum(
-        (module.width_mm for module in modules if module.id not in stack_root),
-        Decimal("0"),
-    )
-    columns: dict[str, Decimal] = {}
-    for module in modules:
-        root = stack_root.get(module.id, module.id)
-        columns[root] = columns.get(root, Decimal("0")) + module.height_mm
-    height = max(columns.values()) if columns else Decimal("0")
-    return width, height
+    layout = elevation_layout(assembly)
+    members = layout.members
+    if not members:
+        return Decimal("0"), Decimal("0")
+    left = min(member.x_mm for member in members)
+    right = max(member.x_mm + member.width_mm for member in members)
+    top = max(member.sill_mm + member.height_mm for member in members)
+    bottom = min(member.sill_mm for member in members)
+    return right - left, top - bottom
 
 
 def _plan_geometry(

@@ -166,6 +166,51 @@ class TestContourMath:
         problems = validate_contour(bow)
         assert any("self-intersect" in p for p in problems)
 
+    def test_self_touching_edge_rejected(self) -> None:
+        # The third edge ends ON the first edge's interior — a touch, not a
+        # strict crossing; a non-simple loop must not validate.
+        touching = Contour(
+            vertices=[
+                _pt("0", "0"),
+                _pt("100", "0"),
+                _pt("100", "100"),
+                _pt("50", "0"),
+                _pt("0", "100"),
+            ],
+            bulges=[None] * 5,
+        )
+        problems = validate_contour(touching)
+        assert any("self-intersect" in p for p in problems)
+
+    def test_collinear_overlap_rejected(self) -> None:
+        overlapping = Contour(
+            vertices=[
+                _pt("0", "0"),
+                _pt("100", "0"),
+                _pt("100", "100"),
+                _pt("60", "0"),
+                _pt("40", "0"),
+                _pt("0", "100"),
+            ],
+            bulges=[None] * 6,
+        )
+        problems = validate_contour(overlapping)
+        assert any("self-intersect" in p for p in problems)
+
+    def test_repeated_nonadjacent_vertex_rejected(self) -> None:
+        repeated = Contour(
+            vertices=[
+                _pt("0", "0"),
+                _pt("100", "0"),
+                _pt("100", "100"),
+                _pt("100", "0"),
+                _pt("0", "100"),
+            ],
+            bulges=[None] * 5,
+        )
+        problems = validate_contour(repeated)
+        assert problems
+
     def test_oversized_sagitta_rejected(self) -> None:
         c = Contour(
             vertices=[_pt("0", "0"), _pt("1000", "0"), _pt("0", "0")],

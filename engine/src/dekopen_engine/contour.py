@@ -234,6 +234,16 @@ def validate_contour(contour: Contour) -> list[str]:
         if bulge:
             if abs(bulge) * _TWO > chord:
                 problems.append(f"edge {i}: arc sagitta exceeds half the chord")
+    # Repeated vertices make the loop touch itself — adjacent repeats are
+    # already caught as zero-length edges; nonadjacent ones need the check.
+    seen: dict[tuple[Decimal, Decimal], int] = {}
+    for i, vertex in enumerate(contour.vertices):
+        key = (vertex.x_mm, vertex.y_mm)
+        previous = seen.get(key)
+        if previous is not None:
+            problems.append(f"vertex {i} repeats vertex {previous}")
+        else:
+            seen[key] = i
     # Structural failures already reject the contour — sampling below would
     # invoke arc math on edges whose preconditions are false (div/0).
     if problems:
@@ -255,14 +265,32 @@ def validate_contour(contour: Contour) -> list[str]:
 
 
 def _seg_intersects(a1: PlanPoint, a2: PlanPoint, b1: PlanPoint, b2: PlanPoint) -> bool:
+    """Complete segment-intersection predicate: strict crossings AND the
+    zero-orientation cases — an endpoint lying on the other segment,
+    including collinear overlap (a self-touching loop is not simple)."""
+
     def orient(p: PlanPoint, q: PlanPoint, r: PlanPoint) -> Decimal:
         return (q.x_mm - p.x_mm) * (r.y_mm - p.y_mm) - (q.y_mm - p.y_mm) * (r.x_mm - p.x_mm)
+
+    def on_segment(p: PlanPoint, q: PlanPoint, r: PlanPoint) -> bool:
+        # r collinear with pq — inside pq's bounding box iff it touches.
+        return (
+            min(p.x_mm, q.x_mm) <= r.x_mm <= max(p.x_mm, q.x_mm)
+            and min(p.y_mm, q.y_mm) <= r.y_mm <= max(p.y_mm, q.y_mm)
+        )
 
     o1 = orient(a1, a2, b1)
     o2 = orient(a1, a2, b2)
     o3 = orient(b1, b2, a1)
     o4 = orient(b1, b2, a2)
-    return (o1 * o2 < 0) and (o3 * o4 < 0)
+    if (o1 * o2 < 0) and (o3 * o4 < 0):
+        return True
+    return (
+        (o1 == 0 and on_segment(a1, a2, b1))
+        or (o2 == 0 and on_segment(a1, a2, b2))
+        or (o3 == 0 and on_segment(b1, b2, a1))
+        or (o4 == 0 and on_segment(b1, b2, a2))
+    )
 
 
 def edge_points(
@@ -348,15 +376,21 @@ def _line_intersect(a0: PlanPoint, a1: PlanPoint, b0: PlanPoint, b1: PlanPoint) 
 def _circle_line_intersect(
     center: PlanPoint, radius: Decimal, a0: PlanPoint, a1: PlanPoint, near: PlanPoint
 ) -> PlanPoint:
-    """Circle ∩ line, choosing the intersection closest to `near`."""
+    """Circle ∩ line, choosing the intersection closest to `near`.
+
+    `disc == 0` is the valid tangent case — the corner collapses to one
+    contact point. A negative discriminant means the offset edges no longer
+    meet: the inset pocket collapsed, which the caller must surface rather
+    than substitute a corner that lies on neither edge.
+    """
     ax, ay = _sub(a1, a0)
     fx, fy = _sub(a0, center)
     a = ax * ax + ay * ay
     b = _TWO * (fx * ax + fy * ay)
     c = fx * fx + fy * fy - radius * radius
     disc = b * b - Decimal(4) * a * c
-    if disc <= 0:
-        return near
+    if disc < 0:
+        raise ValueError("offset pocket collapsed: offset edges do not intersect")
     root = disc.sqrt()
     best: PlanPoint | None = None
     best_d: Decimal | None = None
@@ -372,14 +406,18 @@ def _circle_line_intersect(
 def _circle_circle_intersect(
     c0: PlanPoint, r0: Decimal, c1: PlanPoint, r1: Decimal, near: PlanPoint
 ) -> PlanPoint:
-    """Circle ∩ circle, choosing the intersection closest to `near`."""
+    """Circle ∩ circle, choosing the intersection closest to `near`.
+
+    Disjoint or nested offset arcs mean the inset pocket collapsed — the
+    caller must surface that, not substitute a corner on neither edge.
+    """
     d = _dist(c0, c1)
     if d <= 0 or d > r0 + r1 or d < abs(r0 - r1):
-        return near
+        raise ValueError("offset pocket collapsed: offset arcs do not intersect")
     a = (r0 * r0 - r1 * r1 + d * d) / (_TWO * d)
     h_sq = r0 * r0 - a * a
     if h_sq < 0:
-        return near
+        raise ValueError("offset pocket collapsed: offset arcs do not intersect")
     h = h_sq.sqrt()
     ux, uy = _sub(c1, c0)
     ux, uy = ux / d, uy / d

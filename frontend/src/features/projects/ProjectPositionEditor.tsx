@@ -407,12 +407,16 @@ function PositionWorkspace({
     );
   }, []);
 
+  const assemblyUnsaveable =
+    assemblyEval?.status === "INVALID" ||
+    (assemblyEval?.modules ?? []).some((module) => module.result == null);
+
   async function save(): Promise<void> {
     if (
       uncertainCreate ||
       mutationLock.current ||
       !result ||
-      assemblyEval?.status === "INVALID" ||
+      assemblyUnsaveable ||
       busy ||
       inputs.color !== "WHITE" ||
       inputs.product === null ||
@@ -558,7 +562,7 @@ function PositionWorkspace({
         </button>
         <button
           className="primary-action"
-          disabled={uncertainCreate || busy || !result || assemblyEval?.status === "INVALID"}
+          disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
           onClick={() => void save()}
         >
           {t("projects.save")}

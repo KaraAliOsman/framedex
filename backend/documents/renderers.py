@@ -9,7 +9,9 @@ from pathlib import Path
 
 from dekopen_engine.contour import Contour, contour_points
 from dekopen_engine.models import PlanPoint
+from dekopen_engine.product import ElevationMember, elevation_layout
 from documents.repository import DocumentaryError
+from engine_api.adapter import parse_product_model
 
 _PDF_MEDIA = "application/pdf"
 _FONTS_DIR = Path(__file__).resolve().parent / "fonts"
@@ -352,81 +354,105 @@ def _position_svg(position: dict[str, object]) -> str:
         'stroke-width="1"/></marker></defs>'
     ]
     if tree.get("version") == "product-v2":
-        # Assemblies draw every module's front view side by side; couplings
-        # become an orange joint line with the plan deflection annotated.
         assembly = _object(tree.get("assembly"), "invalid_frozen_parametric_tree")
         modules = [
             _object(module, "invalid_frozen_parametric_tree")
             for module in _array(assembly.get("modules"), "invalid_frozen_parametric_tree")
         ]
-        couplings = [
-            _object(coupling, "invalid_frozen_parametric_tree")
-            for coupling in _array(
-                assembly.get("couplings", []), "invalid_frozen_parametric_tree"
-            )
-        ]
+        # The front elevation comes from the engine's layout: front columns
+        # advance left→right, STACKED members sit above their column root,
+        # and joints are typed (INLINE seams vertical, STACKED contacts
+        # horizontal) — never the side-by-side declaration order.
+        try:
+            layout = elevation_layout(parse_product_model(tree).assembly)
+        except (ValueError, KeyError, DocumentaryError) as error:
+            raise DocumentaryError("invalid_frozen_parametric_tree") from error
+        modules_by_id = {str(module.get("id")): module for module in modules}
+
         # A contour may overshoot its nominal box (an arch rises above it; a
-        # down-swinging arc dips below). Every module still shares ONE sill
-        # line: pass 1 resolves each module's sill offset, pass 2 translates
-        # so the sill is the common baseline and the viewBox spans the
-        # tallest overshoot.
-        draws: list[tuple[dict[str, object], Decimal, Decimal, Decimal, str | None]] = []
-        sill = Decimal("0")
-        below = Decimal("0")
-        for module in modules:
-            module_width = _num(module.get("width_mm"))
-            module_height = _num(module.get("height_mm"))
-            if module_width <= 0 or module_height <= 0:
+        # down-swinging arc dips below). Members on one column share the
+        # column's baseline; every column still shares ONE sill line.
+        draws: list[
+            tuple[dict[str, object], ElevationMember, Decimal, Decimal, Decimal, str | None]
+        ] = []
+        top_edge = Decimal("0")
+        bottom_edge = Decimal("0")
+        for member in layout.members:
+            module = modules_by_id.get(member.module_id)
+            if module is None:
+                raise DocumentaryError("invalid_frozen_parametric_tree")
+            if member.width_mm <= 0 or member.height_mm <= 0:
                 raise DocumentaryError("svg_dimension_invalid")
             path_d: str | None = None
-            sill_offset = module_height
+            member_top = member.height_mm
+            member_bottom = Decimal("0")
             contour_payload = module.get("contour")
             if contour_payload is not None:
-                path_d, top, bottom = _contour_svg_path(contour_payload)
-                sill_offset = top
-                below = max(below, -bottom)
-            draws.append((module, module_width, module_height, sill_offset, path_d))
-            sill = max(sill, sill_offset)
-        height = sill + below
+                path_d, ctop, cbottom = _contour_svg_path(contour_payload)
+                member_top = ctop
+                member_bottom = cbottom
+            draws.append(
+                (module, member, member.width_mm, member.height_mm, member_top, path_d)
+            )
+            top_edge = max(top_edge, member.sill_mm + member_top)
+            bottom_edge = min(bottom_edge, member.sill_mm + member_bottom)
+        height = top_edge - bottom_edge
+        left_edge = (
+            min(member.x_mm for member in layout.members) if layout.members else Decimal("0")
+        )
+        width = (
+            max(member.x_mm + member.width_mm for member in layout.members) - left_edge
+            if layout.members
+            else Decimal("0")
+        )
 
-        width = Decimal("0")
-        for index, (module, module_width, module_height, sill_offset, path_d) in enumerate(draws):
-            baseline = sill - sill_offset
-            if index > 0:
-                joint_width = module_width / Decimal("60")
-                elements.append(
-                    f'<line x1="{_pt(width)}" y1="0" x2="{_pt(width)}" '
-                    f'y2="{_pt(baseline + module_height)}" stroke="#E56A32" '
-                    f'stroke-width="{_pt(joint_width)}"/>'
-                )
-                if index - 1 < len(couplings):
-                    angle = couplings[index - 1].get("angle_deg")
-                    if angle is not None:
-                        elements.append(
-                            f'<text x="{_pt(width)}" y="{_pt(baseline + module_height / Decimal("18"))}" '
-                            f'font-size="{_pt(module_height / Decimal("16"))}" '
-                            f'fill="#E56A32" text-anchor="middle">'
-                            f'{escape(_value(angle))}°</text>'
-                        )
+        for module, member, module_width, module_height, member_top, path_d in draws:
+            x = member.x_mm - left_edge
+            baseline = top_edge - (member.sill_mm + member_top)
             if path_d is not None:
                 stroke = module_width / Decimal("150")
                 elements.append(
-                    f'<g transform="translate({_pt(width)} {_pt(baseline)})">'
+                    f'<g transform="translate({_pt(x)} {_pt(baseline)})">'
                     f'<path d="{path_d}" fill="none" stroke="#252D31" '
                     f'stroke-width="{_pt(stroke)}"/></g>'
                 )
             else:
                 _svg_elements(
                     _object(module.get("tree"), "invalid_frozen_parametric_tree"),
-                    width, baseline, module_width, module_height, elements, marker,
+                    x, baseline, module_width, module_height, elements, marker,
                 )
             elements.append(
-                f'<text x="{_pt(width + module_width / Decimal("30"))}" '
+                f'<text x="{_pt(x + module_width / Decimal("30"))}" '
                 f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
                 f'font-size="{_pt(module_height / Decimal("18"))}" '
                 f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
-            width += module_width
+        for joint in layout.column_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_top = top_edge - joint.top_mm
+            seam_bottom = top_edge
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_top)}" x2="{_pt(seam_x)}" '
+                f'y2="{_pt(seam_bottom)}" stroke="#E56A32" '
+                f'stroke-width="{_pt(joint_width)}"/>'
+            )
+            if joint.angle_deg is not None:
+                elements.append(
+                    f'<text x="{_pt(seam_x)}" y="{_pt(seam_bottom - joint.top_mm / Decimal("18"))}" '
+                    f'font-size="{_pt(joint.top_mm / Decimal("16"))}" '
+                    f'fill="#E56A32" text-anchor="middle">'
+                    f'{escape(str(joint.angle_deg))}°</text>'
+                )
+        for joint in layout.stack_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_y = top_edge - joint.y_mm
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_y)}" '
+                f'x2="{_pt(seam_x + joint.width_mm)}" y2="{_pt(seam_y)}" '
+                f'stroke="#E56A32" stroke-width="{_pt(joint_width)}"/>'
+            )
     else:
         width = _num(position.get("width_mm"))
         height = _num(position.get("height_mm"))

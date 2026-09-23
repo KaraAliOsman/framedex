@@ -289,12 +289,19 @@ def calculate_design(org_id, design):
             if (
                 evaluation.status.value == "INVALID"
                 or evaluation.bom is None
+                or any(
+                    module_eval.result is None
+                    for module_eval in evaluation.modules
+                )
             ):
                 # An INVALID evaluation or a partial BOM can never persist:
                 # the sealed evidence would read a broken assembly back as
-                # authoritative. MANUFACTURING_INCOMPLETE carries a complete
-                # BOM with warnings, so it persists as a draft — sealing and
-                # production stay gated downstream.
+                # authoritative. A module whose evaluation produced no result
+                # (geometry failed, unsupported contour) is absent from the
+                # aggregated BOM — that is a partial BOM too. Draft persistence
+                # only tolerates warnings that leave every module's output
+                # complete: unassigned couplers, bending authority, and
+                # unsupported-but-honest contour leaves.
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",

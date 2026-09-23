@@ -1020,12 +1020,21 @@ def _append_sliding(
     layout = resolved_sliding_layout(node)
     validate_sliding_layout(layout, params)
     article = _article(params, ProfileRole.SASH)
-    count = Decimal(len(layout.panels))
-    pitch = (rect.width_mm - params.central_overlap_mm) / count
-    finished_width = pitch + params.central_overlap_mm
+    count = len(layout.panels)
+    # Equal pitches floored to the canonical 0.01 mm grid; the last slot
+    # absorbs the remainder so the slots tile the frame exactly and every
+    # derived measure stays serializable (a raw n-division can repeat).
+    pitch = (
+        (rect.width_mm - params.central_overlap_mm) / count
+    ).quantize(Decimal("0.01"))
+    pitches = [pitch] * (count - 1) + [
+        rect.width_mm - params.central_overlap_mm - pitch * (count - 1)
+    ]
     cut_height = rect.height_mm - _TWO * params.pulley_height_mm
     adjustment = joint_adjustment_per_end(params, article)
+    slot_x = rect.x_mm
     for index, panel in enumerate(layout.panels):
+        finished_width = pitches[index] + params.central_overlap_mm
         if panel.kind is SlidingPanelKind.MOVING:
             leaf_slot = f"L{index + 1}"
             cut_width = finished_width + params.sliding_end_add_mm
@@ -1047,24 +1056,25 @@ def _append_sliding(
                 params=params,
                 clearance_mm=clearance_mm,
             )
-            continue
-        slot_rect = _Rect(
-            rect.x_mm + pitch * Decimal(index),
-            rect.y_mm,
-            finished_width,
-            rect.height_mm,
-        )
-        _append_frame_glazed_pane(
-            accumulator,
-            node=node,
-            topology_path=topology_path,
-            rect=slot_rect,
-            assembly=f"BAY:{node.id}:SLIDING_FIXED:{panel.slot}",
-            semantic_infill_id=f"{topology_path}/infill/{panel.slot}",
-            leaf_slot=panel.slot,
-            params=params,
-            clearance_mm=clearance_mm,
-        )
+        else:
+            slot_rect = _Rect(
+                slot_x,
+                rect.y_mm,
+                finished_width,
+                rect.height_mm,
+            )
+            _append_frame_glazed_pane(
+                accumulator,
+                node=node,
+                topology_path=topology_path,
+                rect=slot_rect,
+                assembly=f"BAY:{node.id}:SLIDING_FIXED:{panel.slot}",
+                semantic_infill_id=f"{topology_path}/infill/{panel.slot}",
+                leaf_slot=panel.slot,
+                params=params,
+                clearance_mm=clearance_mm,
+            )
+        slot_x += pitches[index]
 
 
 def _append_bay(
