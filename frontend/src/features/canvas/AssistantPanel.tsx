@@ -16,6 +16,9 @@ type Preview = {
   /** The product instance the ops were validated against — any later commit
    * produces a new identity and makes the index-based ops stale. */
   snapshot: ProductJson;
+  /** The catalog the ops were validated against — a system switch without a
+   * product commit keeps the same snapshot, so identity alone can't catch it. */
+  systemId: string | null;
 };
 
 /** NL design assistant: prompt → gateway-validated op preview → one commit.
@@ -66,6 +69,14 @@ export function AssistantPanel({
     requestAnimationFrame(() => promptRef.current?.focus());
     onDraftHandled();
   }, [draft, onDraftHandled]);
+
+  /** A product commit or system switch invalidates anything in flight —
+   * responses are only valid under the exact (product, system) pair they
+   * were validated against. */
+  useEffect(() => {
+    requestSeq.current += 1;
+    setPreview(null);
+  }, [product, systemId]);
   /** One operation key per (prompt, product, system) — a retry after a lost
    * response replays the committed call instead of debiting twice. */
   const operationKey = useRef<{
@@ -121,6 +132,7 @@ export function AssistantPanel({
       const data = response.data as DesignAssistResponse;
       setPreview({
         snapshot: product,
+        systemId,
         ops: data.ops as DesignOp[],
         rejected: data.rejected.map((item) => ({
           op: typeof item.op === "string" ? item.op : null,
@@ -200,7 +212,7 @@ export function AssistantPanel({
                   ))}
                 </ul>
               )}
-              {preview.snapshot !== product ? (
+              {preview.snapshot !== product || preview.systemId !== systemId ? (
                 <p className="assembly-hint">{t("assistant.stale")}</p>
               ) : (
                 <div className="inspector-actions">
