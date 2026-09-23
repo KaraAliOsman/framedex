@@ -34,6 +34,9 @@ import type {
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
   DecideRequestRequest,
+  DeliveryResponse,
+  DeliveryScheduleRequestRequest,
+  DeliveryTransitionRequestRequest,
   DesignOptions,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
@@ -5277,6 +5280,252 @@ export const productionOrderCncFile = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export type productionOrderDeliveryResponse200 = {
+  data: DeliveryResponse;
+  status: 200;
+};
+
+export type productionOrderDeliveryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDeliveryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDeliveryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDeliveryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDeliveryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDeliveryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDeliveryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDeliveryResponseSuccess = productionOrderDeliveryResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDeliveryResponseError = (
+  | productionOrderDeliveryResponse400
+  | productionOrderDeliveryResponse401
+  | productionOrderDeliveryResponse403
+  | productionOrderDeliveryResponse404
+  | productionOrderDeliveryResponse409
+  | productionOrderDeliveryResponse422
+  | productionOrderDeliveryResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDeliveryResponse =
+  productionOrderDeliveryResponseSuccess | productionOrderDeliveryResponseError;
+
+export const getProductionOrderDeliveryUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/delivery/`;
+};
+
+export const productionOrderDelivery = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDeliveryResponse> => {
+  return apiMutator<productionOrderDeliveryResponse>(getProductionOrderDeliveryUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionOrderDeliveryScheduleResponse200 = {
+  data: DeliveryResponse;
+  status: 200;
+};
+
+export type productionOrderDeliveryScheduleResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDeliveryScheduleResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDeliveryScheduleResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDeliveryScheduleResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDeliveryScheduleResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDeliveryScheduleResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDeliveryScheduleResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDeliveryScheduleResponseSuccess =
+  productionOrderDeliveryScheduleResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDeliveryScheduleResponseError = (
+  | productionOrderDeliveryScheduleResponse400
+  | productionOrderDeliveryScheduleResponse401
+  | productionOrderDeliveryScheduleResponse403
+  | productionOrderDeliveryScheduleResponse404
+  | productionOrderDeliveryScheduleResponse409
+  | productionOrderDeliveryScheduleResponse422
+  | productionOrderDeliveryScheduleResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDeliveryScheduleResponse =
+  productionOrderDeliveryScheduleResponseSuccess | productionOrderDeliveryScheduleResponseError;
+
+export const getProductionOrderDeliveryScheduleUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/delivery/`;
+};
+
+export const productionOrderDeliverySchedule = async (
+  orderId: string,
+  deliveryScheduleRequestRequest: DeliveryScheduleRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDeliveryScheduleResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDeliveryScheduleResponse>(
+    getProductionOrderDeliveryScheduleUrl(orderId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(deliveryScheduleRequestRequest),
+    },
+  );
+};
+
+export type productionOrderDeliveryTransitionResponse200 = {
+  data: DeliveryResponse;
+  status: 200;
+};
+
+export type productionOrderDeliveryTransitionResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDeliveryTransitionResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDeliveryTransitionResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDeliveryTransitionResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDeliveryTransitionResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDeliveryTransitionResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDeliveryTransitionResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDeliveryTransitionResponseSuccess =
+  productionOrderDeliveryTransitionResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDeliveryTransitionResponseError = (
+  | productionOrderDeliveryTransitionResponse400
+  | productionOrderDeliveryTransitionResponse401
+  | productionOrderDeliveryTransitionResponse403
+  | productionOrderDeliveryTransitionResponse404
+  | productionOrderDeliveryTransitionResponse409
+  | productionOrderDeliveryTransitionResponse422
+  | productionOrderDeliveryTransitionResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDeliveryTransitionResponse =
+  productionOrderDeliveryTransitionResponseSuccess | productionOrderDeliveryTransitionResponseError;
+
+export const getProductionOrderDeliveryTransitionUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/delivery/transition/`;
+};
+
+export const productionOrderDeliveryTransition = async (
+  orderId: string,
+  deliveryTransitionRequestRequest: DeliveryTransitionRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDeliveryTransitionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDeliveryTransitionResponse>(
+    getProductionOrderDeliveryTransitionUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(deliveryTransitionRequestRequest),
     },
   );
 };

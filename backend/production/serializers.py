@@ -168,3 +168,42 @@ class WorkOrderOptimizeSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
     optimization = serializers.DictField()
+
+
+class DeliverySerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    scheduled_date = serializers.CharField()
+    time_window = serializers.CharField()
+    address = serializers.CharField()
+    contact_name = serializers.CharField(allow_null=True)
+    contact_phone = serializers.CharField(allow_null=True)
+    installer_name = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    status = serializers.ChoiceField(
+        choices=("SCHEDULED", "ON_ROUTE", "DELIVERED", "FAILED")
+    )
+    scheduled_by = serializers.UUIDField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class DeliveryResponseSerializer(serializers.Serializer):
+    delivery = DeliverySerializer(allow_null=True)
+
+
+class DeliveryScheduleRequestSerializer(StrictSerializer):
+    scheduled_date = serializers.CharField(max_length=10)
+    time_window = serializers.ChoiceField(
+        choices=("AM", "PM", "JORNADA"), required=False, default="AM"
+    )
+    address = serializers.CharField(max_length=300)
+    contact_name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    contact_phone = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    installer_name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class DeliveryTransitionRequestSerializer(StrictSerializer):
+    status = serializers.ChoiceField(choices=("ON_ROUTE", "DELIVERED", "FAILED"))

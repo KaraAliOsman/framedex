@@ -1,6 +1,8 @@
 from django.urls import path
 
 from production.views import (
+    ProductionOrderDeliveryTransitionView,
+    ProductionOrderDeliveryView,
     ProductionOrderCncExportView,
     ProductionOrderDispatchView,
     ProductionOrderInstallationView,
@@ -47,6 +49,16 @@ urlpatterns = [
         "orders/<uuid:order_id>/labels/",
         ProductionOrderLabelsView.as_view(),
         name="production-order-labels",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/",
+        ProductionOrderDeliveryView.as_view(),
+        name="production-order-delivery",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/transition/",
+        ProductionOrderDeliveryTransitionView.as_view(),
+        name="production-order-delivery-transition",
     ),
     path(
         "orders/<uuid:order_id>/dispatch/",

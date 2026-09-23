@@ -23,6 +23,9 @@ from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
 from production.serializers import (
+    DeliveryResponseSerializer,
+    DeliveryScheduleRequestSerializer,
+    DeliveryTransitionRequestSerializer,
     CncExportSerializer,
     DispatchRequestSerializer,
     InstallationRequestSerializer,
@@ -53,7 +56,7 @@ def public_production_errors():
     try:
         yield
     except DocumentaryError as error:
-        status_code = 404 if error.code in ("version_not_found", "work_order_not_found", "production_step_not_found") else 422
+        status_code = 404 if error.code in ("version_not_found", "work_order_not_found", "production_step_not_found", "delivery_not_found") else 422
         raise contract_error(
             status_code,
             error.code,
@@ -348,5 +351,65 @@ class ProductionOrderOptimizeView(APIView):
                     actor_id=token.user_id,
                     color=data["color"],
                     cutting_profile_code=data.get("cutting_profile_code"),
+                )
+        return Response(output)
+
+
+class ProductionOrderDeliveryView(APIView):
+    @extend_schema(
+        operation_id="production_order_delivery",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: DeliveryResponseSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                return Response(service.get_delivery(org_id=org_id, order_id=order_id))
+
+    @extend_schema(
+        operation_id="production_order_delivery_schedule",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=DeliveryScheduleRequestSerializer,
+        responses={200: DeliveryResponseSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def put(self, request, order_id: UUID):
+        data = validate(DeliveryScheduleRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.schedule_delivery(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    scheduled_date=str(data["scheduled_date"]),
+                    time_window=str(data["time_window"]),
+                    address=str(data["address"]),
+                    contact_name=data.get("contact_name"),
+                    contact_phone=data.get("contact_phone"),
+                    installer_name=data.get("installer_name"),
+                    notes=data.get("notes"),
+                )
+        return Response(output)
+
+
+class ProductionOrderDeliveryTransitionView(APIView):
+    @extend_schema(
+        operation_id="production_order_delivery_transition",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=DeliveryTransitionRequestSerializer,
+        responses={200: DeliveryResponseSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(DeliveryTransitionRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _STEP_ACTORS) as (token, _, org_id):
+                output = service.transition_delivery(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    to_status=str(data["status"]),
                 )
         return Response(output)

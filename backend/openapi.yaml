@@ -4708,6 +4708,239 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/delivery/:
+    get:
+      operationId: production_order_delivery
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    put:
+      operationId: production_order_delivery_schedule
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryScheduleRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliveryScheduleRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliveryScheduleRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/orders/{order_id}/delivery/transition/:
+    post:
+      operationId: production_order_delivery_transition
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryTransitionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeliveryTransitionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeliveryTransitionRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/orders/{order_id}/dispatch/:
     post:
       operationId: production_order_dispatch
@@ -7761,6 +7994,130 @@ components:
       description: |-
         * `APPROVED` - APPROVED
         * `DECLINED` - DECLINED
+    Delivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        order_code:
+          type: string
+        scheduled_date:
+          type: string
+        time_window:
+          type: string
+        address:
+          type: string
+        contact_name:
+          type: string
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        installer_name:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DeliveryStatusEnum'
+        scheduled_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - address
+      - contact_name
+      - contact_phone
+      - created_at
+      - id
+      - installer_name
+      - notes
+      - order_code
+      - order_id
+      - scheduled_by
+      - scheduled_date
+      - status
+      - time_window
+      - updated_at
+    DeliveryResponse:
+      type: object
+      properties:
+        delivery:
+          allOf:
+          - $ref: '#/components/schemas/Delivery'
+          nullable: true
+      required:
+      - delivery
+    DeliveryScheduleRequestRequest:
+      type: object
+      properties:
+        scheduled_date:
+          type: string
+          minLength: 1
+          maxLength: 10
+        time_window:
+          allOf:
+          - $ref: '#/components/schemas/TimeWindowEnum'
+          default: AM
+        address:
+          type: string
+          minLength: 1
+          maxLength: 300
+        contact_name:
+          type: string
+          maxLength: 200
+        contact_phone:
+          type: string
+          maxLength: 50
+        installer_name:
+          type: string
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 500
+      required:
+      - address
+      - scheduled_date
+    DeliveryStatusEnum:
+      enum:
+      - SCHEDULED
+      - ON_ROUTE
+      - DELIVERED
+      - FAILED
+      type: string
+      description: |-
+        * `SCHEDULED` - SCHEDULED
+        * `ON_ROUTE` - ON_ROUTE
+        * `DELIVERED` - DELIVERED
+        * `FAILED` - FAILED
+    DeliveryTransitionRequestRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DeliveryTransitionRequestStatusEnum'
+      required:
+      - status
+    DeliveryTransitionRequestStatusEnum:
+      enum:
+      - ON_ROUTE
+      - DELIVERED
+      - FAILED
+      type: string
+      description: |-
+        * `ON_ROUTE` - ON_ROUTE
+        * `DELIVERED` - DELIVERED
+        * `FAILED` - FAILED
     DesignOptions:
       type: object
       properties:
@@ -11877,6 +12234,16 @@ components:
       - sliding_glazing_deduction_width_mm
       - sliding_lateral_clearance_mm
       - version
+    TimeWindowEnum:
+      enum:
+      - AM
+      - PM
+      - JORNADA
+      type: string
+      description: |-
+        * `AM` - AM
+        * `PM` - PM
+        * `JORNADA` - JORNADA
     UnitEnum:
       enum:
       - kit

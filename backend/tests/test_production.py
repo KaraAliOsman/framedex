@@ -1331,3 +1331,148 @@ def test_dispatched_order_rejects_mutation_actions(monkeypatch) -> None:
             service.optimize_work_order(
                 org_id=org_id, order_id=order_id, actor_id=uuid4(), color="BLANCO"
             )
+
+
+def test_delivery_schedule_upserts_and_records_event(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    events: list[tuple[str, list]] = []
+    delivery_row = {
+        "id": uuid4(), "org_id": org_id, "order_id": order_id,
+        "order_code": "OT-1", "scheduled_date": "2026-09-25",
+        "time_window": "PM", "address": "Av. Norte 100",
+        "contact_name": None, "contact_phone": None,
+        "installer_name": "Cuadrilla 2", "notes": None,
+        "status": "SCHEDULED", "scheduled_by": uuid4(),
+        "created_at": __import__("datetime").datetime(2026, 9, 23),
+        "updated_at": __import__("datetime").datetime(2026, 9, 23),
+    }
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "insert into public.deliveries" in lowered:
+            return dict(delivery_row)
+        return {"id": str(order_id), "order_code": "OT-1", "status": "COMPLETED"}
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "from public.deliveries d" in lowered:
+            return [dict(delivery_row)]
+        if "select status from public.deliveries" in lowered:
+            return []
+        if "insert into public.production_step_events" in lowered:
+            events.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.schedule_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(),
+            scheduled_date="2026-09-25", time_window="pm",
+            address="  Av. Norte 100 ", installer_name="Cuadrilla 2",
+        )
+    delivery = out["delivery"]
+    assert delivery["status"] == "SCHEDULED"
+    assert delivery["time_window"] == "PM"
+    assert "wo_delivery_scheduled" in events[0][0]
+
+
+def test_delivery_schedule_guards_order_state_and_inputs(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "RELEASED"},
+    )
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="delivery_requires_completed"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="2026-09-25", time_window="AM", address="X 1",
+            )
+        with pytest.raises(DocumentaryError, match="delivery_window_invalid"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="2026-09-25", time_window="NOCHE", address="X 1",
+            )
+        with pytest.raises(DocumentaryError, match="delivery_address_required"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="2026-09-25", time_window="AM", address="  ",
+            )
+        with pytest.raises(DocumentaryError, match="delivery_date_invalid"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="ayer", time_window="AM", address="X 1",
+            )
+
+
+def test_delivery_transition_requires_dispatched_order(monkeypatch) -> None:
+    """ON_ROUTE needs the order DISPATCHED; DELIVERED needs ON_ROUTE first."""
+    org_id, order_id = uuid4(), uuid4()
+    order = {"id": str(order_id), "order_code": "OT-1", "status": "COMPLETED"}
+    delivery = {"id": uuid4(), "status": "SCHEDULED"}
+
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda sql_text, params, code="nf": order if "orders" in sql_text else dict(delivery),
+    )
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "production.service.get_delivery", lambda **kw: {"delivery": {"status": delivery["status"]}}
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="delivery_requires_dispatched"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="ON_ROUTE"
+            )
+        with pytest.raises(DocumentaryError, match="delivery_transition_invalid"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            )
+        with pytest.raises(DocumentaryError, match="delivery_transition_invalid"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="SCHEDULED"
+            )
+
+
+def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    order = {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"}
+    delivery = {"id": uuid4(), "status": "ON_ROUTE"}
+    events: list[tuple[str, list]] = []
+
+    def fake_rows(sql_text: str, params: list) -> list:
+        lowered = " ".join(sql_text.lower().split())
+        if "update public.deliveries set status" in lowered:
+            delivery["status"] = params[0]
+        if "insert into public.production_step_events" in lowered:
+            events.append((lowered, list(params)))
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda sql_text, params, code="nf": order if "orders" in sql_text else dict(delivery),
+    )
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr(
+        "production.service.get_delivery", lambda **kw: {"delivery": {"status": delivery["status"]}}
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.transition_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+        )
+        replay = service.transition_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+        )
+    assert out["delivery"]["status"] == "DELIVERED"
+    assert replay["delivery"]["status"] == "DELIVERED"
+    assert len(events) == 1 and events[0][1][2] == "WO_DELIVERY_DELIVERED"

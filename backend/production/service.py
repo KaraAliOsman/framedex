@@ -10,7 +10,7 @@ so the floor has a paperless trail."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 import hashlib
 import json
@@ -1407,3 +1407,201 @@ def optimize_work_order(
             "order_code": order["order_code"],
             "optimization": optimization,
         }
+
+
+_DELIVERY_WINDOWS = ("AM", "PM", "JORNADA")
+_DELIVERY_NEXT = {
+    "ON_ROUTE": {"SCHEDULED"},
+    "DELIVERED": {"ON_ROUTE"},
+    "FAILED": {"ON_ROUTE"},
+}
+_DELIVERY_EVENT = {
+    "ON_ROUTE": "WO_DELIVERY_ON_ROUTE",
+    "DELIVERED": "WO_DELIVERY_DELIVERED",
+    "FAILED": "WO_DELIVERY_FAILED",
+}
+
+
+def _public_delivery(delivery: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": str(delivery["id"]),
+        "order_id": str(delivery["order_id"]),
+        "order_code": str(delivery["order_code"]),
+        "scheduled_date": str(delivery["scheduled_date"]),
+        "time_window": str(delivery["time_window"]),
+        "address": str(delivery["address"]),
+        "contact_name": delivery["contact_name"],
+        "contact_phone": delivery["contact_phone"],
+        "installer_name": delivery["installer_name"],
+        "notes": delivery["notes"],
+        "status": str(delivery["status"]),
+        "scheduled_by": str(delivery["scheduled_by"]) if delivery["scheduled_by"] else None,
+        "created_at": delivery["created_at"].isoformat(),
+        "updated_at": delivery["updated_at"].isoformat(),
+    }
+
+
+def get_delivery(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+    with documentary_backend():
+        found = rows(
+            """
+            SELECT d.*, o.order_code FROM public.deliveries d
+            JOIN public.orders o ON o.id = d.order_id
+            WHERE d.order_id = %s AND d.org_id = %s
+            """,
+            [str(order_id), str(org_id)],
+        )
+    return {"delivery": _public_delivery(found[0]) if found else None}
+
+
+def schedule_delivery(
+    *,
+    org_id: UUID,
+    order_id: UUID,
+    actor_id: UUID,
+    scheduled_date: str,
+    time_window: str | None,
+    address: str,
+    contact_name: str | None = None,
+    contact_phone: str | None = None,
+    installer_name: str | None = None,
+    notes: str | None = None,
+) -> dict[str, object]:
+    """Create or update the order's single delivery — rescheduling is an
+    upsert so retries and edits stay idempotent on the same row."""
+    window = (time_window or "AM").strip().upper()
+    if window not in _DELIVERY_WINDOWS:
+        raise DocumentaryError("delivery_window_invalid")
+    if not (address or "").strip():
+        raise DocumentaryError("delivery_address_required")
+    try:
+        day = date.fromisoformat(str(scheduled_date))
+    except (TypeError, ValueError):
+        raise DocumentaryError("delivery_date_invalid")
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) not in ("COMPLETED", "DISPATCHED"):
+            raise DocumentaryError("delivery_requires_completed")
+        existing = rows(
+            "SELECT status FROM public.deliveries WHERE order_id = %s AND org_id = %s",
+            [str(order_id), str(org_id)],
+        )
+        if existing and str(existing[0]["status"]) == "DELIVERED":
+            raise DocumentaryError("delivery_already_delivered")
+        delivery = one(
+            """
+            INSERT INTO public.deliveries(
+                org_id, order_id, scheduled_date, time_window, address,
+                contact_name, contact_phone, installer_name, notes, scheduled_by)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (order_id) DO UPDATE SET
+                scheduled_date = EXCLUDED.scheduled_date,
+                time_window = EXCLUDED.time_window,
+                address = EXCLUDED.address,
+                contact_name = EXCLUDED.contact_name,
+                contact_phone = EXCLUDED.contact_phone,
+                installer_name = EXCLUDED.installer_name,
+                notes = EXCLUDED.notes,
+                scheduled_by = EXCLUDED.scheduled_by,
+                status = 'SCHEDULED',
+                updated_at = %s
+            RETURNING *
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(day),
+                window,
+                address.strip(),
+                (contact_name or "").strip() or None,
+                (contact_phone or "").strip() or None,
+                (installer_name or "").strip() or None,
+                (notes or "").strip() or None,
+                str(actor_id),
+                datetime.now(timezone.utc),
+            ],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_DELIVERY_SCHEDULED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "scheduled_date": str(day),
+                    "time_window": window,
+                    "installer_name": delivery["installer_name"],
+                }),
+            ],
+        )
+    return get_delivery(org_id=org_id, order_id=order_id)
+
+
+def transition_delivery(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, to_status: str
+) -> dict[str, object]:
+    """Move the delivery forward; guarded by both its own state and the
+    order's — a truck can't leave before the order is DISPATCHED."""
+    target = str(to_status or "").upper()
+    if target not in _DELIVERY_NEXT:
+        raise DocumentaryError("delivery_transition_invalid")
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        delivery = one(
+            """
+            SELECT * FROM public.deliveries
+            WHERE order_id = %s AND org_id = %s FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "delivery_not_found",
+        )
+        current = str(delivery["status"])
+        if current == target:
+            return get_delivery(org_id=org_id, order_id=order_id)
+        if current not in _DELIVERY_NEXT[target]:
+            raise DocumentaryError("delivery_transition_invalid")
+        if target == "ON_ROUTE" and str(order["status"]) != "DISPATCHED":
+            raise DocumentaryError("delivery_requires_dispatched")
+        rows(
+            """
+            UPDATE public.deliveries SET status = %s, updated_at = %s
+            WHERE id = %s AND org_id = %s RETURNING id
+            """,
+            [target, datetime.now(timezone.utc), str(delivery["id"]), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                _DELIVERY_EVENT[target],
+                str(actor_id),
+                json.dumps({"order_code": order["order_code"]}),
+            ],
+        )
+    return get_delivery(org_id=org_id, order_id=order_id)

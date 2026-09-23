@@ -3,6 +3,9 @@ import { useSearchParams } from "react-router-dom";
 
 import {
   productionOrderCncExport,
+  productionOrderDelivery,
+  productionOrderDeliverySchedule,
+  productionOrderDeliveryTransition,
   productionOrderDetail,
   productionOrderDispatch,
   productionOrderInstall,
@@ -14,6 +17,9 @@ import {
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
+  Delivery,
+  DeliveryScheduleRequestRequest,
+  DeliveryTransitionRequestStatusEnum,
   PackingLabel,
   ProductionOrder,
   ProductionOrderDetail,
@@ -133,6 +139,17 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_PACKED: "production.eventPacked",
   WO_DISPATCHED: "production.eventDispatched",
   WO_INSTALLED: "production.eventInstalled",
+  WO_DELIVERY_SCHEDULED: "production.eventDeliveryScheduled",
+  WO_DELIVERY_ON_ROUTE: "production.eventDeliveryOnRoute",
+  WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
+  WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
+};
+
+const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
+  SCHEDULED: "production.deliveryStatusScheduled",
+  ON_ROUTE: "production.deliveryStatusOnRoute",
+  DELIVERED: "production.deliveryStatusDelivered",
+  FAILED: "production.deliveryStatusFailed",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -173,6 +190,8 @@ export function ProductionPage(): JSX.Element {
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
+  const [delivery, setDelivery] = useState<Delivery | null>(null);
+  const [deliveryForm, setDeliveryForm] = useState<DeliveryScheduleRequestRequest | null>(null);
   const labelsGeneration = useRef(0);
   const selectedIdRef = useRef("");
   const mounted = useRef(true);
@@ -200,6 +219,11 @@ export function ProductionPage(): JSX.Element {
       setDetail(response.data);
       setLabels([]);
     }
+    const deliveryResponse = await productionOrderDelivery(orderId);
+    if (generation === detailGeneration.current) {
+      setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
+      setDeliveryForm(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -211,6 +235,8 @@ export function ProductionPage(): JSX.Element {
     if (!selectedId) {
       detailGeneration.current += 1;
       setDetail(null);
+      setDelivery(null);
+      setDeliveryForm(null);
       return;
     }
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
@@ -295,6 +321,55 @@ export function ProductionPage(): JSX.Element {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function saveDelivery(orderId: string): Promise<void> {
+    if (!deliveryForm) return;
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliverySchedule(orderId, deliveryForm);
+      if (response.status === 200) {
+        setDelivery(response.data.delivery);
+        setDeliveryForm(null);
+      } else {
+        setMessage(t("production.deliveryError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function transitionDelivery(
+    orderId: string,
+    status: DeliveryTransitionRequestStatusEnum,
+  ): Promise<void> {
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliveryTransition(orderId, { status });
+      if (response.status === 200) {
+        setDelivery(response.data.delivery);
+      } else {
+        setMessage(t("production.deliveryError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function openDeliveryForm(existing: Delivery | null): void {
+    setDeliveryForm({
+      scheduled_date: existing?.scheduled_date ?? "",
+      time_window: (existing?.time_window as DeliveryScheduleRequestRequest["time_window"]) ?? "AM",
+      address: existing?.address ?? "",
+      contact_name: existing?.contact_name ?? "",
+      contact_phone: existing?.contact_phone ?? "",
+      installer_name: existing?.installer_name ?? "",
+      notes: existing?.notes ?? "",
+    });
   }
 
   function pack(orderId: string): void {
@@ -701,6 +776,227 @@ export function ProductionPage(): JSX.Element {
                     ) : (
                       <p className="production-optimize-empty">{t("production.packingEmpty")}</p>
                     )}
+                  </section>
+                );
+              })()}
+              {(() => {
+                const canSchedule =
+                  canWrite && (detail.status === "COMPLETED" || detail.status === "DISPATCHED");
+                return (
+                  <section
+                    className="production-delivery"
+                    aria-label={t("production.deliveryTitle")}
+                  >
+                    <header className="production-optimize-head">
+                      <h3>{t("production.deliveryTitle")}</h3>
+                      {delivery ? (
+                        <span
+                          className={`production-chip delivery-${delivery.status.toLowerCase()}`}
+                        >
+                          {t(
+                            deliveryStatusKey[delivery.status] ??
+                              "production.deliveryStatusScheduled",
+                          )}
+                        </span>
+                      ) : null}
+                      {!delivery && canSchedule && deliveryForm === null ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => openDeliveryForm(null)}
+                        >
+                          {t("production.deliverySchedule")}
+                        </button>
+                      ) : null}
+                      {canWrite && delivery && delivery.status !== "DELIVERED" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => openDeliveryForm(delivery)}
+                        >
+                          {t("production.deliveryReschedule")}
+                        </button>
+                      ) : null}
+                      {canStep &&
+                      delivery?.status === "SCHEDULED" &&
+                      detail.status === "DISPATCHED" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void transitionDelivery(detail.id, "ON_ROUTE")}
+                        >
+                          {t("production.deliveryOnRoute")}
+                        </button>
+                      ) : null}
+                      {canStep && delivery?.status === "ON_ROUTE" ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "DELIVERED")}
+                          >
+                            {t("production.deliveryDelivered")}
+                          </button>
+                          <button
+                            type="button"
+                            className="production-chip-danger"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "FAILED")}
+                          >
+                            {t("production.deliveryFailed")}
+                          </button>
+                        </>
+                      ) : null}
+                    </header>
+                    {delivery ? (
+                      <dl className="production-delivery-facts">
+                        <div>
+                          <dt>{t("production.deliveryDate")}</dt>
+                          <dd>
+                            {delivery.scheduled_date} · {delivery.time_window}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t("production.deliveryAddress")}</dt>
+                          <dd>{delivery.address}</dd>
+                        </div>
+                        {delivery.contact_name || delivery.contact_phone ? (
+                          <div>
+                            <dt>{t("production.deliveryContact")}</dt>
+                            <dd>
+                              {[delivery.contact_name, delivery.contact_phone]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </dd>
+                          </div>
+                        ) : null}
+                        {delivery.installer_name ? (
+                          <div>
+                            <dt>{t("production.deliveryInstaller")}</dt>
+                            <dd>{delivery.installer_name}</dd>
+                          </div>
+                        ) : null}
+                        {delivery.notes ? (
+                          <div>
+                            <dt>{t("production.deliveryNotes")}</dt>
+                            <dd>{delivery.notes}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    ) : null}
+                    {!delivery && deliveryForm === null ? (
+                      <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
+                    ) : null}
+                    {deliveryForm !== null && canWrite ? (
+                      <form
+                        className="production-delivery-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void saveDelivery(detail.id);
+                        }}
+                      >
+                        <label>
+                          {t("production.deliveryDate")}
+                          <input
+                            type="date"
+                            required
+                            value={deliveryForm.scheduled_date}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                scheduled_date: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryWindow")}
+                          <select
+                            value={deliveryForm.time_window ?? "AM"}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                time_window: event.target
+                                  .value as DeliveryScheduleRequestRequest["time_window"],
+                              })
+                            }
+                          >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                            <option value="JORNADA">JORNADA</option>
+                          </select>
+                        </label>
+                        <label className="production-delivery-wide">
+                          {t("production.deliveryAddress")}
+                          <input
+                            required
+                            value={deliveryForm.address}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                address: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryContact")}
+                          <input
+                            value={deliveryForm.contact_name ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                contact_name: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryPhone")}
+                          <input
+                            value={deliveryForm.contact_phone ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                contact_phone: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryInstaller")}
+                          <input
+                            value={deliveryForm.installer_name ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                installer_name: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="production-delivery-wide">
+                          {t("production.deliveryNotes")}
+                          <input
+                            value={deliveryForm.notes ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                notes: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <div className="production-delivery-actions">
+                          <button type="submit" disabled={busy}>
+                            {t("production.deliverySave")}
+                          </button>
+                          <button type="button" onClick={() => setDeliveryForm(null)}>
+                            {t("production.deliveryCancel")}
+                          </button>
+                        </div>
+                      </form>
+                    ) : null}
                   </section>
                 );
               })()}
