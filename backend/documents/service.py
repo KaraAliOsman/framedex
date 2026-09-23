@@ -1116,7 +1116,9 @@ def prepare_documentary_inputs(
     def selected(existing, key, options):
         if existing and existing[key] is not None:
             return existing[key]
-        return options[0]["id"] if len(options) == 1 else None
+        # Options arrive ordered version DESC: the newest authority is the
+        # default, and a saved selection always wins (immutable evidence).
+        return options[0]["id"] if options else None
 
     prepared = []
     for position in positions:
