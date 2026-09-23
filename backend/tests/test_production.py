@@ -929,3 +929,44 @@ def test_export_cnc_requires_optimization(monkeypatch) -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), pytest.raises(DocumentaryError, match="cnc_requires_optimization"):
         service.export_cnc_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
+
+
+def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    source_code = "OT-" + "A" * 47  # exactly 50 chars
+    captured: list[list] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": source_code,
+                "status": "HOLD",
+                "project_id": str(uuid4()),
+                "project_version_id": str(uuid4()),
+                "payload_json": {"position_id": str(_POSITION_ID)},
+            }
+        if "count(*)" in lowered:
+            return {"n": 0}
+        if "insert into public.orders" in lowered:
+            captured.append(list(params))
+            return {"id": str(uuid4()), "order_code": params[2]}
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    monkeypatch.setattr("production.service.get_work_order", lambda **kw: {"id": "x"})
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    code = captured[0][2]
+    assert len(code) <= 50
+    assert code.endswith("-RM-01")
+    marker = str(order_id).replace("-", "").upper()
+    assert marker in code
+    # distinct sources keep distinct codes even with identical prefixes
+    other_id = uuid4()
+    other_marker = str(other_id).replace("-", "").upper()
+    assert code != f"{source_code[:50-len('-RM-01')-33]}-{other_marker}-RM-01"
