@@ -14,6 +14,7 @@ import type {
   AccessoryLine,
   AccessorySchedule,
   CoverageEnum,
+  PolishingEdges,
   DocumentaryPolicyOption,
   DocumentaryPreparationPosition,
   DocumentaryPreparationResponse,
@@ -98,6 +99,13 @@ const ORDER_TYPE_KEYS: Record<(typeof ORDER_TYPES)[number], TranslationKey> = {
   SUPPLIER_HARDWARE_PO: "quotation.orderHardware",
   SUPPLIER_PANEL_PO: "quotation.orderPanel",
 };
+
+function nextObligationId(items: AccessoryLine[]): string {
+  const used = new Set(items.map((item) => item.obligation_id));
+  let index = items.length + 1;
+  while (used.has(`acc-${index}`)) index += 1;
+  return `acc-${index}`;
+}
 
 function parseMmList(text: string): string[] | null {
   const parts = text
@@ -372,12 +380,11 @@ export function ProjectQuotationPanel({
     updatePosition(index, { structural_inputs: inputs });
   }
 
-  function updatePolishing(
+  function setPolishingEdges(
     index: number,
     bayId: string,
     leafId: string | null,
-    edge: "top" | "right" | "bottom" | "left",
-    polished: boolean,
+    edges: PolishingEdges,
   ): void {
     if (!preparation) return;
     const position = preparation.positions[index];
@@ -387,16 +394,9 @@ export function ProjectQuotationPanel({
       (item) => item.bay_id === bayId && (item.leaf_id ?? null) === leafId,
     );
     if (existing) {
-      polishing[polishing.indexOf(existing)] = {
-        ...existing,
-        edges: { ...existing.edges, [edge]: polished },
-      };
+      polishing[polishing.indexOf(existing)] = { ...existing, edges };
     } else {
-      polishing.push({
-        bay_id: bayId,
-        leaf_id: leafId,
-        edges: { top: false, right: false, bottom: false, left: false, [edge]: polished },
-      });
+      polishing.push({ bay_id: bayId, leaf_id: leafId, edges });
     }
     updatePosition(index, { glass_polishing: polishing });
   }
@@ -828,19 +828,33 @@ export function ProjectQuotationPanel({
                           />
                           <span className="workshop-unit">mm</span>
                         </label>
-                        <label className="workshop-check">
-                          <input
-                            type="checkbox"
+                        <label className="workshop-field">
+                          <span>{t("quotation.expansionCoupler")}</span>
+                          <select
                             disabled={busy}
-                            checked={annotation?.has_coupler ?? false}
-                            onChange={(event) =>
-                              updateAnnotation(index, bay.bay_id, null, {
-                                has_coupler: event.target.checked,
-                              })
+                            value={
+                              annotation?.has_coupler === true
+                                ? "YES"
+                                : annotation?.has_coupler === false
+                                  ? "NO"
+                                  : ""
                             }
-                          />
-                          {t("quotation.expansionCoupler")}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              if (value !== "YES" && value !== "NO") return;
+                              updateAnnotation(index, bay.bay_id, null, {
+                                has_coupler: value === "YES",
+                              });
+                            }}
+                          >
+                            <option value="">{t("quotation.chooseCoverage")}</option>
+                            <option value="NO">{t("quotation.answerNo")}</option>
+                            <option value="YES">{t("quotation.answerYes")}</option>
+                          </select>
                         </label>
+                        {annotation?.has_coupler == null && (
+                          <span className="handle-pending">{t("quotation.handlePending")}</span>
+                        )}
                       </div>
                     </div>
                   );
@@ -926,36 +940,75 @@ export function ProjectQuotationPanel({
                   <div className="workshop-group">
                     <h5>{t("quotation.glassPolishing")}</h5>
                     {position.workshop_targets.glass.map((target) => {
-                      const polishing = position.glass_polishing.find(
+                      const record = position.glass_polishing.find(
                         (item) =>
                           item.bay_id === target.bay_id &&
                           (item.leaf_id ?? null) === target.leaf_id,
                       );
+                      const polished = record
+                        ? Object.values(record.edges).some(Boolean)
+                        : null;
                       return (
                         <div
-                          className="workshop-target workshop-target--inline"
+                          className="workshop-target"
                           key={`${target.bay_id}|${target.leaf_id ?? ""}`}
                         >
                           <strong>{target.label}</strong>
-                          {(["top", "right", "bottom", "left"] as const).map((edge) => (
-                            <label className="workshop-check" key={edge}>
-                              <input
-                                type="checkbox"
+                          <div className="workshop-row">
+                            <label className="workshop-field">
+                              <span>{t("quotation.polishedEdges")}</span>
+                              <select
                                 disabled={busy}
-                                checked={polishing?.edges[edge] ?? false}
-                                onChange={(event) =>
-                                  updatePolishing(
-                                    index,
-                                    target.bay_id,
-                                    target.leaf_id ?? null,
-                                    edge,
-                                    event.target.checked,
-                                  )
+                                value={
+                                  polished === null ? "" : polished ? "EDGES" : "NONE"
                                 }
-                              />
-                              {t(EDGE_KEYS[edge])}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (value === "NONE") {
+                                    setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, {
+                                      top: false,
+                                      right: false,
+                                      bottom: false,
+                                      left: false,
+                                    });
+                                  } else if (value === "EDGES") {
+                                    setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, {
+                                      top: true,
+                                      right: false,
+                                      bottom: false,
+                                      left: false,
+                                    });
+                                  }
+                                }}
+                              >
+                                <option value="">{t("quotation.chooseCoverage")}</option>
+                                <option value="NONE">{t("quotation.polishNone")}</option>
+                                <option value="EDGES">{t("quotation.polishEdges")}</option>
+                              </select>
                             </label>
-                          ))}
+                            {!record && (
+                              <span className="handle-pending">{t("quotation.handlePending")}</span>
+                            )}
+                            {polished === true &&
+                              (["top", "right", "bottom", "left"] as const).map((edge) => (
+                                <label className="workshop-check" key={edge}>
+                                  <input
+                                    type="checkbox"
+                                    disabled={busy}
+                                    checked={record!.edges[edge]}
+                                    onChange={(event) =>
+                                      setPolishingEdges(
+                                        index,
+                                        target.bay_id,
+                                        target.leaf_id ?? null,
+                                        { ...record!.edges, [edge]: event.target.checked },
+                                      )
+                                    }
+                                  />
+                                  {t(EDGE_KEYS[edge])}
+                                </label>
+                              ))}
+                          </div>
                         </div>
                       );
                     })}
@@ -1112,7 +1165,7 @@ export function ProjectQuotationPanel({
                             items: [
                               ...position.accessory_schedule!.items,
                               {
-                                obligation_id: `acc-${position.accessory_schedule!.items.length + 1}`,
+                                obligation_id: nextObligationId(position.accessory_schedule!.items),
                                 obligation_kind: "INSTALLATION_ACCESSORY",
                                 technical_sku: "",
                                 purchasing_sku: "",
