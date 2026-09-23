@@ -155,11 +155,14 @@ _NUMBER_WORDS = {
     "once": 11,
     "doce": 12,
 }
+# A leading '-' binds to the number only when it cannot be range/subtraction
+# punctuation: 'ángulo -30' declares -30, while '2400-1500' keeps both
+# endpoints positive (the '-' sits against a digit and is ignored).
 _MEASURE_RE = re.compile(
-    r"(\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
+    r"(?<![\d.,])(-?\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
     re.IGNORECASE,
 )
-_BARE_NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
+_BARE_NUMBER_RE = re.compile(r"(?<![\d.,])-?\d+(?:[.,]\d+)*")
 _WORD_NUMBER_RE = re.compile(
     r"\b(uno?|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b",
     re.IGNORECASE,

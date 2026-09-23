@@ -469,3 +469,23 @@ def test_unit_suffixed_literal_does_not_declare_its_raw_value(monkeypatch):
     )
     assert out["ops"] == []
     assert out["rejected"][0]["reason"] == "ancho_no_declarado"
+
+
+def test_signed_angle_declares_the_signed_value(monkeypatch):
+    """'ángulo -30 grados' must declare -30 — the sign binds to the number,
+    while range punctuation like '2400-1500' keeps both endpoints positive."""
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=2, couplings=1),
+        prompt="ángulo -30 grados",
+        system_id=uuid4(),
+        operation_key="assist-g4",
+    )
+    assert out["ops"] == [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]
+    assert out["rejected"] == []
