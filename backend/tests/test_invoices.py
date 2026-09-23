@@ -63,6 +63,11 @@ def _project():
 def _snapshot():
     return {
         "project": {
+            "code": "PRY-001",
+            "name": "Edificio Norte",
+            "client_name": "Constructora Andina",
+            "client_rut": "76.543.210-1",
+            "delivery_address": "Av. Providencia 1234",
             "total_price_net": "1000000",
             "total_price_tax": "190000",
             "total_price_gross": "1190000",
@@ -168,6 +173,27 @@ def test_issue_invoice_payload_seals_deal_positions_and_balance(monkeypatch):
     assert payload["project"]["payment_terms"] == (
         "50% anticipo, saldo contra entrega"
     )
+
+
+def test_issue_invoice_seals_frozen_header_not_live_project(monkeypatch):
+    """A successor may rewrite the live project's client data — the invoice
+    must seal the header frozen inside the chosen revision, never mix states."""
+    storage = _Storage()
+    one_calls = _patch_env(monkeypatch, storage, snapshot=_snapshot())
+    live = _project()
+    live["client_name"] = "Constructora Norte"
+    live["client_rut"] = "77.111.222-3"
+    live["delivery_address"] = "Cambio 999"
+    invoices.issue_invoice(org_id=uuid4(), project=live, actor_id=uuid4())
+    insert = next(
+        params
+        for sql, params in one_calls
+        if "INSERT INTO public.project_invoices" in sql
+    )
+    payload = json.loads(insert[4])
+    assert payload["project"]["client_name"] == "Constructora Andina"
+    assert payload["project"]["client_rut"] == "76.543.210-1"
+    assert payload["project"]["delivery_address"] == "Av. Providencia 1234"
 
 
 def test_issue_invoice_without_sealed_revision_raises_409(monkeypatch):

@@ -393,11 +393,11 @@ export function ProjectPaymentsPanel({
         </table>
       )}
       {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
-      {summary && summary.status !== "NO_DEAL" && (
+      {summary && (summary.sealed_revision || invoiceList.length > 0) && (
         <div className="projects-invoices">
           <div className="projects-actions">
             <h3>{t("projects.invoicesTitle")}</h3>
-            {canWrite && (
+            {canWrite && summary.sealed_revision && (
               <button type="button" onClick={() => void emitInvoice()} disabled={busy}>
                 {t("projects.invoiceEmit")}
               </button>

@@ -220,6 +220,7 @@ class PaymentsSummarySerializer(serializers.Serializer):
     balance = serializers.CharField(allow_null=True)
     currency = serializers.ChoiceField(choices=("CLP", "USD"))
     status = serializers.ChoiceField(choices=("NO_DEAL", "PENDING", "PARTIAL", "PAID"))
+    sealed_revision = serializers.CharField(allow_null=True)
 
 
 class PaymentRecordResponseSerializer(PaymentsSummarySerializer):

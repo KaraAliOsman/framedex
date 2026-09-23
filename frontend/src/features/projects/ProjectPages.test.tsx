@@ -203,6 +203,7 @@ beforeEach(() => {
       balance: null,
       currency: "CLP",
       status: "NO_DEAL",
+      sealed_revision: null,
     }),
   );
   vi.mocked(projectPaymentLinksList).mockResolvedValue(response(200, { links: [] }));

@@ -20,4 +20,6 @@ export interface PaymentsSummary {
   balance: string | null;
   currency: CurrencyEnum;
   status: PaymentStatusEnum;
+  /** @nullable */
+  sealed_revision: string | null;
 }

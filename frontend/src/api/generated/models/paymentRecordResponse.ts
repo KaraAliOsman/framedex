@@ -21,6 +21,8 @@ export interface PaymentRecordResponse {
   balance: string | null;
   currency: CurrencyEnum;
   status: PaymentStatusEnum;
+  /** @nullable */
+  sealed_revision: string | null;
   payment: ProjectPayment;
   receipt: PaymentReceipt | null;
 }

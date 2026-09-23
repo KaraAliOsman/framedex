@@ -78,6 +78,7 @@ def _sealed_deal(org_id: UUID, project_id: UUID) -> dict | None:
     return {
         "version_id": version["id"],
         "revision_code": version["revision_code"],
+        "project": project,
         "net": Decimal(str(project.get("total_price_net") or "0")),
         "tax": Decimal(str(project.get("total_price_tax") or "0")),
         "gross": Decimal(str(gross)),
@@ -114,16 +115,20 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
             )
             invoice_code = f"FAC-{sequence + 1:04d}"
             collected = _collected(org_id, UUID(project_id_s))
+            # Every revision-bound field comes from the frozen header — a
+            # successor may have already rewritten the live project's client
+            # data, and the invoice must never mix two different states.
+            sealed_project = deal["project"]
             payload = {
                 "invoice_code": invoice_code,
                 "issued_at": timezone.now().isoformat(),
                 "revision_code": deal["revision_code"],
                 "project": {
-                    "code": project["code"],
-                    "name": project["name"],
-                    "client_name": project["client_name"],
-                    "client_rut": project["client_rut"],
-                    "delivery_address": project["delivery_address"],
+                    "code": sealed_project.get("code"),
+                    "name": sealed_project.get("name"),
+                    "client_name": sealed_project.get("client_name"),
+                    "client_rut": sealed_project.get("client_rut"),
+                    "delivery_address": sealed_project.get("delivery_address"),
                     "currency": deal["currency"],
                     "payment_terms": deal["payment_terms"],
                 },

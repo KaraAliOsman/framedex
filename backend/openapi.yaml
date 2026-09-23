@@ -13542,6 +13542,9 @@ components:
           $ref: '#/components/schemas/CurrencyEnum'
         status:
           $ref: '#/components/schemas/PaymentStatusEnum'
+        sealed_revision:
+          type: string
+          nullable: true
         payment:
           $ref: '#/components/schemas/ProjectPayment'
         receipt:
@@ -13557,6 +13560,7 @@ components:
       - payments
       - quote_total_gross
       - receipt
+      - sealed_revision
       - status
     PaymentStatusEnum:
       enum:
@@ -13599,6 +13603,9 @@ components:
           $ref: '#/components/schemas/CurrencyEnum'
         status:
           $ref: '#/components/schemas/PaymentStatusEnum'
+        sealed_revision:
+          type: string
+          nullable: true
       required:
       - balance
       - collected
@@ -13606,6 +13613,7 @@ components:
       - invoices
       - payments
       - quote_total_gross
+      - sealed_revision
       - status
     PlanCoupling:
       type: object

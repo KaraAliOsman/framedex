@@ -50,7 +50,8 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
     priced. Zero-valued live totals without that authority are not a deal."""
     with documentary_backend():
         versions = rows(
-            "SELECT snapshot_json::text AS snapshot_json FROM public.project_versions "
+            "SELECT revision_code,snapshot_json::text AS snapshot_json "
+            "FROM public.project_versions "
             "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
             [str(org_id), str(project_id)],
         )
@@ -64,6 +65,7 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
             return {
                 "total": Decimal(str(gross)),
                 "currency": (sealed_project or {}).get("currency") or "CLP",
+                "sealed_revision": versions[0]["revision_code"],
             }
     with documentary_backend():
         applied = rows(
@@ -78,6 +80,7 @@ def _deal(org_id: UUID, project_id: UUID, project: dict) -> dict | None:
     return {
         "total": Decimal(str(project["total_price_gross"])),
         "currency": applied[0]["currency"] or (org[0]["currency"] if org else "CLP"),
+        "sealed_revision": None,
     }
 
 
@@ -142,6 +145,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
         "balance": str(balance) if balance is not None else None,
         "currency": deal["currency"] if deal else "CLP",
         "status": status,
+        "sealed_revision": deal["sealed_revision"] if deal else None,
     }
 
 

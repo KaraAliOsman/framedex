@@ -1099,7 +1099,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
                         f"{_value(position.get('width_mm'))} × "
                         f"{_value(position.get('height_mm'))}"
                         + (
-                            f" · {escape(_value(position.get('location_tag')))}"
+                            f" · {_value(position.get('location_tag'))}"
                             if _value(position.get("location_tag")) != "—"
                             else ""
                         ),

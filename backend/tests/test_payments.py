@@ -61,12 +61,13 @@ def _runner(captured, existing=None, payments_list=None, sealed_gross=None,
                 return []
             return [
                 {
+                    "revision_code": "REV-A",
                     "snapshot_json": {
                         "project": {
                             "total_price_gross": str(sealed_gross),
                             "currency": sealed_currency,
                         }
-                    }
+                    },
                 }
             ]
         if "private.applied_pricing_currency" in sql:
