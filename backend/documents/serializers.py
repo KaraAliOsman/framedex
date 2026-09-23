@@ -138,6 +138,14 @@ class DocumentaryPolicyOptionSerializer(serializers.Serializer):
     version = serializers.IntegerField()
 
 
+class HandleLeafRectSerializer(serializers.Serializer):
+    placement_policy_id = serializers.UUIDField()
+    leaf_top_from_outer_top_mm = DecimalStringField(
+        max_digits=14, decimal_places=4
+    )
+    leaf_height_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
 class HandleRequirementSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
     leaf_id = serializers.CharField(allow_null=True)
@@ -145,6 +153,7 @@ class HandleRequirementSerializer(serializers.Serializer):
     opening_type = serializers.CharField()
     handle_domain_slot = serializers.CharField()
     host_member_side = serializers.ChoiceField(choices=["LEFT", "RIGHT"])
+    outer_height_mm = DecimalStringField(max_digits=14, decimal_places=4)
     mounting_min_from_leaf_top_mm = DecimalStringField(
         max_digits=14, decimal_places=4
     )
@@ -156,6 +165,7 @@ class HandleRequirementSerializer(serializers.Serializer):
             choices=["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"]
         )
     )
+    leaf_rects = HandleLeafRectSerializer(many=True)
 
 
 class HandlePolicyRequirementsSerializer(serializers.Serializer):

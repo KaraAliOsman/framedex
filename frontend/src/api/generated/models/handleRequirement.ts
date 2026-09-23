@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { HandleLeafRect } from "./handleLeafRect";
 import type { HostMemberSideEnum } from "./hostMemberSideEnum";
 import type { VerticalReferenceEnum } from "./verticalReferenceEnum";
 
@@ -17,8 +18,11 @@ export interface HandleRequirement {
   handle_domain_slot: string;
   host_member_side: HostMemberSideEnum;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,4})?$ */
+  outer_height_mm: string;
+  /** @pattern ^-?\d{0,10}(?:\.\d{0,4})?$ */
   mounting_min_from_leaf_top_mm: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,4})?$ */
   mounting_max_from_leaf_top_mm: string;
   permitted_vertical_references: VerticalReferenceEnum[];
+  leaf_rects: HandleLeafRect[];
 }

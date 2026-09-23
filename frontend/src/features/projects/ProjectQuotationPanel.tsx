@@ -50,6 +50,61 @@ const REFERENCE_KEYS = {
   LEAF_BOTTOM: "quotation.refLeafBottom",
 } as const;
 
+/** Valid input range for the entered height under its vertical reference.
+ * The policy bounds describe the final handle coordinate measured from the
+ * leaf's top edge; the engine converts each reference into that coordinate
+ * before comparing, so the input's own range depends on the reference. */
+function heightBounds(
+  position: DocumentaryPreparationPosition,
+  requirement: HandleRequirement,
+  reference: HandleIntent["vertical_reference"],
+): [number, number] | null {
+  const rect = requirement.leaf_rects.find(
+    (entry) => entry.placement_policy_id === position.manufacturing_placement_policy_id,
+  );
+  if (!rect) return null;
+  const min = Number(requirement.mounting_min_from_leaf_top_mm);
+  const max = Number(requirement.mounting_max_from_leaf_top_mm);
+  const leafTop = Number(rect.leaf_top_from_outer_top_mm);
+  const leafHeight = Number(rect.leaf_height_mm);
+  const outerHeight = Number(requirement.outer_height_mm);
+  switch (reference) {
+    case "LEAF_TOP":
+      return [min, max];
+    case "LEAF_BOTTOM":
+      return [leafHeight - max, leafHeight - min];
+    case "OUTER_TOP":
+      return [leafTop + min, leafTop + max];
+    case "OUTER_BOTTOM":
+      return [outerHeight - leafTop - max, outerHeight - leafTop - min];
+  }
+}
+
+/** Dropping or switching the handle policy must not leave intents whose
+ * (bay, leaf, slot) no longer exists — freeze rejects extra intents — and a
+ * retained intent's reference must still be permitted by the new rule. */
+function reconciledHandlePolicy(
+  position: DocumentaryPreparationPosition,
+  policyId: string,
+): Partial<DocumentaryPreparationPosition> {
+  const requirements = position.handle_requirements.find(
+    (entry) => entry.policy_id === policyId,
+  )?.requirements;
+  if (!requirements) return { handle_requirement_policy_id: policyId };
+  const byKey = new Map(requirements.map((requirement) => [intentKey(requirement), requirement]));
+  const intents = position.handle_intents.flatMap((intent) => {
+    const requirement = byKey.get(
+      `${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}`,
+    );
+    if (!requirement) return [];
+    if (requirement.permitted_vertical_references.includes(intent.vertical_reference))
+      return [intent];
+    const [fallback] = requirement.permitted_vertical_references;
+    return fallback ? [{ ...intent, vertical_reference: fallback }] : [];
+  });
+  return { handle_requirement_policy_id: policyId, handle_intents: intents };
+}
+
 function selectedPolicy(
   options: DocumentaryPolicyOption[],
   value: string | null,
@@ -400,7 +455,7 @@ export function ProjectQuotationPanel({
               {selectedPolicy(
                 position.handle_options,
                 position.handle_requirement_policy_id,
-                (value) => updatePosition(index, { handle_requirement_policy_id: value }),
+                (value) => updatePosition(index, reconciledHandlePolicy(position, value)),
                 t("quotation.handlePolicy"),
                 busy,
                 `handle-policy-${position.position_id}`,
@@ -418,12 +473,17 @@ export function ProjectQuotationPanel({
                   <h4>{t("quotation.handleInputs")}</h4>
                   {requirementsFor(position).map((requirement) => {
                     const intent = intentFor(position, requirement);
+                    const reference =
+                      intent?.vertical_reference ?? requirement.permitted_vertical_references[0];
+                    const bounds = reference
+                      ? heightBounds(position, requirement, reference)
+                      : null;
                     const height = Number(intent?.requested_height_mm ?? "");
                     const outOfBounds =
+                      bounds !== null &&
                       intent !== undefined &&
                       intent.requested_height_mm !== "" &&
-                      (height < Number(requirement.mounting_min_from_leaf_top_mm) ||
-                        height > Number(requirement.mounting_max_from_leaf_top_mm));
+                      (height < bounds[0] || height > bounds[1]);
                     return (
                       <div className="handle-row" key={intentKey(requirement)}>
                         <div className="handle-leaf">
@@ -446,12 +506,12 @@ export function ProjectQuotationPanel({
                             id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
                             type="number"
                             inputMode="decimal"
-                            min={Number(requirement.mounting_min_from_leaf_top_mm)}
-                            max={Number(requirement.mounting_max_from_leaf_top_mm)}
-                            step={1}
+                            min={bounds?.[0]}
+                            max={bounds?.[1]}
+                            step="any"
                             disabled={busy}
                             aria-invalid={outOfBounds || undefined}
-                            placeholder={`${requirement.mounting_min_from_leaf_top_mm}–${requirement.mounting_max_from_leaf_top_mm}`}
+                            placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
                             value={intent?.requested_height_mm ?? ""}
                             onChange={(event) =>
                               updateIntent(index, requirement, {
@@ -459,11 +519,11 @@ export function ProjectQuotationPanel({
                               })
                             }
                           />
-                          <span className="handle-bounds">
-                            {t("quotation.handleBounds")}{" "}
-                            {requirement.mounting_min_from_leaf_top_mm}–
-                            {requirement.mounting_max_from_leaf_top_mm} mm
-                          </span>
+                          {bounds && (
+                            <span className="handle-bounds">
+                              {t("quotation.handleBounds")} {bounds[0]}–{bounds[1]} mm
+                            </span>
+                          )}
                         </div>
                         <div className="handle-field">
                           <label

@@ -6854,6 +6854,24 @@ components:
       - handle_domain_slot
       - requested_height_mm
       - vertical_reference
+    HandleLeafRect:
+      type: object
+      properties:
+        placement_policy_id:
+          type: string
+          format: uuid
+        leaf_top_from_outer_top_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+        leaf_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+      required:
+      - leaf_height_mm
+      - leaf_top_from_outer_top_mm
+      - placement_policy_id
     HandlePolicyRequirements:
       type: object
       properties:
@@ -6883,6 +6901,10 @@ components:
           type: string
         host_member_side:
           $ref: '#/components/schemas/HostMemberSideEnum'
+        outer_height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
         mounting_min_from_leaf_top_mm:
           type: string
           format: decimal
@@ -6895,15 +6917,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VerticalReferenceEnum'
+        leaf_rects:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandleLeafRect'
       required:
       - bay_id
       - handle_domain_slot
       - host_member_side
       - leaf_id
       - leaf_label
+      - leaf_rects
       - mounting_max_from_leaf_top_mm
       - mounting_min_from_leaf_top_mm
       - opening_type
+      - outer_height_mm
       - permitted_vertical_references
     HardwareComponent:
       type: object

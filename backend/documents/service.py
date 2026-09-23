@@ -27,9 +27,14 @@ from dekopen_engine.manufacturing import (
     HandleIntentV1,
     HandleRequirementPolicyV1,
     ManufacturingFactsV1,
+    ManufacturingPlacementPolicyV1,
     project_manufacturing_facts_v1,
 )
-from dekopen_engine.manufacturing_trace import GeometryManufacturingTraceV1
+from dekopen_engine.manufacturing_trace import (
+    GeometryManufacturingTraceV1,
+    PlacementDomain,
+    SemanticLeafTraceV1,
+)
 from dekopen_engine.models import EngineResult
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
@@ -51,6 +56,7 @@ from documents.repository import (
     DocumentaryError,
     PurchaseAuthorities,
     _handle_policy,
+    _placement_policy,
     accessory_schedule,
     decoded,
     documentary_backend,
@@ -185,9 +191,42 @@ def _missing_handle_intents(
     return False
 
 
+def _leaf_rects(
+    leaf: SemanticLeafTraceV1,
+    placement_authorities: list[tuple[str, ManufacturingPlacementPolicyV1]],
+) -> list[dict[str, object]]:
+    """Resolved leaf rectangle per placement option. The entered intent
+    height is measured from the selected vertical reference; transforming the
+    leaf-top mounting bounds into the input's own units requires the leaf's
+    position inside the outer rectangle — which only the placement policy
+    resolves for sliding leaves."""
+    rects: list[dict[str, object]] = []
+    for policy_id, policy in placement_authorities:
+        if leaf.placement_domain is PlacementDomain.DIRECT:
+            rect = leaf.direct_rect
+            if rect is None:
+                continue
+            y_mm, height_mm = rect.y_mm, rect.height_mm
+        else:
+            offset = policy.sliding_leaf_offsets.get(leaf.leaf_slot)
+            if offset is None:
+                continue
+            y_mm = leaf.reference_rect.y_mm + offset.y_mm
+            height_mm = leaf.finished_height_mm
+        rects.append(
+            {
+                "placement_policy_id": policy_id,
+                "leaf_top_from_outer_top_mm": str(y_mm),
+                "leaf_height_mm": str(height_mm),
+            }
+        )
+    return rects
+
+
 def _handle_policy_requirements(
     trace_leaves: list[dict[str, object]],
     handle_policy: HandleRequirementPolicyV1,
+    placement_authorities: list[tuple[str, ManufacturingPlacementPolicyV1]],
 ) -> list[dict[str, object]]:
     """Leaf-matched handle requirements of a policy for the preparation UI:
     the editor needs to know which (bay, leaf) pairs need an intent and the
@@ -208,6 +247,7 @@ def _handle_policy_requirements(
                     "opening_type": leaf.opening_type.value,
                     "handle_domain_slot": rule.handle_domain_slot,
                     "host_member_side": rule.host_member_side.value,
+                    "outer_height_mm": str(item["nominal_height_mm"]),
                     "mounting_min_from_leaf_top_mm": str(
                         rule.mounting_min_from_leaf_top_mm
                     ),
@@ -218,6 +258,7 @@ def _handle_policy_requirements(
                         reference.value
                         for reference in rule.permitted_vertical_references
                     ],
+                    "leaf_rects": _leaf_rects(leaf, placement_authorities),
                 }
             )
     return requirements
@@ -989,6 +1030,7 @@ def prepare_documentary_inputs(
     handles = policy_options("handle_requirement_policies")
     reinforcement = policy_options("reinforcement_cut_policies")
     handle_authorities: dict[str, HandleRequirementPolicyV1] = {}
+    placement_authorities: dict[str, ManufacturingPlacementPolicyV1] = {}
     if systems:
         placeholders = ",".join(["%s"] * len(systems))
         for value in rows(
@@ -997,6 +1039,14 @@ def prepare_documentary_inputs(
             [*systems, org_id],
         ):
             handle_authorities[str(value["id"])] = _handle_policy(value["authority"])
+        for value in rows(
+            "SELECT id,authority::text FROM public.manufacturing_placement_policies "
+            f"WHERE system_id IN ({placeholders}) AND (org_id IS NULL OR org_id=%s)",
+            [*systems, org_id],
+        ):
+            placement_authorities[str(value["id"])] = _placement_policy(
+                value["authority"]
+            )
 
     def selected(existing, key, options):
         if existing and existing[key] is not None:
@@ -1065,6 +1115,7 @@ def prepare_documentary_inputs(
                             else f"Hoja {number}"
                         ),
                         "leaf": leaf,
+                        "nominal_height_mm": trace.nominal_height_mm,
                     }
                 )
 
@@ -1139,6 +1190,11 @@ def prepare_documentary_inputs(
                         "requirements": _handle_policy_requirements(
                             trace_leaves,
                             handle_authorities[str(option["id"])],
+                            [
+                                (str(placement["id"]), placement_authorities[str(placement["id"])])
+                                for placement in placement_options
+                                if str(placement["id"]) in placement_authorities
+                            ],
                         ),
                     }
                     for option in handle_options

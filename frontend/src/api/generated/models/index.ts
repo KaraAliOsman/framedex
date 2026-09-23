@@ -102,6 +102,7 @@ export * from "./glassPolishing";
 export * from "./glassPolishingRequest";
 export * from "./handleIntent";
 export * from "./handleIntentRequest";
+export * from "./handleLeafRect";
 export * from "./handlePolicyRequirements";
 export * from "./handleRequirement";
 export * from "./hardwareComponent";
