@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(10);
+SELECT plan(11);
 
 -- Writes must not reach tenant-authenticated sessions.
 SELECT ok(
@@ -39,6 +39,10 @@ SELECT has_column(
 SELECT col_is_fk(
     'public', 'projects', ARRAY['org_id', 'client_id'],
     'projects link is org-scoped composite foreign key'
+);
+SELECT has_column_privilege(
+    'authenticated', 'public', 'projects', 'client_id', 'SELECT',
+    'tenant members can read the project client link'
 );
 SELECT policies_are(
     'public', 'clients',
