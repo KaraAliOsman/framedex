@@ -336,6 +336,44 @@ def test_replay_returns_stored_response_without_provider_or_debit(monkeypatch):
     assert debited == []
 
 
+def test_replay_decodes_jsonb_text_envelope(monkeypatch):
+    """psycopg returns unregistered jsonb as str — the replay envelope must be
+    re-parsed before matching, not crash on `.get`."""
+    stored = {
+        "capability": "nlp_command",
+        "model": "DEKOPEN Neural Core™",
+        "output": "respuesta anterior",
+        "tokens_prompt": 7,
+        "tokens_completion": 11,
+        "latency_ms": 42,
+        "credits_debited": 5,
+    }
+    audit_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "FROM public.ai_audit_logs" in sql:
+            return [
+                {
+                    "id": audit_id,
+                    "tool_name": "nlp_command",
+                    "state_hash_before": service._input_hash({"x": 1}),
+                    "output_payload": json.dumps(stored),
+                }
+            ]
+        return []
+
+    debited = _patch_env(monkeypatch, rows_impl=fake_rows)
+    out = service.invoke(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-1",
+        input_payload={"x": 1},
+    )
+    assert out == {"audit_id": str(audit_id), **stored}
+    assert debited == []
+
+
 def test_replay_with_different_payload_conflicts(monkeypatch):
     stored = {"capability": "nlp_command", "output": "otra"}
 

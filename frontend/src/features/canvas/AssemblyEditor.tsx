@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
 
@@ -52,6 +52,7 @@ import {
   splitModuleBay,
   type CouplingJson,
   type ProductJson,
+  type ProductModuleJson,
 } from "./productEditing";
 import { OPENING_OPTIONS } from "./openings";
 
@@ -66,15 +67,52 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_reinforcement_nonpositive: "assembly.issue.couplerReinforcementNonpositive",
 };
 
-function issueText(issue: ProductIssue): string {
+/** Engine failure reasons arrive as `str(error)` — member ids and field
+ * names never reach the user; each known cause maps to a readable phrase
+ * and anything unrecognized degrades to a generic sentence. */
+export const REASON_KEYS: [RegExp, TranslationKey][] = [
+  [/requires glass_thickness_mm and glass_spec/i, "assembly.reason.glassRequired"],
+  [/requires opening_type/i, "assembly.reason.openingRequired"],
+  [/requires panel_article_sku/i, "assembly.reason.panelRequired"],
+  [/requires split offset and mullion sku/i, "assembly.reason.splitMullionRequired"],
+  [/requires at least two modules/i, "assembly.reason.bowTwoModules"],
+  [/requires at least one module/i, "assembly.reason.oneModule"],
+  [/requires a top-level bay/i, "assembly.reason.doorNeedsBay"],
+  [/requires an opening type/i, "assembly.reason.openingRequired"],
+];
+
+export function issueText(
+  issue: ProductIssue,
+  modules: ProductModuleJson[],
+  couplings: CouplingJson[],
+): string {
   const key = ISSUE_KEYS[issue.code];
   let text = key ? t(key) : issue.code;
   for (const [name, value] of Object.entries(issue.params)) {
+    if (name === "reason") continue;
     text = text.replace(`{${name}}`, value);
   }
-  text = text.replace("{target}", issue.target.replace("coupling:", "").replace("module:", ""));
+  const [kind, id] = issue.target.split(":", 2);
+  const ordinal =
+    kind === "module"
+      ? modules.findIndex((item) => item.id === id)
+      : kind === "coupling"
+        ? couplings.findIndex((item) => item.id === id)
+        : -1;
+  const target =
+    ordinal >= 0
+      ? `${t(kind === "module" ? "assembly.module" : "assembly.coupling")} ${ordinal + 1}`
+      : kind === "assembly"
+        ? t("assembly.wholeAssembly")
+        : kind === "coupling"
+          ? t("assembly.coupling")
+          : t("assembly.module");
+  text = text.replace("{target}", target);
   const reason = issue.params["reason"];
-  if (reason && !text.includes(reason)) text += ` — ${reason}`;
+  if (reason && !text.includes(reason)) {
+    const matched = REASON_KEYS.find(([pattern]) => pattern.test(reason));
+    text += ` — ${matched ? t(matched[1]) : t("assembly.reason.generic")}`;
+  }
   return text;
 }
 
@@ -458,6 +496,24 @@ export function AssemblyEditor({
   const assistantSectionRef = useRef<HTMLDivElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  /** Measured on-screen position — null until the first layout pass, so the
+   * menu can flip away from viewport edges instead of overflowing them. */
+  const [contextMenuPos, setContextMenuPos] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!contextMenu) {
+      setContextMenuPos(null);
+      return;
+    }
+    const menu = contextMenuRef.current;
+    if (!menu) return;
+    const rect = menu.getBoundingClientRect();
+    setContextMenuPos({
+      left: Math.max(0, Math.min(contextMenu.x, window.innerWidth - rect.width)),
+      top: Math.max(0, Math.min(contextMenu.y, window.innerHeight - rect.height)),
+    });
+  }, [contextMenu]);
 
   useEffect(() => {
     onEvaluationChange(evaluation);
@@ -820,11 +876,13 @@ export function AssemblyEditor({
       </div>
       {contextMenu && (
         <div
+          ref={contextMenuRef}
           className="context-menu"
           role="menu"
           style={{
-            left: Math.max(0, Math.min(contextMenu.x, window.innerWidth - 240)),
-            top: Math.max(0, Math.min(contextMenu.y, window.innerHeight - 320)),
+            left: contextMenuPos?.left ?? contextMenu.x,
+            top: contextMenuPos?.top ?? contextMenu.y,
+            visibility: contextMenuPos ? "visible" : "hidden",
           }}
           onMouseDown={(event) => event.stopPropagation()}
           onContextMenu={(event) => event.preventDefault()}
@@ -928,13 +986,17 @@ export function AssemblyEditor({
                     }
                   }}
                 >
-                  {issueText(issue)}
+                  {issueText(issue, modules, couplings)}
                 </button>
                 <button
                   type="button"
                   className="issue-fix"
                   title={t("assistant.fixWith")}
-                  onClick={() => askAssistant(`${t("assistant.fixPrompt")} ${issueText(issue)}`)}
+                  onClick={() =>
+                    askAssistant(
+                      `${t("assistant.fixPrompt")} ${issueText(issue, modules, couplings)}`,
+                    )
+                  }
                 >
                   {t("assistant.fixWith")}
                 </button>

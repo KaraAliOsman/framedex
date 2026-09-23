@@ -70,6 +70,8 @@ def _replay(
         return None
     audit = found[0]
     envelope = audit["output_payload"] or {}
+    if isinstance(envelope, str):
+        envelope = json.loads(envelope)
     if (
         envelope.get("capability") != capability
         or audit["state_hash_before"] != input_hash
