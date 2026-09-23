@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
-from typing import TypeVar
+from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from django.db import connection
@@ -42,7 +42,7 @@ from dekopen_engine.purchasing import (
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
 )
-from dekopen_engine.snapshot import calculation_response
+from dekopen_engine.snapshot import calculation_hash, calculation_response, result_payload
 from engine_api.adapter import (
     evaluate_assembly_from_api,
     normalized_root_from_api,
@@ -279,6 +279,20 @@ def _same_documentary_value(left: object, right: object) -> bool:
 
 
 _GLASS_ADDITIVE_KEYS = frozenset({"glass_spec", "article_sku"})
+
+
+def _calculation_identity_hashes(
+    request: Mapping[str, object], result: EngineResult
+) -> tuple[str, str]:
+    """(current, legacy-compatible) hashes for one engine result. The legacy
+    hash drops glass_spec/article_sku so documentary inputs saved before the
+    fields existed still prove calculation identity; the current hash is what
+    gets sealed forward."""
+    payload = result_payload(result)
+    return (
+        calculation_hash(request, payload),
+        calculation_hash(request, _without_additive_glass_fields(payload)),
+    )
 
 
 def _without_additive_glass_fields(bom: object) -> object:
@@ -680,8 +694,11 @@ def freeze_revision_a(
                 "nominal_height_mm": D(str(position["height_mm"])),
                 "color": color,
             }
-            source_hash = calculation_response(calculation_request, result)["calculation_hash"]
-            if position["documentary_calculation_hash"] != source_hash:
+            source_hash, legacy_hash = _calculation_identity_hashes(
+                calculation_request, result
+            )
+            stored_identity = position["documentary_calculation_hash"]
+            if stored_identity not in (source_hash, legacy_hash):
                 raise DocumentaryError("documentary_calculation_identity_stale")
             inspections: list[tuple[str | None, InspectorResult, bool, bool]] = []
             has_failures = False
@@ -1170,12 +1187,15 @@ def prepare_documentary_inputs(
             system_id=system_id_uuid,
             org_id=org_id,
         )
-        identity_hash = calculation_response({
-            "system_id": system_id, "parametric_tree": tree,
-            "nominal_width_mm": D(str(position["width_mm"])),
-            "nominal_height_mm": D(str(position["height_mm"])), "color": color,
-        }, result)["calculation_hash"]
-        if existing and existing["calculation_hash"] != identity_hash:
+        identity_hash, legacy_hash = _calculation_identity_hashes(
+            {
+                "system_id": system_id, "parametric_tree": tree,
+                "nominal_width_mm": D(str(position["width_mm"])),
+                "nominal_height_mm": D(str(position["height_mm"])), "color": color,
+            },
+            result,
+        )
+        if existing and existing["calculation_hash"] not in (identity_hash, legacy_hash):
             existing = None
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
