@@ -10726,6 +10726,12 @@ components:
           type: string
         address:
           type: string
+        giro:
+          type: string
+          nullable: true
+        comuna:
+          type: string
+          nullable: true
         notes:
           type: string
         is_active:
@@ -10735,7 +10741,9 @@ components:
           format: date-time
       required:
       - address
+      - comuna
       - email
+      - giro
       - id
       - is_active
       - name
@@ -10764,6 +10772,12 @@ components:
           maxLength: 50
         address:
           type: string
+        giro:
+          type: string
+          maxLength: 80
+        comuna:
+          type: string
+          maxLength: 20
         notes:
           type: string
       required:
@@ -13953,6 +13967,12 @@ components:
           maxLength: 50
         address:
           type: string
+        giro:
+          type: string
+          maxLength: 80
+        comuna:
+          type: string
+          maxLength: 20
         notes:
           type: string
         expected_updated_at:
@@ -14044,6 +14064,15 @@ components:
         client_phone:
           type: string
           maxLength: 50
+        client_giro:
+          type: string
+          maxLength: 80
+        client_comuna:
+          type: string
+          maxLength: 20
+        client_address:
+          type: string
+          maxLength: 70
         client_id:
           type: string
           format: uuid
@@ -15541,6 +15570,15 @@ components:
         client_phone:
           type: string
           maxLength: 50
+        client_giro:
+          type: string
+          maxLength: 80
+        client_comuna:
+          type: string
+          maxLength: 20
+        client_address:
+          type: string
+          maxLength: 70
         client_id:
           type: string
           format: uuid
@@ -15676,6 +15714,15 @@ components:
         client_phone:
           type: string
           maxLength: 50
+        client_giro:
+          type: string
+          maxLength: 80
+        client_comuna:
+          type: string
+          maxLength: 20
+        client_address:
+          type: string
+          maxLength: 70
         client_id:
           type: string
           format: uuid
@@ -15981,9 +16028,13 @@ components:
           type: string
         razon_social:
           type: string
+        acteco:
+          type: integer
+          nullable: true
         created_at:
           type: string
       required:
+      - acteco
       - created_at
       - folio_actual
       - folio_desde
@@ -16011,10 +16062,16 @@ components:
           maxLength: 131072
         giro_emis:
           type: string
+          maxLength: 80
         dir_origen:
           type: string
+          maxLength: 70
         cmna_origen:
           type: string
+          maxLength: 20
+        acteco:
+          type: integer
+          nullable: true
       required:
       - caf_xml
     SourceKindEnum:

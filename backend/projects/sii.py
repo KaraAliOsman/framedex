@@ -19,9 +19,11 @@ import hashlib
 import json
 import os
 import re
+from datetime import timedelta, timezone as utc_timezone
 from decimal import Decimal
 from uuid import UUID
 from xml.sax.saxutils import escape
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import defusedxml.ElementTree as ET
 from cryptography.hazmat.primitives import hashes, serialization
@@ -41,11 +43,28 @@ DTE_FACTURA = 33
 _RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
 
 
+try:
+    # SII timestamps are continental-Chile wall time.
+    _SII_TZ = ZoneInfo("America/Santiago")
+except ZoneInfoNotFoundError:  # pragma: no cover - container without tzdata
+    _SII_TZ = utc_timezone(timedelta(hours=-3))
+
+
+def _rut_dv(body: str) -> str:
+    """Modulo-11 verifier digit of a RUT body ('76123456' → '0')."""
+    total = sum(int(digit) * (2 + index % 6) for index, digit in enumerate(reversed(body)))
+    dv = 11 - total % 11
+    return "0" if dv == 11 else "K" if dv == 10 else str(dv)
+
+
 def _rut_normalize(raw) -> str | None:
-    """'12.345.678-k' → '12345678-K'; None when the value is not a RUT."""
+    """'12.345.678-k' → '12345678-K'; None when the shape or the verifier
+    digit is wrong — a shape-valid bad RUT must never enter a sealed DTE."""
     compact = re.sub(r"[.\-\s]", "", str(raw or "")).upper()
     match = _RUT_COMPACT.match(compact)
-    return f"{match.group(1)}-{match.group(2)}" if match else None
+    if match is None or _rut_dv(match.group(1)) != match.group(2):
+        return None
+    return f"{match.group(1)}-{match.group(2)}"
 
 
 def _sha256(content: bytes) -> str:
@@ -118,7 +137,12 @@ def _parse_caf(xml_text: str) -> dict:
 
 def _caf_private_key(rsask: str):
     """SII ships RSASK as base64 DER PKCS#1; PEM/base64 fallbacks tolerated."""
-    blob = base64.b64decode(rsask, validate=True)
+    try:
+        blob = base64.b64decode(rsask, validate=True)
+    except Exception as error:
+        raise contract_error(
+            422, "sii_caf_key_invalid", "La llave RSASK del CAF no es RSA válida."
+        ) from error
     loaders = (
         lambda: serialization.load_der_private_key(blob, password=None),
         lambda: serialization.load_pem_private_key(blob, password=None),
@@ -231,6 +255,7 @@ def _caf_public(row) -> dict:
         "remaining": hasta - actual,
         "rut_emisor": row["rut_emisor"],
         "razon_social": row["razon_social"],
+        "acteco": row["acteco"],
         "created_at": row["created_at"].isoformat()
         if hasattr(row["created_at"], "isoformat")
         else row["created_at"],
@@ -269,6 +294,7 @@ def register_caf(
     giro_emis: str | None = None,
     dir_origen: str | None = None,
     cmna_origen: str | None = None,
+    acteco: int | None = None,
 ) -> dict:
     """Register a CAF uploaded by the tenant. The CAF's own RUT/razón social
     are the emisor identity — the org's tax_id only guards a real-RUT
@@ -313,9 +339,9 @@ def register_caf(
         row = one(
             "INSERT INTO public.sii_cafs("
             "org_id,tipo_dte,folio_desde,folio_hasta,folio_actual,rut_emisor,"
-            "razon_social,giro_emis,dir_origen,cmna_origen,caf_xml,rsask,"
+            "razon_social,giro_emis,dir_origen,cmna_origen,acteco,caf_xml,rsask,"
             "rsapk_m,rsapk_e,file_sha256,uploaded_by) "
-            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
+            "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *",
             [
                 org_id_s,
                 parsed["tipo_dte"],
@@ -327,6 +353,7 @@ def register_caf(
                 (giro_emis or "").strip() or None,
                 (dir_origen or "").strip() or None,
                 (cmna_origen or "").strip() or None,
+                acteco,
                 parsed["caf_xml"],
                 _wrap_rsask(parsed["rsask"]),
                 parsed["rsapk_m"],
@@ -375,30 +402,57 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
             "sii_receptor_missing",
             "La factura no tiene un RUT de receptor válido para timbrar.",
         )
+    # A DTE-33 is rejected by the SII schema without the emisor's activity
+    # code + business address and the receptor's trade, address and commune —
+    # refuse the folio before one is ever allocated on an incomplete input.
+    if not all(
+        caf.get(key)
+        for key in ("giro_emis", "dir_origen", "cmna_origen", "acteco")
+    ):
+        raise contract_error(
+            422,
+            "sii_emisor_incomplete",
+            "El CAF no trae giro, dirección, comuna ni acteco del emisor.",
+        )
+    receptor_fields = ("client_giro", "client_comuna", "client_address")
+    if not all(str(project.get(key) or "").strip() for key in receptor_fields):
+        raise contract_error(
+            422,
+            "sii_receptor_incomplete",
+            "Faltan giro, comuna y dirección del receptor para timbrar.",
+        )
     receptor_name = str(project.get("client_name") or "Cliente").strip()
     revision = payload.get("revision_code") or "REV-A"
     positions = payload.get("positions") or []
     # The DD is ISO-8859-1 — a plain hyphen, not an em-dash.
     item = f"Según cotización {revision} - {len(positions)} posición(es)"
-    fecha = issued_at.date().isoformat()
-    emisor_extra = ""
-    for tag, value in (
-        ("GiroEmis", caf.get("giro_emis")),
-        ("DirOrigen", caf.get("dir_origen")),
-        ("CmnaOrigen", caf.get("cmna_origen")),
-    ):
-        if value:
-            emisor_extra += f"<{tag}>{escape(str(value))}</{tag}>"
-    dir_recep = ""
-    if project.get("delivery_address"):
-        dir_recep = f"<DirRecep>{escape(str(project['delivery_address']))}</DirRecep>"
+    local = issued_at.astimezone(_SII_TZ)
+    fecha = local.date().isoformat()
+    tsted = local.strftime("%Y-%m-%dT%H:%M:%S")
+    emisor_extra = "".join(
+        f"<{tag}>{escape(str(caf[key]))}</{tag}>"
+        for tag, key in (
+            ("GiroEmis", "giro_emis"),
+            ("Acteco", "acteco"),
+            ("DirOrigen", "dir_origen"),
+            ("CmnaOrigen", "cmna_origen"),
+        )
+    )
+    receptor_extra = "".join(
+        f"<{tag}>{escape(str(project[key]).strip())}</{tag}>"
+        for tag, key in (
+            ("GiroRecep", "client_giro"),
+            ("DirRecep", "client_address"),
+            ("CmnaRecep", "client_comuna"),
+        )
+    )
 
     # The DD is signed as serialized — build it once, byte-exact.
     dd = (
         f"<DD><RE>{caf['rut_emisor']}</RE><TD>{DTE_FACTURA}</TD><F>{folio}</F>"
         f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name)}</RSR>"
         f"<MNT>{total}</MNT><IT1>{escape(item)}</IT1>{caf['caf_xml']}"
-        f"<TSTED>{issued_at.isoformat()}</TSTED></DD>"
+        f"<TSTED>{tsted}</TSTED></DD>"
     )
     frmt = _sign_dd(dd, caf["rsask"])
     return (
@@ -409,7 +463,7 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
         f"<Emisor><RUTEmisor>{caf['rut_emisor']}</RUTEmisor>"
         f"<RznSoc>{escape(caf['razon_social'])}</RznSoc>{emisor_extra}</Emisor>"
         f"<Receptor><RUTRecep>{receptor}</RUTRecep>"
-        f"<RznSocRecep>{escape(receptor_name)}</RznSocRecep>{dir_recep}</Receptor>"
+        f"<RznSocRecep>{escape(receptor_name)}</RznSocRecep>{receptor_extra}</Receptor>"
         f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
         f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales></Encabezado>"
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
@@ -619,13 +673,9 @@ def _purge_unreferenced_dte(*, org_id: UUID, object_key: str) -> None:
 def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
     """invoice_id → light DTE badge for the cobranza invoice listing."""
     return {
-        str(row["invoice_id"]): {
-            "id": str(row["id"]),
-            "dte_type": int(row["dte_type"]),
-            "folio": int(row["folio"]),
-        }
+        str(row["invoice_id"]): _dte_public(row)
         for row in rows(
-            "SELECT id, invoice_id, dte_type, folio FROM public.project_dtes "
+            "SELECT * FROM public.project_dtes "
             "WHERE org_id=%s AND project_id=%s",
             [str(org_id), str(project_id)],
         )

@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(17);
 
 SELECT has_table('public', 'sii_cafs', 'sii_cafs exists');
 SELECT has_table('public', 'project_dtes', 'project_dtes exists');
@@ -66,6 +66,12 @@ SELECT ok(
      WHERE oid = 'public.sii_cafs'::regclass),
     'row level security is enabled on both tables'
 );
+
+SELECT has_column('public', 'sii_cafs', 'acteco', 'caf carries the emisor Acteco');
+SELECT has_column('public', 'projects', 'client_giro', 'project carries receptor trade');
+SELECT has_column('public', 'projects', 'client_comuna', 'project carries receptor commune');
+SELECT has_column('public', 'projects', 'client_address', 'project carries receptor legal address');
+SELECT has_column('public', 'clients', 'giro', 'client registry carries giro');
 
 SELECT * FROM finish();
 ROLLBACK;

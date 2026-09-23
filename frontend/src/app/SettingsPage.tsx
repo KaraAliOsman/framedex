@@ -186,10 +186,23 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
     const file = input?.files?.[0];
     if (!file) return;
     const cafXml = await file.text();
+    const form = event.target as HTMLFormElement;
+    const field = (name: string) =>
+      (form.elements.namedItem(name) as HTMLInputElement | null)?.value.trim() ?? "";
+    const actecoRaw = field("acteco");
     setBusy(true);
     setMessage(null);
     try {
-      const response = await siiCafRegister({ caf_xml: cafXml }, requestOptions);
+      const response = await siiCafRegister(
+        {
+          caf_xml: cafXml,
+          giro_emis: field("giro_emis"),
+          dir_origen: field("dir_origen"),
+          cmna_origen: field("cmna_origen"),
+          acteco: actecoRaw ? Number(actecoRaw) : null,
+        },
+        requestOptions,
+      );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (input) input.value = "";
       setMessage({ text: t("settings.siiCafUploaded"), error: false });
@@ -233,6 +246,22 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
         <label>
           {t("settings.siiCafFile")}
           <input type="file" accept=".xml,text/xml" required />
+        </label>
+        <label>
+          {t("settings.siiGiro")}
+          <input name="giro_emis" maxLength={80} required />
+        </label>
+        <label>
+          {t("settings.siiAddress")}
+          <input name="dir_origen" maxLength={70} required />
+        </label>
+        <label>
+          {t("settings.siiComuna")}
+          <input name="cmna_origen" maxLength={20} required />
+        </label>
+        <label>
+          {t("settings.siiActeco")}
+          <input name="acteco" type="number" min={1} required />
         </label>
         <div className="payments-form-actions">
           <button type="submit" className="primary-action" disabled={busy}>

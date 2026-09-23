@@ -592,6 +592,7 @@ class SiiCafsView(APIView):
                     giro_emis=data.get("giro_emis"),
                     dir_origen=data.get("dir_origen"),
                     cmna_origen=data.get("cmna_origen"),
+                    acteco=data.get("acteco"),
                 ),
                 status=201,
             )
