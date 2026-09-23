@@ -83,6 +83,7 @@ beforeEach(() => {
     status: 200,
     data: {
       glass_skus: ["4-12-4 Float Incoloro"],
+      glass_specs: [{ sku: "4-12-4 Float Incoloro", spec: "4-12-4" }],
       glazing_thicknesses: ["20.00"],
     },
   } as never);
@@ -127,8 +128,9 @@ it("expands to list imports and confirms marked candidates into positions", asyn
   expect(items[0]).toMatchObject({
     key: "r1",
     system_id: "sys-1",
-    glass_spec: "20.00",
     glass_article_sku: "4-12-4 Float Incoloro",
   });
+  // No glass_spec on the wire — the purchase mapping resolves it server-side.
+  expect(items[0]).not.toHaveProperty("glass_spec");
   await screen.findByText(t("projects.importsConfirmed").replace("{count}", "1"));
 });

@@ -30,11 +30,8 @@ export interface ConfirmItemRequest {
   color: WhiteColorEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   glass_thickness_mm: string;
-  /**
-   * @minLength 1
-   * @maxLength 120
-   */
-  glass_spec: string;
+  /** @maxLength 120 */
+  glass_spec?: string;
   /**
    * @minLength 1
    * @maxLength 120

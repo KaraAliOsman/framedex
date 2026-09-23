@@ -233,6 +233,13 @@ const messages = {
   "projects.importsWarnCapped":
     "El documento tenía más de 200 posiciones; se conservaron las primeras 200 para revisión.",
   "projects.importsErrorItemUnknown": "La fila no corresponde a un candidato del documento.",
+  "projects.importsErrorProjectClosed":
+    "El proyecto quedó cerrado para edición antes de la extracción; no se cobró la lectura.",
+  "projects.importsErrorGlassUnknown":
+    "El SKU de vidrio no existe en las equivalencias del sistema elegido.",
+  "projects.importsErrorGlassSpec":
+    "El artículo de vidrio no declara composición; indícala en la revisión.",
+  "projects.importsGlassSpecManual": "Composición del vidrio",
   "projects.importsErrorPanelRequired": "Las puertas requieren seleccionar un panel.",
   "projects.importsErrorSave":
     "La posición no pudo guardarse; revisa las medidas y el sistema elegido.",

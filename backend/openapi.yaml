@@ -9380,7 +9380,6 @@ components:
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         glass_spec:
           type: string
-          minLength: 1
           maxLength: 120
         glass_article_sku:
           type: string
@@ -9393,7 +9392,6 @@ components:
       required:
       - color
       - glass_article_sku
-      - glass_spec
       - glass_thickness_mm
       - height_mm
       - key
@@ -9747,6 +9745,10 @@ components:
           type: array
           items:
             type: string
+        glass_specs:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassSpecChoice'
         colors:
           type: array
           items:
@@ -9779,6 +9781,7 @@ components:
       - coupler_skus
       - depth_mm
       - glass_skus
+      - glass_specs
       - glazing_beads
       - glazing_thicknesses
       - hardware_kits
@@ -10676,6 +10679,17 @@ components:
       required:
       - bay_id
       - edges
+    GlassSpecChoice:
+      type: object
+      properties:
+        sku:
+          type: string
+        spec:
+          type: string
+          nullable: true
+      required:
+      - sku
+      - spec
     GlazingBeadChoice:
       type: object
       properties:

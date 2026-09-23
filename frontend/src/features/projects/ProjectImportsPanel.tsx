@@ -60,6 +60,9 @@ const WARNING_LABEL: Record<string, TranslationKey> = {
 };
 const ITEM_ERROR_LABEL: Record<string, TranslationKey> = {
   import_item_unknown: "projects.importsErrorItemUnknown",
+  import_project_closed: "projects.importsErrorProjectClosed",
+  glass_article_unknown: "projects.importsErrorGlassUnknown",
+  glass_spec_required: "projects.importsErrorGlassSpec",
   panel_article_required: "projects.importsErrorPanelRequired",
   save_failed: "projects.importsErrorSave",
 };
@@ -110,6 +113,7 @@ export function ProjectImportsPanel({
   const [rows, setRows] = useState<EditableRow[]>([]);
   const [systemId, setSystemId] = useState("");
   const [glassSpec, setGlassSpec] = useState("");
+  const [manualSpec, setManualSpec] = useState("");
   const [glassThickness, setGlassThickness] = useState("");
   const [panelSku, setPanelSku] = useState("");
   const [reviewDirty, setReviewDirty] = useState(false);
@@ -202,6 +206,12 @@ export function ProjectImportsPanel({
     if (!panelSku && panel) setPanelSku(panel);
   }, [options.data, glassSpec, glassThickness, panelSku]);
 
+  // The catalog mapping declares the recipe for known SKUs; when the chosen
+  // article carries none, the reviewer supplies the composition it lacks.
+  const specNeeded =
+    !!options.data &&
+    options.data.glass_specs.some((entry) => entry.sku === glassSpec && !entry.spec);
+
   function startReview(entry: ImportResponse): void {
     setReviewId(entry.id);
     setItemErrors([]);
@@ -259,10 +269,11 @@ export function ProjectImportsPanel({
         system_id: systemId,
         color: "WHITE",
         glass_thickness_mm: glassThickness,
-        // Same authority pair a normal save carries: the slot thickness is
-        // the physical (monolithic) spec, the catalog SKU is the article.
-        glass_spec: glassThickness,
+        // The SKU is enough — the purchase mapping's recipe resolves the
+        // physical spec server-side; only a spec-less mapping asks the
+        // reviewer for the composition it lacks.
         glass_article_sku: glassSpec,
+        ...(specNeeded ? { glass_spec: manualSpec } : {}),
         ...(row.opening_type === "DOOR_ENTRY" ? { panel_article_sku: panelSku } : {}),
       }));
     const glassValid =
@@ -271,7 +282,15 @@ export function ProjectImportsPanel({
       options.data.glazing_thicknesses.includes(glassThickness);
     const panelValid =
       !hasDoors || (!!options.data && (options.data.panel_skus ?? []).includes(panelSku));
-    if (!items.length || !systemId || !glassSpec || !glassThickness || !glassValid || !panelValid) {
+    if (
+      !items.length ||
+      !systemId ||
+      !glassSpec ||
+      !glassThickness ||
+      !glassValid ||
+      !panelValid ||
+      (specNeeded && !manualSpec.trim())
+    ) {
       setMessage(t("projects.importsConfirmMissing"));
       return;
     }
@@ -423,13 +442,23 @@ export function ProjectImportsPanel({
             <label>
               {t("projects.importsGlass")}
               <select value={glassSpec} onChange={(event) => setGlassSpec(event.target.value)}>
-                {(options.data?.glass_skus ?? []).map((sku) => (
-                  <option key={sku} value={sku}>
-                    {sku}
+                {(options.data?.glass_specs ?? []).map((entry) => (
+                  <option key={entry.sku} value={entry.sku}>
+                    {entry.spec ? `${entry.sku} — ${entry.spec}` : entry.sku}
                   </option>
                 ))}
               </select>
             </label>
+            {specNeeded && (
+              <label>
+                {t("projects.importsGlassSpecManual")}
+                <input
+                  value={manualSpec}
+                  onChange={(event) => setManualSpec(event.target.value)}
+                  placeholder="4-16-4"
+                />
+              </label>
+            )}
             <label>
               {t("projects.importsThickness")}
               <select

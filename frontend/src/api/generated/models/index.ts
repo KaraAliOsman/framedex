@@ -133,6 +133,7 @@ export * from "./freezeResponse";
 export * from "./glassPiece";
 export * from "./glassPolishing";
 export * from "./glassPolishingRequest";
+export * from "./glassSpecChoice";
 export * from "./glazingBeadChoice";
 export * from "./handleIntent";
 export * from "./handleIntentRequest";

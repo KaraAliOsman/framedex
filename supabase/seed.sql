@@ -494,10 +494,10 @@ WHERE system.code='DEMO_60' AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id,system_id,org_id,technical_sku,purchasing_sku,manufacturer_name,purchase_unit,version,provenance)
+ (id,system_id,org_id,technical_sku,purchasing_sku,manufacturer_name,purchase_unit,version,provenance,glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/glass/DEMO_60/GLASS-BASE/V1'),
  system.id,NULL,'GLASS-BASE','DEMO-GLASS-FINISHED-UNIT','DEMO_60 SYNTHETIC FIXTURE','EA',1,
- '{"source":"DEMO_60 SYNTHETIC FIXTURE","certified":"false"}'::jsonb
+ '{"source":"DEMO_60 SYNTHETIC FIXTURE","certified":"false"}'::jsonb,'4 Float Incoloro'
 FROM public.profile_systems system
 WHERE system.code='DEMO_60' AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
@@ -823,18 +823,18 @@ WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND kit.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_65/DVH-24/V1'), s.id, NULL,
  'DVH-24', 'TEST-BUY-DVH-24', 'SYNTHETIC TEST DATA', 'EA', 1,
- '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-16-4'
 FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_65/MONO-5/V1'), s.id, NULL,
  'MONO-5', 'TEST-BUY-MONO-5', 'SYNTHETIC TEST DATA', 'EA', 1,
- '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '5'
 FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
@@ -859,26 +859,26 @@ WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND kit.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/DVH-28/V1'), s.id, NULL,
  'DVH-28', 'TEST-BUY-DVH-28', 'SYNTHETIC TEST DATA', 'EA', 1,
- '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-20-4'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/DVH-32/V1'), s.id, NULL,
  'DVH-32', 'TEST-BUY-DVH-32', 'SYNTHETIC TEST DATA', 'EA', 1,
- '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-24-4'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/MONO-8/V1'), s.id, NULL,
  'MONO-8', 'TEST-BUY-MONO-8', 'SYNTHETIC TEST DATA', 'EA', 1,
- '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '8'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
