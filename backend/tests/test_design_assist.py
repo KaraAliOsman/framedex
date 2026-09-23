@@ -155,7 +155,7 @@ def test_ranges_and_enums_enforced(monkeypatch):
         user_id=uuid4(),
         position=_position(),
         product=_product(),
-        prompt="todo al límite: 99 módulos de 1200 mm",
+        prompt="todo al límite: 99 módulos de 1200 mm y ángulo 120",
         system_id=uuid4(),
         operation_key="assist-5",
     )
@@ -343,7 +343,7 @@ def test_thickness_must_match_a_glazing_bead_rule(monkeypatch):
         user_id=uuid4(),
         position=_position(),
         product=_product(),
-        prompt="espesores",
+        prompt="vidrios de 24 mm y de 9 mm",
         system_id=uuid4(),
         operation_key="assist-12",
     )
@@ -396,6 +396,8 @@ def test_undeclared_dimensions_are_rejected_not_invented(monkeypatch):
                 {"op": "set_total_width", "width_mm": 2400},
                 {"op": "set_height", "height_mm": 1500},
                 {"op": "set_module_count", "count": 5},
+                {"op": "set_coupling_angle", "coupling": 0, "angle_deg": 30},
+                {"op": "set_glass_thickness", "module": 0, "mm": "4"},
                 {"op": "equalize_widths"},
             ]
         },
@@ -414,6 +416,8 @@ def test_undeclared_dimensions_are_rejected_not_invented(monkeypatch):
         "ancho_no_declarado",
         "alto_no_declarado",
         "cantidad_no_declarada",
+        "angulo_no_declarado",
+        "espesor_no_declarado",
     ]
 
 

@@ -310,7 +310,9 @@ def _validate_ops(
         elif name == "equalize_angles":
             accepted.append({"op": name})
         elif name == "set_coupling_angle":
-            if coupling_index(item.get("coupling")) and _in_range(
+            if _number(item.get("angle_deg")) not in declared:
+                rejected.append(reject(item, "angulo_no_declarado"))
+            elif coupling_index(item.get("coupling")) and _in_range(
                 item.get("angle_deg"), Decimal("-90"), Decimal("90")
             ):
                 accepted.append(
@@ -334,7 +336,9 @@ def _validate_ops(
             else:
                 rejected.append(reject(item, "apertura_invalida"))
         elif name == "set_glass_thickness":
-            if (
+            if _number(item.get("mm")) not in declared:
+                rejected.append(reject(item, "espesor_no_declarado"))
+            elif (
                 module_index(item.get("module"))
                 and _number(item.get("mm")) in catalog["thicknesses"]
             ):
