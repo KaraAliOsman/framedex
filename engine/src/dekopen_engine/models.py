@@ -111,8 +111,12 @@ class EffectiveProfileArticle(EngineModel):
     role: ProfileRole
     material: MaterialType
     face_width_mm: Decimal
-    welding_loss_mm: Decimal
-    reinforcement_gap_mm: Decimal
+    # UNKNOWN (None) is a first-class state — a catalog that never stated a
+    # welding loss or reinforcement gap must not gain an invented one; the
+    # consumers that need it (PVC weld math, steel reinforcement cuts) raise
+    # honestly when it is exercised.
+    welding_loss_mm: Decimal | None
+    reinforcement_gap_mm: Decimal | None
     weight_kg_m: Decimal | None
     steel_weight_kg_m: Decimal | None
     reinforcement_sku: str | None = None

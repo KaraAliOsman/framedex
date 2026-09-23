@@ -103,9 +103,13 @@ def demo_60_params() -> SystemParams:
             ProfileRole.MULLION_V: mullion_v,
             ProfileRole.MULLION_H: mullion_h,
             ProfileRole.THRESHOLD: EffectiveProfileArticle(
-                sku="UMBRAL-ALU", role=ProfileRole.THRESHOLD, material=MaterialType.ALUMINIUM,
-                face_width_mm=d("30.00"), welding_loss_mm=d("0.00"),
-                reinforcement_gap_mm=d("0.00"), weight_kg_m=d("1.2000"),
+                sku="UMBRAL-ALU",
+                role=ProfileRole.THRESHOLD,
+                material=MaterialType.ALUMINIUM,
+                face_width_mm=d("30.00"),
+                welding_loss_mm=d("0.00"),
+                reinforcement_gap_mm=d("0.00"),
+                weight_kg_m=d("1.2000"),
                 steel_weight_kg_m=d("1.7000"),
             ),
         },
@@ -174,8 +178,11 @@ def demo_60_params() -> SystemParams:
         available_hardware_kits=demo_hardware_kits(),
         available_panel_rules={
             "PANEL-SANDWICH-DEMO-24": PanelRule(
-                sku="PANEL-SANDWICH-DEMO-24", name="Panel Sándwich Demo 24mm",
-                kind="SANDWICH_PANEL", thickness_mm=d("24.00"), weight_kg_m2=d("10.0000"),
+                sku="PANEL-SANDWICH-DEMO-24",
+                name="Panel Sándwich Demo 24mm",
+                kind="SANDWICH_PANEL",
+                thickness_mm=d("24.00"),
+                weight_kg_m2=d("10.0000"),
             ),
         },
     )
@@ -185,47 +192,175 @@ def demo_hardware_kits() -> list[HardwareKitRule]:
     """Approved synthetic fixtures. New ranges are not manufacturer specifications."""
     rows = [
         ("KIT-TURN", "Kit Practicable Demo 60", "TURN", "400", "1200", "500", "2400", "80", 0, 0),
-        ("KIT-TILT-TURN", "Kit Vorne OB 100kg", "TILT_TURN", "450", "1400", "600", "2400", "100", 0, 1),
-        ("KIT-SLIDING", "Kit Corredera Demo 60", "SLIDING", "400", "1500", "500", "2500", "120", 2, 0),
-        ("KIT-AWNING-16", 'Kit Proyectante Compás 16" 45kg', "AWNING", "400", "1200", "400", "1000", "45", 0, 2),
-        ("KIT-DOOR-MULTIPOINT", "Kit Puerta Entrada Multipunto Demo 60", "DOOR", "700", "1200", "1800", "2400", "120", 0, 0),
+        (
+            "KIT-TILT-TURN",
+            "Kit Vorne OB 100kg",
+            "TILT_TURN",
+            "450",
+            "1400",
+            "600",
+            "2400",
+            "100",
+            0,
+            1,
+        ),
+        (
+            "KIT-SLIDING",
+            "Kit Corredera Demo 60",
+            "SLIDING",
+            "400",
+            "1500",
+            "500",
+            "2500",
+            "120",
+            2,
+            0,
+        ),
+        (
+            "KIT-AWNING-16",
+            'Kit Proyectante Compás 16" 45kg',
+            "AWNING",
+            "400",
+            "1200",
+            "400",
+            "1000",
+            "45",
+            0,
+            2,
+        ),
+        (
+            "KIT-DOOR-MULTIPOINT",
+            "Kit Puerta Entrada Multipunto Demo 60",
+            "DOOR",
+            "700",
+            "1200",
+            "1800",
+            "2400",
+            "120",
+            0,
+            0,
+        ),
     ]
     contents = {
-        "KIT-AWNING-16": [HardwareComponent(
-            sku="DEMO-STAY-16", name='Compás a fricción 16"', qty=d("2"), unit="unit",
-        )],
-        "KIT-DOOR-MULTIPOINT": [HardwareComponent(
-            sku="DEMO-LOCK-MULTIPOINT", name="Cerradura multipunto Demo", qty=d("1"), unit="unit",
-        )],
+        "KIT-AWNING-16": [
+            HardwareComponent(
+                sku="DEMO-STAY-16",
+                name='Compás a fricción 16"',
+                qty=d("2"),
+                unit="unit",
+            )
+        ],
+        "KIT-DOOR-MULTIPOINT": [
+            HardwareComponent(
+                sku="DEMO-LOCK-MULTIPOINT",
+                name="Cerradura multipunto Demo",
+                qty=d("1"),
+                unit="unit",
+            )
+        ],
     }
-    return [HardwareKitRule(
-        sku=sku, name=name, opening_type=opening, min_leaf_width_mm=d(min_w),
-        max_leaf_width_mm=d(max_w), min_leaf_height_mm=d(min_h), max_leaf_height_mm=d(max_h),
-        max_leaf_weight_kg=d(max_kg), rail_type=RailType.DUAL,
-        carriages_qty=carriages, stay_arms_qty=stays, weight_kg=d("2.50"),
-        contents=contents.get(sku, []),
-    ) for sku, name, opening, min_w, max_w, min_h, max_h, max_kg, carriages, stays in rows]
+    return [
+        HardwareKitRule(
+            sku=sku,
+            name=name,
+            opening_type=opening,
+            min_leaf_width_mm=d(min_w),
+            max_leaf_width_mm=d(max_w),
+            min_leaf_height_mm=d(min_h),
+            max_leaf_height_mm=d(max_h),
+            max_leaf_weight_kg=d(max_kg),
+            rail_type=RailType.DUAL,
+            carriages_qty=carriages,
+            stay_arms_qty=stays,
+            weight_kg=d("2.50"),
+            contents=contents.get(sku, []),
+        )
+        for sku, name, opening, min_w, max_w, min_h, max_h, max_kg, carriages, stays in rows
+    ]
 
 
 def alu_65_params() -> SystemParams:
     """ALU_65 test catalog — mechanically jointed aluminium. Synthetic fixtures."""
 
     def _alu(
-        *, sku: str, role: ProfileRole, face_width_mm: str, weight_kg_m: str = "1.4000",
+        *,
+        sku: str,
+        role: ProfileRole,
+        face_width_mm: str,
+        weight_kg_m: str = "1.4000",
     ) -> EffectiveProfileArticle:
         return EffectiveProfileArticle(
-            sku=sku, role=role, material=MaterialType.ALUMINIUM,
-            face_width_mm=d(face_width_mm), welding_loss_mm=d("0.00"),
-            reinforcement_gap_mm=d("0.00"), weight_kg_m=d(weight_kg_m),
+            sku=sku,
+            role=role,
+            material=MaterialType.ALUMINIUM,
+            face_width_mm=d(face_width_mm),
+            welding_loss_mm=d("0.00"),
+            reinforcement_gap_mm=d("0.00"),
+            weight_kg_m=d(weight_kg_m),
             steel_weight_kg_m=d("0.0000"),
         )
 
     kits = [
-        ("KIT-A-TURN", "Kit practicable Alumio 65", "TURN", "400", "1100", "500", "2200", "60", 0, 0),
-        ("KIT-A-TILT-TURN", "Kit oscilobatiente Alumio 65", "TILT_TURN", "450", "1300", "600", "2200", "90", 0, 1),
-        ("KIT-A-SLIDING", "Kit corredera Alumio 65", "SLIDING", "500", "1800", "600", "2400", "100", 2, 0),
-        ("KIT-A-AWNING", "Kit proyectante Alumio 65", "AWNING", "450", "1400", "400", "1200", "50", 0, 2),
-        ("KIT-A-DOOR", "Kit puerta multipunto Alumio 65", "DOOR", "750", "1200", "1900", "2400", "90", 0, 0),
+        (
+            "KIT-A-TURN",
+            "Kit practicable Aluminio 65",
+            "TURN",
+            "400",
+            "1100",
+            "500",
+            "2200",
+            "60",
+            0,
+            0,
+        ),
+        (
+            "KIT-A-TILT-TURN",
+            "Kit oscilobatiente Aluminio 65",
+            "TILT_TURN",
+            "450",
+            "1300",
+            "600",
+            "2200",
+            "90",
+            0,
+            1,
+        ),
+        (
+            "KIT-A-SLIDING",
+            "Kit corredera Aluminio 65",
+            "SLIDING",
+            "500",
+            "1800",
+            "600",
+            "2400",
+            "100",
+            2,
+            0,
+        ),
+        (
+            "KIT-A-AWNING",
+            "Kit proyectante Aluminio 65",
+            "AWNING",
+            "450",
+            "1400",
+            "400",
+            "1200",
+            "50",
+            0,
+            2,
+        ),
+        (
+            "KIT-A-DOOR",
+            "Kit puerta multipunto Aluminio 65",
+            "DOOR",
+            "750",
+            "1200",
+            "1900",
+            "2400",
+            "90",
+            0,
+            0,
+        ),
     ]
     return SystemParams(
         system_code="ALU_65",
@@ -233,17 +368,41 @@ def alu_65_params() -> SystemParams:
         material=MaterialType.ALUMINIUM,
         effective_profile_articles={
             ProfileRole.FRAME: _alu(sku="MARCO-A", role=ProfileRole.FRAME, face_width_mm="55.00"),
-            ProfileRole.SASH: _alu(sku="HOJA-A", role=ProfileRole.SASH, face_width_mm="62.00", weight_kg_m="1.5500"),
-            ProfileRole.MULLION_V: _alu(sku="POSTE-A-V", role=ProfileRole.MULLION_V, face_width_mm="70.00", weight_kg_m="1.7000"),
-            ProfileRole.MULLION_H: _alu(sku="POSTE-A-H", role=ProfileRole.MULLION_H, face_width_mm="70.00", weight_kg_m="1.7000"),
-            ProfileRole.THRESHOLD: _alu(sku="UMBRAL-A", role=ProfileRole.THRESHOLD, face_width_mm="28.00", weight_kg_m="0.9000"),
+            ProfileRole.SASH: _alu(
+                sku="HOJA-A", role=ProfileRole.SASH, face_width_mm="62.00", weight_kg_m="1.5500"
+            ),
+            ProfileRole.MULLION_V: _alu(
+                sku="POSTE-A-V",
+                role=ProfileRole.MULLION_V,
+                face_width_mm="70.00",
+                weight_kg_m="1.7000",
+            ),
+            ProfileRole.MULLION_H: _alu(
+                sku="POSTE-A-H",
+                role=ProfileRole.MULLION_H,
+                face_width_mm="70.00",
+                weight_kg_m="1.7000",
+            ),
+            ProfileRole.THRESHOLD: _alu(
+                sku="UMBRAL-A",
+                role=ProfileRole.THRESHOLD,
+                face_width_mm="28.00",
+                weight_kg_m="0.9000",
+            ),
         },
         glazing_bead_rules={
             d("24.00"): GlazingBeadRule(
                 glass_thickness_mm=d("24.00"),
-                bead_article=_alu(sku="JQ-A-8", role=ProfileRole.GLAZING_BEAD, face_width_mm="8.00", weight_kg_m="0.2000"),
-                bead_width_mm=d("8.00"), gasket_interior_mm=d("3.50"),
-                gasket_exterior_mm=d("3.50"), cut_add_mm=d("7.00"),
+                bead_article=_alu(
+                    sku="JQ-A-8",
+                    role=ProfileRole.GLAZING_BEAD,
+                    face_width_mm="8.00",
+                    weight_kg_m="0.2000",
+                ),
+                bead_width_mm=d("8.00"),
+                gasket_interior_mm=d("3.50"),
+                gasket_exterior_mm=d("3.50"),
+                cut_add_mm=d("7.00"),
             ),
         },
         rebate_depth_mm=d("20.00"),
@@ -266,10 +425,21 @@ def alu_65_params() -> SystemParams:
         sliding_glazing_deduction_width_mm=d("15.00"),
         sliding_glazing_deduction_height_mm=d("15.00"),
         door_leaf_side_clearance_mm=d("5.00"),
-        available_hardware_kits=[HardwareKitRule(
-            sku=sku, name=name, opening_type=opening, min_leaf_width_mm=d(min_w),
-            max_leaf_width_mm=d(max_w), min_leaf_height_mm=d(min_h), max_leaf_height_mm=d(max_h),
-            max_leaf_weight_kg=d(max_kg), rail_type=RailType.DUAL,
-            carriages_qty=carriages, stay_arms_qty=stays, weight_kg=d("2.50"),
-        ) for sku, name, opening, min_w, max_w, min_h, max_h, max_kg, carriages, stays in kits],
+        available_hardware_kits=[
+            HardwareKitRule(
+                sku=sku,
+                name=name,
+                opening_type=opening,
+                min_leaf_width_mm=d(min_w),
+                max_leaf_width_mm=d(max_w),
+                min_leaf_height_mm=d(min_h),
+                max_leaf_height_mm=d(max_h),
+                max_leaf_weight_kg=d(max_kg),
+                rail_type=RailType.DUAL,
+                carriages_qty=carriages,
+                stay_arms_qty=stays,
+                weight_kg=d("2.50"),
+            )
+            for sku, name, opening, min_w, max_w, min_h, max_h, max_kg, carriages, stays in kits
+        ],
     )

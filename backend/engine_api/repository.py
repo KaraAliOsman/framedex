@@ -57,19 +57,23 @@ def _decimal(value: object) -> Decimal:
     return result
 
 
+def _decimal_or_none(value: object) -> Decimal | None:
+    return None if value is None else _decimal(value)
+
+
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
         material=MaterialType(str(row[offset + 8])),
         face_width_mm=_decimal(row[offset + 2]),
-        welding_loss_mm=_decimal(row[offset + 3]),
-        reinforcement_gap_mm=_decimal(row[offset + 4]),
-        weight_kg_m=_decimal(row[offset + 5]),
-        steel_weight_kg_m=_decimal(row[offset + 6]),
-        reinforcement_sku=(
-            str(row[offset + 7]) if row[offset + 7] is not None else None
-        ),
+        # NULL is UNKNOWN — welding/reinforcement/weight data the catalog does
+        # not carry passes through so the honest consumers can refuse or flag.
+        welding_loss_mm=_decimal_or_none(row[offset + 3]),
+        reinforcement_gap_mm=_decimal_or_none(row[offset + 4]),
+        weight_kg_m=_decimal_or_none(row[offset + 5]),
+        steel_weight_kg_m=_decimal_or_none(row[offset + 6]),
+        reinforcement_sku=(str(row[offset + 7]) if row[offset + 7] is not None else None),
     )
 
 
@@ -215,9 +219,7 @@ class SystemParamsRepository:
             rows = cursor.fetchall()
         return {cast(str, row[0]): _article_from_row(row) for row in rows}
 
-    def load_article_names(
-        self, system_id: UUID, active_org_id: UUID
-    ) -> dict[str, str]:
+    def load_article_names(self, system_id: UUID, active_org_id: UUID) -> dict[str, str]:
         """Display names for every catalog profile article of a system.
 
         Names are presentation metadata, not engineering parameters, so they
@@ -274,9 +276,7 @@ class SystemParamsRepository:
             for row in rows
         }
 
-    def _load_hardware_kits(
-        self, system_id: UUID, active_org_id: UUID
-    ) -> list[HardwareKitRule]:
+    def _load_hardware_kits(self, system_id: UUID, active_org_id: UUID) -> list[HardwareKitRule]:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -312,10 +312,7 @@ class SystemParamsRepository:
             for row in rows
         ]
 
-
-    def _load_panel_rules(
-        self, system_id: UUID, active_org_id: UUID
-    ) -> dict[str, PanelRule]:
+    def _load_panel_rules(self, system_id: UUID, active_org_id: UUID) -> dict[str, PanelRule]:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -330,7 +327,9 @@ class SystemParamsRepository:
             rows = cursor.fetchall()
         return {
             str(row[0]): PanelRule(
-                sku=str(row[0]), name=str(row[1]), kind=row[2],
+                sku=str(row[0]),
+                name=str(row[1]),
+                kind=row[2],
                 thickness_mm=_decimal(row[3]),
                 weight_kg_m2=_decimal(row[4]) if row[4] is not None else None,
             )
