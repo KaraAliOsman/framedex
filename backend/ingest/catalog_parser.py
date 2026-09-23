@@ -18,6 +18,7 @@ ROLES = (
     "INVERSOR",
     "GLAZING_BEAD",
     "COUPLER",
+    "THRESHOLD",
     "ADDITIONAL",
 )
 
@@ -29,6 +30,7 @@ _ROLE_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("inversor", "adaptador", "inverter"), "INVERSOR"),
     (("contravidrio", "junta", "vidrio", "bead", "clip"), "GLAZING_BEAD"),
     (("acoplamiento", "bayo", "coupler", "union", "acople"), "COUPLER"),
+    (("umbral", "threshold", "zocalo"), "THRESHOLD"),
     (("refuerzo", "steel", "acero", "reinforcement"), "ADDITIONAL"),
     (("tapa", "tapacanal", "cover", "cap"), "ADDITIONAL"),
 )

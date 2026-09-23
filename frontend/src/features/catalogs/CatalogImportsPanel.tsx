@@ -5,11 +5,8 @@ import {
   catalogImportsCreate,
   catalogImportsList,
 } from "../../api/generated/dekopen";
-import type {
-  CatalogImportResponse,
-  CatalogItemRequest,
-} from "../../api/generated/models";
-import { CatalogItemRoleEnum } from "../../api/generated/models";
+import type { CatalogImportResponse, CatalogItemRequest } from "../../api/generated/models";
+import { CatalogProfileRoleEnum } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 
 const ct = (key: string) => t(`catalog.${key}` as TranslationKey);
@@ -32,7 +29,7 @@ type Candidate = {
 
 type EditableRow = Candidate & { include: boolean };
 
-const ROLE_CHOICES = Object.values(CatalogItemRoleEnum);
+const ROLE_CHOICES = Object.values(CatalogProfileRoleEnum);
 const PENDING_STATUSES = new Set(["UPLOADED", "EXTRACTING"]);
 
 const STATUS_LABEL: Record<string, TranslationKey> = {
@@ -58,11 +55,12 @@ const ITEM_ERROR_LABEL: Record<string, string> = {
   catalog_item_unknown: "importsErrorItemUnknown",
   catalog_role_invalid: "importsErrorRoleInvalid",
   catalog_sku_conflict: "importsErrorSkuConflict",
+  catalog_singleton_role_conflict: "importsErrorSingletonRole",
+  catalog_insert_failed: "importsErrorInsertFailed",
 };
 
 function codeText(code: string): string {
-  if (code.startsWith("catalog.compile_failed"))
-    return ct("importsWarnCompileFailed");
+  if (code.startsWith("catalog.compile_failed")) return ct("importsWarnCompileFailed");
   return ct(WARNING_LABEL[code] ?? ITEM_ERROR_LABEL[code] ?? "importsErrorUnknown");
 }
 
@@ -129,11 +127,9 @@ export function CatalogImportsPanel({
     try {
       const response = await catalogImportsList(requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (mounted.current && listGeneration.current === current)
-        setImports(response.data.imports);
+      if (mounted.current && listGeneration.current === current) setImports(response.data.imports);
     } catch {
-      if (mounted.current && listGeneration.current === current)
-        setMessage(ct("importsLoadError"));
+      if (mounted.current && listGeneration.current === current) setMessage(ct("importsLoadError"));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -181,9 +177,7 @@ export function CatalogImportsPanel({
 
   function patchRow(key: string, patch: Partial<EditableRow>): void {
     setReviewDirty(true);
-    setRows((current) =>
-      current.map((row) => (row.key === key ? { ...row, ...patch } : row)),
-    );
+    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   }
 
   function closeReview(): void {
@@ -234,10 +228,7 @@ export function CatalogImportsPanel({
         } else {
           closeReview();
           setMessage(
-            ct("importsConfirmed").replace(
-              "{count}",
-              String(response.data.created.length),
-            ),
+            ct("importsConfirmed").replace("{count}", String(response.data.created.length)),
           );
           await load();
           onConfirmed?.();
@@ -282,11 +273,7 @@ export function CatalogImportsPanel({
               className="imports-file-input"
               onChange={(event) => void upload(event)}
             />
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => fileInput.current?.click()}
-            >
+            <button type="button" disabled={busy} onClick={() => fileInput.current?.click()}>
               {busy ? ct("importsUploading") : ct("importsUpload")}
             </button>
           </>
@@ -324,7 +311,7 @@ export function CatalogImportsPanel({
                   <td>{entry.candidates.length}</td>
                   <td>{formatDate(entry.created_at)}</td>
                   <td>
-                    {entry.status === "REVIEW_READY" && canWrite && (
+                    {(entry.status === "REVIEW_READY" || entry.status === "FAILED") && canWrite && (
                       <button
                         type="button"
                         // A dirty review's edits live only in this component —
@@ -397,9 +384,7 @@ export function CatalogImportsPanel({
                         <input
                           type="checkbox"
                           checked={row.include}
-                          onChange={(event) =>
-                            patchRow(row.key, { include: event.target.checked })
-                          }
+                          onChange={(event) => patchRow(row.key, { include: event.target.checked })}
                         />
                       </td>
                       <td>
@@ -514,11 +499,7 @@ export function CatalogImportsPanel({
             </table>
           </div>
           <div className="projects-actions">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void confirm(reviewImport)}
-            >
+            <button type="button" disabled={busy} onClick={() => void confirm(reviewImport)}>
               {ct("importsConfirm")}
             </button>
             <button type="button" disabled={busy} onClick={closeReview}>

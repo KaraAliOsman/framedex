@@ -168,6 +168,14 @@ class CatalogImportConfirmSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     items = CatalogItemSerializer(many=True, min_length=1, max_length=200)
 
+    def validate_items(self, value):
+        # One candidate seeds at most one article per request — duplicate keys
+        # would create two articles from the same reviewed row.
+        keys = [item["key"] for item in value]
+        if len(set(keys)) != len(keys):
+            raise serializers.ValidationError("catalog_duplicate_key")
+        return value
+
 
 CatalogImportConfirmResponseSerializer = type(
     "CatalogImportConfirmResponseSerializer",

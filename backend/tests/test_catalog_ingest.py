@@ -8,8 +8,11 @@ from uuid import uuid4
 import pytest
 from rest_framework.exceptions import APIException
 
+from django.db import DatabaseError
+
 from ingest import catalog_service
 from ingest.catalog_parser import parse_article_line, parse_catalog_lines
+from ingest.serializers import CatalogImportConfirmSerializer
 
 
 def test_parse_article_line_full_match():
@@ -178,8 +181,8 @@ def test_confirm_inserts_articles_and_seals(monkeypatch):
     assert inserts[0][1] == str(row["org_id"])
     # Decimal string passed as text — engine purity preserved.
     assert inserts[0][5] == "78"
-    assert updates[0][1] == "CONFIRMED"
-    assert updates[0][2] == str(system_id)
+    # CONFIRMED is inline in the seal SQL; params carry result, system, import.
+    assert updates[0][1] == str(system_id)
 
 
 def test_confirm_rejects_shared_system(monkeypatch):
@@ -252,3 +255,101 @@ def test_confirm_defaults_apply_to_null_fields(monkeypatch):
     assert inserts[0][7] == str(Decimal("6"))
     assert inserts[0][9] == str(Decimal("1.2"))
     assert inserts[0][10] == str(Decimal("1.7"))
+
+
+def test_parse_article_line_threshold_role():
+    assert parse_article_line("UMB-10 umbral 30mm", "r0")["role"] == "THRESHOLD"
+    assert parse_article_line("THR-30 threshold 45mm", "r1")["role"] == "THRESHOLD"
+
+
+def test_confirm_serializer_rejects_duplicate_keys():
+    serializer = CatalogImportConfirmSerializer(
+        data={
+            "system_id": str(uuid4()),
+            "items": [_item(), _item()],
+        }
+    )
+    assert not serializer.is_valid()
+
+
+def _failing_insert(monkeypatch, row, error):
+    updates = []
+
+    def _rows(sql, params=None):
+        if "FROM public.catalog_imports" in sql:
+            return [row]
+        if "FROM public.profile_systems" in sql:
+            return [{"id": params[0]}]
+        if "INSERT INTO public.profile_articles" in sql:
+            raise error
+        if "UPDATE public.catalog_imports" in sql:
+            updates.append(params)
+            return [row]
+        return []
+
+    monkeypatch.setattr(catalog_service, "rows", _rows)
+    monkeypatch.setattr(catalog_service, "documentary_backend", _backend)
+    return updates
+
+
+def test_confirm_singleton_role_conflict_is_per_key(monkeypatch):
+    row = _import_row()
+    updates = _failing_insert(
+        monkeypatch,
+        row,
+        DatabaseError("catalog_singleton_role_conflict: FRAME already exists"),
+    )
+    out = catalog_service.confirm_catalog_import(
+        org_id=row["org_id"],
+        import_id=row["id"],
+        system_id=uuid4(),
+        items=[_item()],
+    )
+    assert out["errors"] == [
+        {"key": "c0", "code": "catalog_singleton_role_conflict"}
+    ]
+    assert out["created"] == []
+    # Retryable: the import stays REVIEW_READY — no FAILED seal.
+    assert updates[0][0].startswith("[")
+
+
+def test_confirm_insert_failure_is_per_key(monkeypatch):
+    row = _import_row()
+    _failing_insert(monkeypatch, row, DatabaseError("constraint exploded"))
+    out = catalog_service.confirm_catalog_import(
+        org_id=row["org_id"],
+        import_id=row["id"],
+        system_id=uuid4(),
+        items=[_item()],
+    )
+    assert out["errors"] == [{"key": "c0", "code": "catalog_insert_failed"}]
+
+
+def test_confirm_failed_import_is_reconfirmable(monkeypatch):
+    row = _import_row(status="FAILED")
+    updates, inserts, article_id = _confirm_patches(monkeypatch, row)
+    out = catalog_service.confirm_catalog_import(
+        org_id=row["org_id"],
+        import_id=row["id"],
+        system_id=uuid4(),
+        items=[_item()],
+    )
+    assert out["created"] == [{"key": "c0", "article_id": str(article_id)}]
+    assert updates[0][1] != "FAILED"
+
+
+def test_mark_failed_only_updates_inflight(monkeypatch):
+    statements = []
+
+    def _rows(sql, params=None):
+        statements.append((sql, params))
+        return []
+
+    monkeypatch.setattr(catalog_service, "rows", _rows)
+    monkeypatch.setattr(catalog_service, "documentary_backend", _backend)
+    catalog_service.mark_catalog_import_failed(
+        org_id=uuid4(), import_id=uuid4(), code="x" * 200
+    )
+    sql, params = statements[0]
+    assert "UPLOADED" in sql and "EXTRACTING" in sql
+    assert len(params[0]) == 80

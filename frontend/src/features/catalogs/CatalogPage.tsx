@@ -55,7 +55,7 @@ export function CatalogPage(): JSX.Element {
   const { status, me, session } = useAuthSession();
   const organization = me?.active_organization;
   if (status !== "ready") return <p role="status">{ct("loading")}</p>;
-  if (!organization || !["OWNER", "WORKSHOP_MANAGER"].includes(organization.role))
+  if (!organization || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR"].includes(organization.role))
     return <p role="alert">{ct("permission")}</p>;
 
   return (
@@ -67,13 +67,7 @@ export function CatalogPage(): JSX.Element {
   );
 }
 
-function CatalogWorkspace({
-  orgId,
-  role,
-}: {
-  orgId: string;
-  role: string;
-}): JSX.Element {
+function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX.Element {
   const api = useMemo(() => catalogApi(orgId), [orgId]);
   const [data, setData] = useState<CatalogData | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -85,6 +79,9 @@ function CatalogWorkspace({
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
   const lifetime = useRef<AbortController | null>(null);
+  // Catalog CRUD accepts OWNER/WORKSHOP_MANAGER — an estimator reads the
+  // catalog and writes only through the import-review flow.
+  const canEdit = role === "OWNER" || role === "WORKSHOP_MANAGER";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -176,16 +173,18 @@ function CatalogWorkspace({
           <h1>{ct("title")}</h1>
           <p>{ct("subtitle")}</p>
         </div>
-        <button
-          type="button"
-          disabled={editor !== null}
-          onClick={() => {
-            setNotice("");
-            setEditor({ resource: "systems" });
-          }}
-        >
-          {ct("newSystem")}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            disabled={editor !== null}
+            onClick={() => {
+              setNotice("");
+              setEditor({ resource: "systems" });
+            }}
+          >
+            {ct("newSystem")}
+          </button>
+        )}
       </header>
 
       <p className="catalog-status" role="status" aria-live="polite">
@@ -287,7 +286,7 @@ function CatalogWorkspace({
 
           <div className="catalog-toolbar">
             <h3>{ct(resource)}</h3>
-            {resource !== "systems" && (
+            {resource !== "systems" && canEdit && (
               <button
                 type="button"
                 disabled={editor !== null || (selected === null && resource !== "hardware-kits")}
@@ -329,14 +328,14 @@ function CatalogWorkspace({
                       <td>
                         <button
                           type="button"
-                          aria-label={`${ct(row.read_only === false ? "edit" : "view")} ${itemName(resource, row, data)}`}
+                          aria-label={`${ct(row.read_only === false && canEdit ? "edit" : "view")} ${itemName(resource, row, data)}`}
                           disabled={editor !== null}
                           onClick={() => {
                             setNotice("");
                             setEditor({ resource, id: row.id });
                           }}
                         >
-                          {ct(row.read_only === false ? "edit" : "view")}
+                          {ct(row.read_only === false && canEdit ? "edit" : "view")}
                           <span className="catalog-sr-only"> {itemName(resource, row, data)}</span>
                         </button>
                       </td>
@@ -355,6 +354,7 @@ function CatalogWorkspace({
               data={data}
               systemId={selected}
               api={api}
+              locked={!canEdit}
               onSaved={(saved) => accept(editor.resource, saved)}
               onDeleted={(id) => removed(editor.resource, id)}
               onClose={() => setEditor(null)}
@@ -372,6 +372,7 @@ type EditorProps = {
   data: CatalogData;
   systemId: string | null;
   api: ReturnType<typeof catalogApi>;
+  locked: boolean;
   onSaved: (row: Row<Resource>) => void;
   onDeleted: (id: string) => void;
   onClose: () => void;
@@ -383,6 +384,7 @@ function CatalogEditor({
   data,
   systemId,
   api,
+  locked,
   onSaved,
   onDeleted,
   onClose,
@@ -401,7 +403,7 @@ function CatalogEditor({
   const firstControl = useRef<HTMLHeadingElement>(null);
   const alive = useRef(true);
   const inFlight = useRef(false);
-  const readOnly = row !== undefined && row.read_only !== false;
+  const readOnly = locked || (row !== undefined && row.read_only !== false);
   const beadOptions = data.articles.filter(
     (article) => article.system_id === draft.system_id && article.role === "GLAZING_BEAD",
   );

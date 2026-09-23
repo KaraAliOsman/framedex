@@ -9071,7 +9071,7 @@ components:
           default: ''
           maxLength: 255
         role:
-          $ref: '#/components/schemas/CatalogItemRoleEnum'
+          $ref: '#/components/schemas/CatalogProfileRoleEnum'
         face_width_mm:
           type: string
           format: decimal
@@ -9101,26 +9101,6 @@ components:
       - key
       - role
       - sku
-    CatalogItemRoleEnum:
-      enum:
-      - ADDITIONAL
-      - COUPLER
-      - FRAME
-      - GLAZING_BEAD
-      - INVERSOR
-      - MULLION_H
-      - MULLION_V
-      - SASH
-      type: string
-      description: |-
-        * `ADDITIONAL` - ADDITIONAL
-        * `COUPLER` - COUPLER
-        * `FRAME` - FRAME
-        * `GLAZING_BEAD` - GLAZING_BEAD
-        * `INVERSOR` - INVERSOR
-        * `MULLION_H` - MULLION_H
-        * `MULLION_V` - MULLION_V
-        * `SASH` - SASH
     CatalogProfileRoleEnum:
       enum:
       - FRAME

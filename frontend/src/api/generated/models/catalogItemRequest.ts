@@ -5,7 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { CatalogItemRoleEnum } from "./catalogItemRoleEnum";
+import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 
 export interface CatalogItemRequest {
   /**
@@ -20,7 +20,7 @@ export interface CatalogItemRequest {
   sku: string;
   /** @maxLength 255 */
   name?: string;
-  role: CatalogItemRoleEnum;
+  role: CatalogProfileRoleEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   face_width_mm: string;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */

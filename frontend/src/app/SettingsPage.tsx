@@ -102,16 +102,11 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
           <span className="settings-mono"> · {status.api_key_preview}</span>
         )}
       </p>
-      {message && (
-        <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>
-      )}
+      {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       <form className="payments-form" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
-          <select
-            value={apiUrl}
-            onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}
-          >
+          <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
             <option value="https://sandbox.flow.cl/api">{t("settings.flowSandbox")}</option>
             <option value="https://www.flow.cl/api">{t("settings.flowProduction")}</option>
           </select>

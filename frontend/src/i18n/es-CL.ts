@@ -1068,23 +1068,22 @@ const messages = {
   "catalog.importsFieldReinforcement": "Refuerzo",
   "catalog.importsFieldWeight": "kg/m",
   "catalog.importsFieldSteelWeight": "Acero kg/m",
-  "catalog.importsWarnParse":
-    "El documento no entregó texto legible; se intentó lectura visual.",
+  "catalog.importsWarnParse": "El documento no entregó texto legible; se intentó lectura visual.",
   "catalog.importsWarnCompileEmpty":
     "La lectura visual no encontró artículos. Revisa el documento.",
-  "catalog.importsWarnCompileFailed":
-    "La lectura visual no pudo procesar el documento.",
-  "catalog.importsWarnNoCandidates":
-    "No se detectaron artículos en el documento.",
+  "catalog.importsWarnCompileFailed": "La lectura visual no pudo procesar el documento.",
+  "catalog.importsWarnNoCandidates": "No se detectaron artículos en el documento.",
   "catalog.importsWarnCapped":
     "El documento tenía más de 200 artículos; se conservaron los primeros 200 para revisión.",
   "catalog.importsWarnNameMissing": "Sin nombre",
   "catalog.importsWarnRoleUnknown": "Rol no reconocido",
   "catalog.importsWarnFaceMissing": "Sin ancho de cara",
-  "catalog.importsErrorItemUnknown":
-    "La fila no corresponde a un candidato del documento.",
+  "catalog.importsErrorItemUnknown": "La fila no corresponde a un candidato del documento.",
   "catalog.importsErrorRoleInvalid": "El rol elegido no es válido.",
   "catalog.importsErrorSkuConflict": "El SKU ya existe en el sistema; se omitió la fila.",
+  "catalog.importsErrorSingletonRole":
+    "El sistema ya tiene un artículo con este rol único; ajusta el rol o el sistema.",
+  "catalog.importsErrorInsertFailed": "No se pudo crear el artículo; revisa los datos de la fila.",
   "catalog.importsErrorUnknown":
     "No se pudo completar la operación. Revisa los datos e inténtalo de nuevo.",
   "projects.reinforcements": "Refuerzos",

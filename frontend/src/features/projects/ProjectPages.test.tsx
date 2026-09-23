@@ -203,9 +203,7 @@ beforeEach(() => {
       status: "NO_DEAL",
     }),
   );
-  vi.mocked(projectPaymentLinksList).mockResolvedValue(
-    response(200, { links: [] }),
-  );
+  vi.mocked(projectPaymentLinksList).mockResolvedValue(response(200, { links: [] }));
   vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
     response(200, { configured: false, enabled: false }),
   );

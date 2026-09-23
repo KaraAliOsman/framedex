@@ -12,7 +12,7 @@ import json
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 
 from authentication.errors import contract_error
 from documents.repository import documentary_backend
@@ -264,10 +264,13 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
 def mark_catalog_import_failed(*, org_id: UUID, import_id: UUID, code: str) -> None:
     with transaction.atomic():
         with documentary_backend():
+            # Only an in-flight import may fail — a stale retry must never
+            # overwrite a REVIEW_READY or CONFIRMED outcome.
             rows(
                 "UPDATE public.catalog_imports SET status='FAILED', "
-                "error_code=%s, updated_at=now() WHERE id=%s AND org_id=%s",
-                [code, str(import_id), str(org_id)],
+                "error_code=%s, updated_at=now() WHERE id=%s AND org_id=%s "
+                "AND status IN ('UPLOADED','EXTRACTING')",
+                [code[:80], str(import_id), str(org_id)],
             )
 
 
@@ -334,50 +337,70 @@ def confirm_catalog_import(
             if role not in ROLES:
                 errors.append({"key": key, "code": "catalog_role_invalid"})
                 continue
-            with documentary_backend():
-                inserted = rows(
-                    "INSERT INTO public.profile_articles("
-                    "system_id, org_id, sku, name, role, face_width_mm,"
-                    " commercial_length_mm, welding_loss_mm, reinforcement_sku,"
-                    " weight_kg_m, steel_weight_kg_m)"
-                    " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                    " ON CONFLICT (system_id, sku) DO NOTHING"
-                    " RETURNING id",
-                    [
-                        str(system_id),
-                        str(org_id),
-                        sku,
-                        name,
-                        role,
-                        str(item["face_width_mm"]),
-                        str(item.get("commercial_length_mm") or DEFAULT_LENGTH_MM),
-                        str(item.get("welding_loss_mm") or DEFAULT_WELDING_LOSS_MM),
-                        (str(item["reinforcement_sku"]).strip() or None)
-                        if item.get("reinforcement_sku")
-                        else None,
-                        str(item.get("weight_kg_m") or DEFAULT_WEIGHT_KG_M),
-                        str(item.get("steel_weight_kg_m") or DEFAULT_STEEL_WEIGHT_KG_M),
-                    ],
+            try:
+                # The tenant's own claims write the article — same RLS path
+                # catalog CRUD uses; the per-item savepoint keeps a rejected
+                # row (singleton role, constraint) from aborting the batch.
+                with transaction.atomic():
+                    inserted = rows(
+                        "INSERT INTO public.profile_articles("
+                        "system_id, org_id, sku, name, role, face_width_mm,"
+                        " commercial_length_mm, welding_loss_mm, reinforcement_sku,"
+                        " weight_kg_m, steel_weight_kg_m)"
+                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                        " ON CONFLICT (system_id, sku) DO NOTHING"
+                        " RETURNING id",
+                        [
+                            str(system_id),
+                            str(org_id),
+                            sku,
+                            name,
+                            role,
+                            str(item["face_width_mm"]),
+                            str(item.get("commercial_length_mm")
+                                or DEFAULT_LENGTH_MM),
+                            str(item.get("welding_loss_mm")
+                                or DEFAULT_WELDING_LOSS_MM),
+                            (str(item["reinforcement_sku"]).strip() or None)
+                            if item.get("reinforcement_sku")
+                            else None,
+                            str(item.get("weight_kg_m") or DEFAULT_WEIGHT_KG_M),
+                            str(item.get("steel_weight_kg_m")
+                                or DEFAULT_STEEL_WEIGHT_KG_M),
+                        ],
+                    )
+            except DatabaseError as error:
+                code = (
+                    "catalog_singleton_role_conflict"
+                    if "catalog_singleton_role_conflict" in str(error)
+                    else "catalog_insert_failed"
                 )
+                errors.append({"key": key, "code": code})
+                continue
             if not inserted:
                 errors.append({"key": key, "code": "catalog_sku_conflict"})
                 continue
             created.append({"key": key, "article_id": str(inserted[0]["id"])})
-        # FAILED when every submitted key reached a terminal outcome (created
-        # or errored) — retryable via a corrected confirm, same as documents.
-        processed = len(created) + len(errors)
-        sealed = len(created) == len(items) and not errors
+            done.add(key)
+        if errors:
+            # Retryable: persist what was created so the next confirm only
+            # attempts the still-unresolved keys.
+            with documentary_backend():
+                updated = rows(
+                    "UPDATE public.catalog_imports SET result=%s::jsonb, "
+                    "system_id=%s, updated_at=now() WHERE id=%s RETURNING *",
+                    [json.dumps(created), str(system_id), str(import_id)],
+                )[0]
+            return {
+                "import": _public(updated),
+                "created": created,
+                "errors": errors,
+            }
         with documentary_backend():
             updated = rows(
-                "UPDATE public.catalog_imports SET result=%s::jsonb, "
-                "status=%s, system_id=%s, updated_at=now() "
+                "UPDATE public.catalog_imports SET status='CONFIRMED', "
+                "result=%s::jsonb, system_id=%s, updated_at=now() "
                 "WHERE id=%s RETURNING *",
-                [
-                    json.dumps(created),
-                    "CONFIRMED" if sealed
-                    else ("FAILED" if processed == len(items) else "REVIEW_READY"),
-                    str(system_id),
-                    str(import_id),
-                ],
-            )
-    return {"import": _public(updated[0]), "created": created, "errors": errors}
+                [json.dumps(created), str(system_id), str(import_id)],
+            )[0]
+    return {"import": _public(updated), "created": created, "errors": []}

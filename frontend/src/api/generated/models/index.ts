@@ -55,7 +55,6 @@ export * from "./catalogImportResponse";
 export * from "./catalogImportResponseCandidatesItem";
 export * from "./catalogImportResponseResultItem";
 export * from "./catalogItemRequest";
-export * from "./catalogItemRoleEnum";
 export * from "./catalogKitListParams";
 export * from "./catalogProfileRoleEnum";
 export * from "./catalogReadiness";

@@ -285,9 +285,7 @@ export function ProjectPaymentsPanel({
               <tr key={payment.id} className={payment.voided_at ? "payments-voided" : undefined}>
                 <td>{formatDate(payment.recorded_at)}</td>
                 <td>{t(KIND_LABEL[payment.kind] ?? "projects.paymentKindParcial")}</td>
-                <td className="num">
-                  {formatMoney(payment.amount, summary?.currency ?? "CLP")}
-                </td>
+                <td className="num">{formatMoney(payment.amount, summary?.currency ?? "CLP")}</td>
                 <td>{t(METHOD_LABEL[payment.method] ?? "projects.paymentMethodOther")}</td>
                 <td>{payment.reference ?? "—"}</td>
                 <td>
