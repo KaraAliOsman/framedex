@@ -500,7 +500,7 @@ SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/glass/DEMO_6
  '{"source":"DEMO_60 SYNTHETIC FIXTURE","certified":"false"}'::jsonb,'4 Float Incoloro'
 FROM public.profile_systems system
 WHERE system.code='DEMO_60' AND system.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.hardware_purchase_mappings
  (id,hardware_kit_id,org_id,purchasing_sku,manufacturer_name,purchase_unit,version,provenance)
@@ -828,7 +828,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_6
  'DVH-24', 'TEST-BUY-DVH-24', 'SYNTHETIC TEST DATA', 'EA', 1,
  '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-16-4'
 FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
  (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
@@ -836,7 +836,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_6
  'MONO-5', 'TEST-BUY-MONO-5', 'SYNTHETIC TEST DATA', 'EA', 1,
  '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '5'
 FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.panel_purchase_authorities
  (id, infill_article_id, org_id, purchasing_sku, manufacturer_name, supply_form, purchase_unit, version, provenance)
@@ -864,7 +864,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS
  'DVH-28', 'TEST-BUY-DVH-28', 'SYNTHETIC TEST DATA', 'EA', 1,
  '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-20-4'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
  (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
@@ -872,7 +872,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS
  'DVH-32', 'TEST-BUY-DVH-32', 'SYNTHETIC TEST DATA', 'EA', 1,
  '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-24-4'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
  (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
@@ -880,7 +880,7 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS
  'MONO-8', 'TEST-BUY-MONO-8', 'SYNTHETIC TEST DATA', 'EA', 1,
  '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '8'
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
-ON CONFLICT (id) DO UPDATE SET glass_spec = EXCLUDED.glass_spec;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.panel_purchase_authorities
  (id, infill_article_id, org_id, purchasing_sku, manufacturer_name, supply_form, purchase_unit, version, provenance)
