@@ -785,18 +785,28 @@ WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
 ON CONFLICT (system_id, org_id, rule_id) DO NOTHING;
 
 INSERT INTO public.profile_purchase_mappings
- (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name, purchase_unit)
+ (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
+  purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' || article.id::text),
- article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR'
+ article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/physical/profile/' || article.id::text),
+ 'WHITE',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/cutting/DEMO'),
+ 1
 FROM public.profile_articles article
 JOIN public.profile_systems s ON s.id = article.system_id
 WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND article.org_id IS NULL
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.profile_purchase_mappings
- (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name, purchase_unit)
+ (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
+  purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' || article.id::text),
- article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR'
+ article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/physical/profile/' || article.id::text),
+ 'WHITE',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/cutting/DEMO'),
+ 1
 FROM public.profile_articles article
 JOIN public.profile_systems s ON s.id = article.system_id
 WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND article.org_id IS NULL

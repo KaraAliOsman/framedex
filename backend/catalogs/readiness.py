@@ -15,7 +15,10 @@ def catalog_readiness(system_id, org_id):
     params = None
     try:
         params = SystemParamsRepository().load_visible(system_id, org_id)
-        if params.material is not MaterialType.PVC or not params.glazing_bead_rules:
+        if (
+            params.material not in (MaterialType.PVC, MaterialType.ALUMINIUM)
+            or not params.glazing_bead_rules
+        ):
             reasons.append("technical_catalog")
     except (SystemNotFound, UnsupportedCatalogContract, ValueError):
         reasons.append("technical_catalog")
@@ -43,10 +46,13 @@ def catalog_readiness(system_id, org_id):
             frame = params.effective_profile_articles[ProfileRole.FRAME]
             profiles = [frame,
                         *(rule.bead_article for rule in params.glazing_bead_rules.values())]
-            # A fixed PVC frame always has reinforcement, including default SKU resolution.
-            stock, _ = CuttingRepository().reinforcement_stock(
-                system_id, org_id, frame.sku, frame.reinforcement_sku, "WHITE")
-            steels = {stock.workshop_sku}
+            steels: set[str] = set()
+            if params.material is MaterialType.PVC:
+                # A welded PVC frame always has reinforcement, including
+                # default SKU resolution. Mechanically jointed systems do not.
+                stock, _ = CuttingRepository().reinforcement_stock(
+                    system_id, org_id, frame.sku, frame.reinforcement_sku, "WHITE")
+                steels = {stock.workshop_sku}
             glass = rows("SELECT technical_sku FROM public.glass_purchase_mappings "
                          "WHERE system_id=%s AND (org_id IS NULL OR org_id=%s)", [system_id, org_id])
             if not glass:

@@ -9,6 +9,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 
 from django.db import connection
 
+from dekopen_engine.cutting import MissingStockAuthority
 from dekopen_engine.documentary_canonical import (
     DOCUMENTARY_CANONICAL_VERSION,
     bom_hash_v1,
@@ -666,9 +667,12 @@ def freeze_revision_a(
             for module_id, computation, _ in calculations:
                 inertias: dict[str, Decimal | None] = {}
                 for span in computation.spans:
-                    _, inertia = stock_repository.reinforcement_stock(
-                        system_id, org_id, span.parent_profile_sku, None, color
-                    )
+                    try:
+                        _, inertia = stock_repository.reinforcement_stock(
+                            system_id, org_id, span.parent_profile_sku, None, color
+                        )
+                    except MissingStockAuthority:
+                        inertia = None
                     inertias[span.target_id] = inertia
                 inspection = inspect(InspectorInput(
                     computation=computation,
