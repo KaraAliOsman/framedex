@@ -632,15 +632,17 @@ export function ProductionPage(): JSX.Element {
                 const glasses = (materials?.glasses ?? []) as GlassPiece[];
                 if (!glasses.length) return null;
                 const polishing = (detail.payload?.glass_polishing ?? []) as PolishingEntry[];
+                const quantity = Math.max(1, Number(detail.quantity) || 1);
                 return (
                   <GlassSummary
                     glasses={glasses}
                     polishing={polishing}
+                    quantity={quantity}
                     onExport={(groups) =>
                       downloadCnc(
                         detail.order_code,
                         `${detail.order_code}-glass.csv`,
-                        glassSummaryCsv(groups),
+                        glassSummaryCsv(groups, quantity),
                       )
                     }
                   />

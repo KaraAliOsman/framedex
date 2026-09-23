@@ -37,18 +37,19 @@ const glasses: GlassPiece[] = [
 ];
 
 describe("GlassSummary", () => {
-  it("groups pieces by composition, sku and thickness with per-size counts and totals", () => {
-    render(<GlassSummary glasses={glasses} polishing={[]} onExport={vi.fn()} />);
+  it("groups pieces by spec/sku/thickness, collapses equal sizes and scales by order quantity", () => {
+    render(<GlassSummary glasses={glasses} polishing={[]} quantity={2} onExport={vi.fn()} />);
     expect(screen.getByText("Resumen de vidrios")).toBeTruthy();
     expect(screen.getByText("4-16-4 Float Incoloro")).toBeTruthy();
     expect(screen.getByText("4.4.2-12-4 Laminado")).toBeTruthy();
-    // two identical panes collapse into one dims row with qty 2
+    // two identical panes collapse into one dims row, order qty 2 → 4
     expect(screen.getByText("680.00×1310.00 mm")).toBeTruthy();
-    // group area 2 × 0.8908, total = 1.7816 + 0.6421
-    expect(screen.getByText("1.782 m²")).toBeTruthy();
-    expect(screen.getByText("2.424 m²")).toBeTruthy();
-    // totals: 3 panes, weight 17.82*2 + 12.84 = 48.48
-    expect(screen.getByText("48.48 kg")).toBeTruthy();
+    expect(screen.getByText("4")).toBeTruthy();
+    // exact decimal sums: 2×0.8908=1.7816 → ×2 units = 3.5632; total 4.8474
+    expect(screen.getByText("3.5632 m²")).toBeTruthy();
+    expect(screen.getByText("4.8474 m²")).toBeTruthy();
+    // weight 17.82*2*2 + 12.84*2 = 96.96
+    expect(screen.getByText("96.96 kg")).toBeTruthy();
   });
 
   it("shows the sealed edge polishing per pane and exports a deterministic CSV", () => {
@@ -60,6 +61,7 @@ describe("GlassSummary", () => {
           { bay_id: "bay_1", edges: { top: true, bottom: true } },
           { bay_id: "bay_1", leaf_id: "leaf_1", edges: { left: true } },
         ]}
+        quantity={3}
         onExport={onExport}
       />,
     );
@@ -68,11 +70,14 @@ describe("GlassSummary", () => {
     fireEvent.click(screen.getByText("Exportar vidrios (CSV)"));
     expect(onExport).toHaveBeenCalledTimes(1);
     const groups = onExport.mock.calls[0]![0];
-    const csv = glassSummaryCsv(groups);
+    const csv = glassSummaryCsv(groups, 3);
     const lines = csv.split("\n");
     expect(lines[0]).toContain("Composición");
-    expect(lines.some((line) => line.includes("4-16-4 Float Incoloro"))).toBe(true);
-    expect(lines.some((line) => line.includes("680.00×1310.00"))).toBe(true);
-    expect(lines.some((line) => line.includes("Z"))).toBe(true);
+    const polished = lines.find((line) => line.includes("S·I"));
+    // per-row totals: pane count 1 → ×3 units, area 0.8908×3, weight 17.82×3
+    expect(polished).toContain(",3,2.6724,53.46");
+    const totals = lines[lines.length - 1]!;
+    expect(totals).toContain("Totales");
+    expect(totals).toContain(",9,7.2711,145.44"); // 3+3+3 panes, (1.7816+0.6421)*3, (17.82*2+12.84)*3
   });
 });

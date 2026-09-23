@@ -17,20 +17,35 @@ export type PolishingEntry = {
   edges?: { top?: boolean; right?: boolean; bottom?: boolean; left?: boolean };
 };
 
+// Engine decimals stay exact: values are scaled to 1e-6 integer mantissas
+// (BigInt) — never routed through binary floats.
+const SCALE = 1_000_000n;
+function scaled(value: string | number | undefined): bigint {
+  const text = String(value ?? "0").trim() || "0";
+  const negative = text.startsWith("-");
+  const body = negative ? text.slice(1) : text;
+  const [intPart = "0", fracPart = ""] = body.split(".");
+  if (!/^\d+$/.test(intPart) || !/^\d*$/.test(fracPart)) return 0n;
+  const mantissa = BigInt(intPart) * SCALE + BigInt((fracPart + "000000").slice(0, 6));
+  return negative ? -mantissa : mantissa;
+}
+function fmtScaled(value: bigint, dp: number): string {
+  const negative = value < 0n;
+  const digits = (negative ? -value : value).toString().padStart(7, "0");
+  const intPart = digits.slice(0, -6) || "0";
+  const fracPart = digits.slice(-6).slice(0, dp);
+  return `${negative ? "-" : ""}${intPart}.${fracPart}`;
+}
+
 type Group = {
   spec: string;
   sku: string;
   thickness: string;
   pieces: { piece: GlassPiece; edges: string }[];
   qty: number;
-  area_m2: number;
-  weight_kg: number;
+  areaScaled: bigint;
+  weightScaled: bigint;
 };
-
-function num(value: string | number | undefined): number {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function polishKey(bay: string, leaf: string | null | undefined): string {
   return `${bay}|${leaf ?? "-"}`;
@@ -46,7 +61,35 @@ function edgeLabel(edges: PolishingEntry["edges"] | undefined): string {
   return parts.length ? parts.join("·") : "—";
 }
 
-export function glassSummaryCsv(groups: Group[]): string {
+type SizeRow = {
+  dims: string;
+  edges: string;
+  count: number;
+  areaScaled: bigint;
+  weightScaled: bigint;
+};
+
+function sizeRows(group: Group): SizeRow[] {
+  const perSize = new Map<string, SizeRow>();
+  for (const item of group.pieces) {
+    const dims = `${item.piece.width_mm}×${item.piece.height_mm}`;
+    const key = `${dims}|${item.edges}`;
+    const entry = perSize.get(key) ?? {
+      dims,
+      edges: item.edges,
+      count: 0,
+      areaScaled: 0n,
+      weightScaled: 0n,
+    };
+    entry.count += 1;
+    entry.areaScaled += scaled(item.piece.area_m2);
+    entry.weightScaled += scaled(item.piece.weight_kg);
+    perSize.set(key, entry);
+  }
+  return [...perSize.values()];
+}
+
+export function glassSummaryCsv(groups: Group[], quantity: number): string {
   const rows: string[][] = [
     [
       t("production.glassColSpec"),
@@ -59,28 +102,36 @@ export function glassSummaryCsv(groups: Group[]): string {
       t("production.glassColPolish"),
     ],
   ];
+  let totalQty = 0;
+  let totalArea = 0n;
+  let totalWeight = 0n;
   for (const group of groups) {
-    const perSize = new Map<string, { count: number; edges: string; dims: string }>();
-    for (const item of group.pieces) {
-      const dims = `${item.piece.width_mm}×${item.piece.height_mm}`;
-      const sizeKey = `${dims}|${item.edges}`;
-      const entry = perSize.get(sizeKey) ?? { count: 0, edges: item.edges, dims };
-      entry.count += 1;
-      perSize.set(sizeKey, entry);
-    }
-    for (const entry of perSize.values()) {
+    for (const row of sizeRows(group)) {
       rows.push([
         group.spec,
         group.sku,
         group.thickness,
-        entry.dims,
-        String(entry.count),
-        entry.count === group.qty ? group.area_m2.toFixed(4) : "",
-        entry.count === group.qty ? group.weight_kg.toFixed(2) : "",
-        entry.edges,
+        row.dims,
+        String(row.count * quantity),
+        fmtScaled(row.areaScaled * BigInt(quantity), 4),
+        fmtScaled(row.weightScaled * BigInt(quantity), 2),
+        row.edges,
       ]);
     }
+    totalQty += group.qty;
+    totalArea += group.areaScaled;
+    totalWeight += group.weightScaled;
   }
+  rows.push([
+    t("production.glassTotals"),
+    "",
+    "",
+    "",
+    String(totalQty * quantity),
+    fmtScaled(totalArea * BigInt(quantity), 4),
+    fmtScaled(totalWeight * BigInt(quantity), 2),
+    "",
+  ]);
   return rows
     .map((row) =>
       row.map((cell) => (/[",\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell)).join(","),
@@ -91,10 +142,12 @@ export function glassSummaryCsv(groups: Group[]): string {
 export function GlassSummary({
   glasses,
   polishing,
+  quantity = 1,
   onExport,
 }: {
   glasses: GlassPiece[];
   polishing: PolishingEntry[];
+  quantity?: number;
   onExport: (groups: Group[]) => void;
 }) {
   const polishByKey = new Map(
@@ -108,19 +161,19 @@ export function GlassSummary({
     const key = `${spec}|${sku}|${thickness}`;
     let group = groups.get(key);
     if (!group) {
-      group = { spec, sku, thickness, pieces: [], qty: 0, area_m2: 0, weight_kg: 0 };
+      group = { spec, sku, thickness, pieces: [], qty: 0, areaScaled: 0n, weightScaled: 0n };
       groups.set(key, group);
     }
     const entry = polishByKey.get(polishKey(piece.bay_id, piece.leaf_id));
     group.pieces.push({ piece, edges: edgeLabel(entry?.edges) });
     group.qty += 1;
-    group.area_m2 += num(piece.area_m2);
-    group.weight_kg += num(piece.weight_kg);
+    group.areaScaled += scaled(piece.area_m2);
+    group.weightScaled += scaled(piece.weight_kg);
   }
   const grouped = [...groups.values()];
-  const totalArea = grouped.reduce((sum, group) => sum + group.area_m2, 0);
   const totalQty = grouped.reduce((sum, group) => sum + group.qty, 0);
-  const totalWeight = grouped.reduce((sum, group) => sum + group.weight_kg, 0);
+  const totalArea = grouped.reduce((sum, group) => sum + group.areaScaled, 0n);
+  const totalWeight = grouped.reduce((sum, group) => sum + group.weightScaled, 0n);
 
   return (
     <section className="production-glass" aria-label={t("production.glassSummaryTitle")}>
@@ -146,36 +199,33 @@ export function GlassSummary({
           </thead>
           <tbody>
             {grouped.map((group) => {
-              const sizes = new Map<string, { count: number; edges: string; dims: string }>();
-              for (const item of group.pieces) {
-                const dims = `${item.piece.width_mm}×${item.piece.height_mm}`;
-                const sizeKey = `${dims}|${item.edges}`;
-                const entry = sizes.get(sizeKey) ?? { count: 0, edges: item.edges, dims };
-                entry.count += 1;
-                sizes.set(sizeKey, entry);
-              }
-              return [...sizes.values()].map((entry, rowIndex) => (
-                <tr key={`${group.spec}-${group.sku}-${entry.dims}-${entry.edges}`}>
-                  {rowIndex === 0 ? <td rowSpan={sizes.size}>{group.spec}</td> : null}
-                  {rowIndex === 0 ? <td rowSpan={sizes.size}>{group.sku}</td> : null}
-                  {rowIndex === 0 ? <td rowSpan={sizes.size}>{group.thickness} mm</td> : null}
-                  <td>{entry.dims} mm</td>
-                  <td>{entry.count}</td>
+              const rows = sizeRows(group);
+              return rows.map((row, rowIndex) => (
+                <tr key={`${group.spec}-${group.sku}-${row.dims}-${row.edges}`}>
+                  {rowIndex === 0 ? <td rowSpan={rows.length}>{group.spec}</td> : null}
+                  {rowIndex === 0 ? <td rowSpan={rows.length}>{group.sku}</td> : null}
+                  {rowIndex === 0 ? <td rowSpan={rows.length}>{group.thickness} mm</td> : null}
+                  <td>{row.dims} mm</td>
+                  <td>{row.count * quantity}</td>
                   {rowIndex === 0 ? (
-                    <td rowSpan={sizes.size}>{group.area_m2.toFixed(3)} m²</td>
+                    <td rowSpan={rows.length}>
+                      {fmtScaled(group.areaScaled * BigInt(quantity), 4)} m²
+                    </td>
                   ) : null}
                   {rowIndex === 0 ? (
-                    <td rowSpan={sizes.size}>{group.weight_kg.toFixed(2)} kg</td>
+                    <td rowSpan={rows.length}>
+                      {fmtScaled(group.weightScaled * BigInt(quantity), 2)} kg
+                    </td>
                   ) : null}
-                  <td>{entry.edges}</td>
+                  <td>{row.edges}</td>
                 </tr>
               ));
             })}
             <tr className="production-glass-total">
               <td colSpan={4}>{t("production.glassTotals")}</td>
-              <td>{totalQty}</td>
-              <td>{totalArea.toFixed(3)} m²</td>
-              <td>{totalWeight.toFixed(2)} kg</td>
+              <td>{totalQty * quantity}</td>
+              <td>{fmtScaled(totalArea * BigInt(quantity), 4)} m²</td>
+              <td>{fmtScaled(totalWeight * BigInt(quantity), 2)} kg</td>
               <td />
             </tr>
           </tbody>
