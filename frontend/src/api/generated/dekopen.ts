@@ -56,12 +56,19 @@ import type {
   FreezeRequestRequest,
   FreezeResponse,
   ImportRequestRequest,
+  InventoryMovement,
+  InventoryMovementRequestRequest,
+  InventoryMovements,
+  InventoryMovementsParams,
+  InventoryStock,
   JobEnqueueRequest,
   JobRun,
   JobsListParams,
   KitList,
   KitResponse,
   KitWriteRequest,
+  OrderReceiptRequestRequest,
+  OrderReceiving,
   OrderResponse,
   PatchedArticleWriteRequest,
   PatchedBeadWriteRequest,
@@ -3436,6 +3443,404 @@ export const engineSystems = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<engineSystemsResponse> => {
   return apiMutator<engineSystemsResponse>(getEngineSystemsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventoryMovementsResponse200 = {
+  data: InventoryMovements;
+  status: 200;
+};
+
+export type inventoryMovementsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryMovementsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryMovementsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryMovementsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryMovementsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryMovementsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryMovementsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryMovementsResponseSuccess = inventoryMovementsResponse200 & {
+  headers: Headers;
+};
+export type inventoryMovementsResponseError = (
+  | inventoryMovementsResponse400
+  | inventoryMovementsResponse401
+  | inventoryMovementsResponse403
+  | inventoryMovementsResponse404
+  | inventoryMovementsResponse409
+  | inventoryMovementsResponse422
+  | inventoryMovementsResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryMovementsResponse =
+  inventoryMovementsResponseSuccess | inventoryMovementsResponseError;
+
+export const getInventoryMovementsUrl = (params?: InventoryMovementsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/inventory/movements/?${stringifiedParams}`
+    : `/api/v1/inventory/movements/`;
+};
+
+export const inventoryMovements = async (
+  params?: InventoryMovementsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryMovementsResponse> => {
+  return apiMutator<inventoryMovementsResponse>(getInventoryMovementsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventoryMovementsRecordResponse200 = {
+  data: InventoryMovement;
+  status: 200;
+};
+
+export type inventoryMovementsRecordResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryMovementsRecordResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryMovementsRecordResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryMovementsRecordResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryMovementsRecordResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryMovementsRecordResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryMovementsRecordResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryMovementsRecordResponseSuccess = inventoryMovementsRecordResponse200 & {
+  headers: Headers;
+};
+export type inventoryMovementsRecordResponseError = (
+  | inventoryMovementsRecordResponse400
+  | inventoryMovementsRecordResponse401
+  | inventoryMovementsRecordResponse403
+  | inventoryMovementsRecordResponse404
+  | inventoryMovementsRecordResponse409
+  | inventoryMovementsRecordResponse422
+  | inventoryMovementsRecordResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryMovementsRecordResponse =
+  inventoryMovementsRecordResponseSuccess | inventoryMovementsRecordResponseError;
+
+export const getInventoryMovementsRecordUrl = () => {
+  return `/api/v1/inventory/movements/`;
+};
+
+export const inventoryMovementsRecord = async (
+  inventoryMovementRequestRequest: InventoryMovementRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryMovementsRecordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryMovementsRecordResponse>(getInventoryMovementsRecordUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(inventoryMovementRequestRequest),
+  });
+};
+
+export type inventoryOrderReceiveResponse200 = {
+  data: OrderReceiving;
+  status: 200;
+};
+
+export type inventoryOrderReceiveResponse201 = {
+  data: OrderReceiving;
+  status: 201;
+};
+
+export type inventoryOrderReceiveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryOrderReceiveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryOrderReceiveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryOrderReceiveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryOrderReceiveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryOrderReceiveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryOrderReceiveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryOrderReceiveResponseSuccess = (
+  inventoryOrderReceiveResponse200 | inventoryOrderReceiveResponse201
+) & {
+  headers: Headers;
+};
+export type inventoryOrderReceiveResponseError = (
+  | inventoryOrderReceiveResponse400
+  | inventoryOrderReceiveResponse401
+  | inventoryOrderReceiveResponse403
+  | inventoryOrderReceiveResponse404
+  | inventoryOrderReceiveResponse409
+  | inventoryOrderReceiveResponse422
+  | inventoryOrderReceiveResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryOrderReceiveResponse =
+  inventoryOrderReceiveResponseSuccess | inventoryOrderReceiveResponseError;
+
+export const getInventoryOrderReceiveUrl = (orderId: string) => {
+  return `/api/v1/inventory/orders/${orderId}/receipts/`;
+};
+
+export const inventoryOrderReceive = async (
+  orderId: string,
+  orderReceiptRequestRequest: OrderReceiptRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryOrderReceiveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryOrderReceiveResponse>(getInventoryOrderReceiveUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(orderReceiptRequestRequest),
+  });
+};
+
+export type inventoryOrderReceivingResponse200 = {
+  data: OrderReceiving;
+  status: 200;
+};
+
+export type inventoryOrderReceivingResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryOrderReceivingResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryOrderReceivingResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryOrderReceivingResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryOrderReceivingResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryOrderReceivingResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryOrderReceivingResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryOrderReceivingResponseSuccess = inventoryOrderReceivingResponse200 & {
+  headers: Headers;
+};
+export type inventoryOrderReceivingResponseError = (
+  | inventoryOrderReceivingResponse400
+  | inventoryOrderReceivingResponse401
+  | inventoryOrderReceivingResponse403
+  | inventoryOrderReceivingResponse404
+  | inventoryOrderReceivingResponse409
+  | inventoryOrderReceivingResponse422
+  | inventoryOrderReceivingResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryOrderReceivingResponse =
+  inventoryOrderReceivingResponseSuccess | inventoryOrderReceivingResponseError;
+
+export const getInventoryOrderReceivingUrl = (orderId: string) => {
+  return `/api/v1/inventory/orders/${orderId}/receiving/`;
+};
+
+export const inventoryOrderReceiving = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryOrderReceivingResponse> => {
+  return apiMutator<inventoryOrderReceivingResponse>(getInventoryOrderReceivingUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventoryStockResponse200 = {
+  data: InventoryStock;
+  status: 200;
+};
+
+export type inventoryStockResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryStockResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryStockResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryStockResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryStockResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryStockResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryStockResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryStockResponseSuccess = inventoryStockResponse200 & {
+  headers: Headers;
+};
+export type inventoryStockResponseError = (
+  | inventoryStockResponse400
+  | inventoryStockResponse401
+  | inventoryStockResponse403
+  | inventoryStockResponse404
+  | inventoryStockResponse409
+  | inventoryStockResponse422
+  | inventoryStockResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryStockResponse = inventoryStockResponseSuccess | inventoryStockResponseError;
+
+export const getInventoryStockUrl = () => {
+  return `/api/v1/inventory/stock/`;
+};
+
+export const inventoryStock = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryStockResponse> => {
+  return apiMutator<inventoryStockResponse>(getInventoryStockUrl(), {
     ...options,
     method: "GET",
   });

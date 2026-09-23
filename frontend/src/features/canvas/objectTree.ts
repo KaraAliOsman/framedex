@@ -10,15 +10,7 @@ export interface TreeNode {
   label: string;
   detail: string | null;
   kind:
-    | "root"
-    | "module"
-    | "bay"
-    | "member"
-    | "glazing"
-    | "handle"
-    | "mullion"
-    | "coupler"
-    | "panel";
+    "root" | "module" | "bay" | "member" | "glazing" | "handle" | "mullion" | "coupler" | "panel";
   severity: "error" | "warning" | null;
   /** Canvas selection target (module or coupling id); null = structural row. */
   selectId: string | null;
@@ -134,9 +126,7 @@ function intentRows(
         kind: "mullion",
         severity: null,
         selectId: moduleId,
-        children: (node.children ?? []).flatMap((child) =>
-          intentRows(child, moduleId, members, t),
-        ),
+        children: (node.children ?? []).flatMap((child) => intentRows(child, moduleId, members, t)),
       },
     ];
   }

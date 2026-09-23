@@ -80,27 +80,20 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "sash",
     titleKey: "assembly.starter.sash",
     hintKey: "assembly.starter.sashHint",
-    build: (w, h) =>
-      wrapTreeAsProduct(starterTree("TILT_TURN_LEFT"), w.toFixed(2), h.toFixed(2)),
+    build: (w, h) => wrapTreeAsProduct(starterTree("TILT_TURN_LEFT"), w.toFixed(2), h.toFixed(2)),
   },
   {
     key: "twoSash",
     titleKey: "assembly.starter.twoSash",
     hintKey: "assembly.starter.twoSashHint",
     build: (w, h) =>
-      splitBay(
-        "SPLIT_V",
-        [starterTree("TILT_TURN_LEFT"), starterTree("TILT_TURN_RIGHT")],
-        w,
-        h,
-      ),
+      splitBay("SPLIT_V", [starterTree("TILT_TURN_LEFT"), starterTree("TILT_TURN_RIGHT")], w, h),
   },
   {
     key: "sliding2",
     titleKey: "assembly.starter.sliding2",
     hintKey: "assembly.starter.sliding2Hint",
-    build: (w, h) =>
-      wrapTreeAsProduct(starterTree("SLIDING_2L"), w.toFixed(2), h.toFixed(2)),
+    build: (w, h) => wrapTreeAsProduct(starterTree("SLIDING_2L"), w.toFixed(2), h.toFixed(2)),
   },
   {
     key: "awning",
@@ -112,29 +105,25 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "awningBand",
     titleKey: "assembly.starter.awningBand",
     hintKey: "assembly.starter.awningBandHint",
-    build: (w, h) =>
-      splitBay("SPLIT_H", [starterTree("FIXED"), starterTree("AWNING")], w, h),
+    build: (w, h) => splitBay("SPLIT_H", [starterTree("FIXED"), starterTree("AWNING")], w, h),
   },
   {
     key: "coupled",
     titleKey: "assembly.starter.coupled",
     hintKey: "assembly.starter.coupledHint",
-    build: (w, h) =>
-      coupledModules(starterTree("TILT_TURN_LEFT"), starterTree("FIXED"), 0.5, w, h),
+    build: (w, h) => coupledModules(starterTree("TILT_TURN_LEFT"), starterTree("FIXED"), 0.5, w, h),
   },
   {
     key: "doorSide",
     titleKey: "assembly.starter.doorSide",
     hintKey: "assembly.starter.doorSideHint",
-    build: (w, h) =>
-      coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
+    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
   },
   {
     key: "slidingFixed",
     titleKey: "assembly.starter.slidingFixed",
     hintKey: "assembly.starter.slidingFixedHint",
-    build: (w, h) =>
-      coupledModules(starterTree("SLIDING_2L"), starterTree("FIXED"), 0.55, w, h),
+    build: (w, h) => coupledModules(starterTree("SLIDING_2L"), starterTree("FIXED"), 0.55, w, h),
   },
   {
     key: "bow3",

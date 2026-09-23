@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "documents.apps.DocumentsConfig",
     "purchasing.apps.PurchasingConfig",
     "jobs.apps.JobsConfig",
+    "inventory.apps.InventoryConfig",
     "billing.apps.BillingConfig",
 ]
 

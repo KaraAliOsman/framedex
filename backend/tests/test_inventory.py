@@ -1,0 +1,233 @@
+"""Inventory: stock derivation, receiving flow, movement recording, views."""
+
+from __future__ import annotations
+
+from contextlib import contextmanager
+from decimal import Decimal
+from types import SimpleNamespace
+from unittest.mock import patch
+from uuid import uuid4
+
+import pytest
+from rest_framework.test import APIClient
+
+from documents.repository import DocumentaryError
+from inventory import service, views as inventory_views
+
+
+def test_list_stock_returns_view_rows() -> None:
+    org_id = uuid4()
+    with patch("inventory.service.rows") as mock_rows:
+        mock_rows.return_value = [
+            {
+                "item_id": uuid4(),
+                "sku": "UMBRAL-ALU",
+                "name": "Umbral",
+                "category": "PROFILE",
+                "unit": "MM",
+                "variant_key": "",
+                "on_hand_qty": Decimal("1200.00"),
+                "reserved_qty": Decimal("400.00"),
+                "available_qty": Decimal("800.00"),
+            }
+        ]
+        output = service.list_stock(org_id=org_id)
+    assert output["items"][0]["available_qty"] == Decimal("800.00")
+    mock_rows.assert_called_once()
+
+
+def test_order_receiving_computes_outstanding() -> None:
+    org_id, order_id = uuid4(), uuid4()
+    line_id = uuid4()
+
+    def fake_rows(query, params):
+        if "order_requirement_lines" in query:
+            return [
+                {
+                    "id": line_id,
+                    "quantity": Decimal("10"),
+                    "received_qty": Decimal("4"),
+                    "damaged_qty": Decimal("1"),
+                    "line_snapshot": {"purchasing_sku": "SKU-1", "category": "PROFILE", "unit": "MM"},
+                }
+            ]
+        return []
+
+    with patch("inventory.service.rows", side_effect=fake_rows), patch(
+        "inventory.service.one",
+        return_value={
+            "id": order_id,
+            "order_code": "PO-X",
+            "order_type": "SUPPLIER_PROFILE_PO",
+            "status": "PARTIALLY_RECEIVED",
+            "supplier_name": "Vendor",
+        },
+    ), patch(
+        "inventory.service.documentary_backend", return_value=_atomic()
+    ):
+        output = service.order_receiving(org_id=org_id, order_id=order_id)
+    assert output["lines"][0]["outstanding_qty"] == Decimal("6")
+    assert output["lines"][0]["purchasing_sku"] == "SKU-1"
+
+
+def test_receive_order_rejects_draft() -> None:
+    org_id, order_id = uuid4(), uuid4()
+    with patch("inventory.service.rows", return_value=[]), patch(
+        "inventory.service.one",
+        return_value={"id": order_id, "status": "DRAFT"},
+    ), patch("inventory.service.transaction.atomic", return_value=_atomic()), patch(
+        "inventory.service.documentary_backend", return_value=_atomic()
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.receive_order(
+                org_id=org_id,
+                actor_id=uuid4(),
+                order_id=order_id,
+                receipt_key="k1",
+                note=None,
+                lines=[],
+            )
+    assert error.value.code == "order_not_sent"
+
+
+def test_receive_order_rejects_unknown_line() -> None:
+    org_id, order_id = uuid4(), uuid4()
+
+    def fake_one(query, params, code=None):
+        if "FOR UPDATE" in query:
+            return {"id": order_id, "status": "SENT"}
+        return {"id": uuid4()}
+
+    with patch("inventory.service.rows", return_value=[]), patch(
+        "inventory.service.one", side_effect=fake_one
+    ), patch("inventory.service.transaction.atomic", return_value=_atomic()), patch(
+        "inventory.service.documentary_backend", return_value=_atomic()
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.receive_order(
+                org_id=org_id,
+                actor_id=uuid4(),
+                order_id=order_id,
+                receipt_key="k2",
+                note=None,
+                lines=[{"order_line_id": str(uuid4()), "received_qty": Decimal("2"), "damaged_qty": Decimal("0")}],
+            )
+    assert error.value.code == "receipt_line_unknown"
+
+
+def test_receive_order_idempotent_replay() -> None:
+    org_id, order_id = uuid4(), uuid4()
+    with patch(
+        "inventory.service.rows",
+        return_value=[{"id": uuid4(), "receipt_key": "dup", "order_id": order_id}],
+    ), patch("inventory.service.transaction.atomic", return_value=_atomic()), patch(
+        "inventory.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "inventory.service.order_receiving", return_value={"order": {}, "lines": [], "receipts": []}
+    ) as receiving:
+        output, created = service.receive_order(
+            org_id=org_id,
+            actor_id=uuid4(),
+            order_id=order_id,
+            receipt_key="dup",
+            note=None,
+            lines=[],
+        )
+    assert created is False
+    receiving.assert_called_once()
+
+
+def test_record_movement_type_gate() -> None:
+    with pytest.raises(DocumentaryError) as error:
+        service.record_movement(
+            org_id=uuid4(),
+            actor_id=uuid4(),
+            item_id=uuid4(),
+            movement_type="CONSUMPTION",
+            quantity=1,
+            lot_code=None,
+            note="x",
+        )
+    assert error.value.code == "movement_type_not_allowed"
+
+
+@contextmanager
+def _atomic():
+    yield
+
+
+def _tenant(role: str, org_id):
+    return SimpleNamespace(
+        active_organization=SimpleNamespace(organization_id=org_id, role=role)
+    )
+
+
+def _client_with_scope(monkeypatch, role: str):
+    org_id = uuid4()
+    token = SimpleNamespace(user_id=uuid4(), claims={}, aal="aal1")
+
+    @contextmanager
+    def fake_scope(request, allowed):
+        assert role in allowed
+        yield token, _tenant(role, org_id), org_id
+
+    monkeypatch.setattr(inventory_views, "documentary_scope", fake_scope)
+    client = APIClient()
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True), token=object())
+    return client, token, org_id
+
+
+def test_stock_view_returns_items(monkeypatch) -> None:
+    client, _, org_id = _client_with_scope(monkeypatch, "ESTIMATOR")
+    monkeypatch.setattr(service, "list_stock", lambda *, org_id: {"items": [{"sku": "S"}]})
+    response = client.get("/api/v1/inventory/stock/")
+    assert response.status_code == 200
+    assert response.data == {"items": [{"sku": "S"}]}
+
+
+def test_receipt_post_forwards_payload(monkeypatch) -> None:
+    client, token, org_id = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+    seen = {}
+
+    def fake_receive(**kwargs):
+        seen.update(kwargs)
+        return {"order": {}, "lines": [], "receipts": []}, True
+
+    monkeypatch.setattr(service, "receive_order", fake_receive)
+    order_id = uuid4()
+    response = client.post(
+        f"/api/v1/inventory/orders/{order_id}/receipts/",
+        {
+            "receipt_key": "r1",
+            "lines": [{"order_line_id": str(uuid4()), "received_qty": "3.00"}],
+        },
+        format="json",
+    )
+    assert response.status_code == 201
+    assert seen["receipt_key"] == "r1"
+    assert seen["actor_id"] == token.user_id
+
+
+def test_receipt_post_denies_estimator(monkeypatch) -> None:
+    org_id = uuid4()
+    token = SimpleNamespace(user_id=uuid4(), claims={}, aal="aal1")
+
+    @contextmanager
+    def fake_scope(request, allowed):
+        from authentication.errors import contract_error
+
+        if "ESTIMATOR" in allowed and len(allowed) > 1:
+            yield token, _tenant("ESTIMATOR", org_id), org_id
+        else:
+            raise contract_error(403, "documentary_permission_denied", "denied")
+            yield
+
+    monkeypatch.setattr(inventory_views, "documentary_scope", fake_scope)
+    client = APIClient()
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True), token=object())
+    response = client.post(
+        f"/api/v1/inventory/orders/{uuid4()}/receipts/",
+        {"receipt_key": "r2", "lines": [{"order_line_id": str(uuid4()), "received_qty": "1.00"}]},
+        format="json",
+    )
+    assert response.status_code == 403

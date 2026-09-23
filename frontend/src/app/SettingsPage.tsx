@@ -58,11 +58,7 @@ export function SettingsPage(): JSX.Element {
 
         <div className="settings-card">
           <h2 className="eyebrow">{t("settings.appearance")}</h2>
-          <div
-            className="settings-theme"
-            role="radiogroup"
-            aria-label={t("settings.theme")}
-          >
+          <div className="settings-theme" role="radiogroup" aria-label={t("settings.theme")}>
             {(["light", "dark"] as const).map((option) => (
               <button
                 key={option}

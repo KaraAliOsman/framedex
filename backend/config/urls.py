@@ -12,6 +12,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("projects.urls")),
     path("api/v1/documents/", include("documents.urls")),
     path("api/v1/jobs/", include("jobs.urls")),
+    path("api/v1/inventory/", include("inventory.urls")),
     path("api/v1/purchasing/", include("purchasing.urls")),
     path("api/v1/pricing/", include("pricing.urls")),
     path("api/v1/auth/", include("authentication.urls")),

@@ -3026,6 +3026,379 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/inventory/movements/:
+    get:
+      operationId: inventory_movements
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: item_id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryMovements'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: inventory_movements_record
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryMovementRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InventoryMovementRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InventoryMovementRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryMovement'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/inventory/orders/{order_id}/receipts/:
+    post:
+      operationId: inventory_order_receive
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderReceiptRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderReceiptRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderReceiptRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderReceiving'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderReceiving'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/inventory/orders/{order_id}/receiving/:
+    get:
+      operationId: inventory_order_receiving
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderReceiving'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/inventory/stock/:
+    get:
+      operationId: inventory_stock
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryStock'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/jobs/:
     get:
       operationId: jobs_list
@@ -7298,6 +7671,163 @@ components:
       required:
       - bay_id
       - leaf_id
+    InventoryMovement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        movement_type:
+          $ref: '#/components/schemas/InventoryMovementMovementTypeEnum'
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+        order_line_id:
+          type: string
+          format: uuid
+          nullable: true
+        lot_code:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - actor_id
+      - created_at
+      - id
+      - item_id
+      - lot_code
+      - movement_type
+      - note
+      - order_id
+      - order_line_id
+      - quantity
+    InventoryMovementMovementTypeEnum:
+      enum:
+      - RECEIPT
+      - RESERVATION
+      - RELEASE
+      - CONSUMPTION
+      - ADJUSTMENT
+      - RETURN
+      - SCRAP
+      type: string
+      description: |-
+        * `RECEIPT` - RECEIPT
+        * `RESERVATION` - RESERVATION
+        * `RELEASE` - RELEASE
+        * `CONSUMPTION` - CONSUMPTION
+        * `ADJUSTMENT` - ADJUSTMENT
+        * `RETURN` - RETURN
+        * `SCRAP` - SCRAP
+    InventoryMovementRequestMovementTypeEnum:
+      enum:
+      - ADJUSTMENT
+      - RETURN
+      - SCRAP
+      type: string
+      description: |-
+        * `ADJUSTMENT` - ADJUSTMENT
+        * `RETURN` - RETURN
+        * `SCRAP` - SCRAP
+    InventoryMovementRequestRequest:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        movement_type:
+          $ref: '#/components/schemas/InventoryMovementRequestMovementTypeEnum'
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        lot_code:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - item_id
+      - movement_type
+      - note
+      - quantity
+    InventoryMovements:
+      type: object
+      properties:
+        movements:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryMovement'
+      required:
+      - movements
+    InventoryStock:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryStockItem'
+      required:
+      - items
+    InventoryStockItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        unit:
+          type: string
+        variant_key:
+          type: string
+        on_hand_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        reserved_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        available_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - available_qty
+      - category
+      - item_id
+      - name
+      - on_hand_qty
+      - reserved_qty
+      - sku
+      - unit
+      - variant_key
     JobEnqueueRequest:
       type: object
       properties:
@@ -7786,6 +8316,111 @@ components:
         * `SLIDING` - SLIDING
         * `TILT_TURN` - TILT_TURN
         * `TURN` - TURN
+    OrderReceipt:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        receipt_key:
+          type: string
+        note:
+          type: string
+          nullable: true
+        received_by:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - id
+      - note
+      - receipt_key
+      - received_by
+    OrderReceiptRequestRequest:
+      type: object
+      properties:
+        receipt_key:
+          type: string
+          minLength: 1
+          maxLength: 100
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiptLineRequestRequest'
+      required:
+      - lines
+      - receipt_key
+    OrderReceiving:
+      type: object
+      properties:
+        order: {}
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderReceivingLine'
+        receipts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderReceipt'
+      required:
+      - lines
+      - order
+      - receipts
+    OrderReceivingLine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ordered_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        received_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        damaged_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        outstanding_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        purchasing_sku:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        physical_stock_identity:
+          type: string
+          nullable: true
+        specification:
+          nullable: true
+      required:
+      - category
+      - damaged_qty
+      - id
+      - ordered_qty
+      - outstanding_qty
+      - physical_stock_identity
+      - purchasing_sku
+      - received_qty
+      - specification
+      - unit
     OrderResponse:
       type: object
       properties:
@@ -8919,6 +9554,39 @@ components:
       description: |-
         * `dual` - dual
         * `mono` - mono
+    ReceiptLineRequestRequest:
+      type: object
+      properties:
+        order_line_id:
+          type: string
+          format: uuid
+        received_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        damaged_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          default: '0.00'
+        lot_code:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+        rack_location:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+      required:
+      - order_line_id
+      - received_qty
     Reinforcement:
       type: object
       properties:

@@ -805,9 +805,7 @@ it("renders the design library with rendered starter cards", async () => {
 it("picking a sliding starter card builds a sliding product", async () => {
   mount("/projects/project-a/positions/new");
   await screen.findByRole("list", { name: t("assembly.starterLibrary") });
-  fireEvent.click(
-    screen.getByRole("button", { name: /Corredera 2 hojas/ }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: /Corredera 2 hojas/ }));
   const product = useCanvasStore.getState().inputs.product;
   expect(product?.assembly.modules[0]?.tree.opening_type).toBe("SLIDING_2L");
 });
