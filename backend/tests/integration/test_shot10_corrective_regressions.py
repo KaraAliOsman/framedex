@@ -606,6 +606,12 @@ def test_readiness_flags_reinforced_coupler_fabrication(documentary_tenant):
          " RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "fabrication" in catalog_readiness(system, org)["reasons"]
+    rows("UPDATE public.profile_articles SET reinforcement_sku=''"
+         " WHERE system_id=%s AND role='COUPLER' RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        # A blank SKU is unreinforced — the engine skips its steel cut math,
+        # so UNKNOWN weld/gap must not block the whole catalog.
+        assert "fabrication" not in catalog_readiness(system, org)["reasons"]
 
 
 @pytest.mark.parametrize("role,flagged", [("SASH", True), ("FRAME", False)])

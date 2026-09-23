@@ -66,7 +66,7 @@ def catalog_readiness(system_id, org_id):
             try:
                 couplers = SystemParamsRepository().load_coupler_articles(system_id, org_id)
                 fabrication_missing = any(
-                    article.reinforcement_sku is not None
+                    bool(article.reinforcement_sku)
                     and (article.welding_loss_mm is None or article.reinforcement_gap_mm is None)
                     for article in couplers.values()
                 )
