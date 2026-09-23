@@ -118,7 +118,7 @@ def _cell(value: object, class_name: str = "") -> str:
     css = f' class="{escape(class_name)}"' if class_name else ""
     rendered = _value(value)
     if class_name == "hash" and len(rendered) > 16:
-        rendered = f"{rendered[:12]}…"
+        rendered = f"{rendered[:12]}…{rendered[-4:]}"
     return f"<td{css}>{escape(rendered)}</td>"
 
 
