@@ -131,7 +131,7 @@ def _audit(
         rows(
             "INSERT INTO public.ai_audit_provenance("
             "audit_id, provider, provider_model, prompt_version)"
-            " VALUES(%s,%s,%s,%s)",
+            " VALUES(%s,%s,%s,%s) RETURNING audit_id",
             [
                 str(inserted[0]["id"]),
                 str(route["provider"]),

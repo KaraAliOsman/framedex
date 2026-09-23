@@ -784,3 +784,76 @@ def test_audit_seals_provider_provenance(monkeypatch):
         str(route["provider_model"]),
         str(route["prompt_version"]),
     ]
+
+
+def test_provenance_insert_returns_a_row(monkeypatch):
+    """rows() reads cursor.description — a bare INSERT without RETURNING raises
+    TypeError and rolls back the paid invocation's audit+debit."""
+    org_id = uuid4()
+    audit_id = uuid4()
+    seen = []
+
+    def fake_rows(sql, params=None):
+        if "INSERT INTO public.ai_audit_provenance" in sql:
+            assert "RETURNING" in sql.upper()
+            seen.append(sql)
+            return [{"audit_id": params[0]}]
+        if "INSERT INTO public.ai_audit_logs" in sql:
+            return [{"id": audit_id}]
+        if "ai_routes" in sql:
+            return [_route()]
+        return []
+
+    _patch_env(monkeypatch, rows_impl=fake_rows)
+    service.invoke(
+        org_id=org_id,
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-returning",
+        input_payload={"x": 1},
+        tool_name="editor_command",
+    )
+    assert seen
+
+
+def test_provider_usage_outside_int4_is_a_provider_error():
+    from ai_gateway.providers import HttpProvider, ProviderError
+
+    provider = HttpProvider.__new__(HttpProvider)
+    provider._request = lambda **_kwargs: (
+        b'{"output":"ok","usage":{"prompt_tokens":2147483648,"completion_tokens":1}}'
+    )
+    with pytest.raises(ProviderError) as failure:
+        provider.invoke(
+            route={"provider_model": "m"},
+            capability="nlp_command",
+            input_payload={},
+        )
+    assert failure.value.code == "ai_provider_error"
+
+
+def test_http_provider_signs_storage_path_at_wire_time(monkeypatch):
+    """input_payload carries the stable storage_path; the ephemeral document_url
+    is minted per attempt so retries keep an identical audited input hash."""
+    from ai_gateway.providers import HttpProvider
+
+    provider = HttpProvider.__new__(HttpProvider)
+    sent = []
+    provider._request = lambda **kwargs: sent.append(kwargs) or b'{"output":"ok","usage":{}}'
+
+    class _Storage:
+        def signed_url(self, path):
+            return f"https://files.test/{path}?token=fresh"
+
+    import documents.storage as storage_mod
+
+    monkeypatch.setattr(storage_mod, "SupabaseDocumentStorage", _Storage)
+    out = provider.invoke(
+        route={"provider_model": "m"},
+        capability="vision_ocr",
+        input_payload={"storage_path": "imports/o/p/f.pdf"},
+    )
+    wire = sent[0]["input_payload"]
+    assert wire["storage_path"] == "imports/o/p/f.pdf"
+    assert wire["document_url"].endswith("token=fresh")
+    assert out["output"] == "ok"

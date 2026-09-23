@@ -220,11 +220,21 @@ class HttpProvider:
         operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
+        # Ephemeral fetch URLs are resolved at wire time, never carried in
+        # input_payload: the audited input hash must stay identical across
+        # retries even though a fresh signed URL is minted each attempt.
+        wire_input = dict(input_payload)
+        if wire_input.get("storage_path"):
+            from documents.storage import SupabaseDocumentStorage
+
+            wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
+                str(wire_input["storage_path"])
+            )
         try:
             content = self._request(
                 route=route,
                 capability=capability,
-                input_payload=input_payload,
+                input_payload=wire_input,
                 client=client,
                 operation_key=operation_key,
             )
@@ -239,6 +249,14 @@ class HttpProvider:
                 raise TypeError("provider output is not a string")
             tokens_prompt = int(usage.get("prompt_tokens") or 0)
             tokens_completion = int(usage.get("completion_tokens") or 0)
+            # Usage feeds an INT4 audit column — a malformed or impossible count
+            # is a provider error, not an audit-time database exception raised
+            # after the paid call already succeeded.
+            if not (
+                0 <= tokens_prompt <= 2_147_483_647
+                and 0 <= tokens_completion <= 2_147_483_647
+            ):
+                raise TypeError("provider token usage is outside the audit range")
         except ProviderError:
             raise
         except (httpx.HTTPError, TypeError, ValueError) as error:

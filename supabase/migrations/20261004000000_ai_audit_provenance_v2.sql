@@ -63,4 +63,6 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION private.purge_expired_ai_audit() FROM PUBLIC;
+-- EXECUTE alone is not enough: qualified calls need schema USAGE too.
+GRANT USAGE ON SCHEMA private TO service_role;
 GRANT EXECUTE ON FUNCTION private.purge_expired_ai_audit() TO service_role;

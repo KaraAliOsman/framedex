@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(8);
+SELECT plan(9);
 
 SELECT has_table(
     'public', 'ai_audit_provenance',
@@ -35,6 +35,13 @@ SELECT function_privs_are(
     'private', 'purge_expired_ai_audit', ARRAY[]::text[],
     'service_role', ARRAY['EXECUTE'],
     'service_role may execute the retention purge'
+);
+
+-- ACL is not enough — the qualified call needs schema USAGE too.
+SET LOCAL ROLE service_role;
+SELECT lives_ok(
+    'SELECT private.purge_expired_ai_audit()',
+    'service_role can actually invoke the retention purge'
 );
 
 SELECT * FROM finish();
