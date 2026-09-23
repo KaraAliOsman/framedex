@@ -870,9 +870,9 @@ def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
     code = captured[0][2]
     assert len(code) <= 50
     assert code.endswith("-RM-01")
-    marker = str(order_id).replace("-", "")[:8].upper()
+    marker = str(order_id).replace("-", "").upper()
     assert marker in code
     # distinct sources keep distinct codes even with identical prefixes
     other_id = uuid4()
-    other_marker = str(other_id).replace("-", "")[:8].upper()
-    assert other_marker != marker or code != f"{source_code[:50-len('-RM-01')-9]}-{other_marker}-RM-01"
+    other_marker = str(other_id).replace("-", "").upper()
+    assert code != f"{source_code[:50-len('-RM-01')-33]}-{other_marker}-RM-01"

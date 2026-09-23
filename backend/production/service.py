@@ -583,8 +583,8 @@ def create_remake(
         if len(source_code) + len(suffix) <= 50:
             order_code = f"{source_code}{suffix}"
         else:
-            marker = str(source["id"]).replace("-", "")[:8].upper()
-            order_code = f"{source_code[: 50 - len(suffix) - 9]}-{marker}{suffix}"
+            marker = str(source["id"]).replace("-", "").upper()
+            order_code = f"{source_code[: 50 - len(suffix) - 33]}-{marker}{suffix}"
         remake = one(
             """
             INSERT INTO public.orders(
