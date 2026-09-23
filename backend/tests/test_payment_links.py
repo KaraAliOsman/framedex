@@ -109,6 +109,9 @@ def _payment_row(**over):
 def _patch_env(monkeypatch, rows_impl, client=None, deal=None):
     monkeypatch.setattr(payment_links, "documentary_backend", _noop)
     monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
+    monkeypatch.setattr(
+        payment_links.wallet, "financial_transaction", lambda org: _noop()
+    )
     monkeypatch.setattr(payment_links, "rows", rows_impl)
     monkeypatch.setattr(
         payment_links, "project_row", staticmethod(lambda *a, **k: {"name": "P-1"})
@@ -260,8 +263,10 @@ def test_create_link_dispatches_and_stores_redirect(monkeypatch):
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
         if "INSERT INTO public.project_payment_links" in sql:
-            inserts.append(params)
             return [_link(status="DISPATCHING")]
+        if "INSERT INTO public.project_payment_link_credentials" in sql:
+            inserts.append(params)
+            return []
         if "UPDATE public.project_payment_links" in sql:
             return [_link()]
         return []
@@ -283,8 +288,9 @@ def test_create_link_dispatches_and_stores_redirect(monkeypatch):
     assert client.calls[0][1]["amount"] == Decimal("250000")
     assert out["link"]["status"] == "PENDING"
     assert out["link"]["url"].startswith("https://sandbox.flow.cl")
-    # The link stores the credential version it was dispatched with.
-    assert inserts[0][-3:] == [
+    # The credential version that signed the dispatch lives on the
+    # backend-only credentials row, keyed by the new link id.
+    assert inserts[0][2:] == [
         integration["api_url"],
         integration["api_key"],
         integration["secret_key"],
@@ -327,7 +333,7 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
     inserts = []
 
     def fake_rows(sql, params=None):
-        if "SELECT * FROM public.project_payment_links" in sql and "id=%s" in sql:
+        if "FROM public.project_payment_links" in sql and "id=%s" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -360,7 +366,7 @@ def test_confirm_uses_link_credentials_not_current_integration(monkeypatch):
     def fake_rows(sql, params=None):
         # org_payment_integrations is deliberately empty — rotation/disabling
         # must not strand an outstanding charge.
-        if "SELECT * FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -435,7 +441,7 @@ def test_settle_rejects_hijacking_payment(monkeypatch):
     hijacker = _payment_row(project_id=uuid4(), amount=Decimal("10000"))
 
     def fake_rows(sql, params=None):
-        if "SELECT * FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return []  # conflict — key already claimed
@@ -456,7 +462,7 @@ def test_settle_accepts_matching_manual_payment(monkeypatch):
     manual = _payment_row(project_id=link["project_id"])
 
     def fake_rows(sql, params=None):
-        if "SELECT * FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return []

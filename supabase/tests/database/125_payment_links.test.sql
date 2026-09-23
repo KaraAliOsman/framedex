@@ -1,15 +1,18 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(16);
+SELECT plan(22);
 
 SELECT has_table('public', 'org_payment_integrations', 'org payment integrations table exists');
 SELECT has_table('public', 'project_payment_links', 'project payment links table exists');
 SELECT has_column('public', 'project_payment_links', 'operation_key', 'claim carries the ledger idempotency key');
 SELECT has_column('public', 'project_payment_links', 'flow_token', 'provider token captured');
-SELECT has_column('public', 'project_payment_links', 'flow_api_url', 'dispatch credential snapshot: url');
-SELECT has_column('public', 'project_payment_links', 'flow_api_key', 'dispatch credential snapshot: key');
-SELECT has_column('public', 'project_payment_links', 'flow_secret_key', 'dispatch credential snapshot: secret');
+SELECT has_table('public', 'project_payment_link_credentials', 'dispatch credential snapshot table exists');
+SELECT has_column('public', 'project_payment_link_credentials', 'flow_api_url', 'credential snapshot: url');
+SELECT has_column('public', 'project_payment_link_credentials', 'flow_api_key', 'credential snapshot: key');
+SELECT has_column('public', 'project_payment_link_credentials', 'flow_secret_key', 'credential snapshot: secret');
+SELECT hasnt_column('public', 'project_payment_links', 'flow_api_url', 'no credentials on the tenant-readable table');
+SELECT hasnt_column('public', 'project_payment_links', 'flow_secret_key', 'no secrets on the tenant-readable table');
 SELECT ok(
     EXISTS (
         SELECT 1 FROM pg_indexes
@@ -67,6 +70,32 @@ SELECT ok(
     NOT has_table_privilege('anon', 'public.project_payment_links', 'INSERT')
     AND NOT has_table_privilege('anon', 'public.project_payment_links', 'UPDATE'),
     'anonymous role cannot write link claims'
+);
+SELECT ok(
+    NOT has_table_privilege('authenticated', 'public.project_payment_link_credentials', 'SELECT')
+    AND NOT has_table_privilege('authenticated', 'public.project_payment_link_credentials', 'INSERT')
+    AND NOT has_table_privilege('anon', 'public.project_payment_link_credentials', 'SELECT'),
+    'credential snapshot stays behind the backend trust boundary'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public' AND tablename = 'project_payment_links'
+          AND policyname = 'billing_backend_scope'
+    ) AND EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public' AND tablename = 'project_payments'
+          AND policyname = 'billing_backend_scope'
+    ),
+    'billing-scoped policies let the webhook settle inside an org-pinned context'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public' AND tablename = 'project_payment_links'
+          AND policyname = 'payment_links_backend_read'
+    ),
+    'backend can resolve the opaque link id without JWT claims'
 );
 
 SELECT * FROM finish();

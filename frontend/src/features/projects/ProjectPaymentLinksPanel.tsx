@@ -284,7 +284,7 @@ export function ProjectPaymentLinksPanel({
                 </td>
                 {canWrite && (
                   <td>
-                    {link.status !== "PAID" && link.status !== "DISPATCHING" && (
+                    {link.status !== "PAID" && (
                       <button type="button" onClick={() => recover(link)} disabled={busy}>
                         {t("projects.paymentLinkRecover")}
                       </button>

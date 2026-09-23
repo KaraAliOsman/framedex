@@ -20,6 +20,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from authentication.errors import contract_error
+from billing import wallet
 from billing.flow import FlowClient, FlowError
 from documents.repository import documentary_backend
 from pricing.repository import rows
@@ -195,9 +196,8 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             """
             INSERT INTO public.project_payment_links(
                 org_id, project_id, operation_key, kind, amount, payer_email,
-                subject, status, environment, created_by,
-                flow_api_url, flow_api_key, flow_secret_key)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s,%s,%s,%s)
+                subject, status, environment, created_by)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s)
             ON CONFLICT (org_id, operation_key) DO NOTHING
             RETURNING *
             """,
@@ -211,9 +211,6 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 subject[:200],
                 _environment(integration[0]["api_url"]),
                 str(actor_id),
-                integration[0]["api_url"],
-                integration[0]["api_key"],
-                integration[0]["secret_key"],
             ],
         )
         if inserted:
@@ -230,6 +227,20 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 )
             return {"link": _public_link(link)}
         integration = integration[0]
+        # The credential version that signs this dispatch travels in a
+        # backend-only row — never on the tenant-readable links table.
+        rows(
+            "INSERT INTO public.project_payment_link_credentials("
+            "link_id, org_id, flow_api_url, flow_api_key, flow_secret_key) "
+            "VALUES (%s,%s,%s,%s,%s)",
+            [
+                str(link["id"]),
+                str(org_id),
+                integration["api_url"],
+                integration["api_key"],
+                integration["secret_key"],
+            ],
+        )
     # The claim is committed — now the provider mutation. An uncertain outcome
     # marks the link UNCERTAIN; recovery is a GET, never a second POST.
     client = _client(integration)
@@ -294,7 +305,7 @@ def _payment(value: dict) -> dict:
 
 def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) -> dict:
     """Fold a verified provider observation into link + ledger, idempotently."""
-    with transaction.atomic(), documentary_backend():
+    with wallet.financial_transaction(org_id):
         found = rows(
             "SELECT * FROM public.project_payment_links "
             "WHERE org_id=%s AND id=%s FOR UPDATE",
@@ -313,12 +324,14 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
         if str(link["status"]) == "PAID":
             return {"link": _public_link(link)}
         if verified["status"] == 1:
-            link = rows(
+            updated = rows(
                 "UPDATE public.project_payment_links SET status='PENDING', flow_order=%s, "
                 "updated_at=now() WHERE org_id=%s AND id=%s "
-                "AND status IN ('DISPATCHING','UNCERTAIN','FAILED') RETURNING *",
+                "AND status IN ('DISPATCHING','UNCERTAIN','FAILED','PENDING') RETURNING *",
                 [verified["flowOrder"], str(org_id), str(link_id)],
-            )[0]
+            )
+            if updated:
+                link = updated[0]
             return {"link": _public_link(link)}
         if verified["status"] in (3, 4):
             link = rows(
@@ -386,7 +399,11 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
     untrusted and rotated org credentials never strand an outstanding charge."""
     with documentary_backend():
         found = rows(
-            "SELECT * FROM public.project_payment_links WHERE id=%s", [str(link_id)]
+            "SELECT l.*, c.flow_api_url, c.flow_api_key, c.flow_secret_key "
+            "FROM public.project_payment_links l "
+            "LEFT JOIN public.project_payment_link_credentials c ON c.link_id = l.id "
+            "WHERE l.id=%s",
+            [str(link_id)],
         )
     if not found:
         raise FlowError("payment_link_not_found")
@@ -401,8 +418,10 @@ def recover_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
     lost webhook or ambiguous create without issuing another charge."""
     with documentary_backend():
         found = rows(
-            "SELECT * FROM public.project_payment_links "
-            "WHERE org_id=%s AND project_id=%s AND id=%s",
+            "SELECT l.*, c.flow_api_url, c.flow_api_key, c.flow_secret_key "
+            "FROM public.project_payment_links l "
+            "LEFT JOIN public.project_payment_link_credentials c ON c.link_id = l.id "
+            "WHERE l.org_id=%s AND l.project_id=%s AND l.id=%s",
             [str(org_id), str(project_id), str(link_id)],
         )
         if not found:
