@@ -173,6 +173,8 @@ const messages = {
   "projects.paymentsLoadError": "No pudimos cargar la cobranza.",
   "projects.paymentsRecordError": "No pudimos registrar el pago.",
   "projects.paymentsVoidError": "No pudimos anular el pago.",
+  "projects.paymentReceipt": "Comprobante",
+  "projects.paymentReceiptError": "No pudimos abrir el comprobante.",
   "projects.paymentLinksTitle": "Links de pago",
   "projects.paymentLinkCreate": "Crear link de pago",
   "projects.paymentLinkEmail": "Correo del pagador",

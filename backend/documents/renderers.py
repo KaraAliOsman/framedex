@@ -824,3 +824,103 @@ def render_pdf_document(
     if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
         raise DocumentaryError("pdf_generation_failed")
     return content, _PDF_MEDIA
+
+
+_PAYMENT_KIND_ES = {"ANTICIPO": "Anticipo", "PARCIAL": "Abono parcial", "SALDO": "Saldo"}
+_PAYMENT_METHOD_ES = {
+    "TRANSFERENCIA": "Transferencia",
+    "EFECTIVO": "Efectivo",
+    "TARJETA": "Tarjeta",
+    "CHEQUE": "Cheque",
+    "FLOW": "Flow",
+    "OTRO": "Otro",
+}
+
+
+def _receipt_body(payload: dict[str, object]) -> str:
+    project = _object(payload.get("project"), "invalid_receipt_project")
+    payment = _object(payload.get("payment"), "invalid_receipt_payment")
+    balance = _object(payload.get("balance"), "invalid_receipt_balance")
+    issued_at = _value(payload.get("issued_at"))
+    receipt_code = _value(payload.get("receipt_code"))
+    currency = _value(project.get("currency"))
+    kind = _PAYMENT_KIND_ES.get(_value(payment.get("kind")), _value(payment.get("kind")))
+    method = _PAYMENT_METHOD_ES.get(
+        _value(payment.get("method")), _value(payment.get("method"))
+    )
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Comprobante de pago</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Recibo</span>'
+        f'<span class="tb-value">{escape(receipt_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Operación</span>'
+        f'<span class="tb-value">{escape(_value(payment.get("operation_key")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(receipt_code)}</strong><br>"
+        f"Comprobante de pago<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Comprobante de pago</h1>"
+        '<section class="hero"><p>Recibido de</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
+        f"{escape(_value(project.get('delivery_address')))}</p>"
+        f'<p class="total">Monto: {escape(currency)} '
+        f'{escape(_value(payment.get("amount")))}</p></section>'
+    )
+    body += (
+        "<h2>Detalle del cobro</h2>"
+        + _table(
+            ["Concepto", "Método", "Referencia", "Fecha de cobro"],
+            [[kind, method, payment.get("reference"), _value(payment.get("recorded_at"))[:10]]],
+        )
+    )
+    note = _value(payment.get("note"))
+    if note != "—":
+        body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
+    body += (
+        "<h2>Estado del trato</h2>"
+        + _table(
+            ["Total cotizado", "Cobrado", "Saldo"],
+            [
+                [
+                    f"{currency} {_value(balance.get('deal_total'))}",
+                    f"{currency} {_value(balance.get('collected'))}",
+                    f"{currency} {_value(balance.get('remaining'))}",
+                ]
+            ],
+            ["", "", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Recibido por</p></div></main>"
+    )
+    return body
+
+
+def render_payment_receipt(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_receipt_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA

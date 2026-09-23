@@ -171,8 +171,22 @@ class PaymentVoidSerializer(StrictSerializer):
     reason = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
 
+class PaymentReceiptSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    receipt_code = serializers.CharField()
+    payment_id = serializers.UUIDField()
+    created_at = serializers.CharField()
+
+
+class PaymentReceiptAccessSerializer(PaymentReceiptSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
 class ProjectPaymentSerializer(serializers.Serializer):
     id = serializers.UUIDField()
+    receipt_id = serializers.UUIDField(allow_null=True)
+    receipt_code = serializers.CharField(allow_null=True)
     kind = serializers.CharField()
     amount = serializers.CharField()
     method = serializers.CharField()
@@ -196,6 +210,7 @@ class PaymentsSummarySerializer(serializers.Serializer):
 
 class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
     payment = ProjectPaymentSerializer()
+    receipt = PaymentReceiptSerializer(allow_null=True)
 
 
 class PaymentLinkCreateSerializer(StrictSerializer):

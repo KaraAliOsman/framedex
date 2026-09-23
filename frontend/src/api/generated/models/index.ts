@@ -235,6 +235,8 @@ export * from "./paymentLinkCreateRequest";
 export * from "./paymentLinkResponse";
 export * from "./paymentLinksResponse";
 export * from "./paymentLinkStatusEnum";
+export * from "./paymentReceipt";
+export * from "./paymentReceiptAccess";
 export * from "./paymentRecordRequest";
 export * from "./paymentRecordResponse";
 export * from "./paymentsSummary";

@@ -92,6 +92,16 @@ def env(monkeypatch):
     monkeypatch.setattr(
         payments, "project_row", staticmethod(lambda org_id, project_id, **kw: _project())
     )
+    monkeypatch.setattr(
+        payments,
+        "issue_receipt",
+        lambda **kw: {
+            "id": str(uuid4()),
+            "receipt_code": "RC-0001",
+            "payment_id": str(kw["payment"]["id"]),
+            "created_at": "2026-09-20T10:00:00+00:00",
+        },
+    )
     return captured
 
 

@@ -3,6 +3,7 @@ import { ApiError } from "../../api/apiMutator";
 import {
   projectPaymentsList,
   projectPaymentsRecord,
+  projectPaymentReceipt,
   projectPaymentVoid,
 } from "../../api/generated/dekopen";
 import type {
@@ -163,6 +164,22 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function openReceipt(payment: ProjectPayment): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentReceipt(projectId, payment.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      window.open(response.data.signed_url, "_blank", "noopener,noreferrer");
+    } catch {
+      if (generation.current === current) setMessage(t("projects.paymentReceiptError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   const payments = summary?.payments ?? [];
   const percent =
     summary?.quote_total_gross && Number(summary.quote_total_gross) > 0
@@ -277,6 +294,7 @@ export function ProjectPaymentsPanel({
               <th>{t("projects.paymentMethod")}</th>
               <th>{t("projects.paymentReference")}</th>
               <th>{t("projects.paymentNote")}</th>
+              <th>{t("projects.paymentReceipt")}</th>
               {canWrite && <th />}
             </tr>
           </thead>
@@ -292,6 +310,15 @@ export function ProjectPaymentsPanel({
                   {payment.voided_at
                     ? `${t("projects.paymentVoided")}${payment.void_reason ? ` — ${payment.void_reason}` : ""}`
                     : (payment.note ?? "—")}
+                </td>
+                <td>
+                  {payment.receipt_code ? (
+                    <button type="button" onClick={() => void openReceipt(payment)} disabled={busy}>
+                      {payment.receipt_code}
+                    </button>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 {canWrite && (
                   <td>

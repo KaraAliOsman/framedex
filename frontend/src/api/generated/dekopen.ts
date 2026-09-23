@@ -109,6 +109,7 @@ import type {
   PaymentLinkCreateRequest,
   PaymentLinkResponse,
   PaymentLinksResponse,
+  PaymentReceiptAccess,
   PaymentRecordRequest,
   PaymentRecordResponse,
   PaymentVoidRequest,
@@ -8365,6 +8366,82 @@ export const projectPaymentVoid = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(paymentVoidRequest),
   });
+};
+
+export type projectPaymentReceiptResponse200 = {
+  data: PaymentReceiptAccess;
+  status: 200;
+};
+
+export type projectPaymentReceiptResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentReceiptResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentReceiptResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentReceiptResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentReceiptResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentReceiptResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentReceiptResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentReceiptResponseSuccess = projectPaymentReceiptResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentReceiptResponseError = (
+  | projectPaymentReceiptResponse400
+  | projectPaymentReceiptResponse401
+  | projectPaymentReceiptResponse403
+  | projectPaymentReceiptResponse404
+  | projectPaymentReceiptResponse409
+  | projectPaymentReceiptResponse422
+  | projectPaymentReceiptResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentReceiptResponse =
+  projectPaymentReceiptResponseSuccess | projectPaymentReceiptResponseError;
+
+export const getProjectPaymentReceiptUrl = (projectId: string, paymentId: string) => {
+  return `/api/v1/projects/${projectId}/payments/${paymentId}/receipt/`;
+};
+
+export const projectPaymentReceipt = async (
+  projectId: string,
+  paymentId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentReceiptResponse> => {
+  return apiMutator<projectPaymentReceiptResponse>(
+    getProjectPaymentReceiptUrl(projectId, paymentId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type positionsCreateResponse201 = {

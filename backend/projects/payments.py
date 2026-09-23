@@ -16,12 +16,15 @@ from django.utils import timezone
 from authentication.errors import contract_error
 from documents.repository import documentary_backend
 from pricing.repository import rows
+from projects.receipts import _receipt_public, issue_receipt
 from projects.service import project_row
 
 
-def _payment_public(row):
+def _payment_public(row, receipt=None):
     return {
         "id": str(row["id"]),
+        "receipt_id": str(receipt["id"]) if receipt else None,
+        "receipt_code": receipt["receipt_code"] if receipt else None,
         "kind": row["kind"],
         "amount": str(row["amount"]),
         "method": row["method"],
@@ -85,6 +88,14 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
             "WHERE org_id=%s AND project_id=%s ORDER BY recorded_at,id",
             [str(org_id), str(project_id)],
         )
+        receipts = {
+            str(receipt["payment_id"]): receipt
+            for receipt in rows(
+                "SELECT id,payment_id,receipt_code FROM public.payment_receipts "
+                "WHERE org_id=%s AND project_id=%s",
+                [str(org_id), str(project_id)],
+            )
+        }
     collected = sum(
         (Decimal(str(p["amount"])) for p in payments if p["voided_at"] is None),
         Decimal("0"),
@@ -101,7 +112,9 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
     else:
         status = "PAID"
     return {
-        "payments": [_payment_public(p) for p in payments],
+        "payments": [
+            _payment_public(p, receipts.get(str(p["id"]))) for p in payments
+        ],
         "collected": str(collected),
         "quote_total_gross": str(total) if total is not None else None,
         "balance": str(balance) if balance is not None else None,
@@ -134,8 +147,14 @@ def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict
                         "La operación ya fue registrada en otro proyecto.",
                     )
                 # Replay returns the recorded row even if the deal later reset.
+                receipt = rows(
+                    "SELECT * FROM public.payment_receipts WHERE payment_id=%s AND org_id=%s",
+                    [str(payment["id"]), str(org_id)],
+                )
+                receipt_row = receipt[0] if receipt else None
                 return {
-                    "payment": _payment_public(payment),
+                    "payment": _payment_public(payment, receipt_row),
+                    "receipt": _receipt_public(receipt_row) if receipt_row else None,
                     **_summary(org_id, project_id, project),
                 }
             deal = _deal(org_id, project_id, project)
@@ -192,7 +211,18 @@ def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict
                     "payment_operation_conflict",
                     "La operación ya fue registrada en otro proyecto.",
                 )
-    return {"payment": _payment_public(payment), **_summary(org_id, project_id, project)}
+            receipt = issue_receipt(
+                org_id=org_id,
+                project=project,
+                payment=payment,
+                actor_id=actor_id,
+                deal=deal,
+            )
+    return {
+        "payment": _payment_public(payment, receipt),
+        "receipt": receipt,
+        **_summary(org_id, project_id, project),
+    }
 
 
 def void_payment(*, org_id: UUID, project_id: UUID, payment_id: UUID, actor_id: UUID, data: dict) -> dict:

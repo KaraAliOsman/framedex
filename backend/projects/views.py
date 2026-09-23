@@ -17,7 +17,7 @@ from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import clients, design_assist, payment_links, payments, service
+from projects import clients, design_assist, payment_links, payments, receipts, service
 from projects.serializers import (
     ClientListResponseSerializer,
     ClientResponseSerializer,
@@ -28,6 +28,7 @@ from projects.serializers import (
     PaymentLinkCreateSerializer,
     PaymentLinkResponseSerializer,
     PaymentLinksResponseSerializer,
+    PaymentReceiptAccessSerializer,
     PaymentRecordResponseSerializer,
     PaymentRecordSerializer,
     PaymentsSummarySerializer,
@@ -402,6 +403,23 @@ class ProjectPaymentView(APIView):
                     payment_id=payment_id,
                     actor_id=token.user_id,
                     data=data,
+                )
+            )
+
+
+class ProjectPaymentReceiptView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_payment_receipt",
+        responses={200: PaymentReceiptAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, payment_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                receipts.receipt_access(
+                    org_id=org, project_id=project_id, payment_id=payment_id
                 )
             )
 

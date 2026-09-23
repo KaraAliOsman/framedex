@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CurrencyEnum } from "./currencyEnum";
+import type { PaymentReceipt } from "./paymentReceipt";
 import type { PaymentStatusEnum } from "./paymentStatusEnum";
 import type { ProjectPayment } from "./projectPayment";
 
@@ -19,4 +20,5 @@ export interface PaymentRecordResponse {
   currency: CurrencyEnum;
   status: PaymentStatusEnum;
   payment: ProjectPayment;
+  receipt: PaymentReceipt | null;
 }
