@@ -49,9 +49,15 @@ export function AssistantPanel({
   const [preview, setPreview] = useState<Preview | null>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  /** Request generation token — a handled draft (or product change) must
+   * invalidate any in-flight generate so its response can't restore ops
+   * under a different prompt. */
+  const requestSeq = useRef(0);
 
   useEffect(() => {
     if (draft === null) return;
+    requestSeq.current += 1;
+    setBusy(false);
     if (draft) setPrompt(draft);
     setMessage("");
     setPreview(null);
@@ -88,6 +94,7 @@ export function AssistantPanel({
         systemId,
       };
     }
+    const seq = ++requestSeq.current;
     try {
       const response = await positionsDesignAssist(
         positionId,
@@ -108,6 +115,9 @@ export function AssistantPanel({
         { headers: { "X-Organization-ID": organizationId } },
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      // A newer draft (or request) superseded this call — its ops must never
+      // surface under a different prompt.
+      if (seq !== requestSeq.current) return;
       const data = response.data as DesignAssistResponse;
       setPreview({
         snapshot: product,
@@ -124,6 +134,7 @@ export function AssistantPanel({
         setMessage(t("assistant.empty"));
       }
     } catch (error) {
+      if (seq !== requestSeq.current) return;
       setMessage(
         error instanceof ApiError && typeof error.payload === "object" && error.payload !== null
           ? String(
@@ -133,7 +144,9 @@ export function AssistantPanel({
           : t("assistant.error"),
       );
     } finally {
-      setBusy(false);
+      // Only the newest request clears busy — a superseded response must not
+      // unlock the panel while a newer generate is still in flight.
+      if (seq === requestSeq.current) setBusy(false);
     }
   }
 

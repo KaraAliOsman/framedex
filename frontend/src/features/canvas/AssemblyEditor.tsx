@@ -594,13 +594,14 @@ export function AssemblyEditor({
   );
   useRegisterCommands(surface);
   const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
-  const selectedLabel = selection?.startsWith("coupling-")
-    ? null
-    : selectedModule
-      ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
-      : selectedCoupling
-        ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
-        : null;
+  // Labels derive from actual product membership — selection ids are
+  // arbitrary strings, so a coupling legitimately named "coupling-x" must
+  // still resolve (prefix sniffing would hide it).
+  const selectedLabel = selectedModule
+    ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
+    : selectedCoupling
+      ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
+      : null;
 
   const divideToolType = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
 
