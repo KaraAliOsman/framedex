@@ -120,7 +120,7 @@ function ProjectMetadataForm({
                           client_phone: picked.phone,
                           client_giro: picked.giro ?? "",
                           client_comuna: picked.comuna ?? "",
-                          client_address: picked.address || draft.value.client_address,
+                          client_address: picked.address,
                           delivery_address: draft.value.delivery_address || picked.address,
                         }
                       : {}),

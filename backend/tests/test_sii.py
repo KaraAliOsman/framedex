@@ -447,11 +447,41 @@ def test_register_caf_fails_closed_without_kek(monkeypatch):
 
 def test_rsask_roundtrip_wrap_unwrap(monkeypatch):
     monkeypatch.setattr(sii, "_kek", lambda: b"\x02" * 32)
-    wrapped = sii._wrap_rsask("aGFzc2R1aWFzZA==")
-    assert wrapped.startswith("enc:v1:")
-    assert sii._unwrap_rsask(wrapped) == "aGFzc2R1aWFzZA=="
+    aad = sii._caf_aad(str(uuid4()), 33, 1, 10)
+    wrapped = sii._wrap_rsask("aGFzc2R1aWFzZA==", aad)
+    assert wrapped.startswith("enc:v2:")
+    assert sii._unwrap_rsask(wrapped, aad) == "aGFzc2R1aWFzZA=="
+    # Ciphertext moved onto a different pool row fails decryption.
+    other = sii._caf_aad(str(uuid4()), 33, 50, 60)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii._unwrap_rsask(wrapped, other)
+    assert excinfo.value.contract_code == "sii_caf_key_invalid"
     # Legacy plaintext rows stay readable without a KEK.
     assert sii._unwrap_rsask("b3RoZXJwbGFpbg==") == "b3RoZXJwbGFpbg=="
+
+
+def test_parse_caf_rejects_zero_based_range():
+    xml, _ = _caf_xml(desde=0, hasta=10)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii._parse_caf(xml)
+    assert excinfo.value.contract_code == "sii_caf_invalid"
+
+
+def test_emit_dte_rejects_non_latin1_characters(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["project"]["client_name"] = "Ventanas \U0001fa9f SpA"
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(monkeypatch, storage, cafs=[caf], invoice=invoice)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_dte_unrepresentable"
+    assert storage.uploads == []
 
 
 def test_emit_dte_refuses_non_clp_invoice(monkeypatch):
