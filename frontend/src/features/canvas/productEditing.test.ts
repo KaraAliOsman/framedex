@@ -162,6 +162,32 @@ describe("splitModuleBay", () => {
     expect(tree.children![1]!.split_offset_mm).toBe("500.00");
   });
 
+  it("centers nested splits inside the true bay region on off-center parents", () => {
+    const once = splitModuleBay(bow(), "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      offsetMm: "200.00",
+    });
+    const [leftBay, rightBay] = once.assembly.modules[1]!.tree.children!;
+    // Fallback members (frame 60, mullion 70): left region [60, 165] is 105mm,
+    // right region [235, 640] is 405mm — centering must use those spans, not
+    // the raw parent offset.
+    const left = splitModuleBay(once, "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      bayId: leftBay!.id,
+    });
+    expect(left.assembly.modules[1]!.tree.children![0]!.type).toBe("SPLIT_V");
+    expect(left.assembly.modules[1]!.tree.children![0]!.split_offset_mm).toBe("52.50");
+    const right = splitModuleBay(once, "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      bayId: rightBay!.id,
+    });
+    expect(right.assembly.modules[1]!.tree.children![1]!.type).toBe("SPLIT_V");
+    expect(right.assembly.modules[1]!.tree.children![1]!.split_offset_mm).toBe("202.50");
+  });
+
   it("returns the same product for an unknown bayId", () => {
     const once = splitModuleBay(bow(), "m2", {
       type: "SPLIT_V",

@@ -914,15 +914,17 @@ export function ProductFrontContent({
   } | null>(null);
   const divideHover = useRef<{ bayId: string; mm: number } | null>(null);
 
-  /** Active drag teardown: removing the window listeners on cancel/unmount
-   * keeps an orphaned drag from committing stale product data later. */
+  /** Active drag teardown: cancelling removes the window listeners AND runs
+   * the drag's own abort, so its live preview is always cleared — on
+   * pointercancel, on unmount, or when a second pointer starts a new drag. */
   const dragDetach = useRef<(() => void) | null>(null);
   useEffect(() => () => dragDetach.current?.(), []);
 
   /** Installs window-level drag listeners bound to ONE pointer: a second
    * finger or pen can neither steer nor commit another pointer's drag.
    * `onRelease` runs on pointerup (commit), `onAbort` on pointercancel or
-   * unmount — never a commit. Starting a new drag detaches the old one. */
+   * unmount — never a commit. Starting a new drag CANCELS the old one: its
+   * listeners are removed and its abort runs, so no preview state leaks. */
   const trackDrag = (
     pointerId: number,
     onMove: (event: globalThis.PointerEvent) => void,
@@ -934,7 +936,11 @@ export function ProductFrontContent({
       window.removeEventListener("pointermove", onGuardedMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
-      dragDetach.current = null;
+      if (dragDetach.current === cancel) dragDetach.current = null;
+    };
+    const cancel = (): void => {
+      detach();
+      onAbort();
     };
     const onGuardedMove = (event: globalThis.PointerEvent): void => {
       if (event.pointerId === pointerId) onMove(event);
@@ -946,13 +952,12 @@ export function ProductFrontContent({
     };
     const onCancel = (event: globalThis.PointerEvent): void => {
       if (event.pointerId !== pointerId) return;
-      detach();
-      onAbort();
+      cancel();
     };
     window.addEventListener("pointermove", onGuardedMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
-    dragDetach.current = detach;
+    dragDetach.current = cancel;
   };
 
   /** Client coordinates → front-elevation millimetres (inverse CTM works at

@@ -13,7 +13,7 @@ import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
 import { buildObjectTree } from "./objectTree";
-import { resolveMembers } from "./members";
+import { resolveMembers, type MemberGeometry } from "./members";
 import {
   frontBounds,
   frontLayout,
@@ -164,6 +164,7 @@ function statusKey(status: string | undefined): TranslationKey {
 function ModuleInspector({
   module,
   product,
+  members,
   glassSkus,
   glazingThicknesses,
   panelSkus,
@@ -173,6 +174,7 @@ function ModuleInspector({
 }: {
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
+  members: MemberGeometry;
   glassSkus: string[];
   glazingThicknesses: string[];
   panelSkus: string[];
@@ -228,10 +230,12 @@ function ModuleInspector({
             disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
             onClick={() =>
               commit(
-                splitModuleBay(product, module.id, {
-                  type: "SPLIT_V",
-                  mullionSku: mullionSkus.SPLIT_V ?? "",
-                }),
+                splitModuleBay(
+                  product,
+                  module.id,
+                  { type: "SPLIT_V", mullionSku: mullionSkus.SPLIT_V ?? "" },
+                  members,
+                ),
               )
             }
           >
@@ -243,10 +247,12 @@ function ModuleInspector({
             disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
             onClick={() =>
               commit(
-                splitModuleBay(product, module.id, {
-                  type: "SPLIT_H",
-                  mullionSku: mullionSkus.SPLIT_H ?? "",
-                }),
+                splitModuleBay(
+                  product,
+                  module.id,
+                  { type: "SPLIT_H", mullionSku: mullionSkus.SPLIT_H ?? "" },
+                  members,
+                ),
               )
             }
           >
@@ -514,12 +520,7 @@ export function AssemblyEditor({
           ? mullionSkus.SPLIT_H
           : undefined;
     if (divideToolType !== null && sku !== undefined) {
-      commit(
-        splitModuleBay(productJson, id, {
-          type: divideToolType,
-          mullionSku: sku,
-        }),
-      );
+      commit(splitModuleBay(productJson, id, { type: divideToolType, mullionSku: sku }, members));
       setTool("select");
     }
     select(id);
@@ -537,12 +538,17 @@ export function AssemblyEditor({
       return;
     }
     commit(
-      splitModuleBay(productJson, id, {
-        type: divideToolType,
-        mullionSku: sku,
-        bayId: bayId ?? undefined,
-        offsetMm,
-      }),
+      splitModuleBay(
+        productJson,
+        id,
+        {
+          type: divideToolType,
+          mullionSku: sku,
+          bayId: bayId ?? undefined,
+          offsetMm,
+        },
+        members,
+      ),
     );
     setTool("select");
     select(id);
@@ -734,6 +740,7 @@ export function AssemblyEditor({
           <ModuleInspector
             module={selectedModule}
             product={product}
+            members={members}
             glassSkus={glassSkus}
             glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}

@@ -1,5 +1,7 @@
 import type { IntentNode, Opening, SplitType } from "./intentEditing";
 import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
+import type { MemberGeometry } from "./members";
+import { FALLBACK_MEMBERS, resolveMembers } from "./members";
 
 /** Compositional product model (product-v2) — modules joined by couplings.
  *
@@ -576,16 +578,21 @@ export function modulePanelSku(module: ProductModuleJson): string | null {
 }
 
 /** A bay's region extent along an axis — the span its local split_offset_mm
- * must stay inside. Splits on the axis narrow the span: first children get
- * the leading part (≈ split_offset_mm), second children the remainder.
- * Mullion thickness is ignored (~35mm); the result still bounds every
- * splittable bay, so span/2 lands inside it whenever a split is possible. */
+ * must stay inside, derived exactly like the engine walks the tree: the top
+ * node fills the frame-clear rectangle (module span minus both frame faces)
+ * and every same-axis ancestor consumes half its mullion face on each side
+ * of the split centerline. The top node's own split_offset_mm is measured
+ * from the module edge (local origin 0); deeper nodes measure from their
+ * own region origin, so only the root step folds in raw module mm.
+ * `isTopBay` tells callers the bay IS the tree top — a new split there
+ * becomes the root and needs a module-relative offset. */
 function baySpanOnAxis(
   root: IntentNode,
   bayId: string,
   vertical: boolean,
   moduleSpanMm: number,
-): number {
+  members: MemberGeometry,
+): { spanMm: number; isTopBay: boolean } | null {
   const pathTo = (node: IntentNode): { node: IntentNode; index: number }[] | null => {
     if (node.id === bayId) return [];
     for (const [index, child] of (node.children ?? []).entries()) {
@@ -595,16 +602,24 @@ function baySpanOnAxis(
     return null;
   };
   const path = pathTo(root);
-  if (!path) return moduleSpanMm;
-  let span = moduleSpanMm;
+  if (!path) return null;
+  const frameFace = members.frame.faceWidthMm;
+  const mullionHalf =
+    (vertical
+      ? (members.mullionV?.faceWidthMm ?? FALLBACK_MEMBERS.mullion)
+      : (members.mullionH?.faceWidthMm ?? FALLBACK_MEMBERS.mullion)) / 2;
+  let lo = frameFace;
+  let hi = Math.max(moduleSpanMm - frameFace, frameFace);
   for (const { node, index } of path) {
     if (node.type !== "SPLIT_V" && node.type !== "SPLIT_H") continue;
     if ((node.type === "SPLIT_V") !== vertical) continue;
     const offset = Number(node.split_offset_mm);
     if (!Number.isFinite(offset) || offset <= 0) continue;
-    span = index === 0 ? offset : Math.max(span - offset, 0);
+    const centerline = node === root ? offset : lo + offset;
+    if (index === 0) hi = Math.min(hi, centerline - mullionHalf);
+    else lo = Math.max(lo, centerline + mullionHalf);
   }
-  return span;
+  return { spanMm: Math.max(hi - lo, 0), isTopBay: path.length === 0 };
 }
 
 /** "Dividir" — split a module's bay region with a catalog mullion.
@@ -619,6 +634,7 @@ export function splitModuleBay(
   product: ProductJson,
   moduleId: string,
   division: { type: SplitType; mullionSku: string; offsetMm?: string; bayId?: string },
+  members?: MemberGeometry,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module || !division.mullionSku.trim()) return product;
@@ -630,9 +646,17 @@ export function splitModuleBay(
   if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
-  const offset =
-    division.offsetMm ??
-    (baySpanOnAxis(root, bay.id, division.type === "SPLIT_V", size) / 2).toFixed(2);
+  const region = baySpanOnAxis(
+    root,
+    bay.id,
+    division.type === "SPLIT_V",
+    size,
+    members ?? resolveMembers(undefined),
+  );
+  if (region === null || region.spanMm <= 0) return product;
+  // The top bay's split becomes the new root — its offset is module-relative.
+  // Deeper bays store bay-local offsets, so centering halves the bay's own span.
+  const offset = division.offsetMm ?? (region.isTopBay ? size / 2 : region.spanMm / 2).toFixed(2);
   const used = new Set(walkIntent(module.tree).map((node) => node.id));
   const freeId = (base: string): string => {
     let index = 1;
