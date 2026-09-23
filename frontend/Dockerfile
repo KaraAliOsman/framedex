@@ -5,6 +5,10 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_POSTHOG_KEY
+ARG VITE_POSTHOG_HOST
 RUN npm run build
 
 FROM nginx:1.29.2-alpine

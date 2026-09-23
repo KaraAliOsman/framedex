@@ -23,8 +23,11 @@ Create five services from `KaraAliOsman/framedex`'s verified release SHA:
 
 - **API** — `railway.toml`: gunicorn on the root Dockerfile, `/health/ready/` check.
 - **Frontend** — `railway.frontend.toml`: nginx serving the built SPA and proxying
-  `/api/` to the API's private origin; set `BACKEND_ORIGIN`
-  (e.g. `http://api.railway.internal:$PORT`) and `PORT`.
+  `/api/` to the API's private origin; set `PORT`, `BACKEND_ORIGIN` as a fully
+  resolved URL (e.g. `http://api.railway.internal:8000` — no `$VAR` references),
+  and the `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` build args (optional
+  `VITE_POSTHOG_KEY`/`VITE_POSTHOG_HOST`). The proxy forwards the upstream host to
+  Django, so the API private hostname must appear in `ALLOWED_HOSTS`.
 - **Jobs worker** — `railway.worker.toml`: the same image running
   `python backend/manage.py runjobs`; shares the API's server env but binds no port.
 - **Billing reconciliation** — `railway.billing.toml` (cron every 15 minutes).
