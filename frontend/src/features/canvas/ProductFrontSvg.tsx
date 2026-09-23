@@ -919,28 +919,37 @@ export function ProductFrontContent({
   const dragDetach = useRef<(() => void) | null>(null);
   useEffect(() => () => dragDetach.current?.(), []);
 
-  /** Installs window-level drag listeners. `onRelease` runs on pointerup
-   * (commit), `onAbort` on pointercancel or unmount — never a commit. */
+  /** Installs window-level drag listeners bound to ONE pointer: a second
+   * finger or pen can neither steer nor commit another pointer's drag.
+   * `onRelease` runs on pointerup (commit), `onAbort` on pointercancel or
+   * unmount — never a commit. Starting a new drag detaches the old one. */
   const trackDrag = (
+    pointerId: number,
     onMove: (event: globalThis.PointerEvent) => void,
     onRelease: (event: globalThis.PointerEvent) => void,
     onAbort: () => void,
   ): void => {
+    dragDetach.current?.();
     const detach = (): void => {
-      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", onGuardedMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
       dragDetach.current = null;
     };
+    const onGuardedMove = (event: globalThis.PointerEvent): void => {
+      if (event.pointerId === pointerId) onMove(event);
+    };
     const onUp = (event: globalThis.PointerEvent): void => {
+      if (event.pointerId !== pointerId) return;
       detach();
       onRelease(event);
     };
-    const onCancel = (): void => {
+    const onCancel = (event: globalThis.PointerEvent): void => {
+      if (event.pointerId !== pointerId) return;
       detach();
       onAbort();
     };
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", onGuardedMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
     dragDetach.current = detach;
@@ -980,6 +989,7 @@ export function ProductFrontContent({
         setLiveOffsets(new Map([[info.divisionId, last]]));
       };
       trackDrag(
+        info.event.pointerId,
         onMove,
         (event) => {
           onMove(event);
@@ -1012,11 +1022,14 @@ export function ProductFrontContent({
       setSeamDrag({ index: seamIndex, deltaMm: last });
     };
     trackDrag(
+      event.pointerId,
       onMove,
       (up) => {
         onMove(up);
         setSeamDrag(null);
-        const snapped = snapMm(last);
+        // Snap first, then re-clamp — a 5mm rounding step can otherwise push
+        // the seam outside the range the preview itself allowed.
+        const snapped = Math.min(Math.max(snapMm(last), lo), hi);
         if (snapped !== 0) onResizeSeam(seamIndex, snapped);
       },
       () => setSeamDrag(null),

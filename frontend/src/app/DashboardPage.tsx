@@ -35,8 +35,9 @@ export function DashboardPage(): JSX.Element {
   });
 
   const items = query.data ?? [];
-  const recent = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8);
-  const next = recent.find((item) => item.status === "DRAFT") ?? null;
+  const byActivity = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const recent = byActivity.slice(0, 8);
+  const next = byActivity.find((item) => item.status === "DRAFT") ?? null;
   const active = items.filter((item) => item.status === "DRAFT" || item.status === "QUOTED");
   const inProduction = items.filter(
     (item) => item.status === "APPROVED" || item.status === "IN_PRODUCTION",

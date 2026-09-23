@@ -85,6 +85,11 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
 svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
+.figures { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 4mm; }
+.figures figure { margin: 0; width: 58mm; break-inside: avoid; }
+.figures figcaption { color: #4A5559; font-size: 7pt; line-height: 1.45; margin-top: 1mm; }
+.figures .figpos { color: #161C1F; font-weight: 600; }
+.figures .figdim { font-family: 'IBM Plex Mono', monospace; font-size: 7.5pt; }
 """
 
 
@@ -442,16 +447,18 @@ def _doc01(snapshot: dict[str, object]) -> str:
         "<h2>Solución propuesta</h2>"
         + _table(["Pos.", "Ubicación", "Dimensiones mm", "Cant.", "Relleno", "Acabado"], opening_rows)
     )
-    body += "<h2>Vistas de vanos</h2>"
+    body += '<h2>Vistas de vanos</h2><div class="figures">'
     for position in positions:
         body += (
-            f'<div class="break-avoid" style="text-align:center">'
-            f'<div style="display:inline-block;max-width:70mm">{_position_svg(position)}</div>'
-            f'<p class="muted">Pos. {escape(_value(position.get("position_index")))} · '
-            f'{escape(_value(position.get("location_tag")))} · '
-            f'{escape(_value(position.get("width_mm")))} × '
-            f'{escape(_value(position.get("height_mm")))} mm</p></div>'
+            f'<figure>{_position_svg(position)}'
+            f'<figcaption><span class="figpos">Pos. '
+            f'{escape(_value(position.get("position_index")))}</span> · '
+            f'{escape(_value(position.get("location_tag")))}<br/>'
+            f'<span class="figdim">{escape(_value(position.get("width_mm")))} × '
+            f'{escape(_value(position.get("height_mm")))} mm</span> · Cant. '
+            f'{escape(_value(position.get("quantity")))}</figcaption></figure>'
         )
+    body += "</div>"
     body += (
         "<h2>Resumen comercial</h2>"
         + _table(["Neto", "Impuesto", "Total"], [[

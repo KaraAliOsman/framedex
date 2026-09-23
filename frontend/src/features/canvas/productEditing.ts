@@ -575,12 +575,45 @@ export function modulePanelSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.panel_article_sku ?? null;
 }
 
+/** A bay's region extent along an axis — the span its local split_offset_mm
+ * must stay inside. Splits on the axis narrow the span: first children get
+ * the leading part (≈ split_offset_mm), second children the remainder.
+ * Mullion thickness is ignored (~35mm); the result still bounds every
+ * splittable bay, so span/2 lands inside it whenever a split is possible. */
+function baySpanOnAxis(
+  root: IntentNode,
+  bayId: string,
+  vertical: boolean,
+  moduleSpanMm: number,
+): number {
+  const pathTo = (node: IntentNode): { node: IntentNode; index: number }[] | null => {
+    if (node.id === bayId) return [];
+    for (const [index, child] of (node.children ?? []).entries()) {
+      const rest = pathTo(child);
+      if (rest !== null) return [{ node, index }, ...rest];
+    }
+    return null;
+  };
+  const path = pathTo(root);
+  if (!path) return moduleSpanMm;
+  let span = moduleSpanMm;
+  for (const { node, index } of path) {
+    if (node.type !== "SPLIT_V" && node.type !== "SPLIT_H") continue;
+    if ((node.type === "SPLIT_V") !== vertical) continue;
+    const offset = Number(node.split_offset_mm);
+    if (!Number.isFinite(offset) || offset <= 0) continue;
+    span = index === 0 ? offset : Math.max(span - offset, 0);
+  }
+  return span;
+}
+
 /** "Dividir" — split a module's bay region with a catalog mullion.
  *
- * The default split is centered (width / 2 for vertical, height / 2 for
- * horizontal) so a single click produces two equal regions; the user can
- * refine the divider afterwards. Returns the unchanged product when the
- * module or split is invalid (door bays can't split).
+ * The default split centers inside the TARGET bay's own span (bay-local
+ * offsets measure from the bay's region origin, not the module edge), so a
+ * click anywhere — front view, object tree, plan — produces a valid nested
+ * split. Returns the unchanged product when the module or split is invalid
+ * (door bays can't split).
  */
 export function splitModuleBay(
   product: ProductJson,
@@ -597,7 +630,9 @@ export function splitModuleBay(
   if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
-  const offset = division.offsetMm ?? (size / 2).toFixed(2);
+  const offset =
+    division.offsetMm ??
+    (baySpanOnAxis(root, bay.id, division.type === "SPLIT_V", size) / 2).toFixed(2);
   const used = new Set(walkIntent(module.tree).map((node) => node.id));
   const freeId = (base: string): string => {
     let index = 1;
