@@ -28,6 +28,7 @@ def test_share_quote_mints_hashed_token(monkeypatch) -> None:
     _roles(monkeypatch)
     org_id, project_id, actor_id, version_id = uuid4(), uuid4(), uuid4(), uuid4()
     captured: dict[str, list] = {"insert_params": []}
+    artifact_calls: list[dict] = []
 
     def fake_one(sql_text, params, code="not_found"):
         lowered = " ".join(sql_text.lower().split())
@@ -46,7 +47,13 @@ def test_share_quote_mints_hashed_token(monkeypatch) -> None:
 
     monkeypatch.setattr("portal.service.one", fake_one)
     monkeypatch.setattr("portal.service.rows", fake_rows)
-    out = service.share_quote(org_id=org_id, project_id=project_id, actor_id=actor_id)
+    monkeypatch.setattr(
+        "portal.service.generate_artifact",
+        lambda **k: (artifact_calls.append(dict(k)) or ({}, True)),
+    )
+    out = service.share_quote(
+        org_id=org_id, project_id=project_id, actor_id=actor_id, role="ESTIMATOR"
+    )
 
     token = out["token"]
     assert len(token) > 40 and out["expires_at"] > datetime.now(timezone.utc)
@@ -56,6 +63,18 @@ def test_share_quote_mints_hashed_token(monkeypatch) -> None:
         token.encode()
     ).hexdigest()
     assert captured["insert_params"][4] == out["expires_at"]
+    # minting guarantees the client-facing DOC-01 for the bound version
+    assert artifact_calls == [
+        {
+            "org_id": org_id,
+            "actor_id": actor_id,
+            "role": "ESTIMATOR",
+            "project_version_id": version_id,
+            "order_id": None,
+            "document_type": "DOC-01",
+            "file_format": "PDF",
+        }
+    ]
 
 
 def test_share_quote_requires_quoted_status(monkeypatch) -> None:
@@ -65,7 +84,9 @@ def test_share_quote_requires_quoted_status(monkeypatch) -> None:
         lambda *a, **k: {"id": uuid4(), "status": "DRAFT"},
     )
     with pytest.raises(DocumentaryError, match="quote_share_requires_quoted"):
-        service.share_quote(org_id=uuid4(), project_id=uuid4(), actor_id=uuid4())
+        service.share_quote(
+            org_id=uuid4(), project_id=uuid4(), actor_id=uuid4(), role="ESTIMATOR"
+        )
 
 
 def _approval(status="PENDING", expired=False):

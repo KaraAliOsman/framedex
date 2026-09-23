@@ -68,11 +68,14 @@ class ProjectQuoteLinkView(APIView):
     def post(self, request, project_id: UUID):
         with public_portal_errors(), documentary_scope(request, _WRITERS) as (
             token,
-            _,
+            tenant,
             org_id,
         ):
             output = service.share_quote(
-                org_id=org_id, project_id=project_id, actor_id=token.user_id
+                org_id=org_id,
+                project_id=project_id,
+                actor_id=token.user_id,
+                role=tenant.active_organization.role,
             )
             output["path"] = f"/cotizacion/{output['token']}"
             return Response(output)

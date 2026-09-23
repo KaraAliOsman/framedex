@@ -21,6 +21,7 @@ class PortalQuoteSerializer(serializers.Serializer):
     total_price_tax = serializers.CharField()
     total_price_gross = serializers.CharField()
     valid_until = serializers.CharField(allow_null=True)
+    validity_expired = serializers.BooleanField()
     superseded = serializers.BooleanField()
     expires_at = serializers.DateTimeField()
     approval_status = serializers.CharField()
@@ -34,3 +35,9 @@ class DecideRequestSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(choices=["APPROVED", "DECLINED"])
     decided_by = serializers.CharField(max_length=255)
     note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+    def validate_decided_by(self, value):
+        trimmed = value.strip()
+        if not trimmed:
+            raise serializers.ValidationError("required")
+        return trimmed
