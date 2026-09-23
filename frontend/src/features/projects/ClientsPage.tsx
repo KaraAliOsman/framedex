@@ -33,7 +33,16 @@ type Draft = {
 
 function empty(): Draft {
   return {
-    value: { name: "", rut: "", email: "", phone: "", address: "", giro: "", comuna: "", notes: "" },
+    value: {
+      name: "",
+      rut: "",
+      email: "",
+      phone: "",
+      address: "",
+      giro: "",
+      comuna: "",
+      notes: "",
+    },
   };
 }
 
