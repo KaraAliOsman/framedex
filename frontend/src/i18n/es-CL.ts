@@ -707,6 +707,8 @@ const messages = {
   "dashboard.ordersHold": "Órdenes en espera",
   "dashboard.quotesWaiting": "Cotizaciones por aprobar",
   "dashboard.allClear": "Nada pendiente — la operación está al día",
+  "dashboard.attentionLoading": "Cargando la operación…",
+  "dashboard.attentionError": "No pudimos cargar la operación de hoy.",
   "portal.title": "Cotización para aprobación",
   "portal.loading": "Cargando cotización…",
   "portal.loadError": "No pudimos cargar la cotización. Revisa el enlace.",

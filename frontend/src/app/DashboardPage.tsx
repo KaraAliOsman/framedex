@@ -141,7 +141,13 @@ export function DashboardPage(): JSX.Element {
 
       <section className="dashboard-attention" aria-label={t("dashboard.attention")}>
         <h2 className="eyebrow">{t("dashboard.attention")}</h2>
-        {attention.length === 0 ? (
+        {query.isPending || opsQuery.isPending ? (
+          <p className="dashboard-attention-clear">{t("dashboard.attentionLoading")}</p>
+        ) : query.isError || opsQuery.isError ? (
+          <p className="dashboard-attention-clear" role="alert">
+            {t("dashboard.attentionError")}
+          </p>
+        ) : attention.length === 0 ? (
           <p className="dashboard-attention-clear">{t("dashboard.allClear")}</p>
         ) : (
           <ul>

@@ -81,11 +81,14 @@ def _summary(org_id: UUID) -> dict[str, Any]:
     deliveries = one(
         """
         SELECT
-            count(*) FILTER (WHERE scheduled_date = CURRENT_DATE
+            count(*) FILTER (WHERE scheduled_date = local_today
                 AND status IN ('SCHEDULED','ON_ROUTE')) AS today,
-            count(*) FILTER (WHERE scheduled_date < CURRENT_DATE
+            count(*) FILTER (WHERE scheduled_date < local_today
                 AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS overdue
-        FROM public.deliveries WHERE org_id = %s
+        FROM public.deliveries,
+            LATERAL (SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'America/Santiago')::date
+                     AS local_today) AS zone
+        WHERE org_id = %s
         """,
         [str(org_id)],
     )
