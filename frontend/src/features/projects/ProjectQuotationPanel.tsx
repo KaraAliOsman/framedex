@@ -182,7 +182,7 @@ const RULE_HINT_KEYS: Record<string, TranslationKey> = {
 
 // Rules recorded against (bay_id, leaf_id) — leaf_id may be null for the
 // single leaf of an operable bay, so the pair still selects it.
-const LEAF_RULES = new Set(["R01", "R03", "R04", "R06", "R08", "R11", "R12", "R13", "R14"]);
+const LEAF_RULES = new Set(["R01", "R02", "R03", "R04", "R06", "R08", "R11", "R12", "R13", "R14"]);
 
 function freezeTargetLabel(
   preparation: DocumentaryPreparationResponse | null,
