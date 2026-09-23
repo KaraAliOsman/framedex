@@ -136,9 +136,30 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
         "repetition_index": 1,
         "nominal_width_mm": "1000.00",
         "nominal_height_mm": "1200.00",
-        "members": [],
-        "reinforcements": [],
-        "infills": [],
+        "members": [
+            {
+                "member_id": "a" * 64, "bay_id": "B1",
+                "identity": {"role": "FRAME", "physical_member_slot": "OUTER_LEFT"},
+                "workshop_sku": "P-101", "cut_length_mm": "1200.00",
+                "angle_left": "90.00", "angle_right": "90.00",
+                "start": {"x_mm": "0.00", "y_mm": "0.00"},
+                "end": {"x_mm": "0.00", "y_mm": "1200.00"},
+            },
+            {
+                "member_id": "d" * 64, "bay_id": "B1",
+                "identity": {"role": "FRAME", "physical_member_slot": "OUTER_RIGHT"},
+                "workshop_sku": "P-101", "cut_length_mm": "1200.00",
+                "angle_left": "90.00", "angle_right": "90.00",
+                "start": {"x_mm": "1000.00", "y_mm": "0.00"},
+                "end": {"x_mm": "1000.00", "y_mm": "1200.00"},
+            },
+        ],
+        "reinforcements": [{"reinforcement_id": "c" * 64, "parent_member_id": "d" * 64}],
+        "infills": [{
+            "infill_id": "e" * 64, "bay_id": "B1", "leaf_id": "L1",
+            "rect": {"width_mm": "900.00", "height_mm": "1100.00"},
+        }],
+        "leaves": [{"leaf_fact_id": "b" * 64, "bay_id": "B1", "leaf_id": "L1"}],
         "handles": [{
             "handle_id": "f" * 64,
             "bay_id": "B1",
@@ -152,6 +173,7 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
         "relationships": [
             {"relationship": "BELONGS_TO_LEAF", "source_id": "a" * 64, "target_id": "b" * 64},
             {"relationship": "REINFORCES", "source_id": "c" * 64, "target_id": "d" * 64},
+            {"relationship": "RETAINS_INFILL", "source_id": "a" * 64, "target_id": "e" * 64},
         ],
     }]
     html = _doc03(snapshot)
@@ -159,6 +181,11 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
     assert "150.00" in html
     assert "Matriz de ensamble" in html
     assert "BELONGS_TO_LEAF" in html and "REINFORCES" in html
+    # heterogeneous endpoints resolve to the printed piece codes, not raw ids
+    assert "M-01" in html and "R-01" in html and "I-01" in html and "H-01" in html
+    matrix = html.split("Matriz de ensamble", 1)[1]
+    assert "a" * 64 not in matrix and "b" * 64 not in matrix
+    assert "c" * 64 not in matrix and "e" * 64 not in matrix
     assert "1050.00" in html
     assert "<svg" in html
 

@@ -582,11 +582,17 @@ def _doc03(snapshot: dict[str, object]) -> str:
             for item in _array(fact.get("relationships"), "invalid_manufacturing_fact")
         ]
         if relationships:
+            endpoints = {
+                **labels["member"],
+                **labels["reinforcement"],
+                **labels["infill"],
+                **labels["leaf_fact"],
+            }
             body += "<h3>Matriz de ensamble</h3>" + _table(
                 ["Relación", "Pieza origen", "Pieza destino"],
                 [[item.get("relationship"),
-                  labels["member"].get(item.get("source_id"), item.get("source_id")),
-                  labels["member"].get(item.get("target_id"), item.get("target_id"))]
+                  endpoints.get(item.get("source_id"), item.get("source_id")),
+                  endpoints.get(item.get("target_id"), item.get("target_id"))]
                  for item in relationships],
                 ["", "hash", "hash"],
             )
@@ -606,6 +612,7 @@ def _piece_labels(
     handle: dict[object, str] = {}
     bay: dict[object, str] = {}
     leaf: dict[object, str] = {}
+    leaf_fact: dict[object, str] = {}
     for fact in _array(snapshot.get("manufacturing"), "invalid_frozen_revision_snapshot"):
         for item in _array(fact.get("members"), "invalid_manufacturing_fact"):
             member.setdefault(item.get("member_id"), f"M-{len(member) + 1:02d}")
@@ -625,6 +632,15 @@ def _piece_labels(
                 bay.setdefault(item.get("bay_id"), f"V-{len(bay) + 1:02d}")
             if item.get("leaf_id") is not None:
                 leaf.setdefault(item.get("leaf_id"), f"H-{len(leaf) + 1:02d}")
+        for item in fact.get("leaves") if isinstance(fact.get("leaves"), list) else []:
+            leaf_id = item.get("leaf_id")
+            bay_id = item.get("bay_id")
+            if leaf_id is not None:
+                leaf.setdefault(leaf_id, f"H-{len(leaf) + 1:02d}")
+                leaf_fact[item.get("leaf_fact_id")] = leaf[leaf_id]
+            elif bay_id is not None:
+                bay.setdefault(bay_id, f"V-{len(bay) + 1:02d}")
+                leaf_fact[item.get("leaf_fact_id")] = bay[bay_id]
     position: dict[object, str] = {}
     for item in _array(snapshot.get("positions"), "invalid_frozen_revision_snapshot"):
         position[item.get("id")] = f"P{item.get('position_index')}"
@@ -635,6 +651,7 @@ def _piece_labels(
         "handle": handle,
         "bay": bay,
         "leaf": leaf,
+        "leaf_fact": leaf_fact,
         "position": position,
     }
 
