@@ -207,6 +207,7 @@ export function ProductionPage(): JSX.Element {
   }, [loadOrders]);
 
   useEffect(() => {
+    labelsGeneration.current += 1;
     if (!selectedId) {
       detailGeneration.current += 1;
       setDetail(null);
@@ -278,17 +279,17 @@ export function ProductionPage(): JSX.Element {
     setBusy(true);
     try {
       const response = await productionOrderLabels(orderId);
+      // A selection change bumps the generation, but a response can still
+      // land in the gap before the effect runs — check the order too.
       if (generation !== labelsGeneration.current) return;
+      if (selectedIdRef.current !== orderId) return;
       if (response.status !== 200) {
         setMessage(t("production.labelsError"));
         return;
       }
-      // A selection change may have landed while the request was in flight:
-      // only apply labels that still belong to the displayed order.
-      if (selectedIdRef.current !== orderId) return;
       setLabels(response.data.labels);
     } catch {
-      if (generation === labelsGeneration.current) {
+      if (generation === labelsGeneration.current && selectedIdRef.current === orderId) {
         setMessage(t("production.labelsError"));
       }
     } finally {
