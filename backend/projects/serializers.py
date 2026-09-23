@@ -1,6 +1,7 @@
 """Typed project metadata and engine-owned position inputs."""
 
 from decimal import Decimal
+from urllib.parse import urlparse
 
 from rest_framework import serializers
 
@@ -205,7 +206,9 @@ class PaymentIntegrationSerializer(StrictSerializer):
     api_url = serializers.ChoiceField(
         choices=("https://sandbox.flow.cl/api", "https://www.flow.cl/api")
     )
-    api_key = serializers.CharField(min_length=10, max_length=100)
+    api_key = serializers.CharField(
+        min_length=10, max_length=100, required=False, allow_blank=True
+    )
     secret_key = serializers.CharField(
         min_length=10, max_length=100, required=False, write_only=True, allow_blank=True
     )
@@ -213,6 +216,15 @@ class PaymentIntegrationSerializer(StrictSerializer):
         max_length=500, required=False, allow_blank=True
     )
     enabled = serializers.BooleanField(required=False, default=True)
+
+    def validate_payer_return_url(self, value):
+        if value:
+            parsed = urlparse(value)
+            if parsed.scheme != "https" or not parsed.netloc:
+                raise serializers.ValidationError(
+                    "La URL de retorno debe ser HTTPS válida."
+                )
+        return value
 
 
 class PaymentIntegrationStatusSerializer(serializers.Serializer):

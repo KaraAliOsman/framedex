@@ -282,7 +282,9 @@ class ProjectPaymentLinkRecoverView(APIView):
         with scope(request, WRITE_ROLES) as (_, _, org):
             try:
                 return response(
-                    payment_links.recover_link(org_id=org, link_id=link_id)
+                    payment_links.recover_link(
+                        org_id=org, project_id=project_id, link_id=link_id
+                    )
                 )
             except FlowError as error:
                 raise contract_error(
@@ -310,7 +312,7 @@ class ProjectPaymentIntegrationView(APIView):
     )
     def put(self, request):
         data = validate(PaymentIntegrationSerializer, request.data)
-        with scope(request, WRITE_ROLES) as (_, _, org):
+        with scope(request, ("OWNER",)) as (_, _, org):
             return response(payment_links.save_integration(org_id=org, data=data))
 
 

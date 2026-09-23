@@ -79,6 +79,9 @@ def _link(**over):
         "flow_token": "tok-1",
         "url": "https://sandbox.flow.cl/pay?token=tok-1",
         "project_payment_id": None,
+        "flow_api_url": "https://sandbox.flow.cl/api",
+        "flow_api_key": "AB12CD34EF56",
+        "flow_secret_key": "S3CR3T-KEY-0987",
         "created_by": uuid4(),
         "created_at": "2026-09-23T10:00:00+00:00",
         "updated_at": "2026-09-23T10:00:00+00:00",
@@ -103,15 +106,25 @@ def _payment_row(**over):
     }
 
 
-def _patch_env(monkeypatch, rows_impl, client=None):
+def _patch_env(monkeypatch, rows_impl, client=None, deal=None):
     monkeypatch.setattr(payment_links, "documentary_backend", _noop)
     monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
     monkeypatch.setattr(payment_links, "rows", rows_impl)
     monkeypatch.setattr(
         payment_links, "project_row", staticmethod(lambda *a, **k: {"name": "P-1"})
     )
+    monkeypatch.setattr(
+        payment_links.payments,
+        "_deal",
+        staticmethod(
+            lambda *a, **k: deal
+            if deal is not None
+            else {"total": Decimal("250000"), "currency": "CLP"}
+        ),
+    )
     if client is not None:
         monkeypatch.setattr(payment_links, "_client", lambda integration: client)
+        monkeypatch.setattr(payment_links, "_client_for_link", lambda link: client)
 
 
 def test_create_link_requires_integration(monkeypatch):
@@ -131,12 +144,65 @@ def test_create_link_requires_integration(monkeypatch):
     assert failure.value.contract_code == "flow_not_configured"
 
 
+def test_create_link_requires_a_deal(monkeypatch):
+    _patch_env(
+        monkeypatch,
+        lambda sql, params=None: [_integration()]
+        if "FROM public.org_payment_integrations" in sql
+        else [],
+        deal=None,
+    )
+    monkeypatch.setattr(
+        payment_links.payments, "_deal", staticmethod(lambda *a, **k: None)
+    )
+    with pytest.raises(APIException) as failure:
+        payment_links.create_link(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={
+                "operation_key": "op-link-1",
+                "kind": "ANTICIPO",
+                "amount": Decimal("250000"),
+                "payer_email": "a@b.cl",
+            },
+        )
+    assert failure.value.contract_code == "payment_requires_deal"
+
+
+def test_create_link_rejects_non_clp_deal(monkeypatch):
+    _patch_env(
+        monkeypatch,
+        lambda sql, params=None: [_integration()]
+        if "FROM public.org_payment_integrations" in sql
+        else [],
+        deal={"total": Decimal("1000"), "currency": "USD"},
+    )
+    with pytest.raises(APIException) as failure:
+        payment_links.create_link(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={
+                "operation_key": "op-link-1",
+                "kind": "ANTICIPO",
+                "amount": Decimal("250000"),
+                "payer_email": "a@b.cl",
+            },
+        )
+    assert failure.value.contract_code == "payment_link_currency_unsupported"
+
+
 def test_create_link_replay_returns_existing(monkeypatch):
     link = _link()
+    calls = []
 
     def fake_rows(sql, params=None):
+        calls.append(sql)
         if "FROM public.org_payment_integrations" in sql:
             return [_integration()]
+        if "INSERT INTO public.project_payment_links" in sql:
+            return []  # conflict: another dispatch won the key first
         if "FROM public.project_payment_links" in sql:
             return [link]
         return []
@@ -154,18 +220,47 @@ def test_create_link_replay_returns_existing(monkeypatch):
         },
     )
     assert out["link"]["id"] == str(link["id"])
+    assert any("ON CONFLICT" in sql for sql in calls)
+
+
+def test_create_link_replay_rejects_cross_project(monkeypatch):
+    link = _link()
+
+    def fake_rows(sql, params=None):
+        if "FROM public.org_payment_integrations" in sql:
+            return [_integration()]
+        if "INSERT INTO public.project_payment_links" in sql:
+            return []
+        if "FROM public.project_payment_links" in sql:
+            return [link]
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    with pytest.raises(APIException) as failure:
+        payment_links.create_link(
+            org_id=link["org_id"],
+            project_id=uuid4(),  # another project claims the key
+            actor_id=uuid4(),
+            data={
+                "operation_key": "op-link-1",
+                "kind": "ANTICIPO",
+                "amount": Decimal("250000"),
+                "payer_email": "a@b.cl",
+            },
+        )
+    assert failure.value.contract_code == "payment_operation_conflict"
 
 
 def test_create_link_dispatches_and_stores_redirect(monkeypatch):
     integration = _integration()
     client = _Client()
-    calls = []
+    inserts = []
 
     def fake_rows(sql, params=None):
-        calls.append(sql)
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
         if "INSERT INTO public.project_payment_links" in sql:
+            inserts.append(params)
             return [_link(status="DISPATCHING")]
         if "UPDATE public.project_payment_links" in sql:
             return [_link()]
@@ -188,6 +283,12 @@ def test_create_link_dispatches_and_stores_redirect(monkeypatch):
     assert client.calls[0][1]["amount"] == Decimal("250000")
     assert out["link"]["status"] == "PENDING"
     assert out["link"]["url"].startswith("https://sandbox.flow.cl")
+    # The link stores the credential version it was dispatched with.
+    assert inserts[0][-3:] == [
+        integration["api_url"],
+        integration["api_key"],
+        integration["secret_key"],
+    ]
 
 
 def test_create_link_marks_uncertain_on_provider_failure(monkeypatch):
@@ -223,14 +324,11 @@ def test_create_link_marks_uncertain_on_provider_failure(monkeypatch):
 
 def test_confirm_settles_payment_into_ledger(monkeypatch):
     link = _link()
-    integration = _integration(org_id=link["org_id"])
     inserts = []
 
     def fake_rows(sql, params=None):
-        if "SELECT org_id FROM public.project_payment_links" in sql:
-            return [{"org_id": link["org_id"]}]
-        if "FROM public.org_payment_integrations" in sql:
-            return [integration]
+        if "SELECT * FROM public.project_payment_links" in sql and "id=%s" in sql:
+            return [link]
         if "FOR UPDATE" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
@@ -248,16 +346,41 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
     assert "ON CONFLICT" in inserts[0]
 
 
-def test_confirm_rejects_binding_mismatch(monkeypatch):
-    link = _link()
-    integration = _integration(org_id=link["org_id"])
+def test_confirm_uses_link_credentials_not_current_integration(monkeypatch):
+    link = _link(flow_api_key="OLD-KEY-ROTATED")
+    client = _Client()
+    built = []
+
+    def factory(**kwargs):
+        built.append(kwargs)
+        return client
+
+    monkeypatch.setattr(payment_links, "FlowClient", factory)
 
     def fake_rows(sql, params=None):
-        if "SELECT org_id FROM public.project_payment_links" in sql:
-            return [{"org_id": link["org_id"]}]
-        if "FROM public.org_payment_integrations" in sql:
-            return [integration]
+        # org_payment_integrations is deliberately empty — rotation/disabling
+        # must not strand an outstanding charge.
+        if "SELECT * FROM public.project_payment_links" in sql:
+            return [link]
         if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    _patch_env(monkeypatch, fake_rows)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert built[0]["api_key"] == "OLD-KEY-ROTATED"
+
+
+def test_confirm_rejects_binding_mismatch(monkeypatch):
+    link = _link()
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql:
             return [link]
         return []
 
@@ -274,14 +397,9 @@ def test_confirm_rejects_binding_mismatch(monkeypatch):
 
 def test_confirm_paid_link_is_idempotent(monkeypatch):
     link = _link(status="PAID", project_payment_id=uuid4())
-    integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "SELECT org_id FROM public.project_payment_links" in sql:
-            return [{"org_id": link["org_id"]}]
-        if "FROM public.org_payment_integrations" in sql:
-            return [integration]
-        if "FOR UPDATE" in sql:
+        if "FROM public.project_payment_links" in sql:
             return [link]
         return []
 
@@ -292,14 +410,9 @@ def test_confirm_paid_link_is_idempotent(monkeypatch):
 
 def test_confirm_failed_observation_marks_link_failed(monkeypatch):
     link = _link()
-    integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "SELECT org_id FROM public.project_payment_links" in sql:
-            return [{"org_id": link["org_id"]}]
-        if "FROM public.org_payment_integrations" in sql:
-            return [integration]
-        if "FOR UPDATE" in sql:
+        if "FROM public.project_payment_links" in sql:
             return [link]
         if "UPDATE public.project_payment_links" in sql:
             return [_link(status="FAILED")]
@@ -316,14 +429,103 @@ def test_confirm_failed_observation_marks_link_failed(monkeypatch):
     assert out["link"]["status"] == "FAILED"
 
 
-def test_recover_link_uses_order_lookup(monkeypatch):
-    link = _link(status="UNCERTAIN", flow_order=None)
-    integration = _integration(org_id=link["org_id"])
+def test_settle_rejects_hijacking_payment(monkeypatch):
+    """A manual row holding the same key but different claim must not settle."""
+    link = _link()
+    hijacker = _payment_row(project_id=uuid4(), amount=Decimal("10000"))
 
     def fake_rows(sql, params=None):
-        if "FROM public.org_payment_integrations" in sql:
-            return [integration]
+        if "SELECT * FROM public.project_payment_links" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return []  # conflict — key already claimed
+        if "FOR UPDATE" in sql and "project_payments" in sql:
+            return [hijacker]
+        if "FOR UPDATE" in sql:
+            return [link]
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    with pytest.raises(APIException) as failure:
+        payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert failure.value.contract_code == "payment_operation_conflict"
+
+
+def test_settle_accepts_matching_manual_payment(monkeypatch):
+    link = _link()
+    manual = _payment_row(project_id=link["project_id"])
+
+    def fake_rows(sql, params=None):
+        if "SELECT * FROM public.project_payment_links" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return []
+        if "FOR UPDATE" in sql and "project_payments" in sql:
+            return [manual]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=manual["id"])]
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert out["link"]["project_payment_id"] == str(manual["id"])
+
+
+def test_recover_promotes_uncertain_to_pending(monkeypatch):
+    link = _link(status="UNCERTAIN", flow_order=None)
+    updates = []
+
+    def fake_rows(sql, params=None):
         if "FROM public.project_payment_links" in sql:
+            return [link]
+        if "UPDATE public.project_payment_links" in sql:
+            updates.append((sql, params))
+            return [_link(status="PENDING", flow_order="99")]
+        return []
+
+    client = _Client(
+        behavior={
+            "by_order": {"flowOrder": 99, "status": 1, "commerceOrder": "op-link-1",
+                         "amount": "250000", "currency": "CLP"}
+        }
+    )
+    _patch_env(monkeypatch, fake_rows, client=client)
+    out = payment_links.recover_link(
+        org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+    )
+    assert out["link"]["status"] == "PENDING"
+    assert updates and "UNCERTAIN" in updates[0][0]
+
+
+def test_recover_scopes_to_project(monkeypatch):
+    seen = []
+
+    def fake_rows(sql, params=None):
+        seen.append((sql, params))
+        if "FROM public.project_payment_links" in sql:
+            return []
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    link = _link()
+    with pytest.raises(APIException):
+        payment_links.recover_link(
+            org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+        )
+    lookup = [p for s, p in seen if "FROM public.project_payment_links" in s][0]
+    assert str(link["project_id"]) in lookup
+
+
+def test_recover_link_uses_order_lookup(monkeypatch):
+    link = _link(status="UNCERTAIN", flow_order=None)
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql:
+            return [link]
+        if "FOR UPDATE" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return [_payment_row()]
@@ -333,7 +535,9 @@ def test_recover_link_uses_order_lookup(monkeypatch):
 
     client = _Client()
     _patch_env(monkeypatch, fake_rows, client=client)
-    out = payment_links.recover_link(org_id=link["org_id"], link_id=link["id"])
+    out = payment_links.recover_link(
+        org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+    )
     assert client.calls[0] == ("by_order", "op-link-1")
     assert out["link"]["status"] == "PAID"
 
@@ -356,8 +560,8 @@ def test_save_integration_keeps_stored_secret_on_update(monkeypatch):
 
     def fake_rows(sql, params=None):
         captured.append((sql, params))
-        if "SELECT secret_key FROM public.org_payment_integrations" in sql:
-            return [{"secret_key": "S3CR3T-KEY-0987"}]
+        if "SELECT api_key, secret_key FROM public.org_payment_integrations" in sql:
+            return [{"api_key": "AB12CD34EF56", "secret_key": "S3CR3T-KEY-0987"}]
         if "INSERT INTO public.org_payment_integrations" in sql:
             return [{"org_id": params[0]}]
         if "FROM public.org_payment_integrations" in sql:
@@ -380,6 +584,33 @@ def test_save_integration_keeps_stored_secret_on_update(monkeypatch):
     assert insert[0][3] == "S3CR3T-KEY-0987"  # stored secret survives the update
 
 
+def test_save_integration_keeps_stored_api_key_on_update(monkeypatch):
+    captured = []
+
+    def fake_rows(sql, params=None):
+        captured.append((sql, params))
+        if "SELECT api_key, secret_key FROM public.org_payment_integrations" in sql:
+            return [{"api_key": "AB12CD34EF56", "secret_key": "S3CR3T-KEY-0987"}]
+        if "INSERT INTO public.org_payment_integrations" in sql:
+            return [{"org_id": params[0]}]
+        if "FROM public.org_payment_integrations" in sql:
+            return [_integration()]
+        return []
+
+    monkeypatch.setattr(payment_links, "documentary_backend", _noop)
+    monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
+    monkeypatch.setattr(payment_links, "rows", fake_rows)
+    payment_links.save_integration(
+        org_id=uuid4(),
+        data={
+            "api_url": "https://www.flow.cl/api",
+            "enabled": False,  # toggling without re-typing the key
+        },
+    )
+    insert = [p for s, p in captured if "INSERT INTO public.org_payment_integrations" in s]
+    assert insert[0][2] == "AB12CD34EF56"
+
+
 def test_save_integration_requires_secret_for_new_org(monkeypatch):
     monkeypatch.setattr(payment_links, "documentary_backend", _noop)
     monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
@@ -393,3 +624,18 @@ def test_save_integration_requires_secret_for_new_org(monkeypatch):
             },
         )
     assert failure.value.contract_code == "flow_secret_required"
+
+
+def test_save_integration_requires_api_key_for_new_org(monkeypatch):
+    monkeypatch.setattr(payment_links, "documentary_backend", _noop)
+    monkeypatch.setattr(payment_links.transaction, "atomic", _noop)
+    monkeypatch.setattr(payment_links, "rows", lambda *_a, **_k: [])
+    with pytest.raises(APIException) as failure:
+        payment_links.save_integration(
+            org_id=uuid4(),
+            data={
+                "api_url": "https://sandbox.flow.cl/api",
+                "secret_key": "S3CR3T-KEY-0987",
+            },
+        )
+    assert failure.value.contract_code == "flow_api_key_required"

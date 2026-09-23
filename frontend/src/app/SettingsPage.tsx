@@ -70,7 +70,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
       const response = await projectPaymentIntegrationSave(
         {
           api_url: apiUrl,
-          api_key: apiKey.trim() || (status?.api_key_preview ?? "").replace("…", ""),
+          ...(apiKey.trim() ? { api_key: apiKey.trim() } : {}),
           ...(secretKey.trim() ? { secret_key: secretKey.trim() } : {}),
           payer_return_url: returnUrl.trim(),
           enabled,
@@ -102,16 +102,11 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
           <span className="settings-mono"> · {status.api_key_preview}</span>
         )}
       </p>
-      {message && (
-        <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>
-      )}
+      {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       <form className="payments-form" onSubmit={save}>
         <label>
           {t("settings.flowEnv")}
-          <select
-            value={apiUrl}
-            onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}
-          >
+          <select value={apiUrl} onChange={(event) => setApiUrl(event.target.value as ApiUrlEnum)}>
             <option value="https://sandbox.flow.cl/api">{t("settings.flowSandbox")}</option>
             <option value="https://www.flow.cl/api">{t("settings.flowProduction")}</option>
           </select>

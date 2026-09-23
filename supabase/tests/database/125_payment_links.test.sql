@@ -1,12 +1,15 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(16);
 
 SELECT has_table('public', 'org_payment_integrations', 'org payment integrations table exists');
 SELECT has_table('public', 'project_payment_links', 'project payment links table exists');
 SELECT has_column('public', 'project_payment_links', 'operation_key', 'claim carries the ledger idempotency key');
 SELECT has_column('public', 'project_payment_links', 'flow_token', 'provider token captured');
+SELECT has_column('public', 'project_payment_links', 'flow_api_url', 'dispatch credential snapshot: url');
+SELECT has_column('public', 'project_payment_links', 'flow_api_key', 'dispatch credential snapshot: key');
+SELECT has_column('public', 'project_payment_links', 'flow_secret_key', 'dispatch credential snapshot: secret');
 SELECT ok(
     EXISTS (
         SELECT 1 FROM pg_indexes
@@ -59,6 +62,11 @@ SELECT ok(
     AND has_table_privilege('documentary_backend', 'public.org_payment_integrations', 'INSERT')
     AND has_table_privilege('documentary_backend', 'public.org_payment_integrations', 'UPDATE'),
     'backend role manages links and credentials'
+);
+SELECT ok(
+    NOT has_table_privilege('anon', 'public.project_payment_links', 'INSERT')
+    AND NOT has_table_privilege('anon', 'public.project_payment_links', 'UPDATE'),
+    'anonymous role cannot write link claims'
 );
 
 SELECT * FROM finish();

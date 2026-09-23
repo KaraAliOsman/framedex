@@ -62,6 +62,7 @@ export function ProjectPaymentLinksPanel({
   const [amount, setAmount] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [subject, setSubject] = useState("");
+  const [operationKey, setOperationKey] = useState<string | null>(null);
   const [baseline, setBaseline] = useState(kind);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const generation = useRef(0);
@@ -110,7 +111,7 @@ export function ProjectPaymentLinksPanel({
       const response = await projectPaymentLinkCreate(
         projectId,
         {
-          operation_key: crypto.randomUUID(),
+          operation_key: operationKey ?? crypto.randomUUID(),
           kind,
           amount: amount.replace(",", "."),
           payer_email: payerEmail.trim(),
@@ -121,11 +122,15 @@ export function ProjectPaymentLinksPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       setLinks((previous) => [response.data.link, ...previous]);
       setShowForm(false);
+      setOperationKey(null);
       setAmount("");
       setPayerEmail("");
       setSubject("");
     } catch {
       setMessage(t("projects.paymentLinkCreateError"));
+      // The backend may hold an UNCERTAIN claim for this key — refresh so its
+      // recovery action is visible instead of minting a second charge.
+      void load();
     } finally {
       setBusy(false);
     }
@@ -172,6 +177,7 @@ export function ProjectPaymentLinksPanel({
             type="button"
             className="primary-action"
             onClick={() => {
+              setOperationKey(crypto.randomUUID());
               setBaseline(kind);
               setShowForm(true);
             }}
@@ -227,7 +233,14 @@ export function ProjectPaymentLinksPanel({
             <button type="submit" className="primary-action" disabled={busy}>
               {t("projects.paymentLinkCreate")}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} disabled={busy}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(false);
+                setOperationKey(null);
+              }}
+              disabled={busy}
+            >
               {t("projects.paymentCancel")}
             </button>
           </div>
@@ -283,9 +296,7 @@ export function ProjectPaymentLinksPanel({
           </tbody>
         </table>
       )}
-      {configured && links.length === 0 && !showForm && (
-        <p>{t("projects.paymentLinksEmpty")}</p>
-      )}
+      {configured && links.length === 0 && !showForm && <p>{t("projects.paymentLinksEmpty")}</p>}
     </section>
   );
 }

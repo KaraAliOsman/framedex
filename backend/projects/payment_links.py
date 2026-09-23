@@ -23,6 +23,7 @@ from authentication.errors import contract_error
 from billing.flow import FlowClient, FlowError
 from documents.repository import documentary_backend
 from pricing.repository import rows
+from projects import payments
 from projects.service import project_row
 
 _LINK_KINDS = ("ANTICIPO", "PARCIAL", "SALDO")
@@ -61,6 +62,18 @@ def _client(integration: dict) -> FlowClient:
     )
 
 
+def _client_for_link(link: dict) -> FlowClient:
+    """The link's own credential version — a dispatched charge settles with the
+    credentials that signed it even after the org rotates or disables them."""
+    if not link.get("flow_api_url") or not link.get("flow_api_key") or not link.get("flow_secret_key"):
+        raise FlowError("flow_not_configured")
+    return FlowClient(
+        api_url=link["flow_api_url"],
+        api_key=link["flow_api_key"],
+        secret_key=link["flow_secret_key"],
+    )
+
+
 def get_integration(*, org_id: UUID) -> dict:
     """Config status for the settings surface — never leaks the secret."""
     with documentary_backend():
@@ -90,11 +103,16 @@ def save_integration(*, org_id: UUID, data: dict) -> dict:
     api_url = str(data.get("api_url") or "https://sandbox.flow.cl/api")
     with transaction.atomic(), documentary_backend():
         existing = rows(
-            "SELECT secret_key FROM public.org_payment_integrations "
+            "SELECT api_key, secret_key FROM public.org_payment_integrations "
             "WHERE org_id=%s AND provider='FLOW'",
             [str(org_id)],
         )
+        api_key = data.get("api_key") or (existing[0]["api_key"] if existing else None)
         secret = data.get("secret_key") or (existing[0]["secret_key"] if existing else None)
+        if not api_key:
+            raise contract_error(
+                422, "flow_api_key_required", "La clave de API de Flow es obligatoria."
+            )
         if not secret:
             raise contract_error(
                 422, "flow_secret_required", "La clave secreta de Flow es obligatoria."
@@ -116,24 +134,13 @@ def save_integration(*, org_id: UUID, data: dict) -> dict:
             [
                 str(org_id),
                 api_url,
-                data["api_key"].strip(),
+                api_key.strip(),
                 secret.strip(),
                 (data.get("payer_return_url") or "").strip() or None,
                 bool(data.get("enabled", True)),
             ],
         )
     return get_integration(org_id=org_id)
-
-
-def _integration_for_link(link_row: dict) -> dict:
-    found = rows(
-        "SELECT * FROM public.org_payment_integrations "
-        "WHERE org_id=%s AND provider='FLOW' AND enabled",
-        [str(link_row["org_id"])],
-    )
-    if not found:
-        raise FlowError("flow_not_configured")
-    return found[0]
 
 
 def list_links(*, org_id: UUID, project_id: UUID) -> dict:
@@ -157,6 +164,17 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
     kind = str(data["kind"]).upper()
     if kind not in _LINK_KINDS:
         raise contract_error(422, "payment_kind_invalid", "Tipo de cobro no válido.")
+    deal = payments._deal(org_id, project_id, project)
+    if deal is None:
+        raise contract_error(
+            422, "payment_requires_deal", "El proyecto necesita un precio aplicado para cobrar."
+        )
+    if deal["currency"] != "CLP":
+        raise contract_error(
+            422,
+            "payment_link_currency_unsupported",
+            "Los links Flow solo cobran en CLP — el trato del proyecto usa otra moneda.",
+        )
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
     with transaction.atomic(), documentary_backend():
         integration = rows(
@@ -170,23 +188,17 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 "flow_not_configured",
                 "Configura la integración Flow en Ajustes primero.",
             )
-        existing = rows(
-            "SELECT * FROM public.project_payment_links WHERE org_id=%s AND operation_key=%s",
-            [str(org_id), data["operation_key"]],
-        )
-        if existing:
-            link = existing[0]
-            if str(link["project_id"]) != str(project_id):
-                raise contract_error(
-                    409, "payment_operation_conflict", "La operación ya existe en otro proyecto."
-                )
-            return {"link": _public_link(link)}
-        link = rows(
+        # Conflict-tolerant claim: concurrent replays converge on the one row the
+        # unique key allows; the loser reads and validates the winner instead of
+        # erroring out of the idempotency contract.
+        inserted = rows(
             """
             INSERT INTO public.project_payment_links(
                 org_id, project_id, operation_key, kind, amount, payer_email,
-                subject, status, environment, created_by)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s)
+                subject, status, environment, created_by,
+                flow_api_url, flow_api_key, flow_secret_key)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,'DISPATCHING',%s,%s,%s,%s,%s)
+            ON CONFLICT (org_id, operation_key) DO NOTHING
             RETURNING *
             """,
             [
@@ -199,8 +211,24 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
                 subject[:200],
                 _environment(integration[0]["api_url"]),
                 str(actor_id),
+                integration[0]["api_url"],
+                integration[0]["api_key"],
+                integration[0]["secret_key"],
             ],
-        )[0]
+        )
+        if inserted:
+            link = inserted[0]
+        else:
+            existing = rows(
+                "SELECT * FROM public.project_payment_links WHERE org_id=%s AND operation_key=%s",
+                [str(org_id), data["operation_key"]],
+            )
+            link = existing[0]
+            if str(link["project_id"]) != str(project_id):
+                raise contract_error(
+                    409, "payment_operation_conflict", "La operación ya existe en otro proyecto."
+                )
+            return {"link": _public_link(link)}
         integration = integration[0]
     # The claim is committed — now the provider mutation. An uncertain outcome
     # marks the link UNCERTAIN; recovery is a GET, never a second POST.
@@ -285,11 +313,12 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
         if str(link["status"]) == "PAID":
             return {"link": _public_link(link)}
         if verified["status"] == 1:
-            rows(
-                "UPDATE public.project_payment_links SET status='PENDING', updated_at=now() "
-                "WHERE org_id=%s AND id=%s AND status='DISPATCHING' RETURNING id",
-                [str(org_id), str(link_id)],
-            )
+            link = rows(
+                "UPDATE public.project_payment_links SET status='PENDING', flow_order=%s, "
+                "updated_at=now() WHERE org_id=%s AND id=%s "
+                "AND status IN ('DISPATCHING','UNCERTAIN','FAILED') RETURNING *",
+                [verified["flowOrder"], str(org_id), str(link_id)],
+            )[0]
             return {"link": _public_link(link)}
         if verified["status"] in (3, 4):
             link = rows(
@@ -323,10 +352,25 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             ],
         )
         if not payment:
-            payment = rows(
-                "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
+            # The operation key was claimed manually first — only a payment that
+            # matches this link's own claim may stand in for the settlement.
+            conflicting = rows(
+                "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s "
+                "FOR UPDATE",
                 [str(org_id), str(link["operation_key"])],
             )
+            payment = conflicting
+            if (
+                str(payment[0]["project_id"]) != str(link["project_id"])
+                or Decimal(str(payment[0]["amount"])) != Decimal(str(link["amount"]))
+                or str(payment[0]["kind"]) != str(link["kind"])
+                or payment[0]["voided_at"] is not None
+            ):
+                raise contract_error(
+                    409,
+                    "payment_operation_conflict",
+                    "La operación pertenece a un cobro distinto — revisa el libro de cobranza.",
+                )
         link = rows(
             "UPDATE public.project_payment_links SET status='PAID', flow_order=%s, "
             "project_payment_id=%s, updated_at=now() "
@@ -338,34 +382,34 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
 
 def confirm_link(*, link_id: UUID, token: str) -> dict:
     """Public webhook: resolve the org through the opaque link id, then verify
-    server-side with the org's own credentials — callback fields are untrusted."""
+    server-side with the link's own dispatch credentials — callback fields are
+    untrusted and rotated org credentials never strand an outstanding charge."""
     with documentary_backend():
         found = rows(
-            "SELECT org_id FROM public.project_payment_links WHERE id=%s", [str(link_id)]
+            "SELECT * FROM public.project_payment_links WHERE id=%s", [str(link_id)]
         )
     if not found:
         raise FlowError("payment_link_not_found")
-    org_id = found[0]["org_id"]
-    integration = _integration_for_link(found[0])
-    client = _client(integration)
+    link = found[0]
+    client = _client_for_link(link)
     verified = _payment(client.payment_status(token))
-    return _settle(org_id=org_id, link_id=link_id, verified=verified, client=client)
+    return _settle(org_id=link["org_id"], link_id=link_id, verified=verified, client=client)
 
 
-def recover_link(*, org_id: UUID, link_id: UUID) -> dict:
+def recover_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
     """Recheck a pending/uncertain link via GET by commerceOrder — recovers a
     lost webhook or ambiguous create without issuing another charge."""
     with documentary_backend():
         found = rows(
-            "SELECT * FROM public.project_payment_links WHERE org_id=%s AND id=%s",
-            [str(org_id), str(link_id)],
+            "SELECT * FROM public.project_payment_links "
+            "WHERE org_id=%s AND project_id=%s AND id=%s",
+            [str(org_id), str(project_id), str(link_id)],
         )
         if not found:
             raise contract_error(404, "payment_link_not_found", "El link de pago no existe.")
         link = found[0]
-        integration = _integration_for_link(link)
     if str(link["status"]) == "PAID":
         return {"link": _public_link(link)}
-    client = _client(integration)
+    client = _client_for_link(link)
     verified = _payment(client.payment_by_order(str(link["operation_key"])))
     return _settle(org_id=org_id, link_id=link_id, verified=verified, client=client)
