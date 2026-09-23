@@ -60,6 +60,7 @@ from documents.repository import (
     _placement_policy,
     accessory_schedule,
     decoded,
+    effective_scope,
     documentary_backend,
     glass_polishing,
     handle_intents,
@@ -1075,20 +1076,25 @@ def prepare_documentary_inputs(
             return {}
         placeholders = ",".join(["%s"] * len(systems))
         values = rows(
-            f"SELECT id,system_id,version,authority->>'policy_id' AS label FROM public.{table} "
+            f"SELECT id,system_id,org_id,version,authority->>'policy_id' AS label FROM public.{table} "
             f"WHERE system_id IN ({placeholders}) AND (org_id IS NULL OR org_id=%s) "
             "ORDER BY system_id,version DESC,id",
             [*systems, org_id],
         )
         grouped = {}
-        for value in values:
-            grouped.setdefault(str(value["system_id"]), []).append(
+        for system_key in {str(value["system_id"]) for value in values}:
+            scoped = effective_scope(
+                [value for value in values if str(value["system_id"]) == system_key],
+                org_id,
+            )
+            grouped[system_key] = [
                 {
                     "id": value["id"],
                     "label": value["label"] or f"Versión {value['version']}",
                     "version": value["version"],
                 }
-            )
+                for value in scoped
+            ]
         return grouped
 
     placement = policy_options("manufacturing_placement_policies")
