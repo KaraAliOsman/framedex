@@ -133,9 +133,41 @@
 }
 .position-workspace {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) 19rem;
-  gap: 1.5rem;
+  gap: 0.75rem;
   margin-top: 1rem;
+}
+
+/* Position metadata folded into the inspector column — compact fields, same
+   visual language as the module inspector. */
+.position-panel fieldset {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.4rem 0.75rem 0.6rem;
+}
+
+.position-panel .assembly-field input,
+.position-panel .assembly-select {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font: inherit;
+  padding: 0.3rem 0.45rem;
+  text-align: left;
+  width: 100%;
+}
+
+.position-panel .assembly-field {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.position-panel .assembly-field > span {
+  color: var(--theme-text-secondary);
+  font-size: 0.78rem;
 }
 .position-design,
 .position-materials {
@@ -153,17 +185,6 @@
   color: var(--theme-text-secondary);
   padding-block: 0.5rem;
   font-variant-numeric: tabular-nums;
-}
-.position-materials {
-  border-left: 1px solid var(--theme-border-subtle);
-  padding-left: 1.25rem;
-}
-.position-materials label {
-  margin-block: 0;
-}
-.position-materials legend {
-  margin-bottom: 0.75rem;
-  font-weight: 600;
 }
 .projects-page select {
   font: inherit;
@@ -477,10 +498,6 @@
   .position-workspace {
     grid-template-columns: 1fr;
   }
-  .position-materials {
-    border-left: 0;
-    padding: 0;
-  }
 }
 
 /* Design library — starter cards previewed through the product renderer */
@@ -509,9 +526,11 @@
 }
 .starter-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  grid-auto-columns: 7.5rem;
+  grid-auto-flow: column;
   gap: 0.625rem;
-  padding: 0 0.75rem 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.75rem 0.75rem;
 }
 .starter-card {
   display: flex;

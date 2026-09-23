@@ -21,7 +21,7 @@ import {
   OpeningGlyph,
   ProductFrontContent,
 } from "./ProductFrontSvg";
-import { unionBox } from "./viewport";
+
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { SplitType } from "./intentEditing";
 import {
@@ -396,6 +396,25 @@ function CouplingInspector({
   );
 }
 
+type EditorTool = "select" | "split_v" | "split_h";
+
+function ToolIcon({ name }: { name: string }): JSX.Element {
+  const strokes: Record<string, JSX.Element> = {
+    select: <path d="M4 2l10 5.5-4.2 1.2L12 13l-2 1.4-2.2-4.3-3.8 2.9z" />,
+    split_v: <path d="M3 3h10v10H3z M8 3v10" />,
+    split_h: <path d="M3 3h10v10H3z M3 8h10" />,
+    couple_left: <path d="M6 3h7v10H6z M5.5 8H1 M2.5 5.5L1 8l1.5 2.5" />,
+    couple_right: <path d="M3 3h7v10H3z M10.5 8H15 M13.5 5.5L15 8l-1.5 2.5" />,
+    equalize: <path d="M3 5h10 M8 2.5L10.5 5 8 7.5 M3 11h10 M8 8.5L10.5 11 8 13.5" />,
+    tree: <path d="M4 3h9 M4 8h9 M4 13h9 M1 3h.5 M1 8h.5 M1 13h.5" />,
+  };
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="tool-icon">
+      {strokes[name]}
+    </svg>
+  );
+}
+
 export function AssemblyEditor({
   organizationId,
   couplerSkus,
@@ -405,6 +424,7 @@ export function AssemblyEditor({
   disabled,
   onChanged,
   onEvaluationChange,
+  positionPanel,
 }: {
   organizationId: string;
   couplerSkus: string[];
@@ -414,6 +434,7 @@ export function AssemblyEditor({
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
+  positionPanel?: JSX.Element;
 }): JSX.Element | null {
   const inputs = useCanvasStore((state) => state.inputs);
   const commitInputs = useCanvasStore((state) => state.commitInputs);
@@ -423,6 +444,9 @@ export function AssemblyEditor({
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
   const members = useMemo(() => resolveMembers(options), [options]);
+  const [tool, setTool] = useState<EditorTool>("select");
+  const [treeOpen, setTreeOpen] = useState(true);
+  const [planOpen, setPlanOpen] = useState(true);
 
   useEffect(() => {
     onEvaluationChange(evaluation);
@@ -434,108 +458,214 @@ export function AssemblyEditor({
     onChanged();
   }
 
-  if (!product) return null;
+  if (!product) {
+    return (
+      <section className="assembly-editor assembly-editor--empty">
+        <div className="assembly-canvas canvas-empty">
+          <p className="assembly-hint">{t("assembly.pickStarter")}</p>
+        </div>
+        <aside className="assembly-side">
+          {positionPanel ?? <p className="assembly-hint">{t("assembly.elementHint")}</p>}
+        </aside>
+      </section>
+    );
+  }
+  const productJson = product;
   const modules = product.assembly.modules;
   const couplings = product.assembly.couplings;
   const selectedModule = modules.find((module) => module.id === selection);
   const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
-  const busy = disabled || isPending;
+  // isPending also holds while the query is disabled (no system/product yet):
+  // only an actual in-flight evaluation locks editing.
+  const evaluating = isPending && inputs.systemId !== null;
+  const busy = disabled || evaluating;
   const mullionSkus: Partial<Record<SplitType, string>> = {
     SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
     SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
   };
 
-  // One drawing sheet: front elevation on top, plan below it centered,
-  // sharing a single pan/zoom space so both views stay aligned.
-  const PLAN_GAP = 160;
   const front = frontLayout(product);
   const frontBox = frontBounds(product);
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
-  const planOffset = planBox
-    ? {
-        x: frontBox.x + (frontBox.w - planBox.w) / 2 - planBox.x,
-        y: frontBox.y + frontBox.h + PLAN_GAP - planBox.y,
-      }
-    : null;
-  const sheetBox =
-    planBox && planOffset
-      ? unionBox(frontBox, {
-          x: planBox.x + planOffset.x,
-          y: planBox.y + planOffset.y,
-          w: planBox.w,
-          h: planBox.h,
-        })
-      : frontBox;
   const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
-  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm${selection ? ` · ${selection}` : ""}`;
+  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
+  const selectedLabel = selection?.startsWith("coupling-")
+    ? null
+    : selectedModule
+      ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
+      : selectedCoupling
+        ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
+        : null;
+
+  // Divide tool: the next module click applies the pending split instead of
+  // only selecting. Any other edit returns the tool to select.
+  function pickModule(id: string): void {
+    const type = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
+    const sku =
+      type === "SPLIT_V"
+        ? mullionSkus.SPLIT_V
+        : type === "SPLIT_H"
+          ? mullionSkus.SPLIT_H
+          : undefined;
+    if (type !== null && sku !== undefined) {
+      commit(splitModuleBay(productJson, id, { type, mullionSku: sku }));
+      setTool("select");
+    }
+    select(id);
+  }
   const objectTree = useMemo(
     () => buildObjectTree(product, members, issues, t),
     [product, members, issues],
   );
 
+  function coupleUnit(side: "left" | "right"): void {
+    const next = addAdjacentUnit(productJson, side);
+    commit(next);
+    select(
+      next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ?? null,
+    );
+  }
+
+  const splitReady = { SPLIT_V: mullionSkus.SPLIT_V, SPLIT_H: mullionSkus.SPLIT_H };
   return (
-    <div className="assembly-editor" aria-label={t("assembly.frontView")}>
-      <div className="assembly-toolbar" role="toolbar">
+    <div
+      className={`assembly-editor${treeOpen ? "" : " assembly-editor--tree-closed"}`}
+      aria-label={t("assembly.frontView")}
+    >
+      <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
         <button
           type="button"
-          className="ghost-button"
+          className={`tool-button${tool === "select" ? " is-active" : ""}`}
+          title={t("assembly.toolSelect")}
+          aria-label={t("assembly.toolSelect")}
+          aria-pressed={tool === "select"}
+          onClick={() => setTool("select")}
+        >
+          <ToolIcon name="select" />
+        </button>
+        <button
+          type="button"
+          className={`tool-button${tool === "split_v" ? " is-active" : ""}`}
+          title={t("assembly.toolDivideV")}
+          aria-label={t("assembly.toolDivideV")}
+          aria-pressed={tool === "split_v"}
+          disabled={busy || splitReady.SPLIT_V === undefined}
+          onClick={() => setTool(tool === "split_v" ? "select" : "split_v")}
+        >
+          <ToolIcon name="split_v" />
+        </button>
+        <button
+          type="button"
+          className={`tool-button${tool === "split_h" ? " is-active" : ""}`}
+          title={t("assembly.toolDivideH")}
+          aria-label={t("assembly.toolDivideH")}
+          aria-pressed={tool === "split_h"}
+          disabled={busy || splitReady.SPLIT_H === undefined}
+          onClick={() => setTool(tool === "split_h" ? "select" : "split_h")}
+        >
+          <ToolIcon name="split_h" />
+        </button>
+        <span className="assembly-tools__divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.addUnitLeft")}
+          aria-label={t("assembly.addUnitLeft")}
+          disabled={busy}
+          onClick={() => coupleUnit("left")}
+        >
+          <ToolIcon name="couple_left" />
+        </button>
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.addUnitRight")}
+          aria-label={t("assembly.addUnitRight")}
+          disabled={busy}
+          onClick={() => coupleUnit("right")}
+        >
+          <ToolIcon name="couple_right" />
+        </button>
+        <span className="assembly-tools__divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.equalizeModules")}
+          aria-label={t("assembly.equalizeModules")}
           disabled={busy || modules.length <= 1}
           onClick={() => commit(equalizeModuleWidths(product))}
         >
-          {t("assembly.equalizeModules")}
+          <ToolIcon name="equalize" />
         </button>
         <button
           type="button"
-          className="ghost-button"
+          className="tool-button"
+          title={t("assembly.equalizeAngles")}
+          aria-label={t("assembly.equalizeAngles")}
           disabled={busy || couplings.length === 0}
           onClick={() => commit(equalizeCouplingAngles(product))}
         >
-          {t("assembly.equalizeAngles")}
+          <ToolIcon name="equalize" />
         </button>
-        <span
-          className={`assembly-status assembly-status--${(evaluation?.status ?? "INVALID").toLowerCase()}`}
-          data-testid="assembly-status"
+        <span className="assembly-tools__spacer" aria-hidden="true" />
+        <button
+          type="button"
+          className={`tool-button${treeOpen ? " is-active" : ""}`}
+          title={t("assembly.toggleTree")}
+          aria-label={t("assembly.toggleTree")}
+          aria-pressed={treeOpen}
+          onClick={() => setTreeOpen((open) => !open)}
         >
-          {isPending
-            ? t("assembly.calculating")
-            : errorCode
-              ? t("assembly.calculateError")
-              : t(statusKey(evaluation?.status))}
-        </span>
+          <ToolIcon name="tree" />
+        </button>
       </div>
-      <div className="assembly-tree">
-        <ObjectTree
-          root={objectTree}
-          selection={selection}
-          onSelect={select}
-          title={t("tree.title")}
-        />
-      </div>
+      {treeOpen && (
+        <div className="assembly-tree">
+          <ObjectTree
+            root={objectTree}
+            selection={selection}
+            onSelect={(id) => {
+              if (id !== null && modules.some((module) => module.id === id)) pickModule(id);
+              else select(id);
+            }}
+            title={t("tree.title")}
+          />
+        </div>
+      )}
       <div className="assembly-canvas">
-        <CanvasViewport contentBox={sheetBox} selectionBox={selectionBox} status={statusText}>
+        <CanvasViewport contentBox={frontBox} selectionBox={selectionBox} status={statusText}>
           <ProductFrontContent
             product={product}
             members={members}
             selectedId={selectedModule?.id ?? null}
             issues={issues}
             disabled={busy}
-            onSelectModule={select}
-            onAddUnit={(side) => {
-              const next = addAdjacentUnit(product, side);
-              commit(next);
-              select(
-                next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ??
-                  null,
-              );
-            }}
+            onSelectModule={pickModule}
+            onAddUnit={coupleUnit}
             onCommitModuleWidth={(moduleId, widthMm) =>
               commit(setModuleWidth(product, moduleId, widthMm))
             }
             onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
             onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
           />
-          {couplings.length > 0 && evaluation?.plan && planOffset && (
-            <g transform={`translate(${planOffset.x} ${planOffset.y})`}>
+        </CanvasViewport>
+        {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
+          <div className="plan-inset" role="complementary" aria-label={t("assembly.planView")}>
+            <div className="plan-inset__header">
+              <span>{t("assembly.planView")}</span>
+              <button
+                type="button"
+                aria-label={t("assembly.hidePlan")}
+                onClick={() => setPlanOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <svg
+              className="plan-inset__svg"
+              viewBox={`${planBox.x} ${planBox.y} ${planBox.w} ${planBox.h}`}
+              preserveAspectRatio="xMidYMid meet"
+            >
               <BowPlanContent
                 plan={evaluation.plan}
                 couplings={couplings}
@@ -544,15 +674,20 @@ export function AssemblyEditor({
                 selectedCouplingId={selectedCoupling?.id ?? null}
                 issues={issues}
                 disabled={busy}
-                onSelectModule={select}
+                onSelectModule={pickModule}
                 onSelectCoupling={select}
                 onCommitAngle={(couplingId, angleDeg) =>
                   commit(setCouplingAngle(product, couplingId, angleDeg))
                 }
               />
-            </g>
-          )}
-        </CanvasViewport>
+            </svg>
+          </div>
+        )}
+        {couplings.length > 0 && evaluation?.plan && !planOpen && (
+          <button type="button" className="plan-toggle" onClick={() => setPlanOpen(true)}>
+            {t("assembly.planView")}
+          </button>
+        )}
       </div>
       <div className="assembly-side">
         {selectedModule ? (
@@ -576,10 +711,13 @@ export function AssemblyEditor({
             commit={commit}
           />
         ) : (
-          <section className="assembly-inspector">
-            <p className="assembly-hint">{t("assembly.elementHint")}</p>
-          </section>
+          !positionPanel && (
+            <section className="assembly-inspector">
+              <p className="assembly-hint">{t("assembly.elementHint")}</p>
+            </section>
+          )
         )}
+        {positionPanel}
         {issues.length > 0 && (
           <ul className="assembly-issues" aria-label={t("assembly.issues")}>
             {issues.map((issue, index) => (
@@ -601,6 +739,41 @@ export function AssemblyEditor({
           </ul>
         )}
       </div>
+      <footer className="assembly-statusbar">
+        <span
+          className={`assembly-status assembly-status--${
+            inputs.systemId === null ? "idle" : (evaluation?.status ?? "INVALID").toLowerCase()
+          }`}
+          data-testid="assembly-status"
+        >
+          {evaluating
+            ? t("assembly.calculating")
+            : inputs.systemId === null
+              ? t("assembly.chooseSystemHint")
+            : errorCode
+              ? t("assembly.calculateError")
+              : t(statusKey(evaluation?.status))}
+        </span>
+        <span className="assembly-statusbar__dims">{statusText}</span>
+        {selectedLabel && <span className="assembly-statusbar__selection">{selectedLabel}</span>}
+        {issues.length > 0 && (
+          <button
+            type="button"
+            className="assembly-statusbar__issues"
+            onClick={() => {
+              const first = issues[0];
+              if (
+                first &&
+                (first.target.startsWith("module:") || first.target.startsWith("coupling:"))
+              ) {
+                select(first.target.slice(first.target.indexOf(":") + 1));
+              }
+            }}
+          >
+            {t("assembly.issueCount").replace("{count}", String(issues.length))}
+          </button>
+        )}
+      </footer>
     </div>
   );
 }

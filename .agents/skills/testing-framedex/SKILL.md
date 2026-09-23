@@ -42,5 +42,15 @@ description: Local dev-stack recipe for DEKOPEN E2E testing — Supabase CLI sta
 - Inspector R02: leaf h/w ratio must be in [0.4,2.5] — FAIL blocks freeze regardless of allow_incomplete (only RED/MISSING_INPUT are tolerable, and views.py hardcodes allow_incomplete_workshop=True).
 - Inputs seal once a version exists (sealed_documentary_inputs_immutable); version rows can't be DELETE'd without `SET session_replication_role=replica`.
 - DOC-03 needs OWNER/WORKSHOP_MANAGER — create a second fixture user (admin API + tenancy_memberships role WORKSHOP_MANAGER; is_active default true). Quote-only versions reject DOC-03 with 422 production_document_blocked.
-- Artifact access: POST `/api/v1/documents/artifacts/` {document_type, format, project_version_id} → GET `artifacts/<id>/access/` → signed_url. Supabase returns signedURL relative to `/storage/v1` — that prefix is resolved server-side; if an emitted-artifact link 404s check which revision is running (pre-#43 builds dropped it).
+- Artifact access: POST `/api/v1/documents/artifacts/` {document_type, format, project_version_id} → GET `artifacts/<id>/access/` → signed_url. Supabase returns signedURL relative to `/storage/v1` — that prefix is resolved server-side; if an emitted-artifact link 404s check which revision is running (pre-#43 builds dropped it). As of 9cd704c the prefix is STILL missing — signed URLs 404; manually insert `/storage/v1` before `/object/sign/`. The old `/api/v1/versions/{id}/production-document/` endpoint is gone (404) — use POST `/api/v1/documents/artifacts/` with `{document_type:"DOC-03",format:"PDF",project_version_id}` (+WM/OWNER token, no X-Organization-ID needed when active org is set).
 - No poppler/gs on box — open generated PDFs in Chrome via file:// for visual check.
+
+## Stacked tip (devin/1790130758-product-completeness, 9cd704c) deltas
+
+- "Biblioteca de diseños" inside the position editor (collapsed details) = starter picker with live SVG thumbnails (11 starters incl. Puerta + lateral, Bow ×3/×5).
+- "Serie de perfiles" seeds 3 systems: Alumio 65 + Vidrio 45 Minimal (both flagged SYNTHETIC TEST DATA) + Sistema Demo 60mm PVC.
+- Settings (/settings/general) is a real surface: account fields + live theme toggle (Claro/Oscuro applies app-wide instantly).
+- #53: picking "Puerta de acceso" opening auto-fills the single catalog panel (PANEL-SANDWICH-DEMO-24) in the Relleno select + object tree — BUT DEMO_60 has no door hardware kit, so DOOR_ENTRY bays still can't reach VALID on the demo catalog ("No compatible hardware kit: DOOR_ENTRY").
+- Pricing is a separate page `/projects/{id}/pricing` (Calcular precio link): fill Fecha efectiva (mm/dd/yyyy — type 8 digits continuously) + Motivo del cambio (required) + confirm checkbox → "Calcular y revisar" → "Aprobar y aplicar precios".
+- DOC-03 (branded): teal masthead + engineering title block (HUELLA BOM, PÁGINA x/N) + hairline tables; VANO/HOJA columns print raw member ids ("0798b233-…-b1" module-uuid|bay on UI-built positions, "m2" ids on assemblies) — cosmetic raw-id leak. Page 1 is a near-blank cover.
+- Some project-page anchor clicks ("Añadir vano", "Calcular precio") didn't navigate under the recording env — nav links work; xdg-open the URL directly as workaround.

@@ -133,6 +133,7 @@ const messages = {
   "projects.back": "Volver al proyecto",
   "projects.position": "Nuevo vano",
   "projects.positionData": "Vano y materiales",
+  "projects.identification": "Identificación",
   "projects.location": "Ubicación del vano",
   "projects.system": "Serie de perfiles",
   "projects.chooseSystem": "Seleccionar serie",
@@ -882,6 +883,15 @@ const messages = {
   "assembly.starter.bow3Hint": "Tres vanos en ángulo",
   "assembly.starter.bow5": "Bow ×5",
   "assembly.starter.bow5Hint": "Cinco vanos en ángulo",
+  "assembly.tools": "Herramientas",
+  "assembly.toolSelect": "Seleccionar",
+  "assembly.toolDivideV": "Dividir en vertical — clic sobre el vano",
+  "assembly.toolDivideH": "Dividir en horizontal — clic sobre el vano",
+  "assembly.toggleTree": "Árbol del conjunto",
+  "assembly.hidePlan": "Ocultar planta",
+  "assembly.issueCount": "{count} observaciones",
+  "assembly.pickStarter": "Elige un sistema y un diseño inicial para comenzar.",
+  "assembly.chooseSystemHint": "Elige una serie para calcular el conjunto.",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

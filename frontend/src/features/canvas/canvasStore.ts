@@ -186,7 +186,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     }));
   },
   replaceInputs(next) {
-    set((state) => ({
+    set(() => ({
       inputs: next,
       draftDimension: null,
       previewDiff: null,

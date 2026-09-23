@@ -237,16 +237,6 @@
   gap: 0.75rem;
 }
 
-.assembly-toolbar {
-  align-items: end;
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-}
-
 .assembly-field {
   align-items: center;
   display: flex;
@@ -393,6 +383,10 @@
   color: var(--theme-danger);
 }
 
+.assembly-status--idle {
+  color: var(--theme-text-secondary);
+}
+
 .assembly-issues {
   color: var(--theme-text-secondary);
   font-size: 0.8rem;
@@ -457,26 +451,200 @@
 }
 
 /* Compositional editor — canvas-first workspace */
+/* The editor is a self-contained application viewport: the grid is bounded by
+   the window so the statusbar and plan inset are always on screen, and only the
+   tree/side rails scroll internally. */
 .assembly-editor {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 15rem minmax(0, 1fr) minmax(250px, 320px);
+  gap: 0.6rem;
+  grid-template-columns: 3rem 13.5rem minmax(0, 1fr) minmax(250px, 300px);
+  grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
-    "toolbar toolbar toolbar"
-    "tree canvas side";
+    "tools tree canvas side"
+    "status status status side";
+  height: calc(100vh - 12rem);
+  height: calc(100dvh - 12rem);
+  min-height: 28rem;
+}
+
+.assembly-editor--tree-closed {
+  grid-template-columns: 3rem minmax(0, 1fr) minmax(250px, 300px);
+  grid-template-areas:
+    "tools canvas side"
+    "status status side";
 }
 
 @media (max-width: 1100px) {
-  .assembly-editor {
-    grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: 3rem minmax(0, 1fr) minmax(240px, 300px);
     grid-template-areas:
-      "toolbar toolbar"
-      "canvas side";
+      "tools canvas side"
+      "status status side";
   }
 
   .assembly-tree {
     display: none;
   }
+}
+
+/* Left tool rail */
+.assembly-tools {
+  align-content: start;
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  grid-area: tools;
+  padding: 0.3rem 0;
+}
+
+.tool-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  display: flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  width: 2rem;
+}
+
+.tool-button:hover:not(:disabled) {
+  background: var(--theme-surface-hover);
+  color: var(--theme-text-primary);
+}
+
+.tool-button.is-active {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+
+.tool-button:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.tool-icon {
+  fill: none;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  width: 1rem;
+}
+
+.assembly-tools__divider {
+  background: var(--theme-border-subtle);
+  height: 1px;
+  margin: 0.25rem 0;
+  width: 1.4rem;
+}
+
+.assembly-tools__spacer {
+  flex: 1;
+}
+
+/* Plan mini-navigator — inset over the canvas, never a second stacked sheet */
+.assembly-canvas {
+  position: relative;
+}
+
+.plan-inset {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: 0.75rem;
+  box-shadow: 0 2px 10px rgb(22 28 31 / 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 9rem;
+  position: absolute;
+  right: 0.75rem;
+  width: 13rem;
+  z-index: 2;
+}
+
+.plan-inset__header {
+  align-items: center;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-muted);
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 600;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.plan-inset__header button {
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.plan-inset__svg {
+  flex: 1;
+  min-height: 0;
+}
+
+.plan-toggle {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 4px;
+  bottom: 0.75rem;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  right: 0.75rem;
+  z-index: 2;
+}
+
+/* Status bar — compact persistent state */
+.assembly-statusbar {
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  display: flex;
+  gap: 0.9rem;
+  grid-area: status;
+  padding: 0.3rem 0.75rem;
+}
+
+.assembly-statusbar__dims {
+  color: var(--theme-text-secondary);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.assembly-statusbar__selection {
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+}
+
+.assembly-statusbar__issues {
+  background: transparent;
+  border: none;
+  color: var(--theme-warning);
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-left: auto;
+  padding: 0;
 }
 
 /* Object tree — left rail, human names only */
@@ -492,7 +660,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: 30rem;
   overflow: hidden;
 }
 
@@ -612,15 +779,11 @@
   background: var(--theme-warning);
 }
 
-.assembly-toolbar {
-  grid-area: toolbar;
-}
-
 .assembly-canvas {
   display: grid;
   grid-area: canvas;
   grid-template-rows: minmax(0, 1fr);
-  min-height: 30rem;
+  min-height: 0;
   padding: 0;
 }
 
@@ -642,6 +805,10 @@
 }
 
 .canvas-viewport .canvas-sheet {
+  background-image:
+    linear-gradient(to right, rgb(209 216 216 / 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(209 216 216 / 0.3) 1px, transparent 1px);
+  background-size: 24px 24px;
   cursor: grab;
   display: block;
   height: 100%;
@@ -922,7 +1089,9 @@
   flex-direction: column;
   gap: 0.75rem;
   grid-area: side;
+  min-height: 0;
   min-width: 0;
+  overflow-y: auto;
 }
 
 .assembly-inspector {

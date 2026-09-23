@@ -223,6 +223,9 @@ function PositionWorkspace({
   const [uncertainCreate, setUncertainCreate] = useState(false);
   const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  // New positions open on the design library (the start point); saved ones go
+  // straight to the canvas — picking a starter collapses it.
+  const [libraryOpen, setLibraryOpen] = useState(!positionId && !copyId);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
   const canUndo = useCanvasStore((s) => s.past.length > 0);
@@ -479,8 +482,67 @@ function PositionWorkspace({
     // Coupled starters mint fresh module ids — a stale selection would leave
     // the inspector pointed at a module that no longer exists.
     store.select(nextProduct.assembly.modules[0]?.id ?? null);
+    setLibraryOpen(false);
     onAssemblyChanged();
   };
+  // Position metadata lives in the right inspector column when no element is
+  // selected: system/materials is edited in context, not as a permanent form.
+  const positionPanel = (
+    <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
+      <header className="assembly-inspector__header">
+        <h4>{t("projects.positionData")}</h4>
+      </header>
+      <details className="inspector-section" open>
+        <summary>{t("projects.identification")}</summary>
+        <fieldset disabled={busy}>
+          <label className="assembly-field">
+            <span>{t("projects.location")}</span>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} />
+          </label>
+          <label className="assembly-field">
+            <span>{t("pricing.quantity")}</span>
+            <input
+              inputMode="numeric"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </label>
+        </fieldset>
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("projects.system")}</summary>
+        <fieldset disabled={busy}>
+          <select
+            className="assembly-select"
+            aria-label={t("projects.system")}
+            value={systemId}
+            onChange={(e) => {
+              const next = e.target.value || null;
+              if (inputs.systemId !== next) {
+                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                setMessage("");
+              }
+            }}
+          >
+            <option value="">{t("projects.chooseSystem")}</option>
+            {systems.data
+              ?.filter((system) => system.quote_ready)
+              .map((system) => (
+                <option key={system.id} value={system.id}>
+                  {system.name}
+                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                </option>
+              ))}
+          </select>
+          {(systems.isError || options.isError) && <p role="alert">{t("projects.catalogError")}</p>}
+          {(systems.isPending || (systemId && options.isPending)) && (
+            <p role="status">{t("projects.loading")}</p>
+          )}
+          <p className="assembly-hint">{t("projects.colorWhite")}</p>
+        </fieldset>
+      </details>
+    </section>
+  );
   return (
     <section className="projects-page position-editor">
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
@@ -506,73 +568,29 @@ function PositionWorkspace({
       </header>
       {message && <p role="status">{message}</p>}
       <div className="position-workspace">
-        <div className="position-design">
-          <details className="starter-library" open>
-            <summary>{t("assembly.starterLibrary")}</summary>
-            <StarterGallery
-              members={resolveMembers(options.data)}
-              disabled={busy}
-              onPick={pickStarter}
-            />
-          </details>
-          <AssemblyEditor
-            organizationId={orgId}
-            couplerSkus={options.data?.coupler_skus ?? []}
-            glassSkus={options.data?.glass_skus ?? []}
-            panelSkus={options.data?.panel_skus ?? []}
-            options={options.data}
+        <details
+          className="starter-library"
+          open={libraryOpen}
+          onToggle={(event) => setLibraryOpen(event.currentTarget.open)}
+        >
+          <summary>{t("assembly.starterLibrary")}</summary>
+          <StarterGallery
+            members={resolveMembers(options.data)}
             disabled={busy}
-            onChanged={onAssemblyChanged}
-            onEvaluationChange={onAssemblyEvaluation}
+            onPick={pickStarter}
           />
-        </div>
-        <aside className="position-materials">
-          <fieldset disabled={busy}>
-            <legend>{t("projects.positionData")}</legend>
-            <label>
-              {t("projects.location")}
-              <input value={location} onChange={(e) => setLocation(e.target.value)} />
-            </label>
-            <label>
-              {t("pricing.quantity")}
-              <input
-                inputMode="numeric"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("projects.system")}
-              <select
-                value={systemId}
-                onChange={(e) => {
-                  const next = e.target.value || null;
-                  if (inputs.systemId !== next) {
-                    useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                    setMessage("");
-                  }
-                }}
-              >
-                <option value="">{t("projects.chooseSystem")}</option>
-                {systems.data
-                  ?.filter((system) => system.quote_ready)
-                  .map((system) => (
-                    <option key={system.id} value={system.id}>
-                      {system.name}
-                      {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            {(systems.isError || options.isError) && (
-              <p role="alert">{t("projects.catalogError")}</p>
-            )}
-            {(systems.isPending || (systemId && options.isPending)) && (
-              <p role="status">{t("projects.loading")}</p>
-            )}
-            <p>{t("projects.colorWhite")}</p>
-          </fieldset>
-        </aside>
+        </details>
+        <AssemblyEditor
+          organizationId={orgId}
+          couplerSkus={options.data?.coupler_skus ?? []}
+          glassSkus={options.data?.glass_skus ?? []}
+          panelSkus={options.data?.panel_skus ?? []}
+          options={options.data}
+          disabled={busy}
+          onChanged={onAssemblyChanged}
+          onEvaluationChange={onAssemblyEvaluation}
+          positionPanel={positionPanel}
+        />
       </div>
       {result ? (
         <ProjectBom result={result} />
