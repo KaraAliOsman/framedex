@@ -194,6 +194,28 @@ def test_enqueue_payload_authorizer_denies_role(monkeypatch) -> None:
     assert created is True
 
 
+def test_worker_id_default_is_process_unique() -> None:
+    first = worker.worker_id_default()
+    second = worker.worker_id_default()
+    assert first != second
+    assert "-" in first
+
+
+def test_heartbeat_stops_when_lease_lost(monkeypatch) -> None:
+    import threading
+    from uuid import uuid4
+
+    monkeypatch.setattr(worker, "LEASE_RENEW_SECONDS", 0.01)
+    monkeypatch.setattr(worker.repository, "renew_lock", lambda **kwargs: False)
+    stop = threading.Event()
+    thread = threading.Thread(
+        target=worker._heartbeat, args=(uuid4(), "w1", stop), daemon=True
+    )
+    thread.start()
+    thread.join(timeout=2)
+    assert not thread.is_alive()
+
+
 def test_worker_marks_permanent_failure_without_retry(monkeypatch) -> None:
     def forbidden(payload, context, report):
         raise registry.JobPermanentError("document_access_denied")

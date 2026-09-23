@@ -7,18 +7,24 @@ by a zombie worker."""
 from __future__ import annotations
 
 import logging
+import os
 import socket
+import threading
 import time
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from jobs import registry, repository
 from jobs.repository import LockLostError
 
 logger = logging.getLogger(__name__)
 
+LEASE_RENEW_SECONDS = 120
+
 
 def worker_id_default() -> str:
-    return f"{socket.gethostname()}"
+    """One lease owner per process — hostname alone would let two workers on the
+    same host claim each other's jobs after a stale reclaim."""
+    return f"{socket.gethostname()}-{os.getpid()}-{uuid4().hex[:8]}"
 
 
 def run_once(*, worker_id: str, batch: int = 8) -> int:
@@ -79,6 +85,13 @@ def _execute(job: dict[str, object], *, worker_id: str) -> None:
         attempt=int(job["attempt"]),
         payload=job["payload"] if isinstance(job["payload"], dict) else {},
     )
+    stop_heartbeat = threading.Event()
+    heartbeat = threading.Thread(
+        target=_heartbeat,
+        args=(context.job_id, worker_id, stop_heartbeat),
+        daemon=True,
+    )
+    heartbeat.start()
     try:
         result = spec.run(context.payload, context, report)
     except registry.JobPermanentError as error:
@@ -109,9 +122,26 @@ def _execute(job: dict[str, object], *, worker_id: str) -> None:
         except LockLostError:
             logger.warning("job %s lost its lease before failure write", job_id)
         return
+    finally:
+        stop_heartbeat.set()
+        heartbeat.join(timeout=5)
     try:
         repository.succeed(job_id=job_id, worker_id=worker_id, result=result)
     except LockLostError:
         logger.warning("job %s (%s) lost its lease; result discarded", job_id, job_type)
         return
     logger.info("job %s (%s) succeeded", job_id, job_type)
+
+
+def _heartbeat(job_id: UUID, worker_id: str, stop: threading.Event) -> None:
+    """Renew the lease while a handler runs so long jobs without progress
+    callbacks keep their lock; a reclaimed job stops being renewable."""
+    while not stop.wait(LEASE_RENEW_SECONDS):
+        try:
+            if not repository.renew_lock(job_id=job_id, worker_id=worker_id):
+                logger.warning(
+                    "job %s lease lost; terminal write will be rejected", job_id
+                )
+                return
+        except Exception:  # noqa: BLE001 — transient DB blips retry on next tick
+            logger.exception("job %s lease renewal failed", job_id)

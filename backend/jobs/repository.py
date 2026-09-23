@@ -181,8 +181,9 @@ def claim_next(*, worker_id: str) -> dict[str, object] | None:
     return _decode(claimed[0]) if claimed else None
 
 
-def renew_lock(*, job_id: UUID, worker_id: str) -> None:
-    """Refresh the lease; running handlers keep ownership through long work."""
+def renew_lock(*, job_id: UUID, worker_id: str) -> bool:
+    """Refresh the lease; running handlers keep ownership through long work.
+    Returns False when the lease is already gone (job reclaimed or requeued)."""
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -192,6 +193,7 @@ def renew_lock(*, job_id: UUID, worker_id: str) -> None:
             """,
             [str(job_id), worker_id],
         )
+        return cursor.rowcount > 0
 
 
 def release_stale(*, now: datetime | None = None) -> int:
@@ -215,7 +217,9 @@ def release_stale(*, now: datetime | None = None) -> int:
 
 
 def report_progress(*, job_id: UUID, worker_id: str, progress: float) -> None:
-    """Record progress and renew the lease in one write."""
+    """Record progress and renew the lease in one write; raises LockLostError
+    when the lease is gone so the handler aborts instead of finishing a job
+    that now belongs to another worker."""
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -225,6 +229,8 @@ def report_progress(*, job_id: UUID, worker_id: str, progress: float) -> None:
             """,
             [progress, str(job_id), worker_id],
         )
+        if cursor.rowcount == 0:
+            raise LockLostError(job_id)
 
 
 def _terminal_update(
