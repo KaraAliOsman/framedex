@@ -308,8 +308,8 @@ def confirm_installation(
     with transaction.atomic(), documentary_backend():
             order = one(
                 "SELECT id, order_code, status, payload_json FROM public.orders "
-                "WHERE id = %s AND organization_id = %s FOR UPDATE",
-                [str(order_id), org_id],
+                "WHERE id = %s AND org_id = %s FOR UPDATE",
+                [str(order_id), str(org_id)],
             )
             if order["status"] == "INSTALLED":
                 return get_work_order(org_id=org_id, order_id=order_id)
@@ -317,13 +317,13 @@ def confirm_installation(
                 raise DocumentaryError("installation_requires_dispatched")
             rows(
                 "UPDATE public.orders SET status = 'INSTALLED' "
-                "WHERE id = %s AND organization_id = %s",
-                [str(order_id), org_id],
+                "WHERE id = %s AND org_id = %s RETURNING id",
+                [str(order_id), str(org_id)],
             )
             rows(
                 """INSERT INTO public.production_step_events
-                       (organization_id, order_id, event, actor_id, payload)
-                   VALUES (%s, %s, 'WO_INSTALLED', %s, %s)""",
+                       (org_id, order_id, event, actor_id, payload)
+                   VALUES (%s, %s, 'WO_INSTALLED', %s, %s) RETURNING id""",
                 [
                     org_id,
                     str(order_id),
