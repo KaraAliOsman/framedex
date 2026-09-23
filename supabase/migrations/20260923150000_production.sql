@@ -12,8 +12,7 @@ CREATE UNIQUE INDEX orders_workshop_position_uq
 ON public.orders (org_id, project_version_id, (payload_json->>'position_id'))
 WHERE order_type = 'WORKSHOP_OT'
   AND project_version_id IS NOT NULL
-  AND payload_json ? 'position_id'
-  AND NOT (payload_json ? 'remake_of');
+  AND payload_json ? 'position_id';
 
 CREATE TABLE public.work_centers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,8 +55,7 @@ CREATE TABLE public.production_step_events (
     step_id UUID REFERENCES public.production_steps(id) ON DELETE SET NULL,
     event TEXT NOT NULL CHECK (event IN (
         'WO_RELEASED', 'STEP_STARTED', 'STEP_COMPLETED', 'STEP_BLOCKED',
-        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD', 'WO_OPTIMIZED',
-        'QC_FAILED', 'WO_REMADE', 'WO_CNC_EXPORTED'
+        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD', 'WO_OPTIMIZED'
     )),
     actor_id UUID,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'),
