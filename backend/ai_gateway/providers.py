@@ -23,13 +23,14 @@ import httpx
 MAX_BODY_BYTES = 1_048_576
 
 
-def _resolve_provider_host(hostname: str) -> str | None:
-    """Resolve the configured host once and return a global connect address,
-    or None. Literal IPs are checked directly; a DNS name must resolve to
-    global answers only — any non-global answer refuses the provider, and
-    resolution failure refuses closed. The request pins this exact address
-    (Host header + SNI keep the configured name), so there is no second
-    lookup for a rebinding attack to poison."""
+def _resolve_provider_hosts(hostname: str) -> list[str] | None:
+    """Resolve the configured host once and return every validated global
+    answer in resolver order, or None. Literal IPs are checked directly; a
+    DNS name must resolve to global answers only — any non-global answer
+    refuses the provider, and resolution failure refuses closed. Requests
+    pin these exact addresses (Host header + SNI keep the configured name),
+    so no second lookup exists for a rebinding attack to poison — while
+    trying each answer preserves normal multi-address failover."""
     try:
         address = ipaddress.ip_address(hostname)
     except ValueError:
@@ -48,8 +49,8 @@ def _resolve_provider_host(hostname: str) -> str | None:
             if not candidate.is_global:
                 return None
             resolved.append(info[4][0])
-        return resolved[0] if resolved else None
-    return str(address) if address.is_global else None
+        return resolved or None
+    return [str(address)] if address.is_global else None
 
 
 class ProviderError(Exception):
@@ -71,42 +72,69 @@ class HttpProvider:
             raise ProviderError("ai_provider_unavailable")
         # Provider URLs are operator config, but a compromised value must not
         # turn the gateway into an authenticated proxy for internal services:
-        # https-only, and the host must not resolve to a non-global address.
+        # https-only, no userinfo/query/fragment, and the host must resolve
+        # to global addresses only. Anything else refuses closed rather than
+        # silently redirecting or dropping part of the configured endpoint.
         try:
             parsed = urlparse(self.base_url)
             hostname = parsed.hostname
+            port = parsed.port or 443
         except ValueError as error:
             raise ProviderError("ai_provider_unavailable") from error
-        if parsed.scheme != "https" or not hostname:
+        if (
+            parsed.scheme != "https"
+            or not hostname
+            or parsed.username
+            or parsed.password
+            or parsed.query
+            or parsed.fragment
+        ):
             raise ProviderError("ai_provider_unavailable")
-        connect_ip = _resolve_provider_host(hostname)
-        if connect_ip is None:
+        connect_ips = _resolve_provider_hosts(hostname)
+        if connect_ips is None:
             raise ProviderError("ai_provider_unavailable")
         self._host = hostname
-        self._port = parsed.port or 443
-        self._connect_ip = connect_ip
+        self._port = port
+        self._connect_ips = connect_ips
+        self._base_path = parsed.path.rstrip("/")
+
+    def _request(self, *, route: dict, capability: str, input_payload: dict):
+        """POST to the provider on each validated address until one connects.
+        Connect-phase failures advance to the next pinned answer; any HTTP
+        response (including errors) stops the loop — it is an answer, not a
+        transport failure."""
+        port_suffix = "" if self._port == 443 else f":{self._port}"
+        header_host = f"[{self._host}]" if ":" in self._host else self._host
+        host_header = (
+            header_host if self._port == 443 else f"{header_host}:{self._port}"
+        )
+        last_error: httpx.HTTPError | None = None
+        for connect_ip in self._connect_ips:
+            url_host = f"[{connect_ip}]" if ":" in connect_ip else connect_ip
+            try:
+                return httpx.post(
+                    f"https://{url_host}{port_suffix}{self._base_path}/invoke",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Host": host_header,
+                    },
+                    extensions={"sni_hostname": self._host},
+                    json={
+                        "model": route["provider_model"],
+                        "capability": capability,
+                        "input": input_payload,
+                    },
+                    timeout=60.0,
+                )
+            except (httpx.ConnectError, httpx.ConnectTimeout) as error:
+                last_error = error
+        raise ProviderError("ai_provider_error") from last_error
 
     def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
         started = time.monotonic()
         try:
-            url_host = f"[{self._connect_ip}]" if ":" in self._connect_ip else self._connect_ip
-            port_suffix = "" if self._port == 443 else f":{self._port}"
-            host_header = (
-                self._host if self._port == 443 else f"{self._host}:{self._port}"
-            )
-            response = httpx.post(
-                f"https://{url_host}{port_suffix}/invoke",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Host": host_header,
-                },
-                extensions={"sni_hostname": self._host},
-                json={
-                    "model": route["provider_model"],
-                    "capability": capability,
-                    "input": input_payload,
-                },
-                timeout=60.0,
+            response = self._request(
+                route=route, capability=capability, input_payload=input_payload
             )
             response.raise_for_status()
             if len(response.content) > MAX_BODY_BYTES:

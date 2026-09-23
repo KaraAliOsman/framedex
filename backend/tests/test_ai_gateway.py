@@ -554,3 +554,148 @@ def test_http_provider_invalid_idna_is_unavailable(monkeypatch):
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="IDNA")
     assert failure.value.code == "ai_provider_unavailable"
+
+
+def test_http_provider_preserves_base_path(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    calls = []
+
+    class _Response:
+        status_code = 200
+        content = b'{"output": "ok", "usage": {}}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": "ok", "usage": {}}
+
+    monkeypatch.setenv("AI_GATEWAY_PATH_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_PATH_BASE_URL", "https://provider.example/api/v1/")
+    _allow_dns(monkeypatch)
+    monkeypatch.setattr("httpx.post", lambda *a, **k: calls.append((a, k)) or _Response())
+    HttpProvider(provider="PATH").invoke(
+        route=_route(), capability="nlp_command", input_payload={}
+    )
+    args, _ = calls[0]
+    assert args[0] == "https://93.184.216.34/api/v1/invoke"
+
+
+def test_http_provider_rejects_userinfo_query_fragment_and_bad_port(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_BADPART_API_KEY", "k")
+    for bad in (
+        "https://user:secret@provider.example",
+        "https://provider.example/invoke?key=abc",
+        "https://provider.example#frag",
+        "https://provider.example:abc",
+        "https://provider.example:99999",
+    ):
+        monkeypatch.setenv("AI_GATEWAY_BADPART_BASE_URL", bad)
+        with pytest.raises(ProviderError) as failure:
+            HttpProvider(provider="BADPART")
+        assert failure.value.code == "ai_provider_unavailable", bad
+
+
+def test_http_provider_fails_over_pinned_addresses(monkeypatch):
+    import socket as _socket
+
+    import httpx
+
+    from ai_gateway.providers import HttpProvider
+
+    calls = []
+
+    class _Response:
+        status_code = 200
+        content = b'{"output": "ok", "usage": {}}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": "ok", "usage": {}}
+
+    def _post(url, **kwargs):
+        calls.append(url)
+        if "93.184.216.34" in url:
+            raise httpx.ConnectError("refused")
+        return _Response()
+
+    monkeypatch.setenv("AI_GATEWAY_MULTI_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_MULTI_BASE_URL", "https://provider.example")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443)),
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.35", 443)),
+        ],
+    )
+    monkeypatch.setattr("httpx.post", _post)
+    result = HttpProvider(provider="MULTI").invoke(
+        route=_route(), capability="nlp_command", input_payload={}
+    )
+    assert result["output"] == "ok"
+    assert calls == [
+        "https://93.184.216.34/invoke",
+        "https://93.184.216.35/invoke",
+    ]
+
+
+def test_http_provider_connect_failure_all_addresses_is_provider_error(monkeypatch):
+    import socket as _socket
+
+    import httpx
+
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_DOWN_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_DOWN_BASE_URL", "https://provider.example")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443)),
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.35", 443)),
+        ],
+    )
+    monkeypatch.setattr(
+        "httpx.post",
+        lambda *a, **k: (_ for _ in ()).throw(httpx.ConnectTimeout("timeout")),
+    )
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="DOWN").invoke(
+            route=_route(), capability="nlp_command", input_payload={}
+        )
+    assert failure.value.code == "ai_provider_error"
+
+
+def test_http_provider_ipv6_host_header_is_bracketed(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    calls = []
+
+    class _Response:
+        status_code = 200
+        content = b'{"output": "ok", "usage": {}}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": "ok", "usage": {}}
+
+    monkeypatch.setenv("AI_GATEWAY_V6_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_V6_BASE_URL", "https://[2606:4700:4700::1111]:8443")
+    monkeypatch.setattr("httpx.post", lambda *a, **k: calls.append((a, k)) or _Response())
+    HttpProvider(provider="V6").invoke(
+        route=_route(), capability="nlp_command", input_payload={}
+    )
+    args, kwargs = calls[0]
+    assert args[0] == "https://[2606:4700:4700::1111]:8443/invoke"
+    assert kwargs["headers"]["Host"] == "[2606:4700:4700::1111]:8443"
+    assert kwargs["extensions"] == {"sni_hostname": "2606:4700:4700::1111"}
