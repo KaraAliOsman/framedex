@@ -91,7 +91,8 @@ def issue_credit_note(
             )
             stamped = rows(
                 "SELECT id FROM public.project_dtes "
-                "WHERE org_id=%s AND invoice_id=%s LIMIT 1",
+                "WHERE org_id=%s AND invoice_id=%s AND credit_note_id IS NULL "
+                "LIMIT 1",
                 [org_id_s, str(invoice_id)],
             )
             if stamped:

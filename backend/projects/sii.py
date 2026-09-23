@@ -19,7 +19,7 @@ import hashlib
 import json
 import os
 import re
-from datetime import timedelta, timezone as utc_timezone
+from datetime import datetime, timedelta, timezone as utc_timezone
 from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 from xml.sax.saxutils import escape
@@ -592,13 +592,19 @@ def _dte_xml_credit_note(
     )
     receptor, receptor_name, receptor_extra = _receptor(payload)
     item = f"Anula factura {payload['invoice']['invoice_code']}"
-    if payload.get("reason"):
-        item = f"{item} - {payload['reason']}"
+    parent_issued = parent_dte["issued_at"]
+    if isinstance(parent_issued, str):
+        parent_issued = datetime.fromisoformat(parent_issued)
+    fch_ref = parent_issued.astimezone(_SII_TZ).date().isoformat()
     referencia = (
-        f"<Referencia><TpoDocRef>{DTE_FACTURA}</TpoDocRef>"
+        f"<Referencia><NroLinRef>1</NroLinRef>"
+        f"<TpoDocRef>{DTE_FACTURA}</TpoDocRef>"
         f"<FolioRef>{int(parent_dte['folio'])}</FolioRef>"
+        f"<FchRef>{fch_ref}</FchRef>"
         f"<CodRef>1</CodRef>"
-        f"<RazonRef>{escape(payload.get('reason') or 'Anula documento')}</RazonRef>"
+        # RazonRef caps at 90 chars — the full reason stays in the NC
+        # payload and PDF; the SII field is a label, not a log.
+        f"<RazonRef>{escape((payload.get('reason') or 'Anula documento')[:90])}</RazonRef>"
         f"</Referencia>"
     )
     return _render_dte(
@@ -636,10 +642,13 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                 "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                 [f"sii_folios:{org_id_s}:{DTE_FACTURA}"],
             )
+            # Parent-DTE lookups must exclude NC DTEs: a factura's DTE-33
+            # and its annulling DTE-61 share the same invoice_id.
             existing = rows(
                 "SELECT * FROM public.project_dtes "
-                "WHERE org_id=%s AND invoice_id=%s",
-                [org_id_s, invoice_id_s],
+                "WHERE org_id=%s AND invoice_id=%s AND credit_note_id IS NULL "
+                "AND dte_type=%s",
+                [org_id_s, invoice_id_s, DTE_FACTURA],
             )
             if existing:
                 return _dte_public(existing[0])
@@ -757,7 +766,8 @@ def dte_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) -> dict:
     with documentary_backend():
         found = rows(
             "SELECT * FROM public.project_dtes "
-            "WHERE org_id=%s AND project_id=%s AND invoice_id=%s",
+            "WHERE org_id=%s AND project_id=%s AND invoice_id=%s "
+            "AND credit_note_id IS NULL",
             [str(org_id), str(project_id), str(invoice_id)],
         )
         if not found:
@@ -804,12 +814,13 @@ def _purge_unreferenced_dte(
 
 
 def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
-    """invoice_id → light DTE badge for the cobranza invoice listing."""
+    """invoice_id → light DTE badge for the cobranza invoice listing —
+    only the parent factura's DTE; NC DTEs map under their credit note."""
     return {
         str(row["invoice_id"]): _dte_public(row)
         for row in rows(
             "SELECT * FROM public.project_dtes "
-            "WHERE org_id=%s AND project_id=%s",
+            "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NULL",
             [str(org_id), str(project_id)],
         )
     }

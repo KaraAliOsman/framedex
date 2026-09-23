@@ -217,7 +217,7 @@ def _patch_env(
         if "FROM public.sii_cafs" in sql:
             return list(cafs or [])
         if "FROM public.project_dtes" in sql and "credit_note_id IS NULL" in sql:
-            return list(parents or [])
+            return list(parents) if parents is not None else list(existing or [])
         if "FROM public.project_dtes" in sql and "credit_note_id=%s" in sql:
             return list(existing_nc or [])
         if "FROM public.project_dtes" in sql:
@@ -482,8 +482,11 @@ def test_emit_credit_note_dte_references_parent_folio(monkeypatch):
     assert "dte61-1_" in object_key and media == "application/xml"
     text = content.decode("iso-8859-1")
     assert "<TipoDTE>61</TipoDTE>" in text
-    assert "<TpoDocRef>33</TpoDocRef><FolioRef>4</FolioRef>" in text
-    assert "<CodRef>1</CodRef>" in text
+    assert (
+        "<NroLinRef>1</NroLinRef><TpoDocRef>33</TpoDocRef>"
+        "<FolioRef>4</FolioRef><FchRef>2026-10-02</FchRef>"
+        "<CodRef>1</CodRef>" in text
+    )
     assert "Anula factura FAC-0001" in text
     import defusedxml.ElementTree as ET
 
@@ -538,6 +541,38 @@ def test_emit_credit_note_dte_seals_credit_note_document(monkeypatch):
     assert pdf_media == "application/pdf"
     xml_key, _, _ = storage.uploads[1]
     assert "dte61-1_" in xml_key
+
+
+def test_emit_credit_note_dte_bounds_sii_field_lengths(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    credit_note["payload_json"]["reason"] = "x" * 300
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        invoice=invoice,
+        credit_note=credit_note,
+        annulled=[credit_note],
+        parents=[_dte_row(invoice["id"], folio=4)],
+        cafs=[caf61],
+    )
+    sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    razon = text[text.index("<RazonRef>") + len("<RazonRef>") : text.index("</RazonRef>")]
+    assert razon == "x" * 90
+    nmb = text[text.index("<NmbItem>") + len("<NmbItem>") : text.index("</NmbItem>")]
+    assert nmb == "Anula factura FAC-0001"
 
 
 def test_emit_credit_note_dte_requires_timbred_parent(monkeypatch):
