@@ -8,6 +8,7 @@ from uuid import UUID
 
 from django.db import DatabaseError
 from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -208,7 +209,7 @@ class ProductionOrderCncFileView(APIView):
         operation_id="production_order_cnc_file",
         parameters=[ACTIVE_ORGANIZATION_HEADER],
         request=None,
-        responses={200: None, **ERRORS},
+        responses={(200, "text/csv"): OpenApiTypes.STR, **ERRORS},
         tags=["production"],
     )
     def get(self, request, order_id: UUID, filename: str):
@@ -253,7 +254,7 @@ class ProductionOrderDxfFileView(APIView):
         operation_id="production_order_dxf_file",
         parameters=[ACTIVE_ORGANIZATION_HEADER],
         request=None,
-        responses={200: None, **ERRORS},
+        responses={(200, "application/dxf"): OpenApiTypes.STR, **ERRORS},
         tags=["production"],
     )
     def get(self, request, order_id: UUID, filename: str):

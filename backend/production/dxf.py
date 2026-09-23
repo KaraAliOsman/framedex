@@ -103,9 +103,12 @@ def _sheet_entities(sheet: dict) -> tuple[str, Decimal, Decimal]:
         w = Decimal(str(placement.get("width_mm") or 0))
         h = Decimal(str(placement.get("height_mm") or 0))
         entities += _rect("CUT", x, y, w, h)
-        label = f"{placement.get('piece_id') or '?'} {w}x{h}"
+        piece = f"{placement.get('piece_id') or '?'}"
+        if placement.get("unit_index") is not None:
+            piece += f"·U{placement['unit_index']}"
         entities += _text(
-            "LABEL", x + _LABEL_HEIGHT, y + h / 2, _SHEET_LABEL_HEIGHT, label
+            "LABEL", x + _LABEL_HEIGHT, y + h / 2, _SHEET_LABEL_HEIGHT,
+            f"{piece} {w}x{h}",
         )
     return entities, width, height
 
@@ -126,7 +129,13 @@ def _bars_entities(bars: list[dict]) -> tuple[str, Decimal]:
         )
         if stock > max_x:
             max_x = stock
-        cursor = Decimal(0)
+        # Same consumption convention as optimize_cut: the head trim is
+        # reserved once, then each piece takes its length plus one kerf.
+        head = Decimal(str(bar.get("head_trim_mm") or 0))
+        kerf = Decimal(str(bar.get("kerf_mm") or 0))
+        cursor = head
+        if head > 0:
+            entities += _line("MARK", head, base_y, head, base_y + _BAR_ROW_HEIGHT)
         for cut in sorted(
             bar.get("cuts") or [], key=lambda c: int(c.get("sequence") or 0)
         ):
@@ -139,14 +148,17 @@ def _bars_entities(bars: list[dict]) -> tuple[str, Decimal]:
             angles = "/".join(
                 str(a) for a in (cut.get("angle_left"), cut.get("angle_right")) if a
             )
-            label = f"{cut.get('piece_id') or '?'} {length}"
+            piece = f"{cut.get('piece_id') or '?'}"
+            if cut.get("unit_index") is not None:
+                piece += f"·U{cut['unit_index']}"
+            label = f"{piece} {length}"
             if angles:
                 label += f" {angles}"
             entities += _text(
                 "LABEL", mid - _LABEL_HEIGHT, base_y + Decimal(10),
                 _LABEL_HEIGHT, label,
             )
-            cursor = next_x
+            cursor = next_x + kerf
     return entities, max_x
 
 

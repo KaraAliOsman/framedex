@@ -6096,7 +6096,7 @@ export const productionOrderCncExport = async (
 };
 
 export type productionOrderCncFileResponse200 = {
-  data: void;
+  data: string;
   status: 200;
 };
 
@@ -6818,7 +6818,7 @@ export const productionOrderDxfExport = async (
 };
 
 export type productionOrderDxfFileResponse200 = {
-  data: void;
+  data: string;
   status: 200;
 };
 

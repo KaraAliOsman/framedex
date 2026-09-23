@@ -5450,7 +5450,11 @@ paths:
       - SupabaseBearer: []
       responses:
         '200':
-          description: No response body
+          content:
+            text/csv:
+              schema:
+                type: string
+          description: ''
         '400':
           content:
             application/json:
@@ -6133,7 +6137,11 @@ paths:
       - SupabaseBearer: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/dxf:
+              schema:
+                type: string
+          description: ''
         '400':
           content:
             application/json:

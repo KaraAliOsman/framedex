@@ -948,10 +948,15 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
                     "bar_index": 1,
                     "commercial_sku": "MARCO-60",
                     "stock_length_mm": "6500",
+                    "head_trim_mm": "15",
+                    "tail_trim_mm": "20",
+                    "kerf_mm": "4",
                     "cuts": [
                         {"piece_id": "M-02", "length_mm": "1200", "sequence": 1,
+                         "unit_index": 1,
                          "angle_left": "45.0", "angle_right": "45.0"},
                         {"piece_id": "M-01", "length_mm": "1500", "sequence": 2,
+                         "unit_index": 2,
                          "angle_left": "90.0", "angle_right": "45.0"},
                     ],
                 }
@@ -965,7 +970,8 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
                 "sheet_height_mm": "2250",
                 "placements": [
                     {"piece_id": "V-01", "x_mm": "100", "y_mm": "50",
-                     "width_mm": "800", "height_mm": "600", "rotated": False}
+                     "width_mm": "800", "height_mm": "600", "unit_index": 2,
+                     "rotated": False}
                 ],
             },
         ],
@@ -999,9 +1005,14 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
     sheet = stored["files"]["sheet_1.dxf"]
     assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
-    assert "AC1015" in sheet and "V-01 800x600" in sheet
+    assert "AC1015" in sheet and "V-01·U2 800x600" in sheet
     bars = stored["files"]["bars.dxf"]
-    assert "M-02 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    assert "M-02·U1 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    # Saw consumption matches optimize_cut: head trim once (mark at 15),
+    # then each piece length + one kerf → piece ends at 1215 and 2719.
+    for mark_x in ("10\n15\n20", "10\n1215\n20", "10\n2719\n20"):
+        assert f"8\nMARK\n{mark_x}" in bars
+    assert "10\n1200\n20" not in bars
     assert stored["schema"] == "work_order_dxf_export_v1"
     assert stored["optimization_fingerprint"]
     assert any("wo_dxf_exported" in s2 for s2, _ in writes)
