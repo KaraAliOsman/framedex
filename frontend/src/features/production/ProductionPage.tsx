@@ -96,9 +96,14 @@ export function ProductionPage(): JSX.Element {
     if (response.status === 200) setOrders(response.data.orders);
   }, []);
 
+  const detailGeneration = useRef(0);
+
   const loadDetail = useCallback(async (orderId: string) => {
+    const generation = ++detailGeneration.current;
     const response = await productionOrderDetail(orderId);
-    if (response.status === 200) setDetail(response.data);
+    if (response.status === 200 && generation === detailGeneration.current) {
+      setDetail(response.data);
+    }
   }, []);
 
   useEffect(() => {
@@ -107,6 +112,7 @@ export function ProductionPage(): JSX.Element {
 
   useEffect(() => {
     if (!selectedId) {
+      detailGeneration.current += 1;
       setDetail(null);
       return;
     }
@@ -230,6 +236,7 @@ export function ProductionPage(): JSX.Element {
                       </span>
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
+                    {detail.status !== "COMPLETED" ? (
                     <div className="production-step-actions">
                       {stepActions(step).map((stepAction) => (
                         <button
@@ -242,6 +249,7 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       ))}
                     </div>
+                    ) : null}
                   </li>
                 ))}
               </ol>
