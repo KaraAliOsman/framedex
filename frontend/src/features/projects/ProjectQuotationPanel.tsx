@@ -25,6 +25,7 @@ import type {
   OrderTypeEnum,
   ProjectResponse,
   WorkshopAnnotation,
+  WorkshopGlassTarget,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import {
@@ -99,6 +100,72 @@ const ORDER_TYPE_KEYS: Record<(typeof ORDER_TYPES)[number], TranslationKey> = {
   SUPPLIER_HARDWARE_PO: "quotation.orderHardware",
   SUPPLIER_PANEL_PO: "quotation.orderPanel",
 };
+
+const EMPTY_EDGES: PolishingEdges = { top: false, right: false, bottom: false, left: false };
+
+function GlassPolishingRow({
+  target,
+  record,
+  disabled,
+  onEdges,
+}: {
+  target: WorkshopGlassTarget;
+  record: { edges: PolishingEdges } | undefined;
+  disabled: boolean;
+  onEdges(edges: PolishingEdges): void;
+}): JSX.Element {
+  const polished = record ? Object.values(record.edges).some(Boolean) : false;
+  const [expanded, setExpanded] = useState(polished);
+  const showEdges = expanded || polished;
+  const value = showEdges ? "EDGES" : record ? "NONE" : "";
+  return (
+    <div className="workshop-target">
+      <strong>{target.label}</strong>
+      <div className="workshop-row">
+        <label className="workshop-field">
+          <span>{t("quotation.polishedEdges")}</span>
+          <select
+            disabled={disabled}
+            value={value}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (next === "NONE") {
+                setExpanded(false);
+                onEdges(EMPTY_EDGES);
+              } else if (next === "EDGES") {
+                setExpanded(true);
+              }
+            }}
+          >
+            <option value="">{t("quotation.chooseCoverage")}</option>
+            <option value="NONE">{t("quotation.polishNone")}</option>
+            <option value="EDGES">{t("quotation.polishEdges")}</option>
+          </select>
+        </label>
+        {!record && (
+          <span className="handle-pending">{t("quotation.handlePending")}</span>
+        )}
+        {showEdges &&
+          (["top", "right", "bottom", "left"] as const).map((edge) => (
+            <label className="workshop-check" key={edge}>
+              <input
+                type="checkbox"
+                disabled={disabled}
+                checked={record?.edges[edge] ?? false}
+                onChange={(event) =>
+                  onEdges({
+                    ...(record?.edges ?? EMPTY_EDGES),
+                    [edge]: event.target.checked,
+                  })
+                }
+              />
+              {t(EDGE_KEYS[edge])}
+            </label>
+          ))}
+      </div>
+    </div>
+  );
+}
 
 function nextObligationId(items: AccessoryLine[]): string {
   const used = new Set(items.map((item) => item.obligation_id));
@@ -939,79 +1006,26 @@ export function ProjectQuotationPanel({
                 {position.workshop_targets.glass.length > 0 && (
                   <div className="workshop-group">
                     <h5>{t("quotation.glassPolishing")}</h5>
-                    {position.workshop_targets.glass.map((target) => {
-                      const record = position.glass_polishing.find(
-                        (item) =>
-                          item.bay_id === target.bay_id &&
-                          (item.leaf_id ?? null) === target.leaf_id,
-                      );
-                      const polished = record
-                        ? Object.values(record.edges).some(Boolean)
-                        : null;
-                      return (
-                        <div
-                          className="workshop-target"
-                          key={`${target.bay_id}|${target.leaf_id ?? ""}`}
-                        >
-                          <strong>{target.label}</strong>
-                          <div className="workshop-row">
-                            <label className="workshop-field">
-                              <span>{t("quotation.polishedEdges")}</span>
-                              <select
-                                disabled={busy}
-                                value={
-                                  polished === null ? "" : polished ? "EDGES" : "NONE"
-                                }
-                                onChange={(event) => {
-                                  const value = event.target.value;
-                                  if (value === "NONE") {
-                                    setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, {
-                                      top: false,
-                                      right: false,
-                                      bottom: false,
-                                      left: false,
-                                    });
-                                  } else if (value === "EDGES") {
-                                    setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, {
-                                      top: true,
-                                      right: false,
-                                      bottom: false,
-                                      left: false,
-                                    });
-                                  }
-                                }}
-                              >
-                                <option value="">{t("quotation.chooseCoverage")}</option>
-                                <option value="NONE">{t("quotation.polishNone")}</option>
-                                <option value="EDGES">{t("quotation.polishEdges")}</option>
-                              </select>
-                            </label>
-                            {!record && (
-                              <span className="handle-pending">{t("quotation.handlePending")}</span>
-                            )}
-                            {polished === true &&
-                              (["top", "right", "bottom", "left"] as const).map((edge) => (
-                                <label className="workshop-check" key={edge}>
-                                  <input
-                                    type="checkbox"
-                                    disabled={busy}
-                                    checked={record!.edges[edge]}
-                                    onChange={(event) =>
-                                      setPolishingEdges(
-                                        index,
-                                        target.bay_id,
-                                        target.leaf_id ?? null,
-                                        { ...record!.edges, [edge]: event.target.checked },
-                                      )
-                                    }
-                                  />
-                                  {t(EDGE_KEYS[edge])}
-                                </label>
-                              ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {position.workshop_targets.glass.map((target) => (
+                      <GlassPolishingRow
+                        key={`${target.bay_id}|${target.leaf_id ?? ""}`}
+                        target={target}
+                        record={position.glass_polishing.find(
+                          (item) =>
+                            item.bay_id === target.bay_id &&
+                            (item.leaf_id ?? null) === target.leaf_id,
+                        )}
+                        disabled={busy}
+                        onEdges={(edges) =>
+                          setPolishingEdges(
+                            index,
+                            target.bay_id,
+                            target.leaf_id ?? null,
+                            edges,
+                          )
+                        }
+                      />
+                    ))}
                   </div>
                 )}
                 <div className="workshop-group">
