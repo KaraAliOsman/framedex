@@ -1004,6 +1004,36 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* Material-family interior detail: the soft chamber rebate of a PVC profile
+ * and the thermal-break strip inside an aluminium extrusion. Strokes come
+ * from each surface's own highlight/edge so they follow the member palette. */
+.member-inner {
+  fill: none;
+  stroke-width: 1.1;
+  opacity: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.member-thermal-strip {
+  opacity: 0.5;
+}
+
+/* Insulated glazing: inner ring reads as the second lite + spacer. */
+.module-glass-ig {
+  fill: none;
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
+  opacity: 0.65;
+  vector-effect: non-scaling-stroke;
+}
+
+.door-hinge {
+  fill: var(--theme-border-subtle);
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
 .module-bay {
   pointer-events: none;
 }

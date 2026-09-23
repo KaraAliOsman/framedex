@@ -525,7 +525,7 @@ export function AssemblyEditor({
     select(id);
   }
 
-  function divideModule(id: string, offsetMm: string): void {
+  function divideModule(id: string, bayId: string | null, offsetMm?: string): void {
     const sku =
       divideToolType === "SPLIT_V"
         ? mullionSkus.SPLIT_V
@@ -536,7 +536,14 @@ export function AssemblyEditor({
       select(id);
       return;
     }
-    commit(splitModuleBay(productJson, id, { type: divideToolType, mullionSku: sku, offsetMm }));
+    commit(
+      splitModuleBay(productJson, id, {
+        type: divideToolType,
+        mullionSku: sku,
+        bayId: bayId ?? undefined,
+        offsetMm,
+      }),
+    );
     setTool("select");
     select(id);
   }

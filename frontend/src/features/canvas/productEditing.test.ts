@@ -140,6 +140,42 @@ describe("splitModuleBay", () => {
     });
     expect(split.assembly.modules[1]!.tree.split_offset_mm).toBe("215.00");
   });
+
+  it("splits the named leaf bay inside an already-divided module", () => {
+    const once = splitModuleBay(bow(), "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      offsetMm: "350.00",
+    });
+    const secondBayId = once.assembly.modules[1]!.tree.children![1]!.id;
+    const twice = splitModuleBay(once, "m2", {
+      type: "SPLIT_H",
+      mullionSku: "MULL-60",
+      bayId: secondBayId,
+      offsetMm: "500.00",
+    });
+    const tree = twice.assembly.modules[1]!.tree;
+    // The first bay stays intact; the second child is now an SPLIT_H node.
+    expect(tree.type).toBe("SPLIT_V");
+    expect(tree.children![0]!.type).toBe("BAY");
+    expect(tree.children![1]!.type).toBe("SPLIT_H");
+    expect(tree.children![1]!.split_offset_mm).toBe("500.00");
+  });
+
+  it("returns the same product for an unknown bayId", () => {
+    const once = splitModuleBay(bow(), "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      offsetMm: "350.00",
+    });
+    const twice = splitModuleBay(once, "m2", {
+      type: "SPLIT_H",
+      mullionSku: "MULL-60",
+      bayId: "no-such-bay",
+    });
+    // Unknown bay → no change.
+    expect(twice).toBe(once);
+  });
 });
 
 describe("moveModuleDivision", () => {

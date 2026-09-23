@@ -585,11 +585,15 @@ export function modulePanelSku(module: ProductModuleJson): string | null {
 export function splitModuleBay(
   product: ProductJson,
   moduleId: string,
-  division: { type: SplitType; mullionSku: string; offsetMm?: string },
+  division: { type: SplitType; mullionSku: string; offsetMm?: string; bayId?: string },
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module || !division.mullionSku.trim()) return product;
-  const bay = modulePrimaryBay(module);
+  const root =
+    module.tree.type === "ROOT" ? (module.tree.children?.[0] ?? module.tree) : module.tree;
+  const bay = division.bayId
+    ? (intentBays(root).find((item) => item.id === division.bayId) ?? null)
+    : modulePrimaryBay(module);
   if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
