@@ -750,3 +750,37 @@ def test_http_provider_ipv6_host_header_is_bracketed(monkeypatch):
     assert str(request.url) == "https://[2606:4700:4700::1111]:8443/invoke"
     assert request.headers["Host"] == "[2606:4700:4700::1111]:8443"
     assert request.extensions["sni_hostname"] == "2606:4700:4700::1111"
+
+
+def test_audit_seals_provider_provenance(monkeypatch):
+    org_id = uuid4()
+    audit_id = uuid4()
+    provenance = []
+    route = _route()
+
+    def fake_rows(sql, params=None):
+        if "INSERT INTO public.ai_audit_provenance" in sql:
+            provenance.append(params)
+            return []
+        if "INSERT INTO public.ai_audit_logs" in sql:
+            return [{"id": audit_id}]
+        if "ai_routes" in sql:
+            return [route]
+        return []
+
+    _patch_env(monkeypatch, rows_impl=fake_rows)
+    service.invoke(
+        org_id=org_id,
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-prov",
+        input_payload={"x": 1},
+        tool_name="editor_command",
+    )
+    assert provenance, "provenance row must seal alongside the audit"
+    assert provenance[0] == [
+        str(audit_id),
+        str(route["provider"]),
+        str(route["provider_model"]),
+        str(route["prompt_version"]),
+    ]

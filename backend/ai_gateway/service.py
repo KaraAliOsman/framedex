@@ -124,6 +124,21 @@ def _audit(
             str(route["id"]),
         ],
     )
+    if inserted:
+        # Seal the exact provider/model/prompt at invocation time — route_id
+        # alone would re-attribute history after a route edit. Provenance is
+        # backend-only (billing_backend), the same role writing here.
+        rows(
+            "INSERT INTO public.ai_audit_provenance("
+            "audit_id, provider, provider_model, prompt_version)"
+            " VALUES(%s,%s,%s,%s)",
+            [
+                str(inserted[0]["id"]),
+                str(route["provider"]),
+                str(route["provider_model"]),
+                str(route["prompt_version"]),
+            ],
+        )
     return inserted[0] if inserted else None
 
 
