@@ -51,6 +51,8 @@ type CanvasState = {
   acceptIntent(expected: CanvasDesignInputs, next: CanvasDesignInputs, selection: string): boolean;
   /** Typed design commands: record history, then apply. */
   commitInputs(next: CanvasDesignInputs): void;
+  /** Deterministic normalization: swap inputs without an undo step. */
+  replaceInputs(next: CanvasDesignInputs): void;
   past: CanvasDesignInputs[];
   future: CanvasDesignInputs[];
   undo(): void;
@@ -179,6 +181,13 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       inputs: next,
       past: [...state.past.slice(-(HISTORY_LIMIT - 1)), state.inputs],
       future: [],
+      draftDimension: null,
+      previewDiff: null,
+    }));
+  },
+  replaceInputs(next) {
+    set((state) => ({
+      inputs: next,
       draftDimension: null,
       previewDiff: null,
     }));

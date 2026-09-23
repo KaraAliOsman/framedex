@@ -327,7 +327,9 @@ function PositionWorkspace({
       options.data.panel_skus.length === 1 ? options.data.panel_skus[0] : undefined,
     );
     if (resolved !== product) {
-      useCanvasStore.getState().commitInputs({ ...inputs, product: resolved });
+      // Deterministic normalization is not a user step: folding it into
+      // history would make the preceding change un-undoable.
+      useCanvasStore.getState().replaceInputs({ ...inputs, product: resolved });
     }
   }, [inputs, options.data]);
 
