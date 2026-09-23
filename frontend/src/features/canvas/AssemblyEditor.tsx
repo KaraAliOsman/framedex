@@ -10,7 +10,7 @@ import type {
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { resolveCommands, useRegisterCommands } from "../commands/registry";
 import type { CommandContext, EditorTool } from "../commands/types";
-import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
+import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
@@ -33,7 +33,6 @@ import {
   addAdjacentUnit,
   equalizeCouplingAngles,
   equalizeModuleWidths,
-  makeBowProduct,
   moduleGlassSku,
   moduleGlassThicknessMm,
   moduleOpening,
@@ -131,23 +130,6 @@ function DraftField({
       <span className="assembly-unit">{unit}</span>
     </label>
   );
-}
-
-export function createBowFromInputs(
-  inputs: CanvasDesignInputs,
-  glassThicknessMm = "4.00",
-  glassSpec = "4",
-  glassArticleSku: string | null = null,
-): ProductJson {
-  return makeBowProduct({
-    moduleCount: 3,
-    widthMm: Math.max(Number(inputs.nominalWidthMm) || 2100, 600),
-    heightMm: Math.max(Number(inputs.nominalHeightMm) || 1400, 400),
-    angleDeg: 15,
-    glassThicknessMm,
-    glassSpec,
-    glassArticleSku,
-  });
 }
 
 function statusKey(status: string | undefined): TranslationKey {
@@ -841,8 +823,8 @@ export function AssemblyEditor({
           className="context-menu"
           role="menu"
           style={{
-            left: Math.min(contextMenu.x, window.innerWidth - 240),
-            top: Math.min(contextMenu.y, window.innerHeight - 320),
+            left: Math.max(0, Math.min(contextMenu.x, window.innerWidth - 240)),
+            top: Math.max(0, Math.min(contextMenu.y, window.innerHeight - 320)),
           }}
           onMouseDown={(event) => event.stopPropagation()}
           onContextMenu={(event) => event.preventDefault()}

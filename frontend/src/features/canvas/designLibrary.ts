@@ -141,10 +141,6 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
 
 export type StarterKey = (typeof STARTER_DEFINITIONS)[number]["key"];
 
-export function starterByKey(key: string): StarterDefinition | undefined {
-  return STARTER_DEFINITIONS.find((definition) => definition.key === key);
-}
-
 /** Nominal canvas the library cards preview at — templates render their own
  * proportions (bow reads wider, door reads taller). */
 export function starterNominalSize(key: string): { widthMm: number; heightMm: number } {

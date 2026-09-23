@@ -106,10 +106,6 @@ export function totalModuleWidth(product: ProductJson): number {
   return product.assembly.modules.reduce((total, module) => total + Number(module.width_mm), 0);
 }
 
-export function maxModuleHeight(product: ProductJson): number {
-  return Math.max(...product.assembly.modules.map((module) => Number(module.height_mm)));
-}
-
 function replaceModule(
   product: ProductJson,
   moduleId: string,
@@ -467,16 +463,6 @@ export function setCouplerSkuAll(product: ProductJson, sku: string | null): Prod
       })),
     },
   };
-}
-
-export function setModuleTree(
-  product: ProductJson,
-  moduleId: string,
-  tree: IntentNode,
-): ProductJson {
-  const module = product.assembly.modules.find((item) => item.id === moduleId);
-  if (!module) return product;
-  return replaceModule(product, moduleId, { ...module, tree });
 }
 
 export function setModuleOpening(

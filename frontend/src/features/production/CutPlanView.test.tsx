@@ -147,7 +147,7 @@ describe("CutPlanView", () => {
     const first = container.querySelectorAll(".cutplan-cut")[0] as Element;
     fireEvent.click(first);
     const aside = container.querySelector(".cutplan-detail") as Element;
-    expect(aside.textContent).toContain("M-60 · u1");
+    expect(aside.textContent).toContain("M-60 · B1-1");
     expect(aside.textContent).toContain("FRAME");
     expect(aside.textContent).toContain("2000 mm");
     // member key = [position,bay,leaf,role] — M-01 and M-02 share it;
@@ -165,7 +165,7 @@ describe("CutPlanView", () => {
     expect(members.length).toBe(1);
     expect(nest.classList.contains("is-selected")).toBe(true);
     const aside = container.querySelector(".cutplan-detail") as Element;
-    expect(aside.textContent).toContain("VID-4MM · u1");
+    expect(aside.textContent).toContain("VID-4MM · S1-2");
     expect(aside.textContent).toContain("1400×1000");
   });
 });

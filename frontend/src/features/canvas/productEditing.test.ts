@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { createBowFromInputs } from "./AssemblyEditor";
 import {
   addAdjacentUnit,
   equalizeCouplingAngles,
@@ -29,7 +28,6 @@ import {
   totalModuleWidth,
   wrapTreeAsProduct,
 } from "./productEditing";
-import type { CanvasDesignInputs } from "./canvasStore";
 
 function bow(): ReturnType<typeof makeBowProduct> {
   return makeBowProduct({
@@ -346,36 +344,5 @@ describe("module commands", () => {
     const fixed = setModuleOpening(doored, "m2", "FIXED");
     expect(modulePanelSku(doored.assembly.modules[1]!)).toBe("PANEL-70");
     expect(modulePanelSku(fixed.assembly.modules[1]!)).toBeNull();
-  });
-});
-
-describe("createBowFromInputs", () => {
-  it("derives a 3-module bow from classic inputs", () => {
-    const inputs: CanvasDesignInputs = {
-      systemId: "s",
-      nominalWidthMm: "2400.00",
-      nominalHeightMm: "1500.00",
-      color: "WHITE",
-      parametricTree: { id: "b", type: "BAY", opening_type: "FIXED" },
-      product: null,
-    };
-    const product = createBowFromInputs(inputs, "4.00", "4");
-    expect(product.assembly.modules).toHaveLength(3);
-    expect(totalModuleWidth(product)).toBeCloseTo(2400, 5);
-  });
-
-  it("carries the selected glass sku into every module", () => {
-    const inputs: CanvasDesignInputs = {
-      systemId: "s",
-      nominalWidthMm: "2400.00",
-      nominalHeightMm: "1500.00",
-      color: "WHITE",
-      parametricTree: { id: "b", type: "BAY", opening_type: "FIXED" },
-      product: null,
-    };
-    const product = createBowFromInputs(inputs, "4.00", "4", "GLASS-A");
-    expect(product.assembly.modules.every((module) => moduleGlassSku(module) === "GLASS-A")).toBe(
-      true,
-    );
   });
 });
