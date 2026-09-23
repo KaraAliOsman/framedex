@@ -156,6 +156,10 @@ def _patch_envio(
     insert_row=None,
 ):
     state = {"inserted": None}
+    monkeypatch.setenv("SII_WS_ENVIO_MOCK", "1")
+    monkeypatch.delenv("SII_WS_ENVIO_URL", raising=False)
+    monkeypatch.delenv("SII_WS_STATUS_URL", raising=False)
+    monkeypatch.delenv("SII_WS_TOKEN", raising=False)
 
     def fake_one(sql, params=None, *args, **kw):
         text = str(sql)
@@ -166,15 +170,25 @@ def _patch_envio(
                 "status": "PENDING",
                 "track_id": None,
                 "glosa": None,
+                "payload_json": {"emisor": {"rut": "76123456-0"}, "envia": "13037614-2"},
+                "storage_object_key": "org_x/envios/e.xml",
                 "sent_at": "2026-10-03T10:00:00+00:00",
             }
             state["inserted"] = row
             return row
+        if "SELECT * FROM public.sii_envios" in text:
+            if existing_envio:
+                return dict(existing_envio[0])
+            return dict(state["inserted"] or {})
         if "UPDATE public.sii_envios" in text:
-            row = dict(state["inserted"] or {})
-            row.update(
-                {"status": params[0], "track_id": params[1], "glosa": params[2]}
-            )
+            row = dict(state["inserted"] or (existing_envio or [{}])[0])
+            if "SET track_id" in text:
+                row.update({"track_id": params[0], "glosa": params[1]})
+            elif "SET status" in text:
+                row.update({"status": params[0], "glosa": params[1]})
+            else:
+                row.update({"glosa": params[0]})
+            state["inserted"] = row
             return row
         if "INSERT INTO public.sii_certificates" in text:
             return {
@@ -203,9 +217,15 @@ def _patch_envio(
 
     def fake_rows(sql, params=None):
         if "FROM public.project_dtes" in sql:
-            return list(dte or [])
+            found = list(dte or [])
+            if "project_id=%s" in sql and params is not None:
+                found = [r for r in found if str(r["project_id"]) == str(params[1])]
+            return found
         if "FROM public.sii_envios" in sql:
-            return list(existing_envio or [])
+            found = list(existing_envio or [])
+            if "project_id=%s" in sql and params is not None:
+                found = [r for r in found if str(r.get("project_id")) == str(params[1])]
+            return found
         if "FROM public.sii_certificates" in sql and "SET active=false" in sql:
             return []
         if "FROM public.sii_certificates" in sql:
@@ -374,7 +394,7 @@ def _verify_signature(target, cert):
 
 def test_send_envio_seals_signed_envelope_and_records_track():
     storage = _Storage()
-    org_id, invoice_id, project_id = uuid4(), uuid4(), uuid4()
+    org_id, invoice_id = uuid4(), uuid4()
     caf = _caf(org_id)
     dte = _dte_row(org_id, invoice_id, caf["id"], folio=7)
     pfx, _key, cert = _pfx()
@@ -385,12 +405,18 @@ def test_send_envio_seals_signed_envelope_and_records_track():
         cert_row = _cert_row(org_id, pfx)
         _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
         result = sii_envio.send_invoice_envio(
-            org_id=org_id, project_id=project_id, invoice_id=invoice_id, actor_id=uuid4()
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
         )
     assert result["status"] == "ACCEPTED"
     assert result["track_id"].startswith("MOCK-")
     envelope_key, envelope, media = storage.uploads[0]
     assert envelope_key.endswith(".xml") and media == "application/xml"
+    assert "<SubTotDTE><TpoDTE>33</TpoDTE><NroDTE>1</NroDTE>" in envelope.decode(
+        "iso-8859-1"
+    )
     root = etree.fromstring(envelope)
     assert root.tag == "{http://www.sii.cl/SiiDte}EnvioDTE"
     caratula = root.find("{http://www.sii.cl/SiiDte}SetDTE/{http://www.sii.cl/SiiDte}Caratula")
@@ -404,7 +430,7 @@ def test_send_envio_seals_signed_envelope_and_records_track():
 
 def test_send_envio_escapes_non_latin1_characters_in_envelope():
     storage = _Storage()
-    org_id, invoice_id, project_id = uuid4(), uuid4(), uuid4()
+    org_id, invoice_id = uuid4(), uuid4()
     caf = _caf(org_id)
     dte = _dte_row(org_id, invoice_id, caf["id"], folio=8)
     pfx, _key, _cert = _pfx()
@@ -417,7 +443,10 @@ def test_send_envio_escapes_non_latin1_characters_in_envelope():
         cert_row = _cert_row(org_id, pfx)
         _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
         sii_envio.send_invoice_envio(
-            org_id=org_id, project_id=project_id, invoice_id=invoice_id, actor_id=uuid4()
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
         )
     _key, envelope, _media = storage.uploads[0]
     assert b"&#8212;" in envelope
@@ -447,7 +476,10 @@ def test_send_envio_requires_certificate():
         _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf)
         with pytest.raises(ContractAPIException) as error:
             sii_envio.send_invoice_envio(
-                org_id=org_id, project_id=uuid4(), invoice_id=invoice_id, actor_id=uuid4()
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
             )
     assert error.value.contract_code == "sii_certificate_missing"
 
@@ -468,7 +500,10 @@ def test_send_envio_rejects_expired_certificate():
         _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
         with pytest.raises(ContractAPIException) as error:
             sii_envio.send_invoice_envio(
-                org_id=org_id, project_id=uuid4(), invoice_id=invoice_id, actor_id=uuid4()
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
             )
     assert error.value.contract_code == "sii_cert_expired"
 
@@ -481,6 +516,7 @@ def test_send_envio_replays_existing_row():
     envio = {
         "id": uuid4(),
         "dte_id": dte["id"],
+        "project_id": dte["project_id"],
         "status": "ACCEPTED",
         "track_id": "MOCK-1",
         "glosa": None,
@@ -489,7 +525,10 @@ def test_send_envio_replays_existing_row():
     with pytest.MonkeyPatch.context() as mp:
         _patch_envio(mp, storage, dte=[dte], existing_envio=[envio], caf=caf)
         result = sii_envio.send_invoice_envio(
-            org_id=org_id, project_id=uuid4(), invoice_id=invoice_id, actor_id=uuid4()
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
         )
     assert result["id"] == str(envio["id"])
     assert storage.uploads == []
@@ -502,6 +541,7 @@ def test_envio_access_returns_signed_url():
     envio = {
         "id": uuid4(),
         "dte_id": dte["id"],
+        "project_id": dte["project_id"],
         "status": "ACCEPTED",
         "track_id": "MOCK-1",
         "glosa": "ok",
@@ -518,7 +558,11 @@ def test_envio_access_returns_signed_url():
         mp.setattr(sii_envio, "rows", fake_rows)
         mp.setattr(sii_envio, "SupabaseDocumentStorage", lambda: storage)
         mp.setattr(sii_envio, "documentary_backend", _noop)
-        result = sii_envio.invoice_envio_access(org_id=org_id, invoice_id=invoice_id)
+        result = sii_envio.invoice_envio_access(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+        )
     assert result["signed_url"].startswith("https://storage.test/")
     assert result["track_id"] == "MOCK-1"
 
@@ -528,5 +572,264 @@ def test_envio_access_missing_returns_404():
         mp.setattr(sii_envio, "rows", lambda *a, **k: [])
         mp.setattr(sii_envio, "documentary_backend", _noop)
         with pytest.raises(ContractAPIException) as error:
-            sii_envio.invoice_envio_access(org_id=uuid4(), invoice_id=uuid4())
+            sii_envio.invoice_envio_access(
+                org_id=uuid4(), project_id=uuid4(), invoice_id=uuid4()
+            )
     assert error.value.contract_code == "sii_envio_missing"
+
+
+def _pending_envio(dte, **over):
+    row = {
+        "id": uuid4(),
+        "dte_id": dte["id"],
+        "project_id": dte["project_id"],
+        "status": "PENDING",
+        "track_id": None,
+        "glosa": None,
+        "payload_json": {"emisor": {"rut": "76123456-0"}, "envia": "13037614-2"},
+        "storage_object_key": f"org_{dte['org_id']}/envios/e.xml",
+        "sent_at": "2026-10-03T10:00:00+00:00",
+    }
+    row.update(over)
+    return row
+
+
+class _RecordingClient:
+    adapter = "mock"
+
+    def __init__(self, verdict=None, fail_submit=False):
+        self.submits = 0
+        self.queries = 0
+        self.verdict = verdict or {"status": "ACCEPTED", "glosa": "ok"}
+        self.fail_submit = fail_submit
+
+    def submit(self, content, *, rut_emisor, rut_envia):
+        self.submits += 1
+        if self.fail_submit:
+            raise ContractAPIException(
+                status_code=503, code="sii_envio_unreachable", detail="x"
+            )
+        return {"track_id": "TRK-9", "glosa": "receipt"}
+
+    def query_status(self, *, track_id, rut_emisor):
+        self.queries += 1
+        return self.verdict
+
+
+def test_send_envio_resumes_pending_row_without_reseal():
+    """A PENDING row committed before the network outage is resumed — the same
+    stored envelope is submitted; nothing is re-rendered or re-inserted."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    dte = _dte_row(org_id, invoice_id, uuid4())
+    envio = _pending_envio(dte)
+    storage.objects[envio["storage_object_key"]] = _dte_xml(folio=9)
+    client = _RecordingClient()
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(
+            mp, storage, dte=[dte], existing_envio=[envio], caf=_caf(org_id),
+            client=client,
+        )
+        result = sii_envio.send_invoice_envio(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
+        )
+    assert result["status"] == "ACCEPTED"
+    assert result["track_id"] == "TRK-9"
+    assert client.submits == 1
+    assert client.queries == 1
+    assert storage.uploads == []
+
+
+def test_send_envio_pending_with_track_only_reconciles():
+    """A TRACKID was already recorded — the retry never re-submits; it only
+    queries the verdict."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    dte = _dte_row(org_id, invoice_id, uuid4())
+    envio = _pending_envio(dte, track_id="TRK-OLD")
+    client = _RecordingClient(verdict={"status": "REJECTED", "glosa": "dato malo"})
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(
+            mp, storage, dte=[dte], existing_envio=[envio], caf=_caf(org_id),
+            client=client,
+        )
+        result = sii_envio.send_invoice_envio(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
+        )
+    assert result["status"] == "REJECTED"
+    assert client.submits == 0
+    assert client.queries == 1
+
+
+def test_send_envio_submit_failure_leaves_pending_row():
+    """Transport failure → the envío stays PENDING and the error surfaces —
+    the sealed evidence is never deleted and the retry can resume."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    storage.objects[dte["storage_object_key"]] = _dte_xml(folio=7)
+    client = _RecordingClient(fail_submit=True)
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf, client=client)
+        cert_row = _cert_row(org_id, pfx)
+        _patch_envio(
+            mp, storage, dte=[dte], certs=[cert_row], caf=caf, client=client
+        )
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_envio_unreachable"
+    assert client.submits == 1
+    assert storage.uploads  # the sealed envelope was committed, not purged
+
+
+def test_send_envio_foreign_project_is_not_found():
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    dte = _dte_row(org_id, invoice_id, uuid4())
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], caf=_caf(org_id))
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=uuid4(),  # not the DTE's project
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_dte_missing"
+
+
+def test_send_envio_requires_adapter_configuration():
+    """Production with no SII endpoint and no explicit mock flag fails closed —
+    the row may seal PENDING but no simulated acceptance is recorded."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    storage.objects[dte["storage_object_key"]] = _dte_xml(folio=7)
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf)
+        cert_row = _cert_row(org_id, pfx)
+        _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
+        mp.delenv("SII_WS_ENVIO_MOCK", raising=False)
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_envio_unconfigured"
+
+
+def test_sii_client_rejects_non_sii_endpoint():
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("SII_WS_ENVIO_URL", "http://169.254.169.254/latest")
+        mp.setenv("SII_WS_TOKEN", "t")
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio._sii_client()
+    assert error.value.contract_code == "sii_envio_endpoint_forbidden"
+
+
+def test_sii_client_requires_token_for_real_endpoint():
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("SII_WS_ENVIO_URL", "https://palena.sii.cl/cgi-bin/UploadEnvio")
+        mp.delenv("SII_WS_TOKEN", raising=False)
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio._sii_client()
+    assert error.value.contract_code == "sii_envio_unconfigured"
+
+
+def test_http_client_posts_sii_multipart_contract():
+    """The real adapter speaks the documented UploadEnvio shape: RUTs split
+    into sender/company fields, archivo file part, TOKEN cookie."""
+    calls = {}
+
+    def fake_post(url, **kw):
+        calls["url"] = url
+        calls["kw"] = kw
+
+        class _R:
+            status_code = 200
+            text = "<RESP_UPLOAD><TRACKID>4242</TRACKID></RESP_UPLOAD>"
+
+        return _R()
+
+    client = sii_envio._HttpSiiClient(
+        "https://palena.sii.cl/cgi-bin/UploadEnvio", None, "TOK"
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio.httpx, "post", fake_post)
+        out = client.submit(b"<x/>", rut_emisor="76123456-0", rut_envia="13037614-2")
+    assert out["track_id"] == "4242"
+    assert calls["kw"]["data"]["rutCompany"] == "76123456"
+    assert calls["kw"]["data"]["dvCompany"] == "0"
+    assert calls["kw"]["data"]["rutSender"] == "13037614"
+    assert calls["kw"]["data"]["dvSender"] == "2"
+    assert calls["kw"]["cookies"]["TOKEN"] == "TOK"
+    assert calls["kw"]["follow_redirects"] is False
+    assert "archivo" in calls["kw"]["files"]
+
+
+def test_send_envio_rejects_not_yet_valid_certificate():
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf)
+        cert_row = _cert_row(
+            org_id,
+            pfx,
+            over={"valid_from": datetime.now(utc_timezone.utc) + timedelta(days=1)},
+        )
+        _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_cert_not_yet_valid"
+
+
+def test_envio_entity_references_are_never_expanded():
+    """A stored DTE smuggling an entity declaration fails closed — the
+    hardened parser refuses the document and no envelope is ever sealed."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"], folio=11)
+    pfx, _key, _cert = _pfx()
+    hostile = _dte_xml(folio=11).replace(
+        b"<DTE ", b'<!DOCTYPE r [<!ENTITY x "INJECTED">]><DTE ', 1
+    ).replace(b"VENTANA", b"&x;", 1)
+    storage.objects[dte["storage_object_key"]] = hostile
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf)
+        cert_row = _cert_row(org_id, pfx)
+        _patch_envio(mp, storage, dte=[dte], certs=[cert_row], caf=caf)
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_dte_unreadable"
+    assert storage.uploads == []

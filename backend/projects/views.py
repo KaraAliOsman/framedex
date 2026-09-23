@@ -711,7 +711,9 @@ class ProjectInvoiceDteEnvioView(APIView):
     def get(self, request, project_id, invoice_id):
         with scope(request, READ_ROLES) as (_, _, org):
             return response(
-                sii_envio.invoice_envio_access(org_id=org, invoice_id=invoice_id)
+                sii_envio.invoice_envio_access(
+                    org_id=org, project_id=project_id, invoice_id=invoice_id
+                )
             )
 
 

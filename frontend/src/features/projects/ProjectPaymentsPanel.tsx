@@ -710,6 +710,15 @@ export function ProjectPaymentsPanel({
                           {t("projects.envioSend")}
                         </button>
                       )}
+                      {canWrite && invoice.dte?.envio?.status === "PENDING" && (
+                        <button
+                          type="button"
+                          onClick={() => void sendEnvio(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.envioRefresh")}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
