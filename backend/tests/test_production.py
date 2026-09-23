@@ -78,8 +78,8 @@ def test_release_rejects_not_allowed_version() -> None:
     version = _version_row({"bom": []})
     version["production_allowed"] = False
     with patch("production.service.one", return_value=version), patch(
-        "production.service.transaction.atomic", return_value=_atomic()
-    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch("production.service.documentary_backend", side_effect=_atomic):
         with pytest.raises(DocumentaryError) as error:
             service.release_production(org_id=uuid4(), version_id=uuid4(), actor_id=uuid4())
     assert error.value.code == "version_not_releasable"
@@ -117,8 +117,8 @@ def test_release_creates_work_order_with_steps() -> None:
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.rows", side_effect=fake_rows
-    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
-        "production.service.documentary_backend", return_value=_atomic()
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -162,8 +162,8 @@ def test_release_replay_returns_existing() -> None:
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.rows", side_effect=fake_rows
-    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
-        "production.service.documentary_backend", return_value=_atomic()
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -207,8 +207,8 @@ def test_transition_step_rejects_invalid_state() -> None:
     fake_one = _transition_fakes(step, "IN_PROGRESS")
 
     with patch("production.service.one", side_effect=fake_one), patch(
-        "production.service.transaction.atomic", return_value=_atomic()
-    ):
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch("production.service.documentary_backend", side_effect=_atomic):
         with pytest.raises(DocumentaryError) as error:
             service.transition_step(
                 org_id=uuid4(), step_id=step["id"], action="START",
@@ -222,8 +222,8 @@ def test_transition_step_completed_order_blocked() -> None:
     fake_one = _transition_fakes(step, "COMPLETED")
 
     with patch("production.service.one", side_effect=fake_one), patch(
-        "production.service.transaction.atomic", return_value=_atomic()
-    ):
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch("production.service.documentary_backend", side_effect=_atomic):
         with pytest.raises(DocumentaryError) as error:
             service.transition_step(
                 org_id=uuid4(), step_id=step["id"], action="START",
@@ -237,8 +237,8 @@ def test_start_from_blocked_step_is_rejected() -> None:
     fake_one = _transition_fakes(step, "IN_PROGRESS")
 
     with patch("production.service.one", side_effect=fake_one), patch(
-        "production.service.transaction.atomic", return_value=_atomic()
-    ):
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch("production.service.documentary_backend", side_effect=_atomic):
         with pytest.raises(DocumentaryError) as error:
             service.transition_step(
                 org_id=uuid4(), step_id=step["id"], action="START",
@@ -330,8 +330,8 @@ def test_order_code_scopes_to_project() -> None:
 
     with patch("production.service.one", side_effect=fake_one), patch(
         "production.service.rows", side_effect=fake_rows
-    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
-        "production.service.documentary_backend", return_value=_atomic()
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
     ):
@@ -346,7 +346,9 @@ def test_work_center_upsert_reports_created() -> None:
         "id": uuid4(), "code": "X", "name": "x", "kind": "CUT",
         "display_order": 0, "active": True, "created": False,
     }
-    with patch("production.service.one", return_value=row):
+    with patch("production.service.one", return_value=row), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch("production.service.documentary_backend", side_effect=_atomic):
         center, created = service.create_work_center(
             org_id=uuid4(), code="X", name="x", kind="CUT", display_order=0
         )

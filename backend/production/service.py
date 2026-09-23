@@ -71,19 +71,20 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
         [str(org_id)],
     )
     if not existing:
-        for code, name, kind, order in _DEFAULT_CENTERS:
-            rows(
-                """
-                INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
-                VALUES (%s, %s, %s, %s, %s) ON CONFLICT (org_id, code) DO NOTHING
-                RETURNING id
-                """,
-                [str(org_id), code, name, kind, order],
+        with transaction.atomic(), documentary_backend():
+            for code, name, kind, order in _DEFAULT_CENTERS:
+                rows(
+                    """
+                    INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
+                    VALUES (%s, %s, %s, %s, %s) ON CONFLICT (org_id, code) DO NOTHING
+                    RETURNING id
+                    """,
+                    [str(org_id), code, name, kind, order],
+                )
+            existing = rows(
+                "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
+                [str(org_id)],
             )
-        existing = rows(
-            "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
-            [str(org_id)],
-        )
     return {str(center["kind"]): center for center in existing}
 
 
@@ -425,7 +426,7 @@ def transition_step(
         raise DocumentaryError("step_action_unknown")
     if action == "NOTE" and not (note or "").strip():
         raise DocumentaryError("step_note_required")
-    with transaction.atomic():
+    with transaction.atomic(), documentary_backend():
         step_ref = one(
             """
             SELECT order_id FROM public.production_steps
@@ -551,17 +552,18 @@ def create_work_center(
 ) -> dict[str, object]:
     if kind not in _STEP_CODE_FOR_CENTER:
         raise DocumentaryError("work_center_kind_unknown")
-    center = one(
-        """
-        INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
-        VALUES (%s, %s, %s, %s, %s)
-        ON CONFLICT (org_id, code) DO UPDATE SET
-            name = EXCLUDED.name, kind = EXCLUDED.kind,
-            display_order = EXCLUDED.display_order, active = TRUE
-        RETURNING id, code, name, kind, display_order, active, (xmax = 0) AS created
-        """,
-        [str(org_id), code, name, kind, display_order],
-    )
+    with transaction.atomic(), documentary_backend():
+        center = one(
+            """
+            INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (org_id, code) DO UPDATE SET
+                name = EXCLUDED.name, kind = EXCLUDED.kind,
+                display_order = EXCLUDED.display_order, active = TRUE
+            RETURNING id, code, name, kind, display_order, active, (xmax = 0) AS created
+            """,
+            [str(org_id), code, name, kind, display_order],
+        )
     created = bool(center.pop("created"))
     return center, created
 

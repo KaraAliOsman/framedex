@@ -81,9 +81,14 @@ WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 REVOKE ALL ON public.work_centers FROM anon;
 REVOKE ALL ON public.production_steps FROM anon;
 REVOKE ALL ON public.production_step_events FROM anon;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.work_centers TO authenticated, documentary_backend;
-GRANT SELECT, INSERT, UPDATE ON public.production_steps TO authenticated, documentary_backend;
-GRANT SELECT, INSERT ON public.production_step_events TO authenticated, documentary_backend;
+-- Writes flow only through documentary_backend (API role checks + transition
+-- validation); org members keep read access for the paperless floor UI.
+GRANT SELECT ON public.work_centers TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.work_centers TO documentary_backend;
+GRANT SELECT ON public.production_steps TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.production_steps TO documentary_backend;
+GRANT SELECT ON public.production_step_events TO authenticated;
+GRANT SELECT, INSERT ON public.production_step_events TO documentary_backend;
 GRANT ALL ON public.work_centers TO service_role;
 GRANT ALL ON public.production_steps TO service_role;
 GRANT ALL ON public.production_step_events TO service_role;

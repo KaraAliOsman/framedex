@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(14);
 
 SELECT has_table('public', 'work_centers', 'work centers table exists');
 SELECT has_table('public', 'production_steps', 'routing steps table exists');
@@ -27,9 +27,21 @@ SELECT ok(
     'step events are append-only for tenant roles'
 );
 SELECT ok(
-    has_table_privilege('authenticated', 'public.production_step_events', 'INSERT')
+    NOT has_table_privilege('authenticated', 'public.production_step_events', 'INSERT')
     AND has_table_privilege('authenticated', 'public.production_step_events', 'SELECT'),
-    'tenant roles can append and read step events'
+    'tenant roles can read but not forge step events'
+);
+SELECT ok(
+    NOT has_table_privilege('authenticated', 'public.production_steps', 'INSERT')
+    AND NOT has_table_privilege('authenticated', 'public.production_steps', 'UPDATE')
+    AND NOT has_table_privilege('authenticated', 'public.production_steps', 'DELETE'),
+    'tenant roles cannot write production steps directly'
+);
+SELECT ok(
+    NOT has_table_privilege('authenticated', 'public.work_centers', 'INSERT')
+    AND NOT has_table_privilege('authenticated', 'public.work_centers', 'UPDATE')
+    AND NOT has_table_privilege('authenticated', 'public.work_centers', 'DELETE'),
+    'tenant roles cannot write work centers directly'
 );
 SELECT ok(
     NOT has_table_privilege('service_role', 'public.production_step_events', 'UPDATE')
