@@ -138,6 +138,21 @@ def welding_loss_per_end(article: EffectiveProfileArticle) -> Decimal:
     return article.welding_loss_mm / _TWO
 
 
+def joint_adjustment_per_end(
+    params: SystemParams, article: EffectiveProfileArticle,
+) -> Decimal:
+    """Per-end cut adjustment for the profile joint system.
+
+    Welded systems (PVC) add a weld allowance so the fused corner lands on the
+    finished size; mechanically jointed systems (aluminium) lose material to the
+    corner bracket that seats inside the profile at each mitred end.
+    """
+
+    if params.material is MaterialType.ALUMINIUM:
+        return -params.corner_bracket_loss_mm
+    return welding_loss_per_end(article)
+
+
 def _article(params: SystemParams, role: ProfileRole) -> EffectiveProfileArticle:
     try:
         article = params.effective_profile_articles[role]
@@ -193,7 +208,7 @@ def _append_profile(
         angle_left=angle_left, angle_right=angle_right, qty=qty, bay_id=bay_id, leaf_id=leaf_id,
     ))
     steel_length: Decimal | None = None
-    if welded_ends is not None:
+    if welded_ends is not None and article.material is MaterialType.PVC:
         steel_length = reinforcement_cut_length(length_mm, article, welded_ends)
         if steel_length <= Decimal("0"):
             raise ValueError("Reinforcement cut must be positive")
@@ -221,15 +236,15 @@ def _append_profile(
             direct_segment=placement.direct_segment,
             parent_leaf_id=placement.parent_leaf_id,
             parent_infill_id=placement.parent_infill_id,
-            reinforcement_required=welded_ends is not None,
-            reinforcement_sku=(article.reinforcement_sku if welded_ends is not None else None),
+            reinforcement_required=steel_length is not None,
+            reinforcement_sku=(article.reinforcement_sku if steel_length is not None else None),
             reinforcement_length_mm=steel_length,
         ))
 
 
 def _append_frame(
     accumulator: _GeometryAccumulator, *, frame_article: EffectiveProfileArticle,
-    nominal_width_mm: Decimal, nominal_height_mm: Decimal,
+    params: SystemParams, nominal_width_mm: Decimal, nominal_height_mm: Decimal,
 ) -> None:
     horizontal = [
         _MemberPlacement("outer-frame/TOP", "outer-frame", "OUTER_FRAME", None, "TOP",
@@ -251,12 +266,12 @@ def _append_frame(
     ]
     _append_profile(
         accumulator, article=frame_article,
-        length_mm=nominal_width_mm + _TWO * welding_loss_per_end(frame_article),
+        length_mm=nominal_width_mm + _TWO * joint_adjustment_per_end(params, frame_article),
         qty=2, welded_ends=2, placements=horizontal,
     )
     _append_profile(
         accumulator, article=frame_article,
-        length_mm=nominal_height_mm + _TWO * welding_loss_per_end(frame_article),
+        length_mm=nominal_height_mm + _TWO * joint_adjustment_per_end(params, frame_article),
         qty=2, welded_ends=2, placements=vertical,
     )
 
@@ -316,8 +331,11 @@ class SashGeometry:
     cut_height_mm: Decimal
 
 
-def _welded_sash(width: Decimal, height: Decimal, article: EffectiveProfileArticle) -> SashGeometry:
-    loss = _TWO * welding_loss_per_end(article)
+def _jointed_sash(
+    width: Decimal, height: Decimal, article: EffectiveProfileArticle,
+    params: SystemParams,
+) -> SashGeometry:
+    loss = _TWO * joint_adjustment_per_end(params, article)
     return SashGeometry(width, height, width + loss, height + loss)
 
 
@@ -326,9 +344,9 @@ def single_rectangular_sash_geometry(
     article: EffectiveProfileArticle, params: SystemParams,
 ) -> SashGeometry:
     """Shared finished-and-cut primitive for TURN, TILT_TURN and AWNING."""
-    return _welded_sash(
+    return _jointed_sash(
         inner_width_mm + _TWO * params.sash_overlap_mm,
-        inner_height_mm + _TWO * params.sash_overlap_mm, article,
+        inner_height_mm + _TWO * params.sash_overlap_mm, article, params,
     )
 
 
@@ -601,8 +619,9 @@ def _append_bay(
             raise NotImplementedError("G10 monorail geometry is deferred to SHOT-24")
         cut_width = (rect.width_mm + params.central_overlap_mm) / _TWO + params.sliding_end_add_mm
         cut_height = rect.height_mm - _TWO * params.pulley_height_mm
+        adjustment = joint_adjustment_per_end(params, article)
         sash = SashGeometry(
-            cut_width - article.welding_loss_mm, cut_height - article.welding_loss_mm,
+            cut_width - _TWO * adjustment, cut_height - _TWO * adjustment,
             cut_width, cut_height,
         )
         for suffix in ("L1", "L2"):
@@ -622,7 +641,7 @@ def _append_door(
         bay_id=node.id, width_mm=nominal_width_mm, height_mm=nominal_height_mm,
     ))
     frame = _article(params, ProfileRole.FRAME)
-    per_end = welding_loss_per_end(frame)
+    per_end = joint_adjustment_per_end(params, frame)
     _append_profile(
         accumulator, article=frame, length_mm=nominal_width_mm + _TWO * per_end,
         qty=1, welded_ends=2, placements=[_MemberPlacement(
@@ -664,7 +683,7 @@ def _append_door(
     outer_width = clear_width - _TWO * params.door_leaf_side_clearance_mm
     outer_height = (nominal_height_mm - frame.face_width_mm - params.door_threshold_mm
                     - params.door_bottom_clearance_mm + params.sash_overlap_mm)
-    sash = _welded_sash(outer_width, outer_height, _article(params, ProfileRole.SASH))
+    sash = _jointed_sash(outer_width, outer_height, _article(params, ProfileRole.SASH), params)
     reference_rect = _Rect(
         frame.face_width_mm,
         frame.face_width_mm,
@@ -835,8 +854,8 @@ def compute_geometry(
 ) -> GeometryComputation:
     """Calculate Core geometry, mobile-leaf weights and selected hardware."""
 
-    if params.material is not MaterialType.PVC:
-        raise NotImplementedError("SHOT-03 implements PVC geometry only")
+    if params.material not in (MaterialType.PVC, MaterialType.ALUMINIUM):
+        raise NotImplementedError(f"{params.material.value} geometry is not supported")
 
     top, nominal_width_mm, nominal_height_mm = _normalize_top_node(root)
     frame_article = _article(params, ProfileRole.FRAME)
@@ -860,7 +879,7 @@ def compute_geometry(
                      clearance_mm=clearance_mm)
     else:
         _append_frame(
-            accumulator, frame_article=frame_article,
+            accumulator, frame_article=frame_article, params=params,
             nominal_width_mm=nominal_width_mm, nominal_height_mm=nominal_height_mm,
         )
         frame_clear_rect = _Rect(
