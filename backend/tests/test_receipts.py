@@ -165,9 +165,10 @@ def test_record_payment_issues_receipt_with_the_deal(monkeypatch):
             return []
         if "FROM public.project_versions" in sql:
             return [{
+                "revision_code": "REV-A",
                 "snapshot_json": {
                     "project": {"total_price_gross": "800000", "currency": "CLP"}
-                }
+                },
             }]
         if "FROM public.project_payments" in sql:
             return []
