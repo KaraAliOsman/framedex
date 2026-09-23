@@ -300,6 +300,11 @@ def _patch_envio(
                 if row.get("status") != "PENDING":
                     return []
                 row.update({"status": params[0], "glosa": params[1]})
+            elif "SET glosa" in sql:
+                # Stale PENDING verdicts can't overwrite a finalized row.
+                if row.get("status") != "PENDING":
+                    return []
+                row.update({"glosa": params[0]})
             elif "submit_inflight_until" in sql:
                 # The atomic submission claim honors the same guards the real
                 # WHERE carries: pending, untracked, and no live lease.
@@ -1253,3 +1258,42 @@ def test_certificate_status_reads_only_granted_columns():
     assert "SELECT *" not in sql
     assert "pfx_wrapped" not in sql
     assert "password_wrapped" not in sql
+
+
+def test_cert_rut_accepts_dotted_form():
+    """Signer RUTs may carry Chilean dot separators — the extraction must
+    recognize them and normalize through the same mod-11 validation."""
+    cert = _leaf(_rsa_key(), rut="13.037.614-2")
+    assert sii_envio._cert_rut(cert) == "13037614-2"
+
+
+def test_pending_verdict_glosa_update_is_pending_guarded():
+    """A stale PENDING verdict writes its glosa only while the row is still
+    PENDING — a finalized envío's explanation can never be overwritten."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    dte = _dte_row(org_id, invoice_id, uuid4())
+    envio = _pending_envio(dte, track_id="TRK-OLD")
+    client = _RecordingClient(verdict={"status": "PENDING", "glosa": "en revisión"})
+    seen = []
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(
+            mp, storage, dte=[dte], existing_envio=[envio],
+            caf=_caf(org_id), client=client,
+        )
+        base = sii_envio.rows
+        mp.setattr(
+            sii_envio,
+            "rows",
+            lambda sql, params=None: (seen.append(str(sql)), base(sql, params))[1],
+        )
+        result = sii_envio.send_invoice_envio(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
+        )
+    assert result["status"] == "PENDING"
+    assert result["glosa"] == "en revisión"
+    glosa_updates = [sql for sql in seen if "SET glosa" in sql]
+    assert glosa_updates and all("status='PENDING'" in sql for sql in glosa_updates)

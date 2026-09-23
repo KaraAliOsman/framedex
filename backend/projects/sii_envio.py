@@ -68,7 +68,9 @@ SII_RECEPTOR_RUT = "60803000-K"
 _DS = "http://www.w3.org/2000/09/xmldsig#"
 _C14N = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
 _MAX_PFX_BYTES = 65536
-_RUT_IN_TEXT = re.compile(r"\b\d{7,8}-[\dkK]\b")
+_RUT_IN_TEXT = re.compile(
+    r"(?<!\d)(?:\d{7,8}|\d{1,2}(?:\.\d{3}){2})-[\dkK](?!\w)"
+)
 # DTE artifacts are parsed back from storage when the envelope is assembled —
 # entity resolution and network access stay disabled regardless of content.
 _SII_HOST_SUFFIX = ".sii.cl"
@@ -906,10 +908,16 @@ def send_invoice_envio(
                     "sii_envio_missing",
                 )
             elif verdict.get("glosa"):
-                row = one(
+                # A stale PENDING verdict must never overwrite a finalized
+                # row's explanation — same guarded update, loser re-reads.
+                updated = rows(
                     "UPDATE public.sii_envios SET glosa=%s "
-                    "WHERE id=%s RETURNING *",
+                    "WHERE id=%s AND status='PENDING' RETURNING *",
                     [verdict["glosa"], str(row["id"])],
+                )
+                row = updated[0] if updated else one(
+                    "SELECT * FROM public.sii_envios WHERE id=%s",
+                    [str(row["id"])],
                     "sii_envio_missing",
                 )
     return _envio_public(row)
