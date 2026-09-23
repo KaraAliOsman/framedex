@@ -40,8 +40,9 @@ SELECT col_is_fk(
     'public', 'projects', ARRAY['org_id', 'client_id'],
     'projects link is org-scoped composite foreign key'
 );
-SELECT has_column_privilege(
-    'authenticated', 'public', 'projects', 'client_id', 'SELECT',
+SELECT ok(
+    has_column_privilege(
+        'authenticated', 'public.projects', 'client_id', 'SELECT'),
     'tenant members can read the project client link'
 );
 SELECT policies_are(
