@@ -1,10 +1,22 @@
+import json
+
 from rest_framework import serializers
+
+MAX_INPUT_BYTES = 65_536
 
 
 class AiInvokeRequestSerializer(serializers.Serializer):
     capability = serializers.CharField(min_length=2, max_length=100)
     tool_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    operation_key = serializers.CharField(min_length=8, max_length=120)
     input_payload = serializers.DictField()
+
+    def validate_input_payload(self, value):
+        if len(json.dumps(value, default=str).encode()) > MAX_INPUT_BYTES:
+            raise serializers.ValidationError(
+                "input_payload excede el límite de 64 KB."
+            )
+        return value
 
 
 class AiInvokeResponseSerializer(serializers.Serializer):

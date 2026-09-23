@@ -7828,12 +7828,17 @@ components:
         tool_name:
           type: string
           maxLength: 100
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
         input_payload:
           type: object
           additionalProperties: {}
       required:
       - capability
       - input_payload
+      - operation_key
     AiInvokeResponse:
       type: object
       properties:

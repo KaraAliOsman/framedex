@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(14);
+SELECT plan(18);
 
 SELECT has_table('public', 'ai_routes', 'AI routing table exists');
 SELECT has_column('public', 'ai_routes', 'public_name', 'white-label name is stored');
@@ -63,6 +63,22 @@ SELECT ok(
 SELECT ok(
     has_table_privilege('authenticated', 'public.ai_audit_logs', 'SELECT'),
     'tenants keep read access to their own audit trail'
+);
+-- Idempotency: every operation_key lands at most one audit row per org.
+SELECT has_column('public', 'ai_audit_logs', 'operation_key',
+    'audit rows carry the caller-supplied operation key');
+SELECT col_type_is('public', 'ai_audit_logs', 'model_used', 'character varying(120)',
+    'audit accepts the widest route model name');
+SELECT col_type_is('public', 'ai_audit_logs', 'operation_key', 'character varying(120)',
+    'operation keys fit inside the audit row');
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_indexes
+        WHERE schemaname = 'public' AND tablename = 'ai_audit_logs'
+          AND indexname = 'ai_audit_logs_org_operation_key'
+          AND indexdef LIKE '%WHERE%'
+    ),
+    'operation keys are unique per org when present'
 );
 
 SELECT * FROM finish();

@@ -77,6 +77,7 @@ def test_invoke_debits_and_returns_white_label(monkeypatch):
         org_id=uuid4(),
         user_id=uuid4(),
         capability="nlp_command",
+        operation_key="op-1",
         input_payload={"texto": "divide en dos"},
     )
     assert out["model"] == "DEKOPEN Neural Core™"
@@ -108,6 +109,7 @@ def test_invoke_binds_audit_to_debit(monkeypatch):
         org_id=uuid4(),
         user_id=uuid4(),
         capability="nlp_command",
+        operation_key="op-1",
         input_payload={"x": 1},
         tool_name="editor_command",
     )
@@ -119,7 +121,7 @@ def test_unknown_capability_rejected(monkeypatch):
     _patch_env(monkeypatch, rows_impl=lambda sql, params=None: [])
     with pytest.raises(APIException) as failure:
         service.invoke(
-            org_id=uuid4(), user_id=uuid4(), capability="nonexistent", input_payload={}
+            org_id=uuid4(), user_id=uuid4(), capability="nonexistent", operation_key="op-1", input_payload={}
         )
     assert failure.value.contract_code == "ai_capability_unknown"
 
@@ -128,7 +130,9 @@ def test_starter_tier_refused_before_provider(monkeypatch):
     called = []
 
     def fake_rows(sql, params=None):
-        return [_route()]
+        if "FROM public.ai_routes" in sql:
+            return [_route()]
+        return []
 
     _patch_env(monkeypatch, org=_org(subscription_tier="STARTER"), rows_impl=fake_rows)
     monkeypatch.setattr(
@@ -139,6 +143,7 @@ def test_starter_tier_refused_before_provider(monkeypatch):
             org_id=uuid4(),
             user_id=uuid4(),
             capability="nlp_command",
+            operation_key="op-1",
             input_payload={},
         )
     assert failure.value.contract_code == "ai_entitlement_required"
@@ -152,6 +157,7 @@ def test_inactive_subscription_refused(monkeypatch):
             org_id=uuid4(),
             user_id=uuid4(),
             capability="nlp_command",
+            operation_key="op-1",
             input_payload={},
         )
     assert failure.value.contract_code == "ai_entitlement_required"
@@ -168,6 +174,7 @@ def test_insufficient_balance_cancels_before_provider_call(monkeypatch):
             org_id=uuid4(),
             user_id=uuid4(),
             capability="nlp_command",
+            operation_key="op-1",
             input_payload={},
         )
     assert failure.value.contract_code == "insufficient_credits"
@@ -188,6 +195,7 @@ def test_no_debit_when_provider_fails(monkeypatch):
             org_id=uuid4(),
             user_id=uuid4(),
             capability="nlp_command",
+            operation_key="op-1",
             input_payload={},
         )
     assert debited == []
@@ -218,6 +226,7 @@ def test_invoke_response_never_echoes_payload_secrets(monkeypatch):
         org_id=uuid4(),
         user_id=uuid4(),
         capability="vision_ocr",
+        operation_key="op-1",
         input_payload={"imagen": "datos"},
     )
     assert out["capability"] == "vision_ocr"
@@ -231,3 +240,160 @@ def test_invoke_response_never_echoes_payload_secrets(monkeypatch):
         "latency_ms",
         "credits_debited",
     }
+
+
+def test_replay_returns_stored_response_without_provider_or_debit(monkeypatch):
+    stored = {
+        "capability": "nlp_command",
+        "model": "DEKOPEN Neural Core™",
+        "output": "respuesta anterior",
+        "tokens_prompt": 7,
+        "tokens_completion": 11,
+        "latency_ms": 42,
+        "credits_debited": 5,
+    }
+    audit_id = uuid4()
+    called = []
+
+    def fake_rows(sql, params=None):
+        if "FROM public.ai_audit_logs" in sql:
+            return [
+                {
+                    "id": audit_id,
+                    "tool_name": "nlp_command",
+                    "state_hash_before": service._input_hash({"x": 1}),
+                    "output_payload": stored,
+                }
+            ]
+        return []
+
+    debited = _patch_env(monkeypatch, rows_impl=fake_rows)
+    monkeypatch.setattr(
+        service, "provider_for", lambda route: called.append(route) or MockProvider()
+    )
+    out = service.invoke(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        capability="nlp_command",
+        operation_key="op-1",
+        input_payload={"x": 1},
+    )
+    assert out == {"audit_id": str(audit_id), **stored}
+    assert called == []
+    assert debited == []
+
+
+def test_replay_with_different_payload_conflicts(monkeypatch):
+    stored = {"capability": "nlp_command", "output": "otra"}
+
+    def fake_rows(sql, params=None):
+        if "FROM public.ai_audit_logs" in sql:
+            return [
+                {
+                    "id": uuid4(),
+                    "tool_name": "nlp_command",
+                    "state_hash_before": service._input_hash({"original": 1}),
+                    "output_payload": stored,
+                }
+            ]
+        return []
+
+    _patch_env(monkeypatch, rows_impl=fake_rows)
+    with pytest.raises(APIException) as failure:
+        service.invoke(
+            org_id=uuid4(),
+            user_id=uuid4(),
+            capability="nlp_command",
+            operation_key="op-1",
+            input_payload={"distinto": 2},
+        )
+    assert failure.value.contract_code == "ai_operation_conflict"
+
+
+def test_oversized_provider_output_is_a_provider_error(monkeypatch):
+    _patch_env(monkeypatch)
+
+    def huge(**kwargs):
+        return {
+            "output": "x" * (service.MAX_OUTPUT_CHARS + 1),
+            "tokens_prompt": 1,
+            "tokens_completion": 1,
+            "latency_ms": 1,
+        }
+
+    monkeypatch.setattr(
+        service, "provider_for", lambda route: type("P", (), {"invoke": staticmethod(huge)})()
+    )
+    with pytest.raises(ProviderError) as failure:
+        service.invoke(
+            org_id=uuid4(),
+            user_id=uuid4(),
+            capability="nlp_command",
+            operation_key="op-1",
+            input_payload={},
+        )
+    assert failure.value.code == "ai_provider_output_too_large"
+
+
+def test_malformed_provider_body_is_a_provider_error(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    class _Response:
+        status_code = 200
+        content = b'{"unexpected": true}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return ["not", "an", "object"]
+
+    monkeypatch.setenv("AI_GATEWAY_TESTP_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_TESTP_BASE_URL", "https://p.example")
+    monkeypatch.setattr(
+        "httpx.post", lambda *a, **k: _Response()
+    )
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="TESTP").invoke(
+            route=_route(), capability="nlp_command", input_payload={}
+        )
+    assert failure.value.code == "ai_provider_error"
+
+
+def test_input_payload_size_capped():
+    from ai_gateway.serializers import AiInvokeRequestSerializer
+
+    serializer = AiInvokeRequestSerializer(
+        data={
+            "capability": "nlp_command",
+            "operation_key": "op-123456",
+            "input_payload": {"blob": "x" * 70_000},
+        }
+    )
+    assert not serializer.is_valid()
+    assert "input_payload" in serializer.errors
+
+
+def test_http_provider_caps_body_size(monkeypatch):
+    from ai_gateway.providers import HttpProvider, MAX_BODY_BYTES
+
+    class _Response:
+        status_code = 200
+        content = b"x" * (MAX_BODY_BYTES + 1)
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {}
+
+    monkeypatch.setenv("AI_GATEWAY_TESTP2_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_TESTP2_BASE_URL", "https://p.example")
+    monkeypatch.setattr("httpx.post", lambda *a, **k: _Response())
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="TESTP2").invoke(
+            route=_route(), capability="nlp_command", input_payload={}
+        )
+    assert failure.value.code == "ai_provider_output_too_large"

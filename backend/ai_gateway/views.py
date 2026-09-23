@@ -33,6 +33,7 @@ class AiInvokeView(APIView):
                         org_id=org_id,
                         user_id=token.user_id,
                         capability=str(data["capability"]),
+                        operation_key=str(data["operation_key"]),
                         input_payload=dict(data["input_payload"]),
                         tool_name=str(data.get("tool_name") or "") or None,
                     )

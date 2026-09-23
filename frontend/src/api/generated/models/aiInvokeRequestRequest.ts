@@ -15,5 +15,10 @@ export interface AiInvokeRequestRequest {
   capability: string;
   /** @maxLength 100 */
   tool_name?: string;
+  /**
+   * @minLength 8
+   * @maxLength 120
+   */
+  operation_key: string;
   input_payload: AiInvokeRequestRequestInputPayload;
 }

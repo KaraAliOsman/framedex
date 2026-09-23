@@ -41,3 +41,12 @@ VALUES
 -- the table privilege was missing.
 REVOKE INSERT, UPDATE, DELETE ON public.ai_audit_logs FROM authenticated;
 GRANT INSERT ON public.ai_audit_logs TO billing_backend;
+
+-- Round-1 review: audit columns must accept every valid route value, and an
+-- invoke retry must replay the original audit instead of double-spending.
+ALTER TABLE public.ai_audit_logs ALTER COLUMN model_used TYPE VARCHAR(120);
+ALTER TABLE public.ai_audit_logs ADD COLUMN IF NOT EXISTS
+    operation_key VARCHAR(120) NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ai_audit_logs_org_operation_key
+    ON public.ai_audit_logs (org_id, operation_key)
+    WHERE operation_key IS NOT NULL;

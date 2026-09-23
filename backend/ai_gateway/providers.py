@@ -17,6 +17,9 @@ from typing import Any
 import httpx
 
 
+MAX_BODY_BYTES = 1_048_576
+
+
 class ProviderError(Exception):
     """Sanitized provider failure — never carries credentials or payloads."""
 
@@ -49,14 +52,25 @@ class HttpProvider:
                 timeout=60.0,
             )
             response.raise_for_status()
+            if len(response.content) > MAX_BODY_BYTES:
+                raise ProviderError("ai_provider_output_too_large")
             body = response.json()
-        except (httpx.HTTPError, ValueError) as error:
+            if not isinstance(body, dict):
+                raise TypeError("provider body is not an object")
+            usage = body.get("usage") or {}
+            if not isinstance(usage, dict):
+                raise TypeError("provider usage is not an object")
+            output = body.get("output") or body.get("text") or ""
+            tokens_prompt = int(usage.get("prompt_tokens") or 0)
+            tokens_completion = int(usage.get("completion_tokens") or 0)
+        except ProviderError:
+            raise
+        except (httpx.HTTPError, TypeError, ValueError) as error:
             raise ProviderError("ai_provider_error") from error
-        usage = body.get("usage") or {}
         return {
-            "output": body.get("output") or body.get("text") or "",
-            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
-            "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "output": output,
+            "tokens_prompt": tokens_prompt,
+            "tokens_completion": tokens_completion,
             "latency_ms": int((time.monotonic() - started) * 1000),
         }
 
