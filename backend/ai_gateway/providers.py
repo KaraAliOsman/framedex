@@ -119,19 +119,25 @@ class HttpProvider:
         input_payload: dict,
         host_header: str,
         port_suffix: str,
+        operation_key: str | None,
     ) -> bytes:
         """One pinned attempt: the URL carries the validated connect address
         while Host + SNI keep the configured name. The body streams in with
         a hard byte cap — an unbounded provider response cannot exhaust
         memory before it is rejected."""
         url_host = f"[{connect_ip}]" if ":" in connect_ip else connect_ip
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Host": host_header,
+        }
+        if operation_key:
+            # The operation key doubles as the provider-level idempotency key
+            # so a retry ambiguous to us can still dedupe provider-side.
+            headers["Idempotency-Key"] = operation_key
         with client.stream(
             "POST",
             f"https://{url_host}{port_suffix}{self._base_path}/invoke",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Host": host_header,
-            },
+            headers=headers,
             extensions={"sni_hostname": self._host},
             json={
                 "model": route["provider_model"],
@@ -154,6 +160,7 @@ class HttpProvider:
         capability: str,
         input_payload: dict,
         client: httpx.Client | None = None,
+        operation_key: str | None = None,
     ) -> bytes:
         """POST to the provider on each validated address until one connects.
         Connect-phase failures advance to the next pinned answer; any HTTP
@@ -168,10 +175,12 @@ class HttpProvider:
         if client is None:
             with httpx.Client(timeout=60.0) as owned:
                 return self._attempts(
-                    owned, route, capability, input_payload, host_header, port_suffix
+                    owned, route, capability, input_payload, host_header, port_suffix,
+                    operation_key,
                 )
         return self._attempts(
-            client, route, capability, input_payload, host_header, port_suffix
+            client, route, capability, input_payload, host_header, port_suffix,
+            operation_key,
         )
 
     def _attempts(
@@ -182,6 +191,7 @@ class HttpProvider:
         input_payload: dict,
         host_header: str,
         port_suffix: str,
+        operation_key: str | None,
     ) -> bytes:
         last_error: httpx.HTTPError | None = None
         for connect_ip in self._connect_ips:
@@ -194,6 +204,7 @@ class HttpProvider:
                     input_payload=input_payload,
                     host_header=host_header,
                     port_suffix=port_suffix,
+                    operation_key=operation_key,
                 )
             except (httpx.ConnectError, httpx.ConnectTimeout) as error:
                 last_error = error
@@ -206,6 +217,7 @@ class HttpProvider:
         capability: str,
         input_payload: dict,
         client: httpx.Client | None = None,
+        operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         try:
@@ -214,6 +226,7 @@ class HttpProvider:
                 capability=capability,
                 input_payload=input_payload,
                 client=client,
+                operation_key=operation_key,
             )
             body = json.loads(content)
             if not isinstance(body, dict):
@@ -241,7 +254,10 @@ class HttpProvider:
 class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
-    def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
+    def invoke(
+        self, *, route: dict, capability: str, input_payload: dict,
+        operation_key: str | None = None,
+    ) -> dict[str, Any]:
         started = time.monotonic()
         digest = hashlib.sha256(
             json.dumps(input_payload, sort_keys=True, default=str).encode()

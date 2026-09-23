@@ -107,7 +107,9 @@ def _audit(
             str(org_id),
             str(user_id),
             tool_name,
-            str(route["provider_model"]),
+            # Audit rows are tenant-readable — store the white-label name,
+            # never the sealed provider/model internals.
+            str(route["public_name"]),
             str(route["prompt_version"]),
             RETENTION_DAYS,
             json.dumps(input_payload, default=str),
@@ -175,6 +177,7 @@ def invoke(
             route=route,
             capability=capability,
             input_payload=input_payload,
+            operation_key=operation_key,
         )
         if len(str(result["output"])) > MAX_OUTPUT_CHARS:
             raise ProviderError("ai_provider_output_too_large")

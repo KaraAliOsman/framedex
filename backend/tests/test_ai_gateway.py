@@ -98,7 +98,8 @@ def test_invoke_binds_audit_to_debit(monkeypatch):
         if "FROM public.ai_routes" in sql:
             return [_route()]
         if "INSERT INTO public.ai_audit_logs" in sql:
-            assert params[3] == "mock-neural-1"  # model_used is the real model
+            # model_used is the white-label name — audit rows are tenant-readable.
+            assert params[3] == "DEKOPEN Neural Core™"
             assert params[8] == 5  # points_debited
             assert len(params[12]) == 64  # state hash
             return [{"id": audit_id}]
@@ -526,6 +527,49 @@ def test_http_provider_pins_resolved_ip_with_host_and_sni(monkeypatch):
     assert str(request.url) == "https://93.184.216.34/invoke"
     assert request.headers["Host"] == "provider.example"
     assert request.extensions["sni_hostname"] == "provider.example"
+
+
+def test_http_provider_sends_operation_key_as_idempotency(monkeypatch):
+    import httpx
+
+    from ai_gateway.providers import HttpProvider
+
+    calls = []
+
+    def _handler(request):
+        calls.append(request)
+        return httpx.Response(200, content=b'{"output": "ok", "usage": {}}')
+
+    monkeypatch.setenv("AI_GATEWAY_KEY_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_KEY_BASE_URL", "https://provider.example")
+    _allow_dns(monkeypatch)
+    provider = HttpProvider(provider="KEY")
+    provider.invoke(
+        route=_route(),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+        operation_key="op-abc",
+    )
+    assert calls[0].headers["Idempotency-Key"] == "op-abc"
+    calls.clear()
+    provider.invoke(
+        route=_route(),
+        capability="nlp_command",
+        input_payload={},
+        client=_client(_handler),
+    )
+    assert "Idempotency-Key" not in calls[0].headers
+
+
+def test_mock_provider_accepts_operation_key():
+    out = MockProvider().invoke(
+        route=_route(),
+        capability="nlp_command",
+        input_payload={"a": 1},
+        operation_key="op-xyz",
+    )
+    assert out["output"]
 
 
 def test_http_provider_invalid_idna_is_unavailable(monkeypatch):
