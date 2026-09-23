@@ -857,3 +857,25 @@ def test_http_provider_signs_storage_path_at_wire_time(monkeypatch):
     assert wire["storage_path"] == "imports/o/p/f.pdf"
     assert wire["document_url"].endswith("token=fresh")
     assert out["output"] == "ok"
+
+
+def test_storage_signing_failure_is_a_provider_error(monkeypatch):
+    from ai_gateway.providers import HttpProvider, ProviderError
+    from documents.repository import DocumentaryError
+
+    provider = HttpProvider.__new__(HttpProvider)
+
+    class _Storage:
+        def signed_url(self, path):
+            raise DocumentaryError("sign_failed")
+
+    import documents.storage as storage_mod
+
+    monkeypatch.setattr(storage_mod, "SupabaseDocumentStorage", _Storage)
+    with pytest.raises(ProviderError) as failure:
+        provider.invoke(
+            route={"provider_model": "m"},
+            capability="vision_ocr",
+            input_payload={"storage_path": "imports/o/p/f.pdf"},
+        )
+    assert failure.value.code == "ai_provider_unavailable"

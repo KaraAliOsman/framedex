@@ -220,17 +220,21 @@ class HttpProvider:
         operation_key: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
-        # Ephemeral fetch URLs are resolved at wire time, never carried in
-        # input_payload: the audited input hash must stay identical across
-        # retries even though a fresh signed URL is minted each attempt.
-        wire_input = dict(input_payload)
-        if wire_input.get("storage_path"):
-            from documents.storage import SupabaseDocumentStorage
-
-            wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
-                str(wire_input["storage_path"])
-            )
         try:
+            # Ephemeral fetch URLs are resolved at wire time, never carried in
+            # input_payload: the audited input hash must stay identical across
+            # retries even though a fresh signed URL is minted each attempt.
+            wire_input = dict(input_payload)
+            if wire_input.get("storage_path"):
+                from documents.repository import DocumentaryError
+                from documents.storage import SupabaseDocumentStorage
+
+                try:
+                    wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
+                        str(wire_input["storage_path"])
+                    )
+                except DocumentaryError as error:
+                    raise ProviderError("ai_provider_unavailable") from error
             content = self._request(
                 route=route,
                 capability=capability,
