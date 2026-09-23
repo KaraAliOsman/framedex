@@ -772,7 +772,12 @@ def optimize_work_order(
             merged.setdefault(key, (rule, []))[1].extend(pieces_group)
         for rule, group_pieces in merged.values():
             outcome = nest_rects(group_pieces, rule)
-            sheets.extend(layout.model_dump(mode="json") for layout in outcome.layouts)
+            for layout in outcome.layouts:
+                dumped = layout.model_dump(mode="json")
+                # sheet_index restarts per bin — renumber across the whole plan
+                # so layouts keep a stable globally-unique identity.
+                dumped["sheet_index"] = len(sheets) + 1
+                sheets.append(dumped)
             sheet_purchases.extend(
                 purchase.model_dump(mode="json") for purchase in outcome.purchase_list
             )
