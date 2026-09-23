@@ -6098,6 +6098,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HandlePolicyRequirements'
+        workshop_targets:
+          $ref: '#/components/schemas/WorkshopTargets'
       required:
       - accessory_schedule
       - calculation_hash
@@ -6115,6 +6117,7 @@ components:
       - structural_inputs
       - system_name
       - workshop_annotations
+      - workshop_targets
     DocumentaryPreparationResponse:
       type: object
       properties:
@@ -9330,6 +9333,88 @@ components:
           nullable: true
       required:
       - bay_id
+    WorkshopBayTarget:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        label:
+          type: string
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+      required:
+      - bay_id
+      - label
+      - width_mm
+    WorkshopGlassTarget:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        label:
+          type: string
+      required:
+      - bay_id
+      - label
+      - leaf_id
+    WorkshopLeafTarget:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        leaf_id:
+          type: string
+          nullable: true
+        leaf_label:
+          type: string
+      required:
+      - bay_id
+      - leaf_id
+      - leaf_label
+    WorkshopSpanTarget:
+      type: object
+      properties:
+        target_id:
+          type: string
+        label:
+          type: string
+        span_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,4})?$
+      required:
+      - label
+      - span_mm
+      - target_id
+    WorkshopTargets:
+      type: object
+      properties:
+        bays:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopBayTarget'
+        leaves:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopLeafTarget'
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopSpanTarget'
+        glass:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopGlassTarget'
+      required:
+      - bays
+      - glass
+      - leaves
+      - spans
   securitySchemes:
     SupabaseBearer:
       type: http

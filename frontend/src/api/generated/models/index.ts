@@ -209,3 +209,8 @@ export * from "./workshopAnnotation";
 export * from "./workshopAnnotationFinishClass";
 export * from "./workshopAnnotationRequest";
 export * from "./workshopAnnotationRequestFinishClass";
+export * from "./workshopBayTarget";
+export * from "./workshopGlassTarget";
+export * from "./workshopLeafTarget";
+export * from "./workshopSpanTarget";
+export * from "./workshopTargets";

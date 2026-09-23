@@ -392,6 +392,67 @@ def _valid_targets(
     return bays, leaves, spans, glass
 
 
+def _workshop_targets(
+    calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]],
+    trace_leaves: list[dict[str, object]],
+) -> dict[str, object]:
+    """Ordered annotation/purchase targets for the emission-prep editors —
+    ids namespaced ``<module_id>|<id>`` exactly like the saved inputs."""
+    leaf_labels = {
+        (item["bay_id"], item["leaf_id"]): str(item["leaf_label"]) for item in trace_leaves
+    }
+    bays: list[dict[str, object]] = []
+    leaves: list[dict[str, object]] = []
+    spans: list[dict[str, object]] = []
+    glass: list[dict[str, object]] = []
+    for module_index, (module_id, computation, _) in enumerate(calculations, 1):
+        prefix = f"{module_id}|" if module_id else ""
+        unit = f"Unidad {module_index} · " if module_id else ""
+        for index, opening in enumerate(computation.openings, 1):
+            bays.append({
+                "bay_id": f"{prefix}{opening.bay_id}",
+                "label": f"{unit}Vano {index}",
+                "width_mm": opening.width_mm,
+            })
+        for index, leaf in enumerate(computation.leaves, 1):
+            leaf_id = (
+                f"{prefix}{leaf.leaf_id}"
+                if module_id and leaf.leaf_id is not None
+                else leaf.leaf_id
+            )
+            leaves.append({
+                "bay_id": f"{prefix}{leaf.bay_id}",
+                "leaf_id": leaf_id,
+                "leaf_label": leaf_labels.get(
+                    (f"{prefix}{leaf.bay_id}", leaf_id), f"{unit}Hoja {index}"
+                ),
+            })
+        for index, span in enumerate(computation.spans, 1):
+            spans.append({
+                "target_id": f"{prefix}{span.target_id}",
+                "label": f"{unit}Travesaño {index}",
+                "span_mm": span.span_mm,
+            })
+        trace = computation.manufacturing_trace
+        glass_count = 0
+        for infill in trace.infills if trace else []:
+            if infill.kind != "GLASS":
+                continue
+            glass_count += 1
+            bay_key = f"{prefix}{infill.bay_id}"
+            leaf_key = (
+                f"{prefix}{infill.leaf_id}"
+                if module_id and infill.leaf_id is not None
+                else infill.leaf_id
+            )
+            glass.append({
+                "bay_id": bay_key,
+                "leaf_id": leaf_key,
+                "label": leaf_labels.get((bay_key, leaf_key), f"{unit}Vidrio {glass_count}"),
+            })
+    return {"bays": bays, "leaves": leaves, "spans": spans, "glass": glass}
+
+
 def _position_rows(project_id: UUID, org_id: UUID) -> list[dict[str, object]]:
     return rows(
         "SELECT position.*,input.id AS documentary_input_id,"
@@ -1200,6 +1261,7 @@ def prepare_documentary_inputs(
                     for option in handle_options
                     if str(option["id"]) in handle_authorities
                 ],
+                "workshop_targets": _workshop_targets(calculations, trace_leaves),
                 "accessory_schedule": decoded(existing["accessory_schedule"])
                 if existing and existing["accessory_schedule"] is not None else None,
                 "legacy_handle_migration_confirmed": bool(
