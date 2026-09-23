@@ -397,7 +397,10 @@ export function AssemblyEditor({
   }, [evaluation, onEvaluationChange]);
 
   function commit(next: ProductJson): void {
-    if (next === product) return;
+    // A setter that lands on unchanged values still produces a fresh object —
+    // committing it would clear the cached evaluation while react-query hands
+    // back the identical result, leaving Save disabled on a valid product.
+    if (next === product || JSON.stringify(next) === JSON.stringify(product)) return;
     commitInputs({ ...inputs, product: next });
     onChanged();
   }

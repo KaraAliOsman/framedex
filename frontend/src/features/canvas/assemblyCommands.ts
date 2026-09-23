@@ -82,20 +82,6 @@ export function assemblyCommands({
       run: () => addUnit("left"),
     },
     {
-      id: "module.equalize-widths",
-      title: t("cmd.equalizeWidths"),
-      keywords: ["igualar", "anchos", "unidades", "repartir"],
-      describe: () => t("cmd.equalizeWidthsDesc"),
-      run: () => commit(equalizeModuleWidths(product)),
-    },
-    {
-      id: "product.equalize-angles",
-      title: t("cmd.equalizeAngles"),
-      keywords: ["igualar", "ángulos", "angulos", "acoplamiento", "bow"],
-      describe: () => t("cmd.equalizeAnglesDesc"),
-      run: () => commit(equalizeCouplingAngles(product)),
-    },
-    {
       id: "product.set-height",
       title: t("cmd.setHeight"),
       keywords: ["alto", "altura", "dimensiones"],
@@ -112,6 +98,25 @@ export function assemblyCommands({
       run: (args) => commit(setAllModuleHeights(product, args.height ?? "")),
     },
   ];
+
+  if (modules.length > 1) {
+    commands.push({
+      id: "module.equalize-widths",
+      title: t("cmd.equalizeWidths"),
+      keywords: ["igualar", "anchos", "unidades", "repartir"],
+      describe: () => t("cmd.equalizeWidthsDesc"),
+      run: () => commit(equalizeModuleWidths(product)),
+    });
+  }
+  if (couplings.length > 1) {
+    commands.push({
+      id: "product.equalize-angles",
+      title: t("cmd.equalizeAngles"),
+      keywords: ["igualar", "ángulos", "angulos", "acoplamiento", "bow"],
+      describe: () => t("cmd.equalizeAnglesDesc"),
+      run: () => commit(equalizeCouplingAngles(product)),
+    });
+  }
 
   if (selectedModule && modules.length > 1) {
     commands.push({

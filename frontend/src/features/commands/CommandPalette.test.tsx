@@ -192,6 +192,33 @@ it("Enter selects the highlighted choice option, not a top-level item", () => {
   expect(screen.queryByRole("dialog")).toBeNull();
 });
 
+it("Escape inside a parameter step abandons it and clears the typed query", () => {
+  const run = vi.fn();
+  render(
+    <Harness
+      commands={[
+        {
+          id: "x.width",
+          title: "Definir ancho",
+          params: [{ kind: "number", id: "width", label: "Ancho", validate: () => "1.00" }],
+          run,
+        },
+      ]}
+    />,
+  );
+  openPalette();
+  fireEvent.click(screen.getByRole("option", { name: /Definir ancho/ }));
+  const input = screen.getByPlaceholderText("Ancho");
+  fireEvent.change(input, { target: { value: "999" } });
+  fireEvent.keyDown(window, { key: "Escape" });
+  // Parameter step abandoned, query cleared — the full command list is back.
+  const back = screen.getByPlaceholderText(t("cmd.placeholder")) as HTMLInputElement;
+  expect(back.value).toBe("");
+  expect(run).not.toHaveBeenCalled();
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
 it("closes on Escape and arrows move the cursor", () => {
   render(<Harness commands={[{ id: "x.a", title: "Primero", run: vi.fn() }]} />);
   openPalette();

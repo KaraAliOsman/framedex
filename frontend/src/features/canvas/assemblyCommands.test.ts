@@ -44,6 +44,8 @@ it("gates destructive and selection-scoped commands", () => {
   // Nothing selected on a single unit: no remove, no module-scoped setters.
   let { commands } = harness(single);
   expect(commands.find((item) => item.id === "module.remove")).toBeUndefined();
+  // Equalizing a single unit can never change the product — don't offer it.
+  expect(commands.find((item) => item.id === "module.equalize-widths")).toBeUndefined();
   expect(commands.find((item) => item.id === "module.set-width")).toBeUndefined();
   expect(commands.find((item) => item.id === "coupling.set-angle")).toBeUndefined();
 
@@ -51,6 +53,8 @@ it("gates destructive and selection-scoped commands", () => {
   // A selected module unlocks module commands.
   ({ commands } = harness(bow, "m2", { glassThicknesses: ["4.00"], couplerSkus: ["CPL-A"] }));
   expect(byId(commands, "module.remove")).toBeTruthy();
+  expect(byId(commands, "module.equalize-widths")).toBeTruthy();
+  expect(byId(commands, "product.equalize-angles")).toBeTruthy();
   const widthParam = byId(commands, "module.set-width").params?.[0];
   expect(widthParam?.kind === "number" ? widthParam.defaultValue : null).toBe(
     bow.assembly.modules[1]!.width_mm,

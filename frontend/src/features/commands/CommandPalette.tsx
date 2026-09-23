@@ -63,8 +63,12 @@ export function CommandPalette({
         setOpen((previous) => !previous);
       } else if (event.key === "Escape" && open) {
         event.preventDefault();
-        if (pending) setPending(null);
-        else close();
+        if (pending) {
+          setPending(null);
+          setQuery("");
+          setCursor(0);
+          setInvalidParam(false);
+        } else close();
       }
     }
     window.addEventListener("keydown", onKeyDown);
