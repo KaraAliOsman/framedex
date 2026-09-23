@@ -19,10 +19,12 @@ import hashlib
 import json
 import zlib
 from decimal import Decimal, InvalidOperation
+from io import BytesIO
 from uuid import UUID
 
 from django.db import connection, transaction
 from django.utils import timezone
+from PIL import Image
 
 from authentication.errors import contract_error
 from documents.repository import DocumentaryError, documentary_backend
@@ -30,6 +32,7 @@ from documents.renderers import render_delivery_pod
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
 from projects.payments import resolve_or_insert_payment
+from projects.receipts import issue_receipt
 from projects.service import project_row
 
 SIGNED_URL_TTL_SECONDS = 600
@@ -37,6 +40,9 @@ SIGNED_URL_TTL_SECONDS = 600
 _MANIFEST_SCHEMA = "work_order_packing_v1"
 _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 _MAX_SIGNATURE_BYTES = 200_000
+# Signature captures are small; a declared size beyond this is a bomb, not ink.
+_MAX_SIGNATURE_DIMENSION = 2000
+_MIN_INK_PIXELS = 20
 _PAYMENT_KINDS = {"ANTICIPO", "PARCIAL", "SALDO"}
 _PAYMENT_METHODS = {"TRANSFER", "CASH", "CARD", "CHECK", "OTHER"}
 
@@ -76,14 +82,15 @@ def _manifest_units(order_payload: dict) -> list[dict]:
 
 
 def _decode_signature(raw: str) -> bytes:
-    """Structure-checked PNG: magic + first chunk IHDR with a valid CRC +
-    trailing IEND — a payload that merely carries the magic bytes never
-    reaches the image decoder or immutable storage."""
+    """Structure- and content-checked PNG: magic + IHDR/CRC/IEND framing,
+    bounded declared dimensions (a tiny file declaring huge pixels is a
+    decompression bomb, not a signature), and a real ink check — a fully
+    transparent or blank capture must never seal a POD."""
     try:
         png = base64.b64decode(raw, validate=True)
     except Exception as error:
         raise DocumentaryError("signature_invalid") from error
-    if not _is_png(png):
+    if not _is_png(png) or not _has_ink(png):
         raise DocumentaryError("signature_invalid")
     return png
 
@@ -99,7 +106,30 @@ def _is_png(png: bytes) -> bool:
         return False
     if zlib.crc32(png[12:29]) != int.from_bytes(png[29:33], "big"):
         return False
+    width = int.from_bytes(png[16:20], "big")
+    height = int.from_bytes(png[20:24], "big")
+    if not (0 < width <= _MAX_SIGNATURE_DIMENSION and 0 < height <= _MAX_SIGNATURE_DIMENSION):
+        return False
     return png[-8:-4] == b"IEND" and int.from_bytes(png[-12:-8], "big") == 0
+
+
+def _has_ink(png: bytes) -> bool:
+    # Pillow rides with WeasyPrint; load() forces a full decode so truncated
+    # or corrupt streams fail here, before the renderer sees them. Bytes
+    # (not getdata): the pixel accessor API moves between Pillow versions.
+    try:
+        image = Image.open(BytesIO(png))
+        image.load()
+        data = image.convert("RGBA").tobytes()
+    except Exception:  # noqa: BLE001 — any decode failure rejects the capture
+        return False
+    inked = 0
+    for i in range(3, len(data), 4):
+        if data[i] >= 32 and (data[i - 3] + data[i - 2] + data[i - 1]) < 690:
+            inked += 1
+            if inked >= _MIN_INK_PIXELS:
+                return True
+    return False
 
 
 def _payment_kwargs(payment: dict) -> dict:
@@ -198,12 +228,13 @@ def confirm_delivery(
             project = project_row(org_id, order["project_id"], lock=True)
             payment_id = None
             payment_payload = None
+            deal = None
             if payment_kwargs is not None:
                 # The cobro goes through the cobranza ledger primitive so the
                 # same deal, currency, project and replay rules apply — the
                 # pod:<delivery> key dedupes a retried confirm like every
                 # other payment.
-                payment_row, _ = resolve_or_insert_payment(
+                payment_row, deal = resolve_or_insert_payment(
                     org_id=org_id,
                     project_id=order["project_id"],
                     project=project,
@@ -219,12 +250,15 @@ def confirm_delivery(
                     },
                 )
                 # A `pod:` collision under the same project still must be the
-                # same collection — different amount/kind/method is a
+                # same collection — any immutable field that differs is a
                 # caller-supplied-key conflict, never silent adoption.
                 if (
                     str(payment_row["kind"]) != payment_kwargs["kind"]
                     or str(payment_row["method"]) != payment_kwargs["method"]
                     or Decimal(str(payment_row["amount"])) != payment_kwargs["amount"]
+                    or str(payment_row["reference"] or "")
+                    != str(payment_kwargs["reference"] or "")
+                    or str(payment_row["note"] or "") != str(payment_kwargs["note"] or "")
                 ):
                     raise contract_error(
                         409,
@@ -232,13 +266,15 @@ def confirm_delivery(
                         "El cobro registrado para esta entrega no coincide.",
                     )
                 payment_id = payment_row["id"]
+                # The sealed payload mirrors the ledger row, never the
+                # request — the two can never diverge on replay.
                 payment_payload = {
                     "id": str(payment_row["id"]),
                     "kind": payment_row["kind"],
                     "method": payment_row["method"],
                     "amount": str(payment_row["amount"]),
-                    "reference": payment_kwargs["reference"],
-                    "note": payment_kwargs["note"],
+                    "reference": payment_row["reference"],
+                    "note": payment_row["note"],
                     "recorded_at": payment_row["recorded_at"].isoformat()
                     if hasattr(payment_row["recorded_at"], "isoformat")
                     else str(payment_row["recorded_at"]),
@@ -387,6 +423,18 @@ def confirm_delivery(
                     ),
                 ],
             )
+            if payment_id is not None and deal is not None:
+                # A freshly inserted COD payment seals its comprobante like
+                # every cobranza row — last, so nothing can strand its
+                # object after the POD writes have all succeeded; a replay
+                # returns the existing receipt.
+                issue_receipt(
+                    org_id=org_id,
+                    project=project,
+                    payment=payment_row,
+                    actor_id=actor_id,
+                    deal=deal,
+                )
             object_keys = []
     except Exception:
         for key in object_keys:

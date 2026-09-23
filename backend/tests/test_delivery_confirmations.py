@@ -35,16 +35,24 @@ def _chunk(ctype: bytes, data: bytes) -> bytes:
     )
 
 
-_PNG = (
-    b"\x89PNG\r\n\x1a\n"
-    + _chunk(
-        b"IHDR",
-        (1).to_bytes(4, "big") + (1).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00",
+def _png(width: int, height: int, pixel: bytes) -> bytes:
+    raw = b"".join(b"\x00" + pixel * width for _ in range(height))
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + _chunk(
+            b"IHDR",
+            width.to_bytes(4, "big")
+            + height.to_bytes(4, "big")
+            + b"\x08\x02\x00\x00\x00",
+        )
+        + _chunk(b"IDAT", zlib.compress(raw))
+        + _chunk(b"IEND", b"")
     )
-    + _chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00"))
-    + _chunk(b"IEND", b"")
-)
+
+
+_PNG = _png(16, 16, b"\x1a\x1f\x24")
 _SIG_B64 = base64.b64encode(_PNG).decode("ascii")
+_TRANSPARENT_B64 = base64.b64encode(_png(8, 8, b"\xff\xff\xff")).decode("ascii")
 
 
 @contextmanager
@@ -164,9 +172,11 @@ def _patch_env(monkeypatch, storage, *, order=None, delivery=None, existing=None
                 "kind": data["kind"],
                 "method": data["method"],
                 "amount": data["amount"],
+                "reference": data["reference"],
+                "note": data["note"],
                 "recorded_at": data["recorded_at"],
             },
-            None,
+            {"total": "100000", "currency": "CLP"},
         )
 
     storage.payment_data = []
@@ -186,6 +196,12 @@ def _patch_env(monkeypatch, storage, *, order=None, delivery=None, existing=None
     monkeypatch.setattr(
         confirmations, "resolve_or_insert_payment", fake_resolve
     )
+    monkeypatch.setattr(
+        confirmations,
+        "issue_receipt",
+        lambda **kwargs: storage.receipt_calls.append(kwargs),
+    )
+    storage.receipt_calls = []
     monkeypatch.setattr(confirmations, "SupabaseDocumentStorage", lambda: storage)
     monkeypatch.setattr(confirmations.transaction, "atomic", _noop)
     monkeypatch.setattr(confirmations, "documentary_backend", _noop)
@@ -230,6 +246,7 @@ def test_confirm_with_payment_inserts_cobro(monkeypatch):
     cobro = storage.payment_data[0]
     assert cobro["operation_key"].startswith("pod:")
     assert cobro["amount"] == 50000 and cobro["kind"] == "SALDO"
+    assert len(storage.receipt_calls) == 1
 
 
 def test_confirm_replays_existing_row_without_rerender(monkeypatch):
@@ -305,6 +322,17 @@ def test_confirm_rejects_bad_signature_and_bad_payment(monkeypatch):
             payment={"amount": "NaN", "method": "CASH"},
         )
     assert raised.value.code == "payment_invalid"
+    with pytest.raises(Exception) as raised:
+        confirmations.confirm_delivery(
+            org_id=uuid4(),
+            order_id=order["id"],
+            actor_id=uuid4(),
+            receiver_name="Juan",
+            receiver_rut=None,
+            signature_b64=_TRANSPARENT_B64,
+            payment=None,
+        )
+    assert raised.value.code == "signature_invalid"
     assert storage.uploads == []
 
 

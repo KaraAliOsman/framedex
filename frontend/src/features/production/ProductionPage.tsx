@@ -1052,7 +1052,7 @@ export function ProductionPage(): JSX.Element {
                               <input
                                 type="number"
                                 min="1"
-                                step="1"
+                                step="0.01"
                                 required
                                 value={collectAmount}
                                 onChange={(event) => setCollectAmount(event.target.value)}
