@@ -2,6 +2,7 @@
 
 import base64
 import json
+import zlib
 from contextlib import contextmanager
 from uuid import uuid4
 
@@ -25,7 +26,24 @@ class _Storage:
         return f"https://signed.example/{object_key}"
 
 
-_PNG = b"\x89PNG\r\n\x1a\n" + b"fake-png-bytes"
+def _chunk(ctype: bytes, data: bytes) -> bytes:
+    return (
+        len(data).to_bytes(4, "big")
+        + ctype
+        + data
+        + zlib.crc32(ctype + data).to_bytes(4, "big")
+    )
+
+
+_PNG = (
+    b"\x89PNG\r\n\x1a\n"
+    + _chunk(
+        b"IHDR",
+        (1).to_bytes(4, "big") + (1).to_bytes(4, "big") + b"\x08\x02\x00\x00\x00",
+    )
+    + _chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00"))
+    + _chunk(b"IEND", b"")
+)
 _SIG_B64 = base64.b64encode(_PNG).decode("ascii")
 
 
@@ -119,14 +137,6 @@ def _patch_env(monkeypatch, storage, *, order=None, delivery=None, existing=None
             if delivery is None:
                 raise RuntimeError(not_found or "missing")
             return delivery
-        if "FROM public.projects" in sql:
-            return {
-                "id": order["project_id"],
-                "code": "P-0001",
-                "name": "Manillas E2E",
-                "client_name": "Cliente SpA",
-                "client_rut": "76.123.456-7",
-            }
         if "COUNT(*)" in sql:
             return {"n": 0}
         if "INSERT INTO public.delivery_confirmations" in sql:
@@ -140,26 +150,42 @@ def _patch_env(monkeypatch, storage, *, order=None, delivery=None, existing=None
     def fake_rows(sql, params=None):
         if "FROM public.delivery_confirmations" in sql:
             return list(existing or [])
-        if "INSERT INTO public.project_payments" in sql:
-            return [
-                {
-                    "id": uuid4(),
-                    "amount": "50000",
-                    "kind": "SALDO",
-                    "method": "CASH",
-                    "recorded_at": "2026-09-24T11:00:00+00:00",
-                }
-            ]
-        if "FROM public.project_payments" in sql:
-            return []
         if "UPDATE public.deliveries" in sql:
             return [{"id": delivery["id"]}]
         if "INSERT INTO public.production_step_events" in sql:
             return [{"id": uuid4()}]
         return []
 
+    def fake_resolve(*, org_id, project_id, project, actor_id, data):
+        storage.payment_data.append(data)
+        return (
+            {
+                "id": uuid4(),
+                "kind": data["kind"],
+                "method": data["method"],
+                "amount": data["amount"],
+                "recorded_at": data["recorded_at"],
+            },
+            None,
+        )
+
+    storage.payment_data = []
     monkeypatch.setattr(confirmations, "one", fake_one)
     monkeypatch.setattr(confirmations, "rows", fake_rows)
+    monkeypatch.setattr(
+        confirmations,
+        "project_row",
+        lambda *a, **k: {
+            "id": order["project_id"],
+            "code": "P-0001",
+            "name": "Manillas E2E",
+            "client_name": "Cliente SpA",
+            "client_rut": "76.123.456-7",
+        },
+    )
+    monkeypatch.setattr(
+        confirmations, "resolve_or_insert_payment", fake_resolve
+    )
     monkeypatch.setattr(confirmations, "SupabaseDocumentStorage", lambda: storage)
     monkeypatch.setattr(confirmations.transaction, "atomic", _noop)
     monkeypatch.setattr(confirmations, "documentary_backend", _noop)
@@ -200,6 +226,10 @@ def test_confirm_with_payment_inserts_cobro(monkeypatch):
     )
     assert out["confirmation_code"] == "CE-0001"
     assert len(storage.uploads) == 2
+    assert len(storage.payment_data) == 1
+    cobro = storage.payment_data[0]
+    assert cobro["operation_key"].startswith("pod:")
+    assert cobro["amount"] == 50000 and cobro["kind"] == "SALDO"
 
 
 def test_confirm_replays_existing_row_without_rerender(monkeypatch):
@@ -262,6 +292,17 @@ def test_confirm_rejects_bad_signature_and_bad_payment(monkeypatch):
             receiver_rut=None,
             signature_b64=_SIG_B64,
             payment={"amount": "-5", "method": "CASH"},
+        )
+    assert raised.value.code == "payment_invalid"
+    with pytest.raises(Exception) as raised:
+        confirmations.confirm_delivery(
+            org_id=uuid4(),
+            order_id=order["id"],
+            actor_id=uuid4(),
+            receiver_name="Juan",
+            receiver_rut=None,
+            signature_b64=_SIG_B64,
+            payment={"amount": "NaN", "method": "CASH"},
         )
     assert raised.value.code == "payment_invalid"
     assert storage.uploads == []

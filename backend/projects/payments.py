@@ -177,24 +177,107 @@ def list_payments(*, org_id: UUID, project_id: UUID) -> dict:
     return _summary(org_id, project_id, project)
 
 
+def resolve_or_insert_payment(
+    *,
+    org_id: UUID,
+    project_id: UUID,
+    project: dict,
+    actor_id: UUID,
+    data: dict,
+) -> tuple[dict, dict | None]:
+    """The shared cobranza ledger primitive: replay the
+    ``(org_id, operation_key)`` row with a cross-project guard, else validate
+    the deal, currency and recorded_at and insert. Cross-domain flows that
+    must settle a payment inside their own transaction (e.g. the POD cobro)
+    call this instead of re-implementing the rules.
+
+    Returns ``(payment_row, deal)``; ``deal`` is ``None`` on replay since the
+    recorded row is returned even when the deal later reset.
+    """
+    existing = rows(
+        "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
+        [str(org_id), data["operation_key"]],
+    )
+    if existing:
+        payment = existing[0]
+        if str(payment["project_id"]) != str(project_id):
+            raise contract_error(
+                409,
+                "payment_operation_conflict",
+                "La operación ya fue registrada en otro proyecto.",
+            )
+        return payment, None
+    deal = _deal(org_id, project_id, project)
+    if deal is None:
+        raise contract_error(
+            422,
+            "payment_requires_deal",
+            "Registra cobros solo sobre un proyecto cotizado.",
+        )
+    if deal["currency"] == "CLP" and data["amount"] != data[
+        "amount"
+    ].to_integral_value():
+        raise contract_error(
+            422,
+            "payment_fractional_currency",
+            "Los montos en CLP no llevan decimales.",
+        )
+    recorded_at = data.get("recorded_at")
+    if recorded_at is not None and recorded_at > timezone.now():
+        raise contract_error(
+            422,
+            "payment_recorded_in_future",
+            "La fecha del cobro no puede ser futura.",
+        )
+    payment = rows(
+        "INSERT INTO public.project_payments"
+        "(org_id,project_id,operation_key,kind,amount,method,reference,note,"
+        " recorded_by,recorded_at) "
+        "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+        "ON CONFLICT (org_id, operation_key) DO NOTHING RETURNING *",
+        [
+            str(org_id),
+            str(project_id),
+            data["operation_key"],
+            data["kind"],
+            data["amount"],
+            data["method"],
+            data.get("reference") or None,
+            data.get("note") or None,
+            str(actor_id),
+            data.get("recorded_at") or timezone.now(),
+        ],
+    )
+    if not payment:
+        # Lost race — the unique key converges on one row.
+        payment = rows(
+            "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
+            [str(org_id), data["operation_key"]],
+        )
+    payment = payment[0]
+    if str(payment["project_id"]) != str(project_id):
+        raise contract_error(
+            409,
+            "payment_operation_conflict",
+            "La operación ya fue registrada en otro proyecto.",
+        )
+    return payment, deal
+
+
 def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -> dict:
     with transaction.atomic():
         # Same lock order as pricing reset: the project row is the concurrency
         # point so a retired deal can never slip between the check and the insert.
         project = project_row(org_id, project_id, lock=True)
         with documentary_backend():
-            existing = rows(
-                "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
-                [str(org_id), data["operation_key"]],
+            payment, deal = resolve_or_insert_payment(
+                org_id=org_id,
+                project_id=project_id,
+                project=project,
+                actor_id=actor_id,
+                data=data,
             )
-            if existing:
-                payment = existing[0]
-                if str(payment["project_id"]) != str(project_id):
-                    raise contract_error(
-                        409,
-                        "payment_operation_conflict",
-                        "La operación ya fue registrada en otro proyecto.",
-                    )
+            if deal is None:
                 # Replay returns the recorded row even if the deal later reset.
                 receipt = rows(
                     "SELECT * FROM public.payment_receipts WHERE payment_id=%s AND org_id=%s",
@@ -206,60 +289,6 @@ def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict
                     "receipt": _receipt_public(receipt_row) if receipt_row else None,
                     **_summary(org_id, project_id, project),
                 }
-            deal = _deal(org_id, project_id, project)
-            if deal is None:
-                raise contract_error(
-                    422,
-                    "payment_requires_deal",
-                    "Registra cobros solo sobre un proyecto cotizado.",
-                )
-            if deal["currency"] == "CLP" and data["amount"] != data[
-                "amount"
-            ].to_integral_value():
-                raise contract_error(
-                    422,
-                    "payment_fractional_currency",
-                    "Los montos en CLP no llevan decimales.",
-                )
-            recorded_at = data.get("recorded_at")
-            if recorded_at is not None and recorded_at > timezone.now():
-                raise contract_error(
-                    422,
-                    "payment_recorded_in_future",
-                    "La fecha del cobro no puede ser futura.",
-                )
-            payment = rows(
-                "INSERT INTO public.project_payments"
-                "(org_id,project_id,operation_key,kind,amount,method,reference,note,"
-                " recorded_by,recorded_at) "
-                "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
-                "ON CONFLICT (org_id, operation_key) DO NOTHING RETURNING *",
-                [
-                    str(org_id),
-                    str(project_id),
-                    data["operation_key"],
-                    data["kind"],
-                    data["amount"],
-                    data["method"],
-                    data.get("reference") or None,
-                    data.get("note") or None,
-                    str(actor_id),
-                    data.get("recorded_at") or timezone.now(),
-                ],
-            )
-            if not payment:
-                # Lost race — the unique key converges on one row.
-                payment = rows(
-                    "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s",
-                    [str(org_id), data["operation_key"]],
-                )
-            payment = payment[0]
-            if str(payment["project_id"]) != str(project_id):
-                raise contract_error(
-                    409,
-                    "payment_operation_conflict",
-                    "La operación ya fue registrada en otro proyecto.",
-                )
             receipt = issue_receipt(
                 org_id=org_id,
                 project=project,

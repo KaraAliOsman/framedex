@@ -46,10 +46,12 @@ const SignaturePad = forwardRef<SignaturePadHandle, { onDraw?: (hasDrawing: bool
           y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
         };
       };
+      let drew = false;
       const down = (event: PointerEvent) => {
         event.preventDefault();
         canvas.setPointerCapture(event.pointerId);
         drawing.current = true;
+        drew = false;
         const { x, y } = point(event);
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -59,6 +61,7 @@ const SignaturePad = forwardRef<SignaturePadHandle, { onDraw?: (hasDrawing: bool
         const { x, y } = point(event);
         ctx.lineTo(x, y);
         ctx.stroke();
+        drew = true;
       };
       const up = (event: PointerEvent) => {
         if (!drawing.current) return;
@@ -66,21 +69,30 @@ const SignaturePad = forwardRef<SignaturePadHandle, { onDraw?: (hasDrawing: bool
         if (canvas.hasPointerCapture(event.pointerId)) {
           canvas.releasePointerCapture(event.pointerId);
         }
+        // A tap without movement seals no signature — only inked strokes count.
+        if (!drew) return;
         strokes.current += 1;
         if (strokes.current === 1) {
           setEmpty(false);
           onDraw?.(true);
         }
       };
+      const cancel = (event: PointerEvent) => {
+        drawing.current = false;
+        drew = false;
+        if (canvas.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+      };
       canvas.addEventListener("pointerdown", down);
       canvas.addEventListener("pointermove", move);
       canvas.addEventListener("pointerup", up);
-      canvas.addEventListener("pointercancel", up);
+      canvas.addEventListener("pointercancel", cancel);
       return () => {
         canvas.removeEventListener("pointerdown", down);
         canvas.removeEventListener("pointermove", move);
         canvas.removeEventListener("pointerup", up);
-        canvas.removeEventListener("pointercancel", up);
+        canvas.removeEventListener("pointercancel", cancel);
       };
     }, [onDraw]);
 

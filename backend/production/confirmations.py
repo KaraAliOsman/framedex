@@ -17,16 +17,20 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import zlib
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
 
 from django.db import connection, transaction
 from django.utils import timezone
 
+from authentication.errors import contract_error
 from documents.repository import DocumentaryError, documentary_backend
 from documents.renderers import render_delivery_pod
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects.payments import resolve_or_insert_payment
+from projects.service import project_row
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -72,13 +76,30 @@ def _manifest_units(order_payload: dict) -> list[dict]:
 
 
 def _decode_signature(raw: str) -> bytes:
+    """Structure-checked PNG: magic + first chunk IHDR with a valid CRC +
+    trailing IEND — a payload that merely carries the magic bytes never
+    reaches the image decoder or immutable storage."""
     try:
         png = base64.b64decode(raw, validate=True)
     except Exception as error:
         raise DocumentaryError("signature_invalid") from error
-    if not png.startswith(_PNG_MAGIC) or len(png) > _MAX_SIGNATURE_BYTES:
+    if not _is_png(png):
         raise DocumentaryError("signature_invalid")
     return png
+
+
+def _is_png(png: bytes) -> bool:
+    # 8-byte magic, then chunks [len:4][type:4][data][crc:4]; the first
+    # chunk must be a 13-byte IHDR and the stream must end in IEND.
+    if len(png) < 8 + 25 + 12 or len(png) > _MAX_SIGNATURE_BYTES:
+        return False
+    if not png.startswith(_PNG_MAGIC):
+        return False
+    if int.from_bytes(png[8:12], "big") != 13 or png[12:16] != b"IHDR":
+        return False
+    if zlib.crc32(png[12:29]) != int.from_bytes(png[29:33], "big"):
+        return False
+    return png[-8:-4] == b"IEND" and int.from_bytes(png[-12:-8], "big") == 0
 
 
 def _payment_kwargs(payment: dict) -> dict:
@@ -89,7 +110,12 @@ def _payment_kwargs(payment: dict) -> dict:
         raise DocumentaryError("payment_invalid") from error
     kind = str(payment.get("kind") or "SALDO").upper()
     method = str(payment.get("method") or "").upper()
-    if amount <= 0 or kind not in _PAYMENT_KINDS or method not in _PAYMENT_METHODS:
+    if (
+        not amount.is_finite()
+        or amount <= 0
+        or kind not in _PAYMENT_KINDS
+        or method not in _PAYMENT_METHODS
+    ):
         raise DocumentaryError("payment_invalid")
     return {
         "amount": amount,
@@ -132,8 +158,6 @@ def confirm_delivery(
                 [order_id_s, org_id_s],
                 "work_order_not_found",
             )
-            if str(order["status"]) != "DISPATCHED":
-                raise DocumentaryError("delivery_requires_dispatched")
             delivery = one(
                 """
                 SELECT * FROM public.deliveries
@@ -143,12 +167,8 @@ def confirm_delivery(
                 "delivery_not_found",
             )
             delivery_id_s = str(delivery["id"])
-            if str(delivery["status"]) not in ("ON_ROUTE", "DELIVERED"):
-                raise DocumentaryError("delivery_transition_invalid")
-            one(
-                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
-                [f"delivery_confirmations:{org_id_s}"],
-            )
+            # Replay wins over lifecycle checks: a lost-response retry after
+            # installation still returns the sealed row, never an error.
             existing = rows(
                 "SELECT * FROM public.delivery_confirmations "
                 "WHERE order_id=%s AND org_id=%s",
@@ -156,6 +176,14 @@ def confirm_delivery(
             )
             if existing:
                 return _confirmation_public(existing[0])
+            if str(order["status"]) != "DISPATCHED":
+                raise DocumentaryError("delivery_requires_dispatched")
+            if str(delivery["status"]) not in ("ON_ROUTE", "DELIVERED"):
+                raise DocumentaryError("delivery_transition_invalid")
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"delivery_confirmations:{org_id_s}"],
+            )
             sequence = int(
                 one(
                     "SELECT COUNT(*) AS n FROM public.delivery_confirmations WHERE org_id=%s",
@@ -165,39 +193,44 @@ def confirm_delivery(
             confirmation_code = f"CE-{sequence + 1:04d}"
             issued_at = timezone.now()
 
+            # Lock the project's concurrency point before the ledger insert:
+            # the deal check and the row must agree on one deal generation.
+            project = project_row(org_id, order["project_id"], lock=True)
             payment_id = None
             payment_payload = None
             if payment_kwargs is not None:
-                # The cobro dedupes on (org_id, operation_key) like every
-                # payment — a retried confirm can never double-count cash.
-                inserted = rows(
-                    "INSERT INTO public.project_payments("
-                    "org_id,project_id,operation_key,kind,amount,method,"
-                    "reference,note,recorded_by,recorded_at) "
-                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
-                    "ON CONFLICT (org_id, operation_key) DO NOTHING "
-                    "RETURNING id,amount,kind,method,recorded_at",
-                    [
-                        org_id_s,
-                        str(order["project_id"]),
-                        f"pod:{delivery_id_s}",
-                        payment_kwargs["kind"],
-                        payment_kwargs["amount"],
-                        payment_kwargs["method"],
-                        payment_kwargs["reference"],
-                        payment_kwargs["note"],
-                        str(actor_id),
-                        issued_at,
-                    ],
+                # The cobro goes through the cobranza ledger primitive so the
+                # same deal, currency, project and replay rules apply — the
+                # pod:<delivery> key dedupes a retried confirm like every
+                # other payment.
+                payment_row, _ = resolve_or_insert_payment(
+                    org_id=org_id,
+                    project_id=order["project_id"],
+                    project=project,
+                    actor_id=actor_id,
+                    data={
+                        "operation_key": f"pod:{delivery_id_s}",
+                        "kind": payment_kwargs["kind"],
+                        "amount": payment_kwargs["amount"],
+                        "method": payment_kwargs["method"],
+                        "reference": payment_kwargs["reference"],
+                        "note": payment_kwargs["note"],
+                        "recorded_at": issued_at,
+                    },
                 )
-                if not inserted:
-                    inserted = rows(
-                        "SELECT id,amount,kind,method,recorded_at "
-                        "FROM public.project_payments "
-                        "WHERE org_id=%s AND operation_key=%s",
-                        [org_id_s, f"pod:{delivery_id_s}"],
+                # A `pod:` collision under the same project still must be the
+                # same collection — different amount/kind/method is a
+                # caller-supplied-key conflict, never silent adoption.
+                if (
+                    str(payment_row["kind"]) != payment_kwargs["kind"]
+                    or str(payment_row["method"]) != payment_kwargs["method"]
+                    or Decimal(str(payment_row["amount"])) != payment_kwargs["amount"]
+                ):
+                    raise contract_error(
+                        409,
+                        "payment_operation_conflict",
+                        "El cobro registrado para esta entrega no coincide.",
                     )
-                payment_row = inserted[0]
                 payment_id = payment_row["id"]
                 payment_payload = {
                     "id": str(payment_row["id"]),
@@ -211,12 +244,6 @@ def confirm_delivery(
                     else str(payment_row["recorded_at"]),
                 }
 
-            project = one(
-                "SELECT id, code, name, client_name, client_rut "
-                "FROM public.projects WHERE id=%s AND org_id=%s",
-                [str(order["project_id"]), org_id_s],
-                "project_not_found",
-            )
             order_payload = (
                 order["payload_json"]
                 if isinstance(order["payload_json"], dict)
@@ -316,12 +343,13 @@ def confirm_delivery(
                     ],
                 )
             except Exception:
+                failed_keys = []
                 for key in object_keys:
                     try:
                         storage.delete_object(key)
-                    except Exception:  # noqa: BLE001 — cleanup must not mask the failure
-                        pass
-                object_keys = []
+                    except Exception:  # noqa: BLE001 — retry after transaction rollback
+                        failed_keys.append(key)
+                object_keys = failed_keys
                 raise
 
             if str(delivery["status"]) != "DELIVERED":
