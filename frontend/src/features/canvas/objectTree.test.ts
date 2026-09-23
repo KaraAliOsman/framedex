@@ -66,3 +66,21 @@ it("marks mullions for split intents", () => {
   const mullionRow = tree.children[0]!.children.find((node) => node.kind === "mullion");
   expect(mullionRow?.label).toBe("Mullión vertical");
 });
+
+it("lists both sliding leaves with their own sash and glazing", () => {
+  const product = makeBowProduct({
+    moduleCount: 1,
+    widthMm: 1800,
+    heightMm: 1400,
+    angleDeg: 0,
+    opening: "SLIDING_2L",
+  });
+  const tree = buildObjectTree(product, members, [], t);
+  const bay = tree.children[0]!.children.find((node) => node.kind === "bay")!;
+  const leaves = bay.children.filter((node) => node.kind === "leaf");
+  expect(leaves.map((node) => node.label)).toEqual(["Hoja corredera 1", "Hoja corredera 2"]);
+  for (const leaf of leaves) {
+    expect(leaf.children.map((node) => node.kind)).toEqual(["member", "glazing"]);
+  }
+  expect(bay.children.some((node) => node.kind === "handle")).toBe(true);
+});

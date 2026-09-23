@@ -82,9 +82,7 @@ export function ObjectTree({
     <nav className="object-tree" aria-label={title}>
       <h3 className="object-tree__title">{title}</h3>
       <ul role="tree" className="tree-root">
-        {root.children.map((node) => (
-          <TreeRow key={node.id} node={node} depth={0} selection={selection} onSelect={onSelect} />
-        ))}
+        <TreeRow key={root.id} node={root} depth={0} selection={selection} onSelect={onSelect} />
       </ul>
     </nav>
   );

@@ -480,6 +480,7 @@ const messages = {
   "tree.glass": "Vidrio",
   "tree.panel": "Panel",
   "tree.handle": "Manilla",
+  "tree.slidingLeaf": "Hoja corredera",
   "inspector.dimensions": "Medidas",
   "inspector.glazing": "Relleno",
   "purchasing.title": "Compras a proveedores",

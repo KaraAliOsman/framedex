@@ -13,6 +13,7 @@ export interface TreeNode {
     | "root"
     | "module"
     | "bay"
+    | "leaf"
     | "member"
     | "glazing"
     | "handle"
@@ -55,16 +56,72 @@ function bayChildren(
   const rows: TreeNode[] = [];
   const opening = node.opening_type ?? "FIXED";
   const operable = opening !== "FIXED";
-  if (operable) {
+
+  const sashRow = (idSuffix: string): TreeNode => ({
+    id: `${moduleId}/${node.id}/${idSuffix}`,
+    label: t("tree.sash"),
+    detail: members.sash.sku,
+    kind: "member",
+    severity: null,
+    selectId: moduleId,
+    children: [],
+  });
+  const infillRow = (idSuffix: string): TreeNode | null => {
+    if (node.panel_article_sku) {
+      return {
+        id: `${moduleId}/${node.id}/${idSuffix}`,
+        label: t("tree.panel"),
+        detail: node.panel_article_sku,
+        kind: "panel",
+        severity: null,
+        selectId: moduleId,
+        children: [],
+      };
+    }
+    const detail = [
+      node.glass_thickness_mm ? `${node.glass_thickness_mm} mm` : null,
+      node.glass_article_sku ?? node.glass_spec ?? null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return {
+      id: `${moduleId}/${node.id}/${idSuffix}`,
+      label: t("tree.glass"),
+      detail: detail || null,
+      kind: "glazing",
+      severity: null,
+      selectId: moduleId,
+      children: [],
+    };
+  };
+
+  if (opening === "SLIDING_2L") {
+    for (let leafIndex = 0; leafIndex < 2; leafIndex += 1) {
+      const infill = infillRow(`leaf${leafIndex + 1}/glass`);
+      rows.push({
+        id: `${moduleId}/${node.id}/leaf${leafIndex + 1}`,
+        label: `${t("tree.slidingLeaf")} ${leafIndex + 1}`,
+        detail: null,
+        kind: "leaf",
+        severity: null,
+        selectId: moduleId,
+        children: [sashRow(`leaf${leafIndex + 1}/sash`), ...(infill ? [infill] : [])],
+      });
+    }
     rows.push({
-      id: `${moduleId}/${node.id}/sash`,
-      label: t("tree.sash"),
-      detail: members.sash.sku,
-      kind: "member",
+      id: `${moduleId}/${node.id}/handle`,
+      label: t("tree.handle"),
+      detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
+      kind: "handle",
       severity: null,
       selectId: moduleId,
       children: [],
     });
+    return rows;
+  }
+
+  if (operable) {
+    rows.push(sashRow("sash"));
     rows.push({
       id: `${moduleId}/${node.id}/handle`,
       label: t("tree.handle"),

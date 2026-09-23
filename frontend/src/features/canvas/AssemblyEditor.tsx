@@ -423,6 +423,10 @@ export function AssemblyEditor({
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
   const members = useMemo(() => resolveMembers(options), [options]);
+  const objectTree = useMemo(
+    () => (product ? buildObjectTree(product, members, issues, t) : null),
+    [product, members, issues],
+  );
 
   useEffect(() => {
     onEvaluationChange(evaluation);
@@ -468,10 +472,6 @@ export function AssemblyEditor({
       : frontBox;
   const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
   const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm${selection ? ` · ${selection}` : ""}`;
-  const objectTree = useMemo(
-    () => buildObjectTree(product, members, issues, t),
-    [product, members, issues],
-  );
 
   return (
     <div className="assembly-editor" aria-label={t("assembly.frontView")}>
@@ -503,14 +503,16 @@ export function AssemblyEditor({
               : t(statusKey(evaluation?.status))}
         </span>
       </div>
-      <div className="assembly-tree">
-        <ObjectTree
-          root={objectTree}
-          selection={selection}
-          onSelect={select}
-          title={t("tree.title")}
-        />
-      </div>
+      {objectTree && (
+        <div className="assembly-tree">
+          <ObjectTree
+            root={objectTree}
+            selection={selection}
+            onSelect={select}
+            title={t("tree.title")}
+          />
+        </div>
+      )}
       <div className="assembly-canvas">
         <CanvasViewport contentBox={sheetBox} selectionBox={selectionBox} status={statusText}>
           <ProductFrontContent
