@@ -229,6 +229,22 @@ def test_issue_dispatch_note_seals_scheduled_delivery_address(monkeypatch):
     assert payload["delivery"]["time_window"] == "AM"
 
 
+def test_issue_dispatch_note_rejects_blank_destination(monkeypatch):
+    """A guía with no destination seals a blank address forever — dispatch
+    must refuse until a delivery or project address exists."""
+    storage = _Storage()
+    _patch_env(monkeypatch, storage)
+    project = {**_project(), "delivery_address": "  "}
+    from authentication.errors import ContractAPIException
+
+    with pytest.raises(ContractAPIException) as excinfo:
+        dispatch_notes.issue_dispatch_note(
+            org_id=uuid4(), order=_order(), project=project, actor_id=uuid4(), note=None
+        )
+    assert excinfo.value.contract_code == "dispatch_destination_required"
+    assert storage.uploads == []
+
+
 def test_issue_dispatch_note_replay_returns_existing_without_upload(monkeypatch):
     storage = _Storage()
     existing = _note_row()

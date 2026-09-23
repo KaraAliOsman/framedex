@@ -113,6 +113,14 @@ def issue_dispatch_note(
     sealed_address = (
         delivery["address"] if delivery else project["delivery_address"]
     )
+    if not (sealed_address or "").strip():
+        # The guía is immutable — a blank destination now means a blank
+        # destination forever, and scheduling later can't repair the paper.
+        raise contract_error(
+            409,
+            "dispatch_destination_required",
+            "La orden no tiene dirección de despacho: programe una entrega o complete la dirección del proyecto.",
+        )
     payload = {
         "note_code": note_code,
         "issued_at": timezone.now().isoformat(),
