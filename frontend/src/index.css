@@ -375,7 +375,7 @@ a:focus-visible {
   color: var(--theme-text-primary);
   display: grid;
   gap: 0.125rem 1rem;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   padding: 0.875rem 1rem;
   text-decoration: none;
 }
@@ -392,6 +392,7 @@ a:focus-visible {
 .dashboard-continue-name {
   font-size: 1.0625rem;
   font-weight: 600;
+  grid-column: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -399,6 +400,7 @@ a:focus-visible {
 
 .dashboard-continue-meta {
   color: var(--theme-text-secondary);
+  grid-column: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -408,6 +410,7 @@ a:focus-visible {
   align-self: center;
   color: var(--theme-accent);
   font-weight: 600;
+  grid-column: 2;
   grid-row: 2 / 4;
 }
 
@@ -417,6 +420,7 @@ a:focus-visible {
   }
 
   .dashboard-continue-cta {
+    grid-column: 1;
     grid-row: auto;
   }
 }
