@@ -376,7 +376,14 @@ export function ProjectImportsPanel({
                   {entry.status === "REVIEW_READY" && canWrite && (
                     <button
                       type="button"
-
+                      // A dirty review's edits live only in this component —
+                      // opening another import would silently discard them.
+                      disabled={reviewDirty && entry.id !== reviewId}
+                      title={
+                        reviewDirty && entry.id !== reviewId
+                          ? t("projects.importsReviewLocked")
+                          : undefined
+                      }
                       onClick={() => startReview(entry)}
                     >
                       {t("projects.importsReview")}

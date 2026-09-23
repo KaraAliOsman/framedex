@@ -465,9 +465,11 @@ def test_extract_vision_fallback_when_no_text(monkeypatch):
     )
     assert seen[0]["capability"] == "vision_ocr"
     assert seen[0]["operation_key"] == f"import:{row['id']}:vision"
-    # The provider receives a fetchable URL — a bare storage path is
-    # unreachable from outside the platform.
-    assert seen[0]["input_payload"]["document_url"].endswith("foto.png")
+    # Only stable identity enters the audited input — the provider adapter
+    # mints the signed URL at wire time so a job retry replays the paid OCR
+    # instead of colliding on a fresh URL's hash.
+    assert seen[0]["input_payload"]["storage_path"].endswith("foto.png")
+    assert "document_url" not in seen[0]["input_payload"]
     assert out["candidate_count"] == 1
 
 

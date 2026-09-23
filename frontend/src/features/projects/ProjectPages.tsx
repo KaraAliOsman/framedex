@@ -336,6 +336,7 @@ function ProjectWorkspace({
       flushSync(() => {
         setQuotationDirty(false);
         setPaymentsDirty(false);
+        setImportsDirty(false);
       });
       navigate(`/projects/${response.data.id}`);
     } catch (caught) {

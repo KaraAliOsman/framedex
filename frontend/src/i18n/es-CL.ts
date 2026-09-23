@@ -205,6 +205,8 @@ const messages = {
   "projects.importsCreated": "Fecha",
   "projects.importsActions": "Acciones",
   "projects.importsReview": "Revisar",
+  "projects.importsReviewLocked":
+    "Confirma o cierra la revisión abierta antes de revisar otra importación.",
   "projects.importsReviewHint":
     "Cada posición candidata necesita tu confirmación — solo lo que revises se convierte en vanos reales.",
   "projects.importsSystem": "Sistema",

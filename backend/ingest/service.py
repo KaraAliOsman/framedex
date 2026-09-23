@@ -218,13 +218,10 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
                 input_payload={
                     "file_name": row["file_name"],
                     "kind": row["kind"],
+                    # Stable document identity only — the provider adapter
+                    # mints a fresh signed URL at wire time, so the audited
+                    # input hash survives a job retry and replays the paid OCR.
                     "storage_path": row["storage_path"],
-                    # A signed URL (1h TTL) so the provider can fetch the
-                    # private object — a bare storage path is unreachable
-                    # from outside the platform.
-                    "document_url": SupabaseDocumentStorage().signed_url(
-                        row["storage_path"]
-                    ),
                 },
             )
             audit_id = vision["audit_id"]
