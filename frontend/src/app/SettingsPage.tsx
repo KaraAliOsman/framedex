@@ -5,12 +5,15 @@ import { ApiError } from "../api/apiMutator";
 import {
   projectPaymentIntegrationSave,
   projectPaymentIntegrationStatus,
+  siiCafRegister,
+  siiCafsList,
 } from "../api/generated/dekopen";
 import type {
   ApiUrlEnum,
   Membership,
   PaymentIntegrationStatus,
   RoleEnum,
+  SiiCaf,
 } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
@@ -155,6 +158,92 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
   );
 }
 
+function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
+  const [items, setItems] = useState<SiiCaf[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+
+  const load = useCallback(async () => {
+    try {
+      const response = await siiCafsList(requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setItems(response.data.items);
+    } catch {
+      setMessage({ text: t("settings.siiCafError"), error: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function upload(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
+      "input[type=file]",
+    );
+    const file = input?.files?.[0];
+    if (!file) return;
+    const cafXml = await file.text();
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await siiCafRegister({ caf_xml: cafXml }, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (input) input.value = "";
+      setMessage({ text: t("settings.siiCafUploaded"), error: false });
+      await load();
+    } catch {
+      setMessage({ text: t("settings.siiCafError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-card">
+      <h2 className="eyebrow">{t("settings.siiTitle")}</h2>
+      {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
+      {items.length === 0 ? (
+        <p className="settings-hint">{t("settings.siiCafEmpty")}</p>
+      ) : (
+        <table className="payments-table">
+          <thead>
+            <tr>
+              <th>{t("settings.siiCafType")}</th>
+              <th>{t("settings.siiCafRange")}</th>
+              <th>{t("settings.siiCafUsed")}</th>
+              <th>{t("settings.siiCafRemaining")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((caf) => (
+              <tr key={caf.id}>
+                <td>{`DTE-${caf.tipo_dte}`}</td>
+                <td>{`${caf.folio_desde}–${caf.folio_hasta}`}</td>
+                <td>{caf.folio_actual < caf.folio_desde ? "—" : caf.folio_actual}</td>
+                <td>{caf.remaining}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <form className="payments-form" onSubmit={upload}>
+        <label>
+          {t("settings.siiCafFile")}
+          <input type="file" accept=".xml,text/xml" required />
+        </label>
+        <div className="payments-form-actions">
+          <button type="submit" className="primary-action" disabled={busy}>
+            {t("settings.siiCafUpload")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function SettingsPage(): JSX.Element {
   const auth = useAuthSession();
   const { theme, toggleTheme } = useTheme();
@@ -223,6 +312,8 @@ export function SettingsPage(): JSX.Element {
         )}
 
         {isOwner && org !== undefined && <FlowIntegrationCard orgId={org.id} />}
+
+        {isOwner && org !== undefined && <SiiCafCard orgId={org.id} />}
 
         {isOwner && (
           <div className="settings-card">

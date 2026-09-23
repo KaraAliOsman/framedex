@@ -26,13 +26,16 @@ from documents.repository import documentary_backend
 from documents.renderers import render_project_invoice
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import sii
 
 logger = logging.getLogger(__name__)
 
 SIGNED_URL_TTL_SECONDS = 600
 
 
-def _invoice_public(row, credit_note: dict | None = None) -> dict:
+def _invoice_public(
+    row, credit_note: dict | None = None, dte: dict | None = None
+) -> dict:
     return {
         "id": str(row["id"]),
         "invoice_code": row["invoice_code"],
@@ -41,6 +44,7 @@ def _invoice_public(row, credit_note: dict | None = None) -> dict:
         if isinstance(row["payload_json"], dict)
         else json.loads(row["payload_json"]).get("revision_code"),
         "credit_note": credit_note,
+        "dte": dte,
         "created_at": row["created_at"].isoformat()
         if hasattr(row["created_at"], "isoformat")
         else row["created_at"],
@@ -265,12 +269,14 @@ def _purge_unreferenced_invoice(*, org_id: UUID, object_key: str) -> None:
 def list_invoices(*, org_id: UUID, project_id: UUID) -> list[dict]:
     with documentary_backend():
         credit_notes = _credit_notes_by_invoice(org_id, project_id)
+        dtes = sii.dtes_by_invoice(org_id=org_id, project_id=project_id)
         return [
             _invoice_public(
                 row,
                 _credit_note_public(credit_notes[str(row["id"])], row)
                 if str(row["id"]) in credit_notes
                 else None,
+                dtes.get(str(row["id"])),
             )
             for row in rows(
                 "SELECT * FROM public.project_invoices "

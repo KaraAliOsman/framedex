@@ -26,6 +26,7 @@ from projects import (
     payments,
     receipts,
     service,
+    sii,
 )
 from projects.serializers import (
     ClientListResponseSerializer,
@@ -45,8 +46,13 @@ from projects.serializers import (
     ProjectCreditNoteAccessSerializer,
     ProjectCreditNoteEmitSerializer,
     ProjectCreditNoteSerializer,
+    ProjectDteAccessSerializer,
+    ProjectDteSerializer,
     ProjectInvoiceAccessSerializer,
     ProjectInvoiceSerializer,
+    SiiCafListSerializer,
+    SiiCafSerializer,
+    SiiCafUploadSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
     DesignAssistRequestSerializer,
@@ -516,6 +522,76 @@ class ProjectCreditNoteAccessView(APIView):
                     project_id=project_id,
                     credit_note_id=credit_note_id,
                 )
+            )
+
+
+class ProjectInvoiceDteView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_invoice_dte_emit",
+        request=None,
+        responses={201: ProjectDteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                sii.emit_dte(
+                    org_id=org,
+                    project=project,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_invoice_dte_access",
+        responses={200: ProjectDteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, invoice_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii.dte_access(
+                    org_id=org, project_id=project_id, invoice_id=invoice_id
+                )
+            )
+
+
+class SiiCafsView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="sii_cafs_list",
+        responses={200: SiiCafListSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response({"items": sii.list_cafs(org_id=org)})
+
+    @extend_schema(
+        operation_id="sii_caf_register",
+        request=SiiCafUploadSerializer,
+        responses={201: SiiCafSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request):
+        data = validate(SiiCafUploadSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            return response(
+                sii.register_caf(
+                    org_id=org,
+                    actor_id=token.user_id,
+                    caf_xml=data["caf_xml"],
+                    giro_emis=data.get("giro_emis"),
+                    dir_origen=data.get("dir_origen"),
+                    cmna_origen=data.get("cmna_origen"),
+                ),
+                status=201,
             )
 
 

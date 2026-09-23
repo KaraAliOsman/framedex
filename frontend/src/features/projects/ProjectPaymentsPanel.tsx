@@ -4,6 +4,8 @@ import {
   projectCreditNoteAccess,
   projectCreditNoteEmit,
   projectInvoiceAccess,
+  projectInvoiceDteAccess,
+  projectInvoiceDteEmit,
   projectInvoiceEmit,
   projectPaymentsList,
   projectPaymentsRecord,
@@ -235,6 +237,48 @@ export function ProjectPaymentsPanel({
     } catch {
       tab.close();
       if (generation.current === current) setMessage(t("projects.invoiceOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function emitDte(invoice: ProjectInvoice): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEmit(projectId, invoice.id, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openDte(invoice: ProjectInvoice): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.dteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.dteOpenError"));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -489,6 +533,17 @@ export function ProjectPaymentsPanel({
                       ) : (
                         <span className="production-chip">{t("projects.invoiceStatusIssued")}</span>
                       )}
+                      {invoice.dte && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.dteStatus")} · folio ${invoice.dte.folio}`}
+                          onClick={() => void openDte(invoice)}
+                          disabled={busy}
+                        >
+                          {`${t("projects.dteStatus")} · ${invoice.dte.folio}`}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button
@@ -498,6 +553,11 @@ export function ProjectPaymentsPanel({
                       >
                         {t("projects.invoiceOpen")}
                       </button>
+                      {canWrite && !invoice.credit_note && !invoice.dte && (
+                        <button type="button" onClick={() => void emitDte(invoice)} disabled={busy}>
+                          {t("projects.dteEmit")}
+                        </button>
+                      )}
                       {canWrite && !invoice.credit_note && (
                         <button
                           type="button"

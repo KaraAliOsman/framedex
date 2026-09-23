@@ -217,18 +217,55 @@ class ProjectCreditNoteEmitSerializer(serializers.Serializer):
     reason = serializers.CharField(required=False, allow_blank=True)
 
 
+class ProjectDteSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    invoice_id = serializers.UUIDField()
+    dte_type = serializers.IntegerField()
+    folio = serializers.IntegerField()
+    issued_at = serializers.CharField()
+
+
+class ProjectDteAccessSerializer(ProjectDteSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
 class ProjectInvoiceSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     invoice_code = serializers.CharField()
     project_id = serializers.UUIDField()
     revision_code = serializers.CharField(allow_null=True)
     credit_note = ProjectCreditNoteSerializer(allow_null=True)
+    dte = ProjectDteSerializer(allow_null=True, required=False)
     created_at = serializers.CharField()
 
 
 class ProjectInvoiceAccessSerializer(ProjectInvoiceSerializer):
     signed_url = serializers.CharField()
     expires_in = serializers.IntegerField()
+
+
+class SiiCafSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    tipo_dte = serializers.IntegerField()
+    folio_desde = serializers.IntegerField()
+    folio_hasta = serializers.IntegerField()
+    folio_actual = serializers.IntegerField()
+    remaining = serializers.IntegerField()
+    rut_emisor = serializers.CharField()
+    razon_social = serializers.CharField()
+    created_at = serializers.CharField()
+
+
+class SiiCafListSerializer(serializers.Serializer):
+    items = SiiCafSerializer(many=True)
+
+
+class SiiCafUploadSerializer(serializers.Serializer):
+    caf_xml = serializers.CharField()
+    giro_emis = serializers.CharField(required=False, allow_blank=True)
+    dir_origen = serializers.CharField(required=False, allow_blank=True)
+    cmna_origen = serializers.CharField(required=False, allow_blank=True)
 
 
 class PaymentsSummarySerializer(serializers.Serializer):

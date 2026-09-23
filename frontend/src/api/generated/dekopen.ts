@@ -132,6 +132,8 @@ import type {
   ProjectCreditNote,
   ProjectCreditNoteAccess,
   ProjectCreditNoteEmitRequest,
+  ProjectDte,
+  ProjectDteAccess,
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
@@ -143,6 +145,9 @@ import type {
   SendOrderRequestRequest,
   ShareQuoteResponse,
   SignedAccessResponse,
+  SiiCaf,
+  SiiCafList,
+  SiiCafUploadRequest,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -8612,6 +8617,158 @@ export const projectCreditNoteEmit = async (
   );
 };
 
+export type projectInvoiceDteAccessResponse200 = {
+  data: ProjectDteAccess;
+  status: 200;
+};
+
+export type projectInvoiceDteAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteAccessResponseSuccess = projectInvoiceDteAccessResponse200 & {
+  headers: Headers;
+};
+export type projectInvoiceDteAccessResponseError = (
+  | projectInvoiceDteAccessResponse400
+  | projectInvoiceDteAccessResponse401
+  | projectInvoiceDteAccessResponse403
+  | projectInvoiceDteAccessResponse404
+  | projectInvoiceDteAccessResponse409
+  | projectInvoiceDteAccessResponse422
+  | projectInvoiceDteAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteAccessResponse =
+  projectInvoiceDteAccessResponseSuccess | projectInvoiceDteAccessResponseError;
+
+export const getProjectInvoiceDteAccessUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte/`;
+};
+
+export const projectInvoiceDteAccess = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteAccessResponse> => {
+  return apiMutator<projectInvoiceDteAccessResponse>(
+    getProjectInvoiceDteAccessUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectInvoiceDteEmitResponse201 = {
+  data: ProjectDte;
+  status: 201;
+};
+
+export type projectInvoiceDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteEmitResponseSuccess = projectInvoiceDteEmitResponse201 & {
+  headers: Headers;
+};
+export type projectInvoiceDteEmitResponseError = (
+  | projectInvoiceDteEmitResponse400
+  | projectInvoiceDteEmitResponse401
+  | projectInvoiceDteEmitResponse403
+  | projectInvoiceDteEmitResponse404
+  | projectInvoiceDteEmitResponse409
+  | projectInvoiceDteEmitResponse422
+  | projectInvoiceDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteEmitResponse =
+  projectInvoiceDteEmitResponseSuccess | projectInvoiceDteEmitResponseError;
+
+export const getProjectInvoiceDteEmitUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte/`;
+};
+
+export const projectInvoiceDteEmit = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteEmitResponse> => {
+  return apiMutator<projectInvoiceDteEmitResponse>(
+    getProjectInvoiceDteEmitUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type projectPaymentLinksListResponse200 = {
   data: PaymentLinksResponse;
   status: 200;
@@ -10300,4 +10457,155 @@ export const purchasingCreateEligibility = async (
       body: JSON.stringify(eligibilityRequestRequest),
     },
   );
+};
+
+export type siiCafsListResponse200 = {
+  data: SiiCafList;
+  status: 200;
+};
+
+export type siiCafsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCafsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCafsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCafsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCafsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCafsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCafsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCafsListResponseSuccess = siiCafsListResponse200 & {
+  headers: Headers;
+};
+export type siiCafsListResponseError = (
+  | siiCafsListResponse400
+  | siiCafsListResponse401
+  | siiCafsListResponse403
+  | siiCafsListResponse404
+  | siiCafsListResponse409
+  | siiCafsListResponse422
+  | siiCafsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCafsListResponse = siiCafsListResponseSuccess | siiCafsListResponseError;
+
+export const getSiiCafsListUrl = () => {
+  return `/api/v1/sii/cafs/`;
+};
+
+export const siiCafsList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCafsListResponse> => {
+  return apiMutator<siiCafsListResponse>(getSiiCafsListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type siiCafRegisterResponse201 = {
+  data: SiiCaf;
+  status: 201;
+};
+
+export type siiCafRegisterResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCafRegisterResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCafRegisterResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCafRegisterResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCafRegisterResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCafRegisterResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCafRegisterResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCafRegisterResponseSuccess = siiCafRegisterResponse201 & {
+  headers: Headers;
+};
+export type siiCafRegisterResponseError = (
+  | siiCafRegisterResponse400
+  | siiCafRegisterResponse401
+  | siiCafRegisterResponse403
+  | siiCafRegisterResponse404
+  | siiCafRegisterResponse409
+  | siiCafRegisterResponse422
+  | siiCafRegisterResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCafRegisterResponse = siiCafRegisterResponseSuccess | siiCafRegisterResponseError;
+
+export const getSiiCafRegisterUrl = () => {
+  return `/api/v1/sii/cafs/`;
+};
+
+export const siiCafRegister = async (
+  siiCafUploadRequest: SiiCafUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCafRegisterResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<siiCafRegisterResponse>(getSiiCafRegisterUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(siiCafUploadRequest),
+  });
 };
