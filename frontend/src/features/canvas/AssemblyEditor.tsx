@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
 
@@ -166,6 +166,7 @@ function ModuleInspector({
   mullionSkus,
   busy,
   commit,
+  onAskAssistant,
 }: {
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
@@ -176,6 +177,7 @@ function ModuleInspector({
   mullionSkus: Partial<Record<SplitType, string>>;
   busy: boolean;
   commit(next: ProductJson): void;
+  onAskAssistant?(): void;
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY";
@@ -333,6 +335,13 @@ function ModuleInspector({
           </label>
         )}
       </details>
+      {onAskAssistant && (
+        <div className="inspector-actions">
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
@@ -344,6 +353,7 @@ function CouplingInspector({
   couplerSkus,
   busy,
   commit,
+  onAskAssistant,
 }: {
   coupling: CouplingJson;
   product: ProductJson;
@@ -351,6 +361,7 @@ function CouplingInspector({
   couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
+  onAskAssistant?(): void;
 }): JSX.Element {
   return (
     <section className="assembly-inspector" aria-label={t("assembly.coupling")}>
@@ -394,6 +405,11 @@ function CouplingInspector({
         >
           {t("assembly.straighten")}
         </button>
+        {onAskAssistant && (
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        )}
       </div>
     </section>
   );
@@ -454,10 +470,39 @@ export function AssemblyEditor({
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(true);
   const [planOpen, setPlanOpen] = useState(true);
+  /** Queued prompt for the assistant — "" means focus only. Every "…with
+   * DEKOPEN" affordance funnels here; the human always confirms. */
+  const [assistantDraft, setAssistantDraft] = useState<string | null>(null);
+  const assistantSectionRef = useRef<HTMLDivElement>(null);
+  /** Canvas context menu — cursor position, closed on action/outside/Escape. */
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     onEvaluationChange(evaluation);
   }, [evaluation, onEvaluationChange]);
+
+  /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
+   * hand it a prompt draft — "" focuses the field untouched. */
+  function askAssistant(prompt: string): void {
+    assistantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setAssistantDraft(prompt);
+  }
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function dismiss(): void {
+      setContextMenu(null);
+    }
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") dismiss();
+    }
+    window.addEventListener("mousedown", dismiss);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", dismiss);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [contextMenu]);
 
   function commit(next: ProductJson): void {
     if (next === product) return;
@@ -519,6 +564,7 @@ export function AssemblyEditor({
       commit,
       select,
       setTool,
+      focusAssistant: () => askAssistant(""),
       undo: undoHistory,
       redo: redoHistory,
       canUndo,
@@ -720,7 +766,13 @@ export function AssemblyEditor({
           />
         </div>
       )}
-      <div className="assembly-canvas">
+      <div
+        className="assembly-canvas"
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setContextMenu({ x: event.clientX, y: event.clientY });
+        }}
+      >
         <CanvasViewport contentBox={frontBox} selectionBox={selectionBox} status={statusText}>
           <ProductFrontContent
             product={product}
@@ -783,6 +835,48 @@ export function AssemblyEditor({
           </button>
         )}
       </div>
+      {contextMenu && (
+        <div
+          className="context-menu"
+          role="menu"
+          style={{
+            left: Math.min(contextMenu.x, window.innerWidth - 240),
+            top: Math.min(contextMenu.y, window.innerHeight - 320),
+          }}
+          onMouseDown={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          {surface.commands
+            .filter((command) => !command.params?.length)
+            .map((command) => (
+              <button
+                key={command.id}
+                type="button"
+                role="menuitem"
+                className="context-menu__item"
+                onClick={() => {
+                  command.run({});
+                  setContextMenu(null);
+                }}
+              >
+                {command.title}
+              </button>
+            ))}
+          {selectedLabel && (
+            <button
+              type="button"
+              role="menuitem"
+              className="context-menu__item context-menu__item--assistant"
+              onClick={() => {
+                askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel));
+                setContextMenu(null);
+              }}
+            >
+              {t("assistant.modifyWith")}
+            </button>
+          )}
+        </div>
+      )}
       <div className="assembly-side">
         {selectedModule ? (
           <ModuleInspector
@@ -795,6 +889,11 @@ export function AssemblyEditor({
             mullionSkus={mullionSkus}
             busy={busy}
             commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
           />
         ) : selectedCoupling ? (
           <CouplingInspector
@@ -804,6 +903,11 @@ export function AssemblyEditor({
             couplerSkus={couplerSkus}
             busy={busy}
             commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
           />
         ) : (
           !positionPanel && (
@@ -814,14 +918,18 @@ export function AssemblyEditor({
         )}
         {positionPanel}
         {product && (
-          <AssistantPanel
-            organizationId={organizationId}
-            positionId={positionId}
-            systemId={inputs.systemId}
-            product={product}
-            disabled={disabled}
-            onApply={(ops) => commit(applyDesignOps(product, ops))}
-          />
+          <div ref={assistantSectionRef}>
+            <AssistantPanel
+              organizationId={organizationId}
+              positionId={positionId}
+              systemId={inputs.systemId}
+              product={product}
+              disabled={disabled}
+              draft={assistantDraft}
+              onDraftHandled={() => setAssistantDraft(null)}
+              onApply={(ops) => commit(applyDesignOps(product, ops))}
+            />
+          </div>
         )}
         {issues.length > 0 && (
           <ul className="assembly-issues" aria-label={t("assembly.issues")}>
@@ -838,6 +946,14 @@ export function AssemblyEditor({
                   }}
                 >
                   {issueText(issue)}
+                </button>
+                <button
+                  type="button"
+                  className="issue-fix"
+                  title={t("assistant.fixWith")}
+                  onClick={() => askAssistant(`${t("assistant.fixPrompt")} ${issueText(issue)}`)}
+                >
+                  {t("assistant.fixWith")}
                 </button>
               </li>
             ))}

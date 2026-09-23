@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAssist } from "../../api/generated/dekopen";
@@ -27,6 +27,8 @@ export function AssistantPanel({
   systemId,
   product,
   disabled,
+  draft,
+  onDraftHandled,
   onApply,
 }: {
   organizationId: string;
@@ -34,12 +36,30 @@ export function AssistantPanel({
   systemId: string | null;
   product: ProductJson;
   disabled: boolean;
+  /** A queued prompt from an external affordance ("Fix with DEKOPEN",
+   * context menus): "" focuses the field, text replaces the draft. The
+   * human always confirms — nothing here calls the provider on its own. */
+  draft: string | null;
+  onDraftHandled(): void;
   onApply(ops: DesignOp[]): void;
 }): JSX.Element {
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [detailsOpen, setDetailsOpen] = useState(true);
+
+  useEffect(() => {
+    if (draft === null) return;
+    if (draft) setPrompt(draft);
+    setMessage("");
+    setPreview(null);
+    setDetailsOpen(true);
+    // Focus after the (possibly closed) details re-renders open.
+    requestAnimationFrame(() => promptRef.current?.focus());
+    onDraftHandled();
+  }, [draft, onDraftHandled]);
   /** One operation key per (prompt, product, system) — a retry after a lost
    * response replays the committed call instead of debiting twice. */
   const operationKey = useRef<{
@@ -118,13 +138,18 @@ export function AssistantPanel({
   }
 
   return (
-    <details className="inspector-section assistant-panel" open>
+    <details
+      className="inspector-section assistant-panel"
+      open={detailsOpen}
+      onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+    >
       <summary>{t("assistant.title")}</summary>
       {!positionId ? (
         <p className="assembly-hint">{t("assistant.saveFirst")}</p>
       ) : (
         <>
           <textarea
+            ref={promptRef}
             className="assistant-panel__prompt"
             rows={2}
             placeholder={t("assistant.prompt")}

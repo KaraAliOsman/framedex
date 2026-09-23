@@ -1379,7 +1379,12 @@ const messages = {
   "production.labelsPieces": "Piezas",
   "production.packingEmpty": "Genera el manifiesto de packing para etiquetar las unidades.",
 
+  "cmd.askDekopen": "Preguntar a DEKOPEN",
   "assistant.title": "Asistente de diseño",
+  "assistant.fixWith": "Corregir con DEKOPEN",
+  "assistant.fixPrompt": "Corrige este problema:",
+  "assistant.modifyWith": "Modificar con DEKOPEN",
+  "assistant.modifyPrompt": "Modifica {target}:",
   "assistant.prompt": "Describe el cambio: «3 módulos correderas de 2400 mm de ancho»",
   "assistant.generate": "Generar",
   "assistant.generating": "Generando…",
