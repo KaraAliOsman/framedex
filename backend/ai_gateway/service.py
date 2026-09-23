@@ -51,7 +51,12 @@ def _response(*, audit: dict, capability: str, route: dict, result: dict) -> dic
 
 
 def _replay(
-    *, org_id: UUID, operation_key: str, capability: str, input_hash: str
+    *,
+    org_id: UUID,
+    operation_key: str,
+    capability: str,
+    tool_name: str | None,
+    input_hash: str,
 ) -> dict | None:
     """The stored response of a completed operation, or None when no audit won
     this key. The org row lock (reconcile FOR UPDATE) makes the winner's commit
@@ -65,7 +70,11 @@ def _replay(
         return None
     audit = found[0]
     envelope = audit["output_payload"] or {}
-    if envelope.get("capability") != capability or audit["state_hash_before"] != input_hash:
+    if (
+        envelope.get("capability") != capability
+        or audit["state_hash_before"] != input_hash
+        or (audit["tool_name"] or capability) != (tool_name or capability)
+    ):
         raise contract_error(
             409,
             "ai_operation_conflict",
@@ -132,6 +141,7 @@ def invoke(
             org_id=org_id,
             operation_key=operation_key,
             capability=capability,
+            tool_name=tool_name,
             input_hash=input_hash,
         )
         if replay is not None:
@@ -193,6 +203,7 @@ def invoke(
                 org_id=org_id,
                 operation_key=operation_key,
                 capability=capability,
+                tool_name=tool_name,
                 input_hash=input_hash,
             )
         wallet.debit(org_id, credits, audit["id"])

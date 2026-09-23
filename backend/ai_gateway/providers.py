@@ -9,10 +9,12 @@ performs network I/O."""
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import time
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -37,6 +39,18 @@ class HttpProvider:
         self.base_url = os.environ.get(f"AI_GATEWAY_{provider}_BASE_URL", "").rstrip("/")
         if not self.api_key or not self.base_url:
             raise ProviderError("ai_provider_unavailable")
+        # Provider URLs are operator config, but a compromised value must not
+        # turn the gateway into an authenticated proxy for internal services.
+        parsed = urlparse(self.base_url)
+        if parsed.scheme != "https" or not parsed.hostname:
+            raise ProviderError("ai_provider_unavailable")
+        try:
+            address = ipaddress.ip_address(parsed.hostname)
+        except ValueError:
+            pass
+        else:
+            if not address.is_global:
+                raise ProviderError("ai_provider_unavailable")
 
     def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
         started = time.monotonic()
@@ -60,7 +74,9 @@ class HttpProvider:
             usage = body.get("usage") or {}
             if not isinstance(usage, dict):
                 raise TypeError("provider usage is not an object")
-            output = body.get("output") or body.get("text") or ""
+            output = body.get("output") if "output" in body else body.get("text")
+            if not isinstance(output, str):
+                raise TypeError("provider output is not a string")
             tokens_prompt = int(usage.get("prompt_tokens") or 0)
             tokens_completion = int(usage.get("completion_tokens") or 0)
         except ProviderError:

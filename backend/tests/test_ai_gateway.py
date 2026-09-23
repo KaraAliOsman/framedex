@@ -397,3 +397,67 @@ def test_http_provider_caps_body_size(monkeypatch):
             route=_route(), capability="nlp_command", input_payload={}
         )
     assert failure.value.code == "ai_provider_output_too_large"
+
+
+def test_replay_with_different_tool_name_conflicts(monkeypatch):
+    stored = {"capability": "nlp_command", "output": "respuesta"}
+
+    def fake_rows(sql, params=None):
+        if "FROM public.ai_audit_logs" in sql:
+            return [
+                {
+                    "id": uuid4(),
+                    "tool_name": "editor_command",
+                    "state_hash_before": service._input_hash({"x": 1}),
+                    "output_payload": stored,
+                }
+            ]
+        return []
+
+    _patch_env(monkeypatch, rows_impl=fake_rows)
+    with pytest.raises(APIException) as failure:
+        service.invoke(
+            org_id=uuid4(),
+            user_id=uuid4(),
+            capability="nlp_command",
+            operation_key="op-1",
+            input_payload={"x": 1},
+            tool_name="catalog_import",
+        )
+    assert failure.value.contract_code == "ai_operation_conflict"
+
+
+def test_http_provider_rejects_internal_urls(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_INT_API_KEY", "k")
+    for bad in ("http://provider.example", "https://127.0.0.1", "https://10.0.0.4",
+                "https://[fd00::1]", "provider.example"):
+        monkeypatch.setenv("AI_GATEWAY_INT_BASE_URL", bad)
+        with pytest.raises(ProviderError) as failure:
+            HttpProvider(provider="INT")
+        assert failure.value.code == "ai_provider_unavailable", bad
+
+
+def test_non_string_provider_output_is_a_provider_error(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    class _Response:
+        status_code = 200
+        content = b'{"output": {"answer": "x"}}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": {"answer": "x"}, "usage": {"prompt_tokens": 3}}
+
+    monkeypatch.setenv("AI_GATEWAY_OBJ_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_OBJ_BASE_URL", "https://p.example")
+    monkeypatch.setattr("httpx.post", lambda *a, **k: _Response())
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="OBJ").invoke(
+            route=_route(), capability="nlp_command", input_payload={}
+        )
+    assert failure.value.code == "ai_provider_error"
