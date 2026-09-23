@@ -149,7 +149,7 @@ export function AssistantPanel({
               {preview.ops.length > 0 && (
                 <ul className="assistant-panel__ops">
                   {preview.ops.map((op, index) => (
-                    <li key={`op-${index}`}>{describeDesignOp(op)}</li>
+                    <li key={`op-${index}`}>{describeDesignOp(op, preview.snapshot)}</li>
                   ))}
                 </ul>
               )}

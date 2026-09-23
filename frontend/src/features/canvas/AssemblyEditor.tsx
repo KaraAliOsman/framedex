@@ -8,7 +8,10 @@ import type {
   ProductIssue,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { resolveCommands, useRegisterCommands } from "../commands/registry";
+import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
+import { assemblyCommands } from "./assemblyCommands";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
@@ -51,17 +54,7 @@ import {
   type CouplingJson,
   type ProductJson,
 } from "./productEditing";
-
-const OPENING_OPTIONS = [
-  ["FIXED", "intent.fixed"],
-  ["TURN_LEFT", "intent.turnLeft"],
-  ["TURN_RIGHT", "intent.turnRight"],
-  ["TILT_TURN_LEFT", "intent.tiltLeft"],
-  ["TILT_TURN_RIGHT", "intent.tiltRight"],
-  ["AWNING", "intent.awning"],
-  ["SLIDING_2L", "intent.sliding"],
-  ["DOOR_ENTRY", "intent.door"],
-] as const;
+import { OPENING_OPTIONS } from "./openings";
 
 const ISSUE_KEYS: Record<string, TranslationKey> = {
   couplings_count_mismatch: "assembly.issue.couplingsCountMismatch",
@@ -406,8 +399,6 @@ function CouplingInspector({
   );
 }
 
-type EditorTool = "select" | "split_v" | "split_h";
-
 function ToolIcon({ name }: { name: string }): JSX.Element {
   const strokes: Record<string, JSX.Element> = {
     select: <path d="M4 2l10 5.5-4.2 1.2L12 13l-2 1.4-2.2-4.3-3.8 2.9z" />,
@@ -452,6 +443,10 @@ export function AssemblyEditor({
   const commitInputs = useCanvasStore((state) => state.commitInputs);
   const selection = useCanvasStore((state) => state.selection);
   const select = useCanvasStore((state) => state.select);
+  const undoHistory = useCanvasStore((state) => state.undo);
+  const redoHistory = useCanvasStore((state) => state.redo);
+  const canUndo = useCanvasStore((state) => state.past.length > 0);
+  const canRedo = useCanvasStore((state) => state.future.length > 0);
   const product = inputs.product;
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
@@ -494,15 +489,64 @@ export function AssemblyEditor({
   // only an actual in-flight evaluation locks editing.
   const evaluating = isPending && inputs.systemId !== null;
   const busy = disabled || evaluating;
-  const mullionSkus: Partial<Record<SplitType, string>> = {
-    SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
-    SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
-  };
+  const mullionSkus: Partial<Record<SplitType, string>> = useMemo(
+    () => ({
+      SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
+      SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
+    }),
+    [options],
+  );
 
   const front = frontLayout(product);
   const frontBox = frontBounds(product);
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
   const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
+
+  // The shared command registry: palette, keyboard and AI all dispatch the
+  // same typed commands; `commit` inside is the single undoable transaction.
+  const commandCtx = useMemo<CommandContext>(
+    () => ({
+      product,
+      selection,
+      catalog: {
+        glassThicknesses: options?.glazing_thicknesses ?? [],
+        glassSkus,
+        couplerSkus,
+        panelSkus,
+        mullionSkus,
+      },
+      disabled: busy,
+      commit,
+      select,
+      setTool,
+      undo: undoHistory,
+      redo: redoHistory,
+      canUndo,
+      canRedo,
+    }),
+    // `commit` is re-declared per render and always sees current inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      product,
+      selection,
+      options,
+      glassSkus,
+      couplerSkus,
+      panelSkus,
+      mullionSkus,
+      busy,
+      select,
+      undoHistory,
+      redoHistory,
+      canUndo,
+      canRedo,
+    ],
+  );
+  const surface = useMemo(
+    () => ({ commands: resolveCommands(commandCtx, assemblyCommands(commandCtx)) }),
+    [commandCtx],
+  );
+  useRegisterCommands(surface);
   const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
   const selectedLabel = selection?.startsWith("coupling-")
     ? null
