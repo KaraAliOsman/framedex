@@ -29,6 +29,7 @@ const eventLabel: Record<string, TranslationKey> = {
   STEP_STARTED: "production.eventStepStarted",
   STEP_COMPLETED: "production.eventStepCompleted",
   STEP_BLOCKED: "production.eventStepBlocked",
+  STEP_UNBLOCKED: "production.eventStepUnblocked",
   NOTE: "production.eventNote",
   WO_HOLD: "production.eventHold",
   WO_REMADE: "production.eventRemade",
