@@ -155,9 +155,11 @@ _NUMBER_WORDS = {
     "once": 11,
     "doce": 12,
 }
-# A leading '-' binds to the number only when it cannot be range/subtraction
-# punctuation: 'ángulo -30' declares -30, while '2400-1500' keeps both
-# endpoints positive (the '-' sits against a digit and is ignored).
+# '-' is a sign only when it does not subtract from a preceding number —
+# spaced or not: '30-20', '30 -20' and '30 - 20' all keep {30, 20} positive,
+# while 'ángulo -30' declares -30. Ranges are normalized first because a
+# regex lookbehind cannot see past whitespace.
+_RANGE_DASH_RE = re.compile(r"(\d)\s+-\s*(?=\d)")
 _MEASURE_RE = re.compile(
     r"(?<![\d.,])(-?\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
     re.IGNORECASE,
@@ -192,6 +194,7 @@ def _declared_values(prompt: str) -> set[Decimal]:
     measurement the request did not contain. Unit-suffixed measures normalize
     to mm, bare numbers count literally, number words cover counts."""
     values: set[Decimal] = set()
+    prompt = _RANGE_DASH_RE.sub(r"\1-", prompt)
     for token, unit in _MEASURE_RE.findall(prompt):
         number = _parse_number(token)
         if number is None:

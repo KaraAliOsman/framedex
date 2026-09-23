@@ -489,3 +489,19 @@ def test_signed_angle_declares_the_signed_value(monkeypatch):
     )
     assert out["ops"] == [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]
     assert out["rejected"] == []
+
+
+def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
+    """A '-' subtracting from a preceding number is range punctuation however
+    it is spaced; only a non-subtraction '-' signs the value."""
+    _patch_invoke(monkeypatch, {"ops": []})
+    values = design_assist._declared_values
+    assert Decimal("-30") in values("ángulo -30 grados")
+    for prompt in (
+        "ángulo entre 30 -20 grados",
+        "ángulo entre 30 - 20 grados",
+        "ángulo 30-20 grados",
+    ):
+        declared = values(prompt)
+        assert Decimal("-20") not in declared
+        assert Decimal("20") in declared and Decimal("30") in declared
