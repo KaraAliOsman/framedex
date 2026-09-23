@@ -43,6 +43,8 @@ SIGNED_URL_TTL_SECONDS = 600
 DTE_FACTURA = 33
 DTE_CREDIT_NOTE = 61
 DTE_GUIA = 52
+IND_TRASLADO_VENTA = 1
+IND_TRASLADO_INTERNO = 5
 _RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
 
 
@@ -451,8 +453,9 @@ def _render_dte(
 ) -> str:
     """Minimal DTE skeleton shared by 33/52/61: Encabezado + one Detalle +
     the TED (DD + FRMT SHA1withRSA stamped by the CAF key). A None deal
-    emits the amount-less shape a guía de despacho carries — no Totales,
-    MNT 0, QtyItem in place of MontoItem."""
+    emits the amount-less shape a guía de despacho carries: Totales and
+    MontoItem stay present with 0 — the DTE schema requires them — and
+    QtyItem carries the moved units."""
     if deal is not None:
         # A DTE is a peso document: a foreign-currency deal would lose its
         # currency entirely, so it refuses here rather than emitting wrong
@@ -537,7 +540,7 @@ def _render_dte(
             f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
             f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales>"
             if deal is not None
-            else ""
+            else f"<Totales><MntTotal>{total}</MntTotal></Totales>"
         )
         + "</Encabezado>"
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
@@ -546,11 +549,7 @@ def _render_dte(
             if qty_item is not None
             else ""
         )
-        + (
-            f"<MontoItem>{neto}</MontoItem>"
-            if deal is not None
-            else ""
-        )
+        + f"<MontoItem>{neto}</MontoItem>"
         + f"</Detalle>{referencia}"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
         f"<TmstFirma>{tsted}</TmstFirma></Documento></DTE>"
@@ -1084,17 +1083,9 @@ def dtes_by_credit_note(*, org_id: UUID, project_id: UUID) -> dict:
     }
 
 
-def _receptor_guia(project: dict) -> tuple[str, str, str]:
-    """Receptor of a guía electrónica: the goods ship to the sealed
-    destination, so DirRecep is the delivery address — never the
-    commercial header address."""
-    receptor = _rut_normalize(project.get("client_rut"))
-    if receptor is None:
-        raise contract_error(
-            422,
-            "sii_receptor_missing",
-            "La guía no tiene un RUT de receptor válido para timbrar.",
-        )
+def _guia_destination(project: dict) -> str:
+    """The DirRecep element of a guía: the destination sealed into the
+    dispatch note at dispatch time."""
     address = str(project.get("delivery_address") or "").strip()
     if not address:
         raise contract_error(
@@ -1102,10 +1093,36 @@ def _receptor_guia(project: dict) -> tuple[str, str, str]:
             "sii_receptor_incomplete",
             "La guía no tiene dirección de entrega para timbrar.",
         )
+    return f"<DirRecep>{escape(address)}</DirRecep>"
+
+
+def _receptor_guia(project: dict) -> tuple[str, str, str]:
+    """Receptor of a guía de venta: the customer the goods ship to, so
+    DirRecep is the delivery address — never the commercial header
+    address."""
+    receptor = _rut_normalize(project.get("client_rut"))
+    if receptor is None:
+        raise contract_error(
+            422,
+            "sii_receptor_missing",
+            "La guía no tiene un RUT de receptor válido para timbrar.",
+        )
     return (
         receptor,
         str(project.get("client_name") or "Cliente").strip(),
-        f"<DirRecep>{escape(address)}</DirRecep>",
+        _guia_destination(project),
+    )
+
+
+def _receptor_guia_interno(project: dict, caf: dict) -> tuple[str, str, str]:
+    """Receptor of a traslado interno (IndTraslado=5): goods move between
+    the issuer's own premises, so the taxpayer receiving them is the
+    issuer itself — RUT and razón social come from the CAF. The
+    destination is still the address sealed in the guía."""
+    return (
+        str(caf["rut_emisor"]),
+        str(caf["razon_social"]).strip() or "Emisor",
+        _guia_destination(project),
     )
 
 
@@ -1119,7 +1136,11 @@ def _dte_xml_dispatch_note(
         if isinstance(note["payload_json"], dict)
         else json.loads(note["payload_json"])
     )
-    receptor, receptor_name, receptor_extra = _receptor_guia(payload["project"])
+    receptor, receptor_name, receptor_extra = (
+        _receptor_guia_interno(payload["project"], caf)
+        if ind_traslado == IND_TRASLADO_INTERNO
+        else _receptor_guia(payload["project"])
+    )
     order_code = str(payload["order"]["code"])
     units = int(payload["totals"]["units"] or payload["order"].get("quantity") or 1)
     item = f"Traslado OT {order_code} ({units} u)"[:80]

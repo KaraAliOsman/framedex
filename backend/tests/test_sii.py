@@ -979,8 +979,11 @@ def test_emit_dispatch_note_dte_stamps_and_replays(monkeypatch):
     text = content.decode("iso-8859-1")
     assert "<TipoDTE>52</TipoDTE>" in text
     assert "<IndTraslado>1</IndTraslado>" in text
-    # Amount-less guía: no Totales block, QtyItem in place of MontoItem.
-    assert "<Totales>" not in text and "<MontoItem>" not in text
+    # Amount-less guía: the schema still requires Totales/MontoItem —
+    # they stamp as 0 while QtyItem carries the moved units.
+    assert "<Totales><MntTotal>0</MntTotal></Totales>" in text
+    assert "<MontoItem>0</MontoItem>" in text
+    assert "<MntNeto>" not in text
     assert "<QtyItem>2</QtyItem>" in text
     assert (
         "<NroLinRef>1</NroLinRef><TpoDocRef>OT</TpoDocRef>"
@@ -1018,7 +1021,70 @@ def test_emit_dispatch_note_dte_ind_traslado_5(monkeypatch):
         actor_id=uuid4(),
         ind_traslado=5,
     )
-    assert "<IndTraslado>5</IndTraslado>" in storage.uploads[0][1].decode("iso-8859-1")
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert "<IndTraslado>5</IndTraslado>" in text
+    # Internal transfer: the receptor is the issuer itself, not the
+    # customer on the sealed guía.
+    assert "<RUTRecep>76123456-0</RUTRecep>" in text
+    assert "<RznSocRecep>Ventanas Prueba SpA</RznSocRecep>" in text
+    assert "<DirRecep>Av. Los Robles 123, Concepción</DirRecep>" in text
+
+
+def test_emit_dispatch_note_dte_ind_traslado_5_skips_client_rut(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    # A traslado interno never names the customer: a guía sealed with a
+    # blank client RUT still stamps, because the issuer is the receptor.
+    note["payload_json"]["project"]["client_rut"] = ""
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=note,
+        cafs=[caf52],
+    )
+    sii.emit_dispatch_note_dte(
+        org_id=order["org_id"],
+        order_id=order["id"],
+        actor_id=uuid4(),
+        ind_traslado=5,
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert "<RUTRecep>76123456-0</RUTRecep>" in text
+
+
+def test_emit_dispatch_note_dte_ind_traslado_5_needs_destination(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    note["payload_json"]["project"]["delivery_address"] = ""
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=note,
+        cafs=[caf52],
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dispatch_note_dte(
+            org_id=order["org_id"],
+            order_id=order["id"],
+            actor_id=uuid4(),
+            ind_traslado=5,
+        )
+    assert excinfo.value.contract_code == "sii_receptor_incomplete"
+    assert storage.uploads == []
 
 
 def test_emit_dispatch_note_dte_requires_sealed_note(monkeypatch):
