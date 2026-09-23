@@ -22,17 +22,32 @@ from typing import Literal
 
 from pydantic import Field
 
+from dekopen_engine.contour import (
+    Contour,
+    contour_area,
+    contour_points,
+    edge_length as contour_edge_length,
+    ensure_ccw,
+    interior_angle,
+    offset_contour,
+    validate_contour,
+)
 from dekopen_engine.geometry import (
     calculate_geometry,
+    joint_adjustment_per_end,
     reinforcement_cut_length,
+    resolve_bead_rule,
 )
+from dekopen_engine.glass import derive_net_glass_thickness
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
     EngineModel,
     EngineResult,
+    GlassPiece,
     NodeType,
     ParametricNode,
+    PlanPoint,
     ProfileCut,
     ProfileRole,
     ReinforcementPiece,
@@ -64,6 +79,11 @@ class IssueCode(str, Enum):
     COUPLER_PROFILE_UNKNOWN = "coupler_profile_unknown"
     COUPLER_HEIGHT_MISMATCH = "coupler_height_mismatch"
     COUPLER_REINFORCEMENT_NONPOSITIVE = "coupler_reinforcement_nonpositive"
+    CONTOUR_INVALID = "contour_invalid"
+    CONTOUR_SPLITS_UNSUPPORTED = "contour_splits_unsupported"
+    CONTOUR_OPENING_UNSUPPORTED = "contour_opening_unsupported"
+    CONTOUR_PANEL_UNSUPPORTED = "contour_panel_unsupported"
+    MEMBER_BENDING_REQUIRED = "member_bending_required"
 
 
 class CouplingDef(EngineModel):
@@ -81,8 +101,15 @@ class CouplingDef(EngineModel):
 
 class ProductModule(EngineModel):
     id: str
+    # Nominal bounding rectangle — still drives plan-view layout and module
+    # pitch. For contour modules these equal the contour bounding box.
     width_mm: Decimal = Field(gt=0)
     height_mm: Decimal = Field(gt=0)
+    # Non-rectangular outer shape (elevation, module-local mm). When set the
+    # module evaluates through the contour path: frame members follow edges,
+    # miters are corner interior / 2, and the fill region is the inward
+    # offset. `tree` must then be a single BAY leaf carrying the region spec.
+    contour: Contour | None = None
     tree: ParametricNode
 
 
@@ -94,11 +121,6 @@ class CoupledAssembly(EngineModel):
 class ProductModel(EngineModel):
     version: Literal["product-v2"]
     assembly: CoupledAssembly
-
-
-class PlanPoint(EngineModel):
-    x_mm: Decimal
-    y_mm: Decimal
 
 
 class PlanModule(EngineModel):
@@ -447,6 +469,207 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
     )
 
 
+def _single_region_leaf(tree: ParametricNode) -> ParametricNode | None:
+    """The region spec of a contour module: a bare BAY or ROOT wrapping one."""
+    top = tree.children[0] if tree.type is NodeType.ROOT and len(tree.children) == 1 else tree
+    return top if top.type is NodeType.BAY and not top.children else None
+
+
+def _evaluate_contour_module(
+    module: ProductModule,
+    params: SystemParams,
+    *,
+    is_foiled: bool,
+) -> tuple[EngineResult | None, list[ProductIssue]]:
+    """Evaluate a non-rectangular module: frame follows the contour, one
+    inward-offset fill region per module.
+
+    Trapezoid/arch/triangle modules get real member lengths and miter cuts
+    (corner interior / 2 — the welded-rect 45° rule generalized), an exact
+    glass polygon, and bead cuts per edge. Anything the kernel cannot build
+    honestly (split trees, operable leaves, panels, bends without a bending
+    authority) is reported, never approximated into a rectangle.
+    """
+    issues: list[ProductIssue] = []
+    target = f"module:{module.id}"
+    assert module.contour is not None
+    contour = ensure_ccw(module.contour)
+
+    problems = validate_contour(contour)
+    if problems:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_INVALID.value,
+                severity=Severity.ERROR,
+                target=target,
+                params={"reason": "; ".join(problems)},
+            )
+        )
+        return None, issues
+
+    leaf = _single_region_leaf(module.tree)
+    if leaf is None:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_SPLITS_UNSUPPORTED.value,
+                severity=Severity.ERROR,
+                target=target,
+            )
+        )
+        return None, issues
+
+    opening = leaf.opening_type or BayOpeningType.FIXED
+    if opening is not BayOpeningType.FIXED:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_OPENING_UNSUPPORTED.value,
+                severity=Severity.WARNING,
+                target=target,
+                params={"opening": opening.value},
+            )
+        )
+        # The frame is still buildable; the operable leaf is not (v1).
+        # Emit frame + infill as a fixed region so BOM stays honest about
+        # what exists, while the warning keeps the module incomplete.
+    if leaf.panel_article_sku is not None:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_PANEL_UNSUPPORTED.value,
+                severity=Severity.WARNING,
+                target=target,
+                params={"sku": leaf.panel_article_sku},
+            )
+        )
+
+    frame = params.effective_profile_articles[ProfileRole.FRAME]
+    per_end = joint_adjustment_per_end(params, frame)
+    n = len(contour.vertices)
+
+    profile_cuts: list[ProfileCut] = []
+    reinforcements: list[ReinforcementPiece] = []
+    glasses: list[GlassPiece] = []
+
+    for i in range(n):
+        bulge = contour.bulges[i]
+        length = contour_edge_length(contour, i) + 2 * per_end
+        sagitta = bulge if bulge else None
+        profile_cuts.append(
+            ProfileCut(
+                sku=frame.sku,
+                role=ProfileRole.FRAME,
+                material=frame.material,
+                length_mm=_q(length),
+                angle_left=_q(interior_angle(contour, i) / 2),
+                angle_right=_q(interior_angle(contour, (i + 1) % n) / 2),
+                qty=1,
+                bay_id=leaf.id,
+                sagitta_mm=sagitta,
+            )
+        )
+        if sagitta is not None:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.MEMBER_BENDING_REQUIRED.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                    params={"edge": str(i), "sagitta_mm": str(sagitta)},
+                )
+            )
+        if frame.reinforcement_sku is not None:
+            reinforcements.append(
+                ReinforcementPiece(
+                    parent_profile_sku=frame.sku,
+                    reinforcement_sku=frame.reinforcement_sku,
+                    role=ProfileRole.FRAME,
+                    length_mm=_q(reinforcement_cut_length(length, frame, 2)),
+                    qty=1,
+                    bay_id=leaf.id,
+                    sagitta_mm=sagitta,
+                )
+            )
+
+    clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
+    # Inward offset that lands exactly on the rect-path pocket math:
+    # pocket = finished - 2*face + 2*rebate - 2*clearance.
+    inset = frame.face_width_mm - params.rebate_depth_mm + clearance_mm
+    try:
+        fill = offset_contour(contour, inset)
+    except ValueError as error:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.CONTOUR_INVALID.value,
+                severity=Severity.ERROR,
+                target=target,
+                params={"reason": str(error)},
+            )
+        )
+        return None, issues
+
+    if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
+        raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
+
+    thickness_net = derive_net_glass_thickness(leaf.glass_spec, leaf.glass_thickness_mm)
+    fill_area_mm2 = contour_area(fill.vertices, fill.bulges)
+    area_m2 = (fill_area_mm2 / Decimal("1000000")).quantize(
+        Decimal("0.0001"), rounding=ROUND_HALF_UP
+    )
+    weight_kg = (fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    xs = [v.x_mm for v in fill.vertices]
+    ys = [v.y_mm for v in fill.vertices]
+    glasses.append(
+        GlassPiece(
+            bay_id=leaf.id,
+            width_mm=_q(max(xs) - min(xs)),
+            height_mm=_q(max(ys) - min(ys)),
+            area_m2=area_m2,
+            weight_kg=weight_kg,
+            thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            glass_spec=leaf.glass_spec,
+            article_sku=leaf.glass_article_sku,
+            shape=contour_points(fill),
+        )
+    )
+
+    # Glazing beads run the fill boundary, one cut per edge.
+    rule = resolve_bead_rule(leaf.glass_thickness_mm, params)
+    fill_n = len(fill.vertices)
+    for i in range(fill_n):
+        bulge = fill.bulges[i]
+        profile_cuts.append(
+            ProfileCut(
+                sku=rule.bead_article.sku,
+                role=ProfileRole.GLAZING_BEAD,
+                material=rule.bead_article.material,
+                length_mm=_q(contour_edge_length(fill, i) + rule.cut_add_mm),
+                angle_left=_q(interior_angle(fill, i) / 2),
+                angle_right=_q(interior_angle(fill, (i + 1) % fill_n) / 2),
+                qty=1,
+                bay_id=leaf.id,
+                sagitta_mm=bulge if bulge else None,
+            )
+        )
+        if bulge:
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.MEMBER_BENDING_REQUIRED.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                    params={"edge": f"bead-{i}", "sagitta_mm": str(bulge)},
+                )
+            )
+
+    return (
+        EngineResult(
+            profile_cuts=profile_cuts,
+            reinforcements=reinforcements,
+            glasses=glasses,
+        ),
+        issues,
+    )
+
+
 def evaluate_product(
     product: ProductModel,
     params: SystemParams,
@@ -487,10 +710,17 @@ def evaluate_product(
         module_issues: list[ProductIssue] = []
         result: EngineResult | None = None
         try:
-            result = calculate_geometry(
-                _top_with_module_dims(module), params, is_foiled=is_foiled
-            )
-            aggregated.append(_prefix_result(module.id, result))
+            if module.contour is not None:
+                result, contour_issues = _evaluate_contour_module(
+                    module, params, is_foiled=is_foiled
+                )
+                module_issues.extend(contour_issues)
+            else:
+                result = calculate_geometry(
+                    _top_with_module_dims(module), params, is_foiled=is_foiled
+                )
+            if result is not None:
+                aggregated.append(_prefix_result(module.id, result))
         except (ValueError, KeyError, NotImplementedError) as error:
             module_issues.append(
                 ProductIssue(

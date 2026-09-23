@@ -16,11 +16,22 @@ export type CouplingJson = {
   coupler_profile_sku: string | null;
 };
 
+/** Closed elevation outline of a module — mirrors dekopen_engine.contour.
+ * vertices[i] → vertices[i+1] is edge i; bulges[i] is its signed sagitta
+ * (positive bulges right of the directed edge = outward on a CCW loop).
+ * Module-local mm, y-up, CCW; the canvas flips y when drawing. */
+export type ContourJson = {
+  vertices: { x_mm: string; y_mm: string }[];
+  bulges: (string | null)[];
+};
+
 export type ProductModuleJson = {
   id: string;
   width_mm: string;
   height_mm: string;
   tree: IntentNode;
+  /** Present only on non-rectangular modules; width/height stay the bbox. */
+  contour?: ContourJson;
 };
 
 export type ProductJson = {
@@ -39,6 +50,59 @@ export function isProductModel(value: unknown): value is ProductJson {
     typeof (value as { assembly?: { modules?: unknown } }).assembly === "object" &&
     Array.isArray((value as { assembly: { modules?: unknown } }).assembly.modules)
   );
+}
+
+export function makeTrapezoidModule(
+  id: string,
+  widthMm: string,
+  heightMm: string,
+  offsetLeftMm: number,
+  offsetRightMm: number,
+  tree: IntentNode,
+): ProductModuleJson {
+  const w = Number(widthMm);
+  const h = Number(heightMm);
+  return {
+    id,
+    width_mm: widthMm,
+    height_mm: heightMm,
+    contour: {
+      vertices: [
+        { x_mm: "0", y_mm: "0" },
+        { x_mm: w.toFixed(2), y_mm: "0" },
+        { x_mm: (w - offsetRightMm).toFixed(2), y_mm: h.toFixed(2) },
+        { x_mm: offsetLeftMm.toFixed(2), y_mm: h.toFixed(2) },
+      ],
+      bulges: [null, null, null, null],
+    },
+    tree,
+  };
+}
+
+export function makeArchModule(
+  id: string,
+  widthMm: string,
+  heightMm: string,
+  riseMm: number,
+  tree: IntentNode,
+): ProductModuleJson {
+  const w = Number(widthMm);
+  const h = Number(heightMm);
+  return {
+    id,
+    width_mm: widthMm,
+    height_mm: heightMm,
+    contour: {
+      vertices: [
+        { x_mm: "0", y_mm: "0" },
+        { x_mm: w.toFixed(2), y_mm: "0" },
+        { x_mm: w.toFixed(2), y_mm: h.toFixed(2) },
+        { x_mm: "0", y_mm: h.toFixed(2) },
+      ],
+      bulges: [null, null, riseMm.toFixed(2), null],
+    },
+    tree,
+  };
 }
 
 export function makeBayTree(
@@ -233,9 +297,15 @@ export function wrapTreeAsProduct(
 }
 
 /** True when the product is a single uncoupled unit — i.e. it can persist in
- * the classic design shape (which keeps the documentary/quotation path). */
+ * the classic design shape (which keeps the documentary/quotation path).
+ * A contoured module stays on the product-v2 path: the classic shape has
+ * nowhere to carry its outline. */
 export function isSingleUnit(product: ProductJson): boolean {
-  return product.assembly.modules.length === 1 && product.assembly.couplings.length === 0;
+  return (
+    product.assembly.modules.length === 1 &&
+    product.assembly.couplings.length === 0 &&
+    !product.assembly.modules[0]!.contour
+  );
 }
 
 /** Set the same deflection on every joint — "Distribuir arco" with an exact value. */
@@ -290,6 +360,33 @@ export function setModuleCount(product: ProductJson, moduleCount: number): Produ
   };
 }
 
+/** Rescale a contour to a new bounding box — x and y scale independently,
+ * so an arch chord stays circular (same sagitta, new radius). */
+export function scaledContour(
+  contour: ContourJson,
+  widthMm: string,
+  heightMm: string,
+): ContourJson {
+  const xs = contour.vertices.map((v) => Number(v.x_mm));
+  const ys = contour.vertices.map((v) => Number(v.y_mm));
+  const bw = Math.max(...xs) - Math.min(...xs);
+  const bh = Math.max(...ys) - Math.min(...ys);
+  const sx = Number(widthMm) / (bw || 1);
+  const sy = Number(heightMm) / (bh || 1);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return {
+    vertices: contour.vertices.map((v) => ({
+      x_mm: ((Number(v.x_mm) - minX) * sx).toFixed(2),
+      y_mm: ((Number(v.y_mm) - minY) * sy).toFixed(2),
+    })),
+    // y-scale stretches the rise; the chord rescales inside arc_params
+    bulges: contour.bulges.map((b) =>
+      b === null || b === undefined ? null : (Number(b) * sy).toFixed(2),
+    ),
+  };
+}
+
 export function setModuleWidth(
   product: ProductJson,
   moduleId: string,
@@ -297,7 +394,13 @@ export function setModuleWidth(
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
-  return replaceModule(product, moduleId, { ...module, width_mm: widthMm });
+  return replaceModule(product, moduleId, {
+    ...module,
+    width_mm: widthMm,
+    ...(module.contour
+      ? { contour: scaledContour(module.contour, widthMm, module.height_mm) }
+      : {}),
+  });
 }
 
 /** Minimum width a module may be dragged to — below this the geometry is
@@ -322,9 +425,21 @@ export function resizeModuleSeam(
   if (leftMm < MIN_MODULE_WIDTH_MM || rightMm < MIN_MODULE_WIDTH_MM) return product;
   const nextModules = modules.map((module, index) =>
     index === seamIndex
-      ? { ...module, width_mm: leftMm.toFixed(2) }
+      ? {
+          ...module,
+          width_mm: leftMm.toFixed(2),
+          ...(module.contour
+            ? { contour: scaledContour(module.contour, leftMm.toFixed(2), module.height_mm) }
+            : {}),
+        }
       : index === seamIndex + 1
-        ? { ...module, width_mm: rightMm.toFixed(2) }
+        ? {
+            ...module,
+            width_mm: rightMm.toFixed(2),
+            ...(module.contour
+              ? { contour: scaledContour(module.contour, rightMm.toFixed(2), module.height_mm) }
+              : {}),
+          }
         : module,
   );
   return { ...product, assembly: { ...product.assembly, modules: nextModules } };
@@ -354,6 +469,57 @@ export function moveModuleDivision(
   }
 }
 
+/** Indices of the two top corners (y ≈ maxY, ordered left→right) of a
+ * contour whose upper bound is a straight or arched chord — trapezoid and
+ * arch starters both qualify. Null for degenerate or free-form outlines. */
+export function contourTopCorners(
+  contour: ContourJson,
+): { leftIndex: number; rightIndex: number } | null {
+  const ys = contour.vertices.map((v) => Number(v.y_mm));
+  const maxY = Math.max(...ys);
+  const top = ys.flatMap((y, index) => (Math.abs(y - maxY) < 0.51 ? [index] : []));
+  if (top.length !== 2) return null;
+  const [first, second] = top as [number, number];
+  return Number(contour.vertices[first]!.x_mm) <= Number(contour.vertices[second]!.x_mm)
+    ? { leftIndex: first, rightIndex: second }
+    : { leftIndex: second, rightIndex: first };
+}
+
+export function setContourVertex(
+  product: ProductJson,
+  moduleId: string,
+  vertexIndex: number,
+  xMm: string,
+  yMm: string,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module?.contour) return product;
+  const vertices = module.contour.vertices.map((vertex, index) =>
+    index === vertexIndex ? { x_mm: xMm, y_mm: yMm } : vertex,
+  );
+  return replaceModule(product, moduleId, {
+    ...module,
+    contour: { ...module.contour, vertices },
+  });
+}
+
+export function setContourBulge(
+  product: ProductJson,
+  moduleId: string,
+  edgeIndex: number,
+  sagittaMm: string | null,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module?.contour) return product;
+  const bulges = module.contour.bulges.map((bulge, index) =>
+    index === edgeIndex ? sagittaMm : bulge,
+  );
+  return replaceModule(product, moduleId, {
+    ...module,
+    contour: { ...module.contour, bulges },
+  });
+}
+
 export function setAllModuleHeights(product: ProductJson, heightMm: string): ProductJson {
   return {
     ...product,
@@ -362,6 +528,9 @@ export function setAllModuleHeights(product: ProductJson, heightMm: string): Pro
       modules: product.assembly.modules.map((module) => ({
         ...module,
         height_mm: heightMm,
+        ...(module.contour
+          ? { contour: scaledContour(module.contour, module.width_mm, heightMm) }
+          : {}),
       })),
     },
   };
@@ -371,13 +540,19 @@ export function equalizeModuleWidths(product: ProductJson): ProductJson {
   const modules = product.assembly.modules;
   const total = totalModuleWidth(product);
   const share = Math.round((total / modules.length) * 100) / 100;
-  const nextModules = modules.map((module, index) => ({
-    ...module,
-    width_mm:
+  const nextModules = modules.map((module, index) => {
+    const widthMm =
       index === modules.length - 1
         ? (total - share * (modules.length - 1)).toFixed(2)
-        : share.toFixed(2),
-  }));
+        : share.toFixed(2);
+    return {
+      ...module,
+      width_mm: widthMm,
+      ...(module.contour
+        ? { contour: scaledContour(module.contour, widthMm, module.height_mm) }
+        : {}),
+    };
+  });
   return { ...product, assembly: { ...product.assembly, modules: nextModules } };
 }
 
@@ -403,10 +578,16 @@ export function scaleModuleWidths(product: ProductJson, totalMm: string): Produc
     shares[index]! += 1;
     remainder -= 1;
   }
-  const nextModules = modules.map((module, index) => ({
-    ...module,
-    width_mm: ((1 + shares[index]!) / 100).toFixed(2),
-  }));
+  const nextModules = modules.map((module, index) => {
+    const widthMm = ((1 + shares[index]!) / 100).toFixed(2);
+    return {
+      ...module,
+      width_mm: widthMm,
+      ...(module.contour
+        ? { contour: scaledContour(module.contour, widthMm, module.height_mm) }
+        : {}),
+    };
+  });
   return { ...product, assembly: { ...product.assembly, modules: nextModules } };
 }
 

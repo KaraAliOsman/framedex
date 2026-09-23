@@ -58,11 +58,21 @@ class BayOpeningType(str, Enum):
     DOOR_DOUBLE = "DOOR_DOUBLE"
 
 
+class PlanPoint(EngineModel):
+    x_mm: Decimal
+    y_mm: Decimal
+
+
 class GlassPiece(EngineModel):
     bay_id: str
     leaf_id: str | None = None
     width_mm: Decimal
     height_mm: Decimal
+    # Boundary polygon for non-rectangular pieces (sampled at arc chords).
+    # When set, width/height are the bounding box only — the piece is NOT
+    # a rectangle and rect-only consumers (2D sheet nesting) must report
+    # it as unnested rather than silently cutting a bounding rectangle.
+    shape: list[PlanPoint] | None = None
     area_m2: Decimal
     weight_kg: Decimal
     thickness_net_mm: Decimal
@@ -218,6 +228,10 @@ class ProfileCut(EngineModel):
     qty: int
     bay_id: str | None = None
     leaf_id: str | None = None
+    # Non-null marks a curved member: length_mm is the arc length and the
+    # cut requires bending authority — without one it must surface as a
+    # manufacturing-incomplete piece, never a straight cut of that length.
+    sagitta_mm: Decimal | None = None
 
 
 class ReinforcementPiece(EngineModel):
@@ -228,6 +242,8 @@ class ReinforcementPiece(EngineModel):
     qty: int
     bay_id: str | None = None
     leaf_id: str | None = None
+    # Curved reinforcement follows its parent member's arc.
+    sagitta_mm: Decimal | None = None
 
 
 class EngineResult(EngineModel):

@@ -41,7 +41,10 @@ import {
   removeUnit,
   resizeModuleSeam,
   scaleModuleWidths,
+  contourTopCorners,
   setAllModuleHeights,
+  setContourBulge,
+  setContourVertex,
   setModuleGlass,
   setModuleGlassThickness,
   setModulePanel,
@@ -65,6 +68,11 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_profile_unknown: "assembly.issue.couplerProfileUnknown",
   coupler_height_mismatch: "assembly.issue.couplerHeightMismatch",
   coupler_reinforcement_nonpositive: "assembly.issue.couplerReinforcementNonpositive",
+  contour_invalid: "assembly.issue.contourInvalid",
+  contour_splits_unsupported: "assembly.issue.contourSplits",
+  contour_opening_unsupported: "assembly.issue.contourOpening",
+  contour_panel_unsupported: "assembly.issue.contourPanel",
+  member_bending_required: "assembly.issue.memberBending",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field
@@ -79,6 +87,9 @@ export const REASON_KEYS: [RegExp, TranslationKey][] = [
   [/requires at least one module/i, "assembly.reason.oneModule"],
   [/requires a top-level bay/i, "assembly.reason.doorNeedsBay"],
   [/requires an opening type/i, "assembly.reason.openingRequired"],
+  [/zero-length segment/i, "assembly.reason.contourDegenerate"],
+  [/sagitta exceeds/i, "assembly.reason.contourSagitta"],
+  [/self-intersect/i, "assembly.reason.contourSelfIntersect"],
 ];
 
 export function issueText(
@@ -176,6 +187,91 @@ function statusKey(status: string | undefined): TranslationKey {
   if (status === "VALID") return "assembly.statusValid";
   if (status === "MANUFACTURING_INCOMPLETE") return "assembly.statusIncomplete";
   return "assembly.statusInvalid";
+}
+
+/** Editable semantic fields of a contour outline: the two top-corner
+ * offsets for a straight chord, plus one rise per bulged edge. Free-form
+ * outlines expose a vertex count until the polygon editor lands. */
+function ContourShapeSection({
+  module,
+  product,
+  busy,
+  commit,
+}: {
+  module: ProductModuleJson;
+  product: ProductJson;
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const contour = module.contour!;
+  const corners = contourTopCorners(contour);
+  const hasBulges = contour.bulges.some((bulge) => bulge !== null && bulge !== undefined);
+  const widthMm = Number(module.width_mm);
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.shape")}</summary>
+      {corners && !hasBulges && (
+        <>
+          <DraftField
+            label={t("assembly.shapeOffsetLeft")}
+            value={Number(contour.vertices[corners.leftIndex]!.x_mm).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={normalizeMm}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.leftIndex,
+                  value,
+                  contour.vertices[corners.leftIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+          <DraftField
+            label={t("assembly.shapeOffsetRight")}
+            value={(widthMm - Number(contour.vertices[corners.rightIndex]!.x_mm)).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={normalizeMm}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.rightIndex,
+                  (widthMm - Number(value)).toFixed(2),
+                  contour.vertices[corners.rightIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+        </>
+      )}
+      {contour.bulges.map(
+        (bulge, edgeIndex) =>
+          bulge !== null &&
+          bulge !== undefined && (
+            <DraftField
+              key={edgeIndex}
+              label={t("assembly.shapeRise")}
+              value={bulge}
+              unit="mm"
+              disabled={busy}
+              normalize={normalizeMm}
+              onCommit={(value) => commit(setContourBulge(product, module.id, edgeIndex, value))}
+            />
+          ),
+      )}
+      {!corners && !hasBulges && (
+        <p className="inspector-note">
+          {t("assembly.shapeVertices").replace("{count}", String(contour.vertices.length))}
+        </p>
+      )}
+    </details>
+  );
 }
 
 function ModuleInspector({
@@ -298,6 +394,9 @@ function ModuleInspector({
           onCommit={(value) => commit(setAllModuleHeights(product, value))}
         />
       </details>
+      {module.contour && (
+        <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
+      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <label className="assembly-field">

@@ -1,7 +1,9 @@
 import type { TranslationKey } from "../../i18n/es-CL";
 import type { IntentNode, Opening } from "./intentEditing";
 import {
+  makeArchModule,
   makeBowProduct,
+  makeTrapezoidModule,
   totalModuleWidth,
   wrapTreeAsProduct,
   type ProductJson,
@@ -137,6 +139,47 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     hintKey: "assembly.starter.bow5Hint",
     build: (w, h) => makeBowProduct({ moduleCount: 5, widthMm: w, heightMm: h, angleDeg: 15 }),
   },
+  {
+    key: "trapezoid",
+    titleKey: "assembly.starter.trapezoid",
+    hintKey: "assembly.starter.trapezoidHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [
+          makeTrapezoidModule(
+            "m1",
+            w.toFixed(2),
+            h.toFixed(2),
+            Math.round(w * 0.15),
+            Math.round(w * 0.15),
+            starterTree("FIXED"),
+          ),
+        ],
+        couplings: [],
+      },
+    }),
+  },
+  {
+    key: "arch",
+    titleKey: "assembly.starter.arch",
+    hintKey: "assembly.starter.archHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [
+          makeArchModule(
+            "m1",
+            w.toFixed(2),
+            h.toFixed(2),
+            Math.round(w * 0.2),
+            starterTree("FIXED"),
+          ),
+        ],
+        couplings: [],
+      },
+    }),
+  },
 ];
 
 export type StarterKey = (typeof STARTER_DEFINITIONS)[number]["key"];
@@ -151,6 +194,10 @@ export function starterNominalSize(key: string): { widthMm: number; heightMm: nu
       return { widthMm: 3000, heightMm: 1400 };
     case "doorSide":
       return { widthMm: 1600, heightMm: 2200 };
+    case "trapezoid":
+      return { widthMm: 2400, heightMm: 1400 };
+    case "arch":
+      return { widthMm: 1800, heightMm: 1600 };
     case "sliding2":
     case "slidingFixed":
       return { widthMm: 1800, heightMm: 1400 };

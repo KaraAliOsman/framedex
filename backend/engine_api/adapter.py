@@ -20,6 +20,8 @@ from dekopen_engine import (
     calculate_geometry,
     evaluate_product,
 )
+from dekopen_engine.contour import Contour
+from dekopen_engine.models import PlanPoint
 
 
 class InvalidEngineRequest(ValueError):
@@ -112,6 +114,44 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         raise InvalidEngineRequest("Invalid parametric_tree") from error
 
 
+def parse_contour(payload: object) -> Contour | None:
+    """Deserialize a module contour: vertices + one signed sagitta per edge."""
+    if payload is None:
+        return None
+    raw = _require_dict(payload, "module.contour")
+    unexpected = set(raw) - {"vertices", "bulges"}
+    if unexpected:
+        raise InvalidEngineRequest(
+            f"module.contour contains unsupported fields: {sorted(unexpected)}"
+        )
+    raw_vertices = raw.get("vertices")
+    raw_bulges = raw.get("bulges")
+    if not isinstance(raw_vertices, list) or not raw_vertices:
+        raise InvalidEngineRequest("contour.vertices must be a non-empty array")
+    if not isinstance(raw_bulges, list) or len(raw_bulges) != len(raw_vertices):
+        raise InvalidEngineRequest("contour.bulges must match vertices one per edge")
+    vertices: list[PlanPoint] = []
+    for point in raw_vertices:
+        vertex = _require_dict(point, "contour.vertices[]")
+        unexpected = set(vertex) - {"x_mm", "y_mm"}
+        if unexpected:
+            raise InvalidEngineRequest("contour vertices carry only x_mm/y_mm")
+        vertices.append(
+            PlanPoint(
+                x_mm=_decimal_string(vertex.get("x_mm"), "contour x_mm"),
+                y_mm=_decimal_string(vertex.get("y_mm"), "contour y_mm"),
+            )
+        )
+    bulges: list[Decimal | None] = [
+        None if bulge is None else _decimal_string(bulge, "contour bulge")
+        for bulge in raw_bulges
+    ]
+    try:
+        return Contour(vertices=vertices, bulges=bulges)
+    except ValueError as error:
+        raise InvalidEngineRequest("Invalid module contour") from error
+
+
 def normalized_root_from_api(
     *,
     parametric_tree: object,
@@ -152,7 +192,7 @@ def calculate_from_api(
 
 _PRODUCT_FIELDS = {"version", "assembly"}
 _ASSEMBLY_FIELDS = {"modules", "couplings"}
-_MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree"}
+_MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree", "contour"}
 _COUPLING_FIELDS = {"id", "angle_deg", "coupler_profile_sku"}
 
 
@@ -217,6 +257,7 @@ def parse_product_model(payload: object) -> ProductModel:
                 height_mm=_decimal_string(
                     module.get("height_mm"), "module.height_mm"
                 ),
+                contour=parse_contour(module.get("contour")),
                 tree=parse_parametric_node(module.get("tree")),
             )
         )
