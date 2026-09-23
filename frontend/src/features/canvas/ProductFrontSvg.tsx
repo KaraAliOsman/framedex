@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
@@ -663,6 +663,7 @@ export function ProductFrontContent({
   selectedId,
   issues,
   disabled,
+  preview = false,
   onSelectModule,
   onAddUnit,
   onCommitModuleWidth,
@@ -674,6 +675,10 @@ export function ProductFrontContent({
   selectedId: string | null;
   issues: ProductIssue[];
   disabled: boolean;
+  /** Thumbnail mode: draws the members but strips every interactive
+   * affordance (roles, tab stops, handlers) so it can live inside a
+   * single outer button. */
+  preview?: boolean;
   onSelectModule(moduleId: string): void;
   onAddUnit(side: "left" | "right"): void;
   onCommitModuleWidth(moduleId: string, widthMm: string): void;
@@ -748,17 +753,21 @@ export function ProductFrontContent({
         <g
           key={module.id}
           className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}`}
-          role="button"
-          aria-label={`${t("assembly.module")} ${module.id}`}
-          aria-pressed={module.id === selectedId}
-          tabIndex={0}
-          onClick={() => onSelectModule(module.id)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onSelectModule(module.id);
-            }
-          }}
+          {...(preview
+            ? { role: "presentation", "aria-hidden": true }
+            : {
+                role: "button",
+                "aria-label": `${t("assembly.module")} ${module.id}`,
+                "aria-pressed": module.id === selectedId,
+                tabIndex: disabled ? -1 : 0,
+                onClick: () => onSelectModule(module.id),
+                onKeyDown: (event: KeyboardEvent) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelectModule(module.id);
+                  }
+                },
+              })}
         >
           <Member x={x} y={0} w={w} h={height} surface={frameSurface} className="member-frame" />
           <rect

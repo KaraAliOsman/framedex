@@ -2,11 +2,7 @@ import { useMemo } from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
-import {
-  STARTER_DEFINITIONS,
-  starterNominalSize,
-  type StarterDefinition,
-} from "./designLibrary";
+import { STARTER_DEFINITIONS, starterNominalSize, type StarterDefinition } from "./designLibrary";
 import type { MemberGeometry } from "./members";
 import { ProductFrontSvg } from "./ProductFrontSvg";
 import type { ProductJson } from "./productEditing";
@@ -28,6 +24,7 @@ function StarterThumb({
       selectedId={null}
       issues={NO_ISSUES}
       disabled
+      preview
       onSelectModule={NOOP}
       onAddUnit={NOOP}
       onCommitModuleWidth={NOOP}

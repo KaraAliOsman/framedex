@@ -22,10 +22,7 @@ import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
 import type { IntentNode, Opening } from "../canvas/intentEditing";
-import {
-  starterContextSize,
-  type StarterDefinition,
-} from "../canvas/designLibrary";
+import { starterContextSize, type StarterDefinition } from "../canvas/designLibrary";
 import { resolveMembers } from "../canvas/members";
 import { StarterGallery } from "../canvas/StarterGallery";
 import {
@@ -72,8 +69,6 @@ function initial(): CanvasDesignInputs {
     product,
   };
 }
-
-
 
 /** Fill catalog-driven values that are uniquely determined: a coupling without
  * a coupler gets the catalog's only coupler; splits without a mullion get the
@@ -464,10 +459,12 @@ function PositionWorkspace({
   const product = inputs.product;
   const pickStarter = (definition: StarterDefinition) => {
     const { widthMm, heightMm } = starterContextSize(product);
-    useCanvasStore.getState().commitInputs({
-      ...inputs,
-      product: definition.build(widthMm, heightMm),
-    });
+    const nextProduct = definition.build(widthMm, heightMm);
+    const store = useCanvasStore.getState();
+    store.commitInputs({ ...inputs, product: nextProduct });
+    // Coupled starters mint fresh module ids — a stale selection would leave
+    // the inspector pointed at a module that no longer exists.
+    store.select(nextProduct.assembly.modules[0]?.id ?? null);
     onAssemblyChanged();
   };
   return (
