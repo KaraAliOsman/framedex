@@ -29,9 +29,11 @@ SELECT ok(
 SELECT ok(
     has_table_privilege('documentary_backend', 'public.project_payments', 'SELECT')
     AND has_table_privilege('documentary_backend', 'public.project_payments', 'INSERT')
-    AND has_table_privilege('documentary_backend', 'public.project_payments', 'UPDATE')
+    AND has_column_privilege(
+        'documentary_backend', 'public.project_payments', 'voided_at', 'UPDATE')
+    AND NOT has_table_privilege('documentary_backend', 'public.project_payments', 'UPDATE')
     AND NOT has_table_privilege('documentary_backend', 'public.project_payments', 'DELETE'),
-    'backend role records and voids, never deletes'
+    'backend role records and voids only, never deletes'
 );
 SELECT ok(
     has_table_privilege('authenticated', 'public.project_payments', 'SELECT')

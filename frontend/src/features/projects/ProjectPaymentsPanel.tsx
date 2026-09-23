@@ -50,10 +50,12 @@ export function ProjectPaymentsPanel({
   projectId,
   orgId,
   canWrite,
+  onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [busy, setBusy] = useState(false);
@@ -93,6 +95,13 @@ export function ProjectPaymentsPanel({
     void load();
   }, [load]);
 
+  const formDirty =
+    showForm &&
+    (amount.trim() !== "" || reference.trim() !== "" || note.trim() !== "");
+  useEffect(() => {
+    onDirtyChange?.(formDirty);
+  }, [formDirty, onDirtyChange]);
+
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
     setShowForm(true);
@@ -100,6 +109,7 @@ export function ProjectPaymentsPanel({
 
   async function record(event: FormEvent): Promise<void> {
     event.preventDefault();
+    const current = generation.current;
     setBusy(true);
     setMessage("");
     try {
@@ -116,30 +126,33 @@ export function ProjectPaymentsPanel({
         requestOptions,
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
       setSummary(response.data);
       setShowForm(false);
       setAmount("");
       setReference("");
       setNote("");
     } catch {
-      setMessage(t("projects.paymentsRecordError"));
+      if (generation.current === current) setMessage(t("projects.paymentsRecordError"));
     } finally {
-      setBusy(false);
+      if (generation.current === current) setBusy(false);
     }
   }
 
   async function voidPayment(payment: ProjectPayment): Promise<void> {
     if (!window.confirm(t("projects.paymentVoidConfirm"))) return;
+    const current = generation.current;
     setBusy(true);
     setMessage("");
     try {
       const response = await projectPaymentVoid(projectId, payment.id, {}, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
       setSummary(response.data);
     } catch {
-      setMessage(t("projects.paymentsVoidError"));
+      if (generation.current === current) setMessage(t("projects.paymentsVoidError"));
     } finally {
-      setBusy(false);
+      if (generation.current === current) setBusy(false);
     }
   }
 
