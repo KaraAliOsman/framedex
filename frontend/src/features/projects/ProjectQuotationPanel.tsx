@@ -6,6 +6,7 @@ import {
   documentaryFreezeRevisionA,
   documentaryPrepareInputs,
   documentarySaveInputs,
+  projectQuoteLinkCreate,
   projectsStartSuccessor,
   projectsResetPricing,
 } from "../../api/generated/dekopen";
@@ -652,6 +653,32 @@ export function ProjectQuotationPanel({
     project.pricing_current &&
     project.current_pricing_operation_id !== null;
   const canRevise = canWrite && project.status === "QUOTED";
+  const canShare =
+    canWrite &&
+    (project.status === "QUOTED" || project.status === "APPROVED") &&
+    (project.versions?.length ?? 0) > 0;
+
+  async function shareQuote(): Promise<void> {
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteLinkCreate(project.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      const url = `${window.location.origin}${response.data.path}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setMessage(t("quotation.shareCopied"));
+      } catch {
+        setMessage(url);
+      }
+    } catch {
+      if (generation.current === current) setMessage(t("quotation.error"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
 
   return (
     <section className="quotation-panel" aria-busy={busy}>
@@ -675,6 +702,11 @@ export function ProjectQuotationPanel({
         {canRevise && (
           <button disabled={busy} onClick={() => void startSuccessor()}>
             {t("quotation.editQuoted")}
+          </button>
+        )}
+        {canShare && (
+          <button disabled={busy} onClick={() => void shareQuote()}>
+            {t("quotation.share")}
           </button>
         )}
       </header>

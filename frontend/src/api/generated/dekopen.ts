@@ -33,6 +33,7 @@ import type {
   Commerce,
   ConfirmBatchRequestRequest,
   ConfirmChangeRequest,
+  DecideRequestRequest,
   DesignOptions,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
@@ -80,6 +81,7 @@ import type {
   PatchedKitWriteRequest,
   PatchedProjectUpdateRequest,
   PatchedSystemWriteRequest,
+  PortalQuote,
   PositionResponse,
   PositionUpdateRequest,
   PositionWriteRequest,
@@ -96,6 +98,7 @@ import type {
   RemakeRequestRequest,
   ResetPricingRequest,
   SendOrderRequestRequest,
+  ShareQuoteResponse,
   SignedAccessResponse,
   StepTransition,
   StepTransitionRequestRequest,
@@ -4030,6 +4033,167 @@ export const jobsGet = async (
   });
 };
 
+export type portalQuoteRetrieveResponse200 = {
+  data: PortalQuote;
+  status: 200;
+};
+
+export type portalQuoteRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalQuoteRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalQuoteRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalQuoteRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalQuoteRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalQuoteRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalQuoteRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalQuoteRetrieveResponseSuccess = portalQuoteRetrieveResponse200 & {
+  headers: Headers;
+};
+export type portalQuoteRetrieveResponseError = (
+  | portalQuoteRetrieveResponse400
+  | portalQuoteRetrieveResponse401
+  | portalQuoteRetrieveResponse403
+  | portalQuoteRetrieveResponse404
+  | portalQuoteRetrieveResponse409
+  | portalQuoteRetrieveResponse422
+  | portalQuoteRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalQuoteRetrieveResponse =
+  portalQuoteRetrieveResponseSuccess | portalQuoteRetrieveResponseError;
+
+export const getPortalQuoteRetrieveUrl = (token: string) => {
+  return `/api/v1/portal/quotes/${token}/`;
+};
+
+/**
+ * Public quote summary behind a share token.
+ */
+export const portalQuoteRetrieve = async (
+  token: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalQuoteRetrieveResponse> => {
+  return apiMutator<portalQuoteRetrieveResponse>(getPortalQuoteRetrieveUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type portalQuoteDecideResponse200 = {
+  data: PortalQuote;
+  status: 200;
+};
+
+export type portalQuoteDecideResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type portalQuoteDecideResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type portalQuoteDecideResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type portalQuoteDecideResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type portalQuoteDecideResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type portalQuoteDecideResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type portalQuoteDecideResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type portalQuoteDecideResponseSuccess = portalQuoteDecideResponse200 & {
+  headers: Headers;
+};
+export type portalQuoteDecideResponseError = (
+  | portalQuoteDecideResponse400
+  | portalQuoteDecideResponse401
+  | portalQuoteDecideResponse403
+  | portalQuoteDecideResponse404
+  | portalQuoteDecideResponse409
+  | portalQuoteDecideResponse422
+  | portalQuoteDecideResponse503
+) & {
+  headers: Headers;
+};
+
+export type portalQuoteDecideResponse =
+  portalQuoteDecideResponseSuccess | portalQuoteDecideResponseError;
+
+export const getPortalQuoteDecideUrl = (token: string) => {
+  return `/api/v1/portal/quotes/${token}/decide/`;
+};
+
+/**
+ * Customer approves or declines the shared quote.
+ */
+export const portalQuoteDecide = async (
+  token: string,
+  decideRequestRequest: DecideRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<portalQuoteDecideResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<portalQuoteDecideResponse>(getPortalQuoteDecideUrl(token), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(decideRequestRequest),
+  });
+};
+
 export type positionsRetrieveResponse200 = {
   data: PositionResponse;
   status: 200;
@@ -6308,6 +6472,81 @@ export const positionsCreate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(positionWriteRequest),
+  });
+};
+
+export type projectQuoteLinkCreateResponse200 = {
+  data: ShareQuoteResponse;
+  status: 200;
+};
+
+export type projectQuoteLinkCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkCreateResponseSuccess = projectQuoteLinkCreateResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkCreateResponseError = (
+  | projectQuoteLinkCreateResponse400
+  | projectQuoteLinkCreateResponse401
+  | projectQuoteLinkCreateResponse403
+  | projectQuoteLinkCreateResponse404
+  | projectQuoteLinkCreateResponse409
+  | projectQuoteLinkCreateResponse422
+  | projectQuoteLinkCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkCreateResponse =
+  projectQuoteLinkCreateResponseSuccess | projectQuoteLinkCreateResponseError;
+
+export const getProjectQuoteLinkCreateUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-link/`;
+};
+
+/**
+ * Mint a customer-approval link for the latest sealed version.
+ */
+export const projectQuoteLinkCreate = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkCreateResponse> => {
+  return apiMutator<projectQuoteLinkCreateResponse>(getProjectQuoteLinkCreateUrl(projectId), {
+    ...options,
+    method: "POST",
   });
 };
 

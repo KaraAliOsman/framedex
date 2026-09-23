@@ -64,6 +64,11 @@ const ProductionPage = lazy(async () => {
   return { default: module.ProductionPage };
 });
 
+const PortalQuotePage = lazy(async () => {
+  const module = await import("./features/portal/PortalQuotePage");
+  return { default: module.PortalQuotePage };
+});
+
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
   if (auth.status === "loading" || auth.status === "resolving") {
@@ -154,6 +159,14 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route path="/" element={<HomeRedirect />} />
+      <Route
+        path="/cotizacion/:token"
+        element={
+          <Suspense fallback={<p role="status">{t("portal.loading")}</p>}>
+            <PortalQuotePage />
+          </Suspense>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route

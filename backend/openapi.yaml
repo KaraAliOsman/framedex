@@ -3584,6 +3584,144 @@ paths:
               schema:
                 $ref: '#/components/schemas/JobRun'
           description: ''
+  /api/v1/portal/quotes/{token}/:
+    get:
+      operationId: portal_quote_retrieve
+      description: Public quote summary behind a share token.
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalQuote'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/portal/quotes/{token}/decide/:
+    post:
+      operationId: portal_quote_decide
+      description: Customer approves or declines the shared quote.
+      parameters:
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DecideRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DecideRequestRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalQuote'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/positions/{position_id}/:
     get:
       operationId: positions_retrieve
@@ -5697,6 +5835,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/quote-link/:
+    post:
+      operationId: project_quote_link_create
+      description: Mint a customer-approval link for the latest sealed version.
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareQuoteResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/reset-pricing/:
     post:
       operationId: projects_reset_pricing
@@ -7458,6 +7660,21 @@ components:
       - source_position_id
       - unit_index
       - workshop_sku
+    DecideRequestRequest:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        decided_by:
+          type: string
+          minLength: 1
+          maxLength: 255
+        note:
+          type: string
+          maxLength: 500
+      required:
+      - decided_by
+      - decision
     DecimalSeparatorEnum:
       enum:
       - .
@@ -7466,6 +7683,14 @@ components:
       description: |-
         * `.` - .
         * `,` - ,
+    DecisionEnum:
+      enum:
+      - APPROVED
+      - DECLINED
+      type: string
+      description: |-
+        * `APPROVED` - APPROVED
+        * `DECLINED` - DECLINED
     DesignOptions:
       type: object
       properties:
@@ -10041,6 +10266,65 @@ components:
       - left
       - right
       - top
+    PortalQuote:
+      type: object
+      properties:
+        schema:
+          type: string
+        project_code:
+          type: string
+        project_name:
+          type: string
+        client_name:
+          type: string
+        project_status:
+          type: string
+        revision_code:
+          type: string
+        emitted_at:
+          type: string
+          format: date-time
+        total_price_net:
+          type: string
+        total_price_tax:
+          type: string
+        total_price_gross:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        approval_status:
+          type: string
+        decided_by:
+          type: string
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        decided_note:
+          type: string
+          nullable: true
+        quote_pdf_url:
+          type: string
+          nullable: true
+      required:
+      - approval_status
+      - client_name
+      - decided_at
+      - decided_by
+      - decided_note
+      - emitted_at
+      - expires_at
+      - project_code
+      - project_name
+      - project_status
+      - quote_pdf_url
+      - revision_code
+      - schema
+      - total_price_gross
+      - total_price_net
+      - total_price_tax
     PositionDesign:
       type: object
       properties:
@@ -11063,6 +11347,20 @@ components:
           type: boolean
       required:
       - confirmed
+    ShareQuoteResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        path:
+          type: string
+      required:
+      - expires_at
+      - path
+      - token
     SignedAccessResponse:
       type: object
       properties:
