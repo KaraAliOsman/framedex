@@ -315,6 +315,94 @@ def test_assembly_freeze_tolerates_unsaved_handle_intents(documentary_tenant) ->
     assert "<svg" in html
 
 
+def test_assembly_freeze_seals_complete_with_full_evidence(documentary_tenant) -> None:
+    """Full workshop evidence lets an assembly seal complete like a classic.
+
+    The quote-only path is reserved for missing evidence — it is not a
+    permanent assembly state.
+    """
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    project_id, position_id, operation_id, tree = _seed_bow_project(org, owner)
+    system_id = UUID(str(one(
+        "SELECT id FROM public.profile_systems WHERE code='DEMO_60'"
+    )["id"]))
+    policies = _policies(org)
+    with as_user(owner):
+        evaluation = evaluate_assembly_from_api(
+            product=parse_product_model(tree),
+            color="WHITE",
+            params=SystemParamsRepository().load_visible(system_id, org),
+            coupler_articles=SystemParamsRepository().load_coupler_articles(system_id, org),
+        )
+    design = {
+        "system_id": str(system_id),
+        "parametric_tree": tree,
+        "nominal_width_mm": D("2100.00"),
+        "nominal_height_mm": D("1400.00"),
+        "color": "WHITE",
+    }
+    bays = [f"{module}|B1" for module in ("m1", "m2", "m3")]
+    with as_user(owner), documentary_backend():
+        save_documentary_inputs(
+            org_id=org,
+            actor_id=owner,
+            project_id=project_id,
+            data={
+                "payment_terms": "Contado",
+                "quotation_valid_until": date(2026, 10, 14),
+                "positions": [{
+                    "position_id": position_id,
+                    "calculation_hash": calculation_response(design, evaluation.bom)[
+                        "calculation_hash"
+                    ],
+                    "location_tag": "BOW-SUR",
+                    "manufacturing_placement_policy_id": policies["placement_id"],
+                    "handle_requirement_policy_id": policies["handle_id"],
+                    "reinforcement_cut_policy_id": policies["steel_id"],
+                    "workshop_annotations": [{
+                        "bay_id": bay,
+                        "leaf_id": None,
+                        "bottom_drain_holes_mm": [D("100"), D("350"), D("600")],
+                        "closing_points_perimeter_mm": None,
+                        "continuous_width_mm": D("700"),
+                        "finish_class": "WHITE",
+                        "has_coupler": False,
+                    } for bay in bays],
+                    "structural_inputs": [],
+                    "glass_polishing": [{
+                        "schema_version": 1,
+                        "bay_id": bay,
+                        "leaf_id": None,
+                        "edges": {
+                            "top": False,
+                            "right": False,
+                            "bottom": False,
+                            "left": False,
+                        },
+                    } for bay in bays],
+                    "handle_intents": [],
+                    "accessory_schedule": {
+                        "schema_version": 1,
+                        "coverage": "NONE_REQUIRED",
+                        "items": [],
+                    },
+                    "legacy_handle_migration_confirmed": False,
+                }],
+            },
+        )
+
+    sealed = _freeze(org, owner, project_id, operation_id, incomplete=False)
+    version_id = UUID(str(sealed["id"]))
+    with as_user(owner):
+        _, snapshot = revision_snapshot(version_id, org)
+    assert snapshot["documentary_complete"] is True
+    assert snapshot["production_allowed"] is True
+    # The workshop order renders for a complete assembly too.
+    html = _doc03(snapshot)
+    assert "m1" in html
+
+
 def test_save_documentary_inputs_validates_namespaced_targets(documentary_tenant) -> None:
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]

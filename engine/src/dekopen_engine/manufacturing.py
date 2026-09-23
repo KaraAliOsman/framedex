@@ -206,6 +206,7 @@ class ManufacturingFactsV1(EngineModel):
     position_id: str
     position_index: int = Field(ge=1)
     repetition_index: int = Field(ge=1)
+    module_id: str | None = None
     view: Literal["BUILDING_INTERIOR_LOOKING_OUTWARD"] = (
         "BUILDING_INTERIOR_LOOKING_OUTWARD"
     )
@@ -594,10 +595,44 @@ def project_manufacturing_facts_v1(
         raise ManufacturingAuthorityError("Handle intent has no required policy slot")
 
     relationships.sort(key=lambda item: (item.relationship, item.source_id, item.target_id))
+    if module_id is not None:
+        # Assembly modules share local topology (each has its own "B1"), so
+        # bay/leaf references inside the facts are namespaced to the module —
+        # the same convention saved inputs and workshop targets already use.
+        prefix = f"{module_id}|"
+        member_facts = [
+            fact.model_copy(update={
+                **({"bay_id": f"{prefix}{fact.bay_id}"} if fact.bay_id is not None else {}),
+                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
+            })
+            for fact in member_facts
+        ]
+        leaf_facts = [
+            fact.model_copy(update={
+                "bay_id": f"{prefix}{fact.bay_id}",
+                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
+            })
+            for fact in leaf_facts
+        ]
+        infill_facts = [
+            fact.model_copy(update={
+                "bay_id": f"{prefix}{fact.bay_id}",
+                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
+            })
+            for fact in infill_facts
+        ]
+        handles = [
+            fact.model_copy(update={
+                "bay_id": f"{prefix}{fact.bay_id}",
+                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
+            })
+            for fact in handles
+        ]
     return ManufacturingFactsV1(
         position_id=position_id,
         position_index=position_index,
         repetition_index=repetition_index,
+        module_id=module_id,
         nominal_width_mm=trace.nominal_width_mm,
         nominal_height_mm=trace.nominal_height_mm,
         placement_policy_id=placement_policy.policy_id,

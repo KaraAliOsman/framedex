@@ -739,6 +739,7 @@ def freeze_revision_a(
             intents = handle_intents(position["handle_intents"])
             quantity = int(position["quantity"])
             unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
+            skipped_module = False
             for module_id, computation, module_tree in calculations:
                 scoped_intents = _module_scoped(
                     intents, module_id, "bay_id", "leaf_id"
@@ -748,9 +749,10 @@ def freeze_revision_a(
                     policies.handles,
                     scoped_intents,
                 ):
-                    # Quote-only assemblies seal incomplete: a module whose
-                    # handle intents were never saved is not projected rather
-                    # than blocking the commercial freeze.
+                    # A module whose handle intents were never saved is not
+                    # projected rather than blocking the commercial freeze;
+                    # skipped_module marks the seal incomplete below.
+                    skipped_module = True
                     continue
                 for repetition in range(1, quantity + 1):
                     unit_models.append((
@@ -784,13 +786,8 @@ def freeze_revision_a(
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
-                (
-                    f"{module_id}|{infill.bay_id}" if module_id else infill.bay_id,
-                    f"{module_id}|{infill.leaf_id}"
-                    if module_id and infill.leaf_id is not None
-                    else infill.leaf_id,
-                )
-                for module_id, unit in unit_models
+                (infill.bay_id, infill.leaf_id)
+                for _, unit in unit_models
                 for infill in unit.infills
                 if infill.kind == "GLASS"
             }
@@ -799,14 +796,13 @@ def freeze_revision_a(
                 if position["accessory_schedule"] is not None else None
             )
             purchase_complete = (
-                {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
+                not skipped_module
+                and {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
                 and accessories is not None
             )
-            if is_assembly:
-                # Per-module purchase projection is not yet defined for
-                # assemblies: they freeze honestly as quote-only, never
-                # faking production completeness.
-                purchase_complete = False
+            # A skipped module means the sealed snapshot would omit its units:
+            # incomplete, never faked. When every module projects, assemblies
+            # carry purchase evidence under the same contract as classics.
             if not purchase_complete:
                 if not allow_incomplete_workshop:
                     raise DocumentaryError("purchase_authority_incomplete")

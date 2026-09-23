@@ -163,8 +163,15 @@ class PositionPurchaseInputV1(EngineModel):
     def quantity_and_sources_reconcile(self) -> PositionPurchaseInputV1:
         if not self.location_tag.strip():
             raise ValueError("Purchasing requires an explicit location tag")
-        repetitions = sorted(unit.repetition_index for unit in self.manufacturing_units)
-        if repetitions != list(range(1, self.quantity + 1)):
+        repetitions_by_module: dict[str | None, list[int]] = {}
+        for unit in self.manufacturing_units:
+            repetitions_by_module.setdefault(unit.module_id, []).append(
+                unit.repetition_index
+            )
+        if any(
+            sorted(repetitions) != list(range(1, self.quantity + 1))
+            for repetitions in repetitions_by_module.values()
+        ):
             raise ValueError("Position quantity must be expanded exactly once")
         if any(
             unit.position_id != self.position_id or unit.position_index != self.position_index
