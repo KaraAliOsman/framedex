@@ -11,6 +11,8 @@ import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
+import { ObjectTree } from "./ObjectTree";
+import { buildObjectTree } from "./objectTree";
 import { resolveMembers } from "./members";
 import {
   frontBounds,
@@ -178,11 +180,12 @@ function ModuleInspector({
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY";
+  const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
   return (
     <section className="assembly-inspector" aria-label={t("assembly.module")}>
       <header className="assembly-inspector__header">
         <h4>
-          {t("assembly.module")} {module.id}
+          {t("assembly.module")} {ordinal}
         </h4>
         <button
           type="button"
@@ -195,129 +198,138 @@ function ModuleInspector({
           ×
         </button>
       </header>
-      <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
-        {OPENING_OPTIONS.map(([value, labelKey]) => (
+      <details className="inspector-section" open>
+        <summary>{t("assembly.opening")}</summary>
+        <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
+          {OPENING_OPTIONS.map(([value, labelKey]) => (
+            <button
+              key={value}
+              type="button"
+              className={`opening-choice${opening === value ? " is-active" : ""}`}
+              title={t(labelKey)}
+              aria-label={t(labelKey)}
+              aria-pressed={opening === value}
+              disabled={busy}
+              onClick={() => commit(setModuleOpening(product, module.id, value))}
+            >
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+                <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+              </svg>
+            </button>
+          ))}
+        </div>
+        <div className="inspector-actions">
           <button
-            key={value}
             type="button"
-            className={`opening-choice${opening === value ? " is-active" : ""}`}
-            title={t(labelKey)}
-            aria-label={t(labelKey)}
-            aria-pressed={opening === value}
-            disabled={busy}
-            onClick={() => commit(setModuleOpening(product, module.id, value))}
-          >
-            <svg viewBox="0 0 100 100" aria-hidden="true">
-              <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
-              <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
-            </svg>
-          </button>
-        ))}
-      </div>
-      <div className="inspector-actions">
-        <button
-          type="button"
-          className="ghost-button"
-          disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
-          onClick={() =>
-            commit(
-              splitModuleBay(product, module.id, {
-                type: "SPLIT_V",
-                mullionSku: mullionSkus.SPLIT_V ?? "",
-              }),
-            )
-          }
-        >
-          {t("assembly.splitV")}
-        </button>
-        <button
-          type="button"
-          className="ghost-button"
-          disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
-          onClick={() =>
-            commit(
-              splitModuleBay(product, module.id, {
-                type: "SPLIT_H",
-                mullionSku: mullionSkus.SPLIT_H ?? "",
-              }),
-            )
-          }
-        >
-          {t("assembly.splitH")}
-        </button>
-      </div>
-      <DraftField
-        label={t("assembly.width")}
-        value={module.width_mm}
-        unit="mm"
-        disabled={busy}
-        normalize={normalizeMm}
-        onCommit={(value) => commit(setModuleWidth(product, module.id, value))}
-      />
-      <DraftField
-        label={t("assembly.height")}
-        value={module.height_mm}
-        unit="mm"
-        disabled={busy}
-        normalize={normalizeMm}
-        onCommit={(value) => commit(setAllModuleHeights(product, value))}
-      />
-      <label className="assembly-field">
-        <span>{t("assembly.glassThickness")}</span>
-        <select
-          aria-label={t("assembly.glassThickness")}
-          disabled={busy}
-          value={moduleGlassThicknessMm(module) ?? ""}
-          onChange={(event) =>
-            commit(setModuleGlassThickness(product, module.id, event.target.value || null))
-          }
-        >
-          <option value="">{t("assembly.chooseThickness")}</option>
-          {glazingThicknesses.map((thickness) => (
-            <option key={thickness} value={thickness}>
-              {thickness} mm
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="assembly-field">
-        <span>{t("assembly.glass")}</span>
-        <select
-          aria-label={t("assembly.glass")}
-          disabled={busy}
-          value={moduleGlassSku(module) ?? ""}
-          onChange={(event) =>
-            commit(setModuleGlass(product, module.id, event.target.value || null))
-          }
-        >
-          <option value="">{t("assembly.noGlass")}</option>
-          {glassSkus.map((sku) => (
-            <option key={sku} value={sku}>
-              {sku}
-            </option>
-          ))}
-        </select>
-      </label>
-      {isDoor && (
-        <label className="assembly-field">
-          <span>{t("assembly.panel")}</span>
-          <select
-            aria-label={t("assembly.panel")}
-            disabled={busy}
-            value={modulePanelSku(module) ?? ""}
-            onChange={(event) =>
-              commit(setModulePanel(product, module.id, event.target.value || null))
+            className="ghost-button"
+            disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
+            onClick={() =>
+              commit(
+                splitModuleBay(product, module.id, {
+                  type: "SPLIT_V",
+                  mullionSku: mullionSkus.SPLIT_V ?? "",
+                }),
+              )
             }
           >
-            <option value="">{t("assembly.noPanel")}</option>
-            {panelSkus.map((sku) => (
+            {t("assembly.splitV")}
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
+            disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
+            onClick={() =>
+              commit(
+                splitModuleBay(product, module.id, {
+                  type: "SPLIT_H",
+                  mullionSku: mullionSkus.SPLIT_H ?? "",
+                }),
+              )
+            }
+          >
+            {t("assembly.splitH")}
+          </button>
+        </div>
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("inspector.dimensions")}</summary>
+        <DraftField
+          label={t("assembly.width")}
+          value={module.width_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit(setModuleWidth(product, module.id, value))}
+        />
+        <DraftField
+          label={t("assembly.height")}
+          value={module.height_mm}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit(setAllModuleHeights(product, value))}
+        />
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("inspector.glazing")}</summary>
+        <label className="assembly-field">
+          <span>{t("assembly.glassThickness")}</span>
+          <select
+            aria-label={t("assembly.glassThickness")}
+            disabled={busy}
+            value={moduleGlassThicknessMm(module) ?? ""}
+            onChange={(event) =>
+              commit(setModuleGlassThickness(product, module.id, event.target.value || null))
+            }
+          >
+            <option value="">{t("assembly.chooseThickness")}</option>
+            {glazingThicknesses.map((thickness) => (
+              <option key={thickness} value={thickness}>
+                {thickness} mm
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="assembly-field">
+          <span>{t("assembly.glass")}</span>
+          <select
+            aria-label={t("assembly.glass")}
+            disabled={busy}
+            value={moduleGlassSku(module) ?? ""}
+            onChange={(event) =>
+              commit(setModuleGlass(product, module.id, event.target.value || null))
+            }
+          >
+            <option value="">{t("assembly.noGlass")}</option>
+            {glassSkus.map((sku) => (
               <option key={sku} value={sku}>
                 {sku}
               </option>
             ))}
           </select>
         </label>
-      )}
+        {isDoor && (
+          <label className="assembly-field">
+            <span>{t("assembly.panel")}</span>
+            <select
+              aria-label={t("assembly.panel")}
+              disabled={busy}
+              value={modulePanelSku(module) ?? ""}
+              onChange={(event) =>
+                commit(setModulePanel(product, module.id, event.target.value || null))
+              }
+            >
+              <option value="">{t("assembly.noPanel")}</option>
+              {panelSkus.map((sku) => (
+                <option key={sku} value={sku}>
+                  {sku}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </details>
     </section>
   );
 }
@@ -325,12 +337,14 @@ function ModuleInspector({
 function CouplingInspector({
   coupling,
   product,
+  ordinal,
   couplerSkus,
   busy,
   commit,
 }: {
   coupling: CouplingJson;
   product: ProductJson;
+  ordinal: number;
   couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
@@ -339,7 +353,7 @@ function CouplingInspector({
     <section className="assembly-inspector" aria-label={t("assembly.coupling")}>
       <header className="assembly-inspector__header">
         <h4>
-          {t("assembly.coupling")} {coupling.id}
+          {t("assembly.coupling")} {ordinal}
         </h4>
       </header>
       <DraftField
@@ -454,6 +468,10 @@ export function AssemblyEditor({
       : frontBox;
   const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
   const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm${selection ? ` · ${selection}` : ""}`;
+  const objectTree = useMemo(
+    () => buildObjectTree(product, members, issues, t),
+    [product, members, issues],
+  );
 
   return (
     <div className="assembly-editor" aria-label={t("assembly.frontView")}>
@@ -484,6 +502,14 @@ export function AssemblyEditor({
               ? t("assembly.calculateError")
               : t(statusKey(evaluation?.status))}
         </span>
+      </div>
+      <div className="assembly-tree">
+        <ObjectTree
+          root={objectTree}
+          selection={selection}
+          onSelect={select}
+          title={t("tree.title")}
+        />
       </div>
       <div className="assembly-canvas">
         <CanvasViewport contentBox={sheetBox} selectionBox={selectionBox} status={statusText}>
@@ -544,6 +570,7 @@ export function AssemblyEditor({
           <CouplingInspector
             coupling={selectedCoupling}
             product={product}
+            ordinal={couplings.findIndex((item) => item.id === selectedCoupling.id) + 1}
             couplerSkus={couplerSkus}
             busy={busy}
             commit={commit}
