@@ -755,3 +755,80 @@ class TestConnections:
         )
         codes = {issue.code for issue in evaluation.issues}
         assert IssueCode.COUPLER_EDGE_INVALID.value in codes
+
+    def test_missing_couplings_disconnect_the_assembly(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Two modules, zero joints: two separate frames, never one product.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [],
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.ASSEMBLY_DISCONNECTED.value in codes
+        assert evaluation.status is ProductStatus.INVALID
+
+    def test_explicit_graph_must_reach_every_module(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [
+                self._module("a", "1000", "2000"),
+                self._module("b", "1000", "2000"),
+                self._module("c", "1000", "2000"),
+            ],
+            [
+                CouplingDef(
+                    id="x1", kind=ConnectionKind.INLINE, modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.ASSEMBLY_DISCONNECTED.value in codes
+
+    def test_stacked_layout_is_order_independent(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The transom declared BEFORE its column still projects onto the
+        # door's footprint — declaration order cannot change the plan.
+        couplings = [
+            CouplingDef(
+                id="s1",
+                kind=ConnectionKind.STACKED,
+                modules=["door", "tr"],
+                edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                coupler_profile_sku="ACOPLE-60",
+            )
+        ]
+        forward = self._product(
+            [self._module("door", "1000", "2200"), self._module("tr", "1000", "400")],
+            couplings,
+        )
+        reversed_order = self._product(
+            [self._module("tr", "1000", "400"), self._module("door", "1000", "2200")],
+            couplings,
+        )
+        first = evaluate_product(
+            forward, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        second = evaluate_product(
+            reversed_order,
+            demo_60_params,
+            coupler_articles={"ACOPLE-60": COUPLER_ARTICLE},
+        )
+        corners = {
+            module.module_id: module.corners for module in second.plan.modules
+        }
+        assert corners["tr"] == corners["door"]
+        door_corners = next(
+            module.corners
+            for module in first.plan.modules
+            if module.module_id == "door"
+        )
+        assert corners["door"] == door_corners

@@ -89,6 +89,7 @@ class IssueCode(str, Enum):
     COUPLER_EDGE_INVALID = "coupler_edge_invalid"
     COUPLER_EDGE_CONFLICT = "coupler_edge_conflict"
     CONNECTION_TYPE_UNSUPPORTED = "connection_type_unsupported"
+    ASSEMBLY_DISCONNECTED = "assembly_disconnected"
 
 
 class ConnectionKind(str, Enum):
@@ -283,12 +284,14 @@ def _plan_geometry(
     # resolved transitively for towers; cycles degrade to "no anchor".
     stack_parent: dict[str, str] = {}
     coupling_pairs: set[frozenset[str]] = set()
+    pair_coupling: dict[frozenset[str], CouplingDef] = {}
     for index, coupling in enumerate(couplings):
         pair = coupling.modules
         if pair is None and index < len(modules) - 1:
             pair = [modules[index].id, modules[index + 1].id]
         if pair is not None and len(pair) == 2:
             coupling_pairs.add(frozenset(pair))
+            pair_coupling.setdefault(frozenset(pair), coupling)
         if coupling.kind is not ConnectionKind.STACKED:
             continue
         edges = coupling.edges or [EdgeSide.TOP, EdgeSide.BOTTOM]
@@ -301,6 +304,31 @@ def _plan_geometry(
             if top_index is not None:
                 stack_parent[pair[1 - top_index]] = pair[top_index]
 
+    # Every declared joint must bind the modules into ONE connected assembly:
+    # isolated modules are separate frames sharing a BOM, never one product.
+    union_parent = {module.id: module.id for module in modules}
+
+    def _union_root(module_id: str) -> str:
+        while union_parent[module_id] != module_id:
+            union_parent[module_id] = union_parent[union_parent[module_id]]
+            module_id = union_parent[module_id]
+        return module_id
+
+    for pair in coupling_pairs:
+        first, second = pair
+        if first in union_parent and second in union_parent:
+            union_parent[_union_root(first)] = _union_root(second)
+    union_roots = {_union_root(module.id) for module in modules}
+    if len(modules) > 1 and len(union_roots) > 1:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.ASSEMBLY_DISCONNECTED.value,
+                severity=Severity.ERROR,
+                target="assembly",
+                params={"roots": str(len(union_roots))},
+            )
+        )
+
     def _anchor(module_id: str) -> str | None:
         seen: set[str] = set()
         current = module_id
@@ -309,21 +337,33 @@ def _plan_geometry(
             current = stack_parent[current]
         return None if current in stack_parent else current
 
+    # Stack roots resolve BEFORE layout, so an upper module declared ahead of
+    # its column produces the same plan as one declared after it.
+    module_ids = {module.id for module in modules}
+    stack_root: dict[str, str] = {}
+    for module in modules:
+        if module.id in stack_parent:
+            anchor = _anchor(module.id)
+            if anchor is not None and anchor in module_ids:
+                stack_root[module.id] = anchor
+
     front: list[PlanPoint] = [PlanPoint(x_mm=Decimal(0), y_mm=Decimal(0))]
     normals: list[PlanPoint] = []
-    plan_modules: list[PlanModule] = []
+    plan_modules_by_id: dict[str, PlanModule] = {}
     plan_couplings: list[PlanCoupling] = []
+    plan_coupling_endpoints: list[frozenset[str]] = []
     all_points: list[PlanPoint] = []
-    corners_by_module: dict[str, list[PlanPoint]] = {}
-    stack_root: dict[str, str] = {}
     front_module_ids: list[str] = []
+    front_indices = [
+        index for index, module in enumerate(modules) if module.id not in stack_root
+    ]
+    next_front = {
+        front_indices[position]: front_indices[position + 1]
+        for position in range(len(front_indices) - 1)
+    }
 
     for index, module in enumerate(modules):
-        anchor = _anchor(module.id) if module.id in stack_parent else None
-        if anchor is not None and anchor in corners_by_module:
-            corners = corners_by_module[anchor]
-            plan_modules.append(PlanModule(module_id=module.id, corners=corners))
-            stack_root[module.id] = anchor
+        if module.id in stack_root:
             continue
         front_module_ids.append(module.id)
         theta = headings[index]
@@ -346,23 +386,19 @@ def _plan_geometry(
             y_mm=end.y_mm - depth_mm * normal.y_mm,
         )
         corners = [start, end, back_end, back_start]
-        corners_by_module[module.id] = corners
-        plan_modules.append(
-            PlanModule(
-                module_id=module.id,
-                corners=corners,
-            )
+        plan_modules_by_id[module.id] = PlanModule(
+            module_id=module.id,
+            corners=corners,
         )
         all_points.extend([start, end, back_start, back_end])
 
-        if index < len(modules) - 1 and index < len(couplings):
-            coupling = couplings[index]
-            adjacent = coupling.modules is None or coupling.modules == [
-                modules[index].id,
-                modules[index + 1].id,
-            ]
-            if coupling.kind is ConnectionKind.INLINE and adjacent:
-                next_theta = headings[index + 1]
+        next_index = next_front.get(index)
+        if next_index is not None:
+            coupling = pair_coupling.get(
+                frozenset({module.id, modules[next_index].id})
+            )
+            if coupling is not None and coupling.kind is ConnectionKind.INLINE:
+                next_theta = headings[next_index]
                 next_normal = PlanPoint(
                     x_mm=-sin_degrees(next_theta), y_mm=cos_degrees(next_theta)
                 )
@@ -377,7 +413,24 @@ def _plan_geometry(
                         polygon=[joint, back_end, back_left],
                     )
                 )
+                plan_coupling_endpoints.append(
+                    frozenset({module.id, modules[next_index].id})
+                )
                 all_points.extend([back_left])
+
+    # Stacked members inherit their resolved root column's footprint.
+    for module in modules:
+        anchor = stack_root.get(module.id)
+        if anchor is not None and anchor in plan_modules_by_id:
+            plan_modules_by_id[module.id] = PlanModule(
+                module_id=module.id,
+                corners=plan_modules_by_id[anchor].corners,
+            )
+    plan_modules = [
+        plan_modules_by_id[module.id]
+        for module in modules
+        if module.id in plan_modules_by_id
+    ]
 
     # Non-adjacent front segments must not cross.
     for i in range(len(front) - 1):
@@ -406,6 +459,7 @@ def _plan_geometry(
             and stack_root[id_a] == stack_root[id_b]
         ) or stack_root.get(id_a) == id_b or stack_root.get(id_b) == id_a
 
+    front_order = {module_id: position for position, module_id in enumerate(front_module_ids)}
     rects = [(module.module_id, module.corners) for module in plan_modules]
     for i, (id_a, poly_a) in enumerate(rects):
         for j in range(i + 1, len(rects)):
@@ -416,7 +470,8 @@ def _plan_geometry(
             # including anchored siblings stacked over declared partners.
             root_a, root_b = stack_root.get(id_a, id_a), stack_root.get(id_b, id_b)
             expected_contact = (
-                j == i + 1 or frozenset({root_a, root_b}) in coupling_pairs
+                abs(front_order[root_a] - front_order[root_b]) == 1
+                or frozenset({root_a, root_b}) in coupling_pairs
             )
             if _polygons_overlap(poly_a, poly_b, interior_only=expected_contact):
                 issues.append(
@@ -428,8 +483,9 @@ def _plan_geometry(
                     )
                 )
     for index, plan_coupling in enumerate(plan_couplings):
+        endpoints = plan_coupling_endpoints[index]
         for j, (id_b, poly_b) in enumerate(rects):
-            if j in (index, index + 1):
+            if id_b in endpoints or stack_root.get(id_b) in endpoints:
                 continue
             if _polygons_overlap(plan_coupling.polygon, poly_b):
                 issues.append(

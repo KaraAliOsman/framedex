@@ -78,6 +78,7 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_edge_invalid: "assembly.issue.couplerEdgeInvalid",
   coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
   connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
+  assembly_disconnected: "assembly.issue.assemblyDisconnected",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field

@@ -1295,6 +1295,8 @@ const messages = {
     "La unión {target} reclama una cara ya ocupada por otra unión.",
   "assembly.issue.connectionTypeUnsupported":
     "La unión tipo {kind} en {target} se declara pero aún no es fabricable.",
+  "assembly.issue.assemblyDisconnected":
+    "El conjunto queda en {roots} partes sin unir — cada módulo debe conectarse por una unión.",
   "assembly.module": "Módulo",
   "assembly.coupling": "Unión",
   "assembly.wholeAssembly": "el conjunto",
