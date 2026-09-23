@@ -821,6 +821,10 @@ export function AssemblyEditor({
             disabled={busy}
             divideTool={divideToolType}
             onSelectModule={pickModule}
+            onContextMenuModule={(moduleId, pos) => {
+              select(moduleId);
+              setContextMenu(pos);
+            }}
             onAddUnit={coupleUnit}
             onCommitModuleWidth={(moduleId, widthMm) =>
               commit(setModuleWidth(product, moduleId, widthMm))
@@ -861,6 +865,10 @@ export function AssemblyEditor({
                 disabled={busy}
                 onSelectModule={pickModule}
                 onSelectCoupling={select}
+                onContextMenuElement={(elementId, pos) => {
+                  select(elementId);
+                  setContextMenu(pos);
+                }}
                 onCommitAngle={(couplingId, angleDeg) =>
                   commit(setCouplingAngle(product, couplingId, angleDeg))
                 }

@@ -864,6 +864,7 @@ export function ProductFrontContent({
   preview = false,
   divideTool = null,
   onSelectModule,
+  onContextMenuModule,
   onAddUnit,
   onCommitModuleWidth,
   onCommitTotalWidth,
@@ -885,6 +886,10 @@ export function ProductFrontContent({
    * clicking splits the leaf bay under the cursor at the cursor offset. */
   divideTool?: "SPLIT_V" | "SPLIT_H" | null;
   onSelectModule(moduleId: string): void;
+  /** Right-click on a module: select it and open the registry menu at the
+   * cursor — commands always resolve against the clicked element, never a
+   * stale earlier selection. */
+  onContextMenuModule?(moduleId: string, pos: { x: number; y: number }): void;
   onAddUnit(side: "left" | "right"): void;
   onCommitModuleWidth(moduleId: string, widthMm: string): void;
   onCommitTotalWidth(totalMm: string): void;
@@ -1192,6 +1197,12 @@ export function ProductFrontContent({
                   divideTool
                     ? endDivide(module.id, event.clientX, event.clientY)
                     : onSelectModule(module.id),
+                onContextMenu: (event) => {
+                  if (!onContextMenuModule) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onContextMenuModule(module.id, { x: event.clientX, y: event.clientY });
+                },
                 onKeyDown: (event: KeyboardEvent) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();

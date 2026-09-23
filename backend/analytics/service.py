@@ -82,7 +82,7 @@ def _summary(org_id: UUID) -> dict[str, Any]:
         """
         SELECT
             count(*) FILTER (WHERE scheduled_date = local_today
-                AND status IN ('SCHEDULED','ON_ROUTE')) AS today,
+                AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS today,
             count(*) FILTER (WHERE scheduled_date < local_today
                 AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS overdue
         FROM public.deliveries,
