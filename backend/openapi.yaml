@@ -4,6 +4,70 @@ info:
   version: 1.0.0
   description: Authenticated tenant and engine API boundary.
 paths:
+  /api/v1/analytics/summary/:
+    get:
+      operationId: analytics_operational_summary
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - analytics
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationalSummary'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/auth/me/:
     get:
       operationId: auth_me
@@ -9334,6 +9398,46 @@ components:
         * `SLIDING` - SLIDING
         * `TILT_TURN` - TILT_TURN
         * `TURN` - TURN
+    OperationalSummary:
+      type: object
+      properties:
+        schema:
+          type: string
+        work_orders:
+          type: object
+          additionalProperties: {}
+        supplier_orders:
+          type: object
+          additionalProperties: {}
+        throughput_30d:
+          type: object
+          additionalProperties: {}
+        avg_release_to_dispatch_hours:
+          type: number
+          format: double
+          nullable: true
+        inventory:
+          type: object
+          additionalProperties: {}
+        documents:
+          type: object
+          additionalProperties: {}
+        projects:
+          type: object
+          additionalProperties: {}
+        recent_events:
+          type: array
+          items: {}
+      required:
+      - avg_release_to_dispatch_hours
+      - documents
+      - inventory
+      - projects
+      - recent_events
+      - schema
+      - supplier_orders
+      - throughput_30d
+      - work_orders
     OrderReceipt:
       type: object
       properties:

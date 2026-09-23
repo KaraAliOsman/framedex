@@ -2,10 +2,47 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
-import { projectsList } from "../api/generated/dekopen";
-import type { ProjectResponse } from "../api/generated/models";
+import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
+import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
+
+const WO_STATUSES = [
+  "RELEASED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "HOLD",
+  "DISPATCHED",
+  "INSTALLED",
+] as const;
+
+const woStatusKey: Record<string, TranslationKey> = {
+  RELEASED: "production.orderReleased",
+  IN_PROGRESS: "production.orderInProgress",
+  COMPLETED: "production.orderCompleted",
+  HOLD: "production.orderHold",
+  DISPATCHED: "production.orderDispatched",
+  INSTALLED: "production.orderInstalled",
+};
+
+const eventLabel: Record<string, TranslationKey> = {
+  STEP_STARTED: "production.eventStepStarted",
+  STEP_COMPLETED: "production.eventStepCompleted",
+  STEP_BLOCKED: "production.eventStepBlocked",
+  NOTE: "production.eventNote",
+  WO_HOLD: "production.eventHold",
+  WO_REMADE: "production.eventRemade",
+  WO_RELEASED: "production.eventReleased",
+  WO_COMPLETED: "production.eventCompleted",
+  WO_OPTIMIZED: "production.eventOptimized",
+  QC_FAILED: "production.eventQcFailed",
+  WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_PACKED: "production.eventPacked",
+  WO_DISPATCHED: "production.eventDispatched",
+  WO_INSTALLED: "production.eventInstalled",
+};
+
+type RecentEvent = { event: string; order_code: string; at: string };
 
 const statuses: Record<ProjectResponse["status"], TranslationKey> = {
   DRAFT: "projects.draft",
@@ -31,6 +68,21 @@ export function DashboardPage(): JSX.Element {
         throw new ApiError(response.status, response.data);
       }
       return response.data.items;
+    },
+  });
+
+  const opsQuery = useQuery<OperationalSummary>({
+    queryKey: ["dashboard", "ops", org?.id],
+    enabled: org !== undefined,
+    queryFn: async ({ signal }) => {
+      const response = await analyticsOperationalSummary({
+        signal,
+        headers: { "X-Organization-ID": org!.id },
+      });
+      if (response.status !== 200) {
+        throw new ApiError(response.status, response.data);
+      }
+      return response.data;
     },
   });
 
@@ -75,6 +127,63 @@ export function DashboardPage(): JSX.Element {
           <span className="dashboard-continue-cta">{t("dashboard.resume")}</span>
         </Link>
       )}
+
+      {opsQuery.data ? (
+        <section className="dashboard-ops" aria-label={t("dashboard.opsTitle")}>
+          <h2 className="eyebrow">{t("dashboard.opsTitle")}</h2>
+          <div className="dashboard-funnel">
+            {WO_STATUSES.map((status) => {
+              const count = Number(
+                (opsQuery.data.work_orders as Record<string, number>)[status] ?? 0,
+              );
+              return (
+                <span key={status} className="status-chip" data-status={status.toLowerCase()}>
+                  {t(woStatusKey[status] ?? "production.orderReleased")} · {count}
+                </span>
+              );
+            })}
+          </div>
+          <div className="dashboard-cards">
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.dispatched30")}</span>
+              <strong>
+                {Number(
+                  (opsQuery.data.throughput_30d as Record<string, number>).dispatched_30d ?? 0,
+                )}
+              </strong>
+            </div>
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.installed30")}</span>
+              <strong>
+                {Number(
+                  (opsQuery.data.throughput_30d as Record<string, number>).installed_30d ?? 0,
+                )}
+              </strong>
+            </div>
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.leadHours")}</span>
+              <strong>
+                {opsQuery.data.avg_release_to_dispatch_hours !== null
+                  ? `${opsQuery.data.avg_release_to_dispatch_hours} h`
+                  : "—"}
+              </strong>
+            </div>
+          </div>
+          {((opsQuery.data.recent_events as RecentEvent[]) ?? []).length > 0 ? (
+            <ul className="dashboard-activity">
+              {(opsQuery.data.recent_events as RecentEvent[]).map((item, i) => (
+                <li key={`${item.order_code}-${item.event}-${i}`}>
+                  <span className="dashboard-activity-event">
+                    {t(eventLabel[item.event] ?? "production.eventStepCompleted")}
+                  </span>
+                  <span className="dashboard-activity-code">{item.order_code}</span>
+                  <time dateTime={item.at}>{new Date(item.at).toLocaleString("es-CL")}</time>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="dashboard-cards">
         <div className="metric-card">

@@ -70,6 +70,7 @@ import type {
   KitList,
   KitResponse,
   KitWriteRequest,
+  OperationalSummary,
   OrderReceiptRequestRequest,
   OrderReceiving,
   OrderResponse,
@@ -111,6 +112,77 @@ import type {
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
+export type analyticsOperationalSummaryResponse200 = {
+  data: OperationalSummary;
+  status: 200;
+};
+
+export type analyticsOperationalSummaryResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type analyticsOperationalSummaryResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type analyticsOperationalSummaryResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type analyticsOperationalSummaryResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type analyticsOperationalSummaryResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type analyticsOperationalSummaryResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type analyticsOperationalSummaryResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type analyticsOperationalSummaryResponseSuccess = analyticsOperationalSummaryResponse200 & {
+  headers: Headers;
+};
+export type analyticsOperationalSummaryResponseError = (
+  | analyticsOperationalSummaryResponse400
+  | analyticsOperationalSummaryResponse401
+  | analyticsOperationalSummaryResponse403
+  | analyticsOperationalSummaryResponse404
+  | analyticsOperationalSummaryResponse409
+  | analyticsOperationalSummaryResponse422
+  | analyticsOperationalSummaryResponse503
+) & {
+  headers: Headers;
+};
+
+export type analyticsOperationalSummaryResponse =
+  analyticsOperationalSummaryResponseSuccess | analyticsOperationalSummaryResponseError;
+
+export const getAnalyticsOperationalSummaryUrl = () => {
+  return `/api/v1/analytics/summary/`;
+};
+
+export const analyticsOperationalSummary = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<analyticsOperationalSummaryResponse> => {
+  return apiMutator<analyticsOperationalSummaryResponse>(getAnalyticsOperationalSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type authMeResponse200 = {
   data: AuthMeResponse;
   status: 200;
