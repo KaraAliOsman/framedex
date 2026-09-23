@@ -105,7 +105,9 @@ def _routing(engine_result: dict[str, object]) -> list[str]:
     return routing
 
 
-def _work_order_payload(position: dict[str, object]) -> dict[str, object]:
+def _work_order_payload(
+    position: dict[str, object], *, polishing: list | None = None
+) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     return {
         "schema": "production_wo_v1",
@@ -116,6 +118,7 @@ def _work_order_payload(position: dict[str, object]) -> dict[str, object]:
             key: engine.get(key) or []
             for key in ("profile_cuts", "reinforcements", "glasses", "panels", "hardware_items")
         },
+        "glass_polishing": list(polishing or []),
         "routing": _routing(engine),
     }
 
@@ -186,10 +189,21 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         for position in bom:
             position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
         centers = _ensure_work_centers(org_id)
+        # The sealed polishing choices live on the snapshot positions — the
+        # work order embeds them so the workshop reads edge processing without
+        # joining the documentary snapshot.
+        polishing_by_position = {
+            str(pos.get("id")): pos.get("glass_polishing") or []
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
-            payload = _work_order_payload(position)
+            payload = _work_order_payload(
+                position,
+                polishing=polishing_by_position.get(str(position.get("position_id"))),
+            )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
                 """

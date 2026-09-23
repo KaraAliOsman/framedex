@@ -28,11 +28,13 @@
     "system_id": "3067da09-3119-5ad0-a1d5-498cd2dfd753"
   },
   "response": {
-    "calculation_hash": "sha256:562cdc97337a690f09db12590ee8a99b420ebc6b7dbf9c40a4d4755132d24f21",
+    "calculation_hash": "sha256:a82ed54c15ddc3f78e13c4ca7330116272f762d229ef1abb7e1fc444b3bcf671",
     "glasses": [
       {
         "area_m2": "0.8908",
+        "article_sku": null,
         "bay_id": "bay_1",
+        "glass_spec": "4-16-4 Float Incoloro",
         "height_mm": "1310.00",
         "leaf_id": null,
         "thickness_net_mm": "8.00",
@@ -41,7 +43,9 @@
       },
       {
         "area_m2": "0.6421",
+        "article_sku": null,
         "bay_id": "bay_2",
+        "glass_spec": "4-12-4 Float Incoloro",
         "height_mm": "1176.00",
         "leaf_id": null,
         "thickness_net_mm": "8.00",

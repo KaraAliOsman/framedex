@@ -618,3 +618,10 @@
     grid-template-columns: 1fr;
   }
 }
+.production-glass {
+  margin-top: 0.75rem;
+}
+.production-glass-total td {
+  font-weight: 600;
+  border-top: 2px solid var(--theme-border-subtle);
+}

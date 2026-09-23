@@ -461,6 +461,7 @@ def _append_leaf(
         accumulator.glasses.append(build_glass_piece(
             bay_id=node.id, leaf_id=leaf_id, width_mm=width, height_mm=height,
             glass_spec=node.glass_spec, fallback_thickness_mm=infill_thickness,
+            article_sku=technical_sku or None,
         ))
     accumulator.computation.infills.append(InfillTechnicalFacts(
         bay_id=node.id, leaf_id=leaf_id, kind=infill_kind,
@@ -563,6 +564,7 @@ def _append_bay(
         accumulator.glasses.append(build_glass_piece(
             bay_id=node.id, width_mm=width, height_mm=height,
             glass_spec=node.glass_spec, fallback_thickness_mm=node.glass_thickness_mm,
+            article_sku=node.glass_article_sku or None,
         ))
         accumulator.computation.infills.append(InfillTechnicalFacts(
             bay_id=node.id, leaf_id=None, kind="GLASS", thickness_mm=node.glass_thickness_mm,

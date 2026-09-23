@@ -66,6 +66,10 @@ class GlassPiece(EngineModel):
     area_m2: Decimal
     weight_kg: Decimal
     thickness_net_mm: Decimal
+    # Composition (e.g. "4-16-4") and the supplier article the piece was
+    # resolved against — None on results sealed before the fields existed.
+    glass_spec: str | None = None
+    article_sku: str | None = None
 
 
 class HardwareComponent(EngineModel):

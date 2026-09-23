@@ -583,6 +583,50 @@ def test_release_seals_system_from_snapshot_positions() -> None:
     assert json.loads(seen["payload"])["system_id"] == _SNAPSHOT["positions"][0]["system_id"]
 
 
+def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
+    polishing = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": None,
+            "edges": {"top": True, "right": True, "bottom": False, "left": False},
+        }
+    ]
+    snapshot = {
+        "positions": [
+            {
+                "id": _POSITION_ID,
+                "system_id": str(uuid4()),
+                "glass_polishing": polishing,
+            }
+        ],
+        "bom": _SNAPSHOT["bom"],
+    }
+    seen = {}
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return _version_row(snapshot)
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "INSERT INTO public.orders" in query:
+            seen["payload"] = params[3]
+            return [{"id": uuid4()}]
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service._ensure_work_centers", return_value={}
+    ):
+        service.release_production(
+            org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
+        )
+    assert json.loads(seen["payload"])["glass_polishing"] == polishing
+
+
 def test_optimize_rejects_completed_order() -> None:
     order_id = uuid4()
 
