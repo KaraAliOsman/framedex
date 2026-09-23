@@ -13,7 +13,7 @@ from uuid import UUID
 from django.db import DatabaseError, connection, transaction
 from psycopg import sql
 
-from documents.artifacts import SupabaseDocumentStorage
+from documents.artifacts import SupabaseDocumentStorage, generate_artifact
 from documents.repository import (
     DocumentaryError,
     decoded,
@@ -58,7 +58,9 @@ def portal_backend() -> Iterator[None]:
                 )
 
 
-def share_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID) -> dict[str, object]:
+def share_quote(
+    *, org_id: UUID, project_id: UUID, actor_id: UUID, role: str
+) -> dict[str, object]:
     """Mint a fresh approval link for the project's latest sealed version."""
     with transaction.atomic(), documentary_backend():
         project = one(
@@ -90,6 +92,18 @@ def share_quote(*, org_id: UUID, project_id: UUID, actor_id: UUID) -> dict[str, 
                 str(actor_id),
             ],
         )
+    # The client-facing quotation is DOC-01 (the commercial offer) — minting
+    # a link guarantees it exists; generation is slot-idempotent so an
+    # already-emitted DOC-01 is reused.
+    generate_artifact(
+        org_id=org_id,
+        actor_id=actor_id,
+        role=role,
+        project_version_id=versions[0]["id"],
+        order_id=None,
+        document_type="DOC-01",
+        file_format="PDF",
+    )
     return {"token": token, "expires_at": expires_at}
 
 
@@ -154,7 +168,7 @@ def portal_quote(token: str) -> dict[str, object]:
         artifacts = rows(
             "SELECT id,storage_object_key,created_at FROM public.document_artifacts "
             "WHERE org_id=%s AND project_version_id=%s "
-            "AND document_type='DOC-03' AND format='PDF' "
+            "AND document_type='DOC-01' AND format='PDF' "
             "ORDER BY created_at DESC LIMIT 1",
             [org_id, approval["project_version_id"]],
         )
