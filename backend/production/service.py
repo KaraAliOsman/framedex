@@ -600,10 +600,11 @@ def _sheet_rules(org_id: UUID) -> dict[str, list[SheetRule]]:
             by_thickness.setdefault(str(Decimal(str(thickness))), []).append(rule)
     # Deterministic authority order: smallest physical sheet first, sku as the
     # tiebreak, so variants never depend on database row order.
-    for candidates in (by_sku | by_thickness).values():
-        candidates.sort(
-            key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku)
-        )
+    for group in (by_sku, by_thickness):
+        for candidates in group.values():
+            candidates.sort(
+                key=lambda r: (r.sheet_width_mm * r.sheet_height_mm, r.workshop_sku)
+            )
     return {"by_sku": by_sku, "by_thickness": by_thickness}
 
 
@@ -756,10 +757,19 @@ def optimize_work_order(
                         for repetition in range(1, quantity + 1)
                     ],
                 ))
-        # Group by rule so one sheet format gets one bin set.
-        merged: dict[str, tuple[SheetRule, list[NestPiece]]] = {}
+        # Group by the full selected rule identity (format + trim + purchasing
+        # identity), never just the SKU — pieces picked for different variants
+        # of one SKU keep separate layouts and purchase lines.
+        merged: dict[tuple, tuple[SheetRule, list[NestPiece]]] = {}
         for rule, pieces_group in sheet_groups:
-            merged.setdefault(rule.workshop_sku, (rule, []))[1].extend(pieces_group)
+            key = (
+                rule.workshop_sku,
+                str(rule.sheet_width_mm),
+                str(rule.sheet_height_mm),
+                str(rule.edge_trim_mm),
+                rule.purchasing_sku,
+            )
+            merged.setdefault(key, (rule, []))[1].extend(pieces_group)
         for rule, group_pieces in merged.values():
             outcome = nest_rects(group_pieces, rule)
             sheets.extend(layout.model_dump(mode="json") for layout in outcome.layouts)
