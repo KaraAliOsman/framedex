@@ -485,6 +485,7 @@ class ProjectCreditNotesView(APIView):
         **SCHEMA,
     )
     def post(self, request, project_id, invoice_id):
+        data = validate(ProjectCreditNoteEmitSerializer, request.data)
         with scope(request, WRITE_ROLES) as (token, _, org):
             project = service.project_row(org, project_id)
             return response(
@@ -493,7 +494,7 @@ class ProjectCreditNotesView(APIView):
                     project=project,
                     invoice_id=invoice_id,
                     actor_id=token.user_id,
-                    reason=(request.data or {}).get("reason"),
+                    reason=data.get("reason"),
                 ),
                 status=201,
             )

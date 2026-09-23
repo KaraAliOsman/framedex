@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 SIGNED_URL_TTL_SECONDS = 600
 
 
-def _invoice_public(row) -> dict:
+def _invoice_public(row, credit_note: dict | None = None) -> dict:
     return {
         "id": str(row["id"]),
         "invoice_code": row["invoice_code"],
@@ -40,10 +40,37 @@ def _invoice_public(row) -> dict:
         "revision_code": row["payload_json"].get("revision_code")
         if isinstance(row["payload_json"], dict)
         else json.loads(row["payload_json"]).get("revision_code"),
-        "credit_note": None,
+        "credit_note": credit_note,
         "created_at": row["created_at"].isoformat()
         if hasattr(row["created_at"], "isoformat")
         else row["created_at"],
+    }
+
+
+def _credit_note_public(row, invoice) -> dict:
+    """The annulment chip attached to an invoice — same public shape the
+    payments summary joins, so every surface reports the same state."""
+    return {
+        "id": str(row["id"]),
+        "credit_code": row["credit_code"],
+        "invoice_id": str(row["invoice_id"]),
+        "invoice_code": invoice["invoice_code"],
+        "project_id": str(row["project_id"]),
+        "created_at": row["created_at"].isoformat()
+        if hasattr(row["created_at"], "isoformat")
+        else row["created_at"],
+    }
+
+
+def _credit_notes_by_invoice(org_id: UUID, project_id: UUID) -> dict:
+    return {
+        str(note["invoice_id"]): note
+        for note in rows(
+            "SELECT id,invoice_id,project_id,credit_code,created_at "
+            "FROM public.project_credit_notes "
+            "WHERE org_id=%s AND project_id=%s",
+            [str(org_id), str(project_id)],
+        )
     }
 
 
@@ -237,8 +264,14 @@ def _purge_unreferenced_invoice(*, org_id: UUID, object_key: str) -> None:
 
 def list_invoices(*, org_id: UUID, project_id: UUID) -> list[dict]:
     with documentary_backend():
+        credit_notes = _credit_notes_by_invoice(org_id, project_id)
         return [
-            _invoice_public(row)
+            _invoice_public(
+                row,
+                _credit_note_public(credit_notes[str(row["id"])], row)
+                if str(row["id"]) in credit_notes
+                else None,
+            )
             for row in rows(
                 "SELECT * FROM public.project_invoices "
                 "WHERE org_id=%s AND project_id=%s ORDER BY created_at,id",
@@ -259,11 +292,20 @@ def invoice_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) -> dict:
                 404, "invoice_not_found", "La factura no está disponible."
             )
         invoice = invoice[0]
+        credit_note = rows(
+            "SELECT id,invoice_id,project_id,credit_code,created_at "
+            "FROM public.project_credit_notes "
+            "WHERE org_id=%s AND invoice_id=%s",
+            [str(org_id), str(invoice_id)],
+        )
         signed_url = SupabaseDocumentStorage().signed_url(
             str(invoice["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
         )
     return {
-        **_invoice_public(invoice),
+        **_invoice_public(
+            invoice,
+            _credit_note_public(credit_note[0], invoice) if credit_note else None,
+        ),
         "signed_url": signed_url,
         "expires_in": SIGNED_URL_TTL_SECONDS,
     }
