@@ -197,6 +197,7 @@ beforeEach(() => {
   vi.mocked(projectPaymentsList).mockResolvedValue(
     response(200, {
       payments: [],
+      invoices: [],
       collected: "0",
       quote_total_gross: null,
       balance: null,

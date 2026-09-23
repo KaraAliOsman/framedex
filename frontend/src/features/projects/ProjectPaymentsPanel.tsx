@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
+  projectInvoiceAccess,
+  projectInvoiceEmit,
   projectPaymentsList,
   projectPaymentsRecord,
   projectPaymentReceipt,
@@ -10,6 +12,7 @@ import type {
   MethodEnum,
   PaymentKindEnum,
   PaymentsSummary,
+  ProjectInvoice,
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
@@ -191,7 +194,51 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function emitInvoice(): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceEmit(projectId, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.invoiceEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openInvoice(invoice: ProjectInvoice): Promise<void> {
+    // Open during the click activation — a tab opened after the await is blocked.
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.invoiceOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.invoiceOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   const payments = summary?.payments ?? [];
+  const invoiceList = summary?.invoices ?? [];
   const percent =
     summary?.quote_total_gross && Number(summary.quote_total_gross) > 0
       ? Math.min(100, (Number(summary.collected) / Number(summary.quote_total_gross)) * 100)
@@ -346,6 +393,50 @@ export function ProjectPaymentsPanel({
         </table>
       )}
       {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
+      {summary && summary.status !== "NO_DEAL" && (
+        <div className="projects-invoices">
+          <div className="projects-actions">
+            <h3>{t("projects.invoicesTitle")}</h3>
+            {canWrite && (
+              <button type="button" onClick={() => void emitInvoice()} disabled={busy}>
+                {t("projects.invoiceEmit")}
+              </button>
+            )}
+          </div>
+          {invoiceList.length > 0 ? (
+            <table className="payments-table">
+              <thead>
+                <tr>
+                  <th>{t("projects.invoiceDate")}</th>
+                  <th>{t("projects.invoiceCode")}</th>
+                  <th>{t("projects.invoiceRevision")}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {invoiceList.map((invoice) => (
+                  <tr key={invoice.id}>
+                    <td>{formatDate(invoice.created_at)}</td>
+                    <td>{invoice.invoice_code}</td>
+                    <td>{invoice.revision_code ?? "—"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => void openInvoice(invoice)}
+                        disabled={busy}
+                      >
+                        {t("projects.invoiceOpen")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>{t("projects.invoicesEmpty")}</p>
+          )}
+        </div>
+      )}
       <ProjectPaymentLinksPanel
         projectId={projectId}
         orgId={orgId}

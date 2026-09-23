@@ -277,6 +277,8 @@ export * from "./productIssueSeverityEnum";
 export * from "./profileChoice";
 export * from "./profileCut";
 export * from "./profileSystemSummary";
+export * from "./projectInvoice";
+export * from "./projectInvoiceAccess";
 export * from "./projectListResponse";
 export * from "./projectPayment";
 export * from "./projectResponse";

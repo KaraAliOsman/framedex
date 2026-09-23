@@ -17,7 +17,15 @@ from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import clients, design_assist, payment_links, payments, receipts, service
+from projects import (
+    clients,
+    design_assist,
+    invoices,
+    payment_links,
+    payments,
+    receipts,
+    service,
+)
 from projects.serializers import (
     ClientListResponseSerializer,
     ClientResponseSerializer,
@@ -33,6 +41,8 @@ from projects.serializers import (
     PaymentRecordSerializer,
     PaymentsSummarySerializer,
     PaymentVoidSerializer,
+    ProjectInvoiceAccessSerializer,
+    ProjectInvoiceSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
     DesignAssistRequestSerializer,
@@ -420,6 +430,43 @@ class ProjectPaymentReceiptView(APIView):
             return response(
                 receipts.receipt_access(
                     org_id=org, project_id=project_id, payment_id=payment_id
+                )
+            )
+
+
+class ProjectInvoicesView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_invoice_emit",
+        request=None,
+        responses={201: ProjectInvoiceSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id):
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                invoices.issue_invoice(
+                    org_id=org, project=project, actor_id=token.user_id
+                ),
+                status=201,
+            )
+
+
+class ProjectInvoiceAccessView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_invoice_access",
+        responses={200: ProjectInvoiceAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, invoice_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                invoices.invoice_access(
+                    org_id=org, project_id=project_id, invoice_id=invoice_id
                 )
             )
 

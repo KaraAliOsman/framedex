@@ -125,6 +125,8 @@ import type {
   ProductionOrderDetail,
   ProductionOrderList,
   ProductionRelease,
+  ProjectInvoice,
+  ProjectInvoiceAccess,
   ProjectListResponse,
   ProjectResponse,
   ProjectWriteRequest,
@@ -7972,6 +7974,154 @@ export const projectImportConfirm = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(importConfirmRequest),
   });
+};
+
+export type projectInvoiceEmitResponse201 = {
+  data: ProjectInvoice;
+  status: 201;
+};
+
+export type projectInvoiceEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceEmitResponseSuccess = projectInvoiceEmitResponse201 & {
+  headers: Headers;
+};
+export type projectInvoiceEmitResponseError = (
+  | projectInvoiceEmitResponse400
+  | projectInvoiceEmitResponse401
+  | projectInvoiceEmitResponse403
+  | projectInvoiceEmitResponse404
+  | projectInvoiceEmitResponse409
+  | projectInvoiceEmitResponse422
+  | projectInvoiceEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceEmitResponse =
+  projectInvoiceEmitResponseSuccess | projectInvoiceEmitResponseError;
+
+export const getProjectInvoiceEmitUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/`;
+};
+
+export const projectInvoiceEmit = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceEmitResponse> => {
+  return apiMutator<projectInvoiceEmitResponse>(getProjectInvoiceEmitUrl(projectId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type projectInvoiceAccessResponse200 = {
+  data: ProjectInvoiceAccess;
+  status: 200;
+};
+
+export type projectInvoiceAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceAccessResponseSuccess = projectInvoiceAccessResponse200 & {
+  headers: Headers;
+};
+export type projectInvoiceAccessResponseError = (
+  | projectInvoiceAccessResponse400
+  | projectInvoiceAccessResponse401
+  | projectInvoiceAccessResponse403
+  | projectInvoiceAccessResponse404
+  | projectInvoiceAccessResponse409
+  | projectInvoiceAccessResponse422
+  | projectInvoiceAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceAccessResponse =
+  projectInvoiceAccessResponseSuccess | projectInvoiceAccessResponseError;
+
+export const getProjectInvoiceAccessUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/`;
+};
+
+export const projectInvoiceAccess = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceAccessResponse> => {
+  return apiMutator<projectInvoiceAccessResponse>(
+    getProjectInvoiceAccessUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type projectPaymentLinksListResponse200 = {

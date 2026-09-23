@@ -10,6 +10,8 @@ from projects.views import (
     ProjectPaymentIntegrationView,
     ProjectPaymentLinkRecoverView,
     ProjectPaymentLinksView,
+    ProjectInvoiceAccessView,
+    ProjectInvoicesView,
     ProjectPaymentReceiptView,
     ProjectPaymentsView,
     ProjectPaymentView,
@@ -43,6 +45,11 @@ urlpatterns = [
     path(
         "projects/<uuid:project_id>/payments/<uuid:payment_id>/receipt/",
         ProjectPaymentReceiptView.as_view(),
+    ),
+    path("projects/<uuid:project_id>/invoices/", ProjectInvoicesView.as_view()),
+    path(
+        "projects/<uuid:project_id>/invoices/<uuid:invoice_id>/",
+        ProjectInvoiceAccessView.as_view(),
     ),
     path(
         "projects/<uuid:project_id>/payment-links/",

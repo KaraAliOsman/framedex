@@ -199,8 +199,22 @@ class ProjectPaymentSerializer(serializers.Serializer):
     created_at = serializers.CharField()
 
 
+class ProjectInvoiceSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    invoice_code = serializers.CharField()
+    project_id = serializers.UUIDField()
+    revision_code = serializers.CharField(allow_null=True)
+    created_at = serializers.CharField()
+
+
+class ProjectInvoiceAccessSerializer(ProjectInvoiceSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
 class PaymentsSummarySerializer(serializers.Serializer):
     payments = ProjectPaymentSerializer(many=True)
+    invoices = ProjectInvoiceSerializer(many=True)
     collected = serializers.CharField()
     quote_total_gross = serializers.CharField(allow_null=True)
     balance = serializers.CharField(allow_null=True)

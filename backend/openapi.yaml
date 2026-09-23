@@ -7226,6 +7226,152 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/invoices/:
+    post:
+      operationId: project_invoice_emit
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInvoice'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/projects/{project_id}/invoices/{invoice_id}/:
+    get:
+      operationId: project_invoice_access
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: invoice_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInvoiceAccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/payment-links/:
     get:
       operationId: project_payment_links_list
@@ -13380,6 +13526,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProjectPayment'
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectInvoice'
         collected:
           type: string
         quote_total_gross:
@@ -13402,6 +13552,7 @@ components:
       - balance
       - collected
       - currency
+      - invoices
       - payment
       - payments
       - quote_total_gross
@@ -13432,6 +13583,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProjectPayment'
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectInvoice'
         collected:
           type: string
         quote_total_gross:
@@ -13448,6 +13603,7 @@ components:
       - balance
       - collected
       - currency
+      - invoices
       - payments
       - quote_total_gross
       - status
@@ -14231,6 +14387,56 @@ components:
       - name
       - quote_ready
       - readiness_reasons
+    ProjectInvoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_code:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        revision_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+      required:
+      - created_at
+      - id
+      - invoice_code
+      - project_id
+      - revision_code
+    ProjectInvoiceAccess:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_code:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        revision_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        signed_url:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - created_at
+      - expires_in
+      - id
+      - invoice_code
+      - project_id
+      - revision_code
+      - signed_url
     ProjectListResponse:
       type: object
       properties:

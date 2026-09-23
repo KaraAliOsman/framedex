@@ -96,6 +96,27 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 [str(org_id), str(project_id)],
             )
         }
+        invoices = [
+            {
+                "id": str(invoice["id"]),
+                "invoice_code": invoice["invoice_code"],
+                "project_id": str(project_id),
+                "revision_code": (
+                    invoice["payload_json"]
+                    if isinstance(invoice["payload_json"], dict)
+                    else json.loads(invoice["payload_json"])
+                ).get("revision_code"),
+                "created_at": invoice["created_at"].isoformat()
+                if hasattr(invoice["created_at"], "isoformat")
+                else invoice["created_at"],
+            }
+            for invoice in rows(
+                "SELECT id,invoice_code,payload_json::text AS payload_json,created_at "
+                "FROM public.project_invoices "
+                "WHERE org_id=%s AND project_id=%s ORDER BY created_at,id",
+                [str(org_id), str(project_id)],
+            )
+        ]
     collected = sum(
         (Decimal(str(p["amount"])) for p in payments if p["voided_at"] is None),
         Decimal("0"),
@@ -115,6 +136,7 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
         "payments": [
             _payment_public(p, receipts.get(str(p["id"]))) for p in payments
         ],
+        "invoices": invoices,
         "collected": str(collected),
         "quote_total_gross": str(total) if total is not None else None,
         "balance": str(balance) if balance is not None else None,

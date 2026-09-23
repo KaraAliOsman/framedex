@@ -8,10 +8,12 @@
 import type { CurrencyEnum } from "./currencyEnum";
 import type { PaymentReceipt } from "./paymentReceipt";
 import type { PaymentStatusEnum } from "./paymentStatusEnum";
+import type { ProjectInvoice } from "./projectInvoice";
 import type { ProjectPayment } from "./projectPayment";
 
 export interface PaymentRecordResponse {
   payments: ProjectPayment[];
+  invoices: ProjectInvoice[];
   collected: string;
   /** @nullable */
   quote_total_gross: string | null;
