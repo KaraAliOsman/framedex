@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAssist } from "../../api/generated/dekopen";
@@ -24,12 +24,14 @@ type Preview = {
 export function AssistantPanel({
   organizationId,
   positionId,
+  systemId,
   product,
   disabled,
   onApply,
 }: {
   organizationId: string;
   positionId: string | null;
+  systemId: string | null;
   product: ProductJson;
   disabled: boolean;
   onApply(ops: DesignOp[]): void;
@@ -38,18 +40,41 @@ export function AssistantPanel({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
+  /** One operation key per (prompt, product, system) — a retry after a lost
+   * response replays the committed call instead of debiting twice. */
+  const operationKey = useRef<{
+    key: string;
+    prompt: string;
+    product: ProductJson;
+    systemId: string | null;
+  } | null>(null);
 
   async function generate(): Promise<void> {
-    if (!positionId || !prompt.trim()) return;
+    if (!positionId || !systemId || !prompt.trim()) return;
     setBusy(true);
     setMessage("");
     setPreview(null);
+    const trimmed = prompt.trim();
+    if (
+      !operationKey.current ||
+      operationKey.current.prompt !== trimmed ||
+      operationKey.current.product !== product ||
+      operationKey.current.systemId !== systemId
+    ) {
+      operationKey.current = {
+        key: crypto.randomUUID(),
+        prompt: trimmed,
+        product,
+        systemId,
+      };
+    }
     try {
       const response = await positionsDesignAssist(
         positionId,
         {
-          prompt: prompt.trim(),
-          operation_key: crypto.randomUUID(),
+          prompt: trimmed,
+          operation_key: operationKey.current.key,
+          system_id: systemId,
           product: {
             modules: product.assembly.modules.map((module) => ({
               width_mm: module.width_mm,
@@ -111,7 +136,7 @@ export function AssistantPanel({
             <button
               type="button"
               className="primary-button"
-              disabled={busy || disabled || !prompt.trim()}
+              disabled={busy || disabled || !systemId || !prompt.trim()}
               onClick={() => void generate()}
             >
               {busy ? t("assistant.generating") : t("assistant.generate")}

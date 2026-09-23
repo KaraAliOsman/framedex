@@ -80,18 +80,20 @@ def _summary(product: Any) -> dict | None:
     }
 
 
-def _catalog(position: dict, org_id: UUID) -> dict:
+def _catalog(system_id: UUID, org_id: UUID) -> dict:
     """The selected system's authoritative material surface — a SKU is a
     catalog identifier, never free text, so proposed glass, panels and
-    thicknesses must resolve against the same options the estimator sees."""
+    thicknesses must resolve against the same options the estimator sees.
+    load_visible scopes to the org: a system the tenant cannot see is the
+    same 404 the design-options surface returns."""
     repository = SystemParamsRepository()
-    params = repository.load_visible(position["system_id"], org_id)
+    params = repository.load_visible(system_id, org_id)
     glass_rows = rows(
         "SELECT DISTINCT ON (technical_sku) technical_sku "
         "FROM public.glass_purchase_mappings "
         "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) "
         "ORDER BY technical_sku, org_id NULLS LAST, version DESC",
-        [position["system_id"], org_id],
+        [system_id, org_id],
     )
     return {
         "glass_skus": {item["technical_sku"] for item in glass_rows},
@@ -170,7 +172,11 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_total_width":
-            if _in_range(item.get("width_mm"), Decimal("150"), Decimal("30000")):
+            if _in_range(
+                item.get("width_mm"),
+                Decimal("150") * state["modules"],
+                Decimal("30000"),
+            ):
                 accepted.append(
                     {"op": name, "width_mm": str(_number(item["width_mm"]))}
                 )
@@ -259,6 +265,7 @@ def assist(
     product: Any,
     prompt: str,
     operation_key: str,
+    system_id: UUID,
 ) -> dict:
     summary = _summary(product)
     if summary is None:
@@ -267,7 +274,7 @@ def assist(
             "design_assist_product_invalid",
             "El producto del asistente no tiene una estructura válida.",
         )
-    catalog = _catalog(position, org_id)
+    catalog = _catalog(system_id, org_id)
     envelope = gateway.invoke(
         org_id=org_id,
         user_id=user_id,
@@ -277,6 +284,7 @@ def assist(
         input_payload={
             "prompt": prompt,
             "position_id": str(position["id"]),
+            "system_id": str(system_id),
             "product": summary,
             "ops_contract": sorted(
                 {

@@ -773,6 +773,7 @@ export function AssemblyEditor({
           <AssistantPanel
             organizationId={organizationId}
             positionId={positionId}
+            systemId={inputs.systemId}
             product={product}
             disabled={disabled}
             onApply={(ops) => commit(applyDesignOps(product, ops))}

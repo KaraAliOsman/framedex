@@ -237,6 +237,7 @@ class PositionDesignAssistView(APIView):
                         product=data["product"],
                         prompt=str(data["prompt"]),
                         operation_key=str(data["operation_key"]),
+                        system_id=data["system_id"],
                     )
                 )
             except ProviderError as error:

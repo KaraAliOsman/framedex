@@ -58,7 +58,7 @@ def _patch_invoke(monkeypatch, output, catalog=None):
 
     monkeypatch.setattr(design_assist.gateway, "invoke", fake_invoke)
     monkeypatch.setattr(
-        design_assist, "_catalog", lambda position, org_id: catalog or _catalog()
+        design_assist, "_catalog", lambda system_id, org_id: catalog or _catalog()
     )
     return captured
 
@@ -81,6 +81,7 @@ def test_assist_returns_validated_ops(monkeypatch):
         position=_position(),
         product=_product(modules=3, couplings=2),
         prompt="3 módulos correderas",
+        system_id=uuid4(),
         operation_key="assist-1",
     )
     assert len(out["ops"]) == 3
@@ -97,6 +98,7 @@ def test_assist_audits_the_submitted_product(monkeypatch):
         position=_position(),
         product=_product(),
         prompt="iguala anchos",
+        system_id=uuid4(),
         operation_key="assist-2",
     )
     assert captured["input"]["product"]["modules"][0]["width_mm"] == "1200"
@@ -115,6 +117,7 @@ def test_out_of_bounds_module_is_rejected(monkeypatch):
         position=_position(),
         product=_product(modules=2),
         prompt="fijo en el quinto",
+        system_id=uuid4(),
         operation_key="assist-3",
     )
     assert out["ops"] == []
@@ -132,6 +135,7 @@ def test_unknown_op_is_rejected_not_applied(monkeypatch):
         position=_position(),
         product=_product(),
         prompt="borra todo y alto 1600",
+        system_id=uuid4(),
         operation_key="assist-4",
     )
     assert [op["op"] for op in out["ops"]] == ["set_height"]
@@ -156,6 +160,7 @@ def test_ranges_and_enums_enforced(monkeypatch):
         position=_position(),
         product=_product(),
         prompt="todo al límite",
+        system_id=uuid4(),
         operation_key="assist-5",
     )
     assert [op["op"] for op in out["ops"]] == ["set_module_width"]
@@ -171,6 +176,7 @@ def test_last_module_cannot_be_removed(monkeypatch):
         position=_position(),
         product=_product(modules=1, couplings=0),
         prompt="quita el módulo",
+        system_id=uuid4(),
         operation_key="assist-6",
     )
     assert out["ops"] == []
@@ -186,7 +192,8 @@ def test_bad_provider_document_is_a_502(monkeypatch):
             position=_position(),
             product=_product(),
             prompt="x",
-            operation_key="assist-7",
+            system_id=uuid4(),
+        operation_key="assist-7",
         )
     assert error.value.get_codes() == "design_assist_bad_output"
 
@@ -200,7 +207,8 @@ def test_invalid_product_summary_is_a_400(monkeypatch):
             position=_position(),
             product={"modules": []},
             prompt="x",
-            operation_key="assist-8",
+            system_id=uuid4(),
+        operation_key="assist-8",
         )
     assert error.value.get_codes() == "design_assist_product_invalid"
 
@@ -223,6 +231,7 @@ def test_structural_ops_validate_against_the_evolving_assembly(monkeypatch):
         position=_position(),
         product=_product(modules=11, couplings=10),
         prompt="doce más uno",
+        system_id=uuid4(),
         operation_key="assist-9",
     )
     assert [op["op"] for op in out["ops"]] == [
@@ -254,6 +263,7 @@ def test_remove_unit_shifts_the_validation_surface(monkeypatch):
         position=_position(),
         product=_product(modules=3, couplings=2),
         prompt="reacomoda",
+        system_id=uuid4(),
         operation_key="assist-10",
     )
     assert [op["op"] for op in out["ops"]] == [
@@ -285,6 +295,7 @@ def test_catalog_skus_are_enforced(monkeypatch):
         position=_position(),
         product=_product(),
         prompt="vidrios y panel",
+        system_id=uuid4(),
         operation_key="assist-11",
     )
     assert [op["op"] for op in out["ops"]] == ["set_glass", "set_panel", "set_panel"]
@@ -292,6 +303,33 @@ def test_catalog_skus_are_enforced(monkeypatch):
         "vidrio_invalido",
         "panel_invalido",
     ]
+
+
+def test_total_width_floor_tracks_the_simulated_module_count(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_total_width", "width_mm": "300"},
+                {"op": "set_module_count", "count": 1},
+                {"op": "set_total_width", "width_mm": "300"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=3, couplings=2),
+        system_id=uuid4(),
+        prompt="angosto",
+        operation_key="assist-13",
+    )
+    # 300 mm is below the 150×3 floor first; after shrinking to one module the
+    # same total clears the floor — the simulated count decides, not the
+    # submitted summary's count.
+    assert [op["op"] for op in out["ops"]] == ["set_module_count", "set_total_width"]
+    assert [item["reason"] for item in out["rejected"]] == ["ancho_invalido"]
 
 
 def test_thickness_must_match_a_glazing_bead_rule(monkeypatch):
@@ -310,6 +348,7 @@ def test_thickness_must_match_a_glazing_bead_rule(monkeypatch):
         position=_position(),
         product=_product(),
         prompt="espesores",
+        system_id=uuid4(),
         operation_key="assist-12",
     )
     assert [op["op"] for op in out["ops"]] == ["set_glass_thickness"]

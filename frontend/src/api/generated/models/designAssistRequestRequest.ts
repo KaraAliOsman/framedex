@@ -19,4 +19,5 @@ export interface DesignAssistRequestRequest {
    */
   operation_key: string;
   product: DesignAssistRequestRequestProduct;
+  system_id: string;
 }

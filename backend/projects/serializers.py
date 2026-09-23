@@ -228,6 +228,9 @@ class DesignAssistRequestSerializer(serializers.Serializer):
     prompt = serializers.CharField(min_length=2, max_length=2000)
     operation_key = serializers.CharField(min_length=8, max_length=120)
     product = serializers.DictField()
+    # The live system the product is being edited under — may lead the
+    # persisted position's system until the estimator saves.
+    system_id = serializers.UUIDField()
 
 
 class DesignAssistResponseSerializer(serializers.Serializer):

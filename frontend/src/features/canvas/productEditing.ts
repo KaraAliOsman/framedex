@@ -277,12 +277,16 @@ export function setModuleCount(product: ProductJson, moduleCount: number): Produ
   const nextModules = [...modules];
   const nextCouplings = [...couplings];
   for (let index = current + 1; index <= moduleCount; index += 1) {
+    const growing: ProductJson = {
+      ...product,
+      assembly: { modules: nextModules, couplings: nextCouplings },
+    };
     nextCouplings.push({
-      id: `c${index - 1}`,
+      id: nextCouplingId(growing),
       angle_deg: lastAngle,
       coupler_profile_sku: lastSku,
     });
-    nextModules.push({ ...last, id: `m${index}` });
+    nextModules.push({ ...last, id: nextModuleId(growing) });
   }
   return {
     ...product,

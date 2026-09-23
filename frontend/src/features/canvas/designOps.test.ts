@@ -54,6 +54,18 @@ describe("applyDesignOps", () => {
     expect(next.assembly.modules).toHaveLength(3);
     expect(next.assembly.couplings).toHaveLength(2);
   });
+
+  it("keeps module and coupling ids unique across remove + regrow", () => {
+    const next = applyDesignOps(bow(3), [
+      { op: "remove_unit", module: 1 },
+      { op: "set_module_count", count: 3 },
+    ]);
+    const moduleIds = next.assembly.modules.map((module) => module.id);
+    const couplingIds = next.assembly.couplings.map((coupling) => coupling.id);
+    expect(new Set(moduleIds).size).toBe(moduleIds.length);
+    expect(new Set(couplingIds).size).toBe(couplingIds.length);
+    expect(next.assembly.modules).toHaveLength(3);
+  });
 });
 
 describe("describeDesignOp", () => {
