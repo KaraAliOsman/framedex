@@ -13,3 +13,12 @@ ALTER TABLE public.project_dtes
 CREATE INDEX idx_project_dtes_credit_note
     ON public.project_dtes (org_id, credit_note_id)
     WHERE credit_note_id IS NOT NULL;
+
+-- The (org_id, invoice_id) uniqueness can only hold for the parent factura's
+-- DTE: an NC's DTE-61 deliberately shares the invoice's documentary chain.
+ALTER TABLE public.project_dtes
+    DROP CONSTRAINT uk_org_invoice_dte;
+
+CREATE UNIQUE INDEX uk_org_invoice_dte
+    ON public.project_dtes (org_id, invoice_id)
+    WHERE credit_note_id IS NULL;
