@@ -80,7 +80,6 @@ it("lists both sliding leaves with their own sash and glazing", () => {
   const leaves = bay.children.filter((node) => node.kind === "leaf");
   expect(leaves.map((node) => node.label)).toEqual(["Hoja corredera 1", "Hoja corredera 2"]);
   for (const leaf of leaves) {
-    expect(leaf.children.map((node) => node.kind)).toEqual(["member", "glazing"]);
+    expect(leaf.children.map((node) => node.kind)).toEqual(["member", "handle", "glazing"]);
   }
-  expect(bay.children.some((node) => node.kind === "handle")).toBe(true);
 });

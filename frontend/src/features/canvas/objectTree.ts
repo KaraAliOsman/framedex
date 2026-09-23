@@ -105,18 +105,21 @@ function bayChildren(
         kind: "leaf",
         severity: null,
         selectId: moduleId,
-        children: [sashRow(`leaf${leafIndex + 1}/sash`), ...(infill ? [infill] : [])],
+        children: [
+          sashRow(`leaf${leafIndex + 1}/sash`),
+          {
+            id: `${moduleId}/${node.id}/leaf${leafIndex + 1}/handle`,
+            label: t("tree.handle"),
+            detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
+            kind: "handle",
+            severity: null,
+            selectId: moduleId,
+            children: [],
+          },
+          ...(infill ? [infill] : []),
+        ],
       });
     }
-    rows.push({
-      id: `${moduleId}/${node.id}/handle`,
-      label: t("tree.handle"),
-      detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
-      kind: "handle",
-      severity: null,
-      selectId: moduleId,
-      children: [],
-    });
     return rows;
   }
 
