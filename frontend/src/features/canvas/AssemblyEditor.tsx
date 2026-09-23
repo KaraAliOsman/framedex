@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import "./canvas.css";
 
@@ -9,6 +9,8 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
+import { useRegisterCommands } from "../commands/registry";
+import { assemblyCommands } from "./assemblyCommands";
 import { BowPlanSvg } from "./BowPlanSvg";
 import { ProductFrontSvg, OpeningGlyph } from "./ProductFrontSvg";
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
@@ -36,17 +38,7 @@ import {
   type CouplingJson,
   type ProductJson,
 } from "./productEditing";
-
-const OPENING_OPTIONS = [
-  ["FIXED", "intent.fixed"],
-  ["TURN_LEFT", "intent.turnLeft"],
-  ["TURN_RIGHT", "intent.turnRight"],
-  ["TILT_TURN_LEFT", "intent.tiltLeft"],
-  ["TILT_TURN_RIGHT", "intent.tiltRight"],
-  ["AWNING", "intent.awning"],
-  ["SLIDING_2L", "intent.sliding"],
-  ["DOOR_ENTRY", "intent.door"],
-] as const;
+import { OPENING_OPTIONS } from "./openings";
 
 const ISSUE_KEYS: Record<string, TranslationKey> = {
   couplings_count_mismatch: "assembly.issue.couplingsCountMismatch",
@@ -409,6 +401,26 @@ export function AssemblyEditor({
     commitInputs({ ...inputs, product: next });
     onChanged();
   }
+
+  const surface = useMemo(
+    () =>
+      product
+        ? {
+            commands: assemblyCommands({
+              product,
+              selection,
+              commit,
+              select,
+              glassThicknesses: options?.glazing_thicknesses ?? [],
+              glassSkus,
+              couplerSkus,
+            }),
+          }
+        : null,
+    // `commit` is re-declared per render and always sees the deps below.
+    [product, selection, select, commitInputs, onChanged, options, glassSkus, couplerSkus],
+  );
+  useRegisterCommands(surface);
 
   if (!product) return null;
   const modules = product.assembly.modules;
