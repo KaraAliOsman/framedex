@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(15);
+SELECT plan(18);
 
 SELECT has_table('public', 'inventory_items', 'inventory items table exists');
 SELECT has_table('public', 'inventory_movements', 'movement ledger table exists');
@@ -89,6 +89,24 @@ SELECT ok(
         WHERE tgname = 'guard_inventory_org' AND NOT tgisinternal
     ) = 3,
     'tenant guard protects receipts, receipt lines, and movements'
+);
+SELECT ok(
+    (
+        SELECT pg_get_functiondef(p.oid)
+        FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid
+        WHERE n.nspname = 'private' AND p.proname = 'guard_inventory_org'
+    ) LIKE '%order_id = receipt_order%',
+    'receipt lines can only credit lines of the receipt''s own order'
+);
+SELECT col_type_is(
+    'public', 'inventory_items', 'sku', 'text',
+    'inventory sku accepts unbounded purchasing SKUs'
+);
+SELECT ok(
+    has_table_privilege('service_role', 'public.inventory_movements', 'INSERT')
+    AND NOT has_table_privilege('service_role', 'public.inventory_movements', 'UPDATE')
+    AND NOT has_table_privilege('service_role', 'public.inventory_movements', 'DELETE'),
+    'service_role appends to the ledger but cannot rewrite it'
 );
 SELECT * FROM finish();
 ROLLBACK;

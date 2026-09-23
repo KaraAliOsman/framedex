@@ -109,6 +109,6 @@ class OrderReceivingSerializer(serializers.Serializer):
 class InventoryMovementRequestSerializer(StrictSerializer):
     item_id = serializers.UUIDField()
     movement_type = serializers.ChoiceField(choices=("ADJUSTMENT", "RETURN", "SCRAP"))
-    quantity = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0"))
+    quantity = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     lot_code = serializers.CharField(required=False, allow_null=True, max_length=100)
     note = serializers.CharField(max_length=500)

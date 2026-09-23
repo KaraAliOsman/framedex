@@ -22,7 +22,7 @@ CREATE TABLE public.inventory_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     org_id UUID NOT NULL
         REFERENCES public.tenancy_organizations(id) ON DELETE CASCADE,
-    sku VARCHAR(100) NOT NULL,
+    sku TEXT NOT NULL,
     name VARCHAR(200) NOT NULL,
     category VARCHAR(50) NOT NULL,
     unit VARCHAR(20) NOT NULL,
@@ -200,6 +200,7 @@ SET search_path = ''
 AS $$
 DECLARE
     receipt_org UUID;
+    receipt_order UUID;
 BEGIN
     IF TG_TABLE_NAME = 'order_receipts' THEN
         IF NOT EXISTS (
@@ -209,11 +210,12 @@ BEGIN
             RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
         END IF;
     ELSIF TG_TABLE_NAME = 'order_receipt_lines' THEN
-        SELECT org_id INTO receipt_org
+        SELECT org_id, order_id INTO receipt_org, receipt_order
         FROM public.order_receipts WHERE id = NEW.receipt_id;
         IF receipt_org IS NULL OR NOT EXISTS (
             SELECT 1 FROM public.order_requirement_lines
             WHERE id = NEW.order_line_id AND org_id = receipt_org
+              AND order_id = receipt_order
         ) THEN
             RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
         END IF;
@@ -268,11 +270,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.inventory_items TO authenticated,
 GRANT SELECT, INSERT ON public.order_receipts TO authenticated, documentary_backend;
 GRANT SELECT, INSERT ON public.order_receipt_lines TO authenticated, documentary_backend;
 GRANT SELECT, INSERT ON public.inventory_movements TO authenticated, documentary_backend;
-REVOKE UPDATE, DELETE, TRUNCATE ON public.inventory_movements FROM authenticated, documentary_backend;
+REVOKE UPDATE, DELETE, TRUNCATE ON public.inventory_movements FROM authenticated, documentary_backend, service_role;
 GRANT SELECT ON public.inventory_stock TO authenticated, documentary_backend;
 
 GRANT ALL ON public.inventory_items TO service_role;
 GRANT ALL ON public.order_receipts TO service_role;
 GRANT ALL ON public.order_receipt_lines TO service_role;
-GRANT ALL ON public.inventory_movements TO service_role;
+GRANT SELECT, INSERT ON public.inventory_movements TO service_role;
 GRANT ALL ON public.inventory_stock TO service_role;

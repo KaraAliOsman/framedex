@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 _READERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 _WRITERS = ("OWNER", "WORKSHOP_MANAGER")
+# Receiving reads order_requirement_lines, whose RLS exposes them only to the
+# warehouse roles — estimators get a false order_not_found, so scope them out.
+_RECEIVERS = _WRITERS
 
 
 @contextmanager
@@ -124,7 +127,7 @@ class OrderReceivingView(APIView):
     )
     def get(self, request, order_id: UUID):
         with public_inventory_errors():
-            with documentary_scope(request, _READERS) as (_, _, org_id):
+            with documentary_scope(request, _RECEIVERS) as (_, _, org_id):
                 output = service.order_receiving(org_id=org_id, order_id=order_id)
         return Response(output)
 

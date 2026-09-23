@@ -314,3 +314,39 @@ def test_receipt_post_denies_estimator(monkeypatch) -> None:
         format="json",
     )
     assert response.status_code == 403
+
+
+def test_receiving_get_denies_estimator(monkeypatch) -> None:
+    org_id = uuid4()
+    token = SimpleNamespace(user_id=uuid4(), claims={}, aal="aal1")
+
+    @contextmanager
+    def fake_scope(request, allowed):
+        from authentication.errors import contract_error
+
+        if "ESTIMATOR" in allowed and len(allowed) > 1:
+            yield token, _tenant("ESTIMATOR", org_id), org_id
+        else:
+            raise contract_error(403, "documentary_permission_denied", "denied")
+            yield
+
+    monkeypatch.setattr(inventory_views, "documentary_scope", fake_scope)
+    client = APIClient()
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True), token=object())
+    response = client.get(f"/api/v1/inventory/orders/{uuid4()}/receiving/")
+    assert response.status_code == 403
+
+
+def test_movement_post_rejects_zero_quantity(monkeypatch) -> None:
+    client, _, _ = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+    response = client.post(
+        "/api/v1/inventory/movements/",
+        {
+            "item_id": str(uuid4()),
+            "movement_type": "ADJUSTMENT",
+            "quantity": "0.00",
+            "note": "x",
+        },
+        format="json",
+    )
+    assert response.status_code == 400
