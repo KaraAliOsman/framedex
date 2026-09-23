@@ -97,6 +97,7 @@ export * from "./designAssistResponseOpsItem";
 export * from "./designAssistResponseRejectedItem";
 export * from "./designOptions";
 export * from "./diffPreconditions";
+export * from "./dispatchNoteAccess";
 export * from "./dispatchRequestRequest";
 export * from "./documentaryInputsRequest";
 export * from "./documentaryInputsResponse";

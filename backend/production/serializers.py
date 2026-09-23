@@ -65,6 +65,7 @@ class ProductionStepEventSerializer(serializers.Serializer):
 class ProductionOrderDetailSerializer(ProductionOrderSerializer):
     steps = ProductionStepSerializer(many=True)
     events = ProductionStepEventSerializer(many=True)
+    dispatch_note_code = serializers.CharField(allow_null=True, required=False)
 
 
 class StepTransitionRequestSerializer(StrictSerializer):
@@ -102,6 +103,18 @@ class DispatchRequestSerializer(serializers.Serializer):
 
 class InstallationRequestSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class DispatchNoteSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    note_code = serializers.CharField()
+    work_order_id = serializers.UUIDField()
+    created_at = serializers.DateTimeField()
+
+
+class DispatchNoteAccessSerializer(DispatchNoteSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
 
 
 class RemakeRequestSerializer(StrictSerializer):

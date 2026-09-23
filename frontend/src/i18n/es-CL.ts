@@ -1222,6 +1222,7 @@ const messages = {
   "production.eventPacked": "Packing generado",
   "production.eventDispatched": "Orden despachada",
   "production.dispatchButton": "Despachar",
+  "production.dispatchNoteError": "La guía de despacho no está disponible aún.",
   "production.orderInstalled": "Instalada",
   "production.deliveryTitle": "Entrega",
   "production.deliverySchedule": "Programar entrega",

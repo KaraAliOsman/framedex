@@ -88,6 +88,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/production/orders/{order_id}/delivery/",
         "/api/v1/production/orders/{order_id}/delivery/transition/",
         "/api/v1/production/orders/{order_id}/dispatch/",
+        "/api/v1/production/orders/{order_id}/dispatch-note/",
         "/api/v1/production/orders/{order_id}/install/",
         "/api/v1/production/orders/{order_id}/labels/",
         "/api/v1/production/orders/{order_id}/remake/",

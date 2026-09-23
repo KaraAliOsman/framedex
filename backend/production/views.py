@@ -22,11 +22,13 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
+from production.dispatch_notes import dispatch_note_access
 from production.serializers import (
     DeliveryResponseSerializer,
     DeliveryScheduleRequestSerializer,
     DeliveryTransitionRequestSerializer,
     CncExportSerializer,
+    DispatchNoteAccessSerializer,
     DispatchRequestSerializer,
     InstallationRequestSerializer,
     PackingLabelsSerializer,
@@ -295,6 +297,21 @@ class ProductionOrderDispatchView(APIView):
                     actor_id=token.user_id,
                     note=data.get("note"),
                 )
+        return Response(output)
+
+
+class ProductionOrderDispatchNoteView(APIView):
+    @extend_schema(
+        operation_id="production_order_dispatch_note",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: DispatchNoteAccessSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = dispatch_note_access(org_id=org_id, order_id=order_id)
         return Response(output)
 
 

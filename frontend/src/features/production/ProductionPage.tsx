@@ -8,6 +8,7 @@ import {
   productionOrderDeliveryTransition,
   productionOrderDetail,
   productionOrderDispatch,
+  productionOrderDispatchNote,
   productionOrderInstall,
   productionOrderLabels,
   productionOrderOptimize,
@@ -385,6 +386,23 @@ export function ProductionPage(): JSX.Element {
     void action(productionOrderInstall(orderId, { note: note || undefined }), orderId);
   }
 
+  async function openDispatchNote(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dispatchNoteError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNote(orderId);
+      if (response.status !== 200) throw new Error("dispatch_note_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dispatchNoteError"));
+    }
+  }
+
   function downloadCnc(orderCode: string, filename: string, content: string): void {
     const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -473,6 +491,15 @@ export function ProductionPage(): JSX.Element {
                     onClick={() => install(detail.id)}
                   >
                     {t("production.installButton")}
+                  </button>
+                ) : null}
+                {detail.dispatch_note_code ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-note"
+                    onClick={() => void openDispatchNote(detail.id)}
+                  >
+                    {detail.dispatch_note_code}
                   </button>
                 ) : null}
                 {canWrite && detail.status === "HOLD" ? (

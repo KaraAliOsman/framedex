@@ -24,6 +24,8 @@ from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
+from production.dispatch_notes import issue_dispatch_note
+from projects.service import project_row
 
 
 _STEP_CODE_FOR_CENTER = {
@@ -381,7 +383,15 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         """,
         [str(order_id), str(org_id)],
     )
+    dispatch_note = rows(
+        "SELECT note_code FROM public.dispatch_notes "
+        "WHERE org_id=%s AND work_order_id=%s",
+        [str(org_id), str(order_id)],
+    )
     output = _public_order(order, include_payload=True)
+    output["dispatch_note_code"] = (
+        dispatch_note[0]["note_code"] if dispatch_note else None
+    )
     output["steps"] = [_public_step(step) for step in steps]
     output["events"] = [
         {
@@ -1070,7 +1080,8 @@ def dispatch_work_order(
     with transaction.atomic(), documentary_backend():
         order = one(
             """
-            SELECT id, order_code, status::text, payload_json FROM public.orders
+            SELECT id, order_code, status::text, payload_json, project_id
+            FROM public.orders
             WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
             FOR UPDATE
             """,
@@ -1089,6 +1100,13 @@ def dispatch_work_order(
             """,
             [datetime.now(timezone.utc), str(order_id), str(org_id)],
         )
+        note_row = issue_dispatch_note(
+            org_id=org_id,
+            order=order,
+            project=project_row(org_id, order["project_id"]),
+            actor_id=actor_id,
+            note=(note or "").strip() or None,
+        )
         rows(
             """
             INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
@@ -1102,6 +1120,7 @@ def dispatch_work_order(
                 json.dumps({
                     "order_code": order["order_code"],
                     "note": (note or "").strip() or None,
+                    "dispatch_note": note_row["note_code"],
                 }),
             ],
         )

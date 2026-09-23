@@ -50,6 +50,7 @@ import type {
   DesignAssistRequestRequest,
   DesignAssistResponse,
   DesignOptions,
+  DispatchNoteAccess,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
@@ -6488,6 +6489,81 @@ export const productionOrderDispatch = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(dispatchRequestRequest),
   });
+};
+
+export type productionOrderDispatchNoteResponse200 = {
+  data: DispatchNoteAccess;
+  status: 200;
+};
+
+export type productionOrderDispatchNoteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteResponseSuccess = productionOrderDispatchNoteResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDispatchNoteResponseError = (
+  | productionOrderDispatchNoteResponse400
+  | productionOrderDispatchNoteResponse401
+  | productionOrderDispatchNoteResponse403
+  | productionOrderDispatchNoteResponse404
+  | productionOrderDispatchNoteResponse409
+  | productionOrderDispatchNoteResponse422
+  | productionOrderDispatchNoteResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteResponse =
+  productionOrderDispatchNoteResponseSuccess | productionOrderDispatchNoteResponseError;
+
+export const getProductionOrderDispatchNoteUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note/`;
+};
+
+export const productionOrderDispatchNote = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteResponse> => {
+  return apiMutator<productionOrderDispatchNoteResponse>(
+    getProductionOrderDispatchNoteUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type productionOrderInstallResponse200 = {

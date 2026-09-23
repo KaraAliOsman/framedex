@@ -924,3 +924,109 @@ def render_payment_receipt(
     if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
         raise DocumentaryError("pdf_generation_failed")
     return content, _PDF_MEDIA
+
+
+def _dispatch_note_body(payload: dict[str, object]) -> str:
+    order = _object(payload.get("order"), "invalid_dispatch_note_order")
+    project = _object(payload.get("project"), "invalid_dispatch_note_project")
+    totals = _object(payload.get("totals"), "invalid_dispatch_note_totals")
+    dispatch = _object(payload.get("dispatch"), "invalid_dispatch_note_dispatch")
+    units = payload.get("units") or []
+    issued_at = _value(payload.get("issued_at"))
+    note_code = _value(payload.get("note_code"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Guía de despacho</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Guía</span>'
+        f'<span class="tb-value">{escape(note_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
+        f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(note_code)}</strong><br>"
+        f"Guía de despacho<br>{escape(issued_at)}</div></div>"
+    )
+    body += (
+        '<div class="rule-stack"></div>'
+        "<h1>Guía de despacho</h1>"
+        '<section class="hero"><p>Destinatario</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
+        f"<p>{escape(_value(project.get('delivery_address')))}</p>"
+        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+    )
+    if units:
+        body += (
+            "<h2>Bultos</h2>"
+            + _table(
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+                [
+                    [
+                        unit.get("label_code"),
+                        unit.get("profiles"),
+                        unit.get("reinforcements"),
+                        unit.get("glasses"),
+                        unit.get("panels"),
+                        unit.get("hardware"),
+                    ]
+                    for unit in units
+                ],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension"],
+            )
+        )
+    else:
+        body += (
+            "<h2>Bultos</h2><p class=\"muted\">Sin manifiesto de embalaje "
+            "registrado — la orden se despacha sin desglose por bulto.</p>"
+        )
+    note = _value(dispatch.get("note"))
+    if note != "—":
+        body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
+    body += (
+        "<h2>Resumen de contenido</h2>"
+        + _table(
+            ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+            [
+                [
+                    totals.get("profiles"),
+                    totals.get("reinforcements"),
+                    totals.get("glasses"),
+                    totals.get("panels"),
+                    totals.get("hardware"),
+                ]
+            ],
+            ["dimension", "dimension", "dimension", "dimension", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Despachado por / Recibido conforme</p></div></main>"
+    )
+    return body
+
+
+def render_dispatch_note(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_dispatch_note_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA

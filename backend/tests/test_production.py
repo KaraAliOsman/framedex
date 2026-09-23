@@ -1007,6 +1007,8 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
 
     # Completed path updates status and emits the event; replay returns detail.
     captured_status: dict[str, dict] = {"row": {"status": "COMPLETED"}}
+    project_id = uuid4()
+    note_calls: list[dict] = []
 
     def fake_one_completed(sql_text: str, params: list, code: str = "not_found") -> dict:
         return {
@@ -1014,6 +1016,7 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
             "order_code": "OT-1",
             "status": captured_status["row"]["status"],
             "payload_json": {},
+            "project_id": str(project_id),
         }
 
     def fake_rows_dispatch(sql_text: str, params: list) -> list:
@@ -1024,8 +1027,16 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
             updates.append((lowered, list(params)))
         return [{"id": "ok"}]
 
+    def fake_issue(**kwargs):
+        note_calls.append(kwargs)
+        return {"note_code": "GD-0001"}
+
     monkeypatch.setattr("production.service.one", fake_one_completed)
     monkeypatch.setattr("production.service.rows", fake_rows_dispatch)
+    monkeypatch.setattr("production.service.issue_dispatch_note", fake_issue)
+    monkeypatch.setattr(
+        "production.service.project_row", lambda *a, **k: {"code": "P-1"}
+    )
     monkeypatch.setattr(
         "production.service.get_work_order",
         lambda **kw: {"order": {"status": captured_status["row"]["status"]}},
@@ -1039,6 +1050,10 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
         assert captured_status["row"]["status"] == "DISPATCHED"
         out2 = service.dispatch_work_order(org_id=org_id, order_id=order_id, actor_id=uuid4())
     assert "'wo_dispatched'" in updates[0][0]
+    assert len(note_calls) == 1
+    assert str(note_calls[0]["order"]["project_id"]) == str(project_id)
+    event_payload = json.loads(updates[0][1][3])
+    assert event_payload["dispatch_note"] == "GD-0001"
     assert out2["order"]["status"] == "DISPATCHED"
 
 

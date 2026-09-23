@@ -26,4 +26,6 @@ export interface ProductionOrderDetail {
   payload?: ProductionOrderDetailPayload;
   steps: ProductionStep[];
   events: ProductionStepEvent[];
+  /** @nullable */
+  dispatch_note_code?: string | null;
 }
