@@ -125,8 +125,8 @@ export function PortalQuotePage(): JSX.Element {
           <div>
             <dt>{t("portal.validUntil")}</dt>
             <dd>
-              <time dateTime={quote.expires_at}>
-                {new Date(quote.expires_at).toLocaleDateString("es-CL")}
+              <time dateTime={quote.valid_until ?? ""}>
+                {quote.valid_until ? new Date(quote.valid_until).toLocaleDateString("es-CL") : "—"}
               </time>
             </dd>
           </div>
@@ -149,6 +149,10 @@ export function PortalQuotePage(): JSX.Element {
               ? t("portal.wasApproved")
               : t("portal.wasDeclined")}{" "}
             {quote.decided_by ? `· ${quote.decided_by}` : ""}
+          </p>
+        ) : quote.superseded ? (
+          <p className="portal-decided" role="status">
+            {t("portal.superseded")}
           </p>
         ) : (
           <form

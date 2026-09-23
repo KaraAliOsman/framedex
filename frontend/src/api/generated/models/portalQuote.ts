@@ -17,6 +17,9 @@ export interface PortalQuote {
   total_price_net: string;
   total_price_tax: string;
   total_price_gross: string;
+  /** @nullable */
+  valid_until: string | null;
+  superseded: boolean;
   expires_at: string;
   approval_status: string;
   /** @nullable */

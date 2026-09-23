@@ -20,6 +20,8 @@ class PortalQuoteSerializer(serializers.Serializer):
     total_price_net = serializers.CharField()
     total_price_tax = serializers.CharField()
     total_price_gross = serializers.CharField()
+    valid_until = serializers.CharField(allow_null=True)
+    superseded = serializers.BooleanField()
     expires_at = serializers.DateTimeField()
     approval_status = serializers.CharField()
     decided_by = serializers.CharField(allow_null=True)

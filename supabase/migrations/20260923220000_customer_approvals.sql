@@ -49,18 +49,29 @@ CREATE POLICY customer_approvals_backend ON public.customer_approvals
     WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
 -- Public portal path: the share token IS the capability. portal_backend
--- carries no JWT, so current_user_org_ids() is empty — the service joins
--- every read/write to the token row's own org_id instead.
-CREATE POLICY customer_approvals_portal ON public.customer_approvals
-    FOR ALL TO portal_backend USING (true) WITH CHECK (true);
+-- carries no JWT, so current_user_org_ids() is empty — instead the service
+-- binds app.portal_org_id to the token row's org once looked up, and every
+-- other portal policy requires that tenant. The token-hash SELECT is the
+-- only query allowed to run unscoped (it only touches the token's own row).
+CREATE POLICY customer_approvals_portal_read ON public.customer_approvals
+    FOR SELECT TO portal_backend USING (true);
+CREATE POLICY customer_approvals_portal_write ON public.customer_approvals
+    FOR UPDATE TO portal_backend
+    USING (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid)
+    WITH CHECK (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid);
 CREATE POLICY projects_portal_read ON public.projects
-    FOR SELECT TO portal_backend USING (true);
+    FOR SELECT TO portal_backend
+    USING (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid);
 CREATE POLICY projects_portal_decide ON public.projects
-    FOR UPDATE TO portal_backend USING (true) WITH CHECK (true);
+    FOR UPDATE TO portal_backend
+    USING (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid)
+    WITH CHECK (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid);
 CREATE POLICY project_versions_portal_read ON public.project_versions
-    FOR SELECT TO portal_backend USING (true);
+    FOR SELECT TO portal_backend
+    USING (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid);
 CREATE POLICY document_artifacts_portal_read ON public.document_artifacts
-    FOR SELECT TO portal_backend USING (true);
+    FOR SELECT TO portal_backend
+    USING (org_id = NULLIF(current_setting('app.portal_org_id', true), '')::uuid);
 
 GRANT SELECT ON public.customer_approvals TO authenticated;
 GRANT ALL ON public.customer_approvals TO documentary_backend;

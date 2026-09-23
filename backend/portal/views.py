@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from authentication.errors import contract_error
+from config.throttling import PortalRateThrottle
 from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from portal import service
@@ -35,9 +36,13 @@ def public_portal_errors():
     except DocumentaryError as error:
         if error.code in ("project_not_found", "version_not_found", "quote_not_found"):
             raise contract_error(404, error.code, "El enlace de cotización no existe.") from error
-        if error.code == "quote_expired":
+        if error.code in ("quote_expired", "quote_validity_expired"):
             raise contract_error(
-                410, error.code, "Este enlace de cotización expiró; solicita uno nuevo."
+                410, error.code, "Esta cotización ya no está vigente; solicita un enlace nuevo."
+            ) from error
+        if error.code == "quote_link_stale":
+            raise contract_error(
+                409, error.code, "Esta cotización fue reemplazada por una revisión nueva."
             ) from error
         raise contract_error(
             422, error.code, "La acción sobre la cotización fue rechazada."
@@ -76,6 +81,7 @@ class ProjectQuoteLinkView(APIView):
 class PortalQuoteView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
+    throttle_classes = [PortalRateThrottle]
 
     @extend_schema(
         operation_id="portal_quote_retrieve",
@@ -89,6 +95,7 @@ class PortalQuoteView(APIView):
 
 class PortalQuoteDecisionView(APIView):
     authentication_classes = []
+    throttle_classes = [PortalRateThrottle]
     permission_classes = [AllowAny]
 
     @extend_schema(

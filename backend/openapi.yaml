@@ -10413,6 +10413,11 @@ components:
           type: string
         total_price_gross:
           type: string
+        valid_until:
+          type: string
+          nullable: true
+        superseded:
+          type: boolean
         expires_at:
           type: string
           format: date-time
@@ -10445,9 +10450,11 @@ components:
       - quote_pdf_url
       - revision_code
       - schema
+      - superseded
       - total_price_gross
       - total_price_net
       - total_price_tax
+      - valid_until
     PositionDesign:
       type: object
       properties:
