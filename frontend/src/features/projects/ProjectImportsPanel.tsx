@@ -91,13 +91,14 @@ export function ProjectImportsPanel({
   const [glassSpec, setGlassSpec] = useState("");
   const [glassThickness, setGlassThickness] = useState("");
   const [itemErrors, setItemErrors] = useState<{ key: string; code: string }[]>([]);
-  const generation = useRef(0);
+  const mounted = useRef(true);
+  const listGeneration = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
 
   useEffect(
     () => () => {
-      generation.current += 1;
+      mounted.current = false;
     },
     [],
   );
@@ -105,13 +106,14 @@ export function ProjectImportsPanel({
   const [expanded, setExpanded] = useState(false);
 
   const load = useCallback(async () => {
-    const current = ++generation.current;
+    const current = ++listGeneration.current;
     try {
       const response = await projectImportsList(projectId, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) setImports(response.data.imports);
+      if (mounted.current && listGeneration.current === current) setImports(response.data.imports);
     } catch {
-      if (generation.current === current) setMessage(t("projects.importsLoadError"));
+      if (mounted.current && listGeneration.current === current)
+        setMessage(t("projects.importsLoadError"));
     }
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -153,6 +155,13 @@ export function ProjectImportsPanel({
     if (!systemId && first) setSystemId(first.id);
   }, [systems.data, systemId]);
 
+  // A system change invalidates the previous catalog's glass selection —
+  // clear it so the options effect re-derives values for the new system.
+  useEffect(() => {
+    setGlassSpec("");
+    setGlassThickness("");
+  }, [systemId]);
+
   useEffect(() => {
     if (!options.data) return;
     const [sku] = options.data.glass_skus;
@@ -177,20 +186,19 @@ export function ProjectImportsPanel({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    const current = ++generation.current;
     setBusy(true);
     setMessage("");
     try {
       const response = await projectImportsCreate(projectId, { file }, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       await load();
-      if (generation.current === current && response.data.import.status === "REVIEW_READY") {
+      if (mounted.current && response.data.import.status === "REVIEW_READY") {
         startReview(response.data.import);
       }
     } catch {
-      if (generation.current === current) setMessage(t("projects.importsUploadError"));
+      if (mounted.current) setMessage(t("projects.importsUploadError"));
     } finally {
-      if (generation.current === current) setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   }
 
@@ -199,7 +207,6 @@ export function ProjectImportsPanel({
   }
 
   async function confirm(entry: ImportResponse): Promise<void> {
-    const current = ++generation.current;
     const items: ConfirmItemRequest[] = rows
       .filter((row) => row.include)
       .map((row) => ({
@@ -214,7 +221,11 @@ export function ProjectImportsPanel({
         glass_thickness_mm: glassThickness,
         glass_spec: glassSpec,
       }));
-    if (!items.length || !systemId || !glassSpec || !glassThickness) {
+    const glassValid =
+      !!options.data &&
+      options.data.glass_skus.includes(glassSpec) &&
+      options.data.glazing_thicknesses.includes(glassThickness);
+    if (!items.length || !systemId || !glassSpec || !glassThickness || !glassValid) {
       setMessage(t("projects.importsConfirmMissing"));
       return;
     }
@@ -224,19 +235,27 @@ export function ProjectImportsPanel({
     try {
       const response = await projectImportConfirm(projectId, entry.id, { items }, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) {
-        setItemErrors(response.data.errors as { key: string; code: string }[]);
-        setReviewId(null);
-        setMessage(
-          t("projects.importsConfirmed").replace("{count}", String(response.data.created.length)),
-        );
-        await load();
-        onChanged?.();
+      if (mounted.current) {
+        const errors = response.data.errors as { key: string; code: string }[];
+        setItemErrors(errors);
+        if (errors.length) {
+          // Partial outcome — the import stays retryable; keep the review
+          // open so the estimator can fix the failed rows and resubmit.
+          setMessage(t("projects.importsConfirmError"));
+          await load();
+        } else {
+          setReviewId(null);
+          setMessage(
+            t("projects.importsConfirmed").replace("{count}", String(response.data.created.length)),
+          );
+          await load();
+          onChanged?.();
+        }
       }
     } catch {
-      if (generation.current === current) setMessage(t("projects.importsConfirmError"));
+      if (mounted.current) setMessage(t("projects.importsConfirmError"));
     } finally {
-      if (generation.current === current) setBusy(false);
+      if (mounted.current) setBusy(false);
     }
   }
 

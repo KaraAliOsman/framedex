@@ -8,8 +8,10 @@ chosen by the human, not inferred by the parser."""
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from uuid import UUID, uuid4
 
+from django.db import transaction
 
 from authentication.errors import contract_error
 from documents.repository import documentary_backend
@@ -30,6 +32,14 @@ class ImportError_(Exception):
         super().__init__(code)
 
 
+def _as_list(value) -> list:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return json.loads(value) if value else []
+    return list(value)
+
+
 def _public(row: dict) -> dict:
     def _stamp(value):
         return value.isoformat() if hasattr(value, "isoformat") else value
@@ -39,9 +49,9 @@ def _public(row: dict) -> dict:
         "file_name": row["file_name"],
         "kind": row["kind"],
         "status": row["status"],
-        "candidates": row["candidates"] or [],
-        "warnings": row["warnings"] or [],
-        "result": row["result"] or [],
+        "candidates": _as_list(row["candidates"]),
+        "warnings": _as_list(row["warnings"]),
+        "result": _as_list(row["result"]),
         "error_code": row["error_code"],
         "created_at": _stamp(row["created_at"]),
         "updated_at": _stamp(row["updated_at"]),
@@ -133,11 +143,27 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
         raise ImportError_("import_not_found")
     row = found[0]
     with documentary_backend():
-        rows(
+        claimed = rows(
             "UPDATE public.document_imports SET status='EXTRACTING', updated_at=now() "
-            "WHERE id=%s AND status='UPLOADED'",
+            "WHERE id=%s AND status='UPLOADED' RETURNING *",
             [str(import_id)],
         )
+    if not claimed:
+        # A job retry on an already-extracted import replays its stored state —
+        # never rewrites candidates a reviewer may have seen nor reverts a
+        # confirmed import.
+        current = rows(
+            "SELECT * FROM public.document_imports WHERE id=%s",
+            [str(import_id)],
+        )[0]
+        if current["status"] in ("REVIEW_READY", "CONFIRMED"):
+            stored = _as_list(current["candidates"])
+            return {
+                "import": _public(current),
+                "candidate_count": len(stored),
+            }
+        if current["status"] != "EXTRACTING":
+            raise ImportError_("import_status_invalid")
     content = SupabaseDocumentStorage().download(row["storage_path"])
     warnings: list[str] = []
     audit_id = None
@@ -201,62 +227,106 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
 def confirm_import(
     *, org_id: UUID, project_id: UUID, import_id: UUID, items: list[dict]
 ) -> dict:
-    """Human confirm — the only path from candidate to position. Each item is
-    an explicit estimator decision (opening + system + glass); per-item errors
-    are collected, never silently dropped. Replay returns the stored result."""
-    row = _get(org_id, project_id, import_id)
-    if row["status"] == "CONFIRMED":
-        return {"import": _public(row), "created": row["result"], "errors": []}
-    if row["status"] not in ("REVIEW_READY", "FAILED"):
-        raise contract_error(
-            409,
-            "import_not_review_ready",
-            "La importación aún está procesándose. Espera a que termine.",
-        )
-    candidate_keys = {candidate.get("key") for candidate in row["candidates"] or []}
-    created: list[dict] = []
-    errors: list[dict] = []
-    for item in items:
-        key = str(item["key"])
-        if candidate_keys and key not in candidate_keys:
-            errors.append({"key": key, "code": "import_item_unknown"})
-            continue
-        design = {
-            "system_id": str(item["system_id"]),
-            "nominal_width_mm": item["width_mm"],
-            "nominal_height_mm": item["height_mm"],
-            "color": item["color"],
-            "parametric_tree": {
-                "id": "imported",
-                "type": "BAY",
-                "opening_type": item["opening_type"],
-                "glass_thickness_mm": item["glass_thickness_mm"],
-                "glass_spec": item["glass_spec"],
-            },
-        }
-        try:
-            position = projects_service.save_position(
-                org_id,
-                project_id,
-                {
-                    "location_tag": item["label"],
-                    "quantity": item["quantity"],
-                    "design": design,
-                },
+    """Human confirm — the only path from candidate to position.
+
+    One transaction: the import row is locked FOR UPDATE, each item saves under
+    its own savepoint, and per-key outcomes accumulate in ``result`` — so a
+    retried or concurrent confirm replays committed state instead of creating
+    duplicates, a partial failure stays retryable, and CONFIRMED only seals
+    once every submitted key has an outcome."""
+    with transaction.atomic():
+        with documentary_backend():
+            found = rows(
+                "SELECT * FROM public.document_imports "
+                "WHERE id=%s AND org_id=%s AND project_id=%s FOR UPDATE",
+                [str(import_id), str(org_id), str(project_id)],
             )
-            created.append({"key": key, "position_id": str(position["id"])})
-        except Exception as error:
-            errors.append({"key": key, "code": getattr(error, "contract_code", "save_failed")})
-    if not created and errors:
-        return {"import": _public(row), "created": [], "errors": errors}
-    with documentary_backend():
-        updated = rows(
-            "UPDATE public.document_imports SET status='CONFIRMED', result=%s::jsonb, "
-            "updated_at=now() WHERE id=%s AND status<>'CONFIRMED' RETURNING *",
-            [json.dumps(created), str(import_id)],
+        if not found:
+            raise ImportError_("import_not_found")
+        row = found[0]
+        if row["status"] == "CONFIRMED":
+            return {
+                "import": _public(row),
+                "created": _as_list(row["result"]),
+                "errors": [],
+            }
+        if row["status"] not in ("REVIEW_READY", "FAILED"):
+            raise contract_error(
+                409,
+                "import_not_review_ready",
+                "La importación aún está procesándose. Espera a que termine.",
+            )
+        candidate_keys = {
+            candidate.get("key") for candidate in _as_list(row["candidates"])
+        }
+        created = _as_list(row["result"])
+        done = {str(entry.get("key")) for entry in created}
+        errors: list[dict] = []
+        for item in items:
+            key = str(item["key"])
+            if key in done:
+                continue
+            if candidate_keys and key not in candidate_keys:
+                errors.append({"key": key, "code": "import_item_unknown"})
+                continue
+            design = {
+                "system_id": str(item["system_id"]),
+                "nominal_width_mm": Decimal(str(item["width_mm"])),
+                "nominal_height_mm": Decimal(str(item["height_mm"])),
+                "color": item["color"],
+                "parametric_tree": {
+                    "id": "imported",
+                    "type": "BAY",
+                    "opening_type": item["opening_type"],
+                    "glass_thickness_mm": item["glass_thickness_mm"],
+                    "glass_spec": item["glass_spec"],
+                },
+            }
+            try:
+                with transaction.atomic():
+                    position = projects_service.save_position(
+                        org_id,
+                        project_id,
+                        {
+                            "location_tag": item["label"],
+                            "quantity": item["quantity"],
+                            "design": design,
+                        },
+                    )
+                created.append({"key": key, "position_id": str(position["id"])})
+                done.add(key)
+            except Exception as error:
+                errors.append(
+                    {
+                        "key": key,
+                        "code": getattr(error, "contract_code", "save_failed"),
+                    }
+                )
+        if errors:
+            # Retryable: persist what was created so the next confirm only
+            # attempts the still-unresolved keys.
+            with documentary_backend():
+                updated = rows(
+                    "UPDATE public.document_imports SET result=%s::jsonb, "
+                    "updated_at=now() WHERE id=%s RETURNING *",
+                    [json.dumps(created), str(import_id)],
+                )[0]
+            return {"import": _public(updated), "created": created, "errors": errors}
+        with documentary_backend():
+            updated = rows(
+                "UPDATE public.document_imports SET status='CONFIRMED', "
+                "result=%s::jsonb, updated_at=now() WHERE id=%s RETURNING *",
+                [json.dumps(created), str(import_id)],
+            )[0]
+        return {"import": _public(updated), "created": created, "errors": []}
+
+
+def mark_import_failed(*, org_id: UUID, import_id: UUID, code: str) -> None:
+    """Terminal job failure → a terminal import state so polling stops."""
+    with transaction.atomic(), documentary_backend():
+        rows(
+            "UPDATE public.document_imports SET status='FAILED', error_code=%s, "
+            "updated_at=now() WHERE id=%s AND org_id=%s "
+            "AND status IN ('UPLOADED','EXTRACTING') RETURNING id",
+            [code[:120], str(import_id), str(org_id)],
         )
-        if updated:
-            row = updated[0]
-        else:
-            row = _get(org_id, project_id, import_id, backend=True)
-    return {"import": _public(row), "created": created, "errors": errors}

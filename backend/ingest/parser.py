@@ -74,9 +74,17 @@ def parse_line(line: str) -> dict | None:
     label_match = _LABEL.search(line)
     label = label_match.group(1) if label_match else None
     opening = opening_hint(line)
-    # Quantity: a bare small integer that is not part of the WxH pair.
+    # Quantity: a bare small integer that is not part of the WxH pair nor of
+    # the label (V-10 fijo 1200x1000 is one window, not ten).
     quantity = 1
-    rest = line[: dimension.start()] + " " + line[dimension.end() :]
+    mask = list(line)
+    spans = [dimension.span(0)]
+    if label_match:
+        spans.append(label_match.span(1))
+    for lo, hi in spans:
+        for index in range(lo, hi):
+            mask[index] = " "
+    rest = "".join(mask)
     quantity_candidates = [
         int(found) for found in _INTEGER.findall(rest) if 0 < int(found) < 100
     ]
