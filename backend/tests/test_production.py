@@ -456,6 +456,8 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
                 "id": order_id, "order_code": "OT-P-REV-A-01",
                 "status": "RELEASED", "payload_json": payload,
             }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
         raise AssertionError(query)
 
     def fake_rows(query, params=()):
@@ -847,11 +849,13 @@ def test_export_cnc_files_writes_deterministic_csv(monkeypatch) -> None:
                     "commercial_sku": "MARCO-60",
                     "stock_length_mm": "6500",
                     "cuts": [
-                        {"piece_id": "M-02", "length_mm": "1200", "unit_index": 1,
-                         "bay_id": "b1", "leaf_id": None,
+                        {"piece_id": "M-02", "length_mm": "1200", "sequence": 1,
+                         "angle_left": "45.0", "angle_right": "45.0",
+                         "unit_index": 1, "bay_id": "b1", "leaf_id": None,
                          "source_position_id": str(_POSITION_ID)},
-                        {"piece_id": "M-01", "length_mm": "1500", "unit_index": 1,
-                         "bay_id": "b1", "leaf_id": None,
+                        {"piece_id": "M-01", "length_mm": "1500", "sequence": 2,
+                         "angle_left": "90.0", "angle_right": "45.0",
+                         "unit_index": 1, "bay_id": "b1", "leaf_id": None,
                          "source_position_id": str(_POSITION_ID)},
                     ],
                 }
@@ -908,8 +912,11 @@ def test_export_cnc_files_writes_deterministic_csv(monkeypatch) -> None:
     bars_csv = stored["files"]["bars.csv"]
     lines = bars_csv.strip().split("\n")
     assert lines[0].startswith("bar_index,")
-    assert "M-01" in lines[1] and "M-02" in lines[2]  # sorted per bar
-    assert ",1," in lines[1]
+    assert "M-02" in lines[1] and "M-01" in lines[2]  # stored cut sequence
+    assert lines[1].split(",")[3] == "1"  # sequence_in_bar column
+    assert "45.0" in lines[1] and "90.0" in lines[2]  # saw angles exported
+    assert stored["schema"] == "work_order_cnc_export_v2"
+    assert stored["optimization_fingerprint"]
     sheets_csv = stored["files"]["sheets.csv"]
     assert "GLASS-4" in sheets_csv and "V-01" in sheets_csv
     assert any("wo_cnc_exported" in s2 for s2, _ in writes)
@@ -931,47 +938,6 @@ def test_export_cnc_requires_optimization(monkeypatch) -> None:
         service.export_cnc_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
 
 
-def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
-    org_id, order_id = uuid4(), uuid4()
-    source_code = "OT-" + "A" * 47  # exactly 50 chars
-    captured: list[list] = []
-
-    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
-        lowered = " ".join(sql_text.lower().split())
-        if "for update" in lowered:
-            return {
-                "id": str(order_id),
-                "order_code": source_code,
-                "status": "HOLD",
-                "project_id": str(uuid4()),
-                "project_version_id": str(uuid4()),
-                "payload_json": {"position_id": str(_POSITION_ID)},
-            }
-        if "count(*)" in lowered:
-            return {"n": 0}
-        if "insert into public.orders" in lowered:
-            captured.append(list(params))
-            return {"id": str(uuid4()), "order_code": params[2]}
-        raise AssertionError(f"unexpected one(): {lowered}")
-
-    monkeypatch.setattr("production.service.one", fake_one)
-    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
-    monkeypatch.setattr("production.service.get_work_order", lambda **kw: {"id": "x"})
-    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
-        "production.service.documentary_backend", side_effect=_atomic
-    ):
-        service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
-    code = captured[0][2]
-    assert len(code) <= 50
-    assert code.endswith("-RM-01")
-    marker = str(order_id).replace("-", "")[:8].upper()
-    assert marker in code
-    # distinct sources keep distinct codes even with identical prefixes
-    other_id = uuid4()
-    other_marker = str(other_id).replace("-", "")[:8].upper()
-    assert other_marker != marker or code != f"{source_code[:50-len('-RM-01')-9]}-{other_marker}-RM-01"
-
-
 def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
     org_id, order_id, actor_id = uuid4(), uuid4(), uuid4()
     events: list[list] = []
@@ -979,7 +945,7 @@ def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
         "position_id": str(_POSITION_ID),
         "quantity": 2,
         "materials": {
-            "profile_cuts": [{"a": 1}, {"b": 2}],
+            "profile_cuts": [{"a": 1, "qty": 3}, {"b": 2, "qty": 2}],
             "glasses": [{"g": 1}],
         },
     }
@@ -1012,7 +978,8 @@ def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
     units = output["packing"]["units"]
     assert [u["unit_index"] for u in units] == [1, 2]
     assert units[0]["label_code"] == "OT-1-U01"
-    assert units[0]["profiles"] == 2 and units[0]["glasses"] == 1
+    # grouped rows count their qty, not one per row
+    assert units[0]["profiles"] == 5 and units[0]["glasses"] == 1
     assert units[0]["panels"] == 0 and units[0]["hardware"] == 0
     assert "'wo_packed'" in events[0][0]
 
@@ -1020,7 +987,6 @@ def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
 def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
     org_id, order_id = uuid4(), uuid4()
     updates: list[list] = []
-    calls = {"n": 0}
     statuses = iter(["IN_PROGRESS"])
 
     def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
@@ -1066,10 +1032,181 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
-        out = service.dispatch_work_order(
+        service.dispatch_work_order(
             org_id=org_id, order_id=order_id, actor_id=uuid4(), note="Camión 12"
         )
         assert captured_status["row"]["status"] == "DISPATCHED"
         out2 = service.dispatch_work_order(org_id=org_id, order_id=order_id, actor_id=uuid4())
     assert "'wo_dispatched'" in updates[0][0]
     assert out2["order"]["status"] == "DISPATCHED"
+
+
+def test_remake_code_embeds_id_fragment_for_long_sources(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    source_code = "OT-" + "A" * 47  # exactly 50 chars
+    captured: list[list] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": source_code,
+                "status": "HOLD",
+                "project_id": str(uuid4()),
+                "project_version_id": str(uuid4()),
+                "payload_json": {"position_id": str(_POSITION_ID)},
+            }
+        if "count(*)" in lowered:
+            return {"n": 0}
+        if "insert into public.orders" in lowered:
+            captured.append(list(params))
+            return {"id": str(uuid4()), "order_code": params[2]}
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    monkeypatch.setattr("production.service.get_work_order", lambda **kw: {"id": "x"})
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    code = captured[0][2]
+    assert len(code) <= 50
+    assert code.endswith("-RM-01")
+    marker = str(order_id).replace("-", "").upper()
+    assert marker in code
+    # distinct sources keep distinct codes even with identical prefixes
+    other_id = uuid4()
+    other_marker = str(other_id).replace("-", "").upper()
+    assert code != f"{source_code[:50-len('-RM-01')-33]}-{other_marker}-RM-01"
+
+
+def test_reinforcement_angles_flow_into_bars_csv() -> None:
+    # The sealed manufacturing facts are the only authority for steel end
+    # angles: PVC mitred 45/45 -> square-cut steel 90/90.
+    snapshot = {
+        "manufacturing": [
+            {
+                "position_id": "pos-1",
+                "members": [
+                    {
+                        "member_id": "m1",
+                        "role": "FRAME",
+                        "bay_id": "b1",
+                        "leaf_id": None,
+                        "workshop_sku": "MARCO-60",
+                    }
+                ],
+                "reinforcements": [
+                    {
+                        "parent_member_id": "m1",
+                        "workshop_sku": "ACERO-35",
+                        "cut_length_mm": "880.00",
+                        "angle_left": "90.0",
+                        "angle_right": "90.0",
+                    }
+                ],
+            }
+        ]
+    }
+    angle_map = service._reinforcement_angle_map(snapshot, "pos-1")
+    assert angle_map == {("ACERO-35", "880.00", "FRAME", "b1", None): ("90.0", "90.0")}
+
+    # Conflicting facts on the same key mark it ambiguous (None).
+    snapshot["manufacturing"][0]["reinforcements"].append(
+        {
+            "parent_member_id": "m1",
+            "workshop_sku": "ACERO-35",
+            "cut_length_mm": "880.00",
+            "angle_left": "45.0",
+            "angle_right": "45.0",
+        }
+    )
+    assert service._reinforcement_angle_map(snapshot, "pos-1")[
+        ("ACERO-35", "880.00", "FRAME", "b1", None)
+    ] is None
+
+
+def test_bars_csv_rejects_reinforcement_without_angles() -> None:
+    optimization = {
+        "bars": {
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "ACERO-35",
+                    "stock_length_mm": "6500",
+                    "cuts": [
+                        {
+                            "piece_id": "R-01",
+                            "source_kind": "REINFORCEMENT",
+                            "length_mm": "880",
+                            "sequence": 1,
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    with pytest.raises(DocumentaryError, match="cnc_incomplete_cut_angles"):
+        service._cnc_bars_csv(optimization)
+
+
+
+def test_packing_labels_keep_suffix_on_long_order_code(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    long_code = "OT-" + "B" * 47
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": str(order_id),
+            "order_code": long_code,
+            "status": "IN_PROGRESS",
+            "payload_json": {"quantity": 2, "materials": {}},
+        },
+    )
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [{"id": "ok"}])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        output = service.generate_packing_manifest(
+            org_id=org_id, order_id=order_id, actor_id=uuid4()
+        )
+    labels = [u["label_code"] for u in output["packing"]["units"]]
+    assert labels[0].endswith("-U01") and labels[1].endswith("-U02")
+    assert len(set(labels)) == 2 and all(len(label) <= 50 for label in labels)
+
+
+def test_remake_drops_source_packing(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    captured: list[list] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-1",
+                "status": "HOLD",
+                "project_id": str(uuid4()),
+                "project_version_id": str(uuid4()),
+                "payload_json": {
+                    "position_id": str(_POSITION_ID),
+                    "packing": {"units": [{"label_code": "OT-1-U01"}]},
+                },
+            }
+        if "count(*)" in lowered:
+            return {"n": 0}
+        if "insert into public.orders" in lowered:
+            captured.append(list(params))
+            return {"id": str(uuid4()), "order_code": params[2]}
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [{"id": "ok"}])
+    monkeypatch.setattr("production.service.get_work_order", lambda **kw: {"id": "x"})
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        service.create_remake(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    assert "packing" not in json.loads(captured[0][3])

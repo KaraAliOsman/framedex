@@ -120,6 +120,9 @@ class CutOptimizationResult(EngineModel):
 def pieces_from_result(
     result: EngineResult, *, color: str, source_position_id: str | None = None,
     reinforcement_skus: dict[str, str],
+    reinforcement_angles: dict[
+        tuple[str, str, str, str | None, str | None], tuple[str, str] | None
+    ] | None = None,
 ) -> list[CutPiece]:
     """Project exact cuts; aggregate identical rows before stable quantity expansion."""
     rows: dict[str, tuple[CutPiece, int]] = {}
@@ -137,12 +140,24 @@ def pieces_from_result(
         sku = steel.reinforcement_sku or reinforcement_skus.get(steel.parent_profile_sku)
         if sku is None:
             raise MissingStockAuthority("Reinforcement has no resolved stock SKU")
+        angles: tuple[str, str] | None = None
+        if reinforcement_angles is not None:
+            angles = reinforcement_angles.get(
+                (sku, str(steel.length_mm), steel.role.value, steel.bay_id, steel.leaf_id)
+            )
+            if angles is None:  # absent or marked ambiguous by conflicting facts
+                raise MissingStockAuthority(
+                    "Reinforcement cut angles are missing or ambiguous in the "
+                    "sealed manufacturing facts"
+                )
         key = "REINFORCEMENT:" + steel.model_dump_json(exclude={"qty"})
         piece = CutPiece(
             piece_id=sha256(key.encode("utf-8")).hexdigest(), source_kind="REINFORCEMENT",
             workshop_sku=sku, material=CutMaterial.STEEL, color=color,
             length_mm=steel.length_mm, source_position_id=source_position_id,
             bay_id=steel.bay_id, leaf_id=steel.leaf_id, role=steel.role.value, unit_index=1,
+            angle_left=Decimal(angles[0]) if angles else None,
+            angle_right=Decimal(angles[1]) if angles else None,
         )
         rows[key] = (piece, rows.get(key, (piece, 0))[1] + steel.qty)
     return [piece.model_copy(update={"unit_index": index})
