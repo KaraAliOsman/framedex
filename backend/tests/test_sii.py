@@ -136,6 +136,31 @@ def _dte_row(invoice_id, folio=1, over=None):
     return row
 
 
+def _credit_note_row(invoice, over=None):
+    row = {
+        "id": uuid4(),
+        "org_id": invoice["org_id"],
+        "project_id": invoice["project_id"],
+        "invoice_id": invoice["id"],
+        "credit_code": "NC-0001",
+        "payload_json": {
+            "credit_code": "NC-0001",
+            "reason": "Anula por error en folio",
+            "invoice": {
+                "id": str(invoice["id"]),
+                "invoice_code": invoice["invoice_code"],
+            },
+            "revision_code": "REV-A",
+            "project": invoice["payload_json"]["project"],
+            "deal": invoice["payload_json"]["deal"],
+            "positions": invoice["payload_json"]["positions"],
+        },
+        "created_at": "2026-10-03T10:00:00+00:00",
+    }
+    row.update(over or {})
+    return row
+
+
 def _patch_env(
     monkeypatch,
     storage,
@@ -145,6 +170,9 @@ def _patch_env(
     invoice=None,
     existing=None,
     insert_row=None,
+    credit_note=None,
+    parents=None,
+    existing_nc=None,
 ):
     def fake_one(sql, params=None, *args, **kw):
         text = str(sql)
@@ -156,6 +184,10 @@ def _patch_env(
             if org is None:
                 raise ContractAPIException(404, "org_not_found", "x")
             return org
+        if "FROM public.project_credit_notes" in text:
+            if credit_note is None:
+                raise ContractAPIException(404, "credit_note_not_found", "x")
+            return credit_note
         if "FROM public.project_invoices" in text:
             if invoice is None:
                 raise ContractAPIException(404, "invoice_not_found", "x")
@@ -173,6 +205,10 @@ def _patch_env(
             ]
         if "FROM public.sii_cafs" in sql:
             return list(cafs or [])
+        if "FROM public.project_dtes" in sql and "credit_note_id IS NULL" in sql:
+            return list(parents or [])
+        if "FROM public.project_dtes" in sql and "credit_note_id=%s" in sql:
+            return list(existing_nc or [])
         if "FROM public.project_dtes" in sql:
             return list(existing or [])
         if "UPDATE public.sii_cafs" in sql:
@@ -364,3 +400,111 @@ def test_dte_access_missing_raises_404(monkeypatch):
     with pytest.raises(ContractAPIException) as excinfo:
         sii.dte_access(org_id=uuid4(), project_id=uuid4(), invoice_id=uuid4())
     assert excinfo.value.contract_code == "dte_not_found"
+
+
+def test_emit_credit_note_dte_references_parent_folio(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    parent = _dte_row(invoice["id"], folio=4)
+    insert_row = _dte_row(
+        invoice["id"], folio=1, over={"dte_type": 61, "credit_note_id": credit_note["id"]}
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        cafs=[caf61],
+        credit_note=credit_note,
+        parents=[parent],
+        insert_row=insert_row,
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        credit_note_id=credit_note["id"],
+        actor_id=uuid4(),
+    )
+    assert out["dte_type"] == 61 and out["folio"] == 1
+    object_key, content, media = storage.uploads[0]
+    assert "dte61-1_" in object_key and media == "application/xml"
+    text = content.decode()
+    assert "<TipoDTE>61</TipoDTE>" in text
+    assert "<TpoDocRef>33</TpoDocRef><FolioRef>4</FolioRef>" in text
+    assert "<CodRef>1</CodRef>" in text
+    assert "Anula factura FAC-0001" in text
+    import defusedxml.ElementTree as ET
+
+    root = ET.fromstring(text)
+    dd = ET.tostring(root.find(".//TED/DD"), encoding="unicode")
+    dd = dd[dd.index("<DD>") : dd.index("</DD>") + len("</DD>")]
+    frmt = base64.b64decode(root.findtext(".//TED/FRMT"))
+    public = rsa.RSAPublicNumbers(
+        int.from_bytes(base64.b64decode(caf61["rsapk_e"]), "big"),
+        int.from_bytes(base64.b64decode(caf61["rsapk_m"]), "big"),
+    ).public_key()
+    public.verify(frmt, dd.encode(), padding.PKCS1v15(), hashes.SHA1())
+
+
+def test_emit_credit_note_dte_requires_timbred_parent(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    _patch_env(monkeypatch, storage, credit_note=credit_note, parents=[])
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_credit_note_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            credit_note_id=credit_note["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_reference_missing"
+    assert storage.uploads == []
+
+
+def test_emit_credit_note_dte_replay_and_exhaustion(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    existing = _dte_row(
+        invoice["id"], folio=9, over={"dte_type": 61, "credit_note_id": credit_note["id"]}
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        credit_note=credit_note,
+        existing_nc=[existing],
+        parents=[_dte_row(invoice["id"], folio=4)],
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        credit_note_id=credit_note["id"],
+        actor_id=uuid4(),
+    )
+    assert out["folio"] == 9 and storage.uploads == []
+
+    exhausted = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=3)[0]),
+        org_id=invoice["org_id"],
+        actual=3,
+    )
+    _patch_env(
+        monkeypatch,
+        _Storage(),
+        credit_note=credit_note,
+        parents=[_dte_row(invoice["id"], folio=4)],
+        cafs=[exhausted],
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_credit_note_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            credit_note_id=credit_note["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_caf_exhausted"

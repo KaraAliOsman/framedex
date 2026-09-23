@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { ApiError } from "../../api/apiMutator";
 import {
   projectCreditNoteAccess,
+  projectCreditNoteDteAccess,
+  projectCreditNoteDteEmit,
   projectCreditNoteEmit,
   projectInvoiceAccess,
   projectInvoiceDteAccess,
@@ -308,6 +310,48 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function emitCreditNoteDte(note: ProjectCreditNote): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEmit(projectId, note.id, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditNoteDte(note: ProjectCreditNote): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.dteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteAccess(projectId, note.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.dteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   async function openCreditNote(note: ProjectCreditNote): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
@@ -544,6 +588,19 @@ export function ProjectPaymentsPanel({
                           {`${t("projects.dteStatus")} · ${invoice.dte.folio}`}
                         </button>
                       )}
+                      {invoice.credit_note?.dte && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.dteCreditStatus")} · folio ${invoice.credit_note.dte.folio}`}
+                          onClick={() => {
+                            if (invoice.credit_note) void openCreditNoteDte(invoice.credit_note);
+                          }}
+                          disabled={busy}
+                        >
+                          {`${t("projects.dteCreditStatus")} · ${invoice.credit_note.dte.folio}`}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button
@@ -567,6 +624,22 @@ export function ProjectPaymentsPanel({
                           {t("projects.creditNoteAnnul")}
                         </button>
                       )}
+                      {canWrite &&
+                        invoice.credit_note &&
+                        invoice.dte &&
+                        !invoice.credit_note.dte && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (invoice.credit_note) {
+                                void emitCreditNoteDte(invoice.credit_note);
+                              }
+                            }}
+                            disabled={busy}
+                          >
+                            {t("projects.dteCreditEmit")}
+                          </button>
+                        )}
                     </td>
                   </tr>
                 ))}

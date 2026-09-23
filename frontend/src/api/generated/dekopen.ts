@@ -8076,6 +8076,158 @@ export const projectCreditNoteAccess = async (
   );
 };
 
+export type projectCreditNoteDteAccessResponse200 = {
+  data: ProjectDteAccess;
+  status: 200;
+};
+
+export type projectCreditNoteDteAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteAccessResponseSuccess = projectCreditNoteDteAccessResponse200 & {
+  headers: Headers;
+};
+export type projectCreditNoteDteAccessResponseError = (
+  | projectCreditNoteDteAccessResponse400
+  | projectCreditNoteDteAccessResponse401
+  | projectCreditNoteDteAccessResponse403
+  | projectCreditNoteDteAccessResponse404
+  | projectCreditNoteDteAccessResponse409
+  | projectCreditNoteDteAccessResponse422
+  | projectCreditNoteDteAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteAccessResponse =
+  projectCreditNoteDteAccessResponseSuccess | projectCreditNoteDteAccessResponseError;
+
+export const getProjectCreditNoteDteAccessUrl = (projectId: string, creditNoteId: string) => {
+  return `/api/v1/projects/${projectId}/credit-notes/${creditNoteId}/dte/`;
+};
+
+export const projectCreditNoteDteAccess = async (
+  projectId: string,
+  creditNoteId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteAccessResponse> => {
+  return apiMutator<projectCreditNoteDteAccessResponse>(
+    getProjectCreditNoteDteAccessUrl(projectId, creditNoteId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectCreditNoteDteEmitResponse201 = {
+  data: ProjectDte;
+  status: 201;
+};
+
+export type projectCreditNoteDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteEmitResponseSuccess = projectCreditNoteDteEmitResponse201 & {
+  headers: Headers;
+};
+export type projectCreditNoteDteEmitResponseError = (
+  | projectCreditNoteDteEmitResponse400
+  | projectCreditNoteDteEmitResponse401
+  | projectCreditNoteDteEmitResponse403
+  | projectCreditNoteDteEmitResponse404
+  | projectCreditNoteDteEmitResponse409
+  | projectCreditNoteDteEmitResponse422
+  | projectCreditNoteDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteEmitResponse =
+  projectCreditNoteDteEmitResponseSuccess | projectCreditNoteDteEmitResponseError;
+
+export const getProjectCreditNoteDteEmitUrl = (projectId: string, creditNoteId: string) => {
+  return `/api/v1/projects/${projectId}/credit-notes/${creditNoteId}/dte/`;
+};
+
+export const projectCreditNoteDteEmit = async (
+  projectId: string,
+  creditNoteId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteEmitResponse> => {
+  return apiMutator<projectCreditNoteDteEmitResponse>(
+    getProjectCreditNoteDteEmitUrl(projectId, creditNoteId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type projectImportsListResponse200 = {
   data: ImportListResponse;
   status: 200;

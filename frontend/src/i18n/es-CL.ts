@@ -197,6 +197,8 @@ const messages = {
   "projects.dteEmitError": "No pudimos timbrar el DTE.",
   "projects.dteOpenError": "No pudimos abrir el DTE.",
   "projects.dteStatus": "DTE-33",
+  "projects.dteCreditEmit": "Emitir DTE-61",
+  "projects.dteCreditStatus": "DTE-61",
   "settings.siiTitle": "Facturación electrónica SII",
   "settings.siiCafUpload": "Cargar CAF",
   "settings.siiCafFile": "Archivo CAF (.xml)",

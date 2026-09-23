@@ -561,6 +561,44 @@ class ProjectInvoiceDteView(APIView):
             )
 
 
+class ProjectCreditNoteDteView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_emit",
+        request=None,
+        responses={201: ProjectDteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, credit_note_id):
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                sii.emit_credit_note_dte(
+                    org_id=org,
+                    project=project,
+                    credit_note_id=credit_note_id,
+                    actor_id=token.user_id,
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_access",
+        responses={200: ProjectDteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, credit_note_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii.credit_note_dte_access(
+                    org_id=org,
+                    project_id=project_id,
+                    credit_note_id=credit_note_id,
+                )
+            )
+
+
 class SiiCafsView(APIView):
     parser_classes = [DecimalJSONParser]
 

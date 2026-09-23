@@ -36,6 +36,7 @@ from pricing.repository import one, rows
 SIGNED_URL_TTL_SECONDS = 600
 
 DTE_FACTURA = 33
+DTE_CREDIT_NOTE = 61
 _RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
 
 
@@ -250,29 +251,24 @@ def register_caf(
     return _caf_public(row)
 
 
-def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
-    """Render the minimal DTE-33: Encabezado + one Detalle referencing the
-    sealed quotation + TED (DD + FRMT SHA1withRSA stamped by the CAF key)."""
-    payload = (
-        invoice["payload_json"]
-        if isinstance(invoice["payload_json"], dict)
-        else json.loads(invoice["payload_json"])
-    )
-    deal, project = payload["deal"], payload["project"]
+def _render_dte(
+    *,
+    tipo: int,
+    folio: int,
+    receptor: str,
+    receptor_name: str,
+    deal: dict,
+    item: str,
+    caf: dict,
+    issued_at,
+    dir_recep: str = "",
+    referencia: str = "",
+) -> bytes:
+    """Minimal DTE skeleton shared by 33/61: Encabezado + one Detalle + the
+    TED (DD + FRMT SHA1withRSA stamped by the CAF key)."""
     total = int(Decimal(str(deal["total_gross"])))
     neto = int(Decimal(str(deal["total_net"])))
     iva = int(Decimal(str(deal["total_tax"])))
-    receptor = _rut_normalize(project.get("client_rut"))
-    if receptor is None:
-        raise contract_error(
-            422,
-            "sii_receptor_missing",
-            "La factura no tiene un RUT de receptor válido para timbrar.",
-        )
-    receptor_name = str(project.get("client_name") or "Cliente").strip()
-    revision = payload.get("revision_code") or "REV-A"
-    positions = payload.get("positions") or []
-    item = f"Según cotización {revision} — {len(positions)} posición(es)"
     fecha = issued_at.date().isoformat()
     emisor_extra = ""
     for tag, value in (
@@ -282,21 +278,18 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
     ):
         if value:
             emisor_extra += f"<{tag}>{escape(str(value))}</{tag}>"
-    dir_recep = ""
-    if project.get("delivery_address"):
-        dir_recep = f"<DirRecep>{escape(str(project['delivery_address']))}</DirRecep>"
 
     # The DD is signed as serialized — build it once, byte-exact.
     dd = (
-        f"<DD><RE>{caf['rut_emisor']}</RE><TD>{DTE_FACTURA}</TD><F>{folio}</F>"
+        f"<DD><RE>{caf['rut_emisor']}</RE><TD>{tipo}</TD><F>{folio}</F>"
         f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name)}</RSR>"
         f"<MNT>{total}</MNT><IT1>{escape(item)}</IT1>{caf['caf_xml']}"
         f"<TSTED>{issued_at.isoformat()}</TSTED></DD>"
     )
     frmt = _sign_dd(dd, caf["rsask"])
     return (
-        f'<DTE version="1.0"><Documento ID="F{DTE_FACTURA}T{folio}">'
-        f"<Encabezado><IdDoc><TipoDTE>{DTE_FACTURA}</TipoDTE>"
+        f'<DTE version="1.0"><Documento ID="F{tipo}T{folio}">'
+        f"<Encabezado><IdDoc><TipoDTE>{tipo}</TipoDTE>"
         f"<Folio>{folio}</Folio><FchEmis>{fecha}</FchEmis></IdDoc>"
         f"<Emisor><RUTEmisor>{caf['rut_emisor']}</RUTEmisor>"
         f"<RznSoc>{escape(caf['razon_social'])}</RznSoc>{emisor_extra}</Emisor>"
@@ -305,10 +298,86 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
         f"<Totales><MntNeto>{neto}</MntNeto><TasaIVA>19</TasaIVA>"
         f"<IVA>{iva}</IVA><MntTotal>{total}</MntTotal></Totales></Encabezado>"
         f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
-        f"<MontoItem>{neto}</MontoItem></Detalle>"
+        f"<MontoItem>{neto}</MontoItem></Detalle>{referencia}"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
         f"</Documento></DTE>"
     ).encode("utf-8")
+
+
+def _receptor(payload: dict) -> tuple[str, str]:
+    project = payload["project"]
+    receptor = _rut_normalize(project.get("client_rut"))
+    if receptor is None:
+        raise contract_error(
+            422,
+            "sii_receptor_missing",
+            "El documento no tiene un RUT de receptor válido para timbrar.",
+        )
+    return receptor, str(project.get("client_name") or "Cliente").strip()
+
+
+def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> bytes:
+    """DTE-33: one Detalle referencing the sealed quotation."""
+    payload = (
+        invoice["payload_json"]
+        if isinstance(invoice["payload_json"], dict)
+        else json.loads(invoice["payload_json"])
+    )
+    receptor, receptor_name = _receptor(payload)
+    project = payload["project"]
+    revision = payload.get("revision_code") or "REV-A"
+    positions = payload.get("positions") or []
+    item = f"Según cotización {revision} — {len(positions)} posición(es)"
+    dir_recep = (
+        f"<DirRecep>{escape(str(project['delivery_address']))}</DirRecep>"
+        if project.get("delivery_address")
+        else ""
+    )
+    return _render_dte(
+        tipo=DTE_FACTURA,
+        folio=folio,
+        receptor=receptor,
+        receptor_name=receptor_name,
+        deal=payload["deal"],
+        item=item,
+        caf=caf,
+        issued_at=issued_at,
+        dir_recep=dir_recep,
+    )
+
+
+def _dte_xml_credit_note(
+    *, folio: int, credit_note: dict, parent_dte: dict, caf: dict, issued_at
+) -> bytes:
+    """DTE-61: annuls a factura — its <Referencia> points at the parent's
+    stamped folio (CodRef=1)."""
+    payload = (
+        credit_note["payload_json"]
+        if isinstance(credit_note["payload_json"], dict)
+        else json.loads(credit_note["payload_json"])
+    )
+    receptor, receptor_name = _receptor(payload)
+    item = f"Anula factura {payload['invoice']['invoice_code']}"
+    if payload.get("reason"):
+        item = f"{item} — {payload['reason']}"
+    referencia = (
+        f"<Referencia><TpoDocRef>{DTE_FACTURA}</TpoDocRef>"
+        f"<FolioRef>{int(parent_dte['folio'])}</FolioRef>"
+        f"<CodRef>1</CodRef>"
+        f"<RazonRef>{escape(payload.get('reason') or 'Anula documento')}</RazonRef>"
+        f"</Referencia>"
+    )
+    return _render_dte(
+        tipo=DTE_CREDIT_NOTE,
+        folio=folio,
+        receptor=receptor,
+        receptor_name=receptor_name,
+        deal=payload["deal"],
+        item=item,
+        caf=caf,
+        issued_at=issued_at,
+        referencia=referencia,
+    )
 
 
 def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -> dict:
@@ -429,7 +498,9 @@ def emit_dte(*, org_id: UUID, project: dict, invoice_id: UUID, actor_id: UUID) -
                 raise
     except Exception:
         if object_key is not None:
-            _purge_unreferenced_dte(org_id=org_id, object_key=object_key)
+            _purge_unreferenced_dte(
+                org_id=org_id, object_key=object_key, tipo=DTE_FACTURA
+            )
         raise
     return _dte_public(row)
 
@@ -454,9 +525,11 @@ def dte_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) -> dict:
     }
 
 
-def _purge_unreferenced_dte(*, org_id: UUID, object_key: str) -> None:
+def _purge_unreferenced_dte(
+    *, org_id: UUID, object_key: str, tipo: int
+) -> None:
     """Compensating delete for a rolled-back DTE: the org folio slot
-    serializes against emit_dte — a committed row referencing the key wins,
+    serializes against emit — a committed row referencing the key wins,
     an orphan is removed without masking the original failure."""
     import logging
 
@@ -465,7 +538,7 @@ def _purge_unreferenced_dte(*, org_id: UUID, object_key: str) -> None:
             with connection.cursor() as cursor:
                 cursor.execute(
                     "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
-                    [f"sii_folios:{org_id}:{DTE_FACTURA}"],
+                    [f"sii_folios:{org_id}:{tipo}"],
                 )
             referenced = rows(
                 "SELECT id FROM public.project_dtes "
@@ -493,6 +566,197 @@ def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
         for row in rows(
             "SELECT id, invoice_id, dte_type, folio FROM public.project_dtes "
             "WHERE org_id=%s AND project_id=%s",
+            [str(org_id), str(project_id)],
+        )
+    }
+
+
+def emit_credit_note_dte(
+    *, org_id: UUID, project: dict, credit_note_id: UUID, actor_id: UUID
+) -> dict:
+    """Timbra a nota de crédito as DTE-61. Its <Referencia> points at the
+    parent factura's stamped folio, so the parent's DTE-33 must exist —
+    a credit note can never invent a folio the SII didn't issue.
+    UNIQUE(org_id, credit_note_id) makes a retried emit replay the row."""
+    org_id_s, project_id_s, credit_id_s = (
+        str(org_id),
+        str(project["id"]),
+        str(credit_note_id),
+    )
+    object_key: str | None = None
+    try:
+        with transaction.atomic(), documentary_backend():
+            credit_note = one(
+                "SELECT * FROM public.project_credit_notes "
+                "WHERE id=%s AND org_id=%s AND project_id=%s",
+                [credit_id_s, org_id_s, project_id_s],
+                "credit_note_not_found",
+            )
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"sii_folios:{org_id_s}:{DTE_CREDIT_NOTE}"],
+            )
+            existing = rows(
+                "SELECT * FROM public.project_dtes "
+                "WHERE org_id=%s AND credit_note_id=%s",
+                [org_id_s, credit_id_s],
+            )
+            if existing:
+                return _dte_public(existing[0])
+            parents = rows(
+                "SELECT * FROM public.project_dtes "
+                "WHERE org_id=%s AND invoice_id=%s AND credit_note_id IS NULL "
+                "AND dte_type=%s",
+                [org_id_s, str(credit_note["invoice_id"]), DTE_FACTURA],
+            )
+            if not parents:
+                raise contract_error(
+                    409,
+                    "sii_reference_missing",
+                    "La factura debe timbrarse antes de emitir la nota de crédito electrónica.",
+                )
+            parent_dte = parents[0]
+            cafs = rows(
+                "SELECT * FROM public.sii_cafs "
+                "WHERE org_id=%s AND tipo_dte=%s AND folio_actual < folio_hasta "
+                "ORDER BY folio_desde LIMIT 1 FOR UPDATE",
+                [org_id_s, DTE_CREDIT_NOTE],
+            )
+            if not cafs:
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 61 disponibles — cargue un CAF en Configuración.",
+                )
+            caf = cafs[0]
+            folio = int(caf["folio_actual"]) + 1
+            if folio > int(caf["folio_hasta"]):
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 61 disponibles — cargue un CAF en Configuración.",
+                )
+            issued_at = timezone.now()
+            content = _dte_xml_credit_note(
+                folio=folio,
+                credit_note=credit_note,
+                parent_dte=parent_dte,
+                caf=caf,
+                issued_at=issued_at,
+            )
+            moved = rows(
+                "UPDATE public.sii_cafs SET folio_actual=%s "
+                "WHERE id=%s AND org_id=%s AND folio_actual=%s "
+                "RETURNING folio_actual",
+                [folio, str(caf["id"]), org_id_s, folio - 1],
+            )
+            if not moved:
+                raise contract_error(
+                    409,
+                    "sii_caf_exhausted",
+                    "No hay folios CAF tipo 61 disponibles — cargue un CAF en Configuración.",
+                )
+            content_hash = _sha256(content)
+            payload = {
+                "dte_type": DTE_CREDIT_NOTE,
+                "folio": folio,
+                "issued_at": issued_at.isoformat(),
+                "credit_code": credit_note["credit_code"],
+                "referenced": {
+                    "invoice_code": credit_note["payload_json"]["invoice"]["invoice_code"]
+                    if isinstance(credit_note["payload_json"], dict)
+                    else json.loads(credit_note["payload_json"])["invoice"]["invoice_code"],
+                    "folio": int(parent_dte["folio"]),
+                },
+                "caf": {
+                    "id": str(caf["id"]),
+                    "folio_desde": int(caf["folio_desde"]),
+                    "folio_hasta": int(caf["folio_hasta"]),
+                },
+                "emisor": {
+                    "rut": caf["rut_emisor"],
+                    "razon_social": caf["razon_social"],
+                },
+            }
+            object_key = (
+                f"org_{org_id_s}/projects/{project_id_s}/dtes/"
+                f"dte{DTE_CREDIT_NOTE}-{folio}_{content_hash[:16]}.xml"
+            )
+            storage = SupabaseDocumentStorage()
+            try:
+                storage.upload_immutable(object_key, content, "application/xml")
+                row = one(
+                    "INSERT INTO public.project_dtes("
+                    "org_id,project_id,invoice_id,credit_note_id,caf_id,dte_type,folio,"
+                    "payload_json,storage_bucket,storage_object_key,file_sha256,"
+                    "media_type,byte_size,issued_by,issued_at) "
+                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s::jsonb,'documents',%s,%s,"
+                    "'application/xml',%s,%s,%s) RETURNING *",
+                    [
+                        org_id_s,
+                        project_id_s,
+                        str(credit_note["invoice_id"]),
+                        credit_id_s,
+                        str(caf["id"]),
+                        DTE_CREDIT_NOTE,
+                        folio,
+                        json.dumps(payload),
+                        object_key,
+                        content_hash,
+                        len(content),
+                        str(actor_id),
+                        issued_at,
+                    ],
+                )
+            except Exception:
+                try:
+                    storage.delete_object(object_key)
+                    object_key = None
+                except Exception:  # noqa: BLE001 — cleanup must not mask the real failure
+                    pass
+                raise
+    except Exception:
+        if object_key is not None:
+            _purge_unreferenced_dte(
+                org_id=org_id, object_key=object_key, tipo=DTE_CREDIT_NOTE
+            )
+        raise
+    return _dte_public(row)
+
+
+def credit_note_dte_access(*, org_id: UUID, project_id: UUID, credit_note_id: UUID) -> dict:
+    with documentary_backend():
+        found = rows(
+            "SELECT * FROM public.project_dtes "
+            "WHERE org_id=%s AND project_id=%s AND credit_note_id=%s",
+            [str(org_id), str(project_id), str(credit_note_id)],
+        )
+        if not found:
+            raise contract_error(
+                404, "dte_not_found", "La nota de crédito no tiene DTE emitido."
+            )
+        found = found[0]
+        signed_url = SupabaseDocumentStorage().signed_url(
+            str(found["storage_object_key"]), expires_in=SIGNED_URL_TTL_SECONDS
+        )
+    return {
+        **_dte_public(found),
+        "signed_url": signed_url,
+        "expires_in": SIGNED_URL_TTL_SECONDS,
+    }
+
+
+def dtes_by_credit_note(*, org_id: UUID, project_id: UUID) -> dict:
+    """credit_note_id → light DTE badge for the cobranza listing."""
+    return {
+        str(row["credit_note_id"]): {
+            "id": str(row["id"]),
+            "dte_type": int(row["dte_type"]),
+            "folio": int(row["folio"]),
+        }
+        for row in rows(
+            "SELECT id, credit_note_id, dte_type, folio FROM public.project_dtes "
+            "WHERE org_id=%s AND project_id=%s AND credit_note_id IS NOT NULL",
             [str(org_id), str(project_id)],
         )
     }

@@ -11,6 +11,7 @@ from projects.views import (
     ProjectPaymentLinkRecoverView,
     ProjectPaymentLinksView,
     ProjectCreditNoteAccessView,
+    ProjectCreditNoteDteView,
     ProjectCreditNotesView,
     ProjectInvoiceAccessView,
     ProjectInvoiceDteView,
@@ -67,6 +68,10 @@ urlpatterns = [
     path(
         "projects/<uuid:project_id>/credit-notes/<uuid:credit_note_id>/",
         ProjectCreditNoteAccessView.as_view(),
+    ),
+    path(
+        "projects/<uuid:project_id>/credit-notes/<uuid:credit_note_id>/dte/",
+        ProjectCreditNoteDteView.as_view(),
     ),
     path(
         "projects/<uuid:project_id>/payment-links/",
