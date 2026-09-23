@@ -339,3 +339,47 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.85em;
 }
+
+.production-labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.production-label {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line-strong, #2e3338);
+  padding: 12px;
+  text-align: center;
+}
+.production-label-qr svg {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+}
+.production-label-pieces {
+  font-weight: 600;
+}
+.production-label-parts {
+  font-size: var(--text-s, 12px);
+  color: var(--ink-muted, #6b7280);
+}
+@media print {
+  .app-shell .sidebar,
+  .app-shell .topbar,
+  .production-orders,
+  .production-detail-head,
+  .production-steps,
+  .production-events,
+  .production-note,
+  .production-optimize,
+  .production-optimize-head button,
+  .production-plan {
+    display: none !important;
+  }
+}

@@ -75,6 +75,7 @@ import type {
   OrderReceiptRequestRequest,
   OrderReceiving,
   OrderResponse,
+  PackingLabels,
   PackingManifest,
   PatchedArticleWriteRequest,
   PatchedBeadWriteRequest,
@@ -5443,6 +5444,78 @@ export const productionOrderInstall = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(installationRequestRequest),
+  });
+};
+
+export type productionOrderLabelsResponse200 = {
+  data: PackingLabels;
+  status: 200;
+};
+
+export type productionOrderLabelsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderLabelsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderLabelsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderLabelsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderLabelsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderLabelsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderLabelsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderLabelsResponseSuccess = productionOrderLabelsResponse200 & {
+  headers: Headers;
+};
+export type productionOrderLabelsResponseError = (
+  | productionOrderLabelsResponse400
+  | productionOrderLabelsResponse401
+  | productionOrderLabelsResponse403
+  | productionOrderLabelsResponse404
+  | productionOrderLabelsResponse409
+  | productionOrderLabelsResponse422
+  | productionOrderLabelsResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderLabelsResponse =
+  productionOrderLabelsResponseSuccess | productionOrderLabelsResponseError;
+
+export const getProductionOrderLabelsUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/labels/`;
+};
+
+export const productionOrderLabels = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderLabelsResponse> => {
+  return apiMutator<productionOrderLabelsResponse>(getProductionOrderLabelsUrl(orderId), {
+    ...options,
+    method: "GET",
   });
 };
 

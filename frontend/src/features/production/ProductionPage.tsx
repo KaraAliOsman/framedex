@@ -6,6 +6,7 @@ import {
   productionOrderDetail,
   productionOrderDispatch,
   productionOrderInstall,
+  productionOrderLabels,
   productionOrderOptimize,
   productionOrderPacking,
   productionOrderRemake,
@@ -13,6 +14,7 @@ import {
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
+  PackingLabel,
   ProductionOrder,
   ProductionOrderDetail,
   ProductionStep,
@@ -170,6 +172,7 @@ export function ProductionPage(): JSX.Element {
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
+  const [labels, setLabels] = useState<PackingLabel[]>([]);
   const mounted = useRef(true);
   useEffect(
     () => () => {
@@ -192,6 +195,7 @@ export function ProductionPage(): JSX.Element {
     const response = await productionOrderDetail(orderId);
     if (response.status === 200 && generation === detailGeneration.current) {
       setDetail(response.data);
+      setLabels([]);
     }
   }, []);
 
@@ -263,6 +267,23 @@ export function ProductionPage(): JSX.Element {
 
   function exportCnc(orderId: string): void {
     void action(productionOrderCncExport(orderId), orderId);
+  }
+
+  async function showLabels(orderId: string): Promise<void> {
+    setLabels([]);
+    setBusy(true);
+    try {
+      const response = await productionOrderLabels(orderId);
+      if (response.status !== 200) {
+        setMessage(t("production.labelsError"));
+        return;
+      }
+      setLabels(response.data.labels);
+    } catch {
+      setMessage(t("production.labelsError"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   function pack(orderId: string): void {
@@ -595,7 +616,52 @@ export function ProductionPage(): JSX.Element {
                             : t("production.packingGenerate")}
                         </button>
                       ) : null}
+                      {units.length ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void showLabels(detail.id)}
+                        >
+                          {t("production.labelsShow")}
+                        </button>
+                      ) : null}
+                      {labels.length ? (
+                        <button type="button" onClick={() => window.print()}>
+                          {t("production.labelsPrint")}
+                        </button>
+                      ) : null}
                     </header>
+                    {labels.length ? (
+                      <ul className="production-labels">
+                        {labels.map((label) => (
+                          <li key={label.label_code} className="production-label">
+                            <span className="production-label-code">{label.label_code}</span>
+                            <span
+                              className="production-label-qr"
+                              // Generated server-side by segno from the sealed manifest.
+                              dangerouslySetInnerHTML={{ __html: label.qr_svg }}
+                            />
+                            <span className="production-label-pieces">
+                              {t("production.labelsPieces")}: {label.pieces}
+                            </span>
+                            <span className="production-label-parts">
+                              {(
+                                [
+                                  ["M", label.profiles],
+                                  ["R", label.reinforcements],
+                                  ["V", label.glasses],
+                                  ["P", label.panels],
+                                  ["H", label.hardware],
+                                ] as Array<[string, number]>
+                              )
+                                .filter(([, count]) => count > 0)
+                                .map(([kind, count]) => `${kind}×${count}`)
+                                .join(" · ")}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                     {units.length ? (
                       <table className="production-plan">
                         <thead>

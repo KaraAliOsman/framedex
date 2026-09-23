@@ -26,6 +26,7 @@ from production.serializers import (
     CncExportSerializer,
     DispatchRequestSerializer,
     InstallationRequestSerializer,
+    PackingLabelsSerializer,
     PackingManifestSerializer,
     ProductionOrderDetailSerializer,
     RemakeRequestSerializer,
@@ -256,6 +257,21 @@ class ProductionOrderPackingView(APIView):
                     actor_id=token.user_id,
                 )
         return Response(output, status=201)
+
+
+class ProductionOrderLabelsView(APIView):
+    @extend_schema(
+        operation_id="production_order_labels",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: PackingLabelsSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = service.packing_labels(org_id=org_id, order_id=order_id)
+        return Response(output)
 
 
 class ProductionOrderDispatchView(APIView):

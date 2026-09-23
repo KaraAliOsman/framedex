@@ -17,6 +17,7 @@ import json
 from uuid import UUID
 
 from django.db import transaction
+import segno
 
 from dekopen_engine.cutting import optimize_cut, pieces_from_result
 from dekopen_engine.models import EngineResult
@@ -996,6 +997,61 @@ def generate_packing_manifest(
             "order_id": str(order_id),
             "order_code": order["order_code"],
             "packing": packing,
+        }
+
+
+def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+    """Printable unit labels: the stored manifest plus a QR per unit.
+
+    The QR encodes ``DEKOPEN|<order_code>|<label_code>|<piece_count>`` so a
+    scanned label identifies the order, the unit, and its checklist even
+    without a terminal at hand. Rendered on read — the manifest is already
+    sealed, so labels never drift from it."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        packing = (_decoded(order["payload_json"]) or {}).get("packing")
+        if not packing or not packing.get("units"):
+            raise DocumentaryError("packing_required")
+        labels = []
+        for unit in packing["units"]:
+            pieces = (
+                int(unit.get("profiles") or 0)
+                + int(unit.get("reinforcements") or 0)
+                + int(unit.get("glasses") or 0)
+                + int(unit.get("panels") or 0)
+                + int(unit.get("hardware") or 0)
+            )
+            qr_payload = (
+                f"DEKOPEN|{order['order_code']}|{unit['label_code']}|{pieces}"
+            )
+            labels.append(
+                {
+                    "unit_index": int(unit["unit_index"]),
+                    "label_code": unit["label_code"],
+                    "pieces": pieces,
+                    "profiles": int(unit.get("profiles") or 0),
+                    "reinforcements": int(unit.get("reinforcements") or 0),
+                    "glasses": int(unit.get("glasses") or 0),
+                    "panels": int(unit.get("panels") or 0),
+                    "hardware": int(unit.get("hardware") or 0),
+                    "qr_payload": qr_payload,
+                    "qr_svg": segno.make(qr_payload, error="m").svg_inline(
+                        border=2, scale=6
+                    ),
+                }
+            )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "status": str(order["status"]),
+            "labels": labels,
         }
 
 

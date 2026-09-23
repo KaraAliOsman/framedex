@@ -1031,6 +1031,10 @@ const messages = {
   "production.packingGlasses": "Vidrios",
   "production.packingPanels": "Paneles",
   "production.packingHardware": "Herrajes",
+  "production.labelsShow": "Etiquetas",
+  "production.labelsPrint": "Imprimir",
+  "production.labelsError": "No se pudieron cargar las etiquetas.",
+  "production.labelsPieces": "Piezas",
   "production.packingEmpty": "Genera el manifiesto de packing para etiquetar las unidades.",
 } as const;
 

@@ -113,6 +113,26 @@ class StepTransitionSerializer(serializers.Serializer):
     order_status = serializers.CharField()
 
 
+class PackingLabelSerializer(serializers.Serializer):
+    unit_index = serializers.IntegerField()
+    label_code = serializers.CharField()
+    pieces = serializers.IntegerField()
+    profiles = serializers.IntegerField()
+    reinforcements = serializers.IntegerField()
+    glasses = serializers.IntegerField()
+    panels = serializers.IntegerField()
+    hardware = serializers.IntegerField()
+    qr_payload = serializers.CharField()
+    qr_svg = serializers.CharField()
+
+
+class PackingLabelsSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    status = serializers.CharField()
+    labels = PackingLabelSerializer(many=True)
+
+
 class WorkCenterSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     code = serializers.CharField()

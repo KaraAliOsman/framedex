@@ -1213,6 +1213,56 @@ def test_remake_drops_source_packing(monkeypatch) -> None:
 
 
 
+def test_packing_labels_render_qr_per_unit(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    order = {
+        "id": order_id,
+        "order_code": "OT-LBL-1",
+        "status": "COMPLETED",
+        "payload_json": json.dumps(
+            {
+                "packing": {
+                    "units": [
+                        {
+                            "unit_index": 1,
+                            "label_code": "OT-LBL-1-U01",
+                            "profiles": 6,
+                            "reinforcements": 4,
+                            "glasses": 2,
+                            "panels": 0,
+                            "hardware": 8,
+                        }
+                    ]
+                }
+            }
+        ),
+    }
+    monkeypatch.setattr(service, "one", lambda *a, **k: order)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    monkeypatch.setattr(service.transaction, "atomic", _atomic)
+    out = service.packing_labels(org_id=org_id, order_id=order_id)
+
+    assert len(out["labels"]) == 1
+    label = out["labels"][0]
+    assert label["pieces"] == 20
+    assert label["qr_payload"] == "DEKOPEN|OT-LBL-1|OT-LBL-1-U01|20"
+    assert label["qr_svg"].startswith("<svg") and "path" in label["qr_svg"]
+
+
+def test_packing_labels_require_manifest(monkeypatch) -> None:
+    order = {
+        "id": uuid4(),
+        "order_code": "OT-LBL-2",
+        "status": "IN_PROGRESS",
+        "payload_json": json.dumps({}),
+    }
+    monkeypatch.setattr(service, "one", lambda *a, **k: order)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    monkeypatch.setattr(service.transaction, "atomic", _atomic)
+    with pytest.raises(DocumentaryError, match="packing_required"):
+        service.packing_labels(org_id=uuid4(), order_id=uuid4())
+
+
 def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None:
     org_id, order_id = uuid4(), uuid4()
     statuses = iter(["IN_PROGRESS", "DISPATCHED", "INSTALLED"])

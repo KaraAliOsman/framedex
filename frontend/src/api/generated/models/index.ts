@@ -168,6 +168,8 @@ export * from "./orderResponse";
 export * from "./orderResponseStatusEnum";
 export * from "./orderTypeEnum";
 export * from "./originEnum";
+export * from "./packingLabel";
+export * from "./packingLabels";
 export * from "./packingManifest";
 export * from "./packingManifestPacking";
 export * from "./panelPiece";
