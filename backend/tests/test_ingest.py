@@ -53,6 +53,17 @@ def test_parse_line_label_digits_do_not_inflate_quantity():
     assert candidate["quantity"] == 3
 
 
+def test_parse_line_dimension_first_row_keeps_quantity_one():
+    # A leading dimension is width, not a count — only a count placed before
+    # the dimension may promote into a quantity.
+    for line in ("800 x 600 V-1 fijo", "800 × 600 V-1 fijo", "800x600 V-1 fijo"):
+        candidate = parse_line(line)
+        assert candidate is not None
+        assert candidate["quantity"] == 1, line
+        assert candidate["width_mm"] == "800"
+    assert parse_line("3 V-1 fijo 1200x1000")["quantity"] == 3
+
+
 def test_candidates_from_text_keys_rows():
     candidates = candidates_from_text("A-1 fijo 1000x1000\nA-2 corredera 1500x1200")
     assert [c["key"] for c in candidates] == ["r0", "r1"]

@@ -59,13 +59,13 @@ const IMPORT = {
   updated_at: "2026-09-20T10:00:05Z",
 };
 
-function renderPanel() {
+function renderPanel(props: { onDirtyChange?: (dirty: boolean) => void } = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <ProjectImportsPanel projectId="p-1" orgId="org-a" canWrite={true} />
+      <ProjectImportsPanel projectId="p-1" orgId="org-a" canWrite={true} {...props} />
     </QueryClientProvider>,
   );
 }
@@ -133,4 +133,65 @@ it("expands to list imports and confirms marked candidates into positions", asyn
   // No glass_spec on the wire — the purchase mapping resolves it server-side.
   expect(items[0]).not.toHaveProperty("glass_spec");
   await screen.findByText(t("projects.importsConfirmed").replace("{count}", "1"));
+});
+
+it("marks the review dirty only on user catalog edits, not automatic defaults", async () => {
+  const onDirtyChange = vi.fn();
+  vi.mocked(engineSystems).mockResolvedValue({
+    status: 200,
+    data: {
+      systems: [
+        { id: "sys-1", code: "DEMO_60", name: "Demo 60" },
+        { id: "sys-2", code: "ALU_65", name: "Alu 65" },
+      ],
+    },
+  } as never);
+  renderPanel({ onDirtyChange });
+
+  fireEvent.click(screen.getByRole("button", { name: t("projects.importsTitle") }));
+  await screen.findByText("cotizacion-providencia.pdf");
+  fireEvent.click(screen.getByRole("button", { name: t("projects.importsReview") }));
+  await waitFor(() => expect(screen.getByDisplayValue("Demo 60")).toBeTruthy());
+
+  // Auto-derived defaults do not count as edits.
+  expect(onDirtyChange).not.toHaveBeenCalledWith(true);
+
+  fireEvent.change(screen.getByDisplayValue("Demo 60"), { target: { value: "sys-2" } });
+  await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true));
+});
+
+it("clears a manual composition when the glass article changes", async () => {
+  vi.mocked(projectDesignOptions).mockResolvedValue({
+    status: 200,
+    data: {
+      glass_skus: ["GLASS-4", "GLASS-8"],
+      glass_specs: [
+        { sku: "GLASS-4", spec: "4" },
+        { sku: "GLASS-8", spec: null },
+      ],
+      glazing_thicknesses: ["20.00"],
+    },
+  } as never);
+  renderPanel();
+
+  fireEvent.click(screen.getByRole("button", { name: t("projects.importsTitle") }));
+  await screen.findByText("cotizacion-providencia.pdf");
+  fireEvent.click(screen.getByRole("button", { name: t("projects.importsReview") }));
+  await waitFor(() => expect(screen.getByDisplayValue("Demo 60")).toBeTruthy());
+
+  const glassSelect = await screen.findByRole("combobox", {
+    name: new RegExp(t("projects.importsGlass")),
+  });
+  fireEvent.change(glassSelect, { target: { value: "GLASS-8" } });
+
+  const manual = await screen.findByLabelText(t("projects.importsGlassSpecManual"));
+  fireEvent.change(manual, { target: { value: "8" } });
+
+  // Leaving the spec-less article must not carry its recipe to another SKU.
+  fireEvent.change(glassSelect, { target: { value: "GLASS-4" } });
+  expect(screen.queryByLabelText(t("projects.importsGlassSpecManual"))).toBeNull();
+
+  fireEvent.change(glassSelect, { target: { value: "GLASS-8" } });
+  const reopened = await screen.findByLabelText(t("projects.importsGlassSpecManual"));
+  expect((reopened as HTMLInputElement).value).toBe("");
 });

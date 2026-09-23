@@ -168,10 +168,10 @@
 }
 .production-remake {
   padding: 0.35rem 0.7rem;
-  border: 1px solid #e56a32;
+  border: 1px solid var(--theme-mark);
   border-radius: 0.25rem;
   background: transparent;
-  color: #e56a32;
+  color: var(--theme-mark);
   font-weight: 600;
   cursor: pointer;
 }
@@ -200,7 +200,7 @@
 }
 
 .production-remake:hover:not(:disabled) {
-  background: color-mix(in srgb, #e56a32 12%, transparent);
+  background: color-mix(in srgb, var(--theme-mark) 12%, transparent);
 }
 .production-remake:disabled {
   cursor: default;

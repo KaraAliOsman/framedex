@@ -188,12 +188,13 @@ export function ProjectImportsPanel({
     onDirtyChange?.(reviewDirty);
   }, [reviewDirty, onDirtyChange]);
 
-  // A system change invalidates the previous catalog's glass and panel
-  // selection — clear them so the options effect re-derives values.
+  // A system change invalidates the previous catalog's glass, panel and
+  // composition selection — clear them so the options effect re-derives values.
   useEffect(() => {
     setGlassSpec("");
     setGlassThickness("");
     setPanelSku("");
+    setManualSpec("");
   }, [systemId]);
 
   useEffect(() => {
@@ -211,6 +212,35 @@ export function ProjectImportsPanel({
   const specNeeded =
     !!options.data &&
     options.data.glass_specs.some((entry) => entry.sku === glassSpec && !entry.spec);
+
+  // Only user-driven catalog edits dirty the review — automatic defaults from
+  // the options effect stay clean so an untouched review warns on nothing.
+  function chooseSystem(value: string): void {
+    setReviewDirty(true);
+    setSystemId(value);
+  }
+
+  function chooseGlass(value: string): void {
+    setReviewDirty(true);
+    // The entered recipe belongs to the previous SKU — never reuse it.
+    setManualSpec("");
+    setGlassSpec(value);
+  }
+
+  function chooseThickness(value: string): void {
+    setReviewDirty(true);
+    setGlassThickness(value);
+  }
+
+  function choosePanel(value: string): void {
+    setReviewDirty(true);
+    setPanelSku(value);
+  }
+
+  function editManualSpec(value: string): void {
+    setReviewDirty(true);
+    setManualSpec(value);
+  }
 
   function startReview(entry: ImportResponse): void {
     setReviewId(entry.id);
@@ -431,7 +461,7 @@ export function ProjectImportsPanel({
           <div className="imports-review-fields">
             <label>
               {t("projects.importsSystem")}
-              <select value={systemId} onChange={(event) => setSystemId(event.target.value)}>
+              <select value={systemId} onChange={(event) => chooseSystem(event.target.value)}>
                 {(systems.data ?? []).map((system) => (
                   <option key={system.id} value={system.id}>
                     {system.name}
@@ -441,7 +471,7 @@ export function ProjectImportsPanel({
             </label>
             <label>
               {t("projects.importsGlass")}
-              <select value={glassSpec} onChange={(event) => setGlassSpec(event.target.value)}>
+              <select value={glassSpec} onChange={(event) => chooseGlass(event.target.value)}>
                 {(options.data?.glass_specs ?? []).map((entry) => (
                   <option key={entry.sku} value={entry.sku}>
                     {entry.spec ? `${entry.sku} — ${entry.spec}` : entry.sku}
@@ -454,7 +484,7 @@ export function ProjectImportsPanel({
                 {t("projects.importsGlassSpecManual")}
                 <input
                   value={manualSpec}
-                  onChange={(event) => setManualSpec(event.target.value)}
+                  onChange={(event) => editManualSpec(event.target.value)}
                   placeholder="4-16-4"
                 />
               </label>
@@ -463,7 +493,7 @@ export function ProjectImportsPanel({
               {t("projects.importsThickness")}
               <select
                 value={glassThickness}
-                onChange={(event) => setGlassThickness(event.target.value)}
+                onChange={(event) => chooseThickness(event.target.value)}
               >
                 {(options.data?.glazing_thicknesses ?? []).map((thickness) => (
                   <option key={thickness} value={thickness}>
@@ -475,7 +505,7 @@ export function ProjectImportsPanel({
             {rows.some((row) => row.include && row.opening_type === "DOOR_ENTRY") && (
               <label>
                 {t("projects.importsPanel")}
-                <select value={panelSku} onChange={(event) => setPanelSku(event.target.value)}>
+                <select value={panelSku} onChange={(event) => choosePanel(event.target.value)}>
                   {(options.data?.panel_skus ?? []).map((sku) => (
                     <option key={sku} value={sku}>
                       {sku}
