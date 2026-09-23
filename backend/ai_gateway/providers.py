@@ -12,6 +12,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import socket
 import time
 from typing import Any
@@ -21,6 +22,10 @@ import httpx
 
 
 MAX_BODY_BYTES = 1_048_576
+# A configured base path may only contain plain ASCII segments — no
+# encoded separators, dot segments, backslashes, or whitespace that could
+# redirect the authenticated request on the approved host.
+_BASE_PATH_RE = re.compile(r"/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*")
 
 
 def _resolve_provider_hosts(hostname: str) -> list[str] | None:
@@ -93,53 +98,124 @@ class HttpProvider:
         connect_ips = _resolve_provider_hosts(hostname)
         if connect_ips is None:
             raise ProviderError("ai_provider_unavailable")
+        base_path = parsed.path.rstrip("/")
+        if base_path and (
+            not _BASE_PATH_RE.fullmatch(base_path)
+            or any(segment in (".", "..") for segment in base_path.split("/"))
+        ):
+            raise ProviderError("ai_provider_unavailable")
         self._host = hostname
         self._port = port
         self._connect_ips = connect_ips
-        self._base_path = parsed.path.rstrip("/")
+        self._base_path = base_path
 
-    def _request(self, *, route: dict, capability: str, input_payload: dict):
+    def _send(
+        self,
+        client: httpx.Client,
+        connect_ip: str,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        host_header: str,
+        port_suffix: str,
+    ) -> bytes:
+        """One pinned attempt: the URL carries the validated connect address
+        while Host + SNI keep the configured name. The body streams in with
+        a hard byte cap — an unbounded provider response cannot exhaust
+        memory before it is rejected."""
+        url_host = f"[{connect_ip}]" if ":" in connect_ip else connect_ip
+        with client.stream(
+            "POST",
+            f"https://{url_host}{port_suffix}{self._base_path}/invoke",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Host": host_header,
+            },
+            extensions={"sni_hostname": self._host},
+            json={
+                "model": route["provider_model"],
+                "capability": capability,
+                "input": input_payload,
+            },
+        ) as response:
+            response.raise_for_status()
+            content = bytearray()
+            for chunk in response.iter_bytes(65536):
+                content += chunk
+                if len(content) > MAX_BODY_BYTES:
+                    raise ProviderError("ai_provider_output_too_large")
+        return bytes(content)
+
+    def _request(
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        client: httpx.Client | None = None,
+    ) -> bytes:
         """POST to the provider on each validated address until one connects.
         Connect-phase failures advance to the next pinned answer; any HTTP
         response (including errors) stops the loop — it is an answer, not a
-        transport failure."""
+        transport failure. Tests inject a MockTransport client so the real
+        httpx request path (extensions, streaming) is exercised."""
         port_suffix = "" if self._port == 443 else f":{self._port}"
         header_host = f"[{self._host}]" if ":" in self._host else self._host
         host_header = (
             header_host if self._port == 443 else f"{header_host}:{self._port}"
         )
+        if client is None:
+            with httpx.Client(timeout=60.0) as owned:
+                return self._attempts(
+                    owned, route, capability, input_payload, host_header, port_suffix
+                )
+        return self._attempts(
+            client, route, capability, input_payload, host_header, port_suffix
+        )
+
+    def _attempts(
+        self,
+        client: httpx.Client,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        host_header: str,
+        port_suffix: str,
+    ) -> bytes:
         last_error: httpx.HTTPError | None = None
         for connect_ip in self._connect_ips:
-            url_host = f"[{connect_ip}]" if ":" in connect_ip else connect_ip
             try:
-                return httpx.post(
-                    f"https://{url_host}{port_suffix}{self._base_path}/invoke",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Host": host_header,
-                    },
-                    extensions={"sni_hostname": self._host},
-                    json={
-                        "model": route["provider_model"],
-                        "capability": capability,
-                        "input": input_payload,
-                    },
-                    timeout=60.0,
+                return self._send(
+                    client,
+                    connect_ip,
+                    route=route,
+                    capability=capability,
+                    input_payload=input_payload,
+                    host_header=host_header,
+                    port_suffix=port_suffix,
                 )
             except (httpx.ConnectError, httpx.ConnectTimeout) as error:
                 last_error = error
         raise ProviderError("ai_provider_error") from last_error
 
-    def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
+    def invoke(
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        client: httpx.Client | None = None,
+    ) -> dict[str, Any]:
         started = time.monotonic()
         try:
-            response = self._request(
-                route=route, capability=capability, input_payload=input_payload
+            content = self._request(
+                route=route,
+                capability=capability,
+                input_payload=input_payload,
+                client=client,
             )
-            response.raise_for_status()
-            if len(response.content) > MAX_BODY_BYTES:
-                raise ProviderError("ai_provider_output_too_large")
-            body = response.json()
+            body = json.loads(content)
             if not isinstance(body, dict):
                 raise TypeError("provider body is not an object")
             usage = body.get("usage") or {}
