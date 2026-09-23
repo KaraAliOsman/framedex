@@ -81,6 +81,7 @@ function resolveDefaults(
   couplerSkus: string[],
   mullionSkus: { SPLIT_V?: string; SPLIT_H?: string },
   glassThicknessMm?: string,
+  panelSku?: string,
 ): ProductJson {
   let next = product;
   if (couplerSkus.length === 1) {
@@ -108,7 +109,14 @@ function resolveDefaults(
       node.type === "BAY" &&
       glassThicknessMm !== undefined &&
       (!node.glass_thickness_mm || !node.glass_spec);
-    return missingMullion || missingGlass || (node.children?.some(needsFill) ?? false);
+    const missingPanel =
+      node.type === "BAY" &&
+      node.opening_type === "DOOR_ENTRY" &&
+      !node.panel_article_sku &&
+      panelSku !== undefined;
+    return (
+      missingMullion || missingGlass || missingPanel || (node.children?.some(needsFill) ?? false)
+    );
   };
   const fill = (node: IntentNode): IntentNode => {
     let updated = node;
@@ -123,6 +131,9 @@ function resolveDefaults(
       if (!updated.glass_thickness_mm)
         updated = { ...updated, glass_thickness_mm: glassThicknessMm };
       if (!updated.glass_spec) updated = { ...updated, glass_spec: glassThicknessMm };
+    }
+    if (updated.type === "BAY" && updated.opening_type === "DOOR_ENTRY" && panelSku !== undefined) {
+      if (!updated.panel_article_sku) updated = { ...updated, panel_article_sku: panelSku };
     }
     return { ...updated, children: node.children?.map(fill) };
   };
@@ -313,6 +324,7 @@ function PositionWorkspace({
       options.data.glazing_thicknesses.length === 1
         ? options.data.glazing_thicknesses[0]
         : undefined,
+      options.data.panel_skus.length === 1 ? options.data.panel_skus[0] : undefined,
     );
     if (resolved !== product) {
       useCanvasStore.getState().commitInputs({ ...inputs, product: resolved });
