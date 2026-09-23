@@ -156,6 +156,7 @@ import type {
   SiiCertificateUploadRequest,
   SiiEnvio,
   SiiEnvioAccess,
+  SiiEnvioSendRequest,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -9246,13 +9247,24 @@ export const getProjectInvoiceDteEnvioSendUrl = (projectId: string, invoiceId: s
 export const projectInvoiceDteEnvioSend = async (
   projectId: string,
   invoiceId: string,
+  siiEnvioSendRequest?: SiiEnvioSendRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<projectInvoiceDteEnvioSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
   return apiMutator<projectInvoiceDteEnvioSendResponse>(
     getProjectInvoiceDteEnvioSendUrl(projectId, invoiceId),
     {
       ...options,
       method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(siiEnvioSendRequest),
     },
   );
 };

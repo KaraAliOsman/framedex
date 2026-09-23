@@ -16,5 +16,6 @@ export interface SiiEnvioAccess {
   /** @nullable */
   glosa: string | null;
   sent_at: string;
+  attempted: boolean;
   signed_url: string;
 }

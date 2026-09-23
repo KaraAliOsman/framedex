@@ -302,15 +302,17 @@ def _build_signature(target_id: str, digest_b64: str, privkey,
 
 
 def _envelope_sign(root, target_id: str, privkey, cert_der_b64: str) -> None:
-    """Append an enveloped xmldsig Signature over the element carrying
-    ID=target_id: digest the target before the Signature exists (enveloped
-    transform removes it from the digest anyway), then sign the SignedInfo
-    in final context so ancestor namespaces digest identically on verify."""
+    """Sign the element carrying ID=target_id with an enveloped xmldsig
+    Signature placed as its *sibling* — the shape the SII schema requires:
+    ``<DTE><Documento/><Signature/></DTE>`` and ``<EnvioDTE><SetDTE/><Signature
+    /></EnvioDTE>``. The digest is computed before the Signature exists and the
+    SignedInfo is canonicalized in its final position so ancestor namespaces
+    digest identically on verify."""
     target = _find_id(root, target_id)
     digest = base64.b64encode(hashlib.sha1(_c14n(target)).digest()).decode("ascii")
     skeleton = _build_signature(target_id, digest, privkey, cert_der_b64)
     signature_el = _xml_parse(skeleton.encode("utf-8"))
-    target.append(signature_el)
+    target.addnext(signature_el)
     signed_info = signature_el.find(f"{{{_DS}}}SignedInfo")
     signature_el.find(f"{{{_DS}}}SignatureValue").text = base64.b64encode(
         privkey.sign(_c14n(signed_info), padding.PKCS1v15(), hashes.SHA1())
@@ -467,12 +469,22 @@ class _HttpSiiClient:
             return None
         if response.status_code != 200:
             return None
-        body = response.text or ""
-        glosa_match = re.search(r"<GLOSA>([^<]*)</GLOSA>", body)
-        glosa = glosa_match.group(1) if glosa_match else None
-        if re.search(r"RECHAZADO|RPR", body):
+        try:
+            body_root = _xml_parse(response.content)
+        except etree.XMLSyntaxError:
+            return None
+
+        def _field(*names: str) -> str | None:
+            for element in body_root.iter():
+                if etree.QName(element).localname.upper() in names and element.text:
+                    return element.text.strip()
+            return None
+
+        glosa = _field("GLOSA", "GLOSA_ESTADO", "GLOSA_ERR")
+        code = (_field("ESTADO", "STATUS", "COD_ESTATUS") or "").upper()
+        if code in {"RPR", "RECHAZADO", "DNK", "FAU", "FAN"}:
             return {"status": "REJECTED", "glosa": glosa}
-        if re.search(r"ACEPTADO|EPR", body):
+        if code in {"EPR", "ACEPTADO", "FOK", "ENC", "FIN"}:
             return {"status": "ACCEPTED", "glosa": glosa}
         return {"status": "PENDING", "glosa": glosa}
 
@@ -529,6 +541,13 @@ def _sii_client():
     )
 
 
+def _payload(row: dict) -> dict:
+    """The sealed envío evidence — psycopg hands JSONB back either parsed or
+    as raw text depending on the connection; normalize once."""
+    payload = row.get("payload_json")
+    return json.loads(payload) if isinstance(payload, str) else (payload or {})
+
+
 def _envio_public(row: dict) -> dict:
     return {
         "id": str(row["id"]),
@@ -537,6 +556,7 @@ def _envio_public(row: dict) -> dict:
         "track_id": row.get("track_id"),
         "glosa": row.get("glosa"),
         "sent_at": str(row["sent_at"]),
+        "attempted": bool(_payload(row).get("submit_attempted_at")),
     }
 
 
@@ -677,7 +697,12 @@ def _seal_pending_envio(
 
 
 def send_invoice_envio(
-    *, org_id: UUID, project_id: UUID, invoice_id: UUID, actor_id: UUID
+    *,
+    org_id: UUID,
+    project_id: UUID,
+    invoice_id: UUID,
+    actor_id: UUID,
+    resubmit: bool = False,
 ) -> dict:
     """Submit a stamped factura's DTE to the SII. The envío row is committed
     PENDING *before* any network call, so an uncertain transport outcome never
@@ -726,20 +751,56 @@ def send_invoice_envio(
         )
         if row["status"] != "PENDING":
             return _envio_public(row)
-        payload = row["payload_json"]
-        if isinstance(payload, str):
-            payload = json.loads(payload)
+        payload = _payload(row)
         if not row["track_id"]:
-            if envelope is None:
-                envelope = storage.download(str(row["storage_object_key"]))
-            receipt = client.submit(
-                envelope,
-                rut_emisor=str(payload["emisor"]["rut"]),
-                rut_envia=str(payload["envia"]),
-            )
+            # A previous attempt may have reached the SII without its response
+            # reaching us — no TRACKID was ever recorded. Never auto-resubmit:
+            # the mock is exempt (its track id is a pure function of the same
+            # bytes, so a retry cannot duplicate), everything else requires the
+            # explicit human recovery decision (`resubmit`).
+            if payload.get("submit_attempted_at") and (
+                client.adapter != "mock" and not resubmit
+            ):
+                raise contract_error(
+                    409,
+                    "sii_envio_uncertain",
+                    "El intento anterior no confirmó recepción — confirme el "
+                    "reintento para enviar el mismo sobre nuevamente.",
+                )
             row = one(
+                "UPDATE public.sii_envios "
+                "SET payload_json = payload_json || %s::jsonb "
+                "WHERE id=%s RETURNING *",
+                [
+                    json.dumps(
+                        {
+                            "submit_attempted_at": timezone.now().isoformat(),
+                            "submit_resubmitted": bool(
+                                payload.get("submit_attempted_at")
+                            ),
+                        }
+                    ),
+                    str(row["id"]),
+                ],
+            )
+    row_payload = _payload(row)
+    if not row["track_id"]:
+        if envelope is None:
+            envelope = storage.download(str(row["storage_object_key"]))
+        receipt = client.submit(
+            envelope,
+            rut_emisor=str(row_payload["emisor"]["rut"]),
+            rut_envia=str(row_payload["envia"]),
+        )
+        with transaction.atomic(), documentary_backend():
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"sii_envios:{org_id_s}:{dte['id']}"],
+            )
+            updated = rows(
                 "UPDATE public.sii_envios SET track_id=%s, glosa=%s,"
-                "payload_json = payload_json || %s::jsonb WHERE id=%s RETURNING *",
+                "payload_json = payload_json || %s::jsonb "
+                "WHERE id=%s AND status='PENDING' AND track_id IS NULL RETURNING *",
                 [
                     receipt.get("track_id"),
                     receipt.get("glosa"),
@@ -752,22 +813,37 @@ def send_invoice_envio(
                     str(row["id"]),
                 ],
             )
-        payload = row["payload_json"]
-        verdict = client.query_status(
-            track_id=str(row["track_id"]),
-            rut_emisor=str(payload["emisor"]["rut"]),
-        )
-        if verdict is not None and verdict.get("status") in ("ACCEPTED", "REJECTED"):
-            row = one(
-                "UPDATE public.sii_envios SET status=%s, glosa=%s WHERE id=%s "
-                "RETURNING *",
-                [verdict["status"], verdict.get("glosa"), str(row["id"])],
+            # A concurrent send may have recorded its receipt first — re-read
+            # the winner instead of clobbering it.
+            row = updated[0] if updated else one(
+                "SELECT * FROM public.sii_envios WHERE id=%s",
+                [str(row["id"])],
+                "sii_envio_missing",
             )
-        elif verdict is not None and verdict.get("glosa"):
-            row = one(
-                "UPDATE public.sii_envios SET glosa=%s WHERE id=%s RETURNING *",
-                [verdict["glosa"], str(row["id"])],
-            )
+    verdict = client.query_status(
+        track_id=str(row["track_id"]),
+        rut_emisor=str(row_payload["emisor"]["rut"]),
+    )
+    if verdict is not None:
+        with transaction.atomic(), documentary_backend():
+            if verdict.get("status") in ("ACCEPTED", "REJECTED"):
+                updated = rows(
+                    "UPDATE public.sii_envios SET status=%s, glosa=%s "
+                    "WHERE id=%s AND status='PENDING' RETURNING *",
+                    [verdict["status"], verdict.get("glosa"), str(row["id"])],
+                )
+                row = updated[0] if updated else one(
+                    "SELECT * FROM public.sii_envios WHERE id=%s",
+                    [str(row["id"])],
+                    "sii_envio_missing",
+                )
+            elif verdict.get("glosa"):
+                row = one(
+                    "UPDATE public.sii_envios SET glosa=%s "
+                    "WHERE id=%s RETURNING *",
+                    [verdict["glosa"], str(row["id"])],
+                    "sii_envio_missing",
+                )
     return _envio_public(row)
 
 
@@ -779,9 +855,11 @@ def envios_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
             "id": str(row["id"]),
             "status": row["status"],
             "track_id": row["track_id"],
+            "attempted": bool(row["attempted"]),
         }
         for row in rows(
-            "SELECT e.id, e.status, e.track_id, d.invoice_id "
+            "SELECT e.id, e.status, e.track_id, d.invoice_id, "
+            "(e.payload_json->'submit_attempted_at' IS NOT NULL) AS attempted "
             "FROM public.sii_envios e "
             "JOIN public.project_dtes d ON d.id = e.dte_id "
             "WHERE e.org_id=%s AND e.project_id=%s AND d.credit_note_id IS NULL",

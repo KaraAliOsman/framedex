@@ -8393,6 +8393,11 @@ paths:
         required: true
       tags:
       - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiiEnvioSendRequest'
       security:
       - SupabaseBearer: []
       responses:
@@ -16104,7 +16109,10 @@ components:
         track_id:
           type: string
           nullable: true
+        attempted:
+          type: boolean
       required:
+      - attempted
       - id
       - status
       - track_id
@@ -16847,7 +16855,10 @@ components:
           nullable: true
         sent_at:
           type: string
+        attempted:
+          type: boolean
       required:
+      - attempted
       - dte_id
       - glosa
       - id
@@ -16873,9 +16884,12 @@ components:
           nullable: true
         sent_at:
           type: string
+        attempted:
+          type: boolean
         signed_url:
           type: string
       required:
+      - attempted
       - dte_id
       - glosa
       - id
@@ -16883,6 +16897,12 @@ components:
       - signed_url
       - status
       - track_id
+    SiiEnvioSendRequest:
+      type: object
+      properties:
+        resubmit:
+          type: boolean
+          default: false
     SiiEnvioStatusEnum:
       enum:
       - PENDING

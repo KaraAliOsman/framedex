@@ -335,6 +335,7 @@ export * from "./siiCertificateStatus";
 export * from "./siiCertificateUploadRequest";
 export * from "./siiEnvio";
 export * from "./siiEnvioAccess";
+export * from "./siiEnvioSendRequest";
 export * from "./siiEnvioStatusEnum";
 export * from "./sourceKindEnum";
 export * from "./stepTransition";

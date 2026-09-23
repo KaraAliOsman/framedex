@@ -58,6 +58,7 @@ from projects.serializers import (
     SiiCertificateStatusSerializer,
     SiiCertificateUploadSerializer,
     SiiEnvioAccessSerializer,
+    SiiEnvioSendSerializer,
     SiiEnvioSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
@@ -687,18 +688,22 @@ class ProjectInvoiceDteEnvioView(APIView):
 
     @extend_schema(
         operation_id="project_invoice_dte_envio_send",
-        request=None,
+        request=SiiEnvioSendSerializer,
         responses={201: SiiEnvioSerializer, **ERRORS},
         **SCHEMA,
     )
     def post(self, request, project_id, invoice_id):
-        with scope(request, WRITE_ROLES) as (token, _, org):
+        data = validate(SiiEnvioSendSerializer, request.data)
+        # An envío submits signed fiscal documents with the org's certificate —
+        # the production side, never the estimator's commercial scope.
+        with scope(request, ("OWNER", "WORKSHOP_MANAGER")) as (token, _, org):
             return response(
                 sii_envio.send_invoice_envio(
                     org_id=org,
                     project_id=project_id,
                     invoice_id=invoice_id,
                     actor_id=token.user_id,
+                    resubmit=bool(data.get("resubmit")),
                 ),
                 status=201,
             )

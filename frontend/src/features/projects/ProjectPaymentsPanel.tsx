@@ -288,7 +288,7 @@ export function ProjectPaymentsPanel({
     }
   }
 
-  async function sendEnvio(invoice: ProjectInvoice): Promise<void> {
+  async function sendEnvio(invoice: ProjectInvoice, resubmit = false): Promise<void> {
     const current = generation.current;
     setBusy(true);
     setMessage("");
@@ -296,6 +296,7 @@ export function ProjectPaymentsPanel({
       const response = await projectInvoiceDteEnvioSend(
         projectId,
         invoice.id,
+        { resubmit },
         requestOptions,
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
@@ -318,11 +319,7 @@ export function ProjectPaymentsPanel({
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectInvoiceDteEnvioAccess(
-        projectId,
-        invoice.id,
-        requestOptions,
-      );
+      const response = await projectInvoiceDteEnvioAccess(projectId, invoice.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) {
         tab.close();
@@ -713,10 +710,17 @@ export function ProjectPaymentsPanel({
                       {canWrite && invoice.dte?.envio?.status === "PENDING" && (
                         <button
                           type="button"
-                          onClick={() => void sendEnvio(invoice)}
+                          onClick={() =>
+                            void sendEnvio(
+                              invoice,
+                              invoice.dte?.envio?.attempted === true && !invoice.dte.envio.track_id,
+                            )
+                          }
                           disabled={busy}
                         >
-                          {t("projects.envioRefresh")}
+                          {invoice.dte.envio.attempted === true && !invoice.dte.envio.track_id
+                            ? t("projects.envioResend")
+                            : t("projects.envioRefresh")}
                         </button>
                       )}
                     </td>

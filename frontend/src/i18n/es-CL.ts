@@ -206,6 +206,7 @@ const messages = {
   "projects.dteCreditStatus": "DTE-61",
   "projects.envioSend": "Enviar al SII",
   "projects.envioRefresh": "Actualizar estado",
+  "projects.envioResend": "Reintentar envío",
   "projects.envioStatus": "SII",
   "projects.envioSendError": "No pudimos enviar el DTE al SII.",
   "projects.envioOpenError": "No pudimos abrir el envío.",

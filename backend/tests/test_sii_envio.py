@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone as utc_timezone
 from uuid import uuid4
@@ -166,6 +167,8 @@ def _patch_envio(
         if "INSERT INTO public.sii_envios" in text:
             row = insert_row or {
                 "id": uuid4(),
+                "org_id": params[0],
+                "project_id": params[1],
                 "dte_id": (dte[0]["id"] if dte else uuid4()),
                 "status": "PENDING",
                 "track_id": None,
@@ -182,7 +185,12 @@ def _patch_envio(
             return dict(state["inserted"] or {})
         if "UPDATE public.sii_envios" in text:
             row = dict(state["inserted"] or (existing_envio or [{}])[0])
-            if "SET track_id" in text:
+            if "SET payload_json = payload_json ||" in text:
+                payload = row.get("payload_json") or {}
+                if isinstance(payload, str):
+                    payload = json.loads(payload)
+                row["payload_json"] = {**payload, **json.loads(params[0])}
+            elif "SET track_id" in text:
                 row.update({"track_id": params[0], "glosa": params[1]})
             elif "SET status" in text:
                 row.update({"status": params[0], "glosa": params[1]})
@@ -221,8 +229,25 @@ def _patch_envio(
             if "project_id=%s" in sql and params is not None:
                 found = [r for r in found if str(r["project_id"]) == str(params[1])]
             return found
+        if "UPDATE public.sii_envios" in sql:
+            row = dict(state["inserted"] or (existing_envio or [{}])[0])
+            if "SET track_id" in sql:
+                if row.get("status") != "PENDING" or row.get("track_id"):
+                    return []
+                row.update({"track_id": params[0], "glosa": params[1]})
+                payload = row.get("payload_json") or {}
+                if isinstance(payload, str):
+                    payload = json.loads(payload)
+                row["payload_json"] = {**payload, **json.loads(params[2])}
+            elif "SET status" in sql:
+                if row.get("status") != "PENDING":
+                    return []
+                row.update({"status": params[0], "glosa": params[1]})
+            state["inserted"] = row
+            return [row]
         if "FROM public.sii_envios" in sql:
-            found = list(existing_envio or [])
+            found = [dict(state["inserted"])] if state["inserted"] is not None else []
+            found += list(existing_envio or [])
             if "project_id=%s" in sql and params is not None:
                 found = [r for r in found if str(r.get("project_id")) == str(params[1])]
             return found
@@ -363,14 +388,16 @@ def test_upload_certificate_rejects_non_rsa():
 
 def _verify_signature(target, cert):
     """Verify one enveloped RSA-SHA1 signature on ``target``: DigestValue must
-    match sha1(c14n(target minus its Signature)) and SignatureValue must
-    verify over c14n(SignedInfo) with the cert's public key. The signed
-    Signature is always the target's last child — a descendant find would hit
-    the Documento's own signature inside a SetDTE. The digest runs in place:
-    detaching the node would drop in-scope ancestor namespaces that c14n
-    includes."""
-    sig = target[-1]
-    assert sig.tag == f"{{{sii_envio._DS}}}Signature"
+    match sha1(c14n(target)) and SignatureValue must verify over
+    c14n(SignedInfo) with the cert's public key. SII shape: the Signature is
+    the target's *sibling* — ``<DTE><Documento/><Signature/></DTE>`` and
+    ``<EnvioDTE><SetDTE/><Signature/></EnvioDTE>`` — not a nested child.
+    Verification removes it from the shared parent (the digestable subtree
+    never contains it anyway)."""
+    parent = target.getparent()
+    sig = target.getnext()
+    assert sig is not None and sig.tag == f"{{{sii_envio._DS}}}Signature"
+    assert sig.getparent() is parent  # schema-required sibling placement
     signed_info = sig.find(f"{{{sii_envio._DS}}}SignedInfo")
     digest_value = signed_info.find(
         f"{{{sii_envio._DS}}}Reference/{{{sii_envio._DS}}}DigestValue"
@@ -382,14 +409,14 @@ def _verify_signature(target, cert):
         padding.PKCS1v15(),
         hashes.SHA1(),
     )
-    target.remove(sig)
+    parent.remove(sig)
     try:
         computed = base64.b64encode(
             hashlib.sha1(sii_envio._c14n(target)).digest()
         ).decode("ascii")
         assert computed == digest_value
     finally:
-        target.append(sig)
+        target.addnext(sig)
 
 
 def test_send_envio_seals_signed_envelope_and_records_track():
@@ -782,6 +809,181 @@ def test_http_client_posts_sii_multipart_contract():
     assert calls["kw"]["cookies"]["TOKEN"] == "TOK"
     assert calls["kw"]["follow_redirects"] is False
     assert "archivo" in calls["kw"]["files"]
+
+
+def _attempted_pending(dte, **over):
+    """A PENDING envío whose first submit attempt already ran but never
+    confirmed a receipt — the uncertain-attempt state."""
+    return _pending_envio(
+        dte,
+        payload_json={
+            "emisor": {"rut": "76123456-0"},
+            "envia": "13037614-2",
+            "submit_attempted_at": "2026-10-03T10:00:00+00:00",
+        },
+        **over,
+    )
+
+
+class _WsClient(_RecordingClient):
+    adapter = "sii-ws"
+
+
+def test_send_envio_uncertain_attempt_never_auto_resubmits():
+    """A prior attempt may have reached the SII — resubmitting identical
+    bytes is a human decision, never an automatic retry."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    pending = _attempted_pending(dte, dte_id=dte["id"], project_id=dte["project_id"])
+    client = _WsClient()
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf, client=client)
+        cert_row = _cert_row(org_id, pfx)
+        _patch_envio(
+            mp,
+            storage,
+            dte=[dte],
+            existing_envio=[pending],
+            certs=[cert_row],
+            caf=caf,
+            client=client,
+        )
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_envio_uncertain"
+    assert client.submits == 0
+
+
+def test_send_envio_resubmit_is_the_explicit_recovery():
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    pending = _attempted_pending(dte, dte_id=dte["id"], project_id=dte["project_id"])
+    storage.objects[pending["storage_object_key"]] = _dte_xml(folio=9)
+    client = _WsClient()
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf, client=client)
+        cert_row = _cert_row(org_id, pfx)
+        state = _patch_envio(
+            mp,
+            storage,
+            dte=[dte],
+            existing_envio=[pending],
+            certs=[cert_row],
+            caf=caf,
+            client=client,
+        )
+        result = sii_envio.send_invoice_envio(
+            org_id=org_id,
+            project_id=dte["project_id"],
+            invoice_id=invoice_id,
+            actor_id=uuid4(),
+            resubmit=True,
+        )
+    assert client.submits == 1
+    assert result["status"] == "ACCEPTED"
+    payload = state["inserted"]["payload_json"]
+    assert payload["submit_resubmitted"] is True
+
+
+def test_send_envio_attempt_is_marked_before_submit():
+    """Submit raises after the marker committed: the row keeps
+    submit_attempted_at and the next call refuses the blind retry."""
+    storage = _Storage()
+    org_id, invoice_id = uuid4(), uuid4()
+    caf = _caf(org_id)
+    dte = _dte_row(org_id, invoice_id, caf["id"])
+    pfx, _key, _cert = _pfx()
+    storage.objects[dte["storage_object_key"]] = _dte_xml(folio=7)
+    client = _WsClient(fail_submit=True)
+    with pytest.MonkeyPatch.context() as mp:
+        _patch_envio(mp, storage, dte=[dte], certs=[], caf=caf, client=client)
+        cert_row = _cert_row(org_id, pfx)
+        state = _patch_envio(
+            mp,
+            storage,
+            dte=[dte],
+            certs=[cert_row],
+            caf=caf,
+            client=client,
+        )
+        with pytest.raises(ContractAPIException):
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+        payload = state["inserted"]["payload_json"]
+        assert payload["submit_attempted_at"]
+        assert client.submits == 1
+        with pytest.raises(ContractAPIException) as error:
+            sii_envio.send_invoice_envio(
+                org_id=org_id,
+                project_id=dte["project_id"],
+                invoice_id=invoice_id,
+                actor_id=uuid4(),
+            )
+    assert error.value.contract_code == "sii_envio_uncertain"
+    assert client.submits == 1
+
+
+def test_query_status_ignores_zero_rejection_count():
+    """<RECHAZADOS>0</RECHAZADOS> is a count, not a verdict — only the ESTADO
+    code decides ACCEPTED/REJECTED."""
+
+    def fake_post(url, **kw):
+        class _R:
+            status_code = 200
+            content = (
+                b"<RESP_STATUS><TRACKID>9</TRACKID><ESTADO>EPR</ESTADO>"
+                b"<GLOSA>procesado</GLOSA><RECHAZADOS>0</RECHAZADOS></RESP_STATUS>"
+            )
+
+        return _R()
+
+    client = sii_envio._HttpSiiClient(
+        "https://palena.sii.cl/cgi-bin/UploadEnvio",
+        "https://palena.sii.cl/cgi-bin/QueryEstUp",
+        "TOK",
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio.httpx, "post", fake_post)
+        verdict = client.query_status(track_id="9", rut_emisor="76123456-0")
+    assert verdict["status"] == "ACCEPTED"
+
+
+def test_query_status_maps_rechazado_verdict():
+    def fake_post(url, **kw):
+        class _R:
+            status_code = 200
+            content = (
+                b"<RESP_STATUS><TRACKID>9</TRACKID><ESTADO>RPR</ESTADO>"
+                b"<GLOSA>firma no v\xc3\xa1lida</GLOSA></RESP_STATUS>"
+            )
+
+        return _R()
+
+    client = sii_envio._HttpSiiClient(
+        "https://palena.sii.cl/cgi-bin/UploadEnvio",
+        "https://palena.sii.cl/cgi-bin/QueryEstUp",
+        "TOK",
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(sii_envio.httpx, "post", fake_post)
+        verdict = client.query_status(track_id="9", rut_emisor="76123456-0")
+    assert verdict["status"] == "REJECTED"
+    assert verdict["glosa"] == "firma no válida"
 
 
 def test_send_envio_rejects_not_yet_valid_certificate():

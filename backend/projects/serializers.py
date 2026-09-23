@@ -210,6 +210,7 @@ class ProjectDteEnvioSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     status = serializers.CharField()
     track_id = serializers.CharField(allow_null=True)
+    attempted = serializers.BooleanField()
 
 
 class ProjectDteSerializer(serializers.Serializer):
@@ -316,6 +317,14 @@ class SiiEnvioSerializer(serializers.Serializer):
     track_id = serializers.CharField(allow_null=True)
     glosa = serializers.CharField(allow_null=True)
     sent_at = serializers.CharField()
+    attempted = serializers.BooleanField()
+
+
+class SiiEnvioSendSerializer(StrictSerializer):
+    # Explicit human recovery: a prior submit attempt may have reached the SII
+    # without its response reaching us — resending identical bytes is only
+    # allowed as a deliberate decision, never an automatic retry.
+    resubmit = serializers.BooleanField(required=False, default=False)
 
 
 class SiiEnvioAccessSerializer(SiiEnvioSerializer):

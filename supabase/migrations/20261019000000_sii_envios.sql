@@ -76,16 +76,17 @@ CREATE POLICY sii_envios_backend ON public.sii_envios
     USING (org_id IN (SELECT private.current_user_org_ids()))
     WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
-GRANT SELECT ON public.sii_certificates TO authenticated;
+-- Column-level tenant read: pfx_wrapped/password_wrapped are KEK ciphertexts
+-- a member client must never see (offline-attack material) — grant only the
+-- metadata columns; the backend role keeps whole-row access.
+REVOKE ALL ON public.sii_certificates FROM anon, authenticated;
+GRANT SELECT (id, org_id, subject, rut_firma, serial_number, valid_from,
+    valid_to, file_sha256, nro_resol, fch_resol, active, uploaded_by, created_at)
+    ON public.sii_certificates TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.sii_certificates TO documentary_backend;
 GRANT ALL ON public.sii_certificates TO service_role;
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER
-    ON public.sii_certificates FROM authenticated;
-REVOKE ALL ON public.sii_certificates FROM anon;
 
+REVOKE ALL ON public.sii_envios FROM anon, authenticated;
 GRANT SELECT ON public.sii_envios TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.sii_envios TO documentary_backend;
 GRANT ALL ON public.sii_envios TO service_role;
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER
-    ON public.sii_envios FROM authenticated;
-REVOKE ALL ON public.sii_envios FROM anon;

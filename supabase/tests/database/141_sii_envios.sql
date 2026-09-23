@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(14);
 
 SELECT has_table('public', 'sii_certificates', 'sii_certificates exists');
 SELECT has_table('public', 'sii_envios', 'sii_envios exists');
@@ -69,6 +69,19 @@ SELECT ok(
 SELECT has_index(
     'public', 'sii_envios', 'idx_sii_envios_project',
     'envio lookups index the project'
+);
+
+-- KEK ciphertexts are never tenant-visible: a member client must not be able
+-- to exfiltrate wrapped signing material for offline attacks.
+SELECT ok(
+    NOT has_column_privilege('authenticated', 'public.sii_certificates', 'pfx_wrapped', 'SELECT')
+    AND NOT has_column_privilege('authenticated', 'public.sii_certificates', 'password_wrapped', 'SELECT'),
+    'tenant read never reaches wrapped certificate material'
+);
+SELECT ok(
+    has_column_privilege('authenticated', 'public.sii_certificates', 'subject', 'SELECT')
+    AND has_column_privilege('documentary_backend', 'public.sii_certificates', 'pfx_wrapped', 'SELECT'),
+    'metadata stays tenant-readable and the backend keeps the wrapped material'
 );
 
 SELECT * FROM finish();

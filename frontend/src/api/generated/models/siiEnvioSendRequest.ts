@@ -6,10 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProjectDteEnvio {
-  id: string;
-  status: string;
-  /** @nullable */
-  track_id: string | null;
-  attempted: boolean;
+export interface SiiEnvioSendRequest {
+  resubmit?: boolean;
 }

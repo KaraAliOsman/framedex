@@ -16,4 +16,5 @@ export interface SiiEnvio {
   /** @nullable */
   glosa: string | null;
   sent_at: string;
+  attempted: boolean;
 }
