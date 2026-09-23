@@ -602,6 +602,7 @@ function PositionWorkspace({
 }
 
 export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX.Element {
+  const longestCut = Math.max(0, ...result.profile_cuts.map((cut) => Number(cut.length_mm)));
   return (
     <details className="project-bom">
       <summary>{t("projects.bom")}</summary>
@@ -618,7 +619,10 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
             {result.profile_cuts.map((cut, index) => (
               <tr key={index}>
                 <td>{cut.sku}</td>
-                <td>{cut.length_mm}</td>
+                <td>
+                  {cut.length_mm}
+                  <CutBar lengthMm={Number(cut.length_mm)} maxMm={longestCut} />
+                </td>
                 <td>{cut.qty}</td>
               </tr>
             ))}
@@ -665,7 +669,10 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               {result.reinforcements.map((item, index) => (
                 <tr key={index}>
                   <td>{item.reinforcement_sku || item.parent_profile_sku}</td>
-                  <td>{item.length_mm}</td>
+                  <td>
+                    {item.length_mm}
+                    <CutBar lengthMm={Number(item.length_mm)} maxMm={longestCut} />
+                  </td>
                   <td>{item.qty}</td>
                 </tr>
               ))}
@@ -697,5 +704,18 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
         </div>
       )}
     </details>
+  );
+}
+
+/** Proportional length bar under a cut dimension — reads the cut plan at a
+ * glance the way workshop software shows bar vs remnant. */
+function CutBar({ lengthMm, maxMm }: { lengthMm: number; maxMm: number }): JSX.Element | null {
+  if (!Number.isFinite(lengthMm) || !Number.isFinite(maxMm) || maxMm <= 0 || lengthMm <= 0)
+    return null;
+  const pct = Math.min(100, Math.max(2, (lengthMm / maxMm) * 100));
+  return (
+    <span className="cut-bar" aria-hidden="true">
+      <span style={{ width: `${pct}%` }} />
+    </span>
   );
 }

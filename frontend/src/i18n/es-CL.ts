@@ -132,6 +132,11 @@ const messages = {
   "projects.save": "Guardar",
   "projects.back": "Volver al proyecto",
   "projects.position": "Nuevo vano",
+  "projects.positionThumb": "Vista del vano",
+  "projects.lockedQuoted":
+    "El proyecto ya está cotizado — los vanos quedan bloqueados. Duplícalo como borrador para seguir trabajando.",
+  "projects.lockedPriced":
+    "El precio ya fue calculado — los vanos quedan bloqueados. Duplica el proyecto para seguir editando.",
   "projects.positionData": "Vano y materiales",
   "projects.identification": "Identificación",
   "projects.location": "Ubicación del vano",
@@ -466,6 +471,8 @@ const messages = {
     "Crea un proyecto, configura sus vanos y prepara la cotización del taller.",
   "dashboard.inProgress": "Cotización activa",
   "dashboard.production": "Aprobados / producción",
+  "dashboard.continue": "Continuar donde quedaste",
+  "dashboard.resume": "Reanudar",
   "dashboard.recent": "Proyectos recientes",
   "dashboard.viewAll": "Ver todos",
   "dashboard.empty": "Aún no hay proyectos. Crea el primero para empezar a cotizar vanos.",

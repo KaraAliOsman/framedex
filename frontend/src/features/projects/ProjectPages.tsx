@@ -21,6 +21,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import "./projects.css";
+import { PositionThumb } from "./PositionThumb";
 import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 
@@ -414,6 +415,11 @@ function ProjectWorkspace({
       {project ? (
         <>
           <p>{t(statuses[project.status])}</p>
+          {canWrite && !editable && (
+            <p className="project-locked" role="status">
+              {t(project.status === "DRAFT" ? "projects.lockedPriced" : "projects.lockedQuoted")}
+            </p>
+          )}
           {!draft && (
             <dl className="project-metadata">
               {fields
@@ -484,33 +490,36 @@ function ProjectWorkspace({
             {project.position_count === 0 && <p>{t("projects.noPositions")}</p>}
             {project.positions?.map((position) => (
               <article className="project-position" key={position.id}>
-                <div className="projects-actions">
-                  <strong>
-                    {position.position_index}. {position.location_tag || t("projects.position")}
-                  </strong>
-                  <span>
-                    {position.design.nominal_width_mm} × {position.design.nominal_height_mm} mm
-                  </span>
-                  <span>
-                    {t("pricing.quantity")}: {position.quantity}
-                  </span>
-                  {editable && (
-                    <Link to={`/projects/${project.id}/positions/${position.id}/edit`}>
-                      {t("projects.openPosition")}
-                    </Link>
-                  )}
-                  {editable && (
-                    <Link to={`/projects/${project.id}/positions/new?copy=${position.id}`}>
-                      {t("projects.duplicatePosition")}
-                    </Link>
-                  )}
-                  {editable && (
-                    <button disabled={disabled} onClick={() => void deletePosition(position)}>
-                      {t("projects.deletePosition")}
-                    </button>
-                  )}
+                <PositionThumb design={position.design} />
+                <div className="project-position-body">
+                  <div className="projects-actions">
+                    <strong>
+                      {position.position_index}. {position.location_tag || t("projects.position")}
+                    </strong>
+                    <span>
+                      {position.design.nominal_width_mm} × {position.design.nominal_height_mm} mm
+                    </span>
+                    <span>
+                      {t("pricing.quantity")}: {position.quantity}
+                    </span>
+                    {editable && (
+                      <Link to={`/projects/${project.id}/positions/${position.id}/edit`}>
+                        {t("projects.openPosition")}
+                      </Link>
+                    )}
+                    {editable && (
+                      <Link to={`/projects/${project.id}/positions/new?copy=${position.id}`}>
+                        {t("projects.duplicatePosition")}
+                      </Link>
+                    )}
+                    {editable && (
+                      <button disabled={disabled} onClick={() => void deletePosition(position)}>
+                        {t("projects.deletePosition")}
+                      </button>
+                    )}
+                  </div>
+                  <ProjectBom result={position.bom} />
                 </div>
-                <ProjectBom result={position.bom} />
               </article>
             ))}
           </section>

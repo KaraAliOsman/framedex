@@ -496,6 +496,10 @@ export type DividerDragInfo = {
   divisionId: string;
   vertical: boolean;
   localOrigin: { x: number; y: number };
+  /** Absolute start of the split region on the drag axis (front-elevation
+   * mm) — offsets measure from `localOrigin`, so the clamp needs this to
+   * keep the mullion inside the region, not just positive. */
+  regionLoMm: number;
   /** Extent of the region the divider splits — the clamp range for offsets. */
   extentMm: number;
 };
@@ -610,6 +614,7 @@ function ModuleTree({
                 divisionId: node.id,
                 vertical,
                 localOrigin,
+                regionLoMm: lo,
                 extentMm: extent,
               })
             }
@@ -961,7 +966,13 @@ export function ProductFrontContent({
       info.event.preventDefault();
       info.event.stopPropagation();
       let last = Number.NaN;
-      const clamp = (mm: number) => Math.min(Math.max(mm, 60), Math.max(60, info.extentMm - 60));
+      // The stored offset measures from the bay's own origin, which can sit
+      // before the region start (top level: module outer edge vs frame inset).
+      // Clamp the offset so the centerline stays 60mm inside the region.
+      const originAxis = info.vertical ? info.localOrigin.x : info.localOrigin.y;
+      const lo = info.regionLoMm - originAxis + 60;
+      const hi = info.regionLoMm + info.extentMm - originAxis - 60;
+      const clamp = (mm: number) => Math.min(Math.max(mm, lo), Math.max(lo, hi));
       const onMove = (event: globalThis.PointerEvent) => {
         const pt = pointInFront(event.clientX, event.clientY);
         if (!pt) return;
@@ -1012,14 +1023,14 @@ export function ProductFrontContent({
     );
   };
 
-  /** Armed divide tool: hit-test the leaf bay under the cursor and preview
-   * the mullion inside it; the snapped bay-local offset commits on click. */
-  const previewDivide = (moduleId: string) => (event: PointerEvent) => {
-    if (!divideTool) return;
-    const pt = pointInFront(event.clientX, event.clientY);
-    if (!pt) return;
+  /** The leaf bay + snapped bay-local offset a client point divides — shared
+   * by hover preview and click commit so a touch tap (no prior pointermove)
+   * resolves the same bay a mouse hover would. */
+  const divideHit = (moduleId: string, clientX: number, clientY: number) => {
+    const pt = pointInFront(clientX, clientY);
+    if (!pt) return null;
     const rect = rects.find((item) => item.module.id === moduleId);
-    if (!rect) return;
+    if (!rect) return null;
     const bay = bayRegions(
       rect.module.tree,
       { x: rect.x + frameT, y: frameT, w: rect.w - frameT * 2, h: height - frameT * 2 },
@@ -1032,28 +1043,45 @@ export function ProductFrontContent({
         pt.y >= leaf.region.y &&
         pt.y <= leaf.region.y + leaf.region.h,
     );
-    if (!bay) {
-      divideHover.current = null;
-      setDividePreview(null);
-      return;
-    }
+    if (!bay) return null;
     const vertical = divideTool === "SPLIT_V";
     const lo = (vertical ? bay.region.x : bay.region.y) + 60;
     const hi = lo - 60 + Math.max(0, (vertical ? bay.region.w : bay.region.h) - 60);
     const originAxis = vertical ? bay.origin.x : bay.origin.y;
     const axis = Math.min(Math.max(vertical ? pt.x : pt.y, lo), hi);
     const mm = snapMm(axis - originAxis);
-    divideHover.current = { bayId: bay.id, mm };
-    setDividePreview({
-      moduleId,
+    return {
+      bayId: bay.id,
+      mm,
       line: vertical
         ? { x1: axis, y1: bay.region.y, x2: axis, y2: bay.region.y + bay.region.h }
         : { x1: bay.region.x, y1: axis, x2: bay.region.x + bay.region.w, y2: axis },
-    });
+    };
   };
 
-  const endDivide = (moduleId: string) => {
-    const hovered = divideHover.current;
+  /** Armed divide tool: hit-test the leaf bay under the cursor and preview
+   * the mullion inside it; the snapped bay-local offset commits on click. */
+  const previewDivide = (moduleId: string) => (event: PointerEvent) => {
+    if (!divideTool) return;
+    const hit = divideHit(moduleId, event.clientX, event.clientY);
+    if (!hit) {
+      divideHover.current = null;
+      setDividePreview(null);
+      return;
+    }
+    divideHover.current = { bayId: hit.bayId, mm: hit.mm };
+    setDividePreview({ moduleId, line: hit.line });
+  };
+
+  const endDivide = (moduleId: string, clientX?: number, clientY?: number) => {
+    // A touch tap produces a click without any pointermove: resolve the bay
+    // from the click coordinates then. Only a keyboard commit (no pointer
+    // position at all) falls back to centering the primary bay.
+    const hovered =
+      divideHover.current ??
+      (clientX !== undefined && clientY !== undefined
+        ? divideHit(moduleId, clientX, clientY)
+        : null);
     setDividePreview(null);
     divideHover.current = null;
     if (!divideTool || !onCommitDivide) return;
@@ -1061,7 +1089,6 @@ export function ProductFrontContent({
     if (hovered) {
       onCommitDivide(moduleId, hovered.bayId, hovered.mm.toFixed(2));
     } else {
-      // Keyboard commit without a pointer position: center the primary bay.
       onCommitDivide(moduleId, null);
     }
   };
@@ -1143,7 +1170,10 @@ export function ProductFrontContent({
                 "aria-label": `${t("assembly.module")} ${module.id}`,
                 "aria-pressed": module.id === selectedId,
                 tabIndex: disabled ? -1 : 0,
-                onClick: () => (divideTool ? endDivide(module.id) : onSelectModule(module.id)),
+                onClick: (event) =>
+                  divideTool
+                    ? endDivide(module.id, event.clientX, event.clientY)
+                    : onSelectModule(module.id),
                 onKeyDown: (event: KeyboardEvent) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();

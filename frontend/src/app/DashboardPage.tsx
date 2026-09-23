@@ -36,6 +36,7 @@ export function DashboardPage(): JSX.Element {
 
   const items = query.data ?? [];
   const recent = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8);
+  const next = recent.find((item) => item.status === "DRAFT") ?? null;
   const active = items.filter((item) => item.status === "DRAFT" || item.status === "QUOTED");
   const inProduction = items.filter(
     (item) => item.status === "APPROVED" || item.status === "IN_PRODUCTION",
@@ -57,6 +58,22 @@ export function DashboardPage(): JSX.Element {
       </header>
 
       {query.isError && <p role="alert">{t("projects.uncertain")}</p>}
+
+      {next && (
+        <Link to={`/projects/${next.id}`} className="dashboard-continue">
+          <span className="eyebrow">{t("dashboard.continue")}</span>
+          <span className="dashboard-continue-name">
+            {next.code} · {next.name}
+          </span>
+          <span className="dashboard-continue-meta">
+            {next.client_name} ·{" "}
+            <time dateTime={next.updated_at}>
+              {new Date(next.updated_at).toLocaleString("es-CL")}
+            </time>
+          </span>
+          <span className="dashboard-continue-cta">{t("dashboard.resume")}</span>
+        </Link>
+      )}
 
       <div className="dashboard-cards">
         <div className="metric-card">
