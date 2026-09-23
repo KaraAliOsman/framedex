@@ -197,6 +197,7 @@ const messages = {
   "quotation.designEvidence": "Evidencia de diseño; faltan antecedentes de producción",
   "quotation.openEvidence": "Abrir cotización emitida",
   "quotation.documentError": "No se pudo generar o abrir la cotización emitida.",
+  "quotation.documentGenerating": "Generando cotización emitida…",
   "quotation.loadError": "No pudimos preparar la emisión. Revisa las autoridades técnicas.",
   "quotation.error":
     "No se pudo emitir. Conservamos los datos para que puedas corregir y reintentar.",
@@ -615,6 +616,7 @@ const messages = {
   "purchasing.actionError":
     "La operación fue rechazada; recarga y revisa elegibilidad, asignaciones y confirmaciones.",
   "purchasing.documentError": "No se pudo generar o abrir el documento.",
+  "purchasing.documentGenerating": "Generando documento…",
   "purchasing.workshop": "Volver a proyectos y taller",
   "purchasing.orderTypeProfile": "Perfiles",
   "purchasing.orderTypeGlass": "Vidrios",

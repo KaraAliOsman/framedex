@@ -12,9 +12,10 @@
  * * `APPLIED` - APPLIED
  * * `REJECTED` - REJECTED
  */
-export type StateEnum = (typeof StateEnum)[keyof typeof StateEnum];
+export type PriceResponseStateEnum =
+  (typeof PriceResponseStateEnum)[keyof typeof PriceResponseStateEnum];
 
-export const StateEnum = {
+export const PriceResponseStateEnum = {
   PREVIEW: "PREVIEW",
   PENDING: "PENDING",
   APPLIED: "APPLIED",

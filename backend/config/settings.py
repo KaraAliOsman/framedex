@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "engine_api.apps.EngineApiConfig",
     "documents.apps.DocumentsConfig",
     "purchasing.apps.PurchasingConfig",
+    "jobs.apps.JobsConfig",
     "billing.apps.BillingConfig",
 ]
 

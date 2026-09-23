@@ -56,6 +56,9 @@ import type {
   FreezeRequestRequest,
   FreezeResponse,
   ImportRequestRequest,
+  JobEnqueueRequest,
+  JobRun,
+  JobsListParams,
   KitList,
   KitResponse,
   KitWriteRequest,
@@ -3433,6 +3436,103 @@ export const engineSystems = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<engineSystemsResponse> => {
   return apiMutator<engineSystemsResponse>(getEngineSystemsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type jobsListResponse200 = {
+  data: JobRun[];
+  status: 200;
+};
+
+export type jobsListResponseSuccess = jobsListResponse200 & {
+  headers: Headers;
+};
+export type jobsListResponse = jobsListResponseSuccess;
+
+export const getJobsListUrl = (params?: JobsListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/jobs/?${stringifiedParams}` : `/api/v1/jobs/`;
+};
+
+export const jobsList = async (
+  params?: JobsListParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<jobsListResponse> => {
+  return apiMutator<jobsListResponse>(getJobsListUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type jobsEnqueueResponse200 = {
+  data: JobRun;
+  status: 200;
+};
+
+export type jobsEnqueueResponse201 = {
+  data: JobRun;
+  status: 201;
+};
+
+export type jobsEnqueueResponseSuccess = (jobsEnqueueResponse200 | jobsEnqueueResponse201) & {
+  headers: Headers;
+};
+export type jobsEnqueueResponse = jobsEnqueueResponseSuccess;
+
+export const getJobsEnqueueUrl = () => {
+  return `/api/v1/jobs/`;
+};
+
+export const jobsEnqueue = async (
+  jobEnqueueRequest: JobEnqueueRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<jobsEnqueueResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<jobsEnqueueResponse>(getJobsEnqueueUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(jobEnqueueRequest),
+  });
+};
+
+export type jobsGetResponse200 = {
+  data: JobRun;
+  status: 200;
+};
+
+export type jobsGetResponseSuccess = jobsGetResponse200 & {
+  headers: Headers;
+};
+export type jobsGetResponse = jobsGetResponseSuccess;
+
+export const getJobsGetUrl = (jobId: string) => {
+  return `/api/v1/jobs/${jobId}/`;
+};
+
+export const jobsGet = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<jobsGetResponse> => {
+  return apiMutator<jobsGetResponse>(getJobsGetUrl(jobId), {
     ...options,
     method: "GET",
   });

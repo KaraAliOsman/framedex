@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { apiMutator } from "../../api/apiMutator";
+import { apiMutator, ApiError } from "../../api/apiMutator";
+import { documentaryArtifactAccess } from "../../api/generated/dekopen";
+import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import "./purchasing.css";
@@ -269,17 +271,27 @@ function PurchasingWorkspace({
     if (!state?.version) return;
     setMessage("");
     try {
-      const artifact = await request<{ id: string }>("documents/artifacts/", "POST", {
-        document_type: documentType,
-        format,
-        project_version_id: state.version.id,
-        order_id: orderId ?? null,
-      });
-      const access = await request<{ signed_url: string }>(
-        `documents/artifacts/${artifact.id}/access/`,
-        "POST",
+      setMessage(t("purchasing.documentGenerating"));
+      const job = await runJob(
+        {
+          type: "document.artifact.generate",
+          payload: {
+            document_type: documentType,
+            format,
+            project_version_id: state.version.id,
+            order_id: orderId ?? null,
+          },
+          idempotency_key: `${documentType.toLowerCase()}:${state.version.id}:${orderId ?? ""}`,
+        },
+        { headers: { "X-Organization-ID": orgId } },
       );
-      window.open(access.signed_url, "_blank", "noopener,noreferrer");
+      const artifact = (job.result as { artifact: { id: string } }).artifact;
+      const access = await documentaryArtifactAccess(artifact.id, {
+        headers: { "X-Organization-ID": orgId },
+      });
+      if (access.status !== 200) throw new ApiError(access.status, access.data);
+      window.open(access.data.signed_url, "_blank", "noopener,noreferrer");
+      setMessage("");
     } catch {
       if (mounted.current) setMessage(t("purchasing.documentError"));
     }
