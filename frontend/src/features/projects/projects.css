@@ -482,3 +482,21 @@
     padding: 0;
   }
 }
+
+.freeze-failures {
+  margin: 0.35rem 0 0;
+  padding: 0.55rem 0.8rem;
+  list-style: none;
+  border: 1px solid var(--theme-danger, #b4472f);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm, 5px);
+  color: var(--theme-danger, #b4472f);
+  font-size: 0.82rem;
+}
+.freeze-failures li + li {
+  margin-top: 0.3rem;
+}
+.freeze-failures strong {
+  color: var(--theme-text);
+  font-weight: 600;
+}

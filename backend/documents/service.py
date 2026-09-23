@@ -699,7 +699,32 @@ def freeze_revision_a(
                 inspection.status == "RED" for _, inspection, _, _ in inspections
             )
             if has_failures or (is_red and not allow_incomplete_workshop):
-                raise DocumentaryError("inspector_red_blocks_documentary_freeze")
+                failures: list[dict[str, object]] = []
+                for module_id, inspection, _, _ in inspections:
+                    prefix = f"{module_id}|" if module_id else ""
+                    failures.extend(
+                        {
+                            "rule_id": evaluation.rule_id.value,
+                            "status": evaluation.status.value,
+                            "bay_id": (
+                                f"{prefix}{evaluation.bay_id}"
+                                if evaluation.bay_id is not None
+                                else None
+                            ),
+                            "leaf_id": (
+                                f"{prefix}{evaluation.leaf_id}"
+                                if evaluation.leaf_id is not None
+                                else None
+                            ),
+                        }
+                        for evaluation in inspection.evaluations
+                        if evaluation.status
+                        in (RuleEvaluationStatus.FAIL, RuleEvaluationStatus.MISSING_INPUT)
+                    )
+                raise DocumentaryError(
+                    "inspector_red_blocks_documentary_freeze",
+                    details={"failures": failures},
+                )
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
@@ -1151,7 +1176,9 @@ def prepare_documentary_inputs(
 
         trace_leaves: list[dict[str, object]] = []
         leaf_counts: dict[str | None, int] = {}
-        for module_id, computation, _module_tree in calculations:
+        for module_index, (module_id, computation, _module_tree) in enumerate(
+            calculations, 1
+        ):
             trace = computation.manufacturing_trace
             if trace is None:
                 continue
@@ -1171,7 +1198,7 @@ def prepare_documentary_inputs(
                             else leaf.leaf_id
                         ),
                         "leaf_label": (
-                            f"Unidad {module_id} · hoja {number}"
+                            f"Unidad {module_index} · Hoja {number}"
                             if module_id
                             else f"Hoja {number}"
                         ),

@@ -142,9 +142,7 @@ function GlassPolishingRow({
             <option value="EDGES">{t("quotation.polishEdges")}</option>
           </select>
         </label>
-        {!record && (
-          <span className="handle-pending">{t("quotation.handlePending")}</span>
-        )}
+        {!record && <span className="handle-pending">{t("quotation.handlePending")}</span>}
         {showEdges &&
           (["top", "right", "bottom", "left"] as const).map((edge) => (
             <label className="workshop-check" key={edge}>
@@ -165,6 +163,48 @@ function GlassPolishingRow({
       </div>
     </div>
   );
+}
+
+interface FreezeFailure {
+  rule_id: string;
+  status: string;
+  bay_id: string | null;
+  leaf_id: string | null;
+}
+
+const RULE_HINT_KEYS: Record<string, TranslationKey> = {
+  R05: "quotation.ruleR05",
+  R07: "quotation.ruleR07",
+  R08: "quotation.ruleR08",
+  R09: "quotation.ruleR09",
+};
+
+function freezeTargetLabel(
+  preparation: DocumentaryPreparationResponse | null,
+  failure: FreezeFailure,
+): string {
+  if (preparation) {
+    for (const position of preparation.positions) {
+      const targets = position.workshop_targets;
+      if (!targets) continue;
+      const leaf =
+        failure.leaf_id != null && targets.leaves.find((item) => item.leaf_id === failure.leaf_id);
+      if (leaf) return leaf.leaf_label;
+      const span =
+        failure.bay_id != null && targets.spans.find((item) => item.target_id === failure.bay_id);
+      if (span) return span.label;
+      const bay =
+        failure.bay_id != null && targets.bays.find((item) => item.bay_id === failure.bay_id);
+      if (bay) return bay.label;
+    }
+  }
+  return failure.leaf_id ?? failure.bay_id ?? "";
+}
+
+function freezeFailureText(failure: FreezeFailure): string {
+  const hint = RULE_HINT_KEYS[failure.rule_id];
+  const text = hint ? t(hint) : `${t("quotation.ruleOther")} ${failure.rule_id}`;
+  return failure.status === "MISSING_INPUT" ? `${text} (${t("quotation.handlePending")})` : text;
 }
 
 function nextObligationId(items: AccessoryLine[]): string {
@@ -208,7 +248,7 @@ function CsvMmField({
         value={draft}
         disabled={disabled}
         inputMode="decimal"
-        placeholder="300, 600"
+        placeholder="250, 500, 750"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
           const parsed = parseMmList(draft);
@@ -337,6 +377,7 @@ export function ProjectQuotationPanel({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [failures, setFailures] = useState<FreezeFailure[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const generation = useRef(0);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -468,10 +509,7 @@ export function ProjectQuotationPanel({
     updatePosition(index, { glass_polishing: polishing });
   }
 
-  function updateAccessories(
-    index: number,
-    patch: Partial<AccessorySchedule>,
-  ): void {
+  function updateAccessories(index: number, patch: Partial<AccessorySchedule>): void {
     if (!preparation) return;
     const position = preparation.positions[index];
     if (!position) return;
@@ -552,10 +590,20 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
+      setFailures([]);
       setMessage(`${t("quotation.emitted")} ${frozen.data.revision_code}`);
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
+      const payload =
+        error instanceof ApiError
+          ? (error.payload as { error?: { code?: string; failures?: FreezeFailure[] } } | undefined)
+          : undefined;
+      setFailures(
+        payload?.error?.code === "inspector_red_blocks_documentary_freeze"
+          ? (payload.error.failures ?? [])
+          : [],
+      );
       setMessage(
         t(
           error instanceof ApiError && error.status === 409
@@ -681,6 +729,17 @@ export function ProjectQuotationPanel({
         )}
       </header>
       {message && <p role="status">{message}</p>}
+      {failures.length > 0 && (
+        <ul className="freeze-failures" role="list">
+          {failures.map((failure, index) => (
+            <li key={index}>
+              <strong>{freezeTargetLabel(preparation, failure)}</strong>
+              {" — "}
+              {freezeFailureText(failure)}
+            </li>
+          ))}
+        </ul>
+      )}
       {canWrite && project.status === "DRAFT" && !project.pricing_current && (
         <p>{t("quotation.priceFirst")}</p>
       )}
@@ -857,348 +916,347 @@ export function ProjectQuotationPanel({
                 </div>
               )}
               {position.workshop_targets && (
-              <details className="workshop-inputs">
-                <summary>{t("quotation.workshopData")}</summary>
-                {position.workshop_targets.bays.map((bay) => {
-                  const annotation = position.workshop_annotations.find(
-                    (item) => item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
-                  );
-                  return (
-                    <div className="workshop-target" key={bay.bay_id}>
-                      <strong>{bay.label}</strong>
-                      <div className="workshop-row">
-                        <CsvMmField
-                          id={`drains-${position.position_id}-${bay.bay_id}`}
-                          label={t("quotation.drains")}
-                          values={annotation?.bottom_drain_holes_mm}
-                          disabled={busy}
-                          onCommit={(value) =>
-                            updateAnnotation(index, bay.bay_id, null, {
-                              bottom_drain_holes_mm: value,
-                            })
-                          }
-                        />
-                        <label className="workshop-field">
-                          <span>{t("quotation.continuousWidth")}</span>
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            step="any"
-                            min="0"
+                <details className="workshop-inputs">
+                  <summary>{t("quotation.workshopData")}</summary>
+                  {position.workshop_targets.bays.map((bay) => {
+                    const annotation = position.workshop_annotations.find(
+                      (item) => item.bay_id === bay.bay_id && (item.leaf_id ?? null) === null,
+                    );
+                    return (
+                      <div className="workshop-target" key={bay.bay_id}>
+                        <strong>{bay.label}</strong>
+                        <div className="workshop-row">
+                          <CsvMmField
+                            id={`drains-${position.position_id}-${bay.bay_id}`}
+                            label={t("quotation.drains")}
+                            values={annotation?.bottom_drain_holes_mm}
                             disabled={busy}
-                            value={annotation?.continuous_width_mm ?? ""}
-                            onChange={(event) =>
+                            onCommit={(value) =>
                               updateAnnotation(index, bay.bay_id, null, {
-                                continuous_width_mm: event.target.value || null,
+                                bottom_drain_holes_mm: value,
                               })
                             }
                           />
-                          <span className="workshop-unit">mm</span>
-                        </label>
-                        <label className="workshop-field">
-                          <span>{t("quotation.expansionCoupler")}</span>
-                          <select
-                            disabled={busy}
-                            value={
-                              annotation?.has_coupler === true
-                                ? "YES"
-                                : annotation?.has_coupler === false
-                                  ? "NO"
-                                  : ""
-                            }
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (value !== "YES" && value !== "NO") return;
-                              updateAnnotation(index, bay.bay_id, null, {
-                                has_coupler: value === "YES",
-                              });
-                            }}
-                          >
-                            <option value="">{t("quotation.chooseCoverage")}</option>
-                            <option value="NO">{t("quotation.answerNo")}</option>
-                            <option value="YES">{t("quotation.answerYes")}</option>
-                          </select>
-                        </label>
-                        {annotation?.has_coupler == null && (
-                          <span className="handle-pending">{t("quotation.handlePending")}</span>
-                        )}
+                          <label className="workshop-field">
+                            <span>{t("quotation.continuousWidth")}</span>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              min="0"
+                              disabled={busy}
+                              value={annotation?.continuous_width_mm ?? ""}
+                              onChange={(event) =>
+                                updateAnnotation(index, bay.bay_id, null, {
+                                  continuous_width_mm: event.target.value || null,
+                                })
+                              }
+                            />
+                            <span className="workshop-unit">mm</span>
+                          </label>
+                          <label className="workshop-field">
+                            <span>{t("quotation.expansionCoupler")}</span>
+                            <select
+                              disabled={busy}
+                              value={
+                                annotation?.has_coupler === true
+                                  ? "YES"
+                                  : annotation?.has_coupler === false
+                                    ? "NO"
+                                    : ""
+                              }
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (value !== "YES" && value !== "NO") return;
+                                updateAnnotation(index, bay.bay_id, null, {
+                                  has_coupler: value === "YES",
+                                });
+                              }}
+                            >
+                              <option value="">{t("quotation.chooseCoverage")}</option>
+                              <option value="NO">{t("quotation.answerNo")}</option>
+                              <option value="YES">{t("quotation.answerYes")}</option>
+                            </select>
+                          </label>
+                          {annotation?.has_coupler == null && (
+                            <span className="handle-pending">{t("quotation.handlePending")}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-                {position.workshop_targets.leaves.length > 0 && (
-                  <div className="workshop-group">
-                    <h5>{t("quotation.closingPoints")}</h5>
-                    {position.workshop_targets.leaves.map((leaf) => {
-                      const annotation = position.workshop_annotations.find(
-                        (item) =>
-                          item.bay_id === leaf.bay_id &&
-                          (item.leaf_id ?? null) === leaf.leaf_id,
-                      );
-                      return (
-                        <CsvMmField
-                          key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
-                          id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
-                          label={leaf.leaf_label}
-                          values={annotation?.closing_points_perimeter_mm}
-                          disabled={busy}
-                          onCommit={(value) =>
-                            updateAnnotation(index, leaf.bay_id, leaf.leaf_id ?? null, {
-                              closing_points_perimeter_mm: value,
-                            })
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-                {position.workshop_targets.spans.length > 0 && (
-                  <div className="workshop-group">
-                    <h5>{t("quotation.structuralInputs")}</h5>
-                    {position.workshop_targets.spans.map((span) => {
-                      const structural = position.structural_inputs.find(
-                        (item) => item.target_id === span.target_id,
-                      );
-                      return (
-                        <div className="workshop-target" key={span.target_id}>
-                          <strong>
-                            {span.label} · {span.span_mm} mm
-                          </strong>
-                          <div className="workshop-row">
-                            <label className="workshop-field">
-                              <span>{t("quotation.requiredIx")}</span>
-                              <input
-                                type="number"
-                                inputMode="decimal"
-                                step="any"
-                                min="0"
-                                disabled={busy}
-                                value={structural?.required_ix_cm4 ?? ""}
-                                onChange={(event) =>
-                                  updateStructural(index, span.target_id, {
-                                    required_ix_cm4: event.target.value || null,
-                                  })
-                                }
-                              />
-                              <span className="workshop-unit">cm⁴</span>
-                            </label>
-                            <label className="workshop-field workshop-field--wide">
-                              <span>{t("quotation.structuralBasis")}</span>
-                              <input
-                                type="text"
-                                maxLength={1000}
-                                disabled={busy}
-                                value={structural?.structural_basis ?? ""}
-                                placeholder={t("quotation.structuralBasisHint")}
-                                onChange={(event) =>
-                                  updateStructural(index, span.target_id, {
-                                    structural_basis: event.target.value || null,
-                                  })
-                                }
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {position.workshop_targets.glass.length > 0 && (
-                  <div className="workshop-group">
-                    <h5>{t("quotation.glassPolishing")}</h5>
-                    {position.workshop_targets.glass.map((target) => (
-                      <GlassPolishingRow
-                        key={`${target.bay_id}|${target.leaf_id ?? ""}`}
-                        target={target}
-                        record={position.glass_polishing.find(
+                    );
+                  })}
+                  {position.workshop_targets.leaves.length > 0 && (
+                    <div className="workshop-group">
+                      <h5>{t("quotation.closingPoints")}</h5>
+                      {position.workshop_targets.leaves.map((leaf) => {
+                        const annotation = position.workshop_annotations.find(
                           (item) =>
-                            item.bay_id === target.bay_id &&
-                            (item.leaf_id ?? null) === target.leaf_id,
-                        )}
-                        disabled={busy}
-                        onEdges={(edges) =>
-                          setPolishingEdges(
-                            index,
-                            target.bay_id,
-                            target.leaf_id ?? null,
-                            edges,
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-                <div className="workshop-group">
-                  <h5>{t("quotation.accessories")}</h5>
-                  <label className="workshop-field">
-                    <span>{t("quotation.coverage")}</span>
-                    <select
-                      disabled={busy}
-                      value={position.accessory_schedule?.coverage ?? ""}
-                      onChange={(event) => {
-                        const coverage = event.target.value as CoverageEnum | "";
-                        if (!coverage) return;
-                        updateAccessories(index, {
-                          coverage,
-                          items: coverage === "DECLARED" ? position.accessory_schedule?.items ?? [] : [],
-                        });
-                      }}
-                    >
-                      <option value="">{t("quotation.chooseCoverage")}</option>
-                      <option value="NONE_REQUIRED">{t("quotation.coverageNone")}</option>
-                      <option value="DECLARED">{t("quotation.coverageDeclared")}</option>
-                    </select>
-                  </label>
-                  {position.accessory_schedule?.coverage === "DECLARED" && (
-                    <div className="workshop-accessories">
-                      {position.accessory_schedule.items.map((item, itemIndex) => (
-                        <div className="workshop-accessory" key={itemIndex}>
-                          <input
-                            type="text"
+                            item.bay_id === leaf.bay_id && (item.leaf_id ?? null) === leaf.leaf_id,
+                        );
+                        return (
+                          <CsvMmField
+                            key={`${leaf.bay_id}|${leaf.leaf_id ?? ""}`}
+                            id={`closing-${position.position_id}-${leaf.bay_id}-${leaf.leaf_id ?? ""}`}
+                            label={leaf.leaf_label}
+                            values={annotation?.closing_points_perimeter_mm}
                             disabled={busy}
-                            maxLength={200}
-                            placeholder={t("quotation.obligationId")}
-                            value={item.obligation_id}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                obligation_id: event.target.value,
+                            onCommit={(value) =>
+                              updateAnnotation(index, leaf.bay_id, leaf.leaf_id ?? null, {
+                                closing_points_perimeter_mm: value,
                               })
                             }
                           />
-                          <select
-                            disabled={busy}
-                            value={item.obligation_kind}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                obligation_kind: event.target.value as ObligationKindEnum,
-                              })
-                            }
-                          >
-                            {OBLIGATION_KINDS.map((kind) => (
-                              <option key={kind} value={kind}>
-                                {t(OBLIGATION_KIND_KEYS[kind])}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="text"
-                            disabled={busy}
-                            maxLength={200}
-                            placeholder={t("quotation.technicalSku")}
-                            value={item.technical_sku}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                technical_sku: event.target.value,
-                              })
-                            }
-                          />
-                          <input
-                            type="text"
-                            disabled={busy}
-                            maxLength={200}
-                            placeholder={t("quotation.purchasingSku")}
-                            value={item.purchasing_sku}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                purchasing_sku: event.target.value,
-                              })
-                            }
-                          />
-                          <input
-                            type="text"
-                            disabled={busy}
-                            maxLength={300}
-                            placeholder={t("quotation.manufacturer")}
-                            value={item.manufacturer_name}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                manufacturer_name: event.target.value,
-                              })
-                            }
-                          />
-                          <select
-                            disabled={busy}
-                            value={item.order_type}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                order_type: event.target.value as OrderTypeEnum,
-                              })
-                            }
-                          >
-                            {ORDER_TYPES.map((order) => (
-                              <option key={order} value={order}>
-                                {t(ORDER_TYPE_KEYS[order])}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="number"
-                            disabled={busy}
-                            min="1"
-                            step="1"
-                            placeholder={t("quotation.quantityPerUnit")}
-                            value={item.quantity_per_position_unit}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                quantity_per_position_unit: Math.max(
-                                  1,
-                                  Number(event.target.value) || 1,
-                                ),
-                              })
-                            }
-                          />
-                          <input
-                            type="text"
-                            disabled={busy}
-                            maxLength={1000}
-                            placeholder={t("quotation.description")}
-                            value={item.description}
-                            onChange={(event) =>
-                              updateAccessoryItem(index, itemIndex, {
-                                description: event.target.value,
-                              })
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="ghost-button is-danger"
-                            disabled={busy}
-                            aria-label={t("quotation.removeAccessory")}
-                            onClick={() => updateAccessoryItem(index, itemIndex, null)}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        disabled={busy}
-                        onClick={() =>
-                          updateAccessories(index, {
-                            items: [
-                              ...position.accessory_schedule!.items,
-                              {
-                                obligation_id: nextObligationId(position.accessory_schedule!.items),
-                                obligation_kind: "INSTALLATION_ACCESSORY",
-                                technical_sku: "",
-                                purchasing_sku: "",
-                                manufacturer_name: "",
-                                order_type: "SUPPLIER_HARDWARE_PO",
-                                unit: "EA",
-                                quantity_per_position_unit: 1,
-                                description: "",
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        {t("quotation.addAccessory")}
-                      </button>
+                        );
+                      })}
                     </div>
                   )}
-                </div>
-              </details>
+                  {position.workshop_targets.spans.length > 0 && (
+                    <div className="workshop-group">
+                      <h5>{t("quotation.structuralInputs")}</h5>
+                      {position.workshop_targets.spans.map((span) => {
+                        const structural = position.structural_inputs.find(
+                          (item) => item.target_id === span.target_id,
+                        );
+                        return (
+                          <div className="workshop-target" key={span.target_id}>
+                            <strong>
+                              {span.label} · {span.span_mm} mm
+                            </strong>
+                            <div className="workshop-row">
+                              <label className="workshop-field">
+                                <span>{t("quotation.requiredIx")}</span>
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="any"
+                                  min="0"
+                                  disabled={busy}
+                                  value={structural?.required_ix_cm4 ?? ""}
+                                  onChange={(event) =>
+                                    updateStructural(index, span.target_id, {
+                                      required_ix_cm4: event.target.value || null,
+                                    })
+                                  }
+                                />
+                                <span className="workshop-unit">cm⁴</span>
+                              </label>
+                              <label className="workshop-field workshop-field--wide">
+                                <span>{t("quotation.structuralBasis")}</span>
+                                <input
+                                  type="text"
+                                  maxLength={1000}
+                                  disabled={busy}
+                                  value={structural?.structural_basis ?? ""}
+                                  placeholder={t("quotation.structuralBasisHint")}
+                                  onChange={(event) =>
+                                    updateStructural(index, span.target_id, {
+                                      structural_basis: event.target.value || null,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {position.workshop_targets.glass.length > 0 && (
+                    <div className="workshop-group">
+                      <h5>{t("quotation.glassPolishing")}</h5>
+                      {position.workshop_targets.glass.map((target) => (
+                        <GlassPolishingRow
+                          key={`${target.bay_id}|${target.leaf_id ?? ""}`}
+                          target={target}
+                          record={position.glass_polishing.find(
+                            (item) =>
+                              item.bay_id === target.bay_id &&
+                              (item.leaf_id ?? null) === target.leaf_id,
+                          )}
+                          disabled={busy}
+                          onEdges={(edges) =>
+                            setPolishingEdges(index, target.bay_id, target.leaf_id ?? null, edges)
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <div className="workshop-group">
+                    <h5>{t("quotation.accessories")}</h5>
+                    <label className="workshop-field">
+                      <span>{t("quotation.coverage")}</span>
+                      <select
+                        disabled={busy}
+                        value={position.accessory_schedule?.coverage ?? ""}
+                        onChange={(event) => {
+                          const coverage = event.target.value as CoverageEnum | "";
+                          if (!coverage) return;
+                          updateAccessories(index, {
+                            coverage,
+                            items:
+                              coverage === "DECLARED"
+                                ? (position.accessory_schedule?.items ?? [])
+                                : [],
+                          });
+                        }}
+                      >
+                        <option value="">{t("quotation.chooseCoverage")}</option>
+                        <option value="NONE_REQUIRED">{t("quotation.coverageNone")}</option>
+                        <option value="DECLARED">{t("quotation.coverageDeclared")}</option>
+                      </select>
+                    </label>
+                    {position.accessory_schedule?.coverage === "DECLARED" && (
+                      <div className="workshop-accessories">
+                        {position.accessory_schedule.items.map((item, itemIndex) => (
+                          <div className="workshop-accessory" key={itemIndex}>
+                            <input
+                              type="text"
+                              disabled={busy}
+                              maxLength={200}
+                              placeholder={t("quotation.obligationId")}
+                              value={item.obligation_id}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  obligation_id: event.target.value,
+                                })
+                              }
+                            />
+                            <select
+                              disabled={busy}
+                              value={item.obligation_kind}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  obligation_kind: event.target.value as ObligationKindEnum,
+                                })
+                              }
+                            >
+                              {OBLIGATION_KINDS.map((kind) => (
+                                <option key={kind} value={kind}>
+                                  {t(OBLIGATION_KIND_KEYS[kind])}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              disabled={busy}
+                              maxLength={200}
+                              placeholder={t("quotation.technicalSku")}
+                              value={item.technical_sku}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  technical_sku: event.target.value,
+                                })
+                              }
+                            />
+                            <input
+                              type="text"
+                              disabled={busy}
+                              maxLength={200}
+                              placeholder={t("quotation.purchasingSku")}
+                              value={item.purchasing_sku}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  purchasing_sku: event.target.value,
+                                })
+                              }
+                            />
+                            <input
+                              type="text"
+                              disabled={busy}
+                              maxLength={300}
+                              placeholder={t("quotation.manufacturer")}
+                              value={item.manufacturer_name}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  manufacturer_name: event.target.value,
+                                })
+                              }
+                            />
+                            <select
+                              disabled={busy}
+                              value={item.order_type}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  order_type: event.target.value as OrderTypeEnum,
+                                })
+                              }
+                            >
+                              {ORDER_TYPES.map((order) => (
+                                <option key={order} value={order}>
+                                  {t(ORDER_TYPE_KEYS[order])}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              disabled={busy}
+                              min="1"
+                              step="1"
+                              placeholder={t("quotation.quantityPerUnit")}
+                              value={item.quantity_per_position_unit}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  quantity_per_position_unit: Math.max(
+                                    1,
+                                    Number(event.target.value) || 1,
+                                  ),
+                                })
+                              }
+                            />
+                            <input
+                              type="text"
+                              disabled={busy}
+                              maxLength={1000}
+                              placeholder={t("quotation.description")}
+                              value={item.description}
+                              onChange={(event) =>
+                                updateAccessoryItem(index, itemIndex, {
+                                  description: event.target.value,
+                                })
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="ghost-button is-danger"
+                              disabled={busy}
+                              aria-label={t("quotation.removeAccessory")}
+                              onClick={() => updateAccessoryItem(index, itemIndex, null)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          disabled={busy}
+                          onClick={() =>
+                            updateAccessories(index, {
+                              items: [
+                                ...position.accessory_schedule!.items,
+                                {
+                                  obligation_id: nextObligationId(
+                                    position.accessory_schedule!.items,
+                                  ),
+                                  obligation_kind: "INSTALLATION_ACCESSORY",
+                                  technical_sku: "",
+                                  purchasing_sku: "",
+                                  manufacturer_name: "",
+                                  order_type: "SUPPLIER_HARDWARE_PO",
+                                  unit: "EA",
+                                  quantity_per_position_unit: 1,
+                                  description: "",
+                                },
+                              ],
+                            })
+                          }
+                        >
+                          {t("quotation.addAccessory")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </details>
               )}
             </fieldset>
           ))}

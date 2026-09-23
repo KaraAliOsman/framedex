@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from decimal import Decimal
@@ -43,9 +43,14 @@ from pricing.repository import encode
 
 
 class DocumentaryError(ValueError):
-    def __init__(self, code: str) -> None:
+    """`details` travels into the error envelope's `error` body (see
+    `public_documentary_errors`) so clients can render failing inspector
+    targets instead of a bare code."""
+
+    def __init__(self, code: str, *, details: Mapping[str, object] | None = None) -> None:
         super().__init__(code)
         self.code = code
+        self.details = dict(details or {})
 
 
 @dataclass(frozen=True)
