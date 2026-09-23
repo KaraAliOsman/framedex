@@ -81,9 +81,7 @@ export function ProjectPaymentLinksPanel({
       // their readable links instead of losing the whole panel to one 403.
       const [linksResponse, statusResponse] = await Promise.all([
         projectPaymentLinksList(projectId, requestOptions),
-        canWrite
-          ? projectPaymentIntegrationStatus(requestOptions)
-          : Promise.resolve(null),
+        canWrite ? projectPaymentIntegrationStatus(requestOptions) : Promise.resolve(null),
       ]);
       if (generation.current !== current) return;
       if (linksResponse.status === 200) setLinks(linksResponse.data.links);

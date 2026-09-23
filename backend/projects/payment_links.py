@@ -290,13 +290,22 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             503, "payment_link_dispatch_failed", "Flow no confirmó el link — reintenta verificar."
         ) from error
     with transaction.atomic(), documentary_backend():
-        link = rows(
+        # The webhook can settle the DISPATCHING claim while this request is
+        # still in flight — only take the link to PENDING if it is still ours.
+        updated = rows(
             "UPDATE public.project_payment_links SET status='PENDING', flow_order=%s, "
             "flow_token=%s, url=%s, updated_at=now() "
-            "WHERE org_id=%s AND id=%s RETURNING *",
+            "WHERE org_id=%s AND id=%s AND status='DISPATCHING' RETURNING *",
             [str(created["flowOrder"]), str(created.get("token") or ""), redirect,
              str(org_id), str(link["id"])],
-        )[0]
+        )
+        if updated:
+            link = updated[0]
+        else:
+            link = rows(
+                "SELECT * FROM public.project_payment_links WHERE org_id=%s AND id=%s",
+                [str(org_id), str(link["id"])],
+            )[0]
     return {"link": _public_link(link)}
 
 
@@ -413,12 +422,12 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             "WHERE org_id=%s AND id=%s RETURNING *",
             [verified["flowOrder"], str(payment[0]["id"]), str(org_id), str(link_id)],
         )[0]
-    # The credential version only needs to outlive an in-flight charge —
-    # terminal links drop the snapshot so plaintext creds never accumulate.
-    rows(
-        "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
-        [str(link_id)],
-    )
+        # The credential version only needs to outlive an in-flight charge —
+        # terminal links drop the snapshot atomically with the transition.
+        rows(
+            "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
+            [str(link_id)],
+        )
     return {"link": _public_link(link)}
 
 
@@ -437,6 +446,10 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
     if not found:
         raise FlowError("payment_link_not_found")
     link = found[0]
+    # Acknowledge idempotent retries of an already-settled callback without a
+    # provider query — the terminal link's credential snapshot may be gone.
+    if str(link["status"]) == "PAID":
+        return {"link": _public_link(link)}
     client = _client_for_link(link)
     verified = _payment(client.payment_status(token))
     return _settle(org_id=link["org_id"], link_id=link_id, verified=verified, client=client)

@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(22);
+SELECT plan(23);
 
 SELECT has_table('public', 'org_payment_integrations', 'org payment integrations table exists');
 SELECT has_table('public', 'project_payment_links', 'project payment links table exists');
@@ -96,6 +96,11 @@ SELECT ok(
           AND policyname = 'payment_links_backend_read'
     ),
     'backend can resolve the opaque link id without JWT claims'
+);
+SELECT ok(
+    has_table_privilege('billing_backend', 'public.project_payment_link_credentials', 'DELETE')
+    AND NOT has_table_privilege('documentary_backend', 'public.project_payment_link_credentials', 'DELETE'),
+    'only the billing role can drop an in-flight credential snapshot'
 );
 
 SELECT * FROM finish();

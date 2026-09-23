@@ -66,3 +66,8 @@ CREATE POLICY billing_backend_restrict ON public.project_payments
 
 GRANT SELECT, INSERT, UPDATE ON public.project_payment_links TO billing_backend;
 GRANT SELECT, INSERT, UPDATE ON public.project_payments TO billing_backend;
+
+-- Terminal settles drop the in-flight snapshot inside the billing transaction —
+-- the scoped DELETE is the whole reason the table exists, so billing_backend
+-- gets DELETE here and nowhere else.
+GRANT DELETE ON public.project_payment_link_credentials TO billing_backend;
