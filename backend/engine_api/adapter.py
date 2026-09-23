@@ -16,13 +16,19 @@ from dekopen_engine import (
     ProductEvaluation,
     ProductModel,
     ProductModule,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
     calculate_geometry,
     evaluate_product,
 )
 from dekopen_engine.contour import Contour
 from dekopen_engine.models import PlanPoint
-from dekopen_engine.product import ConnectionKind, EdgeSide
+from dekopen_engine.product import (
+    ConnectionKind,
+    EdgeSide,
+)
 
 
 class InvalidEngineRequest(ValueError):
@@ -48,6 +54,7 @@ _NODE_FIELDS = {
     "panel_article_sku",
     "hardware_set_sku",
     "handle_height_mm",
+    "sliding_layout",
 }
 _DECIMAL_NODE_FIELDS = {
     "width_mm",
@@ -105,6 +112,9 @@ def parse_parametric_node(payload: object) -> ParametricNode:
                 raise InvalidEngineRequest(f"{field_name} must be a string")
             values[field_name] = raw[field_name]
 
+    if "sliding_layout" in raw and raw["sliding_layout"] is not None:
+        values["sliding_layout"] = _parse_sliding_layout(raw["sliding_layout"])
+
     children = raw.get("children", [])
     if not isinstance(children, list):
         raise InvalidEngineRequest("children must be an array")
@@ -113,6 +123,48 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         return ParametricNode(**values)
     except ValueError as error:
         raise InvalidEngineRequest("Invalid parametric_tree") from error
+
+
+def _parse_sliding_layout(payload: object) -> SlidingLayout:
+    """Deserialize a node's declared sliding topology: rail count plus the
+    ordered panels with their kind/track."""
+    raw = _require_dict(payload, "sliding_layout")
+    unexpected = set(raw) - {"tracks", "panels"}
+    if unexpected:
+        raise InvalidEngineRequest(
+            f"sliding_layout contains unsupported fields: {sorted(unexpected)}"
+        )
+    if not isinstance(raw.get("tracks"), int) or isinstance(raw.get("tracks"), bool):
+        raise InvalidEngineRequest("sliding_layout.tracks must be an integer")
+    panels = raw.get("panels")
+    if not isinstance(panels, list) or not panels:
+        raise InvalidEngineRequest("sliding_layout.panels must be a non-empty array")
+    parsed_panels: list[SlidingPanel] = []
+    for index, panel in enumerate(panels):
+        panel_raw = _require_dict(panel, f"sliding_layout.panels[{index}]")
+        unexpected_panel = set(panel_raw) - {"slot", "kind", "track"}
+        if unexpected_panel:
+            raise InvalidEngineRequest(
+                "sliding_layout.panels contains unsupported fields: "
+                f"{sorted(unexpected_panel)}"
+            )
+        if not isinstance(panel_raw.get("slot"), str):
+            raise InvalidEngineRequest("sliding_layout.panels[].slot must be a string")
+        try:
+            kind = SlidingPanelKind(cast(str, panel_raw.get("kind")))
+        except ValueError as error:
+            raise InvalidEngineRequest(
+                "sliding_layout.panels[].kind must be MOVING or FIXED"
+            ) from error
+        track = panel_raw.get("track")
+        if track is not None and (
+            not isinstance(track, int) or isinstance(track, bool)
+        ):
+            raise InvalidEngineRequest("sliding_layout.panels[].track must be an integer or null")
+        parsed_panels.append(
+            SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track)
+        )
+    return SlidingLayout(tracks=raw["tracks"], panels=parsed_panels)
 
 
 def parse_contour(payload: object) -> Contour | None:

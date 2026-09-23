@@ -16,6 +16,7 @@ from documents.repository import documentary_backend
 from engine_api.adapter import (
     calculate_from_api,
     evaluate_assembly_from_api,
+    elevation_envelope,
     parse_product_model,
     UnsupportedEngineContract,
 )
@@ -293,11 +294,10 @@ def calculate_design(org_id, design):
                     "manufacturing_incomplete",
                     "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
                 )
-            if design["nominal_width_mm"] != sum(
-                (module.width_mm for module in model.assembly.modules),
-                Decimal("0"),
-            ) or design["nominal_height_mm"] != max(
-                module.height_mm for module in model.assembly.modules
+            envelope_width, envelope_height = elevation_envelope(model.assembly)
+            if (
+                design["nominal_width_mm"] != envelope_width
+                or design["nominal_height_mm"] != envelope_height
             ):
                 raise contract_error(
                     400,

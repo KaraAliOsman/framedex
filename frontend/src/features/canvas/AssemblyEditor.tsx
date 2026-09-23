@@ -28,7 +28,8 @@ import {
 } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
-import type { SplitType } from "./intentEditing";
+import type { SlidingLayout, SplitType } from "./intentEditing";
+import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import {
   addAdjacentUnit,
   equalizeCouplingAngles,
@@ -37,6 +38,7 @@ import {
   moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
+  modulePrimaryBay,
   moveModuleDivision,
   removeUnit,
   resizeModuleSeam,
@@ -51,6 +53,7 @@ import {
   setCouplerSku,
   setCouplingAngle,
   setModuleOpening,
+  setModuleSlidingLayout,
   setModuleWidth,
   splitModuleBay,
   type CouplingJson,
@@ -79,6 +82,8 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
   connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
   assembly_disconnected: "assembly.issue.assemblyDisconnected",
+  sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
+  sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field
@@ -96,6 +101,14 @@ export const REASON_KEYS: [RegExp, TranslationKey][] = [
   [/zero-length segment/i, "assembly.reason.contourDegenerate"],
   [/sagitta exceeds/i, "assembly.reason.contourSagitta"],
   [/self-intersect/i, "assembly.reason.contourSelfIntersect"],
+  [/requires a sliding_layout/i, "assembly.reason.slidingLayoutRequired"],
+  [/not a sliding opening/i, "assembly.reason.slidingLayoutRequired"],
+  [/duplicate panel slot/i, "assembly.reason.slidingDuplicateSlot"],
+  [/undeclared track/i, "assembly.reason.slidingBadTrack"],
+  [/cannot occupy a track/i, "assembly.reason.slidingFixedTrack"],
+  [/adjacent fixed panels/i, "assembly.reason.slidingFixedAdjacent"],
+  [/cannot share a track/i, "assembly.reason.slidingSameTrack"],
+  [/at least one moving panel/i, "assembly.reason.slidingNoMoving"],
 ];
 
 export function issueText(
@@ -329,7 +342,11 @@ function ModuleInspector({
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY";
+  const slidingBay = isSlidingOpening(opening) ? modulePrimaryBay(module) : null;
+  const slidingLayout = slidingBay ? resolvedSlidingLayout(slidingBay) : null;
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
+  const commitSlidingLayout = (layout: SlidingLayout) =>
+    commit(setModuleSlidingLayout(product, module.id, layout));
   return (
     <section className="assembly-inspector" aria-label={t("assembly.module")}>
       <header className="assembly-inspector__header">
@@ -405,6 +422,124 @@ function ModuleInspector({
           </button>
         </div>
       </details>
+      {slidingLayout && (
+        <details className="inspector-section" open>
+          <summary>{t("assembly.slidingLayout")}</summary>
+          <div className="inspector-field">
+            <label htmlFor={`tracks-${module.id}`}>{t("assembly.slidingTracks")}</label>
+            <select
+              id={`tracks-${module.id}`}
+              value={slidingLayout.tracks}
+              disabled={busy}
+              onChange={(event) => {
+                const tracks = Number(event.target.value);
+                commitSlidingLayout({
+                  tracks,
+                  panels: slidingLayout.panels.map((panel) =>
+                    panel.kind === "MOVING" && panel.track != null && panel.track >= tracks
+                      ? { ...panel, track: tracks - 1 }
+                      : panel,
+                  ),
+                });
+              }}
+            >
+              {[1, 2, 3, 4].map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </div>
+          <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>
+            {slidingLayout.panels.map((panel, index) => (
+              <li key={panel.slot} className="sliding-panel">
+                <span className="sliding-panel__slot">
+                  {t("assembly.slidingPanel").replace("{index}", String(index + 1))}
+                </span>
+                <select
+                  aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("intent.opening")}`}
+                  value={panel.kind}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const kind = event.target.value as "MOVING" | "FIXED";
+                    const panels = slidingLayout.panels.map((item, at) =>
+                      at === index
+                        ? {
+                            ...item,
+                            kind,
+                            track:
+                              kind === "MOVING"
+                                ? (item.track ?? index % Math.max(slidingLayout.tracks, 1))
+                                : null,
+                          }
+                        : item,
+                    );
+                    commitSlidingLayout({ ...slidingLayout, panels });
+                  }}
+                >
+                  <option value="MOVING">{t("assembly.panelMoving")}</option>
+                  <option value="FIXED">{t("assembly.panelFixed")}</option>
+                </select>
+                {panel.kind === "MOVING" && (
+                  <select
+                    aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
+                    value={panel.track ?? 0}
+                    disabled={busy}
+                    onChange={(event) => {
+                      const track = Number(event.target.value);
+                      const panels = slidingLayout.panels.map((item, at) =>
+                        at === index ? { ...item, track } : item,
+                      );
+                      commitSlidingLayout({ ...slidingLayout, panels });
+                    }}
+                  >
+                    {Array.from({ length: slidingLayout.tracks }, (_, track) => (
+                      <option key={track} value={track}>
+                        {t("assembly.panelTrack")} {track + 1}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="inspector-actions">
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length >= 8}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: [
+                    ...slidingLayout.panels,
+                    {
+                      slot: `S${slidingLayout.panels.length + 1}`,
+                      kind: "MOVING",
+                      track: slidingLayout.panels.length % Math.max(slidingLayout.tracks, 1),
+                    },
+                  ],
+                })
+              }
+            >
+              {t("assembly.addPanel")}
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length <= 1}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: slidingLayout.panels.slice(0, -1),
+                })
+              }
+            >
+              {t("assembly.removePanel")}
+            </button>
+          </div>
+        </details>
+      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.dimensions")}</summary>
         <DraftField

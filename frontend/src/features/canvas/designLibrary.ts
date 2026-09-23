@@ -98,6 +98,12 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     build: (w, h) => wrapTreeAsProduct(starterTree("SLIDING_2L"), w.toFixed(2), h.toFixed(2)),
   },
   {
+    key: "sliding3",
+    titleKey: "assembly.starter.sliding3",
+    hintKey: "assembly.starter.sliding3Hint",
+    build: (w, h) => wrapTreeAsProduct(starterTree("SLIDING_3L"), w.toFixed(2), h.toFixed(2)),
+  },
+  {
     key: "awning",
     titleKey: "assembly.starter.awning",
     hintKey: "assembly.starter.awningHint",
@@ -201,6 +207,8 @@ export function starterNominalSize(key: string): { widthMm: number; heightMm: nu
     case "sliding2":
     case "slidingFixed":
       return { widthMm: 1800, heightMm: 1400 };
+    case "sliding3":
+      return { widthMm: 2400, heightMm: 1400 };
     case "awning":
     case "awningBand":
       return { widthMm: 1200, heightMm: 800 };

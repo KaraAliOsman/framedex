@@ -11,6 +11,9 @@ from dekopen_engine.models import (
     NodeType,
     ParametricNode,
     ProfileRole,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
 )
 from dekopen_engine.product import (
@@ -26,6 +29,7 @@ from dekopen_engine.product import (
     coupling_ids,
     equalize_coupling_angles,
     equalize_module_widths,
+    elevation_envelope,
     evaluate_product,
     make_bow_assembly,
     module_ids,
@@ -832,3 +836,163 @@ class TestConnections:
             if module.module_id == "door"
         )
         assert corners["door"] == door_corners
+
+    def test_stacked_columns_derive_the_elevation_envelope(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A stacked member shares its column's width and adds its height —
+        # the nominal envelope is door 1000x2200 + transom 400 → 1000x2600.
+        product = self._product(
+            [self._module("door", "1000", "2200"), self._module("tr", "1000", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1000"),
+            Decimal("2600"),
+        )
+        # Order-independent: the transom declared first resolves the same root.
+        product = self._product(
+            [self._module("tr", "1000", "400"), self._module("door", "1000", "2200")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1000"),
+            Decimal("2600"),
+        )
+
+    def test_inline_angle_binds_the_joint_it_names(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Couplings declared out of chain order: {a,b} turns 5°, {c,d} turns
+        # 10°, and the b→c joint stays straight. The angle must land on the
+        # joint the coupling names — never on a declaration position.
+        product = self._product(
+            [
+                self._module("a", "1000", "2200"),
+                self._module("b", "1000", "2200"),
+                self._module("c", "1000", "2200"),
+                self._module("d", "1000", "2200"),
+            ],
+            [
+                CouplingDef(
+                    id="cd",
+                    angle_deg=Decimal("10"),
+                    modules=["c", "d"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="ab",
+                    angle_deg=Decimal("5"),
+                    modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        corners = {m.module_id: m.corners for m in evaluation.plan.modules}
+        # b runs at 5° from the a→b joint; c inherits the same heading (the
+        # b→c joint declares no coupling); d accumulates to 15°.
+        single = Decimal("1000") * sin_degrees(Decimal("5"))
+        assert corners["b"][1].y_mm == single.quantize(Decimal("0.01"))
+        assert corners["c"][1].y_mm == (single * 2).quantize(Decimal("0.01"))
+        expected_d = (single * 2 + Decimal("1000") * sin_degrees(Decimal("15"))).quantize(
+            Decimal("0.01")
+        )
+        assert corners["d"][1].y_mm == expected_d
+
+
+class TestSlidingTopologyEvaluation:
+    def _sliding_module(self, layout: "SlidingLayout | None") -> ProductModule:
+        return ProductModule(
+            id="s",
+            width_mm=Decimal("1800"),
+            height_mm=Decimal("1500"),
+            tree=ParametricNode(
+                id="s",
+                type=NodeType.BAY,
+                opening_type=BayOpeningType.SLIDING,
+                sliding_layout=layout,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            ),
+        )
+
+    def test_sliding_facts_describe_the_resolved_topology(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = ProductModel(
+            version="product-v2",
+            assembly=CoupledAssembly(
+                modules=[
+                    self._sliding_module(
+                        SlidingLayout(
+                            tracks=2,
+                            panels=[
+                                SlidingPanel(slot="fijo", kind=SlidingPanelKind.FIXED),
+                                SlidingPanel(
+                                    slot="corrediza",
+                                    kind=SlidingPanelKind.MOVING,
+                                    track=0,
+                                ),
+                                SlidingPanel(
+                                    slot="corrediza2",
+                                    kind=SlidingPanelKind.MOVING,
+                                    track=1,
+                                ),
+                            ],
+                        )
+                    )
+                ],
+                couplings=[],
+            ),
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        module = evaluation.modules[0]
+        assert module.sliding[0].bay_id == "s"
+        assert module.sliding[0].tracks == 2
+        assert [(p.slot, p.kind, p.track, p.leaf_id) for p in module.sliding[0].panels] == [
+            ("fijo", SlidingPanelKind.FIXED, None, None),
+            ("corrediza", SlidingPanelKind.MOVING, 0, "s:L2"),
+            ("corrediza2", SlidingPanelKind.MOVING, 1, "s:L3"),
+        ]
+        leaf_ids = {
+            cut.leaf_id for cut in (module.result.profile_cuts if module.result else [])
+            if cut.leaf_id
+        }
+        assert leaf_ids == {"s:L2", "s:L3"}
+
+    def test_sliding_layout_errors_surface_as_issues(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = ProductModel(
+            version="product-v2",
+            assembly=CoupledAssembly(
+                modules=[self._sliding_module(None)], couplings=[]
+            ),
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        module = evaluation.modules[0]
+        assert module.result is None
+        assert [i.code for i in module.issues] == [
+            IssueCode.SLIDING_LAYOUT_INVALID.value
+        ]
+        assert module.issues[0].severity is Severity.ERROR
+        assert "sliding_layout" in module.issues[0].params["reason"]

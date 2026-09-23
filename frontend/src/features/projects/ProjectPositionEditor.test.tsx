@@ -802,7 +802,7 @@ it("renders the design library with rendered starter cards", async () => {
   const list = await screen.findByRole("list", {
     name: t("assembly.starterLibrary"),
   });
-  expect(within(list).getAllByRole("listitem")).toHaveLength(13);
+  expect(within(list).getAllByRole("listitem")).toHaveLength(14);
   // Every card previews through the same front-elevation renderer.
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });

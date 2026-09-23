@@ -33,10 +33,12 @@ from dekopen_engine.contour import (
     validate_contour,
 )
 from dekopen_engine.geometry import (
+    SlidingLayoutError,
     calculate_geometry,
     joint_adjustment_per_end,
     reinforcement_cut_length,
     resolve_bead_rule,
+    resolved_sliding_layout,
 )
 from dekopen_engine.glass import derive_net_glass_thickness
 from dekopen_engine.models import (
@@ -51,6 +53,7 @@ from dekopen_engine.models import (
     ProfileCut,
     ProfileRole,
     ReinforcementPiece,
+    SlidingPanelKind,
     SystemParams,
 )
 from dekopen_engine.trig import cos_degrees, sin_degrees
@@ -90,6 +93,8 @@ class IssueCode(str, Enum):
     COUPLER_EDGE_CONFLICT = "coupler_edge_conflict"
     CONNECTION_TYPE_UNSUPPORTED = "connection_type_unsupported"
     ASSEMBLY_DISCONNECTED = "assembly_disconnected"
+    SLIDING_LAYOUT_INVALID = "sliding_layout_invalid"
+    SLIDING_TRACKS_UNSUPPORTED = "sliding_tracks_unsupported"
 
 
 class ConnectionKind(str, Enum):
@@ -181,10 +186,31 @@ class ProductIssue(EngineModel):
     params: dict[str, str] = Field(default_factory=dict)
 
 
+class SlidingPanelFacts(EngineModel):
+    """One evaluated sliding slot — the panel's declared kind, the rail it
+    rides, and the leaf id the BOM carries for it (moving panels only)."""
+
+    slot: str
+    kind: SlidingPanelKind
+    track: int | None = None
+    leaf_id: str | None = None
+
+
+class SlidingLayoutFacts(EngineModel):
+    """The sliding topology a module's bay evaluated to — rails plus every
+    panel left→right. Meeting stiles are every adjacent pair; a pair where
+    one side is FIXED is the channel the moving leaf covers."""
+
+    bay_id: str
+    tracks: int
+    panels: list[SlidingPanelFacts]
+
+
 class ModuleEvaluation(EngineModel):
     module_id: str
     issues: list[ProductIssue] = Field(default_factory=list)
     result: EngineResult | None = None
+    sliding: list[SlidingLayoutFacts] = Field(default_factory=list)
 
 
 class ProductEvaluation(EngineModel):
@@ -247,6 +273,82 @@ def _polygons_overlap(
     return True
 
 
+def _resolved_pairs(
+    modules: list[ProductModule], couplings: list[CouplingDef]
+) -> list[tuple[CouplingDef, list[str]]]:
+    """Explicit `modules` endpoints, or the positional binding index→index+1
+    when a coupling leaves them implicit."""
+    resolved: list[tuple[CouplingDef, list[str]]] = []
+    for index, coupling in enumerate(couplings):
+        pair = coupling.modules
+        if pair is None and index < len(modules) - 1:
+            pair = [modules[index].id, modules[index + 1].id]
+        if pair is not None and len(pair) == 2:
+            resolved.append((coupling, pair))
+    return resolved
+
+
+def _resolve_stack_roots(
+    modules: list[ProductModule],
+    resolved: list[tuple[CouplingDef, list[str]]],
+) -> dict[str, str]:
+    """Map each stacked member id → its root column id.
+
+    Modules joined by a STACKED coupling project onto their lower partner —
+    the endpoint whose TOP edge is the contact. Anchors resolve transitively
+    for towers; cycles degrade to "no anchor" and lay out front-wise.
+    """
+    stack_parent: dict[str, str] = {}
+    for coupling, pair in resolved:
+        if coupling.kind is not ConnectionKind.STACKED:
+            continue
+        edges = coupling.edges or [EdgeSide.TOP, EdgeSide.BOTTOM]
+        if len(edges) != 2:
+            continue
+        top_index = (
+            0
+            if edges[0] is EdgeSide.TOP
+            else (1 if edges[1] is EdgeSide.TOP else None)
+        )
+        if top_index is not None:
+            stack_parent[pair[1 - top_index]] = pair[top_index]
+    module_ids = {module.id for module in modules}
+    roots: dict[str, str] = {}
+    for member_id in stack_parent:
+        seen: set[str] = set()
+        current = member_id
+        while current in stack_parent and current not in seen:
+            seen.add(current)
+            current = stack_parent[current]
+        anchor = None if current in stack_parent else current
+        if anchor is not None and anchor in module_ids:
+            roots[member_id] = anchor
+    return roots
+
+
+def elevation_envelope(assembly: CoupledAssembly) -> tuple[Decimal, Decimal]:
+    """The assembly's nominal front-elevation envelope (mandate §6).
+
+    Stacked members project into their root column: width sums across the
+    front columns only, and each column's height is the sum of its members —
+    a 1000×2200 door carrying a 1000×400 transom is 1000×2600, not
+    2000×2200. This is THE nominal-dimension contract the API validates
+    and the frontend sends.
+    """
+    modules = assembly.modules
+    stack_root = _resolve_stack_roots(modules, _resolved_pairs(modules, assembly.couplings))
+    width = sum(
+        (module.width_mm for module in modules if module.id not in stack_root),
+        Decimal("0"),
+    )
+    columns: dict[str, Decimal] = {}
+    for module in modules:
+        root = stack_root.get(module.id, module.id)
+        columns[root] = columns.get(root, Decimal("0")) + module.height_mm
+    height = max(columns.values()) if columns else Decimal("0")
+    return width, height
+
+
 def _plan_geometry(
     assembly: CoupledAssembly, depth_mm: Decimal
 ) -> tuple[PlanGeometry, list[ProductIssue]]:
@@ -262,50 +364,11 @@ def _plan_geometry(
     modules = assembly.modules
     couplings = assembly.couplings
 
-    headings: list[Decimal] = [Decimal(0)]
-    for coupling in couplings:
-        heading = headings[-1] + coupling.angle_deg
-        if abs(heading) > _MAX_HEADING_DEG:
-            issues.append(
-                ProductIssue(
-                    code=IssueCode.ASSEMBLY_FOLDS_BACK.value,
-                    severity=Severity.ERROR,
-                    target=f"coupling:{coupling.id}",
-                    params={"heading_deg": str(_q(heading))},
-                )
-            )
-        headings.append(heading)
-    while len(headings) < len(modules):
-        headings.append(headings[-1])
+    resolved_pairs = _resolved_pairs(modules, couplings)
 
-    # Modules joined by a STACKED coupling project onto their lower partner's
-    # plan footprint (same front slot, same depth) — they are not a new chain
-    # segment. Anchor = the endpoint whose TOP edge is the contact (lower),
-    # resolved transitively for towers; cycles degrade to "no anchor".
-    stack_parent: dict[str, str] = {}
-    coupling_pairs: set[frozenset[str]] = set()
-    pair_coupling: dict[frozenset[str], CouplingDef] = {}
-    for index, coupling in enumerate(couplings):
-        pair = coupling.modules
-        if pair is None and index < len(modules) - 1:
-            pair = [modules[index].id, modules[index + 1].id]
-        if pair is not None and len(pair) == 2:
-            coupling_pairs.add(frozenset(pair))
-            pair_coupling.setdefault(frozenset(pair), coupling)
-        if coupling.kind is not ConnectionKind.STACKED:
-            continue
-        edges = coupling.edges or [EdgeSide.TOP, EdgeSide.BOTTOM]
-        if pair is not None and len(pair) == 2 and len(edges) == 2:
-            top_index = (
-                0
-                if edges[0] is EdgeSide.TOP
-                else (1 if edges[1] is EdgeSide.TOP else None)
-            )
-            if top_index is not None:
-                stack_parent[pair[1 - top_index]] = pair[top_index]
-
-    # Every declared joint must bind the modules into ONE connected assembly:
-    # isolated modules are separate frames sharing a BOM, never one product.
+    # Connectivity unions over the RAW pairs — a stacked member is connected
+    # through the joint to its column. Front joints are keyed by ROOT pairs:
+    # a coupling on a stacked member's side edge binds its whole column.
     union_parent = {module.id: module.id for module in modules}
 
     def _union_root(module_id: str) -> str:
@@ -314,7 +377,7 @@ def _plan_geometry(
             module_id = union_parent[module_id]
         return module_id
 
-    for pair in coupling_pairs:
+    for _coupling, pair in resolved_pairs:
         first, second = pair
         if first in union_parent and second in union_parent:
             union_parent[_union_root(first)] = _union_root(second)
@@ -329,26 +392,21 @@ def _plan_geometry(
             )
         )
 
-    def _anchor(module_id: str) -> str | None:
-        seen: set[str] = set()
-        current = module_id
-        while current in stack_parent and current not in seen:
-            seen.add(current)
-            current = stack_parent[current]
-        return None if current in stack_parent else current
-
     # Stack roots resolve BEFORE layout, so an upper module declared ahead of
     # its column produces the same plan as one declared after it.
-    module_ids = {module.id for module in modules}
-    stack_root: dict[str, str] = {}
-    for module in modules:
-        if module.id in stack_parent:
-            anchor = _anchor(module.id)
-            if anchor is not None and anchor in module_ids:
-                stack_root[module.id] = anchor
+    stack_root = _resolve_stack_roots(modules, resolved_pairs)
+
+    coupling_pairs: set[frozenset[str]] = set()
+    pair_coupling: dict[frozenset[str], CouplingDef] = {}
+    for coupling, pair in resolved_pairs:
+        root_pair = frozenset(
+            {stack_root.get(pair[0], pair[0]), stack_root.get(pair[1], pair[1])}
+        )
+        if len(root_pair) == 2:
+            coupling_pairs.add(root_pair)
+            pair_coupling.setdefault(root_pair, coupling)
 
     front: list[PlanPoint] = [PlanPoint(x_mm=Decimal(0), y_mm=Decimal(0))]
-    normals: list[PlanPoint] = []
     plan_modules_by_id: dict[str, PlanModule] = {}
     plan_couplings: list[PlanCoupling] = []
     plan_coupling_endpoints: list[frozenset[str]] = []
@@ -362,18 +420,42 @@ def _plan_geometry(
         for position in range(len(front_indices) - 1)
     }
 
+    # Headings belong to the resolved front joints, not to declaration order:
+    # an INLINE edge's angle applies at the joint it binds, wherever in the
+    # coupling list it was declared; an undeclared joint stays straight.
+    front_heading: dict[int, Decimal] = {}
+    heading = Decimal(0)
+    previous_index: int | None = None
+    for index in front_indices:
+        if previous_index is not None:
+            coupling = pair_coupling.get(
+                frozenset({modules[previous_index].id, modules[index].id})
+            )
+            if coupling is not None and coupling.kind is ConnectionKind.INLINE:
+                heading = heading + coupling.angle_deg
+                if abs(heading) > _MAX_HEADING_DEG:
+                    issues.append(
+                        ProductIssue(
+                            code=IssueCode.ASSEMBLY_FOLDS_BACK.value,
+                            severity=Severity.ERROR,
+                            target=f"coupling:{coupling.id}",
+                            params={"heading_deg": str(_q(heading))},
+                        )
+                    )
+        front_heading[index] = heading
+        previous_index = index
+
     for index, module in enumerate(modules):
         if module.id in stack_root:
             continue
         front_module_ids.append(module.id)
-        theta = headings[index]
+        theta = front_heading[index]
         cos_t = cos_degrees(theta)
         sin_t = sin_degrees(theta)
         end_x = front[-1].x_mm + module.width_mm * cos_t
         end_y = front[-1].y_mm + module.width_mm * sin_t
         front.append(PlanPoint(x_mm=end_x, y_mm=end_y))
         normal = PlanPoint(x_mm=-sin_t, y_mm=cos_t)
-        normals.append(normal)
 
         start = front[-2]
         end = front[-1]
@@ -398,7 +480,7 @@ def _plan_geometry(
                 frozenset({module.id, modules[next_index].id})
             )
             if coupling is not None and coupling.kind is ConnectionKind.INLINE:
-                next_theta = headings[next_index]
+                next_theta = front_heading[next_index]
                 next_normal = PlanPoint(
                     x_mm=-sin_degrees(next_theta), y_mm=cos_degrees(next_theta)
                 )
@@ -543,6 +625,52 @@ def _top_with_module_dims(module: ProductModule) -> ParametricNode:
     return tree.model_copy(
         update={"width_mm": module.width_mm, "height_mm": module.height_mm}
     )
+
+
+_SLIDING_OPENINGS = {
+    BayOpeningType.SLIDING_2L,
+    BayOpeningType.SLIDING_3L,
+    BayOpeningType.SLIDING_4L,
+    BayOpeningType.SLIDING,
+}
+
+
+def _sliding_facts(module: ProductModule) -> list[SlidingLayoutFacts]:
+    """Resolved sliding topology per sliding bay — the editor's rail/panel
+    inspector facts, independent of whether the BOM evaluated."""
+    facts: list[SlidingLayoutFacts] = []
+
+    def _visit(node: ParametricNode) -> None:
+        if node.type is NodeType.BAY and node.opening_type in _SLIDING_OPENINGS:
+            try:
+                layout = resolved_sliding_layout(node)
+            except ValueError:
+                layout = None
+            if layout is not None:
+                facts.append(
+                    SlidingLayoutFacts(
+                        bay_id=node.id,
+                        tracks=layout.tracks,
+                        panels=[
+                            SlidingPanelFacts(
+                                slot=panel.slot,
+                                kind=panel.kind,
+                                track=panel.track,
+                                leaf_id=(
+                                    f"{node.id}:L{index + 1}"
+                                    if panel.kind is SlidingPanelKind.MOVING
+                                    else None
+                                ),
+                            )
+                            for index, panel in enumerate(layout.panels)
+                        ],
+                    )
+                )
+        for child in node.children:
+            _visit(child)
+
+    _visit(module.tree)
+    return facts
 
 
 def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
@@ -897,6 +1025,15 @@ def evaluate_product(
                 )
             if result is not None:
                 aggregated.append(_prefix_result(module.id, result))
+        except SlidingLayoutError as error:
+            module_issues.append(
+                ProductIssue(
+                    code=error.code,
+                    severity=Severity.ERROR,
+                    target=f"module:{module.id}",
+                    params={**error.params, "reason": str(error)},
+                )
+            )
         except (ValueError, KeyError, NotImplementedError) as error:
             module_issues.append(
                 ProductIssue(
@@ -908,7 +1045,10 @@ def evaluate_product(
             )
         module_evals.append(
             ModuleEvaluation(
-                module_id=module.id, issues=module_issues, result=result
+                module_id=module.id,
+                issues=module_issues,
+                result=result,
+                sliding=_sliding_facts(module),
             )
         )
         issues.extend(module_issues)
@@ -1427,8 +1567,8 @@ def coupling_ids(product: ProductModel) -> list[str]:
 
 
 def nominal_width_mm(product: ProductModel) -> Decimal:
-    return sum((m.width_mm for m in product.assembly.modules), Decimal("0"))
+    return elevation_envelope(product.assembly)[0]
 
 
 def nominal_height_mm(product: ProductModel) -> Decimal:
-    return max(m.height_mm for m in product.assembly.modules)
+    return elevation_envelope(product.assembly)[1]

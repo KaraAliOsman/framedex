@@ -14,8 +14,8 @@ from dekopen_engine import (
 from dekopen_engine.models import ParametricNode
 
 
-def test_system_params_contract_has_exactly_27_fields() -> None:
-    assert len(SystemParams.model_fields) == 27
+def test_system_params_contract_has_exactly_28_fields() -> None:
+    assert len(SystemParams.model_fields) == 28
     assert "frame_face_width_mm" not in SystemParams.model_fields
     assert "sash_face_width_mm" not in SystemParams.model_fields
     assert "mullion_face_width_mm" not in SystemParams.model_fields

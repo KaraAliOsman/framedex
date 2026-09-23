@@ -9,5 +9,8 @@ export const OPENING_OPTIONS: readonly [Opening, TranslationKey][] = [
   ["TILT_TURN_RIGHT", "intent.tiltRight"],
   ["AWNING", "intent.awning"],
   ["SLIDING_2L", "intent.sliding"],
+  ["SLIDING_3L", "intent.sliding3"],
+  ["SLIDING_4L", "intent.sliding4"],
+  ["SLIDING", "intent.slidingLayout"],
   ["DOOR_ENTRY", "intent.door"],
 ];

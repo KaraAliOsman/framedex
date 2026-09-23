@@ -53,9 +53,42 @@ class BayOpeningType(str, Enum):
     SLIDING_2L = "SLIDING_2L"
     SLIDING_3L = "SLIDING_3L"
     SLIDING_4L = "SLIDING_4L"
+    # Layout-driven sliding unit: the panel/track topology lives in
+    # `sliding_layout`, so arbitrary X/O arrangements need no enum values.
+    SLIDING = "SLIDING"
     AWNING = "AWNING"
     DOOR_ENTRY = "DOOR_ENTRY"
     DOOR_DOUBLE = "DOOR_DOUBLE"
+
+
+class SlidingPanelKind(str, Enum):
+    MOVING = "MOVING"  # rides a rail — a sliding sash leaf
+    FIXED = "FIXED"  # glazed in-frame — an "O" panel
+
+
+class SlidingPanel(EngineModel):
+    """One slot of a sliding unit, ordered left→right in elevation."""
+
+    slot: str
+    kind: SlidingPanelKind
+    # 0-based rail index. Required on MOVING panels, must be null on FIXED —
+    # a fixed pane has no rail. Two adjacent MOVING panels may not share a
+    # track (they would collide before overlapping).
+    track: int | None = None
+
+
+class SlidingLayout(EngineModel):
+    """Track topology of a sliding bay (mandate §12).
+
+    `tracks` is how many of the frame's rails the layout occupies and must
+    not exceed the system profile's rail capacity. `panels` lists every
+    slot left→right; adjacent slots overlap by the system's central
+    overlap. X/O notation: MOVING=X, FIXED=O — e.g. O/X/X/O is
+    panels [FIXED, MOVING@0, MOVING@1, FIXED] on 2 tracks.
+    """
+
+    tracks: int = Field(ge=1)
+    panels: list[SlidingPanel] = Field(min_length=1)
 
 
 class PlanPoint(EngineModel):
@@ -191,6 +224,10 @@ class SystemParams(EngineModel):
     door_threshold_mm: Decimal = Decimal("30.00")
     door_bottom_clearance_mm: Decimal = Decimal("20.00")
     rail_type: RailType = RailType.DUAL
+    # Physical rails the frame profile provides. None = derive from
+    # rail_type (MONO=1, DUAL=2); a catalog with a triple-rail profile
+    # declares it explicitly — layouts may never exceed this capacity.
+    rail_count: int | None = None
     pvc_weight_kg_m: Decimal = Decimal("1.2000")
     steel_weight_kg_m: Decimal = Decimal("1.7000")
     hardware_kit_weight_kg: Decimal = Decimal("2.50")
@@ -216,6 +253,10 @@ class ParametricNode(EngineModel):
     panel_article_sku: str | None = None
     hardware_set_sku: str | None = None
     handle_height_mm: Decimal | None = None
+    # Sliding panel topology (mandate §12). Present on a sliding BAY it
+    # fully defines the unit — slots, moving/fixed kind, rail assignment.
+    # Absent, the SLIDING_*L presets map to canonical layouts.
+    sliding_layout: SlidingLayout | None = None
 
 
 class ProfileCut(EngineModel):

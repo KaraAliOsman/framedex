@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } fr
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
+import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import { memberSurface, type MemberSurface } from "./materials";
 import { contourOutset, contourPathD, insetContourPoints, pointsPathD } from "./contourGeometry";
 import type { MemberGeometry } from "./members";
@@ -144,19 +145,25 @@ export function OpeningGlyph({
       {(kind.startsWith("TILT") || kind === "AWNING") && (
         <polyline points={`${left},${bottom} ${cx},${top} ${right},${bottom}`} fill="none" />
       )}
-      {kind === "SLIDING_2L" && (
-        <>
-          <line x1={cx} y1={top} x2={cx} y2={bottom} />
-          <path
-            d={`M${x + w * 0.2} ${cy} H${x + w * 0.42} M${x + w * 0.38} ${cy - h * 0.05} L${x + w * 0.44} ${cy}`}
-            fill="none"
-          />
-          <path
-            d={`M${x + w * 0.8} ${cy} H${x + w * 0.58} M${x + w * 0.62} ${cy + h * 0.05} L${x + w * 0.56} ${cy}`}
-            fill="none"
-          />
-        </>
-      )}
+      {kind.startsWith("SLIDING") &&
+        (() => {
+          const panes = { SLIDING_3L: 3, SLIDING_4L: 4 }[kind] ?? 2;
+          const paneW = (right - left) / panes;
+          return Array.from({ length: panes }, (_, index) => {
+            const boundary = left + paneW * index;
+            const mid = boundary + paneW / 2;
+            const arrow = paneW * 0.22;
+            return (
+              <g key={`sliding-${index}`}>
+                {index > 0 && <line x1={boundary} y1={top} x2={boundary} y2={bottom} />}
+                <path
+                  d={`M${mid - arrow} ${cy} H${mid + arrow} M${mid + arrow * 0.5} ${cy - h * 0.05} L${mid + arrow} ${cy}`}
+                  fill="none"
+                />
+              </g>
+            );
+          });
+        })()}
       {kind === "DOOR_ENTRY" && <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.35} />}
       {kind === "FIXED" && <line x1={left} y1={top} x2={right} y2={bottom} opacity={0.18} />}
     </g>
@@ -290,33 +297,65 @@ function Bay({
   const insulated = Number(node.glass_thickness_mm ?? "0") >= 12;
   const sashSurface = memberSurface(members.sash.material);
 
-  // Two-track slider: two sash leaves with their meeting-stile interlock —
-  // the rear leaf draws first, the front leaf covers the overlap.
-  if (opening === "SLIDING_2L") {
+  // Sliding topology (mandate §12): panels on rails — each slot is pitch
+  // wide, a moving leaf covers its slot plus the meeting-stile overlap;
+  // rear track draws first so the front leaf covers the interlock. Fixed
+  // panels glaze their slot directly like a fixed bay.
+  if (isSlidingOpening(opening)) {
+    const layout = resolvedSlidingLayout(node);
+    const panels = layout?.panels ?? [];
     const interlock = members.sash.faceWidthMm;
-    const leafW = (region.w + interlock) / 2;
-    const leaves: Region[] = [
-      { x: region.x, y: region.y, w: leafW, h: region.h },
-      { x: region.x + region.w - leafW, y: region.y, w: leafW, h: region.h },
-    ];
+    const pitch = region.w / Math.max(panels.length, 1);
+    const leafW = pitch + interlock;
+    const leafSashT = members.sash.faceWidthMm;
+    const order = panels
+      .map((panel, index) => ({ panel, index }))
+      .sort((a, b) => (a.panel.track ?? -1) - (b.panel.track ?? -1));
     return (
       <g className="module-bay module-bay--sliding">
-        {leaves.map((leaf, index) => {
-          const leafSashT = members.sash.faceWidthMm;
-          const beadX = leaf.x + leafSashT;
-          const beadY = leaf.y + leafSashT;
-          const beadW = leaf.w - leafSashT * 2;
-          const beadH = leaf.h - leafSashT * 2;
+        {order.map(({ panel, index }) => {
+          const slotX = region.x + pitch * index;
+          if (panel.kind === "FIXED") {
+            return (
+              <g key={`leaf-${index}`} className="sliding-leaf sliding-leaf--fixed">
+                <rect
+                  className="member-bead"
+                  x={slotX + bead}
+                  y={region.y + bead}
+                  width={Math.max(pitch - bead * 2, 0)}
+                  height={Math.max(region.h - bead * 2, 0)}
+                />
+                <rect
+                  className="module-glass"
+                  x={slotX + bead * 2}
+                  y={region.y + bead * 2}
+                  width={Math.max(pitch - bead * 4, 0)}
+                  height={Math.max(region.h - bead * 4, 0)}
+                />
+              </g>
+            );
+          }
+          const leafX = Math.min(
+            Math.max(slotX - interlock / 2, region.x),
+            region.x + region.w - leafW,
+          );
+          const beadX = leafX + leafSashT;
+          const beadY = region.y + leafSashT;
+          const beadW = leafW - leafSashT * 2;
+          const beadH = region.h - leafSashT * 2;
+          const midX = leafX + leafW / 2;
+          const midY = region.y + region.h / 2;
+          const arrow = Math.min(leafW, region.h) * 0.16;
           return (
             <g
               key={`leaf-${index}`}
-              className={`sliding-leaf sliding-leaf--${index === 0 ? "rear" : "front"}`}
+              className={`sliding-leaf sliding-leaf--${(panel.track ?? 0) === 0 ? "rear" : "front"}`}
             >
               <Member
-                x={leaf.x}
-                y={leaf.y}
-                w={leaf.w}
-                h={leaf.h}
+                x={leafX}
+                y={region.y}
+                w={leafW}
+                h={region.h}
                 surface={sashSurface}
                 className="member-sash"
               />
@@ -344,6 +383,11 @@ function Bay({
                   }}
                 />
               )}
+              <path
+                className="sliding-arrow"
+                d={`M${midX - arrow} ${midY} H${midX + arrow} M${midX + arrow * 0.5} ${midY - arrow * 0.4} L${midX + arrow} ${midY}`}
+                fill="none"
+              />
             </g>
           );
         })}

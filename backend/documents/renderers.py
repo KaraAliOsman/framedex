@@ -268,21 +268,32 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             f'{_pt(mx)},{_pt(iy + ih)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
-    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L"):
-        leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}[str(opening)]
-        leaf_w = iw / leaf_count
-        for index in range(leaf_count):
+    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L", "SLIDING"):
+        layout = node.get("sliding_layout")
+        layout_panels = (
+            layout.get("panels")
+            if isinstance(layout, dict) and isinstance(layout.get("panels"), list)
+            and layout["panels"] else None
+        )
+        if layout_panels is None:
+            leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}.get(
+                str(opening), 2
+            )
+            layout_panels = [{"kind": "MOVING"} for _ in range(leaf_count)]
+        leaf_w = iw / len(layout_panels)
+        for index, panel in enumerate(layout_panels):
             lx = ix + leaf_w * index
             out.append(
                 f'<rect x="{_pt(lx)}" y="{_pt(iy)}" width="{_pt(leaf_w)}" '
                 f'height="{_pt(ih)}" fill="none" stroke="#075F5A" '
                 f'stroke-width="{stroke}"/>'
             )
-            out.append(
-                f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
-                f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
-                f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
-            )
+            if not isinstance(panel, dict) or panel.get("kind") == "MOVING":
+                out.append(
+                    f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
+                    f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
+                    f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
+                )
     elif opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         out.append(
             f'<line x1="{_pt(ix)}" y1="{_pt(iy + ih)}" x2="{_pt(ix + iw)}" '
@@ -295,13 +306,16 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
 
 
-def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal]:
-    """Sampled SVG `d` for a stored module contour plus its drawn height.
+def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal, Decimal]:
+    """Sampled SVG `d` for a stored module contour, plus its sill offset and
+    its lowest drawn point.
 
     The boundary comes from the engine's own sampler (vertices exact, arcs
     chord-sampled), so issued documents render the same shape the geometry
     evaluated — never a bounding-box stand-in. Points are emitted in screen
-    space (y flipped, top aligned to the highest sampled point)."""
+    space normalized to the highest sampled point, so the module's nominal
+    sill (local y=0) lands at `top` and any downward arc overshoot lands
+    below it."""
     raw = _object(contour_payload, "invalid_frozen_parametric_tree")
     vertices = [
         PlanPoint(
@@ -326,7 +340,7 @@ def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal]:
         f"{'M' if index == 0 else 'L'}{_pt(point.x_mm)},{_pt(top - point.y_mm)}"
         for index, point in enumerate(points)
     ]
-    return " ".join(commands) + " Z", top - bottom
+    return " ".join(commands) + " Z", top, bottom
 
 
 def _position_svg(position: dict[str, object]) -> str:
@@ -351,52 +365,68 @@ def _position_svg(position: dict[str, object]) -> str:
                 assembly.get("couplings", []), "invalid_frozen_parametric_tree"
             )
         ]
-        width = Decimal("0")
-        height = Decimal("0")
-        for index, module in enumerate(modules):
+        # A contour may overshoot its nominal box (an arch rises above it; a
+        # down-swinging arc dips below). Every module still shares ONE sill
+        # line: pass 1 resolves each module's sill offset, pass 2 translates
+        # so the sill is the common baseline and the viewBox spans the
+        # tallest overshoot.
+        draws: list[tuple[dict[str, object], Decimal, Decimal, Decimal, str | None]] = []
+        sill = Decimal("0")
+        below = Decimal("0")
+        for module in modules:
             module_width = _num(module.get("width_mm"))
             module_height = _num(module.get("height_mm"))
             if module_width <= 0 or module_height <= 0:
                 raise DocumentaryError("svg_dimension_invalid")
+            path_d: str | None = None
+            sill_offset = module_height
+            contour_payload = module.get("contour")
+            if contour_payload is not None:
+                path_d, top, bottom = _contour_svg_path(contour_payload)
+                sill_offset = top
+                below = max(below, -bottom)
+            draws.append((module, module_width, module_height, sill_offset, path_d))
+            sill = max(sill, sill_offset)
+        height = sill + below
+
+        width = Decimal("0")
+        for index, (module, module_width, module_height, sill_offset, path_d) in enumerate(draws):
+            baseline = sill - sill_offset
             if index > 0:
                 joint_width = module_width / Decimal("60")
                 elements.append(
                     f'<line x1="{_pt(width)}" y1="0" x2="{_pt(width)}" '
-                    f'y2="{_pt(module_height)}" stroke="#E56A32" '
+                    f'y2="{_pt(baseline + module_height)}" stroke="#E56A32" '
                     f'stroke-width="{_pt(joint_width)}"/>'
                 )
                 if index - 1 < len(couplings):
                     angle = couplings[index - 1].get("angle_deg")
                     if angle is not None:
                         elements.append(
-                            f'<text x="{_pt(width)}" y="{_pt(module_height / Decimal("18"))}" '
+                            f'<text x="{_pt(width)}" y="{_pt(baseline + module_height / Decimal("18"))}" '
                             f'font-size="{_pt(module_height / Decimal("16"))}" '
                             f'fill="#E56A32" text-anchor="middle">'
                             f'{escape(_value(angle))}°</text>'
                         )
-            contour_payload = module.get("contour")
-            drawn_height = module_height
-            if contour_payload is not None:
-                path_d, drawn_height = _contour_svg_path(contour_payload)
+            if path_d is not None:
                 stroke = module_width / Decimal("150")
                 elements.append(
-                    f'<g transform="translate({_pt(width)} 0)">'
+                    f'<g transform="translate({_pt(width)} {_pt(baseline)})">'
                     f'<path d="{path_d}" fill="none" stroke="#252D31" '
                     f'stroke-width="{_pt(stroke)}"/></g>'
                 )
             else:
                 _svg_elements(
                     _object(module.get("tree"), "invalid_frozen_parametric_tree"),
-                    width, Decimal("0"), module_width, module_height, elements, marker,
+                    width, baseline, module_width, module_height, elements, marker,
                 )
             elements.append(
                 f'<text x="{_pt(width + module_width / Decimal("30"))}" '
-                f'y="{_pt(module_height - module_height / Decimal("30"))}" '
+                f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
                 f'font-size="{_pt(module_height / Decimal("18"))}" '
                 f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
             width += module_width
-            height = max(height, drawn_height)
     else:
         width = _num(position.get("width_mm"))
         height = _num(position.get("height_mm"))

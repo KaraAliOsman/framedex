@@ -75,6 +75,11 @@ def calculation_response(request: Mapping[str, object], result: EngineResult) ->
 def evaluation_payload(evaluation: ProductEvaluation) -> dict[str, JsonValue]:
     value = _json_value(evaluation.model_dump())
     assert isinstance(value, dict)
+    # `sliding` facts only serialize when a module actually carries a sliding
+    # bay — an empty list would churn every hash for no information.
+    for module in value.get("modules", []):
+        if isinstance(module, dict) and not module.get("sliding"):
+            module.pop("sliding", None)
     return value
 
 

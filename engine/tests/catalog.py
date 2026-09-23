@@ -259,7 +259,7 @@ def demo_hardware_kits() -> list[HardwareKitRule]:
             )
         ],
     }
-    return [
+    kits = [
         HardwareKitRule(
             sku=sku,
             name=name,
@@ -277,6 +277,24 @@ def demo_hardware_kits() -> list[HardwareKitRule]:
         )
         for sku, name, opening, min_w, max_w, min_h, max_h, max_kg, carriages, stays in rows
     ]
+    kits.append(
+        HardwareKitRule(
+            sku="KIT-SLIDING-MONO",
+            name="Kit Corredera Mono Demo 60",
+            opening_type="SLIDING",
+            min_leaf_width_mm=d("400"),
+            max_leaf_width_mm=d("1500"),
+            min_leaf_height_mm=d("500"),
+            max_leaf_height_mm=d("2500"),
+            max_leaf_weight_kg=d("120"),
+            rail_type=RailType.MONO,
+            carriages_qty=1,
+            stay_arms_qty=0,
+            weight_kg=d("2.10"),
+            contents=[],
+        )
+    )
+    return kits
 
 
 def alu_65_params() -> SystemParams:

@@ -1,4 +1,5 @@
-import type { IntentNode, Opening, SplitType } from "./intentEditing";
+import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
+import { SLIDING_PRESETS } from "./intentEditing";
 import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
 import type { MemberGeometry } from "./members";
 import { FALLBACK_MEMBERS, resolveMembers } from "./members";
@@ -174,6 +175,53 @@ export function makeBowProduct(options: {
 
 export function totalModuleWidth(product: ProductJson): number {
   return product.assembly.modules.reduce((total, module) => total + Number(module.width_mm), 0);
+}
+
+/** The nominal front-elevation envelope — mirrors the engine's
+ * `elevation_envelope` exactly: stacked members project into their root
+ * column, so width sums across columns only and height is the tallest
+ * column's stacked sum. Nominal dims are a contract between this request
+ * body and the server's validation — keep the resolution rules identical. */
+export function elevationEnvelopeMm(product: ProductJson): { width: number; height: number } {
+  const modules = product.assembly.modules;
+  const pairs = product.assembly.couplings.flatMap((coupling, index) => {
+    const pair =
+      coupling.modules ??
+      (index < modules.length - 1 && modules[index] && modules[index + 1]
+        ? ([modules[index]!.id, modules[index + 1]!.id] as const)
+        : undefined);
+    return pair !== undefined && pair.length === 2 ? [{ coupling, pair }] : [];
+  });
+  const stackParent = new Map<string, string>();
+  for (const { coupling, pair } of pairs) {
+    if (coupling.kind !== "STACKED") continue;
+    const edges = coupling.edges ?? ["top", "bottom"];
+    if (edges.length !== 2) continue;
+    const topIndex = edges[0] === "top" ? 0 : edges[1] === "top" ? 1 : -1;
+    if (topIndex === 0 || topIndex === 1) {
+      stackParent.set(pair[(1 - topIndex) as 0 | 1]!, pair[topIndex as 0 | 1]!);
+    }
+  }
+  const moduleIds = new Set(modules.map((module) => module.id));
+  const stackRoot = new Map<string, string>();
+  for (const member of stackParent.keys()) {
+    const seen = new Set<string>();
+    let current = member;
+    while (stackParent.has(current) && !seen.has(current)) {
+      seen.add(current);
+      current = stackParent.get(current) as string;
+    }
+    const anchor = stackParent.has(current) ? undefined : current;
+    if (anchor !== undefined && moduleIds.has(anchor)) stackRoot.set(member, anchor);
+  }
+  let width = 0;
+  const columns = new Map<string, number>();
+  for (const module of modules) {
+    const root = stackRoot.get(module.id) ?? module.id;
+    if (!stackRoot.has(module.id)) width += Number(module.width_mm);
+    columns.set(root, (columns.get(root) ?? 0) + Number(module.height_mm));
+  }
+  return { width, height: columns.size > 0 ? Math.max(...columns.values()) : 0 };
 }
 
 function replaceModule(
@@ -674,9 +722,17 @@ export function setModuleOpening(
     if (node.type === "BAY") {
       // Panels are only an engine input for DOOR_ENTRY; a stale panel sku on a
       // non-door bay would linger invisibly after switching back.
-      return opening === "DOOR_ENTRY"
-        ? { ...node, opening_type: opening }
-        : { ...node, opening_type: opening, panel_article_sku: null };
+      const cleared =
+        opening === "DOOR_ENTRY"
+          ? { ...node, opening_type: opening }
+          : { ...node, opening_type: opening, panel_article_sku: null };
+      // The opening picker selects presets — a stale declared layout would
+      // keep winning over the new preset. "SLIDING" alone needs a layout to
+      // evaluate, so it seeds the 2-leaf topology the user then edits.
+      return {
+        ...cleared,
+        sliding_layout: opening === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
+      };
     }
     return { ...node, children: node.children?.map(withOpening) };
   }
@@ -685,6 +741,30 @@ export function setModuleOpening(
     module.tree.type === "ROOT" && singleChild && module.tree.children?.length === 1
       ? { ...module.tree, children: [withOpening(singleChild)] }
       : withOpening(module.tree);
+  return replaceModule(product, moduleId, { ...module, tree });
+}
+
+/** Author the primary bay's sliding topology (mandate §12). Any manual
+ * layout edit makes the bay layout-driven (`opening_type: "SLIDING"` —
+ * presets resolve without a declared layout). */
+export function setModuleSlidingLayout(
+  product: ProductJson,
+  moduleId: string,
+  layout: SlidingLayout,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  function withLayout(node: IntentNode): IntentNode {
+    if (node.type === "BAY") {
+      return { ...node, opening_type: "SLIDING", sliding_layout: layout };
+    }
+    return { ...node, children: node.children?.map(withLayout) };
+  }
+  const singleChild = module.tree.children?.at(0);
+  const tree =
+    module.tree.type === "ROOT" && singleChild && module.tree.children?.length === 1
+      ? { ...module.tree, children: [withLayout(singleChild)] }
+      : withLayout(module.tree);
   return replaceModule(product, moduleId, { ...module, tree });
 }
 
