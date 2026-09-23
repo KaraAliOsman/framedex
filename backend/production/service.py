@@ -670,20 +670,26 @@ def optimize_work_order(
         stocks = CuttingRepository()
         authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
         profile = stocks.cutting_profile(org_id, cutting_profile_code)
+        per_unit = pieces_from_result(
+            result,
+            color=color,
+            source_position_id=str(position_id) if position_id else None,
+            reinforcement_skus=authorities.reinforcement_skus,
+        )
+        # pieces_from_result already expands each unit's qty via unit_index;
+        # offset by the per-unit count so the identity stays unique per unit.
         pieces = [
-            piece.model_copy(update={"unit_index": repetition})
-            for repetition in range(1, quantity + 1)
-            for piece in pieces_from_result(
-                result,
-                color=color,
-                source_position_id=str(position_id) if position_id else None,
-                reinforcement_skus=authorities.reinforcement_skus,
+            piece.model_copy(
+                update={"unit_index": (repetition - 1) * len(per_unit) + piece.unit_index}
             )
+            for repetition in range(1, quantity + 1)
+            for piece in per_unit
         ]
         bars = optimize_cut(pieces, authorities.stocks, profile).model_dump(mode="json")
 
         rules = _sheet_rules(org_id)
         sheets: list[dict[str, object]] = []
+        sheet_purchases: list[dict[str, object]] = []
         unnested: list[dict[str, object]] = []
         sheet_groups: list[tuple[SheetRule, list[NestPiece]]] = []
         for group_key, entries, kind in (
@@ -698,8 +704,9 @@ def optimize_work_order(
                 label = f"V-{index:02d}" if kind == "GLASS" else f"PAN-{index:02d}"
                 if rule is None:
                     unnested.append({
-                        "kind": kind, "group": group, "width_mm": entry.width_mm,
-                        "height_mm": entry.height_mm, "quantity": quantity,
+                        "kind": kind, "group": group,
+                        "width_mm": str(entry.width_mm),
+                        "height_mm": str(entry.height_mm), "quantity": quantity,
                         "bay_id": entry.bay_id, "leaf_id": entry.leaf_id,
                         "reason": "no_declared_sheet",
                     })
@@ -726,7 +733,17 @@ def optimize_work_order(
             merged.setdefault(rule.workshop_sku, (rule, []))[1].extend(pieces_group)
         for rule, group_pieces in merged.values():
             outcome = nest_rects(group_pieces, rule)
-            sheets.append(outcome.model_dump(mode="json"))
+            sheets.extend(layout.model_dump(mode="json") for layout in outcome.layouts)
+            sheet_purchases.extend(
+                purchase.model_dump(mode="json") for purchase in outcome.purchase_list
+            )
+            for piece in outcome.unplaced:
+                unnested.append({
+                    "kind": "SHEET", "group": rule.workshop_sku,
+                    "width_mm": str(piece.width_mm), "height_mm": str(piece.height_mm),
+                    "quantity": 1, "bay_id": piece.bay_id, "leaf_id": piece.leaf_id,
+                    "reason": "piece_larger_than_usable_sheet",
+                })
 
         optimization = {
             "schema": "work_order_optimization_v1",
@@ -736,6 +753,7 @@ def optimize_work_order(
             "units": quantity,
             "bars": bars,
             "sheets": sheets,
+            "sheet_purchases": sheet_purchases,
             "unnested": unnested,
         }
         new_payload = {**payload, "optimization": optimization}

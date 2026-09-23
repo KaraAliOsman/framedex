@@ -10,10 +10,14 @@ from dekopen_engine.nesting import (
 )
 
 
-def _piece(pid: str, w: str, h: str, **kwargs) -> NestPiece:
+def _piece(
+    pid: str, w: str, h: str, *,
+    unit_index: int = 1, allow_rotation: bool = True,
+) -> NestPiece:
     return NestPiece(
         piece_id=pid, workshop_sku="DVH4",
-        width_mm=Decimal(w), height_mm=Decimal(h), **kwargs,
+        width_mm=Decimal(w), height_mm=Decimal(h),
+        unit_index=unit_index, allow_rotation=allow_rotation,
     )
 
 
@@ -24,7 +28,7 @@ RULE = SheetRule(
 )
 
 
-def test_nests_pieces_on_one_sheet_with_exact_yield():
+def test_nests_pieces_on_one_sheet_with_exact_yield() -> None:
     pieces = [_piece("a", "810", "630"), _piece("b", "810", "630", unit_index=2)]
     result = nest_rects(pieces, RULE)
     assert len(result.layouts) == 1
@@ -45,7 +49,7 @@ def test_nests_pieces_on_one_sheet_with_exact_yield():
         assert placement.y_mm + placement.height_mm <= Decimal("1600") - Decimal("5")
 
 
-def test_placements_never_overlap():
+def test_placements_never_overlap() -> None:
     pieces = [_piece(f"p{i}", "900", "700", unit_index=i) for i in range(1, 5)]
     result = nest_rects(pieces, RULE)
     rects = [
@@ -58,14 +62,14 @@ def test_placements_never_overlap():
             assert not overlap, f"placements overlap: {a} vs {b}"
 
 
-def test_opens_new_sheet_when_first_is_full():
+def test_opens_new_sheet_when_first_is_full() -> None:
     pieces = [_piece("a", "1900", "1500"), _piece("b", "1900", "1500", unit_index=2)]
     result = nest_rects(pieces, RULE)
     assert len(result.layouts) == 2
     assert result.purchase_list[0].qty_sheets == 2
 
 
-def test_rotates_when_rotation_is_the_only_fit():
+def test_rotates_when_rotation_is_the_only_fit() -> None:
     rule = SheetRule(
         workshop_sku="DVH4", purchasing_sku="X",
         sheet_width_mm=Decimal("1000"), sheet_height_mm=Decimal("2000"),
@@ -75,7 +79,7 @@ def test_rotates_when_rotation_is_the_only_fit():
     assert result.layouts[0].placements[0].rotated is True
 
 
-def test_no_rotation_leaves_piece_unplaced():
+def test_no_rotation_leaves_piece_unplaced() -> None:
     rule = SheetRule(
         workshop_sku="DVH4", purchasing_sku="X",
         sheet_width_mm=Decimal("1000"), sheet_height_mm=Decimal("2000"),
@@ -86,13 +90,13 @@ def test_no_rotation_leaves_piece_unplaced():
     assert result.layouts == []
 
 
-def test_oversized_piece_goes_to_unplaced():
+def test_oversized_piece_goes_to_unplaced() -> None:
     piece = _piece("big", "3000", "2000")
     result = nest_rects([piece], RULE)
     assert result.unplaced == [piece]
 
 
-def test_edge_trim_reduces_usable_area():
+def test_edge_trim_reduces_usable_area() -> None:
     rule = SheetRule(
         workshop_sku="DVH4", purchasing_sku="X",
         sheet_width_mm=Decimal("1000"), sheet_height_mm=Decimal("1000"),
@@ -102,13 +106,13 @@ def test_edge_trim_reduces_usable_area():
         nest_rects([_piece("a", "100", "100")], rule)
 
 
-def test_duplicate_identity_is_rejected():
+def test_duplicate_identity_is_rejected() -> None:
     pieces = [_piece("dup", "100", "100"), _piece("dup", "200", "200")]
     with pytest.raises(ValueError, match="Duplicate"):
         nest_rects(pieces, RULE)
 
 
-def test_result_is_deterministic():
+def test_result_is_deterministic() -> None:
     pieces = [
         _piece("a", "810", "630"), _piece("b", "900", "700"),
         _piece("c", "400", "300"), _piece("d", "810", "630", unit_index=2),

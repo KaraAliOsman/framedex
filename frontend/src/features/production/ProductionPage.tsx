@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import {
   productionOrderDetail,
+  productionOrderOptimize,
   productionOrders,
   productionStepTransition,
 } from "../../api/generated/dekopen";
@@ -23,6 +24,57 @@ type WorkOrderMaterials = {
 };
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE";
+
+type CutPlacement = {
+  piece_id: string;
+  length_mm: string;
+  unit_index?: number;
+  bay_id?: string | null;
+  leaf_id?: string | null;
+};
+type CutBar = {
+  bar_index: number;
+  commercial_sku: string;
+  stock_length_mm: string;
+  remainder_mm: string;
+  yield_pct: string;
+  cuts: CutPlacement[];
+};
+type PurchaseLine = { commercial_sku: string; qty_bars: number; stock_length_mm: string };
+type SheetPurchase = { purchasing_sku: string; qty_sheets: number };
+type NestPlacement = {
+  piece_id: string;
+  x_mm: string;
+  y_mm: string;
+  width_mm: string;
+  height_mm: string;
+  rotated: boolean;
+  unit_index?: number;
+};
+type SheetLayout = {
+  sheet_index: number;
+  purchasing_sku: string;
+  sheet_width_mm: string;
+  sheet_height_mm: string;
+  yield_pct: string;
+  placements: NestPlacement[];
+};
+type UnnestedPiece = {
+  kind: string;
+  group: string;
+  width_mm: string;
+  height_mm: string;
+  quantity: number;
+};
+type WorkOrderOptimization = {
+  color?: string;
+  units?: number;
+  optimized_at?: string;
+  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
+  sheets?: SheetLayout[];
+  sheet_purchases?: SheetPurchase[];
+  unnested?: UnnestedPiece[];
+};
 
 const stepStatusKey: Record<string, Parameters<typeof t>[0]> = {
   PENDING: "production.stepPending",
@@ -46,6 +98,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   NOTE: "production.eventNote",
   WO_COMPLETED: "production.eventCompleted",
   WO_HOLD: "production.eventHold",
+  WO_OPTIMIZED: "production.eventOptimized",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -81,6 +134,7 @@ export function ProductionPage(): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");
+  const [optColor, setOptColor] = useState("");
   const mounted = useRef(true);
   useEffect(
     () => () => {
@@ -143,6 +197,11 @@ export function ProductionPage(): JSX.Element {
       productionStepTransition(stepId, { action: stepAction, note: noteValue ?? null }),
       orderId,
     );
+  }
+
+  function optimize(orderId: string): void {
+    if (!optColor.trim()) return;
+    void action(productionOrderOptimize(orderId, { color: optColor.trim() }), orderId);
   }
 
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
@@ -222,6 +281,150 @@ export function ProductionPage(): JSX.Element {
                   </dl>
                 );
               })()}
+              {(() => {
+                const optimization = detail.payload?.optimization as
+                  WorkOrderOptimization | undefined;
+                const canOptimize = role === "OWNER" || role === "WORKSHOP_MANAGER";
+                const cutPlan = optimization?.bars?.workshop_cut_plan ?? [];
+                const purchases = optimization?.bars?.purchase_list ?? [];
+                const layouts = optimization?.sheets ?? [];
+                const unnested = optimization?.unnested ?? [];
+                const sheetPurchases = optimization?.sheet_purchases ?? [];
+                return (
+                  <section
+                    className="production-optimize"
+                    aria-label={t("production.optimizeTitle")}
+                  >
+                    <header className="production-optimize-head">
+                      <h3>{t("production.optimizeTitle")}</h3>
+                      {optimization?.optimized_at ? (
+                        <time dateTime={optimization.optimized_at}>
+                          {t("production.optimizeRunAt")}:
+                          {new Date(optimization.optimized_at).toLocaleString("es-CL")}
+                        </time>
+                      ) : null}
+                    </header>
+                    {canOptimize && detail.status !== "COMPLETED" ? (
+                      <div className="production-optimize-controls">
+                        <input
+                          type="text"
+                          value={optColor}
+                          onChange={(event) => setOptColor(event.target.value)}
+                          placeholder={t("production.optimizeColorPlaceholder")}
+                          aria-label={t("production.optimizeColor")}
+                        />
+                        <button
+                          type="button"
+                          disabled={busy || !optColor.trim()}
+                          onClick={() => optimize(detail.id)}
+                        >
+                          {t("production.optimizeButton")}
+                        </button>
+                      </div>
+                    ) : null}
+                    {!optimization ? (
+                      <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
+                    ) : (
+                      <>
+                        {cutPlan.length ? (
+                          <table className="production-plan">
+                            <thead>
+                              <tr>
+                                <th>{t("production.optimizeBar")}</th>
+                                <th>{t("production.optimizeSku")}</th>
+                                <th>{t("production.optimizeStock")}</th>
+                                <th>{t("production.optimizeCuts")}</th>
+                                <th>{t("production.optimizeRemainder")}</th>
+                                <th>{t("production.optimizeYield")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cutPlan.map((bar) => (
+                                <tr key={bar.bar_index}>
+                                  <td>#{bar.bar_index}</td>
+                                  <td>{bar.commercial_sku}</td>
+                                  <td>{bar.stock_length_mm} mm</td>
+                                  <td>
+                                    {bar.cuts
+                                      .map(
+                                        (cut) =>
+                                          `${cut.piece_id} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
+                                      )
+                                      .join(" · ")}
+                                  </td>
+                                  <td>{bar.remainder_mm} mm</td>
+                                  <td>{bar.yield_pct}%</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : null}
+                        {purchases.length || sheetPurchases.length ? (
+                          <p className="production-optimize-purchases">
+                            {t("production.optimizePurchases")}:{" "}
+                            {purchases
+                              .map(
+                                (line) =>
+                                  `${line.qty_bars} ${t("production.optimizePurchaseUnit")} ${line.commercial_sku}`,
+                              )
+                              .concat(
+                                sheetPurchases.map(
+                                  (line) =>
+                                    `${line.qty_sheets} ${t("production.optimizePurchaseSheet")} ${line.purchasing_sku}`,
+                                ),
+                              )
+                              .join(" · ")}
+                          </p>
+                        ) : null}
+                        {layouts.length ? (
+                          <table className="production-plan">
+                            <thead>
+                              <tr>
+                                <th>{t("production.optimizeSheet")}</th>
+                                <th>{t("production.optimizeSku")}</th>
+                                <th>{t("production.optimizeSize")}</th>
+                                <th>{t("production.optimizePieces")}</th>
+                                <th>{t("production.optimizeYield")}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {layouts.map((layout) => (
+                                <tr key={`${layout.purchasing_sku}-${layout.sheet_index}`}>
+                                  <td>#{layout.sheet_index}</td>
+                                  <td>{layout.purchasing_sku}</td>
+                                  <td>
+                                    {layout.sheet_width_mm}×{layout.sheet_height_mm} mm
+                                  </td>
+                                  <td>
+                                    {layout.placements
+                                      .map(
+                                        (piece) =>
+                                          `${piece.piece_id}${piece.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
+                                      )
+                                      .join(" · ")}
+                                  </td>
+                                  <td>{layout.yield_pct}%</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : null}
+                        {unnested.length ? (
+                          <p className="production-optimize-unnested" role="alert">
+                            {t("production.optimizeUnnested")}:{" "}
+                            {unnested
+                              .map(
+                                (piece) =>
+                                  `${piece.kind} ${piece.width_mm}×${piece.height_mm} mm ×${piece.quantity} (${piece.group})`,
+                              )
+                              .join(" · ")}
+                          </p>
+                        ) : null}
+                      </>
+                    )}
+                  </section>
+                );
+              })()}
               <ol className="production-steps">
                 {detail.steps.map((step) => (
                   <li key={step.id} className={`production-step step-${step.status.toLowerCase()}`}>
@@ -237,18 +440,18 @@ export function ProductionPage(): JSX.Element {
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
                     {detail.status !== "COMPLETED" ? (
-                    <div className="production-step-actions">
-                      {stepActions(step).map((stepAction) => (
-                        <button
-                          key={stepAction}
-                          type="button"
-                          disabled={busy}
-                          onClick={() => transition(step.id, stepAction, detail.id)}
-                        >
-                          {t(actionLabel[stepAction])}
-                        </button>
-                      ))}
-                    </div>
+                      <div className="production-step-actions">
+                        {stepActions(step).map((stepAction) => (
+                          <button
+                            key={stepAction}
+                            type="button"
+                            disabled={busy}
+                            onClick={() => transition(step.id, stepAction, detail.id)}
+                          >
+                            {t(actionLabel[stepAction])}
+                          </button>
+                        ))}
+                      </div>
                     ) : null}
                   </li>
                 ))}

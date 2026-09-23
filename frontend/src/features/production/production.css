@@ -202,3 +202,85 @@
     grid-template-columns: 1fr;
   }
 }
+
+.production-optimize {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 0.25rem;
+  padding: 0.9rem;
+  margin-bottom: 1rem;
+  background: var(--theme-surface-panel);
+}
+.production-optimize-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.production-optimize-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.production-optimize-head time {
+  color: var(--theme-text-secondary);
+  font-family: var(--theme-font-mono);
+  font-size: 0.75rem;
+}
+.production-optimize-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+}
+.production-optimize-controls input {
+  background: var(--theme-bg-canvas);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border-subtle);
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.25rem;
+  font-family: var(--theme-font-mono);
+  width: 10rem;
+}
+.production-optimize-controls button {
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.production-optimize-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.production-optimize-empty {
+  color: var(--theme-text-secondary);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+.production-plan {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.6rem;
+}
+.production-plan th {
+  text-align: left;
+  color: var(--theme-text-secondary);
+  font-weight: 500;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+.production-plan td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  vertical-align: top;
+}
+.production-plan td:first-child {
+  font-family: var(--theme-font-mono);
+  color: var(--theme-text-secondary);
+}
+.production-optimize-purchases {
+  font-size: 0.85rem;
+  color: var(--theme-text-secondary);
+  margin: 0.6rem 0 0;
+}
+.production-optimize-unnested {
+  font-size: 0.85rem;
+  color: var(--theme-warning, #b45309);
+  margin: 0.6rem 0 0;
+}
