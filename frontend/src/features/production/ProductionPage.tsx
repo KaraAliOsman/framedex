@@ -421,7 +421,8 @@ export function ProductionPage(): JSX.Element {
                     </header>
                     {canOptimize &&
                     detail.status !== "COMPLETED" &&
-                    detail.status !== "DISPATCHED" ? (
+                    detail.status !== "DISPATCHED" &&
+                    detail.status !== "INSTALLED" ? (
                       <div className="production-optimize-controls">
                         <input
                           type="text"
@@ -447,7 +448,8 @@ export function ProductionPage(): JSX.Element {
                         <div className="production-cnc">
                           {canOptimize &&
                           detail.status !== "COMPLETED" &&
-                          detail.status !== "DISPATCHED" ? (
+                          detail.status !== "DISPATCHED" &&
+                          detail.status !== "INSTALLED" ? (
                             <button
                               type="button"
                               disabled={busy}

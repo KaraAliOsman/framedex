@@ -306,36 +306,37 @@ def confirm_installation(
     Idempotent: replaying on an INSTALLED order returns the current state.
     """
     with transaction.atomic(), documentary_backend():
-            order = one(
-                "SELECT id, order_code, status, payload_json FROM public.orders "
-                "WHERE id = %s AND org_id = %s FOR UPDATE",
-                [str(order_id), str(org_id)],
-            )
-            if order["status"] == "INSTALLED":
-                return get_work_order(org_id=org_id, order_id=order_id)
-            if order["status"] != "DISPATCHED":
-                raise DocumentaryError("installation_requires_dispatched")
-            rows(
-                "UPDATE public.orders SET status = 'INSTALLED' "
-                "WHERE id = %s AND org_id = %s RETURNING id",
-                [str(order_id), str(org_id)],
-            )
-            rows(
-                """INSERT INTO public.production_step_events
-                       (org_id, order_id, event, actor_id, payload)
+        order = one(
+            "SELECT id, order_code, status, payload_json FROM public.orders "
+            "WHERE id = %s AND org_id = %s FOR UPDATE",
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if order["status"] == "INSTALLED":
+            return get_work_order(org_id=org_id, order_id=order_id)
+        if order["status"] != "DISPATCHED":
+            raise DocumentaryError("installation_requires_dispatched")
+        rows(
+            "UPDATE public.orders SET status = 'INSTALLED', updated_at = %s "
+            "WHERE id = %s AND org_id = %s RETURNING id",
+            [datetime.now(timezone.utc), str(order_id), str(org_id)],
+        )
+        rows(
+            """INSERT INTO public.production_step_events
+                   (org_id, order_id, event, actor_id, payload)
                    VALUES (%s, %s, 'WO_INSTALLED', %s, %s) RETURNING id""",
-                [
-                    org_id,
-                    str(order_id),
-                    actor_id,
-                    json.dumps(
-                        {
-                            "order_code": order["order_code"],
-                            "note": (note or "").strip() or None,
-                        }
-                    ),
-                ],
-            )
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps(
+                    {
+                        "order_code": order["order_code"],
+                        "note": (note or "").strip() or None,
+                    }
+                ),
+            ],
+        )
     return get_work_order(org_id=org_id, order_id=order_id)
 
 
