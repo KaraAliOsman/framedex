@@ -22,7 +22,7 @@ VALUES (
     uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60'),
     NULL,
     'DEMO_60',
-    'Sistema Demo 60mm PVC',
+    'Sistema Demo 60mm PVC — referencia sintética',
     60.00,
     'PVC',
     3,
@@ -537,7 +537,7 @@ INSERT INTO public.profile_systems (
     door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
     sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
     chamber_clearance_mm, is_global, is_demo
-) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65'), NULL, 'ALU_65', 'Línea Aluminio 65 — SYNTHETIC TEST DATA', 65.00,'ALUMINIUM',1,6.00,4.00,4.00,10.00,25.00,3.00,5.00,2.00,8.00,25.00,18.00,'dual',15.00,15.00,5.00,8.00, TRUE, TRUE)
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65'), NULL, 'ALU_65', 'Línea Aluminio 65 — referencia sintética', 65.00,'ALUMINIUM',1,6.00,4.00,4.00,10.00,25.00,3.00,5.00,2.00,8.00,25.00,18.00,'dual',15.00,15.00,5.00,8.00, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
     chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
@@ -564,7 +564,7 @@ INSERT INTO public.profile_systems (
     door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
     sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
     chamber_clearance_mm, is_global, is_demo
-) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45'), NULL, 'GLASS_45', 'Línea Vidrio 45 Minimal — SYNTHETIC TEST DATA', 45.00,'ALUMINIUM',1,4.00,3.00,3.00,8.00,18.00,2.00,4.00,1.50,6.00,12.00,12.00,'dual',10.00,10.00,3.00,6.00, TRUE, TRUE)
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45'), NULL, 'GLASS_45', 'Vidrio-dominante 45 (aluminio) — referencia sintética', 45.00,'ALUMINIUM',1,4.00,3.00,3.00,8.00,18.00,2.00,4.00,1.50,6.00,12.00,12.00,'dual',10.00,10.00,3.00,6.00, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
     chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
