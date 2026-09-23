@@ -14246,6 +14246,9 @@ components:
         inventory:
           type: object
           additionalProperties: {}
+        deliveries:
+          type: object
+          additionalProperties: {}
         documents:
           type: object
           additionalProperties: {}
@@ -14257,6 +14260,7 @@ components:
           items: {}
       required:
       - avg_release_to_dispatch_hours
+      - deliveries
       - documents
       - inventory
       - projects

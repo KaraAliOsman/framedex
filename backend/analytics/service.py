@@ -78,6 +78,17 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             )["n"]
         ),
     }
+    deliveries = one(
+        """
+        SELECT
+            count(*) FILTER (WHERE scheduled_date = CURRENT_DATE
+                AND status IN ('SCHEDULED','ON_ROUTE')) AS today,
+            count(*) FILTER (WHERE scheduled_date < CURRENT_DATE
+                AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS overdue
+        FROM public.deliveries WHERE org_id = %s
+        """,
+        [str(org_id)],
+    )
     documents = {
         str(row["document_type"]): int(row["n"])
         for row in rows(
@@ -126,6 +137,7 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             round(float(lag_hours), 1) if lag_hours is not None else None
         ),
         "inventory": inventory,
+        "deliveries": {k: int(v or 0) for k, v in deliveries.items()},
         "documents": documents,
         "projects": {k: int(v or 0) for k, v in projects.items()},
         "recent_events": recent,

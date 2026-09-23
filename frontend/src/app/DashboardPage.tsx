@@ -91,11 +91,37 @@ export function DashboardPage(): JSX.Element {
   const byActivity = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const recent = byActivity.slice(0, 8);
   const next = byActivity.find((item) => item.status === "DRAFT") ?? null;
-  const active = items.filter((item) => item.status === "DRAFT" || item.status === "QUOTED");
-  const inProduction = items.filter(
-    (item) => item.status === "APPROVED" || item.status === "IN_PRODUCTION",
-  );
   const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
+
+  const workOrders = (opsQuery.data?.work_orders ?? {}) as Record<string, number>;
+  const deliveries = (opsQuery.data?.deliveries ?? {}) as Record<string, number>;
+  const attentionCandidates: { key: TranslationKey; count: number; to: string; warn: boolean }[] = [
+    {
+      key: "dashboard.deliveriesOverdue",
+      count: Number(deliveries.overdue ?? 0),
+      to: "/production",
+      warn: true,
+    },
+    {
+      key: "dashboard.deliveriesToday",
+      count: Number(deliveries.today ?? 0),
+      to: "/production",
+      warn: false,
+    },
+    {
+      key: "dashboard.ordersHold",
+      count: Number(workOrders.HOLD ?? 0),
+      to: "/production",
+      warn: true,
+    },
+    {
+      key: "dashboard.quotesWaiting",
+      count: items.filter((item) => item.status === "QUOTED").length,
+      to: "/projects",
+      warn: false,
+    },
+  ];
+  const attention = attentionCandidates.filter((entry) => entry.count > 0);
 
   return (
     <section className="dashboard" aria-labelledby="page-title">
@@ -112,6 +138,27 @@ export function DashboardPage(): JSX.Element {
       </header>
 
       {query.isError && <p role="alert">{t("projects.uncertain")}</p>}
+
+      <section className="dashboard-attention" aria-label={t("dashboard.attention")}>
+        <h2 className="eyebrow">{t("dashboard.attention")}</h2>
+        {attention.length === 0 ? (
+          <p className="dashboard-attention-clear">{t("dashboard.allClear")}</p>
+        ) : (
+          <ul>
+            {attention.map((entry) => (
+              <li
+                key={entry.key}
+                className={entry.warn ? "attention-item is-warn" : "attention-item"}
+              >
+                <Link to={entry.to}>
+                  <span>{t(entry.key)}</span>
+                  <strong>{entry.count}</strong>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {next && (
         <Link to={`/projects/${next.id}`} className="dashboard-continue">
@@ -185,21 +232,6 @@ export function DashboardPage(): JSX.Element {
           ) : null}
         </section>
       ) : null}
-
-      <div className="dashboard-cards">
-        <div className="metric-card">
-          <span className="eyebrow">{t("dashboard.inProgress")}</span>
-          <strong>{active.length}</strong>
-        </div>
-        <div className="metric-card">
-          <span className="eyebrow">{t("dashboard.production")}</span>
-          <strong>{inProduction.length}</strong>
-        </div>
-        <div className="metric-card">
-          <span className="eyebrow">{t("projects.title")}</span>
-          <strong>{items.length}</strong>
-        </div>
-      </div>
 
       {query.isPending ? (
         <p role="status">{t("projects.loading")}</p>

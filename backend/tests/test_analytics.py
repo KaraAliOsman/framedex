@@ -51,6 +51,8 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
             return {"n": 7}
         if "offcut_inventory" in lowered:
             return {"n": 2}
+        if "deliveries" in lowered:
+            return {"today": 2, "overdue": 1}
         if "projects" in lowered:
             return {"projects": 5, "positions": 9, "sealed_versions": 3}
         raise AssertionError(f"unexpected one(): {lowered}")
@@ -67,6 +69,7 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert out["throughput_30d"]["dispatched_30d"] == 3
     assert out["avg_release_to_dispatch_hours"] == 4.3
     assert out["inventory"] == {"items": 7, "offcuts": 2}
+    assert out["deliveries"] == {"today": 2, "overdue": 1}
     assert out["documents"] == {"DOC-03": 4}
     assert out["projects"]["sealed_versions"] == 3
     assert out["recent_events"][0]["event"] == "WO_INSTALLED"
