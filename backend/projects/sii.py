@@ -36,6 +36,7 @@ from authentication.errors import contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import credit_notes
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -109,7 +110,7 @@ def _parse_caf(xml_text: str) -> dict:
         raise contract_error(
             422, "sii_caf_invalid", "El rango o tipo de DTE del CAF no es válido."
         ) from error
-    if tipo_dte <= 0 or folio_desde > folio_hasta:
+    if tipo_dte <= 0 or folio_desde < 1 or folio_desde > folio_hasta:
         raise contract_error(
             422, "sii_caf_invalid", "El rango o tipo de DTE del CAF no es válido."
         )
@@ -158,13 +159,24 @@ def _caf_private_key(rsask: str):
     )
 
 
-def _sign_dd(dd_xml: str, rsask: str) -> str:
-    key = _caf_private_key(_unwrap_rsask(rsask))
+def _latin1(xml: str) -> bytes:
+    """DTE files are ISO-8859-1 per the SII convention — anything outside
+    latin-1 can't be stamped and is refused rather than silently mangled."""
+    try:
+        return xml.encode("iso-8859-1")
+    except UnicodeEncodeError as error:
+        raise contract_error(
+            422,
+            "sii_dte_unrepresentable",
+            "El DTE contiene caracteres no representables en ISO-8859-1.",
+        ) from error
+
+
+def _sign_dd(dd_xml: str, rsask: str, aad: bytes | None = None) -> str:
+    key = _caf_private_key(_unwrap_rsask(rsask, aad))
     # The SII signs the DD as ISO-8859-1 bytes — UTF-8 would verify locally
     # and fail the SII verifier on every accented character.
-    signature = key.sign(
-        dd_xml.encode("iso-8859-1"), padding.PKCS1v15(), hashes.SHA1()
-    )
+    signature = key.sign(_latin1(dd_xml), padding.PKCS1v15(), hashes.SHA1())
     return base64.b64encode(signature).decode("ascii")
 
 
@@ -181,7 +193,22 @@ def _kek() -> bytes | None:
     return key if len(key) == 32 else None
 
 
-def _wrap_rsask(rsask: str) -> str:
+def _caf_aad(org_id: str, tipo_dte: int, desde: int, hasta: int) -> bytes:
+    """AES-GCM associated data binding a wrapped key to its exact CAF pool —
+    ciphertext moved onto another row (or org) can never be decrypted."""
+    return f"sii_cafs:{org_id}:{tipo_dte}:{desde}:{hasta}".encode("utf-8")
+
+
+def _row_aad(org_id: str, caf: dict) -> bytes:
+    return _caf_aad(
+        org_id,
+        int(caf["tipo_dte"]),
+        int(caf["folio_desde"]),
+        int(caf["folio_hasta"]),
+    )
+
+
+def _wrap_rsask(rsask: str, aad: bytes | None = None) -> str:
     """Envelope-encrypt the CAF private key (AES-256-GCM, fresh nonce) for
     storage. Refuses to persist plaintext — an unconfigured KEK fails closed."""
     kek = _kek()
@@ -192,17 +219,21 @@ def _wrap_rsask(rsask: str) -> str:
             "SII_CAF_KEK no está configurado — las claves CAF no se almacenan en claro.",
         )
     nonce = os.urandom(12)
-    blob = AESGCM(kek).encrypt(nonce, rsask.encode("utf-8"), None)
+    blob = AESGCM(kek).encrypt(nonce, rsask.encode("utf-8"), aad)
     return (
-        f"enc:v1:{base64.b64encode(nonce).decode()}"
+        f"enc:v2:{base64.b64encode(nonce).decode()}"
         f":{base64.b64encode(blob).decode()}"
     )
 
 
-def _unwrap_rsask(stored: str) -> str:
-    """Inverse of ``_wrap_rsask``; rows stored before encryption existed are
-    still readable so a KEK rollout never strands an older pool."""
-    if not stored.startswith("enc:v1:"):
+def _unwrap_rsask(stored: str, aad: bytes | None = None) -> str:
+    """Inverse of ``_wrap_rsask``; rows stored before envelope versions existed
+    are still readable so a KEK rollout never strands an older pool."""
+    if stored.startswith("enc:v2:"):
+        versioned_aad: bytes | None = aad
+    elif stored.startswith("enc:v1:"):
+        versioned_aad = None
+    else:
         return stored
     kek = _kek()
     if kek is None:
@@ -214,7 +245,7 @@ def _unwrap_rsask(stored: str) -> str:
     _, _, nonce_b64, blob_b64 = stored.split(":", 3)
     try:
         return AESGCM(kek).decrypt(
-            base64.b64decode(nonce_b64), base64.b64decode(blob_b64), None
+            base64.b64decode(nonce_b64), base64.b64decode(blob_b64), versioned_aad
         ).decode("utf-8")
     except Exception as error:
         raise contract_error(
@@ -229,9 +260,9 @@ def _ensure_rsask_wrapped(caf: dict, org_id: str) -> dict:
     inside the folio transaction, so no fiscal key is ever *used* from
     cleartext storage. Without a KEK it fails closed — plaintext never
     signs."""
-    if caf["rsask"].startswith("enc:v1:"):
+    if caf["rsask"].startswith(("enc:v1:", "enc:v2:")):
         return caf
-    wrapped = _wrap_rsask(caf["rsask"])
+    wrapped = _wrap_rsask(caf["rsask"], _row_aad(org_id, caf))
     rows(
         "UPDATE public.sii_cafs SET rsask=%s "
         "WHERE id=%s AND org_id=%s RETURNING id",
@@ -378,7 +409,15 @@ def register_caf(
                 (cmna_origen or "").strip() or None,
                 acteco,
                 parsed["caf_xml"],
-                _wrap_rsask(parsed["rsask"]),
+                _wrap_rsask(
+                    parsed["rsask"],
+                    _caf_aad(
+                        org_id_s,
+                        parsed["tipo_dte"],
+                        parsed["folio_desde"],
+                        parsed["folio_hasta"],
+                    ),
+                ),
                 parsed["rsapk_m"],
                 parsed["rsapk_e"],
                 file_hash,
@@ -461,11 +500,11 @@ def _render_dte(
     # The DD is signed as serialized — build it once, byte-exact.
     dd = (
         f"<DD><RE>{caf['rut_emisor']}</RE><TD>{tipo}</TD><F>{folio}</F>"
-        f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name)}</RSR>"
+        f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name[:40])}</RSR>"
         f"<MNT>{total}</MNT><IT1>{escape(item)}</IT1>{caf['caf_xml']}"
         f"<TSTED>{tsted}</TSTED></DD>"
     )
-    frmt = _sign_dd(dd, caf["rsask"])
+    frmt = _sign_dd(dd, caf["rsask"], _row_aad(str(caf["org_id"]), caf))
     return (
         '<?xml version="1.0" encoding="ISO-8859-1"?>'
         f'<DTE version="1.0" xmlns="http://www.sii.cl/SiiDte">'
@@ -486,16 +525,8 @@ def _render_dte(
 
 
 def _encode_dte(xml: str) -> bytes:
-    """DTE files are ISO-8859-1 per the SII convention — anything outside
-    latin-1 can't be stamped and is refused rather than silently mangled."""
-    try:
-        return xml.encode("iso-8859-1")
-    except UnicodeEncodeError as error:
-        raise contract_error(
-            422,
-            "sii_dte_unrepresentable",
-            "El DTE contiene caracteres no representables en ISO-8859-1.",
-        ) from error
+    """Serialize the DTE as the SII's ISO-8859-1 bytes."""
+    return _latin1(xml)
 
 
 def _receptor(payload: dict) -> tuple[str, str, str]:
@@ -785,42 +816,47 @@ def dtes_by_invoice(*, org_id: UUID, project_id: UUID) -> dict:
 
 
 def emit_credit_note_dte(
-    *, org_id: UUID, project: dict, credit_note_id: UUID, actor_id: UUID
+    *,
+    org_id: UUID,
+    project: dict,
+    invoice_id: UUID,
+    actor_id: UUID,
+    reason: str | None = None,
 ) -> dict:
-    """Timbra a nota de crédito as DTE-61. Its <Referencia> points at the
-    parent factura's stamped folio, so the parent's DTE-33 must exist —
-    a credit note can never invent a folio the SII didn't issue.
-    UNIQUE(org_id, credit_note_id) makes a retried emit replay the row."""
-    org_id_s, project_id_s, credit_id_s = (
-        str(org_id),
-        str(project["id"]),
-        str(credit_note_id),
-    )
+    """Timbra the electronic annulment of a stamped factura: seals the nota
+    de crédito document AND its DTE-61 in one transaction — a factura the
+    SII stamped is annulled electronically, never by a paper-only note.
+    The NC's <Referencia> points at the parent's stamped folio (CodRef=1),
+    so the parent's DTE-33 must exist first. UNIQUE(invoice_id) on the
+    credit note and UNIQUE(org_id, credit_note_id) on the DTE make a
+    retried emit replay the same artifacts."""
+    org_id_s, project_id_s, invoice_id_s = str(org_id), str(project["id"]), str(invoice_id)
     object_key: str | None = None
+    credit_object_key: str | None = None
     try:
         with transaction.atomic(), documentary_backend():
-            credit_note = one(
-                "SELECT * FROM public.project_credit_notes "
+            invoice = one(
+                "SELECT * FROM public.project_invoices "
                 "WHERE id=%s AND org_id=%s AND project_id=%s",
-                [credit_id_s, org_id_s, project_id_s],
-                "credit_note_not_found",
+                [invoice_id_s, org_id_s, project_id_s],
+                "invoice_not_found",
+            )
+            # Org slots serialize NC creation and folio allocation: the
+            # replay checks below can never race a second click on the
+            # same invoice.
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"project_credit_notes:{org_id_s}"],
             )
             one(
                 "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                 [f"sii_folios:{org_id_s}:{DTE_CREDIT_NOTE}"],
             )
-            existing = rows(
-                "SELECT * FROM public.project_dtes "
-                "WHERE org_id=%s AND credit_note_id=%s",
-                [org_id_s, credit_id_s],
-            )
-            if existing:
-                return _dte_public(existing[0])
             parents = rows(
                 "SELECT * FROM public.project_dtes "
                 "WHERE org_id=%s AND invoice_id=%s AND credit_note_id IS NULL "
                 "AND dte_type=%s",
-                [org_id_s, str(credit_note["invoice_id"]), DTE_FACTURA],
+                [org_id_s, invoice_id_s, DTE_FACTURA],
             )
             if not parents:
                 raise contract_error(
@@ -829,6 +865,31 @@ def emit_credit_note_dte(
                     "La factura debe timbrarse antes de emitir la nota de crédito electrónica.",
                 )
             parent_dte = parents[0]
+            notes = rows(
+                "SELECT * FROM public.project_credit_notes "
+                "WHERE invoice_id=%s AND org_id=%s",
+                [invoice_id_s, org_id_s],
+            )
+            if notes:
+                credit_note = notes[0]
+                existing = rows(
+                    "SELECT * FROM public.project_dtes "
+                    "WHERE org_id=%s AND credit_note_id=%s",
+                    [org_id_s, str(credit_note["id"])],
+                )
+                if existing:
+                    return _dte_public(existing[0])
+            else:
+                # The electronic annulment seals its own counter-document:
+                # NC PDF + DTE-61 commit or roll back together.
+                credit_note, credit_object_key = credit_notes.seal_credit_note(
+                    invoice=invoice,
+                    org_id_s=org_id_s,
+                    project_id_s=project_id_s,
+                    project=project,
+                    reason=reason,
+                    actor_id=actor_id,
+                )
             cafs = rows(
                 "SELECT * FROM public.sii_cafs "
                 "WHERE org_id=%s AND tipo_dte=%s AND folio_actual < folio_hasta "
@@ -911,7 +972,7 @@ def emit_credit_note_dte(
                         org_id_s,
                         project_id_s,
                         str(credit_note["invoice_id"]),
-                        credit_id_s,
+                        str(credit_note["id"]),
                         str(caf["id"]),
                         DTE_CREDIT_NOTE,
                         folio,
@@ -935,16 +996,21 @@ def emit_credit_note_dte(
             _purge_unreferenced_dte(
                 org_id=org_id, object_key=object_key, tipo=DTE_CREDIT_NOTE
             )
+        if credit_object_key is not None:
+            credit_notes._purge_unreferenced_credit_note(
+                org_id=org_id, object_key=credit_object_key
+            )
         raise
     return _dte_public(row)
 
 
-def credit_note_dte_access(*, org_id: UUID, project_id: UUID, credit_note_id: UUID) -> dict:
+def credit_note_dte_access(*, org_id: UUID, project_id: UUID, invoice_id: UUID) -> dict:
     with documentary_backend():
         found = rows(
             "SELECT * FROM public.project_dtes "
-            "WHERE org_id=%s AND project_id=%s AND credit_note_id=%s",
-            [str(org_id), str(project_id), str(credit_note_id)],
+            "WHERE org_id=%s AND project_id=%s AND invoice_id=%s "
+            "AND credit_note_id IS NOT NULL",
+            [str(org_id), str(project_id), str(invoice_id)],
         )
         if not found:
             raise contract_error(

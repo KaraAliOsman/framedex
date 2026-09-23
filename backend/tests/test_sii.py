@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from authentication.errors import ContractAPIException
+from projects import credit_notes as credit_notes_module
 from projects import sii
 
 
@@ -186,6 +187,10 @@ def _patch_env(
             return insert_row or _dte_row(invoice["id"], folio=1)
         if "INSERT INTO public.sii_cafs" in text:
             return _caf_row(_parse(), org_id=uuid4())
+        if "INSERT INTO public.project_credit_notes" in text:
+            return credit_note or _credit_note_row(invoice)
+        if "COUNT(*) AS n" in text and "FROM public.project_credit_notes" in text:
+            return {"n": len(annulled or [])}
         if "FROM public.tenancy_organizations" in text:
             if org is None:
                 raise ContractAPIException(404, "org_not_found", "x")
@@ -229,6 +234,18 @@ def _patch_env(
     monkeypatch.setattr(sii, "SupabaseDocumentStorage", lambda: storage)
     monkeypatch.setattr(sii.transaction, "atomic", _noop)
     monkeypatch.setattr(sii, "documentary_backend", _noop)
+    # emit_credit_note_dte seals the NC document through
+    # projects.credit_notes — stub its own module-level deps too.
+    monkeypatch.setattr(credit_notes_module, "one", fake_one)
+    monkeypatch.setattr(credit_notes_module, "SupabaseDocumentStorage", lambda: storage)
+    monkeypatch.setattr(
+        credit_notes_module,
+        "render_credit_note",
+        lambda payload, pdf_identifier=None: (b"%PDF-fake-cn", "application/pdf"),
+    )
+    monkeypatch.setattr(
+        credit_notes_module, "_purge_unreferenced_credit_note", lambda **kw: None
+    )
 
 
 def _parse(desde=1, hasta=10):
@@ -448,14 +465,16 @@ def test_emit_credit_note_dte_references_parent_folio(monkeypatch):
         monkeypatch,
         storage,
         cafs=[caf61],
+        invoice=invoice,
         credit_note=credit_note,
+        annulled=[credit_note],
         parents=[parent],
         insert_row=insert_row,
     )
     out = sii.emit_credit_note_dte(
         org_id=invoice["org_id"],
         project={"id": invoice["project_id"]},
-        credit_note_id=credit_note["id"],
+        invoice_id=invoice["id"],
         actor_id=uuid4(),
     )
     assert out["dte_type"] == 61 and out["folio"] == 1
@@ -484,16 +503,52 @@ def test_emit_credit_note_dte_references_parent_folio(monkeypatch):
     )
 
 
+def test_emit_credit_note_dte_seals_credit_note_document(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    insert_row = _dte_row(
+        invoice["id"],
+        folio=1,
+        over={"dte_type": 61, "credit_note_id": str(uuid4())},
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        invoice=invoice,
+        cafs=[caf61],
+        parents=[_dte_row(invoice["id"], folio=4)],
+        insert_row=insert_row,
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+        reason="Anula por error en folio",
+    )
+    assert out["dte_type"] == 61 and out["folio"] == 1
+    assert len(storage.uploads) == 2
+    pdf_key, pdf_content, pdf_media = storage.uploads[0]
+    assert "credit-notes/nc-0001_" in pdf_key
+    assert pdf_media == "application/pdf"
+    xml_key, _, _ = storage.uploads[1]
+    assert "dte61-1_" in xml_key
+
+
 def test_emit_credit_note_dte_requires_timbred_parent(monkeypatch):
     storage = _Storage()
     invoice = _invoice_row()
-    credit_note = _credit_note_row(invoice)
-    _patch_env(monkeypatch, storage, credit_note=credit_note, parents=[])
+    _patch_env(monkeypatch, storage, invoice=invoice, parents=[])
     with pytest.raises(ContractAPIException) as excinfo:
         sii.emit_credit_note_dte(
             org_id=invoice["org_id"],
             project={"id": invoice["project_id"]},
-            credit_note_id=credit_note["id"],
+            invoice_id=invoice["id"],
             actor_id=uuid4(),
         )
     assert excinfo.value.contract_code == "sii_reference_missing"
@@ -510,14 +565,16 @@ def test_emit_credit_note_dte_replay_and_exhaustion(monkeypatch):
     _patch_env(
         monkeypatch,
         storage,
+        invoice=invoice,
         credit_note=credit_note,
+        annulled=[credit_note],
         existing_nc=[existing],
         parents=[_dte_row(invoice["id"], folio=4)],
     )
     out = sii.emit_credit_note_dte(
         org_id=invoice["org_id"],
         project={"id": invoice["project_id"]},
-        credit_note_id=credit_note["id"],
+        invoice_id=invoice["id"],
         actor_id=uuid4(),
     )
     assert out["folio"] == 9 and storage.uploads == []
@@ -530,7 +587,9 @@ def test_emit_credit_note_dte_replay_and_exhaustion(monkeypatch):
     _patch_env(
         monkeypatch,
         _Storage(),
+        invoice=invoice,
         credit_note=credit_note,
+        annulled=[credit_note],
         parents=[_dte_row(invoice["id"], folio=4)],
         cafs=[exhausted],
     )
@@ -538,7 +597,7 @@ def test_emit_credit_note_dte_replay_and_exhaustion(monkeypatch):
         sii.emit_credit_note_dte(
             org_id=invoice["org_id"],
             project={"id": invoice["project_id"]},
-            credit_note_id=credit_note["id"],
+            invoice_id=invoice["id"],
             actor_id=uuid4(),
         )
     assert excinfo.value.contract_code == "sii_caf_exhausted"
@@ -596,11 +655,43 @@ def test_register_caf_fails_closed_without_kek(monkeypatch):
 
 def test_rsask_roundtrip_wrap_unwrap(monkeypatch):
     monkeypatch.setattr(sii, "_kek", lambda: b"\x02" * 32)
-    wrapped = sii._wrap_rsask("aGFzc2R1aWFzZA==")
-    assert wrapped.startswith("enc:v1:")
-    assert sii._unwrap_rsask(wrapped) == "aGFzc2R1aWFzZA=="
+    aad = sii._caf_aad(str(uuid4()), 33, 1, 10)
+    wrapped = sii._wrap_rsask("aGFzc2R1aWFzZA==", aad)
+    assert wrapped.startswith("enc:v2:")
+    assert sii._unwrap_rsask(wrapped, aad) == "aGFzc2R1aWFzZA=="
+    # Ciphertext moved onto a different pool row fails decryption.
+    other = sii._caf_aad(str(uuid4()), 33, 50, 60)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii._unwrap_rsask(wrapped, other)
+    assert excinfo.value.contract_code == "sii_caf_key_invalid"
     # Legacy plaintext rows stay readable without a KEK.
     assert sii._unwrap_rsask("b3RoZXJwbGFpbg==") == "b3RoZXJwbGFpbg=="
+
+
+def test_parse_caf_rejects_zero_based_range():
+    xml, _ = _caf_xml(desde=0, hasta=50)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii._parse_caf(xml)
+    assert excinfo.value.contract_code == "sii_caf_invalid"
+
+
+def test_emit_dte_rejects_non_latin1_characters(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["project"]["client_name"] = "Ventanas \U0001fa9f SpA"
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(monkeypatch, storage, cafs=[caf], invoice=invoice)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_dte_unrepresentable"
+    # The folio is only committed after the XML is stamped, so a rejected
+    # render never consumes one.
+    assert storage.uploads == []
 
 
 def test_emit_dte_refuses_non_clp_invoice(monkeypatch):

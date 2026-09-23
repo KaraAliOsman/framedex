@@ -566,19 +566,21 @@ class ProjectCreditNoteDteView(APIView):
 
     @extend_schema(
         operation_id="project_credit_note_dte_emit",
-        request=None,
+        request=ProjectCreditNoteEmitSerializer,
         responses={201: ProjectDteSerializer, **ERRORS},
         **SCHEMA,
     )
-    def post(self, request, project_id, credit_note_id):
+    def post(self, request, project_id, invoice_id):
+        data = validate(ProjectCreditNoteEmitSerializer, request.data)
         with scope(request, WRITE_ROLES) as (token, _, org):
             project = service.project_row(org, project_id)
             return response(
                 sii.emit_credit_note_dte(
                     org_id=org,
                     project=project,
-                    credit_note_id=credit_note_id,
+                    invoice_id=invoice_id,
                     actor_id=token.user_id,
+                    reason=data.get("reason"),
                 ),
                 status=201,
             )
@@ -588,13 +590,13 @@ class ProjectCreditNoteDteView(APIView):
         responses={200: ProjectDteAccessSerializer, **ERRORS},
         **SCHEMA,
     )
-    def get(self, request, project_id, credit_note_id):
+    def get(self, request, project_id, invoice_id):
         with scope(request, READ_ROLES) as (_, _, org):
             return response(
                 sii.credit_note_dte_access(
                     org_id=org,
                     project_id=project_id,
-                    credit_note_id=credit_note_id,
+                    invoice_id=invoice_id,
                 )
             )
 

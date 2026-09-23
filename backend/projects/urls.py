@@ -70,7 +70,7 @@ urlpatterns = [
         ProjectCreditNoteAccessView.as_view(),
     ),
     path(
-        "projects/<uuid:project_id>/credit-notes/<uuid:credit_note_id>/dte/",
+        "projects/<uuid:project_id>/invoices/<uuid:invoice_id>/credit-note-dte/",
         ProjectCreditNoteDteView.as_view(),
     ),
     path(

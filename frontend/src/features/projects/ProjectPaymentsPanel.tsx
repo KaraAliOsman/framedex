@@ -310,12 +310,19 @@ export function ProjectPaymentsPanel({
     }
   }
 
-  async function emitCreditNoteDte(note: ProjectCreditNote): Promise<void> {
+  async function emitCreditNoteDte(invoice: ProjectInvoice): Promise<void> {
+    const reason = window.prompt(t("projects.creditNoteReason"));
+    if (reason === null) return;
     const current = generation.current;
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectCreditNoteDteEmit(projectId, note.id, requestOptions);
+      const response = await projectCreditNoteDteEmit(
+        projectId,
+        invoice.id,
+        reason.trim() ? { reason: reason.trim() } : {},
+        requestOptions,
+      );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
@@ -326,7 +333,7 @@ export function ProjectPaymentsPanel({
     }
   }
 
-  async function openCreditNoteDte(note: ProjectCreditNote): Promise<void> {
+  async function openCreditNoteDte(invoice: ProjectInvoice): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
       setMessage(t("projects.dteOpenError"));
@@ -336,7 +343,7 @@ export function ProjectPaymentsPanel({
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectCreditNoteDteAccess(projectId, note.id, requestOptions);
+      const response = await projectCreditNoteDteAccess(projectId, invoice.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) {
         tab.close();
@@ -593,9 +600,7 @@ export function ProjectPaymentsPanel({
                           type="button"
                           className="production-chip"
                           title={`${t("projects.dteCreditStatus")} · folio ${invoice.credit_note.dte.folio}`}
-                          onClick={() => {
-                            if (invoice.credit_note) void openCreditNoteDte(invoice.credit_note);
-                          }}
+                          onClick={() => void openCreditNoteDte(invoice)}
                           disabled={busy}
                         >
                           {`${t("projects.dteCreditStatus")} · ${invoice.credit_note.dte.folio}`}
@@ -624,22 +629,15 @@ export function ProjectPaymentsPanel({
                           {t("projects.creditNoteAnnul")}
                         </button>
                       )}
-                      {canWrite &&
-                        invoice.credit_note &&
-                        invoice.dte &&
-                        !invoice.credit_note.dte && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (invoice.credit_note) {
-                                void emitCreditNoteDte(invoice.credit_note);
-                              }
-                            }}
-                            disabled={busy}
-                          >
-                            {t("projects.dteCreditEmit")}
-                          </button>
-                        )}
+                      {canWrite && invoice.dte && !invoice.credit_note?.dte && (
+                        <button
+                          type="button"
+                          onClick={() => void emitCreditNoteDte(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.dteCreditEmit")}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
