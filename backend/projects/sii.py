@@ -347,9 +347,27 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
         else json.loads(invoice["payload_json"])
     )
     deal, project = payload["deal"], payload["project"]
-    total = int(Decimal(str(deal["total_gross"])))
-    neto = int(Decimal(str(deal["total_net"])))
-    iva = int(Decimal(str(deal["total_tax"])))
+    # A DTE-33 is a peso document: a foreign-currency invoice would lose its
+    # currency entirely, so it refuses here rather than emitting wrong numbers.
+    if str(deal.get("currency") or "CLP").upper() != "CLP":
+        raise contract_error(
+            422,
+            "sii_currency_unsupported",
+            "El DTE-33 sólo timbra facturas en CLP — esta factura está en "
+            f"{deal.get('currency')}.",
+        )
+    amounts = [
+        Decimal(str(deal[key]))
+        for key in ("total_gross", "total_net", "total_tax")
+    ]
+    if any(amount != amount.to_integral_value() for amount in amounts):
+        raise contract_error(
+            422,
+            "sii_amount_fractional",
+            "Los totales de la factura no son enteros — el DTE no puede "
+            "truncarlos.",
+        )
+    total, neto, iva = (int(amount) for amount in amounts)
     receptor = _rut_normalize(project.get("client_rut"))
     if receptor is None:
         raise contract_error(

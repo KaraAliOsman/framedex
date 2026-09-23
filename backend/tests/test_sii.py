@@ -430,3 +430,37 @@ def test_rsask_roundtrip_wrap_unwrap(monkeypatch):
     assert sii._unwrap_rsask(wrapped) == "aGFzc2R1aWFzZA=="
     # Legacy plaintext rows stay readable without a KEK.
     assert sii._unwrap_rsask("b3RoZXJwbGFpbg==") == "b3RoZXJwbGFpbg=="
+
+
+def test_emit_dte_refuses_non_clp_invoice(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["deal"]["currency"] = "USD"
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(monkeypatch, storage, cafs=[caf], invoice=invoice)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_currency_unsupported"
+    # The folio cursor must be untouched — the DD is validated before UPDATE.
+    assert storage.uploads == []
+
+
+def test_emit_dte_refuses_fractional_clp_totals(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["deal"]["total_net"] = "1000.50"
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(monkeypatch, storage, cafs=[caf], invoice=invoice)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_amount_fractional"
