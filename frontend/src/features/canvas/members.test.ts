@@ -54,8 +54,24 @@ it("falls back to drawing conventions when options are missing", () => {
   expect(members.couplerFor("CPL-90")).toBeNull();
 });
 
-it("falls back to the first coupler/bead when the key is absent", () => {
+it("resolves a null coupler only when the catalog offers exactly one", () => {
   const members = resolveMembers(CATALOG);
   expect(members.couplerFor(null)?.sku).toBe("CPL-90");
-  expect(members.beadFor("999.00")).toBe(18);
+
+  const ambiguous = resolveMembers({
+    ...CATALOG,
+    coupler_skus: ["CPL-90", "CPL-40"],
+    coupler_profiles: [
+      ...CATALOG.coupler_profiles,
+      { sku: "CPL-40", name: "Coplana 40", material: "PVC", face_width_mm: "40.00" },
+    ],
+  });
+  expect(ambiguous.couplerFor(null)).toBeNull();
+  expect(ambiguous.couplerFor("CPL-40")?.faceWidthMm).toBe(40);
+});
+
+it("returns the neutral bead convention for unknown thicknesses", () => {
+  const members = resolveMembers(CATALOG);
+  expect(members.beadFor("999.00")).toBe(18); // convention, not a catalog bead
+  expect(members.beadFor("24.00")).toBe(18); // catalog match still wins
 });

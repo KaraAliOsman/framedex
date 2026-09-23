@@ -62,6 +62,8 @@ class DesignOptionsView(APIView):
         with scope(request, READ_ROLES) as (_, _, org):
             repository = SystemParamsRepository()
             params = repository.load_visible(system_id, org)
+            names = repository.load_article_names(system_id, org)
+            couplers = repository.load_coupler_articles(system_id, org)
             glass_rows = rows(
                 "SELECT DISTINCT technical_sku FROM public.glass_purchase_mappings "
                 "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) ORDER BY technical_sku",
@@ -73,7 +75,7 @@ class DesignOptionsView(APIView):
                         {
                             "sku": item.sku,
                             "role": item.role.value,
-                            "name": item.name,
+                            "name": names.get(item.sku, item.sku),
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
                         }
@@ -88,20 +90,15 @@ class DesignOptionsView(APIView):
                     ],
                     "glass_skus": [item["technical_sku"] for item in glass_rows],
                     "colors": ["WHITE"],
-                    "coupler_skus": sorted(
-                        repository.load_coupler_articles(system_id, org)
-                    ),
+                    "coupler_skus": sorted(couplers),
                     "coupler_profiles": [
                         {
                             "sku": item.sku,
-                            "name": item.name,
+                            "name": names.get(item.sku, item.sku),
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
                         }
-                        for item in sorted(
-                            repository.load_coupler_articles(system_id, org).values(),
-                            key=lambda article: article.sku,
-                        )
+                        for item in sorted(couplers.values(), key=lambda article: article.sku)
                     ],
                     "glazing_beads": [
                         {

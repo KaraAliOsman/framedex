@@ -215,6 +215,28 @@ class SystemParamsRepository:
             rows = cursor.fetchall()
         return {cast(str, row[0]): _article_from_row(row) for row in rows}
 
+    def load_article_names(
+        self, system_id: UUID, active_org_id: UUID
+    ) -> dict[str, str]:
+        """Display names for every catalog profile article of a system.
+
+        Names are presentation metadata, not engineering parameters, so they
+        live outside EffectiveProfileArticle; options/design surfaces join
+        them by SKU.
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT sku, name
+                FROM public.profile_articles
+                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                ORDER BY sku
+                """,
+                [system_id, active_org_id],
+            )
+            rows = cursor.fetchall()
+        return {str(row[0]): str(row[1]) for row in rows}
+
     def _load_glazing_rules(
         self, system_id: UUID, active_org_id: UUID
     ) -> dict[Decimal, GlazingBeadRule]:

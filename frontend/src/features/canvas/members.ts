@@ -80,11 +80,15 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
     beadFor(glassThicknessMm) {
       if (glassThicknessMm !== null && beads.has(glassThicknessMm))
         return beads.get(glassThicknessMm)!;
-      const first = beads.values().next().value;
-      return first ?? FALLBACK.bead;
+      // Unresolved or unknown thickness → neutral drawing convention, never
+      // an arbitrary catalog bead presented as selected.
+      return FALLBACK.bead;
     },
     couplerFor(sku) {
-      return (sku ? couplers.get(sku) : undefined) ?? couplers.values().next().value ?? null;
+      if (sku) return couplers.get(sku) ?? null;
+      // Null selection only resolves when the catalog offers exactly one
+      // coupler; ambiguity returns unresolved so the drawing stays neutral.
+      return couplers.size === 1 ? (couplers.values().next().value ?? null) : null;
     },
     rebateMm: Number.isFinite(rebate) && rebate > 0 ? rebate : FALLBACK.rebate,
     sashOverlapMm:
