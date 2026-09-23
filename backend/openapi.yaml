@@ -4299,6 +4299,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/positions/{position_id}/design-assist/:
+    post:
+      operationId: positions_design_assist
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: position_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignAssistRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesignAssistResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/admin/{resource}/:
     get:
       operationId: pricing_admin_list
@@ -9706,6 +9782,53 @@ components:
         * `ON_ROUTE` - ON_ROUTE
         * `DELIVERED` - DELIVERED
         * `FAILED` - FAILED
+    DesignAssistRequestRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+          minLength: 2
+          maxLength: 2000
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+        product:
+          type: object
+          additionalProperties: {}
+      required:
+      - operation_key
+      - product
+      - prompt
+    DesignAssistResponse:
+      type: object
+      properties:
+        audit_id:
+          type: string
+        model:
+          type: string
+        credits_debited:
+          type: integer
+        ops:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        rejected:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        notes:
+          type: string
+          nullable: true
+      required:
+      - audit_id
+      - credits_debited
+      - model
+      - notes
+      - ops
+      - rejected
     DesignOptions:
       type: object
       properties:

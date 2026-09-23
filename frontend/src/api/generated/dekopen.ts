@@ -44,6 +44,8 @@ import type {
   DeliveryResponse,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestRequest,
+  DesignAssistRequestRequest,
+  DesignAssistResponse,
   DesignOptions,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
@@ -4839,6 +4841,89 @@ export const positionsDestroy = async (
   return apiMutator<positionsDestroyResponse>(getPositionsDestroyUrl(positionId, params), {
     ...options,
     method: "DELETE",
+  });
+};
+
+export type positionsDesignAssistResponse200 = {
+  data: DesignAssistResponse;
+  status: 200;
+};
+
+export type positionsDesignAssistResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsDesignAssistResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsDesignAssistResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsDesignAssistResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsDesignAssistResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsDesignAssistResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsDesignAssistResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsDesignAssistResponseSuccess = positionsDesignAssistResponse200 & {
+  headers: Headers;
+};
+export type positionsDesignAssistResponseError = (
+  | positionsDesignAssistResponse400
+  | positionsDesignAssistResponse401
+  | positionsDesignAssistResponse403
+  | positionsDesignAssistResponse404
+  | positionsDesignAssistResponse409
+  | positionsDesignAssistResponse422
+  | positionsDesignAssistResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsDesignAssistResponse =
+  positionsDesignAssistResponseSuccess | positionsDesignAssistResponseError;
+
+export const getPositionsDesignAssistUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/design-assist/`;
+};
+
+export const positionsDesignAssist = async (
+  positionId: string,
+  designAssistRequestRequest: DesignAssistRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsDesignAssistResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionsDesignAssistResponse>(getPositionsDesignAssistUrl(positionId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(designAssistRequestRequest),
   });
 };
 

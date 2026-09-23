@@ -10,13 +10,14 @@ from rest_framework.views import APIView
 from rest_framework.parsers import FormParser
 from rest_framework.permissions import AllowAny
 
+from ai_gateway.providers import ProviderError
 from authentication.errors import contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
 from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
-from projects import payment_links, payments, service
+from projects import design_assist, payment_links, payments, service
 from projects.serializers import (
     PaymentIntegrationSerializer,
     PaymentIntegrationStatusSerializer,
@@ -29,6 +30,8 @@ from projects.serializers import (
     PaymentVoidSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
+    DesignAssistRequestSerializer,
+    DesignAssistResponseSerializer,
     PositionResponseSerializer,
     PositionUpdateSerializer,
     PositionWriteSerializer,
@@ -211,6 +214,37 @@ class PositionView(APIView):
         with scope(request, WRITE_ROLES) as (_, _, org):
             service.delete_position(org, position_id, data["expected_updated_at"])
         return Response(status=204)
+
+
+class PositionDesignAssistView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="positions_design_assist",
+        request=DesignAssistRequestSerializer,
+        responses={200: DesignAssistResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, position_id):
+        data = validate(DesignAssistRequestSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            try:
+                return response(
+                    design_assist.assist(
+                        org_id=org,
+                        user_id=token.user_id,
+                        position=service.position_row(org, position_id),
+                        product=data["product"],
+                        prompt=str(data["prompt"]),
+                        operation_key=str(data["operation_key"]),
+                    )
+                )
+            except ProviderError as error:
+                raise contract_error(
+                    503,
+                    error.code,
+                    "El proveedor de IA no está disponible en este momento.",
+                ) from None
 
 
 class ProjectPaymentsView(APIView):

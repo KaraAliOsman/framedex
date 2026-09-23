@@ -15,6 +15,7 @@ from projects.views import (
     ProjectResetPricingView,
     ProjectView,
     ProjectsView,
+    PositionDesignAssistView,
     PositionView,
 )
 from projects.options import DesignOptionsView
@@ -43,4 +44,8 @@ urlpatterns = [
         ProjectPaymentLinkRecoverView.as_view(),
     ),
     path("positions/<uuid:position_id>/", PositionView.as_view()),
+    path(
+        "positions/<uuid:position_id>/design-assist/",
+        PositionDesignAssistView.as_view(),
+    ),
 ]

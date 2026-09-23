@@ -222,3 +222,18 @@ class PaymentIntegrationStatusSerializer(serializers.Serializer):
     payer_return_url = serializers.CharField(required=False, allow_null=True)
     enabled = serializers.BooleanField(required=False)
     updated_at = serializers.CharField(required=False)
+
+
+class DesignAssistRequestSerializer(serializers.Serializer):
+    prompt = serializers.CharField(min_length=2, max_length=2000)
+    operation_key = serializers.CharField(min_length=8, max_length=120)
+    product = serializers.DictField()
+
+
+class DesignAssistResponseSerializer(serializers.Serializer):
+    audit_id = serializers.CharField()
+    model = serializers.CharField()
+    credits_debited = serializers.IntegerField()
+    ops = serializers.ListField(child=serializers.DictField())
+    rejected = serializers.ListField(child=serializers.DictField())
+    notes = serializers.CharField(allow_null=True)

@@ -273,6 +273,70 @@ class HttpProvider:
         }
 
 
+_COUNT_RE = re.compile(r"(\d+)\s*(m[oó]dulos?|vanos?|unidades?|pa[nñ]os?)")
+_WIDTH_RE = re.compile(
+    r"(?:ancho\s+(?:total\s+)?(?:de\s+)?|medida\s+de\s+)(\d{3,5})(?:\s*mm)?"
+    r"|(\d{3,5})\s*mm\s+de\s+ancho"
+)
+_HEIGHT_RE = re.compile(
+    r"alto\s+(?:de\s+)?(\d{3,4})(?:\s*mm)?|(\d{3,4})\s*mm\s+de\s+alto"
+)
+_OPENING_KEYWORDS = (
+    (re.compile(r"corred"), "SLIDING_2L"),
+    (re.compile(r"puerta|door"), "DOOR_ENTRY"),
+    (re.compile(r"proyectante|awning"), "AWNING"),
+    (re.compile(r"oscil|batiente|tilt"), "TILT_TURN_LEFT"),
+    (re.compile(r"fijo|fixed"), "FIXED"),
+)
+
+
+def _design_assist_output(input_payload: dict) -> dict:
+    """Mock design intent → typed product ops. The contract the real provider
+    must satisfy is exercised exactly: a JSON document of whitelisted ops plus
+    a human note, deterministic per prompt so environments and tests agree."""
+    prompt = str(input_payload.get("prompt") or "").lower()
+    product = input_payload.get("product") or {}
+    modules = product.get("modules") or []
+    couplings = product.get("couplings") or []
+    ops: list[dict] = []
+    notes: list[str] = []
+    count = _COUNT_RE.search(prompt)
+    if count and int(count.group(1)) > 0:
+        ops.append({"op": "set_module_count", "count": int(count.group(1))})
+        notes.append(f"{count.group(1)} módulos")
+    width = _WIDTH_RE.search(prompt)
+    if width:
+        ops.append({"op": "set_total_width", "width_mm": int(width.group(1) or width.group(2))})
+        notes.append(f"ancho total {width.group(1) or width.group(2)} mm")
+    height = _HEIGHT_RE.search(prompt)
+    if height:
+        ops.append({"op": "set_height", "height_mm": int(height.group(1) or height.group(2))})
+        notes.append(f"alto {height.group(1) or height.group(2)} mm")
+    if re.search(r"igual|mismo\s+ancho|uniform", prompt):
+        ops.append({"op": "equalize_widths"})
+        notes.append("anchos iguales")
+    if re.search(r"arco|bow|proa", prompt) and couplings:
+        for index, _ in enumerate(couplings):
+            ops.append({"op": "set_coupling_angle", "coupling": index, "angle_deg": 22.5})
+        notes.append("ángulos de arco 22.5°")
+    for pattern, opening in _OPENING_KEYWORDS:
+        if pattern.search(prompt):
+            target = 0 if opening == "DOOR_ENTRY" else None
+            indices = [target] if target is not None else range(len(modules))
+            for index in indices:
+                ops.append({"op": "set_opening", "module": index, "opening": opening})
+            notes.append(f"apertura {opening}")
+            break
+    return {
+        "ops": ops,
+        "notes": (
+            "; ".join(notes)
+            if notes
+            else "No reconocí una acción de diseño en la instrucción."
+        ),
+    }
+
+
 class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
@@ -285,7 +349,9 @@ class MockProvider:
             json.dumps(input_payload, sort_keys=True, default=str).encode()
         ).hexdigest()[:16]
         output = (
-            f"{route['public_name']} [{capability}] "
+            json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
+            if capability == "design_assist"
+            else f"{route['public_name']} [{capability}] "
             f"respuesta determinista para {digest}"
         )
         serialized = json.dumps(input_payload, default=str)

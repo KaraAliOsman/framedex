@@ -9,6 +9,8 @@ import type {
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
+import { AssistantPanel } from "./AssistantPanel";
+import { applyDesignOps } from "./designOps";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
@@ -432,6 +434,7 @@ export function AssemblyEditor({
   disabled,
   onChanged,
   onEvaluationChange,
+  positionId,
   positionPanel,
 }: {
   organizationId: string;
@@ -442,6 +445,7 @@ export function AssemblyEditor({
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
+  positionId: string | null;
   positionPanel?: JSX.Element;
 }): JSX.Element | null {
   const inputs = useCanvasStore((state) => state.inputs);
@@ -765,6 +769,15 @@ export function AssemblyEditor({
           )
         )}
         {positionPanel}
+        {product && (
+          <AssistantPanel
+            organizationId={organizationId}
+            positionId={positionId}
+            product={product}
+            disabled={disabled}
+            onApply={(ops) => commit(applyDesignOps(product, ops))}
+          />
+        )}
         {issues.length > 0 && (
           <ul className="assembly-issues" aria-label={t("assembly.issues")}>
             {issues.map((issue, index) => (

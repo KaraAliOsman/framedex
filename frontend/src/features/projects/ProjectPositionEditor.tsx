@@ -589,6 +589,7 @@ function PositionWorkspace({
           disabled={busy}
           onChanged={onAssemblyChanged}
           onEvaluationChange={onAssemblyEvaluation}
+          positionId={saved?.id ?? null}
           positionPanel={positionPanel}
         />
       </div>

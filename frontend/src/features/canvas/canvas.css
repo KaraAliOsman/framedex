@@ -1442,3 +1442,45 @@
   font-size: 30px;
   font-variant-numeric: tabular-nums;
 }
+
+.assistant-panel__prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 4px;
+  background: var(--theme-surface);
+  color: var(--theme-text-primary);
+  font: inherit;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.assistant-panel__preview {
+  border-top: 1px solid var(--theme-border-subtle);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.assistant-panel__notes {
+  color: var(--theme-text-secondary);
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+.assistant-panel__ops,
+.assistant-panel__rejected {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.assistant-panel__rejected {
+  color: var(--theme-mark);
+}
+
+.assistant-panel__meta {
+  color: var(--theme-text-muted);
+  font-size: 11px;
+  margin: 6px 0 0;
+}
