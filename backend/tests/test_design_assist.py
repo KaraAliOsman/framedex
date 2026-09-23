@@ -508,3 +508,6 @@ def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
         declared = values(prompt)
         assert Decimal("-20") not in declared
         assert Decimal("20") in declared and Decimal("30") in declared
+    for prompt in ("ángulos 30°; -20°", "+30°/-20°", "30, -20", "30 y -20"):
+        declared = values(prompt)
+        assert Decimal("-20") in declared and Decimal("30") in declared

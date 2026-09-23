@@ -204,12 +204,23 @@ def _parse_number(token: str) -> Decimal | None:
 
 def _unary_minus(text: str, start: int) -> bool:
     """Whether the '-' before `start` signs the number rather than separating
-    a range or subtraction: it is a sign unless the token on its left is a
-    number, a degree mark, or a unit ('30 mm - 20' keeps both positive)."""
+    a range or subtraction. The dash is binary only when it directly follows
+    a number, degree mark or unit (whitespace aside): '30 -20', '30mm-20mm',
+    '30° - 20°' stay positive, while 'ángulo -30' and '30°; -20°' — where a
+    clause delimiter sits between — keep the sign."""
     left = None
+    left_end = None
     for token in _LEFT_TOKEN_RE.finditer(text[:start]):
-        left = token.group(0)
-    if left is None:
+        # Chilean numbers can carry a trailing '.' or ',' (2.400, 2,4) — but a
+        # token ending in punctuation is the number plus a delimiter: trim it
+        # so '30, -20' sees the comma as the clause break it is.
+        left = token.group(0).rstrip(".,;:")
+        left_end = token.start() + len(left)
+    if left is None or not left:
+        return True
+    if text[left_end:start].strip():
+        # A delimiter (semicolon, slash, comma, conjunction) starts a new
+        # clause — the minus signs what follows it.
         return True
     if left == "°" or left.lower() in _UNITS:
         return False
