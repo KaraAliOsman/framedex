@@ -101,6 +101,8 @@ import type {
   WorkCenter,
   WorkCenterList,
   WorkCenterRequestRequest,
+  WorkOrderOptimize,
+  WorkOrderOptimizeRequestRequest,
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
@@ -4886,6 +4888,89 @@ export const productionOrderDetail = async (
   return apiMutator<productionOrderDetailResponse>(getProductionOrderDetailUrl(orderId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type productionOrderOptimizeResponse200 = {
+  data: WorkOrderOptimize;
+  status: 200;
+};
+
+export type productionOrderOptimizeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderOptimizeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderOptimizeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderOptimizeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderOptimizeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderOptimizeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderOptimizeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderOptimizeResponseSuccess = productionOrderOptimizeResponse200 & {
+  headers: Headers;
+};
+export type productionOrderOptimizeResponseError = (
+  | productionOrderOptimizeResponse400
+  | productionOrderOptimizeResponse401
+  | productionOrderOptimizeResponse403
+  | productionOrderOptimizeResponse404
+  | productionOrderOptimizeResponse409
+  | productionOrderOptimizeResponse422
+  | productionOrderOptimizeResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderOptimizeResponse =
+  productionOrderOptimizeResponseSuccess | productionOrderOptimizeResponseError;
+
+export const getProductionOrderOptimizeUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/optimize/`;
+};
+
+export const productionOrderOptimize = async (
+  orderId: string,
+  workOrderOptimizeRequestRequest: WorkOrderOptimizeRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderOptimizeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderOptimizeResponse>(getProductionOrderOptimizeUrl(orderId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(workOrderOptimizeRequestRequest),
   });
 };
 

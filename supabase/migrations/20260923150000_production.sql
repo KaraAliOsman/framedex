@@ -55,7 +55,7 @@ CREATE TABLE public.production_step_events (
     step_id UUID REFERENCES public.production_steps(id) ON DELETE SET NULL,
     event TEXT NOT NULL CHECK (event IN (
         'WO_RELEASED', 'STEP_STARTED', 'STEP_COMPLETED', 'STEP_BLOCKED',
-        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD'
+        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD', 'WO_OPTIMIZED'
     )),
     actor_id UUID,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'),

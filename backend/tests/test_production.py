@@ -417,3 +417,158 @@ def test_step_transition_forwards_action(monkeypatch) -> None:
     assert response.status_code == 200
     assert seen["action"] == "START"
     assert seen["actor_id"] == token.user_id
+
+
+def test_optimize_work_order_builds_bar_plan_and_event() -> None:
+    from decimal import Decimal
+
+    from dekopen_engine.cutting import (
+        CutBar, CutMaterial, CutOptimizationResult, CuttingProfile,
+        PurchaseLine, StockRule,
+    )
+
+    order_id = uuid4()
+    payload = {
+        "position_id": str(uuid4()),
+        "system_id": str(uuid4()),
+        "quantity": 2,
+        "materials": {
+            "profile_cuts": [
+                {
+                    "qty": 2, "sku": "MARCO", "role": "FRAME",
+                    "material": "PVC", "length_mm": "900.00",
+                    "angle_left": "45.0", "angle_right": "45.0",
+                }
+            ],
+            "reinforcements": [], "glasses": [], "panels": [], "hardware_items": [],
+        },
+    }
+    seen = {}
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT-P-REV-A-01",
+                "status": "RELEASED", "payload_json": payload,
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "inventory_items" in query:
+            return []
+        seen.setdefault("writes", []).append(query)
+        return []
+
+    stock = StockRule(
+        stock_authority_id="S1", workshop_sku="MARCO",
+        commercial_sku="P-MARCO-60", manufacturer_name="DEMO",
+        supplier_name=None, purchase_unit="BAR",
+        material=CutMaterial.PVC, color="BLANCO",
+        stock_length_mm=Decimal("6000"),
+    )
+    authorities = SimpleNamespace(
+        stocks=[stock], reinforcement_skus={}, inertias={},
+    )
+    profile = CuttingProfile(
+        id="CP1", code="SAW01", kerf_mm=Decimal("5"),
+        head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+    )
+    cut_result = CutOptimizationResult(
+        workshop_cut_plan=[CutBar(
+            bar_index=1, commercial_sku="P-MARCO-60",
+            material=CutMaterial.PVC, color="BLANCO",
+            stock_length_mm=Decimal("6000"),
+            head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+            kerf_mm=Decimal("5"), cuts=[],
+            kerf_total_mm=Decimal("0"),
+            productive_length_mm=Decimal("0"),
+            process_consumed_mm=Decimal("0"),
+            remainder_mm=Decimal("3000"),
+            waste_mm=Decimal("0"),
+            yield_pct=Decimal("50"), waste_pct=Decimal("50"),
+        )],
+        purchase_list=[PurchaseLine(
+            commercial_sku="P-MARCO-60", manufacturer="DEMO",
+            supplier=None, stock_length_mm=Decimal("6000"),
+            material=CutMaterial.PVC, color="BLANCO",
+            unit="BAR", qty_bars=1,
+        )],
+    )
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service.CuttingRepository"
+    ) as repo, patch(
+        "production.service.optimize_cut", return_value=cut_result
+    ) as cut:
+        repo.return_value.for_result.return_value = authorities
+        repo.return_value.cutting_profile.return_value = profile
+        output = service.optimize_work_order(
+            org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+        )
+    assert output["optimization"]["color"] == "BLANCO"
+    assert output["optimization"]["units"] == 2
+    assert len(cut.call_args[0][0]) == 4  # qty 2 per unit x 2 units
+    writes = seen["writes"]
+    assert any("payload_json" in q for q in writes)
+    assert any("WO_OPTIMIZED" in q for q in writes)
+
+
+def test_optimize_rejects_completed_order() -> None:
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "COMPLETED",
+                "payload_json": {},
+            }
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+            )
+    assert error.value.code == "work_order_completed"
+
+
+def test_optimize_requires_color() -> None:
+    with pytest.raises(DocumentaryError) as error:
+        service.optimize_work_order(
+            org_id=uuid4(), order_id=uuid4(), actor_id=uuid4(), color="  ",
+        )
+    assert error.value.code == "optimize_color_required"
+
+
+def test_optimize_post_forwards_scope(monkeypatch) -> None:
+    client, token, org_id = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+    seen = {}
+
+    def fake_optimize(**kwargs):
+        seen.update(kwargs)
+        return {"order_id": str(kwargs["order_id"]), "order_code": "OT", "optimization": {}}
+
+    monkeypatch.setattr(service, "optimize_work_order", fake_optimize)
+    order_id = uuid4()
+    response = client.post(
+        f"/api/v1/production/orders/{order_id}/optimize/",
+        {"color": "BLANCO"}, format="json",
+    )
+    assert response.status_code == 200
+    assert seen["actor_id"] == token.user_id
+    assert seen["color"] == "BLANCO"
+
+
+def test_optimize_post_rejects_blank_color(monkeypatch) -> None:
+    client, _, _ = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+    response = client.post(
+        f"/api/v1/production/orders/{uuid4()}/optimize/",
+        {"color": " "}, format="json",
+    )
+    assert response.status_code == 400

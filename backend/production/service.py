@@ -11,12 +11,17 @@ so the floor has a paperless trail."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from decimal import Decimal
 import json
 from uuid import UUID
 
 from django.db import transaction
 
+from dekopen_engine.cutting import optimize_cut, pieces_from_result
+from dekopen_engine.models import EngineResult
+from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
+from engine_api.cutting_repository import CuttingRepository
 
 
 _STEP_CODE_FOR_CENTER = {
@@ -98,6 +103,7 @@ def _work_order_payload(position: dict[str, object]) -> dict[str, object]:
     return {
         "schema": "production_wo_v1",
         "position_id": str(position.get("position_id") or ""),
+        "system_id": str(position.get("system_id") or ""),
         "quantity": position.get("quantity", 1),
         "materials": {
             key: engine.get(key) or []
@@ -165,6 +171,19 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         project_code = str(
             (snapshot.get("project") or {}).get("code") or version["project_id"]
         )
+        position_ids = [str(p.get("position_id") or "") for p in bom if p.get("position_id")]
+        position_systems = {
+            str(row["id"]): str(row["system_id"])
+            for row in rows(
+                """
+                SELECT id, system_id FROM public.project_positions
+                WHERE org_id = %s AND id = ANY(%s::uuid[])
+                """,
+                [str(org_id), position_ids],
+            )
+        } if position_ids else {}
+        for position in bom:
+            position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
         centers = _ensure_work_centers(org_id)
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
@@ -545,3 +564,209 @@ def create_work_center(
     )
     created = bool(center.pop("created"))
     return center, created
+
+
+def _sheet_rules(org_id: UUID) -> dict[str, list[SheetRule]]:
+    """Sheet stock declared by the shop: ``inventory_items.attributes`` carrying
+    ``sheet_width_mm``/``sheet_height_mm``. Panels match a rule by sku; glass by
+    ``sheet_thickness_mm``. No inferred compatibility — undeclared groups fall
+    through to ``unnested`` in the plan."""
+    items = rows(
+        """
+        SELECT sku, name, attributes FROM public.inventory_items
+        WHERE org_id = %s
+          AND attributes ? 'sheet_width_mm'
+          AND attributes ? 'sheet_height_mm'
+        """,
+        [str(org_id)],
+    )
+    by_sku: dict[str, SheetRule] = {}
+    by_thickness: dict[str, SheetRule] = {}
+    for item in items:
+        attributes = item.get("attributes") or {}
+        if isinstance(attributes, str):
+            attributes = json.loads(attributes)
+        try:
+            rule = SheetRule(
+                workshop_sku=str(item["sku"]),
+                purchasing_sku=str(attributes.get("purchasing_sku") or item["sku"]),
+                manufacturer_name=attributes.get("manufacturer_name"),
+                supplier_name=attributes.get("supplier_name") or item.get("name"),
+                sheet_width_mm=Decimal(str(attributes["sheet_width_mm"])),
+                sheet_height_mm=Decimal(str(attributes["sheet_height_mm"])),
+                edge_trim_mm=Decimal(str(attributes.get("sheet_edge_trim_mm") or 0)),
+            )
+        except Exception:
+            continue
+        by_sku[rule.workshop_sku] = rule
+        thickness = attributes.get("sheet_thickness_mm")
+        if thickness is not None:
+            by_thickness[str(Decimal(str(thickness)))] = rule
+    return {"by_sku": by_sku, "by_thickness": by_thickness}
+
+
+def _decoded(payload: object) -> dict[str, object]:
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    return payload if isinstance(payload, dict) else {}
+
+
+def optimize_work_order(
+    *,
+    org_id: UUID,
+    order_id: UUID,
+    actor_id: UUID,
+    color: str,
+    cutting_profile_code: str | None = None,
+) -> dict[str, object]:
+    """Bar cutting plan (1D best-fit) + sheet nesting (2D guillotine) for one
+    work order. Replaces any previous plan in ``payload_json.optimization`` and
+    appends a ``WO_OPTIMIZED`` event. Sealed materials are never mutated."""
+    color = (color or "").strip()
+    if not color:
+        raise DocumentaryError("optimize_color_required")
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "COMPLETED":
+            raise DocumentaryError("work_order_completed")
+        payload = _decoded(order["payload_json"])
+        materials = payload.get("materials") or {}
+        position_id = payload.get("position_id")
+        system_id = payload.get("system_id")
+        if not system_id:
+            position = one(
+                """
+                SELECT system_id FROM public.project_positions
+                WHERE id = %s AND org_id = %s
+                """,
+                [str(position_id), str(org_id)],
+                "work_order_missing_system",
+            )
+            system_id = str(position["system_id"])
+        quantity = int(payload.get("quantity") or 1)
+        # payload was produced by model_dump(mode="json") — Decimals are strings,
+        # so validate non-strictly to round them back.
+        result = EngineResult.model_validate(
+            {
+                "profile_cuts": materials.get("profile_cuts") or [],
+                "reinforcements": materials.get("reinforcements") or [],
+                "glasses": materials.get("glasses") or [],
+                "panels": materials.get("panels") or [],
+                "hardware_items": materials.get("hardware_items") or [],
+                "leaf_weights": materials.get("leaf_weights") or [],
+            },
+            strict=False,
+        )
+        stocks = CuttingRepository()
+        authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
+        profile = stocks.cutting_profile(org_id, cutting_profile_code)
+        pieces = [
+            piece.model_copy(update={"unit_index": repetition})
+            for repetition in range(1, quantity + 1)
+            for piece in pieces_from_result(
+                result,
+                color=color,
+                source_position_id=str(position_id) if position_id else None,
+                reinforcement_skus=authorities.reinforcement_skus,
+            )
+        ]
+        bars = optimize_cut(pieces, authorities.stocks, profile).model_dump(mode="json")
+
+        rules = _sheet_rules(org_id)
+        sheets: list[dict[str, object]] = []
+        unnested: list[dict[str, object]] = []
+        sheet_groups: list[tuple[SheetRule, list[NestPiece]]] = []
+        for group_key, entries, kind in (
+            ("by_thickness", result.glasses, "GLASS"),
+            ("by_sku", result.panels, "PANEL"),
+        ):
+            for index, entry in enumerate(entries, start=1):
+                group = (
+                    str(entry.thickness_net_mm) if kind == "GLASS" else entry.sku
+                )
+                rule = rules[group_key].get(group)
+                label = f"V-{index:02d}" if kind == "GLASS" else f"PAN-{index:02d}"
+                if rule is None:
+                    unnested.append({
+                        "kind": kind, "group": group, "width_mm": entry.width_mm,
+                        "height_mm": entry.height_mm, "quantity": quantity,
+                        "bay_id": entry.bay_id, "leaf_id": entry.leaf_id,
+                        "reason": "no_declared_sheet",
+                    })
+                    continue
+                sheet_groups.append((
+                    rule,
+                    [
+                        NestPiece(
+                            piece_id=label,
+                            workshop_sku=rule.workshop_sku,
+                            width_mm=entry.width_mm,
+                            height_mm=entry.height_mm,
+                            source_position_id=str(position_id) if position_id else None,
+                            bay_id=entry.bay_id,
+                            leaf_id=entry.leaf_id,
+                            unit_index=repetition,
+                        )
+                        for repetition in range(1, quantity + 1)
+                    ],
+                ))
+        # Group by rule so one sheet format gets one bin set.
+        merged: dict[str, tuple[SheetRule, list[NestPiece]]] = {}
+        for rule, pieces_group in sheet_groups:
+            merged.setdefault(rule.workshop_sku, (rule, []))[1].extend(pieces_group)
+        for rule, group_pieces in merged.values():
+            outcome = nest_rects(group_pieces, rule)
+            sheets.append(outcome.model_dump(mode="json"))
+
+        optimization = {
+            "schema": "work_order_optimization_v1",
+            "optimized_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "color": color,
+            "units": quantity,
+            "bars": bars,
+            "sheets": sheets,
+            "unnested": unnested,
+        }
+        new_payload = {**payload, "optimization": optimization}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_OPTIMIZED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "color": color,
+                    "bars": len(bars.get("bars") or []),
+                    "sheets": len(sheets),
+                    "unnested": len(unnested),
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "optimization": optimization,
+        }

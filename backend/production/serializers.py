@@ -101,3 +101,20 @@ class WorkCenterRequestSerializer(StrictSerializer):
     name = serializers.CharField(max_length=200)
     kind = serializers.ChoiceField(choices=("CUT", "ASSEMBLY", "GLAZING", "QC", "PACK"))
     display_order = serializers.IntegerField(required=False, default=0)
+
+
+class WorkOrderOptimizeRequestSerializer(StrictSerializer):
+    color = serializers.CharField(max_length=50)
+    cutting_profile_code = serializers.CharField(required=False, allow_null=True, max_length=50)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not (data.get("color") or "").strip():
+            raise serializers.ValidationError({"color": "Color is required"})
+        return data
+
+
+class WorkOrderOptimizeSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    optimization = serializers.DictField()

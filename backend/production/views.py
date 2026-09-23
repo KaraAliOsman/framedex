@@ -26,6 +26,8 @@ from production.serializers import (
     WorkCenterListSerializer,
     WorkCenterRequestSerializer,
     WorkCenterSerializer,
+    WorkOrderOptimizeRequestSerializer,
+    WorkOrderOptimizeSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -161,3 +163,25 @@ class WorkCenterListView(APIView):
                     display_order=data.get("display_order", 0),
                 )
         return Response(output, status=201 if created else 200)
+
+
+class ProductionOrderOptimizeView(APIView):
+    @extend_schema(
+        operation_id="production_order_optimize",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=WorkOrderOptimizeRequestSerializer,
+        responses={200: WorkOrderOptimizeSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(WorkOrderOptimizeRequestSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.optimize_work_order(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    color=data["color"],
+                    cutting_profile_code=data.get("cutting_profile_code"),
+                )
+        return Response(output)
