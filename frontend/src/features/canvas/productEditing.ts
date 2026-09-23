@@ -1,5 +1,5 @@
 import type { IntentNode, Opening, SplitType } from "./intentEditing";
-import { intentBays, splitBay, walkIntent } from "./intentEditing";
+import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
 
 /** Compositional product model (product-v2) — modules joined by couplings.
  *
@@ -298,6 +298,60 @@ export function setModuleWidth(
   return replaceModule(product, moduleId, { ...module, width_mm: widthMm });
 }
 
+/** Minimum width a module may be dragged to — below this the geometry is
+ * meaningless for any catalog (engine minimums sit higher, ~400mm). */
+export const MIN_MODULE_WIDTH_MM = 150;
+
+/** Drag a module seam: the left module grows by `deltaMm`, the right module
+ * shrinks by the same amount, so the overall width is preserved. Both sides
+ * are clamped to MIN_MODULE_WIDTH_MM; returns the unchanged product when the
+ * seam doesn't exist or would cross a minimum. */
+export function resizeModuleSeam(
+  product: ProductJson,
+  seamIndex: number,
+  deltaMm: number,
+): ProductJson {
+  const modules = product.assembly.modules;
+  const left = modules[seamIndex];
+  const right = modules[seamIndex + 1];
+  if (!left || !right || !Number.isFinite(deltaMm)) return product;
+  const leftMm = Number(left.width_mm) + deltaMm;
+  const rightMm = Number(right.width_mm) - deltaMm;
+  if (leftMm < MIN_MODULE_WIDTH_MM || rightMm < MIN_MODULE_WIDTH_MM) return product;
+  const nextModules = modules.map((module, index) =>
+    index === seamIndex
+      ? { ...module, width_mm: leftMm.toFixed(2) }
+      : index === seamIndex + 1
+        ? { ...module, width_mm: rightMm.toFixed(2) }
+        : module,
+  );
+  return { ...product, assembly: { ...product.assembly, modules: nextModules } };
+}
+
+/** Drag an interior divider (mullion/travesaño) to a new offset. */
+export function moveModuleDivision(
+  product: ProductJson,
+  moduleId: string,
+  divisionId: string,
+  offsetMm: string,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  try {
+    const tree = moveDivision(
+      module.tree.type === "ROOT" ? (module.tree.children?.[0] ?? module.tree) : module.tree,
+      divisionId,
+      offsetMm,
+    );
+    return replaceModule(product, moduleId, {
+      ...module,
+      tree: module.tree.type === "ROOT" ? { ...module.tree, children: [tree] } : tree,
+    });
+  } catch {
+    return product;
+  }
+}
+
 export function setAllModuleHeights(product: ProductJson, heightMm: string): ProductJson {
   return {
     ...product,
@@ -531,7 +585,7 @@ export function modulePanelSku(module: ProductModuleJson): string | null {
 export function splitModuleBay(
   product: ProductJson,
   moduleId: string,
-  division: { type: SplitType; mullionSku: string },
+  division: { type: SplitType; mullionSku: string; offsetMm?: string },
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module || !division.mullionSku.trim()) return product;
@@ -539,7 +593,7 @@ export function splitModuleBay(
   if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
-  const offset = (size / 2).toFixed(2);
+  const offset = division.offsetMm ?? (size / 2).toFixed(2);
   const used = new Set(walkIntent(module.tree).map((node) => node.id));
   const freeId = (base: string): string => {
     let index = 1;

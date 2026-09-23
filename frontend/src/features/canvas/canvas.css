@@ -465,6 +465,7 @@
   height: calc(100vh - 12rem);
   height: calc(100dvh - 12rem);
   min-height: 28rem;
+  position: relative;
 }
 
 .assembly-editor--tree-closed {
@@ -483,8 +484,27 @@
       "status status side";
   }
 
+  /* The tree column collapses at this width; toggling it opens a drawer
+     overlay above the canvas instead — the toggle stays functional. */
   .assembly-tree {
-    display: none;
+    background: var(--theme-surface-panel);
+    border: 1px solid var(--theme-border-subtle);
+    border-radius: 6px;
+    bottom: 3.2rem;
+    box-shadow: 0 12px 28px rgb(22 28 31 / 0.18);
+    display: block;
+    left: 3.8rem;
+    max-width: min(18rem, 72vw);
+    overflow: hidden;
+    position: absolute;
+    top: 0.4rem;
+    width: 18rem;
+    z-index: 6;
+  }
+
+  .assembly-tree .object-tree {
+    border: none;
+    border-radius: 0;
   }
 }
 
@@ -1325,12 +1345,70 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 1100px) {
-  .assembly-editor {
-    grid-template-areas:
-      "toolbar"
-      "canvas"
-      "side";
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* --- Direct manipulation: divider grips, seam grips, divide preview --- */
+
+.divider-grip {
+  fill: transparent;
+  outline: none;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.divider-grip.is-vertical {
+  cursor: ew-resize;
+}
+
+.divider-grip.is-horizontal {
+  cursor: ns-resize;
+}
+
+.divider-grip:hover,
+.divider-grip:active {
+  fill: var(--theme-accent);
+  fill-opacity: 0.18;
+  stroke: var(--theme-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.seam-grip {
+  cursor: ew-resize;
+  fill: transparent;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.seam-grip:hover {
+  fill: var(--theme-accent);
+  fill-opacity: 0.14;
+}
+
+.divide-preview-line {
+  pointer-events: none;
+  stroke: var(--theme-accent);
+  stroke-dasharray: 14 10;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.front-module.is-divide-target {
+  cursor: crosshair;
+}
+
+.seam-preview {
+  pointer-events: none;
+}
+
+.seam-preview-line {
+  stroke: var(--theme-accent);
+  stroke-dasharray: 16 12;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.seam-preview-label {
+  fill: var(--theme-accent-ink);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
 }

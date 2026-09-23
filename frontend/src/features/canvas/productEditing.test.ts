@@ -13,6 +13,8 @@ import {
   moduleGlassSku,
   moduleOpening,
   modulePanelSku,
+  moveModuleDivision,
+  resizeModuleSeam,
   setModulePanel,
   setAllCouplingAngles,
   setCouplerSku,
@@ -128,6 +130,48 @@ describe("splitModuleBay", () => {
     const door = setModuleOpening(bow(), "m2", "DOOR_ENTRY");
     expect(splitModuleBay(door, "m2", { type: "SPLIT_V", mullionSku: "MULL-60" })).toBe(door);
     expect(splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "" })).toEqual(bow());
+  });
+
+  it("splits at a pointer-chosen offset instead of the center", () => {
+    const split = splitModuleBay(bow(), "m2", {
+      type: "SPLIT_V",
+      mullionSku: "MULL-60",
+      offsetMm: "215.00",
+    });
+    expect(split.assembly.modules[1]!.tree.split_offset_mm).toBe("215.00");
+  });
+});
+
+describe("moveModuleDivision", () => {
+  it("moves the divider to a new offset", () => {
+    const split = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
+    const divisionId = split.assembly.modules[1]!.tree.id;
+    const moved = moveModuleDivision(split, "m2", divisionId, "420.00");
+    expect(moved.assembly.modules[1]!.tree.split_offset_mm).toBe("420.00");
+  });
+
+  it("returns the same product for unknown ids or bays", () => {
+    const product = bow();
+    expect(moveModuleDivision(product, "m2", "m2-g1", "100.00")).toBe(product);
+    expect(moveModuleDivision(product, "nope", "anything", "100.00")).toBe(product);
+  });
+});
+
+describe("resizeModuleSeam", () => {
+  it("grows the left module while shrinking the right — total holds", () => {
+    const resized = resizeModuleSeam(bow(), 0, 120);
+    const [m1, m2] = resized.assembly.modules;
+    expect(Number(m1!.width_mm)).toBeCloseTo(820, 5);
+    expect(Number(m2!.width_mm)).toBeCloseTo(580, 5);
+    expect(totalModuleWidth(resized)).toBeCloseTo(2100, 5);
+  });
+
+  it("refuses drags that cross the minimum module width", () => {
+    const product = bow();
+    // each module is 700mm — a -560mm drag would leave 140mm on the left
+    expect(resizeModuleSeam(product, 0, -560)).toBe(product);
+    expect(resizeModuleSeam(product, 0, 560)).toBe(product);
+    expect(resizeModuleSeam(product, 9, 10)).toBe(product);
   });
 });
 

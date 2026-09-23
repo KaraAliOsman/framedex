@@ -1,11 +1,12 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
 import { memberSurface, type MemberSurface } from "./materials";
 import type { MemberGeometry } from "./members";
-import type { ProductJson } from "./productEditing";
+import { MIN_MODULE_WIDTH_MM, type ProductJson } from "./productEditing";
+import { useViewportScale } from "./CanvasViewport";
 
 /** Front elevation of the compositional product as a real fenestration
  * drawing: frame/sash/mullion/bead/threshold members at their catalog face
@@ -403,6 +404,17 @@ function Bay({
   );
 }
 
+/** Where a pointerdown on a divider grip lands: everything the drag loop
+ * needs to convert pointer movement into a candidate split_offset_mm. */
+export type DividerDragInfo = {
+  event: React.PointerEvent<SVGRectElement>;
+  divisionId: string;
+  vertical: boolean;
+  localOrigin: { x: number; y: number };
+  /** Extent of the region the divider splits — the clamp range for offsets. */
+  extentMm: number;
+};
+
 /** Render a module's parametric tree inside a region: splits become mullion
  * members at their catalog face width, bays render the full member hierarchy. */
 function ModuleTree({
@@ -410,6 +422,9 @@ function ModuleTree({
   region,
   localOrigin,
   members,
+  liveOffsets,
+  hitMm,
+  onDividerDown,
 }: {
   node: IntentNode;
   region: Region;
@@ -418,6 +433,13 @@ function ModuleTree({
    * origin for children. */
   localOrigin: { x: number; y: number };
   members: MemberGeometry;
+  /** In-flight divider drags: division node id → candidate offset mm. The
+   * preview value flows through the same layout math so the whole tree
+   * breathes while the user drags. */
+  liveOffsets?: Map<string, number>;
+  /** Grip width in mm — sized from the viewport scale so it stays ~12px. */
+  hitMm?: number;
+  onDividerDown?: (info: DividerDragInfo) => void;
 }): JSX.Element {
   if (node.type === "ROOT" && node.children?.length === 1 && node.children[0]) {
     return (
@@ -426,6 +448,9 @@ function ModuleTree({
         region={region}
         localOrigin={localOrigin}
         members={members}
+        liveOffsets={liveOffsets}
+        hitMm={hitMm}
+        onDividerDown={onDividerDown}
       />
     );
   }
@@ -436,7 +461,8 @@ function ModuleTree({
     const barW = mullion?.faceWidthMm ?? Math.max(Math.min(region.w, region.h) * 0.05, 20);
     const lo = vertical ? region.x : region.y;
     const extent = vertical ? region.w : region.h;
-    const offset = Number(node.split_offset_mm);
+    const stored = Number(node.split_offset_mm);
+    const offset = liveOffsets?.get(node.id) ?? stored;
     // Engine parity (geometry._walk_node): the mullion centerline sits at
     // local-origin + split_offset_mm. The top node's origin is the module's
     // outer edge; each child's origin is its own rect's origin. Clamped into
@@ -466,6 +492,7 @@ function ModuleTree({
       node.type === "SPLIT_V"
         ? { x: axis - barW / 2, y: region.y, w: barW, h: region.h }
         : { x: region.x, y: axis - barW / 2, w: region.w, h: barW };
+    const grip = Math.min(Math.max(barW + 8, hitMm ?? 46), extent * 0.6);
     return (
       <>
         <ModuleTree
@@ -473,6 +500,9 @@ function ModuleTree({
           region={firstRegion}
           localOrigin={{ x: firstRegion.x, y: firstRegion.y }}
           members={members}
+          liveOffsets={liveOffsets}
+          hitMm={hitMm}
+          onDividerDown={onDividerDown}
         />
         <Member
           x={bar.x}
@@ -482,11 +512,32 @@ function ModuleTree({
           surface={memberSurface(mullion?.material ?? members.frame.material)}
           className="member-mullion"
         />
+        {onDividerDown && (
+          <rect
+            className={`divider-grip${vertical ? " is-vertical" : " is-horizontal"}`}
+            x={vertical ? axis - grip / 2 : bar.x}
+            y={vertical ? bar.y : axis - grip / 2}
+            width={vertical ? grip : Math.max(bar.w, 0)}
+            height={vertical ? Math.max(bar.h, 0) : grip}
+            onPointerDown={(event) =>
+              onDividerDown({
+                event,
+                divisionId: node.id,
+                vertical,
+                localOrigin,
+                extentMm: extent,
+              })
+            }
+          />
+        )}
         <ModuleTree
           node={second!}
           region={secondRegion}
           localOrigin={{ x: secondRegion.x, y: secondRegion.y }}
           members={members}
+          liveOffsets={liveOffsets}
+          hitMm={hitMm}
+          onDividerDown={onDividerDown}
         />
       </>
     );
@@ -664,11 +715,15 @@ export function ProductFrontContent({
   issues,
   disabled,
   preview = false,
+  divideTool = null,
   onSelectModule,
   onAddUnit,
   onCommitModuleWidth,
   onCommitTotalWidth,
   onCommitHeight,
+  onCommitDivide,
+  onMoveDivision,
+  onResizeSeam,
 }: {
   product: ProductJson;
   members: MemberGeometry;
@@ -679,11 +734,17 @@ export function ProductFrontContent({
    * affordance (roles, tab stops, handlers) so it can live inside a
    * single outer button. */
   preview?: boolean;
+  /** Armed divide tool — hovering a module shows where the mullion lands
+   * and clicking splits the primary bay at the cursor, not at the center. */
+  divideTool?: "SPLIT_V" | "SPLIT_H" | null;
   onSelectModule(moduleId: string): void;
   onAddUnit(side: "left" | "right"): void;
   onCommitModuleWidth(moduleId: string, widthMm: string): void;
   onCommitTotalWidth(totalMm: string): void;
   onCommitHeight(heightMm: string): void;
+  onCommitDivide?(moduleId: string, offsetMm: string): void;
+  onMoveDivision?(moduleId: string, divisionId: string, offsetMm: string): void;
+  onResizeSeam?(seamIndex: number, deltaMm: number): void;
 }): JSX.Element {
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
@@ -691,9 +752,124 @@ export function ProductFrontContent({
   const { rects, totalW, height } = frontLayout(product);
   const issueMap = severityByModule(issues);
   const midY = height / 2;
+  const interactive = !preview && !disabled;
+  const sheetScale = useViewportScale();
+  // ~12px on screen is the smallest usable drag target (W3C pointer
+  // guidance); never wider than a third of the smallest affected span.
+  const hitMm = Math.min(160, Math.max(24, 12 / sheetScale));
+
+  const frontRef = useRef<SVGGElement>(null);
+  const [liveOffsets, setLiveOffsets] = useState<Map<string, number>>(new Map());
+  const [seamDrag, setSeamDrag] = useState<{ index: number; deltaMm: number } | null>(null);
+  const [dividePreview, setDividePreview] = useState<{ moduleId: string; mm: number } | null>(null);
+  const divideHover = useRef<number | null>(null);
+
+  /** Client coordinates → front-elevation millimetres (inverse CTM works at
+   * any pan/zoom the viewport applies). */
+  const pointInFront = (clientX: number, clientY: number) => {
+    const el = frontRef.current;
+    const ctm = el?.getScreenCTM();
+    if (!el || !ctm) return null;
+    return new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+  };
+
+  const snapMm = (mm: number) => Math.round(mm / 5) * 5;
+
+  /** Divider grip: live-preview the whole layout while dragging, commit the
+   * snapped offset on release. */
+  const beginDividerDrag =
+    (moduleId: string) =>
+    (info: DividerDragInfo): void => {
+      if (!interactive || !onMoveDivision) return;
+      info.event.preventDefault();
+      info.event.stopPropagation();
+      let last = Number.NaN;
+      const clamp = (mm: number) => Math.min(Math.max(mm, 60), Math.max(60, info.extentMm - 60));
+      const onMove = (event: globalThis.PointerEvent) => {
+        const pt = pointInFront(event.clientX, event.clientY);
+        if (!pt) return;
+        last = clamp(info.vertical ? pt.x - info.localOrigin.x : pt.y - info.localOrigin.y);
+        setLiveOffsets(new Map([[info.divisionId, last]]));
+      };
+      const onUp = (event: globalThis.PointerEvent) => {
+        window.removeEventListener("pointermove", onMove);
+        onMove(event);
+        setLiveOffsets(new Map());
+        if (Number.isFinite(last))
+          onMoveDivision(moduleId, info.divisionId, snapMm(last).toFixed(2));
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    };
+
+  /** Module seam: left module grows, right module shrinks — total width
+   * holds. A ghost line tracks the candidate seam; commit on release. */
+  const beginSeamDrag = (seamIndex: number) => (event: PointerEvent<SVGRectElement>) => {
+    if (!interactive || !onResizeSeam) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const left = rects[seamIndex];
+    const right = rects[seamIndex + 1];
+    if (!left || !right) return;
+    const origin = pointInFront(event.clientX, event.clientY);
+    if (!origin) return;
+    let last = 0;
+    const lo = MIN_MODULE_WIDTH_MM - left.w;
+    const hi = right.w - MIN_MODULE_WIDTH_MM;
+    const onMove = (move: globalThis.PointerEvent) => {
+      const pt = pointInFront(move.clientX, move.clientY);
+      if (!pt) return;
+      last = Math.min(Math.max(pt.x - origin.x, lo), hi);
+      setSeamDrag({ index: seamIndex, deltaMm: last });
+    };
+    const onUp = (up: globalThis.PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      onMove(up);
+      setSeamDrag(null);
+      const snapped = snapMm(last);
+      if (snapped !== 0) onResizeSeam(seamIndex, snapped);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp, { once: true });
+  };
+
+  /** Armed divide tool: track the cursor to preview the mullion position;
+   * the snapped value commits on click. */
+  const previewDivide = (moduleId: string, x: number) => (event: PointerEvent) => {
+    if (!divideTool) return;
+    const pt = pointInFront(event.clientX, event.clientY);
+    if (!pt) return;
+    const rect = rects.find((item) => item.module.id === moduleId);
+    if (!rect) return;
+    const raw = divideTool === "SPLIT_V" ? pt.x - x : pt.y;
+    const extent = divideTool === "SPLIT_V" ? rect.w : height;
+    const mm = snapMm(Math.min(Math.max(raw, 60), Math.max(60, extent - 60)));
+    divideHover.current = mm;
+    setDividePreview({ moduleId, mm });
+  };
+
+  const endDivide = (moduleId: string) => {
+    setDividePreview(null);
+    divideHover.current = null;
+    if (!divideTool || !onCommitDivide) return;
+    const rect = rects.find((item) => item.module.id === moduleId);
+    if (!rect) return;
+    const extent = divideTool === "SPLIT_V" ? rect.w : height;
+    const mm = divideHover.current ?? extent / 2;
+    onCommitDivide(moduleId, mm.toFixed(2));
+  };
+
+  const seamLeftMm =
+    seamDrag !== null && rects[seamDrag.index]
+      ? Number(rects[seamDrag.index]!.module.width_mm) + seamDrag.deltaMm
+      : null;
+  const seamRightMm =
+    seamDrag !== null && rects[seamDrag.index + 1]
+      ? Number(rects[seamDrag.index + 1]!.module.width_mm) - seamDrag.deltaMm
+      : null;
 
   return (
-    <g className="product-front-svg" data-testid="product-front">
+    <g className="product-front-svg" data-testid="product-front" ref={frontRef}>
       {/* overall width chain */}
       <DimRun marks={[0, totalW]} edge={0} at={-70} vertical={false} />
       <SvgDim
@@ -752,7 +928,7 @@ export function ProductFrontContent({
       {rects.map(({ module, x, w }) => (
         <g
           key={module.id}
-          className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}`}
+          className={`front-module${module.id === selectedId ? " is-selected" : ""}${issueMap.get(module.id) === "error" ? " has-error" : issueMap.get(module.id) === "warning" ? " has-warning" : ""}${divideTool ? " is-divide-target" : ""}`}
           {...(preview
             ? { role: "presentation", "aria-hidden": true }
             : {
@@ -760,13 +936,21 @@ export function ProductFrontContent({
                 "aria-label": `${t("assembly.module")} ${module.id}`,
                 "aria-pressed": module.id === selectedId,
                 tabIndex: disabled ? -1 : 0,
-                onClick: () => onSelectModule(module.id),
+                onClick: () => (divideTool ? endDivide(module.id) : onSelectModule(module.id)),
                 onKeyDown: (event: KeyboardEvent) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    onSelectModule(module.id);
+                    if (divideTool) endDivide(module.id);
+                    else onSelectModule(module.id);
                   }
                 },
+                onPointerMove: divideTool ? previewDivide(module.id, x) : undefined,
+                onPointerLeave: divideTool
+                  ? () => {
+                      setDividePreview(null);
+                      divideHover.current = null;
+                    }
+                  : undefined,
               })}
         >
           <Member x={x} y={0} w={w} h={height} surface={frameSurface} className="member-frame" />
@@ -782,7 +966,29 @@ export function ProductFrontContent({
             region={{ x: x + frameT, y: frameT, w: w - frameT * 2, h: height - frameT * 2 }}
             localOrigin={{ x, y: 0 }}
             members={members}
+            liveOffsets={liveOffsets}
+            onDividerDown={
+              interactive && onMoveDivision && !divideTool ? beginDividerDrag(module.id) : undefined
+            }
           />
+          {dividePreview?.moduleId === module.id &&
+            (divideTool === "SPLIT_V" ? (
+              <line
+                className="divide-preview-line"
+                x1={x + dividePreview.mm}
+                y1={0}
+                x2={x + dividePreview.mm}
+                y2={height}
+              />
+            ) : (
+              <line
+                className="divide-preview-line"
+                x1={x}
+                y1={dividePreview.mm}
+                x2={x + w}
+                y2={dividePreview.mm}
+              />
+            ))}
         </g>
       ))}
       {couplings.map((coupling, index) => {
@@ -804,6 +1010,45 @@ export function ProductFrontContent({
           />
         );
       })}
+      {/* Seam grips render above the coupler members so the drag target is
+          not swallowed by the coupler rect. */}
+      {interactive &&
+        onResizeSeam &&
+        !divideTool &&
+        rects.slice(0, -1).map(({ x, w }, index) => {
+          const neighbor = rects[index + 1];
+          const seamW = Math.min(hitMm, Math.max(12, Math.min(w, neighbor?.w ?? w) * 0.5));
+          return (
+            <rect
+              key={`seam-${index}`}
+              className="seam-grip"
+              x={x + w - seamW / 2}
+              y={0}
+              width={seamW}
+              height={height}
+              onPointerDown={beginSeamDrag(index)}
+            />
+          );
+        })}
+      {seamDrag && seamLeftMm !== null && seamRightMm !== null && (
+        <g className="seam-preview" aria-hidden="true">
+          <line
+            className="seam-preview-line"
+            x1={rects[seamDrag.index]!.x + rects[seamDrag.index]!.w + seamDrag.deltaMm}
+            y1={0}
+            x2={rects[seamDrag.index]!.x + rects[seamDrag.index]!.w + seamDrag.deltaMm}
+            y2={height}
+          />
+          <text
+            className="seam-preview-label"
+            x={rects[seamDrag.index]!.x + rects[seamDrag.index]!.w + seamDrag.deltaMm}
+            y={-40}
+            textAnchor="middle"
+          >
+            {`${seamLeftMm.toFixed(0)} | ${seamRightMm.toFixed(0)}`}
+          </text>
+        </g>
+      )}
     </g>
   );
 }

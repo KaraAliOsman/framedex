@@ -33,7 +33,9 @@ import {
   moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
+  moveModuleDivision,
   removeUnit,
+  resizeModuleSeam,
   scaleModuleWidths,
   setAllModuleHeights,
   setModuleGlass,
@@ -454,6 +456,9 @@ export function AssemblyEditor({
 
   function commit(next: ProductJson): void {
     if (next === product) return;
+    // Any product edit ends modal tool state — an armed divide must not
+    // survive an unrelated edit and surprise the next module click.
+    setTool("select");
     commitInputs({ ...inputs, product: next });
     onChanged();
   }
@@ -497,20 +502,42 @@ export function AssemblyEditor({
         ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
         : null;
 
-  // Divide tool: the next module click applies the pending split instead of
-  // only selecting. Any other edit returns the tool to select.
+  const divideToolType = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
+
+  // Divide tool: a canvas click splits the module at the cursor offset
+  // (direct manipulation), a tree click splits it at the center.
   function pickModule(id: string): void {
-    const type = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
     const sku =
-      type === "SPLIT_V"
+      divideToolType === "SPLIT_V"
         ? mullionSkus.SPLIT_V
-        : type === "SPLIT_H"
+        : divideToolType === "SPLIT_H"
           ? mullionSkus.SPLIT_H
           : undefined;
-    if (type !== null && sku !== undefined) {
-      commit(splitModuleBay(productJson, id, { type, mullionSku: sku }));
+    if (divideToolType !== null && sku !== undefined) {
+      commit(
+        splitModuleBay(productJson, id, {
+          type: divideToolType,
+          mullionSku: sku,
+        }),
+      );
       setTool("select");
     }
+    select(id);
+  }
+
+  function divideModule(id: string, offsetMm: string): void {
+    const sku =
+      divideToolType === "SPLIT_V"
+        ? mullionSkus.SPLIT_V
+        : divideToolType === "SPLIT_H"
+          ? mullionSkus.SPLIT_H
+          : undefined;
+    if (divideToolType === null || sku === undefined) {
+      select(id);
+      return;
+    }
+    commit(splitModuleBay(productJson, id, { type: divideToolType, mullionSku: sku, offsetMm }));
+    setTool("select");
     select(id);
   }
   const objectTree = useMemo(
@@ -640,6 +667,7 @@ export function AssemblyEditor({
             selectedId={selectedModule?.id ?? null}
             issues={issues}
             disabled={busy}
+            divideTool={divideToolType}
             onSelectModule={pickModule}
             onAddUnit={coupleUnit}
             onCommitModuleWidth={(moduleId, widthMm) =>
@@ -647,6 +675,11 @@ export function AssemblyEditor({
             }
             onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
             onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
+            onCommitDivide={divideModule}
+            onMoveDivision={(moduleId, divisionId, offsetMm) =>
+              commit(moveModuleDivision(product, moduleId, divisionId, offsetMm))
+            }
+            onResizeSeam={(index, deltaMm) => commit(resizeModuleSeam(product, index, deltaMm))}
           />
         </CanvasViewport>
         {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
@@ -750,9 +783,9 @@ export function AssemblyEditor({
             ? t("assembly.calculating")
             : inputs.systemId === null
               ? t("assembly.chooseSystemHint")
-            : errorCode
-              ? t("assembly.calculateError")
-              : t(statusKey(evaluation?.status))}
+              : errorCode
+                ? t("assembly.calculateError")
+                : t(statusKey(evaluation?.status))}
         </span>
         <span className="assembly-statusbar__dims">{statusText}</span>
         {selectedLabel && <span className="assembly-statusbar__selection">{selectedLabel}</span>}
