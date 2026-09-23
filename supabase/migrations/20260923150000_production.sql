@@ -78,6 +78,22 @@ CREATE POLICY production_step_events_isolation ON public.production_step_events 
 USING (org_id IN (SELECT private.current_user_org_ids()))
 WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 
+-- Floor roles (INSTALLER included) drive step transitions through the API,
+-- which switches to documentary_backend for writes; the shot-09
+-- workshop_orders_inherited_access policy only covers `authenticated`, so
+-- mirror it for the backend role on WORKSHOP_OT rows. API role checks still
+-- decide WHO may transition — the DB layer only enforces tenancy.
+CREATE POLICY workshop_orders_backend_access
+ON public.orders FOR ALL TO documentary_backend
+USING (
+    order_type = 'WORKSHOP_OT'
+    AND org_id IN (SELECT private.current_user_org_ids())
+)
+WITH CHECK (
+    order_type = 'WORKSHOP_OT'
+    AND org_id IN (SELECT private.current_user_org_ids())
+);
+
 REVOKE ALL ON public.work_centers FROM anon;
 REVOKE ALL ON public.production_steps FROM anon;
 REVOKE ALL ON public.production_step_events FROM anon;
