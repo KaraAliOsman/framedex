@@ -412,7 +412,7 @@ function PositionWorkspace({
       uncertainCreate ||
       mutationLock.current ||
       !result ||
-      assemblyEval?.status !== "VALID" ||
+      assemblyEval?.status === "INVALID" ||
       busy ||
       inputs.color !== "WHITE" ||
       inputs.product === null ||
@@ -558,7 +558,7 @@ function PositionWorkspace({
         </button>
         <button
           className="primary-action"
-          disabled={uncertainCreate || busy || !result || assemblyEval?.status !== "VALID"}
+          disabled={uncertainCreate || busy || !result || assemblyEval?.status === "INVALID"}
           onClick={() => void save()}
         >
           {t("projects.save")}

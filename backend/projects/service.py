@@ -286,13 +286,19 @@ def calculate_design(org_id, design):
                     design["system_id"], org_id
                 ),
             )
-            if evaluation.status.value != "VALID" or evaluation.bom is None:
-                # Persisted positions are production-bound: a partial BOM must
-                # never be stored or read back as authoritative.
+            if (
+                evaluation.status.value == "INVALID"
+                or evaluation.bom is None
+            ):
+                # An INVALID evaluation or a partial BOM can never persist:
+                # the sealed evidence would read a broken assembly back as
+                # authoritative. MANUFACTURING_INCOMPLETE carries a complete
+                # BOM with warnings, so it persists as a draft — sealing and
+                # production stay gated downstream.
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",
-                    "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
+                    "El conjunto tiene errores que impiden guardarlo: asigna acopladores y revisa cada módulo.",
                 )
             envelope_width, envelope_height = elevation_envelope(model.assembly)
             if (

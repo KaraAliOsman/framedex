@@ -147,7 +147,10 @@ def test_revision_sequence_is_excel_style_without_skips():
     assert next_revision_code("REV-AA") == "REV-AB"
 
 
-def test_assembly_save_requires_manufacturing_complete(monkeypatch):
+def test_unassigned_couplers_save_as_manufacturing_incomplete(monkeypatch):
+    """Declared-but-unassigned couplers are warnings: the BOM is complete
+    structurally, so the position persists as a draft. Sealing/production
+    stay gated downstream."""
     from backend.tests.factories import SYSTEM_ID
     from backend.tests.test_engine_assembly import bow_product
 
@@ -164,10 +167,8 @@ def test_assembly_save_requires_manufacturing_complete(monkeypatch):
         "color": "WHITE",
         "parametric_tree": bow_product(),
     }
-    with pytest.raises(APIException) as caught:
-        calculate_design(ORG_A_ID, design)
-    assert caught.value.status_code == 400
-    assert "acopladores" in str(caught.value)
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
 
 
 def test_valid_assembly_saves_with_prefixed_bom(monkeypatch):
@@ -329,3 +330,71 @@ def test_position_public_reads_new_glass_metadata_fields():
     public = service.position_public(row)
     assert public["bom"]["calculation_hash"] == expected
     assert public["bom"]["glasses"] == stored_glasses
+
+
+def test_manufacturing_incomplete_assembly_saves_as_draft(monkeypatch):
+    """An arch (member_bending_required warnings) carries a complete BOM —
+    it persists as a draft position while INVALID evaluations still refuse.
+    Sealing/production stay gated downstream."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import contour_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2400.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": contour_product(
+            [("0", "0"), ("2400", "0"), ("2400", "1400"), ("0", "1400")],
+            [None, None, "300.00", None],
+        ),
+    }
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
+    assert any(cut.get("sagitta_mm") for cut in result["profile_cuts"])
+
+
+def test_invalid_assembly_still_refuses_to_save(monkeypatch):
+    """A disconnected assembly (a module no coupling reaches) is INVALID —
+    persistence must refuse it even though a partial BOM exists."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = bow_product()
+    product["assembly"]["modules"].append(
+        {
+            "id": "m4",
+            "width_mm": "700.00",
+            "height_mm": "1400.00",
+            "tree": {
+                "id": "m4",
+                "type": "BAY",
+                "opening_type": "FIXED",
+                "glass_thickness_mm": "4.00",
+                "glass_spec": "4",
+            },
+        }
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2800.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"

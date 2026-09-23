@@ -28,6 +28,7 @@ from dekopen_engine.models import PlanPoint
 from dekopen_engine.product import (
     ConnectionKind,
     EdgeSide,
+    elevation_envelope as elevation_envelope,
 )
 
 
