@@ -45,11 +45,13 @@ export function ProjectPaymentLinksPanel({
   orgId,
   canWrite,
   onChanged,
+  onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
   onChanged: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [integration, setIntegration] = useState<PaymentIntegrationStatus | null>(null);
@@ -88,6 +90,13 @@ export function ProjectPaymentLinksPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const formDirty =
+    showForm &&
+    (amount.trim() !== "" || payerEmail.trim() !== "" || subject.trim() !== "");
+  useEffect(() => {
+    onDirtyChange?.(formDirty);
+  }, [formDirty, onDirtyChange]);
 
   async function create(event: FormEvent): Promise<void> {
     event.preventDefault();
