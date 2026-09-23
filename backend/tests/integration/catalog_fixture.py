@@ -4,8 +4,8 @@ from uuid import uuid4
 from pricing.repository import one, rows, json_text
 
 
-def copy_fixed_catalog(org):
-    source = one("SELECT * FROM public.profile_systems WHERE code='DEMO_60' AND is_global")
+def copy_fixed_catalog(org, code="DEMO_60"):
+    source = one("SELECT * FROM public.profile_systems WHERE code=%s AND is_global", [code])
     target = uuid4()
 
     def insert(table, row):
