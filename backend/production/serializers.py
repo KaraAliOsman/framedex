@@ -91,6 +91,13 @@ class CncExportSerializer(serializers.Serializer):
     files = serializers.DictField(child=serializers.CharField())
 
 
+class DxfExportSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    exported_at = serializers.CharField()
+    files = serializers.DictField(child=serializers.CharField())
+
+
 class PackingManifestSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()

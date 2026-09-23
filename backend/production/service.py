@@ -25,6 +25,7 @@ from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
 from production.confirmations import confirmation_summary
+from production.dxf import dxf_files
 from production.dispatch_notes import issue_dispatch_note
 from projects.service import project_row
 
@@ -631,6 +632,7 @@ def create_remake(
         payload = _decoded(source["payload_json"])
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
+        payload.pop("dxf_export", None)
         payload.pop("packing", None)  # labels carry the source order code
         payload["remake_of"] = str(source["id"])
         prior = one(
@@ -916,6 +918,104 @@ def cnc_file_content(
     )
     payload = _decoded(order["payload_json"])
     export = payload.get("cnc_export") or {}
+    optimization = payload.get("optimization")
+    if (
+        export.get("optimization_fingerprint")
+        and _optimization_fingerprint(optimization if isinstance(optimization, dict) else {})
+        != export["optimization_fingerprint"]
+    ):
+        return None
+    files = export.get("files") or {}
+    content = files.get(filename)
+    if content is None:
+        return None
+    return f"{order['order_code']}-{filename}", content
+
+
+def export_dxf_files(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """Machine geometry handoff: renders the stored optimization plan into
+    DXF files (one per nested sheet plus a bars layout), stored on the order
+    under ``dxf_export`` and recorded as ``WO_DXF_EXPORTED``. Same contract
+    as the CSV export — requires optimization, invalidates on a fresh plan."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization")
+        if not isinstance(optimization, dict) or not (
+            optimization.get("bars") or optimization.get("sheets")
+        ):
+            raise DocumentaryError("dxf_requires_optimization")
+        files = dxf_files(optimization)
+        if not files:
+            raise DocumentaryError("dxf_requires_optimization")
+        export = {
+            "schema": "work_order_dxf_export_v1",
+            "optimization_fingerprint": _optimization_fingerprint(optimization),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "files": files,
+        }
+        new_payload = {**payload, "dxf_export": export}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_DXF_EXPORTED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "files": sorted(files),
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "exported_at": export["exported_at"],
+            "files": files,
+        }
+
+
+def dxf_file_content(
+    *, org_id: UUID, order_id: UUID, filename: str
+) -> tuple[str, str] | None:
+    order = one(
+        """
+        SELECT order_code, payload_json FROM public.orders
+        WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    payload = _decoded(order["payload_json"])
+    export = payload.get("dxf_export") or {}
     optimization = payload.get("optimization")
     if (
         export.get("optimization_fingerprint")
@@ -1400,6 +1500,7 @@ def optimize_work_order(
         # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
         new_payload.pop("cnc_export", None)
+        new_payload.pop("dxf_export", None)
         rows(
             """
             UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s

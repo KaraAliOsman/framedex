@@ -60,6 +60,7 @@ import type {
   DocumentaryPreparationResponse,
   DraftProjectRequest,
   DraftResponse,
+  DxfExport,
   EligibilityRequestRequest,
   EligibilityResponse,
   EngineAssemblyCalculateRequest,
@@ -6737,6 +6738,154 @@ export const productionOrderDispatchNote = async (
 ): Promise<productionOrderDispatchNoteResponse> => {
   return apiMutator<productionOrderDispatchNoteResponse>(
     getProductionOrderDispatchNoteUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type productionOrderDxfExportResponse201 = {
+  data: DxfExport;
+  status: 201;
+};
+
+export type productionOrderDxfExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDxfExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDxfExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDxfExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDxfExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDxfExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDxfExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDxfExportResponseSuccess = productionOrderDxfExportResponse201 & {
+  headers: Headers;
+};
+export type productionOrderDxfExportResponseError = (
+  | productionOrderDxfExportResponse400
+  | productionOrderDxfExportResponse401
+  | productionOrderDxfExportResponse403
+  | productionOrderDxfExportResponse404
+  | productionOrderDxfExportResponse409
+  | productionOrderDxfExportResponse422
+  | productionOrderDxfExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDxfExportResponse =
+  productionOrderDxfExportResponseSuccess | productionOrderDxfExportResponseError;
+
+export const getProductionOrderDxfExportUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dxf-export/`;
+};
+
+export const productionOrderDxfExport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDxfExportResponse> => {
+  return apiMutator<productionOrderDxfExportResponse>(getProductionOrderDxfExportUrl(orderId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type productionOrderDxfFileResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type productionOrderDxfFileResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDxfFileResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDxfFileResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDxfFileResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDxfFileResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDxfFileResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDxfFileResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDxfFileResponseSuccess = productionOrderDxfFileResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDxfFileResponseError = (
+  | productionOrderDxfFileResponse400
+  | productionOrderDxfFileResponse401
+  | productionOrderDxfFileResponse403
+  | productionOrderDxfFileResponse404
+  | productionOrderDxfFileResponse409
+  | productionOrderDxfFileResponse422
+  | productionOrderDxfFileResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDxfFileResponse =
+  productionOrderDxfFileResponseSuccess | productionOrderDxfFileResponseError;
+
+export const getProductionOrderDxfFileUrl = (orderId: string, filename: string) => {
+  return `/api/v1/production/orders/${orderId}/dxf-export/${filename}`;
+};
+
+export const productionOrderDxfFile = async (
+  orderId: string,
+  filename: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDxfFileResponse> => {
+  return apiMutator<productionOrderDxfFileResponse>(
+    getProductionOrderDxfFileUrl(orderId, filename),
     {
       ...options,
       method: "GET",

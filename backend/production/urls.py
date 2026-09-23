@@ -7,6 +7,8 @@ from production.views import (
     ProductionOrderDeliveryView,
     ProductionOrderCncExportView,
     ProductionOrderDispatchView,
+    ProductionOrderDxfExportView,
+    ProductionOrderDxfFileView,
     ProductionOrderDispatchNoteView,
     ProductionOrderInstallationView,
     ProductionOrderLabelsView,
@@ -42,6 +44,16 @@ urlpatterns = [
         "orders/<uuid:order_id>/cnc-export/<str:filename>",
         ProductionOrderCncFileView.as_view(),
         name="production-order-cnc-file",
+    ),
+    path(
+        "orders/<uuid:order_id>/dxf-export/",
+        ProductionOrderDxfExportView.as_view(),
+        name="production-order-dxf-export",
+    ),
+    path(
+        "orders/<uuid:order_id>/dxf-export/<str:filename>",
+        ProductionOrderDxfFileView.as_view(),
+        name="production-order-dxf-file",
     ),
     path(
         "orders/<uuid:order_id>/packing/",

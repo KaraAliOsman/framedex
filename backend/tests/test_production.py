@@ -939,6 +939,90 @@ def test_export_cnc_requires_optimization(monkeypatch) -> None:
         service.export_cnc_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
 
 
+def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    optimization = {
+        "bars": {
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "MARCO-60",
+                    "stock_length_mm": "6500",
+                    "cuts": [
+                        {"piece_id": "M-02", "length_mm": "1200", "sequence": 1,
+                         "angle_left": "45.0", "angle_right": "45.0"},
+                        {"piece_id": "M-01", "length_mm": "1500", "sequence": 2,
+                         "angle_left": "90.0", "angle_right": "45.0"},
+                    ],
+                }
+            ]
+        },
+        "sheets": [
+            {
+                "sheet_index": 1,
+                "purchasing_sku": "GLASS-4",
+                "sheet_width_mm": "3210",
+                "sheet_height_mm": "2250",
+                "placements": [
+                    {"piece_id": "V-01", "x_mm": "100", "y_mm": "50",
+                     "width_mm": "800", "height_mm": "600", "rotated": False}
+                ],
+            },
+        ],
+    }
+    writes: list[tuple[str, list]] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-P-AAA-01",
+                "status": "IN_PROGRESS",
+                "payload_json": {"optimization": optimization},
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, params=(): writes.append(
+            (" ".join(sql_text.lower().split()), list(params))
+        ) or [{"id": str(order_id)}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.export_dxf_files(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    update = next(p2 for s2, p2 in writes if "update public.orders" in s2)
+    stored = json.loads(update[0])["dxf_export"]
+    assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
+    sheet = stored["files"]["sheet_1.dxf"]
+    assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
+    assert "AC1015" in sheet and "V-01 800x600" in sheet
+    bars = stored["files"]["bars.dxf"]
+    assert "M-02 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    assert stored["schema"] == "work_order_dxf_export_v1"
+    assert stored["optimization_fingerprint"]
+    assert any("wo_dxf_exported" in s2 for s2, _ in writes)
+
+
+def test_export_dxf_requires_optimization(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": "o",
+            "order_code": "OT",
+            "status": "RELEASED",
+            "payload_json": {},
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="dxf_requires_optimization"):
+        service.export_dxf_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
+
+
 def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:
     org_id, order_id, actor_id = uuid4(), uuid4(), uuid4()
     events: list[list] = []

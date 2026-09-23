@@ -1278,6 +1278,8 @@ const messages = {
   "production.deliveryCollectAmount": "Monto cobrado",
   "production.deliveryConfirmSubmit": "Emitir comprobante",
   "production.deliveryConfirmError": "El comprobante no pudo emitirse.",
+  "production.dxfExportButton": "Exportar DXF",
+  "production.eventDxfExported": "Archivos DXF generados",
   "production.eventInstalled": "Instalación confirmada",
   "production.installButton": "Confirmar instalación",
   "production.packingTitle": "Packing",

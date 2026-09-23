@@ -118,6 +118,8 @@ export * from "./draftResponse";
 export * from "./drainFixRuleIdEnum";
 export * from "./drainOperation";
 export * from "./drainOperationKindEnum";
+export * from "./dxfExport";
+export * from "./dxfExportFiles";
 export * from "./eligibilityEvidenceRequest";
 export * from "./eligibilityRequestRequest";
 export * from "./eligibilityResponse";

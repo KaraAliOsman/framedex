@@ -32,6 +32,7 @@ from production.serializers import (
     DeliveryScheduleRequestSerializer,
     DeliveryTransitionRequestSerializer,
     CncExportSerializer,
+    DxfExportSerializer,
     DispatchNoteAccessSerializer,
     DispatchRequestSerializer,
     InstallationRequestSerializer,
@@ -224,6 +225,51 @@ class ProductionOrderCncFileView(APIView):
             )
         download_name, content = found
         response = HttpResponse(content, content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        return response
+
+
+class ProductionOrderDxfExportView(APIView):
+    @extend_schema(
+        operation_id="production_order_dxf_export",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={201: DxfExportSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.export_dxf_files(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                )
+        return Response(output, status=201)
+
+
+class ProductionOrderDxfFileView(APIView):
+    @extend_schema(
+        operation_id="production_order_dxf_file",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: None, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID, filename: str):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                found = service.dxf_file_content(
+                    org_id=org_id, order_id=order_id, filename=filename
+                )
+        if found is None:
+            raise contract_error(
+                404,
+                "dxf_file_not_found",
+                "No hay un archivo DXF generado con ese nombre en la orden.",
+            )
+        download_name, content = found
+        response = HttpResponse(content, content_type="application/dxf")
         response["Content-Disposition"] = f'attachment; filename="{download_name}"'
         return response
 

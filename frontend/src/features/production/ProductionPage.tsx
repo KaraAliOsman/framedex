@@ -11,6 +11,7 @@ import {
   productionOrderDetail,
   productionOrderDispatch,
   productionOrderDispatchNote,
+  productionOrderDxfExport,
   productionOrderInstall,
   productionOrderLabels,
   productionOrderOptimize,
@@ -99,6 +100,7 @@ type CncExport = {
   exported_at?: string;
   files?: Record<string, string>;
 };
+type DxfExport = CncExport;
 
 type PackingUnit = {
   unit_index: number;
@@ -142,6 +144,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   QC_FAILED: "production.eventQcFailed",
   WO_REMADE: "production.eventRemade",
   WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_DXF_EXPORTED: "production.eventDxfExported",
   WO_PACKED: "production.eventPacked",
   WO_DISPATCHED: "production.eventDispatched",
   WO_INSTALLED: "production.eventInstalled",
@@ -317,6 +320,10 @@ export function ProductionPage(): JSX.Element {
 
   function exportCnc(orderId: string): void {
     void action(productionOrderCncExport(orderId), orderId);
+  }
+
+  function exportDxf(orderId: string): void {
+    void action(productionOrderDxfExport(orderId), orderId);
   }
 
   async function showLabels(orderId: string): Promise<void> {
@@ -653,7 +660,9 @@ export function ProductionPage(): JSX.Element {
                     ) : null}
                     {(() => {
                       const cncExport = detail.payload?.cnc_export as CncExport | undefined;
+                      const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
                       const files = Object.entries(cncExport?.files ?? {});
+                      const dxfFiles = Object.entries(dxfExport?.files ?? {});
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
@@ -661,15 +670,34 @@ export function ProductionPage(): JSX.Element {
                           detail.status !== "COMPLETED" &&
                           detail.status !== "DISPATCHED" &&
                           detail.status !== "INSTALLED" ? (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => exportCnc(detail.id)}
-                            >
-                              {t("production.cncExportButton")}
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportCnc(detail.id)}
+                              >
+                                {t("production.cncExportButton")}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportDxf(detail.id)}
+                              >
+                                {t("production.dxfExportButton")}
+                              </button>
+                            </>
                           ) : null}
                           {files.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                          {dxfFiles.map(([filename, content]) => (
                             <button
                               key={filename}
                               type="button"
