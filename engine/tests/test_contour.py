@@ -7,6 +7,7 @@ from dekopen_engine.contour import (
     Contour,
     arc_params,
     contour_area,
+    contour_points,
     edge_length,
     ensure_ccw,
     interior_angle,
@@ -103,6 +104,13 @@ class TestContourMath:
         assert abs(
             edge_length(Contour.arch_top(D("2400"), D("1400"), D("300")), 2) - D("2498.782")
         ) < D("0.01")
+
+    def test_arc_sampling_reaches_the_apex(self) -> None:
+        # A positive bulge must rise above its chord, never sag below it —
+        # inverted travel direction samples the arc on the concave side.
+        points = contour_points(Contour.arch_top(D("2400"), D("1400"), D("300")))
+        assert max(p.y_mm for p in points) > D("1690")
+        assert min(p.y_mm for p in points) == D("0")
 
     def test_offset_rect_is_exact_inset(self) -> None:
         fill = offset_contour(Contour.rect(D("1000"), D("500")), D("20"))

@@ -272,7 +272,9 @@ def edge_points(
     steps = max(2, int((radius * span * _PI / Decimal("180")) / step_mm) + 1)
     rx, ry = _sub(p0, center)
     start = atan2_degrees(ry, rx)
-    sign = Decimal("-1") if bulge > 0 else Decimal("1")  # CW vs CCW travel
+    # Positive bulge: center sits left of the directed edge, so p0 -> p1
+    # travels counterclockwise around it; a left-side center means clockwise.
+    sign = Decimal("1") if bulge > 0 else Decimal("-1")
     points = [_pt(p0.x_mm, p0.y_mm)]
     for k in range(1, steps):
         angle = start + sign * span * Decimal(k) / Decimal(steps)

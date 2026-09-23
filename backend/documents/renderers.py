@@ -7,6 +7,8 @@ from decimal import Decimal
 from html import escape
 from pathlib import Path
 
+from dekopen_engine.contour import Contour, contour_points
+from dekopen_engine.models import PlanPoint
 from documents.repository import DocumentaryError
 
 _PDF_MEDIA = "application/pdf"
@@ -293,6 +295,40 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
 
 
+def _contour_svg_path(contour_payload: object) -> tuple[str, Decimal]:
+    """Sampled SVG `d` for a stored module contour plus its drawn height.
+
+    The boundary comes from the engine's own sampler (vertices exact, arcs
+    chord-sampled), so issued documents render the same shape the geometry
+    evaluated — never a bounding-box stand-in. Points are emitted in screen
+    space (y flipped, top aligned to the highest sampled point)."""
+    raw = _object(contour_payload, "invalid_frozen_parametric_tree")
+    vertices = [
+        PlanPoint(
+            x_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("x_mm")),
+            y_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("y_mm")),
+        )
+        for point in _array(raw.get("vertices"), "invalid_frozen_parametric_tree")
+    ]
+    bulges = [
+        None if bulge is None else _num(bulge)
+        for bulge in _array(raw.get("bulges"), "invalid_frozen_parametric_tree")
+    ]
+    try:
+        points = contour_points(Contour(vertices=vertices, bulges=bulges))
+    except ValueError as error:
+        raise DocumentaryError("svg_dimension_invalid") from error
+    if not points:
+        raise DocumentaryError("svg_dimension_invalid")
+    top = max(point.y_mm for point in points)
+    bottom = min(point.y_mm for point in points)
+    commands = [
+        f"{'M' if index == 0 else 'L'}{_pt(point.x_mm)},{_pt(top - point.y_mm)}"
+        for index, point in enumerate(points)
+    ]
+    return " ".join(commands) + " Z", top - bottom
+
+
 def _position_svg(position: dict[str, object]) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
     marker = f"arrow-{_value(position.get('position_index'))}"
@@ -338,10 +374,21 @@ def _position_svg(position: dict[str, object]) -> str:
                             f'fill="#E56A32" text-anchor="middle">'
                             f'{escape(_value(angle))}°</text>'
                         )
-            _svg_elements(
-                _object(module.get("tree"), "invalid_frozen_parametric_tree"),
-                width, Decimal("0"), module_width, module_height, elements, marker,
-            )
+            contour_payload = module.get("contour")
+            drawn_height = module_height
+            if contour_payload is not None:
+                path_d, drawn_height = _contour_svg_path(contour_payload)
+                stroke = module_width / Decimal("150")
+                elements.append(
+                    f'<g transform="translate({_pt(width)} 0)">'
+                    f'<path d="{path_d}" fill="none" stroke="#252D31" '
+                    f'stroke-width="{_pt(stroke)}"/></g>'
+                )
+            else:
+                _svg_elements(
+                    _object(module.get("tree"), "invalid_frozen_parametric_tree"),
+                    width, Decimal("0"), module_width, module_height, elements, marker,
+                )
             elements.append(
                 f'<text x="{_pt(width + module_width / Decimal("30"))}" '
                 f'y="{_pt(module_height - module_height / Decimal("30"))}" '
@@ -349,7 +396,7 @@ def _position_svg(position: dict[str, object]) -> str:
                 f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
             width += module_width
-            height = max(height, module_height)
+            height = max(height, drawn_height)
     else:
         width = _num(position.get("width_mm"))
         height = _num(position.get("height_mm"))
