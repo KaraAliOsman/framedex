@@ -16,6 +16,9 @@ type Preview = {
   /** The product instance the ops were validated against — any later commit
    * produces a new identity and makes the index-based ops stale. */
   snapshot: ProductJson;
+  /** The catalog system the ops were validated against — a system switch may
+   * keep the same product identity, so the snapshot check alone can't catch it. */
+  systemId: string;
 };
 
 /** NL design assistant: prompt → gateway-validated op preview → one commit.
@@ -48,6 +51,10 @@ export function AssistantPanel({
     product: ProductJson;
     systemId: string | null;
   } | null>(null);
+  /** Latest (systemId, product) at render — an in-flight response is dropped
+   * when either moved on before it landed. */
+  const latest = useRef({ systemId, product });
+  latest.current = { systemId, product };
 
   async function generate(): Promise<void> {
     if (!positionId || !systemId || !prompt.trim()) return;
@@ -89,7 +96,12 @@ export function AssistantPanel({
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       const data = response.data as DesignAssistResponse;
+      if (latest.current.systemId !== systemId || latest.current.product !== product) {
+        setMessage(t("assistant.stale"));
+        return;
+      }
       setPreview({
+        systemId,
         snapshot: product,
         ops: data.ops as DesignOp[],
         rejected: data.rejected.map((item) => ({
@@ -162,7 +174,7 @@ export function AssistantPanel({
                   ))}
                 </ul>
               )}
-              {preview.snapshot !== product ? (
+              {preview.snapshot !== product || preview.systemId !== systemId ? (
                 <p className="assembly-hint">{t("assistant.stale")}</p>
               ) : (
                 <div className="inspector-actions">
