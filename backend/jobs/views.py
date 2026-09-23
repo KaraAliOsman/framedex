@@ -46,6 +46,10 @@ def public_job_errors():
             raise contract_error(
                 422, error.code, "Tipo de trabajo no disponible."
             ) from error
+        if error.code == "job_permission_denied":
+            raise contract_error(
+                403, error.code, "Tu rol no permite encolar este trabajo."
+            ) from error
         raise contract_error(
             422, error.code, "Revisa los parámetros del trabajo."
         ) from error
@@ -126,6 +130,7 @@ class JobListCreateView(APIView):
                     idempotency_key=data.get("idempotency_key"),
                     max_attempts=data.get("max_attempts", 3),
                     created_by=token.user_id,
+                    role=tenant.active_organization.role,
                 )
         return Response(JobRunSerializer(job).data, status=201 if created else 200)
 

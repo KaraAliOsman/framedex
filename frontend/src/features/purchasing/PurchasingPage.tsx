@@ -281,7 +281,7 @@ function PurchasingWorkspace({
             project_version_id: state.version.id,
             order_id: orderId ?? null,
           },
-          idempotency_key: `${documentType.toLowerCase()}:${state.version.id}:${orderId ?? ""}`,
+          idempotency_key: `${documentType.toLowerCase()}:${format.toLowerCase()}:${state.version.id}:${orderId ?? ""}`,
         },
         { headers: { "X-Organization-ID": orgId } },
       );

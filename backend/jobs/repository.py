@@ -17,6 +17,10 @@ STALE_LOCK_SECONDS = 600
 _JSON_COLUMNS = frozenset({"payload", "result", "error"})
 
 
+class LockLostError(DatabaseError):
+    """The row was reclaimed by another worker mid-execution."""
+
+
 def _decode(record: dict[str, object]) -> dict[str, object]:
     for key in record.keys() & _JSON_COLUMNS:
         if isinstance(record[key], str):
@@ -114,8 +118,12 @@ def list_jobs(
     ]
 
 
-def claim_batch(*, worker_id: str, limit: int) -> list[dict[str, object]]:
-    """Atomically claim queued rows; one worker wins each row."""
+def claim_next(*, worker_id: str) -> dict[str, object] | None:
+    """Atomically claim the single oldest runnable job; one worker wins.
+
+    Jobs are claimed one at a time, right before execution — a row can never
+    sit inside a claimed batch waiting for earlier work while its lock ages
+    toward the stale cutoff."""
     if connection.vendor == "postgresql":
         record = rows(
             """
@@ -126,34 +134,32 @@ def claim_batch(*, worker_id: str, limit: int) -> list[dict[str, object]]:
                 attempt = attempt + 1,
                 started_at = COALESCE(started_at, NOW()),
                 updated_at = NOW()
-            WHERE id IN (
+            WHERE id = (
                 SELECT id FROM public.job_runs
                 WHERE state = 'QUEUED' AND run_after <= NOW()
                 ORDER BY created_at
                 FOR UPDATE SKIP LOCKED
-                LIMIT %s
+                LIMIT 1
             )
             RETURNING *
             """,
-            [worker_id, limit],
+            [worker_id],
         )
-        return [_decode(item) for item in record]
+        return _decode(record[0]) if record else None
     # Development fallback (sqlite): single-process claim without SKIP LOCKED.
     record = rows(
         """
         SELECT id FROM public.job_runs
         WHERE state = 'QUEUED' AND run_after <= %s
         ORDER BY created_at
-        LIMIT %s
+        LIMIT 1
         """,
-        [datetime.now(timezone.utc).isoformat(), limit],
+        [datetime.now(timezone.utc).isoformat()],
     )
     if not record:
-        return []
-    ids = [item["id"] for item in record]
-    placeholders = ", ".join("%s" for _ in ids)
+        return None
     claimed = rows(
-        f"""
+        """
         UPDATE public.job_runs
         SET state = 'RUNNING',
             locked_by = %s,
@@ -161,7 +167,7 @@ def claim_batch(*, worker_id: str, limit: int) -> list[dict[str, object]]:
             attempt = attempt + 1,
             started_at = COALESCE(started_at, %s),
             updated_at = %s
-        WHERE id IN ({placeholders}) AND state = 'QUEUED'
+        WHERE id = %s AND state = 'QUEUED'
         RETURNING *
         """,
         [
@@ -169,10 +175,23 @@ def claim_batch(*, worker_id: str, limit: int) -> list[dict[str, object]]:
             datetime.now(timezone.utc).isoformat(),
             datetime.now(timezone.utc).isoformat(),
             datetime.now(timezone.utc).isoformat(),
-            *ids,
+            str(record[0]["id"]),
         ],
     )
-    return [_decode(item) for item in claimed]
+    return _decode(claimed[0]) if claimed else None
+
+
+def renew_lock(*, job_id: UUID, worker_id: str) -> None:
+    """Refresh the lease; running handlers keep ownership through long work."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE public.job_runs
+            SET locked_at = NOW(), updated_at = NOW()
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
+            """,
+            [str(job_id), worker_id],
+        )
 
 
 def release_stale(*, now: datetime | None = None) -> int:
@@ -195,39 +214,62 @@ def release_stale(*, now: datetime | None = None) -> int:
         return cursor.rowcount
 
 
-def report_progress(*, job_id: UUID, progress: float) -> None:
+def report_progress(*, job_id: UUID, worker_id: str, progress: float) -> None:
+    """Record progress and renew the lease in one write."""
     with connection.cursor() as cursor:
         cursor.execute(
             """
             UPDATE public.job_runs
-            SET progress = %s, updated_at = NOW()
-            WHERE id = %s AND state = 'RUNNING'
+            SET progress = %s, locked_at = NOW(), updated_at = NOW()
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
             """,
-            [progress, str(job_id)],
+            [progress, str(job_id), worker_id],
         )
 
 
-def succeed(*, job_id: UUID, result: dict[str, object]) -> None:
+def _terminal_update(
+    *, job_id: UUID, worker_id: str, set_clause: str, parameters: list[object]
+) -> None:
+    """Write a terminal state only while this worker still owns the lease —
+    a requeued row belongs to its new claimer and must not be overwritten."""
     with connection.cursor() as cursor:
         cursor.execute(
-            """
+            f"""
             UPDATE public.job_runs
-            SET state = 'SUCCEEDED',
-                progress = 100.00,
-                result = %s::jsonb,
-                error = NULL,
-                locked_by = NULL,
-                locked_at = NULL,
-                completed_at = NOW(),
-                updated_at = NOW()
-            WHERE id = %s
+            SET {set_clause}
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
             """,
-            [json_text(result), str(job_id)],
+            [*parameters, str(job_id), worker_id],
         )
+        if cursor.rowcount == 0:
+            raise LockLostError(f"job {job_id} lock lost before terminal write")
+
+
+def succeed(*, job_id: UUID, worker_id: str, result: dict[str, object]) -> None:
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause="""
+            state = 'SUCCEEDED',
+            progress = 100.00,
+            result = %s::jsonb,
+            error = NULL,
+            locked_by = NULL,
+            locked_at = NULL,
+            completed_at = NOW(),
+            updated_at = NOW()
+        """,
+        parameters=[json_text(result)],
+    )
 
 
 def fail_or_retry(
-    *, job_id: UUID, error: dict[str, object], attempt: int, max_attempts: int
+    *,
+    job_id: UUID,
+    worker_id: str,
+    error: dict[str, object],
+    attempt: int,
+    max_attempts: int,
 ) -> str:
     """Requeue with quadratic backoff, or mark FAILED after the last attempt."""
     terminal = attempt >= max_attempts
@@ -236,18 +278,35 @@ def fail_or_retry(
         if terminal
         else "state = 'QUEUED'"
     )
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            UPDATE public.job_runs
-            SET {state_update},
-                error = %s::jsonb,
-                locked_by = NULL,
-                locked_at = NULL,
-                run_after = NOW() + (%s || ' seconds')::interval,
-                updated_at = NOW()
-            WHERE id = %s
-            """,
-            [json_text(error), str(15 * attempt * attempt), str(job_id)],
-        )
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause=f"""
+            {state_update},
+            error = %s::jsonb,
+            locked_by = NULL,
+            locked_at = NULL,
+            run_after = NOW() + (%s || ' seconds')::interval,
+            updated_at = NOW()
+        """,
+        parameters=[json_text(error), str(15 * attempt * attempt)],
+    )
     return "FAILED" if terminal else "QUEUED"
+
+
+def fail_permanent(*, job_id: UUID, worker_id: str, error: dict[str, object]) -> None:
+    """Terminal failure regardless of remaining attempts: contract violations
+    (permission denied, not found, invalid payload) never succeed on retry."""
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause="""
+            state = 'FAILED',
+            error = %s::jsonb,
+            locked_by = NULL,
+            locked_at = NULL,
+            completed_at = NOW(),
+            updated_at = NOW()
+        """,
+        parameters=[json_text(error)],
+    )

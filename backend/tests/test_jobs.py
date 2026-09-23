@@ -85,12 +85,15 @@ def test_worker_executes_handler_and_reports_success(monkeypatch) -> None:
     succeeded: dict[str, object] = {}
     progress_values: list[float] = []
 
-    def record_progress(*, job_id, progress):
+    def record_progress(*, job_id, worker_id, progress):
         progress_values.append(progress)
 
+    monkeypatch.setattr(repository, "renew_lock", lambda **kwargs: None)
     monkeypatch.setattr(repository, "report_progress", record_progress)
     monkeypatch.setattr(
-        repository, "succeed", lambda *, job_id, result: succeeded.update(result)
+        repository,
+        "succeed",
+        lambda *, job_id, worker_id, result: succeeded.update(result),
     )
 
     claimed = {
@@ -102,7 +105,7 @@ def test_worker_executes_handler_and_reports_success(monkeypatch) -> None:
         "attempt": 1,
         "max_attempts": 3,
     }
-    worker._execute(claimed)
+    worker._execute(claimed, worker_id="w1")
     assert progress_values == [50]
     assert succeeded == {"echo": 42, "org": str(org_id)}
 
@@ -115,6 +118,7 @@ def test_worker_marks_failure_with_error_payload(monkeypatch) -> None:
         "demo.boom", roles=("OWNER",), payload_serializer=DemoPayloadSerializer
     )(boom)
     outcomes: list[dict[str, object]] = []
+    monkeypatch.setattr(repository, "renew_lock", lambda **kwargs: None)
     monkeypatch.setattr(repository, "report_progress", lambda **kwargs: None)
     monkeypatch.setattr(
         repository, "fail_or_retry", lambda **kwargs: outcomes.append(kwargs) or "QUEUED"
@@ -129,7 +133,8 @@ def test_worker_marks_failure_with_error_payload(monkeypatch) -> None:
             "payload": {"amount": 1},
             "attempt": 2,
             "max_attempts": 3,
-        }
+        },
+        worker_id="w1",
     )
     assert len(outcomes) == 1
     assert outcomes[0]["error"]["code"] == "job_handler_error"
@@ -152,9 +157,76 @@ def test_worker_fails_unregistered_type(monkeypatch) -> None:
             "payload": {},
             "attempt": 1,
             "max_attempts": 3,
-        }
+        },
+        worker_id="w1",
     )
     assert outcomes[0]["error"]["code"] == "job_type_unregistered"
+
+
+def test_enqueue_payload_authorizer_denies_role(monkeypatch) -> None:
+    @registry.register(
+        "demo.gated",
+        roles=("OWNER", "ESTIMATOR"),
+        payload_serializer=DemoPayloadSerializer,
+        authorize=lambda payload, role: payload["amount"] < 10 or role == "OWNER",
+    )
+    def gated(payload, context, report):
+        return {}
+
+    monkeypatch.setattr(
+        repository, "insert_job", lambda **kwargs: ({"id": uuid4()}, True)
+    )
+    with pytest.raises(service.JobServiceError) as denied:
+        service.enqueue(
+            org_id=uuid4(),
+            job_type="demo.gated",
+            payload={"amount": 42},
+            role="ESTIMATOR",
+        )
+    assert denied.value.code == "job_permission_denied"
+
+    job, created = service.enqueue(
+        org_id=uuid4(),
+        job_type="demo.gated",
+        payload={"amount": 42},
+        role="OWNER",
+    )
+    assert created is True
+
+
+def test_worker_marks_permanent_failure_without_retry(monkeypatch) -> None:
+    def forbidden(payload, context, report):
+        raise registry.JobPermanentError("document_access_denied")
+
+    registry.register(
+        "demo.forbidden", roles=("OWNER",), payload_serializer=DemoPayloadSerializer
+    )(forbidden)
+    outcomes: list[dict[str, object]] = []
+    monkeypatch.setattr(repository, "renew_lock", lambda **kwargs: None)
+    monkeypatch.setattr(repository, "report_progress", lambda **kwargs: None)
+    monkeypatch.setattr(
+        repository, "fail_permanent", lambda **kwargs: outcomes.append(kwargs)
+    )
+    monkeypatch.setattr(
+        repository,
+        "fail_or_retry",
+        lambda **kwargs: pytest.fail("permanent error must not retry"),
+    )
+    worker._execute(
+        {
+            "id": uuid4(),
+            "org_id": uuid4(),
+            "created_by": uuid4(),
+            "type": "demo.forbidden",
+            "payload": {"amount": 1},
+            "attempt": 1,
+            "max_attempts": 3,
+        },
+        worker_id="w1",
+    )
+    assert len(outcomes) == 1
+    assert outcomes[0]["error"]["code"] == "job_permanent_error"
+    assert "document_access_denied" in outcomes[0]["error"]["detail"]
 
 
 def test_enqueue_serializer_rejects_unknown_fields() -> None:

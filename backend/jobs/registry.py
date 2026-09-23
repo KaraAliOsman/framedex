@@ -16,6 +16,13 @@ class JobRegistryError(ValueError):
     pass
 
 
+class JobPermanentError(Exception):
+    """Handler-side signal that the failure is a contract violation —
+    permission denied, target not found, invalid state — and retrying the
+    same payload can never succeed. The worker marks the job FAILED at once
+    instead of burning retries."""
+
+
 @dataclass(frozen=True)
 class JobContext:
     """What a running handler knows about the row it was claimed for."""
@@ -29,6 +36,7 @@ class JobContext:
 
 ProgressReporter = Callable[[float], None]
 JobRunner = Callable[[dict[str, Any], JobContext, ProgressReporter], dict[str, Any]]
+PayloadAuthorizer = Callable[[dict[str, Any], str], bool]
 
 
 @dataclass(frozen=True)
@@ -38,6 +46,11 @@ class JobSpec:
     payload_serializer: type[serializers.Serializer]
     run: JobRunner
     label: str
+    # Optional payload-aware authorization on top of the job-type role list —
+    # e.g. one job type covering several operations whose allowed roles differ
+    # per payload. Checked at enqueue so a forbidden request is a 403, not a
+    # job that retries to a guaranteed failure.
+    authorize: PayloadAuthorizer | None = None
 
 
 _REGISTRY: dict[str, JobSpec] = {}
@@ -49,6 +62,7 @@ def register(
     roles: tuple[str, ...],
     payload_serializer: type[serializers.Serializer],
     label: str = "",
+    authorize: PayloadAuthorizer | None = None,
 ) -> Callable[[JobRunner], JobRunner]:
     def decorator(run: JobRunner) -> JobRunner:
         if job_type in _REGISTRY:
@@ -59,6 +73,7 @@ def register(
             payload_serializer=payload_serializer,
             run=run,
             label=label or job_type,
+            authorize=authorize,
         )
         return run
 

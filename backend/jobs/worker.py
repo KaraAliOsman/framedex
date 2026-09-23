@@ -1,6 +1,8 @@
-"""Worker loop: claim queued rows, run the registered handler, record the
-terminal state. Crash recovery happens through release_stale() requeueing
-RUNNING rows whose lock went stale."""
+"""Worker loop: claim queued rows one at a time, run the registered handler,
+record the terminal state. Crash recovery happens through release_stale()
+requeueing RUNNING rows whose lock went stale; every mutating write is
+conditional on still owning the lease so a reclaimed job is never overwritten
+by a zombie worker."""
 
 from __future__ import annotations
 
@@ -10,6 +12,7 @@ import time
 from uuid import UUID
 
 from jobs import registry, repository
+from jobs.repository import LockLostError
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +26,14 @@ def run_once(*, worker_id: str, batch: int = 8) -> int:
     released = repository.release_stale()
     if released:
         logger.warning("job worker %s requeued %s stale job(s)", worker_id, released)
-    claimed = repository.claim_batch(worker_id=worker_id, limit=batch)
-    for job in claimed:
-        _execute(job)
-    return len(claimed)
+    processed = 0
+    while processed < batch:
+        job = repository.claim_next(worker_id=worker_id)
+        if job is None:
+            break
+        _execute(job, worker_id=worker_id)
+        processed += 1
+    return processed
 
 
 def run_forever(*, worker_id: str, batch: int = 8, poll_seconds: float = 2.0) -> None:
@@ -42,21 +49,28 @@ def run_forever(*, worker_id: str, batch: int = 8, poll_seconds: float = 2.0) ->
             time.sleep(poll_seconds)
 
 
-def _execute(job: dict[str, object]) -> None:
+def _execute(job: dict[str, object], *, worker_id: str) -> None:
     job_type = str(job["type"])
     spec = registry.spec_for(job_type)
     job_id = job["id"]
     if spec is None:
         repository.fail_or_retry(
             job_id=job_id,
+            worker_id=worker_id,
             error={"code": "job_type_unregistered", "detail": job_type},
             attempt=int(job["attempt"]),
             max_attempts=int(job["max_attempts"]),
         )
         return
 
+    repository.renew_lock(job_id=job_id, worker_id=worker_id)
+
     def report(progress: float) -> None:
-        repository.report_progress(job_id=job_id, progress=max(0.0, min(progress, 99.0)))
+        repository.report_progress(
+            job_id=job_id,
+            worker_id=worker_id,
+            progress=max(0.0, min(progress, 99.0)),
+        )
 
     context = registry.JobContext(
         job_id=job_id if isinstance(job_id, UUID) else UUID(str(job_id)),
@@ -67,18 +81,37 @@ def _execute(job: dict[str, object]) -> None:
     )
     try:
         result = spec.run(context.payload, context, report)
+    except registry.JobPermanentError as error:
+        repository.fail_permanent(
+            job_id=job_id,
+            worker_id=worker_id,
+            error={"code": "job_permanent_error", "detail": str(error)[:500]},
+        )
+        logger.warning("job %s (%s) failed permanently", job_id, job_type)
+        return
+    except LockLostError:
+        logger.warning("job %s (%s) lost its lease; result discarded", job_id, job_type)
+        return
     except Exception as error:  # noqa: BLE001 — any handler error becomes job error
         logger.exception("job %s (%s) failed on attempt %s", job_id, job_type, job["attempt"])
-        outcome = repository.fail_or_retry(
-            job_id=job_id,
-            error={
-                "code": "job_handler_error",
-                "detail": f"{type(error).__name__}: {error}"[:500],
-            },
-            attempt=int(job["attempt"]),
-            max_attempts=int(job["max_attempts"]),
-        )
-        logger.warning("job %s marked %s", job_id, outcome)
+        try:
+            outcome = repository.fail_or_retry(
+                job_id=job_id,
+                worker_id=worker_id,
+                error={
+                    "code": "job_handler_error",
+                    "detail": f"{type(error).__name__}: {error}"[:500],
+                },
+                attempt=int(job["attempt"]),
+                max_attempts=int(job["max_attempts"]),
+            )
+            logger.warning("job %s marked %s", job_id, outcome)
+        except LockLostError:
+            logger.warning("job %s lost its lease before failure write", job_id)
         return
-    repository.succeed(job_id=job_id, result=result)
+    try:
+        repository.succeed(job_id=job_id, worker_id=worker_id, result=result)
+    except LockLostError:
+        logger.warning("job %s (%s) lost its lease; result discarded", job_id, job_type)
+        return
     logger.info("job %s (%s) succeeded", job_id, job_type)

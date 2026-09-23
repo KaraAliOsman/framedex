@@ -23,6 +23,7 @@ def enqueue(
     max_attempts: int = 3,
     run_after: datetime | None = None,
     created_by: UUID | None = None,
+    role: str | None = None,
 ) -> tuple[dict[str, object], bool]:
     spec = registry.spec_for(job_type)
     if spec is None:
@@ -30,10 +31,13 @@ def enqueue(
     serializer = spec.payload_serializer(data=payload)
     if not serializer.is_valid():
         raise JobServiceError("job_payload_invalid")
+    validated = dict(serializer.validated_data)
+    if spec.authorize is not None and role is not None and not spec.authorize(validated, role):
+        raise JobServiceError("job_permission_denied")
     return repository.insert_job(
         org_id=org_id,
         job_type=job_type,
-        payload=dict(serializer.validated_data),
+        payload=validated,
         idempotency_key=idempotency_key,
         max_attempts=max_attempts,
         run_after=run_after or datetime.now(timezone.utc),

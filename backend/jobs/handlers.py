@@ -12,7 +12,9 @@ from typing import Any
 
 from django.db import connection, transaction
 
-from jobs.registry import JobContext, ProgressReporter, register
+from jobs.registry import JobContext, JobPermanentError, ProgressReporter, register
+from documents.artifacts import _DOCUMENT_ROLES
+from documents.repository import DocumentaryError
 from documents.serializers import ArtifactRequestSerializer
 
 
@@ -33,6 +35,8 @@ def _claims_for(actor_id: str, context: JobContext) -> dict[str, Any]:
     roles=("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"),
     payload_serializer=ArtifactRequestSerializer,
     label="Emitir documento",
+    authorize=lambda payload, role: role
+    in _DOCUMENT_ROLES.get(str(payload.get("document_type")), set()),
 )
 def generate_artifact_job(
     payload: dict[str, Any], context: JobContext, report: ProgressReporter
@@ -54,14 +58,17 @@ def generate_artifact_job(
                 "SELECT set_config('request.jwt.claims', %s, true)",
                 [json.dumps(_claims_for(str(context.created_by), context))],
             )
-        output, created = generate_artifact(
-            org_id=context.org_id,
-            actor_id=context.created_by,
-            role=role,
-            project_version_id=payload["project_version_id"],
-            order_id=payload.get("order_id"),
-            document_type=payload["document_type"],
-            file_format=payload["format"],
-        )
+        try:
+            output, created = generate_artifact(
+                org_id=context.org_id,
+                actor_id=context.created_by,
+                role=role,
+                project_version_id=payload["project_version_id"],
+                order_id=payload.get("order_id"),
+                document_type=payload["document_type"],
+                file_format=payload["format"],
+            )
+        except DocumentaryError as error:
+            raise JobPermanentError(error.code) from error
     report(95)
     return {"artifact": output, "created": created}
