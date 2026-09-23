@@ -12,6 +12,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import socket
 import time
 from typing import Any
 from urllib.parse import urlparse
@@ -20,6 +21,26 @@ import httpx
 
 
 MAX_BODY_BYTES = 1_048_576
+
+
+def _public_hostname(hostname: str) -> bool:
+    """Literal IPs are checked directly; a DNS name must resolve — every
+    answer non-global means the provider request would land inside our own
+    network. Resolution failure refuses closed."""
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            infos = socket.getaddrinfo(hostname, 443, proto=socket.IPPROTO_TCP)
+        except socket.gaierror:
+            return False
+        addresses = {
+            ipaddress.ip_address(info[4][0])
+            for info in infos
+            if info[4] and info[4][0]
+        }
+        return bool(addresses) and all(address.is_global for address in addresses)
+    return address.is_global
 
 
 class ProviderError(Exception):
@@ -40,17 +61,17 @@ class HttpProvider:
         if not self.api_key or not self.base_url:
             raise ProviderError("ai_provider_unavailable")
         # Provider URLs are operator config, but a compromised value must not
-        # turn the gateway into an authenticated proxy for internal services.
-        parsed = urlparse(self.base_url)
-        if parsed.scheme != "https" or not parsed.hostname:
-            raise ProviderError("ai_provider_unavailable")
+        # turn the gateway into an authenticated proxy for internal services:
+        # https-only, and the host must not resolve to a non-global address.
         try:
-            address = ipaddress.ip_address(parsed.hostname)
-        except ValueError:
-            pass
-        else:
-            if not address.is_global:
-                raise ProviderError("ai_provider_unavailable")
+            parsed = urlparse(self.base_url)
+            hostname = parsed.hostname
+        except ValueError as error:
+            raise ProviderError("ai_provider_unavailable") from error
+        if parsed.scheme != "https" or not hostname:
+            raise ProviderError("ai_provider_unavailable")
+        if not _public_hostname(hostname):
+            raise ProviderError("ai_provider_unavailable")
 
     def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
         started = time.monotonic()

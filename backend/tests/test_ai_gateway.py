@@ -201,6 +201,18 @@ def test_no_debit_when_provider_fails(monkeypatch):
     assert debited == []
 
 
+
+
+def _allow_dns(monkeypatch):
+    import socket as _socket
+
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+        ],
+    )
+
 def test_http_provider_requires_environment(monkeypatch):
     from ai_gateway.providers import HttpProvider
 
@@ -351,6 +363,7 @@ def test_malformed_provider_body_is_a_provider_error(monkeypatch):
 
     monkeypatch.setenv("AI_GATEWAY_TESTP_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_TESTP_BASE_URL", "https://p.example")
+    _allow_dns(monkeypatch)
     monkeypatch.setattr(
         "httpx.post", lambda *a, **k: _Response()
     )
@@ -391,6 +404,7 @@ def test_http_provider_caps_body_size(monkeypatch):
 
     monkeypatch.setenv("AI_GATEWAY_TESTP2_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_TESTP2_BASE_URL", "https://p.example")
+    _allow_dns(monkeypatch)
     monkeypatch.setattr("httpx.post", lambda *a, **k: _Response())
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="TESTP2").invoke(
@@ -455,9 +469,38 @@ def test_non_string_provider_output_is_a_provider_error(monkeypatch):
 
     monkeypatch.setenv("AI_GATEWAY_OBJ_API_KEY", "k")
     monkeypatch.setenv("AI_GATEWAY_OBJ_BASE_URL", "https://p.example")
+    _allow_dns(monkeypatch)
     monkeypatch.setattr("httpx.post", lambda *a, **k: _Response())
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="OBJ").invoke(
             route=_route(), capability="nlp_command", input_payload={}
         )
     assert failure.value.code == "ai_provider_error"
+
+
+def test_http_provider_rejects_private_dns_answers(monkeypatch):
+    import socket as _socket
+
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_DNS_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_DNS_BASE_URL", "https://provider.example")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("192.168.1.10", 443))
+        ],
+    )
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="DNS")
+    assert failure.value.code == "ai_provider_unavailable"
+
+
+def test_http_provider_malformed_url_is_a_provider_error(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_BADURL_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_BADURL_BASE_URL", "https://[broken")
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="BADURL")
+    assert failure.value.code == "ai_provider_unavailable"
