@@ -137,6 +137,89 @@ def test_receive_order_idempotent_replay() -> None:
     receiving.assert_called_once()
 
 
+def test_receive_order_takes_receipt_key_lock() -> None:
+    org_id, order_id = uuid4(), uuid4()
+    queries = []
+
+    def fake_rows(query, params=()):
+        queries.append(query)
+        return []
+
+    with patch("inventory.service.rows", side_effect=fake_rows), patch(
+        "inventory.service.one",
+        return_value={"id": order_id, "status": "DRAFT"},
+    ), patch("inventory.service.transaction.atomic", return_value=_atomic()), patch(
+        "inventory.service.documentary_backend", return_value=_atomic()
+    ):
+        with pytest.raises(DocumentaryError):
+            service.receive_order(
+                org_id=org_id,
+                actor_id=uuid4(),
+                order_id=order_id,
+                receipt_key="k-lock",
+                note=None,
+                lines=[],
+            )
+    assert any("pg_advisory_xact_lock" in q for q in queries)
+
+
+def test_next_order_status_fulfilled_per_line() -> None:
+    with patch(
+        "inventory.service.one", return_value={"fulfilled": True}
+    ):
+        assert service._next_order_status(org_id=uuid4(), order_id=uuid4()) == "FULFILLED"
+    with patch(
+        "inventory.service.one", return_value={"fulfilled": False}
+    ):
+        assert (
+            service._next_order_status(org_id=uuid4(), order_id=uuid4())
+            == "PARTIALLY_RECEIVED"
+        )
+
+
+def test_record_movement_returns_full_projection() -> None:
+    row = {
+        "id": uuid4(),
+        "item_id": uuid4(),
+        "movement_type": "SCRAP",
+        "quantity": Decimal("1.00"),
+        "order_id": None,
+        "order_line_id": None,
+        "lot_code": "L1",
+        "note": "n",
+        "actor_id": uuid4(),
+        "created_at": "2026-09-23T00:00:00Z",
+    }
+    with patch("inventory.service.rows", return_value=[]), patch(
+        "inventory.service.one", return_value=row
+    ), patch("inventory.service.transaction.atomic", return_value=_atomic()):
+        output = service.record_movement(
+            org_id=uuid4(),
+            actor_id=uuid4(),
+            item_id=uuid4(),
+            movement_type="SCRAP",
+            quantity=Decimal("1"),
+            lot_code="L1",
+            note="n",
+        )
+    assert output["item_id"] == row["item_id"]
+    assert output["order_id"] is None
+    assert output["movement_type"] == "SCRAP"
+
+
+def test_receipt_post_rejects_zero_quantity(monkeypatch) -> None:
+    client, _, _ = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+    response = client.post(
+        f"/api/v1/inventory/orders/{uuid4()}/receipts/",
+        {
+            "receipt_key": "r0",
+            "lines": [{"order_line_id": str(uuid4()), "received_qty": "0.00"}],
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+
+
 def test_record_movement_type_gate() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.record_movement(

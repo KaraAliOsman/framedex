@@ -142,22 +142,26 @@ def order_receiving(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
 
 
 def _next_order_status(*, org_id: UUID, order_id: UUID) -> str:
+    # Fulfilment is per line: an over-receipt on one line must not hide a
+    # shortage on another.
     totals = one(
         """
-        SELECT COALESCE(SUM(l.quantity), 0) AS ordered,
-               COALESCE(SUM(r.received_qty), 0) AS received
-        FROM public.order_requirement_lines l
-        LEFT JOIN (
-            SELECT order_line_id, SUM(received_qty) AS received_qty
-            FROM public.order_receipt_lines
-            GROUP BY order_line_id
-        ) r ON r.order_line_id = l.id
-        WHERE l.order_id = %s AND l.org_id = %s
+        SELECT COALESCE(bool_and(complete), FALSE) AS fulfilled
+        FROM (
+            SELECT COALESCE(r.received_qty, 0) >= l.quantity AS complete
+            FROM public.order_requirement_lines l
+            LEFT JOIN (
+                SELECT order_line_id, SUM(received_qty) AS received_qty
+                FROM public.order_receipt_lines
+                GROUP BY order_line_id
+            ) r ON r.order_line_id = l.id
+            WHERE l.order_id = %s AND l.org_id = %s
+        ) per_line
         """,
         [str(order_id), str(org_id)],
         "order_lines_missing",
     )
-    if totals["received"] >= totals["ordered"] and totals["ordered"] > 0:
+    if totals["fulfilled"]:
         return "FULFILLED"
     return "PARTIALLY_RECEIVED"
 
@@ -174,6 +178,12 @@ def receive_order(
     """Record a physical receipt against a SENT/partial order. Idempotent per
     (org, receipt_key): a replayed key returns the existing receipt."""
     with transaction.atomic(), documentary_backend():
+        # Serialize retries on the same (org, receipt_key) pair so a concurrent
+        # replay waits for the first transaction instead of racing the insert.
+        rows(
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+            [f"{org_id}:{receipt_key}"],
+        )
         existing = rows(
             "SELECT id, receipt_key, order_id FROM public.order_receipts WHERE org_id = %s AND receipt_key = %s",
             [str(org_id), receipt_key],
@@ -316,7 +326,8 @@ def record_movement(
             INSERT INTO public.inventory_movements(
                 org_id, item_id, movement_type, quantity, lot_code, note, actor_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, movement_type::text, quantity, created_at
+            RETURNING id, item_id, movement_type::text, quantity, order_id,
+                      order_line_id, lot_code, note, actor_id, created_at
             """,
             [
                 str(org_id),
@@ -328,4 +339,4 @@ def record_movement(
                 str(actor_id),
             ],
         )
-    return {k: str(v) for k, v in movement.items()}
+    return dict(movement)

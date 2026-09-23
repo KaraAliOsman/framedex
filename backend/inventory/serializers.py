@@ -64,7 +64,7 @@ class MovementListQuerySerializer(StrictSerializer):
 
 class ReceiptLineRequestSerializer(StrictSerializer):
     order_line_id = serializers.UUIDField()
-    received_qty = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0"))
+    received_qty = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     damaged_qty = serializers.DecimalField(
         max_digits=14, decimal_places=2, min_value=Decimal("0"), default=0
     )

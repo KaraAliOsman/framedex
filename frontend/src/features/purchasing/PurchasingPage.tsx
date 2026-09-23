@@ -855,7 +855,9 @@ function ReceivingPanel({
   const [quantities, setQuantities] = useState<
     Record<string, { received: string; damaged: string }>
   >({});
-  const [receiptKey] = useState(() => `${order.order_code}-${crypto.randomUUID().slice(0, 8)}`);
+  const [receiptKey, setReceiptKey] = useState(
+    () => `${order.order_code}-${crypto.randomUUID().slice(0, 8)}`,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -900,7 +902,17 @@ function ReceivingPanel({
         note: note || null,
         lines,
       }),
-    );
+    ).then((ok) => {
+      if (!ok) return;
+      // One key = one physical receipt: a successful post starts the next one
+      // with a fresh key; a failed/uncertain submit keeps it for safe retry.
+      setReceiptKey(`${order.order_code}-${crypto.randomUUID().slice(0, 8)}`);
+      setQuantities({});
+      setNote("");
+      request(`inventory/orders/${order.id}/receiving/`)
+        .then((fresh) => setState(fresh as ReceivingState))
+        .catch(() => undefined);
+    });
   }
 
   return (

@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(15);
 
 SELECT has_table('public', 'inventory_items', 'inventory items table exists');
 SELECT has_table('public', 'inventory_movements', 'movement ledger table exists');
@@ -65,6 +65,30 @@ SELECT ok(
     has_table_privilege('authenticated', 'public.inventory_movements', 'INSERT')
     AND has_table_privilege('authenticated', 'public.inventory_movements', 'SELECT'),
     'authenticated can append and read the movement ledger'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename = 'inventory_movements'
+          AND policyname = 'inventory_movements_insert'
+          AND with_check LIKE '%documentary_role%'
+    ),
+    'movement writes require warehouse roles, not just org membership'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid
+        WHERE n.nspname = 'private' AND p.proname = 'guard_inventory_org'
+    ),
+    'cross-tenant reference guard exists'
+);
+SELECT ok(
+    (
+        SELECT count(*) FROM pg_trigger
+        WHERE tgname = 'guard_inventory_org' AND NOT tgisinternal
+    ) = 3,
+    'tenant guard protects receipts, receipt lines, and movements'
 );
 SELECT * FROM finish();
 ROLLBACK;

@@ -121,36 +121,143 @@ ALTER TABLE public.order_receipts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_receipt_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_movements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY inventory_items_isolation ON public.inventory_items
-    FOR ALL
-    USING (org_id IN (SELECT private.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
+-- Reads are org-wide for tenant members; writes additionally require the
+-- warehouse roles (OWNER / WORKSHOP_MANAGER) so estimators and installers
+-- cannot forge stock or receipts directly.
+CREATE POLICY inventory_items_select ON public.inventory_items
+    FOR SELECT
+    USING (org_id IN (SELECT private.current_user_org_ids()));
+CREATE POLICY inventory_items_insert ON public.inventory_items
+    FOR INSERT
+    WITH CHECK (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    );
+CREATE POLICY inventory_items_update ON public.inventory_items
+    FOR UPDATE
+    USING (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    )
+    WITH CHECK (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    );
+CREATE POLICY inventory_items_delete ON public.inventory_items
+    FOR DELETE
+    USING (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    );
 
-CREATE POLICY order_receipts_isolation ON public.order_receipts
-    FOR ALL
-    USING (org_id IN (SELECT private.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
+CREATE POLICY order_receipts_select ON public.order_receipts
+    FOR SELECT
+    USING (org_id IN (SELECT private.current_user_org_ids()));
+CREATE POLICY order_receipts_insert ON public.order_receipts
+    FOR INSERT
+    WITH CHECK (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    );
 
-CREATE POLICY order_receipt_lines_isolation ON public.order_receipt_lines
-    FOR ALL
+CREATE POLICY order_receipt_lines_select ON public.order_receipt_lines
+    FOR SELECT
     USING (EXISTS (
         SELECT 1 FROM public.order_receipts receipt
         WHERE receipt.id = receipt_id
           AND receipt.org_id IN (SELECT private.current_user_org_ids())
-    ))
+    ));
+CREATE POLICY order_receipt_lines_insert ON public.order_receipt_lines
+    FOR INSERT
     WITH CHECK (EXISTS (
         SELECT 1 FROM public.order_receipts receipt
         WHERE receipt.id = receipt_id
           AND receipt.org_id IN (SELECT private.current_user_org_ids())
+          AND private.documentary_role(
+              receipt.org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
     ));
 
 -- Append-only by privilege: the ledger can be read and written but never
--- edited or deleted. (RLS FOR ALL is required so owner-scope still applies
--- to INSERT ... SELECT derived paths.)
-CREATE POLICY inventory_movements_isolation ON public.inventory_movements
-    FOR ALL
-    USING (org_id IN (SELECT private.current_user_org_ids()))
-    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
+-- edited or deleted.
+CREATE POLICY inventory_movements_select ON public.inventory_movements
+    FOR SELECT
+    USING (org_id IN (SELECT private.current_user_org_ids()));
+CREATE POLICY inventory_movements_insert ON public.inventory_movements
+    FOR INSERT
+    WITH CHECK (
+        org_id IN (SELECT private.current_user_org_ids())
+        AND private.documentary_role(org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER'])
+    );
+
+-- Cross-tenant FK targets: a receipt line can only reference requirement lines
+-- of the receipt's own org, and a movement can only reference rows of its own
+-- org. RLS checks the row's org; this trigger checks the referenced org.
+CREATE FUNCTION private.guard_inventory_org()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    receipt_org UUID;
+BEGIN
+    IF TG_TABLE_NAME = 'order_receipts' THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM public.orders
+            WHERE id = NEW.order_id AND org_id = NEW.org_id
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+    ELSIF TG_TABLE_NAME = 'order_receipt_lines' THEN
+        SELECT org_id INTO receipt_org
+        FROM public.order_receipts WHERE id = NEW.receipt_id;
+        IF receipt_org IS NULL OR NOT EXISTS (
+            SELECT 1 FROM public.order_requirement_lines
+            WHERE id = NEW.order_line_id AND org_id = receipt_org
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+    ELSIF TG_TABLE_NAME = 'inventory_movements' THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM public.inventory_items
+            WHERE id = NEW.item_id AND org_id = NEW.org_id
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+        IF NEW.order_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM public.orders
+            WHERE id = NEW.order_id AND org_id = NEW.org_id
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+        IF NEW.order_line_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM public.order_requirement_lines
+            WHERE id = NEW.order_line_id AND org_id = NEW.org_id
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+        IF NEW.receipt_line_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM public.order_receipt_lines line_
+            JOIN public.order_receipts receipt ON receipt.id = line_.receipt_id
+            WHERE line_.id = NEW.receipt_line_id AND receipt.org_id = NEW.org_id
+        ) THEN
+            RAISE EXCEPTION 'inventory_org_mismatch' USING ERRCODE = '23514';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION private.guard_inventory_org() FROM PUBLIC;
+
+CREATE TRIGGER guard_inventory_org
+    BEFORE INSERT ON public.order_receipts
+    FOR EACH ROW EXECUTE FUNCTION private.guard_inventory_org();
+CREATE TRIGGER guard_inventory_org
+    BEFORE INSERT ON public.order_receipt_lines
+    FOR EACH ROW EXECUTE FUNCTION private.guard_inventory_org();
+CREATE TRIGGER guard_inventory_org
+    BEFORE INSERT ON public.inventory_movements
+    FOR EACH ROW EXECUTE FUNCTION private.guard_inventory_org();
 
 REVOKE ALL ON public.inventory_items FROM anon;
 REVOKE ALL ON public.order_receipts FROM anon;
