@@ -4879,6 +4879,11 @@ export type positionsDesignAssistResponse422 = {
   status: 422;
 };
 
+export type positionsDesignAssistResponse502 = {
+  data: ErrorResponse;
+  status: 502;
+};
+
 export type positionsDesignAssistResponse503 = {
   data: ErrorResponse;
   status: 503;
@@ -4894,6 +4899,7 @@ export type positionsDesignAssistResponseError = (
   | positionsDesignAssistResponse404
   | positionsDesignAssistResponse409
   | positionsDesignAssistResponse422
+  | positionsDesignAssistResponse502
   | positionsDesignAssistResponse503
 ) & {
   headers: Headers;

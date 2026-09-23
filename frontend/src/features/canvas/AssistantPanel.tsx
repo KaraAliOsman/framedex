@@ -13,6 +13,9 @@ type Preview = {
   notes: string | null;
   model: string;
   credits: number;
+  /** The product instance the ops were validated against — any later commit
+   * produces a new identity and makes the index-based ops stale. */
+  snapshot: ProductJson;
 };
 
 /** NL design assistant: prompt → gateway-validated op preview → one commit.
@@ -62,6 +65,7 @@ export function AssistantPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       const data = response.data as DesignAssistResponse;
       setPreview({
+        snapshot: product,
         ops: data.ops as DesignOp[],
         rejected: data.rejected.map((item) => ({
           op: typeof item.op === "string" ? item.op : null,
@@ -133,20 +137,24 @@ export function AssistantPanel({
                   ))}
                 </ul>
               )}
-              <div className="inspector-actions">
-                <button
-                  type="button"
-                  className="primary-button"
-                  disabled={preview.ops.length === 0 || disabled}
-                  onClick={() => {
-                    onApply(preview.ops);
-                    setPreview(null);
-                    setPrompt("");
-                  }}
-                >
-                  {t("assistant.apply").replace("{count}", String(preview.ops.length))}
-                </button>
-              </div>
+              {preview.snapshot !== product ? (
+                <p className="assembly-hint">{t("assistant.stale")}</p>
+              ) : (
+                <div className="inspector-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    disabled={preview.ops.length === 0 || disabled}
+                    onClick={() => {
+                      onApply(preview.ops);
+                      setPreview(null);
+                      setPrompt("");
+                    }}
+                  >
+                    {t("assistant.apply").replace("{count}", String(preview.ops.length))}
+                  </button>
+                </div>
+              )}
               <p className="assistant-panel__meta">
                 {preview.model} · {preview.credits} {t("assistant.credits")}
               </p>

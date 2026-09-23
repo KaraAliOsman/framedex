@@ -3,6 +3,7 @@ it becomes an op — index bounds, enums, ranges; rejected ops are reported,
 never silently applied."""
 
 import json
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -22,7 +23,17 @@ def _product(modules=2, couplings=1):
 
 
 def _position():
-    return {"id": uuid4(), "project_id": uuid4()}
+    return {"id": uuid4(), "project_id": uuid4(), "system_id": uuid4()}
+
+
+def _catalog(**overrides):
+    catalog = {
+        "glass_skus": {"GLASS-4MM", "DVH-4-12-4"},
+        "panel_skus": {"PANEL-SANDWICH-24"},
+        "thicknesses": {Decimal("4"), Decimal("24")},
+    }
+    catalog.update(overrides)
+    return catalog
 
 
 def _envelope(output):
@@ -38,7 +49,7 @@ def _envelope(output):
     }
 
 
-def _patch_invoke(monkeypatch, output):
+def _patch_invoke(monkeypatch, output, catalog=None):
     captured = {}
 
     def fake_invoke(**kwargs):
@@ -46,6 +57,9 @@ def _patch_invoke(monkeypatch, output):
         return _envelope(output)
 
     monkeypatch.setattr(design_assist.gateway, "invoke", fake_invoke)
+    monkeypatch.setattr(
+        design_assist, "_catalog", lambda position, org_id: catalog or _catalog()
+    )
     return captured
 
 
@@ -189,6 +203,117 @@ def test_invalid_product_summary_is_a_400(monkeypatch):
             operation_key="assist-8",
         )
     assert error.value.get_codes() == "design_assist_product_invalid"
+
+
+def test_structural_ops_validate_against_the_evolving_assembly(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_module_count", "count": 12},
+                {"op": "add_unit", "side": "right"},
+                {"op": "set_opening", "module": 11, "opening": "FIXED"},
+                {"op": "set_opening", "module": 12, "opening": "FIXED"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=11, couplings=10),
+        prompt="doce más uno",
+        operation_key="assist-9",
+    )
+    assert [op["op"] for op in out["ops"]] == [
+        "set_module_count",
+        "set_opening",
+    ]
+    assert [item["reason"] for item in out["rejected"]] == [
+        "lado_invalido",
+        "apertura_invalida",
+    ]
+
+
+def test_remove_unit_shifts_the_validation_surface(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_unit", "module": 0},
+                {"op": "set_opening", "module": 1, "opening": "AWNING"},
+                {"op": "set_opening", "module": 2, "opening": "AWNING"},
+                {"op": "add_unit", "side": "left"},
+                {"op": "set_opening", "module": 2, "opening": "FIXED"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=3, couplings=2),
+        prompt="reacomoda",
+        operation_key="assist-10",
+    )
+    assert [op["op"] for op in out["ops"]] == [
+        "remove_unit",
+        "set_opening",
+        "add_unit",
+        "set_opening",
+    ]
+    assert out["ops"][3]["module"] == 2
+    assert [item["reason"] for item in out["rejected"]] == ["apertura_invalida"]
+
+
+def test_catalog_skus_are_enforced(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_glass", "module": 0, "sku": "GLASS-4MM"},
+                {"op": "set_glass", "module": 0, "sku": "PANEL-MADE-UP"},
+                {"op": "set_panel", "module": 1, "sku": "PANEL-SANDWICH-24"},
+                {"op": "set_panel", "module": 1, "sku": "NO-EXISTE"},
+                {"op": "set_panel", "module": 1, "sku": None},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(),
+        prompt="vidrios y panel",
+        operation_key="assist-11",
+    )
+    assert [op["op"] for op in out["ops"]] == ["set_glass", "set_panel", "set_panel"]
+    assert [item["reason"] for item in out["rejected"]] == [
+        "vidrio_invalido",
+        "panel_invalido",
+    ]
+
+
+def test_thickness_must_match_a_glazing_bead_rule(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_glass_thickness", "module": 0, "mm": "24"},
+                {"op": "set_glass_thickness", "module": 0, "mm": "9"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(),
+        prompt="espesores",
+        operation_key="assist-12",
+    )
+    assert [op["op"] for op in out["ops"]] == ["set_glass_thickness"]
+    assert [item["reason"] for item in out["rejected"]] == ["espesor_invalido"]
 
 
 def test_mock_provider_emits_ops_for_spanish_intent():

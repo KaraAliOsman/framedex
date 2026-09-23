@@ -1247,6 +1247,7 @@ const messages = {
   "assistant.saveFirst": "Guarda el vano para usar el asistente.",
   "assistant.error": "No se pudo contactar al asistente.",
   "assistant.empty": "El asistente no propuso operaciones.",
+  "assistant.stale": "El producto cambió — genera de nuevo para aplicar.",
   "assistant.apply": "Aplicar {count} operaciones",
   "assistant.credits": "créditos",
   "assistant.reason_formato_invalido": "formato inválido",

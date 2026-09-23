@@ -222,7 +222,7 @@ class PositionDesignAssistView(APIView):
     @extend_schema(
         operation_id="positions_design_assist",
         request=DesignAssistRequestSerializer,
-        responses={200: DesignAssistResponseSerializer, **ERRORS},
+        responses={200: DesignAssistResponseSerializer, 502: ERRORS[503], **ERRORS},
         **SCHEMA,
     )
     def post(self, request, position_id):
