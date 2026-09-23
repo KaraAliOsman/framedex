@@ -504,3 +504,53 @@ def test_http_provider_malformed_url_is_a_provider_error(monkeypatch):
     with pytest.raises(ProviderError) as failure:
         HttpProvider(provider="BADURL")
     assert failure.value.code == "ai_provider_unavailable"
+
+
+def test_http_provider_pins_resolved_ip_with_host_and_sni(monkeypatch):
+    import socket as _socket
+
+    from ai_gateway.providers import HttpProvider
+
+    calls = []
+
+    class _Response:
+        status_code = 200
+        content = b'{"output": "ok", "usage": {"prompt_tokens": 1}}'
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": "ok", "usage": {"prompt_tokens": 1}}
+
+    monkeypatch.setenv("AI_GATEWAY_PIN_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_PIN_BASE_URL", "https://provider.example")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: [
+            (_socket.AF_INET, _socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+        ],
+    )
+    monkeypatch.setattr("httpx.post", lambda *a, **k: calls.append((a, k)) or _Response())
+    HttpProvider(provider="PIN").invoke(
+        route=_route(), capability="nlp_command", input_payload={}
+    )
+    args, kwargs = calls[0]
+    assert args[0] == "https://93.184.216.34/invoke"
+    assert kwargs["headers"]["Host"] == "provider.example"
+    assert kwargs["extensions"] == {"sni_hostname": "provider.example"}
+
+
+def test_http_provider_invalid_idna_is_unavailable(monkeypatch):
+    from ai_gateway.providers import HttpProvider
+
+    monkeypatch.setenv("AI_GATEWAY_IDNA_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_IDNA_BASE_URL", "https://provider.example")
+    monkeypatch.setattr(
+        "ai_gateway.providers.socket.getaddrinfo",
+        lambda *a, **k: (_ for _ in ()).throw(UnicodeError("idna")),
+    )
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="IDNA")
+    assert failure.value.code == "ai_provider_unavailable"

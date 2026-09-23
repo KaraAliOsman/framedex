@@ -23,24 +23,33 @@ import httpx
 MAX_BODY_BYTES = 1_048_576
 
 
-def _public_hostname(hostname: str) -> bool:
-    """Literal IPs are checked directly; a DNS name must resolve — every
-    answer non-global means the provider request would land inside our own
-    network. Resolution failure refuses closed."""
+def _resolve_provider_host(hostname: str) -> str | None:
+    """Resolve the configured host once and return a global connect address,
+    or None. Literal IPs are checked directly; a DNS name must resolve to
+    global answers only — any non-global answer refuses the provider, and
+    resolution failure refuses closed. The request pins this exact address
+    (Host header + SNI keep the configured name), so there is no second
+    lookup for a rebinding attack to poison."""
     try:
         address = ipaddress.ip_address(hostname)
     except ValueError:
         try:
             infos = socket.getaddrinfo(hostname, 443, proto=socket.IPPROTO_TCP)
-        except socket.gaierror:
-            return False
-        addresses = {
-            ipaddress.ip_address(info[4][0])
-            for info in infos
-            if info[4] and info[4][0]
-        }
-        return bool(addresses) and all(address.is_global for address in addresses)
-    return address.is_global
+        except (socket.gaierror, UnicodeError):
+            return None
+        resolved: list[str] = []
+        for info in infos:
+            if not info[4] or not info[4][0]:
+                continue
+            try:
+                candidate = ipaddress.ip_address(info[4][0])
+            except ValueError:
+                return None
+            if not candidate.is_global:
+                return None
+            resolved.append(info[4][0])
+        return resolved[0] if resolved else None
+    return str(address) if address.is_global else None
 
 
 class ProviderError(Exception):
@@ -70,15 +79,28 @@ class HttpProvider:
             raise ProviderError("ai_provider_unavailable") from error
         if parsed.scheme != "https" or not hostname:
             raise ProviderError("ai_provider_unavailable")
-        if not _public_hostname(hostname):
+        connect_ip = _resolve_provider_host(hostname)
+        if connect_ip is None:
             raise ProviderError("ai_provider_unavailable")
+        self._host = hostname
+        self._port = parsed.port or 443
+        self._connect_ip = connect_ip
 
     def invoke(self, *, route: dict, capability: str, input_payload: dict) -> dict[str, Any]:
         started = time.monotonic()
         try:
+            url_host = f"[{self._connect_ip}]" if ":" in self._connect_ip else self._connect_ip
+            port_suffix = "" if self._port == 443 else f":{self._port}"
+            host_header = (
+                self._host if self._port == 443 else f"{self._host}:{self._port}"
+            )
             response = httpx.post(
-                f"{self.base_url}/invoke",
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                f"https://{url_host}{port_suffix}/invoke",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Host": host_header,
+                },
+                extensions={"sni_hostname": self._host},
                 json={
                     "model": route["provider_model"],
                     "capability": capability,
