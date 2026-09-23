@@ -90,7 +90,11 @@ def parse_line(line: str) -> dict | None:
     leading = _LEADING_QUANTITY.match(line)
     if marker:
         quantity = int(marker.group(1))
-    elif leading and not _LABEL.fullmatch(leading.group(0).strip()):
+    elif (
+        leading
+        and leading.end() <= dimension.start()
+        and not _LABEL.fullmatch(leading.group(0).strip())
+    ):
         quantity = int(leading.group(1))
     if label is None:
         warnings.append("import.candidate_no_label")
