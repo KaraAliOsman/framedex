@@ -74,8 +74,12 @@ def _validated(serializer_type, data, *, partial=False):
     return serializer.validated_data
 
 
+READ_ROLES = ("OWNER", "WORKSHOP_MANAGER", "ESTIMATOR")
+WRITE_ROLES = ("OWNER", "WORKSHOP_MANAGER")
+
+
 @contextmanager
-def catalog_scope(request):
+def catalog_scope(request, *, roles=WRITE_ROLES):
     token = verified_request_token(request)
     try:
         with authenticated_rls_context(token.claims):
@@ -84,10 +88,7 @@ def catalog_scope(request):
                 request.headers.get("X-Organization-ID"),
             )
             enforce_owner_mfa(tenant, token.aal)
-            if tenant.active_organization.role not in (
-                "OWNER",
-                "WORKSHOP_MANAGER",
-            ):
+            if tenant.active_organization.role not in roles:
                 raise contract_error(
                     403,
                     "catalog_permission_denied",
@@ -122,7 +123,7 @@ class CatalogCollectionView(APIView):
     list_serializer = None
 
     def get(self, request):
-        with catalog_scope(request) as org_id:
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
             filters = _validated(CatalogFilterSerializer, request.query_params.dict())
             if self.resource is service.SYSTEMS and filters:
                 raise contract_error(
@@ -152,7 +153,7 @@ class CatalogDetailView(APIView):
     response_serializer = None
 
     def get(self, request, row_id):
-        with catalog_scope(request) as org_id:
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
             row = service.retrieve(self.resource, org_id, row_id)
             output = self.response_serializer(row).data
         return Response(output)

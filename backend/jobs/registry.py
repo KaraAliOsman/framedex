@@ -31,6 +31,7 @@ class JobContext:
     org_id: UUID
     created_by: UUID | None
     attempt: int
+    max_attempts: int
     payload: dict[str, Any]
 
 
