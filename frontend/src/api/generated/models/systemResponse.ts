@@ -6,10 +6,20 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogReadiness } from "./catalogReadiness";
+import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { MaterialEnum } from "./materialEnum";
 import type { RailTypeEnum } from "./railTypeEnum";
 
+/**
+ * Read-only provenance/review state — written only by import jobs and
+ * the technical-review endpoint, never by catalog CRUD.
+ */
 export interface SystemResponse {
+  readonly data_provenance: DataProvenanceEnum;
+  /** @nullable */
+  readonly technical_reviewed_at: string | null;
+  /** @nullable */
+  readonly technical_reviewed_by: string | null;
   /** @maxLength 150 */
   name: string;
   /** @maxLength 50 */
@@ -51,6 +61,16 @@ export interface SystemResponse {
   sliding_glazing_deduction_height_mm: string;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   door_leaf_side_clearance_mm: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  rebate_depth_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  end_milling_overlap_mm?: string | null;
   /**
    * @nullable
    * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$

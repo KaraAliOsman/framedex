@@ -134,6 +134,20 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     setNotice(ct("saved"));
   }
 
+  const [reviewing, setReviewing] = useState<string | null>(null);
+  async function reviewRow<R extends Resource>(kind: R, id: string) {
+    setReviewing(id);
+    setNotice("");
+    try {
+      accept(kind, await api.review(kind, id));
+      setNotice(ct("reviewed"));
+    } catch (caught) {
+      setNotice(failure(caught));
+    } finally {
+      if (!lifetime.current?.signal.aborted) setReviewing(null);
+    }
+  }
+
   function removed(kind: Resource, id: string) {
     if (lifetime.current?.signal.aborted) return;
     setEditor(null);
@@ -328,6 +342,13 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                         {"is_active" in row && (
                           <span> · {ct(row.is_active ? "active" : "inactive")}</span>
                         )}
+                        {"data_provenance" in row &&
+                          row.data_provenance === "LEGACY_UNVERIFIED" && (
+                            <span className="catalog-provenance-legacy">
+                              {" · "}
+                              {ct("provenanceLegacy")}
+                            </span>
+                          )}
                       </td>
                       <td>
                         <button
@@ -342,6 +363,23 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                           {ct(row.read_only === false && canEdit ? "edit" : "view")}
                           <span className="catalog-sr-only"> {itemName(resource, row, data)}</span>
                         </button>
+                        {canEdit &&
+                          "data_provenance" in row &&
+                          row.data_provenance === "LEGACY_UNVERIFIED" &&
+                          row.read_only === false && (
+                            <button
+                              type="button"
+                              aria-label={`${ct("markReviewed")} ${itemName(resource, row, data)}`}
+                              disabled={editor !== null || reviewing !== null}
+                              onClick={() => void reviewRow(resource, row.id)}
+                            >
+                              {reviewing === row.id ? ct("reviewing") : ct("markReviewed")}
+                              <span className="catalog-sr-only">
+                                {" "}
+                                {itemName(resource, row, data)}
+                              </span>
+                            </button>
+                          )}
                       </td>
                     </tr>
                   ))}

@@ -109,8 +109,10 @@ class GlassPiece(EngineModel):
     # it as unnested rather than silently cutting a bounding rectangle.
     shape: list[PlanPoint] | None = None
     area_m2: Decimal
-    weight_kg: Decimal
-    thickness_net_mm: Decimal
+    # UNKNOWN is first-class: a spec the composition authority cannot parse
+    # must not quietly borrow the package thickness and fabricate a mass.
+    weight_kg: Decimal | None
+    thickness_net_mm: Decimal | None
     # Composition (e.g. "4-16-4") and the supplier article the piece was
     # resolved against — None on results sealed before the fields existed.
     glass_spec: str | None = None
@@ -243,18 +245,21 @@ class PanelPiece(EngineModel):
     width_mm: Decimal
     height_mm: Decimal
     area_m2: Decimal
-    weight_kg: Decimal
+    weight_kg: Decimal | None
 
 
 class LeafWeight(EngineModel):
     bay_id: str
     leaf_id: str | None = None
-    pvc_weight_kg: Decimal
-    steel_weight_kg: Decimal
-    infill_weight_kg: Decimal
-    hardware_weight_kg: Decimal
-    total_weight_kg: Decimal
-    used_fallback: bool
+    # Any component the catalog does not declare stays UNKNOWN (None); the
+    # total is only present when every component resolved. Hardware
+    # compatibility is never certified on a fabricated mass.
+    pvc_weight_kg: Decimal | None
+    steel_weight_kg: Decimal | None
+    infill_weight_kg: Decimal | None
+    hardware_weight_kg: Decimal | None
+    total_weight_kg: Decimal | None
+    weight_unknown_reasons: list[str] = Field(default_factory=list)
 
 
 class SystemParams(EngineModel):
@@ -263,8 +268,10 @@ class SystemParams(EngineModel):
     material: MaterialType = MaterialType.PVC
     effective_profile_articles: dict[ProfileRole, EffectiveProfileArticle]
     glazing_bead_rules: dict[Decimal, GlazingBeadRule]
-    rebate_depth_mm: Decimal = Decimal("20.00")
-    end_milling_overlap_mm: Decimal = Decimal("0.00")
+    # Fabrication data the catalog must declare — the engine has no invented
+    # constants for the rebate bite or the mullion end-milling overlap.
+    rebate_depth_mm: Decimal | None = None
+    end_milling_overlap_mm: Decimal | None = None
     sash_overlap_mm: Decimal = Decimal("8.00")
     glass_clearance_white_mm: Decimal = Decimal("3.00")
     glass_clearance_foil_mm: Decimal = Decimal("5.00")
@@ -281,9 +288,6 @@ class SystemParams(EngineModel):
     # rail_type (MONO=1, DUAL=2); a catalog with a triple-rail profile
     # declares it explicitly — layouts may never exceed this capacity.
     rail_count: int | None = None
-    pvc_weight_kg_m: Decimal = Decimal("1.2000")
-    steel_weight_kg_m: Decimal = Decimal("1.7000")
-    hardware_kit_weight_kg: Decimal = Decimal("2.50")
     available_hardware_kits: list[HardwareKitRule] = Field(default_factory=list)
     sliding_glazing_deduction_width_mm: Decimal
     sliding_glazing_deduction_height_mm: Decimal

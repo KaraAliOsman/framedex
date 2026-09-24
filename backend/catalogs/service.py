@@ -34,14 +34,22 @@ class Resource:
         )
 
 
+_PROVENANCE_COLUMNS = (
+    "data_provenance",
+    "technical_reviewed_at",
+    "technical_reviewed_by",
+)
+
 SYSTEMS = Resource(
     "profile_systems",
     SystemWriteSerializer,
-    ("is_global", "is_demo"),
+    ("is_global", "is_demo", *_PROVENANCE_COLUMNS),
 )
-ARTICLES = Resource("profile_articles", ArticleWriteSerializer)
+ARTICLES = Resource(
+    "profile_articles", ArticleWriteSerializer, _PROVENANCE_COLUMNS
+)
 BEADS = Resource("glazing_bead_matrix", BeadWriteSerializer)
-KITS = Resource("hardware_kits", KitWriteSerializer)
+KITS = Resource("hardware_kits", KitWriteSerializer, _PROVENANCE_COLUMNS)
 
 
 def _not_found():
@@ -313,6 +321,13 @@ def update(resource, org_id, row_id, values, expected_revision=None):
         assignments = [
             f"{name} = %s::jsonb" if name in _JSONB_FIELDS else f"{name} = %s" for name in values
         ]
+        if set(_PROVENANCE_COLUMNS) & set(current):
+            # Editing a reviewed technical row re-opens its review — the new
+            # values are unverified until reviewed again.
+            assignments += [
+                "technical_reviewed_at = NULL",
+                "technical_reviewed_by = NULL",
+            ]
         with connection.cursor() as cursor:
             cursor.execute(
                 f"UPDATE public.{resource.table} SET {', '.join(assignments)} "
@@ -323,6 +338,29 @@ def update(resource, org_id, row_id, values, expected_revision=None):
                 raise contract_error(
                     409, "catalog_write_conflict", "catalogs.errors.catalog_constraint_conflict"
                 )
+    return retrieve(resource, org_id, row_id)
+
+
+def review(resource, org_id, row_id, user_id):
+    """Mark a catalog row technically reviewed. A LEGACY_UNVERIFIED row a
+    human has vouched for becomes MANUAL; other provenance stays truthful."""
+    if resource is BEADS:
+        raise _not_found()
+    current = retrieve(resource, org_id, row_id, lock=True)
+    _require_owned(current, org_id)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE public.{resource.table} SET "
+            "technical_reviewed_at = now(), technical_reviewed_by = %s, "
+            "data_provenance = CASE WHEN data_provenance = 'LEGACY_UNVERIFIED' "
+            "THEN 'MANUAL' ELSE data_provenance END "
+            "WHERE id = %s AND org_id = %s",
+            [str(user_id), row_id, org_id],
+        )
+        if cursor.rowcount != 1:
+            raise contract_error(
+                409, "catalog_write_conflict", "catalogs.errors.catalog_constraint_conflict"
+            )
     return retrieve(resource, org_id, row_id)
 
 

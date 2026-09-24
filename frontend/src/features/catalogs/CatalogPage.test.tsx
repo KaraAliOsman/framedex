@@ -35,6 +35,11 @@ const SYSTEM_ID = "00000000-0000-4000-8000-000000000010";
 const KIT_ID = "00000000-0000-4000-8000-000000000020";
 const ARTICLE_ID = "00000000-0000-4000-8000-000000000030";
 const REVISION = `sha256:${"a".repeat(64)}`;
+const PROVENANCE = {
+  data_provenance: "MANUAL" as const,
+  technical_reviewed_at: null,
+  technical_reviewed_by: null,
+};
 const SAVED_REVISION = `sha256:${"b".repeat(64)}`;
 
 function ok<T>(data: T) {
@@ -76,7 +81,7 @@ function system(): SystemResponse {
     is_demo: true,
     readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,
-
+    ...PROVENANCE,
     read_only: true,
   };
 }
@@ -106,7 +111,14 @@ function kitWrite(): KitWriteRequest {
 }
 
 function kit(overrides: Partial<KitResponse> = {}): KitResponse {
-  return { ...kitWrite(), id: KIT_ID, revision: REVISION, read_only: false, ...overrides };
+  return {
+    ...kitWrite(),
+    id: KIT_ID,
+    revision: REVISION,
+    read_only: false,
+    ...PROVENANCE,
+    ...overrides,
+  };
 }
 
 function articleWrite(): ArticleWriteRequest {
@@ -128,7 +140,14 @@ function articleWrite(): ArticleWriteRequest {
 }
 
 function article(overrides: Partial<ArticleResponse> = {}): ArticleResponse {
-  return { ...articleWrite(), id: ARTICLE_ID, revision: REVISION, read_only: false, ...overrides };
+  return {
+    ...articleWrite(),
+    id: ARTICLE_ID,
+    revision: REVISION,
+    read_only: false,
+    ...PROVENANCE,
+    ...overrides,
+  };
 }
 
 const SECTION_VERTEX = [
@@ -395,6 +414,7 @@ describe("CatalogPage typed kit editor", () => {
       id: KIT_ID,
       revision: SAVED_REVISION,
       read_only: false,
+      ...PROVENANCE,
     };
     const pending = deferred<ReturnType<typeof ok<KitResponse>>>();
     vi.mocked(client.catalogKitUpdate).mockReturnValueOnce(pending.promise);
@@ -532,6 +552,7 @@ describe("CatalogPage typed kit editor", () => {
           id: KIT_ID,
           revision: SAVED_REVISION,
           read_only: false,
+          ...PROVENANCE,
         }),
       );
 

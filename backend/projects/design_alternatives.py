@@ -283,15 +283,18 @@ def _metrics(evaluation, model) -> dict:
             "profile_cuts": len(bom.profile_cuts),
             "reinforcements": len(bom.reinforcements),
             "hardware_items": len(bom.hardware_items),
-            # Operable leaves only — a fixed pane has no leaf, so summing
-            # here would print a false 0.00 kg next to real glass.
-            "leaf_weight_kg": str(
-                sum((leaf.total_weight_kg for leaf in bom.leaf_weights), ZERO).quantize(
-                    Decimal("0.01")
+            # Operable leaves only — a fixed pane has no leaf, and an UNKNOWN
+            # component leaves the sum unknown, not 0.00.
+            "leaf_weight_kg": (
+                None
+                if not bom.leaf_weights
+                or any(leaf.total_weight_kg is None for leaf in bom.leaf_weights)
+                else str(
+                    sum(
+                        (leaf.total_weight_kg for leaf in bom.leaf_weights), ZERO
+                    ).quantize(Decimal("0.01"))
                 )
-            )
-            if bom.leaf_weights
-            else None,
+            ),
         }
     )
     return metrics

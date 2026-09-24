@@ -60,6 +60,16 @@ export interface SystemWriteRequest {
    * @nullable
    * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
    */
+  rebate_depth_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  end_milling_overlap_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
   chamber_clearance_mm?: string | null;
   /**
    * @minimum 1

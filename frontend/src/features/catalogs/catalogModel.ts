@@ -96,6 +96,15 @@ export const schemas: Record<Resource, Group[]> = {
       ],
     },
     {
+      title: "fabricationGeometry",
+      fields: [
+        // UNKNOWN is a legitimate state — an empty value writes null and the
+        // engine refuses rather than compute on an invented constant.
+        decimal("rebate_depth_mm", 2, true),
+        decimal("end_milling_overlap_mm", 2, true),
+      ],
+    },
+    {
       title: "slidingGeometry",
       fields: [
         rail,
@@ -423,6 +432,17 @@ export function catalogApi(orgId: string) {
                 : await client.catalogKitCreate(body as KitWrite, options);
       if (response.status !== 200 && response.status !== 201)
         throw new Error("catalog_write_failed");
+      return response.data as Row<R>;
+    },
+    async review<R extends Resource>(resource: R, id: string): Promise<Row<R>> {
+      // Glazing rows have no provenance — never called for them by the UI.
+      const response =
+        resource === "systems"
+          ? await client.catalogSystemReview(id, options)
+          : resource === "articles"
+            ? await client.catalogArticleReview(id, options)
+            : await client.catalogKitReview(id, options);
+      if (response.status !== 200) throw new Error("catalog_review_failed");
       return response.data as Row<R>;
     },
     async remove(resource: Resource, id: string, revision: string): Promise<void> {

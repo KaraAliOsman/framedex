@@ -1,17 +1,21 @@
-"""Exact mobile-leaf mass; rounding belongs only to the public result."""
+"""Exact mobile-leaf mass; rounding belongs only to the public result.
+
+UNKNOWN is a first-class state: when a catalog authority is missing for a
+component the component is None, the total is None, and the reasons say which
+authority is missing — no fabricated fallback ever enters a compatibility
+decision."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
 from dekopen_engine.models import (
-    HardwareKitRule, LeafWeight, MaterialType, ProfileCut, ProfileRole,
+    HardwareKitRule, LeafWeight, ProfileCut, ProfileRole,
     ReinforcementPiece, SystemParams,
 )
 
-WEIGHT_FALLBACK_FACTOR = Decimal("1.10")
 _KG = Decimal("0.01")
 _METRE = Decimal("1000")
 
@@ -20,41 +24,65 @@ class MissingWeightAuthority(ValueError):
     pass
 
 
+class MissingFabricationAuthority(ValueError):
+    """A fabrication datum the catalog must declare is absent — refuse with a
+    precise reason instead of computing on an invented constant."""
+
+
+def _accumulate(
+    total: Decimal | None, addend: Decimal | None,
+) -> Decimal | None:
+    if total is None or addend is None:
+        return None
+    return total + addend
+
+
 @dataclass(frozen=True, slots=True)
 class ExactLeafWeight:
-    pvc_weight_kg: Decimal
-    steel_weight_kg: Decimal
-    infill_weight_kg: Decimal
-    hardware_weight_kg: Decimal = Decimal("0")
-    used_fallback: bool = False
+    pvc_weight_kg: Decimal | None
+    steel_weight_kg: Decimal | None
+    infill_weight_kg: Decimal | None
+    hardware_weight_kg: Decimal | None = Decimal("0")
+    # Reasons naming the missing authority, e.g.
+    # "missing_profile_mass:DEMO-HOJA" — empty when the mass is fully known.
+    weight_unknown_reasons: tuple[str, ...] = field(default_factory=tuple)
 
     @property
-    def total_weight_kg(self) -> Decimal:
-        return (
-            self.pvc_weight_kg + self.steel_weight_kg
-            + self.infill_weight_kg + self.hardware_weight_kg
+    def total_weight_kg(self) -> Decimal | None:
+        components = (
+            self.pvc_weight_kg, self.steel_weight_kg,
+            self.infill_weight_kg, self.hardware_weight_kg,
         )
+        if any(component is None for component in components):
+            return None
+        return sum(component for component in components if component is not None)
+
+    @staticmethod
+    def _quantize(value: Decimal | None) -> Decimal | None:
+        return None if value is None else value.quantize(_KG, rounding=ROUND_HALF_UP)
 
     def public_result(self, bay_id: str, leaf_id: str | None) -> LeafWeight:
+        total = self.total_weight_kg
         return LeafWeight(
             bay_id=bay_id, leaf_id=leaf_id,
-            pvc_weight_kg=self.pvc_weight_kg.quantize(_KG, rounding=ROUND_HALF_UP),
-            steel_weight_kg=self.steel_weight_kg.quantize(_KG, rounding=ROUND_HALF_UP),
-            infill_weight_kg=self.infill_weight_kg.quantize(_KG, rounding=ROUND_HALF_UP),
-            hardware_weight_kg=self.hardware_weight_kg.quantize(_KG, rounding=ROUND_HALF_UP),
-            total_weight_kg=self.total_weight_kg.quantize(_KG, rounding=ROUND_HALF_UP),
-            used_fallback=self.used_fallback,
+            pvc_weight_kg=self._quantize(self.pvc_weight_kg),
+            steel_weight_kg=self._quantize(self.steel_weight_kg),
+            infill_weight_kg=self._quantize(self.infill_weight_kg),
+            hardware_weight_kg=self._quantize(self.hardware_weight_kg),
+            total_weight_kg=None if total is None else total.quantize(_KG, rounding=ROUND_HALF_UP),
+            weight_unknown_reasons=list(self.weight_unknown_reasons),
         )
 
 
 def base_leaf_weight(
     *, profile_cuts: Sequence[ProfileCut], reinforcements: Sequence[ReinforcementPiece],
-    infill_weight_kg: Decimal, params: SystemParams,
+    infill_weight_kg: Decimal | None, params: SystemParams,
+    infill_unknown_reason: str | None = None,
 ) -> ExactLeafWeight:
     """Consume one leaf's cuts; frame, beads and threshold never enter its mass."""
-    pvc = Decimal("0")
-    steel = Decimal("0")
-    used_fallback = False
+    pvc: Decimal | None = Decimal("0")
+    steel: Decimal | None = Decimal("0")
+    reasons: list[str] = []
     for cut in profile_cuts:
         if cut.role is not ProfileRole.SASH:
             continue
@@ -63,11 +91,12 @@ def base_leaf_weight(
             raise MissingWeightAuthority(f"Missing profile mass authority: {cut.sku}")
         density = article.weight_kg_m
         if density is None:
-            if article.material is not MaterialType.PVC:
-                raise MissingWeightAuthority(f"Missing non-PVC mass authority: {article.sku}")
-            density = params.pvc_weight_kg_m * WEIGHT_FALLBACK_FACTOR
-            used_fallback = True
-        pvc += cut.length_mm / _METRE * cut.qty * density
+            pvc = None
+            reason = f"missing_profile_mass:{article.sku}"
+            if reason not in reasons:
+                reasons.append(reason)
+        else:
+            pvc = _accumulate(pvc, cut.length_mm / _METRE * cut.qty * density)
     for piece in reinforcements:
         if piece.role is not ProfileRole.SASH:
             continue
@@ -76,22 +105,28 @@ def base_leaf_weight(
             raise MissingWeightAuthority(f"Missing steel mass authority: {piece.parent_profile_sku}")
         density = article.steel_weight_kg_m
         if density is None:
-            density = params.steel_weight_kg_m * WEIGHT_FALLBACK_FACTOR
-            used_fallback = True
-        steel += piece.length_mm / _METRE * piece.qty * density
-    return ExactLeafWeight(pvc, steel, infill_weight_kg, used_fallback=used_fallback)
+            steel = None
+            reason = f"missing_steel_mass:{article.sku}"
+            if reason not in reasons:
+                reasons.append(reason)
+        else:
+            steel = _accumulate(steel, piece.length_mm / _METRE * piece.qty * density)
+    if infill_weight_kg is None:
+        reasons.append(infill_unknown_reason or "missing_infill_mass")
+    return ExactLeafWeight(pvc, steel, infill_weight_kg,
+                           weight_unknown_reasons=tuple(reasons))
 
 
 def with_hardware_weight(
     base: ExactLeafWeight, kit: HardwareKitRule, params: SystemParams,
 ) -> ExactLeafWeight:
-    fallback = kit.weight_kg is None
-    weight = (
-        params.hardware_kit_weight_kg * WEIGHT_FALLBACK_FACTOR
-        if fallback else kit.weight_kg
-    )
-    assert weight is not None
+    if kit.weight_kg is None:
+        return ExactLeafWeight(
+            base.pvc_weight_kg, base.steel_weight_kg, base.infill_weight_kg,
+            None,
+            base.weight_unknown_reasons + (f"missing_hardware_mass:{kit.sku}",),
+        )
     return ExactLeafWeight(
         base.pvc_weight_kg, base.steel_weight_kg, base.infill_weight_kg,
-        weight, base.used_fallback or fallback,
+        kit.weight_kg, base.weight_unknown_reasons,
     )

@@ -81,6 +81,7 @@ export * from "./currencyEnum";
 export * from "./cutBar";
 export * from "./cutMaterialEnum";
 export * from "./cutPlacement";
+export * from "./dataProvenanceEnum";
 export * from "./decideRequestRequest";
 export * from "./decimalSeparatorEnum";
 export * from "./decisionEnum";

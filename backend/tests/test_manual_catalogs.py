@@ -246,3 +246,107 @@ def test_section_decoder_passes_absent_and_rejects_decoded_json():
     assert _section(None) is None
     with pytest.raises(UnsupportedCatalogContract):
         _section({"source": "POLYGON"})
+
+
+def test_system_accepts_nullable_fabrication_fields():
+    serializer = SystemWriteSerializer(
+        data={"rebate_depth_mm": "20.00", "end_milling_overlap_mm": None},
+        partial=True,
+    )
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["rebate_depth_mm"] == Decimal("20.00")
+    assert serializer.validated_data["end_milling_overlap_mm"] is None
+
+
+@pytest.mark.parametrize(
+    "field", ["data_provenance", "technical_reviewed_at", "technical_reviewed_by"]
+)
+@pytest.mark.parametrize(
+    "serializer_type",
+    [SystemWriteSerializer, ArticleWriteSerializer, KitWriteSerializer],
+)
+def test_write_serializers_reject_provenance_injection(serializer_type, field):
+    assert not serializer_type(data={field: "injected"}, partial=True).is_valid()
+
+
+def test_response_serializers_emit_provenance_triple():
+    from catalogs.serializers import SystemResponseSerializer
+
+    serializer = SystemResponseSerializer(
+        {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "org_id": "22222222-2222-2222-2222-222222222222",
+            "name": "S",
+            "code": "S",
+            "depth_mm": "60.00",
+            "material": "PVC",
+            "chamber_count": 3,
+            "sash_overlap_mm": "8.00",
+            "glass_clearance_white_mm": "5.00",
+            "glass_clearance_foil_mm": "5.00",
+            "pulley_height_mm": "12.00",
+            "central_overlap_mm": "3.00",
+            "sliding_lateral_clearance_mm": "2.50",
+            "sliding_end_add_mm": "6.00",
+            "corner_bracket_loss_mm": "10.00",
+            "hook_depth_mm": "12.00",
+            "door_threshold_mm": "50.00",
+            "door_bottom_clearance_mm": "10.00",
+            "rail_type": "dual",
+            "sliding_glazing_deduction_width_mm": "0.00",
+            "sliding_glazing_deduction_height_mm": "0.00",
+            "door_leaf_side_clearance_mm": "0.00",
+            "version": 1,
+            "is_active": True,
+            "is_global": False,
+            "is_demo": False,
+            "read_only": False,
+            "data_provenance": "LEGACY_UNVERIFIED",
+            "technical_reviewed_at": None,
+            "technical_reviewed_by": None,
+            "readiness": {"quote_ready": False, "scope": "s", "reasons": []},
+            "revision": "sha256:x",
+        }
+    )
+    output = serializer.data
+    assert output["data_provenance"] == "LEGACY_UNVERIFIED"
+    assert output["technical_reviewed_at"] is None
+    assert output["technical_reviewed_by"] is None
+
+
+def test_engine_result_serializers_carry_unknown_weight():
+    from engine_api.serializers import GlassPieceSerializer, LeafWeightSerializer
+
+    leaf = LeafWeightSerializer(
+        {
+            "bay_id": "b1",
+            "leaf_id": None,
+            "pvc_weight_kg": None,
+            "steel_weight_kg": None,
+            "infill_weight_kg": "4.00",
+            "hardware_weight_kg": None,
+            "total_weight_kg": None,
+            "weight_unknown_reasons": ["missing_profile_mass:SASH-1"],
+        }
+    )
+    output = leaf.data
+    assert output["total_weight_kg"] is None
+    assert output["weight_unknown_reasons"] == ["missing_profile_mass:SASH-1"]
+    assert "used_fallback" not in output
+
+    glass = GlassPieceSerializer(
+        {
+            "bay_id": "b1",
+            "leaf_id": None,
+            "width_mm": "100.00",
+            "height_mm": "100.00",
+            "shape": None,
+            "area_m2": "0.0100",
+            "weight_kg": None,
+            "thickness_net_mm": None,
+            "glass_spec": "weird-spec",
+            "article_sku": None,
+            "exposed_edges": None,
+        }
+    )
+    assert glass.data["weight_kg"] is None

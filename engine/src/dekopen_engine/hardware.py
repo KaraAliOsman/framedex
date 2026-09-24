@@ -36,12 +36,14 @@ class HardwareCandidateEvaluation:
     width_match: bool
     height_match: bool
     exact_total_weight: ExactLeafWeight
-    weight_match: bool
+    # None = the leaf mass is UNKNOWN — compatibility is undecidable, never
+    # silently certified.
+    weight_match: bool | None
 
     @property
     def compatible(self) -> bool:
         return (self.opening_match and self.rail_match and self.width_match
-                and self.height_match and self.weight_match)
+                and self.height_match and self.weight_match is True)
 
 
 def evaluate_hardware_candidates(
@@ -53,12 +55,14 @@ def evaluate_hardware_candidates(
         if explicit_sku is not None and kit.sku != explicit_sku:
             continue
         exact = with_hardware_weight(base_weight, kit, params)
+        total = exact.total_weight_kg
         candidates.append(HardwareCandidateEvaluation(
             kit=kit, opening_match=kit.opening_type == normalize_opening_type(opening),
             rail_match=kit.rail_type is params.rail_type,
             width_match=kit.min_leaf_width_mm <= width_mm <= kit.max_leaf_width_mm,
             height_match=kit.min_leaf_height_mm <= height_mm <= kit.max_leaf_height_mm,
-            exact_total_weight=exact, weight_match=exact.total_weight_kg <= kit.max_leaf_weight_kg,
+            exact_total_weight=exact,
+            weight_match=(None if total is None else total <= kit.max_leaf_weight_kg),
         ))
     return candidates
 
@@ -69,6 +73,21 @@ def resolve_hardware_evaluations(
 ) -> tuple[HardwareKitRule, ExactLeafWeight]:
     candidates = [candidate for candidate in evaluations if candidate.compatible]
     if not candidates:
+        undecidable = [
+            candidate for candidate in evaluations
+            if candidate.weight_match is None and candidate.opening_match
+            and candidate.rail_match and candidate.width_match and candidate.height_match
+        ]
+        if undecidable:
+            reasons = sorted({
+                reason
+                for candidate in undecidable
+                for reason in candidate.exact_total_weight.weight_unknown_reasons
+            })
+            raise NoCompatibleHardwareKit(
+                "Hardware compatibility undecidable — leaf mass unknown: "
+                + ", ".join(reasons)
+            )
         raise NoCompatibleHardwareKit(f"No compatible hardware kit: {explicit_sku or opening.value}")
     if len(candidates) != 1:
         raise AmbiguousHardwareKit(f"Ambiguous hardware kits: {opening.value}")

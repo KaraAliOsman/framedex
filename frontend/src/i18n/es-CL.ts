@@ -999,6 +999,7 @@ const messages = {
   "production.glassColPolish": "Aristas",
   "production.glassTotals": "Totales",
   "production.glassEmpty": "Sin vidrios en esta orden.",
+  "production.glassWeightUnknown": "desconocido",
   "production.glassEdgeTop": "S",
   "production.glassEdgeRight": "D",
   "production.glassEdgeBottom": "I",
@@ -1015,6 +1016,8 @@ const messages = {
   "catalog.readiness.manufacturing": "Completar políticas de fabricación",
 
   "catalog.readiness.fabrication": "Declarar soldadura, refuerzo y masa de la serie",
+
+  "catalog.readiness.catalog_review": "Revisar datos técnicos heredados sin verificar",
 
   "catalog.readiness.purchase": "Completar referencias y suministro de materiales",
   "catalog.title": "Catálogo técnico",
@@ -1049,6 +1052,10 @@ const messages = {
   "catalog.readOnly": "Solo lectura",
   "catalog.active": "Activo",
   "catalog.inactive": "Inactivo",
+  "catalog.provenanceLegacy": "Sin revisar",
+  "catalog.markReviewed": "Marcar revisado",
+  "catalog.reviewing": "Revisando…",
+  "catalog.reviewed": "Revisión técnica registrada.",
   "catalog.state": "Estado",
   "catalog.actions": "Acciones",
   "catalog.record": "Registro",
@@ -1093,6 +1100,7 @@ const messages = {
 
   "catalog.group.identity": "Identificación y estado",
   "catalog.group.glazingGeometry": "Hoja y alojamiento del vidrio",
+  "catalog.group.fabricationGeometry": "Fabricación del sistema",
   "catalog.group.slidingGeometry": "Geometría de corredera",
   "catalog.group.doorGeometry": "Puertas y umbral",
   "catalog.group.profileGeometry": "Dimensiones y fabricación",
@@ -1128,6 +1136,8 @@ const messages = {
   "catalog.field.glass_clearance_white_mm": "Holgura de vidrio en blanco (mm)",
   "catalog.field.glass_clearance_foil_mm": "Holgura de vidrio en foliado (mm)",
   "catalog.field.chamber_clearance_mm": "Holgura de cámara (mm)",
+  "catalog.field.rebate_depth_mm": "Profundidad de rebaje (mm)",
+  "catalog.field.end_milling_overlap_mm": "Solape de desbaste de extremo (mm)",
   "catalog.field.pulley_height_mm": "Altura de rueda (mm)",
   "catalog.field.central_overlap_mm": "Solape central (mm)",
   "catalog.field.sliding_lateral_clearance_mm": "Holgura lateral de corredera (mm)",

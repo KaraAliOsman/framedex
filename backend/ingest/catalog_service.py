@@ -354,8 +354,8 @@ def confirm_catalog_import(
                         "INSERT INTO public.profile_articles("
                         "system_id, org_id, sku, name, role, material, face_width_mm,"
                         " commercial_length_mm, welding_loss_mm, reinforcement_sku,"
-                        " weight_kg_m, steel_weight_kg_m)"
-                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                        " weight_kg_m, steel_weight_kg_m, data_provenance)"
+                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'IMPORT')"
                         " ON CONFLICT (system_id, sku) DO NOTHING"
                         " RETURNING id",
                         [

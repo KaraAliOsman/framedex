@@ -1255,12 +1255,15 @@ def _evaluate_contour_module(
     if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
         raise ValueError(f"contour region {leaf.id} requires glass_thickness_mm and glass_spec")
 
-    thickness_net = derive_net_glass_thickness(leaf.glass_spec, leaf.glass_thickness_mm)
+    thickness_net = derive_net_glass_thickness(leaf.glass_spec)
     area_m2 = (fill_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
-    weight_kg = (fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
+    weight_kg = (
+        None if thickness_net is None else
+        (fill_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
     )
     # Bounds come from the sampled fill boundary, not the vertex box — an
     # arc bulging past its endpoints would otherwise shrink the reported
@@ -1278,7 +1281,8 @@ def _evaluate_contour_module(
             height_mm=glass_height,
             area_m2=area_m2,
             weight_kg=weight_kg,
-            thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            thickness_net_mm=(None if thickness_net is None else
+                              thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
             glass_spec=leaf.glass_spec,
             article_sku=leaf.glass_article_sku,
             # An axis-aligned rect fill is the classic rectangle — `shape`
@@ -1484,13 +1488,16 @@ def _evaluate_frameless_module(
     glasses: list[GlassPiece] = []
     fittings: list[FittingPiece] = []
 
-    thickness_net = derive_net_glass_thickness(leaf.glass_spec, leaf.glass_thickness_mm)
+    thickness_net = derive_net_glass_thickness(leaf.glass_spec)
     pane_area_mm2 = module.width_mm * module.height_mm
     area_m2 = (pane_area_mm2 / Decimal("1000000")).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
-    weight_kg = (pane_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
+    weight_kg = (
+        None if thickness_net is None else
+        (pane_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
     )
     exposed = spec.exposed_edges or [
         EdgeSide.TOP,
@@ -1505,7 +1512,8 @@ def _evaluate_frameless_module(
             height_mm=_q(module.height_mm),
             area_m2=area_m2,
             weight_kg=weight_kg,
-            thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            thickness_net_mm=(None if thickness_net is None else
+                              thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
             glass_spec=leaf.glass_spec,
             article_sku=leaf.glass_article_sku,
             exposed_edges=[edge.value for edge in exposed],

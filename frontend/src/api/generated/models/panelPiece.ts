@@ -18,6 +18,9 @@ export interface PanelPiece {
   height_mm: string;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,4})?$ */
   area_m2: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  weight_kg: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  weight_kg: string | null;
 }

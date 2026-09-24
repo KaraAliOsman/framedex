@@ -988,6 +988,41 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/reinforceme
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
+-- §2 fabrication authority: the values the engine once invented as hard-coded
+-- constants are now catalog columns; the synthetic reference families declare
+-- their own and carry the fixture provenance label. Guarded on the column so
+-- the shot-07 upgrade drill skips it on the old schema.
+IF EXISTS (SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'profile_systems'
+             AND column_name = 'data_provenance') THEN
+UPDATE public.profile_systems SET
+    rebate_depth_mm = CASE code
+        WHEN 'DEMO_60' THEN 20.00
+        WHEN 'ALU_65' THEN 7.00
+        WHEN 'GLASS_45' THEN 5.00
+    END,
+    end_milling_overlap_mm = CASE code
+        WHEN 'DEMO_60' THEN 0.00
+        WHEN 'ALU_65' THEN 3.00
+        WHEN 'GLASS_45' THEN 2.00
+    END,
+    data_provenance = 'SEED_SYNTHETIC'
+WHERE is_global = TRUE AND org_id IS NULL
+  AND code IN ('DEMO_60', 'ALU_65', 'GLASS_45');
+UPDATE public.profile_articles a SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND a.org_id IS NULL;
+UPDATE public.infill_articles a SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND a.org_id IS NULL;
+UPDATE public.hardware_kits k SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE k.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND k.org_id IS NULL;
+END IF;
+
 END IF;
 END;
 $post09$;

@@ -1705,6 +1705,72 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/articles/{row_id}/review/:
+    post:
+      operationId: catalog_article_review
+      description: Mark the row technically reviewed; LEGACY_UNVERIFIED provenance
+        becomes MANUAL.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/glazing/:
     get:
       operationId: catalog_bead_list
@@ -2363,6 +2429,72 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/hardware-kits/{row_id}/review/:
+    post:
+      operationId: catalog_kit_review
+      description: Mark the row technically reviewed; LEGACY_UNVERIFIED provenance
+        becomes MANUAL.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KitResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/systems/:
     get:
       operationId: catalog_system_list
@@ -2651,6 +2783,72 @@ paths:
       responses:
         '204':
           description: Deleted
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/catalogs/systems/{row_id}/review/:
+    post:
+      operationId: catalog_system_review
+      description: Mark the row technically reviewed; LEGACY_UNVERIFIED provenance
+        becomes MANUAL.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemResponse'
+          description: ''
         '400':
           content:
             application/json:
@@ -10709,7 +10907,24 @@ components:
       - items
     ArticleResponse:
       type: object
+      description: |-
+        Read-only provenance/review state — written only by import jobs and
+        the technical-review endpoint, never by catalog CRUD.
       properties:
+        data_provenance:
+          allOf:
+          - $ref: '#/components/schemas/DataProvenanceEnum'
+          readOnly: true
+        technical_reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        technical_reviewed_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -10769,6 +10984,7 @@ components:
           type: string
           format: uuid
       required:
+      - data_provenance
       - face_width_mm
       - id
       - material
@@ -10778,6 +10994,8 @@ components:
       - role
       - sku
       - system_id
+      - technical_reviewed_at
+      - technical_reviewed_by
     ArticleWriteRequest:
       type: object
       properties:
@@ -11789,6 +12007,18 @@ components:
       - source_position_id
       - unit_index
       - workshop_sku
+    DataProvenanceEnum:
+      enum:
+      - SEED_SYNTHETIC
+      - MANUAL
+      - IMPORT
+      - LEGACY_UNVERIFIED
+      type: string
+      description: |-
+        * `SEED_SYNTHETIC` - SEED_SYNTHETIC
+        * `MANUAL` - MANUAL
+        * `IMPORT` - IMPORT
+        * `LEGACY_UNVERIFIED` - LEGACY_UNVERIFIED
     DecideRequestRequest:
       type: object
       properties:
@@ -13209,10 +13439,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         thickness_net_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         glass_spec:
           type: string
           nullable: true
@@ -14057,7 +14289,24 @@ components:
         * `TURN` - TURN
     KitResponse:
       type: object
+      description: |-
+        Read-only provenance/review state — written only by import jobs and
+        the technical-review endpoint, never by catalog CRUD.
       properties:
+        data_provenance:
+          allOf:
+          - $ref: '#/components/schemas/DataProvenanceEnum'
+          readOnly: true
+        technical_reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        technical_reviewed_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
         system_id:
           type: string
           format: uuid
@@ -14127,6 +14376,7 @@ components:
       required:
       - carriages_qty
       - contents
+      - data_provenance
       - id
       - is_active
       - max_leaf_height_mm
@@ -14142,6 +14392,8 @@ components:
       - sku
       - stay_arms_qty
       - system_id
+      - technical_reviewed_at
+      - technical_reviewed_by
     KitWriteRequest:
       type: object
       properties:
@@ -14232,24 +14484,31 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         steel_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         infill_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         hardware_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         total_weight_kg:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        used_fallback:
-          type: boolean
+          nullable: true
+        weight_unknown_reasons:
+          type: array
+          items:
+            type: string
       required:
       - bay_id
       - hardware_weight_kg
@@ -14258,7 +14517,7 @@ components:
       - pvc_weight_kg
       - steel_weight_kg
       - total_weight_kg
-      - used_fallback
+      - weight_unknown_reasons
     Ledger:
       type: object
       properties:
@@ -14742,6 +15001,7 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - area_m2
       - bay_id
@@ -15056,6 +15316,16 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rebate_depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        end_milling_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         chamber_clearance_mm:
           type: string
           format: decimal
@@ -17447,7 +17717,24 @@ components:
       - items
     SystemResponse:
       type: object
+      description: |-
+        Read-only provenance/review state — written only by import jobs and
+        the technical-review endpoint, never by catalog CRUD.
       properties:
+        data_provenance:
+          allOf:
+          - $ref: '#/components/schemas/DataProvenanceEnum'
+          readOnly: true
+        technical_reviewed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        technical_reviewed_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
         name:
           type: string
           maxLength: 150
@@ -17522,6 +17809,16 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rebate_depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        end_milling_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         chamber_clearance_mm:
           type: string
           format: decimal
@@ -17554,6 +17851,7 @@ components:
       - chamber_count
       - code
       - corner_bracket_loss_mm
+      - data_provenance
       - depth_mm
       - door_bottom_clearance_mm
       - door_leaf_side_clearance_mm
@@ -17577,6 +17875,8 @@ components:
       - sliding_glazing_deduction_height_mm
       - sliding_glazing_deduction_width_mm
       - sliding_lateral_clearance_mm
+      - technical_reviewed_at
+      - technical_reviewed_by
       - version
     SystemWriteRequest:
       type: object
@@ -17657,6 +17957,16 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        rebate_depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        end_milling_overlap_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         chamber_clearance_mm:
           type: string
           format: decimal

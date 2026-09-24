@@ -124,10 +124,11 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
         if kit is None and not candidates:
             raise NoCompatibleHardwareKit("No applicable hardware candidate for inspection")
         if kit is not None and weight is not None:
-            record("R01", _FAIL if weight.total_weight_kg > kit.max_leaf_weight_kg else _PASS, bay, leaf_id)
+            record("R01", _MISSING if weight.total_weight_kg is None else
+                   _FAIL if weight.total_weight_kg > kit.max_leaf_weight_kg else _PASS, bay, leaf_id)
         else:
             dimensional = [c for c in candidates if c.width_match and c.height_match]
-            record("R01", (_FAIL if dimensional and all(not c.weight_match for c in dimensional)
+            record("R01", (_FAIL if dimensional and all(c.weight_match is False for c in dimensional)
                            else _MISSING), bay, leaf_id)
         w, h = leaf.finished_width_mm, leaf.finished_height_mm
         if w <= 0 or h <= 0:
@@ -167,7 +168,7 @@ def inspect(data: InspectorInput, config: InspectorConfig) -> InspectorResult:
                      _FAIL if kit.stay_arms_qty < config.R13.required_stay_arms else _PASS)
             record("R13", state, bay, leaf_id)
         if leaf.rail_type is RailType.MONO:
-            state = (_MISSING if weight is None else _PASS if
+            state = (_MISSING if weight is None or weight.total_weight_kg is None else _PASS if
                      weight.total_weight_kg <= config.R14.weight_trigger_kg else
                      _MISSING if kit is None or kit.carriage_capacity_kg is None else
                      _FAIL if kit.carriages_qty < config.R14.required_carriages or

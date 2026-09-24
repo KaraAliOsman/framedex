@@ -28,7 +28,7 @@
     "system_id": "3067da09-3119-5ad0-a1d5-498cd2dfd753"
   },
   "response": {
-    "calculation_hash": "sha256:db6b86fec3bb8a2eddac4e4a22ed4522c0917a309e8a42700a425a1dc1ef1da1",
+    "calculation_hash": "sha256:3c1b79dbbfdc4d20445412669763a31734ae04d9fd0ce700b24f1e91b86e1ee3",
     "fittings": [],
     "glasses": [
       {
@@ -78,7 +78,7 @@
         "pvc_weight_kg": "4.74",
         "steel_weight_kg": "6.47",
         "total_weight_kg": "26.55",
-        "used_fallback": false
+        "weight_unknown_reasons": []
       }
     ],
     "panels": [],

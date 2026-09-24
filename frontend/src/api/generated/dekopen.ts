@@ -2090,6 +2090,75 @@ export const catalogArticleDelete = async (
   });
 };
 
+export type catalogArticleReviewResponse200 = {
+  data: ArticleResponse;
+  status: 200;
+};
+
+export type catalogArticleReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogArticleReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogArticleReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogArticleReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogArticleReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogArticleReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogArticleReviewResponseSuccess = catalogArticleReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogArticleReviewResponseError = (
+  | catalogArticleReviewResponse400
+  | catalogArticleReviewResponse401
+  | catalogArticleReviewResponse403
+  | catalogArticleReviewResponse404
+  | catalogArticleReviewResponse409
+  | catalogArticleReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogArticleReviewResponse =
+  catalogArticleReviewResponseSuccess | catalogArticleReviewResponseError;
+
+export const getCatalogArticleReviewUrl = (rowId: string) => {
+  return `/api/v1/catalogs/articles/${rowId}/review/`;
+};
+
+/**
+ * Mark the row technically reviewed; LEGACY_UNVERIFIED provenance becomes MANUAL.
+ */
+export const catalogArticleReview = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogArticleReviewResponse> => {
+  return apiMutator<catalogArticleReviewResponse>(getCatalogArticleReviewUrl(rowId), {
+    ...options,
+    method: "POST",
+  });
+};
+
 export type catalogBeadListResponse200 = {
   data: BeadList;
   status: 200;
@@ -2814,6 +2883,75 @@ export const catalogKitDelete = async (
   });
 };
 
+export type catalogKitReviewResponse200 = {
+  data: KitResponse;
+  status: 200;
+};
+
+export type catalogKitReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogKitReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogKitReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogKitReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogKitReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogKitReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogKitReviewResponseSuccess = catalogKitReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogKitReviewResponseError = (
+  | catalogKitReviewResponse400
+  | catalogKitReviewResponse401
+  | catalogKitReviewResponse403
+  | catalogKitReviewResponse404
+  | catalogKitReviewResponse409
+  | catalogKitReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogKitReviewResponse =
+  catalogKitReviewResponseSuccess | catalogKitReviewResponseError;
+
+export const getCatalogKitReviewUrl = (rowId: string) => {
+  return `/api/v1/catalogs/hardware-kits/${rowId}/review/`;
+};
+
+/**
+ * Mark the row technically reviewed; LEGACY_UNVERIFIED provenance becomes MANUAL.
+ */
+export const catalogKitReview = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogKitReviewResponse> => {
+  return apiMutator<catalogKitReviewResponse>(getCatalogKitReviewUrl(rowId), {
+    ...options,
+    method: "POST",
+  });
+};
+
 export type catalogSystemListResponse200 = {
   data: SystemList;
   status: 200;
@@ -3161,6 +3299,75 @@ export const catalogSystemDelete = async (
   return apiMutator<catalogSystemDeleteResponse>(getCatalogSystemDeleteUrl(rowId), {
     ...options,
     method: "DELETE",
+  });
+};
+
+export type catalogSystemReviewResponse200 = {
+  data: SystemResponse;
+  status: 200;
+};
+
+export type catalogSystemReviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemReviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemReviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemReviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemReviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemReviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemReviewResponseSuccess = catalogSystemReviewResponse200 & {
+  headers: Headers;
+};
+export type catalogSystemReviewResponseError = (
+  | catalogSystemReviewResponse400
+  | catalogSystemReviewResponse401
+  | catalogSystemReviewResponse403
+  | catalogSystemReviewResponse404
+  | catalogSystemReviewResponse409
+  | catalogSystemReviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemReviewResponse =
+  catalogSystemReviewResponseSuccess | catalogSystemReviewResponseError;
+
+export const getCatalogSystemReviewUrl = (rowId: string) => {
+  return `/api/v1/catalogs/systems/${rowId}/review/`;
+};
+
+/**
+ * Mark the row technically reviewed; LEGACY_UNVERIFIED provenance becomes MANUAL.
+ */
+export const catalogSystemReview = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemReviewResponse> => {
+  return apiMutator<catalogSystemReviewResponse>(getCatalogSystemReviewUrl(rowId), {
+    ...options,
+    method: "POST",
   });
 };
 

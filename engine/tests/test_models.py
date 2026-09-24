@@ -14,13 +14,17 @@ from dekopen_engine import (
 from dekopen_engine.models import ParametricNode
 
 
-def test_system_params_contract_has_exactly_28_fields() -> None:
-    assert len(SystemParams.model_fields) == 28
+def test_system_params_contract_has_exactly_25_fields() -> None:
+    assert len(SystemParams.model_fields) == 25
     assert "frame_face_width_mm" not in SystemParams.model_fields
     assert "sash_face_width_mm" not in SystemParams.model_fields
     assert "mullion_face_width_mm" not in SystemParams.model_fields
     assert "steel_gap_corner_mm" not in SystemParams.model_fields
     assert "steel_gap_mullion_mm" not in SystemParams.model_fields
+    # No fabricated weight authorities may ever reappear.
+    assert "pvc_weight_kg_m" not in SystemParams.model_fields
+    assert "steel_weight_kg_m" not in SystemParams.model_fields
+    assert "hardware_kit_weight_kg" not in SystemParams.model_fields
 
 
 def test_welding_loss_is_derived_independently_per_effective_article() -> None:

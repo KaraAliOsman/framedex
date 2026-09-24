@@ -3,12 +3,12 @@
 from decimal import ROUND_HALF_UP, Decimal
 
 from dekopen_engine.models import PanelPiece, PanelRule
-from dekopen_engine.weight import MissingWeightAuthority
 
 
-def exact_panel_weight(width_mm: Decimal, height_mm: Decimal, rule: PanelRule) -> Decimal:
+def exact_panel_weight(width_mm: Decimal, height_mm: Decimal, rule: PanelRule) -> Decimal | None:
+    """Exact panel mass, or None when the catalog declares no areal density."""
     if rule.weight_kg_m2 is None:
-        raise MissingWeightAuthority(f"Missing panel weight authority: {rule.sku}")
+        return None
     if width_mm <= Decimal("0") or height_mm <= Decimal("0"):
         raise ValueError("Panel dimensions must be positive")
     return width_mm * height_mm / Decimal("1000000") * rule.weight_kg_m2
@@ -25,5 +25,7 @@ def build_panel_piece(
         area_m2=(width_mm * height_mm / Decimal("1000000")).quantize(
             Decimal("0.0001"), rounding=ROUND_HALF_UP,
         ),
-        weight_kg=exact_weight.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        weight_kg=None if exact_weight is None else exact_weight.quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP,
+        ),
     )

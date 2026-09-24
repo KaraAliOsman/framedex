@@ -135,7 +135,7 @@ class SystemParamsRepository:
                        door_threshold_mm, door_bottom_clearance_mm, rail_type,
                        sliding_glazing_deduction_width_mm,
                        sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
-                       rail_count
+                       rail_count, rebate_depth_mm, end_milling_overlap_mm
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -175,6 +175,8 @@ class SystemParamsRepository:
             sliding_glazing_deduction_height_mm=_decimal(system[16]),
             door_leaf_side_clearance_mm=_decimal(system[17]),
             rail_count=None if system[18] is None else int(system[18]),
+            rebate_depth_mm=_decimal_or_none(system[19]),
+            end_milling_overlap_mm=_decimal_or_none(system[20]),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )

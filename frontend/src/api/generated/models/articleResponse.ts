@@ -6,10 +6,20 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
+import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { MaterialEnum } from "./materialEnum";
 import type { ProfileSection } from "./profileSection";
 
+/**
+ * Read-only provenance/review state — written only by import jobs and
+ * the technical-review endpoint, never by catalog CRUD.
+ */
 export interface ArticleResponse {
+  readonly data_provenance: DataProvenanceEnum;
+  /** @nullable */
+  readonly technical_reviewed_at: string | null;
+  /** @nullable */
+  readonly technical_reviewed_by: string | null;
   system_id: string;
   /** @maxLength 100 */
   sku: string;

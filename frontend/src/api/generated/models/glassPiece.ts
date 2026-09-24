@@ -19,10 +19,16 @@ export interface GlassPiece {
   shape: PlanPoint[] | null;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,4})?$ */
   area_m2: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  thickness_net_mm: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  weight_kg: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  thickness_net_mm: string | null;
   /** @nullable */
   glass_spec: string | null;
   /** @nullable */

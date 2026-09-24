@@ -82,6 +82,12 @@ class SystemWriteSerializer(StrictSerializer):
     sliding_glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     sliding_glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     door_leaf_side_clearance_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    rebate_depth_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
+    end_milling_overlap_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
     chamber_clearance_mm = decimal_field(
         10,
         2,
@@ -265,7 +271,19 @@ class CatalogReadinessSerializer(serializers.Serializer):
     reasons = serializers.ListField(child=serializers.CharField())
 
 
-class SystemResponseSerializer(SystemWriteSerializer):
+class ProvenanceFieldsMixin(serializers.Serializer):
+    """Read-only provenance/review state — written only by import jobs and
+    the technical-review endpoint, never by catalog CRUD."""
+
+    data_provenance = serializers.ChoiceField(
+        choices=["SEED_SYNTHETIC", "MANUAL", "IMPORT", "LEGACY_UNVERIFIED"],
+        read_only=True,
+    )
+    technical_reviewed_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    technical_reviewed_by = serializers.UUIDField(read_only=True, allow_null=True)
+
+
+class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
     readiness = CatalogReadinessSerializer(read_only=True)
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
@@ -274,7 +292,7 @@ class SystemResponseSerializer(SystemWriteSerializer):
     is_demo = serializers.BooleanField()
 
 
-class ArticleResponseSerializer(ArticleWriteSerializer):
+class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()
@@ -286,7 +304,7 @@ class BeadResponseSerializer(BeadWriteSerializer):
     id = serializers.UUIDField()
 
 
-class KitResponseSerializer(KitWriteSerializer):
+class KitResponseSerializer(ProvenanceFieldsMixin, KitWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()
