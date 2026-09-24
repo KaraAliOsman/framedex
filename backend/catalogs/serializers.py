@@ -112,17 +112,28 @@ class ArticleWriteSerializer(StrictSerializer):
     )
     material = serializers.ChoiceField(choices=["PVC", "ALUMINIUM"])
     face_width_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
-    commercial_length_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
-    welding_loss_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    # Fabrication fields may be omitted or NULL — UNKNOWN is a legitimate
+    # state; nothing downstream may invent a missing stock length, weld loss
+    # or weight.
+    commercial_length_mm = decimal_field(
+        10, 2, min_value=Decimal("0.01"), required=False, allow_null=True
+    )
+    welding_loss_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
     reinforcement_sku = serializers.CharField(
         max_length=100,
         allow_null=True,
         allow_blank=True,
         required=False,
     )
-    reinforcement_gap_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
-    weight_kg_m = decimal_field(8, 4, min_value=Decimal("0.0001"))
-    steel_weight_kg_m = decimal_field(8, 4, min_value=Decimal("0.0000"))
+    reinforcement_gap_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
+    weight_kg_m = decimal_field(8, 4, min_value=Decimal("0.0001"), required=False, allow_null=True)
+    steel_weight_kg_m = decimal_field(
+        8, 4, min_value=Decimal("0.0000"), required=False, allow_null=True
+    )
 
 
 class BeadWriteSerializer(StrictSerializer):

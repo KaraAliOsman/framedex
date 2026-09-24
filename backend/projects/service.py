@@ -16,12 +16,14 @@ from documents.repository import documentary_backend
 from engine_api.adapter import (
     calculate_from_api,
     evaluate_assembly_from_api,
+    elevation_envelope,
     parse_product_model,
     UnsupportedEngineContract,
 )
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
 from pricing.repository import audit_reason, commercial_backend, json_text, rows
 from pricing.service import decoded
+from projects.clients import linkable_client
 from projects.serializers import PositionWriteSerializer
 from projects.typology import derive_typology
 
@@ -31,6 +33,9 @@ METADATA = (
     "client_rut",
     "client_email",
     "client_phone",
+    "client_giro",
+    "client_comuna",
+    "client_address",
     "delivery_address",
     "notes_commercial",
     "notes_internal",
@@ -44,6 +49,7 @@ PROJECT_COLUMNS = (
     "total_price_net",
     "total_price_tax",
     "total_price_gross",
+    "client_id",
     "updated_at",
 )
 POSITION_COLUMNS = (
@@ -133,7 +139,9 @@ def position_public(row):
     try:
         payload = {key: value for key, value in stored.items() if key != "calculation_hash"}
         result = EngineResult.model_validate_json(json_text(payload))
-        safe = result_payload(result)
+        # Re-validation of a pre-upgrade BOM must hash the persisted field
+        # presence: optional fields the model gained later stay absent.
+        safe = result_payload(result, exclude_unset=True)
         expected = calculation_hash({**design, "system_id": str(design["system_id"])}, safe)
         # SHOT-08 stored EngineResult before calculation_hash was part of this
         # persistence boundary. Preserve that exact result; do not recalculate.
@@ -221,10 +229,13 @@ def create_project(org_id, actor_id, data):
     # The code is an opaque human-readable reference, never an internal DB ID input.
     code = f"P-{identity.hex[:12].upper()}"
     values = {key: data.get(key, "") for key in METADATA}
+    client_id = data.get("client_id")
+    if client_id:
+        linkable_client(org_id, client_id)
     rows(
-        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ") "
-        "VALUES(" + ",".join(["%s"] * (4 + len(METADATA))) + ") RETURNING id",
-        [identity, org_id, code, actor_id, *values.values()],
+        "INSERT INTO public.projects(id,org_id,code,created_by," + ",".join(METADATA) + ",client_id) "
+        "VALUES(" + ",".join(["%s"] * (5 + len(METADATA))) + ") RETURNING id",
+        [identity, org_id, code, actor_id, *values.values(), client_id],
     )
     return project_public(org_id, project_row(org_id, identity), detail=True)
 
@@ -233,6 +244,10 @@ def update_project(org_id, project_id, data):
     current = editable(org_id, project_id)
     unchanged(current, data["expected_updated_at"])
     values = {key: data[key] for key in METADATA if key in data}
+    if "client_id" in data:
+        if data["client_id"]:
+            linkable_client(org_id, data["client_id"])
+        values["client_id"] = data["client_id"] or None
     if not values:
         return project_public(org_id, current, detail=True)
     query = sql.SQL(
@@ -271,19 +286,52 @@ def calculate_design(org_id, design):
                     design["system_id"], org_id
                 ),
             )
-            if evaluation.status.value != "VALID" or evaluation.bom is None:
-                # Persisted positions are production-bound: a partial BOM must
-                # never be stored or read back as authoritative.
+            if (
+                evaluation.status.value == "INVALID"
+                or evaluation.bom is None
+                or any(
+                    module_eval.result is None
+                    for module_eval in evaluation.modules
+                )
+            ):
+                # An INVALID evaluation or a partial BOM can never persist:
+                # the sealed evidence would read a broken assembly back as
+                # authoritative. A module whose evaluation produced no result
+                # (geometry failed) is absent from the aggregated BOM — that
+                # is a partial BOM too. Draft persistence only tolerates
+                # warnings that leave every module's output whole: unassigned
+                # couplers and missing bending authority.
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",
-                    "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
+                    "El conjunto tiene errores que impiden guardarlo: asigna acopladores y revisa cada módulo.",
                 )
-            if design["nominal_width_mm"] != sum(
-                (module.width_mm for module in model.assembly.modules),
-                Decimal("0"),
-            ) or design["nominal_height_mm"] != max(
-                module.height_mm for module in model.assembly.modules
+            intent_unsupported = {
+                "contour_opening_unsupported",
+                "contour_panel_unsupported",
+                "contour_coupling_unsupported",
+            }
+            reported_codes = {
+                issue.code
+                for module_eval in evaluation.modules
+                for issue in module_eval.issues
+            } | {issue.code for issue in evaluation.issues}
+            if reported_codes & intent_unsupported:
+                # Draft tolerance covers warnings about authority the workshop
+                # lacks (member bending) — never a declared intent the engine
+                # cannot build at all. An operable leaf, panel or joint on a
+                # contour would otherwise seal a fixed rectangular BOM under
+                # the declared shape: the saved product would misdescribe
+                # itself.
+                raise contract_error(
+                    400,
+                    "manufacturing_incomplete",
+                    "La apertura o el panel declarado no se fabrica aún sobre contornos — cámbialo a fijo o vuelve el módulo rectangular.",
+                )
+            envelope_width, envelope_height = elevation_envelope(model.assembly)
+            if (
+                design["nominal_width_mm"] != envelope_width
+                or design["nominal_height_mm"] != envelope_height
             ):
                 raise contract_error(
                     400,
@@ -464,6 +512,9 @@ def _assert_live_matches_version(org_id, project_id, version):
         "client_rut",
         "client_email",
         "client_phone",
+        "client_giro",
+        "client_comuna",
+        "client_address",
         "delivery_address",
         "notes_commercial",
         "total_price_net",

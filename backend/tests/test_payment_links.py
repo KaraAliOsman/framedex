@@ -82,6 +82,8 @@ def _link(**over):
         "flow_api_url": "https://sandbox.flow.cl/api",
         "flow_api_key": "AB12CD34EF56",
         "flow_secret_key": "S3CR3T-KEY-0987",
+        "deal_total": Decimal("250000"),
+        "deal_currency": "CLP",
         "created_by": uuid4(),
         "created_at": "2026-09-23T10:00:00+00:00",
         "updated_at": "2026-09-23T10:00:00+00:00",
@@ -117,7 +119,7 @@ def _patch_env(monkeypatch, rows_impl, client=None, deal=None):
         payment_links, "project_row", staticmethod(lambda *a, **k: {"name": "P-1"})
     )
     monkeypatch.setattr(
-        payment_links.payments,
+        payment_links,
         "_deal",
         staticmethod(
             lambda *a, **k: deal
@@ -125,9 +127,16 @@ def _patch_env(monkeypatch, rows_impl, client=None, deal=None):
             else {"total": Decimal("250000"), "currency": "CLP"}
         ),
     )
+    receipts = []
+    monkeypatch.setattr(
+        payment_links,
+        "issue_receipt",
+        lambda **kwargs: receipts.append(kwargs) or {},
+    )
     if client is not None:
         monkeypatch.setattr(payment_links, "_client", lambda integration: client)
         monkeypatch.setattr(payment_links, "_client_for_link", lambda link: client)
+    return receipts
 
 
 def test_create_link_requires_integration(monkeypatch):
@@ -156,7 +165,7 @@ def test_create_link_requires_a_deal(monkeypatch):
         deal=None,
     )
     monkeypatch.setattr(
-        payment_links.payments, "_deal", staticmethod(lambda *a, **k: None)
+        payment_links, "_deal", staticmethod(lambda *a, **k: None)
     )
     with pytest.raises(APIException) as failure:
         payment_links.create_link(
@@ -345,11 +354,126 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
         return []
 
     client = _Client()
-    _patch_env(monkeypatch, fake_rows, client=client)
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
     out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
     assert out["link"]["status"] == "PAID"
     assert len(inserts) == 1
     assert "ON CONFLICT" in inserts[0]
+    assert len(receipts) == 1
+    assert receipts[0]["actor_id"] == link["created_by"]
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_seals_frozen_total_when_repriced(monkeypatch):
+    """The comprobante reflects the total the link presented to the payer:
+    repricing between mint and settle must not rewrite the frozen deal."""
+    link = _link()
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links l" in sql:
+            return [link]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(
+        payment_links,
+        "_deal",
+        lambda *a, **k: {"total": Decimal("400000"), "currency": "CLP"},
+    )
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_settles_on_frozen_deal_when_pricing_reset(monkeypatch):
+    """A verified payment must never strand: if the live deal is gone, the
+    receipt falls back to the snapshot frozen on the link at creation."""
+    link = _link()
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links l" in sql:
+            return [link]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(payment_links, "_deal", lambda *a, **k: None)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert len(receipts) == 1
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
+    """Links minted before the freeze carry no snapshot: the live deal is
+    used when it exists."""
+    link = _link(deal_total=None, deal_currency=None)
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links l" in sql:
+            return [link]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
+
+
+def test_confirm_settles_without_any_deal(monkeypatch):
+    """Links minted before the deal freeze carry no snapshot — the charge
+    still settles and the comprobante renders an empty balance."""
+    link = _link(deal_total=None, deal_currency=None)
+    integration = _integration(org_id=link["org_id"])
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links l" in sql:
+            return [link]
+        if "FROM public.org_payment_integrations" in sql:
+            return [integration]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            return [_link(status="PAID", project_payment_id=uuid4())]
+        return []
+
+    client = _Client()
+    receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(payment_links, "_deal", lambda *a, **k: None)
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    assert out["link"]["status"] == "PAID"
+    assert receipts[0]["deal"] == {"total": None, "currency": "CLP"}
 
 
 def test_confirm_uses_link_credentials_not_current_integration(monkeypatch):

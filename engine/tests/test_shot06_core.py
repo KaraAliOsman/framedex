@@ -19,6 +19,8 @@ D = Decimal
 def core_node(case: str) -> ParametricNode:
     width, height, opening = {
         "G5": ("2000.00", "2100.00", BayOpeningType.SLIDING_2L),
+        "G8": ("2440.00", "2100.00", BayOpeningType.SLIDING_3L),
+        "G9": ("3240.00", "2100.00", BayOpeningType.SLIDING_4L),
         "G6": ("1200.00", "800.00", BayOpeningType.AWNING),
         "G7": ("950.00", "2150.00", BayOpeningType.DOOR_ENTRY),
     }[case]
