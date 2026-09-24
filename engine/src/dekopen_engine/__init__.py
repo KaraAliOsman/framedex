@@ -20,13 +20,13 @@ from dekopen_engine.glass import (
     derive_net_glass_thickness,
     exact_glass_area_m2,
 )
+from dekopen_engine.models import PlanPoint
 from dekopen_engine.product import (
     CoupledAssembly,
     CouplingDef,
     IssueCode,
     PlanGeometry,
     PlanModule,
-    PlanPoint,
     ProductEvaluation,
     ProductIssue,
     ProductModel,
@@ -69,6 +69,9 @@ from dekopen_engine.models import (
     ProfileRole,
     RailType,
     ReinforcementPiece,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
 )
 
@@ -111,6 +114,9 @@ __all__ = [
     "ProfileRole",
     "RailType",
     "ReinforcementPiece",
+    "SlidingLayout",
+    "SlidingPanel",
+    "SlidingPanelKind",
     "SystemParams",
     "__version__",
     "bom_hash_v1",

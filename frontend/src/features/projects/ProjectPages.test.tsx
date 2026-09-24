@@ -7,6 +7,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   positionsDestroy,
+  projectPaymentIntegrationStatus,
+  projectPaymentLinksList,
+  projectPaymentsList,
   projectsClone,
   projectsCreate,
   projectsList,
@@ -50,6 +53,13 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectsUpdate: vi.fn(),
     projectsClone: vi.fn(),
     positionsDestroy: vi.fn(),
+    projectPaymentsList: vi.fn(),
+    projectPaymentsRecord: vi.fn(),
+    projectPaymentVoid: vi.fn(),
+    projectPaymentLinksList: vi.fn(),
+    projectPaymentIntegrationStatus: vi.fn(),
+    projectPaymentLinkCreate: vi.fn(),
+    projectPaymentLinkRecover: vi.fn(),
   };
 });
 
@@ -82,6 +92,7 @@ function makePosition(): PositionResponse {
       reinforcements: [],
       glasses: [],
       panels: [],
+      fittings: [],
       hardware_items: [],
       leaf_weights: [],
       calculation_hash: `sha256:${"a".repeat(64)}`,
@@ -98,6 +109,9 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     client_rut: "",
     client_email: "",
     client_phone: "",
+    client_giro: "",
+    client_comuna: "",
+    client_address: "",
     delivery_address: "",
     notes_commercial: "",
     notes_internal: "",
@@ -119,10 +133,14 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
 function expectedMetadata(project: ProjectResponse): ProjectWriteRequest {
   return {
     name: project.name,
+    client_id: project.client_id ?? null,
     client_name: project.client_name,
     client_rut: project.client_rut ?? "",
     client_email: project.client_email ?? "",
     client_phone: project.client_phone ?? "",
+    client_giro: project.client_giro ?? "",
+    client_comuna: project.client_comuna ?? "",
+    client_address: project.client_address ?? "",
     delivery_address: project.delivery_address ?? "",
     notes_commercial: project.notes_commercial ?? "",
     notes_internal: project.notes_internal ?? "",
@@ -183,6 +201,22 @@ beforeEach(() => {
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, makeProject()));
+  vi.mocked(projectPaymentsList).mockResolvedValue(
+    response(200, {
+      payments: [],
+      invoices: [],
+      collected: "0",
+      quote_total_gross: null,
+      balance: null,
+      currency: "CLP",
+      status: "NO_DEAL",
+      sealed_revision: null,
+    }),
+  );
+  vi.mocked(projectPaymentLinksList).mockResolvedValue(response(200, { links: [] }));
+  vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
+    response(200, { configured: false, enabled: false }),
+  );
 });
 
 afterEach(() => {
@@ -228,10 +262,14 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   const [body, options] = vi.mocked(projectsCreate).mock.calls[0]!;
   expect(body).toEqual({
     name: "Nombre ingresado",
+    client_id: null,
     client_name: "Cliente ingresado",
     client_rut: "",
     client_email: "ingresado@example.test",
     client_phone: "",
+    client_giro: "",
+    client_comuna: "",
+    client_address: "",
     delivery_address: "",
     notes_commercial: "",
     notes_internal: "Nota ingresada",
