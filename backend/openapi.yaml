@@ -16606,6 +16606,8 @@ components:
           type: string
           format: uuid
           nullable: true
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
         position_count:
           type: integer
         updated_at:
@@ -16622,6 +16624,7 @@ components:
       required:
       - client_name
       - code
+      - currency
       - current_pricing_operation_id
       - current_revision
       - id

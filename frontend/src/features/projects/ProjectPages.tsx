@@ -24,6 +24,7 @@ import type {
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatMoney } from "../money";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
 import { ProjectBom } from "./ProjectPositionEditor";
@@ -58,6 +59,18 @@ const statuses: Record<ProjectResponse["status"], TranslationKey> = {
  * job" each vano is: drafted → engine-evaluated → priced → sealed into a
  * revision → released to production. It is derived, never stored: the
  * project's own state machine is the authority. */
+const typologyKeys: Record<string, TranslationKey> = {
+  FIXED: "typology.fixed",
+  TURN: "typology.turn",
+  TILT_TURN: "typology.tiltTurn",
+  SLIDING_2L: "typology.sliding2l",
+  SLIDING_3L: "typology.sliding3l",
+  SLIDING_4L: "typology.sliding4l",
+  AWNING: "typology.awning",
+  DOOR_ENTRY: "typology.doorEntry",
+  COMPOSITE: "typology.composite",
+};
+
 function positionStatusKey(
   project: ProjectResponse,
   position: PositionResponse,
@@ -638,15 +651,15 @@ function ProjectWorkspace({
                     <>
                       <div>
                         <dt>{t("projects.net")}</dt>
-                        <dd>{project.total_price_net}</dd>
+                        <dd>{formatMoney(project.total_price_net, project.currency)}</dd>
                       </div>
                       <div>
                         <dt>{t("projects.tax")}</dt>
-                        <dd>{project.total_price_tax}</dd>
+                        <dd>{formatMoney(project.total_price_tax, project.currency)}</dd>
                       </div>
                       <div>
                         <dt>{t("projects.total")}</dt>
-                        <dd>{project.total_price_gross}</dd>
+                        <dd>{formatMoney(project.total_price_gross, project.currency)}</dd>
                       </div>
                     </>
                   ) : (
@@ -789,7 +802,11 @@ function ProjectWorkspace({
                     </div>
                     <div>
                       <dt>{t("projects.typology")}</dt>
-                      <dd>{selected.typology}</dd>
+                      <dd>
+                        {typologyKeys[selected.typology]
+                          ? t(typologyKeys[selected.typology]!)
+                          : selected.typology}
+                      </dd>
                     </div>
                   </dl>
                   <div className="projects-actions">
@@ -855,7 +872,9 @@ function ProjectWorkspace({
                       </time>
                     </td>
                     <td>
-                      {item.pricing_current ? item.total_price_gross : t("projects.unpriced")}
+                      {item.pricing_current
+                        ? formatMoney(item.total_price_gross, item.currency)
+                        : t("projects.unpriced")}
                     </td>
                   </tr>
                 ))}

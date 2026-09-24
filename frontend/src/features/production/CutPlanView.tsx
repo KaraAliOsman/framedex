@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { cutRoleLabel } from "./labels";
 import { t } from "../../i18n/es-CL";
 
 // Full engine payload contract (backend/production/service.py →
@@ -341,7 +342,7 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       sku: piece.workshop_sku ?? "—",
       material: cut.material ?? "—",
       color: cut.color ?? "—",
-      role: cut.role ?? "—",
+      role: cutRoleLabel(cut.role),
       position: shortId(piece.source_position_id),
       bay: shortId(piece.bay_id),
       leaf: shortId(piece.leaf_id),

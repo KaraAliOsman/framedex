@@ -123,6 +123,7 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     total_price_gross: "0.00",
     pricing_current: false,
     current_pricing_operation_id: null,
+    currency: "CLP",
     position_count: 0,
     positions: [],
     versions: [],
@@ -471,6 +472,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   const position = makePosition();
   const priced = makeProject({
     pricing_current: true,
+    currency: "CLP",
     current_pricing_operation_id: "operation-a",
     total_price_gross: "1190.00",
     position_count: 1,

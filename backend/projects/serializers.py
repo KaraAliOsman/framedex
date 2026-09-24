@@ -135,6 +135,7 @@ class ProjectResponseSerializer(ProjectWriteSerializer):
     total_price_gross = serializers.CharField()
     pricing_current = serializers.BooleanField()
     current_pricing_operation_id = serializers.UUIDField(allow_null=True)
+    currency = serializers.ChoiceField(choices=("CLP", "USD"))
     position_count = serializers.IntegerField()
     updated_at = serializers.DateTimeField()
     positions = PositionResponseSerializer(many=True, required=False)

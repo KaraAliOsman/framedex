@@ -25,6 +25,7 @@ import type {
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatDate, formatMoney } from "../money";
 import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 
@@ -46,19 +47,6 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PARTIAL: "projects.paymentStatusPartial",
   PAID: "projects.paymentStatusPaid",
 };
-
-function formatMoney(value: string | null, currency: string): string {
-  if (value === null) return "—";
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: currency === "CLP" ? 0 : 2,
-  }).format(Number(value));
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(value));
-}
 
 export function ProjectPaymentsPanel({
   projectId,

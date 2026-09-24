@@ -11,6 +11,19 @@ import "./purchasing.css";
 
 type OrderType =
   "SUPPLIER_PROFILE_PO" | "SUPPLIER_GLASS_PO" | "SUPPLIER_HARDWARE_PO" | "SUPPLIER_PANEL_PO";
+function categoryLabel(category: string): string {
+  const key = `purchasing.categoryValue.${category}` as Parameters<typeof t>[0];
+  const known: ReadonlySet<string> = new Set([
+    "PROFILE",
+    "REINFORCEMENT",
+    "GLASS",
+    "HARDWARE_KIT",
+    "PANEL",
+    "ACCESSORY",
+  ]);
+  return known.has(category) ? t(key) : category;
+}
+
 const ORDER_TYPES: OrderType[] = [
   "SUPPLIER_PROFILE_PO",
   "SUPPLIER_GLASS_PO",
@@ -603,7 +616,7 @@ function RequirementRow({
   const allocated = eligibilities.find((item) => item.id === allocation?.supplier_eligibility_id);
   return (
     <tr>
-      <td>{requirement.category}</td>
+      <td>{categoryLabel(requirement.category)}</td>
       <td>{requirement.technical_skus.join(", ") || "—"}</td>
       <td>
         {requirement.purchasing_sku ?? "—"}

@@ -148,7 +148,7 @@ describe("CutPlanView", () => {
     fireEvent.click(first);
     const aside = container.querySelector(".cutplan-detail") as Element;
     expect(aside.textContent).toContain("M-60 · B1-1");
-    expect(aside.textContent).toContain("FRAME");
+    expect(aside.textContent).toContain("Marco");
     expect(aside.textContent).toContain("2000 mm");
     // member key = [position,bay,leaf,role] — M-01 and M-02 share it;
     // V-01's role is empty so it's a different member.

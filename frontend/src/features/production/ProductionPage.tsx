@@ -35,6 +35,7 @@ import type {
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { cutRoleLabel } from "./labels";
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import {
   GlassSummary,
@@ -807,7 +808,7 @@ export function ProductionPage(): JSX.Element {
                                     {bar.cuts
                                       .map(
                                         (cut) =>
-                                          `${cut.piece_id} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
+                                          `${cutRoleLabel(cut.role)} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
                                       )
                                       .join(" · ")}
                                   </td>

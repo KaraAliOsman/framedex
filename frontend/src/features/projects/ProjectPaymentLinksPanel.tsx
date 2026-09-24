@@ -13,6 +13,7 @@ import type {
   PaymentLinkStatusEnum,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatMoney } from "../money";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -29,11 +30,7 @@ const LINK_STATUS_LABEL: Record<PaymentLinkStatusEnum, TranslationKey> = {
 };
 
 function formatClp(value: string): string {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
+  return formatMoney(value, "CLP");
 }
 
 function formatDate(value: string): string {

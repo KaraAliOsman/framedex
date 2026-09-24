@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CurrencyEnum } from "./currencyEnum";
 import type { PositionResponse } from "./positionResponse";
 import type { ProjectResponseStatusEnum } from "./projectResponseStatusEnum";
 import type { ProjectVersionResponse } from "./projectVersionResponse";
@@ -41,6 +42,7 @@ export interface ProjectResponse {
   pricing_current: boolean;
   /** @nullable */
   current_pricing_operation_id: string | null;
+  currency: CurrencyEnum;
   position_count: number;
   updated_at: string;
   positions?: PositionResponse[];
