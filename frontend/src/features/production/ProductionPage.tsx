@@ -158,6 +158,7 @@ export function ProductionPage(): JSX.Element {
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
+  const [optStrategy, setOptStrategy] = useState("auto");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryForm, setDeliveryForm] = useState<DeliveryScheduleRequestRequest | null>(null);
@@ -280,7 +281,13 @@ export function ProductionPage(): JSX.Element {
 
   function optimize(orderId: string): void {
     if (!optColor.trim()) return;
-    void action(productionOrderOptimize(orderId, { color: optColor.trim() }), orderId);
+    void action(
+      productionOrderOptimize(orderId, {
+        color: optColor.trim(),
+        strategy: optStrategy as "fast" | "deep" | "auto",
+      }),
+      orderId,
+    );
   }
 
   function exportCnc(orderId: string): void {
@@ -715,6 +722,15 @@ export function ProductionPage(): JSX.Element {
                           placeholder={t("production.optimizeColorPlaceholder")}
                           aria-label={t("production.optimizeColor")}
                         />
+                        <select
+                          value={optStrategy}
+                          onChange={(event) => setOptStrategy(event.target.value)}
+                          aria-label={t("production.optimizeStrategy")}
+                        >
+                          <option value="auto">{t("production.optimizeStrategyAuto")}</option>
+                          <option value="fast">{t("production.optimizeStrategyFast")}</option>
+                          <option value="deep">{t("production.optimizeStrategyDeep")}</option>
+                        </select>
                         <button
                           type="button"
                           disabled={busy || !optColor.trim()}
@@ -802,7 +818,15 @@ export function ProductionPage(): JSX.Element {
                               {cutPlan.map((bar) => (
                                 <tr key={bar.bar_index}>
                                   <td>#{bar.bar_index}</td>
-                                  <td>{bar.commercial_sku}</td>
+                                  <td>
+                                    {bar.commercial_sku}
+                                    {bar.source === "REMNANT" ? (
+                                      <span className="production-remnant-tag">
+                                        {" "}
+                                        {t("production.optimizeRemnantBar")}
+                                      </span>
+                                    ) : null}
+                                  </td>
                                   <td>{bar.stock_length_mm} mm</td>
                                   <td>
                                     {bar.cuts
@@ -812,7 +836,15 @@ export function ProductionPage(): JSX.Element {
                                       )
                                       .join(" · ")}
                                   </td>
-                                  <td>{bar.remainder_mm} mm</td>
+                                  <td>
+                                    {bar.remainder_mm} mm
+                                    {bar.remainder_reusable ? (
+                                      <span className="production-remnant-tag">
+                                        {" "}
+                                        {t("production.optimizeRemnantReusable")}
+                                      </span>
+                                    ) : null}
+                                  </td>
                                   <td>{bar.yield_pct}%</td>
                                 </tr>
                               ))}
@@ -836,6 +868,74 @@ export function ProductionPage(): JSX.Element {
                               .join(" · ")}
                           </p>
                         ) : null}
+                        {(() => {
+                          const remnantLedger = optimization?.remnants;
+                          const consumed = remnantLedger?.consumed ?? [];
+                          const producedCount =
+                            (remnantLedger?.produced_bars?.length ?? 0) +
+                            (remnantLedger?.produced_sheets?.length ?? 0);
+                          const metrics = optimization?.bars?.metrics;
+                          const comparison = optimization?.bars?.strategy_comparison;
+                          const comparisonEntries = comparison
+                            ? (["fast", "deep"] as const)
+                                .filter((key) => comparison[key])
+                                .map((key) => ({ key, metrics: comparison[key] }))
+                            : [];
+                          const unplaced = optimization?.bars?.unplaced ?? [];
+                          return (
+                            <>
+                              {consumed.length || producedCount ? (
+                                <p className="production-optimize-remnants">
+                                  {consumed.length ? (
+                                    <span>
+                                      {t("production.optimizeRemnantsUsed")}: {consumed.length}
+                                    </span>
+                                  ) : null}
+                                  {producedCount ? (
+                                    <span>
+                                      {t("production.optimizeRemnantsProduced")}: {producedCount}
+                                    </span>
+                                  ) : null}
+                                </p>
+                              ) : null}
+                              {metrics ? (
+                                <p className="production-optimize-metrics">
+                                  {t("production.optimizeMetrics")}:{" "}
+                                  {[
+                                    `${metrics.bars ?? 0} barras`,
+                                    `${metrics.purchased_bars ?? 0} compra`,
+                                    `${metrics.remnant_bars ?? 0} remanentes`,
+                                    `${metrics.process_waste_mm ?? "0"} mm desperdicio`,
+                                    `${metrics.reusable_remnant_mm ?? "0"} mm reutilizable`,
+                                    `${metrics.cuts ?? 0} cortes`,
+                                  ].join(" · ")}
+                                </p>
+                              ) : null}
+                              {comparisonEntries.length > 1 ? (
+                                <p className="production-optimize-metrics">
+                                  {t("production.optimizeComparison")}:{" "}
+                                  {comparisonEntries
+                                    .map(
+                                      ({ key, metrics: m }) =>
+                                        `${key}${comparison?.chosen === key ? "*" : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
+                                    )
+                                    .join("  |  ")}
+                                </p>
+                              ) : null}
+                              {unplaced.length ? (
+                                <p className="production-optimize-unnested" role="alert">
+                                  {t("production.optimizeUnplaced")}:{" "}
+                                  {unplaced
+                                    .map(
+                                      (entry) =>
+                                        `${entry.piece?.piece_id ?? "?"} (${entry.reason ?? ""})`,
+                                    )
+                                    .join(" · ")}
+                                </p>
+                              ) : null}
+                            </>
+                          );
+                        })()}
                         {layouts.length ? (
                           <table className="production-plan">
                             <thead>
@@ -856,6 +956,11 @@ export function ProductionPage(): JSX.Element {
                                     {layout.sheet_width_mm}×{layout.sheet_height_mm} mm
                                   </td>
                                   <td>
+                                    {layout.source === "REMNANT" ? (
+                                      <span className="production-remnant-tag">
+                                        {t("production.optimizeRemnantBar")}{" "}
+                                      </span>
+                                    ) : null}
                                     {layout.placements
                                       .map(
                                         (piece) =>

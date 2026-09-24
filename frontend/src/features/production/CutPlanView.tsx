@@ -33,9 +33,13 @@ export type CutBar = {
   kerf_mm?: string;
   cuts: CutPlacement[];
   remainder_mm: string;
+  remainder_reusable?: boolean;
   waste_mm?: string;
   yield_pct: string;
   waste_pct?: string;
+  stock_authority_id?: string;
+  source?: "NEW" | "REMNANT";
+  remnant_id?: string | null;
 };
 export type PurchaseLine = {
   commercial_sku: string;
@@ -64,6 +68,10 @@ export type SheetLayout = {
   sheet_height_mm: string;
   yield_pct: string;
   placements: NestPlacement[];
+  workshop_sku?: string;
+  source?: "NEW" | "REMNANT";
+  remnant_id?: string | null;
+  produced_remnants?: { x_mm: string; y_mm: string; width_mm: string; height_mm: string }[];
 };
 export type UnnestedPiece = {
   kind: string;
@@ -72,16 +80,45 @@ export type UnnestedPiece = {
   height_mm: string;
   quantity: number;
 };
+export type OptimizationMetrics = {
+  bars?: number;
+  purchased_bars?: number;
+  remnant_bars?: number;
+  cuts?: number;
+  productive_length_mm?: string;
+  process_waste_mm?: string;
+  reusable_remnant_mm?: string;
+  unplaced?: number;
+};
+export type StrategyComparison = {
+  fast?: OptimizationMetrics;
+  deep?: OptimizationMetrics;
+  chosen?: string;
+};
+export type RemnantLedger = {
+  consumed?: { id: string; kind: string }[];
+  produced_bars?: { stock_authority_id: string; remainder_mm: string }[];
+  produced_sheets?: { workshop_sku: string; width_mm: string; height_mm: string }[];
+};
 export type WorkOrderOptimization = {
   schema?: string;
   color?: string;
   units?: number;
   optimized_at?: string;
   actor_id?: string;
-  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
+  strategy?: string;
+  bars?: {
+    workshop_cut_plan?: CutBar[];
+    purchase_list?: PurchaseLine[];
+    metrics?: OptimizationMetrics;
+    strategy_comparison?: StrategyComparison;
+    plan_seed?: string;
+    unplaced?: { piece?: { piece_id?: string }; reason?: string }[];
+  };
   sheets?: SheetLayout[];
   sheet_purchases?: SheetPurchase[];
   unnested?: UnnestedPiece[];
+  remnants?: RemnantLedger;
 };
 
 type PieceRef = {

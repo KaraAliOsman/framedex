@@ -95,6 +95,7 @@ import type {
   InventoryMovementRequestRequest,
   InventoryMovements,
   InventoryMovementsParams,
+  InventoryRemnantsParams,
   InventoryStock,
   JobEnqueueRequest,
   JobRun,
@@ -146,6 +147,9 @@ import type {
   ProjectWriteRequest,
   PurchasingState,
   RemakeRequestRequest,
+  Remnant,
+  RemnantCreateRequest,
+  RemnantList,
   ResetPricingRequest,
   SendOrderRequestRequest,
   ShareQuoteResponse,
@@ -4888,6 +4892,316 @@ export const inventoryOrderReceiving = async (
   return apiMutator<inventoryOrderReceivingResponse>(getInventoryOrderReceivingUrl(orderId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type inventoryRemnantsResponse200 = {
+  data: RemnantList;
+  status: 200;
+};
+
+export type inventoryRemnantsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantsResponseSuccess = inventoryRemnantsResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantsResponseError = (
+  | inventoryRemnantsResponse400
+  | inventoryRemnantsResponse401
+  | inventoryRemnantsResponse403
+  | inventoryRemnantsResponse404
+  | inventoryRemnantsResponse409
+  | inventoryRemnantsResponse422
+  | inventoryRemnantsResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantsResponse =
+  inventoryRemnantsResponseSuccess | inventoryRemnantsResponseError;
+
+export const getInventoryRemnantsUrl = (params?: InventoryRemnantsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/inventory/remnants/?${stringifiedParams}`
+    : `/api/v1/inventory/remnants/`;
+};
+
+export const inventoryRemnants = async (
+  params?: InventoryRemnantsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantsResponse> => {
+  return apiMutator<inventoryRemnantsResponse>(getInventoryRemnantsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type inventoryRemnantCreateResponse201 = {
+  data: Remnant;
+  status: 201;
+};
+
+export type inventoryRemnantCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantCreateResponseSuccess = inventoryRemnantCreateResponse201 & {
+  headers: Headers;
+};
+export type inventoryRemnantCreateResponseError = (
+  | inventoryRemnantCreateResponse400
+  | inventoryRemnantCreateResponse401
+  | inventoryRemnantCreateResponse403
+  | inventoryRemnantCreateResponse404
+  | inventoryRemnantCreateResponse409
+  | inventoryRemnantCreateResponse422
+  | inventoryRemnantCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantCreateResponse =
+  inventoryRemnantCreateResponseSuccess | inventoryRemnantCreateResponseError;
+
+export const getInventoryRemnantCreateUrl = () => {
+  return `/api/v1/inventory/remnants/`;
+};
+
+export const inventoryRemnantCreate = async (
+  remnantCreateRequest: RemnantCreateRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<inventoryRemnantCreateResponse>(getInventoryRemnantCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(remnantCreateRequest),
+  });
+};
+
+export type inventoryRemnantScrapResponse200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantScrapResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantScrapResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantScrapResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantScrapResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantScrapResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantScrapResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantScrapResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantScrapResponseSuccess = inventoryRemnantScrapResponse200 & {
+  headers: Headers;
+};
+export type inventoryRemnantScrapResponseError = (
+  | inventoryRemnantScrapResponse400
+  | inventoryRemnantScrapResponse401
+  | inventoryRemnantScrapResponse403
+  | inventoryRemnantScrapResponse404
+  | inventoryRemnantScrapResponse409
+  | inventoryRemnantScrapResponse422
+  | inventoryRemnantScrapResponse503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantScrapResponse =
+  inventoryRemnantScrapResponseSuccess | inventoryRemnantScrapResponseError;
+
+export const getInventoryRemnantScrapUrl = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/release/`;
+};
+
+export const inventoryRemnantScrap = async (
+  remnantId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantScrapResponse> => {
+  return apiMutator<inventoryRemnantScrapResponse>(getInventoryRemnantScrapUrl(remnantId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type inventoryRemnantScrap2Response200 = {
+  data: Remnant;
+  status: 200;
+};
+
+export type inventoryRemnantScrap2Response400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type inventoryRemnantScrap2Response401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type inventoryRemnantScrap2Response403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type inventoryRemnantScrap2Response404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type inventoryRemnantScrap2Response409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type inventoryRemnantScrap2Response422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type inventoryRemnantScrap2Response503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type inventoryRemnantScrap2ResponseSuccess = inventoryRemnantScrap2Response200 & {
+  headers: Headers;
+};
+export type inventoryRemnantScrap2ResponseError = (
+  | inventoryRemnantScrap2Response400
+  | inventoryRemnantScrap2Response401
+  | inventoryRemnantScrap2Response403
+  | inventoryRemnantScrap2Response404
+  | inventoryRemnantScrap2Response409
+  | inventoryRemnantScrap2Response422
+  | inventoryRemnantScrap2Response503
+) & {
+  headers: Headers;
+};
+
+export type inventoryRemnantScrap2Response =
+  inventoryRemnantScrap2ResponseSuccess | inventoryRemnantScrap2ResponseError;
+
+export const getInventoryRemnantScrap2Url = (remnantId: string) => {
+  return `/api/v1/inventory/remnants/${remnantId}/scrap/`;
+};
+
+export const inventoryRemnantScrap2 = async (
+  remnantId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<inventoryRemnantScrap2Response> => {
+  return apiMutator<inventoryRemnantScrap2Response>(getInventoryRemnantScrap2Url(remnantId), {
+    ...options,
+    method: "POST",
   });
 };
 

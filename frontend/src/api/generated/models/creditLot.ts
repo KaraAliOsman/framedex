@@ -5,12 +5,12 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { OriginEnum } from "./originEnum";
+import type { CreditLotOriginEnum } from "./creditLotOriginEnum";
 
 export interface CreditLot {
   id: string;
   grant_id: string;
-  origin: OriginEnum;
+  origin: CreditLotOriginEnum;
   /** @minimum 0 */
   remaining: number;
   /** @nullable */

@@ -17,6 +17,7 @@ from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from inventory import service
+from inventory import remnants as remnants_service
 from inventory.serializers import (
     InventoryMovementRequestSerializer,
     InventoryMovementSerializer,
@@ -25,6 +26,10 @@ from inventory.serializers import (
     MovementListQuerySerializer,
     OrderReceiptRequestSerializer,
     OrderReceivingSerializer,
+    RemnantCreateSerializer,
+    RemnantListQuerySerializer,
+    RemnantListSerializer,
+    RemnantSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -150,3 +155,66 @@ class OrderReceiptCreateView(APIView):
                     lines=data["lines"],
                 )
         return Response(output, status=201 if created else 200)
+
+
+class RemnantListView(APIView):
+    @extend_schema(
+        operation_id="inventory_remnants",
+        parameters=[ACTIVE_ORGANIZATION_HEADER, RemnantListQuerySerializer],
+        request=None,
+        responses={200: RemnantListSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def get(self, request):
+        query = validate(RemnantListQuerySerializer, request.query_params)
+        with public_inventory_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = remnants_service.list_remnants(
+                    org_id=org_id,
+                    kind=query.get("kind"),
+                    status=query.get("status"),
+                )
+        return Response(output)
+
+    @extend_schema(
+        operation_id="inventory_remnant_create",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=RemnantCreateSerializer,
+        responses={201: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request):
+        data = validate(RemnantCreateSerializer, request.data)
+        with public_inventory_errors():
+            with documentary_scope(request, _WRITERS) as (_, _, org_id):
+                output = remnants_service.create_remnant(
+                    org_id=org_id, **data,
+                )
+        return Response(output, status=201)
+
+
+class RemnantTransitionView(APIView):
+    @extend_schema(
+        operation_id="inventory_remnant_scrap",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request, remnant_id: UUID):
+        action = request.path.rstrip("/").rsplit("/", 1)[-1]
+        with public_inventory_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                if action == "scrap":
+                    output = remnants_service.scrap_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+                elif action == "release":
+                    output = remnants_service.unreserve_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+                else:
+                    raise contract_error(404, "remnant_action_unknown", "")
+        return Response(output)

@@ -24,6 +24,7 @@ from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
+from inventory import remnants as remnants_service
 from production.confirmations import confirmation_summary
 from production.dxf import dxf_files
 from production.dispatch_notes import issue_dispatch_note
@@ -627,6 +628,61 @@ def transition_step(
                 }),
             ],
         )
+        # §6: completing CUT is where the physical drop goes on the saw —
+        # reserved remnants consume and the plan's usable remainders return
+        # to stock under this order's provenance, once.
+        if new_status == "DONE" and str(step["code"]) == "CUT":
+            payload_row = one(
+                """
+                SELECT payload_json FROM public.orders
+                WHERE id = %s AND org_id = %s
+                """,
+                [str(step["order_id"]), str(org_id)],
+                "work_order_not_found",
+            )
+            optimization = (_decoded(payload_row["payload_json"]).get("optimization") or {})
+            plan_remnants = optimization.get("remnants") or {}
+            consumed = remnants_service.consume_order_remnants(
+                org_id=org_id, order_id=step["order_id"]
+            )
+            produced = 0
+            # Produced remnants are written only once per order — a CUT
+            # resume/complete cycle can never double the ledger.
+            already = rows(
+                """
+                SELECT id FROM public.inventory_remnants
+                WHERE org_id = %s AND origin_order_id = %s AND origin = 'PRODUCTION'
+                LIMIT 1
+                """,
+                [str(org_id), str(step["order_id"])],
+            )
+            if not already and (
+                plan_remnants.get("produced_bars")
+                or plan_remnants.get("produced_sheets")
+            ):
+                produced = remnants_service.record_produced_remnants(
+                    org_id=org_id, order_id=step["order_id"],
+                    produced_bars=plan_remnants.get("produced_bars") or [],
+                    produced_sheets=plan_remnants.get("produced_sheets") or [],
+                )
+            if consumed or produced:
+                rows(
+                    """
+                    INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
+                    VALUES (%s, %s, %s, 'WO_REMNANTS_SETTLED', %s, %s::jsonb)
+                    RETURNING id
+                    """,
+                    [
+                        str(org_id),
+                        str(step["order_id"]),
+                        str(step_id),
+                        str(actor_id),
+                        json.dumps({
+                            "consumed": consumed,
+                            "produced": produced,
+                        }),
+                    ],
+                )
         order_status = _refresh_order_status(
             org_id=org_id, order_id=step["order_id"], actor_id=actor_id
         )
@@ -1366,6 +1422,7 @@ def optimize_work_order(
     actor_id: UUID,
     color: str,
     cutting_profile_code: str | None = None,
+    strategy: str = "auto",
 ) -> dict[str, object]:
     """Bar cutting plan (1D best-fit) + sheet nesting (2D guillotine) for one
     work order. Replaces any previous plan in ``payload_json.optimization`` and
@@ -1433,6 +1490,12 @@ def optimize_work_order(
         stocks = CuttingRepository()
         authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
         profile = stocks.cutting_profile(org_id, cutting_profile_code)
+        # §6: on-hand bar drops matching the plan's stock authorities are cut
+        # before any purchase; the engine consumes smallest-fitting-first.
+        bar_remnants = remnants_service.bar_remnants_for_authorities(
+            org_id=org_id,
+            authority_ids={s.stock_authority_id for s in authorities.stocks},
+        )
         per_unit = pieces_from_result(
             result,
             color=color,
@@ -1451,7 +1514,10 @@ def optimize_work_order(
             for repetition in range(1, quantity + 1)
             for piece in per_unit
         ]
-        bars = optimize_cut(pieces, authorities.stocks, profile).model_dump(mode="json")
+        bars = optimize_cut(
+            pieces, authorities.stocks, profile,
+            remnants=bar_remnants, strategy=strategy,
+        ).model_dump(mode="json")
 
         rules = _sheet_rules(org_id)
         sheets: list[dict[str, object]] = []
@@ -1525,12 +1591,20 @@ def optimize_work_order(
             )
             merged.setdefault(key, (rule, []))[1].extend(pieces_group)
         for rule, group_pieces in merged.values():
-            outcome = nest_rects(group_pieces, rule)
+            outcome = nest_rects(
+                group_pieces, rule,
+                remnants=remnants_service.sheet_remnants_for_sku(
+                    org_id=org_id, workshop_sku=rule.workshop_sku
+                ),
+            )
             for layout in outcome.layouts:
                 dumped = layout.model_dump(mode="json")
                 # sheet_index restarts per bin — renumber across the whole plan
                 # so layouts keep a stable globally-unique identity.
                 dumped["sheet_index"] = len(sheets) + 1
+                # Remnant identity: the workshop sku this layout nests under
+                # (produced_remnants rejoin the pool under the same key).
+                dumped["workshop_sku"] = rule.workshop_sku
                 sheets.append(dumped)
             sheet_purchases.extend(
                 purchase.model_dump(mode="json") for purchase in outcome.purchase_list
@@ -1543,16 +1617,60 @@ def optimize_work_order(
                     "reason": "piece_larger_than_usable_sheet",
                 })
 
+        # §6 remnant lifecycle: the plan claims what it will cut (RESERVED
+        # inside this same transaction — never a drop double-booked) and
+        # reports what reusable material it will return to the rack.
+        consumed_bars = [
+            {"id": bar["remnant_id"], "kind": "BAR"}
+            for bar in bars.get("workshop_cut_plan") or []
+            if bar.get("source") == "REMNANT" and bar.get("remnant_id")
+        ]
+        consumed_sheets = [
+            {"id": sheet["remnant_id"], "kind": "SHEET"}
+            for sheet in sheets
+            if sheet.get("source") == "REMNANT" and sheet.get("remnant_id")
+        ]
+        produced_bars = [
+            {
+                "stock_authority_id": bar["stock_authority_id"],
+                "remainder_mm": bar["remainder_mm"],
+            }
+            for bar in bars.get("workshop_cut_plan") or []
+            if bar.get("remainder_reusable") and bar.get("stock_authority_id")
+        ]
+        produced_sheets = [
+            {
+                "workshop_sku": sheet["workshop_sku"],
+                "width_mm": remnant["width_mm"],
+                "height_mm": remnant["height_mm"],
+            }
+            for sheet in sheets
+            for remnant in sheet.get("produced_remnants") or []
+        ]
+        # Re-optimizing replaces the plan: the old reservation releases before
+        # the new one claims, atomically.
+        remnants_service.release_reservations(org_id=org_id, order_id=order_id)
+        remnants_service.reserve_remnants(
+            org_id=org_id,
+            remnant_ids=[r["id"] for r in consumed_bars + consumed_sheets],
+            order_id=order_id,
+        )
         optimization = {
             "schema": "work_order_optimization_v1",
             "optimized_at": datetime.now(timezone.utc).isoformat(),
             "actor_id": str(actor_id),
             "color": color,
             "units": quantity,
+            "strategy": strategy,
             "bars": bars,
             "sheets": sheets,
             "sheet_purchases": sheet_purchases,
             "unnested": unnested,
+            "remnants": {
+                "consumed": consumed_bars + consumed_sheets,
+                "produced_bars": produced_bars,
+                "produced_sheets": produced_sheets,
+            },
         }
         # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
@@ -1583,6 +1701,7 @@ def optimize_work_order(
                     "bars": len(bars.get("workshop_cut_plan") or []),
                     "sheets": len(sheets),
                     "unnested": len(unnested),
+                    "remnants_consumed": len(consumed_bars + consumed_sheets),
                 }),
             ],
         )

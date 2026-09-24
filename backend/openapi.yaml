@@ -4300,6 +4300,311 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/inventory/remnants/:
+    get:
+      operationId: inventory_remnants
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: kind
+        schema:
+          enum:
+          - BAR
+          - SHEET
+          type: string
+          minLength: 1
+        description: |-
+          * `BAR` - BAR
+          * `SHEET` - SHEET
+      - in: query
+        name: status
+        schema:
+          enum:
+          - AVAILABLE
+          - RESERVED
+          - CONSUMED
+          - SCRAPPED
+          type: string
+          minLength: 1
+        description: |-
+          * `AVAILABLE` - AVAILABLE
+          * `RESERVED` - RESERVED
+          * `CONSUMED` - CONSUMED
+          * `SCRAPPED` - SCRAPPED
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemnantList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    post:
+      operationId: inventory_remnant_create
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - inventory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemnantCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemnantCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemnantCreateRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remnant'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/inventory/remnants/{remnant_id}/release/:
+    post:
+      operationId: inventory_remnant_scrap
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: remnant_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remnant'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/inventory/remnants/{remnant_id}/scrap/:
+    post:
+      operationId: inventory_remnant_scrap_2
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: remnant_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - inventory
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remnant'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/inventory/stock/:
     get:
       operationId: inventory_stock
@@ -11870,7 +12175,7 @@ components:
           type: string
           format: uuid
         origin:
-          $ref: '#/components/schemas/OriginEnum'
+          $ref: '#/components/schemas/CreditLotOriginEnum'
         remaining:
           type: integer
           minimum: 0
@@ -11884,6 +12189,18 @@ components:
       - id
       - origin
       - remaining
+    CreditLotOriginEnum:
+      enum:
+      - trial
+      - monthly
+      - pack
+      - legacy
+      type: string
+      description: |-
+        * `trial` - trial
+        * `monthly` - monthly
+        * `pack` - pack
+        * `legacy` - legacy
     CurrencyEnum:
       enum:
       - CLP
@@ -14251,6 +14568,14 @@ components:
         * `SUCCEEDED` - SUCCEEDED
         * `FAILED` - FAILED
         * `CANCELED` - CANCELED
+    Kind8acEnum:
+      enum:
+      - BAR
+      - SHEET
+      type: string
+      description: |-
+        * `BAR` - BAR
+        * `SHEET` - SHEET
     KitChoice:
       type: object
       properties:
@@ -14893,18 +15218,6 @@ components:
         * `SUPPLIER_GLASS_PO` - SUPPLIER_GLASS_PO
         * `SUPPLIER_HARDWARE_PO` - SUPPLIER_HARDWARE_PO
         * `SUPPLIER_PANEL_PO` - SUPPLIER_PANEL_PO
-    OriginEnum:
-      enum:
-      - trial
-      - monthly
-      - pack
-      - legacy
-      type: string
-      description: |-
-        * `trial` - trial
-        * `monthly` - monthly
-        * `pack` - pack
-        * `legacy` - legacy
     PackingLabel:
       type: object
       properties:
@@ -17171,6 +17484,180 @@ components:
           nullable: true
           minLength: 1
           maxLength: 500
+    Remnant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/Kind8acEnum'
+        stock_authority_id:
+          type: string
+          format: uuid
+          nullable: true
+        sheet_workshop_sku:
+          type: string
+          nullable: true
+        physical_stock_identity:
+          type: string
+          format: uuid
+          nullable: true
+        material:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        status:
+          $ref: '#/components/schemas/RemnantStatusEnum'
+        origin:
+          $ref: '#/components/schemas/RemnantOriginEnum'
+        origin_order_id:
+          type: string
+          format: uuid
+          nullable: true
+        reserved_order_id:
+          type: string
+          format: uuid
+          nullable: true
+        consumed_order_id:
+          type: string
+          format: uuid
+          nullable: true
+        rack_location:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - color
+      - consumed_order_id
+      - created_at
+      - height_mm
+      - id
+      - kind
+      - length_mm
+      - material
+      - notes
+      - origin
+      - origin_order_id
+      - physical_stock_identity
+      - rack_location
+      - reserved_order_id
+      - sheet_workshop_sku
+      - status
+      - stock_authority_id
+      - updated_at
+      - width_mm
+    RemnantCreateRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/Kind8acEnum'
+        stock_authority_id:
+          type: string
+          format: uuid
+          nullable: true
+        sheet_workshop_sku:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+        physical_stock_identity:
+          type: string
+          format: uuid
+          nullable: true
+        material:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 50
+        length_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        width_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        height_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        rack_location:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+        notes:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 500
+      required:
+      - kind
+    RemnantList:
+      type: object
+      properties:
+        remnants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remnant'
+      required:
+      - remnants
+    RemnantOriginEnum:
+      enum:
+      - RECEIPT
+      - PRODUCTION
+      - MANUAL
+      type: string
+      description: |-
+        * `RECEIPT` - RECEIPT
+        * `PRODUCTION` - PRODUCTION
+        * `MANUAL` - MANUAL
+    RemnantStatusEnum:
+      enum:
+      - AVAILABLE
+      - RESERVED
+      - CONSUMED
+      - SCRAPPED
+      type: string
+      description: |-
+        * `AVAILABLE` - AVAILABLE
+        * `RESERVED` - RESERVED
+        * `CONSUMED` - CONSUMED
+        * `SCRAPPED` - SCRAPPED
     RequiredAalEnum:
       enum:
       - aal2
@@ -17630,6 +18117,16 @@ components:
           - $ref: '#/components/schemas/NullEnum'
       required:
       - action
+    StrategyEnum:
+      enum:
+      - fast
+      - deep
+      - auto
+      type: string
+      description: |-
+        * `fast` - fast
+        * `deep` - deep
+        * `auto` - auto
     StructuralInputRequest:
       type: object
       properties:
@@ -18173,6 +18670,10 @@ components:
           nullable: true
           minLength: 1
           maxLength: 50
+        strategy:
+          allOf:
+          - $ref: '#/components/schemas/StrategyEnum'
+          default: auto
       required:
       - color
     WorkshopAnnotation:

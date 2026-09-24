@@ -195,6 +195,9 @@ class WorkCenterRequestSerializer(StrictSerializer):
 class WorkOrderOptimizeRequestSerializer(StrictSerializer):
     color = serializers.CharField(max_length=50)
     cutting_profile_code = serializers.CharField(required=False, allow_null=True, max_length=50)
+    strategy = serializers.ChoiceField(
+        choices=["fast", "deep", "auto"], required=False, default="auto"
+    )
 
     def validate(self, data):
         data = super().validate(data)

@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { StrategyEnum } from "./strategyEnum";
 
 export interface WorkOrderOptimizeRequestRequest {
   /**
@@ -18,4 +19,5 @@ export interface WorkOrderOptimizeRequestRequest {
    * @nullable
    */
   cutting_profile_code?: string | null;
+  strategy?: StrategyEnum;
 }
