@@ -1641,6 +1641,17 @@ def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
     )
     monkeypatch.setattr("production.service.rows", fake_rows)
     monkeypatch.setattr(
+        "production.service.sealed_delivery",
+        lambda **kw: {
+            "scheduled_date": "2026-09-25",
+            "time_window": "PM",
+            "address": "Av. Norte 100",
+            "contact_name": None,
+            "contact_phone": None,
+            "installer_name": "Cuadrilla 2",
+        },
+    )
+    monkeypatch.setattr(
         "production.service.sealed_delivery_address",
         lambda **kw: "Av. Norte 100",
     )
@@ -1657,9 +1668,8 @@ def test_delivery_schedule_replay_adds_no_duplicate_event(monkeypatch) -> None:
     assert out["delivery"]["status"] == "SCHEDULED"
 
 
-def test_schedule_delivery_rejects_address_change_after_dispatch(monkeypatch) -> None:
-    """The issued guía sealed the destination — the paper the driver holds
-    can't drift. Dates/contacts may still move; the address may not."""
+def _dispatched_delivery_env(monkeypatch, sealed: dict) -> tuple:
+    """A dispatched order whose guía sealed `sealed` delivery fields."""
     org_id, order_id = uuid4(), uuid4()
     monkeypatch.setattr(
         "production.service.one",
@@ -1668,22 +1678,96 @@ def test_schedule_delivery_rejects_address_change_after_dispatch(monkeypatch) ->
     monkeypatch.setattr(
         "production.service.rows",
         lambda *_a, **_k: [
-            {"status": "SCHEDULED", "address": "Av. Norte 100"}
+            {"status": "SCHEDULED", "address": sealed.get("address", "Av. Norte 100")}
         ],
     )
+    monkeypatch.setattr("production.service.sealed_delivery", lambda **kw: sealed)
     monkeypatch.setattr(
         "production.service.sealed_delivery_address",
-        lambda **kw: "Av. Norte 100",
+        lambda **kw: sealed.get("address"),
+    )
+    return org_id, order_id
+
+
+def test_schedule_delivery_rejects_address_change_after_dispatch(monkeypatch) -> None:
+    """The issued guía sealed the destination — the paper the driver holds
+    can't drift."""
+    org_id, order_id = _dispatched_delivery_env(
+        monkeypatch, {"address": "Av. Norte 100"}
     )
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
-        with pytest.raises(DocumentaryError, match="delivery_address_sealed"):
+        with pytest.raises(DocumentaryError, match="delivery_schedule_sealed"):
             service.schedule_delivery(
                 org_id=org_id, order_id=order_id, actor_id=uuid4(),
                 scheduled_date="2026-10-01", time_window=None,
                 address="Otra Calle 55",
             )
+
+
+def test_schedule_delivery_rejects_reschedule_after_dispatch(monkeypatch) -> None:
+    """The sealed guía prints the scheduled date/window/contact — moving
+    them post-dispatch would contradict the driver's paper."""
+    org_id, order_id = _dispatched_delivery_env(
+        monkeypatch,
+        {
+            "address": "Av. Norte 100",
+            "scheduled_date": "2026-09-25",
+            "time_window": "PM",
+            "contact_name": "Portería",
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="delivery_schedule_sealed"):
+            service.schedule_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(),
+                scheduled_date="2026-10-02", time_window="AM",
+                address="Av. Norte 100", contact_name="Portería",
+            )
+
+
+def test_schedule_delivery_same_values_after_dispatch_replays(monkeypatch) -> None:
+    """Resubmitting the sealed program is a replay, not a drift."""
+    from datetime import date
+
+    org_id, order_id = _dispatched_delivery_env(
+        monkeypatch,
+        {
+            "address": "Av. Norte 100",
+            "scheduled_date": "2026-09-25",
+            "time_window": "PM",
+        },
+    )
+
+    def fake_rows(sql, params=None):
+        if "FROM public.deliveries" in sql:
+            return [
+                {
+                    "status": "SCHEDULED",
+                    "scheduled_date": date(2026, 9, 25),
+                    "time_window": "PM",
+                    "address": "Av. Norte 100",
+                    "contact_name": None,
+                    "contact_phone": None,
+                    "installer_name": None,
+                    "notes": None,
+                }
+            ]
+        return []
+
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr(service, "get_delivery", lambda **kw: {"delivery": {"status": "SCHEDULED"}})
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.schedule_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(),
+            scheduled_date="2026-09-25", time_window="PM", address="Av. Norte 100",
+        )
+    assert out["delivery"]["status"] == "SCHEDULED"
 
 
 def test_dispatch_purges_orphaned_pdf_on_transaction_failure(monkeypatch) -> None:

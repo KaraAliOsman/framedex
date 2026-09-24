@@ -253,9 +253,17 @@ def dispatch_note_access(*, org_id: UUID, order_id: UUID) -> dict:
     }
 
 
-def sealed_delivery_address(*, org_id: UUID, order_id: UUID) -> str | None:
-    """The destination the issued guía carries — post-dispatch address edits
-    must not drift from the paper the driver holds."""
+def _note_payload(note_row: dict) -> dict:
+    payload = note_row["payload_json"]
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    return payload if isinstance(payload, dict) else {}
+
+
+def sealed_delivery(*, org_id: UUID, order_id: UUID) -> dict | None:
+    """The delivery block sealed into the issued guía — destination plus the
+    program the driver's paper shows. None when no note exists or the note
+    predates the delivery block."""
     note = rows(
         "SELECT payload_json::text AS payload_json FROM public.dispatch_notes "
         "WHERE org_id=%s AND work_order_id=%s",
@@ -263,17 +271,26 @@ def sealed_delivery_address(*, org_id: UUID, order_id: UUID) -> str | None:
     )
     if not note:
         return None
-    payload = note[0]["payload_json"]
-    if isinstance(payload, str):
-        payload = json.loads(payload)
-    if not isinstance(payload, dict):
-        return None
-    delivery = payload.get("delivery")
-    if isinstance(delivery, dict) and delivery.get("address"):
+    delivery = _note_payload(note[0]).get("delivery")
+    return delivery if isinstance(delivery, dict) else None
+
+
+def sealed_delivery_address(*, org_id: UUID, order_id: UUID) -> str | None:
+    """The destination the issued guía carries — post-dispatch address edits
+    must not drift from the paper the driver holds."""
+    delivery = sealed_delivery(org_id=org_id, order_id=order_id)
+    if delivery and delivery.get("address"):
         return delivery["address"]
+    note = rows(
+        "SELECT payload_json::text AS payload_json FROM public.dispatch_notes "
+        "WHERE org_id=%s AND work_order_id=%s",
+        [str(org_id), str(order_id)],
+    )
+    if not note:
+        return None
     # Notes issued before the delivery block existed sealed the destination
     # under project.delivery_address — still the paper the driver holds.
-    project = payload.get("project")
+    project = _note_payload(note[0]).get("project")
     if isinstance(project, dict):
         return project.get("delivery_address")
     return None

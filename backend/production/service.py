@@ -28,6 +28,7 @@ from production.confirmations import confirmation_summary
 from production.dispatch_notes import (
     issue_dispatch_note,
     purge_unreferenced_note_object,
+    sealed_delivery,
     sealed_delivery_address,
 )
 from production.dxf import dxf_files
@@ -1722,14 +1723,36 @@ def schedule_delivery(
             "notes": (notes or "").strip() or None,
         }
         if str(order["status"]) == "DISPATCHED":
-            # The guía de despacho already sealed a destination — the paper
-            # the driver holds can't be edited after the fact. Dates,
-            # windows and contacts may still move; the address may not.
-            sealed_address = sealed_delivery_address(
-                org_id=org_id, order_id=order_id
-            )
-            if sealed_address is not None and normalized["address"] != sealed_address:
-                raise DocumentaryError("delivery_address_sealed")
+            # The guía de despacho already sealed a destination and the
+            # delivery program the driver's paper shows — post-dispatch
+            # reschedules would put the system at odds with the printed
+            # document, so every sealed field is frozen (notes stay free:
+            # they never reach the guía).
+            sealed = sealed_delivery(org_id=org_id, order_id=order_id)
+            if sealed is not None:
+                for key in (
+                    "address",
+                    "scheduled_date",
+                    "time_window",
+                    "contact_name",
+                    "contact_phone",
+                    "installer_name",
+                ):
+                    left = normalized.get(key)
+                    right = sealed.get(key)
+                    if ("" if left is None else str(left)) != (
+                        "" if right is None else str(right)
+                    ):
+                        raise DocumentaryError("delivery_schedule_sealed")
+            else:
+                sealed_address = sealed_delivery_address(
+                    org_id=org_id, order_id=order_id
+                )
+                if (
+                    sealed_address is not None
+                    and normalized["address"] != sealed_address
+                ):
+                    raise DocumentaryError("delivery_address_sealed")
         if (
             existing
             and str(existing[0]["status"]) == "SCHEDULED"
