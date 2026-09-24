@@ -18,7 +18,7 @@ from authentication.errors import contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from ingest.catalog_parser import ROLES, parse_catalog_lines
-from ingest.extract import extract_tagged, kind_for
+from ingest.extract import extract_tagged, kind_for, safe_file_name
 from jobs import service as jobs_service
 from pricing.repository import rows
 
@@ -102,6 +102,12 @@ def create_catalog_import(
             422,
             "catalog_import_file_invalid",
             "El nombre del archivo es demasiado largo o está vacío.",
+        )
+    if not safe_file_name(file_name):
+        raise contract_error(
+            422,
+            "catalog_import_file_invalid",
+            "El nombre del archivo contiene caracteres no permitidos.",
         )
     import_id = uuid4()
     storage_path = f"catalog-imports/{org_id}/{import_id}/{file_name}"

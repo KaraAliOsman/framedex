@@ -85,6 +85,19 @@ def extract_tagged(kind: str, content: bytes) -> list[tuple[str, str]] | None:
     return None
 
 
+def safe_file_name(file_name: str) -> bool:
+    """Storage-key safety: the name becomes a segment of the object's path, so
+    separators, traversal or control characters would escape the org prefix.
+    The multipart transport supplies this value verbatim — never trust it."""
+    name = file_name.strip()
+    if not name or name in (".", ".."):
+        return False
+    if "/" in name or "\\" in name:
+        return False
+    # Control bytes scan the raw name — an edge space never masks a \t inside.
+    return not any(ord(character) < 32 for character in file_name)
+
+
 def kind_for(file_name: str) -> str | None:
     lowered = file_name.lower()
     if lowered.endswith(".pdf"):

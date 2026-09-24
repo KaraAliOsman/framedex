@@ -461,3 +461,26 @@ def test_series_gaps_names_the_missing_roles():
         is None
     )
     assert catalog_service._series_gaps([]) is None
+
+
+def test_create_catalog_import_rejects_path_like_filenames():
+    # The multipart filename lands verbatim in the storage key — separators or
+    # traversal would write the object outside catalog-imports/{org}/.
+    for bad_name in (
+        "../escape.pdf",
+        "a/b.csv",
+        "a\\b.pdf",
+        "lista\t.pdf",
+    ):
+        with pytest.raises(APIException) as caught:
+            catalog_service.create_catalog_import(
+                org_id=uuid4(),
+                actor_id=uuid4(),
+                file_name=bad_name,
+                content=b"x",
+                content_type="text/csv",
+            )
+        assert (
+            getattr(caught.value, "contract_code", None)
+            == "catalog_import_file_invalid"
+        )

@@ -16,7 +16,7 @@ from django.db import transaction
 from authentication.errors import ContractAPIException, contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
-from ingest.extract import extract, kind_for
+from ingest.extract import extract, kind_for, safe_file_name
 from ingest.parser import candidates_from_rows, candidates_from_text
 from jobs import service as jobs_service
 from pricing.repository import rows
@@ -98,6 +98,12 @@ def create_import(
             422,
             "import_file_invalid",
             "El nombre del archivo es demasiado largo o está vacío.",
+        )
+    if not safe_file_name(file_name):
+        raise contract_error(
+            422,
+            "import_file_invalid",
+            "El nombre del archivo contiene caracteres no permitidos.",
         )
     # Fast-fail before the storage write; the authoritative gate re-locks the
     # row inside the atomic block below.

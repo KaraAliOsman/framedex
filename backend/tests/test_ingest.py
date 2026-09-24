@@ -669,6 +669,39 @@ def test_create_import_rejects_long_filename(monkeypatch):
     assert uploads == []
 
 
+def test_create_import_rejects_path_like_filenames(monkeypatch):
+    # The multipart filename lands verbatim in the storage key — traversal or
+    # separators would write the object outside the org-scoped prefix.
+    uploads = []
+
+    class _Storage:
+        def upload_immutable(self, *a):
+            uploads.append(a)
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service.projects_service, "editable", lambda *a, **k: {"id": "p"}
+    )
+    for bad_name in (
+        "../escape.pdf",
+        "a/b.pdf",
+        "a\\b.pdf",
+        "lista\t.pdf",
+        "x\n.pdf",
+    ):
+        with pytest.raises(Exception) as caught:
+            service.create_import(
+                org_id=uuid4(),
+                project_id=uuid4(),
+                actor_id=uuid4(),
+                file_name=bad_name,
+                content=b"%PDF",
+                content_type="application/pdf",
+            )
+        assert getattr(caught.value, "contract_code", None) == "import_file_invalid"
+    assert uploads == []
+
+
 def test_extract_replays_when_row_sealed_during_extract(monkeypatch):
     # Claim won (UPLOADED→EXTRACTING) but a confirm sealed the import before
     # the terminal write — replay the committed state, never overwrite it.
