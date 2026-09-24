@@ -156,9 +156,10 @@ def test_additive_bom_normalizer_keeps_old_snapshots_comparable() -> None:
         ],
     }
     # Fields the model gained after the snapshot was sealed drop out on both
-    # sides — the unchanged position stays comparable.
+    # sides — the unchanged position stays comparable. Both sides normalize
+    # against the same older snapshot.
     assert _without_additive_bom_fields(current, legacy_stored) == _without_additive_bom_fields(
-        legacy_stored, current
+        legacy_stored, legacy_stored
     )
 
     # A value carried by the snapshot stays compared: a changed bend must flag.
@@ -173,8 +174,94 @@ def test_additive_bom_normalizer_keeps_old_snapshots_comparable() -> None:
         "profile_cuts": [{**current["profile_cuts"][0], "sagitta_mm": "300"}],
     }
     assert _without_additive_bom_fields(bent_current, bent_stored) != _without_additive_bom_fields(
-        bent_stored, bent_current
+        bent_stored, bent_stored
     )
+
+    # A null in the snapshot is equivalent to the field never having existed —
+    # a non-null recomputed value must not flag drift.
+    null_stored = {
+        **legacy_stored,
+        "glasses": [
+            {
+                **legacy_stored["glasses"][0],
+                "glass_spec": None,
+                "article_sku": None,
+            }
+        ],
+    }
+    assert _without_additive_bom_fields(current, null_stored) == _without_additive_bom_fields(
+        null_stored, null_stored
+    )
+
+    # Same-role cuts of different lengths are distinct pieces: a drift on one
+    # must not be masked by the other's last-wins identity row.
+    double_stored = {
+        **legacy_stored,
+        "profile_cuts": [
+            {**legacy_stored["profile_cuts"][0], "sagitta_mm": "500"},
+            {
+                **legacy_stored["profile_cuts"][0],
+                "length_mm": "1400",
+                "sagitta_mm": "300",
+            },
+        ],
+    }
+    double_current = {
+        **current,
+        "profile_cuts": [
+            {**current["profile_cuts"][0], "sagitta_mm": "500"},
+            {
+                **current["profile_cuts"][0],
+                "length_mm": "1400",
+                "sagitta_mm": "620",
+            },
+        ],
+    }
+    assert _without_additive_bom_fields(double_current, double_stored) != _without_additive_bom_fields(
+        double_stored, double_stored
+    )
+
+
+def test_era_projections_reproduce_historical_preimages() -> None:
+    from documents.service import _drop_bom_keys
+
+    current = {
+        "profile_cuts": [{"sku": "MARCO-60", "sagitta_mm": None}],
+        "reinforcements": [{"parent_profile_sku": "MARCO-60", "sagitta_mm": None}],
+        "glasses": [
+            {
+                "bay_id": "B1",
+                "glass_spec": "4-16-4",
+                "article_sku": "DVH",
+                "shape": None,
+                "exposed_edges": None,
+            }
+        ],
+        "fittings": [],
+    }
+    era94 = _drop_bom_keys(
+        current, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+    )
+    assert "fittings" not in era94
+    assert "exposed_edges" not in era94["glasses"][0]
+    assert era94["glasses"][0]["shape"] is None  # era-92 fields survive
+    era92 = _drop_bom_keys(
+        era94,
+        frozenset(),
+        {
+            "glasses": frozenset({"shape"}),
+            "profile_cuts": frozenset({"sagitta_mm"}),
+            "reinforcements": frozenset({"sagitta_mm"}),
+        },
+    )
+    assert "shape" not in era92["glasses"][0]
+    assert "sagitta_mm" not in era92["profile_cuts"][0]
+    assert "sagitta_mm" not in era92["reinforcements"][0]
+    era86 = _drop_bom_keys(
+        era92, frozenset(), {"glasses": frozenset({"glass_spec", "article_sku"})}
+    )
+    assert "glass_spec" not in era86["glasses"][0]
+    assert "article_sku" not in era86["glasses"][0]
 
 
 def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:

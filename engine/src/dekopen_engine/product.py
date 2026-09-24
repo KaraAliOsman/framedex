@@ -1588,6 +1588,164 @@ def contour_module_computation(
     return computation, issues
 
 
+_RETAINING_FITTINGS = frozenset(
+    {
+        FramelessFittingKind.PATCH_FITTING,
+        FramelessFittingKind.CLAMP,
+        FramelessFittingKind.HINGE,
+        FramelessFittingKind.SUPPORT,
+    }
+)
+
+
+def frameless_retention_declared(spec: FramelessSpec) -> bool:
+    """Whether the frameless spec declares hardware that retains the pane —
+    supported edges (channel/clamps) or retaining fittings. A pane with no
+    retention at all is not production-ready (inspector R06)."""
+    return bool(spec.supports) or any(
+        fitting.kind in _RETAINING_FITTINGS for fitting in spec.fittings
+    )
+
+
+def frameless_module_computation(
+    module: ProductModule,
+    *,
+    coupler_articles: dict[str, EffectiveProfileArticle],
+) -> tuple[GeometryComputation | None, list[ProductIssue]]:
+    """Documentary-sealing entry for a frameless module: the same evaluation
+    the BOM path runs, returned as a GeometryComputation whose trace carries
+    the pane infill and channel members instead of a framed approximation."""
+    result, issues = _evaluate_frameless_module(
+        module, coupler_articles=coupler_articles
+    )
+    if result is None:
+        return None, issues
+    assert module.frameless is not None
+    spec = module.frameless
+    leaf = _single_region_leaf(module.tree)
+    assert leaf is not None  # evaluation errors out when the leaf is missing
+    topology_path = f"BAY:{leaf.id}"
+    assembly = f"BAY:{leaf.id}:FRAMELESS"
+
+    trace_members: list[SemanticMemberTraceV1] = []
+    for index, support in enumerate(spec.supports):
+        if support.kind is not FramelessSupportKind.CHANNEL:
+            continue
+        article = coupler_articles.get(support.article_sku)
+        if article is None:
+            continue  # already a frameless_article_unknown warning
+        horizontal = support.edge in (EdgeSide.TOP, EdgeSide.BOTTOM)
+        cut_length = _q(
+            module.width_mm if horizontal else module.height_mm
+        )
+        # manufacturing origin is top-left, y downward — TOP sits at y=0
+        if support.edge is EdgeSide.TOP:
+            segment = TraceSegmentV1(
+                start=TracePointV1(x_mm=Decimal("0"), y_mm=Decimal("0")),
+                end=TracePointV1(x_mm=module.width_mm, y_mm=Decimal("0")),
+            )
+        elif support.edge is EdgeSide.BOTTOM:
+            segment = TraceSegmentV1(
+                start=TracePointV1(x_mm=Decimal("0"), y_mm=module.height_mm),
+                end=TracePointV1(
+                    x_mm=module.width_mm, y_mm=module.height_mm
+                ),
+            )
+        elif support.edge is EdgeSide.LEFT:
+            segment = TraceSegmentV1(
+                start=TracePointV1(x_mm=Decimal("0"), y_mm=Decimal("0")),
+                end=TracePointV1(x_mm=Decimal("0"), y_mm=module.height_mm),
+            )
+        else:
+            segment = TraceSegmentV1(
+                start=TracePointV1(x_mm=module.width_mm, y_mm=Decimal("0")),
+                end=TracePointV1(
+                    x_mm=module.width_mm, y_mm=module.height_mm
+                ),
+            )
+        for unit in range(support.qty):
+            trace_members.append(
+                SemanticMemberTraceV1(
+                    semantic_member_id=(
+                        f"{topology_path}/member/S{index}.{unit}"
+                    ),
+                    topology_path=topology_path,
+                    assembly=assembly,
+                    bay_id=leaf.id,
+                    leaf_id=None,
+                    leaf_slot=None,
+                    role=ProfileRole.CHANNEL,
+                    physical_member_slot=(
+                        f"channel-{index}-{support.edge.value.lower()}"
+                    ),
+                    workshop_sku=article.sku,
+                    material=article.material,
+                    cut_length_mm=cut_length,
+                    angle_left=Decimal("90"),
+                    angle_right=Decimal("90"),
+                    axis=Axis.HORIZONTAL if horizontal else Axis.VERTICAL,
+                    placement_domain=PlacementDomain.DIRECT,
+                    direct_segment=segment,
+                )
+            )
+
+    pane = result.glasses[0]
+    infill_id = f"{topology_path}/infill"
+    computation = GeometryComputation(
+        result=result,
+        manufacturing_trace=GeometryManufacturingTraceV1(
+            nominal_width_mm=module.width_mm,
+            nominal_height_mm=module.height_mm,
+            members=trace_members,
+            leaves=[],
+            infills=[
+                SemanticInfillTraceV1(
+                    semantic_infill_id=infill_id,
+                    topology_path=topology_path,
+                    assembly=assembly,
+                    bay_id=leaf.id,
+                    leaf_id=None,
+                    leaf_slot=None,
+                    kind="GLASS",
+                    technical_sku=leaf.glass_article_sku or "",
+                    composition=leaf.glass_spec or "",
+                    width_mm=module.width_mm,
+                    height_mm=module.height_mm,
+                    placement_domain=PlacementDomain.DIRECT,
+                    direct_rect=TraceRectV1(
+                        x_mm=Decimal("0"),
+                        y_mm=Decimal("0"),
+                        width_mm=module.width_mm,
+                        height_mm=module.height_mm,
+                    ),
+                )
+            ],
+        ),
+        openings=[
+            OpeningTechnicalFacts(
+                bay_id=leaf.id,
+                width_mm=module.width_mm,
+                height_mm=module.height_mm,
+            )
+        ],
+        infills=[
+            InfillTechnicalFacts(
+                bay_id=leaf.id,
+                leaf_id=None,
+                kind="GLASS",
+                thickness_mm=leaf.glass_thickness_mm or Decimal("0"),
+                glass_spec=leaf.glass_spec,
+                width_mm=module.width_mm,
+                height_mm=module.height_mm,
+                exact_area_m2=pane.area_m2,
+                bead_supported=frameless_retention_declared(spec),
+            )
+        ],
+        node_dimensions={leaf.id: (module.width_mm, module.height_mm)},
+    )
+    return computation, issues
+
+
 def evaluate_product(
     product: ProductModel,
     params: SystemParams,

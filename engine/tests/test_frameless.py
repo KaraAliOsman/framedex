@@ -298,3 +298,125 @@ class TestFramelessPane:
         evaluation = evaluate_product(_product([module]), demo_60_params)
         issues = _issues(evaluation.modules[0])
         assert IssueCode.FRAMELESS_PANEL_UNSUPPORTED.value in issues
+
+    def test_documentary_computation_carries_pane_and_channel_members(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The freeze/seal path needs a GeometryComputation, not a framed
+        # approximation: pane infill + channel member on the declared edge.
+        from dekopen_engine.product import frameless_module_computation
+
+        module = _frameless_module(
+            spec=FramelessSpec(
+                supports=[
+                    FramelessSupport(
+                        kind=FramelessSupportKind.CHANNEL,
+                        edge=EdgeSide.LEFT,
+                        article_sku="UCHANNEL-12",
+                        qty=2,
+                    )
+                ],
+                exposed_edges=[EdgeSide.LEFT],
+            )
+        )
+        computation, issues = frameless_module_computation(
+            module, coupler_articles={"UCHANNEL-12": CHANNEL_ARTICLE}
+        )
+        assert issues == []
+        assert computation is not None
+        trace = computation.manufacturing_trace
+        assert trace is not None
+        assert len(trace.members) == 2  # qty=2 → one semantic member each
+        member = trace.members[0]
+        assert member.role is ProfileRole.CHANNEL
+        assert member.workshop_sku == "UCHANNEL-12"
+        assert member.cut_length_mm == Decimal("2100.00")
+        assert member.axis.value == "VERTICAL"
+        assert member.direct_segment is not None
+        assert member.direct_segment.start.x_mm == Decimal("0")
+        assert member.direct_segment.end.y_mm == Decimal("2100")
+        assert len(trace.infills) == 1
+        infill = trace.infills[0]
+        assert infill.kind == "GLASS"
+        assert infill.direct_rect is not None
+        assert (infill.direct_rect.width_mm, infill.direct_rect.height_mm) == (
+            Decimal("1200"),
+            Decimal("2100"),
+        )
+        assert computation.openings[0].bay_id == "g1"
+        assert computation.infills[0].bead_supported is True
+        # The computation result is the same BOM the evaluation emits.
+        evaluation = evaluate_product(
+            _product([module]),
+            demo_60_params,
+            coupler_articles={"UCHANNEL-12": CHANNEL_ARTICLE},
+        )
+        assert computation.result == evaluation.modules[0].result
+
+    def test_documentary_computation_maps_edges_and_retention(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Manufacturing origin is top-left, y down: TOP sits at y=0,
+        # BOTTOM at y=height. A pane with no declared retention must stay
+        # unsupported (inspector R06 blocks the freeze).
+        from dekopen_engine.product import (
+            frameless_module_computation,
+            frameless_retention_declared,
+        )
+
+        module = _frameless_module(
+            spec=FramelessSpec(
+                supports=[
+                    FramelessSupport(
+                        kind=FramelessSupportKind.CHANNEL,
+                        edge=EdgeSide.TOP,
+                        article_sku="UCHANNEL-12",
+                        qty=1,
+                    ),
+                    FramelessSupport(
+                        kind=FramelessSupportKind.CHANNEL,
+                        edge=EdgeSide.BOTTOM,
+                        article_sku="UCHANNEL-12",
+                        qty=1,
+                    ),
+                ],
+                exposed_edges=[],
+            )
+        )
+        computation, issues = frameless_module_computation(
+            module, coupler_articles={"UCHANNEL-12": CHANNEL_ARTICLE}
+        )
+        assert issues == []
+        assert computation is not None
+        segments = {
+            m.physical_member_slot: m.direct_segment
+            for m in computation.manufacturing_trace.members
+        }
+        top = segments["channel-0-top"]
+        assert top is not None
+        assert top.start.y_mm == Decimal("0") and top.end.y_mm == Decimal("0")
+        bottom = segments["channel-1-bottom"]
+        assert bottom is not None
+        assert bottom.start.y_mm == Decimal("2100")
+        assert bottom.end.y_mm == Decimal("2100")
+
+        bare = _frameless_module(spec=FramelessSpec())
+        bare_computation, _ = frameless_module_computation(
+            bare, coupler_articles={}
+        )
+        assert bare_computation is not None
+        assert bare_computation.infills[0].bead_supported is False
+        assert frameless_retention_declared(
+            FramelessSpec(fittings=[])
+        ) is False
+        assert frameless_retention_declared(
+            FramelessSpec(
+                fittings=[
+                    FramelessFitting(
+                        kind=FramelessFittingKind.PATCH_FITTING,
+                        sku="PF-1",
+                        qty=2,
+                    )
+                ]
+            )
+        ) is True

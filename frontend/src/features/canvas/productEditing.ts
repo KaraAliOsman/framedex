@@ -503,13 +503,15 @@ export function wrapTreeAsProduct(
 
 /** True when the product is a single uncoupled unit — i.e. it can persist in
  * the classic design shape (which keeps the documentary/quotation path).
- * A contoured module stays on the product-v2 path: the classic shape has
- * nowhere to carry its outline. */
+ * Contoured and frameless modules stay on the product-v2 path: the classic
+ * shape has nowhere to carry their outline or glass-only specification. */
 export function isSingleUnit(product: ProductJson): boolean {
+  const module = product.assembly.modules[0];
   return (
     product.assembly.modules.length === 1 &&
     product.assembly.couplings.length === 0 &&
-    !product.assembly.modules[0]!.contour
+    !module?.contour &&
+    !module?.frameless
   );
 }
 

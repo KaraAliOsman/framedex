@@ -111,7 +111,7 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
     )
     result = SimpleNamespace(
         profile_cuts=[], reinforcements=[], glasses=[glass],
-        panels=[], hardware_items=[], leaf_weights=[],
+        panels=[], hardware_items=[], fittings=[], leaf_weights=[],
     )
 
     class Cursor:
@@ -160,6 +160,77 @@ def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
          "installation_rate_per_m2": Decimal("0")},
     )
     assert total == Decimal("180")
+
+
+def test_position_cost_prices_fittings_as_unit_pieces(monkeypatch):
+    """Frameless fittings are real material: each declared SKU must resolve an
+    'EA' cost-list entry or the quote fails — never silently priced at zero."""
+    from types import SimpleNamespace
+
+    from dekopen_engine.models import GlassPiece
+    import pricing.service as service
+
+    glass = GlassPiece(
+        bay_id="B1", width_mm=Decimal("1000.00"), height_mm=Decimal("1000.00"),
+        area_m2=Decimal("1.00"), weight_kg=Decimal("2.50"),
+        thickness_net_mm=Decimal("4.00"),
+    )
+    fitting = SimpleNamespace(sku="CLAMP-SQ", qty=4)
+    result = SimpleNamespace(
+        profile_cuts=[], reinforcements=[], glasses=[glass],
+        panels=[], hardware_items=[], fittings=[fitting], leaf_weights=[],
+    )
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, sql):
+            return None
+
+    class Conn:
+        needs_rollback = False
+
+        def cursor(self):
+            return Cursor()
+
+    calls = []
+
+    class Repo:
+        org_id = "org"
+
+        def cost(self, sku, unit):
+            calls.append((sku, unit))
+            return Decimal("100") if unit == "M2" else Decimal("25")
+
+    position = {
+        "system_id": "sys", "width_mm": Decimal("1000"),
+        "height_mm": Decimal("1000"),
+        "parametric_tree": {"id": "B1", "type": "BAY",
+                            "glass_article_sku": "V4"},
+        "color_interior": "WHITE", "color_exterior": "WHITE",
+    }
+    params_repo = SimpleNamespace(
+        load_visible=lambda *a, **k: None,
+        load_coupler_articles=lambda *a, **k: {},
+    )
+    monkeypatch.setattr(service, "connection", Conn())
+    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
+    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        service, "engine_result_from_api", lambda **kwargs: result
+    )
+    total, _area, _result = service.position_cost(
+        Repo(), position,
+        {"waste_factor_pct": Decimal("0"),
+         "labor_rate_per_m2": Decimal("0"),
+         "installation_rate_per_m2": Decimal("0")},
+    )
+    assert ("CLAMP-SQ", "EA") in calls
+    assert total == Decimal("200")  # 1 m² glass + 4 clamps
 
 
 def test_public_response_uses_line_total_strings():
