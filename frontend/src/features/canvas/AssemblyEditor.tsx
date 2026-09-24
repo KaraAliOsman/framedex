@@ -1585,6 +1585,9 @@ export function AssemblyEditor({
                 ...(options?.panel_skus ?? []),
                 ...(options?.coupler_skus ?? []),
                 ...(options?.glazing_thicknesses ?? []),
+                // Recipes are catalog authority too — a composition edit
+                // makes old cards stale and new generations a new request.
+                ...(options?.glass_specs ?? []).map((item) => `${item.sku}=${item.spec}`),
               ]
                 .sort()
                 .join("|")}

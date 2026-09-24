@@ -181,6 +181,11 @@ def _build_product(
         panel_sku = next(iter(sorted(catalog["panel_skus"])))
     if coupler_sku is None and len(openings) > 1 and len(coupler_skus) == 1:
         coupler_sku = next(iter(sorted(coupler_skus)))
+    # A glazed candidate with no resolved SKU is unpriceable — pricing
+    # requires the article, so the spec rejects instead of shipping a
+    # window no quote can ever name.
+    if glass_sku is None and any(opening != "DOOR_ENTRY" for opening in openings):
+        return None, "vidrio_no_resuelto"
     # The mapping's recipe is the composition authority — "4-16-4" weighs
     # 8 mm of glass, not the slot's 24. A spec-less mapping keeps the
     # monolithic fallback: spec == slot thickness, honestly what it is.
@@ -336,6 +341,13 @@ def alternatives(
                 "glazing_thicknesses": [
                     str(thickness) for thickness in sorted(catalog["thicknesses"])
                 ],
+                # Recipes ride inside the hashed input — editing a
+                # composition is a different request, never a replay of
+                # the answer that weighed the old panes.
+                "glass_recipes": {
+                    sku: catalog["glass_recipes"].get(sku)
+                    for sku in sorted(catalog["glass_skus"])
+                },
             },
         },
     )

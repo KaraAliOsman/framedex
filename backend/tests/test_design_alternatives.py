@@ -97,11 +97,13 @@ def test_alternatives_carry_engine_metrics(monkeypatch):
                     "label": "Paño fijo",
                     "rationale": "simple",
                     "openings": ["FIXED"],
+                    "glass_sku": "GLASS-4MM",
                 },
                 {
                     "label": "Corredera",
                     "rationale": "sin barrido",
                     "openings": ["SLIDING_2L"],
+                    "glass_sku": "GLASS-4MM",
                 },
             ],
             "notes": "dos opciones",
@@ -135,6 +137,7 @@ def test_bow_alternative_gets_share_widths_and_couplings(monkeypatch):
                     "rationale": "panorámica",
                     "openings": ["FIXED", "FIXED", "FIXED"],
                     "angle_deg": 22.5,
+                    "glass_sku": "GLASS-4MM",
                 }
             ]
         },
@@ -149,7 +152,7 @@ def test_bow_alternative_gets_share_widths_and_couplings(monkeypatch):
 def test_share_width_remainder_lands_on_the_last_module(monkeypatch):
     _patch(
         monkeypatch,
-        {"alternatives": [{"openings": ["FIXED", "FIXED"]}]},
+        {"alternatives": [{"openings": ["FIXED", "FIXED"], "glass_sku": "GLASS-4MM"}]},
     )
     position = _position() | {"width_mm": "2399"}
     out = design_alternatives.alternatives(
@@ -175,7 +178,7 @@ def test_invalid_specs_are_rejected_never_shipped(monkeypatch):
         monkeypatch,
         {
             "alternatives": [
-                {"label": "Bien", "openings": ["FIXED"]},
+                {"label": "Bien", "openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
                 {"label": "Rara", "openings": ["FLYING"], },
                 {"label": "Sin hojas", "openings": []},
                 {"label": "Vidrio falso", "openings": ["FIXED"], "glass_sku": "NO"},
@@ -220,6 +223,12 @@ def test_catalog_and_contract_reach_the_provider(monkeypatch):
     assert payload["height_mm"] == "1500"
     assert "SLIDING_2L" in payload["openings_contract"]
     assert payload["catalog"]["glass_skus"] == ["DVH-4-12-4", "GLASS-4MM"]
+    # Recipes ride inside the hashed input — a composition edit is a new
+    # request, never a replay of the answer that weighed the old panes.
+    assert payload["catalog"]["glass_recipes"] == {
+        "DVH-4-12-4": "4-12-4",
+        "GLASS-4MM": "4",
+    }
 
 
 def test_mock_provider_proposes_a_sliding_for_corredera_brief():
@@ -261,9 +270,9 @@ def test_count_caps_evaluated_specs(monkeypatch):
         monkeypatch,
         {
             "alternatives": [
-                {"label": "Una", "openings": ["FIXED"]},
-                {"label": "Dos", "openings": ["FIXED", "FIXED"]},
-                {"label": "Tres", "openings": ["FIXED"] * 3},
+                {"label": "Una", "openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
+                {"label": "Dos", "openings": ["FIXED", "FIXED"], "glass_sku": "GLASS-4MM"},
+                {"label": "Tres", "openings": ["FIXED"] * 3, "glass_sku": "GLASS-4MM"},
             ]
         },
     )
@@ -283,8 +292,11 @@ def test_count_caps_evaluated_specs(monkeypatch):
 def test_candidate_glass_spec_matches_catalog_thickness(monkeypatch):
     _patch(
         monkeypatch,
-        {"alternatives": [{"openings": ["FIXED"]}]},
-        catalog=_catalog(thicknesses={Decimal("6")}),
+        {"alternatives": [{"openings": ["FIXED"], "glass_sku": "GLASS-4MM"}]},
+        catalog=_catalog(
+            thicknesses={Decimal("6")},
+            glass_recipes={"GLASS-4MM": None, "DVH-4-12-4": None},
+        ),
     )
     out = _call()
     tree = out["alternatives"][0]["product"]["assembly"]["modules"][0]["tree"]
@@ -316,7 +328,7 @@ def test_door_spec_fills_the_single_catalog_panel(monkeypatch):
 def test_live_dimensions_win_over_the_persisted_row(monkeypatch):
     captured = _patch(
         monkeypatch,
-        {"alternatives": [{"openings": ["FIXED"]}]},
+        {"alternatives": [{"openings": ["FIXED"], "glass_sku": "GLASS-4MM"}]},
     )
     out = design_alternatives.alternatives(
         org_id=uuid4(),
@@ -342,7 +354,7 @@ def test_malformed_spec_rejects_without_aborting_siblings(monkeypatch):
         {
             "alternatives": [
                 {"label": "Rota", "openings": [["FIXED"]]},
-                {"label": "Buena", "openings": ["FIXED"]},
+                {"label": "Buena", "openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
             ]
         },
     )
@@ -357,13 +369,41 @@ def test_nan_angle_rejects_the_spec_not_the_response(monkeypatch):
         {
             "alternatives": [
                 {"label": "NaN", "openings": ["FIXED", "FIXED"], "angle_deg": "NaN"},
-                {"label": "Buena", "openings": ["FIXED"]},
+                {"label": "Buena", "openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
             ]
         },
     )
     out = _call()
     assert [item["label"] for item in out["alternatives"]] == ["Buena"]
     assert out["rejected"][0]["reasons"] == ["angulo_invalido"]
+
+
+def test_ambiguous_glass_rejects_glazed_specs(monkeypatch):
+    """Multiple catalog SKUs + no provider pick = unpriceable candidate —
+    rejected, never offered."""
+    _patch(
+        monkeypatch,
+        {
+            "alternatives": [
+                {"label": "Fija", "openings": ["FIXED"]},
+                {"label": "Puerta", "openings": ["DOOR_ENTRY"]},
+            ]
+        },
+    )
+    out = design_alternatives.alternatives(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        brief="dos opciones",
+        count=3,
+        system_id=uuid4(),
+        operation_key="alt-ambig",
+        # Door-sized live dims — a 2400 mm door is honestly refused.
+        width_mm="900.00",
+        height_mm="2100.00",
+    )
+    assert [item["label"] for item in out["alternatives"]] == ["Puerta"]
+    assert out["rejected"][0]["reasons"] == ["vidrio_no_resuelto"]
 
 
 def test_single_catalog_glass_fills_the_candidate(monkeypatch):
@@ -379,7 +419,7 @@ def test_single_catalog_glass_fills_the_candidate(monkeypatch):
 
 def test_single_catalog_coupler_fills_the_union():
     product, reason = design_alternatives._build_product(
-        {"openings": ["FIXED", "FIXED"]},
+        {"openings": ["FIXED", "FIXED"], "glass_sku": "GLASS-4MM"},
         width_mm=Decimal("2400"),
         height_mm=Decimal("1500"),
         catalog=_catalog(),
@@ -391,7 +431,7 @@ def test_single_catalog_coupler_fills_the_union():
 
 def test_unknown_coupler_sku_rejects_the_spec():
     product, reason = design_alternatives._build_product(
-        {"openings": ["FIXED", "FIXED"], "coupler_sku": "NOPE"},
+        {"openings": ["FIXED", "FIXED"], "coupler_sku": "NOPE", "glass_sku": "GLASS-4MM"},
         width_mm=Decimal("2400"),
         height_mm=Decimal("1500"),
         catalog=_catalog(),
@@ -457,8 +497,8 @@ def test_leaf_weight_only_when_leaves_exist(monkeypatch):
         monkeypatch,
         {
             "alternatives": [
-                {"label": "Fija", "openings": ["FIXED"]},
-                {"label": "Abatible", "openings": ["TILT_TURN_LEFT"]},
+                {"label": "Fija", "openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
+                {"label": "Abatible", "openings": ["TILT_TURN_LEFT"], "glass_sku": "GLASS-4MM"},
             ]
         },
     )
