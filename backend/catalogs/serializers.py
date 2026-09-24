@@ -115,10 +115,27 @@ class ProfileSectionSerializer(StrictSerializer):
         max_length=500, allow_null=True, allow_blank=True, required=False
     )
 
+    def validate_axes(self, value):
+        # Under a propagated partial update an axis row may validate with a
+        # missing name or y_mm — an incomplete axis must never persist (the
+        # engine decoder would reject the stored section on load).
+        for axis in value:
+            if "name" not in axis or "y_mm" not in axis:
+                raise serializers.ValidationError(
+                    "Each section axis needs a name and y_mm."
+                )
+        return value
+
     def validate_polygon(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("A section polygon needs at least 3 points.")
-        points = [(point["x_mm"], point["y_mm"]) for point in value]
+        points = []
+        for point in value:
+            if "x_mm" not in point or "y_mm" not in point:
+                raise serializers.ValidationError(
+                    "Each section point needs x_mm and y_mm."
+                )
+            points.append((point["x_mm"], point["y_mm"]))
         if len(set(points)) != len(points):
             raise serializers.ValidationError("A section polygon cannot repeat vertices.")
         area = Decimal(0)

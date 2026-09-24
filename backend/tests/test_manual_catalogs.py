@@ -211,6 +211,21 @@ def test_article_section_rejects_noncanonical_shapes(mutated):
     assert not serializer.is_valid()
 
 
+@pytest.mark.parametrize(
+    "section",
+    [
+        {**SECTION_POLYGON, "polygon": SECTION_POLYGON["polygon"][:2] + [{"x_mm": "0"}]},
+        {**SECTION_POLYGON, "axes": [{"name": "GLAZING"}]},
+    ],
+)
+def test_article_section_partial_patch_rejects_incomplete_rows(section):
+    # `partial=True` propagates into the nested serializers — incomplete
+    # vertices/axes must still refuse (400, never a KeyError 500 or a stored
+    # row the engine decode rejects later).
+    serializer = ArticleWriteSerializer(data={"section": section}, partial=True)
+    assert not serializer.is_valid()
+
+
 def test_article_section_accepts_referenced_dxf():
     serializer = ProfileSectionSerializer(
         data={**SECTION_POLYGON, "source": "DXF_REFERENCE", "drawing_ref": "catalog.pdf#p4"}
