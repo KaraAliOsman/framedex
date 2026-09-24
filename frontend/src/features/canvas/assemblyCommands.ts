@@ -494,8 +494,18 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
   },
 ];
 
+/** UI affordance on the same registry: the palette row and context-menu entry
+ * that open the design assistant. Non-mutating — `run` only moves focus. */
+export const UI_ASK_ASSISTANT: CommandSpec = {
+  id: "ui.ask-assistant",
+  title: "cmd.askDekopen",
+  keywords: ["ia", "ai", "asistente", "preguntar", "dekopen", "ayuda", "help"],
+  run: (ctx) => ctx.focusAssistant?.(),
+};
+
 /** Commands the surface offers right now (selection/product-sensitive). */
 export function assemblyCommands(ctx: CommandContext): CommandSpec[] {
   if (ctx.disabled) return [];
-  return ASSEMBLY_COMMANDS.filter((spec) => spec.applicable?.(ctx) ?? true);
+  const domain = ASSEMBLY_COMMANDS.filter((spec) => spec.applicable?.(ctx) ?? true);
+  return ctx.focusAssistant ? [...domain, UI_ASK_ASSISTANT] : domain;
 }
