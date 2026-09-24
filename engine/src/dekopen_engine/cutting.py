@@ -64,6 +64,9 @@ class CutPiece(EngineModel):
     unit_index: int = Field(ge=1)
     angle_left: Decimal | None = None
     angle_right: Decimal | None = None
+    # Set on pieces cut from a curved member: the shop bends to this sagitta
+    # instead of cutting straight.
+    sagitta_mm: Decimal | None = None
 
 
 class StockRule(EngineModel):
@@ -134,6 +137,7 @@ def pieces_from_result(
             length_mm=cut.length_mm, source_position_id=source_position_id,
             bay_id=cut.bay_id, leaf_id=cut.leaf_id, role=cut.role.value, unit_index=1,
             angle_left=cut.angle_left, angle_right=cut.angle_right,
+            sagitta_mm=cut.sagitta_mm,
         )
         rows[key] = (piece, rows.get(key, (piece, 0))[1] + cut.qty)
     for steel in result.reinforcements:
@@ -158,6 +162,7 @@ def pieces_from_result(
             bay_id=steel.bay_id, leaf_id=steel.leaf_id, role=steel.role.value, unit_index=1,
             angle_left=Decimal(angles[0]) if angles else None,
             angle_right=Decimal(angles[1]) if angles else None,
+            sagitta_mm=steel.sagitta_mm,
         )
         rows[key] = (piece, rows.get(key, (piece, 0))[1] + steel.qty)
     return [piece.model_copy(update={"unit_index": index})

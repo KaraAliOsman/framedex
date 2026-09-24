@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     "analytics.apps.AnalyticsConfig",
     "portal.apps.PortalConfig",
     "billing.apps.BillingConfig",
+    "ai_gateway.apps.AiGatewayConfig",
+    "ingest.apps.IngestConfig",
 ]
 
 MIDDLEWARE = [
@@ -134,7 +136,15 @@ SPECTACULAR_SETTINGS = {
         "DrainFixRuleIdEnum": ["R07"],
         "ColorEnum": ["WHITE", "FOILED"],
         "WhiteColorEnum": ["WHITE"],
+        "PaymentStatusEnum": ["NO_DEAL", "PENDING", "PARTIAL", "PAID"],
+        "PaymentKindEnum": ["ANTICIPO", "PARCIAL", "SALDO"],
         "VerticalReferenceEnum": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"],
+        "KitOpeningTypeEnum": ["AWNING", "DOOR", "SLIDING", "TILT_TURN", "TURN"],
+        "ImportOpeningTypeEnum": [
+            "AWNING", "DOOR_ENTRY", "FIXED", "SLIDING_2L",
+            "TILT_TURN_LEFT", "TILT_TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT",
+        ],
+        "SiiEnvioStatusEnum": ["PENDING", "ACCEPTED", "REJECTED"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",

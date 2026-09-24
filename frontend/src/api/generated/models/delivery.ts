@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DeliveryConfirmation } from "./deliveryConfirmation";
 import type { DeliveryStatusEnum } from "./deliveryStatusEnum";
 
 export interface Delivery {
@@ -23,6 +24,7 @@ export interface Delivery {
   /** @nullable */
   notes: string | null;
   status: DeliveryStatusEnum;
+  confirmation: DeliveryConfirmation | null;
   /** @nullable */
   scheduled_by: string | null;
   created_at: string;
