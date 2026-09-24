@@ -3,7 +3,7 @@
 // authentication and the generated API boundary.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
@@ -78,11 +78,13 @@ function bom(sku: string): EngineCalculateResponse {
         qty: 2,
         bay_id: "bay-1",
         leaf_id: null,
+        sagitta_mm: null,
       },
     ],
     reinforcements: [],
     glasses: [],
     panels: [],
+    fittings: [],
     hardware_items: [],
     leaf_weights: [],
     calculation_hash: `sha256:${"a".repeat(64)}`,
@@ -312,6 +314,10 @@ beforeEach(() => {
       ],
       glazing_thicknesses: ["24.00", "28.00"],
       glass_skus: ["GLASS-A", "GLASS-B"],
+      glass_specs: [
+        { sku: "GLASS-A", spec: "4-16-4" },
+        { sku: "GLASS-B", spec: null },
+      ],
       hardware_kits: [{ sku: "KIT-B", name: "Kit B", opening_type: "TURN" }],
       coupler_skus: ["ACOPLE-60"],
       coupler_profiles: [
@@ -344,7 +350,7 @@ afterEach(() => {
 
 it("opens a new position directly on the canvas editor", async () => {
   mount("/projects/project-a/positions/new");
-  await screen.findByRole("group", { name: t("assembly.starters") });
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
   // A blank window is already on the canvas — no product-type decision exists.
   expect(useCanvasStore.getState().inputs.product).not.toBeNull();
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
@@ -403,8 +409,8 @@ it("evaluates live through the assembly endpoint when the system changes", async
   expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
 });
 
-it("keeps save disabled while the product is not manufacturing-ready", async () => {
-  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
+it("keeps save disabled only while the product is invalid", async () => {
+  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "INVALID")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
   await screen.findByText("CUT-A");
@@ -413,11 +419,26 @@ it("keeps save disabled while the product is not manufacturing-ready", async () 
   expect(update).not.toHaveBeenCalled();
 });
 
-it("builds a five-unit bow from a starter chip and edits a joint angle on plan", async () => {
-  mount("/projects/project-a/positions/new");
-  await screen.findByRole("group", { name: t("assembly.starters") });
+it("saves a manufacturing-incomplete assembly as a draft", async () => {
+  // Warnings carry a complete BOM — the draft persists; sealing/production
+  // stay gated downstream.
+  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
+  mount();
+  await screen.findByRole("heading", { name: "Cocina" });
+  await screen.findByText("CUT-A");
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  const button = screen.getByRole("button", { name: t("projects.save") });
+  expect(button).toBeEnabled();
+  fireEvent.click(button);
+  await screen.findByText(t("projects.saved"));
+  expect(update).toHaveBeenCalled();
+});
 
-  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow5") }));
+it("builds a five-unit bow from the design library and edits a joint angle on plan", async () => {
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
+
+  fireEvent.click(screen.getByRole("button", { name: /Bow ×5/ }));
 
   const product = useCanvasStore.getState().inputs.product;
   expect(product?.assembly.modules).toHaveLength(5);
@@ -426,9 +447,9 @@ it("builds a five-unit bow from a starter chip and edits a joint angle on plan",
 
 it("auto-resolves the catalog coupler when only one exists", async () => {
   mount("/projects/project-a/positions/new");
-  await screen.findByRole("group", { name: t("assembly.starters") });
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
 
-  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow3") }));
+  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
 
   // Starters ship null couplers; the catalog's single coupler fills them in.
   change("projects.system", "system-a");
@@ -447,6 +468,7 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
       glazing_thicknesses: ["4.00"],
       hardware_kits: [],
       glass_skus: ["GLASS-A"],
+      glass_specs: [{ sku: "GLASS-A", spec: "4" }],
       coupler_skus: [],
       coupler_profiles: [],
       glazing_beads: [],
@@ -458,7 +480,7 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
     }),
   );
   mount("/projects/project-a/positions/new");
-  await screen.findByRole("group", { name: t("assembly.starters") });
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
   // The system <select> only commits once its options exist.
   await screen.findByRole("option", { name: /Sistema A/ });
 
@@ -486,8 +508,8 @@ it("fills glass defaults when the catalog has a single glazing thickness", async
 
 it("removes a selected module with Delete and undoes it", async () => {
   mount("/projects/project-a/positions/new");
-  await screen.findByRole("group", { name: t("assembly.starters") });
-  fireEvent.click(screen.getByRole("button", { name: t("assembly.starter.bow3") }));
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
+  fireEvent.click(screen.getByRole("button", { name: /Bow ×3/ }));
 
   useCanvasStore.getState().select("m2");
   fireEvent.keyDown(window, { key: "Delete" });
@@ -790,4 +812,22 @@ it("does not offer FOILED or a catalog the backend marks incomplete", async () =
   await ready();
   expect(screen.queryByRole("option", { name: /FOILED|Foliado/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("option", { name: "Incomplete system" })).not.toBeInTheDocument();
+});
+
+it("renders the design library with rendered starter cards", async () => {
+  mount("/projects/project-a/positions/new");
+  const list = await screen.findByRole("list", {
+    name: t("assembly.starterLibrary"),
+  });
+  expect(within(list).getAllByRole("listitem")).toHaveLength(15);
+  // Every card previews through the same front-elevation renderer.
+  expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
+});
+
+it("picking a sliding starter card builds a sliding product", async () => {
+  mount("/projects/project-a/positions/new");
+  await screen.findByRole("list", { name: t("assembly.starterLibrary") });
+  fireEvent.click(screen.getByRole("button", { name: /Corredera 2 hojas/ }));
+  const product = useCanvasStore.getState().inputs.product;
+  expect(product?.assembly.modules[0]?.tree.opening_type).toBe("SLIDING_2L");
 });

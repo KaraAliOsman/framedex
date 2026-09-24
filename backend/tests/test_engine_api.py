@@ -130,7 +130,7 @@ def test_deferred_opening_returns_422(monkeypatch: pytest.MonkeyPatch) -> None:
     client = APIClient()
     configure_api(client, monkeypatch)
     payload = g1_request()
-    payload["parametric_tree"]["opening_type"] = "SLIDING_3L"
+    payload["parametric_tree"]["opening_type"] = "DOOR_DOUBLE"
 
     response = client.post("/api/v1/engine/calculate/", payload, format="json")
 

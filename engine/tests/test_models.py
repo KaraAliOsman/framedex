@@ -14,8 +14,8 @@ from dekopen_engine import (
 from dekopen_engine.models import ParametricNode
 
 
-def test_system_params_contract_has_exactly_27_fields() -> None:
-    assert len(SystemParams.model_fields) == 27
+def test_system_params_contract_has_exactly_28_fields() -> None:
+    assert len(SystemParams.model_fields) == 28
     assert "frame_face_width_mm" not in SystemParams.model_fields
     assert "sash_face_width_mm" not in SystemParams.model_fields
     assert "mullion_face_width_mm" not in SystemParams.model_fields
@@ -71,9 +71,7 @@ def test_one_calculation_preserves_asymmetric_frame_and_sash_welding(
     articles[ProfileRole.SASH] = articles[ProfileRole.SASH].model_copy(
         update={"welding_loss_mm": Decimal("5.00")}
     )
-    asymmetric_params = demo_60_params.model_copy(
-        update={"effective_profile_articles": articles}
-    )
+    asymmetric_params = demo_60_params.model_copy(update={"effective_profile_articles": articles})
 
     result = calculate_geometry(g2_node, asymmetric_params)
     frame_lengths = sorted(
@@ -99,9 +97,7 @@ def test_glazing_bead_cut_uses_selected_rule_instead_of_a_hardcoded_addition(
 
     result = calculate_geometry(g1_node, params)
     bead_lengths = sorted(
-        cut.length_mm
-        for cut in result.profile_cuts
-        if cut.role is ProfileRole.GLAZING_BEAD
+        cut.length_mm for cut in result.profile_cuts if cut.role is ProfileRole.GLAZING_BEAD
     )
 
     assert bead_lengths == [Decimal("917.00"), Decimal("917.00")]
