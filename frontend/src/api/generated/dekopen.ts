@@ -50,6 +50,8 @@ import type {
   DeliveryResponse,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestRequest,
+  DesignAlternativesRequestRequest,
+  DesignAlternativesResponse,
   DesignAssistRequestRequest,
   DesignAssistResponse,
   DesignOptions,
@@ -5247,6 +5249,98 @@ export const positionsDestroy = async (
     ...options,
     method: "DELETE",
   });
+};
+
+export type positionsDesignAlternativesResponse200 = {
+  data: DesignAlternativesResponse;
+  status: 200;
+};
+
+export type positionsDesignAlternativesResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type positionsDesignAlternativesResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type positionsDesignAlternativesResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type positionsDesignAlternativesResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type positionsDesignAlternativesResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type positionsDesignAlternativesResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type positionsDesignAlternativesResponse502 = {
+  data: ErrorResponse;
+  status: 502;
+};
+
+export type positionsDesignAlternativesResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type positionsDesignAlternativesResponseSuccess = positionsDesignAlternativesResponse200 & {
+  headers: Headers;
+};
+export type positionsDesignAlternativesResponseError = (
+  | positionsDesignAlternativesResponse400
+  | positionsDesignAlternativesResponse401
+  | positionsDesignAlternativesResponse403
+  | positionsDesignAlternativesResponse404
+  | positionsDesignAlternativesResponse409
+  | positionsDesignAlternativesResponse422
+  | positionsDesignAlternativesResponse502
+  | positionsDesignAlternativesResponse503
+) & {
+  headers: Headers;
+};
+
+export type positionsDesignAlternativesResponse =
+  positionsDesignAlternativesResponseSuccess | positionsDesignAlternativesResponseError;
+
+export const getPositionsDesignAlternativesUrl = (positionId: string) => {
+  return `/api/v1/positions/${positionId}/design-alternatives/`;
+};
+
+export const positionsDesignAlternatives = async (
+  positionId: string,
+  designAlternativesRequestRequest: DesignAlternativesRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<positionsDesignAlternativesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<positionsDesignAlternativesResponse>(
+    getPositionsDesignAlternativesUrl(positionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(designAlternativesRequestRequest),
+    },
+  );
 };
 
 export type positionsDesignAssistResponse200 = {

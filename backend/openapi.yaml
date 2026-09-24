@@ -4641,6 +4641,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/positions/{position_id}/design-alternatives/:
+    post:
+      operationId: positions_design_alternatives
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: position_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignAlternativesRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesignAlternativesResponse'
+          description: ''
+        '502':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/positions/{position_id}/design-assist/:
     post:
       operationId: positions_design_assist
@@ -11980,6 +12062,57 @@ components:
         * `ON_ROUTE` - ON_ROUTE
         * `DELIVERED` - DELIVERED
         * `FAILED` - FAILED
+    DesignAlternativesRequestRequest:
+      type: object
+      properties:
+        brief:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        count:
+          type: integer
+          maximum: 3
+          minimum: 1
+          default: 2
+        system_id:
+          type: string
+          format: uuid
+        operation_key:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - brief
+      - operation_key
+      - system_id
+    DesignAlternativesResponse:
+      type: object
+      properties:
+        audit_id:
+          type: string
+        model:
+          type: string
+        credits_debited:
+          type: integer
+        alternatives:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        rejected:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        notes:
+          type: string
+          nullable: true
+      required:
+      - alternatives
+      - audit_id
+      - credits_debited
+      - model
+      - rejected
     DesignAssistRequestRequest:
       type: object
       properties:

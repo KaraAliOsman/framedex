@@ -403,6 +403,32 @@ class PaymentIntegrationStatusSerializer(serializers.Serializer):
     updated_at = serializers.CharField(required=False)
 
 
+class DesignAlternativesRequestSerializer(serializers.Serializer):
+    brief = serializers.CharField(max_length=2000, trim_whitespace=True)
+    count = serializers.IntegerField(min_value=1, max_value=3, required=False, default=2)
+    system_id = serializers.UUIDField()
+    operation_key = serializers.CharField(max_length=120)
+
+    def validate_brief(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Escribe una intención de diseño.")
+        return value
+
+    def validate_operation_key(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Falta la clave de operación.")
+        return value
+
+
+class DesignAlternativesResponseSerializer(serializers.Serializer):
+    audit_id = serializers.CharField()
+    model = serializers.CharField()
+    credits_debited = serializers.IntegerField()
+    alternatives = serializers.ListField(child=serializers.DictField())
+    rejected = serializers.ListField(child=serializers.DictField())
+    notes = serializers.CharField(allow_null=True, required=False)
+
+
 class DesignAssistRequestSerializer(serializers.Serializer):
     prompt = serializers.CharField(min_length=2, max_length=2000)
     operation_key = serializers.CharField(min_length=8, max_length=120)

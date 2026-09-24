@@ -12,6 +12,7 @@ import { resolveCommands, useRegisterCommands } from "../commands/registry";
 import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
+import { AlternativesPanel } from "./AlternativesPanel";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
@@ -1570,6 +1571,14 @@ export function AssemblyEditor({
               draft={assistantDraft}
               onDraftHandled={() => setAssistantDraft(null)}
               onApply={(ops) => commit(applyDesignOps(product, ops))}
+            />
+            <AlternativesPanel
+              organizationId={organizationId}
+              positionId={positionId}
+              systemId={inputs.systemId}
+              members={members}
+              disabled={disabled}
+              onUse={(next) => commit(next)}
             />
           </div>
         )}

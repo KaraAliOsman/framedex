@@ -482,6 +482,67 @@ def _design_assist_output(input_payload: dict) -> dict:
     }
 
 
+def _design_alternatives_output(input_payload: dict) -> dict:
+    """Mock brief → intent-level candidate specs. Deterministic per brief:
+    a sliding mention proposes a corredera first, a door mention a porte,
+    otherwise the classic fixed/operable/sliding spread — every candidate
+    is still built and engine-validated server-side before it ships."""
+    brief = str(input_payload.get("brief") or "").lower()
+    count = max(1, min(3, int(input_payload.get("count") or 2)))
+    candidates: list[dict] = []
+    if re.search(r"corred|sliding|riel", brief):
+        candidates.append(
+            {
+                "label": "Corredera de dos hojas",
+                "rationale": "Una hoja corre sobre la otra — sin barrido interior.",
+                "openings": ["SLIDING_2L"],
+            }
+        )
+    if re.search(r"puerta|door|porte", brief):
+        candidates.append(
+            {
+                "label": "Puerta de acceso",
+                "rationale": "Hoja de paso con apertura abatible.",
+                "openings": ["DOOR_ENTRY"],
+            }
+        )
+    if re.search(r"arco|bow|proa", brief):
+        candidates.append(
+            {
+                "label": "Bow de tres paños",
+                "rationale": "Tres módulos en quiebre suave.",
+                "openings": ["FIXED", "FIXED", "FIXED"],
+                "angle_deg": 22.5,
+            }
+        )
+    candidates.append(
+        {
+            "label": "Paño fijo",
+            "rationale": "Máxima luz y la solución más simple.",
+            "openings": ["FIXED"],
+        }
+    )
+    candidates.append(
+        {
+            "label": "Abatible + fijo",
+            "rationale": "Ventilación practicable junto a un paño fijo.",
+            "openings": ["TURN_LEFT", "FIXED"],
+        }
+    )
+    if "SLIDING_2L" not in {op for c in candidates for op in c["openings"]}:
+        candidates.append(
+            {
+                "label": "Corredera",
+                "rationale": "Alternativa sin barrido hacia el interior.",
+                "openings": ["SLIDING_2L"],
+            }
+        )
+    return {
+        "alternatives": candidates[:count],
+        "notes": f"{min(len(candidates), count)} alternativas para revisar.",
+    }
+
+
 class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
@@ -498,11 +559,16 @@ class MockProvider:
         digest = hashlib.sha256(
             json.dumps(input_payload, sort_keys=True, default=str).encode()
         ).hexdigest()[:16]
-        output = (
-            json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
-            if capability == "design_assist"
-            else f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
-        )
+        if capability == "design_assist":
+            output = json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
+        elif capability == "design_alternatives":
+            output = json.dumps(
+                _design_alternatives_output(input_payload), ensure_ascii=False
+            )
+        else:
+            output = (
+                f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
+            )
         serialized = json.dumps(input_payload, default=str)
         return {
             "output": output,

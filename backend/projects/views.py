@@ -20,6 +20,7 @@ from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import (
     clients,
     credit_notes,
+    design_alternatives,
     design_assist,
     invoices,
     payment_links,
@@ -62,6 +63,8 @@ from projects.serializers import (
     SiiEnvioSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
+    DesignAlternativesRequestSerializer,
+    DesignAlternativesResponseSerializer,
     DesignAssistRequestSerializer,
     DesignAssistResponseSerializer,
     PositionResponseSerializer,
@@ -268,6 +271,42 @@ class PositionDesignAssistView(APIView):
                         position=service.position_row(org, position_id),
                         product=data["product"],
                         prompt=str(data["prompt"]),
+                        operation_key=str(data["operation_key"]),
+                        system_id=data["system_id"],
+                    )
+                )
+            except ProviderError as error:
+                raise contract_error(
+                    503,
+                    error.code,
+                    "El proveedor de IA no está disponible en este momento.",
+                ) from None
+
+
+class PositionDesignAlternativesView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="positions_design_alternatives",
+        request=DesignAlternativesRequestSerializer,
+        responses={
+            200: DesignAlternativesResponseSerializer,
+            502: ERRORS[503],
+            **ERRORS,
+        },
+        **SCHEMA,
+    )
+    def post(self, request, position_id):
+        data = validate(DesignAlternativesRequestSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            try:
+                return response(
+                    design_alternatives.alternatives(
+                        org_id=org,
+                        user_id=token.user_id,
+                        position=service.position_row(org, position_id),
+                        brief=str(data["brief"]),
+                        count=int(data.get("count") or 2),
                         operation_key=str(data["operation_key"]),
                         system_id=data["system_id"],
                     )
