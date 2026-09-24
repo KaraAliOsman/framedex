@@ -168,10 +168,10 @@
 }
 .production-remake {
   padding: 0.35rem 0.7rem;
-  border: 1px solid #e56a32;
+  border: 1px solid var(--theme-mark);
   border-radius: 0.25rem;
   background: transparent;
-  color: #e56a32;
+  color: var(--theme-mark);
   font-weight: 600;
   cursor: pointer;
 }
@@ -200,7 +200,7 @@
 }
 
 .production-remake:hover:not(:disabled) {
-  background: color-mix(in srgb, #e56a32 12%, transparent);
+  background: color-mix(in srgb, var(--theme-mark) 12%, transparent);
 }
 .production-remake:disabled {
   cursor: default;
@@ -390,4 +390,239 @@
     border: 0;
     background: none;
   }
+}
+.production-delivery {
+  margin-top: 12px;
+}
+.production-delivery-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+}
+.production-delivery-facts dt {
+  color: var(--ink-muted);
+  font-size: var(--text-s, 12px);
+}
+.production-delivery-facts dd {
+  margin: 0;
+}
+.production-delivery-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.production-delivery-form label {
+  display: grid;
+  gap: 4px;
+  font-size: var(--text-s, 12px);
+  color: var(--ink-muted);
+}
+.production-delivery-wide {
+  grid-column: 1 / -1;
+}
+.production-delivery-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+.production-chip.delivery-scheduled {
+  border-color: var(--accent);
+}
+.production-chip.delivery-on_route {
+  border-color: var(--warn, #b7791f);
+}
+.production-chip.delivery-delivered {
+  border-color: var(--ok, #2f855a);
+}
+.production-chip.delivery-failed {
+  border-color: var(--danger, #c53030);
+}
+.production-chip-danger {
+  color: var(--danger, #c53030);
+}
+.signature-pad {
+  position: relative;
+  margin-top: 4px;
+}
+.signature-pad-canvas {
+  display: block;
+  color: var(--signature-ink);
+  width: 100%;
+  max-width: 480px;
+  height: 160px;
+  border: 1px solid var(--line, #d8dde2);
+  border-radius: 4px;
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+}
+.signature-pad-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-s, 12px);
+  color: var(--ink-faint, #98a2ab);
+  pointer-events: none;
+}
+.production-confirm-collect {
+  grid-column: 1 / -1;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.cutplan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+.cutplan-canvas {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+.cutplan-bar-row,
+.cutplan-sheet-card {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.cutplan-bar-row figcaption,
+.cutplan-sheet-card figcaption {
+  font-size: 0.78rem;
+  color: var(--theme-text-secondary);
+  font-family: "IBM Plex Mono", monospace;
+}
+.cutplan-bar {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.cutplan-sheets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cutplan-sheet {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+}
+.cutplan-frame,
+.cutplan-sheet-frame {
+  fill: var(--theme-surface-card);
+  stroke: var(--theme-border-subtle);
+  stroke-width: 1;
+}
+.cutplan-cut rect,
+.cutplan-nest rect {
+  stroke-width: 1;
+  cursor: pointer;
+}
+.cutplan-piece-pvc rect {
+  fill: var(--member-pvc-fill);
+  stroke: var(--member-pvc-edge);
+}
+.cutplan-piece-alu rect {
+  fill: var(--member-aluminium-fill);
+  stroke: var(--member-aluminium-edge);
+}
+.cutplan-piece-steel rect {
+  fill: var(--member-panel-fill);
+  stroke: var(--member-panel-edge);
+}
+.cutplan-nest rect {
+  fill: var(--member-panel-fill);
+  stroke: var(--member-panel-edge);
+}
+.cutplan-cut.is-member rect,
+.cutplan-nest.is-member rect {
+  stroke: var(--theme-accent);
+  stroke-width: 1.6;
+}
+.cutplan-cut.is-selected rect,
+.cutplan-nest.is-selected rect {
+  stroke: var(--theme-mark);
+  stroke-width: 2.2;
+}
+.cutplan-cut-id {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--theme-text-primary);
+  font-family: "IBM Plex Mono", monospace;
+}
+.cutplan-cut-len {
+  font-size: 10px;
+  fill: var(--theme-text-secondary);
+  font-family: "IBM Plex Mono", monospace;
+}
+.cutplan-miter-mark {
+  font-size: 10px;
+  fill: var(--theme-mark);
+}
+.cutplan-nest text {
+  font-size: 9px;
+  fill: var(--theme-text-primary);
+  font-family: "IBM Plex Mono", monospace;
+  pointer-events: none;
+}
+.cutplan-cut text {
+  pointer-events: none;
+}
+.cutplan-trim {
+  fill: var(--theme-warning-soft);
+  stroke: var(--theme-warning);
+  stroke-width: 0.5;
+}
+.cutplan-remainder {
+  fill: none;
+  stroke: var(--theme-border-subtle);
+  stroke-width: 0.6;
+  stroke-dasharray: 3 3;
+}
+.cutplan-detail {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 4px;
+  background: var(--theme-surface-panel);
+  padding: 10px 12px;
+  align-self: start;
+}
+.cutplan-detail dl {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+.cutplan-detail dt {
+  color: var(--theme-text-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cutplan-detail dd {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  word-break: break-word;
+}
+.cutplan-detail-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--theme-text-secondary);
+}
+@media (max-width: 860px) {
+  .cutplan {
+    grid-template-columns: 1fr;
+  }
+}
+.production-glass {
+  margin-top: 0.75rem;
+}
+.production-glass-total td {
+  font-weight: 600;
+  border-top: 2px solid var(--theme-border-subtle);
 }

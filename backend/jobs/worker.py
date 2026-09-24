@@ -83,6 +83,7 @@ def _execute(job: dict[str, object], *, worker_id: str) -> None:
         org_id=UUID(str(job["org_id"])),
         created_by=UUID(str(job["created_by"])) if job.get("created_by") else None,
         attempt=int(job["attempt"]),
+        max_attempts=int(job["max_attempts"]),
         payload=job["payload"] if isinstance(job["payload"], dict) else {},
     )
     stop_heartbeat = threading.Event()

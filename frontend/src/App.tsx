@@ -35,6 +35,9 @@ const CanvasEditor2DView = lazy(async () => {
 const ProjectPages = lazy(async () => ({
   default: (await import("./features/projects/ProjectPages")).ProjectPages,
 }));
+const ClientsPage = lazy(async () => ({
+  default: (await import("./features/projects/ClientsPage")).ClientsPage,
+}));
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
@@ -191,6 +194,18 @@ export function AppRoutes(): JSX.Element {
           <ReadyGuard>
             <AppShell>
               <DashboardPage />
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/clients"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("clients.loading")}</p>}>
+                <ClientsPage />
+              </Suspense>
             </AppShell>
           </ReadyGuard>
         }

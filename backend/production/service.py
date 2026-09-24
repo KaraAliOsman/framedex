@@ -10,7 +10,7 @@ so the floor has a paperless trail."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 import hashlib
 import json
@@ -24,6 +24,10 @@ from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
+from production.confirmations import confirmation_summary
+from production.dxf import dxf_files
+from production.dispatch_notes import issue_dispatch_note
+from projects.service import project_row
 
 
 _STEP_CODE_FOR_CENTER = {
@@ -101,7 +105,9 @@ def _routing(engine_result: dict[str, object]) -> list[str]:
     return routing
 
 
-def _work_order_payload(position: dict[str, object]) -> dict[str, object]:
+def _work_order_payload(
+    position: dict[str, object], *, polishing: list | None = None
+) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     return {
         "schema": "production_wo_v1",
@@ -110,8 +116,12 @@ def _work_order_payload(position: dict[str, object]) -> dict[str, object]:
         "quantity": position.get("quantity", 1),
         "materials": {
             key: engine.get(key) or []
-            for key in ("profile_cuts", "reinforcements", "glasses", "panels", "hardware_items")
+            for key in (
+                "profile_cuts", "reinforcements", "glasses", "panels",
+                "fittings", "hardware_items",
+            )
         },
+        "glass_polishing": list(polishing or []),
         "routing": _routing(engine),
     }
 
@@ -182,10 +192,21 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         for position in bom:
             position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
         centers = _ensure_work_centers(org_id)
+        # The sealed polishing choices live on the snapshot positions — the
+        # work order embeds them so the workshop reads edge processing without
+        # joining the documentary snapshot.
+        polishing_by_position = {
+            str(pos.get("id")): pos.get("glass_polishing") or []
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
-            payload = _work_order_payload(position)
+            payload = _work_order_payload(
+                position,
+                polishing=polishing_by_position.get(str(position.get("position_id"))),
+            )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
                 """
@@ -317,6 +338,12 @@ def confirm_installation(
             return get_work_order(org_id=org_id, order_id=order_id)
         if order["status"] != "DISPATCHED":
             raise DocumentaryError("installation_requires_dispatched")
+        delivery = rows(
+            "SELECT status FROM public.deliveries WHERE order_id = %s AND org_id = %s",
+            [str(order_id), str(org_id)],
+        )
+        if delivery and str(delivery[0]["status"]) != "DELIVERED":
+            raise DocumentaryError("installation_requires_delivered")
         rows(
             "UPDATE public.orders SET status = 'INSTALLED', updated_at = %s "
             "WHERE id = %s AND org_id = %s RETURNING id",
@@ -375,7 +402,32 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         """,
         [str(order_id), str(org_id)],
     )
+    dispatch_note = rows(
+        "SELECT id, note_code FROM public.dispatch_notes "
+        "WHERE org_id=%s AND work_order_id=%s",
+        [str(org_id), str(order_id)],
+    )
     output = _public_order(order, include_payload=True)
+    output["dispatch_note_code"] = (
+        dispatch_note[0]["note_code"] if dispatch_note else None
+    )
+    if dispatch_note:
+        dte = rows(
+            "SELECT dte_type, folio, issued_at FROM public.project_dtes "
+            "WHERE org_id=%s AND dispatch_note_id=%s",
+            [str(org_id), str(dispatch_note[0]["id"])],
+        )
+        output["dispatch_note_dte"] = (
+            {
+                "dte_type": int(dte[0]["dte_type"]),
+                "folio": int(dte[0]["folio"]),
+                "issued_at": dte[0]["issued_at"],
+            }
+            if dte
+            else None
+        )
+    else:
+        output["dispatch_note_dte"] = None
     output["steps"] = [_public_step(step) for step in steps]
     output["events"] = [
         {
@@ -614,6 +666,7 @@ def create_remake(
         payload = _decoded(source["payload_json"])
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
+        payload.pop("dxf_export", None)
         payload.pop("packing", None)  # labels carry the source order code
         payload["remake_of"] = str(source["id"])
         prior = one(
@@ -913,6 +966,104 @@ def cnc_file_content(
     return f"{order['order_code']}-{filename}", content
 
 
+def export_dxf_files(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """Machine geometry handoff: renders the stored optimization plan into
+    DXF files (one per nested sheet plus a bars layout), stored on the order
+    under ``dxf_export`` and recorded as ``WO_DXF_EXPORTED``. Same contract
+    as the CSV export — requires optimization, invalidates on a fresh plan."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization")
+        if not isinstance(optimization, dict) or not (
+            optimization.get("bars") or optimization.get("sheets")
+        ):
+            raise DocumentaryError("dxf_requires_optimization")
+        files = dxf_files(optimization)
+        if not files:
+            raise DocumentaryError("dxf_requires_optimization")
+        export = {
+            "schema": "work_order_dxf_export_v1",
+            "optimization_fingerprint": _optimization_fingerprint(optimization),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "files": files,
+        }
+        new_payload = {**payload, "dxf_export": export}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_DXF_EXPORTED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "files": sorted(files),
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "exported_at": export["exported_at"],
+            "files": files,
+        }
+
+
+def dxf_file_content(
+    *, org_id: UUID, order_id: UUID, filename: str
+) -> tuple[str, str] | None:
+    order = one(
+        """
+        SELECT order_code, payload_json FROM public.orders
+        WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    payload = _decoded(order["payload_json"])
+    export = payload.get("dxf_export") or {}
+    optimization = payload.get("optimization")
+    if (
+        export.get("optimization_fingerprint")
+        and _optimization_fingerprint(optimization if isinstance(optimization, dict) else {})
+        != export["optimization_fingerprint"]
+    ):
+        return None
+    files = export.get("files") or {}
+    content = files.get(filename)
+    if content is None:
+        return None
+    return f"{order['order_code']}-{filename}", content
+
+
 def generate_packing_manifest(
     *, org_id: UUID, order_id: UUID, actor_id: UUID
 ) -> dict[str, object]:
@@ -950,6 +1101,10 @@ def generate_packing_manifest(
             "hardware": sum(
                 int(item.get("qty") or 1)
                 for item in materials.get("hardware_items") or []
+            ),
+            "fittings": sum(
+                int(item.get("qty") or 1)
+                for item in materials.get("fittings") or []
             ),
         }
         units = [
@@ -1027,6 +1182,7 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 + int(unit.get("glasses") or 0)
                 + int(unit.get("panels") or 0)
                 + int(unit.get("hardware") or 0)
+                + int(unit.get("fittings") or 0)
             )
             qr_payload = (
                 f"DEKOPEN|{order['order_code']}|{unit['label_code']}|{pieces}"
@@ -1041,6 +1197,7 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                     "glasses": int(unit.get("glasses") or 0),
                     "panels": int(unit.get("panels") or 0),
                     "hardware": int(unit.get("hardware") or 0),
+                    "fittings": int(unit.get("fittings") or 0),
                     "qr_payload": qr_payload,
                     "qr_svg": segno.make(qr_payload, error="m").svg_inline(
                         border=2, scale=6
@@ -1064,7 +1221,8 @@ def dispatch_work_order(
     with transaction.atomic(), documentary_backend():
         order = one(
             """
-            SELECT id, order_code, status::text, payload_json FROM public.orders
+            SELECT id, order_code, status::text, payload_json, project_id
+            FROM public.orders
             WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
             FOR UPDATE
             """,
@@ -1083,6 +1241,13 @@ def dispatch_work_order(
             """,
             [datetime.now(timezone.utc), str(order_id), str(org_id)],
         )
+        note_row = issue_dispatch_note(
+            org_id=org_id,
+            order=order,
+            project=project_row(org_id, order["project_id"]),
+            actor_id=actor_id,
+            note=(note or "").strip() or None,
+        )
         rows(
             """
             INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
@@ -1096,6 +1261,7 @@ def dispatch_work_order(
                 json.dumps({
                     "order_code": order["order_code"],
                     "note": (note or "").strip() or None,
+                    "dispatch_note": note_row["note_code"],
                 }),
             ],
         )
@@ -1258,6 +1424,7 @@ def optimize_work_order(
                 "reinforcements": materials.get("reinforcements") or [],
                 "glasses": materials.get("glasses") or [],
                 "panels": materials.get("panels") or [],
+                "fittings": materials.get("fittings") or [],
                 "hardware_items": materials.get("hardware_items") or [],
                 "leaf_weights": materials.get("leaf_weights") or [],
             },
@@ -1299,6 +1466,22 @@ def optimize_work_order(
                 group = (
                     str(entry.thickness_net_mm) if kind == "GLASS" else entry.sku
                 )
+                if getattr(entry, "shape", None):
+                    # Non-rectangular glass cannot be guillotine-nested by a
+                    # bounding rect — it goes to the shape-cutting cell with
+                    # its true outline, never silently a rectangle.
+                    unnested.append({
+                        "kind": kind, "group": group,
+                        "width_mm": str(entry.width_mm),
+                        "height_mm": str(entry.height_mm), "quantity": quantity,
+                        "bay_id": entry.bay_id, "leaf_id": entry.leaf_id,
+                        "shape": [
+                            {"x_mm": str(p.x_mm), "y_mm": str(p.y_mm)}
+                            for p in entry.shape
+                        ],
+                        "reason": "shaped_glass_outline",
+                    })
+                    continue
                 rule = _pick_sheet_rule(
                     rules[group_key].get(group) or [], entry.width_mm, entry.height_mm
                 )
@@ -1374,6 +1557,7 @@ def optimize_work_order(
         # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
         new_payload.pop("cnc_export", None)
+        new_payload.pop("dxf_export", None)
         rows(
             """
             UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
@@ -1407,3 +1591,236 @@ def optimize_work_order(
             "order_code": order["order_code"],
             "optimization": optimization,
         }
+
+
+_DELIVERY_WINDOWS = ("AM", "PM", "JORNADA")
+_DELIVERY_NEXT = {
+    "ON_ROUTE": {"SCHEDULED"},
+    "DELIVERED": {"ON_ROUTE"},
+    "FAILED": {"ON_ROUTE"},
+}
+_DELIVERY_EVENT = {
+    "ON_ROUTE": "WO_DELIVERY_ON_ROUTE",
+    "DELIVERED": "WO_DELIVERY_DELIVERED",
+    "FAILED": "WO_DELIVERY_FAILED",
+}
+
+
+def _public_delivery(
+    delivery: dict[str, object], *, confirmation: dict | None = None
+) -> dict[str, object]:
+    return {
+        "id": str(delivery["id"]),
+        "order_id": str(delivery["order_id"]),
+        "order_code": str(delivery["order_code"]),
+        "scheduled_date": str(delivery["scheduled_date"]),
+        "time_window": str(delivery["time_window"]),
+        "address": str(delivery["address"]),
+        "contact_name": delivery["contact_name"],
+        "contact_phone": delivery["contact_phone"],
+        "installer_name": delivery["installer_name"],
+        "notes": delivery["notes"],
+        "status": str(delivery["status"]),
+        "confirmation": confirmation,
+        "scheduled_by": str(delivery["scheduled_by"]) if delivery["scheduled_by"] else None,
+        "created_at": delivery["created_at"].isoformat(),
+        "updated_at": delivery["updated_at"].isoformat(),
+    }
+
+
+def get_delivery(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
+    """Delivery for a valid WORKSHOP_OT — `delivery: null` only when the order
+    genuinely exists but was never scheduled; bad ids raise work_order_not_found."""
+    with documentary_backend():
+        found = rows(
+            """
+            SELECT d.*, o.order_code FROM public.orders o
+            LEFT JOIN public.deliveries d ON d.order_id = o.id
+            WHERE o.id = %s AND o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
+            """,
+            [str(order_id), str(org_id)],
+        )
+        if not found:
+            raise DocumentaryError("work_order_not_found")
+    delivery = found[0]
+    if not delivery.get("id"):
+        return {"delivery": None}
+    return {
+        "delivery": _public_delivery(
+            delivery,
+            confirmation=confirmation_summary(
+                org_id=org_id, order_id=order_id
+            ),
+        )
+    }
+
+
+def schedule_delivery(
+    *,
+    org_id: UUID,
+    order_id: UUID,
+    actor_id: UUID,
+    scheduled_date: str,
+    time_window: str | None,
+    address: str,
+    contact_name: str | None = None,
+    contact_phone: str | None = None,
+    installer_name: str | None = None,
+    notes: str | None = None,
+) -> dict[str, object]:
+    """Create or update the order's single delivery — rescheduling is an
+    upsert so retries and edits stay idempotent on the same row."""
+    window = (time_window or "AM").strip().upper()
+    if window not in _DELIVERY_WINDOWS:
+        raise DocumentaryError("delivery_window_invalid")
+    if not (address or "").strip():
+        raise DocumentaryError("delivery_address_required")
+    try:
+        day = date.fromisoformat(str(scheduled_date))
+    except (TypeError, ValueError):
+        raise DocumentaryError("delivery_date_invalid")
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) not in ("COMPLETED", "DISPATCHED"):
+            raise DocumentaryError("delivery_requires_completed")
+        existing = rows(
+            "SELECT * FROM public.deliveries WHERE order_id = %s AND org_id = %s",
+            [str(order_id), str(org_id)],
+        )
+        if existing and str(existing[0]["status"]) == "DELIVERED":
+            raise DocumentaryError("delivery_already_delivered")
+        normalized = {
+            "scheduled_date": day,
+            "time_window": window,
+            "address": address.strip(),
+            "contact_name": (contact_name or "").strip() or None,
+            "contact_phone": (contact_phone or "").strip() or None,
+            "installer_name": (installer_name or "").strip() or None,
+            "notes": (notes or "").strip() or None,
+        }
+        if (
+            existing
+            and str(existing[0]["status"]) == "SCHEDULED"
+            and all(existing[0][key] == value for key, value in normalized.items())
+        ):
+            # Identical schedule replay — one row, no duplicate audit event.
+            return get_delivery(org_id=org_id, order_id=order_id)
+        delivery = one(
+            """
+            INSERT INTO public.deliveries(
+                org_id, order_id, scheduled_date, time_window, address,
+                contact_name, contact_phone, installer_name, notes, scheduled_by)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (order_id) DO UPDATE SET
+                scheduled_date = EXCLUDED.scheduled_date,
+                time_window = EXCLUDED.time_window,
+                address = EXCLUDED.address,
+                contact_name = EXCLUDED.contact_name,
+                contact_phone = EXCLUDED.contact_phone,
+                installer_name = EXCLUDED.installer_name,
+                notes = EXCLUDED.notes,
+                scheduled_by = EXCLUDED.scheduled_by,
+                status = 'SCHEDULED',
+                updated_at = %s
+            RETURNING *
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(day),
+                window,
+                address.strip(),
+                (contact_name or "").strip() or None,
+                (contact_phone or "").strip() or None,
+                (installer_name or "").strip() or None,
+                (notes or "").strip() or None,
+                str(actor_id),
+                datetime.now(timezone.utc),
+            ],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_DELIVERY_SCHEDULED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "scheduled_date": str(day),
+                    "time_window": window,
+                    "installer_name": delivery["installer_name"],
+                }),
+            ],
+        )
+    return get_delivery(org_id=org_id, order_id=order_id)
+
+
+def transition_delivery(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID, to_status: str
+) -> dict[str, object]:
+    """Move the delivery forward; guarded by both its own state and the
+    order's — a truck can't leave before the order is DISPATCHED."""
+    target = str(to_status or "").upper()
+    if target not in _DELIVERY_NEXT:
+        raise DocumentaryError("delivery_transition_invalid")
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("order_already_installed")
+        delivery = one(
+            """
+            SELECT * FROM public.deliveries
+            WHERE order_id = %s AND org_id = %s FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "delivery_not_found",
+        )
+        current = str(delivery["status"])
+        if current == target:
+            return get_delivery(org_id=org_id, order_id=order_id)
+        if current not in _DELIVERY_NEXT[target]:
+            raise DocumentaryError("delivery_transition_invalid")
+        if target == "ON_ROUTE" and str(order["status"]) != "DISPATCHED":
+            raise DocumentaryError("delivery_requires_dispatched")
+        rows(
+            """
+            UPDATE public.deliveries SET status = %s, updated_at = %s
+            WHERE id = %s AND org_id = %s RETURNING id
+            """,
+            [target, datetime.now(timezone.utc), str(delivery["id"]), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, %s, %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                _DELIVERY_EVENT[target],
+                str(actor_id),
+                json.dumps({"order_code": order["order_code"]}),
+            ],
+        )
+    return get_delivery(org_id=org_id, order_id=order_id)
