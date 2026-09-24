@@ -58,7 +58,7 @@
 
 .canvas-system {
   color: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
 }
 
 .cad-svg {
@@ -90,7 +90,7 @@
 .opening-label,
 .glass-dimension {
   fill: var(--theme-text-primary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-size: 28px;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
@@ -118,7 +118,7 @@
   border: 1px solid var(--theme-border-subtle);
   color: var(--theme-text-primary);
   display: flex;
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   gap: 0.25rem;
   height: 36px;
   justify-content: center;
@@ -195,7 +195,7 @@
 }
 
 .canvas-technical-results dd {
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
   margin: 0.25rem 0 0;
 }
@@ -237,16 +237,6 @@
   gap: 0.75rem;
 }
 
-.assembly-toolbar {
-  align-items: end;
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-}
-
 .assembly-field {
   align-items: center;
   display: flex;
@@ -271,6 +261,78 @@
 .assembly-unit {
   color: var(--theme-text-muted);
   font-size: 0.8rem;
+}
+
+.assembly-field--inline {
+  gap: 0.5rem;
+}
+
+.assembly-field--inline input[type="checkbox"] {
+  width: auto;
+}
+
+.inspector-note {
+  color: var(--theme-text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 0.4rem;
+}
+
+.inspector-subhead {
+  color: var(--theme-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0.6rem 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.frameless-rows {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.frameless-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.frameless-row select {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.3rem;
+}
+
+.frameless-row input[type="text"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: 0.8rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  width: 7rem;
+}
+
+.frameless-row input[type="number"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+  width: 3.5rem;
+}
+
+.frameless-edges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
 }
 
 .assembly-workspace {
@@ -322,7 +384,7 @@
 
 .plan-dimension {
   fill: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -366,7 +428,7 @@
 
 .assembly-strip-dims {
   color: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
@@ -391,6 +453,10 @@
 .assembly-status--invalid {
   border-color: var(--theme-danger);
   color: var(--theme-danger);
+}
+
+.assembly-status--idle {
+  color: var(--theme-text-secondary);
 }
 
 .assembly-issues {
@@ -457,32 +523,483 @@
 }
 
 /* Compositional editor — canvas-first workspace */
+/* The editor is a self-contained application viewport: the grid is bounded by
+   the window so the statusbar and plan inset are always on screen, and only the
+   tree/side rails scroll internally. */
 .assembly-editor {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  gap: 0.6rem;
+  grid-template-columns: 3rem 13.5rem minmax(0, 1fr) minmax(250px, 300px);
+  grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
-    "toolbar toolbar"
-    "canvas side";
+    "tools tree canvas side"
+    "status status status side";
+  height: calc(100vh - 12rem);
+  height: calc(100dvh - 12rem);
+  min-height: 28rem;
+  position: relative;
 }
 
-.assembly-toolbar {
-  grid-area: toolbar;
+.assembly-editor--tree-closed {
+  grid-template-columns: 3rem minmax(0, 1fr) minmax(250px, 300px);
+  grid-template-areas:
+    "tools canvas side"
+    "status status side";
+}
+
+@media (max-width: 1100px) {
+  .assembly-editor,
+  .assembly-editor--tree-closed {
+    grid-template-columns: 3rem minmax(0, 1fr) minmax(240px, 300px);
+    grid-template-areas:
+      "tools canvas side"
+      "status status side";
+  }
+
+  /* The tree column collapses at this width; toggling it opens a drawer
+     overlay above the canvas instead — the toggle stays functional. */
+  .assembly-tree {
+    background: var(--theme-surface-panel);
+    border: 1px solid var(--theme-border-subtle);
+    border-radius: 6px;
+    bottom: 3.2rem;
+    box-shadow: 0 12px 28px rgb(22 28 31 / 0.18);
+    display: block;
+    left: 3.8rem;
+    max-width: min(18rem, 72vw);
+    overflow: hidden;
+    position: absolute;
+    top: 0.4rem;
+    width: 18rem;
+    z-index: 6;
+  }
+
+  .assembly-tree .object-tree {
+    border: none;
+    border-radius: 0;
+  }
+}
+
+/* Left tool rail */
+.assembly-tools {
+  align-content: start;
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  grid-area: tools;
+  padding: 0.3rem 0;
+}
+
+.tool-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  display: flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  width: 2rem;
+}
+
+.tool-button:hover:not(:disabled) {
+  background: var(--theme-surface-hover);
+  color: var(--theme-text-primary);
+}
+
+.tool-button.is-active {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+
+.tool-button:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.tool-icon {
+  fill: none;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  width: 1rem;
+}
+
+.assembly-tools__divider {
+  background: var(--theme-border-subtle);
+  height: 1px;
+  margin: 0.25rem 0;
+  width: 1.4rem;
+}
+
+.assembly-tools__spacer {
+  flex: 1;
+}
+
+/* Plan mini-navigator — inset over the canvas, never a second stacked sheet */
+.assembly-canvas {
+  position: relative;
+}
+
+.plan-inset {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: 0.75rem;
+  box-shadow: 0 2px 10px rgb(22 28 31 / 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 9rem;
+  position: absolute;
+  right: 0.75rem;
+  width: 13rem;
+  z-index: 2;
+}
+
+.plan-inset__header {
+  align-items: center;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-muted);
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 600;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.plan-inset__header button {
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.plan-inset__svg {
+  flex: 1;
+  min-height: 0;
+}
+
+.plan-toggle {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 4px;
+  bottom: 0.75rem;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  right: 0.75rem;
+  z-index: 2;
+}
+
+/* Status bar — compact persistent state */
+.assembly-statusbar {
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  display: flex;
+  gap: 0.9rem;
+  grid-area: status;
+  padding: 0.3rem 0.75rem;
+}
+
+.assembly-statusbar__dims {
+  color: var(--theme-text-secondary);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.assembly-statusbar__selection {
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+}
+
+.assembly-statusbar__issues {
+  background: transparent;
+  border: none;
+  color: var(--theme-warning);
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-left: auto;
+  padding: 0;
+}
+
+/* Object tree — left rail, human names only */
+.assembly-tree {
+  grid-area: tree;
+  min-height: 0;
+}
+
+.object-tree {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.object-tree__title {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  text-transform: uppercase;
+}
+
+.tree-root,
+.tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-root {
+  overflow-y: auto;
+  padding: 0.25rem 0.2rem;
+}
+
+.tree-row {
+  align-items: center;
+  display: flex;
+  gap: 2px;
+  min-height: 1.5rem;
+}
+
+.tree-disclosure {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  height: 0.9rem;
+  justify-content: center;
+  padding: 0;
+  width: 0.9rem;
+}
+
+.tree-disclosure--leaf {
+  display: inline-block;
+}
+
+.tree-label {
+  align-items: baseline;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 1;
+  font: inherit;
+  font-size: 0.8rem;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.15rem 0.3rem;
+  text-align: left;
+}
+
+.tree-label:hover {
+  background: var(--theme-surface-hover);
+}
+
+.tree-label.is-selected {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+
+.tree-label.is-static {
+  cursor: default;
+}
+
+.tree-label__text {
+  flex: none;
+  font-weight: 500;
+}
+
+.tree-row--member .tree-label__text,
+.tree-row--glazing .tree-label__text,
+.tree-row--handle .tree-label__text,
+.tree-row--panel .tree-label__text {
+  color: var(--theme-text-secondary);
+  font-weight: 400;
+}
+
+.tree-label__detail {
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.66rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-severity {
+  border-radius: 50%;
+  flex: none;
+  height: 6px;
+  margin-left: auto;
+  width: 6px;
+}
+
+.tree-severity--error {
+  background: var(--theme-danger);
+}
+
+.tree-severity--warning {
+  background: var(--theme-warning);
 }
 
 .assembly-canvas {
   display: grid;
-  gap: 0.5rem;
   grid-area: canvas;
-  grid-template-rows: minmax(0, 1fr) auto;
-  min-height: 26rem;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   padding: 0;
 }
 
-.product-front-svg {
+.canvas-viewport {
   background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
   display: block;
-  min-height: 18rem;
+  height: 100%;
+  min-height: 30rem;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+}
+
+.canvas-viewport:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: -2px;
+}
+
+.canvas-viewport .canvas-sheet {
+  background-image:
+    linear-gradient(to right, rgb(209 216 216 / 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(209 216 216 / 0.3) 1px, transparent 1px);
+  background-size: 24px 24px;
+  cursor: grab;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.canvas-viewport.is-panning .canvas-sheet {
+  cursor: grabbing;
+}
+
+/* Floating zoom cluster — bottom-left island chrome */
+.viewport-island {
+  align-items: center;
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: 0.75rem;
+  display: flex;
+  left: 0.75rem;
+  padding: 2px;
+  position: absolute;
+  z-index: 2;
+}
+
+.viewport-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.72rem;
+  height: 1.6rem;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0 0.35rem;
+}
+
+.viewport-button:hover {
+  background: var(--theme-surface-hover);
+  color: var(--theme-text-primary);
+}
+
+.viewport-button--percent {
+  min-width: 3rem;
+}
+
+.viewport-menu {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  bottom: calc(100% + 6px);
+  box-shadow: 0 6px 20px rgba(16, 26, 25, 0.12);
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  min-width: 10.5rem;
+  padding: 3px;
+  position: absolute;
+}
+
+.viewport-menu__item {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.viewport-menu__item:hover:not(:disabled) {
+  background: var(--theme-accent-soft);
+}
+
+.viewport-menu__item:disabled {
+  color: var(--theme-text-muted);
+  cursor: default;
+}
+
+.viewport-status {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 5px;
+  bottom: 0.75rem;
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.72rem;
+  padding: 0.3rem 0.55rem;
+  position: absolute;
+  right: 0.75rem;
+  z-index: 2;
+}
+
+.product-front-svg {
+  display: block;
   width: 100%;
 }
 
@@ -490,36 +1007,129 @@
   cursor: pointer;
 }
 
-.front-module .module-frame {
-  fill: var(--theme-surface-card);
-  stroke: var(--theme-text-secondary);
-  stroke-width: 4;
+.member {
   vector-effect: non-scaling-stroke;
 }
 
-.front-module.is-selected .module-frame {
+.front-module .member-frame {
+  stroke-width: 4;
+}
+
+.front-module.is-selected .member-frame {
   stroke: var(--theme-accent);
+  stroke-width: 6;
 }
 
-.front-module.has-error .module-frame {
+.front-module.has-error .member-frame {
   stroke: var(--theme-danger);
+  stroke-width: 6;
 }
 
-.front-module.has-warning .module-frame {
+.front-module.has-warning .member-frame {
   stroke: var(--theme-warning);
+  stroke-width: 6;
+}
+
+.module-opening {
+  fill: none;
+}
+
+.member-sash {
+  stroke-width: 2;
+}
+
+.member-mullion,
+.member-coupler,
+.member-threshold {
+  stroke-width: 2.5;
+}
+
+.member-bead {
+  fill: none;
+  stroke: var(--member-pvc-edge);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
 }
 
 .module-glass {
   fill: var(--theme-glass-tint);
-  stroke: none;
+  stroke: var(--theme-border-subtle);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
 }
 
-.module-divider {
-  fill: var(--theme-surface-card);
+.glass-sheen {
+  stroke: var(--member-pvc-highlight);
+  stroke-width: 7;
+  opacity: 0.75;
+}
+
+.bay-panel {
+  fill: var(--member-panel-fill);
+  stroke: var(--member-panel-edge);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.handle-lever line {
+  stroke: var(--theme-accent-ink);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Material-family interior detail: the soft chamber rebate of a PVC profile
+ * and the thermal-break strip inside an aluminium extrusion. Strokes come
+ * from each surface's own highlight/edge so they follow the member palette. */
+.member-inner {
+  fill: none;
+  stroke-width: 1.1;
+  opacity: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.member-thermal-strip {
+  opacity: 0.5;
+}
+
+/* Insulated glazing: inner ring reads as the second lite + spacer. */
+.module-glass-ig {
+  fill: none;
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
+  opacity: 0.65;
+  vector-effect: non-scaling-stroke;
+}
+
+.door-hinge {
+  fill: var(--theme-border-subtle);
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
 }
 
 .module-bay {
   pointer-events: none;
+}
+
+.dim-run {
+  pointer-events: none;
+}
+
+.dim-extension {
+  stroke: var(--theme-border-subtle);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dim-line {
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.dim-tick {
+  stroke: var(--theme-text-secondary);
+  stroke-width: 2.6;
+  vector-effect: non-scaling-stroke;
 }
 
 .opening-glyph polyline,
@@ -537,12 +1147,17 @@
 .canvas-dim {
   cursor: pointer;
   fill: var(--theme-text-secondary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 
 .canvas-dim:hover {
   fill: var(--theme-accent);
+}
+
+.canvas-dim.is-active {
+  fill: var(--theme-accent-ink);
+  font-weight: 500;
 }
 
 .canvas-dim-input {
@@ -596,7 +1211,9 @@
   flex-direction: column;
   gap: 0.75rem;
   grid-area: side;
+  min-height: 0;
   min-width: 0;
+  overflow-y: auto;
 }
 
 .assembly-inspector {
@@ -623,6 +1240,56 @@
   color: var(--theme-text-muted);
   font-size: 0.85rem;
   margin: 0;
+}
+
+.inspector-section {
+  border-top: 1px solid var(--theme-border-subtle);
+  display: contents;
+}
+
+.inspector-section > summary {
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  list-style: none;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.inspector-section > summary::before {
+  content: "▾";
+  display: inline-block;
+  margin-right: 0.35rem;
+  transition: transform 0.12s ease;
+}
+
+.inspector-section:not([open]) > summary::before {
+  transform: rotate(-90deg);
+}
+
+.inspector-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.inspector-section:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+.inspector-section[open] > *:not(summary) {
+  animation: inspector-reveal 0.12s ease;
+}
+
+@keyframes inspector-reveal {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .opening-grid {
@@ -723,7 +1390,7 @@
 .plan-angle {
   cursor: pointer;
   fill: var(--theme-text-primary);
-  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -780,12 +1447,164 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 1100px) {
-  .assembly-editor {
-    grid-template-areas:
-      "toolbar"
-      "canvas"
-      "side";
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* --- Direct manipulation: divider grips, seam grips, divide preview --- */
+
+.divider-grip {
+  fill: transparent;
+  outline: none;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.divider-grip.is-vertical {
+  cursor: ew-resize;
+}
+
+.divider-grip.is-horizontal {
+  cursor: ns-resize;
+}
+
+.divider-grip:hover,
+.divider-grip:active {
+  fill: var(--theme-accent);
+  fill-opacity: 0.18;
+  stroke: var(--theme-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.seam-grip {
+  cursor: ew-resize;
+  fill: transparent;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.seam-grip:hover {
+  fill: var(--theme-accent);
+  fill-opacity: 0.14;
+}
+
+.divide-preview-line {
+  pointer-events: none;
+  stroke: var(--theme-accent);
+  stroke-dasharray: 14 10;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.front-module.is-divide-target {
+  cursor: crosshair;
+}
+
+.seam-preview {
+  pointer-events: none;
+}
+
+.seam-preview-line {
+  stroke: var(--theme-accent);
+  stroke-dasharray: 16 12;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.seam-preview-label {
+  fill: var(--theme-accent-ink);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+.assistant-panel__prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 4px;
+  background: var(--theme-surface);
+  color: var(--theme-text-primary);
+  font: inherit;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.assistant-panel__preview {
+  border-top: 1px solid var(--theme-border-subtle);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.assistant-panel__notes {
+  color: var(--theme-text-secondary);
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+
+.assistant-panel__ops,
+.assistant-panel__rejected {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.assistant-panel__rejected {
+  color: var(--theme-mark);
+}
+
+.assistant-panel__meta {
+  color: var(--theme-text-muted);
+  font-size: 11px;
+  margin: 6px 0 0;
+}
+
+.context-menu {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgb(22 28 31 / 0.18);
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 4px;
+  position: fixed;
+  z-index: 70;
+}
+
+.context-menu__item {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.context-menu__item:hover {
+  background: var(--theme-surface-raised);
+  color: var(--theme-text-primary);
+}
+
+.context-menu__item--assistant {
+  border-top: 1px solid var(--theme-border-subtle);
+  border-radius: 0 0 4px 4px;
+  color: var(--theme-accent);
+  margin-top: 4px;
+}
+
+.issue-fix {
+  background: transparent;
+  border: none;
+  color: var(--theme-accent);
+  cursor: pointer;
+  font-size: 11px;
+  margin-top: 2px;
+  padding: 0 4px;
+  text-align: left;
+}
+
+.issue-fix:hover {
+  text-decoration: underline;
 }

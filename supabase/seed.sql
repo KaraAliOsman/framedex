@@ -22,7 +22,7 @@ VALUES (
     uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60'),
     NULL,
     'DEMO_60',
-    'Sistema Demo 60mm PVC',
+    'Sistema Demo 60mm PVC — referencia sintética',
     60.00,
     'PVC',
     3,
@@ -494,10 +494,10 @@ WHERE system.code='DEMO_60' AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.glass_purchase_mappings
- (id,system_id,org_id,technical_sku,purchasing_sku,manufacturer_name,purchase_unit,version,provenance)
+ (id,system_id,org_id,technical_sku,purchasing_sku,manufacturer_name,purchase_unit,version,provenance,glass_spec)
 SELECT uuid_generate_v5(uuid_ns_url(),'https://dekopen.local/shot09/glass/DEMO_60/GLASS-BASE/V1'),
  system.id,NULL,'GLASS-BASE','DEMO-GLASS-FINISHED-UNIT','DEMO_60 SYNTHETIC FIXTURE','EA',1,
- '{"source":"DEMO_60 SYNTHETIC FIXTURE","certified":"false"}'::jsonb
+ '{"source":"DEMO_60 SYNTHETIC FIXTURE","certified":"false"}'::jsonb,'4 Float Incoloro'
 FROM public.profile_systems system
 WHERE system.code='DEMO_60' AND system.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
@@ -522,5 +522,410 @@ ON CONFLICT (id) DO NOTHING;
 END IF;
 END;
 $shot09$;
+
+COMMIT;
+-- Reference families ALU_65 + GLASS_45 — SYNTHETIC TEST DATA, not manufacturer
+-- specifications. Seeded so the editor, engine, inspector and documentary flow
+-- can run a PVC, an aluminium and a glass-dominant family end to end.
+BEGIN;
+
+INSERT INTO public.profile_systems (
+    id, org_id, code, name, depth_mm, material, chamber_count, sash_overlap_mm,
+    glass_clearance_white_mm, glass_clearance_foil_mm, pulley_height_mm,
+    central_overlap_mm, sliding_lateral_clearance_mm, sliding_end_add_mm,
+    corner_bracket_loss_mm, hook_depth_mm, door_threshold_mm,
+    door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
+    sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
+    chamber_clearance_mm, is_global, is_demo
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65'), NULL, 'ALU_65', 'Línea Aluminio 65 — referencia sintética', 65.00,'ALUMINIUM',1,6.00,4.00,4.00,10.00,25.00,3.00,5.00,2.00,8.00,25.00,18.00,'dual',15.00,15.00,5.00,8.00, TRUE, TRUE)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
+    chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
+    glass_clearance_white_mm = EXCLUDED.glass_clearance_white_mm,
+    glass_clearance_foil_mm = EXCLUDED.glass_clearance_foil_mm,
+    pulley_height_mm = EXCLUDED.pulley_height_mm,
+    central_overlap_mm = EXCLUDED.central_overlap_mm,
+    sliding_lateral_clearance_mm = EXCLUDED.sliding_lateral_clearance_mm,
+    sliding_end_add_mm = EXCLUDED.sliding_end_add_mm,
+    corner_bracket_loss_mm = EXCLUDED.corner_bracket_loss_mm,
+    hook_depth_mm = EXCLUDED.hook_depth_mm, door_threshold_mm = EXCLUDED.door_threshold_mm,
+    door_bottom_clearance_mm = EXCLUDED.door_bottom_clearance_mm, rail_type = EXCLUDED.rail_type,
+    sliding_glazing_deduction_width_mm = EXCLUDED.sliding_glazing_deduction_width_mm,
+    sliding_glazing_deduction_height_mm = EXCLUDED.sliding_glazing_deduction_height_mm,
+    door_leaf_side_clearance_mm = EXCLUDED.door_leaf_side_clearance_mm,
+    chamber_clearance_mm = EXCLUDED.chamber_clearance_mm,
+    is_global = EXCLUDED.is_global, is_demo = EXCLUDED.is_demo;
+
+INSERT INTO public.profile_systems (
+    id, org_id, code, name, depth_mm, material, chamber_count, sash_overlap_mm,
+    glass_clearance_white_mm, glass_clearance_foil_mm, pulley_height_mm,
+    central_overlap_mm, sliding_lateral_clearance_mm, sliding_end_add_mm,
+    corner_bracket_loss_mm, hook_depth_mm, door_threshold_mm,
+    door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
+    sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
+    chamber_clearance_mm, is_global, is_demo
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45'), NULL, 'GLASS_45', 'Vidrio-dominante 45 (aluminio) — referencia sintética', 45.00,'ALUMINIUM',1,4.00,3.00,3.00,8.00,18.00,2.00,4.00,1.50,6.00,12.00,12.00,'dual',10.00,10.00,3.00,6.00, TRUE, TRUE)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
+    chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
+    glass_clearance_white_mm = EXCLUDED.glass_clearance_white_mm,
+    glass_clearance_foil_mm = EXCLUDED.glass_clearance_foil_mm,
+    pulley_height_mm = EXCLUDED.pulley_height_mm,
+    central_overlap_mm = EXCLUDED.central_overlap_mm,
+    sliding_lateral_clearance_mm = EXCLUDED.sliding_lateral_clearance_mm,
+    sliding_end_add_mm = EXCLUDED.sliding_end_add_mm,
+    corner_bracket_loss_mm = EXCLUDED.corner_bracket_loss_mm,
+    hook_depth_mm = EXCLUDED.hook_depth_mm, door_threshold_mm = EXCLUDED.door_threshold_mm,
+    door_bottom_clearance_mm = EXCLUDED.door_bottom_clearance_mm, rail_type = EXCLUDED.rail_type,
+    sliding_glazing_deduction_width_mm = EXCLUDED.sliding_glazing_deduction_width_mm,
+    sliding_glazing_deduction_height_mm = EXCLUDED.sliding_glazing_deduction_height_mm,
+    door_leaf_side_clearance_mm = EXCLUDED.door_leaf_side_clearance_mm,
+    chamber_clearance_mm = EXCLUDED.chamber_clearance_mm,
+    is_global = EXCLUDED.is_global, is_demo = EXCLUDED.is_demo;
+
+INSERT INTO public.profile_articles (
+    id, system_id, org_id, sku, name, role, material, face_width_mm,
+    commercial_length_mm, welding_loss_mm, reinforcement_gap_mm, weight_kg_m
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/' || a.sku), s.id, NULL,
+ a.sku, a.name, a.role::public.profile_role, 'ALUMINIUM'::public.material_type,
+ a.face_mm, 6000.00, 0.00, 0.00, a.weight
+FROM public.profile_systems s CROSS JOIN (VALUES
+    ('MARCO-A','Marco Aluminio 65','FRAME',55.00,1.4000),
+    ('HOJA-A','Hoja Aluminio 65','SASH',62.00,1.5500),
+    ('POSTE-A-V','Poste vertical Aluminio 65','MULLION_V',70.00,1.7000),
+    ('POSTE-A-H','Travesaño Aluminio 65','MULLION_H',70.00,1.7000),
+    ('JQ-A-24','Junquillo Aluminio 24','GLAZING_BEAD',24.00,0.3500),
+    ('JQ-A-16','Junquillo Aluminio 16','GLAZING_BEAD',16.00,0.2800),
+    ('JQ-A-8','Junquillo Aluminio 8','GLAZING_BEAD',8.00,0.2000),
+    ('UMBRAL-A','Umbral Aluminio 65','THRESHOLD',28.00,0.9000),
+    ('COPLE-A-30','Acoplador Aluminio 30','COUPLER',30.00,0.8500),
+    ('COPLE-A-90','Acoplador Aluminio 90','COUPLER',34.00,1.0000)
+) AS a(sku, name, role, face_mm, weight)
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE
+ON CONFLICT (system_id, sku) DO UPDATE SET
+    name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
+    face_width_mm = EXCLUDED.face_width_mm, welding_loss_mm = EXCLUDED.welding_loss_mm,
+    reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm, weight_kg_m = EXCLUDED.weight_kg_m;
+
+INSERT INTO public.profile_articles (
+    id, system_id, org_id, sku, name, role, material, face_width_mm,
+    commercial_length_mm, welding_loss_mm, reinforcement_gap_mm, weight_kg_m
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45/' || a.sku), s.id, NULL,
+ a.sku, a.name, a.role::public.profile_role, 'ALUMINIUM'::public.material_type,
+ a.face_mm, 6000.00, 0.00, 0.00, a.weight
+FROM public.profile_systems s CROSS JOIN (VALUES
+    ('MARCO-G','Marco Vidrio 45','FRAME',34.00,0.9500),
+    ('HOJA-G','Hoja Vidrio 45','SASH',42.00,1.1500),
+    ('POSTE-G-V','Poste vertical Vidrio 45','MULLION_V',38.00,1.2500),
+    ('POSTE-G-H','Travesaño Vidrio 45','MULLION_H',38.00,1.2500),
+    ('JQ-G-10','Junquillo Vidrio 10','GLAZING_BEAD',10.00,0.2200),
+    ('JQ-G-6','Junquillo Vidrio 6','GLAZING_BEAD',6.00,0.1800),
+    ('UMBRAL-G','Umbral Vidrio 45','THRESHOLD',18.00,0.6000),
+    ('COPLE-G-30','Acoplador Vidrio 30','COUPLER',26.00,0.7000),
+    ('COPLE-G-90','Acoplador Vidrio 90','COUPLER',28.00,0.7800),
+    ('REMATE-G','Remate estructural Vidrio 45','COUPLER',20.00,0.5500)
+) AS a(sku, name, role, face_mm, weight)
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
+ON CONFLICT (system_id, sku) DO UPDATE SET
+    name = EXCLUDED.name, role = EXCLUDED.role, material = EXCLUDED.material,
+    face_width_mm = EXCLUDED.face_width_mm, welding_loss_mm = EXCLUDED.welding_loss_mm,
+    reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm, weight_kg_m = EXCLUDED.weight_kg_m;
+
+INSERT INTO public.glazing_bead_matrix (
+    id, system_id, org_id, glass_thickness_mm, bead_article_id, bead_width_mm,
+    gasket_interior_mm, gasket_exterior_mm, cut_add_mm
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/BEAD-' || matrix.thick),
+ s.id, NULL, matrix.thick::numeric, p.id, matrix.bead_w::numeric, matrix.gi::numeric,
+ matrix.ge::numeric, 7.00
+FROM public.profile_systems s
+CROSS JOIN (VALUES
+    ('5','JQ-A-24',24.00,3.00,3.00),
+    ('24','JQ-A-8',8.00,3.50,3.50),
+    ('20','JQ-A-16',16.00,3.00,3.00),
+    ('28','JQ-A-8',8.00,3.50,3.50)
+) AS matrix(thick, bead_sku, bead_w, gi, ge)
+JOIN public.profile_articles p ON p.system_id = s.id AND p.sku = matrix.bead_sku
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE
+ON CONFLICT (id) DO UPDATE SET
+    glass_thickness_mm = EXCLUDED.glass_thickness_mm, bead_article_id = EXCLUDED.bead_article_id,
+    bead_width_mm = EXCLUDED.bead_width_mm, gasket_interior_mm = EXCLUDED.gasket_interior_mm,
+    gasket_exterior_mm = EXCLUDED.gasket_exterior_mm, cut_add_mm = EXCLUDED.cut_add_mm;
+
+INSERT INTO public.glazing_bead_matrix (
+    id, system_id, org_id, glass_thickness_mm, bead_article_id, bead_width_mm,
+    gasket_interior_mm, gasket_exterior_mm, cut_add_mm
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45/BEAD-' || matrix.thick),
+ s.id, NULL, matrix.thick::numeric, p.id, matrix.bead_w::numeric, matrix.gi::numeric,
+ matrix.ge::numeric, 7.00
+FROM public.profile_systems s
+CROSS JOIN (VALUES
+    ('24','JQ-G-10',10.00,2.00,2.00),
+    ('28','JQ-G-6',6.00,2.50,2.50),
+    ('32','JQ-G-6',6.00,3.00,3.00)
+) AS matrix(thick, bead_sku, bead_w, gi, ge)
+JOIN public.profile_articles p ON p.system_id = s.id AND p.sku = matrix.bead_sku
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
+ON CONFLICT (id) DO UPDATE SET
+    glass_thickness_mm = EXCLUDED.glass_thickness_mm, bead_article_id = EXCLUDED.bead_article_id,
+    bead_width_mm = EXCLUDED.bead_width_mm, gasket_interior_mm = EXCLUDED.gasket_interior_mm,
+    gasket_exterior_mm = EXCLUDED.gasket_exterior_mm, cut_add_mm = EXCLUDED.cut_add_mm;
+
+INSERT INTO public.hardware_kits (
+    id, system_id, org_id, sku, name, opening_type,
+    min_leaf_width_mm, max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
+    max_leaf_weight_kg, rail_type, carriages_qty, stay_arms_qty, weight_kg, contents
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/' || kit.sku), s.id, NULL,
+ kit.sku, kit.name, kit.opening_type, kit.min_w, kit.max_w, kit.min_h, kit.max_h,
+ kit.max_weight, kit.rail, kit.carriages, kit.stays, 2.50, '[]'::JSONB
+FROM public.profile_systems s
+CROSS JOIN (VALUES
+    ('KIT-A-TURN','Kit practicable Aluminio 65','TURN',400,1100,500,2200,60,'dual',0,0),
+    ('KIT-A-TILT-TURN','Kit oscilobatiente Aluminio 65','TILT_TURN',450,1300,600,2200,90,'dual',0,1),
+    ('KIT-A-SLIDING','Kit corredera Aluminio 65','SLIDING',500,1800,600,2400,100,'dual',2,0),
+    ('KIT-A-AWNING','Kit proyectante Aluminio 65','AWNING',450,1400,400,1200,50,'dual',0,2),
+    ('KIT-A-DOOR','Kit puerta multipunto Aluminio 65','DOOR',750,1200,1900,2400,90,'dual',0,0)
+) AS kit(sku, name, opening_type, min_w, max_w, min_h, max_h, max_weight, rail, carriages, stays)
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name, opening_type = EXCLUDED.opening_type,
+    min_leaf_width_mm = EXCLUDED.min_leaf_width_mm, max_leaf_width_mm = EXCLUDED.max_leaf_width_mm,
+    min_leaf_height_mm = EXCLUDED.min_leaf_height_mm, max_leaf_height_mm = EXCLUDED.max_leaf_height_mm,
+    max_leaf_weight_kg = EXCLUDED.max_leaf_weight_kg, rail_type = EXCLUDED.rail_type,
+    carriages_qty = EXCLUDED.carriages_qty, stay_arms_qty = EXCLUDED.stay_arms_qty,
+    weight_kg = EXCLUDED.weight_kg, contents = EXCLUDED.contents;
+
+INSERT INTO public.hardware_kits (
+    id, system_id, org_id, sku, name, opening_type,
+    min_leaf_width_mm, max_leaf_width_mm, min_leaf_height_mm, max_leaf_height_mm,
+    max_leaf_weight_kg, rail_type, carriages_qty, stay_arms_qty, weight_kg, contents
+)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45/' || kit.sku), s.id, NULL,
+ kit.sku, kit.name, kit.opening_type, kit.min_w, kit.max_w, kit.min_h, kit.max_h,
+ kit.max_weight, kit.rail, kit.carriages, kit.stays, 2.50, '[]'::JSONB
+FROM public.profile_systems s
+CROSS JOIN (VALUES
+    ('KIT-G-TURN','Kit practicable Vidrio 45','TURN',400,1000,500,2100,50,'dual',0,0),
+    ('KIT-G-TILT-TURN','Kit oscilobatiente Vidrio 45','TILT_TURN',450,1200,600,2100,70,'dual',0,1),
+    ('KIT-G-SLIDING','Kit corredera Vidrio 45','SLIDING',600,1600,700,2300,80,'dual',2,0),
+    ('KIT-G-AWNING','Kit proyectante Vidrio 45','AWNING',500,1600,400,1100,45,'dual',0,2),
+    ('KIT-G-DOOR','Kit puerta Vidrio 45','DOOR',800,1100,1950,2300,70,'dual',0,0)
+) AS kit(sku, name, opening_type, min_w, max_w, min_h, max_h, max_weight, rail, carriages, stays)
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name, opening_type = EXCLUDED.opening_type,
+    min_leaf_width_mm = EXCLUDED.min_leaf_width_mm, max_leaf_width_mm = EXCLUDED.max_leaf_width_mm,
+    min_leaf_height_mm = EXCLUDED.min_leaf_height_mm, max_leaf_height_mm = EXCLUDED.max_leaf_height_mm,
+    max_leaf_weight_kg = EXCLUDED.max_leaf_weight_kg, rail_type = EXCLUDED.rail_type,
+    carriages_qty = EXCLUDED.carriages_qty, stay_arms_qty = EXCLUDED.stay_arms_qty,
+    weight_kg = EXCLUDED.weight_kg, contents = EXCLUDED.contents;
+
+INSERT INTO public.infill_articles (id, system_id, org_id, sku, name, kind, thickness_mm, weight_kg_m2)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/PANEL-SANDWICH-ALU-24'), s.id, NULL,
+ 'PANEL-SANDWICH-ALU-24', 'Panel sándwich Aluminio 24', 'SANDWICH_PANEL', 24.00, 9.5000
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (system_id, sku) DO UPDATE SET
+    name = EXCLUDED.name, kind = EXCLUDED.kind, thickness_mm = EXCLUDED.thickness_mm,
+    weight_kg_m2 = EXCLUDED.weight_kg_m2;
+
+INSERT INTO public.infill_articles (id, system_id, org_id, sku, name, kind, thickness_mm, weight_kg_m2)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45/PANEL-SANDWICH-GLASS-24'), s.id, NULL,
+ 'PANEL-SANDWICH-GLASS-24', 'Panel sándwich Vidrio 24', 'SANDWICH_PANEL', 24.00, 9.5000
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (system_id, sku) DO UPDATE SET
+    name = EXCLUDED.name, kind = EXCLUDED.kind, thickness_mm = EXCLUDED.thickness_mm,
+    weight_kg_m2 = EXCLUDED.weight_kg_m2;
+
+INSERT INTO public.inspector_rule_configs (id, system_id, org_id, rule_id, params)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/config/' || s.id::text || '/' || cfg.rule_id),
+ s.id, NULL, cfg.rule_id, cfg.params
+FROM public.profile_systems s CROSS JOIN (VALUES
+    ('R01', '{}'::JSONB),
+    ('R02', '{"min_ratio":"0.4000","max_ratio":"2.5000","suggested_ratio":"1.5000"}'::JSONB),
+    ('R03', '{"min_width_mm":"350.00","max_width_mm":"1600.00","max_height_mm":"2400.00"}'::JSONB),
+    ('R04', '{"monolithic_4_max_area_m2":"1.8000","dvh_4_any_4_max_area_m2":"2.6000"}'::JSONB),
+    ('R05', '{"span_trigger_mm":"1800.00"}'::JSONB),
+    ('R06', '{}'::JSONB),
+    ('R07', '{"width_trigger_mm":"800.00","required_bottom_drains":3}'::JSONB),
+    ('R08', '{"max_spacing_mm":"800.00"}'::JSONB),
+    ('R09', '{"white_limit_mm":"4000.00","foiled_limit_mm":"3000.00"}'::JSONB),
+    ('R10', '{"tolerance_mm":"1.50"}'::JSONB),
+    ('R11', '{"expected_mm":"12.00","tolerance_mm":"1.50","suggested_sash_overlap_mm":"8.00"}'::JSONB),
+    ('R12', '{"width_trigger_mm":"4500.00","minimum_ix_cm4":"45.0000"}'::JSONB),
+    ('R13', '{"height_trigger_mm":"1200.00","required_stay_arms":2}'::JSONB),
+    ('R14', '{"weight_trigger_kg":"150.00","required_carriages":4,"minimum_capacity_kg":"80.00"}'::JSONB)
+) cfg(rule_id, params)
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE
+ON CONFLICT (system_id, org_id, rule_id) DO NOTHING;
+
+INSERT INTO public.inspector_rule_configs (id, system_id, org_id, rule_id, params)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/config/' || s.id::text || '/' || cfg.rule_id),
+ s.id, NULL, cfg.rule_id, cfg.params
+FROM public.profile_systems s CROSS JOIN (VALUES
+    ('R01', '{}'::JSONB),
+    ('R02', '{"min_ratio":"0.4000","max_ratio":"2.5000","suggested_ratio":"1.5000"}'::JSONB),
+    ('R03', '{"min_width_mm":"350.00","max_width_mm":"1600.00","max_height_mm":"2400.00"}'::JSONB),
+    ('R04', '{"monolithic_4_max_area_m2":"1.8000","dvh_4_any_4_max_area_m2":"2.6000"}'::JSONB),
+    ('R05', '{"span_trigger_mm":"1800.00"}'::JSONB),
+    ('R06', '{}'::JSONB),
+    ('R07', '{"width_trigger_mm":"800.00","required_bottom_drains":3}'::JSONB),
+    ('R08', '{"max_spacing_mm":"800.00"}'::JSONB),
+    ('R09', '{"white_limit_mm":"4000.00","foiled_limit_mm":"3000.00"}'::JSONB),
+    ('R10', '{"tolerance_mm":"1.50"}'::JSONB),
+    ('R11', '{"expected_mm":"12.00","tolerance_mm":"1.50","suggested_sash_overlap_mm":"8.00"}'::JSONB),
+    ('R12', '{"width_trigger_mm":"4500.00","minimum_ix_cm4":"45.0000"}'::JSONB),
+    ('R13', '{"height_trigger_mm":"1200.00","required_stay_arms":2}'::JSONB),
+    ('R14', '{"weight_trigger_kg":"150.00","required_carriages":4,"minimum_capacity_kg":"80.00"}'::JSONB)
+) cfg(rule_id, params)
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
+ON CONFLICT (system_id, org_id, rule_id) DO NOTHING;
+
+INSERT INTO public.profile_purchase_mappings
+ (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
+  purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' || article.id::text),
+ article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/physical/profile/' || article.id::text),
+ 'WHITE',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/cutting/DEMO'),
+ 1
+FROM public.profile_articles article
+JOIN public.profile_systems s ON s.id = article.system_id
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND article.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.profile_purchase_mappings
+ (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
+  purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' || article.id::text),
+ article.id, NULL, 'TEST-BUY-' || article.sku, 'SYNTHETIC TEST DATA', 'TEST-SUPPLIER', 'BAR',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/physical/profile/' || article.id::text),
+ 'WHITE',
+ uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/cutting/DEMO'),
+ 1
+FROM public.profile_articles article
+JOIN public.profile_systems s ON s.id = article.system_id
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND article.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.hardware_purchase_mappings
+ (id, hardware_kit_id, org_id, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/hardware/' || kit.id::text || '/V1'),
+ kit.id, NULL, 'TEST-BUY-' || kit.sku, 'SYNTHETIC TEST DATA', 'KIT', 1,
+ '{"source":"SYNTHETIC TEST DATA","mode":"KIT_ONLY"}'::jsonb
+FROM public.hardware_kits kit
+JOIN public.profile_systems s ON s.id = kit.system_id
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND kit.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.glass_purchase_mappings
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_65/DVH-24/V1'), s.id, NULL,
+ 'DVH-24', 'TEST-BUY-DVH-24', 'SYNTHETIC TEST DATA', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-16-4'
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.glass_purchase_mappings
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/ALU_65/MONO-5/V1'), s.id, NULL,
+ 'MONO-5', 'TEST-BUY-MONO-5', 'SYNTHETIC TEST DATA', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '5'
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.panel_purchase_authorities
+ (id, infill_article_id, org_id, purchasing_sku, manufacturer_name, supply_form, purchase_unit, version, provenance)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/panel/' || panel.id::text || '/V1'),
+ panel.id, NULL, 'TEST-BUY-' || panel.sku, 'SYNTHETIC TEST DATA', 'CUT_TO_SIZE', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+FROM public.infill_articles panel
+JOIN public.profile_systems s ON s.id = panel.system_id
+WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND panel.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.hardware_purchase_mappings
+ (id, hardware_kit_id, org_id, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/hardware/' || kit.id::text || '/V1'),
+ kit.id, NULL, 'TEST-BUY-' || kit.sku, 'SYNTHETIC TEST DATA', 'KIT', 1,
+ '{"source":"SYNTHETIC TEST DATA","mode":"KIT_ONLY"}'::jsonb
+FROM public.hardware_kits kit
+JOIN public.profile_systems s ON s.id = kit.system_id
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND kit.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.glass_purchase_mappings
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/DVH-28/V1'), s.id, NULL,
+ 'DVH-28', 'TEST-BUY-DVH-28', 'SYNTHETIC TEST DATA', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-20-4'
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.glass_purchase_mappings
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/DVH-32/V1'), s.id, NULL,
+ 'DVH-32', 'TEST-BUY-DVH-32', 'SYNTHETIC TEST DATA', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '4-24-4'
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.glass_purchase_mappings
+ (id, system_id, org_id, technical_sku, purchasing_sku, manufacturer_name, purchase_unit, version, provenance, glass_spec)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/glass/GLASS_45/MONO-8/V1'), s.id, NULL,
+ 'MONO-8', 'TEST-BUY-MONO-8', 'SYNTHETIC TEST DATA', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb, '8'
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.panel_purchase_authorities
+ (id, infill_article_id, org_id, purchasing_sku, manufacturer_name, supply_form, purchase_unit, version, provenance)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/panel/' || panel.id::text || '/V1'),
+ panel.id, NULL, 'TEST-BUY-' || panel.sku, 'SYNTHETIC TEST DATA', 'CUT_TO_SIZE', 'EA', 1,
+ '{"source":"SYNTHETIC TEST DATA","certified":"false"}'::jsonb
+FROM public.infill_articles panel
+JOIN public.profile_systems s ON s.id = panel.system_id
+WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND panel.org_id IS NULL
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.manufacturing_placement_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/placement/ALU_65/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "ALU_65_PLACEMENT_V1", "version": 1, "sliding_leaf_offsets": {"L1": {"x_mm": "0.00", "y_mm": "0.00"}, "L2": {"x_mm": "940.00", "y_mm": "0.00"}}, "sliding_infill_offsets": {"L1": {"x_mm": "70.00", "y_mm": "70.00"}, "L2": {"x_mm": "70.00", "y_mm": "70.00"}}, "bead_offsets": {"TOP": {"x_mm": "0.00", "y_mm": "0.00"}, "RIGHT": {"x_mm": "0.00", "y_mm": "0.00"}, "BOTTOM": {"x_mm": "0.00", "y_mm": "0.00"}, "LEFT": {"x_mm": "0.00", "y_mm": "0.00"}}}'::jsonb
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.handle_requirement_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/handles/ALU_65/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "ALU_65_HANDLES_V1", "version": 1, "slots": [{"opening_type": "TURN_LEFT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TURN_RIGHT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TILT_TURN_LEFT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TILT_TURN_RIGHT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "SLIDING_2L", "leaf_slot": "L1", "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "SLIDING_2L", "leaf_slot": "L2", "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "AWNING", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "DOOR_ENTRY", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}]}'::jsonb
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.reinforcement_cut_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/reinforcement-cuts/ALU_65/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "ALU_65_REINFORCEMENT_CUT_V1", "version": 1, "rules": [{"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "SASH", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_V", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_H", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}]}'::jsonb
+FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.manufacturing_placement_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/placement/GLASS_45/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "GLASS_45_PLACEMENT_V1", "version": 1, "sliding_leaf_offsets": {"L1": {"x_mm": "0.00", "y_mm": "0.00"}, "L2": {"x_mm": "940.00", "y_mm": "0.00"}}, "sliding_infill_offsets": {"L1": {"x_mm": "70.00", "y_mm": "70.00"}, "L2": {"x_mm": "70.00", "y_mm": "70.00"}}, "bead_offsets": {"TOP": {"x_mm": "0.00", "y_mm": "0.00"}, "RIGHT": {"x_mm": "0.00", "y_mm": "0.00"}, "BOTTOM": {"x_mm": "0.00", "y_mm": "0.00"}, "LEFT": {"x_mm": "0.00", "y_mm": "0.00"}}}'::jsonb
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.handle_requirement_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/handles/GLASS_45/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "GLASS_45_HANDLES_V1", "version": 1, "slots": [{"opening_type": "TURN_LEFT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TURN_RIGHT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TILT_TURN_LEFT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "TILT_TURN_RIGHT", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "SLIDING_2L", "leaf_slot": "L1", "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "SLIDING_2L", "leaf_slot": "L2", "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "AWNING", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}, {"opening_type": "DOOR_ENTRY", "leaf_slot": null, "handle_domain_slot": "PRIMARY", "host_member_side": "RIGHT", "horizontal_reference": "HOST_MEMBER_AXIS", "horizontal_offset_mm": "-10.00", "permitted_vertical_references": ["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"], "mounting_min_from_leaf_top_mm": "0.00", "mounting_max_from_leaf_top_mm": "3000.00"}]}'::jsonb
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.reinforcement_cut_policies (id, system_id, org_id, version, authority)
+SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/reinforcement-cuts/GLASS_45/V1'), s.id, NULL, 1,
+ '{"schema_version": 1, "policy_id": "GLASS_45_REINFORCEMENT_CUT_V1", "version": 1, "rules": [{"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "SASH", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_V", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_H", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}]}'::jsonb
+FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
+ON CONFLICT (id) DO NOTHING;
 
 COMMIT;

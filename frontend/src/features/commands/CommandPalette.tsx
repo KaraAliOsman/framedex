@@ -4,7 +4,7 @@ import "./commands.css";
 
 import { t } from "../../i18n/es-CL";
 import { useCommandSurface } from "./registry";
-import type { CommandDefinition, CommandParam } from "./types";
+import type { CommandParam, ResolvedCommand } from "./types";
 
 export interface NavCommandItem {
   to: string;
@@ -41,7 +41,7 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const [pending, setPending] = useState<{
-    command: CommandDefinition;
+    command: ResolvedCommand;
     paramIndex: number;
     args: Record<string, string>;
   } | null>(null);

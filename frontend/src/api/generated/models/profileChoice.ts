@@ -9,4 +9,7 @@
 export interface ProfileChoice {
   sku: string;
   role: string;
+  name: string;
+  material: string;
+  face_width_mm: string;
 }

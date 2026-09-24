@@ -488,8 +488,9 @@ def test_backend_readiness_excludes_incomplete_system(documentary_tenant):
     with as_user(users["OWNER"]):
         readiness = catalog_readiness(system, org)
         assert not readiness["quote_ready"]
-        assert "manufacturing" in readiness["reasons"]
-        assert "inspection" in readiness["reasons"]
+        # The clone carries the full technical catalog — only fabrication
+        # authorities and manufacturing policies stay incomplete.
+        assert readiness["reasons"] == ["manufacturing"]
         assert not catalog_readiness(system, other)["quote_ready"]
         demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
         assert catalog_readiness(demo, org)["quote_ready"]
@@ -537,20 +538,12 @@ def test_catalog_reservation_requires_editing_membership(documentary_tenant, cas
 
 
 def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
-    import json
     from backend.tests.integration.catalog_fixture import copy_fixed_catalog
     from catalogs.readiness import catalog_readiness
-    from pricing.repository import rows, json_text
+    from pricing.repository import rows
     org, _, users, _ = documentary_tenant
+    # The clone already carries the system's glass purchase authorities.
     system = copy_fixed_catalog(org)
-    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
-    for row in rows("SELECT * FROM public.glass_purchase_mappings WHERE system_id=%s", [demo]):
-        if isinstance(row["provenance"], str):
-            row["provenance"] = json.loads(row["provenance"])
-        row.update(id=uuid4(), system_id=system, org_id=org)
-        one("INSERT INTO public.glass_purchase_mappings SELECT "
-            "(jsonb_populate_record(NULL::public.glass_purchase_mappings,%s::jsonb)).* RETURNING id",
-            [json_text(row)])
     one("UPDATE public.profile_articles SET reinforcement_sku=NULL "
         "WHERE system_id=%s AND role='FRAME' RETURNING id", [system])
     with as_user(users["OWNER"]):
@@ -558,3 +551,72 @@ def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
     rows("DELETE FROM public.reinforcement_articles WHERE system_id=%s RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "purchase" in catalog_readiness(system, org)["reasons"]
+
+
+@pytest.mark.parametrize("column", ["welding_loss_mm", "reinforcement_gap_mm"])
+def test_readiness_flags_missing_fabrication_authority(documentary_tenant, column):
+    """A PVC catalog that never declared weld loss or reinforcement gap must
+    read as incomplete — the alternative is a quote that fails mid-geometry."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows(f"UPDATE public.profile_articles SET {column}=NULL "
+         "WHERE system_id=%s RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" in catalog_readiness(system, org)["reasons"]
+
+
+def test_readiness_skips_unwelded_and_fabrication_free_articles(documentary_tenant):
+    """Readiness mirrors the engine's consumption rules: a THRESHOLD is appended
+    unwelded, and leaf weight never reads profile mass on a welded system — so
+    UNKNOWN there must not block an otherwise complete PVC catalog."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET welding_loss_mm=NULL,"
+         "reinforcement_gap_mm=NULL WHERE system_id=%s AND role='THRESHOLD'"
+         " RETURNING id", [system])
+    rows("UPDATE public.profile_articles SET weight_kg_m=NULL"
+         " WHERE system_id=%s RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" not in catalog_readiness(system, org)["reasons"]
+
+
+def test_readiness_flags_reinforced_coupler_fabrication(documentary_tenant):
+    """A reinforced coupler runs reinforcement_cut_length even though it loads
+    outside the effective role map — UNKNOWN weld/gap on it must block."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org)
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET reinforcement_sku='ST-TEST',"
+         " reinforcement_gap_mm=NULL WHERE system_id=%s AND role='COUPLER'"
+         " RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        assert "fabrication" in catalog_readiness(system, org)["reasons"]
+    rows("UPDATE public.profile_articles SET reinforcement_sku=''"
+         " WHERE system_id=%s AND role='COUPLER' RETURNING id", [system])
+    with as_user(users["OWNER"]):
+        # A blank SKU is unreinforced — the engine skips its steel cut math,
+        # so UNKNOWN weld/gap must not block the whole catalog.
+        assert "fabrication" not in catalog_readiness(system, org)["reasons"]
+
+
+@pytest.mark.parametrize("role,flagged", [("SASH", True), ("FRAME", False)])
+def test_readiness_nonpvc_weight_scoped_to_leaf_articles(documentary_tenant, role, flagged):
+    """Non-PVC mass is consumed only by leaf weight, so only the effective
+    SASH's missing density flags fabrication — a frame's does not."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    system = copy_fixed_catalog(org, code="ALU_65")
+    from pricing.repository import rows
+    rows("UPDATE public.profile_articles SET weight_kg_m=NULL"
+         " WHERE system_id=%s AND role=%s RETURNING id", [system, role])
+    with as_user(users["OWNER"]):
+        assert ("fabrication" in catalog_readiness(system, org)["reasons"]) is flagged

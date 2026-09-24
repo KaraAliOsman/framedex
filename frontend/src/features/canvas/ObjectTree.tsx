@@ -1,0 +1,94 @@
+import { useState, type JSX } from "react";
+
+import type { TreeNode } from "./objectTree";
+
+function TreeRow({
+  node,
+  depth,
+  selection,
+  onSelect,
+}: {
+  node: TreeNode;
+  depth: number;
+  selection: string | null;
+  onSelect(selectId: string): void;
+}): JSX.Element {
+  const [open, setOpen] = useState(true);
+  const selected = node.selectId !== null && node.selectId === selection;
+  const expandable = node.children.length > 0;
+  return (
+    <li role="treeitem" aria-expanded={expandable ? open : undefined} aria-selected={selected}>
+      <div
+        className={`tree-row tree-row--${node.kind}`}
+        style={{ paddingLeft: `${6 + depth * 14}px` }}
+      >
+        {expandable ? (
+          <button
+            type="button"
+            className="tree-disclosure"
+            aria-label={open ? "−" : "+"}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+              <path d={open ? "M1 2.5h6L4 6z" : "M2.5 1l3.5 3-3.5 3z"} fill="currentColor" />
+            </svg>
+          </button>
+        ) : (
+          <span className="tree-disclosure tree-disclosure--leaf" />
+        )}
+        <button
+          type="button"
+          className={`tree-label${selected ? " is-selected" : ""}${node.selectId === null ? " is-static" : ""}`}
+          onClick={() => {
+            if (node.selectId !== null) onSelect(node.selectId);
+          }}
+        >
+          <span className="tree-label__text">{node.label}</span>
+          {node.detail && <span className="tree-label__detail">{node.detail}</span>}
+          {node.severity && (
+            <span
+              className={`tree-severity tree-severity--${node.severity}`}
+              aria-label={node.severity}
+            />
+          )}
+        </button>
+      </div>
+      {expandable && open && (
+        <ul role="group" className="tree-children">
+          {node.children.map((child) => (
+            <TreeRow
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selection={selection}
+              onSelect={onSelect}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+export function ObjectTree({
+  root,
+  selection,
+  onSelect,
+  title,
+}: {
+  root: TreeNode;
+  selection: string | null;
+  onSelect(selectId: string): void;
+  title: string;
+}): JSX.Element {
+  return (
+    <nav className="object-tree" aria-label={title}>
+      <h3 className="object-tree__title">{title}</h3>
+      <ul role="tree" className="tree-root">
+        {root.children.map((node) => (
+          <TreeRow key={node.id} node={node} depth={0} selection={selection} onSelect={onSelect} />
+        ))}
+      </ul>
+    </nav>
+  );
+}

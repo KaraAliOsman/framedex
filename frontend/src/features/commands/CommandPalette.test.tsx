@@ -6,11 +6,11 @@ import { afterEach, expect, it, vi } from "vitest";
 import { t } from "../../i18n/es-CL";
 import { CommandPalette } from "./CommandPalette";
 import { useRegisterCommands } from "./registry";
-import type { CommandDefinition } from "./types";
+import type { ResolvedCommand } from "./types";
 
 afterEach(cleanup);
 
-function Harness({ commands }: { commands: CommandDefinition[] }) {
+function Harness({ commands }: { commands: ResolvedCommand[] }) {
   const surface = useMemo(() => ({ commands }), [commands]);
   useRegisterCommands(surface);
   const [navigated, setNavigated] = useState("");

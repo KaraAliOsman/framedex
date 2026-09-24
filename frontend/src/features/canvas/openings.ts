@@ -1,5 +1,7 @@
-/** Opening types offered by the editors and the command palette. */
-export const OPENING_OPTIONS = [
+import type { TranslationKey } from "../../i18n/es-CL";
+import type { Opening } from "./intentEditing";
+
+export const OPENING_OPTIONS: readonly [Opening, TranslationKey][] = [
   ["FIXED", "intent.fixed"],
   ["TURN_LEFT", "intent.turnLeft"],
   ["TURN_RIGHT", "intent.turnRight"],
@@ -7,5 +9,8 @@ export const OPENING_OPTIONS = [
   ["TILT_TURN_RIGHT", "intent.tiltRight"],
   ["AWNING", "intent.awning"],
   ["SLIDING_2L", "intent.sliding"],
+  ["SLIDING_3L", "intent.sliding3"],
+  ["SLIDING_4L", "intent.sliding4"],
+  ["SLIDING", "intent.slidingLayout"],
   ["DOOR_ENTRY", "intent.door"],
-] as const;
+];
