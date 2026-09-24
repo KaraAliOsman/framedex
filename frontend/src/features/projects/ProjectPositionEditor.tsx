@@ -491,62 +491,28 @@ function PositionWorkspace({
     setLibraryOpen(false);
     onAssemblyChanged();
   };
-  // Position metadata lives in the right inspector column when no element is
-  // selected: system/materials is edited in context, not as a permanent form.
+  // Overview-level position facts — the editable fields live in the
+  // .position-head strip; this card answers "what is this vano" at a glance.
+  const systemName = systems.data?.find((system) => system.id === inputs.systemId)?.name ?? "—";
   const positionPanel = (
     <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
       <header className="assembly-inspector__header">
         <h4>{t("projects.positionData")}</h4>
       </header>
-      <details className="inspector-section" open>
-        <summary>{t("projects.identification")}</summary>
-        <fieldset disabled={busy}>
-          <label className="assembly-field">
-            <span>{t("projects.location")}</span>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} />
-          </label>
-          <label className="assembly-field">
-            <span>{t("pricing.quantity")}</span>
-            <input
-              inputMode="numeric"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-          </label>
-        </fieldset>
-      </details>
-      <details className="inspector-section" open>
-        <summary>{t("projects.system")}</summary>
-        <fieldset disabled={busy}>
-          <select
-            className="assembly-select"
-            aria-label={t("projects.system")}
-            value={systemId}
-            onChange={(e) => {
-              const next = e.target.value || null;
-              if (inputs.systemId !== next) {
-                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                setMessage("");
-              }
-            }}
-          >
-            <option value="">{t("projects.chooseSystem")}</option>
-            {systems.data
-              ?.filter((system) => system.quote_ready)
-              .map((system) => (
-                <option key={system.id} value={system.id}>
-                  {system.name}
-                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
-                </option>
-              ))}
-          </select>
-          {(systems.isError || options.isError) && <p role="alert">{t("projects.catalogError")}</p>}
-          {(systems.isPending || (systemId && options.isPending)) && (
-            <p role="status">{t("projects.loading")}</p>
-          )}
-          <p className="assembly-hint">{t("projects.colorWhite")}</p>
-        </fieldset>
-      </details>
+      <dl className="inspector-summary__list">
+        <div className="inspector-summary__row">
+          <dt>{t("projects.location")}</dt>
+          <dd>{location.trim() || "—"}</dd>
+        </div>
+        <div className="inspector-summary__row">
+          <dt>{t("pricing.quantity")}</dt>
+          <dd>{quantity || "1"}</dd>
+        </div>
+        <div className="inspector-summary__row">
+          <dt>{t("projects.system")}</dt>
+          <dd>{systemName}</dd>
+        </div>
+      </dl>
     </section>
   );
   return (
@@ -573,6 +539,56 @@ function PositionWorkspace({
         </button>
       </header>
       {message && <p role="status">{message}</p>}
+      <fieldset className="position-head" disabled={busy}>
+        <label className="position-head__field">
+          <span>{t("projects.location")}</span>
+          <input value={location} onChange={(e) => setLocation(e.target.value)} />
+        </label>
+        <label className="position-head__field">
+          <span>{t("pricing.quantity")}</span>
+          <input
+            inputMode="numeric"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+        </label>
+        <label className="position-head__field position-head__field--wide">
+          <span>{t("projects.system")}</span>
+          <select
+            className="assembly-select"
+            aria-label={t("projects.system")}
+            value={systemId}
+            onChange={(e) => {
+              const next = e.target.value || null;
+              if (inputs.systemId !== next) {
+                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                setMessage("");
+              }
+            }}
+          >
+            <option value="">{t("projects.chooseSystem")}</option>
+            {systems.data
+              ?.filter((system) => system.quote_ready)
+              .map((system) => (
+                <option key={system.id} value={system.id}>
+                  {system.name}
+                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                </option>
+              ))}
+          </select>
+        </label>
+        {(systems.isError || options.isError) && (
+          <p className="position-head__alert" role="alert">
+            {t("projects.catalogError")}
+          </p>
+        )}
+        {(systems.isPending || (systemId && options.isPending)) && (
+          <p className="position-head__alert" role="status">
+            {t("projects.loading")}
+          </p>
+        )}
+        <p className="position-head__hint">{t("projects.colorWhite")}</p>
+      </fieldset>
       <div className="position-workspace">
         <details
           className="starter-library"

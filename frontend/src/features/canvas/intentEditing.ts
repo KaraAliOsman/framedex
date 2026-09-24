@@ -224,6 +224,14 @@ export function moveDivision(tree: IntentNode, divisionId: string, offset: strin
   return requestTree(replaceNode(tree, divisionId, { ...node, split_offset_mm: exactMm(offset) }));
 }
 
+/** Explicit per-bay edit: patch fields on one leaf without touching the
+ * rest of the tree — bay selection writes through the same request-tree
+ * normalization every other edit uses. */
+export function updateBay(tree: IntentNode, bayId: string, patch: Partial<IntentNode>): IntentNode {
+  const bay = selectedBay(tree, bayId);
+  return requestTree(replaceNode(tree, bayId, { ...bay, ...patch, id: bay.id, type: bay.type }));
+}
+
 /** Explicit user action replaces the layout while retaining the chosen infill. */
 export function singleBayTemplate(tree: IntentNode, bayId: string, opening: Opening): IntentNode {
   if (!OPENINGS.includes(opening)) throw new Error("unsupported_opening");

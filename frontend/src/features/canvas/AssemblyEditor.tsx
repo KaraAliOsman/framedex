@@ -30,8 +30,16 @@ import {
 } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
-import type { SlidingLayout, SplitType } from "./intentEditing";
-import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
+import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
+import {
+  intentBays,
+  isSlidingOpening,
+  resolvedSlidingLayout,
+  selectedBay,
+  topIntent,
+  updateBay,
+  SLIDING_PRESETS,
+} from "./intentEditing";
 import {
   addAdjacentUnit,
   equalizeCouplingAngles,
@@ -56,6 +64,7 @@ import {
   setCouplingAngle,
   setModuleOpening,
   setModuleSlidingLayout,
+  setModuleTree,
   setModuleWidth,
   setModuleFrameless,
   splitModuleBay,
@@ -602,6 +611,481 @@ function FramelessSection({
   );
 }
 
+/** Detail levels on the right rail — the same selection shows progressively
+ * more: identity & facts (overview), editable design intent (design), or the
+ * engine's manufacturing output (technical). */
+type DetailLevel = "overview" | "design" | "technical";
+
+const DETAIL_LEVELS: { level: DetailLevel; labelKey: TranslationKey }[] = [
+  { level: "overview", labelKey: "assembly.levelOverview" },
+  { level: "design", labelKey: "assembly.levelDesign" },
+  { level: "technical", labelKey: "assembly.levelTechnical" },
+];
+
+/** Sliding panel topology editor — shared by the module inspector (primary
+ * bay) and the bay inspector (the leaf the layout actually lives on). */
+function SlidingPanelsEditor({
+  instanceId,
+  layout,
+  busy,
+  onChange,
+}: {
+  instanceId: string;
+  layout: SlidingLayout;
+  busy: boolean;
+  onChange(next: SlidingLayout): void;
+}): JSX.Element {
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.slidingLayout")}</summary>
+      <div className="inspector-field">
+        <label htmlFor={`tracks-${instanceId}`}>{t("assembly.slidingTracks")}</label>
+        <select
+          id={`tracks-${instanceId}`}
+          value={layout.tracks}
+          disabled={busy}
+          onChange={(event) => {
+            const tracks = Number(event.target.value);
+            onChange({
+              tracks,
+              panels: layout.panels.map((panel, index) =>
+                panel.kind === "MOVING" ? { ...panel, track: index % tracks } : panel,
+              ),
+            });
+          }}
+        >
+          {[1, 2, 3, 4]
+            .filter(
+              (count) =>
+                count === layout.tracks ||
+                count >=
+                  (layout.panels.filter((panel) => panel.kind === "MOVING").length > 1 ? 2 : 1),
+            )
+            .map((count) => (
+              <option key={count} value={count}>
+                {count}
+              </option>
+            ))}
+        </select>
+      </div>
+      <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>
+        {layout.panels.map((panel, index) => (
+          <li key={panel.slot} className="sliding-panel">
+            <span className="sliding-panel__slot">
+              {t("assembly.slidingPanel").replace("{index}", String(index + 1))}
+            </span>
+            <select
+              aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("intent.opening")}`}
+              value={panel.kind}
+              disabled={busy}
+              onChange={(event) => {
+                const kind = event.target.value as "MOVING" | "FIXED";
+                const panels = layout.panels.map((item, at) =>
+                  at === index
+                    ? {
+                        ...item,
+                        kind,
+                        track:
+                          kind === "MOVING"
+                            ? (item.track ?? index % Math.max(layout.tracks, 1))
+                            : null,
+                      }
+                    : item,
+                );
+                onChange({ ...layout, panels });
+              }}
+            >
+              <option value="MOVING">{t("assembly.panelMoving")}</option>
+              <option value="FIXED">{t("assembly.panelFixed")}</option>
+            </select>
+            {panel.kind === "MOVING" && (
+              <select
+                aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
+                value={panel.track ?? 0}
+                disabled={busy}
+                onChange={(event) => {
+                  const track = Number(event.target.value);
+                  const panels = layout.panels.map((item, at) =>
+                    at === index ? { ...item, track } : item,
+                  );
+                  onChange({ ...layout, panels });
+                }}
+              >
+                {Array.from({ length: layout.tracks }, (_, track) => (
+                  <option key={track} value={track}>
+                    {t("assembly.panelTrack")} {track + 1}
+                  </option>
+                ))}
+              </select>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy || layout.panels.length >= 8}
+          onClick={() =>
+            onChange({
+              ...layout,
+              panels: [
+                ...layout.panels,
+                {
+                  slot: `S${layout.panels.length + 1}`,
+                  kind: "MOVING",
+                  track: layout.panels.length % Math.max(layout.tracks, 1),
+                },
+              ],
+            })
+          }
+        >
+          {t("assembly.addPanel")}
+        </button>
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy || layout.panels.length <= 1}
+          onClick={() =>
+            onChange({
+              ...layout,
+              panels: layout.panels.slice(0, -1),
+            })
+          }
+        >
+          {t("assembly.removePanel")}
+        </button>
+      </div>
+    </details>
+  );
+}
+
+/** A bay (paño) is the leaf granularity the workshop thinks in — opening,
+ * glazing and handle placement edit on this leaf alone, through the same
+ * normalized request-tree every other canvas edit uses. */
+function BayInspector({
+  module,
+  bay,
+  product,
+  glassSkus,
+  glazingThicknesses,
+  panelSkus,
+  busy,
+  commit,
+  onAskAssistant,
+}: {
+  module: ProductModuleJson;
+  bay: IntentNode;
+  product: ProductJson;
+  glassSkus: string[];
+  glazingThicknesses: string[];
+  panelSkus: string[];
+  busy: boolean;
+  commit(next: ProductJson): void;
+  onAskAssistant?(): void;
+}): JSX.Element {
+  const opening = bay.opening_type ?? "FIXED";
+  const isDoor = opening === "DOOR_ENTRY";
+  const slidingLayout = resolvedSlidingLayout(bay);
+  const bays = intentBays(module.tree);
+  const bayOrdinal = bays.findIndex((node) => node.id === bay.id) + 1;
+  const moduleOrdinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
+  const isTopBay = topIntent(module.tree).id === bay.id;
+
+  function patchBay(patch: Partial<IntentNode>): void {
+    commit(setModuleTree(product, module.id, updateBay(module.tree, bay.id, patch)));
+  }
+
+  function pickOpening(next: Opening): void {
+    if (next === "DOOR_ENTRY" && !isTopBay) return;
+    // Mirrors setModuleOpening's normalization at leaf scope: a sliding pick
+    // seeds the 2-leaf preset, a non-door bay never keeps a panel sku.
+    patchBay({
+      opening_type: next,
+      sliding_layout: next === "SLIDING" ? structuredClone(SLIDING_PRESETS.SLIDING_2L!) : null,
+      panel_article_sku: next === "DOOR_ENTRY" ? (bay.panel_article_sku ?? null) : null,
+    });
+  }
+
+  return (
+    <section className="assembly-inspector" aria-label={t("assembly.bay")}>
+      <header className="assembly-inspector__header">
+        <h4>
+          {t("assembly.bay")} {bayOrdinal} · {t("assembly.module")} {moduleOrdinal}
+        </h4>
+      </header>
+      <details className="inspector-section" open>
+        <summary>{t("assembly.opening")}</summary>
+        <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
+          {OPENING_OPTIONS.map(([value, labelKey]) => {
+            const doorBlocked = value === "DOOR_ENTRY" && !isTopBay;
+            return (
+              <button
+                key={value}
+                type="button"
+                className={`opening-choice${opening === value ? " is-active" : ""}`}
+                title={doorBlocked ? t("assembly.doorTopOnly") : t(labelKey)}
+                aria-label={t(labelKey)}
+                aria-pressed={opening === value}
+                disabled={busy || doorBlocked}
+                onClick={() => pickOpening(value)}
+              >
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                  <rect className="opening-choice__frame" x={4} y={4} width={92} height={92} />
+                  <OpeningGlyph opening={value} x={4} y={4} w={92} h={92} />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+        {isDoor && !isTopBay && <p className="assembly-hint">{t("assembly.doorTopOnly")}</p>}
+      </details>
+      {slidingLayout && (
+        <SlidingPanelsEditor
+          instanceId={bay.id}
+          layout={slidingLayout}
+          busy={busy}
+          onChange={(next) => commit(setModuleSlidingLayout(product, module.id, next, bay.id))}
+        />
+      )}
+      <details className="inspector-section" open>
+        <summary>{t("inspector.glazing")}</summary>
+        <label className="assembly-field">
+          <span>{t("assembly.glassThickness")}</span>
+          <select
+            aria-label={t("assembly.glassThickness")}
+            disabled={busy}
+            value={bay.glass_thickness_mm ?? ""}
+            onChange={(event) =>
+              patchBay({
+                glass_thickness_mm: event.target.value || null,
+                glass_spec: bay.glass_spec ?? (event.target.value || null),
+              })
+            }
+          >
+            <option value="">{t("assembly.chooseThickness")}</option>
+            {glazingThicknesses.map((thickness) => (
+              <option key={thickness} value={thickness}>
+                {thickness} mm
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="assembly-field">
+          <span>{t("assembly.glass")}</span>
+          <select
+            aria-label={t("assembly.glass")}
+            disabled={busy}
+            value={bay.glass_article_sku ?? ""}
+            onChange={(event) => patchBay({ glass_article_sku: event.target.value || null })}
+          >
+            <option value="">{t("assembly.noGlass")}</option>
+            {glassSkus.map((sku) => (
+              <option key={sku} value={sku}>
+                {sku}
+              </option>
+            ))}
+          </select>
+        </label>
+        {isDoor && (
+          <label className="assembly-field">
+            <span>{t("assembly.panel")}</span>
+            <select
+              aria-label={t("assembly.panel")}
+              disabled={busy}
+              value={bay.panel_article_sku ?? ""}
+              onChange={(event) => patchBay({ panel_article_sku: event.target.value || null })}
+            >
+              <option value="">{t("assembly.noPanel")}</option>
+              {panelSkus.map((sku) => (
+                <option key={sku} value={sku}>
+                  {sku}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <DraftField
+          label={t("quotation.handleHeight")}
+          value={bay.handle_height_mm ?? ""}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => patchBay({ handle_height_mm: value })}
+        />
+      </details>
+      {onAskAssistant && (
+        <div className="inspector-actions">
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Overview level: what this element IS, not how to change it. */
+function ElementSummary({ title, rows }: { title: string; rows: [string, string][] }): JSX.Element {
+  return (
+    <section className="assembly-inspector inspector-summary">
+      <h4 className="inspector-summary__title">{title}</h4>
+      <dl className="inspector-summary__list">
+        {rows.map(([label, value]) => (
+          <div key={label} className="inspector-summary__row">
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/** Technical level: the engine's manufacturing output for the selection —
+ * the module's cuts/glass/hardware, or just the pieces tagged to one bay. */
+function TechnicalPanel({
+  evaluation,
+  moduleId,
+  bayId,
+  moduleIndex,
+}: {
+  evaluation: EngineAssemblyCalculateResponse | null;
+  moduleId?: string;
+  bayId?: string | null;
+  moduleIndex?: (moduleId: string) => number;
+}): JSX.Element {
+  const entries = (evaluation?.modules ?? []).filter(
+    (entry) => !moduleId || entry.module_id === moduleId,
+  );
+  if (entries.length === 0) {
+    return (
+      <section className="assembly-inspector">
+        <p className="assembly-hint">{t("assembly.techPending")}</p>
+      </section>
+    );
+  }
+  return (
+    <div className="tech-panel">
+      {entries.map((entry) => {
+        const result = entry.result;
+        const ordinal = moduleIndex ? moduleIndex(entry.module_id) : 0;
+        const heading = `${t("assembly.module")} ${ordinal}`;
+        if (!result) {
+          return (
+            <section key={entry.module_id} className="assembly-inspector">
+              <h4 className="inspector-summary__title">{heading}</h4>
+              <p className="assembly-hint">{t("assembly.techUnavailable")}</p>
+            </section>
+          );
+        }
+        const cuts = result.profile_cuts.filter((cut) => !bayId || cut.bay_id === bayId);
+        const glasses = result.glasses.filter((glass) => !bayId || glass.bay_id === bayId);
+        const panels = result.panels.filter((panel) => !bayId || panel.bay_id === bayId);
+        const fittings = result.fittings.filter((fit) => !bayId || fit.bay_id === bayId);
+        const empty =
+          cuts.length === 0 && glasses.length === 0 && panels.length === 0 && fittings.length === 0;
+        return (
+          <section key={entry.module_id} className="assembly-inspector">
+            <h4 className="inspector-summary__title">{heading}</h4>
+            {empty && <p className="assembly-hint">{t("assembly.techEmpty")}</p>}
+            {cuts.length > 0 && (
+              <details className="inspector-section" open>
+                <summary>{t("assembly.techCuts")}</summary>
+                <table className="tech-table">
+                  <thead>
+                    <tr>
+                      <th>{t("assembly.techSku")}</th>
+                      <th>{t("assembly.techLength")}</th>
+                      <th>{t("assembly.techQty")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cuts.map((cut, index) => (
+                      <tr key={`${cut.sku}-${index}`}>
+                        <td>{cut.sku}</td>
+                        <td>{Number(cut.length_mm).toFixed(0)}</td>
+                        <td>{cut.qty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            )}
+            {glasses.length > 0 && (
+              <details className="inspector-section" open>
+                <summary>{t("assembly.techGlasses")}</summary>
+                <table className="tech-table">
+                  <thead>
+                    <tr>
+                      <th>{t("assembly.glass")}</th>
+                      <th>{t("projects.dims")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {glasses.map((glass, index) => (
+                      <tr key={`${glass.bay_id}-${index}`}>
+                        <td>{glass.article_sku ?? "—"}</td>
+                        <td>
+                          {Number(glass.width_mm).toFixed(0)} × {Number(glass.height_mm).toFixed(0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            )}
+            {panels.length > 0 && (
+              <details className="inspector-section" open>
+                <summary>{t("assembly.techPanels")}</summary>
+                <table className="tech-table">
+                  <thead>
+                    <tr>
+                      <th>{t("assembly.panel")}</th>
+                      <th>{t("projects.dims")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {panels.map((panel, index) => (
+                      <tr key={`${panel.bay_id}-${index}`}>
+                        <td>{panel.sku}</td>
+                        <td>
+                          {Number(panel.width_mm).toFixed(0)} × {Number(panel.height_mm).toFixed(0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            )}
+            {fittings.length > 0 && (
+              <details className="inspector-section" open>
+                <summary>{t("assembly.techFittings")}</summary>
+                <table className="tech-table">
+                  <thead>
+                    <tr>
+                      <th>{t("assembly.techSku")}</th>
+                      <th>{t("assembly.techQty")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fittings.map((fit, index) => (
+                      <tr key={`${fit.sku}-${index}`}>
+                        <td>{fit.sku}</td>
+                        <td>{fit.qty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 function ModuleInspector({
   module,
   product,
@@ -712,130 +1196,13 @@ function ModuleInspector({
           </button>
         </div>
       </details>
-      {slidingLayout && (
-        <details className="inspector-section" open>
-          <summary>{t("assembly.slidingLayout")}</summary>
-          <div className="inspector-field">
-            <label htmlFor={`tracks-${module.id}`}>{t("assembly.slidingTracks")}</label>
-            <select
-              id={`tracks-${module.id}`}
-              value={slidingLayout.tracks}
-              disabled={busy}
-              onChange={(event) => {
-                const tracks = Number(event.target.value);
-                commitSlidingLayout({
-                  tracks,
-                  panels: slidingLayout.panels.map((panel, index) =>
-                    panel.kind === "MOVING" ? { ...panel, track: index % tracks } : panel,
-                  ),
-                });
-              }}
-            >
-              {[1, 2, 3, 4]
-                .filter(
-                  (count) =>
-                    count === slidingLayout.tracks ||
-                    count >=
-                      (slidingLayout.panels.filter((panel) => panel.kind === "MOVING").length > 1
-                        ? 2
-                        : 1),
-                )
-                .map((count) => (
-                  <option key={count} value={count}>
-                    {count}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>
-            {slidingLayout.panels.map((panel, index) => (
-              <li key={panel.slot} className="sliding-panel">
-                <span className="sliding-panel__slot">
-                  {t("assembly.slidingPanel").replace("{index}", String(index + 1))}
-                </span>
-                <select
-                  aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("intent.opening")}`}
-                  value={panel.kind}
-                  disabled={busy}
-                  onChange={(event) => {
-                    const kind = event.target.value as "MOVING" | "FIXED";
-                    const panels = slidingLayout.panels.map((item, at) =>
-                      at === index
-                        ? {
-                            ...item,
-                            kind,
-                            track:
-                              kind === "MOVING"
-                                ? (item.track ?? index % Math.max(slidingLayout.tracks, 1))
-                                : null,
-                          }
-                        : item,
-                    );
-                    commitSlidingLayout({ ...slidingLayout, panels });
-                  }}
-                >
-                  <option value="MOVING">{t("assembly.panelMoving")}</option>
-                  <option value="FIXED">{t("assembly.panelFixed")}</option>
-                </select>
-                {panel.kind === "MOVING" && (
-                  <select
-                    aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
-                    value={panel.track ?? 0}
-                    disabled={busy}
-                    onChange={(event) => {
-                      const track = Number(event.target.value);
-                      const panels = slidingLayout.panels.map((item, at) =>
-                        at === index ? { ...item, track } : item,
-                      );
-                      commitSlidingLayout({ ...slidingLayout, panels });
-                    }}
-                  >
-                    {Array.from({ length: slidingLayout.tracks }, (_, track) => (
-                      <option key={track} value={track}>
-                        {t("assembly.panelTrack")} {track + 1}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div className="inspector-actions">
-            <button
-              type="button"
-              className="ghost-button"
-              disabled={busy || slidingLayout.panels.length >= 8}
-              onClick={() =>
-                commitSlidingLayout({
-                  ...slidingLayout,
-                  panels: [
-                    ...slidingLayout.panels,
-                    {
-                      slot: `S${slidingLayout.panels.length + 1}`,
-                      kind: "MOVING",
-                      track: slidingLayout.panels.length % Math.max(slidingLayout.tracks, 1),
-                    },
-                  ],
-                })
-              }
-            >
-              {t("assembly.addPanel")}
-            </button>
-            <button
-              type="button"
-              className="ghost-button"
-              disabled={busy || slidingLayout.panels.length <= 1}
-              onClick={() =>
-                commitSlidingLayout({
-                  ...slidingLayout,
-                  panels: slidingLayout.panels.slice(0, -1),
-                })
-              }
-            >
-              {t("assembly.removePanel")}
-            </button>
-          </div>
-        </details>
+      {slidingLayout && slidingBay && (
+        <SlidingPanelsEditor
+          instanceId={slidingBay.id}
+          layout={slidingLayout}
+          busy={busy}
+          onChange={commitSlidingLayout}
+        />
       )}
       <details className="inspector-section" open>
         <summary>{t("inspector.dimensions")}</summary>
@@ -1082,6 +1449,9 @@ export function AssemblyEditor({
   const members = useMemo(() => resolveMembers(options), [options]);
   const [tool, setTool] = useState<EditorTool>("select");
   const [treeOpen, setTreeOpen] = useState(true);
+  /** Right-rail detail level — overview/design/technical over the same
+   * selection; complexity stays hidden until the user asks for it. */
+  const [detail, setDetail] = useState<DetailLevel>("design");
   const [planOpen, setPlanOpen] = useState(true);
   /** Queued prompt for the assistant — "" means focus only. Every "…with
    * DEKOPEN" affordance funnels here; the human always confirms. */
@@ -1161,10 +1531,28 @@ export function AssemblyEditor({
   const couplings = product.assembly.couplings;
   const selectedModule = modules.find((module) => module.id === selection);
   const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
-  // isPending also holds while the query is disabled (no system/product yet):
-  // only an actual in-flight evaluation locks editing.
+  // Leaf granularity: canvas bay clicks and tree leaf rows select the
+  // composite "moduleId/bayId" — resolved back into (module, bay node) here.
+  const baySelection = selection?.includes("/") ? selection.split("/") : null;
+  const selectedBayModule = baySelection
+    ? modules.find((module) => module.id === baySelection[0])
+    : undefined;
+  const selectedBayNode = (() => {
+    if (!baySelection || !selectedBayModule) return null;
+    try {
+      return baySelection[1] !== undefined
+        ? selectedBay(selectedBayModule.tree, baySelection[1])
+        : null;
+    } catch {
+      return null;
+    }
+  })();
+  // isPending also holds while the query is disabled (no system/product yet).
+  // Evaluation is non-blocking: an in-flight recalc keeps the canvas live —
+  // react-query keys on the product so stale results never land on newer
+  // state, and save still requires the fresh engine verdict upstream.
   const evaluating = isPending && inputs.systemId !== null;
-  const busy = disabled || evaluating;
+  const busy = disabled;
   const mullionSkus: Partial<Record<SplitType, string>> = useMemo(
     () => ({
       SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
@@ -1228,11 +1616,17 @@ export function AssemblyEditor({
   // Labels derive from actual product membership — selection ids are
   // arbitrary strings, so a coupling legitimately named "coupling-x" must
   // still resolve (prefix sniffing would hide it).
+  const bayOrdinal =
+    selectedBayModule && selectedBayNode
+      ? intentBays(selectedBayModule.tree).findIndex((node) => node.id === selectedBayNode.id) + 1
+      : 0;
   const selectedLabel = selectedModule
     ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
-    : selectedCoupling
-      ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
-      : null;
+    : selectedBayModule && selectedBayNode
+      ? `${t("assembly.bay")} ${bayOrdinal} · ${t("assembly.module")} ${modules.findIndex((item) => item.id === selectedBayModule.id) + 1}`
+      : selectedCoupling
+        ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
+        : null;
 
   const divideToolType = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
 
@@ -1414,6 +1808,8 @@ export function AssemblyEditor({
             disabled={busy}
             divideTool={divideToolType}
             onSelectModule={pickModule}
+            onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
+            selectedBayId={selectedBayModule && selectedBayNode ? selectedBayNode.id : null}
             onContextMenuModule={(moduleId, pos) => {
               select(moduleId);
               setContextMenu(pos);
@@ -1520,7 +1916,100 @@ export function AssemblyEditor({
         </div>
       )}
       <div className="assembly-side">
-        {selectedModule ? (
+        <div className="detail-levels" role="group" aria-label={t("assembly.detailLevels")}>
+          {DETAIL_LEVELS.map(({ level, labelKey }) => (
+            <button
+              key={level}
+              type="button"
+              className={`detail-levels__btn${detail === level ? " is-active" : ""}`}
+              aria-pressed={detail === level}
+              onClick={() => setDetail(level)}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </div>
+        {detail === "technical" ? (
+          <TechnicalPanel
+            evaluation={evaluation}
+            moduleId={selectedBayModule?.id ?? selectedModule?.id}
+            bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
+            moduleIndex={(moduleId) => modules.findIndex((module) => module.id === moduleId) + 1}
+          />
+        ) : detail === "overview" ? (
+          selectedModule ? (
+            <ElementSummary
+              title={selectedLabel ?? t("assembly.module")}
+              rows={[
+                [
+                  t("inspector.dimensions"),
+                  `${Number(selectedModule.width_mm).toFixed(0)} × ${Number(selectedModule.height_mm).toFixed(0)} mm`,
+                ],
+                [
+                  t("assembly.opening"),
+                  t(
+                    OPENING_OPTIONS.find(
+                      ([value]) => value === moduleOpening(selectedModule),
+                    )?.[1] ?? "intent.fixed",
+                  ),
+                ],
+                [t("assembly.bayCount"), String(intentBays(selectedModule.tree).length)],
+                [
+                  t("assembly.glass"),
+                  [moduleGlassThicknessMm(selectedModule), moduleGlassSku(selectedModule)]
+                    .filter((value): value is string => value !== null && value !== "")
+                    .join(" · ") || "—",
+                ],
+              ]}
+            />
+          ) : selectedBayModule && selectedBayNode ? (
+            <ElementSummary
+              title={selectedLabel ?? t("assembly.bay")}
+              rows={[
+                [
+                  t("assembly.opening"),
+                  t(
+                    OPENING_OPTIONS.find(
+                      ([value]) => value === (selectedBayNode.opening_type ?? "FIXED"),
+                    )?.[1] ?? "intent.fixed",
+                  ),
+                ],
+                [
+                  t("assembly.glass"),
+                  [selectedBayNode.glass_thickness_mm, selectedBayNode.glass_article_sku]
+                    .filter((value): value is string => value != null && value !== "")
+                    .join(" · ") || "—",
+                ],
+                [
+                  t("quotation.handleHeight"),
+                  selectedBayNode.handle_height_mm ? `${selectedBayNode.handle_height_mm} mm` : "—",
+                ],
+                ...(selectedBayNode.opening_type === "DOOR_ENTRY"
+                  ? [
+                      [t("assembly.panel"), selectedBayNode.panel_article_sku ?? "—"] as [
+                        string,
+                        string,
+                      ],
+                    ]
+                  : []),
+              ]}
+            />
+          ) : selectedCoupling ? (
+            <ElementSummary
+              title={selectedLabel ?? t("assembly.coupling")}
+              rows={[
+                [t("assembly.angle"), `${selectedCoupling.angle_deg}°`],
+                [t("assembly.coupler"), selectedCoupling.coupler_profile_sku ?? "—"],
+              ]}
+            />
+          ) : (
+            (positionPanel ?? (
+              <section className="assembly-inspector">
+                <p className="assembly-hint">{t("assembly.elementHint")}</p>
+              </section>
+            ))
+          )
+        ) : selectedModule ? (
           <ModuleInspector
             module={selectedModule}
             product={product}
@@ -1530,6 +2019,22 @@ export function AssemblyEditor({
             panelSkus={panelSkus}
             mullionSkus={mullionSkus}
             couplerSkus={couplerSkus}
+            busy={busy}
+            commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
+          />
+        ) : selectedBayModule && selectedBayNode ? (
+          <BayInspector
+            module={selectedBayModule}
+            bay={selectedBayNode}
+            product={product}
+            glassSkus={glassSkus}
+            glazingThicknesses={options?.glazing_thicknesses ?? []}
+            panelSkus={panelSkus}
             busy={busy}
             commit={commit}
             onAskAssistant={
@@ -1553,11 +2058,9 @@ export function AssemblyEditor({
             }
           />
         ) : (
-          !positionPanel && (
-            <section className="assembly-inspector">
-              <p className="assembly-hint">{t("assembly.elementHint")}</p>
-            </section>
-          )
+          <section className="assembly-inspector">
+            <p className="assembly-hint">{t("assembly.elementHint")}</p>
+          </section>
         )}
         {positionPanel}
         {product && (

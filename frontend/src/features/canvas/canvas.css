@@ -1110,6 +1110,22 @@
   pointer-events: none;
 }
 
+/* Leaf-bay selection: pointer events turn on only while a select handler is
+   wired (armed divide tool keeps the module's click contract intact). */
+.module-bay.bay-pickable {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.bay-select-ring {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--theme-accent);
+  stroke-dasharray: 42 20;
+  stroke-width: 10;
+  vector-effect: non-scaling-stroke;
+}
+
 .dim-run {
   pointer-events: none;
 }
@@ -1204,6 +1220,95 @@
   font-size: 0.75rem;
   margin-bottom: 0.25rem;
   text-transform: uppercase;
+}
+
+/* Detail-level segmented control — overview/design/technical over the
+   same selection. Tokens only; matches the tool-strip language. */
+.detail-levels {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: var(--theme-surface);
+}
+
+.detail-levels__btn {
+  flex: 1;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--theme-text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.detail-levels__btn:hover {
+  color: var(--theme-text);
+}
+
+.detail-levels__btn.is-active {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+  font-weight: 600;
+}
+
+.inspector-summary {
+  padding: var(--space-3);
+}
+
+.inspector-summary__title {
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-2);
+}
+
+.inspector-summary__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.inspector-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.inspector-summary__row dt {
+  color: var(--theme-text-muted);
+  font-size: var(--text-sm);
+}
+
+.inspector-summary__row dd {
+  font-size: var(--text-sm);
+  margin: 0;
+  text-align: right;
+}
+
+.tech-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tech-table {
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+  width: 100%;
+}
+
+.tech-table th {
+  color: var(--theme-text-muted);
+  font-weight: 500;
+  text-align: left;
+}
+
+.tech-table th,
+.tech-table td {
+  border-bottom: 1px solid var(--theme-border-subtle);
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
 }
 
 .assembly-side {

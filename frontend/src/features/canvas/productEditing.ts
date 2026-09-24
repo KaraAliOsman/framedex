@@ -898,6 +898,18 @@ export function setCouplerSkuAll(product: ProductJson, sku: string | null): Prod
   };
 }
 
+/** Replace one module's parametric tree — bay-level edits land through
+ * updateBay upstream, this only swaps the validated result. */
+export function setModuleTree(
+  product: ProductJson,
+  moduleId: string,
+  tree: IntentNode,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  return replaceModule(product, moduleId, { ...module, tree });
+}
+
 export function setModuleOpening(
   product: ProductJson,
   moduleId: string,

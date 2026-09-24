@@ -57,7 +57,7 @@ function bayChildren(
       detail: members.sash.sku,
       kind: "member",
       severity: null,
-      selectId: moduleId,
+      selectId: `${moduleId}/${node.id}`,
       children: [],
     });
     rows.push({
@@ -66,7 +66,7 @@ function bayChildren(
       detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
       kind: "handle",
       severity: null,
-      selectId: moduleId,
+      selectId: `${moduleId}/${node.id}`,
       children: [],
     });
   }
@@ -77,7 +77,7 @@ function bayChildren(
       detail: node.panel_article_sku,
       kind: "panel",
       severity: null,
-      selectId: moduleId,
+      selectId: `${moduleId}/${node.id}`,
       children: [],
     });
   } else {
@@ -93,7 +93,7 @@ function bayChildren(
       detail: detail || null,
       kind: "glazing",
       severity: null,
-      selectId: moduleId,
+      selectId: `${moduleId}/${node.id}`,
       children: [],
     });
   }
@@ -115,7 +115,7 @@ function intentRows(
         detail: null,
         kind: "bay",
         severity: null,
-        selectId: moduleId,
+        selectId: `${moduleId}/${node.id}`,
         children: bayChildren(node, moduleId, members, t),
       },
     ];
