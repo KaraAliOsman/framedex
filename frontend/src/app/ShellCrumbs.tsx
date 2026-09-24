@@ -1,44 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { projectsRetrieve } from "../api/generated/dekopen";
 import { ApiError } from "../api/apiMutator";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
-import { projectNameCached, projectNameWrite } from "../features/projects/projectNames";
+import {
+  projectNameCached,
+  projectNameSubscribe,
+  projectNameWrite,
+} from "../features/projects/projectNames";
 
 export type Crumb = { label: string; to?: string };
 
 /** The project name is a fetch, not a route param — resolved once per
- * (org, id) and cached in features/projects/projectNames so revisiting a
- * project never re-reads it and a rename writes through. */
+ * (org, id) into features/projects/projectNames. Subscribing to the store
+ * means a rename writes through to the already-mounted crumb. */
 function useProjectName(id: string | null): string | null {
   const orgId = useAuthSession().me?.active_organization?.id;
-  const [name, setName] = useState<string | null>(
+  const cached = useSyncExternalStore(projectNameSubscribe, () =>
     id && orgId ? projectNameCached(orgId, id) : null,
   );
   useEffect(() => {
-    const found = id && orgId ? projectNameCached(orgId, id) : null;
-    if (!id || !orgId || found !== null) {
-      setName(found);
-      return;
-    }
-    let active = true;
+    if (!id || !orgId || cached !== null) return;
     projectsRetrieve(id, { headers: { "X-Organization-ID": orgId } })
       .then((response) => {
         if (response.status !== 200) throw new ApiError(response.status, response.data);
         const fetched = (response.data as { name?: string }).name ?? null;
         if (fetched !== null) projectNameWrite(orgId, id, fetched);
-        if (active) setName(fetched);
       })
-      .catch(() => {
-        if (active) setName(null);
-      });
-    return () => {
-      active = false;
-    };
-  }, [id, orgId]);
-  return name;
+      .catch(() => {});
+  }, [id, orgId, cached]);
+  return cached;
 }
 
 /** Rail → entity → leaf. The first crumb is the rail destination the user
