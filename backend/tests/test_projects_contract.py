@@ -363,6 +363,41 @@ def test_manufacturing_incomplete_assembly_saves_as_draft(monkeypatch):
     assert any(cut.get("sagitta_mm") for cut in result["profile_cuts"])
 
 
+def test_operable_contour_intent_refuses_to_save(monkeypatch):
+    """A contour module whose bay declares an operable opening still
+    evaluates: the engine emits the frame + infill it can build and warns
+    contour_opening_unsupported. Persisting that would seal a fixed-pane
+    BOM under a tilt-turn intent — the saved product would misdescribe
+    itself, so persistence refuses until the leaf is honestly fixed."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import contour_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = contour_product(
+        [("0", "0"), ("2400", "0"), ("2200", "1400"), ("200", "1400")],
+        [None, None, None, None],
+    )
+    product["assembly"]["modules"][0]["tree"]["opening_type"] = (
+        "TILT_TURN_LEFT"
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2400.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
 def test_invalid_assembly_still_refuses_to_save(monkeypatch):
     """A disconnected assembly (a module no coupling reaches) is INVALID —
     persistence must refuse it even though a partial BOM exists."""

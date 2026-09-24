@@ -374,11 +374,13 @@ export function addAdjacentUnit(
   const edge = side === "right" ? modules.at(-1) : modules[0];
   if (!edge) return product;
   const outerCoupling = side === "right" ? couplings.at(-1) : couplings[0];
+  const widthMm = defaults.widthMm ?? edge.width_mm;
   const module: ProductModuleJson = {
     id: nextModuleId(product),
-    width_mm: defaults.widthMm ?? edge.width_mm,
+    width_mm: widthMm,
     height_mm: edge.height_mm,
     tree: cloneTree(edge.tree),
+    ...(edge.contour ? { contour: scaledContour(edge.contour, widthMm, edge.height_mm) } : {}),
   };
   const coupling: CouplingJson = {
     id: nextCouplingId(product),

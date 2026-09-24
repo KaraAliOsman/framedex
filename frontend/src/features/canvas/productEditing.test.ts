@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addAdjacentUnit,
+  makeTrapezoidModule,
   elevationLayoutMm,
   equalizeCouplingAngles,
   equalizeModuleWidths,
@@ -28,6 +29,7 @@ import {
   splitModuleBay,
   totalModuleWidth,
   wrapTreeAsProduct,
+  type ProductJson,
 } from "./productEditing";
 
 function bow(): ReturnType<typeof makeBowProduct> {
@@ -79,6 +81,33 @@ describe("addAdjacentUnit", () => {
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
     expect(grown.assembly.modules[0]!.tree).not.toBe(grown.assembly.modules[1]!.tree);
+  });
+
+  it("carries the edge module's contour — scaled, never silently rect", () => {
+    const trapezoid: ProductJson = {
+      version: "product-v2",
+      assembly: {
+        modules: [
+          makeTrapezoidModule("m1", "2400.00", "1400.00", 200, 200, {
+            id: "g1",
+            type: "BAY",
+            opening_type: "FIXED",
+          }),
+        ],
+        couplings: [],
+      },
+    };
+    const grown = addAdjacentUnit(trapezoid, "right", { widthMm: "1200.00" });
+    const added = grown.assembly.modules.at(-1)!;
+    expect(added.contour).toBeDefined();
+    expect(added.width_mm).toBe("1200.00");
+    // Scaled to the new width: right edge lands on 1200, top corners keep
+    // the same proportional inset (200/2400 → 100/1200).
+    const xs = added.contour!.vertices.map((v) => Number(v.x_mm));
+    expect(Math.max(...xs)).toBeCloseTo(1200, 2);
+    expect(Math.min(...xs)).toBeCloseTo(0, 2);
+    expect(Number(added.contour!.vertices[2]!.x_mm)).toBeCloseTo(1100, 2);
+    expect(Number(added.contour!.vertices[3]!.x_mm)).toBeCloseTo(100, 2);
   });
 });
 

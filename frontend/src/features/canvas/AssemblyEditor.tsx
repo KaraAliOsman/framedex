@@ -440,19 +440,26 @@ function ModuleInspector({
                 const tracks = Number(event.target.value);
                 commitSlidingLayout({
                   tracks,
-                  panels: slidingLayout.panels.map((panel) =>
-                    panel.kind === "MOVING" && panel.track != null && panel.track >= tracks
-                      ? { ...panel, track: tracks - 1 }
-                      : panel,
+                  panels: slidingLayout.panels.map((panel, index) =>
+                    panel.kind === "MOVING" ? { ...panel, track: index % tracks } : panel,
                   ),
                 });
               }}
             >
-              {[1, 2, 3, 4].map((count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ))}
+              {[1, 2, 3, 4]
+                .filter(
+                  (count) =>
+                    count === slidingLayout.tracks ||
+                    count >=
+                      (slidingLayout.panels.filter((panel) => panel.kind === "MOVING").length > 1
+                        ? 2
+                        : 1),
+                )
+                .map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
             </select>
           </div>
           <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>

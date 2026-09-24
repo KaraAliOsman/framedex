@@ -1306,7 +1306,14 @@ def _evaluate_contour_module(
                     else Axis.VERTICAL
                 ),
                 sagitta_mm=_q(bulge) if bulge else None,
-                placement_domain=PlacementDomain.BEAD_SET,
+                # The bead's seat IS the fill edge — a contour has no
+                # rectangular side to derive it from, so the trace carries
+                # the chord directly (arcs stay honest via sagitta_mm).
+                placement_domain=PlacementDomain.DIRECT,
+                direct_segment=TraceSegmentV1(
+                    start=TracePointV1(x_mm=bstart.x_mm, y_mm=bstart.y_mm),
+                    end=TracePointV1(x_mm=bend.x_mm, y_mm=bend.y_mm),
+                ),
                 parent_infill_id=infill_id,
             )
         )

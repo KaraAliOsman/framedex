@@ -28,8 +28,12 @@ from dekopen_engine.product import (
     contour_module_computation,
     evaluate_product,
 )
+from dekopen_engine.manufacturing import (
+    project_manufacturing_facts_v1,
+)
 
 from engine.tests.catalog import demo_60_params
+from engine.tests.test_manufacturing import handles, placement, steel
 
 
 def _pt(x: str, y: str) -> PlanPoint:
@@ -416,3 +420,94 @@ class TestContourEvaluation:
         assert arc_members
         (infill,) = trace.infills
         assert infill.shape is not None and len(infill.shape) > 4
+
+    def test_contour_beads_project_to_physical_facts(self) -> None:
+        """The freeze path rejects bead-set members it cannot derive a side
+        for — a contour has no rectangular side, so beads trace as DIRECT
+        chords and still bind the infill they retain."""
+        product = _product(Contour.trapezoid(D("2400"), D("1400"), D("200"), D("200")))
+        computation, _issues = contour_module_computation(
+            product.assembly.modules[0], demo_60_params()
+        )
+        assert computation is not None
+        trace = computation.manufacturing_trace
+        beads = [m for m in trace.members if m.role.value == "GLAZING_BEAD"]
+        assert len(beads) == 4
+        assert all(
+            bead.placement_domain.value == "DIRECT"
+            and bead.direct_segment is not None
+            and bead.parent_infill_id is not None
+            for bead in beads
+        )
+        roles_and_angles = sorted(
+            {
+                (member.role, str(member.angle_left), str(member.angle_right))
+                for member in trace.members
+                if member.reinforcement_required
+            },
+            key=lambda item: (item[0].value, item[1], item[2]),
+        )
+        facts = project_manufacturing_facts_v1(
+            trace=trace,
+            position_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            position_index=1,
+            repetition_index=1,
+            placement_policy=placement(),
+            handle_policy=handles("FIXED"),
+            reinforcement_policy=steel(*roles_and_angles),
+            handle_intents=[],
+            resolved_reinforcement_skus={
+                member.workshop_sku: f"STEEL-{member.workshop_sku}"
+                for member in trace.members
+                if member.reinforcement_required
+            },
+            module_id="m1",
+        )
+        member_beads = [
+            member
+            for member in facts.members
+            if member.identity.role.value == "GLAZING_BEAD"
+        ]
+        assert len(member_beads) == 4
+        # Every bead retains the glass it seats — the infill link survives
+        # the direct-placement encoding.
+        assert len([
+            rel for rel in facts.relationships if rel.relationship == "RETAINS_INFILL"
+        ]) == 4
+        # The shaped facts ride through: a trapezoid glass carries its
+        # polygon; arched members keep their sagitta.
+        (infill_fact,) = facts.infills
+        assert infill_fact.shape is not None and len(infill_fact.shape) == 4
+
+    def test_arch_bead_facts_carry_sagitta(self) -> None:
+        product = _product(Contour.arch_top(D("2400"), D("1400"), D("300")))
+        computation, _issues = contour_module_computation(
+            product.assembly.modules[0], demo_60_params()
+        )
+        assert computation is not None
+        roles_and_angles = sorted(
+            {
+                (member.role, str(member.angle_left), str(member.angle_right))
+                for member in computation.manufacturing_trace.members
+                if member.reinforcement_required
+            },
+            key=lambda item: (item[0].value, item[1], item[2]),
+        )
+        facts = project_manufacturing_facts_v1(
+            trace=computation.manufacturing_trace,
+            position_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            position_index=1,
+            repetition_index=1,
+            placement_policy=placement(),
+            handle_policy=handles("FIXED"),
+            reinforcement_policy=steel(*roles_and_angles),
+            handle_intents=[],
+            resolved_reinforcement_skus={
+                member.workshop_sku: f"STEEL-{member.workshop_sku}"
+                for member in computation.manufacturing_trace.members
+                if member.reinforcement_required
+            },
+            module_id="m1",
+        )
+        bent = [m for m in facts.members if m.sagitta_mm is not None]
+        assert bent
