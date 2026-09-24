@@ -336,7 +336,7 @@
 .handle-pending {
   align-self: center;
   padding: 0.125rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   color: var(--theme-warning);
   background: var(--theme-warning-soft);
@@ -507,7 +507,7 @@
 }
 .cut-bar {
   background: var(--theme-border-subtle);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: block;
   height: 0.3125rem;
   margin-top: 0.25rem;
@@ -516,7 +516,7 @@
 }
 .cut-bar > span {
   background: var(--theme-accent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: block;
   height: 100%;
 }
@@ -646,7 +646,7 @@
 }
 .payments-progress {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--surface-sunken, #e8e6e1);
   overflow: hidden;
 }

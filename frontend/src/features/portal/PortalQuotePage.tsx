@@ -5,6 +5,7 @@ import { ApiError } from "../../api/apiMutator";
 import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/dekopen";
 import type { PortalQuote } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import "./portal.css";
 
 function money(raw: string): string {
   const value = Number(raw);

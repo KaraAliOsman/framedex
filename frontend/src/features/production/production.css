@@ -60,7 +60,7 @@
 .production-chip {
   display: inline-block;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   border: 1px solid var(--theme-border-subtle);
@@ -453,7 +453,7 @@
   max-width: 480px;
   height: 160px;
   border: 1px solid var(--line, #d8dde2);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: #fff;
   touch-action: none;
   cursor: crosshair;
@@ -587,7 +587,7 @@
 }
 .cutplan-detail {
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--theme-surface-panel);
   padding: 10px 12px;
   align-self: start;

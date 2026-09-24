@@ -1,0 +1,120 @@
+/* Customer-facing quote portal — a public surface, so it gets the same
+   care as the app: quiet paper, one decision, no chrome. */
+
+.portal-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: clamp(1rem, 5vw, 4rem) var(--space-4);
+  background: var(--theme-bg-canvas);
+  color: var(--theme-text-primary);
+}
+
+.portal-card {
+  width: min(38rem, 100%);
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.portal-card h1 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.portal-card .eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.portal-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
+
+.portal-facts > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.portal-facts dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-text-muted);
+}
+
+.portal-facts dd {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--theme-text-primary);
+}
+
+.portal-facts dd strong {
+  font-size: var(--text-title);
+}
+
+.portal-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--theme-accent-strong);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.portal-doc:hover {
+  background: var(--theme-accent-soft);
+  text-decoration: underline;
+}
+
+.portal-decided {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+  font-weight: 500;
+}
+
+.portal-decision {
+  display: grid;
+  gap: var(--space-3);
+  border-top: 1px solid var(--theme-border-subtle);
+  padding-top: var(--space-4);
+}
+
+.portal-decision label {
+  font-size: var(--text-s);
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+}
+
+.portal-decision input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+}
+
+.portal-decision input:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 1px;
+  border-color: var(--theme-accent);
+}

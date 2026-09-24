@@ -1,7 +1,15 @@
 /* DEKOPEN identity tokens.
    Palette contract: ~75% graphite neutrals, ~20% teal accent, occasional
    orange mark (#E56A32 — couplers/brand, never CTAs). Semantic colors carry
-   status only; never gradients, glow, or glassmorphism. */
+   status only; never gradients, glow, or glassmorphism.
+
+   Two tiers:
+   1. Color tokens — --theme-* and member-material palettes below.
+   2. Structural tokens — type/space/radius/shadow/z-index — so components
+      stop inventing their own values.
+   Aliases at the bottom retire the ad-hoc vocabulary newer code pasted in;
+   keep them defined (usage resolves correctly in both themes) and migrate
+   call sites to the canonical --theme-* name opportunistically. */
 
 :root,
 :root[data-theme="light"] {
@@ -13,10 +21,9 @@
   --theme-border-strong: #b9c4c2;
   --theme-text-primary: #1f2a29;
   --theme-text-secondary: #55635f;
-  --theme-text-muted: #93a29e;
+  --theme-text-muted: #5c6c68;
   --theme-accent: #0f817a;
   --theme-accent-strong: #0b6b66;
-  --theme-accent-bright: #15968c;
   --theme-accent-soft: #e4f3f1;
   --theme-accent-ink: #0b4d49;
   --theme-mark: #e56a32;
@@ -26,6 +33,8 @@
   --theme-success-soft: #e3f2ea;
   --theme-danger: #b3372f;
   --theme-danger-soft: #fbe9e7;
+  --theme-info: var(--theme-accent);
+  --theme-info-soft: var(--theme-accent-soft);
   --signature-ink: #1a1f24;
   --theme-glass-tint: rgba(15, 129, 122, 0.07);
   --member-pvc-fill: #f4f7f6;
@@ -36,6 +45,9 @@
   --member-aluminium-highlight: #f2f6f7;
   --member-panel-fill: #e3eae8;
   --member-panel-edge: #aab6b3;
+  --shadow-raise: 0 2px 10px rgb(22 28 31 / 0.1);
+  --shadow-pop: 0 12px 32px rgb(22 28 31 / 0.18);
+  --shadow-modal: 0 12px 40px rgba(15, 25, 24, 0.22);
 }
 
 :root[data-theme="dark"] {
@@ -47,10 +59,9 @@
   --theme-border-strong: #4a585d;
   --theme-text-primary: #edf2f1;
   --theme-text-secondary: #a4b6b3;
-  --theme-text-muted: #62736f;
+  --theme-text-muted: #81938f;
   --theme-accent: #2aa69b;
   --theme-accent-strong: #45beb1;
-  --theme-accent-bright: #15968c;
   --theme-accent-soft: #14312f;
   --theme-accent-ink: #bfe6e0;
   --theme-mark: #e8804a;
@@ -60,6 +71,8 @@
   --theme-success-soft: #16291f;
   --theme-danger: #e06154;
   --theme-danger-soft: #331d1a;
+  --theme-info: var(--theme-accent);
+  --theme-info-soft: var(--theme-accent-soft);
   --theme-glass-tint: rgba(42, 166, 155, 0.1);
   --member-pvc-fill: #2b3438;
   --member-pvc-edge: #48565b;
@@ -69,4 +82,57 @@
   --member-aluminium-highlight: #4b585d;
   --member-panel-fill: #323c41;
   --member-panel-edge: #4f5d62;
+  --shadow-raise: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-modal: 0 12px 44px rgba(0, 0, 0, 0.6);
+}
+
+:root {
+  /* Type */
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --text-xs: 0.6875rem;
+  --text-s: 0.75rem;
+  --text-body: 0.8125rem;
+  --text-title: 0.9375rem;
+  --text-display: 1.25rem;
+
+  /* Space — 4px base grid */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  /* Layers */
+  --z-island: 10;
+  --z-drawer: 30;
+  --z-overlay: 50;
+  --z-modal: 90;
+
+  /* Retired-vocabulary aliases — resolve to canonical tokens so older call
+     sites render correctly in both themes. New code uses --theme-* directly. */
+  --theme-surface: var(--theme-surface-panel);
+  --theme-surface-raised: var(--theme-surface-panel);
+  --theme-font-mono: var(--font-mono);
+  --surface-raised: var(--theme-surface-panel);
+  --surface-sunken: var(--theme-surface-card);
+  --accent: var(--theme-accent);
+  --ok: var(--theme-success);
+  --warn: var(--theme-warning);
+  --danger: var(--theme-danger);
+  --ink-muted: var(--theme-text-muted);
+  --ink-3: var(--theme-text-secondary);
+  --ink-faint: var(--theme-text-muted);
+  --line: var(--theme-border-subtle);
+  --line-strong: var(--theme-border-strong);
+  --border: var(--theme-border-subtle);
 }

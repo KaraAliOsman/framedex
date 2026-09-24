@@ -561,9 +561,9 @@
   .assembly-tree {
     background: var(--theme-surface-panel);
     border: 1px solid var(--theme-border-subtle);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     bottom: 3.2rem;
-    box-shadow: 0 12px 28px rgb(22 28 31 / 0.18);
+    box-shadow: var(--shadow-pop);
     display: block;
     left: 3.8rem;
     max-width: min(18rem, 72vw);
@@ -586,7 +586,7 @@
   align-items: center;
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -598,7 +598,7 @@
   align-items: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-secondary);
   cursor: pointer;
   display: flex;
@@ -651,9 +651,9 @@
 .plan-inset {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   bottom: 0.75rem;
-  box-shadow: 0 2px 10px rgb(22 28 31 / 0.1);
+  box-shadow: var(--shadow-raise);
   display: flex;
   flex-direction: column;
   height: 9rem;
@@ -694,7 +694,7 @@
 .plan-toggle {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   bottom: 0.75rem;
   color: var(--theme-text-secondary);
   cursor: pointer;
@@ -710,7 +710,7 @@
   align-items: center;
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   display: flex;
   gap: 0.9rem;
   grid-area: status;
@@ -748,7 +748,7 @@
 .object-tree {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -807,7 +807,7 @@
   align-items: baseline;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -882,7 +882,7 @@
 .canvas-viewport {
   background: var(--theme-bg-canvas);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   display: block;
   height: 100%;
   min-height: 30rem;
@@ -916,7 +916,7 @@
   align-items: center;
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   bottom: 0.75rem;
   display: flex;
   left: 0.75rem;
@@ -929,7 +929,7 @@
   align-items: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-secondary);
   cursor: pointer;
   display: inline-flex;
@@ -953,9 +953,9 @@
 .viewport-menu {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   bottom: calc(100% + 6px);
-  box-shadow: 0 6px 20px rgba(16, 26, 25, 0.12);
+  box-shadow: var(--shadow-pop);
   display: flex;
   flex-direction: column;
   left: 0;
@@ -967,7 +967,7 @@
 .viewport-menu__item {
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-primary);
   cursor: pointer;
   font: inherit;
@@ -987,7 +987,7 @@
 .viewport-status {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   bottom: 0.75rem;
   color: var(--theme-text-muted);
   font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
@@ -1520,7 +1520,7 @@
   box-sizing: border-box;
   resize: vertical;
   border: 1px solid var(--theme-border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--theme-surface);
   color: var(--theme-text-primary);
   font: inherit;
@@ -1571,7 +1571,7 @@
 
 .alternative-card {
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 8px;
   background: var(--theme-surface);
 }
@@ -1619,8 +1619,8 @@
 .context-menu {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
-  box-shadow: 0 12px 32px rgb(22 28 31 / 0.18);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
   display: flex;
   flex-direction: column;
   min-width: 200px;
@@ -1632,7 +1632,7 @@
 .context-menu__item {
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-secondary);
   cursor: pointer;
   font: inherit;
