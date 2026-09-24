@@ -82,7 +82,7 @@ def test_snapshot_request_identity_and_response_contract() -> None:
     request = golden_request()
     assert request["system_id"] == "3067da09-3119-5ad0-a1d5-498cd2dfd753"
     response = calculation_response(request, golden_result())
-    assert set(response) == {"calculation_hash", "profile_cuts", "reinforcements", "glasses", "panels", "hardware_items", "leaf_weights"}
+    assert set(response) == {"calculation_hash", "profile_cuts", "reinforcements", "glasses", "panels", "hardware_items", "leaf_weights", "fittings"}
     assert json.loads(generated_bytes()) == {"request": request, "response": response}
     changed = deepcopy(request)
     changed["color"] = "CHANGED-HASH-INPUT"
