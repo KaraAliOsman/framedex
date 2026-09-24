@@ -33,6 +33,9 @@ export interface CommandContext {
   commit(next: ProductJson): void;
   select(id: string | null): void;
   setTool?(tool: EditorTool): void;
+  /** Focus the design assistant's prompt (editor affordance — UI commands
+   * like "Preguntar a DEKOPEN" and context-menu entries land here). */
+  focusAssistant?(): void;
   undo?(): void;
   redo?(): void;
   canUndo?: boolean;

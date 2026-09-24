@@ -75,11 +75,6 @@ export function runCommand(ctx: CommandContext, spec: CommandSpec, args: Command
   }
 }
 
-/** Resolve a wire op to its command spec (the AI seam). */
-export function specForOp(specs: CommandSpec[], op: string): CommandSpec | null {
-  return specs.find((spec) => spec.ai?.op === op) ?? null;
-}
-
 /** Apply one backend-validated wire op through the shared command table. The
  * op decodes to the same args a palette would collect, then hits the same
  * `apply` a human action uses. Unknown/undecodable ops are refused. Several

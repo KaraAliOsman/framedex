@@ -448,6 +448,7 @@
 }
 .signature-pad-canvas {
   display: block;
+  color: var(--signature-ink);
   width: 100%;
   max-width: 480px;
   height: 160px;

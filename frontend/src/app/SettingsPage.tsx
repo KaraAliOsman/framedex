@@ -468,6 +468,7 @@ export function SettingsPage(): JSX.Element {
             <div className="settings-links">
               <Link to="/settings/billing">{t("settings.billingPage")}</Link>
               <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
+              <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
             </div>
           </div>
         )}
