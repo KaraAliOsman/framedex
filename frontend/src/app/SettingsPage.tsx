@@ -311,8 +311,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
     try {
       const pfx_b64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () =>
-          resolve(String(reader.result ?? "").split(",")[1] ?? "");
+        reader.onload = () => resolve(String(reader.result ?? "").split(",")[1] ?? "");
         reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(file);
       });
@@ -469,6 +468,7 @@ export function SettingsPage(): JSX.Element {
             <div className="settings-links">
               <Link to="/settings/billing">{t("settings.billingPage")}</Link>
               <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
+              <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
             </div>
           </div>
         )}

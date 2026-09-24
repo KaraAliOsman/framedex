@@ -16,6 +16,9 @@ type BowPlanSvgProps = {
   disabled: boolean;
   onSelectModule(moduleId: string): void;
   onSelectCoupling(couplingId: string): void;
+  /** Right-click on any plan element (module or coupling): select it and
+   * open the registry menu at the cursor. */
+  onContextMenuElement?(elementId: string, pos: { x: number; y: number }): void;
   onCommitAngle(couplingId: string, angleDeg: string): void;
 };
 
@@ -148,6 +151,7 @@ export function BowPlanContent({
   disabled,
   onSelectModule,
   onSelectCoupling,
+  onContextMenuElement,
   onCommitAngle,
 }: BowPlanSvgProps): JSX.Element {
   const bounds = planBounds(plan);
@@ -176,6 +180,12 @@ export function BowPlanContent({
           aria-label={`${t("assembly.module")} ${module.module_id}`}
           tabIndex={0}
           onClick={() => onSelectModule(module.module_id)}
+          onContextMenu={(event) => {
+            if (!onContextMenuElement) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onContextMenuElement(module.module_id, { x: event.clientX, y: event.clientY });
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
@@ -192,7 +202,18 @@ export function BowPlanContent({
           members.couplerFor(spec?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
         );
         return (
-          <g key={coupling.coupling_id}>
+          <g
+            key={coupling.coupling_id}
+            onContextMenu={(event) => {
+              if (!onContextMenuElement) return;
+              event.preventDefault();
+              event.stopPropagation();
+              onContextMenuElement(coupling.coupling_id, {
+                x: event.clientX,
+                y: event.clientY,
+              });
+            }}
+          >
             <polygon
               className={`plan-coupling${
                 coupling.coupling_id === selectedCouplingId ? " is-selected" : ""

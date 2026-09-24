@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { OperationalSummaryDeliveries } from "./operationalSummaryDeliveries";
 import type { OperationalSummaryDocuments } from "./operationalSummaryDocuments";
 import type { OperationalSummaryInventory } from "./operationalSummaryInventory";
 import type { OperationalSummaryProjects } from "./operationalSummaryProjects";
@@ -20,6 +21,7 @@ export interface OperationalSummary {
   /** @nullable */
   avg_release_to_dispatch_hours: number | null;
   inventory: OperationalSummaryInventory;
+  deliveries: OperationalSummaryDeliveries;
   documents: OperationalSummaryDocuments;
   projects: OperationalSummaryProjects;
   recent_events: unknown[];

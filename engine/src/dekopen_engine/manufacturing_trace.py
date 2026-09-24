@@ -84,6 +84,9 @@ class SemanticInfillTraceV1(EngineModel):
     composition: str
     width_mm: Decimal = Field(gt=Decimal("0"))
     height_mm: Decimal = Field(gt=Decimal("0"))
+    # Boundary polygon for non-rectangular fills (contour modules): width/height
+    # stay the bounding box while shape carries the real edge loop + bulges.
+    shape: list[TracePointV1] | None = None
     placement_domain: Literal[PlacementDomain.DIRECT, PlacementDomain.SLIDING_INFILL]
     parent_leaf_id: str | None = None
     direct_rect: TraceRectV1 | None = None
@@ -113,6 +116,9 @@ class SemanticMemberTraceV1(EngineModel):
     angle_left: Decimal
     angle_right: Decimal
     axis: Axis
+    # Signed sagitta of an arc edge (contour members); the direct_segment is
+    # the chord and cut_length_mm already carries the true arc length.
+    sagitta_mm: Decimal | None = None
     placement_domain: Literal[
         PlacementDomain.DIRECT, PlacementDomain.SLIDING_LEAF, PlacementDomain.BEAD_SET
     ]

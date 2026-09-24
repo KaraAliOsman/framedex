@@ -57,6 +57,7 @@ def _manifest_units(payload: dict) -> list[dict]:
                 "glasses": unit.get("glasses"),
                 "panels": unit.get("panels"),
                 "hardware": unit.get("hardware"),
+                "fittings": unit.get("fittings"),
             }
         )
     return units
@@ -119,6 +120,7 @@ def issue_dispatch_note(
             "glasses": sum(int(u.get("glasses") or 0) for u in units),
             "panels": sum(int(u.get("panels") or 0) for u in units),
             "hardware": sum(int(u.get("hardware") or 0) for u in units),
+            "fittings": sum(int(u.get("fittings") or 0) for u in units),
         },
         "dispatch": {
             "dispatched_by": str(actor_id),
