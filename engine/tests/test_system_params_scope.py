@@ -1,4 +1,4 @@
-"""Canonical SHOT-06 scope: 27 mapped, 22 consumed, 2 metadata, 3 reserved."""
+"""Canonical SHOT-06 scope: 28 mapped, 23 consumed, 2 metadata, 3 reserved."""
 
 import ast
 from collections.abc import Callable
@@ -20,9 +20,9 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "sash_overlap_mm": geometry.single_rectangular_sash_geometry,
     "glass_clearance_white_mm": geometry.compute_geometry,
     "glass_clearance_foil_mm": geometry.compute_geometry,
-    "pulley_height_mm": geometry._append_bay,
-    "central_overlap_mm": geometry._append_bay,
-    "sliding_end_add_mm": geometry._append_bay,
+    "pulley_height_mm": geometry._append_sliding,
+    "central_overlap_mm": geometry._append_sliding,
+    "sliding_end_add_mm": geometry._append_sliding,
     "door_threshold_mm": geometry._append_door,
     "door_bottom_clearance_mm": geometry._append_door,
     "rail_type": hardware.evaluate_hardware_candidates,
@@ -34,13 +34,14 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "sliding_glazing_deduction_height_mm": geometry._append_leaf,
     "door_leaf_side_clearance_mm": geometry._append_door,
     "available_panel_rules": geometry._append_leaf,
+    "rail_count": geometry.rail_count,
 }
 METADATA = {"system_code", "depth_mm"}
 RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_depth_mm"}
 
 
 def test_every_system_parameter_has_an_explicit_scope() -> None:
-    assert len(CORE_CONSUMERS) == 22 and len(METADATA) == 2 and len(RESERVED) == 3
+    assert len(CORE_CONSUMERS) == 23 and len(METADATA) == 2 and len(RESERVED) == 3
     assert set(CORE_CONSUMERS) | METADATA | RESERVED == set(SystemParams.model_fields)
     for field, consumer in CORE_CONSUMERS.items():
         reads = {

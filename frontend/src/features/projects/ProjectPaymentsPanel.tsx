@@ -1,17 +1,31 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
+  projectCreditNoteAccess,
+  projectCreditNoteDteAccess,
+  projectCreditNoteDteEmit,
+  projectCreditNoteEmit,
+  projectInvoiceAccess,
+  projectInvoiceDteAccess,
+  projectInvoiceDteEmit,
+  projectInvoiceDteEnvioAccess,
+  projectInvoiceDteEnvioSend,
+  projectInvoiceEmit,
   projectPaymentsList,
   projectPaymentsRecord,
+  projectPaymentReceipt,
   projectPaymentVoid,
 } from "../../api/generated/dekopen";
 import type {
   MethodEnum,
-  PaymentRecordKindEnum,
+  PaymentKindEnum,
   PaymentsSummary,
+  ProjectCreditNote,
+  ProjectInvoice,
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -49,11 +63,13 @@ export function ProjectPaymentsPanel({
   projectId,
   orgId,
   canWrite,
+  canSendEnvio = false,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  canSendEnvio?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -61,12 +77,13 @@ export function ProjectPaymentsPanel({
   const [message, setMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [operationKey, setOperationKey] = useState("");
-  const [kind, setKind] = useState<PaymentRecordKindEnum>("ANTICIPO");
+  const [kind, setKind] = useState<PaymentKindEnum>("ANTICIPO");
   const [method, setMethod] = useState<MethodEnum>("TRANSFER");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [baseline, setBaseline] = useState({ kind, method });
+  const [linksDirty, setLinksDirty] = useState(false);
   const generation = useRef(0);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
   useEffect(
@@ -103,8 +120,8 @@ export function ProjectPaymentsPanel({
       reference.trim() !== "" ||
       note.trim() !== "");
   useEffect(() => {
-    onDirtyChange?.(formDirty);
-  }, [formDirty, onDirtyChange]);
+    onDirtyChange?.(formDirty || linksDirty);
+  }, [formDirty, linksDirty, onDirtyChange]);
 
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
@@ -161,7 +178,266 @@ export function ProjectPaymentsPanel({
     }
   }
 
+  async function openReceipt(payment: ProjectPayment): Promise<void> {
+    // Open during the click activation — a tab opened after the await is blocked.
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.paymentReceiptError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentReceipt(projectId, payment.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.paymentReceiptError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function emitInvoice(): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceEmit(projectId, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.invoiceEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openInvoice(invoice: ProjectInvoice): Promise<void> {
+    // Open during the click activation — a tab opened after the await is blocked.
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.invoiceOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.invoiceOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function emitDte(invoice: ProjectInvoice): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEmit(projectId, invoice.id, requestOptions);
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openDte(invoice: ProjectInvoice): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.dteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.dteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function sendEnvio(invoice: ProjectInvoice, resubmit = false): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEnvioSend(
+        projectId,
+        invoice.id,
+        { resubmit },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.envioSendError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openEnvio(invoice: ProjectInvoice): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.envioOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEnvioAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.envioOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function annulInvoice(invoice: ProjectInvoice): Promise<void> {
+    if (!window.confirm(t("projects.creditNoteAnnulConfirm"))) return;
+    const reason = window.prompt(t("projects.creditNoteReason"));
+    if (reason === null) return;
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteEmit(
+        projectId,
+        invoice.id,
+        reason.trim() ? { reason: reason.trim() } : {},
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.creditNoteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function emitCreditNoteDte(invoice: ProjectInvoice): Promise<void> {
+    const reason = window.prompt(t("projects.creditNoteReason"));
+    if (reason === null) return;
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEmit(
+        projectId,
+        invoice.id,
+        reason.trim() ? { reason: reason.trim() } : {},
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditNoteDte(invoice: ProjectInvoice): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.dteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.dteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditNote(note: ProjectCreditNote): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.creditNoteOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteAccess(projectId, note.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.creditNoteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
   const payments = summary?.payments ?? [];
+  const invoiceList = summary?.invoices ?? [];
   const percent =
     summary?.quote_total_gross && Number(summary.quote_total_gross) > 0
       ? Math.min(100, (Number(summary.collected) / Number(summary.quote_total_gross)) * 100)
@@ -216,7 +492,7 @@ export function ProjectPaymentsPanel({
             {t("projects.paymentKind")}
             <select
               value={kind}
-              onChange={(event) => setKind(event.target.value as PaymentRecordKindEnum)}
+              onChange={(event) => setKind(event.target.value as PaymentKindEnum)}
             >
               <option value="ANTICIPO">{t("projects.paymentKindAnticipo")}</option>
               <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
@@ -275,6 +551,7 @@ export function ProjectPaymentsPanel({
               <th>{t("projects.paymentMethod")}</th>
               <th>{t("projects.paymentReference")}</th>
               <th>{t("projects.paymentNote")}</th>
+              <th>{t("projects.paymentReceipt")}</th>
               {canWrite && <th />}
             </tr>
           </thead>
@@ -283,15 +560,22 @@ export function ProjectPaymentsPanel({
               <tr key={payment.id} className={payment.voided_at ? "payments-voided" : undefined}>
                 <td>{formatDate(payment.recorded_at)}</td>
                 <td>{t(KIND_LABEL[payment.kind] ?? "projects.paymentKindParcial")}</td>
-                <td className="num">
-                  {formatMoney(payment.amount, summary?.currency ?? "CLP")}
-                </td>
+                <td className="num">{formatMoney(payment.amount, summary?.currency ?? "CLP")}</td>
                 <td>{t(METHOD_LABEL[payment.method] ?? "projects.paymentMethodOther")}</td>
                 <td>{payment.reference ?? "—"}</td>
                 <td>
                   {payment.voided_at
                     ? `${t("projects.paymentVoided")}${payment.void_reason ? ` — ${payment.void_reason}` : ""}`
                     : (payment.note ?? "—")}
+                </td>
+                <td>
+                  {payment.receipt_code ? (
+                    <button type="button" onClick={() => void openReceipt(payment)} disabled={busy}>
+                      {payment.receipt_code}
+                    </button>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 {canWrite && (
                   <td>
@@ -308,6 +592,156 @@ export function ProjectPaymentsPanel({
         </table>
       )}
       {summary && payments.length === 0 && !showForm && <p>{t("projects.paymentsEmpty")}</p>}
+      {summary && (summary.sealed_revision || invoiceList.length > 0) && (
+        <div className="projects-invoices">
+          <div className="projects-actions">
+            <h3>{t("projects.invoicesTitle")}</h3>
+            {canWrite && summary.sealed_revision && (
+              <button type="button" onClick={() => void emitInvoice()} disabled={busy}>
+                {t("projects.invoiceEmit")}
+              </button>
+            )}
+          </div>
+          {invoiceList.length > 0 ? (
+            <table className="payments-table">
+              <thead>
+                <tr>
+                  <th>{t("projects.invoiceDate")}</th>
+                  <th>{t("projects.invoiceCode")}</th>
+                  <th>{t("projects.invoiceRevision")}</th>
+                  <th>{t("projects.invoiceStatus")}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {invoiceList.map((invoice) => (
+                  <tr key={invoice.id}>
+                    <td>{formatDate(invoice.created_at)}</td>
+                    <td>{invoice.invoice_code}</td>
+                    <td>{invoice.revision_code ?? "—"}</td>
+                    <td>
+                      {invoice.credit_note ? (
+                        <button
+                          type="button"
+                          className="production-chip delivery-cancelled"
+                          title={invoice.credit_note.credit_code}
+                          onClick={() => {
+                            if (invoice.credit_note) void openCreditNote(invoice.credit_note);
+                          }}
+                          disabled={busy}
+                        >
+                          {`${t("projects.invoiceStatusAnnulled")} · ${invoice.credit_note.credit_code}`}
+                        </button>
+                      ) : (
+                        <span className="production-chip">{t("projects.invoiceStatusIssued")}</span>
+                      )}
+                      {invoice.dte && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.dteStatus")} · folio ${invoice.dte.folio}`}
+                          onClick={() => void openDte(invoice)}
+                          disabled={busy}
+                        >
+                          {`${t("projects.dteStatus")} · ${invoice.dte.folio}`}
+                        </button>
+                      )}
+                      {invoice.credit_note?.dte && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.dteCreditStatus")} · folio ${invoice.credit_note.dte.folio}`}
+                          onClick={() => void openCreditNoteDte(invoice)}
+                          disabled={busy}
+                        >
+                          {`${t("projects.dteCreditStatus")} · ${invoice.credit_note.dte.folio}`}
+                        </button>
+                      )}
+                      {invoice.dte?.envio && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.envioStatus")} · ${invoice.dte.envio.track_id ?? ""}`}
+                          onClick={() => void openEnvio(invoice)}
+                          disabled={busy}
+                        >
+                          {`${t("projects.envioStatus")} · ${invoice.dte.envio.status}`}
+                        </button>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => void openInvoice(invoice)}
+                        disabled={busy}
+                      >
+                        {t("projects.invoiceOpen")}
+                      </button>
+                      {canWrite && !invoice.credit_note && !invoice.dte && (
+                        <button type="button" onClick={() => void emitDte(invoice)} disabled={busy}>
+                          {t("projects.dteEmit")}
+                        </button>
+                      )}
+                      {canWrite && !invoice.credit_note && !invoice.dte && (
+                        <button
+                          type="button"
+                          onClick={() => void annulInvoice(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.creditNoteAnnul")}
+                        </button>
+                      )}
+                      {canWrite && invoice.dte && !invoice.credit_note?.dte && (
+                        <button
+                          type="button"
+                          onClick={() => void emitCreditNoteDte(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.dteCreditEmit")}
+                        </button>
+                      )}
+                      {canSendEnvio && invoice.dte && !invoice.dte.envio && (
+                        <button
+                          type="button"
+                          onClick={() => void sendEnvio(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.envioSend")}
+                        </button>
+                      )}
+                      {canSendEnvio && invoice.dte?.envio?.status === "PENDING" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void sendEnvio(
+                              invoice,
+                              invoice.dte?.envio?.attempted === true && !invoice.dte.envio.track_id,
+                            )
+                          }
+                          disabled={busy}
+                        >
+                          {invoice.dte.envio.attempted === true && !invoice.dte.envio.track_id
+                            ? t("projects.envioResend")
+                            : t("projects.envioRefresh")}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>{t("projects.invoicesEmpty")}</p>
+          )}
+        </div>
+      )}
+      <ProjectPaymentLinksPanel
+        projectId={projectId}
+        orgId={orgId}
+        canWrite={canWrite}
+        onChanged={load}
+        onDirtyChange={setLinksDirty}
+      />
     </section>
   );
 }

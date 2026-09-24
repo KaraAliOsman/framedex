@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MethodEnum } from "./methodEnum";
-import type { PaymentRecordKindEnum } from "./paymentRecordKindEnum";
+import type { PaymentKindEnum } from "./paymentKindEnum";
 
 export interface PaymentRecordRequest {
   /**
@@ -14,7 +14,7 @@ export interface PaymentRecordRequest {
    * @maxLength 80
    */
   operation_key: string;
-  kind: PaymentRecordKindEnum;
+  kind: PaymentKindEnum;
   /** @pattern ^-?\d{0,12}(?:\.\d{0,2})?$ */
   amount: string;
   method: MethodEnum;
