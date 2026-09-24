@@ -1185,7 +1185,11 @@ export function setModuleGlassThickness(
   if (!module) return product;
   function withThickness(node: IntentNode): IntentNode {
     if (node.type === "BAY") {
-      return { ...node, glass_thickness_mm: glassThicknessMm };
+      return {
+        ...node,
+        glass_thickness_mm: glassThicknessMm,
+        glass_spec: node.glass_spec ?? glassThicknessMm,
+      };
     }
     return { ...node, children: node.children?.map(withThickness) };
   }

@@ -861,7 +861,13 @@ function BayInspector({
             aria-label={t("assembly.glassThickness")}
             disabled={busy}
             value={bay.glass_thickness_mm ?? ""}
-            onChange={(event) => patchBay({ glass_thickness_mm: event.target.value || null })}
+            onChange={(event) => {
+              const next = event.target.value || null;
+              patchBay({
+                glass_thickness_mm: next,
+                glass_spec: bay.glass_spec ?? next,
+              });
+            }}
           >
             <option value="">{t("assembly.chooseThickness")}</option>
             {glazingThicknesses.map((thickness) => (
