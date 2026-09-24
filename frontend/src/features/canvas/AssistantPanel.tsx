@@ -114,12 +114,22 @@ export function AssistantPanel({
           operation_key: operationKey.current.key,
           system_id: systemId,
           product: {
+            // The wire carries stable domain ids — the same ones commands and
+            // selection already use — so ops address modules/couplings by ref,
+            // never by position; endpoints expose the assembly graph itself.
             modules: product.assembly.modules.map((module) => ({
+              id: module.id,
               width_mm: module.width_mm,
               height_mm: module.height_mm,
+              ...(module.contour ? { contour: module.contour } : {}),
+              ...(module.frameless ? { frameless: module.frameless } : {}),
             })),
             couplings: product.assembly.couplings.map((coupling) => ({
+              id: coupling.id,
               angle_deg: coupling.angle_deg,
+              ...(coupling.kind ? { kind: coupling.kind } : {}),
+              ...(coupling.modules ? { modules: coupling.modules } : {}),
+              ...(coupling.edges ? { edges: coupling.edges } : {}),
             })),
           },
         },
@@ -199,7 +209,9 @@ export function AssistantPanel({
               {preview.ops.length > 0 && (
                 <ul className="assistant-panel__ops">
                   {preview.ops.map((op, index) => (
-                    <li key={`op-${index}`}>{describeDesignOp(op, preview.snapshot)}</li>
+                    <li key={`op-${index}`}>
+                      {describeDesignOp(op, preview.snapshot, preview.ops.slice(0, index))}
+                    </li>
                   ))}
                 </ul>
               )}

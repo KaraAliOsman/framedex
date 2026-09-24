@@ -268,7 +268,7 @@ def test_remove_unit_shifts_the_validation_surface(monkeypatch):
         "add_unit",
         "set_opening",
     ]
-    assert out["ops"][3]["module"] == 2
+    assert out["ops"][3]["module"] == "m3"
     assert [item["reason"] for item in out["rejected"]] == ["apertura_invalida"]
 
 
@@ -487,7 +487,7 @@ def test_signed_angle_declares_the_signed_value(monkeypatch):
         system_id=uuid4(),
         operation_key="assist-g4",
     )
-    assert out["ops"] == [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]
+    assert out["ops"] == [{"op": "set_coupling_angle", "coupling": "c1", "angle_deg": "-30"}]
     assert out["rejected"] == []
 
 
@@ -511,3 +511,74 @@ def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
     for prompt in ("ángulos 30°; -20°", "+30°/-20°", "30, -20", "30 y -20"):
         declared = values(prompt)
         assert Decimal("-20") in declared and Decimal("30") in declared
+
+
+def test_stable_refs_address_modules_and_survive_structural_ops(monkeypatch):
+    """§2: domain ids drive the wire — a ref names the entity, not its slot.
+    Removing m2 mid-sequence keeps m3's ref honest where an index would have
+    silently shifted, and a unit the sequence itself adds is addressable as
+    added_m{n}."""
+    captured = _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_unit", "module": "mod-b"},
+                {"op": "set_opening", "module": "mod-c", "opening": "AWNING"},
+                {"op": "add_unit", "side": "right"},
+                {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
+                {"op": "set_coupling_angle", "coupling": "added_c2", "angle_deg": "-15"},
+            ],
+            "notes": "",
+        },
+    )
+    product = {
+        "modules": [
+            {"id": "mod-a", "width_mm": "1200", "height_mm": "1500"},
+            {"id": "mod-b", "width_mm": "900", "height_mm": "1500"},
+            {"id": "mod-c", "width_mm": "900", "height_mm": "1500", "contour": {}},
+        ],
+        "couplings": [
+            {"id": "cpl-1", "angle_deg": "20", "modules": ["mod-a", "mod-b"]},
+            {"id": "cpl-2", "angle_deg": "20", "modules": ["mod-b", "mod-c"]},
+        ],
+    }
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="ángulo -15 en una unión",
+        system_id=uuid4(),
+        operation_key="assist-r1",
+    )
+    assert out["ops"] == [
+        {"op": "remove_unit", "module": "mod-b"},
+        {"op": "set_opening", "module": "mod-c", "opening": "AWNING"},
+        {"op": "add_unit", "side": "right", "ref": "added_m1"},
+        {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
+        {"op": "set_coupling_angle", "coupling": "added_c2", "angle_deg": "-15"},
+    ]
+    assert out["rejected"] == []
+    summary = captured["input"]["product"]
+    assert summary["modules"][0]["ref"] == "mod-a"
+    assert summary["modules"][2]["shape"] == "CONTOUR"
+    assert summary["couplings"][0]["modules"] == ["mod-a", "mod-b"]
+    assert summary["couplings"][1]["ref"] == "cpl-2"
+
+
+def test_unknown_ref_is_rejected_not_floored_to_an_index(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "set_opening", "module": "mod-z", "opening": "FIXED"}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=2),
+        prompt="fijo en módulo z",
+        system_id=uuid4(),
+        operation_key="assist-r2",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "apertura_invalida"

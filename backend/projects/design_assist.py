@@ -65,7 +65,7 @@ Operaciones:
 
 Reglas:
 - Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
-- Índices válidos: 0..len(modules)-1 y 0..len(couplings)-1.
+- Direcciona cada módulo y unión por su "ref" (id estable del dominio), nunca por posición: el grafo muestra qué borde de qué módulo une cada unión ("modules": [refA, refB], "edges"). Para un módulo aún inexistente creado por add_unit en esta misma secuencia usa la ref "added_m1", "added_m2"... (y "added_c1"... para uniones nuevas).
 - Las medidas numéricas (count, width_mm, height_mm, angle_deg, mm) solo pueden citar números que el usuario escribió en "prompt"; si el usuario no declaró una medida, no la inventes — explícalo en "notes".
 - Si la intención es ambigua, propón menos ops y explícalo en "notes"; nunca adivines medidas que el usuario no pidió.
 - Sin texto fuera del JSON."""
@@ -86,10 +86,23 @@ def _in_range(value: Any, low: Decimal, high: Decimal) -> bool:
     return parsed is not None and low <= parsed <= high
 
 
+def _ref(raw: Any, prefix: str, index: int) -> str:
+    """Stable domain id for a wire entity — the module/coupling id the client
+    assigned, falling back to a positional m{n}/c{n} when absent (legacy
+    payloads without ids still resolve)."""
+    if isinstance(raw, dict) and isinstance(raw.get("id"), str) and raw["id"].strip():
+        return raw["id"].strip()
+    return f"{prefix}{index + 1}"
+
+
 def _summary(product: Any) -> dict | None:
     """The client-submitted product surface — the same modules and couplings
-    the returned ops will be applied against, so index bounds are derived
-    here and can never drift against a stale persisted copy."""
+    the returned ops will be applied against, so bounds are derived here and
+    can never drift against a stale persisted copy. Ops address entities by
+    their stable `ref` (the client's own id), not by position: removing a
+    module mid-sequence keeps the survivors' refs honest, and the coupling
+    endpoints expose the assembly graph — which module edge meets which —
+    rather than a bare index into a list."""
     if not isinstance(product, dict):
         return None
     modules_raw = product.get("modules")
@@ -98,19 +111,45 @@ def _summary(product: Any) -> dict | None:
     couplings_raw = product.get("couplings") or []
     if not isinstance(couplings_raw, list) or len(couplings_raw) > MAX_MODULE_COUNT:
         return None
+    module_refs = [_ref(module, "m", index) for index, module in enumerate(modules_raw)]
+    ref_by_id = {
+        str(module["id"]).strip(): ref
+        for module, ref in zip(modules_raw, module_refs)
+        if isinstance(module, dict) and isinstance(module.get("id"), str) and module["id"].strip()
+    }
     return {
         "modules": [
             {
+                "ref": ref,
                 "index": index,
                 "width_mm": module.get("width_mm") if isinstance(module, dict) else None,
                 "height_mm": module.get("height_mm") if isinstance(module, dict) else None,
+                "shape": (
+                    "CONTOUR"
+                    if isinstance(module, dict) and isinstance(module.get("contour"), dict)
+                    else "RECT"
+                ),
+                "frameless": bool(
+                    isinstance(module, dict) and isinstance(module.get("frameless"), dict)
+                ),
             }
-            for index, module in enumerate(modules_raw)
+            for index, (ref, module) in enumerate(zip(module_refs, modules_raw))
         ],
         "couplings": [
             {
+                "ref": _ref(coupling, "c", index),
                 "index": index,
                 "angle_deg": coupling.get("angle_deg") if isinstance(coupling, dict) else None,
+                "kind": (coupling.get("kind") or "INLINE") if isinstance(coupling, dict) else None,
+                # Graph endpoints as module refs — 'c2 joins m1.right ↔ m2.left'
+                # reads structurally; an absent pair is the legacy chain i↔i+1.
+                "modules": (
+                    [ref_by_id.get(str(mid), str(mid)) for mid in coupling["modules"]]
+                    if isinstance(coupling, dict)
+                    and isinstance(coupling.get("modules"), list)
+                    else None
+                ),
+                "edges": coupling.get("edges") if isinstance(coupling, dict) else None,
             }
             for index, coupling in enumerate(couplings_raw)
         ],
@@ -273,22 +312,45 @@ def _validate_ops(
     ops: Any, summary: dict, catalog: dict, declared: set[Decimal]
 ) -> tuple[list[dict], list[dict]]:
     """Validate each op against a simulated assembly that evolves in op order —
-    structural ops mutate the module/coupling counts every later op is checked
-    against, so a proposal can never address a module that stopped existing or
-    grow the assembly past MAX_MODULE_COUNT."""
-    state = {"modules": len(summary["modules"]), "couplings": len(summary["couplings"])}
+    structural ops mutate the ref sets every later op is checked against, so
+    a proposal can never address a module that stopped existing or grow the
+    assembly past MAX_MODULE_COUNT. Ops address entities by stable domain
+    ref — the client-assigned id — or by a legacy positional index; the wire
+    always echoes the canonical ref back so the applier resolves identity,
+    not position."""
+    module_refs = [str(module["ref"]) for module in summary["modules"]]
+    coupling_refs = [str(coupling["ref"]) for coupling in summary["couplings"]]
+    state = {
+        "module_refs": module_refs,
+        "coupling_refs": coupling_refs,
+        "added": {"m": 0, "c": 0},
+    }
 
-    def module_index(value: Any) -> bool:
-        return (
-            isinstance(value, int) and not isinstance(value, bool) and 0 <= value < state["modules"]
-        )
+    def _add_ref(prefix: str) -> str:
+        state["added"][prefix] += 1
+        return f"added_{prefix}{state['added'][prefix]}"
 
-    def coupling_index(value: Any) -> bool:
-        return (
+    def module_ref(value: Any) -> str | None:
+        if isinstance(value, str) and value in state["module_refs"]:
+            return value
+        if (
             isinstance(value, int)
             and not isinstance(value, bool)
-            and 0 <= value < state["couplings"]
-        )
+            and 0 <= value < len(state["module_refs"])
+        ):
+            return state["module_refs"][value]
+        return None
+
+    def coupling_ref(value: Any) -> str | None:
+        if isinstance(value, str) and value in state["coupling_refs"]:
+            return value
+        if (
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and 0 <= value < len(state["coupling_refs"])
+        ):
+            return state["coupling_refs"][value]
+        return None
 
     def reject(item: Any, reason: str) -> dict:
         return {"op": item.get("op") if isinstance(item, dict) else None, "reason": reason}
@@ -311,34 +373,60 @@ def _validate_ops(
                 rejected.append(reject(item, "cantidad_no_declarada"))
             elif 1 <= item["count"] <= MAX_MODULE_COUNT:
                 accepted.append({"op": name, "count": item["count"]})
-                state["modules"] = item["count"]
-                state["couplings"] = max(0, item["count"] - 1)
+                while len(state["module_refs"]) < item["count"]:
+                    state["module_refs"].append(_add_ref("m"))
+                while len(state["coupling_refs"]) < item["count"] - 1:
+                    state["coupling_refs"].append(_add_ref("c"))
+                state["module_refs"] = state["module_refs"][: item["count"]]
+                state["coupling_refs"] = state["coupling_refs"][: item["count"] - 1]
             else:
                 rejected.append(reject(item, "cantidad_invalida"))
         elif name == "add_unit":
-            if item.get("side") in ("left", "right") and state["modules"] < MAX_MODULE_COUNT:
-                accepted.append({"op": name, "side": item["side"]})
-                state["modules"] += 1
-                state["couplings"] = state["modules"] - 1
+            if (
+                item.get("side") in ("left", "right")
+                and len(state["module_refs"]) < MAX_MODULE_COUNT
+            ):
+                accepted.append({"op": name, "side": item["side"], "ref": _add_ref("m")})
+                if item["side"] == "left":
+                    state["module_refs"].insert(0, accepted[-1]["ref"])
+                    state["coupling_refs"].insert(0, _add_ref("c"))
+                else:
+                    state["module_refs"].append(accepted[-1]["ref"])
+                    state["coupling_refs"].append(_add_ref("c"))
             else:
                 rejected.append(reject(item, "lado_invalido"))
         elif name == "remove_unit":
-            if module_index(item.get("module")) and state["modules"] > 1:
-                accepted.append({"op": name, "module": item["module"]})
-                state["modules"] -= 1
-                state["couplings"] = state["modules"] - 1
+            ref = module_ref(item.get("module"))
+            if ref is not None and len(state["module_refs"]) > 1:
+                accepted.append({"op": name, "module": ref})
+                p = state["module_refs"].index(ref)
+                state["module_refs"].pop(p)
+                # The surviving chain keeps the couplings that still join
+                # surviving neighbors; the relink between former neighbors of
+                # the removed module mints a fresh coupling identity.
+                if p == 0:
+                    state["coupling_refs"] = state["coupling_refs"][1:]
+                elif p == len(state["module_refs"]):
+                    state["coupling_refs"] = state["coupling_refs"][:-1]
+                else:
+                    state["coupling_refs"] = (
+                        state["coupling_refs"][: p - 1]
+                        + [_add_ref("c")]
+                        + state["coupling_refs"][p + 1 :]
+                    )
             else:
                 rejected.append(reject(item, "modulo_invalido"))
         elif name == "set_module_width":
+            ref = module_ref(item.get("module"))
             if _number(item.get("width_mm")) not in declared:
                 rejected.append(reject(item, "ancho_no_declarado"))
-            elif module_index(item.get("module")) and _in_range(
+            elif ref is not None and _in_range(
                 item.get("width_mm"), Decimal("150"), Decimal("6000")
             ):
                 accepted.append(
                     {
                         "op": name,
-                        "module": item["module"],
+                        "module": ref,
                         "width_mm": str(_number(item["width_mm"])),
                     }
                 )
@@ -349,7 +437,7 @@ def _validate_ops(
                 rejected.append(reject(item, "ancho_no_declarado"))
             elif _in_range(
                 item.get("width_mm"),
-                Decimal("150") * state["modules"],
+                Decimal("150") * len(state["module_refs"]),
                 Decimal("30000"),
             ):
                 accepted.append({"op": name, "width_mm": str(_number(item["width_mm"]))})
@@ -367,57 +455,59 @@ def _validate_ops(
         elif name == "equalize_angles":
             accepted.append({"op": name})
         elif name == "set_coupling_angle":
+            ref = coupling_ref(item.get("coupling"))
             if _number(item.get("angle_deg")) not in declared:
                 rejected.append(reject(item, "angulo_no_declarado"))
-            elif coupling_index(item.get("coupling")) and _in_range(
+            elif ref is not None and _in_range(
                 item.get("angle_deg"), Decimal("-90"), Decimal("90")
             ):
                 accepted.append(
                     {
                         "op": name,
-                        "coupling": item["coupling"],
+                        "coupling": ref,
                         "angle_deg": str(_number(item["angle_deg"])),
                     }
                 )
             else:
                 rejected.append(reject(item, "angulo_invalido"))
         elif name == "set_opening":
-            if module_index(item.get("module")) and item.get("opening") in OPENINGS:
+            ref = module_ref(item.get("module"))
+            if ref is not None and item.get("opening") in OPENINGS:
                 accepted.append(
                     {
                         "op": name,
-                        "module": item["module"],
+                        "module": ref,
                         "opening": item["opening"],
                     }
                 )
             else:
                 rejected.append(reject(item, "apertura_invalida"))
         elif name == "set_glass_thickness":
+            ref = module_ref(item.get("module"))
             if _number(item.get("mm")) not in declared:
                 rejected.append(reject(item, "espesor_no_declarado"))
-            elif (
-                module_index(item.get("module"))
-                and _number(item.get("mm")) in catalog["thicknesses"]
-            ):
+            elif ref is not None and _number(item.get("mm")) in catalog["thicknesses"]:
                 accepted.append(
                     {
                         "op": name,
-                        "module": item["module"],
+                        "module": ref,
                         "mm": str(_number(item["mm"])),
                     }
                 )
             else:
                 rejected.append(reject(item, "espesor_invalido"))
         elif name == "set_glass":
-            if module_index(item.get("module")) and item.get("sku") in catalog["glass_skus"]:
-                accepted.append({"op": name, "module": item["module"], "sku": item["sku"]})
+            ref = module_ref(item.get("module"))
+            if ref is not None and item.get("sku") in catalog["glass_skus"]:
+                accepted.append({"op": name, "module": ref, "sku": item["sku"]})
             else:
                 rejected.append(reject(item, "vidrio_invalido"))
         elif name == "set_panel":
-            if module_index(item.get("module")) and (
+            ref = module_ref(item.get("module"))
+            if ref is not None and (
                 item.get("sku") is None or item["sku"] in catalog["panel_skus"]
             ):
-                accepted.append({"op": name, "module": item["module"], "sku": item.get("sku")})
+                accepted.append({"op": name, "module": ref, "sku": item.get("sku")})
             else:
                 rejected.append(reject(item, "panel_invalido"))
         else:

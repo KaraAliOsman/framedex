@@ -82,3 +82,40 @@ describe("describeDesignOp", () => {
     );
   });
 });
+
+describe("stable domain refs", () => {
+  it("addresses a module by its own id, not its slot", () => {
+    const product = bow(3);
+    const id = product.assembly.modules[2]!.id;
+    const next = applyDesignOps(product, [
+      { op: "remove_unit", module: product.assembly.modules[0]!.id },
+      { op: "set_opening", module: id, opening: "AWNING" },
+    ]);
+    // The ref kept naming the same module after index 0 was removed — an
+    // index would have silently hit a different unit.
+    const target = next.assembly.modules.find((module) => module.id === id)!;
+    const child = target.tree.children?.[0] ?? target.tree;
+    expect(child.opening_type).toBe("AWNING");
+    expect(next.assembly.modules).toHaveLength(2);
+  });
+
+  it("resolves added_m{n} to the units the sequence itself created", () => {
+    const next = applyDesignOps(bow(2), [
+      { op: "add_unit", side: "right", ref: "added_m1" },
+      { op: "set_opening", module: "added_m1", opening: "DOOR_ENTRY" },
+    ]);
+    expect(next.assembly.modules).toHaveLength(3);
+    const created = next.assembly.modules[2]!;
+    const child = created.tree.children?.[0] ?? created.tree;
+    expect(child.opening_type).toBe("DOOR_ENTRY");
+  });
+
+  it("describes mid-sequence refs with the replayed product", () => {
+    const product = bow(2);
+    const ops = [
+      { op: "add_unit", side: "right", ref: "added_m1" },
+      { op: "set_opening", module: "added_m1", opening: "AWNING" },
+    ];
+    expect(describeDesignOp(ops[1]!, product, ops.slice(0, 1))).toBe("módulo nueva 1: proyectante");
+  });
+});
