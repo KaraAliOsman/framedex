@@ -348,15 +348,6 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
-.workshop-target--inline {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.workshop-target--inline > strong {
-  margin-bottom: 0;
-  min-width: 8rem;
-}
 .workshop-row {
   display: flex;
   flex-wrap: wrap;
