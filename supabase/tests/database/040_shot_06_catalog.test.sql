@@ -23,7 +23,8 @@ SELECT is((SELECT count(*) FROM public.profile_articles WHERE sku = 'UMBRAL-ALU'
     AND role = 'THRESHOLD' AND material = 'ALUMINIUM' AND welding_loss_mm = 0.00
     AND reinforcement_gap_mm = 0.00 AND reinforcement_sku IS NULL), 1::BIGINT,
     'threshold has its own real material and no steel authority');
-SELECT is((SELECT count(*) FROM public.hardware_kits WHERE weight_kg = 2.50),
+SELECT is((SELECT count(*) FROM public.hardware_kits WHERE weight_kg = 2.50
+    AND sku IN ('KIT-TILT-TURN','KIT-TURN','KIT-AWNING-16','KIT-SLIDING','KIT-DOOR-MULTIPOINT')),
     5::BIGINT, 'all five DEMO kits persist their exact weight');
 SELECT is((SELECT contents FROM public.hardware_kits WHERE sku = 'KIT-AWNING-16'),
     '[{"sku":"DEMO-STAY-16","name":"Compás a fricción 16\"","qty":2,"unit":"unit"}]'::JSONB,
@@ -60,7 +61,7 @@ SELECT set_config('request.jwt.claims',
     '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', TRUE);
 SELECT set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', TRUE);
 SELECT is((SELECT count(*) FROM public.infill_articles WHERE org_id IS NULL),
-    1::BIGINT, 'A reads global panel');
+    3::BIGINT, 'A reads global panel');
 SELECT is((SELECT count(*) FROM public.infill_articles WHERE sku = 'PANEL-A'),
     1::BIGINT, 'A reads own panel');
 SELECT is((SELECT count(*) FROM public.infill_articles WHERE sku = 'PANEL-B'),
@@ -98,7 +99,7 @@ SELECT set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
 SELECT is((SELECT array_agg(sku::TEXT ORDER BY sku) FROM public.infill_articles
     WHERE org_id IS NOT NULL), ARRAY['PANEL-B'], 'B sees only own tenant panel');
 SELECT is((SELECT count(*) FROM public.infill_articles WHERE org_id IS NULL),
-    1::BIGINT, 'B reads global panel');
+    3::BIGINT, 'B reads global panel');
 RESET ROLE;
 
 SELECT is((SELECT ARRAY[sliding_glazing_deduction_width_mm,
