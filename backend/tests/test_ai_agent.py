@@ -86,10 +86,15 @@ def test_agent_simple_reply_and_navigate(monkeypatch):
     assert result["steps"] == [
         {"kind": "navigate", "path": f"/projects/{project_id}", "label": "Abrir proyecto"}
     ]
-    assert result["queries"] == []
+    # The caller's own surface counts as provenance.
+    assert result["queries"] == [{"surface": "dashboard", "status": "ok"}]
     assert calls[0]["capability"] == "agent"
     assert calls[0]["tool_name"] == "agent"
     assert calls[0]["input_payload"]["actions"]["ops_available"] is False
+    assert calls[0]["input_payload"]["actions"]["prepare_routes"]["emit_revision"] == (
+        "/projects/{project_id}/pricing"
+    )
+    assert calls[0]["input_payload"]["product"] is None
 
 
 def test_agent_query_loop_feeds_observation_and_accumulates_credits(monkeypatch):
@@ -135,7 +140,10 @@ def test_agent_query_loop_feeds_observation_and_accumulates_credits(monkeypatch)
     assert observations[0]["context"]["orders"][0]["code"] == "OT-9"
     # The navigate step is grounded in the observed entity.
     assert result["steps"][0]["path"] == f"/production/{project_id}"
-    assert result["queries"] == [{"surface": "production", "status": "ok"}]
+    assert result["queries"] == [
+        {"surface": "dashboard", "status": "ok"},
+        {"surface": "production", "status": "ok"},
+    ]
     assert result["credits_debited"] == 6
 
 
@@ -164,7 +172,10 @@ def test_agent_query_error_becomes_observation_not_crash(monkeypatch):
         history=[],
         operation_key="goal-3",
     )
-    assert result["queries"] == [{"surface": "project", "status": "error"}]
+    assert result["queries"] == [
+        {"surface": "dashboard", "status": "ok"},
+        {"surface": "project", "status": "error"},
+    ]
 
 
 def test_agent_navigate_rejects_ungrounded_uuid(monkeypatch):
@@ -229,6 +240,14 @@ def test_agent_prepare_requires_allowlisted_action(monkeypatch):
             {
                 "kind": "prepare",
                 "action": "emit_revision",
+                "path": f"/projects/{project_id}/pricing",
+                "label": "Emitir revisión",
+            },
+            # Right action, wrong route — a prepare can never deep-link
+            # somewhere its label doesn't mean.
+            {
+                "kind": "prepare",
+                "action": "emit_revision",
                 "path": f"/projects/{project_id}",
                 "label": "Emitir revisión",
             },
@@ -255,7 +274,7 @@ def test_agent_prepare_requires_allowlisted_action(monkeypatch):
         {
             "kind": "prepare",
             "action": "emit_revision",
-            "path": f"/projects/{project_id}",
+            "path": f"/projects/{project_id}/pricing",
             "label": "Emitir revisión",
         }
     ]
@@ -328,7 +347,7 @@ def test_agent_ops_step_validated_through_design_contract(monkeypatch):
             }
         ]
     )
-    _patch(monkeypatch, contexts=contexts, outputs=[output])
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
 
     summary = {"modules": [{"ref": "m1", "width_mm": 1200}], "couplings": []}
     validated_ops = [{"op": "set_module_width", "module": "m1", "width_mm": 1400}]
@@ -363,6 +382,10 @@ def test_agent_ops_step_validated_through_design_contract(monkeypatch):
         {"kind": "ops", "ops": validated_ops, "label": "Ajustar ancho"}
     ]
     assert result["rejected"] == dropped
+    # The provider sees the live product wire — without it the model has no
+    # real refs to emit ops against.
+    assert calls[0]["input_payload"]["product"] == product
+    assert calls[0]["input_payload"]["actions"]["ops_available"] is True
 
 
 def test_agent_ops_step_dropped_off_position_surface(monkeypatch):

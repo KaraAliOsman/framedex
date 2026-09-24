@@ -9,6 +9,7 @@ role already sees, and it can never reach another tenant's rows.
 
 from __future__ import annotations
 
+import json
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
@@ -39,6 +40,17 @@ class _ContextError(Exception):
     def __init__(self, code: str):
         super().__init__(code)
         self.code = code
+
+
+def _jsonb(value: Any) -> Any:
+    """Raw cursors return jsonb columns as text — decode before the shape
+    checks or a real dict/list payload silently collapses to None."""
+    if isinstance(value, str):
+        try:
+            return json.loads(value, parse_float=Decimal)
+        except json.JSONDecodeError:
+            return None
+    return value
 
 
 def _cut(value: Any, limit: int = MAX_FIELD) -> str | None:
@@ -224,10 +236,20 @@ def _position(org_id: UUID, refs: dict) -> dict:
     if not result:
         raise _ContextError("ai_context_not_found")
     position = result[0]
-    tree = position.get("parametric_tree")
+    tree = _jsonb(position.get("parametric_tree"))
     assembly = tree.get("assembly") if isinstance(tree, dict) else None
     modules = assembly.get("modules") if isinstance(assembly, dict) else None
     couplings = assembly.get("couplings") if isinstance(assembly, dict) else None
+    if modules is None and isinstance(tree, dict) and tree:
+        # Single-module positions persist the module's own tree without an
+        # assembly envelope — surface one module carrying the position's dims.
+        modules = [
+            {
+                "single": True,
+                "width_mm": position["width_mm"],
+                "height_mm": position["height_mm"],
+            }
+        ]
     return {
         "id": str(position["id"]),
         "project": {
@@ -251,6 +273,7 @@ def _position(org_id: UUID, refs: dict) -> dict:
                     "id": _cut(m.get("id"), 40),
                     "width_mm": _cut(m.get("width_mm")),
                     "height_mm": _cut(m.get("height_mm")),
+                    **({"single": True} if m.get("single") else {}),
                 }
                 for m in modules[:MAX_LIST]
                 if isinstance(m, dict)
@@ -364,7 +387,7 @@ def _work_order(org_id: UUID, refs: dict) -> dict:
         "WHERE org_id=%s AND order_id=%s ORDER BY sequence LIMIT %s",
         [org_id, order_id, MAX_LIST * 2],
     )
-    reservations = order[0].get("reservations")
+    reservations = _jsonb(order[0].get("reservations"))
     shortages = (
         sum(1 for entry in reservations if isinstance(entry, dict) and _positive(entry.get("short")))
         if isinstance(reservations, list)

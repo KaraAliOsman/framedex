@@ -12,6 +12,7 @@ entity the context did not show it."""
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 from uuid import UUID
 
@@ -38,18 +39,18 @@ MAX_LABEL = 80
 MAX_WARNINGS = 8
 MAX_WARNING = 240
 
-# Consequential actions the agent may PREPARE as a card. The card deep-links
-# to the surface where the action lives — the human still confirms there;
-# the agent never executes. A path UUID must name an entity a projection
-# showed it this turn.
-PREPARE_ACTIONS = {
-    "emit_revision",
-    "release_work_order",
-    "optimize_work_order",
-    "register_payment",
-    "upload_document",
-    "review_catalog",
-    "upload_certificate",
+# Consequential actions the agent may PREPARE as a card. Each action binds to
+# the real route where the action lives — the human still confirms there; the
+# agent never executes. {placeholder}s must be filled with a UUID a projection
+# showed this turn; a path that doesn't match its action's template is dropped.
+PREPARE_ROUTES: dict[str, tuple[str, tuple[str, ...]]] = {
+    "emit_revision": ("/projects/{project_id}/pricing", ("project_id",)),
+    "register_payment": ("/projects/{project_id}", ("project_id",)),
+    "upload_document": ("/projects/{project_id}", ("project_id",)),
+    "release_work_order": ("/production", ()),
+    "optimize_work_order": ("/production", ()),
+    "review_catalog": ("/catalogs/systems", ()),
+    "upload_certificate": ("/settings/general", ()),
 }
 
 AGENT_SYSTEM = """Eres DEKOPEN Agente — el agente completo de una aplicación profesional de ventanas y puertas (español chileno).
@@ -61,6 +62,7 @@ Recibes un JSON con:
 - "observations": resultados de las consultas que pediste en turnos anteriores de esta misma meta.
 - "history": la conversación previa.
 - "actions": los tipos de paso permitidos.
+- "product": (solo en surface="position") el diseño en edición: modules[] y couplings[] con sus ids y medidas reales — son los refs válidos para "ops".
 
 Respondes SOLO un JSON:
 {
@@ -73,7 +75,7 @@ Tipos de paso:
 - {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Usa las operaciones del contrato de diseño (set_module_count, add_unit, remove_unit, set_module_width, set_total_width, set_height, equalize_widths, equalize_angles, set_coupling_angle, set_opening, set_glass, set_glass_thickness, set_panel) con refs de módulo/unión reales del producto.
-- {"kind":"prepare","action":"emit_revision|release_work_order|optimize_work_order|register_payment|upload_document|review_catalog|upload_certificate","path":"/ruta","label":"..."} — prepara una acción consecuente; la persona la confirma en la superficie real. Nunca la ejecutes tú.
+- {"kind":"prepare","action":"emit_revision|release_work_order|optimize_work_order|register_payment|upload_document|review_catalog|upload_certificate","path":"/ruta","label":"..."} — prepara una acción consecuente; la persona la confirma en la superficie real. Nunca la ejecutes tú. El "path" DEBE seguir la plantilla de actions.prepare_routes[action] rellenando {id} con el UUID real de la entidad (uno que el contexto o las observaciones ya mostraron).
 
 Reglas duras:
 - Solo citas números (medidas, precios, cantidades, SKUs, ids) que estén literalmente en el contexto, las observaciones o la meta del usuario. Nada inventado.
@@ -135,6 +137,19 @@ def _queries(
     return observations, refs_union
 
 
+def _prepare_path_valid(action: str, path: str) -> bool:
+    """A prepare link must equal its action's route template — every
+    {placeholder} filled by a real UUID — so "Ir a la cotización" can never
+    resolve to /dashboard."""
+    template = PREPARE_ROUTES.get(action)
+    if template is None:
+        return False
+    pattern = re.escape(template[0])
+    for name in template[1]:
+        pattern = pattern.replace(rf"\{{{name}\}}", _PATH_UUID.pattern)
+    return bool(re.fullmatch(pattern, path))
+
+
 def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     """Navigate / prepare steps survive only when their path is allowlisted
     AND every UUID in it names an entity a projection actually returned."""
@@ -150,7 +165,7 @@ def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     if kind == "navigate":
         return {"kind": "navigate", "path": path, "label": label or path}
     action = item.get("action")
-    if action not in PREPARE_ACTIONS:
+    if not isinstance(action, str) or not _prepare_path_valid(action, path):
         return None
     return {"kind": "prepare", "action": action, "path": path, "label": label or action}
 
@@ -194,9 +209,19 @@ def act(
                 "history": history,
                 "actions": {
                     "query_surfaces": sorted(REQUIRED_REFS),
-                    "prepare_actions": sorted(PREPARE_ACTIONS),
+                    "prepare_actions": sorted(PREPARE_ROUTES),
+                    "prepare_routes": {
+                        action: route for action, (route, _params) in PREPARE_ROUTES.items()
+                    },
                     "ops_available": surface == "position" and product is not None,
                 },
+                "product": product,
+                "product_fields": (
+                    "product.modules[].id|width_mm|height_mm|contour|frameless "
+                    "y product.couplings[].id|angle_deg|kind|modules|edges"
+                    if surface == "position" and product is not None
+                    else None
+                ),
             },
         )
         debited += int(envelope["credits_debited"])
@@ -305,11 +330,16 @@ def act(
         "reply": reply,
         "steps": steps,
         "queries": [
-            {
-                "surface": observation["surface"],
-                "status": "ok" if "context" in observation else "error",
-            }
-            for observation in all_observations
+            # The caller's own surface was already consulted — report it as
+            # provenance even when the model never queried anything else.
+            {"surface": surface, "status": "ok"},
+            *[
+                {
+                    "surface": observation["surface"],
+                    "status": "ok" if "context" in observation else "error",
+                }
+                for observation in all_observations
+            ],
         ],
         "warnings": warnings,
         "rejected": rejected,

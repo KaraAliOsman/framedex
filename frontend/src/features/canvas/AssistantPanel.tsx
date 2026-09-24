@@ -4,7 +4,7 @@ import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAssist } from "../../api/generated/dekopen";
 import type { DesignAssistResponse } from "../../api/generated/models/designAssistResponse";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { describeDesignOp, type DesignOp } from "./designOps";
+import { describeDesignOp, designAssistProduct, type DesignOp } from "./designOps";
 import type { ProductJson } from "./productEditing";
 
 type Preview = {
@@ -113,25 +113,10 @@ export function AssistantPanel({
           prompt: trimmed,
           operation_key: operationKey.current.key,
           system_id: systemId,
-          product: {
-            // The wire carries stable domain ids — the same ones commands and
-            // selection already use — so ops address modules/couplings by ref,
-            // never by position; endpoints expose the assembly graph itself.
-            modules: product.assembly.modules.map((module) => ({
-              id: module.id,
-              width_mm: module.width_mm,
-              height_mm: module.height_mm,
-              ...(module.contour ? { contour: module.contour } : {}),
-              ...(module.frameless ? { frameless: module.frameless } : {}),
-            })),
-            couplings: product.assembly.couplings.map((coupling) => ({
-              id: coupling.id,
-              angle_deg: coupling.angle_deg,
-              ...(coupling.kind ? { kind: coupling.kind } : {}),
-              ...(coupling.modules ? { modules: coupling.modules } : {}),
-              ...(coupling.edges ? { edges: coupling.edges } : {}),
-            })),
-          },
+          // The wire carries stable domain ids — the same ones commands and
+          // selection already use — so ops address modules/couplings by ref,
+          // never by position; endpoints expose the assembly graph itself.
+          product: designAssistProduct(product),
         },
         { headers: { "X-Organization-ID": organizationId } },
       );

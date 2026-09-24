@@ -159,7 +159,13 @@ describe("AskDekopen — Agente mode", () => {
   });
 
   it("applies an ops step through the canvas's registered commit bridge", async () => {
-    const product = { assembly: { modules: [{ id: "m1" }], couplings: [] } };
+    const product = {
+      version: "product-v2",
+      assembly: {
+        modules: [{ id: "m1", width_mm: "1200", height_mm: "1500" }],
+        couplings: [],
+      },
+    };
     const applied: DesignOp[][] = [];
     function Bridge() {
       useRegisterDesignOpsBridge(product, (ops) => applied.push(ops));
@@ -193,8 +199,14 @@ describe("AskDekopen — Agente mode", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Ejecutar/i }));
     await waitFor(() => expect(agentMock).toHaveBeenCalledTimes(1));
-    // The live product rode along so the server validated against it.
-    expect(agentMock.mock.calls[0]?.[0]).toMatchObject({ product });
+    // The wire carries the stable-id projection the ops contract validates
+    // against — the same shape AssistantPanel sends.
+    expect(agentMock.mock.calls[0]?.[0]).toMatchObject({
+      product: {
+        modules: [{ id: "m1", width_mm: "1200", height_mm: "1500" }],
+        couplings: [],
+      },
+    });
     const applyButton = await screen.findByRole("button", { name: /Aplicar 1 operaciones/i });
     fireEvent.click(applyButton);
     expect(applied).toEqual([[{ op: "set_module_width", module: "m1", width_mm: 1400 }]]);
@@ -202,8 +214,14 @@ describe("AskDekopen — Agente mode", () => {
   });
 
   it("refuses to apply ops once the product changed (stale plan)", async () => {
-    const productA = { version: 1 };
-    const productB = { version: 2 };
+    const productA = {
+      version: "product-v2",
+      assembly: { modules: [{ id: "m1", width_mm: "1200", height_mm: "1500" }], couplings: [] },
+    };
+    const productB = {
+      version: "product-v2",
+      assembly: { modules: [{ id: "m2", width_mm: "1200", height_mm: "1500" }], couplings: [] },
+    };
     let current: { [key: string]: unknown } = productA;
     function Bridge() {
       useRegisterDesignOpsBridge(current, () => undefined);

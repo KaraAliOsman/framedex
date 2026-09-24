@@ -8,7 +8,7 @@ import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiAgentHistoryRequest } from "../../api/generated/models/aiAgentHistoryRequest";
 import { t } from "../../i18n/es-CL";
 import type { DesignOp } from "../commands/types";
-import { describeDesignOp } from "../canvas/designOps";
+import { describeDesignOp, designAssistProduct } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
 
@@ -93,7 +93,9 @@ export function AgentBody({
           surface,
           refs,
           goal: trimmed,
-          ...(product ? { product } : {}),
+          // The ops contract validates the stable-id projection, not the raw
+          // product — the same wire shape AssistantPanel sends.
+          ...(product ? { product: designAssistProduct(product as ProductJson) } : {}),
           history,
           operation_key: operationKey.current.key,
         },

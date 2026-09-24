@@ -454,3 +454,122 @@ def test_ask_navigation_actions_grounded_to_context_ids(monkeypatch):
     )
     paths = [a["path"] for a in result["actions"]]
     assert paths == [f"/projects/{project_id}", "/production"]
+
+
+def _position_row(position_id, project_id, parametric_tree):
+    return {
+        "id": position_id,
+        "project_id": project_id,
+        "position_index": 1,
+        "location_tag": "Fachada",
+        "typology": "VENTANA",
+        "width_mm": "2400.00",
+        "height_mm": "1500.00",
+        "parametric_tree": parametric_tree,
+        "system_code": "DEMO_60",
+        "system_name": "Demo 60",
+        "material": "PVC",
+        "project_code": "OB-1",
+        "project_name": "Edificio",
+    }
+
+
+def test_position_context_decodes_jsonb_parametric_tree(monkeypatch):
+    """Raw cursors hand jsonb back as text — undecoded, modules/couplings
+    would collapse to None forever."""
+    org_id = uuid4()
+    position_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "FROM public.project_positions" in sql:
+            return [
+                _position_row(
+                    position_id,
+                    project_id,
+                    json.dumps(
+                        {
+                            "assembly": {
+                                "modules": [
+                                    {"id": "m1", "width_mm": "1200", "height_mm": "1500"},
+                                    {"id": "m2", "width_mm": "1200", "height_mm": "1500"},
+                                ],
+                                "couplings": [{"id": "c1", "modules": ["m1", "m2"]}],
+                            }
+                        }
+                    ),
+                )
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "position", {"position_id": str(position_id)})
+    assert ctx["modules"] == [
+        {"id": "m1", "width_mm": "1200", "height_mm": "1500"},
+        {"id": "m2", "width_mm": "1200", "height_mm": "1500"},
+    ]
+    assert ctx["couplings"] == 1
+
+
+def test_position_context_wraps_single_module_tree(monkeypatch):
+    """A single-module position persists its module's own tree — no assembly
+    envelope — so the projection surfaces it as one module with real dims."""
+    org_id = uuid4()
+    position_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "FROM public.project_positions" in sql:
+            return [
+                _position_row(
+                    position_id,
+                    project_id,
+                    json.dumps({"bays": [{"id": "b1"}], "leaves": []}),
+                )
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "position", {"position_id": str(position_id)})
+    assert ctx["modules"] == [
+        {
+            "id": None,
+            "width_mm": "2400.00",
+            "height_mm": "1500.00",
+            "single": True,
+        }
+    ]
+    assert ctx["couplings"] is None
+
+
+def test_work_order_context_decodes_jsonb_reservations(monkeypatch):
+    """payload_json->'optimization'->'stock_reservations' arrives as text —
+    shortages must count real entries, not silently read 0."""
+    org_id = uuid4()
+    order_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "FROM public.orders" in sql:
+            return [
+                {
+                    "id": order_id,
+                    "order_code": "OT-1",
+                    "status": "RELEASED",
+                    "reservations": json.dumps(
+                        [{"sku": "S1", "short": "3"}, {"sku": "S2", "short": "0"}]
+                    ),
+                }
+            ]
+        if "FROM public.production_steps" in sql:
+            return [{"sequence": 1, "code": "CUT", "label": "Corte", "status": "PENDING"}]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "work_order", {"work_order_id": str(order_id)})
+    assert ctx["shortages"] == 1

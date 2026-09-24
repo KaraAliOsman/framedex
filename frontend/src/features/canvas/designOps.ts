@@ -5,6 +5,43 @@ import type { ProductJson } from "./productEditing";
 
 export type { DesignOp };
 
+/** The product wire shape the design-ops contract validates against — stable
+ * domain ids (modules/couplings refs), not the full ProductJson. AssistantPanel
+ * and the agent share this projection so both apply against the same graph. */
+export function designAssistProduct(product: ProductJson): {
+  modules: {
+    id: string;
+    width_mm: string;
+    height_mm: string;
+    contour?: unknown;
+    frameless?: unknown;
+  }[];
+  couplings: {
+    id: string;
+    angle_deg: string;
+    kind?: "INLINE" | "STACKED" | "TEE" | "CORNER";
+    modules?: [string, string];
+    edges?: ["left" | "right" | "top" | "bottom", "left" | "right" | "top" | "bottom"];
+  }[];
+} {
+  return {
+    modules: product.assembly.modules.map((module) => ({
+      id: module.id,
+      width_mm: module.width_mm,
+      height_mm: module.height_mm,
+      ...(module.contour ? { contour: module.contour } : {}),
+      ...(module.frameless ? { frameless: module.frameless } : {}),
+    })),
+    couplings: product.assembly.couplings.map((coupling) => ({
+      id: coupling.id,
+      angle_deg: coupling.angle_deg,
+      ...(coupling.kind ? { kind: coupling.kind } : {}),
+      ...(coupling.modules ? { modules: coupling.modules } : {}),
+      ...(coupling.edges ? { edges: coupling.edges } : {}),
+    })),
+  };
+}
+
 /** Wire op → product: dispatched through the shared command registry — the
  * same `apply` a palette row or context-menu action commits. The backend has
  * already bounds-checked the op; unknown or undecodable ops are refused. */
