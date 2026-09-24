@@ -155,7 +155,11 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
       "POST",
       "/api/v1/engine/assembly/calculate/",
       200,
-      () => page.getByRole("button", { name: "Abatible derecha", exact: true }).click(),
+      () =>
+        page
+          .locator(".opening-grid")
+          .getByRole("button", { name: "Abatible derecha", exact: true })
+          .click(),
     )
   ).bom!;
   expect(editedBom.hardware_items![0]!.kit_sku).toBe("KIT-TURN");
@@ -238,10 +242,9 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(reopened).toEqual(saved);
   await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
   await expect(page.getByRole("textbox", { name: "Alto mm" })).toHaveValue("1050.50");
-  await expect(page.getByRole("button", { name: "Abatible derecha", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(
+    page.locator(".opening-grid").getByRole("button", { name: "Abatible derecha", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await bom.locator("summary").click();
   await bom.scrollIntoViewIfNeeded();
   await screenshot(page, info, "03-reopened-bom");
