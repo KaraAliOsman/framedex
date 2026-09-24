@@ -7,7 +7,7 @@ import pytest
 
 from dekopen_engine.documentary_canonical import file_sha256
 from documents.artifacts import _require_document_role
-from documents.renderers import _doc01, _doc03, _doc06, _doc07, render_pdf_document
+from documents.renderers import _doc01, _doc03, _doc04, _doc06, _doc07, render_pdf_document
 from documents.repository import DocumentaryError
 from documents.serializers import HandleIntentSerializer
 from documents.storage import SIGNED_URL_TTL_SECONDS, SupabaseDocumentStorage
@@ -442,6 +442,14 @@ def test_xlsx_is_deterministic_exact_text_and_no_formula_authority(
         assert profile_workbook["Pedido de perfiles"]["F8"].value == "5800.00"
     finally:
         profile_workbook.close()
+
+
+def test_doc04_pdf_keeps_full_requirement_key_for_reconciliation() -> None:
+    """DOC-04 prints the requirement_key exactly like the XLSX twin — the PDF
+    must reconcile line-by-line, so the hash-cell abbreviation never applies."""
+    body = _doc04(order_snapshot("SUPPLIER_PROFILE_PO"))
+    assert "c" * 64 in body
+    assert "…" not in body.split("Requisito")[1].split("</tr>")[1]
 
 
 def test_xlsx_formula_like_text_stays_literal_never_a_formula() -> None:

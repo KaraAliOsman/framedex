@@ -127,7 +127,10 @@ def _value(value: object) -> str:
 def _cell(value: object, class_name: str = "") -> str:
     css = f' class="{escape(class_name)}"' if class_name else ""
     rendered = _value(value)
-    if class_name == "hash" and len(rendered) > 16:
+    classes = set(class_name.split())
+    # "full" opts an identifier out of abbreviation — reconciliation keys
+    # (DOC-04 requisitos) must print exactly as stored in the XLSX twin.
+    if "hash" in classes and "full" not in classes and len(rendered) > 16:
         rendered = f"{rendered[:12]}…{rendered[-4:]}"
     return f"<td{css}>{escape(rendered)}</td>"
 
@@ -905,7 +908,7 @@ def _doc04(snapshot: dict[str, object]) -> str:
             [[line.get("requirement_key"), line.get("category"),
               ", ".join(_value(item) for item in _array(line.get("technical_skus"), "invalid_order_line")),
               line.get("purchasing_sku"), line.get("quantity"), line.get("unit")]
-             for line in lines], ["hash", "", "", "", "dimension", ""],
+             for line in lines], ["hash full", "", "", "", "dimension", ""],
         )
         + "</main>"
     )
