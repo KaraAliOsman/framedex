@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import {
+  clientsList,
   projectsList,
   projectsCreate,
   projectsRetrieve,
@@ -14,6 +15,7 @@ import {
   positionsDestroy,
 } from "../../api/generated/dekopen";
 import type {
+  ClientResponse,
   ProjectResponse,
   ProjectWriteRequest,
   PositionResponse,
@@ -33,6 +35,9 @@ const fields = [
   ["client_rut", "projects.rut", "text", 50],
   ["client_email", "projects.email", "email", undefined],
   ["client_phone", "projects.phone", "tel", 50],
+  ["client_giro", "projects.clientGiro", "text", 80],
+  ["client_comuna", "projects.clientComuna", "text", 20],
+  ["client_address", "projects.clientAddress", "text", 70],
   ["delivery_address", "projects.address", "textarea", undefined],
   ["notes_commercial", "projects.commercialNotes", "textarea", undefined],
   ["notes_internal", "projects.internalNotes", "textarea", undefined],
@@ -50,10 +55,14 @@ const statuses: Record<ProjectResponse["status"], TranslationKey> = {
 function metadata(project?: ProjectResponse): ProjectWriteRequest {
   return {
     name: project?.name ?? "",
+    client_id: project?.client_id ?? null,
     client_name: project?.client_name ?? "",
     client_rut: project?.client_rut ?? "",
     client_email: project?.client_email ?? "",
     client_phone: project?.client_phone ?? "",
+    client_giro: project?.client_giro ?? "",
+    client_comuna: project?.client_comuna ?? "",
+    client_address: project?.client_address ?? "",
     delivery_address: project?.delivery_address ?? "",
     notes_commercial: project?.notes_commercial ?? "",
     notes_internal: project?.notes_internal ?? "",
@@ -67,12 +76,14 @@ type Draft = {
 
 function ProjectMetadataForm({
   draft,
+  clients,
   disabled,
   onChange,
   onSave,
   onCancel,
 }: {
   draft: Draft;
+  clients: ClientResponse[];
   disabled: boolean;
   onChange(value: Draft): void;
   onSave(): void;
@@ -88,6 +99,47 @@ function ProjectMetadataForm({
     >
       <fieldset disabled={disabled}>
         <legend>{t("projects.metadata")}</legend>
+        {clients.length > 0 && (
+          <label>
+            {t("clients.pick")}
+            <select
+              name="client_id"
+              value={draft.value.client_id ?? ""}
+              onChange={(event) => {
+                const picked = clients.find((item) => item.id === event.target.value) ?? null;
+                onChange({
+                  ...draft,
+                  value: {
+                    ...draft.value,
+                    client_id: picked?.id ?? null,
+                    ...(picked
+                      ? {
+                          client_name: picked.name,
+                          client_rut: picked.rut,
+                          client_email: picked.email,
+                          client_phone: picked.phone,
+                          client_giro: picked.giro ?? "",
+                          client_comuna: picked.comuna ?? "",
+                          client_address: picked.address,
+                          delivery_address: draft.value.delivery_address || picked.address,
+                        }
+                      : {}),
+                  },
+                });
+              }}
+            >
+              <option value="">{t("clients.none")}</option>
+              {clients
+                .filter((item) => item.is_active || item.id === draft.value.client_id)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                    {item.rut ? ` · ${item.rut}` : ""}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
         {fields.map(([name, label, type, maxLength]) => {
           const props = {
             name,
@@ -134,6 +186,7 @@ export function ProjectPages(): JSX.Element {
       orgId={org.id}
       id={id}
       canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
+      canSendEnvio={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
     />
   );
 }
@@ -148,11 +201,13 @@ function ProjectWorkspace({
   orgId,
   id,
   canWrite,
+  canSendEnvio,
 }: {
   identity: string;
   orgId: string;
   id?: string;
   canWrite: boolean;
+  canSendEnvio: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -197,6 +252,24 @@ function ProjectWorkspace({
     gcTime: 0,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+  });
+
+  // The picker only materializes when the metadata form opens — fetch then,
+  // so the list page never pays for it.
+  const clientsQuery = useQuery<ClientResponse[]>({
+    queryKey: ["clients", identity],
+    enabled: draft !== null,
+    queryFn: async ({ signal }) => {
+      const response = await clientsList({
+        signal,
+        headers: { "X-Organization-ID": orgId },
+      });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data.items;
+    },
+    retry: false,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   async function save(): Promise<void> {
@@ -388,6 +461,7 @@ function ProjectWorkspace({
       {draft ? (
         <ProjectMetadataForm
           draft={draft}
+          clients={clientsQuery.data ?? []}
           disabled={disabled}
           onChange={setDraft}
           onSave={() => void save()}
@@ -488,6 +562,7 @@ function ProjectWorkspace({
             projectId={project.id}
             orgId={orgId}
             canWrite={canWrite}
+            canSendEnvio={canSendEnvio}
             onDirtyChange={setPaymentsDirty}
           />
           <ProjectImportsPanel

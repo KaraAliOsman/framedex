@@ -31,24 +31,30 @@ def database_access(django_db_blocker: DjangoDbBlocker) -> Iterator[None]:
 
 
 def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures) -> None:
+    # The global demo system can be technical_locked once positions reference
+    # it — tenant mappings run against an org-owned clone carrying the same
+    # global-scope authorities.
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+
     repo = CuttingRepository()
     org = real_rows.organizations["A"]
     with authenticated_rls_context(real_rows.tokens["A"].claims):
         global_stock = repo.profile_stock(real_rows.demo_system, org, "MARCO", "WHITE")
         assert global_stock.stock_length_mm == Decimal("6000.00")
         assert global_stock.commercial_sku == "DEMO-BAR-MARCO"
+    clone = copy_fixed_catalog(org, global_scope=True)
     with connection.cursor() as cursor:
         cursor.execute(
             """INSERT INTO public.profile_purchase_mappings
                (profile_article_id,org_id,commercial_sku,manufacturer_name,purchase_unit)
                SELECT id,%s,'TENANT-EXACT','Synthetic test','BAR'
                FROM public.profile_articles WHERE system_id=%s AND sku='MARCO'
-               RETURNING id""", [org, real_rows.demo_system],
+               RETURNING id""", [org, clone],
         )
         mapping_id = cursor.fetchone()[0]
     try:
         with authenticated_rls_context(real_rows.tokens["A"].claims):
-            chosen = repo.profile_stock(real_rows.demo_system, org, "MARCO", "WHITE")
+            chosen = repo.profile_stock(clone, org, "MARCO", "WHITE")
             assert chosen.commercial_sku == "TENANT-EXACT"
             assert chosen.stock_length_mm == global_stock.stock_length_mm
             with connection.cursor() as cursor:
@@ -61,7 +67,7 @@ def test_purchase_tenant_precedence_and_ambiguity(real_rows: RLSFixtures) -> Non
                 )
                 duplicate_id = cursor.fetchone()[0]
             with pytest.raises(AmbiguousStockAuthority):
-                repo.profile_stock(real_rows.demo_system, org, "MARCO", "WHITE")
+                repo.profile_stock(clone, org, "MARCO", "WHITE")
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM public.profile_purchase_mappings WHERE id=%s",
                                [duplicate_id])
@@ -118,8 +124,14 @@ def test_cutting_profile_scope_default_and_explicit_visibility(real_rows: RLSFix
 
 
 def test_inspector_exact_json_override_and_missing_config(real_rows: RLSFixtures) -> None:
+    # The global demo system can be technical_locked once positions reference
+    # it — tenant overrides run against an org-owned clone carrying the same
+    # global-scope rule configs.
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+
     repo = InspectorRepository()
     org = real_rows.organizations["A"]
+    clone = copy_fixed_catalog(org, global_scope=True)
     with authenticated_rls_context(real_rows.tokens["A"].claims):
         assert repo.load(real_rows.demo_system, org).config.R10.tolerance_mm == Decimal("1.50")
         with pytest.raises(InspectorConfigurationError):
@@ -128,15 +140,15 @@ def test_inspector_exact_json_override_and_missing_config(real_rows: RLSFixtures
             cursor.execute(
                 """INSERT INTO public.inspector_rule_configs (system_id,org_id,rule_id,params)
                    VALUES (%s,%s,'R10','{"tolerance_mm":1.5000000000000001}'::jsonb) RETURNING id""",
-                [real_rows.demo_system, org],
+                [clone, org],
             )
             row_id = cursor.fetchone()[0]
         try:
-            assert repo.load(real_rows.demo_system, org).config.R10.tolerance_mm == Decimal("1.5000000000000001")
+            assert repo.load(clone, org).config.R10.tolerance_mm == Decimal("1.5000000000000001")
             with connection.cursor() as cursor:
                 cursor.execute("UPDATE public.inspector_rule_configs SET params='{}' WHERE id=%s", [row_id])
             with pytest.raises(InspectorConfigurationError):
-                repo.load(real_rows.demo_system, org)
+                repo.load(clone, org)
         finally:
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM public.inspector_rule_configs WHERE id=%s", [row_id])

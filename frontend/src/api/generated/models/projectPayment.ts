@@ -8,6 +8,10 @@
 
 export interface ProjectPayment {
   id: string;
+  /** @nullable */
+  receipt_id: string | null;
+  /** @nullable */
+  receipt_code: string | null;
   kind: string;
   amount: string;
   method: string;
