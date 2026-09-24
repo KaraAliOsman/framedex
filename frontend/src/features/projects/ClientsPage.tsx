@@ -21,6 +21,8 @@ const clientFields = [
   ["email", "clients.email", "email", undefined],
   ["phone", "clients.phone", "tel", 50],
   ["address", "clients.address", "textarea", undefined],
+  ["giro", "clients.giro", "text", 80],
+  ["comuna", "clients.comuna", "text", 20],
   ["notes", "clients.notes", "textarea", undefined],
 ] as const;
 
@@ -31,7 +33,16 @@ type Draft = {
 
 function empty(): Draft {
   return {
-    value: { name: "", rut: "", email: "", phone: "", address: "", notes: "" },
+    value: {
+      name: "",
+      rut: "",
+      email: "",
+      phone: "",
+      address: "",
+      giro: "",
+      comuna: "",
+      notes: "",
+    },
   };
 }
 
@@ -43,6 +54,8 @@ function filled(client: ClientResponse): Draft {
       email: client.email,
       phone: client.phone,
       address: client.address,
+      giro: client.giro ?? "",
+      comuna: client.comuna ?? "",
       notes: client.notes,
     },
     expectedUpdatedAt: client.updated_at,
@@ -121,6 +134,8 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
             email: draft.value.email ?? "",
             phone: draft.value.phone ?? "",
             address: draft.value.address ?? "",
+            giro: draft.value.giro ?? "",
+            comuna: draft.value.comuna ?? "",
             notes: draft.value.notes ?? "",
           },
           options,

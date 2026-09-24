@@ -161,3 +161,32 @@ def test_purchase_aggregation_and_canonical_order_independent_of_inputs() -> Non
         for rules in ([a, z], [z, a]):
             assert optimize_cut(list(permuted), rules, saw()).model_dump_json() == (
                 expected.model_dump_json())
+
+
+def test_curved_members_keep_their_sagitta_through_the_cut_plan() -> None:
+    # A bent member is a cutting instruction of its own — the bar plan must
+    # carry the sagitta so the workshop bends instead of cutting straight.
+    from dekopen_engine.cutting import pieces_from_result
+    from dekopen_engine.models import EngineResult, MaterialType, ProfileCut, ProfileRole
+
+    result = EngineResult(
+        profile_cuts=[
+            ProfileCut(
+                sku="MARCO-60",
+                role=ProfileRole.FRAME,
+                material=MaterialType.PVC,
+                length_mm=D("2400.00"),
+                angle_left=D("45.0"),
+                angle_right=D("45.0"),
+                qty=1,
+                bay_id="B1",
+                sagitta_mm=D("500.00"),
+            )
+        ],
+        reinforcements=[],
+        glasses=[],
+    )
+    pieces = pieces_from_result(result, color="WHITE", reinforcement_skus={})
+    assert [piece.sagitta_mm for piece in pieces] == [D("500.00")]
+    plan = optimize_cut(pieces, [stock(sku="MARCO-60")], saw())
+    assert plan.workshop_cut_plan[0].cuts[0].sagitta_mm == D("500.00")
