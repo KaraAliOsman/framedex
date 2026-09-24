@@ -1729,6 +1729,42 @@ def test_schedule_delivery_rejects_reschedule_after_dispatch(monkeypatch) -> Non
             )
 
 
+def test_schedule_delivery_first_schedule_after_unscheduled_dispatch(monkeypatch) -> None:
+    """A note issued without a scheduled delivery seals only the destination —
+    the first schedule must still be creatable for the same address."""
+    org_id, order_id = _dispatched_delivery_env(
+        monkeypatch, {"address": "Calle 10"}
+    )
+    stored: list = []
+
+    def fake_one(sql, params=None, *_a, **_k):
+        if "insert into public.deliveries" in " ".join(str(sql).lower().split()):
+            stored.append(params)
+            return {"id": uuid4(), "installer_name": None, "status": "SCHEDULED"}
+        return {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"}
+
+    def fake_rows(sql, params=None):
+        lowered = " ".join(str(sql).lower().split())
+        if "from public.deliveries" in lowered:
+            return []
+        return [{"id": "ok"}]
+
+    monkeypatch.setattr("production.service.rows", fake_rows)
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr(
+        service, "get_delivery", lambda **kw: {"delivery": {"status": "SCHEDULED"}}
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.schedule_delivery(
+            org_id=org_id, order_id=order_id, actor_id=uuid4(),
+            scheduled_date="2026-10-05", time_window="AM", address="Calle 10",
+        )
+    assert out["delivery"]["status"] == "SCHEDULED"
+    assert stored  # the first schedule actually inserted
+
+
 def test_schedule_delivery_same_values_after_dispatch_replays(monkeypatch) -> None:
     """Resubmitting the sealed program is a replay, not a drift."""
     from datetime import date

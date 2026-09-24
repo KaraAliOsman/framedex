@@ -1730,14 +1730,21 @@ def schedule_delivery(
             # they never reach the guía).
             sealed = sealed_delivery(org_id=org_id, order_id=order_id)
             if sealed is not None:
-                for key in (
-                    "address",
-                    "scheduled_date",
-                    "time_window",
-                    "contact_name",
-                    "contact_phone",
-                    "installer_name",
-                ):
+                # The guía always prints a destination; it only prints a
+                # delivery program when one existed at dispatch. A note issued
+                # without a schedule seals the address alone — the first
+                # schedule must still be creatable.
+                keys = ("address",)
+                if sealed.get("scheduled_date"):
+                    keys = (
+                        "address",
+                        "scheduled_date",
+                        "time_window",
+                        "contact_name",
+                        "contact_phone",
+                        "installer_name",
+                    )
+                for key in keys:
                     left = normalized.get(key)
                     right = sealed.get(key)
                     if ("" if left is None else str(left)) != (
