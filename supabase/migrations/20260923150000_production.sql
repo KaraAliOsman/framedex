@@ -55,7 +55,7 @@ CREATE TABLE public.production_step_events (
     step_id UUID REFERENCES public.production_steps(id) ON DELETE SET NULL,
     event TEXT NOT NULL CHECK (event IN (
         'WO_RELEASED', 'STEP_STARTED', 'STEP_COMPLETED', 'STEP_BLOCKED',
-        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD'
+        'STEP_UNBLOCKED', 'NOTE', 'WO_COMPLETED', 'WO_HOLD', 'WO_OPTIMIZED'
     )),
     actor_id UUID,
     payload JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'),
@@ -97,9 +97,9 @@ WITH CHECK (
         org_id, ARRAY['OWNER', 'WORKSHOP_MANAGER', 'INSTALLER'])
 );
 
-REVOKE ALL ON public.work_centers FROM anon;
-REVOKE ALL ON public.production_steps FROM anon;
-REVOKE ALL ON public.production_step_events FROM anon;
+REVOKE ALL ON public.work_centers FROM anon, authenticated;
+REVOKE ALL ON public.production_steps FROM anon, authenticated;
+REVOKE ALL ON public.production_step_events FROM anon, authenticated;
 -- Writes flow only through documentary_backend (API role checks + transition
 -- validation); org members keep read access for the paperless floor UI.
 GRANT SELECT ON public.work_centers TO authenticated;

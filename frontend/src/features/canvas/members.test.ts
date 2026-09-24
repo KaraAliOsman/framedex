@@ -19,6 +19,7 @@ const CATALOG: DesignOptions = {
   glazing_thicknesses: ["24.00", "28.00"],
   hardware_kits: [],
   glass_skus: [],
+  glass_specs: [],
   coupler_skus: ["CPL-90"],
   coupler_profiles: [{ sku: "CPL-90", name: "Coplana", material: "PVC", face_width_mm: "90.00" }],
   glazing_beads: [
