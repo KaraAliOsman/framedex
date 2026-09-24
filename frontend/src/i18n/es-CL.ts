@@ -247,6 +247,8 @@ const messages = {
   "projects.paymentLinkCopy": "Copiar",
   "projects.paymentLinkCopied": "Copiado",
   "projects.paymentLinkRecover": "Revisar estado",
+  "projects.paymentLinkCancel": "Cancelar",
+  "projects.paymentLinkCancelError": "No pudimos cancelar el link.",
   "projects.paymentLinkStatusDispatching": "Creando",
   "projects.paymentLinkStatusPending": "Pendiente",
   "projects.paymentLinkStatusPaid": "Pagado",

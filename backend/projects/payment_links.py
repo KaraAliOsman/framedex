@@ -15,6 +15,8 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
 
+import json
+
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -199,6 +201,14 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         if deal is None:
             raise contract_error(
                 422, "payment_requires_deal", "El proyecto necesita un precio aplicado para cobrar."
+            )
+        # The deal can change between the pre-check and this lock — a pricing
+        # reset that lands first must not mint a CLP charge on a foreign deal.
+        if deal["currency"] != "CLP":
+            raise contract_error(
+                422,
+                "payment_link_currency_unsupported",
+                "Los links Flow solo cobran en CLP — el trato del proyecto usa otra moneda.",
             )
         deal_total = str(deal["total"])
         deal_currency = deal["currency"]
@@ -433,22 +443,12 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
         # live deal for links minted before the freeze, else an empty
         # snapshot.
         project = project_row(org_id, link["project_id"])
-        live_deal = _deal(org_id, link["project_id"], project)
-        if link.get("deal_total") is not None:
-            deal = {
-                "total": Decimal(str(link["deal_total"])),
-                "currency": link["deal_currency"] or "CLP",
-            }
-        elif live_deal is not None:
-            deal = live_deal
-        else:
-            deal = {"total": None, "currency": "CLP"}
         issue_receipt(
             org_id=org_id,
             project=project,
             payment=payment[0],
             actor_id=link["created_by"] or org_id,
-            deal=deal,
+            deal=_settle_deal(org_id=org_id, project=project, link=link),
         )
         link = rows(
             "UPDATE public.project_payment_links SET status='PAID', flow_order=%s, "
@@ -463,6 +463,78 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             [str(link_id)],
         )
     return {"link": _public_link(link)}
+
+
+def _settle_deal(*, org_id: UUID, project: dict, link: dict) -> dict:
+    """Deal for the comprobante inside the billing scope. The snapshot frozen
+    on the link at creation wins; links minted before the freeze fall back to
+    the latest sealed revision, then to an applied-pricing live deal, else to
+    an empty snapshot — a verified charge must never strand over missing
+    pricing authority. These reads run under billing_backend (pinned by the
+    caller's financial_transaction): the documentary role resolves nothing on
+    the public webhook because it carries no request claims."""
+    if link.get("deal_total") is not None:
+        return {
+            "total": Decimal(str(link["deal_total"])),
+            "currency": link["deal_currency"] or "CLP",
+        }
+    versions = rows(
+        "SELECT revision_code,snapshot_json::text AS snapshot_json "
+        "FROM public.project_versions "
+        "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+        [str(org_id), str(link["project_id"])],
+    )
+    if versions:
+        snapshot = versions[0]["snapshot_json"]
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+        sealed_project = snapshot.get("project") if isinstance(snapshot, dict) else None
+        gross = (sealed_project or {}).get("total_price_gross")
+        if gross is not None:
+            return {
+                "total": Decimal(str(gross)),
+                "currency": (sealed_project or {}).get("currency") or "CLP",
+            }
+    applied = rows(
+        "SELECT currency FROM private.applied_pricing_currency(%s,%s)",
+        [str(org_id), str(link["project_id"])],
+    )
+    if applied:
+        org = rows(
+            "SELECT currency FROM public.tenancy_organizations WHERE id=%s",
+            [str(org_id)],
+        )
+        return {
+            "total": Decimal(str(project["total_price_gross"])),
+            "currency": applied[0]["currency"] or (org[0]["currency"] if org else "CLP"),
+        }
+    return {"total": None, "currency": "CLP"}
+
+
+def cancel_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
+    """Abandon a non-terminal link: a stuck charge must not pin the project's
+    pricing forever — the requester tombstones it explicitly, its dispatch
+    credentials drop with the transition, and the operation_key stays burned
+    so a replay of create still resolves the same (now cancelled) row."""
+    with transaction.atomic(), documentary_backend():
+        found = rows(
+            "UPDATE public.project_payment_links SET status='CANCELLED',updated_at=NOW() "
+            "WHERE org_id=%s AND project_id=%s AND id=%s "
+            "AND status IN ('DISPATCHING','PENDING','UNCERTAIN') RETURNING *",
+            [str(org_id), str(project_id), str(link_id)],
+        )
+        if not found:
+            raise contract_error(
+                409,
+                "payment_link_not_cancellable",
+                "El link ya está resuelto — no se puede cancelar.",
+            )
+        # The credential version only needs to outlive an in-flight charge.
+        rows(
+            "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
+            [str(link_id)],
+        )
+    return {"link": _public_link(found[0])}
 
 
 def confirm_link(*, link_id: UUID, token: str) -> dict:
@@ -480,9 +552,11 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
     if not found:
         raise FlowError("payment_link_not_found")
     link = found[0]
-    # Acknowledge idempotent retries of an already-settled callback without a
-    # provider query — the terminal link's credential snapshot may be gone.
+    # Acknowledge a retried callback only when it carries the link's own
+    # opaque Flow token — a bare link id must not forge settlement evidence.
     if str(link["status"]) == "PAID":
+        if token != link["flow_token"]:
+            raise FlowError("flow_payment_binding_mismatch")
         return {"link": _public_link(link)}
     client = _client_for_link(link)
     verified = _payment(client.payment_status(token))

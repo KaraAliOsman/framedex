@@ -9424,6 +9424,82 @@ export const projectPaymentLinkCreate = async (
   });
 };
 
+export type projectPaymentLinkCancelResponse200 = {
+  data: PaymentLinkResponse;
+  status: 200;
+};
+
+export type projectPaymentLinkCancelResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectPaymentLinkCancelResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectPaymentLinkCancelResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectPaymentLinkCancelResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectPaymentLinkCancelResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectPaymentLinkCancelResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectPaymentLinkCancelResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectPaymentLinkCancelResponseSuccess = projectPaymentLinkCancelResponse200 & {
+  headers: Headers;
+};
+export type projectPaymentLinkCancelResponseError = (
+  | projectPaymentLinkCancelResponse400
+  | projectPaymentLinkCancelResponse401
+  | projectPaymentLinkCancelResponse403
+  | projectPaymentLinkCancelResponse404
+  | projectPaymentLinkCancelResponse409
+  | projectPaymentLinkCancelResponse422
+  | projectPaymentLinkCancelResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectPaymentLinkCancelResponse =
+  projectPaymentLinkCancelResponseSuccess | projectPaymentLinkCancelResponseError;
+
+export const getProjectPaymentLinkCancelUrl = (projectId: string, linkId: string) => {
+  return `/api/v1/projects/${projectId}/payment-links/${linkId}/cancel/`;
+};
+
+export const projectPaymentLinkCancel = async (
+  projectId: string,
+  linkId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectPaymentLinkCancelResponse> => {
+  return apiMutator<projectPaymentLinkCancelResponse>(
+    getProjectPaymentLinkCancelUrl(projectId, linkId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
 export type projectPaymentLinkRecoverResponse200 = {
   data: PaymentLinkResponse;
   status: 200;

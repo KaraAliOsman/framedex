@@ -424,8 +424,8 @@ def test_confirm_settles_on_frozen_deal_when_pricing_reset(monkeypatch):
 
 
 def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
-    """Links minted before the freeze carry no snapshot: the live deal is
-    used when it exists."""
+    """Links minted before the freeze carry no snapshot: the sealed revision's
+    deal is used — read inside the billing scope, not via documentary claims."""
     link = _link(deal_total=None, deal_currency=None)
     integration = _integration(org_id=link["org_id"])
 
@@ -434,6 +434,13 @@ def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
+        if "FROM public.project_versions" in sql:
+            return [
+                {
+                    "revision_code": "REV-A",
+                    "snapshot_json": '{"project":{"total_price_gross":"250000","currency":"CLP"}}',
+                }
+            ]
         if "FOR UPDATE" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
@@ -444,6 +451,7 @@ def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
 
     client = _Client()
     receipts = _patch_env(monkeypatch, fake_rows, client=client)
+    monkeypatch.setattr(payment_links, "_deal", lambda *a, **k: None)
     out = payment_links.confirm_link(link_id=link["id"], token="tok-1")
     assert out["link"]["status"] == "PAID"
     assert receipts[0]["deal"] == {"total": Decimal("250000"), "currency": "CLP"}
@@ -867,3 +875,88 @@ def test_reset_pricing_blocked_by_outstanding_link(monkeypatch):
             project["org_id"], project["id"], op_id, "reprice"
         )
     assert failure.value.contract_code == "payment_links_outstanding"
+
+
+def test_confirm_paid_link_requires_own_token(monkeypatch):
+    """A retried callback acknowledges only when it carries the link's own
+    opaque Flow token — a bare link id must not forge settlement evidence."""
+    link = _link(status="PAID", project_payment_id=uuid4())
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql:
+            return [link]
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    with pytest.raises(FlowError, match="flow_payment_binding_mismatch"):
+        payment_links.confirm_link(link_id=link["id"], token="tok-other")
+
+
+def test_cancel_link_tombstones_open_claim(monkeypatch):
+    link = _link()
+    writes = []
+
+    def fake_rows(sql, params=None):
+        if "SET status='CANCELLED'" in sql:
+            writes.append(sql)
+            return [_link(status="CANCELLED")]
+        if "DELETE FROM public.project_payment_link_credentials" in sql:
+            writes.append(sql)
+            return []
+        return []
+
+    _patch_env(monkeypatch, fake_rows)
+    out = payment_links.cancel_link(
+        org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+    )
+    assert out["link"]["status"] == "CANCELLED"
+    assert len(writes) == 2
+
+
+def test_cancel_link_rejects_terminal_status(monkeypatch):
+    link = _link(status="PAID")
+
+    def fake_rows(sql, params=None):
+        return []  # the status guard filters terminal rows out
+
+    _patch_env(monkeypatch, fake_rows)
+    with pytest.raises(APIException) as failure:
+        payment_links.cancel_link(
+            org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
+        )
+    assert failure.value.contract_code == "payment_link_not_cancellable"
+
+
+def test_create_link_rechecks_currency_under_lock(monkeypatch):
+    """A pricing reset landing between the pre-check and the project lock can
+    swap the deal's currency — the locked re-check must still refuse the
+    charge."""
+    calls = {"n": 0}
+
+    def flip_deal(*args, **kwargs):
+        calls["n"] += 1
+        currency = "CLP" if calls["n"] == 1 else "USD"
+        return {"total": Decimal("250000"), "currency": currency}
+
+    _patch_env(
+        monkeypatch,
+        lambda sql, params=None: [_integration()]
+        if "FROM public.org_payment_integrations" in sql
+        else [],
+        deal={"total": Decimal("250000"), "currency": "CLP"},
+    )
+    monkeypatch.setattr(payment_links, "_deal", staticmethod(flip_deal))
+    with pytest.raises(APIException) as failure:
+        payment_links.create_link(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            data={
+                "operation_key": "op-link-1",
+                "kind": "ANTICIPO",
+                "amount": Decimal("250000"),
+                "payer_email": "a@b.cl",
+            },
+        )
+    assert failure.value.contract_code == "payment_link_currency_unsupported"
+    assert calls["n"] == 2  # pre-check passed; locked re-check caught the swap

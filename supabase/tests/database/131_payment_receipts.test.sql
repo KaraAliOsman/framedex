@@ -33,8 +33,9 @@ SELECT has_column(
 );
 SELECT policies_are(
     'public', 'payment_receipts',
-    ARRAY['payment_receipts_read', 'payment_receipts_backend'],
-    'tenant reads, only the backend role writes'
+    ARRAY['payment_receipts_read', 'payment_receipts_backend',
+          'billing_backend_scope', 'billing_backend_restrict'],
+    'tenant reads, only the backend role writes, billing settles'
 );
 SELECT ok(
     (SELECT pol.polcmd = 'r' FROM pg_policy pol

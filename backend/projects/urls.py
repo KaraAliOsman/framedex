@@ -8,6 +8,7 @@ from projects.views import (
     FlowPaymentConfirmView,
     ProjectCloneView,
     ProjectPaymentIntegrationView,
+    ProjectPaymentLinkCancelView,
     ProjectPaymentLinkRecoverView,
     ProjectPaymentLinksView,
     ProjectCreditNoteAccessView,
@@ -87,6 +88,10 @@ urlpatterns = [
     path(
         "projects/<uuid:project_id>/payment-links/<uuid:link_id>/recover/",
         ProjectPaymentLinkRecoverView.as_view(),
+    ),
+    path(
+        "projects/<uuid:project_id>/payment-links/<uuid:link_id>/cancel/",
+        ProjectPaymentLinkCancelView.as_view(),
     ),
     path("positions/<uuid:position_id>/", PositionView.as_view()),
     path(

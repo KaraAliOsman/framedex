@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { ApiError } from "../../api/apiMutator";
 import {
   projectPaymentIntegrationStatus,
+  projectPaymentLinkCancel,
   projectPaymentLinkCreate,
   projectPaymentLinkRecover,
   projectPaymentLinksList,
@@ -165,6 +166,22 @@ export function ProjectPaymentLinksPanel({
     }
   }
 
+  async function cancel(link: PaymentLink): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectPaymentLinkCancel(projectId, link.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setLinks((previous) =>
+        previous.map((item) => (item.id === link.id ? response.data.link : item)),
+      );
+    } catch {
+      setMessage(t("projects.paymentLinkCancelError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const configured = integration?.configured === true && integration.enabled === true;
 
   return (
@@ -286,9 +303,14 @@ export function ProjectPaymentLinksPanel({
                 </td>
                 {canWrite && (
                   <td>
-                    {link.status !== "PAID" && (
+                    {link.status !== "PAID" && link.status !== "CANCELLED" && (
                       <button type="button" onClick={() => recover(link)} disabled={busy}>
                         {t("projects.paymentLinkRecover")}
+                      </button>
+                    )}
+                    {link.status !== "PAID" && link.status !== "CANCELLED" && (
+                      <button type="button" onClick={() => cancel(link)} disabled={busy}>
+                        {t("projects.paymentLinkCancel")}
                       </button>
                     )}
                   </td>

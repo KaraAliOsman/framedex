@@ -359,6 +359,22 @@ class ProjectPaymentLinkRecoverView(APIView):
                 ) from None
 
 
+class ProjectPaymentLinkCancelView(APIView):
+    @extend_schema(
+        operation_id="project_payment_link_cancel",
+        request=None,
+        responses={200: PaymentLinkResponseSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, link_id):
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(
+                payment_links.cancel_link(
+                    org_id=org, project_id=project_id, link_id=link_id
+                )
+            )
+
+
 class ProjectPaymentIntegrationView(APIView):
     parser_classes = [DecimalJSONParser]
 
