@@ -90,12 +90,16 @@ SELECT ok(
     'billing-scoped policies let the webhook settle inside an org-pinned context'
 );
 SELECT ok(
-    EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public' AND tablename = 'project_payment_links'
-          AND policyname = 'payment_links_backend_read'
+    has_function_privilege(
+        'documentary_backend',
+        'private.payment_link_for_confirm(uuid)',
+        'EXECUTE'
+    ) AND NOT has_function_privilege(
+        'authenticated',
+        'private.payment_link_for_confirm(uuid)',
+        'EXECUTE'
     ),
-    'backend can resolve the opaque link id without JWT claims'
+    'webhook resolves its own link via a definer lookup; direct reads stay org-scoped'
 );
 SELECT ok(
     has_table_privilege('billing_backend', 'public.project_payment_link_credentials', 'DELETE')

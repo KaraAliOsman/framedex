@@ -215,7 +215,7 @@ def test_create_link_replay_returns_existing(monkeypatch):
             return [_integration()]
         if "INSERT INTO public.project_payment_links" in sql:
             return []  # conflict: another dispatch won the key first
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         return []
 
@@ -232,7 +232,35 @@ def test_create_link_replay_returns_existing(monkeypatch):
         },
     )
     assert out["link"]["id"] == str(link["id"])
-    assert any("ON CONFLICT" in sql for sql in calls)
+    # The claim resolves before any new-dispatch validation — a replay must
+    # never reach the INSERT (even a repriced deal can't turn it into a 422).
+    assert not any("INSERT INTO public.project_payment_links" in sql for sql in calls)
+
+
+def test_create_link_replay_returns_existing_after_repricing(monkeypatch):
+    """A reset/disabled setup must not turn an idempotent replay into a 422:
+    the existing claim resolves before any new-dispatch validation."""
+    link = _link()
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
+            return [link]
+        return []
+
+    _patch_env(monkeypatch, fake_rows)
+    monkeypatch.setattr(payment_links, "_deal", staticmethod(lambda *a, **k: None))
+    out = payment_links.create_link(
+        org_id=link["org_id"],
+        project_id=link["project_id"],
+        actor_id=uuid4(),
+        data={
+            "operation_key": "op-link-1",
+            "kind": "ANTICIPO",
+            "amount": Decimal("250000"),
+            "payer_email": "a@b.cl",
+        },
+    )
+    assert out["link"]["id"] == str(link["id"])
 
 
 def test_create_link_replay_rejects_cross_project(monkeypatch):
@@ -243,7 +271,7 @@ def test_create_link_replay_rejects_cross_project(monkeypatch):
             return [_integration()]
         if "INSERT INTO public.project_payment_links" in sql:
             return []
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         return []
 
@@ -342,7 +370,7 @@ def test_confirm_settles_payment_into_ledger(monkeypatch):
     inserts = []
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql and "id=%s" in sql:
+        if ("FROM public.project_payment_links" in sql and "id=%s" in sql) or "payment_link_for_confirm" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -371,7 +399,7 @@ def test_confirm_seals_frozen_total_when_repriced(monkeypatch):
     integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links l" in sql:
+        if "FROM public.project_payment_links l" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
@@ -402,7 +430,7 @@ def test_confirm_settles_on_frozen_deal_when_pricing_reset(monkeypatch):
     integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links l" in sql:
+        if "FROM public.project_payment_links l" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
@@ -430,7 +458,7 @@ def test_confirm_settles_on_live_deal_for_legacy_link(monkeypatch):
     integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links l" in sql:
+        if "FROM public.project_payment_links l" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
@@ -464,7 +492,7 @@ def test_confirm_settles_without_any_deal(monkeypatch):
     integration = _integration(org_id=link["org_id"])
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links l" in sql:
+        if "FROM public.project_payment_links l" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
@@ -498,7 +526,7 @@ def test_confirm_uses_link_credentials_not_current_integration(monkeypatch):
     def fake_rows(sql, params=None):
         # org_payment_integrations is deliberately empty — rotation/disabling
         # must not strand an outstanding charge.
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -518,7 +546,7 @@ def test_confirm_rejects_binding_mismatch(monkeypatch):
     link = _link()
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         return []
 
@@ -537,7 +565,7 @@ def test_confirm_paid_link_is_idempotent(monkeypatch):
     link = _link(status="PAID", project_payment_id=uuid4())
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         return []
 
@@ -550,7 +578,7 @@ def test_confirm_failed_observation_marks_link_failed(monkeypatch):
     link = _link()
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "UPDATE public.project_payment_links" in sql:
             return [_link(status="FAILED")]
@@ -573,7 +601,7 @@ def test_settle_rejects_hijacking_payment(monkeypatch):
     hijacker = _payment_row(project_id=uuid4(), amount=Decimal("10000"))
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return []  # conflict — key already claimed
@@ -594,7 +622,7 @@ def test_settle_accepts_matching_manual_payment(monkeypatch):
     manual = _payment_row(project_id=link["project_id"])
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "INSERT INTO public.project_payments" in sql:
             return []
@@ -617,7 +645,7 @@ def test_recover_promotes_uncertain_to_pending(monkeypatch):
     updates = []
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "UPDATE public.project_payment_links" in sql:
             updates.append((sql, params))
@@ -643,7 +671,7 @@ def test_recover_scopes_to_project(monkeypatch):
 
     def fake_rows(sql, params=None):
         seen.append((sql, params))
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return []
         return []
 
@@ -661,7 +689,7 @@ def test_recover_link_uses_order_lookup(monkeypatch):
     link = _link(status="UNCERTAIN", flow_order=None)
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -785,7 +813,7 @@ def test_settle_drops_credentials_once_paid(monkeypatch):
     deletes = []
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FOR UPDATE" in sql:
             return [link]
@@ -820,7 +848,7 @@ def test_terminal_link_falls_back_to_current_integration(monkeypatch):
     integration = _integration(api_key="CURRENT-KEY")
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         if "FROM public.org_payment_integrations" in sql:
             return [integration]
@@ -865,7 +893,7 @@ def test_reset_pricing_blocked_by_outstanding_link(monkeypatch):
     def fake_rows(sql, params=None):
         if "FROM public.project_versions" in sql:
             return []  # revision not yet emitted
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [{"id": uuid4()}]  # an outstanding collectible link
         return []
 
@@ -877,13 +905,37 @@ def test_reset_pricing_blocked_by_outstanding_link(monkeypatch):
     assert failure.value.contract_code == "payment_links_outstanding"
 
 
+def test_confirm_early_settle_stores_flow_token(monkeypatch):
+    """The early-settle race (webhook before create's PENDING write) must not
+    leave flow_token NULL — the PAID update backfills it from the callback."""
+    link = _link(flow_token=None)
+    updates = []
+
+    def fake_rows(sql, params=None):
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
+            return [link]
+        if "INSERT INTO public.project_payments" in sql:
+            return [_payment_row()]
+        if "UPDATE public.project_payment_links" in sql:
+            updates.append((sql, params))
+            return [_link(status="PAID", project_payment_id=uuid4(), flow_token="tok-1")]
+        return []
+
+    client = _Client()
+    _patch_env(monkeypatch, fake_rows, client=client)
+    payment_links.confirm_link(link_id=link["id"], token="tok-1")
+    paid = [(s, p) for s, p in updates if "status='PAID'" in s]
+    assert paid and "COALESCE(flow_token" in paid[0][0]
+    assert "tok-1" in paid[0][1]
+
+
 def test_confirm_paid_link_requires_own_token(monkeypatch):
     """A retried callback acknowledges only when it carries the link's own
     opaque Flow token — a bare link id must not forge settlement evidence."""
     link = _link(status="PAID", project_payment_id=uuid4())
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql:
+        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
             return [link]
         return []
 
@@ -928,22 +980,20 @@ def test_cancel_link_rejects_terminal_status(monkeypatch):
 
 
 def test_create_link_rechecks_currency_under_lock(monkeypatch):
-    """A pricing reset landing between the pre-check and the project lock can
-    swap the deal's currency — the locked re-check must still refuse the
-    charge."""
+    """The deal is validated once, under the project lock — a foreign-currency
+    deal refuses the CLP charge no matter what a pre-check might have seen."""
     calls = {"n": 0}
 
     def flip_deal(*args, **kwargs):
         calls["n"] += 1
-        currency = "CLP" if calls["n"] == 1 else "USD"
-        return {"total": Decimal("250000"), "currency": currency}
+        return {"total": Decimal("250000"), "currency": "USD"}
 
     _patch_env(
         monkeypatch,
         lambda sql, params=None: [_integration()]
         if "FROM public.org_payment_integrations" in sql
         else [],
-        deal={"total": Decimal("250000"), "currency": "CLP"},
+        deal={"total": Decimal("250000"), "currency": "USD"},
     )
     monkeypatch.setattr(payment_links, "_deal", staticmethod(flip_deal))
     with pytest.raises(APIException) as failure:
@@ -959,4 +1009,4 @@ def test_create_link_rechecks_currency_under_lock(monkeypatch):
             },
         )
     assert failure.value.contract_code == "payment_link_currency_unsupported"
-    assert calls["n"] == 2  # pre-check passed; locked re-check caught the swap
+    assert calls["n"] == 1  # single authoritative check, inside the lock

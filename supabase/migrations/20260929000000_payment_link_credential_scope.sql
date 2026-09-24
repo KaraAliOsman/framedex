@@ -37,18 +37,15 @@ GRANT SELECT, INSERT, UPDATE ON public.project_payment_link_credentials
 GRANT ALL ON public.project_payment_link_credentials TO service_role;
 
 CREATE POLICY payment_link_credentials_backend ON public.project_payment_link_credentials
-    FOR ALL TO documentary_backend USING (true) WITH CHECK (true);
+    FOR ALL TO documentary_backend
+    USING (org_id IN (SELECT private.current_user_org_ids()))
+    WITH CHECK (org_id IN (SELECT private.current_user_org_ids()));
 CREATE POLICY billing_backend_scope ON public.project_payment_link_credentials
     FOR ALL TO billing_backend
     USING (private.billing_scope(org_id)) WITH CHECK (private.billing_scope(org_id));
 CREATE POLICY billing_backend_restrict ON public.project_payment_link_credentials
     AS RESTRICTIVE FOR ALL TO billing_backend
     USING (private.billing_scope(org_id)) WITH CHECK (private.billing_scope(org_id));
-
--- The webhook resolves the opaque link id (no JWT, no org context yet), then
--- every write runs inside the billing-scoped org context.
-CREATE POLICY payment_links_backend_read ON public.project_payment_links
-    FOR SELECT TO documentary_backend USING (true);
 
 CREATE POLICY billing_backend_scope ON public.project_payment_links
     FOR ALL TO billing_backend

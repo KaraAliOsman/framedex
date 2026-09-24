@@ -177,17 +177,6 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
     kind = str(data["kind"]).upper()
     if kind not in _LINK_KINDS:
         raise contract_error(422, "payment_kind_invalid", "Tipo de cobro no válido.")
-    deal = _deal(org_id, project_id, project)
-    if deal is None:
-        raise contract_error(
-            422, "payment_requires_deal", "El proyecto necesita un precio aplicado para cobrar."
-        )
-    if deal["currency"] != "CLP":
-        raise contract_error(
-            422,
-            "payment_link_currency_unsupported",
-            "Los links Flow solo cobran en CLP — el trato del proyecto usa otra moneda.",
-        )
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
     with transaction.atomic():
         # Serialize against reset_draft_pricing, which holds the same project
@@ -195,6 +184,21 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         # this claim outlive the deal it was priced against. Locking as the
         # request role: documentary_backend cannot take FOR UPDATE on projects.
         project_row(org_id, project_id, lock=True)
+        with documentary_backend():
+            # An existing claim resolves before any new-dispatch validation — a
+            # replay must return its link even if pricing was reset or the
+            # integration disabled since (idempotent by operation_key).
+            prior = rows(
+                "SELECT * FROM public.project_payment_links "
+                "WHERE org_id=%s AND operation_key=%s",
+                [str(org_id), data["operation_key"]],
+            )
+            if prior:
+                if str(prior[0]["project_id"]) != str(project_id):
+                    raise contract_error(
+                        409, "payment_operation_conflict", "La operación ya existe en otro proyecto."
+                    )
+                return {"link": _public_link(prior[0])}
         # The comprobante seals the deal at claim time — a pricing reset while
         # the customer is paying must not restate what the link presented.
         deal = _deal(org_id, project_id, project)
@@ -202,8 +206,6 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             raise contract_error(
                 422, "payment_requires_deal", "El proyecto necesita un precio aplicado para cobrar."
             )
-        # The deal can change between the pre-check and this lock — a pricing
-        # reset that lands first must not mint a CLP charge on a foreign deal.
         if deal["currency"] != "CLP":
             raise contract_error(
                 422,
@@ -350,8 +352,14 @@ def _payment(value: dict) -> dict:
         raise FlowError("flow_invalid_payment") from None
 
 
-def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) -> dict:
-    """Fold a verified provider observation into link + ledger, idempotently."""
+def _settle(
+    *, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient,
+    token: str | None = None,
+) -> dict:
+    """Fold a verified provider observation into link + ledger, idempotently.
+    The callback token that proved this settlement is stored alongside PAID —
+    the early-settle race (webhook before create's PENDING write) must not
+    leave flow_token NULL, which would reject every later PAID ack."""
     with wallet.financial_transaction(org_id):
         found = rows(
             "SELECT * FROM public.project_payment_links "
@@ -452,9 +460,10 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
         )
         link = rows(
             "UPDATE public.project_payment_links SET status='PAID', flow_order=%s, "
+            "flow_token=COALESCE(flow_token, %s), "
             "project_payment_id=%s, updated_at=now() "
             "WHERE org_id=%s AND id=%s RETURNING *",
-            [verified["flowOrder"], str(payment[0]["id"]), str(org_id), str(link_id)],
+            [verified["flowOrder"], token, str(payment[0]["id"]), str(org_id), str(link_id)],
         )[0]
         # The credential version only needs to outlive an in-flight charge —
         # terminal links drop the snapshot atomically with the transition.
@@ -516,7 +525,10 @@ def cancel_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
     pricing forever — the requester tombstones it explicitly, its dispatch
     credentials drop with the transition, and the operation_key stays burned
     so a replay of create still resolves the same (now cancelled) row."""
-    with transaction.atomic(), documentary_backend():
+    # billing scope, not documentary: the credential DELETE is only granted
+    # to billing_backend (the settle path), and the org-pinned billing context
+    # keeps the transition tenant-isolated.
+    with transaction.atomic(), wallet.financial_transaction(org_id):
         found = rows(
             "UPDATE public.project_payment_links SET status='CANCELLED',updated_at=NOW() "
             "WHERE org_id=%s AND project_id=%s AND id=%s "
@@ -541,12 +553,11 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
     """Public webhook: resolve the org through the opaque link id, then verify
     server-side with the link's own dispatch credentials — callback fields are
     untrusted and rotated org credentials never strand an outstanding charge."""
+    # Opaque-id resolve through the SECURITY DEFINER lookup — direct table
+    # reads stay org-scoped; the link id itself is the capability.
     with documentary_backend():
         found = rows(
-            "SELECT l.*, c.flow_api_url, c.flow_api_key, c.flow_secret_key "
-            "FROM public.project_payment_links l "
-            "LEFT JOIN public.project_payment_link_credentials c ON c.link_id = l.id "
-            "WHERE l.id=%s",
+            "SELECT * FROM private.payment_link_for_confirm(%s)",
             [str(link_id)],
         )
     if not found:
@@ -560,7 +571,10 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
         return {"link": _public_link(link)}
     client = _client_for_link(link)
     verified = _payment(client.payment_status(token))
-    return _settle(org_id=link["org_id"], link_id=link_id, verified=verified, client=client)
+    return _settle(
+        org_id=link["org_id"], link_id=link_id, verified=verified, client=client,
+        token=token,
+    )
 
 
 def recover_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
@@ -581,4 +595,7 @@ def recover_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
         return {"link": _public_link(link)}
     client = _client_for_link(link)
     verified = _payment(client.payment_by_order(str(link["operation_key"])))
-    return _settle(org_id=org_id, link_id=link_id, verified=verified, client=client)
+    return _settle(
+        org_id=org_id, link_id=link_id, verified=verified, client=client,
+        token=link["flow_token"],
+    )

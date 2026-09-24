@@ -63,7 +63,10 @@ export function ProjectPaymentLinksPanel({
   const [amount, setAmount] = useState("");
   const [payerEmail, setPayerEmail] = useState("");
   const [subject, setSubject] = useState("");
-  const [operationKey, setOperationKey] = useState<string | null>(null);
+  // Idempotency binds the payload, not the form open: an identical retry of a
+  // failed create reuses the key (replay resolves the same claim), while an
+  // edited submit mints a fresh key — never returning the wrong link.
+  const [attempt, setAttempt] = useState<{ key: string; payload: string } | null>(null);
   const [baseline, setBaseline] = useState(kind);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const generation = useRef(0);
@@ -110,11 +113,19 @@ export function ProjectPaymentLinksPanel({
     event.preventDefault();
     setBusy(true);
     setMessage("");
+    const payload = JSON.stringify({
+      kind,
+      amount: amount.replace(",", "."),
+      payer_email: payerEmail.trim(),
+      subject: subject.trim(),
+    });
+    const key = attempt?.payload === payload ? attempt.key : crypto.randomUUID();
+    setAttempt({ key, payload });
     try {
       const response = await projectPaymentLinkCreate(
         projectId,
         {
-          operation_key: operationKey ?? crypto.randomUUID(),
+          operation_key: key,
           kind,
           amount: amount.replace(",", "."),
           payer_email: payerEmail.trim(),
@@ -125,7 +136,7 @@ export function ProjectPaymentLinksPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       setLinks((previous) => [response.data.link, ...previous]);
       setShowForm(false);
-      setOperationKey(null);
+      setAttempt(null);
       setAmount("");
       setPayerEmail("");
       setSubject("");
@@ -196,7 +207,7 @@ export function ProjectPaymentLinksPanel({
             type="button"
             className="primary-action"
             onClick={() => {
-              setOperationKey(crypto.randomUUID());
+              setAttempt(null);
               setBaseline(kind);
               setShowForm(true);
             }}
@@ -256,7 +267,7 @@ export function ProjectPaymentLinksPanel({
               type="button"
               onClick={() => {
                 setShowForm(false);
-                setOperationKey(null);
+                setAttempt(null);
               }}
               disabled={busy}
             >
