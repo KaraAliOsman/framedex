@@ -248,7 +248,12 @@ function leafSolids(
   const glassZ = Math.max((depth - glassT) / 2, 0);
 
   if (sliding && sliding.panels.length > 0) {
-    const paneW = region.w / sliding.panels.length;
+    // Slot geometry mirrors the front view: each slot is `pitch` wide, a
+    // moving leaf covers its slot plus the meeting-stile interlock and is
+    // clamped inside the bay; fixed panels glaze their slot directly.
+    const pitch = region.w / sliding.panels.length;
+    const interlock = members.sash.faceWidthMm;
+    const leafW = pitch + interlock;
     const trackStep = Math.min(24, Math.max(depth * 0.18, 10));
     const sashD = Math.min(24, depth * 0.4);
     sliding.panels.forEach((panel, index) => {
@@ -258,12 +263,7 @@ function leafSolids(
         panel.track ??
         (panel.kind === "FIXED" ? sliding.tracks - 1 : index % Math.max(sliding.tracks, 1));
       const z0 = Math.min(glassZ + (sliding.tracks - 1 - track) * trackStep, depth - glassT);
-      const paneRegion: Region = {
-        x: region.x + index * paneW,
-        y: region.y,
-        w: paneW,
-        h: region.h,
-      };
+      const slotX = region.x + pitch * index;
       if (panel.kind === "FIXED") {
         // Fixed slots glaze directly — no sash, same as the front view.
         solids.push(
@@ -271,17 +271,22 @@ function leafSolids(
             owner,
             "glass",
             "GLASS",
-            paneRegion.x + bead,
-            paneRegion.y + bead,
+            slotX + bead,
+            region.y + bead,
             z0,
-            Math.max(paneW - 2 * bead, 1),
-            Math.max(paneRegion.h - 2 * bead, 1),
+            Math.max(pitch - 2 * bead, 1),
+            Math.max(region.h - 2 * bead, 1),
             glassT,
           ),
         );
         return;
       }
-      const sashW = Math.min(members.sash.faceWidthMm, paneW / 3, region.h / 3);
+      const leafX = Math.min(
+        Math.max(slotX - interlock / 2, region.x),
+        region.x + region.w - leafW,
+      );
+      const paneRegion: Region = { x: leafX, y: region.y, w: leafW, h: region.h };
+      const sashW = Math.min(members.sash.faceWidthMm, leafW / 3, region.h / 3);
       memberBarRing(
         solids,
         owner,
@@ -300,7 +305,7 @@ function leafSolids(
           paneRegion.x + sashW,
           paneRegion.y + sashW,
           z0,
-          Math.max(paneW - 2 * sashW, 1),
+          Math.max(leafW - 2 * sashW, 1),
           Math.max(paneRegion.h - 2 * sashW, 1),
           glassT,
         ),
@@ -309,7 +314,7 @@ function leafSolids(
     return;
   }
 
-  if (bay.panel_article_sku) {
+  if (bay.panel_article_sku && !operable) {
     solids.push(
       box(
         owner,
@@ -339,11 +344,13 @@ function leafSolids(
       sashD,
       depth - sashD,
     );
+    // An operable bay's infill sits inside its sash — an opaque panel for
+    // panel doors, glazing otherwise (the front view wraps both the same).
     solids.push(
       box(
         owner,
-        "glass",
-        "GLASS",
+        bay.panel_article_sku ? "panel" : "glass",
+        bay.panel_article_sku ? members.frame.material : "GLASS",
         region.x + sashW,
         region.y + sashW,
         glassZ,
@@ -385,6 +392,14 @@ function framelessSolids(
   if (!spec) return;
   const owner = module.id;
   const reveal = 6;
+  // The pane is the bay's declared glass — the primary bay carries the
+  // selected thickness, falling back to the neutral default only when
+  // nothing is declared.
+  const declaredT = Number(modulePrimaryBay(module)?.glass_thickness_mm);
+  const glassT = Math.max(
+    Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
+    4,
+  );
   solids.push(
     box(
       owner,
@@ -392,10 +407,10 @@ function framelessSolids(
       "GLASS",
       reveal,
       reveal,
-      Math.max((depth - GLASS_DEFAULT_MM) / 2, 0),
+      Math.max((depth - glassT) / 2, 0),
       Math.max(w - 2 * reveal, 1),
       Math.max(h - 2 * reveal, 1),
-      GLASS_DEFAULT_MM,
+      glassT,
     ),
   );
   const edgeSpan = (edge: string): Region => {
@@ -497,7 +512,7 @@ export function buildScene3D(
   members: MemberGeometry,
   plan?: PlanGeometry | null,
 ): Scene3D {
-  const { rects, joints } = frontLayout(product);
+  const { rects, joints, columns } = frontLayout(product);
   const frameT = members.frame.faceWidthMm;
   const fallbackDepth = Math.max(
     Number(members.frame.section?.depth_mm) || FALLBACK_DEPTH_MM,
@@ -644,14 +659,17 @@ export function buildScene3D(
   // Pairs resolve with the same explicit-or-positional convention the
   // layout uses: `coupling.modules`, else index i binds modules i and i+1.
   const pairByCoupling = new Map(stacks.pairs.map(({ coupling, pair }) => [coupling.id, pair]));
+  // A joint's top matches the front view's seam: the min of the two bound
+  // ROOT columns' tops, where a column top counts every stacked member — a
+  // transom's sill + height raises the seam above the root's own height.
+  const topByRoot = new Map(columns.map((column) => [column.rootId, column.top]));
   const couplingHeight = (couplingId: string | null): number => {
     const pair = couplingId === null ? undefined : pairByCoupling.get(couplingId);
     if (!pair) return 0;
-    const heights = pair
-      .map((id) => moduleById.get(id))
-      .filter((m): m is ProductModuleJson => Boolean(m))
-      .map((m) => Number(m.height_mm));
-    return heights.length > 0 ? Math.min(...heights) : 0;
+    const tops = pair
+      .map((id) => topByRoot.get(stacks.stackRoot.get(id) ?? id))
+      .filter((top): top is number => typeof top === "number");
+    return tops.length > 0 ? Math.min(...tops) : 0;
   };
   for (const polygon of plan?.couplings ?? []) {
     const coupling = product.assembly.couplings.find((item) => item.id === polygon.coupling_id);

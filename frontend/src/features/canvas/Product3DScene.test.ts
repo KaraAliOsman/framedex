@@ -345,4 +345,149 @@ describe("buildScene3D", () => {
     expect(solids.filter((solid) => solid.surface === "sash")).toHaveLength(4);
     expect(solids.filter((solid) => solid.surface === "glass")).toHaveLength(2);
   });
+
+  it("overlaps moving sliding leaves by the meeting-stile interlock", () => {
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 1200, heightMm: 1400, angleDeg: 0 });
+    const bay: IntentNode = {
+      id: "b1",
+      type: "BAY",
+      opening_type: "SLIDING",
+      glass_thickness_mm: "4.00",
+      sliding_layout: {
+        tracks: 2,
+        panels: [
+          { slot: "S1", kind: "MOVING", track: 0 },
+          { slot: "S2", kind: "MOVING", track: 1 },
+        ],
+      },
+    };
+    const module = {
+      ...base.assembly.modules[0]!,
+      tree: { id: "r", type: "ROOT" as const, children: [bay] },
+    };
+    const product = {
+      ...base,
+      assembly: { modules: [module], couplings: [] },
+    } as ProductJson;
+    const scene = buildScene3D(product, members);
+    const solids = scene.modules[0]!.solids;
+    const sash = solids.filter((solid) => solid.surface === "sash") as BoxSolid[];
+    // two leaves × four bars, like the front view
+    expect(sash).toHaveLength(8);
+    // aperture 60..1140 → pitch 540, leaf 540+72: leaf0 spans 60..672 and
+    // leaf1 spans 528..1140, so the meeting stiles overlap in (528, 672)
+    const verticals = sash
+      .filter((solid) => solid.size[1] > solid.size[0])
+      .map((solid) => solid.center[0])
+      .sort((a, b) => a - b);
+    expect(verticals).toHaveLength(4);
+    expect(verticals[0]).toBeCloseTo(96, 5);
+    expect(verticals[1]).toBeCloseTo(564, 5);
+    expect(verticals[2]).toBeCloseTo(636, 5);
+    expect(verticals[3]).toBeCloseTo(1104, 5);
+  });
+
+  it("wraps an operable panel door's infill in a sash", () => {
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const bay: IntentNode = {
+      id: "b1",
+      type: "BAY",
+      opening_type: "DOOR_ENTRY",
+      panel_article_sku: "P-1",
+    };
+    const module = {
+      ...base.assembly.modules[0]!,
+      tree: { id: "r", type: "ROOT" as const, children: [bay] },
+    };
+    const product = {
+      ...base,
+      assembly: { modules: [module], couplings: [] },
+    } as ProductJson;
+    const scene = buildScene3D(product, members);
+    const solids = scene.modules[0]!.solids;
+    expect(solids.filter((solid) => solid.surface === "sash")).toHaveLength(4);
+    const panels = solids.filter((solid) => solid.surface === "panel") as BoxSolid[];
+    expect(panels).toHaveLength(1);
+    // the slab is inset by the sash face, not the bead — sash 72 into a
+    // 60..840 aperture puts the panel's left edge at 132
+    expect(panels[0]!.center[0] - panels[0]!.size[0] / 2).toBeCloseTo(132, 5);
+  });
+
+  it("extrudes the frameless pane at the declared glass thickness", () => {
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1200, angleDeg: 0 });
+    const module = {
+      ...base.assembly.modules[0]!,
+      frameless: { supports: [], fittings: [] },
+    };
+    const product = { ...base, assembly: { modules: [module], couplings: [] } } as ProductJson;
+    const scene = buildScene3D(product, members);
+    const glass = scene.modules[0]!.solids.find((solid) => solid.surface === "glass") as BoxSolid;
+    // the primary bay declares 4 mm glass — the pane is 4 mm thick,
+    // centred in the 60 mm module depth (z spans 28..32)
+    expect(glass.size[2]).toBeCloseTo(4, 5);
+    expect(glass.center[2]).toBeCloseTo(30, 5);
+  });
+
+  it("raises inline couplers to the taller stacked column top", () => {
+    const door = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const transom = wrapTreeAsProduct(
+      makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 400, angleDeg: 0 }).assembly
+        .modules[0]!.tree,
+      "900.00",
+      "400.00",
+    ).assembly.modules[0]!;
+    const window_ = makeBowProduct({
+      moduleCount: 1,
+      widthMm: 900,
+      heightMm: 2500,
+      angleDeg: 0,
+    }).assembly.modules[0]!;
+    const product = {
+      ...door,
+      assembly: {
+        modules: [door.assembly.modules[0]!, { ...transom, id: "t1" }, { ...window_, id: "w2" }],
+        couplings: [
+          {
+            id: "c1",
+            modules: [door.assembly.modules[0]!.id, "t1"],
+            edges: ["top", "bottom"],
+            kind: "STACKED" as const,
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+          {
+            id: "c2",
+            modules: [door.assembly.modules[0]!.id, "w2"],
+            edges: ["right", "left"],
+            kind: "INLINE" as const,
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const plan: PlanGeometry = {
+      front_chain: [],
+      modules: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "1800",
+      height_mm: "60",
+      couplings: [
+        {
+          coupling_id: "c2",
+          polygon: [
+            { x_mm: "900", y_mm: "0" },
+            { x_mm: "900", y_mm: "-60" },
+            { x_mm: "930", y_mm: "0" },
+          ],
+        },
+      ],
+    };
+    const scene = buildScene3D(product, members, plan);
+    const prism = scene.couplers.find((solid) => solid.owner === "c2");
+    expect(prism?.kind).toBe("prism");
+    // the door's column top includes its 400 mm transom → 2500, not 2100
+    if (prism?.kind === "prism") expect(prism.y1).toBeCloseTo(2500, 5);
+  });
 });

@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { PlanGeometry } from "../../api/generated/models";
 import type { ProductJson } from "./productEditing";
+import { useTheme } from "../../theme/ThemeProvider";
 import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
 import type { MemberGeometry } from "./members";
 
@@ -43,10 +44,14 @@ function solidColor(solid: Solid3D): string {
 function SolidMesh({
   solid,
   selected,
+  theme,
   onPick,
 }: {
   solid: Solid3D;
   selected: boolean;
+  /** Re-resolves token colors when the app theme switches — theme changes
+   * flip CSS variables without otherwise re-rendering this subtree. */
+  theme: string;
   onPick(owner: string): void;
 }): JSX.Element {
   const geometry = useMemo(() => {
@@ -79,6 +84,14 @@ function SolidMesh({
   }, [solid]);
 
   const glass = solid.surface === "glass";
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- theme re-resolves
+  // the same tokens against the new CSS variable values.
+  const color = useMemo(() => solidColor(solid), [solid, theme]);
+  const emissive = useMemo(
+    () => (selected ? tokenColor("var(--theme-warning)", "#b45309") : "#000000"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selected, theme],
+  );
   return (
     <mesh
       geometry={geometry ?? undefined}
@@ -90,13 +103,13 @@ function SolidMesh({
     >
       {solid.kind === "box" && <boxGeometry args={solid.size} />}
       <meshStandardMaterial
-        color={solidColor(solid)}
+        color={color}
         transparent={glass}
         opacity={glass ? 0.38 : 1}
         depthWrite={!glass}
         roughness={solid.surface === "glass" ? 0.15 : 0.75}
         metalness={solid.surface === "fitting" || solid.surface === "support" ? 0.55 : 0.05}
-        emissive={selected ? tokenColor("var(--theme-warning)", "#b45309") : "#000000"}
+        emissive={emissive}
         emissiveIntensity={selected ? 0.55 : 0}
       />
     </mesh>
@@ -106,10 +119,12 @@ function SolidMesh({
 function SceneContent({
   scene,
   selection,
+  theme,
   onPick,
 }: {
   scene: Scene3D;
   selection: string | null;
+  theme: string;
   onPick(owner: string): void;
 }): JSX.Element {
   return (
@@ -129,6 +144,7 @@ function SceneContent({
                 key={`${module.moduleId}-${index}`}
                 solid={solid}
                 selected={selection === solid.owner}
+                theme={theme}
                 onPick={onPick}
               />
             ))}
@@ -139,6 +155,7 @@ function SceneContent({
             key={`coupler-${index}`}
             solid={solid}
             selected={selection === solid.owner}
+            theme={theme}
             onPick={onPick}
           />
         ))}
@@ -172,6 +189,7 @@ export default function Model3DView({
   onSelectBay(moduleId: string, bayId: string): void;
   onSelectCoupling(couplingId: string): void;
 }): JSX.Element {
+  const { theme } = useTheme();
   const scene = useMemo(() => buildScene3D(product, members, plan), [product, members, plan]);
   const moduleIds = useMemo(
     () => new Set(product.assembly.modules.map((module) => module.id)),
@@ -202,7 +220,7 @@ export default function Model3DView({
       }}
       className="model3d-canvas"
     >
-      <SceneContent scene={scene} selection={selection} onPick={pick} />
+      <SceneContent scene={scene} selection={selection} theme={theme} onPick={pick} />
     </Canvas>
   );
 }
