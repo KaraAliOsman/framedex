@@ -37,11 +37,17 @@ class KitChoiceSerializer(serializers.Serializer):
     opening_type = serializers.CharField()
 
 
+class GlassSpecChoiceSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    spec = serializers.CharField(allow_null=True)
+
+
 class DesignOptionsSerializer(serializers.Serializer):
     profiles = ProfileChoiceSerializer(many=True)
     glazing_thicknesses = serializers.ListField(child=serializers.CharField())
     hardware_kits = KitChoiceSerializer(many=True)
     glass_skus = serializers.ListField(child=serializers.CharField())
+    glass_specs = GlassSpecChoiceSerializer(many=True)
     colors = serializers.ListField(child=serializers.CharField())
     coupler_skus = serializers.ListField(child=serializers.CharField())
     coupler_profiles = CouplerChoiceSerializer(many=True)
@@ -64,9 +70,14 @@ class DesignOptionsView(APIView):
             params = repository.load_visible(system_id, org)
             names = repository.load_article_names(system_id, org)
             couplers = repository.load_coupler_articles(system_id, org)
+            # Latest version wins; an org-scoped mapping outranks the global
+            # recipe for the same technical SKU — same resolution the confirm
+            # endpoint applies when it binds the glass authority.
             glass_rows = rows(
-                "SELECT DISTINCT technical_sku FROM public.glass_purchase_mappings "
-                "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) ORDER BY technical_sku",
+                "SELECT DISTINCT ON (technical_sku) technical_sku, glass_spec "
+                "FROM public.glass_purchase_mappings "
+                "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) "
+                "ORDER BY technical_sku, org_id NULLS LAST, version DESC",
                 [system_id, org],
             )
             return response(
@@ -89,6 +100,13 @@ class DesignOptionsView(APIView):
                         for item in params.available_hardware_kits
                     ],
                     "glass_skus": [item["technical_sku"] for item in glass_rows],
+                    "glass_specs": [
+                        {
+                            "sku": item["technical_sku"],
+                            "spec": item["glass_spec"],
+                        }
+                        for item in glass_rows
+                    ],
                     "colors": ["WHITE"],
                     "coupler_skus": sorted(couplers),
                     "coupler_profiles": [

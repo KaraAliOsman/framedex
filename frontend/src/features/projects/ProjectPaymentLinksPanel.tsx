@@ -283,9 +283,7 @@ export function ProjectPaymentLinksPanel({
           </tbody>
         </table>
       )}
-      {configured && links.length === 0 && !showForm && (
-        <p>{t("projects.paymentLinksEmpty")}</p>
-      )}
+      {configured && links.length === 0 && !showForm && <p>{t("projects.paymentLinksEmpty")}</p>}
     </section>
   );
 }
