@@ -388,6 +388,7 @@ class TestFramelessPane:
         )
         assert issues == []
         assert computation is not None
+        assert computation.manufacturing_trace is not None
         segments = {
             m.physical_member_slot: m.direct_segment
             for m in computation.manufacturing_trace.members
