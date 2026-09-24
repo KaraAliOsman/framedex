@@ -21,6 +21,67 @@ from documents.repository import rows
 RETENTION_DAYS = 90
 MAX_OUTPUT_CHARS = 256_000
 
+# input_payload is client-supplied and audited verbatim — server-only keys can
+# never arrive through it. A provider call that needs a document names an owned
+# source row via "source"; the service resolves that row under the active org
+# and signs only the canonical stored object (never a client-chosen path).
+_RESERVED_INPUT_KEYS = frozenset({"storage_path", "document_url"})
+_SOURCE_TABLES = {
+    "document_import": ("public.document_imports", "imports"),
+    "catalog_import": ("public.catalog_imports", "catalog-imports"),
+}
+
+
+def _source_document_path(org_id: UUID, source: object) -> str | None:
+    """Resolve a declared source reference to its canonical storage object key.
+
+    The row must belong to the active org and the stored key must live under
+    that org's canonical prefix — a corrupted row can never mint a URL for a
+    foreign object, and no client input ever reaches the signer."""
+    if source is None:
+        return None
+    # The source contract is exactly {kind, id} — an extra key (e.g. a nested
+    # storage_path smuggle) makes the whole reference invalid rather than
+    # being silently ignored in the audited input.
+    if not isinstance(source, dict) or set(source) != {"kind", "id"}:
+        raise contract_error(
+            400,
+            "ai_source_invalid",
+            "La referencia de documento no es válida.",
+        )
+    table_prefix = _SOURCE_TABLES.get(str(source.get("kind")))
+    try:
+        source_id = UUID(str(source.get("id")))
+    except (ValueError, AttributeError, TypeError):
+        source_id = None
+    if table_prefix is None or source_id is None:
+        raise contract_error(
+            400,
+            "ai_source_invalid",
+            "La referencia de documento no es válida.",
+        )
+    table, prefix = table_prefix
+    found = rows(
+        f"SELECT storage_path FROM {table} WHERE id=%s AND org_id=%s",
+        [str(source_id), str(org_id)],
+    )
+    if not found:
+        raise contract_error(
+            404,
+            "ai_source_not_found",
+            "El documento de origen no existe o no pertenece a tu organización.",
+        )
+    path = str(found[0]["storage_path"])
+    segments = path.split("/")
+    if not path.startswith(f"{prefix}/{org_id}/") or any(
+        segment in ("", ".", "..") or "\\" in segment or "%" in segment
+        for segment in segments
+    ):
+        # Server-side data corruption — the stored object key must already be
+        # canonical; refuse rather than canonicalize a foreign path into shape.
+        raise ProviderError("ai_source_unreadable")
+    return path
+
 
 def _route(capability: str) -> dict | None:
     found = rows(
@@ -161,6 +222,12 @@ def invoke(
     # mode). It is deliberately NOT part of input_payload: that hash covers the
     # client's request semantics so a prompt-version change can never break
     # replay, and the generic invoke endpoint can never smuggle in control keys.
+    if _RESERVED_INPUT_KEYS.intersection(input_payload):
+        raise contract_error(
+            400,
+            "ai_input_rejected",
+            "La entrada contiene claves reservadas del servidor.",
+        )
     input_hash = _input_hash(input_payload)
     with wallet.financial_transaction(org_id):
         organization = wallet.reconcile(org_id)
@@ -200,11 +267,16 @@ def invoke(
                 "insufficient_credits",
                 "No quedan créditos suficientes para esta operación de IA.",
             )
+        # A declared source resolves to its canonical object key under the
+        # active org; the provider signs exactly that path at wire time —
+        # never a path the request supplied.
+        document_path = _source_document_path(org_id, input_payload.get("source"))
         result = provider_for(route).invoke(
             route=route,
             capability=capability,
             input_payload=input_payload,
             provider_options=provider_options,
+            document_path=document_path,
             # The wire key is org-namespaced: a real provider dedupes on the
             # header globally, so the raw org-scoped key alone would collide
             # across tenants sharing a capability-level key prefix.

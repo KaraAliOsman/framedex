@@ -208,12 +208,13 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
                 capability="catalog_compile",
                 operation_key=f"catalog:{import_id}:compile",
                 input_payload={
-                    # Stable identity only — the provider adapter mints a fresh
-                    # signed URL at wire time, so the audited input hash
-                    # survives a job retry and replays the paid compile.
+                    # Stable identity only — the gateway resolves the row
+                    # under the active org and signs its canonical object, so
+                    # the audited input survives a job retry and replays the
+                    # paid compile instead of minting a new URL.
                     "file_name": row["file_name"],
                     "kind": row["kind"],
-                    "storage_path": row["storage_path"],
+                    "source": {"kind": "catalog_import", "id": str(import_id)},
                     "target": "profile_articles",
                 },
             )

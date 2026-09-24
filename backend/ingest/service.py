@@ -232,10 +232,11 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
                 input_payload={
                     "file_name": row["file_name"],
                     "kind": row["kind"],
-                    # Stable document identity only — the provider adapter
-                    # mints a fresh signed URL at wire time, so the audited
-                    # input hash survives a job retry and replays the paid OCR.
-                    "storage_path": row["storage_path"],
+                    # Stable document identity only — the gateway resolves the
+                    # row under the active org and signs its canonical object,
+                    # so the audited input survives a job retry and replays
+                    # the paid OCR instead of minting a new URL.
+                    "source": {"kind": "document_import", "id": str(import_id)},
                 },
             )
             audit_id = vision["audit_id"]

@@ -230,6 +230,7 @@ class HttpProvider:
         provider_options: dict | None = None,
         client: httpx.Client | None = None,
         operation_key: str | None = None,
+        document_path: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         options = provider_options or {}
@@ -243,14 +244,17 @@ class HttpProvider:
             # Ephemeral fetch URLs are resolved at wire time, never carried in
             # input_payload: the audited input hash must stay identical across
             # retries even though a fresh signed URL is minted each attempt.
+            # document_path arrives only from the service's org-scoped source
+            # resolution — a request can name an owned document row but can
+            # never choose the object key that gets signed.
             wire_input = dict(input_payload)
-            if wire_input.get("storage_path"):
+            if document_path:
                 from documents.repository import DocumentaryError
                 from documents.storage import SupabaseDocumentStorage
 
                 try:
                     wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
-                        str(wire_input["storage_path"])
+                        document_path
                     )
                 except DocumentaryError as error:
                     raise ProviderError("ai_provider_unavailable") from error
@@ -569,6 +573,9 @@ class MockProvider:
         input_payload: dict,
         provider_options: dict | None = None,
         operation_key: str | None = None,
+        # Mock performs no fetch — the parameter exists so the service passes
+        # the resolved document path uniformly across providers.
+        document_path: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         digest = hashlib.sha256(
