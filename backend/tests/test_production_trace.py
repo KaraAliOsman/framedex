@@ -45,7 +45,30 @@ def _order_payload() -> dict:
                     "unit_index": 1,
                 }],
             }]},
-            "sheets": [],
+            "sheets": [{
+                "sheet_index": 1,
+                "purchasing_sku": "DEMO-SHEET-VIDRIO",
+                "workshop_sku": "VIDRIO_4MM",
+                "sheet_width_mm": "3210.00",
+                "sheet_height_mm": "2250.00",
+                "source": "NEW",
+                "remnant_id": None,
+                "yield_pct": "71.23",
+                "placements": [{
+                    "piece_id": PIECE,
+                    "sequence": 1,
+                    "workshop_sku": "VIDRIO_4MM",
+                    "width_mm": "1100.00",
+                    "height_mm": "900.00",
+                    "x_mm": "0.00",
+                    "y_mm": "0.00",
+                    "rotated": False,
+                    "source_position_id": str(uuid4()),
+                    "bay_id": str(uuid4()),
+                    "leaf_id": str(uuid4()),
+                    "unit_index": 1,
+                }],
+            }],
             "stock_reservations": [{
                 "kind": "BAR", "sku": "DEMO-BAR-MARCO", "variant_key": "",
                 "name": "DEMO-BAR-MARCO", "unit": "BAR", "needed": "1",
@@ -116,6 +139,11 @@ def test_trace_work_order_assembles_full_chain() -> None:
     (cut,) = bar["cuts"]
     assert cut["piece_id"] == PIECE
     assert cut["source_position_id"]
+    (sheet,) = report["plan"]["sheets"]
+    assert sheet["width_mm"] == "3210.00"
+    (placement,) = sheet["pieces"]
+    assert placement["piece_id"] == PIECE
+    assert placement["x_mm"] == "0.00"
     assert report["steps"][0]["code"] == "CUT"
     assert report["stock"]["movements"][0]["movement_type"] == "RESERVATION"
     assert report["stock"]["reservations"][0]["reserved"] == "1"
@@ -140,12 +168,14 @@ def test_trace_piece_walks_backward() -> None:
          patch("production.trace.one", side_effect=_one_factory()):
         report = trace.trace_piece(org_id=ORG, piece_id=PIECE)
 
-    (match,) = report["matches"]
-    assert match["work_order"]["order_code"] == "OT-0001"
-    assert match["location"]["kind"] == "BAR"
-    assert match["location"]["bar_index"] == 1
-    assert match["location"]["piece"]["piece_id"] == PIECE
-    assert match["steps"][0]["status"] == "DONE"
+    bar_match, sheet_match = report["matches"]
+    assert bar_match["location"]["kind"] == "BAR"
+    assert bar_match["location"]["bar_index"] == 1
+    assert bar_match["location"]["piece"]["piece_id"] == PIECE
+    assert sheet_match["location"]["kind"] == "SHEET"
+    assert sheet_match["location"]["sheet_index"] == 1
+    assert sheet_match["location"]["workshop_sku"] == "VIDRIO_4MM"
+    assert bar_match["steps"][0]["status"] == "DONE"
 
 
 def test_trace_piece_unknown_returns_empty() -> None:
@@ -182,5 +212,6 @@ def test_trace_version_lists_orders_with_piece_counts() -> None:
 
     (wo,) = report["work_orders"]
     assert wo["work_order"]["order_code"] == "OT-0001"
-    assert wo["pieces"] == 1
+    assert wo["pieces"] == 2
+    assert wo["sheets"] == 1
     assert wo["positions_cut"]  # traced back to the frozen position

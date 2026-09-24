@@ -184,7 +184,7 @@ def _money(amount: object, currency: object) -> str:
     if code == "CLP":
         grouped = f"{value:,.0f}".replace(",", ".")
         return f"$ {grouped}"
-    return f"{escape(code)} {value:,.2f}"
+    return f"{code} {value:,.2f}"
 
 
 def _cldate(raw: object) -> str:
@@ -626,7 +626,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         '<section class="hero"><p>Preparado para</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         + "".join(client_lines)
-        + f'<p class="total">Total: {_money(project.get("total_price_gross"), currency)}</p>'
+        + f'<p class="total">Total: {escape(_money(project.get("total_price_gross"), currency))}</p>'
         "</section>"
         "<h2>Solución propuesta</h2>"
         '<table class="sol-table"><colgroup>'
@@ -1082,7 +1082,7 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
         f"{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Monto: {_money(payment.get("amount"), currency)}</p></section>'
+        f'<p class="total">Monto: {escape(_money(payment.get("amount"), currency))}</p></section>'
     )
     body += (
         "<h2>Detalle del cobro</h2>"
@@ -1287,7 +1287,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
         f"{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Total: {_money(deal.get("total_gross"), currency)}</p></section>'
+        f'<p class="total">Total: {escape(_money(deal.get("total_gross"), currency))}</p></section>'
     )
     if positions:
         body += (
@@ -1394,7 +1394,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
         '<section class="hero"><p>Acreditar a</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
-        f'<p class="total">Crédito: {_money(deal.get("total_gross"), currency)}</p></section>'
+        f'<p class="total">Crédito: {escape(_money(deal.get("total_gross"), currency))}</p></section>'
     )
     body += (
         f"<p><strong>Referencia:</strong> anula Factura {escape(invoice_code)}"

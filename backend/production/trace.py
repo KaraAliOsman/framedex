@@ -50,6 +50,9 @@ def _trace_piece(cut: dict[str, Any]) -> dict[str, Any]:
         "sagitta_mm": cut.get("sagitta_mm"),
         "workshop_sku": cut.get("workshop_sku"),
         "source_kind": cut.get("source_kind"),
+        "x_mm": cut.get("x_mm"),
+        "y_mm": cut.get("y_mm"),
+        "rotated": cut.get("rotated"),
         "source_position_id": cut.get("source_position_id"),
         "module_id": cut.get("module_id"),
         "bay_id": cut.get("bay_id"),
@@ -86,11 +89,13 @@ def _plan_sheets(optimization: dict[str, Any]) -> list[dict[str, Any]]:
             "sheet_index": sheet.get("sheet_index"),
             "workshop_sku": sheet.get("workshop_sku"),
             "material": sheet.get("material"),
-            "width_mm": sheet.get("width_mm"),
-            "height_mm": sheet.get("height_mm"),
-            "thickness_mm": sheet.get("thickness_mm"),
+            "width_mm": sheet.get("sheet_width_mm"),
+            "height_mm": sheet.get("sheet_height_mm"),
+            "purchasing_sku": sheet.get("purchasing_sku"),
+            "remnant_id": sheet.get("remnant_id"),
+            "yield_pct": sheet.get("yield_pct"),
             "source": sheet.get("source"),
-            "pieces": [_trace_piece(piece) for piece in sheet.get("pieces") or []],
+            "pieces": [_trace_piece(piece) for piece in sheet.get("placements") or []],
         })
     return plan
 
