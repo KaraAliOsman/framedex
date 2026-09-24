@@ -18,6 +18,10 @@ from uuid import UUID
 
 from documents.repository import DocumentaryError, one, rows
 
+from dekopen_engine.cutting import CutBar
+from dekopen_engine.manufacturing import ManufacturingFactsV1
+from dekopen_engine.operations import operations_from_plan
+
 
 def _decoded(raw: Any) -> dict[str, Any]:
     if isinstance(raw, dict):
@@ -118,16 +122,18 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
         )
 
     version = None
+    version_snapshot: dict[str, Any] = {}
     if order["project_version_id"]:
         version = one(
             """
             SELECT id::text, revision_code, snapshot_sha256, bom_hash,
-                   emitted_at, production_allowed
+                   emitted_at, production_allowed, snapshot_json::text
             FROM public.project_versions WHERE id = %s AND org_id = %s
             """,
             [order["project_version_id"], str(org_id)],
             "work_order_not_found",
         )
+        version_snapshot = _decoded(version.pop("snapshot_json", None))
 
     steps = rows(
         """
@@ -221,7 +227,52 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
         },
         "steps": steps,
         "events": events,
+        "operations": _trace_operations(
+            payload=payload,
+            optimization=optimization,
+            version_snapshot=version_snapshot,
+        ),
     }
+
+
+def _trace_operations(
+    *,
+    payload: dict[str, Any],
+    optimization: dict[str, Any],
+    version_snapshot: dict[str, Any],
+) -> dict[str, Any]:
+    """The sealed plan's machining operations, reconstructed deterministically
+    — the same derivation ``export_operations`` uses, computed at read time so
+    the operator sees them without sealing an export. Empty when the order has
+    not been optimized or the frozen snapshot carries no manufacturing facts."""
+    raw_bars = (optimization.get("bars") or {}).get("workshop_cut_plan") or []
+    raw_units = [
+        unit
+        for unit in (version_snapshot.get("manufacturing") or [])
+        if not payload.get("position_id")
+        or str(unit.get("position_id")) == str(payload["position_id"])
+    ]
+    if not raw_bars:
+        return {"count": 0, "items": [], "unemitted_kinds": []}
+    try:
+        bars = [
+            CutBar.model_validate_json(json.dumps(bar)) for bar in raw_bars
+        ]
+        fact_units = [
+            ManufacturingFactsV1.model_validate_json(json.dumps(unit))
+            for unit in raw_units
+        ]
+    except Exception:
+        return {"count": 0, "items": [], "unemitted_kinds": [],
+                "unavailable": "operations_underivable"}
+    ops = [
+        op.model_dump(mode="json")
+        for op in operations_from_plan(bars=bars, fact_units=fact_units)
+    ]
+    by_kind: dict[str, int] = {}
+    for op in ops:
+        by_kind[str(op["kind"])] = by_kind.get(str(op["kind"]), 0) + 1
+    return {"count": len(ops), "by_kind": by_kind, "items": ops}
 
 
 def _piece_hits(order_row: dict[str, Any], piece_id: str) -> list[dict[str, Any]]:

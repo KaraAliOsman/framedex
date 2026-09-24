@@ -308,6 +308,7 @@ class ProductionOrderTraceSerializer(serializers.Serializer):
     stock = serializers.DictField()
     steps = serializers.ListField()
     events = serializers.ListField()
+    operations = serializers.DictField()
 
 
 class ProductionPieceTraceSerializer(serializers.Serializer):

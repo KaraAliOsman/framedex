@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProductionOrderTraceOperations } from "./productionOrderTraceOperations";
 import type { ProductionOrderTracePlan } from "./productionOrderTracePlan";
 import type { ProductionOrderTraceProject } from "./productionOrderTraceProject";
 import type { ProductionOrderTraceStock } from "./productionOrderTraceStock";
@@ -23,4 +24,5 @@ export interface ProductionOrderTrace {
   stock: ProductionOrderTraceStock;
   steps: unknown[];
   events: unknown[];
+  operations: ProductionOrderTraceOperations;
 }

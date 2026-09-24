@@ -49,6 +49,7 @@ import {
   type PolishingEntry,
 } from "./GlassSummary";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
+import { OperatorStepCard } from "./OperatorCard";
 import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
 import "./production.css";
 
@@ -184,6 +185,7 @@ export function ProductionPage(): JSX.Element {
   const [sigDrawn, setSigDrawn] = useState(false);
   const [trace, setTrace] = useState<ProductionOrderTrace | null>(null);
   const [traceBusy, setTraceBusy] = useState(false);
+  const [operatorStepId, setOperatorStepId] = useState<string | null>(null);
   const [pieceQuery, setPieceQuery] = useState("");
   const [pieceReport, setPieceReport] = useState<ProductionPieceTrace | null>(null);
   const [pieceBusy, setPieceBusy] = useState(false);
@@ -231,6 +233,17 @@ export function ProductionPage(): JSX.Element {
     }
   }, []);
 
+  const loadTrace = useCallback(async () => {
+    if (!selectedId) return;
+    setTraceBusy(true);
+    try {
+      const response = await productionOrderTrace(selectedId);
+      if (response.status === 200) setTrace(response.data);
+    } finally {
+      setTraceBusy(false);
+    }
+  }, [selectedId]);
+
   useEffect(() => {
     void loadOrders().catch(() => setMessage(t("production.loadError")));
   }, [loadOrders]);
@@ -246,21 +259,12 @@ export function ProductionPage(): JSX.Element {
       return;
     }
     setTrace(null);
+    setOperatorStepId(null);
     setPieceQuery("");
     setPieceReport(null);
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
-  }, [selectedId, loadDetail]);
-
-  const loadTrace = useCallback(async () => {
-    if (!selectedId) return;
-    setTraceBusy(true);
-    try {
-      const response = await productionOrderTrace(selectedId);
-      if (response.status === 200) setTrace(response.data);
-    } finally {
-      setTraceBusy(false);
-    }
-  }, [selectedId]);
+    void loadTrace();
+  }, [selectedId, loadDetail, loadTrace]);
 
   const lookupPiece = useCallback(async () => {
     const query = pieceQuery.trim();
@@ -1601,39 +1605,73 @@ export function ProductionPage(): JSX.Element {
                   </div>
                 );
               })()}
-              <ol className="production-steps">
-                {detail.steps.map((step) => (
-                  <li key={step.id} className={`production-step step-${step.status.toLowerCase()}`}>
-                    <div className="production-step-head">
-                      <span className="production-step-seq">{step.sequence}</span>
-                      <span className="production-step-label">{step.label}</span>
-                      {step.work_center_code ? (
-                        <span className="production-step-center">{step.work_center_code}</span>
-                      ) : null}
-                      <span className={`production-chip status-${step.status.toLowerCase()}`}>
-                        {t(stepStatusKey[step.status] ?? "production.stepReady")}
-                      </span>
-                    </div>
-                    {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                    {detail.status !== "COMPLETED" &&
-                    detail.status !== "DISPATCHED" &&
-                    detail.status !== "INSTALLED" ? (
-                      <div className="production-step-actions">
-                        {stepActions(step).map((stepAction) => (
-                          <button
-                            key={stepAction}
-                            type="button"
-                            disabled={busy}
-                            onClick={() => transition(step.id, stepAction, detail.id)}
-                          >
-                            {t(actionLabel[stepAction])}
-                          </button>
-                        ))}
-                      </div>
+              {(() => {
+                const nextStep = detail.steps.find(
+                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
+                );
+                const operatorStep =
+                  detail.steps.find((step) => step.id === operatorStepId) ??
+                  nextStep ??
+                  detail.steps[detail.steps.length - 1] ??
+                  null;
+                return (
+                  <>
+                    <ol className="production-steps">
+                      {detail.steps.map((step) => (
+                        <li
+                          key={step.id}
+                          className={`production-step step-${step.status.toLowerCase()}${
+                            operatorStep?.id === step.id ? " step-operator" : ""
+                          }`}
+                        >
+                          <div className="production-step-head">
+                            <span className="production-step-seq">{step.sequence}</span>
+                            <button
+                              type="button"
+                              className="production-step-operator"
+                              onClick={() =>
+                                setOperatorStepId((current) =>
+                                  current === step.id ? null : step.id,
+                                )
+                              }
+                            >
+                              {step.label}
+                            </button>
+                            {step.work_center_code ? (
+                              <span className="production-step-center">
+                                {step.work_center_code}
+                              </span>
+                            ) : null}
+                            <span className={`production-chip status-${step.status.toLowerCase()}`}>
+                              {t(stepStatusKey[step.status] ?? "production.stepReady")}
+                            </span>
+                          </div>
+                          {step.note ? <p className="production-step-note">{step.note}</p> : null}
+                          {detail.status !== "COMPLETED" &&
+                          detail.status !== "DISPATCHED" &&
+                          detail.status !== "INSTALLED" ? (
+                            <div className="production-step-actions">
+                              {stepActions(step).map((stepAction) => (
+                                <button
+                                  key={stepAction}
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => transition(step.id, stepAction, detail.id)}
+                                >
+                                  {t(actionLabel[stepAction])}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                    {operatorStep ? (
+                      <OperatorStepCard step={operatorStep} trace={trace} traceBusy={traceBusy} />
                     ) : null}
-                  </li>
-                ))}
-              </ol>
+                  </>
+                );
+              })()}
               <label className="production-note">
                 {t("production.noteLabel")}
                 <input
@@ -1659,10 +1697,10 @@ export function ProductionPage(): JSX.Element {
                       {" → "}
                       {trace.version?.revision_code ? String(trace.version.revision_code) : "—"}
                       {" → "}
-                      {String(trace.work_order.order_code ?? "—")}
+                      {String(trace.work_order?.order_code ?? "—")}
                     </p>
-                    <TracePlan plan={trace.plan} />
-                    <TraceStock stock={trace.stock} />
+                    {trace.plan ? <TracePlan plan={trace.plan} /> : null}
+                    {trace.stock ? <TraceStock stock={trace.stock} /> : null}
                   </div>
                 ) : null}
                 <div className="production-trace-lookup">

@@ -296,6 +296,7 @@ export * from "./productionOrderDetailPayload";
 export * from "./productionOrderList";
 export * from "./productionOrderPayload";
 export * from "./productionOrderTrace";
+export * from "./productionOrderTraceOperations";
 export * from "./productionOrderTracePlan";
 export * from "./productionOrderTraceProject";
 export * from "./productionOrderTraceStock";

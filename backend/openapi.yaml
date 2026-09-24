@@ -17091,8 +17091,12 @@ components:
         events:
           type: array
           items: {}
+        operations:
+          type: object
+          additionalProperties: {}
       required:
       - events
+      - operations
       - plan
       - project
       - steps
