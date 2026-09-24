@@ -11,7 +11,7 @@ import { t, type TranslationKey } from "../../i18n/es-CL";
 import { resolveCommands, useRegisterCommands } from "../commands/registry";
 import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
-import { assemblyCommands } from "./assemblyCommands";
+import { assemblyCommands, MAX_MODULES, normalizeAngle } from "./assemblyCommands";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
@@ -167,11 +167,7 @@ function normalizeMm(candidate: string): string | null {
   return value.toFixed(2);
 }
 
-function normalizeAngle(candidate: string): string | null {
-  const value = Number(candidate.replace(",", "."));
-  if (!Number.isFinite(value) || Math.abs(value) >= 90) return null;
-  return value.toFixed(1);
-}
+
 
 /** Contour coordinates are signed: zero/negative carry meaning (a vertical
  * side, an inward arc). Bounds keep the corner ordering the engine requires. */
@@ -1259,7 +1255,10 @@ export function AssemblyEditor({
     [product, members, issues],
   );
 
+  const modulesAtCap = product.assembly.modules.length >= MAX_MODULES;
+
   function coupleUnit(side: "left" | "right"): void {
+    if (modulesAtCap) return;
     const next = addAdjacentUnit(productJson, side);
     commit(next);
     select(
@@ -1312,7 +1311,7 @@ export function AssemblyEditor({
           className="tool-button"
           title={t("assembly.addUnitLeft")}
           aria-label={t("assembly.addUnitLeft")}
-          disabled={busy}
+          disabled={busy || modulesAtCap}
           onClick={() => coupleUnit("left")}
         >
           <ToolIcon name="couple_left" />
@@ -1322,7 +1321,7 @@ export function AssemblyEditor({
           className="tool-button"
           title={t("assembly.addUnitRight")}
           aria-label={t("assembly.addUnitRight")}
-          disabled={busy}
+          disabled={busy || modulesAtCap}
           onClick={() => coupleUnit("right")}
         >
           <ToolIcon name="couple_right" />
@@ -1394,6 +1393,7 @@ export function AssemblyEditor({
               setContextMenu(pos);
             }}
             onAddUnit={coupleUnit}
+            modulesAtCap={modulesAtCap}
             onCommitModuleWidth={(moduleId, widthMm) =>
               commit(setModuleWidth(product, moduleId, widthMm))
             }

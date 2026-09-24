@@ -37,7 +37,9 @@ function normalizeMm(raw: string): string | null {
   return value.toFixed(2);
 }
 
-function normalizeAngle(raw: string): string | null {
+/** Coupling-angle validator shared by commands and the inspector — ±90°
+ * inclusive is the product contract for mullion angles. */
+export function normalizeAngle(raw: string): string | null {
   const value = Number(raw.replace(",", "."));
   if (!Number.isFinite(value) || Math.abs(value) > 90) return null;
   return value.toFixed(1);

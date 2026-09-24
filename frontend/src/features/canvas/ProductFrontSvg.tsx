@@ -1035,6 +1035,7 @@ export function ProductFrontContent({
   onSelectModule,
   onContextMenuModule,
   onAddUnit,
+  modulesAtCap = false,
   onCommitModuleWidth,
   onCommitTotalWidth,
   onCommitHeight,
@@ -1060,6 +1061,9 @@ export function ProductFrontContent({
    * stale earlier selection. */
   onContextMenuModule?(moduleId: string, pos: { x: number; y: number }): void;
   onAddUnit(side: "left" | "right"): void;
+  /** True when the assembly already holds the contract's module bound —
+   * the add handles render disabled instead of minting an invalid product. */
+  modulesAtCap?: boolean;
   onCommitModuleWidth(moduleId: string, widthMm: string): void;
   onCommitTotalWidth(totalMm: string): void;
   onCommitHeight(heightMm: string): void;
@@ -1345,14 +1349,14 @@ export function ProductFrontContent({
           x={-70}
           y={midY}
           label={t("assembly.addUnitLeft")}
-          disabled={disabled}
+          disabled={disabled || modulesAtCap}
           onAdd={() => onAddUnit("left")}
         />
         <AddHandle
           x={totalW + 70}
           y={midY}
           label={t("assembly.addUnitRight")}
-          disabled={disabled}
+          disabled={disabled || modulesAtCap}
           onAdd={() => onAddUnit("right")}
         />
         {rects.map(({ module, x, w, sill, h }) => {
