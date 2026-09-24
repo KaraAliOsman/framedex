@@ -4,11 +4,21 @@
 -- scoped policies so the public Flow webhook settles inside an org-pinned
 -- context — membership/JWT policies return nothing without request claims.
 
+-- The link tenant must bind to the credential row's org_id — two independent
+-- keys would let a row carry another tenant's link and authorize it under
+-- the wrong billing scope.
+ALTER TABLE public.project_payment_links
+    ADD CONSTRAINT project_payment_links_id_org_key UNIQUE (id, org_id);
+
 CREATE TABLE public.project_payment_link_credentials (
     link_id UUID PRIMARY KEY
         REFERENCES public.project_payment_links(id) ON DELETE CASCADE,
     org_id UUID NOT NULL
         REFERENCES public.tenancy_organizations(id) ON DELETE CASCADE,
+    CONSTRAINT payment_link_credentials_link_org_fk
+        FOREIGN KEY (link_id, org_id)
+        REFERENCES public.project_payment_links (id, org_id)
+        ON DELETE CASCADE,
     flow_api_url TEXT NOT NULL,
     flow_api_key TEXT NOT NULL,
     flow_secret_key TEXT NOT NULL,
