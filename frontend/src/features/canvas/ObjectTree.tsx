@@ -18,7 +18,10 @@ function TreeRow({
   const expandable = node.children.length > 0;
   return (
     <li role="treeitem" aria-expanded={expandable ? open : undefined} aria-selected={selected}>
-      <div className={`tree-row tree-row--${node.kind}`} style={{ paddingLeft: `${6 + depth * 14}px` }}>
+      <div
+        className={`tree-row tree-row--${node.kind}`}
+        style={{ paddingLeft: `${6 + depth * 14}px` }}
+      >
         {expandable ? (
           <button
             type="button"

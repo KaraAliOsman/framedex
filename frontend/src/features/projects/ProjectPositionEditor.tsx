@@ -26,10 +26,10 @@ import { starterContextSize, type StarterDefinition } from "../canvas/designLibr
 import { resolveMembers } from "../canvas/members";
 import { StarterGallery } from "../canvas/StarterGallery";
 import {
+  elevationEnvelopeMm,
   isProductModel,
   isSingleUnit,
   removeUnit,
-  totalModuleWidth,
   wrapTreeAsProduct,
   type ProductJson,
 } from "../canvas/productEditing";
@@ -81,6 +81,7 @@ function resolveDefaults(
   couplerSkus: string[],
   mullionSkus: { SPLIT_V?: string; SPLIT_H?: string },
   glassThicknessMm?: string,
+  panelSku?: string,
 ): ProductJson {
   let next = product;
   if (couplerSkus.length === 1) {
@@ -108,7 +109,14 @@ function resolveDefaults(
       node.type === "BAY" &&
       glassThicknessMm !== undefined &&
       (!node.glass_thickness_mm || !node.glass_spec);
-    return missingMullion || missingGlass || (node.children?.some(needsFill) ?? false);
+    const missingPanel =
+      node.type === "BAY" &&
+      node.opening_type === "DOOR_ENTRY" &&
+      !node.panel_article_sku &&
+      panelSku !== undefined;
+    return (
+      missingMullion || missingGlass || missingPanel || (node.children?.some(needsFill) ?? false)
+    );
   };
   const fill = (node: IntentNode): IntentNode => {
     let updated = node;
@@ -123,6 +131,9 @@ function resolveDefaults(
       if (!updated.glass_thickness_mm)
         updated = { ...updated, glass_thickness_mm: glassThicknessMm };
       if (!updated.glass_spec) updated = { ...updated, glass_spec: glassThicknessMm };
+    }
+    if (updated.type === "BAY" && updated.opening_type === "DOOR_ENTRY" && panelSku !== undefined) {
+      if (!updated.panel_article_sku) updated = { ...updated, panel_article_sku: panelSku };
     }
     return { ...updated, children: node.children?.map(fill) };
   };
@@ -157,10 +168,8 @@ function designPayload(inputs: CanvasDesignInputs): PositionDesignRequest | null
       }
     : {
         system_id: inputs.systemId,
-        nominal_width_mm: totalModuleWidth(product).toFixed(2),
-        nominal_height_mm: Math.max(
-          ...product.assembly.modules.map((module) => Number(module.height_mm)),
-        ).toFixed(2),
+        nominal_width_mm: elevationEnvelopeMm(product).width.toFixed(2),
+        nominal_height_mm: elevationEnvelopeMm(product).height.toFixed(2),
         color: inputs.color,
         parametric_tree: product,
       };
@@ -212,6 +221,9 @@ function PositionWorkspace({
   const [uncertainCreate, setUncertainCreate] = useState(false);
   const [assemblyEval, setAssemblyEval] = useState<EngineAssemblyCalculateResponse | null>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  // New positions open on the design library (the start point); saved ones go
+  // straight to the canvas — picking a starter collapses it.
+  const [libraryOpen, setLibraryOpen] = useState(!positionId && !copyId);
   const generation = useRef(0);
   const inputs = useCanvasStore((s) => s.inputs);
   const canUndo = useCanvasStore((s) => s.past.length > 0);
@@ -313,9 +325,12 @@ function PositionWorkspace({
       options.data.glazing_thicknesses.length === 1
         ? options.data.glazing_thicknesses[0]
         : undefined,
+      options.data.panel_skus.length === 1 ? options.data.panel_skus[0] : undefined,
     );
     if (resolved !== product) {
-      useCanvasStore.getState().commitInputs({ ...inputs, product: resolved });
+      // Deterministic normalization is not a user step: folding it into
+      // history would make the preceding change un-undoable.
+      useCanvasStore.getState().replaceInputs({ ...inputs, product: resolved });
     }
   }, [inputs, options.data]);
 
@@ -392,12 +407,16 @@ function PositionWorkspace({
     );
   }, []);
 
+  const assemblyUnsaveable =
+    assemblyEval?.status === "INVALID" ||
+    (assemblyEval?.modules ?? []).some((module) => module.result == null);
+
   async function save(): Promise<void> {
     if (
       uncertainCreate ||
       mutationLock.current ||
       !result ||
-      assemblyEval?.status !== "VALID" ||
+      assemblyUnsaveable ||
       busy ||
       inputs.color !== "WHITE" ||
       inputs.product === null ||
@@ -465,8 +484,67 @@ function PositionWorkspace({
     // Coupled starters mint fresh module ids — a stale selection would leave
     // the inspector pointed at a module that no longer exists.
     store.select(nextProduct.assembly.modules[0]?.id ?? null);
+    setLibraryOpen(false);
     onAssemblyChanged();
   };
+  // Position metadata lives in the right inspector column when no element is
+  // selected: system/materials is edited in context, not as a permanent form.
+  const positionPanel = (
+    <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
+      <header className="assembly-inspector__header">
+        <h4>{t("projects.positionData")}</h4>
+      </header>
+      <details className="inspector-section" open>
+        <summary>{t("projects.identification")}</summary>
+        <fieldset disabled={busy}>
+          <label className="assembly-field">
+            <span>{t("projects.location")}</span>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} />
+          </label>
+          <label className="assembly-field">
+            <span>{t("pricing.quantity")}</span>
+            <input
+              inputMode="numeric"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </label>
+        </fieldset>
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("projects.system")}</summary>
+        <fieldset disabled={busy}>
+          <select
+            className="assembly-select"
+            aria-label={t("projects.system")}
+            value={systemId}
+            onChange={(e) => {
+              const next = e.target.value || null;
+              if (inputs.systemId !== next) {
+                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                setMessage("");
+              }
+            }}
+          >
+            <option value="">{t("projects.chooseSystem")}</option>
+            {systems.data
+              ?.filter((system) => system.quote_ready)
+              .map((system) => (
+                <option key={system.id} value={system.id}>
+                  {system.name}
+                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                </option>
+              ))}
+          </select>
+          {(systems.isError || options.isError) && <p role="alert">{t("projects.catalogError")}</p>}
+          {(systems.isPending || (systemId && options.isPending)) && (
+            <p role="status">{t("projects.loading")}</p>
+          )}
+          <p className="assembly-hint">{t("projects.colorWhite")}</p>
+        </fieldset>
+      </details>
+    </section>
+  );
   return (
     <section className="projects-page position-editor">
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
@@ -484,7 +562,7 @@ function PositionWorkspace({
         </button>
         <button
           className="primary-action"
-          disabled={uncertainCreate || busy || !result || assemblyEval?.status !== "VALID"}
+          disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
           onClick={() => void save()}
         >
           {t("projects.save")}
@@ -492,73 +570,30 @@ function PositionWorkspace({
       </header>
       {message && <p role="status">{message}</p>}
       <div className="position-workspace">
-        <div className="position-design">
-          <details className="starter-library" open>
-            <summary>{t("assembly.starterLibrary")}</summary>
-            <StarterGallery
-              members={resolveMembers(options.data)}
-              disabled={busy}
-              onPick={pickStarter}
-            />
-          </details>
-          <AssemblyEditor
-            organizationId={orgId}
-            couplerSkus={options.data?.coupler_skus ?? []}
-            glassSkus={options.data?.glass_skus ?? []}
-            panelSkus={options.data?.panel_skus ?? []}
-            options={options.data}
+        <details
+          className="starter-library"
+          open={libraryOpen}
+          onToggle={(event) => setLibraryOpen(event.currentTarget.open)}
+        >
+          <summary>{t("assembly.starterLibrary")}</summary>
+          <StarterGallery
+            members={resolveMembers(options.data)}
             disabled={busy}
-            onChanged={onAssemblyChanged}
-            onEvaluationChange={onAssemblyEvaluation}
+            onPick={pickStarter}
           />
-        </div>
-        <aside className="position-materials">
-          <fieldset disabled={busy}>
-            <legend>{t("projects.positionData")}</legend>
-            <label>
-              {t("projects.location")}
-              <input value={location} onChange={(e) => setLocation(e.target.value)} />
-            </label>
-            <label>
-              {t("pricing.quantity")}
-              <input
-                inputMode="numeric"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("projects.system")}
-              <select
-                value={systemId}
-                onChange={(e) => {
-                  const next = e.target.value || null;
-                  if (inputs.systemId !== next) {
-                    useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                    setMessage("");
-                  }
-                }}
-              >
-                <option value="">{t("projects.chooseSystem")}</option>
-                {systems.data
-                  ?.filter((system) => system.quote_ready)
-                  .map((system) => (
-                    <option key={system.id} value={system.id}>
-                      {system.name}
-                      {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            {(systems.isError || options.isError) && (
-              <p role="alert">{t("projects.catalogError")}</p>
-            )}
-            {(systems.isPending || (systemId && options.isPending)) && (
-              <p role="status">{t("projects.loading")}</p>
-            )}
-            <p>{t("projects.colorWhite")}</p>
-          </fieldset>
-        </aside>
+        </details>
+        <AssemblyEditor
+          organizationId={orgId}
+          couplerSkus={options.data?.coupler_skus ?? []}
+          glassSkus={options.data?.glass_skus ?? []}
+          panelSkus={options.data?.panel_skus ?? []}
+          options={options.data}
+          disabled={busy}
+          onChanged={onAssemblyChanged}
+          onEvaluationChange={onAssemblyEvaluation}
+          positionId={saved?.id ?? null}
+          positionPanel={positionPanel}
+        />
       </div>
       {result ? (
         <ProjectBom result={result} />
@@ -570,6 +605,7 @@ function PositionWorkspace({
 }
 
 export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX.Element {
+  const longestCut = Math.max(0, ...result.profile_cuts.map((cut) => Number(cut.length_mm)));
   return (
     <details className="project-bom">
       <summary>{t("projects.bom")}</summary>
@@ -586,7 +622,10 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
             {result.profile_cuts.map((cut, index) => (
               <tr key={index}>
                 <td>{cut.sku}</td>
-                <td>{cut.length_mm}</td>
+                <td>
+                  {cut.length_mm}
+                  <CutBar lengthMm={Number(cut.length_mm)} maxMm={longestCut} />
+                </td>
                 <td>{cut.qty}</td>
               </tr>
             ))}
@@ -618,6 +657,29 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
           {kit.name} × {kit.qty}
         </p>
       ))}
+      {(result.fittings ?? []).length > 0 && (
+        <div className="projects-table-scroll">
+          <table>
+            <caption>{t("projects.fittings")}</caption>
+            <thead>
+              <tr>
+                <th>{t("projects.article")}</th>
+                <th>{t("assembly.framelessFittings")}</th>
+                <th>{t("pricing.quantity")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(result.fittings ?? []).map((item, index) => (
+                <tr key={index}>
+                  <td>{item.sku}</td>
+                  <td>{item.kind}</td>
+                  <td>{item.qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {result.reinforcements.length > 0 && (
         <div className="projects-table-scroll">
           <table>
@@ -633,7 +695,10 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               {result.reinforcements.map((item, index) => (
                 <tr key={index}>
                   <td>{item.reinforcement_sku || item.parent_profile_sku}</td>
-                  <td>{item.length_mm}</td>
+                  <td>
+                    {item.length_mm}
+                    <CutBar lengthMm={Number(item.length_mm)} maxMm={longestCut} />
+                  </td>
                   <td>{item.qty}</td>
                 </tr>
               ))}
@@ -665,5 +730,18 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
         </div>
       )}
     </details>
+  );
+}
+
+/** Proportional length bar under a cut dimension — reads the cut plan at a
+ * glance the way workshop software shows bar vs remnant. */
+function CutBar({ lengthMm, maxMm }: { lengthMm: number; maxMm: number }): JSX.Element | null {
+  if (!Number.isFinite(lengthMm) || !Number.isFinite(maxMm) || maxMm <= 0 || lengthMm <= 0)
+    return null;
+  const pct = Math.min(100, Math.max(2, (lengthMm / maxMm) * 100));
+  return (
+    <span className="cut-bar" aria-hidden="true">
+      <span style={{ width: `${pct}%` }} />
+    </span>
   );
 }

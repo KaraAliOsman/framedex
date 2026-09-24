@@ -23,7 +23,8 @@ SELECT is((SELECT count(*) FROM public.profile_articles WHERE sku = 'UMBRAL-ALU'
     AND role = 'THRESHOLD' AND material = 'ALUMINIUM' AND welding_loss_mm = 0.00
     AND reinforcement_gap_mm = 0.00 AND reinforcement_sku IS NULL), 1::BIGINT,
     'threshold has its own real material and no steel authority');
-SELECT is((SELECT count(*) FROM public.hardware_kits WHERE weight_kg = 2.50),
+SELECT is((SELECT count(*) FROM public.hardware_kits WHERE weight_kg = 2.50
+    AND sku IN ('KIT-TILT-TURN','KIT-TURN','KIT-AWNING-16','KIT-SLIDING','KIT-DOOR-MULTIPOINT')),
     5::BIGINT, 'all five DEMO kits persist their exact weight');
 SELECT is((SELECT contents FROM public.hardware_kits WHERE sku = 'KIT-AWNING-16'),
     '[{"sku":"DEMO-STAY-16","name":"Compás a fricción 16\"","qty":2,"unit":"unit"}]'::JSONB,

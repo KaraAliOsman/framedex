@@ -1,0 +1,318 @@
+"""Raw access to public.job_runs — a service-owned table reached only as the
+connection owner. Every query binds org_id explicitly; RLS is never relied on
+here because worker claims and service reads bypass it by design."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+import json
+from uuid import UUID
+
+from django.db import connection, DatabaseError
+
+from pricing.repository import json_text, rows
+
+STALE_LOCK_SECONDS = 600
+
+_JSON_COLUMNS = frozenset({"payload", "result", "error"})
+
+
+class LockLostError(DatabaseError):
+    """The row was reclaimed by another worker mid-execution."""
+
+
+def _decode(record: dict[str, object]) -> dict[str, object]:
+    for key in record.keys() & _JSON_COLUMNS:
+        if isinstance(record[key], str):
+            record[key] = json.loads(record[key])
+    return record
+
+
+def insert_job(
+    *,
+    org_id: UUID,
+    job_type: str,
+    payload: dict[str, object],
+    idempotency_key: str | None,
+    max_attempts: int,
+    run_after: datetime,
+    created_by: UUID | None,
+) -> tuple[dict[str, object], bool]:
+    """Insert a queued job; on idempotency conflict return the live row."""
+    try:
+        record = rows(
+            """
+            INSERT INTO public.job_runs
+                (org_id, type, payload, idempotency_key, max_attempts, run_after, created_by)
+            VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s)
+            RETURNING *
+            """,
+            [
+                str(org_id),
+                job_type,
+                json_text(payload),
+                idempotency_key,
+                max_attempts,
+                run_after,
+                str(created_by) if created_by else None,
+            ],
+        )
+        return _decode(record[0]), True
+    except DatabaseError as error:
+        if getattr(getattr(error, "__cause__", None), "sqlstate", None) != "23505":
+            raise
+    if idempotency_key is None:
+        raise DatabaseError("job_idempotency_conflict_unresolved")
+    existing = get_job_by_key(org_id=org_id, job_type=job_type, key=idempotency_key)
+    if existing is None:
+        raise DatabaseError("job_idempotency_conflict_unresolved")
+    return existing, False
+
+
+def get_job(*, org_id: UUID, job_id: UUID) -> dict[str, object] | None:
+    record = rows(
+        "SELECT * FROM public.job_runs WHERE org_id = %s AND id = %s",
+        [str(org_id), str(job_id)],
+    )
+    return _decode(record[0]) if record else None
+
+
+def get_job_by_key(*, org_id: UUID, job_type: str, key: str) -> dict[str, object] | None:
+    record = rows(
+        """
+        SELECT * FROM public.job_runs
+        WHERE org_id = %s AND type = %s AND idempotency_key = %s
+        """,
+        [str(org_id), job_type, key],
+    )
+    return _decode(record[0]) if record else None
+
+
+def list_jobs(
+    *,
+    org_id: UUID,
+    job_type: str | None = None,
+    state: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, object]]:
+    clauses = ["org_id = %s"]
+    parameters: list[object] = [str(org_id)]
+    if job_type:
+        clauses.append("type = %s")
+        parameters.append(job_type)
+    if state:
+        clauses.append("state = %s")
+        parameters.append(state)
+    parameters.append(limit)
+    return [
+        _decode(record)
+        for record in rows(
+            f"""
+            SELECT * FROM public.job_runs
+            WHERE {' AND '.join(clauses)}
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            parameters,
+        )
+    ]
+
+
+def claim_next(*, worker_id: str) -> dict[str, object] | None:
+    """Atomically claim the single oldest runnable job; one worker wins.
+
+    Jobs are claimed one at a time, right before execution — a row can never
+    sit inside a claimed batch waiting for earlier work while its lock ages
+    toward the stale cutoff."""
+    if connection.vendor == "postgresql":
+        record = rows(
+            """
+            UPDATE public.job_runs
+            SET state = 'RUNNING',
+                locked_by = %s,
+                locked_at = NOW(),
+                attempt = attempt + 1,
+                started_at = COALESCE(started_at, NOW()),
+                updated_at = NOW()
+            WHERE id = (
+                SELECT id FROM public.job_runs
+                WHERE state = 'QUEUED' AND run_after <= NOW()
+                ORDER BY created_at
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            )
+            RETURNING *
+            """,
+            [worker_id],
+        )
+        return _decode(record[0]) if record else None
+    # Development fallback (sqlite): single-process claim without SKIP LOCKED.
+    record = rows(
+        """
+        SELECT id FROM public.job_runs
+        WHERE state = 'QUEUED' AND run_after <= %s
+        ORDER BY created_at
+        LIMIT 1
+        """,
+        [datetime.now(timezone.utc).isoformat()],
+    )
+    if not record:
+        return None
+    claimed = rows(
+        """
+        UPDATE public.job_runs
+        SET state = 'RUNNING',
+            locked_by = %s,
+            locked_at = %s,
+            attempt = attempt + 1,
+            started_at = COALESCE(started_at, %s),
+            updated_at = %s
+        WHERE id = %s AND state = 'QUEUED'
+        RETURNING *
+        """,
+        [
+            worker_id,
+            datetime.now(timezone.utc).isoformat(),
+            datetime.now(timezone.utc).isoformat(),
+            datetime.now(timezone.utc).isoformat(),
+            str(record[0]["id"]),
+        ],
+    )
+    return _decode(claimed[0]) if claimed else None
+
+
+def renew_lock(*, job_id: UUID, worker_id: str) -> bool:
+    """Refresh the lease; running handlers keep ownership through long work.
+    Returns False when the lease is already gone (job reclaimed or requeued)."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE public.job_runs
+            SET locked_at = NOW(), updated_at = NOW()
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
+            """,
+            [str(job_id), worker_id],
+        )
+        return cursor.rowcount > 0
+
+
+def release_stale(*, now: datetime | None = None) -> int:
+    """Requeue RUNNING jobs whose worker disappeared (crash recovery)."""
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(
+        seconds=STALE_LOCK_SECONDS
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE public.job_runs
+            SET state = 'QUEUED',
+                locked_by = NULL,
+                locked_at = NULL,
+                updated_at = NOW()
+            WHERE state = 'RUNNING' AND locked_at < %s
+            """,
+            [cutoff],
+        )
+        return cursor.rowcount
+
+
+def report_progress(*, job_id: UUID, worker_id: str, progress: float) -> None:
+    """Record progress and renew the lease in one write; raises LockLostError
+    when the lease is gone so the handler aborts instead of finishing a job
+    that now belongs to another worker."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE public.job_runs
+            SET progress = %s, locked_at = NOW(), updated_at = NOW()
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
+            """,
+            [progress, str(job_id), worker_id],
+        )
+        if cursor.rowcount == 0:
+            raise LockLostError(job_id)
+
+
+def _terminal_update(
+    *, job_id: UUID, worker_id: str, set_clause: str, parameters: list[object]
+) -> None:
+    """Write a terminal state only while this worker still owns the lease —
+    a requeued row belongs to its new claimer and must not be overwritten."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            UPDATE public.job_runs
+            SET {set_clause}
+            WHERE id = %s AND locked_by = %s AND state = 'RUNNING'
+            """,
+            [*parameters, str(job_id), worker_id],
+        )
+        if cursor.rowcount == 0:
+            raise LockLostError(f"job {job_id} lock lost before terminal write")
+
+
+def succeed(*, job_id: UUID, worker_id: str, result: dict[str, object]) -> None:
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause="""
+            state = 'SUCCEEDED',
+            progress = 100.00,
+            result = %s::jsonb,
+            error = NULL,
+            locked_by = NULL,
+            locked_at = NULL,
+            completed_at = NOW(),
+            updated_at = NOW()
+        """,
+        parameters=[json_text(result)],
+    )
+
+
+def fail_or_retry(
+    *,
+    job_id: UUID,
+    worker_id: str,
+    error: dict[str, object],
+    attempt: int,
+    max_attempts: int,
+) -> str:
+    """Requeue with quadratic backoff, or mark FAILED after the last attempt."""
+    terminal = attempt >= max_attempts
+    state_update = (
+        "state = 'FAILED', completed_at = NOW()"
+        if terminal
+        else "state = 'QUEUED'"
+    )
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause=f"""
+            {state_update},
+            error = %s::jsonb,
+            locked_by = NULL,
+            locked_at = NULL,
+            run_after = NOW() + (%s || ' seconds')::interval,
+            updated_at = NOW()
+        """,
+        parameters=[json_text(error), str(15 * attempt * attempt)],
+    )
+    return "FAILED" if terminal else "QUEUED"
+
+
+def fail_permanent(*, job_id: UUID, worker_id: str, error: dict[str, object]) -> None:
+    """Terminal failure regardless of remaining attempts: contract violations
+    (permission denied, not found, invalid payload) never succeed on retry."""
+    _terminal_update(
+        job_id=job_id,
+        worker_id=worker_id,
+        set_clause="""
+            state = 'FAILED',
+            error = %s::jsonb,
+            locked_by = NULL,
+            locked_at = NULL,
+            completed_at = NOW(),
+            updated_at = NOW()
+        """,
+        parameters=[json_text(error)],
+    )

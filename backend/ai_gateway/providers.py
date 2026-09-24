@@ -1,0 +1,527 @@
+"""Provider transports for the AI gateway.
+
+Routes (capability → provider/model/cost) are operational config in ai_routes;
+tenants only ever see the white-label public_name. Real providers are wired via
+environment: AI_GATEWAY_{PROVIDER}_API_KEY and AI_GATEWAY_{PROVIDER}_BASE_URL.
+MOCK is the deterministic default used by seeded routes and tests — it never
+performs network I/O."""
+
+from __future__ import annotations
+
+import hashlib
+import ipaddress
+import json
+import os
+import re
+import socket
+import time
+from typing import Any
+from urllib.parse import urlparse
+
+import httpx
+
+
+MAX_BODY_BYTES = 1_048_576
+# A configured base path may only contain plain ASCII segments — no
+# encoded separators, dot segments, backslashes, or whitespace that could
+# redirect the authenticated request on the approved host.
+_BASE_PATH_RE = re.compile(r"/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*")
+
+
+def _resolve_provider_hosts(hostname: str) -> list[str] | None:
+    """Resolve the configured host once and return every validated global
+    answer in resolver order, or None. Literal IPs are checked directly; a
+    DNS name must resolve to global answers only — any non-global answer
+    refuses the provider, and resolution failure refuses closed. Requests
+    pin these exact addresses (Host header + SNI keep the configured name),
+    so no second lookup exists for a rebinding attack to poison — while
+    trying each answer preserves normal multi-address failover."""
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            infos = socket.getaddrinfo(hostname, 443, proto=socket.IPPROTO_TCP)
+        except (socket.gaierror, UnicodeError):
+            return None
+        resolved: list[str] = []
+        for info in infos:
+            if not info[4] or not info[4][0]:
+                continue
+            try:
+                candidate = ipaddress.ip_address(info[4][0])
+            except ValueError:
+                return None
+            if not candidate.is_global:
+                return None
+            resolved.append(info[4][0])
+        return resolved or None
+    return [str(address)] if address.is_global else None
+
+
+class ProviderError(Exception):
+    """Sanitized provider failure — never carries credentials or payloads."""
+
+    def __init__(self, code: str):
+        self.code = code
+        super().__init__(code)
+
+
+class HttpProvider:
+    """Generic JSON invocation endpoint: POST {model, capability, input}."""
+
+    def __init__(self, *, provider: str):
+        self.provider = provider
+        self.api_key = os.environ.get(f"AI_GATEWAY_{provider}_API_KEY", "")
+        self.base_url = os.environ.get(f"AI_GATEWAY_{provider}_BASE_URL", "").rstrip("/")
+        if not self.api_key or not self.base_url:
+            raise ProviderError("ai_provider_unavailable")
+        # Provider URLs are operator config, but a compromised value must not
+        # turn the gateway into an authenticated proxy for internal services:
+        # https-only, no userinfo/query/fragment, and the host must resolve
+        # to global addresses only. Anything else refuses closed rather than
+        # silently redirecting or dropping part of the configured endpoint.
+        try:
+            parsed = urlparse(self.base_url)
+            hostname = parsed.hostname
+            port = parsed.port or 443
+        except ValueError as error:
+            raise ProviderError("ai_provider_unavailable") from error
+        if (
+            parsed.scheme != "https"
+            or not hostname
+            or parsed.username
+            or parsed.password
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ProviderError("ai_provider_unavailable")
+        connect_ips = _resolve_provider_hosts(hostname)
+        if connect_ips is None:
+            raise ProviderError("ai_provider_unavailable")
+        base_path = parsed.path.rstrip("/")
+        if base_path and (
+            not _BASE_PATH_RE.fullmatch(base_path)
+            or any(segment in (".", "..") for segment in base_path.split("/"))
+        ):
+            raise ProviderError("ai_provider_unavailable")
+        self._host = hostname
+        self._port = port
+        self._connect_ips = connect_ips
+        self._base_path = base_path
+
+    def _send(
+        self,
+        client: httpx.Client,
+        connect_ip: str,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+        host_header: str,
+        port_suffix: str,
+        operation_key: str | None,
+    ) -> bytes:
+        """One pinned attempt: the URL carries the validated connect address
+        while Host + SNI keep the configured name. The body streams in with
+        a hard byte cap — an unbounded provider response cannot exhaust
+        memory before it is rejected."""
+        url_host = f"[{connect_ip}]" if ":" in connect_ip else connect_ip
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Host": host_header,
+        }
+        if operation_key:
+            # The operation key doubles as the provider-level idempotency key
+            # so a retry ambiguous to us can still dedupe provider-side.
+            headers["Idempotency-Key"] = operation_key
+        path, body = self._wire_request(route, capability, input_payload, provider_options)
+        with client.stream(
+            "POST",
+            f"https://{url_host}{port_suffix}{path}",
+            headers=headers,
+            extensions={"sni_hostname": self._host},
+            json=body,
+        ) as response:
+            response.raise_for_status()
+            content = bytearray()
+            for chunk in response.iter_bytes(65536):
+                content += chunk
+                if len(content) > MAX_BODY_BYTES:
+                    raise ProviderError("ai_provider_output_too_large")
+        return bytes(content)
+
+    def _request(
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+        client: httpx.Client | None = None,
+        operation_key: str | None = None,
+    ) -> bytes:
+        """POST to the provider on each validated address until one connects.
+        Connect-phase failures advance to the next pinned answer; any HTTP
+        response (including errors) stops the loop — it is an answer, not a
+        transport failure. Tests inject a MockTransport client so the real
+        httpx request path (extensions, streaming) is exercised."""
+        port_suffix = "" if self._port == 443 else f":{self._port}"
+        header_host = f"[{self._host}]" if ":" in self._host else self._host
+        host_header = header_host if self._port == 443 else f"{header_host}:{self._port}"
+        if client is None:
+            with httpx.Client(timeout=60.0) as owned:
+                return self._attempts(
+                    owned,
+                    route,
+                    capability,
+                    input_payload,
+                    provider_options,
+                    host_header,
+                    port_suffix,
+                    operation_key,
+                )
+        return self._attempts(
+            client,
+            route,
+            capability,
+            input_payload,
+            provider_options,
+            host_header,
+            port_suffix,
+            operation_key,
+        )
+
+    def _attempts(
+        self,
+        client: httpx.Client,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+        host_header: str,
+        port_suffix: str,
+        operation_key: str | None,
+    ) -> bytes:
+        last_error: httpx.HTTPError | None = None
+        for connect_ip in self._connect_ips:
+            try:
+                return self._send(
+                    client,
+                    connect_ip,
+                    route=route,
+                    capability=capability,
+                    input_payload=input_payload,
+                    provider_options=provider_options,
+                    host_header=host_header,
+                    port_suffix=port_suffix,
+                    operation_key=operation_key,
+                )
+            except (httpx.ConnectError, httpx.ConnectTimeout) as error:
+                last_error = error
+        raise ProviderError("ai_provider_error") from last_error
+
+    def invoke(
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict | None = None,
+        client: httpx.Client | None = None,
+        operation_key: str | None = None,
+    ) -> dict[str, Any]:
+        started = time.monotonic()
+        options = provider_options or {}
+        # The model must fit the provenance column BEFORE the paid call runs —
+        # an env override longer than VARCHAR(120) would otherwise fail the
+        # sealed audit after inference already happened.
+        requested_model = self._requested_model(route)
+        if not (0 < len(requested_model) <= 120):
+            raise ProviderError("ai_provider_error")
+        try:
+            # Ephemeral fetch URLs are resolved at wire time, never carried in
+            # input_payload: the audited input hash must stay identical across
+            # retries even though a fresh signed URL is minted each attempt.
+            wire_input = dict(input_payload)
+            if wire_input.get("storage_path"):
+                from documents.repository import DocumentaryError
+                from documents.storage import SupabaseDocumentStorage
+
+                try:
+                    wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
+                        str(wire_input["storage_path"])
+                    )
+                except DocumentaryError as error:
+                    raise ProviderError("ai_provider_unavailable") from error
+            content = self._request(
+                route=route,
+                capability=capability,
+                input_payload=wire_input,
+                provider_options=options,
+                client=client,
+                operation_key=operation_key,
+            )
+            parsed = self._parse_response(content)
+            tokens_prompt = int(parsed["tokens_prompt"])
+            tokens_completion = int(parsed["tokens_completion"])
+            # Usage feeds an INT4 audit column — a malformed or impossible count
+            # is a provider error, not an audit-time database exception raised
+            # after the paid call already succeeded.
+            if not (
+                0 <= tokens_prompt <= 2_147_483_647 and 0 <= tokens_completion <= 2_147_483_647
+            ):
+                raise TypeError("provider token usage is outside the audit range")
+        except ProviderError:
+            raise
+        except (httpx.HTTPError, TypeError, ValueError) as error:
+            raise ProviderError("ai_provider_error") from error
+        response_model = parsed.get("model")
+        return {
+            "output": parsed["output"],
+            "tokens_prompt": tokens_prompt,
+            "tokens_completion": tokens_completion,
+            "latency_ms": int((time.monotonic() - started) * 1000),
+            # The model the request actually ran on — the response's own model
+            # field wins when it is a sane string that fits the provenance
+            # column; an overlong or absent value falls back to what we sent.
+            # Sealed into audit provenance, which must never re-attribute.
+            "model": (
+                response_model
+                if isinstance(response_model, str) and 0 < len(response_model) <= 120
+                else requested_model
+            ),
+        }
+
+    def _requested_model(self, route: dict) -> str:
+        """Model the request will run on; subclasses may override the route."""
+        return str(route["provider_model"])
+
+    def _wire_request(
+        self,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+    ) -> tuple[str, dict]:
+        """(path, json body) the subclass's protocol posts on the pinned host."""
+        return f"{self._base_path}/invoke", {
+            "model": route["provider_model"],
+            "capability": capability,
+            "input": input_payload,
+        }
+
+    def _parse_response(self, content: bytes) -> dict[str, Any]:
+        """Generic envelope: {output|text, usage:{prompt_tokens,completion_tokens}}."""
+        body = json.loads(content)
+        if not isinstance(body, dict):
+            raise TypeError("provider body is not an object")
+        usage = body.get("usage") or {}
+        if not isinstance(usage, dict):
+            raise TypeError("provider usage is not an object")
+        output = body.get("output") if "output" in body else body.get("text")
+        if not isinstance(output, str):
+            raise TypeError("provider output is not a string")
+        return {
+            "output": output,
+            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
+            "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "model": body["model"] if isinstance(body.get("model"), str) else None,
+        }
+
+
+_DEFAULT_SYSTEM = (
+    "You are the backend endpoint of a professional design tool. "
+    "Respond with a single JSON document only — no prose, no markdown fences."
+)
+
+
+class OpenAICompatibleProvider(HttpProvider):
+    """OpenAI-compatible chat-completions transport (Xiaomi MiMo, OpenAI,
+    OpenRouter, …). Inherits the pinned-host request machinery; only the wire
+    contract differs: POST {base}/chat/completions with {model, messages}.
+
+    Configuration (all env, per provider name):
+      AI_GATEWAY_{P}_API_KEY   — bearer token (required)
+      AI_GATEWAY_{P}_BASE_URL  — https endpoint, e.g. https://api.xiaomimimo…/v1
+      AI_GATEWAY_{P}_MODEL     — overrides the route's provider_model when set
+
+    Server-side callers may steer the conversation through provider_options
+    (never input_payload — that is client-supplied and audited verbatim, so
+    honoring control keys inside it would let any authenticated caller replace
+    the platform's system prompt and would pollute the replay hash):
+      "system"      — system-prompt text (defaults to a JSON-only endpoint prompt)
+      "json_output" — truthy requests response_format={"type": "json_object"}
+    input_payload is serialized whole as the user message."""
+
+    def __init__(self, *, provider: str):
+        super().__init__(provider=provider)
+        self._model = os.environ.get(f"AI_GATEWAY_{provider}_MODEL", "")
+
+    def _wire_request(
+        self,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict,
+    ) -> tuple[str, dict]:
+        # An operator may point BASE_URL straight at the completions path —
+        # don't double-append it.
+        path = (
+            self._base_path
+            if self._base_path.endswith("/chat/completions")
+            else f"{self._base_path}/chat/completions"
+        )
+        body: dict[str, Any] = {
+            "model": self._requested_model(route),
+            "messages": [
+                {
+                    "role": "system",
+                    "content": str(provider_options.get("system") or _DEFAULT_SYSTEM),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(input_payload, ensure_ascii=False, default=str),
+                },
+            ],
+            "temperature": 0,
+        }
+        if provider_options.get("json_output"):
+            body["response_format"] = {"type": "json_object"}
+        return path, body
+
+    def _requested_model(self, route: dict) -> str:
+        # AI_GATEWAY_{P}_MODEL is an operational override — the audit must
+        # seal this effective model, not the route's, or provenance lies.
+        return self._model or str(route["provider_model"])
+
+    def _parse_response(self, content: bytes) -> dict[str, Any]:
+        """OpenAI envelope: choices[0].message.content + usage."""
+        body = json.loads(content)
+        if not isinstance(body, dict):
+            raise TypeError("provider body is not an object")
+        # Some compatible gateways answer 200 with an error envelope — that is
+        # a provider answer, not a successful completion.
+        if body.get("error"):
+            raise TypeError("provider returned an error envelope")
+        choices = body.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise TypeError("provider returned no choices")
+        message = choices[0].get("message") if isinstance(choices[0], dict) else None
+        output = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(output, str):
+            raise TypeError("provider output is not a string")
+        usage = body.get("usage") or {}
+        if not isinstance(usage, dict):
+            raise TypeError("provider usage is not an object")
+        return {
+            "output": output,
+            "tokens_prompt": int(usage.get("prompt_tokens") or 0),
+            "tokens_completion": int(usage.get("completion_tokens") or 0),
+            "model": body["model"] if isinstance(body.get("model"), str) else None,
+        }
+
+
+_COUNT_RE = re.compile(r"(\d+)\s*(m[oó]dulos?|vanos?|unidades?|pa[nñ]os?)")
+_WIDTH_RE = re.compile(
+    r"(?:ancho\s+(?:total\s+)?(?:de\s+)?|medida\s+de\s+)(\d{3,5})(?:\s*mm)?"
+    r"|(\d{3,5})\s*mm\s+de\s+ancho"
+)
+_HEIGHT_RE = re.compile(r"alto\s+(?:de\s+)?(\d{3,4})(?:\s*mm)?|(\d{3,4})\s*mm\s+de\s+alto")
+_OPENING_KEYWORDS = (
+    (re.compile(r"corred"), "SLIDING_2L"),
+    (re.compile(r"puerta|door"), "DOOR_ENTRY"),
+    (re.compile(r"proyectante|awning"), "AWNING"),
+    (re.compile(r"oscil|batiente|tilt"), "TILT_TURN_LEFT"),
+    (re.compile(r"fijo|fixed"), "FIXED"),
+)
+
+
+def _design_assist_output(input_payload: dict) -> dict:
+    """Mock design intent → typed product ops. The contract the real provider
+    must satisfy is exercised exactly: a JSON document of whitelisted ops plus
+    a human note, deterministic per prompt so environments and tests agree."""
+    prompt = str(input_payload.get("prompt") or "").lower()
+    product = input_payload.get("product") or {}
+    modules = product.get("modules") or []
+    couplings = product.get("couplings") or []
+    ops: list[dict] = []
+    notes: list[str] = []
+    count = _COUNT_RE.search(prompt)
+    if count and int(count.group(1)) > 0:
+        ops.append({"op": "set_module_count", "count": int(count.group(1))})
+        notes.append(f"{count.group(1)} módulos")
+    width = _WIDTH_RE.search(prompt)
+    if width:
+        ops.append({"op": "set_total_width", "width_mm": int(width.group(1) or width.group(2))})
+        notes.append(f"ancho total {width.group(1) or width.group(2)} mm")
+    height = _HEIGHT_RE.search(prompt)
+    if height:
+        ops.append({"op": "set_height", "height_mm": int(height.group(1) or height.group(2))})
+        notes.append(f"alto {height.group(1) or height.group(2)} mm")
+    if re.search(r"igual|mismo\s+ancho|uniform", prompt):
+        ops.append({"op": "equalize_widths"})
+        notes.append("anchos iguales")
+    if re.search(r"arco|bow|proa", prompt) and couplings:
+        for index, _ in enumerate(couplings):
+            ops.append({"op": "set_coupling_angle", "coupling": index, "angle_deg": 22.5})
+        notes.append("ángulos de arco 22.5°")
+    for pattern, opening in _OPENING_KEYWORDS:
+        if pattern.search(prompt):
+            target = 0 if opening == "DOOR_ENTRY" else None
+            indices = [target] if target is not None else range(len(modules))
+            for index in indices:
+                ops.append({"op": "set_opening", "module": index, "opening": opening})
+            notes.append(f"apertura {opening}")
+            break
+    return {
+        "ops": ops,
+        "notes": (
+            "; ".join(notes) if notes else "No reconocí una acción de diseño en la instrucción."
+        ),
+    }
+
+
+class MockProvider:
+    """Deterministic provider — a real output a test can assert, never I/O."""
+
+    def invoke(
+        self,
+        *,
+        route: dict,
+        capability: str,
+        input_payload: dict,
+        provider_options: dict | None = None,
+        operation_key: str | None = None,
+    ) -> dict[str, Any]:
+        started = time.monotonic()
+        digest = hashlib.sha256(
+            json.dumps(input_payload, sort_keys=True, default=str).encode()
+        ).hexdigest()[:16]
+        output = (
+            json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
+            if capability == "design_assist"
+            else f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
+        )
+        serialized = json.dumps(input_payload, default=str)
+        return {
+            "output": output,
+            "tokens_prompt": max(1, len(serialized) // 8),
+            "tokens_completion": max(1, len(output) // 8),
+            "latency_ms": int((time.monotonic() - started) * 1000),
+        }
+
+
+# Providers that speak the OpenAI chat-completions protocol out of the box;
+# AI_GATEWAY_{P}_PROTOCOL = openai|http overrides the registry either way.
+_OPENAI_PROTOCOL_PROVIDERS = {"MIMO", "OPENAI", "OPENROUTER", "DEEPSEEK", "QWEN"}
+
+
+def provider_for(route: dict):
+    name = str(route["provider"]).upper()
+    if name == "MOCK":
+        return MockProvider()
+    protocol = os.environ.get(f"AI_GATEWAY_{name}_PROTOCOL", "").lower()
+    if protocol == "openai" or (not protocol and name in _OPENAI_PROTOCOL_PROVIDERS):
+        return OpenAICompatibleProvider(provider=name)
+    return HttpProvider(provider=name)
