@@ -22,6 +22,7 @@ class ProductionStepSerializer(serializers.Serializer):
     )
     work_center_id = serializers.UUIDField(allow_null=True)
     work_center_code = serializers.CharField(allow_null=True)
+    work_center_name = serializers.CharField(allow_null=True)
     started_at = serializers.DateTimeField(allow_null=True)
     finished_at = serializers.DateTimeField(allow_null=True)
     actor_id = serializers.UUIDField(allow_null=True)

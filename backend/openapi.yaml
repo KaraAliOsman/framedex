@@ -17486,6 +17486,9 @@ components:
         work_center_code:
           type: string
           nullable: true
+        work_center_name:
+          type: string
+          nullable: true
         started_at:
           type: string
           format: date-time
@@ -17513,6 +17516,7 @@ components:
       - status
       - work_center_code
       - work_center_id
+      - work_center_name
     ProductionStepEvent:
       type: object
       properties:

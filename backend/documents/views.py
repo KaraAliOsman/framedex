@@ -78,7 +78,9 @@ def public_documentary_errors():
         raise contract_error(
             status_code,
             error.code,
-            "La evidencia documental no pudo guardarse; revisa el proyecto, sus autoridades y su estado.",
+            error.public_detail
+            or "La evidencia documental no pudo guardarse; revisa el proyecto, sus autoridades y su estado.",
+            error_extra=error.extra or None,
         ) from error
     except InvalidEngineRequest as error:
         raise contract_error(400, "validation_error", "Revisa los datos técnicos del proyecto.") from error
@@ -101,6 +103,7 @@ def public_documentary_errors():
             422,
             "documentary_authority_required",
             "Falta o no coincide una autoridad técnica necesaria para congelar la revisión.",
+            error_extra={"reason": str(error)},
         ) from error
     except DatabaseError as error:
         cause = error.__cause__

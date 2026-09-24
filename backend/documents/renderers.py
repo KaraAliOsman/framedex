@@ -80,7 +80,7 @@ h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } 
 table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; table-layout: fixed; }
 thead { border-top: 0.9pt solid #465158; }
 th { color: #465158; font: 6.5pt 'IBM Plex Sans', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; border-bottom: 0.9pt solid #465158; padding: 1.4mm 1.8mm; }
-td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: anywhere; }
+td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: normal; hyphens: auto; }
 tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .workshop h1 { font-size: 14pt; } .workshop th { background: #252D31; color: #FCFDFC; }
 .dimension { font: 11pt 'IBM Plex Mono', monospace; font-weight: 500; color: #161C1F; }
@@ -608,7 +608,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             ", ".join(bucket["locations"]) or "—",
             _TYPOLOGY_ES.get(typology, typology),
             f"{width_mm} × {height_mm}",
-            bucket["quantity"], specs, f"{ci} / {ce}",
+            bucket["quantity"], specs, _finish(ci, ce),
             _money(bucket["price_net"], currency) if bucket["priced"] else "—",
         ])
     body, _ = _revision_header(snapshot, "Cotización comercial", "DOC-01")
@@ -1247,6 +1247,16 @@ _TYPOLOGY_ES = {
     "DOOR_ENTRY": "Puerta",
     "COMPOSITE": "Conjunto",
 }
+
+_COLOR_ES = {
+    "WHITE": "Blanco",
+}
+
+
+def _finish(ci: object, ce: object) -> str:
+    interior = _COLOR_ES.get(ci, ci)
+    exterior = _COLOR_ES.get(ce, ce)
+    return interior if interior == exterior else f"{interior} / {exterior}"
 
 
 def _invoice_body(payload: dict[str, object]) -> str:

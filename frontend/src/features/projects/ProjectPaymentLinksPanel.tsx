@@ -41,12 +41,14 @@ export function ProjectPaymentLinksPanel({
   projectId,
   orgId,
   canWrite,
+  isOwner = false,
   onChanged,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  isOwner?: boolean;
   onChanged: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
@@ -182,7 +184,11 @@ export function ProjectPaymentLinksPanel({
       </div>
       {message && <p className="form-error">{message}</p>}
       {integration !== null && !configured && (
-        <p className="settings-hint">{t("projects.paymentLinkFlowRequired")}</p>
+        <p className="settings-hint">
+          {isOwner
+            ? t("projects.paymentLinkFlowRequired")
+            : t("projects.paymentLinkFlowRequiredOwner")}
+        </p>
       )}
       {showForm && (
         <form className="payments-form" onSubmit={create}>
@@ -282,7 +288,9 @@ export function ProjectPaymentLinksPanel({
           </tbody>
         </table>
       )}
-      {configured && links.length === 0 && !showForm && <p>{t("projects.paymentLinksEmpty")}</p>}
+      {links.length === 0 && !showForm && (
+        <p className="settings-hint">{t("projects.paymentLinksEmpty")}</p>
+      )}
     </section>
   );
 }

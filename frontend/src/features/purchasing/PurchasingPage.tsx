@@ -891,7 +891,8 @@ function EligibilityForm({
             {requirements.map((item) => (
               <label key={item.id}>
                 <input type="checkbox" name={`key_${item.id}`} defaultChecked />
-                {item.category} · {item.purchasing_sku ?? item.requirement_key.slice(0, 12)}
+                {categoryLabel(item.category)} ·{" "}
+                {item.purchasing_sku ?? item.requirement_key.slice(0, 12)}
               </label>
             ))}
           </fieldset>

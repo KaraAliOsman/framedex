@@ -738,6 +738,7 @@ def _seed_workshop_defaults(
         if isinstance(item, dict)
     }
     seeded: list[dict[str, object]] = []
+    seeded_bay_rows: dict[str, dict[str, object]] = {}
     for module_id, computation, _ in calculations:
         prefix = f"{module_id}|" if module_id else ""
         for opening in computation.openings:
@@ -751,7 +752,7 @@ def _seed_workshop_defaults(
                     str((opening.width_mm * (index + 1) / (count + 1)).quantize(D("0.01")))
                     for index in range(count)
                 ]
-            seeded.append({
+            bay_row: dict[str, object] = {
                 "bay_id": bay_key,
                 "leaf_id": None,
                 "bottom_drain_holes_mm": drains,
@@ -759,7 +760,9 @@ def _seed_workshop_defaults(
                 "continuous_width_mm": str(opening.width_mm.quantize(D("0.01"))),
                 "finish_class": "WHITE",
                 "has_coupler": False,
-            })
+            }
+            seeded.append(bay_row)
+            seeded_bay_rows[bay_key] = bay_row
         for leaf in computation.leaves:
             bay_key = f"{prefix}{leaf.bay_id}"
             leaf_key = (
@@ -771,14 +774,24 @@ def _seed_workshop_defaults(
                 continue
             perimeter = (leaf.finished_width_mm + leaf.finished_height_mm) * 2
             count = max(2, ceil(perimeter / config.R08.max_spacing_mm))
+            closing_points = [
+                str((perimeter * index / count).quantize(D("0.01")))
+                for index in range(count)
+            ]
+            if leaf_key is None:
+                # A leaf with no leaf identity shares the bay-level target;
+                # a second (bay, None) row would collide with it at freeze.
+                bay_row = seeded_bay_rows.get(bay_key)
+                if bay_row is not None and (
+                    bay_row["closing_points_perimeter_mm"] is None
+                ):
+                    bay_row["closing_points_perimeter_mm"] = closing_points
+                continue
             seeded.append({
                 "bay_id": bay_key,
                 "leaf_id": leaf_key,
                 "bottom_drain_holes_mm": None,
-                "closing_points_perimeter_mm": [
-                    str((perimeter * index / count).quantize(D("0.01")))
-                    for index in range(count)
-                ],
+                "closing_points_perimeter_mm": closing_points,
                 "continuous_width_mm": None,
                 "finish_class": None,
                 "has_coupler": None,

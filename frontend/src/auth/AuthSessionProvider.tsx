@@ -211,6 +211,29 @@ export function AuthSessionProvider({ children }: PropsWithChildren): JSX.Elemen
       organizationRef.current = window.localStorage.getItem(
         organizationStorageKey(nextSession.user.id),
       );
+      // Magic-link redirects carry the access token in the URL hash; strip the
+      // auth params so the address bar no longer bears a live credential.
+      if (window.location.hash.includes("access_token=")) {
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        for (const key of [
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "expires_at",
+          "token_type",
+          "type",
+          "provider_token",
+          "provider_refresh_token",
+        ]) {
+          params.delete(key);
+        }
+        const rest = params.toString();
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}${rest ? `#${rest}` : ""}`,
+        );
+      }
       setStatus("resolving");
       // Supabase listeners are synchronous: do not acquire Auth's lock from inside one.
       const timer = window.setTimeout(() => {

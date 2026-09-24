@@ -57,6 +57,11 @@
   font-weight: 600;
 }
 
+.production-filter-clear {
+  border-style: dashed;
+  color: var(--theme-text);
+}
+
 .production-next {
   align-items: center;
   background: var(--theme-accent-soft);

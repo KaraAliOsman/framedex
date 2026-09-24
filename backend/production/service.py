@@ -163,6 +163,7 @@ def _public_step(step: dict[str, object]) -> dict[str, object]:
         "status": step["status"],
         "work_center_id": str(step["work_center_id"]) if step.get("work_center_id") else None,
         "work_center_code": step.get("work_center_code"),
+        "work_center_name": step.get("work_center_name"),
         "started_at": step["started_at"],
         "finished_at": step["finished_at"],
         "actor_id": str(step["actor_id"]) if step.get("actor_id") else None,
@@ -534,7 +535,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     steps = rows(
         """
         SELECT s.id, s.sequence, s.code, s.label, s.status, s.work_center_id,
-               w.code AS work_center_code, s.started_at, s.finished_at, s.actor_id, s.note
+               w.code AS work_center_code, w.name AS work_center_name, s.started_at, s.finished_at, s.actor_id, s.note
         FROM public.production_steps s
         LEFT JOIN public.work_centers w ON w.id = s.work_center_id
         WHERE s.order_id = %s ORDER BY s.sequence
@@ -691,7 +692,7 @@ def transition_step(
             """
             SELECT s.id, s.order_id, s.status, s.sequence, s.code, s.label,
                    s.work_center_id, s.started_at, s.finished_at, s.actor_id, s.note,
-                   w.code AS work_center_code
+                   w.code AS work_center_code, w.name AS work_center_name
             FROM public.production_steps s
             LEFT JOIN public.work_centers w ON w.id = s.work_center_id
             WHERE s.id = %s AND s.org_id = %s FOR UPDATE OF s
@@ -888,7 +889,39 @@ def transition_step(
                 )
             )
             if short_entries or unplaced_plan or opt.get("unmapped_stock_skus"):
-                raise DocumentaryError("work_order_material_shortage")
+                raise DocumentaryError(
+                    "work_order_material_shortage",
+                    detail=(
+                        "La orden no tiene material suficiente para completar este paso: "
+                        "revisa los faltantes de la reserva, las piezas sin ubicar y los "
+                        "materiales sin equivalencia de stock en Compras."
+                    ),
+                    extra={
+                        "short_skus": sorted({
+                            str(entry.get("sku"))
+                            for entry in short_entries
+                            if entry.get("sku")
+                        }),
+                        "unmapped_stock_skus": sorted(
+                            opt.get("unmapped_stock_skus") or []
+                        ),
+                        "unplaced": sorted({
+                            kind
+                            for kind, blocked in (
+                                ("BAR", bool((opt.get("bars") or {}).get("unplaced"))),
+                                (
+                                    "SHEET",
+                                    any(
+                                        entry.get("reason")
+                                        not in _PURCHASED_UNNESTED_REASONS
+                                        for entry in (opt.get("unnested") or [])
+                                    ),
+                                ),
+                            )
+                            if blocked and kind in consumed_kinds
+                        }),
+                    },
+                )
             open_entries = [
                 entry for entry in reservations
                 if entry.get("kind") in consumed_kinds
@@ -944,7 +977,7 @@ def transition_step(
         fresh = one(
             """
             SELECT s.id, s.sequence, s.code, s.label, s.status, s.work_center_id,
-                   w.code AS work_center_code, s.started_at, s.finished_at, s.actor_id, s.note
+                   w.code AS work_center_code, w.name AS work_center_name, s.started_at, s.finished_at, s.actor_id, s.note
             FROM public.production_steps s
             LEFT JOIN public.work_centers w ON w.id = s.work_center_id
             WHERE s.id = %s

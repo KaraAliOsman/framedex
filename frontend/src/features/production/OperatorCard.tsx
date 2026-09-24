@@ -158,8 +158,10 @@ export function OperatorStepCard({
         <h3>
           {t("production.operatorTitle")}: {step.label}
         </h3>
-        {step.work_center_code ? (
-          <span className="production-step-center">{step.work_center_code}</span>
+        {(step.work_center_name ?? step.work_center_code) ? (
+          <span className="production-step-center">
+            {step.work_center_name ?? step.work_center_code}
+          </span>
         ) : null}
       </header>
       {!trace ? (

@@ -47,7 +47,9 @@ def public_inventory_errors():
         raise contract_error(
             status_code,
             error.code,
-            "La operación de inventario fue rechazada; revisa el pedido y las cantidades.",
+            error.public_detail
+            or "La operación de inventario fue rechazada; revisa el pedido y las cantidades.",
+            error_extra=error.extra or None,
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(

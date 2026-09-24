@@ -53,6 +53,14 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* The light-theme accent reads dim on dark surfaces — use the stronger
+ * accent token so keyboard focus stays visible in the dark theme. */
+:root[data-theme="dark"] button:focus-visible,
+:root[data-theme="dark"] input:focus-visible,
+:root[data-theme="dark"] a:focus-visible {
+  outline-color: var(--theme-accent-strong);
+}
+
 .auth-screen {
   align-items: center;
   background: var(--theme-bg-canvas);

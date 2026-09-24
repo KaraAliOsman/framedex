@@ -144,9 +144,23 @@ const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
  * of collapsing into a generic toast. */
 function actionErrorDetail(error: unknown): string {
   if (error instanceof ApiError) {
-    const payload = error.payload as { error?: { detail?: unknown } } | null;
+    const payload = error.payload as {
+      error?: {
+        detail?: unknown;
+        short_skus?: unknown;
+        unmapped_stock_skus?: unknown;
+      };
+    } | null;
     const detail = payload?.error?.detail;
-    if (typeof detail === "string" && detail.trim()) return detail;
+    if (typeof detail === "string" && detail.trim()) {
+      const shortList = payload?.error?.short_skus;
+      const unmappedList = payload?.error?.unmapped_stock_skus;
+      const skus = [
+        ...(Array.isArray(shortList) ? shortList : []),
+        ...(Array.isArray(unmappedList) ? unmappedList : []),
+      ].filter((sku): sku is string => typeof sku === "string" && sku.length > 0);
+      return skus.length ? `${detail} · ${skus.join(", ")}` : detail;
+    }
   }
   return t("production.actionError");
 }
@@ -707,6 +721,21 @@ export function ProductionPage(): JSX.Element {
             >
               {t("production.filterDispatchReady")}
             </button>
+            {listFiltered ? (
+              <button
+                type="button"
+                className="production-filter production-filter-clear"
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.delete("status");
+                  next.delete("shortage");
+                  next.delete("dispatch_ready");
+                  setParams(next);
+                }}
+              >
+                {t("production.clearFilters")}
+              </button>
+            ) : null}
           </div>
           {orders.length === 0 ? <p>{t("production.empty")}</p> : null}
           {listFiltered && orders.length > 0 && filteredOrders.length === 0 ? (
@@ -1720,7 +1749,9 @@ export function ProductionPage(): JSX.Element {
                   >
                     <span className="production-next-label">
                       {t("production.nextStep")}: <strong>{nextStep.label}</strong>
-                      {nextStep.work_center_code ? ` · ${nextStep.work_center_code}` : ""}
+                      {(nextStep.work_center_name ?? nextStep.work_center_code)
+                        ? ` · ${nextStep.work_center_name ?? nextStep.work_center_code}`
+                        : ""}
                     </span>
                     <span className="production-step-actions">
                       {stepActions(nextStep).map((stepAction) => (
@@ -1769,9 +1800,9 @@ export function ProductionPage(): JSX.Element {
                             >
                               {step.label}
                             </button>
-                            {step.work_center_code ? (
+                            {(step.work_center_name ?? step.work_center_code) ? (
                               <span className="production-step-center">
-                                {step.work_center_code}
+                                {step.work_center_name ?? step.work_center_code}
                               </span>
                             ) : null}
                             <span className={`production-chip status-${step.status.toLowerCase()}`}>

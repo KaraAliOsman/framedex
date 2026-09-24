@@ -293,6 +293,7 @@ export function ProjectPages(): JSX.Element {
       id={id}
       canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
       canSendEnvio={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
+      isOwner={org.role === "OWNER"}
     />
   );
 }
@@ -308,12 +309,14 @@ function ProjectWorkspace({
   id,
   canWrite,
   canSendEnvio,
+  isOwner,
 }: {
   identity: string;
   orgId: string;
   id?: string;
   canWrite: boolean;
   canSendEnvio: boolean;
+  isOwner: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -704,6 +707,7 @@ function ProjectWorkspace({
                     orgId={orgId}
                     canWrite={canWrite}
                     canSendEnvio={canSendEnvio}
+                    isOwner={isOwner}
                     onDirtyChange={setPaymentsDirty}
                   />
                 </details>
@@ -726,7 +730,7 @@ function ProjectWorkspace({
               selects it for the side pane. */}
           <div className="project-desk__center">
             <div className="projects-actions">
-              <h2>{t("projects.positions")}</h2>
+              <h2 title={t("projects.positionsHint")}>{t("projects.positions")}</h2>
               {editable && (
                 <Link className="primary-action" to={`/projects/${project.id}/positions/new`}>
                   {t("projects.addPosition")}
@@ -762,7 +766,14 @@ function ProjectWorkspace({
                     <span className="position-row__thumb">
                       <PositionThumb design={position.design} />
                     </span>
-                    <span className="position-row__loc">
+                    <span
+                      className="position-row__loc"
+                      title={
+                        position.location_tag
+                          ? `${position.position_index}. ${position.location_tag}`
+                          : undefined
+                      }
+                    >
                       {position.position_index}. {position.location_tag || t("projects.position")}
                     </span>
                     <span className="position-row__dims">

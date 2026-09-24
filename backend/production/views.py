@@ -78,7 +78,9 @@ def public_production_errors():
         raise contract_error(
             status_code,
             error.code,
-            "La operación de producción fue rechazada; revisa la orden y el paso.",
+            error.public_detail
+            or "La operación de producción fue rechazada; revisa la orden y el paso.",
+            error_extra=error.extra or None,
         ) from error
     except (InvalidCutContract, SystemNotFound, PydanticValidationError) as error:
         logger.warning(
@@ -90,6 +92,7 @@ def public_production_errors():
             422,
             "documentary_authority_required",
             "Falta o no coincide una autoridad técnica necesaria para optimizar la orden.",
+            error_extra={"reason": str(error)},
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(

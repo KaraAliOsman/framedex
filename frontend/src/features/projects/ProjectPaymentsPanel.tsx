@@ -48,17 +48,30 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PAID: "projects.paymentStatusPaid",
 };
 
+/** Contract errors carry actionable detail (e.g. `sii_caf_exhausted` tells
+ * the operator to load a CAF) — surface it instead of the generic toast. */
+function actionErrorDetail(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    const payload = error.payload as { error?: { detail?: unknown } } | null;
+    const detail = payload?.error?.detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+  }
+  return fallback;
+}
+
 export function ProjectPaymentsPanel({
   projectId,
   orgId,
   canWrite,
   canSendEnvio = false,
+  isOwner = false,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
   canSendEnvio?: boolean;
+  isOwner?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -143,8 +156,9 @@ export function ProjectPaymentsPanel({
       setAmount("");
       setReference("");
       setNote("");
-    } catch {
-      if (generation.current === current) setMessage(t("projects.paymentsRecordError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.paymentsRecordError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -160,8 +174,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
-    } catch {
-      if (generation.current === current) setMessage(t("projects.paymentsVoidError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.paymentsVoidError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -203,8 +219,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.invoiceEmitError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.invoiceEmitError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -246,8 +263,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.dteEmitError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -293,8 +312,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.envioSendError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.envioSendError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -343,8 +364,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.creditNoteEmitError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.creditNoteEmitError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -366,8 +389,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.dteEmitError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -728,6 +752,7 @@ export function ProjectPaymentsPanel({
         projectId={projectId}
         orgId={orgId}
         canWrite={canWrite}
+        isOwner={isOwner}
         onChanged={load}
         onDirtyChange={setLinksDirty}
       />

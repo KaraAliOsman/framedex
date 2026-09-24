@@ -129,6 +129,7 @@ const messages = {
   "projects.status": "Estado",
   "projects.updated": "Última actualización",
   "projects.positions": "Vanos",
+  "projects.positionsHint": "Vano: cada ventana, puerta o abertura del proyecto.",
   "projects.net": "Precio neto",
   "projects.tax": "Impuesto",
   "projects.total": "Precio total",
@@ -260,6 +261,8 @@ const messages = {
   "projects.paymentLinkRecoverError": "No pudimos consultar el estado del link.",
   "projects.paymentLinkFlowRequired":
     "Configura la integración Flow en Ajustes para cobrar en línea.",
+  "projects.paymentLinkFlowRequiredOwner":
+    "La integración Flow no está configurada. Pide a un propietario que la active en Ajustes.",
   "projects.noPositions": "Añade el primer vano para comenzar la cotización.",
   "projects.openPosition": "Abrir diseño",
   "projects.priceProject": "Calcular precio",
@@ -1622,6 +1625,7 @@ const messages = {
   "production.filterShortage": "Con escasez",
   "production.filterDispatchReady": "Listas para despacho",
   "production.emptyFilter": "Ninguna orden en este estado.",
+  "production.clearFilters": "Limpiar filtros",
   "production.nextStep": "Siguiente paso",
   "production.deliveryTitle": "Entrega",
   "production.deliverySchedule": "Programar entrega",

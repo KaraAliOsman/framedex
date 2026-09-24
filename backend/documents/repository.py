@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -44,9 +44,17 @@ from pricing.repository import encode
 
 
 class DocumentaryError(ValueError):
-    def __init__(self, code: str) -> None:
+    def __init__(
+        self,
+        code: str,
+        *,
+        detail: str | None = None,
+        extra: Mapping[str, object] | None = None,
+    ) -> None:
         super().__init__(code)
         self.code = code
+        self.public_detail = detail
+        self.extra = dict(extra or {})
 
 
 @dataclass(frozen=True)
