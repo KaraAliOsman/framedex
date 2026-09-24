@@ -298,3 +298,57 @@ class TestFramelessPane:
         evaluation = evaluate_product(_product([module]), demo_60_params)
         issues = _issues(evaluation.modules[0])
         assert IssueCode.FRAMELESS_PANEL_UNSUPPORTED.value in issues
+
+    def test_documentary_computation_carries_pane_and_channel_members(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The freeze/seal path needs a GeometryComputation, not a framed
+        # approximation: pane infill + channel member on the declared edge.
+        from dekopen_engine.product import frameless_module_computation
+
+        module = _frameless_module(
+            spec=FramelessSpec(
+                supports=[
+                    FramelessSupport(
+                        kind=FramelessSupportKind.CHANNEL,
+                        edge=EdgeSide.LEFT,
+                        article_sku="UCHANNEL-12",
+                        qty=2,
+                    )
+                ],
+                exposed_edges=[EdgeSide.LEFT],
+            )
+        )
+        computation, issues = frameless_module_computation(
+            module, coupler_articles={"UCHANNEL-12": CHANNEL_ARTICLE}
+        )
+        assert issues == []
+        assert computation is not None
+        trace = computation.manufacturing_trace
+        assert trace is not None
+        assert len(trace.members) == 2  # qty=2 → one semantic member each
+        member = trace.members[0]
+        assert member.role is ProfileRole.CHANNEL
+        assert member.workshop_sku == "UCHANNEL-12"
+        assert member.cut_length_mm == Decimal("2100.00")
+        assert member.axis.value == "VERTICAL"
+        assert member.direct_segment is not None
+        assert member.direct_segment.start.x_mm == Decimal("0")
+        assert member.direct_segment.end.y_mm == Decimal("2100")
+        assert len(trace.infills) == 1
+        infill = trace.infills[0]
+        assert infill.kind == "GLASS"
+        assert infill.direct_rect is not None
+        assert (infill.direct_rect.width_mm, infill.direct_rect.height_mm) == (
+            Decimal("1200"),
+            Decimal("2100"),
+        )
+        assert computation.openings[0].bay_id == "g1"
+        assert computation.infills[0].bead_supported is False
+        # The computation result is the same BOM the evaluation emits.
+        evaluation = evaluate_product(
+            _product([module]),
+            demo_60_params,
+            coupler_articles={"UCHANNEL-12": CHANNEL_ARTICLE},
+        )
+        assert computation.result == evaluation.modules[0].result

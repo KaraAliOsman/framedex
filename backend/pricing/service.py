@@ -125,6 +125,10 @@ def position_cost(repo, position, rules):
         materials.append(repo.cost(panel.sku,'M2') * exact_glass_area_m2(panel.width_mm,panel.height_mm))
     for kit in result.hardware_items:
         materials.append(repo.cost(kit.kit_sku,'KIT') * kit.qty)
+    # Frameless supports/fittings are counted pieces: a declared SKU must
+    # resolve a unit price or the quote fails — never silently priced at zero.
+    for fitting in result.fittings:
+        materials.append(repo.cost(fitting.sku,'EA') * fitting.qty)
     area = exact_glass_area_m2(position['width_mm'],position['height_mm'])
     return (direct_cost(materials,area,rules['waste_factor_pct'],rules['labor_rate_per_m2'],
                         rules['installation_rate_per_m2']), area, result)

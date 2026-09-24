@@ -23,6 +23,7 @@ import {
   setCouplerSkuAll,
   setCouplingAngle,
   setModuleCount,
+  setModuleFrameless,
   setModuleOpening,
   setModuleWidth,
   setAllModuleHeights,
@@ -81,6 +82,23 @@ describe("addAdjacentUnit", () => {
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
     expect(grown.assembly.modules[0]!.tree).not.toBe(grown.assembly.modules[1]!.tree);
+  });
+
+  it("a single frameless pane stays product-v2, never classic", () => {
+    const pane = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED", glass_spec: "4" },
+      "1200.00",
+      "2100.00",
+    );
+    const frameless = setModuleFrameless(pane, "m1", {
+      supports: [{ kind: "CHANNEL", edge: "bottom", article_sku: "UCHANNEL-12", qty: 1 }],
+      fittings: [],
+      exposed_edges: ["top", "right", "bottom", "left"],
+    });
+    // The classic tree has nowhere to carry supports/fittings — serializing
+    // as a framed single unit would silently drop the glass-only spec.
+    expect(isSingleUnit(frameless)).toBe(false);
+    expect(isSingleUnit(setModuleFrameless(frameless, "m1", null))).toBe(true);
   });
 
   it("carries the edge module's contour — scaled, never silently rect", () => {
