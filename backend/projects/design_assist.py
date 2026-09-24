@@ -126,7 +126,7 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict:
     repository = SystemParamsRepository()
     params = repository.load_visible(system_id, org_id)
     glass_rows = rows(
-        "SELECT DISTINCT ON (technical_sku) technical_sku "
+        "SELECT DISTINCT ON (technical_sku) technical_sku, glass_spec "
         "FROM public.glass_purchase_mappings "
         "WHERE system_id=%s AND (org_id=%s OR org_id IS NULL) "
         "ORDER BY technical_sku, org_id NULLS LAST, version DESC",
@@ -134,6 +134,12 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict:
     )
     return {
         "glass_skus": {item["technical_sku"] for item in glass_rows},
+        # A SKU carries its composition recipe — "4-16-4", never the bead
+        # slot number. Absent recipes resolve downstream as monolithic.
+        "glass_recipes": {
+            item["technical_sku"]: (item.get("glass_spec") or "").strip() or None
+            for item in glass_rows
+        },
         "panel_skus": set(params.available_panel_rules),
         "thicknesses": set(params.glazing_bead_rules),
     }
