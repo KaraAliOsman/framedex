@@ -146,7 +146,10 @@ class CatalogCollectionView(APIView):
     def post(self, request):
         with catalog_scope(request) as org_id:
             data = _validated(self.resource.serializer, request.data)
-            row = service.create(self.resource, org_id, data)
+            row = service.create(
+                self.resource, org_id, data,
+                actor_id=verified_request_token(request).user_id,
+            )
             output = self.response_serializer(row).data
         return Response(output, status=201)
 
@@ -169,7 +172,10 @@ class CatalogDetailView(APIView):
                 request.data,
                 partial=True,
             )
-            row = service.update(self.resource, org_id, row_id, data, request.headers.get("If-Match"))
+            row = service.update(
+                self.resource, org_id, row_id, data, request.headers.get("If-Match"),
+                actor_id=verified_request_token(request).user_id,
+            )
             output = self.response_serializer(row).data
         return Response(output)
 

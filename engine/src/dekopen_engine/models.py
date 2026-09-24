@@ -186,6 +186,16 @@ class ProfileSection(EngineModel):
     depth_mm: Decimal = Field(gt=0)
     axes: list[SectionAxis] = Field(default_factory=list)
     drawing_ref: str | None = None
+    # Declared interpretation facts (mandate §8): which polygon edge faces the
+    # building exterior, and where the declared (0,0) anchor sits in polygon
+    # space. They tell renderers how to orient the drawing — they never feed
+    # fabrication math.
+    orientation: Literal[
+        "EXTERIOR_DOWN", "EXTERIOR_UP", "EXTERIOR_LEFT", "EXTERIOR_RIGHT"
+    ] = "EXTERIOR_DOWN"
+    local_origin: Literal[
+        "TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT", "CENTROID"
+    ] = "TOP_LEFT"
 
     @model_validator(mode="after")
     def _section_is_real(self) -> "ProfileSection":

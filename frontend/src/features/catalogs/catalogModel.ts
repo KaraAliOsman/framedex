@@ -247,11 +247,18 @@ export interface SectionAxisDraft {
   y_mm: string;
 }
 
+export type SectionOrientation =
+  "EXTERIOR_DOWN" | "EXTERIOR_UP" | "EXTERIOR_LEFT" | "EXTERIOR_RIGHT";
+export type SectionLocalOrigin =
+  "TOP_LEFT" | "TOP_RIGHT" | "BOTTOM_LEFT" | "BOTTOM_RIGHT" | "CENTROID";
+
 export interface SectionDraft {
   enabled: boolean;
   source: "POLYGON" | "DXF_REFERENCE";
   depth_mm: string;
   drawing_ref: string;
+  orientation: SectionOrientation;
+  local_origin: SectionLocalOrigin;
   vertices: SectionVertexDraft[];
   axes: SectionAxisDraft[];
 }
@@ -262,6 +269,8 @@ export function initialSectionDraft(section: ProfileSection | null | undefined):
     source: section?.source === "DXF_REFERENCE" ? "DXF_REFERENCE" : "POLYGON",
     depth_mm: section?.depth_mm ?? "",
     drawing_ref: section?.drawing_ref ?? "",
+    orientation: section?.orientation ?? "EXTERIOR_DOWN",
+    local_origin: section?.local_origin ?? "TOP_LEFT",
     vertices: (section?.polygon ?? []).map((point) => ({
       key: crypto.randomUUID(),
       x_mm: point.x_mm,
@@ -295,6 +304,8 @@ export function sectionFromDraft(draft: SectionDraft | undefined): ProfileSectio
     source: draft.source,
     polygon,
     depth_mm: depth,
+    orientation: draft.orientation,
+    local_origin: draft.local_origin,
     axes: draft.axes
       .filter((axis) => axis.name.trim() !== "" || axis.y_mm.trim() !== "")
       .map((axis) => ({ name: axis.name.trim(), y_mm: exact(axis.y_mm) })),
@@ -313,6 +324,8 @@ export function sectionPreviewFromDraft(draft: SectionDraft): ProfileSection | n
       y_mm: vertex.y_mm || "0",
     })),
     depth_mm: draft.depth_mm || "0",
+    orientation: draft.orientation,
+    local_origin: draft.local_origin,
     axes: draft.axes
       .filter((axis) => axis.name.trim() !== "")
       .map((axis) => ({ name: axis.name.trim(), y_mm: axis.y_mm || "0" })),

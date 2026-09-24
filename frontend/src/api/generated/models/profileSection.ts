@@ -5,6 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { LocalOriginEnum } from "./localOriginEnum";
+import type { OrientationEnum } from "./orientationEnum";
 import type { SectionAxis } from "./sectionAxis";
 import type { SectionPoint } from "./sectionPoint";
 import type { SourceEnum } from "./sourceEnum";
@@ -24,4 +26,6 @@ export interface ProfileSection {
    * @nullable
    */
   drawing_ref?: string | null;
+  orientation?: OrientationEnum;
+  local_origin?: LocalOriginEnum;
 }

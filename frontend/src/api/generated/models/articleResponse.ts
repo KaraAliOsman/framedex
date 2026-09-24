@@ -63,4 +63,9 @@ export interface ArticleResponse {
   readonly revision: string;
   read_only: boolean;
   id: string;
+  readonly section_revision: number;
+  /** @nullable */
+  readonly section_revised_at: string | null;
+  /** @nullable */
+  readonly section_revised_by: string | null;
 }

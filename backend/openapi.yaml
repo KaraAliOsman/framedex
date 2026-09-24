@@ -11433,6 +11433,19 @@ components:
         id:
           type: string
           format: uuid
+        section_revision:
+          type: integer
+          readOnly: true
+        section_revised_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        section_revised_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
       required:
       - data_provenance
       - face_width_mm
@@ -11442,6 +11455,9 @@ components:
       - read_only
       - revision
       - role
+      - section_revised_at
+      - section_revised_by
+      - section_revision
       - sku
       - system_id
       - technical_reviewed_at
@@ -15030,6 +15046,20 @@ components:
       required:
       - line_net
       - position_index
+    LocalOriginEnum:
+      enum:
+      - TOP_LEFT
+      - TOP_RIGHT
+      - BOTTOM_LEFT
+      - BOTTOM_RIGHT
+      - CENTROID
+      type: string
+      description: |-
+        * `TOP_LEFT` - TOP_LEFT
+        * `TOP_RIGHT` - TOP_RIGHT
+        * `BOTTOM_LEFT` - BOTTOM_LEFT
+        * `BOTTOM_RIGHT` - BOTTOM_RIGHT
+        * `CENTROID` - CENTROID
     MaterialEnum:
       enum:
       - PVC
@@ -15389,6 +15419,18 @@ components:
         * `SUPPLIER_GLASS_PO` - SUPPLIER_GLASS_PO
         * `SUPPLIER_HARDWARE_PO` - SUPPLIER_HARDWARE_PO
         * `SUPPLIER_PANEL_PO` - SUPPLIER_PANEL_PO
+    OrientationEnum:
+      enum:
+      - EXTERIOR_DOWN
+      - EXTERIOR_UP
+      - EXTERIOR_LEFT
+      - EXTERIOR_RIGHT
+      type: string
+      description: |-
+        * `EXTERIOR_DOWN` - EXTERIOR_DOWN
+        * `EXTERIOR_UP` - EXTERIOR_UP
+        * `EXTERIOR_LEFT` - EXTERIOR_LEFT
+        * `EXTERIOR_RIGHT` - EXTERIOR_RIGHT
     PackingLabel:
       type: object
       properties:
@@ -16967,6 +17009,14 @@ components:
           type: string
           nullable: true
           maxLength: 500
+        orientation:
+          allOf:
+          - $ref: '#/components/schemas/OrientationEnum'
+          default: EXTERIOR_DOWN
+        local_origin:
+          allOf:
+          - $ref: '#/components/schemas/LocalOriginEnum'
+          default: TOP_LEFT
       required:
       - depth_mm
       - polygon
@@ -16995,6 +17045,14 @@ components:
           type: string
           nullable: true
           maxLength: 500
+        orientation:
+          allOf:
+          - $ref: '#/components/schemas/OrientationEnum'
+          default: EXTERIOR_DOWN
+        local_origin:
+          allOf:
+          - $ref: '#/components/schemas/LocalOriginEnum'
+          default: TOP_LEFT
       required:
       - depth_mm
       - polygon

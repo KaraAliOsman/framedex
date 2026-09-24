@@ -720,6 +720,49 @@ function CatalogEditor({
                       }
                     />
                   </label>
+                  <label htmlFor={`catalog-${resource}-section-orientation`}>
+                    <span>{ct("field.orientation")}</span>
+                    <select
+                      id={`catalog-${resource}-section-orientation`}
+                      value={sectionDraft.orientation}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          orientation: event.target.value as SectionDraft["orientation"],
+                        }))
+                      }
+                    >
+                      <option value="EXTERIOR_DOWN">
+                        {ct("sectionOrientation.EXTERIOR_DOWN")}
+                      </option>
+                      <option value="EXTERIOR_UP">{ct("sectionOrientation.EXTERIOR_UP")}</option>
+                      <option value="EXTERIOR_LEFT">
+                        {ct("sectionOrientation.EXTERIOR_LEFT")}
+                      </option>
+                      <option value="EXTERIOR_RIGHT">
+                        {ct("sectionOrientation.EXTERIOR_RIGHT")}
+                      </option>
+                    </select>
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-origin`}>
+                    <span>{ct("field.local_origin")}</span>
+                    <select
+                      id={`catalog-${resource}-section-origin`}
+                      value={sectionDraft.local_origin}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          local_origin: event.target.value as SectionDraft["local_origin"],
+                        }))
+                      }
+                    >
+                      <option value="TOP_LEFT">{ct("sectionLocalOrigin.TOP_LEFT")}</option>
+                      <option value="TOP_RIGHT">{ct("sectionLocalOrigin.TOP_RIGHT")}</option>
+                      <option value="BOTTOM_LEFT">{ct("sectionLocalOrigin.BOTTOM_LEFT")}</option>
+                      <option value="BOTTOM_RIGHT">{ct("sectionLocalOrigin.BOTTOM_RIGHT")}</option>
+                      <option value="CENTROID">{ct("sectionLocalOrigin.CENTROID")}</option>
+                    </select>
+                  </label>
                 </div>
                 <div className="catalog-table-scroll">
                   <table className="catalog-contents">

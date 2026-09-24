@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 
 import pytest
 
@@ -240,6 +241,69 @@ def test_engine_rejects_a_degenerate_stored_section():
             '{"x_mm": 0, "y_mm": 0}, {"x_mm": 60, "y_mm": 0}, {"x_mm": 120, "y_mm": 0}],'
             '"depth_mm": 60}'
         )
+
+
+def test_section_orientation_and_origin_default_and_round_trip():
+    serializer = ProfileSectionSerializer(data=SECTION_POLYGON)
+    assert serializer.is_valid(), serializer.errors
+    section = _section(_jsonb(serializer.validated_data))
+    assert section.orientation == "EXTERIOR_DOWN"
+    assert section.local_origin == "TOP_LEFT"
+    serializer = ProfileSectionSerializer(
+        data={
+            **SECTION_POLYGON,
+            "orientation": "EXTERIOR_LEFT",
+            "local_origin": "CENTROID",
+        }
+    )
+    assert serializer.is_valid(), serializer.errors
+    section = _section(_jsonb(serializer.validated_data))
+    assert section.orientation == "EXTERIOR_LEFT"
+    assert section.local_origin == "CENTROID"
+
+
+def test_section_rejects_undeclared_orientation_and_origin():
+    for field, bad in (("orientation", "INSIDE_OUT"), ("local_origin", "MIDDLE")):
+        serializer = ProfileSectionSerializer(data={**SECTION_POLYGON, field: bad})
+        assert not serializer.is_valid()
+
+
+def test_section_stamp_tracks_geometry_changes_only():
+    from catalogs.service import _json_value, _stamp_section
+
+    validated = ProfileSectionSerializer(data=SECTION_POLYGON)
+    assert validated.is_valid()
+    section = validated.validated_data
+
+    values = {"section": section}
+    _stamp_section(values, None, "u1")
+    assert values["section_revision"] == 1
+    assert values["section_revised_by"] == "u1"
+    assert values["section_revised_at"] is not None
+
+    # Identical geometry on a later write: no stamp, revision untouched.
+    current = {
+        "section": json.loads(_json_value(section), parse_float=Decimal),
+        "section_revision": 3,
+    }
+    values = {"section": section}
+    _stamp_section(values, current, "u2")
+    assert "section_revision" not in values
+
+    # A real shape change bumps the counter and stamps the actor.
+    changed = ProfileSectionSerializer(
+        data={**SECTION_POLYGON, "depth_mm": "70"}
+    )
+    assert changed.is_valid()
+    values = {"section": changed.validated_data}
+    _stamp_section(values, current, "u2")
+    assert values["section_revision"] == 4
+    assert values["section_revised_by"] == "u2"
+
+    # Declaring a section where none existed starts at revision 1.
+    values = {"section": section}
+    _stamp_section(values, {"section": None, "section_revision": 1}, "u3")
+    assert values["section_revision"] == 1
 
 
 def test_section_decoder_passes_absent_and_rejects_decoded_json():

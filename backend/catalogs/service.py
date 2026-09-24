@@ -1,6 +1,7 @@
 """Tenant-scoped catalog persistence; callers enter authenticated RLS first."""
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal
 import json
 from hashlib import sha256
@@ -46,7 +47,14 @@ SYSTEMS = Resource(
     ("is_global", "is_demo", *_PROVENANCE_COLUMNS),
 )
 ARTICLES = Resource(
-    "profile_articles", ArticleWriteSerializer, _PROVENANCE_COLUMNS
+    "profile_articles",
+    ArticleWriteSerializer,
+    (
+        *_PROVENANCE_COLUMNS,
+        "section_revision",
+        "section_revised_at",
+        "section_revised_by",
+    ),
 )
 BEADS = Resource("glazing_bead_matrix", BeadWriteSerializer)
 KITS = Resource("hardware_kits", KitWriteSerializer, _PROVENANCE_COLUMNS)
@@ -229,6 +237,29 @@ def _parameters(values):
     ]
 
 
+def _stamp_section(values, current, actor_id):
+    """§8 revision tracking for the section payload: geometry changes bump
+    `section_revision` and record who/when. The stamp lives on real columns —
+    inside the JSONB it would ride the same payload it claims to audit."""
+    section = values["section"]
+    if current is None:
+        changed = section is not None
+        next_revision = 1
+    else:
+        prior = current.get("section")
+        changed = _json_value(prior) != _json_value(section)
+        next_revision = (
+            (int(current.get("section_revision") or 0) + 1)
+            if prior is not None
+            else 1
+        )
+    if not changed:
+        return
+    values["section_revision"] = next_revision
+    values["section_revised_at"] = datetime.now(timezone.utc)
+    values["section_revised_by"] = str(actor_id) if actor_id else None
+
+
 # Every non-bead, non-coupler role resolves to a single effective article per
 # system; glazing beads stay multi-valued per thickness and couplers are
 # multi-valued per system (assemblies resolve any catalog SKU).
@@ -251,8 +282,10 @@ def _lock_singleton_role(system_id):
         )
 
 
-def create(resource, org_id, values):
+def create(resource, org_id, values, actor_id=None):
     _bind_parent(resource, org_id, values)
+    if resource is ARTICLES and "section" in values:
+        _stamp_section(values, None, actor_id)
     if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
         _lock_singleton_role(values["system_id"])
         with connection.cursor() as cursor:
@@ -280,7 +313,7 @@ def create(resource, org_id, values):
     return retrieve(resource, org_id, row_id)
 
 
-def update(resource, org_id, row_id, values, expected_revision=None):
+def update(resource, org_id, row_id, values, expected_revision=None, actor_id=None):
     _require_owned(retrieve(resource, org_id, row_id), org_id)
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
@@ -294,6 +327,8 @@ def update(resource, org_id, row_id, values, expected_revision=None):
             error_extra={"fields": validator.errors},
         )
     values = validator.validated_data
+    if resource is ARTICLES and "section" in values:
+        _stamp_section(values, current, actor_id)
     if "system_id" in values and values["system_id"] != current["system_id"]:
         raise contract_error(
             400,

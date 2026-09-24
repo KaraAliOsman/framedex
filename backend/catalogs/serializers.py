@@ -120,6 +120,16 @@ class ProfileSectionSerializer(StrictSerializer):
     drawing_ref = serializers.CharField(
         max_length=500, allow_null=True, allow_blank=True, required=False
     )
+    orientation = serializers.ChoiceField(
+        choices=["EXTERIOR_DOWN", "EXTERIOR_UP", "EXTERIOR_LEFT", "EXTERIOR_RIGHT"],
+        required=False,
+        default="EXTERIOR_DOWN",
+    )
+    local_origin = serializers.ChoiceField(
+        choices=["TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT", "CENTROID"],
+        required=False,
+        default="TOP_LEFT",
+    )
 
     def validate_axes(self, value):
         # Under a propagated partial update an axis row may validate with a
@@ -296,6 +306,9 @@ class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()
+    section_revision = serializers.IntegerField(read_only=True)
+    section_revised_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    section_revised_by = serializers.UUIDField(read_only=True, allow_null=True)
 
 
 class BeadResponseSerializer(BeadWriteSerializer):

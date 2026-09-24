@@ -185,6 +185,8 @@ BEGIN
             {"x_mm": 60, "y_mm": 60}, {"x_mm": 0, "y_mm": 60}
         ],
         "depth_mm": 60,
+        "orientation": "EXTERIOR_DOWN",
+        "local_origin": "TOP_LEFT",
         "axes": [
             {"name": "GLAZING", "y_mm": 24},
             {"name": "WEB", "y_mm": 34}
@@ -199,6 +201,8 @@ BEGIN
             {"x_mm": 75, "y_mm": 75}, {"x_mm": 0, "y_mm": 75}
         ],
         "depth_mm": 75,
+        "orientation": "EXTERIOR_DOWN",
+        "local_origin": "TOP_LEFT",
         "axes": [
             {"name": "GLAZING", "y_mm": 30},
             {"name": "WEB", "y_mm": 41}

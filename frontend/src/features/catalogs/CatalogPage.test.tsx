@@ -145,6 +145,9 @@ function article(overrides: Partial<ArticleResponse> = {}): ArticleResponse {
     id: ARTICLE_ID,
     revision: REVISION,
     read_only: false,
+    section_revision: 1,
+    section_revised_at: null,
+    section_revised_by: null,
     ...PROVENANCE,
     ...overrides,
   };
@@ -617,6 +620,8 @@ describe("CatalogPage article section editor", () => {
       source: "POLYGON",
       polygon: SECTION_VERTEX.map(({ x, y }) => ({ x_mm: x, y_mm: y })),
       depth_mm: "60",
+      orientation: "EXTERIOR_DOWN",
+      local_origin: "TOP_LEFT",
       axes: [],
       drawing_ref: null,
     });
@@ -628,6 +633,8 @@ describe("CatalogPage article section editor", () => {
         source: "POLYGON",
         polygon: SECTION_VERTEX.map(({ x, y }) => ({ x_mm: x, y_mm: y })),
         depth_mm: "60",
+        orientation: "EXTERIOR_DOWN",
+        local_origin: "TOP_LEFT",
         axes: [],
         drawing_ref: null,
       },
