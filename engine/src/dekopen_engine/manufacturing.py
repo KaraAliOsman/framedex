@@ -134,6 +134,8 @@ class PhysicalMemberFactV1(EngineModel):
     axis: Axis
     start: TracePointV1
     end: TracePointV1
+    # Signed sagitta when the member is an arc — start/end stay the chord.
+    sagitta_mm: Decimal | None = None
 
 
 class ReinforcementFactV1(EngineModel):
@@ -177,6 +179,8 @@ class InfillLocationFactV1(EngineModel):
     technical_sku: str
     composition: str
     rect: TraceRectV1
+    # Sampled boundary of a shaped infill — rect stays its bounding box.
+    shape: list[TracePointV1] | None = None
 
 
 class HandleLocationFactV1(EngineModel):
@@ -415,6 +419,7 @@ def project_manufacturing_facts_v1(
             technical_sku=infill.technical_sku,
             composition=infill.composition,
             rect=rect,
+            shape=infill.shape,
         ))
 
     infill_ids = {item.semantic_infill_id: item.infill_id for item in infill_facts}
@@ -470,6 +475,7 @@ def project_manufacturing_facts_v1(
             axis=trace_member.axis,
             start=segment.start,
             end=segment.end,
+            sagitta_mm=trace_member.sagitta_mm,
         ))
         member_trace_by_id[member_id] = trace_member
         if trace_member.parent_leaf_id is not None:

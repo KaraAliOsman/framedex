@@ -18,21 +18,36 @@ export interface ArticleResponse {
   material: MaterialEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   face_width_mm: string;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  commercial_length_mm: string;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  welding_loss_mm: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  commercial_length_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  welding_loss_mm?: string | null;
   /**
    * @maxLength 100
    * @nullable
    */
   reinforcement_sku?: string | null;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  reinforcement_gap_mm: string;
-  /** @pattern ^-?\d{0,4}(?:\.\d{0,4})?$ */
-  weight_kg_m: string;
-  /** @pattern ^-?\d{0,4}(?:\.\d{0,4})?$ */
-  steel_weight_kg_m: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  reinforcement_gap_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,4}(?:\.\d{0,4})?$
+   */
+  weight_kg_m?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,4}(?:\.\d{0,4})?$
+   */
+  steel_weight_kg_m?: string | null;
   readonly revision: string;
   read_only: boolean;
   id: string;

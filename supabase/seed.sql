@@ -22,7 +22,7 @@ VALUES (
     uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60'),
     NULL,
     'DEMO_60',
-    'Sistema Demo 60mm PVC',
+    'Sistema Demo 60mm PVC — referencia sintética',
     60.00,
     'PVC',
     3,
@@ -537,7 +537,7 @@ INSERT INTO public.profile_systems (
     door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
     sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
     chamber_clearance_mm, is_global, is_demo
-) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65'), NULL, 'ALU_65', 'Línea Alumio 65 — SYNTHETIC TEST DATA', 65.00,'ALUMINIUM',1,6.00,4.00,4.00,10.00,25.00,3.00,5.00,2.00,8.00,25.00,18.00,'dual',15.00,15.00,5.00,8.00, TRUE, TRUE)
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65'), NULL, 'ALU_65', 'Línea Aluminio 65 — referencia sintética', 65.00,'ALUMINIUM',1,6.00,4.00,4.00,10.00,25.00,3.00,5.00,2.00,8.00,25.00,18.00,'dual',15.00,15.00,5.00,8.00, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
     chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
@@ -564,7 +564,7 @@ INSERT INTO public.profile_systems (
     door_bottom_clearance_mm, rail_type, sliding_glazing_deduction_width_mm,
     sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
     chamber_clearance_mm, is_global, is_demo
-) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45'), NULL, 'GLASS_45', 'Línea Vidrio 45 Minimal — SYNTHETIC TEST DATA', 45.00,'ALUMINIUM',1,4.00,3.00,3.00,8.00,18.00,2.00,4.00,1.50,6.00,12.00,12.00,'dual',10.00,10.00,3.00,6.00, TRUE, TRUE)
+) VALUES (uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/GLASS_45'), NULL, 'GLASS_45', 'Vidrio-dominante 45 (aluminio) — referencia sintética', 45.00,'ALUMINIUM',1,4.00,3.00,3.00,8.00,18.00,2.00,4.00,1.50,6.00,12.00,12.00,'dual',10.00,10.00,3.00,6.00, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, depth_mm = EXCLUDED.depth_mm, material = EXCLUDED.material,
     chamber_count = EXCLUDED.chamber_count, sash_overlap_mm = EXCLUDED.sash_overlap_mm,
@@ -591,16 +591,16 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/' |
  a.sku, a.name, a.role::public.profile_role, 'ALUMINIUM'::public.material_type,
  a.face_mm, 6000.00, 0.00, 0.00, a.weight
 FROM public.profile_systems s CROSS JOIN (VALUES
-    ('MARCO-A','Marco Alumio 65','FRAME',55.00,1.4000),
-    ('HOJA-A','Hoja Alumio 65','SASH',62.00,1.5500),
-    ('POSTE-A-V','Poste vertical Alumio 65','MULLION_V',70.00,1.7000),
-    ('POSTE-A-H','Travesaño Alumio 65','MULLION_H',70.00,1.7000),
-    ('JQ-A-24','Junquillo Alumio 24','GLAZING_BEAD',24.00,0.3500),
-    ('JQ-A-16','Junquillo Alumio 16','GLAZING_BEAD',16.00,0.2800),
-    ('JQ-A-8','Junquillo Alumio 8','GLAZING_BEAD',8.00,0.2000),
-    ('UMBRAL-A','Umbral Alumio 65','THRESHOLD',28.00,0.9000),
-    ('COPLE-A-30','Acoplador Alumio 30','COUPLER',30.00,0.8500),
-    ('COPLE-A-90','Acoplador Alumio 90','COUPLER',34.00,1.0000)
+    ('MARCO-A','Marco Aluminio 65','FRAME',55.00,1.4000),
+    ('HOJA-A','Hoja Aluminio 65','SASH',62.00,1.5500),
+    ('POSTE-A-V','Poste vertical Aluminio 65','MULLION_V',70.00,1.7000),
+    ('POSTE-A-H','Travesaño Aluminio 65','MULLION_H',70.00,1.7000),
+    ('JQ-A-24','Junquillo Aluminio 24','GLAZING_BEAD',24.00,0.3500),
+    ('JQ-A-16','Junquillo Aluminio 16','GLAZING_BEAD',16.00,0.2800),
+    ('JQ-A-8','Junquillo Aluminio 8','GLAZING_BEAD',8.00,0.2000),
+    ('UMBRAL-A','Umbral Aluminio 65','THRESHOLD',28.00,0.9000),
+    ('COPLE-A-30','Acoplador Aluminio 30','COUPLER',30.00,0.8500),
+    ('COPLE-A-90','Acoplador Aluminio 90','COUPLER',34.00,1.0000)
 ) AS a(sku, name, role, face_mm, weight)
 WHERE s.code = 'ALU_65' AND s.is_global = TRUE
 ON CONFLICT (system_id, sku) DO UPDATE SET
@@ -684,11 +684,11 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/' |
  kit.max_weight, kit.rail, kit.carriages, kit.stays, 2.50, '[]'::JSONB
 FROM public.profile_systems s
 CROSS JOIN (VALUES
-    ('KIT-A-TURN','Kit practicable Alumio 65','TURN',400,1100,500,2200,60,'dual',0,0),
-    ('KIT-A-TILT-TURN','Kit oscilobatiente Alumio 65','TILT_TURN',450,1300,600,2200,90,'dual',0,1),
-    ('KIT-A-SLIDING','Kit corredera Alumio 65','SLIDING',500,1800,600,2400,100,'dual',2,0),
-    ('KIT-A-AWNING','Kit proyectante Alumio 65','AWNING',450,1400,400,1200,50,'dual',0,2),
-    ('KIT-A-DOOR','Kit puerta multipunto Alumio 65','DOOR',750,1200,1900,2400,90,'dual',0,0)
+    ('KIT-A-TURN','Kit practicable Aluminio 65','TURN',400,1100,500,2200,60,'dual',0,0),
+    ('KIT-A-TILT-TURN','Kit oscilobatiente Aluminio 65','TILT_TURN',450,1300,600,2200,90,'dual',0,1),
+    ('KIT-A-SLIDING','Kit corredera Aluminio 65','SLIDING',500,1800,600,2400,100,'dual',2,0),
+    ('KIT-A-AWNING','Kit proyectante Aluminio 65','AWNING',450,1400,400,1200,50,'dual',0,2),
+    ('KIT-A-DOOR','Kit puerta multipunto Aluminio 65','DOOR',750,1200,1900,2400,90,'dual',0,0)
 ) AS kit(sku, name, opening_type, min_w, max_w, min_h, max_h, max_weight, rail, carriages, stays)
 WHERE s.code = 'ALU_65' AND s.is_global = TRUE
 ON CONFLICT (id) DO UPDATE SET
@@ -726,7 +726,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 INSERT INTO public.infill_articles (id, system_id, org_id, sku, name, kind, thickness_mm, weight_kg_m2)
 SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/ALU_65/PANEL-SANDWICH-ALU-24'), s.id, NULL,
- 'PANEL-SANDWICH-ALU-24', 'Panel sándwich Alumio 24', 'SANDWICH_PANEL', 24.00, 9.5000
+ 'PANEL-SANDWICH-ALU-24', 'Panel sándwich Aluminio 24', 'SANDWICH_PANEL', 24.00, 9.5000
 FROM public.profile_systems s WHERE s.code='ALU_65' AND s.is_global=TRUE
 ON CONFLICT (system_id, sku) DO UPDATE SET
     name = EXCLUDED.name, kind = EXCLUDED.kind, thickness_mm = EXCLUDED.thickness_mm,

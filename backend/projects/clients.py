@@ -20,12 +20,14 @@ COLUMNS = (
     "email",
     "phone",
     "address",
+    "giro",
+    "comuna",
     "notes",
     "is_active",
     "created_at",
     "updated_at",
 )
-FIELDS = ("name", "rut", "email", "phone", "address", "notes")
+FIELDS = ("name", "rut", "email", "phone", "address", "giro", "comuna", "notes")
 
 
 def missing():

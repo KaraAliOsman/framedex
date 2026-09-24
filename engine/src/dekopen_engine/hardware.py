@@ -21,7 +21,7 @@ def normalize_opening_type(opening: BayOpeningType) -> str:
     if opening in (BayOpeningType.TILT_TURN_LEFT, BayOpeningType.TILT_TURN_RIGHT):
         return "TILT_TURN"
     if opening in (BayOpeningType.SLIDING_2L, BayOpeningType.SLIDING_3L,
-                   BayOpeningType.SLIDING_4L):
+                   BayOpeningType.SLIDING_4L, BayOpeningType.SLIDING):
         return "SLIDING"
     if opening in (BayOpeningType.DOOR_ENTRY, BayOpeningType.DOOR_DOUBLE):
         return "DOOR"

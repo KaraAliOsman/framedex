@@ -8,7 +8,7 @@ from threading import Event, get_ident
 from uuid import UUID, uuid4
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import close_old_connections, connection, transaction, DatabaseError
+from django.db import close_old_connections, connection, transaction, DatabaseError, IntegrityError, ProgrammingError
 from django.db.backends.utils import CursorWrapper
 import pytest
 from rest_framework.test import APIClient
@@ -66,7 +66,13 @@ def committed_commercial_rows(django_db_blocker):
         finally:
             connection.close()
             with connection.cursor() as cursor:
-                cursor.execute('DELETE FROM public.tenancy_organizations WHERE id IN (%s,%s)',[org,other])
+                # Immutable evidence (ai_audit_logs, sealed ledger) deliberately
+                # refuses org teardown — committed residue is harmless because
+                # every fixture identifier is uuid-random per run.
+                try:
+                    cursor.execute('DELETE FROM public.tenancy_organizations WHERE id IN (%s,%s)',[org,other])
+                except (IntegrityError, ProgrammingError):
+                    pass
 
 
 @contextmanager
