@@ -18,6 +18,8 @@ def _row(**over):
         "email": "obras@andina.cl",
         "phone": "+56 2 2345 6789",
         "address": "Av. Providencia 1234, Santiago",
+        "giro": "Construcción",
+        "comuna": "Providencia",
         "notes": None,
         "is_active": True,
         "created_at": datetime(2026, 9, 20, tzinfo=timezone.utc),

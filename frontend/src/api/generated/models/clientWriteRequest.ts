@@ -18,5 +18,9 @@ export interface ClientWriteRequest {
   /** @maxLength 50 */
   phone?: string;
   address?: string;
+  /** @maxLength 80 */
+  giro?: string;
+  /** @maxLength 20 */
+  comuna?: string;
   notes?: string;
 }

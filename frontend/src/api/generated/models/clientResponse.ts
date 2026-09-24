@@ -13,6 +13,10 @@ export interface ClientResponse {
   email: string;
   phone: string;
   address: string;
+  /** @nullable */
+  giro: string | null;
+  /** @nullable */
+  comuna: string | null;
   notes: string;
   is_active: boolean;
   updated_at: string;

@@ -83,6 +83,25 @@ def issue_credit_note(
                 "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                 [f"project_credit_notes:{org_id_s}"],
             )
+            # Share the DTE-33 folio lock before the stamped check: a timbraje
+            # in flight can't race this annulment decision.
+            one(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                [f"sii_folios:{org_id_s}:33"],
+            )
+            stamped = rows(
+                "SELECT id FROM public.project_dtes "
+                "WHERE org_id=%s AND invoice_id=%s AND credit_note_id IS NULL "
+                "LIMIT 1",
+                [org_id_s, str(invoice_id)],
+            )
+            if stamped:
+                raise contract_error(
+                    409,
+                    "invoice_already_stamped",
+                    "La factura ya tiene un DTE-33 — se anula timbrando una nota "
+                    "de crédito electrónica (DTE-61), no con una nota interna.",
+                )
             existing = rows(
                 "SELECT * FROM public.project_credit_notes "
                 "WHERE invoice_id=%s AND org_id=%s",
@@ -90,79 +109,105 @@ def issue_credit_note(
             )
             if existing:
                 return _credit_note_public(existing[0])
-            sequence = int(
-                one(
-                    "SELECT COUNT(*) AS n FROM public.project_credit_notes WHERE org_id=%s",
-                    [org_id_s],
-                )["n"]
+            row, object_key = seal_credit_note(
+                invoice=invoice,
+                org_id_s=org_id_s,
+                project_id_s=project_id_s,
+                project=project,
+                reason=reason,
+                actor_id=actor_id,
             )
-            credit_code = f"NC-{sequence + 1:04d}"
-            reason_text = (reason or "").strip() or None
-            payload = {
-                "credit_code": credit_code,
-                "issued_at": timezone.now().isoformat(),
-                "reason": reason_text,
-                "invoice": {
-                    "id": str(invoice["id"]),
-                    "invoice_code": invoice["invoice_code"],
-                    "issued_at": invoice_payload.get("issued_at"),
-                },
-                "revision_code": invoice_payload.get("revision_code"),
-                "project": invoice_payload.get("project") or {
-                    "code": project["code"],
-                    "name": project["name"],
-                    "client_name": project["client_name"],
-                    "client_rut": project["client_rut"],
-                },
-                "positions": invoice_payload.get("positions") or [],
-                "deal": invoice_payload.get("deal") or {},
-            }
-            identifier = hashlib.sha256(
-                json.dumps(payload, sort_keys=True).encode("utf-8")
-            ).hexdigest()
-            content, media_type = render_credit_note(
-                payload, pdf_identifier=identifier
-            )
-            content_hash = hashlib.sha256(content).hexdigest()
-            object_key = (
-                f"org_{org_id_s}/projects/{project_id_s}/credit-notes/"
-                f"{credit_code.lower()}_{content_hash[:16]}.pdf"
-            )
-            storage = SupabaseDocumentStorage()
-            try:
-                storage.upload_immutable(object_key, content, media_type)
-                row = one(
-                    "INSERT INTO public.project_credit_notes("
-                    "org_id,project_id,invoice_id,credit_code,payload_json,"
-                    "storage_bucket,storage_object_key,file_sha256,media_type,"
-                    "byte_size,created_by) "
-                    "VALUES(%s,%s,%s,%s,%s::jsonb,'documents',%s,%s,%s,%s,%s) "
-                    "RETURNING *",
-                    [
-                        org_id_s,
-                        project_id_s,
-                        str(invoice_id),
-                        credit_code,
-                        json.dumps(payload),
-                        object_key,
-                        content_hash,
-                        media_type,
-                        len(content),
-                        str(actor_id),
-                    ],
-                )
-            except Exception:
-                try:
-                    storage.delete_object(object_key)
-                    object_key = None
-                except Exception:  # noqa: BLE001 — cleanup must not mask the real failure
-                    pass
-                raise
     except Exception:
         if object_key is not None:
             _purge_unreferenced_credit_note(org_id=org_id, object_key=object_key)
         raise
     return _credit_note_public(row)
+
+
+def seal_credit_note(
+    *,
+    invoice: dict,
+    org_id_s: str,
+    project_id_s: str,
+    project: dict,
+    reason: str | None,
+    actor_id: UUID,
+) -> tuple[dict, str]:
+    """Render, upload and insert the sealed counter-document for ``invoice``.
+
+    Runs inside the caller's org-serialized transaction and returns
+    ``(row, object_key)`` — the caller keeps the key in its own compensating
+    purge so a rollback later in the same flow can't leave an orphan."""
+    invoice_payload = invoice["payload_json"]
+    if isinstance(invoice_payload, str):
+        invoice_payload = json.loads(invoice_payload)
+    sequence = int(
+        one(
+            "SELECT COUNT(*) AS n FROM public.project_credit_notes WHERE org_id=%s",
+            [org_id_s],
+        )["n"]
+    )
+    credit_code = f"NC-{sequence + 1:04d}"
+    reason_text = (reason or "").strip() or None
+    payload = {
+        "credit_code": credit_code,
+        "issued_at": timezone.now().isoformat(),
+        "reason": reason_text,
+        "invoice": {
+            "id": str(invoice["id"]),
+            "invoice_code": invoice["invoice_code"],
+            "issued_at": invoice_payload.get("issued_at"),
+        },
+        "revision_code": invoice_payload.get("revision_code"),
+        "project": invoice_payload.get("project") or {
+            "code": project["code"],
+            "name": project["name"],
+            "client_name": project["client_name"],
+            "client_rut": project["client_rut"],
+        },
+        "positions": invoice_payload.get("positions") or [],
+        "deal": invoice_payload.get("deal") or {},
+    }
+    identifier = hashlib.sha256(
+        json.dumps(payload, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    content, media_type = render_credit_note(payload, pdf_identifier=identifier)
+    content_hash = hashlib.sha256(content).hexdigest()
+    object_key = (
+        f"org_{org_id_s}/projects/{project_id_s}/credit-notes/"
+        f"{credit_code.lower()}_{content_hash[:16]}.pdf"
+    )
+    storage = SupabaseDocumentStorage()
+    try:
+        storage.upload_immutable(object_key, content, media_type)
+        row = one(
+            "INSERT INTO public.project_credit_notes("
+            "org_id,project_id,invoice_id,credit_code,payload_json,"
+            "storage_bucket,storage_object_key,file_sha256,media_type,"
+            "byte_size,created_by) "
+            "VALUES(%s,%s,%s,%s,%s::jsonb,'documents',%s,%s,%s,%s,%s) "
+            "RETURNING *",
+            [
+                org_id_s,
+                project_id_s,
+                str(invoice["id"]),
+                credit_code,
+                json.dumps(payload),
+                object_key,
+                content_hash,
+                media_type,
+                len(content),
+                str(actor_id),
+            ],
+        )
+    except Exception:
+        try:
+            storage.delete_object(object_key)
+            object_key = None
+        except Exception:  # noqa: BLE001 — cleanup must not mask the real failure
+            pass
+        raise
+    return row, object_key
 
 
 def _purge_unreferenced_credit_note(*, org_id: UUID, object_key: str) -> None:

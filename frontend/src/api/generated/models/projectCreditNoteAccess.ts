@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProjectDte } from "./projectDte";
 
 export interface ProjectCreditNoteAccess {
   id: string;
@@ -13,6 +14,7 @@ export interface ProjectCreditNoteAccess {
   /** @nullable */
   invoice_code: string | null;
   project_id: string;
+  dte?: ProjectDte | null;
   created_at: string;
   signed_url: string;
   expires_in: number;

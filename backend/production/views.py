@@ -25,6 +25,7 @@ from engine_api.repository import SystemNotFound
 from production import service
 from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
+from projects import sii
 from production.serializers import (
     DeliveryConfirmRequestSerializer,
     DeliveryConfirmResponseSerializer,
@@ -35,6 +36,9 @@ from production.serializers import (
     CncExportSerializer,
     DxfExportSerializer,
     DispatchNoteAccessSerializer,
+    DispatchNoteDteAccessSerializer,
+    DispatchNoteDteEmitSerializer,
+    DispatchNoteDteSerializer,
     DispatchRequestSerializer,
     InstallationRequestSerializer,
     PackingLabelsSerializer,
@@ -363,6 +367,42 @@ class ProductionOrderDispatchNoteView(APIView):
         with public_production_errors():
             with documentary_scope(request, _READERS) as (_, _, org_id):
                 output = dispatch_note_access(org_id=org_id, order_id=order_id)
+        return Response(output)
+
+
+class ProductionOrderDispatchNoteDteView(APIView):
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte_emit",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=DispatchNoteDteEmitSerializer,
+        responses={201: DispatchNoteDteSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(DispatchNoteDteEmitSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = sii.emit_dispatch_note_dte(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    ind_traslado=int(data.get("ind_traslado") or 1),
+                )
+        return Response(output, status=201)
+
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: DispatchNoteDteAccessSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = sii.dispatch_note_dte_access(
+                    org_id=org_id, order_id=order_id
+                )
         return Response(output)
 
 
