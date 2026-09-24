@@ -11,6 +11,9 @@ import {
   productionOrderDetail,
   productionOrderDispatch,
   productionOrderDispatchNote,
+  productionOrderDispatchNoteDte,
+  productionOrderDispatchNoteDteEmit,
+  productionOrderDxfExport,
   productionOrderInstall,
   productionOrderLabels,
   productionOrderOptimize,
@@ -32,6 +35,13 @@ import type {
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
+import {
+  GlassSummary,
+  glassSummaryCsv,
+  type GlassPiece,
+  type PolishingEntry,
+} from "./GlassSummary";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import "./production.css";
 
@@ -44,61 +54,11 @@ type WorkOrderMaterials = {
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
 
-type CutPlacement = {
-  piece_id: string;
-  length_mm: string;
-  unit_index?: number;
-  bay_id?: string | null;
-  leaf_id?: string | null;
-};
-type CutBar = {
-  bar_index: number;
-  commercial_sku: string;
-  stock_length_mm: string;
-  remainder_mm: string;
-  yield_pct: string;
-  cuts: CutPlacement[];
-};
-type PurchaseLine = { commercial_sku: string; qty_bars: number; stock_length_mm: string };
-type SheetPurchase = { purchasing_sku: string; qty_sheets: number };
-type NestPlacement = {
-  piece_id: string;
-  x_mm: string;
-  y_mm: string;
-  width_mm: string;
-  height_mm: string;
-  rotated: boolean;
-  unit_index?: number;
-};
-type SheetLayout = {
-  sheet_index: number;
-  purchasing_sku: string;
-  sheet_width_mm: string;
-  sheet_height_mm: string;
-  yield_pct: string;
-  placements: NestPlacement[];
-};
-type UnnestedPiece = {
-  kind: string;
-  group: string;
-  width_mm: string;
-  height_mm: string;
-  quantity: number;
-};
-type WorkOrderOptimization = {
-  color?: string;
-  units?: number;
-  optimized_at?: string;
-  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
-  sheets?: SheetLayout[];
-  sheet_purchases?: SheetPurchase[];
-  unnested?: UnnestedPiece[];
-};
-
 type CncExport = {
   exported_at?: string;
   files?: Record<string, string>;
 };
+type DxfExport = CncExport;
 
 type PackingUnit = {
   unit_index: number;
@@ -142,6 +102,7 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   QC_FAILED: "production.eventQcFailed",
   WO_REMADE: "production.eventRemade",
   WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_DXF_EXPORTED: "production.eventDxfExported",
   WO_PACKED: "production.eventPacked",
   WO_DISPATCHED: "production.eventDispatched",
   WO_INSTALLED: "production.eventInstalled",
@@ -319,6 +280,10 @@ export function ProductionPage(): JSX.Element {
     void action(productionOrderCncExport(orderId), orderId);
   }
 
+  function exportDxf(orderId: string): void {
+    void action(productionOrderDxfExport(orderId), orderId);
+  }
+
   async function showLabels(orderId: string): Promise<void> {
     const generation = ++labelsGeneration.current;
     setLabels([]);
@@ -460,6 +425,42 @@ export function ProductionPage(): JSX.Element {
     }
   }
 
+  async function emitDispatchNoteDte(orderId: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionOrderDispatchNoteDteEmit(orderId, {
+        ind_traslado: 1,
+      });
+      if (response.status === 201) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.dteEmitError"));
+      }
+    } catch {
+      setMessage(t("production.dteEmitError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openDispatchNoteDte(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dteOpenError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNoteDte(orderId);
+      if (response.status !== 200) throw new Error("dte_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dteOpenError"));
+    }
+  }
+
   async function openDispatchNote(orderId: string): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
@@ -576,6 +577,25 @@ export function ProductionPage(): JSX.Element {
                     {detail.dispatch_note_code}
                   </button>
                 ) : null}
+                {detail.dispatch_note_dte ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-note-dte"
+                    title={`${t("production.dteStatus")} · folio ${detail.dispatch_note_dte.folio}`}
+                    onClick={() => void openDispatchNoteDte(detail.id)}
+                  >
+                    {`${t("production.dteStatus")} · ${detail.dispatch_note_dte.folio}`}
+                  </button>
+                ) : canWrite && detail.dispatch_note_code ? (
+                  <button
+                    type="button"
+                    className="production-dispatch"
+                    disabled={busy}
+                    onClick={() => void emitDispatchNoteDte(detail.id)}
+                  >
+                    {t("production.dteEmit")}
+                  </button>
+                ) : null}
                 {canWrite && detail.status === "HOLD" ? (
                   <button
                     type="button"
@@ -605,6 +625,23 @@ export function ProductionPage(): JSX.Element {
                       <dd>{materials.hardware_items?.length ?? 0}</dd>
                     </div>
                   </dl>
+                );
+              })()}
+              {(() => {
+                const materials = detail.payload?.materials as WorkOrderMaterials | undefined;
+                const glasses = (materials?.glasses ?? []) as GlassPiece[];
+                if (!glasses.length) return null;
+                const polishing = (detail.payload?.glass_polishing ?? []) as PolishingEntry[];
+                const quantity = Math.max(1, Number(detail.quantity) || 1);
+                return (
+                  <GlassSummary
+                    glasses={glasses}
+                    polishing={polishing}
+                    quantity={quantity}
+                    onExport={(groups) =>
+                      downloadCnc(detail.order_code, `glass.csv`, glassSummaryCsv(groups, quantity))
+                    }
+                  />
                 );
               })()}
               {(() => {
@@ -653,7 +690,9 @@ export function ProductionPage(): JSX.Element {
                     ) : null}
                     {(() => {
                       const cncExport = detail.payload?.cnc_export as CncExport | undefined;
+                      const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
                       const files = Object.entries(cncExport?.files ?? {});
+                      const dxfFiles = Object.entries(dxfExport?.files ?? {});
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
@@ -661,15 +700,34 @@ export function ProductionPage(): JSX.Element {
                           detail.status !== "COMPLETED" &&
                           detail.status !== "DISPATCHED" &&
                           detail.status !== "INSTALLED" ? (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => exportCnc(detail.id)}
-                            >
-                              {t("production.cncExportButton")}
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportCnc(detail.id)}
+                              >
+                                {t("production.cncExportButton")}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportDxf(detail.id)}
+                              >
+                                {t("production.dxfExportButton")}
+                              </button>
+                            </>
                           ) : null}
                           {files.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                          {dxfFiles.map(([filename, content]) => (
                             <button
                               key={filename}
                               type="button"
@@ -686,6 +744,12 @@ export function ProductionPage(): JSX.Element {
                       <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
                     ) : (
                       <>
+                        {cutPlan.length || layouts.length ? (
+                          <CutPlanView
+                            key={optimization.optimized_at ?? "optimization"}
+                            optimization={optimization}
+                          />
+                        ) : null}
                         {cutPlan.length ? (
                           <table className="production-plan">
                             <thead>

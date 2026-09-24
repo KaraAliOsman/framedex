@@ -54,12 +54,16 @@ import type {
   DesignAssistResponse,
   DesignOptions,
   DispatchNoteAccess,
+  DispatchNoteDte,
+  DispatchNoteDteAccess,
+  DispatchNoteDteEmitRequest,
   DispatchRequestRequest,
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
   DocumentaryPreparationResponse,
   DraftProjectRequest,
   DraftResponse,
+  DxfExport,
   EligibilityRequestRequest,
   EligibilityResponse,
   EngineAssemblyCalculateRequest,
@@ -131,6 +135,8 @@ import type {
   ProjectCreditNote,
   ProjectCreditNoteAccess,
   ProjectCreditNoteEmitRequest,
+  ProjectDte,
+  ProjectDteAccess,
   ProjectInvoice,
   ProjectInvoiceAccess,
   ProjectListResponse,
@@ -142,6 +148,15 @@ import type {
   SendOrderRequestRequest,
   ShareQuoteResponse,
   SignedAccessResponse,
+  SiiCaf,
+  SiiCafList,
+  SiiCafUploadRequest,
+  SiiCertificate,
+  SiiCertificateStatus,
+  SiiCertificateUploadRequest,
+  SiiEnvio,
+  SiiEnvioAccess,
+  SiiEnvioSendRequest,
   StepTransition,
   StepTransitionRequestRequest,
   SuccessorRequestRequest,
@@ -6095,7 +6110,7 @@ export const productionOrderCncExport = async (
 };
 
 export type productionOrderCncFileResponse200 = {
-  data: void;
+  data: string;
   status: 200;
 };
 
@@ -6737,6 +6752,318 @@ export const productionOrderDispatchNote = async (
 ): Promise<productionOrderDispatchNoteResponse> => {
   return apiMutator<productionOrderDispatchNoteResponse>(
     getProductionOrderDispatchNoteUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type productionOrderDispatchNoteDteResponse200 = {
+  data: DispatchNoteDteAccess;
+  status: 200;
+};
+
+export type productionOrderDispatchNoteDteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteResponseSuccess =
+  productionOrderDispatchNoteDteResponse200 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteResponseError = (
+  | productionOrderDispatchNoteDteResponse400
+  | productionOrderDispatchNoteDteResponse401
+  | productionOrderDispatchNoteDteResponse403
+  | productionOrderDispatchNoteDteResponse404
+  | productionOrderDispatchNoteDteResponse409
+  | productionOrderDispatchNoteDteResponse422
+  | productionOrderDispatchNoteDteResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteResponse =
+  productionOrderDispatchNoteDteResponseSuccess | productionOrderDispatchNoteDteResponseError;
+
+export const getProductionOrderDispatchNoteDteUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-dte/`;
+};
+
+export const productionOrderDispatchNoteDte = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteResponse> => {
+  return apiMutator<productionOrderDispatchNoteDteResponse>(
+    getProductionOrderDispatchNoteDteUrl(orderId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type productionOrderDispatchNoteDteEmitResponse201 = {
+  data: DispatchNoteDte;
+  status: 201;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDispatchNoteDteEmitResponseSuccess =
+  productionOrderDispatchNoteDteEmitResponse201 & {
+    headers: Headers;
+  };
+export type productionOrderDispatchNoteDteEmitResponseError = (
+  | productionOrderDispatchNoteDteEmitResponse400
+  | productionOrderDispatchNoteDteEmitResponse401
+  | productionOrderDispatchNoteDteEmitResponse403
+  | productionOrderDispatchNoteDteEmitResponse404
+  | productionOrderDispatchNoteDteEmitResponse409
+  | productionOrderDispatchNoteDteEmitResponse422
+  | productionOrderDispatchNoteDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDispatchNoteDteEmitResponse =
+  | productionOrderDispatchNoteDteEmitResponseSuccess
+  | productionOrderDispatchNoteDteEmitResponseError;
+
+export const getProductionOrderDispatchNoteDteEmitUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dispatch-note-dte/`;
+};
+
+export const productionOrderDispatchNoteDteEmit = async (
+  orderId: string,
+  dispatchNoteDteEmitRequest?: DispatchNoteDteEmitRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDispatchNoteDteEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<productionOrderDispatchNoteDteEmitResponse>(
+    getProductionOrderDispatchNoteDteEmitUrl(orderId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(dispatchNoteDteEmitRequest),
+    },
+  );
+};
+
+export type productionOrderDxfExportResponse201 = {
+  data: DxfExport;
+  status: 201;
+};
+
+export type productionOrderDxfExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDxfExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDxfExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDxfExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDxfExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDxfExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDxfExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDxfExportResponseSuccess = productionOrderDxfExportResponse201 & {
+  headers: Headers;
+};
+export type productionOrderDxfExportResponseError = (
+  | productionOrderDxfExportResponse400
+  | productionOrderDxfExportResponse401
+  | productionOrderDxfExportResponse403
+  | productionOrderDxfExportResponse404
+  | productionOrderDxfExportResponse409
+  | productionOrderDxfExportResponse422
+  | productionOrderDxfExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDxfExportResponse =
+  productionOrderDxfExportResponseSuccess | productionOrderDxfExportResponseError;
+
+export const getProductionOrderDxfExportUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/dxf-export/`;
+};
+
+export const productionOrderDxfExport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDxfExportResponse> => {
+  return apiMutator<productionOrderDxfExportResponse>(getProductionOrderDxfExportUrl(orderId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type productionOrderDxfFileResponse200 = {
+  data: string;
+  status: 200;
+};
+
+export type productionOrderDxfFileResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderDxfFileResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderDxfFileResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderDxfFileResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderDxfFileResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderDxfFileResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderDxfFileResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderDxfFileResponseSuccess = productionOrderDxfFileResponse200 & {
+  headers: Headers;
+};
+export type productionOrderDxfFileResponseError = (
+  | productionOrderDxfFileResponse400
+  | productionOrderDxfFileResponse401
+  | productionOrderDxfFileResponse403
+  | productionOrderDxfFileResponse404
+  | productionOrderDxfFileResponse409
+  | productionOrderDxfFileResponse422
+  | productionOrderDxfFileResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderDxfFileResponse =
+  productionOrderDxfFileResponseSuccess | productionOrderDxfFileResponseError;
+
+export const getProductionOrderDxfFileUrl = (orderId: string, filename: string) => {
+  return `/api/v1/production/orders/${orderId}/dxf-export/${filename}`;
+};
+
+export const productionOrderDxfFile = async (
+  orderId: string,
+  filename: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderDxfFileResponse> => {
+  return apiMutator<productionOrderDxfFileResponse>(
+    getProductionOrderDxfFileUrl(orderId, filename),
     {
       ...options,
       method: "GET",
@@ -8463,6 +8790,485 @@ export const projectCreditNoteEmit = async (
   );
 };
 
+export type projectCreditNoteDteAccessResponse200 = {
+  data: ProjectDteAccess;
+  status: 200;
+};
+
+export type projectCreditNoteDteAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteAccessResponseSuccess = projectCreditNoteDteAccessResponse200 & {
+  headers: Headers;
+};
+export type projectCreditNoteDteAccessResponseError = (
+  | projectCreditNoteDteAccessResponse400
+  | projectCreditNoteDteAccessResponse401
+  | projectCreditNoteDteAccessResponse403
+  | projectCreditNoteDteAccessResponse404
+  | projectCreditNoteDteAccessResponse409
+  | projectCreditNoteDteAccessResponse422
+  | projectCreditNoteDteAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteAccessResponse =
+  projectCreditNoteDteAccessResponseSuccess | projectCreditNoteDteAccessResponseError;
+
+export const getProjectCreditNoteDteAccessUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/credit-note-dte/`;
+};
+
+export const projectCreditNoteDteAccess = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteAccessResponse> => {
+  return apiMutator<projectCreditNoteDteAccessResponse>(
+    getProjectCreditNoteDteAccessUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectCreditNoteDteEmitResponse201 = {
+  data: ProjectDte;
+  status: 201;
+};
+
+export type projectCreditNoteDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectCreditNoteDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectCreditNoteDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectCreditNoteDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectCreditNoteDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectCreditNoteDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectCreditNoteDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectCreditNoteDteEmitResponseSuccess = projectCreditNoteDteEmitResponse201 & {
+  headers: Headers;
+};
+export type projectCreditNoteDteEmitResponseError = (
+  | projectCreditNoteDteEmitResponse400
+  | projectCreditNoteDteEmitResponse401
+  | projectCreditNoteDteEmitResponse403
+  | projectCreditNoteDteEmitResponse404
+  | projectCreditNoteDteEmitResponse409
+  | projectCreditNoteDteEmitResponse422
+  | projectCreditNoteDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectCreditNoteDteEmitResponse =
+  projectCreditNoteDteEmitResponseSuccess | projectCreditNoteDteEmitResponseError;
+
+export const getProjectCreditNoteDteEmitUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/credit-note-dte/`;
+};
+
+export const projectCreditNoteDteEmit = async (
+  projectId: string,
+  invoiceId: string,
+  projectCreditNoteEmitRequest?: ProjectCreditNoteEmitRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectCreditNoteDteEmitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectCreditNoteDteEmitResponse>(
+    getProjectCreditNoteDteEmitUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(projectCreditNoteEmitRequest),
+    },
+  );
+};
+
+export type projectInvoiceDteAccessResponse200 = {
+  data: ProjectDteAccess;
+  status: 200;
+};
+
+export type projectInvoiceDteAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteAccessResponseSuccess = projectInvoiceDteAccessResponse200 & {
+  headers: Headers;
+};
+export type projectInvoiceDteAccessResponseError = (
+  | projectInvoiceDteAccessResponse400
+  | projectInvoiceDteAccessResponse401
+  | projectInvoiceDteAccessResponse403
+  | projectInvoiceDteAccessResponse404
+  | projectInvoiceDteAccessResponse409
+  | projectInvoiceDteAccessResponse422
+  | projectInvoiceDteAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteAccessResponse =
+  projectInvoiceDteAccessResponseSuccess | projectInvoiceDteAccessResponseError;
+
+export const getProjectInvoiceDteAccessUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte/`;
+};
+
+export const projectInvoiceDteAccess = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteAccessResponse> => {
+  return apiMutator<projectInvoiceDteAccessResponse>(
+    getProjectInvoiceDteAccessUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectInvoiceDteEmitResponse201 = {
+  data: ProjectDte;
+  status: 201;
+};
+
+export type projectInvoiceDteEmitResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteEmitResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteEmitResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteEmitResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteEmitResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteEmitResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteEmitResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteEmitResponseSuccess = projectInvoiceDteEmitResponse201 & {
+  headers: Headers;
+};
+export type projectInvoiceDteEmitResponseError = (
+  | projectInvoiceDteEmitResponse400
+  | projectInvoiceDteEmitResponse401
+  | projectInvoiceDteEmitResponse403
+  | projectInvoiceDteEmitResponse404
+  | projectInvoiceDteEmitResponse409
+  | projectInvoiceDteEmitResponse422
+  | projectInvoiceDteEmitResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteEmitResponse =
+  projectInvoiceDteEmitResponseSuccess | projectInvoiceDteEmitResponseError;
+
+export const getProjectInvoiceDteEmitUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte/`;
+};
+
+export const projectInvoiceDteEmit = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteEmitResponse> => {
+  return apiMutator<projectInvoiceDteEmitResponse>(
+    getProjectInvoiceDteEmitUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export type projectInvoiceDteEnvioAccessResponse200 = {
+  data: SiiEnvioAccess;
+  status: 200;
+};
+
+export type projectInvoiceDteEnvioAccessResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteEnvioAccessResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteEnvioAccessResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteEnvioAccessResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteEnvioAccessResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteEnvioAccessResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteEnvioAccessResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteEnvioAccessResponseSuccess =
+  projectInvoiceDteEnvioAccessResponse200 & {
+    headers: Headers;
+  };
+export type projectInvoiceDteEnvioAccessResponseError = (
+  | projectInvoiceDteEnvioAccessResponse400
+  | projectInvoiceDteEnvioAccessResponse401
+  | projectInvoiceDteEnvioAccessResponse403
+  | projectInvoiceDteEnvioAccessResponse404
+  | projectInvoiceDteEnvioAccessResponse409
+  | projectInvoiceDteEnvioAccessResponse422
+  | projectInvoiceDteEnvioAccessResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteEnvioAccessResponse =
+  projectInvoiceDteEnvioAccessResponseSuccess | projectInvoiceDteEnvioAccessResponseError;
+
+export const getProjectInvoiceDteEnvioAccessUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte-envio/`;
+};
+
+export const projectInvoiceDteEnvioAccess = async (
+  projectId: string,
+  invoiceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteEnvioAccessResponse> => {
+  return apiMutator<projectInvoiceDteEnvioAccessResponse>(
+    getProjectInvoiceDteEnvioAccessUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type projectInvoiceDteEnvioSendResponse201 = {
+  data: SiiEnvio;
+  status: 201;
+};
+
+export type projectInvoiceDteEnvioSendResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectInvoiceDteEnvioSendResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectInvoiceDteEnvioSendResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectInvoiceDteEnvioSendResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectInvoiceDteEnvioSendResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectInvoiceDteEnvioSendResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectInvoiceDteEnvioSendResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectInvoiceDteEnvioSendResponseSuccess = projectInvoiceDteEnvioSendResponse201 & {
+  headers: Headers;
+};
+export type projectInvoiceDteEnvioSendResponseError = (
+  | projectInvoiceDteEnvioSendResponse400
+  | projectInvoiceDteEnvioSendResponse401
+  | projectInvoiceDteEnvioSendResponse403
+  | projectInvoiceDteEnvioSendResponse404
+  | projectInvoiceDteEnvioSendResponse409
+  | projectInvoiceDteEnvioSendResponse422
+  | projectInvoiceDteEnvioSendResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectInvoiceDteEnvioSendResponse =
+  projectInvoiceDteEnvioSendResponseSuccess | projectInvoiceDteEnvioSendResponseError;
+
+export const getProjectInvoiceDteEnvioSendUrl = (projectId: string, invoiceId: string) => {
+  return `/api/v1/projects/${projectId}/invoices/${invoiceId}/dte-envio/`;
+};
+
+export const projectInvoiceDteEnvioSend = async (
+  projectId: string,
+  invoiceId: string,
+  siiEnvioSendRequest?: SiiEnvioSendRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectInvoiceDteEnvioSendResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectInvoiceDteEnvioSendResponse>(
+    getProjectInvoiceDteEnvioSendUrl(projectId, invoiceId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(siiEnvioSendRequest),
+    },
+  );
+};
+
 export type projectPaymentLinksListResponse200 = {
   data: PaymentLinksResponse;
   status: 200;
@@ -10151,4 +10957,308 @@ export const purchasingCreateEligibility = async (
       body: JSON.stringify(eligibilityRequestRequest),
     },
   );
+};
+
+export type siiCafsListResponse200 = {
+  data: SiiCafList;
+  status: 200;
+};
+
+export type siiCafsListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCafsListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCafsListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCafsListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCafsListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCafsListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCafsListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCafsListResponseSuccess = siiCafsListResponse200 & {
+  headers: Headers;
+};
+export type siiCafsListResponseError = (
+  | siiCafsListResponse400
+  | siiCafsListResponse401
+  | siiCafsListResponse403
+  | siiCafsListResponse404
+  | siiCafsListResponse409
+  | siiCafsListResponse422
+  | siiCafsListResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCafsListResponse = siiCafsListResponseSuccess | siiCafsListResponseError;
+
+export const getSiiCafsListUrl = () => {
+  return `/api/v1/sii/cafs/`;
+};
+
+export const siiCafsList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCafsListResponse> => {
+  return apiMutator<siiCafsListResponse>(getSiiCafsListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type siiCafRegisterResponse201 = {
+  data: SiiCaf;
+  status: 201;
+};
+
+export type siiCafRegisterResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCafRegisterResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCafRegisterResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCafRegisterResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCafRegisterResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCafRegisterResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCafRegisterResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCafRegisterResponseSuccess = siiCafRegisterResponse201 & {
+  headers: Headers;
+};
+export type siiCafRegisterResponseError = (
+  | siiCafRegisterResponse400
+  | siiCafRegisterResponse401
+  | siiCafRegisterResponse403
+  | siiCafRegisterResponse404
+  | siiCafRegisterResponse409
+  | siiCafRegisterResponse422
+  | siiCafRegisterResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCafRegisterResponse = siiCafRegisterResponseSuccess | siiCafRegisterResponseError;
+
+export const getSiiCafRegisterUrl = () => {
+  return `/api/v1/sii/cafs/`;
+};
+
+export const siiCafRegister = async (
+  siiCafUploadRequest: SiiCafUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCafRegisterResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<siiCafRegisterResponse>(getSiiCafRegisterUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(siiCafUploadRequest),
+  });
+};
+
+export type siiCertificateStatusResponse200 = {
+  data: SiiCertificateStatus;
+  status: 200;
+};
+
+export type siiCertificateStatusResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCertificateStatusResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCertificateStatusResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCertificateStatusResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCertificateStatusResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCertificateStatusResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCertificateStatusResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCertificateStatusResponseSuccess = siiCertificateStatusResponse200 & {
+  headers: Headers;
+};
+export type siiCertificateStatusResponseError = (
+  | siiCertificateStatusResponse400
+  | siiCertificateStatusResponse401
+  | siiCertificateStatusResponse403
+  | siiCertificateStatusResponse404
+  | siiCertificateStatusResponse409
+  | siiCertificateStatusResponse422
+  | siiCertificateStatusResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCertificateStatusResponse =
+  siiCertificateStatusResponseSuccess | siiCertificateStatusResponseError;
+
+export const getSiiCertificateStatusUrl = () => {
+  return `/api/v1/sii/certificate/`;
+};
+
+export const siiCertificateStatus = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCertificateStatusResponse> => {
+  return apiMutator<siiCertificateStatusResponse>(getSiiCertificateStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type siiCertificateUploadResponse201 = {
+  data: SiiCertificate;
+  status: 201;
+};
+
+export type siiCertificateUploadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type siiCertificateUploadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type siiCertificateUploadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type siiCertificateUploadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type siiCertificateUploadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type siiCertificateUploadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type siiCertificateUploadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type siiCertificateUploadResponseSuccess = siiCertificateUploadResponse201 & {
+  headers: Headers;
+};
+export type siiCertificateUploadResponseError = (
+  | siiCertificateUploadResponse400
+  | siiCertificateUploadResponse401
+  | siiCertificateUploadResponse403
+  | siiCertificateUploadResponse404
+  | siiCertificateUploadResponse409
+  | siiCertificateUploadResponse422
+  | siiCertificateUploadResponse503
+) & {
+  headers: Headers;
+};
+
+export type siiCertificateUploadResponse =
+  siiCertificateUploadResponseSuccess | siiCertificateUploadResponseError;
+
+export const getSiiCertificateUploadUrl = () => {
+  return `/api/v1/sii/certificate/`;
+};
+
+export const siiCertificateUpload = async (
+  siiCertificateUploadRequest: SiiCertificateUploadRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<siiCertificateUploadResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<siiCertificateUploadResponse>(getSiiCertificateUploadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(siiCertificateUploadRequest),
+  });
 };

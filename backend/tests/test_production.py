@@ -527,6 +527,83 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
     assert any("WO_OPTIMIZED" in q for q in writes)
 
 
+def test_optimize_routes_shaped_glass_to_unnested() -> None:
+    from decimal import Decimal
+
+    from dekopen_engine.cutting import (
+        CutOptimizationResult, CuttingProfile,
+    )
+
+    order_id = uuid4()
+    shape = [
+        {"x_mm": "0.00", "y_mm": "0.00"},
+        {"x_mm": "2296.22", "y_mm": "0.00"},
+        {"x_mm": "2096.22", "y_mm": "1310.00"},
+        {"x_mm": "200.00", "y_mm": "1310.00"},
+    ]
+    payload = {
+        "position_id": str(uuid4()),
+        "system_id": str(uuid4()),
+        "quantity": 1,
+        "materials": {
+            "profile_cuts": [], "reinforcements": [],
+            "glasses": [
+                {
+                    "bay_id": "B1", "leaf_id": None,
+                    "width_mm": "2296.22", "height_mm": "1310.00",
+                    "shape": shape,
+                    "area_m2": "2.62", "weight_kg": "13.10",
+                    "thickness_net_mm": "4.00",
+                    "glass_spec": "4", "article_sku": "V4",
+                }
+            ],
+            "panels": [], "hardware_items": [],
+        },
+    }
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT-P-REV-A-01",
+                "status": "RELEASED", "payload_json": payload,
+            }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        return []
+
+    profile = CuttingProfile(
+        id="CP1", code="SAW01", kerf_mm=Decimal("5"),
+        head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+    )
+    cut_result = CutOptimizationResult(workshop_cut_plan=[], purchase_list=[])
+    authorities = SimpleNamespace(stocks=[], reinforcement_skus={}, inertias={})
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service.CuttingRepository"
+    ) as repo, patch(
+        "production.service.optimize_cut", return_value=cut_result
+    ):
+        repo.return_value.for_result.return_value = authorities
+        repo.return_value.cutting_profile.return_value = profile
+        output = service.optimize_work_order(
+            org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+        )
+    optimization = output["optimization"]
+    assert optimization["sheets"] == []
+    assert len(optimization["unnested"]) == 1
+    flagged = optimization["unnested"][0]
+    assert flagged["kind"] == "GLASS"
+    assert flagged["reason"] == "shaped_glass_outline"
+    assert flagged["shape"] == shape
+
+
 def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
     from decimal import Decimal
 
@@ -581,6 +658,50 @@ def test_release_seals_system_from_snapshot_positions() -> None:
             org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
         )
     assert json.loads(seen["payload"])["system_id"] == _SNAPSHOT["positions"][0]["system_id"]
+
+
+def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
+    polishing = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": None,
+            "edges": {"top": True, "right": True, "bottom": False, "left": False},
+        }
+    ]
+    snapshot = {
+        "positions": [
+            {
+                "id": _POSITION_ID,
+                "system_id": str(uuid4()),
+                "glass_polishing": polishing,
+            }
+        ],
+        "bom": _SNAPSHOT["bom"],
+    }
+    seen = {}
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return _version_row(snapshot)
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "INSERT INTO public.orders" in query:
+            seen["payload"] = params[3]
+            return [{"id": uuid4()}]
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service._ensure_work_centers", return_value={}
+    ):
+        service.release_production(
+            org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
+        )
+    assert json.loads(seen["payload"])["glass_polishing"] == polishing
 
 
 def test_optimize_rejects_completed_order() -> None:
@@ -937,6 +1058,101 @@ def test_export_cnc_requires_optimization(monkeypatch) -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), pytest.raises(DocumentaryError, match="cnc_requires_optimization"):
         service.export_cnc_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
+
+
+def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
+    org_id, order_id = uuid4(), uuid4()
+    optimization = {
+        "bars": {
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "MARCO-60",
+                    "stock_length_mm": "6500",
+                    "head_trim_mm": "15",
+                    "tail_trim_mm": "20",
+                    "kerf_mm": "4",
+                    "cuts": [
+                        {"piece_id": "M-02", "length_mm": "1200", "sequence": 1,
+                         "unit_index": 1,
+                         "angle_left": "45.0", "angle_right": "45.0"},
+                        {"piece_id": "M-01", "length_mm": "1500", "sequence": 2,
+                         "unit_index": 2,
+                         "angle_left": "90.0", "angle_right": "45.0"},
+                    ],
+                }
+            ]
+        },
+        "sheets": [
+            {
+                "sheet_index": 1,
+                "purchasing_sku": "GLASS-4",
+                "sheet_width_mm": "3210",
+                "sheet_height_mm": "2250",
+                "placements": [
+                    {"piece_id": "V-01", "x_mm": "100", "y_mm": "50",
+                     "width_mm": "800", "height_mm": "600", "unit_index": 2,
+                     "rotated": False}
+                ],
+            },
+        ],
+    }
+    writes: list[tuple[str, list]] = []
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        if "for update" in lowered:
+            return {
+                "id": str(order_id),
+                "order_code": "OT-P-AAA-01",
+                "status": "IN_PROGRESS",
+                "payload_json": {"optimization": optimization},
+            }
+        raise AssertionError(f"unexpected one(): {lowered}")
+
+    monkeypatch.setattr("production.service.one", fake_one)
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, params=(): writes.append(
+            (" ".join(sql_text.lower().split()), list(params))
+        ) or [{"id": str(order_id)}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.export_dxf_files(org_id=org_id, order_id=order_id, actor_id=uuid4())
+    update = next(p2 for s2, p2 in writes if "update public.orders" in s2)
+    stored = json.loads(update[0])["dxf_export"]
+    assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
+    sheet = stored["files"]["sheet_1.dxf"]
+    assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
+    assert "AC1015" in sheet and "V-01·U2 800x600" in sheet
+    bars = stored["files"]["bars.dxf"]
+    assert "M-02·U1 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    # Saw consumption matches optimize_cut: head trim once (mark at 15),
+    # then each piece length + one kerf → piece ends at 1215 and 2719.
+    for mark_x in ("10\n15\n20", "10\n1215\n20", "10\n2719\n20"):
+        assert f"8\nMARK\n{mark_x}" in bars
+    assert "10\n1200\n20" not in bars
+    assert stored["schema"] == "work_order_dxf_export_v1"
+    assert stored["optimization_fingerprint"]
+    assert any("wo_dxf_exported" in s2 for s2, _ in writes)
+
+
+def test_export_dxf_requires_optimization(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": "o",
+            "order_code": "OT",
+            "status": "RELEASED",
+            "payload_json": {},
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="dxf_requires_optimization"):
+        service.export_dxf_files(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
 
 
 def test_packing_manifest_builds_units_and_records(monkeypatch) -> None:

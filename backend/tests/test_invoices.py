@@ -211,6 +211,11 @@ def test_invoice_access_signs_the_stored_object(monkeypatch):
     row = _invoice_row()
     monkeypatch.setattr(invoices, "documentary_backend", _noop)
     monkeypatch.setattr(
+        invoices.sii,
+        "dtes_by_credit_note",
+        lambda *, org_id, project_id: {},
+    )
+    monkeypatch.setattr(
         invoices,
         "rows",
         lambda sql, params=None: []
