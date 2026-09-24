@@ -72,3 +72,63 @@ def extract_document_job(
         raise
     report(95)
     return output
+
+
+@register(
+    "ingest.catalog.extract",
+    roles=("OWNER", "ESTIMATOR"),
+    payload_serializer=ExtractPayloadSerializer,
+    label="Extraer artículos del catálogo",
+)
+def extract_catalog_job(
+    payload: dict[str, Any], context: JobContext, report: ProgressReporter
+) -> dict[str, Any]:
+    from ingest.catalog_service import (
+        CatalogImportError,
+        extract_catalog_import,
+        mark_catalog_import_failed,
+    )
+
+    if context.created_by is None:
+        raise ValueError("job_requires_actor")
+    report(10)
+    try:
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT set_config('request.jwt.claims', %s, true)",
+                    [json.dumps(_claims_for(str(context.created_by), context))],
+                )
+                # Any active membership is not enough — a demoted uploader must
+                # not spend compile credits or write articles through a queued job.
+                cursor.execute(
+                    "SELECT 1 FROM public.tenancy_memberships "
+                    "WHERE user_id=%s AND org_id=%s AND is_active "
+                    "AND role IN ('OWNER','ESTIMATOR')",
+                    [str(context.created_by), str(context.org_id)],
+                )
+                member = cursor.fetchone()
+        if member is None:
+            raise CatalogImportError("catalog_membership_revoked")
+        output = extract_catalog_import(
+            org_id=context.org_id,
+            import_id=payload["import_id"],
+            actor_id=context.created_by,
+        )
+    except Exception as error:
+        permanent = isinstance(error, CatalogImportError)
+        if permanent or context.attempt >= context.max_attempts:
+            code = error.code if permanent else "catalog_extract_failed"
+            try:
+                mark_catalog_import_failed(
+                    org_id=context.org_id,
+                    import_id=payload["import_id"],
+                    code=code,
+                )
+            except Exception:  # noqa: BLE001 — job_runs already records the error
+                pass
+        if permanent:
+            raise JobPermanentError(error.code) from error
+        raise
+    report(95)
+    return output

@@ -1,6 +1,9 @@
 from django.urls import path
 
 from ingest.views import (
+    CatalogImportConfirmView,
+    CatalogImportDetailView,
+    CatalogImportsView,
     ProjectImportConfirmView,
     ProjectImportDetailView,
     ProjectImportsView,
@@ -21,5 +24,20 @@ urlpatterns = [
         "projects/<uuid:project_id>/imports/<uuid:import_id>/confirm/",
         ProjectImportConfirmView.as_view(),
         name="project-import-confirm",
+    ),
+    path(
+        "catalog-imports/",
+        CatalogImportsView.as_view(),
+        name="catalog-imports",
+    ),
+    path(
+        "catalog-imports/<uuid:import_id>/",
+        CatalogImportDetailView.as_view(),
+        name="catalog-import-detail",
+    ),
+    path(
+        "catalog-imports/<uuid:import_id>/confirm/",
+        CatalogImportConfirmView.as_view(),
+        name="catalog-import-confirm",
     ),
 ]

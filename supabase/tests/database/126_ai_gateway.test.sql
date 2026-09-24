@@ -24,8 +24,8 @@ SELECT ok(
     'route prices are strictly positive credits'
 );
 SELECT ok(
-    (SELECT count(*) = 5 FROM public.ai_routes WHERE provider = 'MOCK' AND enabled),
-    'five deterministic MOCK capabilities are seeded'
+    (SELECT count(*) = 6 FROM public.ai_routes WHERE provider = 'MOCK' AND enabled),
+    'six deterministic MOCK capabilities are seeded'
 );
 SELECT ok(
     (SELECT relrowsecurity FROM pg_class WHERE relname = 'ai_routes'),
