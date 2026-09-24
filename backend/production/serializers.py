@@ -65,6 +65,8 @@ class ProductionStepEventSerializer(serializers.Serializer):
 class ProductionOrderDetailSerializer(ProductionOrderSerializer):
     steps = ProductionStepSerializer(many=True)
     events = ProductionStepEventSerializer(many=True)
+    dispatch_note_code = serializers.CharField(allow_null=True, required=False)
+    dispatch_note_dte = serializers.DictField(allow_null=True, required=False)
 
 
 class StepTransitionRequestSerializer(StrictSerializer):
@@ -90,6 +92,13 @@ class CncExportSerializer(serializers.Serializer):
     files = serializers.DictField(child=serializers.CharField())
 
 
+class DxfExportSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    exported_at = serializers.CharField()
+    files = serializers.DictField(child=serializers.CharField())
+
+
 class PackingManifestSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
@@ -104,6 +113,36 @@ class InstallationRequestSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=500)
 
 
+class DispatchNoteSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    note_code = serializers.CharField()
+    work_order_id = serializers.UUIDField()
+    created_at = serializers.DateTimeField()
+
+
+class DispatchNoteAccessSerializer(DispatchNoteSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
+class DispatchNoteDteEmitSerializer(StrictSerializer):
+    # 1 = venta (goods delivered under a sale); 5 = traslado interno.
+    ind_traslado = serializers.ChoiceField(choices=(1, 5), default=1)
+
+
+class DispatchNoteDteSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    dispatch_note_id = serializers.UUIDField()
+    dte_type = serializers.IntegerField()
+    folio = serializers.IntegerField()
+    issued_at = serializers.CharField()
+
+
+class DispatchNoteDteAccessSerializer(DispatchNoteDteSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
 class RemakeRequestSerializer(StrictSerializer):
     note = serializers.CharField(required=False, allow_null=True, max_length=500)
 
@@ -111,6 +150,26 @@ class RemakeRequestSerializer(StrictSerializer):
 class StepTransitionSerializer(serializers.Serializer):
     step = ProductionStepSerializer()
     order_status = serializers.CharField()
+
+
+class PackingLabelSerializer(serializers.Serializer):
+    unit_index = serializers.IntegerField()
+    label_code = serializers.CharField()
+    pieces = serializers.IntegerField()
+    profiles = serializers.IntegerField()
+    reinforcements = serializers.IntegerField()
+    glasses = serializers.IntegerField()
+    panels = serializers.IntegerField()
+    hardware = serializers.IntegerField()
+    qr_payload = serializers.CharField()
+    qr_svg = serializers.CharField()
+
+
+class PackingLabelsSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    status = serializers.CharField()
+    labels = PackingLabelSerializer(many=True)
 
 
 class WorkCenterSerializer(serializers.Serializer):
@@ -148,3 +207,81 @@ class WorkOrderOptimizeSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
     optimization = serializers.DictField()
+
+
+class DeliveryConfirmationSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    confirmation_code = serializers.CharField()
+    order_id = serializers.UUIDField()
+    delivery_id = serializers.UUIDField()
+    payment_id = serializers.UUIDField(allow_null=True)
+    issued_at = serializers.DateTimeField()
+
+
+class DeliveryConfirmationAccessSerializer(DeliveryConfirmationSerializer):
+    signed_url = serializers.CharField()
+    expires_in = serializers.IntegerField()
+
+
+class DeliverySerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    scheduled_date = serializers.CharField()
+    time_window = serializers.CharField()
+    address = serializers.CharField()
+    contact_name = serializers.CharField(allow_null=True)
+    contact_phone = serializers.CharField(allow_null=True)
+    installer_name = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    status = serializers.ChoiceField(
+        choices=("SCHEDULED", "ON_ROUTE", "DELIVERED", "FAILED")
+    )
+    confirmation = DeliveryConfirmationSerializer(allow_null=True)
+    scheduled_by = serializers.UUIDField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class DeliveryResponseSerializer(serializers.Serializer):
+    delivery = DeliverySerializer(allow_null=True)
+
+
+class DeliveryScheduleRequestSerializer(StrictSerializer):
+    scheduled_date = serializers.CharField(max_length=10)
+    time_window = serializers.ChoiceField(
+        choices=("AM", "PM", "JORNADA"), required=False, default="AM"
+    )
+    address = serializers.CharField(max_length=300)
+    contact_name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    contact_phone = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    installer_name = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class DeliveryTransitionRequestSerializer(StrictSerializer):
+    status = serializers.ChoiceField(choices=("ON_ROUTE", "DELIVERED", "FAILED"))
+
+
+class DeliveryPaymentRequestSerializer(StrictSerializer):
+    amount = serializers.CharField()
+    method = serializers.ChoiceField(
+        choices=("TRANSFER", "CASH", "CARD", "CHECK", "OTHER")
+    )
+    kind = serializers.ChoiceField(
+        choices=("ANTICIPO", "PARCIAL", "SALDO"), required=False, default="SALDO"
+    )
+    reference = serializers.CharField(required=False, allow_blank=True, max_length=120)
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class DeliveryConfirmRequestSerializer(StrictSerializer):
+    receiver_name = serializers.CharField(max_length=200)
+    receiver_rut = serializers.CharField(required=False, allow_blank=True, max_length=30)
+    signature_png = serializers.CharField()
+    payment = DeliveryPaymentRequestSerializer(required=False, allow_null=True)
+
+
+class DeliveryConfirmResponseSerializer(serializers.Serializer):
+    confirmation = DeliveryConfirmationSerializer()
+    delivery = DeliverySerializer()

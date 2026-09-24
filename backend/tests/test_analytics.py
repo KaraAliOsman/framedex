@@ -20,6 +20,7 @@ class _FakeTs:
 def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     org_id = uuid4()
     seen_params: list[list] = []
+    seen_sql: list[str] = []
 
     def fake_rows(sql_text: str, params: list) -> list[dict]:
         lowered = " ".join(sql_text.lower().split())
@@ -51,6 +52,9 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
             return {"n": 7}
         if "offcut_inventory" in lowered:
             return {"n": 2}
+        if "deliveries" in lowered:
+            seen_sql.append(lowered)
+            return {"today": 2, "overdue": 1}
         if "projects" in lowered:
             return {"projects": 5, "positions": 9, "sealed_versions": 3}
         raise AssertionError(f"unexpected one(): {lowered}")
@@ -67,8 +71,14 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert out["throughput_30d"]["dispatched_30d"] == 3
     assert out["avg_release_to_dispatch_hours"] == 4.3
     assert out["inventory"] == {"items": 7, "offcuts": 2}
+    assert out["deliveries"] == {"today": 2, "overdue": 1}
     assert out["documents"] == {"DOC-03": 4}
     assert out["projects"]["sealed_versions"] == 3
     assert out["recent_events"][0]["event"] == "WO_INSTALLED"
     # every aggregate ran org-scoped
-    assert seen_params and all(p == [str(org_id)] or p == [str(org_id)] * 3 for p in seen_params)
+    assert seen_params and all(set(p) == {str(org_id)} for p in seen_params)
+    # the "business day" is the organization's own timezone, never UTC or a
+    # hardcoded locale — deliveries classify at the tenant's local midnight
+    assert seen_sql and all(
+        "tenancy_organizations" in sql and "org.timezone" in sql for sql in seen_sql
+    )

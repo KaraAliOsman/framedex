@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createBowFromInputs } from "./AssemblyEditor";
 import {
   addAdjacentUnit,
+  makeTrapezoidModule,
+  elevationLayoutMm,
   equalizeCouplingAngles,
   equalizeModuleWidths,
   isProductModel,
@@ -22,14 +23,15 @@ import {
   setCouplerSkuAll,
   setCouplingAngle,
   setModuleCount,
+  setModuleFrameless,
   setModuleOpening,
   setModuleWidth,
   setAllModuleHeights,
   splitModuleBay,
   totalModuleWidth,
   wrapTreeAsProduct,
+  type ProductJson,
 } from "./productEditing";
-import type { CanvasDesignInputs } from "./canvasStore";
 
 function bow(): ReturnType<typeof makeBowProduct> {
   return makeBowProduct({
@@ -80,6 +82,50 @@ describe("addAdjacentUnit", () => {
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
     expect(grown.assembly.modules[0]!.tree).not.toBe(grown.assembly.modules[1]!.tree);
+  });
+
+  it("a single frameless pane stays product-v2, never classic", () => {
+    const pane = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED", glass_spec: "4" },
+      "1200.00",
+      "2100.00",
+    );
+    const frameless = setModuleFrameless(pane, "m1", {
+      supports: [{ kind: "CHANNEL", edge: "bottom", article_sku: "UCHANNEL-12", qty: 1 }],
+      fittings: [],
+      exposed_edges: ["top", "right", "bottom", "left"],
+    });
+    // The classic tree has nowhere to carry supports/fittings — serializing
+    // as a framed single unit would silently drop the glass-only spec.
+    expect(isSingleUnit(frameless)).toBe(false);
+    expect(isSingleUnit(setModuleFrameless(frameless, "m1", null))).toBe(true);
+  });
+
+  it("carries the edge module's contour — scaled, never silently rect", () => {
+    const trapezoid: ProductJson = {
+      version: "product-v2",
+      assembly: {
+        modules: [
+          makeTrapezoidModule("m1", "2400.00", "1400.00", 200, 200, {
+            id: "g1",
+            type: "BAY",
+            opening_type: "FIXED",
+          }),
+        ],
+        couplings: [],
+      },
+    };
+    const grown = addAdjacentUnit(trapezoid, "right", { widthMm: "1200.00" });
+    const added = grown.assembly.modules.at(-1)!;
+    expect(added.contour).toBeDefined();
+    expect(added.width_mm).toBe("1200.00");
+    // Scaled to the new width: right edge lands on 1200, top corners keep
+    // the same proportional inset (200/2400 → 100/1200).
+    const xs = added.contour!.vertices.map((v) => Number(v.x_mm));
+    expect(Math.max(...xs)).toBeCloseTo(1200, 2);
+    expect(Math.min(...xs)).toBeCloseTo(0, 2);
+    expect(Number(added.contour!.vertices[2]!.x_mm)).toBeCloseTo(1100, 2);
+    expect(Number(added.contour!.vertices[3]!.x_mm)).toBeCloseTo(100, 2);
   });
 });
 
@@ -303,6 +349,44 @@ describe("scaleModuleWidths", () => {
     expect(scaleModuleWidths(product, "abc")).toBe(product);
     expect(scaleModuleWidths(product, "0.02")).toBe(product);
   });
+
+  it("scales the elevation envelope, not the stacked width sum", () => {
+    // Door + transom share one column: widths sum 1800 but the elevation is
+    // 900 wide — a 1200 request must produce a 1200 mm envelope, not 600 mm
+    // of column plus a 600 mm overhang.
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const door = base.assembly.modules[0]!;
+    const transom = wrapTreeAsProduct(
+      makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 400, angleDeg: 0 }).assembly
+        .modules[0]!.tree,
+      "900.00",
+      "400.00",
+    ).assembly.modules[0]!;
+    const stacked: ProductJson = {
+      ...base,
+      assembly: {
+        modules: [door, { ...transom, id: "t1" }],
+        couplings: [
+          {
+            id: "c1",
+            modules: [door.id, "t1"],
+            edges: ["top", "bottom"],
+            kind: "STACKED",
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const scaled = scaleModuleWidths(stacked, "1200.00");
+    const layout = elevationLayoutMm(scaled);
+    const envelope =
+      Math.max(...layout.members.map((member) => member.x + member.w)) -
+      Math.min(...layout.members.map((member) => member.x));
+    expect(envelope).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[0]!.width_mm)).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[1]!.width_mm)).toBeCloseTo(1200, 2);
+  });
 });
 
 describe("module commands", () => {
@@ -346,36 +430,5 @@ describe("module commands", () => {
     const fixed = setModuleOpening(doored, "m2", "FIXED");
     expect(modulePanelSku(doored.assembly.modules[1]!)).toBe("PANEL-70");
     expect(modulePanelSku(fixed.assembly.modules[1]!)).toBeNull();
-  });
-});
-
-describe("createBowFromInputs", () => {
-  it("derives a 3-module bow from classic inputs", () => {
-    const inputs: CanvasDesignInputs = {
-      systemId: "s",
-      nominalWidthMm: "2400.00",
-      nominalHeightMm: "1500.00",
-      color: "WHITE",
-      parametricTree: { id: "b", type: "BAY", opening_type: "FIXED" },
-      product: null,
-    };
-    const product = createBowFromInputs(inputs, "4.00", "4");
-    expect(product.assembly.modules).toHaveLength(3);
-    expect(totalModuleWidth(product)).toBeCloseTo(2400, 5);
-  });
-
-  it("carries the selected glass sku into every module", () => {
-    const inputs: CanvasDesignInputs = {
-      systemId: "s",
-      nominalWidthMm: "2400.00",
-      nominalHeightMm: "1500.00",
-      color: "WHITE",
-      parametricTree: { id: "b", type: "BAY", opening_type: "FIXED" },
-      product: null,
-    };
-    const product = createBowFromInputs(inputs, "4.00", "4", "GLASS-A");
-    expect(product.assembly.modules.every((module) => moduleGlassSku(module) === "GLASS-A")).toBe(
-      true,
-    );
   });
 });
