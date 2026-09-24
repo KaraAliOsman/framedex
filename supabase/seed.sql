@@ -835,6 +835,15 @@ FROM public.profile_systems s CROSS JOIN (VALUES
 WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
 ON CONFLICT (system_id, org_id, rule_id) DO NOTHING;
 
+-- The purchase-authority tail targets the post-shot-09 schema (physical
+-- stock identity, provenance, glass_spec). The pre-pricing upgrade drill
+-- replays this seed on a shot-07 schema; the tail is planned only when the
+-- column family exists.
+DO $post09$
+BEGIN
+IF EXISTS (SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'glass_purchase_mappings'
+             AND column_name = 'glass_spec') THEN
 INSERT INTO public.profile_purchase_mappings
  (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
   purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
@@ -978,5 +987,9 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/reinforceme
  '{"schema_version": 1, "policy_id": "GLASS_45_REINFORCEMENT_CUT_V1", "version": 1, "rules": [{"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "SASH", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_V", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_H", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}]}'::jsonb
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
+
+END IF;
+END;
+$post09$;
 
 COMMIT;
