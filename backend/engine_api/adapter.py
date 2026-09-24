@@ -28,6 +28,11 @@ from dekopen_engine.models import PlanPoint
 from dekopen_engine.product import (
     ConnectionKind,
     EdgeSide,
+    FramelessFitting,
+    FramelessFittingKind,
+    FramelessSpec,
+    FramelessSupport,
+    FramelessSupportKind,
     elevation_envelope as elevation_envelope,
 )
 
@@ -206,6 +211,106 @@ def parse_contour(payload: object) -> Contour | None:
         raise InvalidEngineRequest("Invalid module contour") from error
 
 
+_SUPPORT_FIELDS = {"kind", "edge", "article_sku", "qty"}
+_FITTING_FIELDS = {"kind", "sku", "qty"}
+_FRAMELESS_FIELDS = {"supports", "fittings", "exposed_edges"}
+
+
+def _parse_edge_side(value: object, label: str) -> EdgeSide:
+    text = _require_str(value, label)
+    try:
+        return EdgeSide(text)
+    except ValueError as error:
+        raise InvalidEngineRequest(f"{label} must be a side (left/right/top/bottom)") from error
+
+
+def _positive_qty(value: object, label: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise InvalidEngineRequest(f"{label} must be a positive integer")
+    return value
+
+
+def parse_frameless(payload: object) -> FramelessSpec | None:
+    """Deserialize a glass-only module spec (mandate §14): declared supports,
+    fittings and exposed edges — all validated enum/field whitelists."""
+    if payload is None:
+        return None
+    raw = _require_dict(payload, "module.frameless")
+    unexpected = set(raw) - _FRAMELESS_FIELDS
+    if unexpected:
+        raise InvalidEngineRequest(
+            f"module.frameless contains unsupported fields: {sorted(unexpected)}"
+        )
+
+    supports: list[FramelessSupport] = []
+    for item in raw.get("supports") or []:
+        support = _require_dict(item, "frameless.supports[]")
+        unexpected = set(support) - _SUPPORT_FIELDS
+        if unexpected:
+            raise InvalidEngineRequest(
+                f"frameless support contains unsupported fields: {sorted(unexpected)}"
+            )
+        kind_raw = _require_str(support.get("kind"), "frameless.support.kind")
+        try:
+            kind = FramelessSupportKind(kind_raw)
+        except ValueError as error:
+            raise InvalidEngineRequest(
+                "frameless support kind must be CHANNEL or CLAMPS"
+            ) from error
+        supports.append(
+            FramelessSupport(
+                kind=kind,
+                edge=_parse_edge_side(support.get("edge"), "frameless.support.edge"),
+                article_sku=_require_str(
+                    support.get("article_sku"), "frameless.support.article_sku"
+                ),
+                qty=_positive_qty(support.get("qty", 1), "frameless.support.qty"),
+            )
+        )
+
+    fittings: list[FramelessFitting] = []
+    for item in raw.get("fittings") or []:
+        fitting = _require_dict(item, "frameless.fittings[]")
+        unexpected = set(fitting) - _FITTING_FIELDS
+        if unexpected:
+            raise InvalidEngineRequest(
+                f"frameless fitting contains unsupported fields: {sorted(unexpected)}"
+            )
+        kind_raw = _require_str(fitting.get("kind"), "frameless.fitting.kind")
+        try:
+            kind = FramelessFittingKind(kind_raw)
+        except ValueError as error:
+            raise InvalidEngineRequest(
+                "frameless fitting kind must be one of "
+                + ", ".join(k.value for k in FramelessFittingKind)
+            ) from error
+        fittings.append(
+            FramelessFitting(
+                kind=kind,
+                sku=_require_str(fitting.get("sku"), "frameless.fitting.sku"),
+                qty=_positive_qty(fitting.get("qty", 1), "frameless.fitting.qty"),
+            )
+        )
+
+    raw_edges = raw.get("exposed_edges")
+    exposed_edges = None
+    if raw_edges is not None:
+        if not isinstance(raw_edges, list) or not raw_edges:
+            raise InvalidEngineRequest(
+                "frameless.exposed_edges must be a non-empty array of sides"
+            )
+        exposed_edges = [
+            _parse_edge_side(edge, "frameless.exposed_edges[]") for edge in raw_edges
+        ]
+
+    try:
+        return FramelessSpec(
+            supports=supports, fittings=fittings, exposed_edges=exposed_edges
+        )
+    except ValueError as error:
+        raise InvalidEngineRequest("Invalid module frameless spec") from error
+
+
 def normalized_root_from_api(
     *,
     parametric_tree: object,
@@ -246,7 +351,9 @@ def calculate_from_api(
 
 _PRODUCT_FIELDS = {"version", "assembly"}
 _ASSEMBLY_FIELDS = {"modules", "couplings"}
-_MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree", "contour"}
+_MODULE_FIELDS = {
+    "id", "width_mm", "height_mm", "tree", "contour", "frameless",
+}
 _COUPLING_FIELDS = {
     "id",
     "angle_deg",
@@ -338,6 +445,7 @@ def parse_product_model(payload: object) -> ProductModel:
                 width_mm=width_mm,
                 height_mm=height_mm,
                 contour=contour,
+                frameless=parse_frameless(module.get("frameless")),
                 tree=parse_parametric_node(module.get("tree")),
             )
         )

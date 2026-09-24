@@ -74,10 +74,12 @@ function responseFor(request: EngineCalculateRequestRequest): EngineCalculateRes
         thickness_net_mm: "4.00",
         glass_spec: null,
         article_sku: null,
+        exposed_edges: null,
       },
     ],
     hardware_items: [],
     panels: [],
+    fittings: [],
     leaf_weights: [],
     calculation_hash: `sha256:${"0".repeat(64)}`,
   };

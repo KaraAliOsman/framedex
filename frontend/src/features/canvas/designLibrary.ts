@@ -3,6 +3,7 @@ import type { IntentNode, Opening } from "./intentEditing";
 import {
   makeArchModule,
   makeBowProduct,
+  makeFramelessModule,
   makeTrapezoidModule,
   totalModuleWidth,
   wrapTreeAsProduct,
@@ -182,6 +183,18 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
             starterTree("FIXED"),
           ),
         ],
+        couplings: [],
+      },
+    }),
+  },
+  {
+    key: "frameless",
+    titleKey: "assembly.starter.frameless",
+    hintKey: "assembly.starter.framelessHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [makeFramelessModule("m1", w.toFixed(2), h.toFixed(2), starterTree("FIXED"))],
         couplings: [],
       },
     }),

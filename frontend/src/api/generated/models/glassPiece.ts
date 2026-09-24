@@ -27,4 +27,6 @@ export interface GlassPiece {
   glass_spec: string | null;
   /** @nullable */
   article_sku: string | null;
+  /** @nullable */
+  exposed_edges: string[] | null;
 }

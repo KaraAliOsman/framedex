@@ -56,6 +56,7 @@ from dekopen_engine.models import (
     EffectiveProfileArticle,
     EngineModel,
     EngineResult,
+    FittingPiece,
     GlassPiece,
     MaterialType,
     NodeType,
@@ -111,8 +112,14 @@ class IssueCode(str, Enum):
     ASSEMBLY_DISCONNECTED = "assembly_disconnected"
     STACKED_CYCLE = "stacked_cycle"
     INLINE_NOT_ADJACENT = "inline_not_adjacent"
+    CONTOUR_COUPLING_UNSUPPORTED = "contour_coupling_unsupported"
     SLIDING_LAYOUT_INVALID = "sliding_layout_invalid"
     SLIDING_TRACKS_UNSUPPORTED = "sliding_tracks_unsupported"
+    FRAMELESS_SPLITS_UNSUPPORTED = "frameless_splits_unsupported"
+    FRAMELESS_OPENING_UNSUPPORTED = "frameless_opening_unsupported"
+    FRAMELESS_PANEL_UNSUPPORTED = "frameless_panel_unsupported"
+    FRAMELESS_CONTOUR_UNSUPPORTED = "frameless_contour_unsupported"
+    FRAMELESS_ARTICLE_UNKNOWN = "frameless_article_unknown"
 
 
 class ConnectionKind(str, Enum):
@@ -152,6 +159,57 @@ class CouplingDef(EngineModel):
     edges: list[EdgeSide] | None = None
 
 
+class FramelessSupportKind(str, Enum):
+    """How an exposed edge is held (mandate §14)."""
+
+    CHANNEL = "CHANNEL"  # continuous channel run seating the edge
+    CLAMPS = "CLAMPS"  # point clamps along the edge — `qty` is the count
+
+
+class FramelessFittingKind(str, Enum):
+    """Counted fitting kinds of the glass-only domain (mandate §14)."""
+
+    PATCH_FITTING = "PATCH_FITTING"
+    CLAMP = "CLAMP"
+    HINGE = "HINGE"
+    LOCK = "LOCK"
+    CONNECTOR = "CONNECTOR"
+    SEAL = "SEAL"
+    SUPPORT = "SUPPORT"
+
+
+class FramelessSupport(EngineModel):
+    """One supported edge run of a frameless pane."""
+
+    kind: FramelessSupportKind
+    edge: EdgeSide
+    article_sku: str
+    qty: int = Field(default=1, gt=0)
+
+
+class FramelessFitting(EngineModel):
+    """A declared fitting on the pane — patch fitting, clamp, hinge, lock,
+    connector, seal or point support, with its catalog sku and count."""
+
+    kind: FramelessFittingKind
+    sku: str
+    qty: int = Field(default=1, gt=0)
+
+
+class FramelessSpec(EngineModel):
+    """Glass-only module spec (mandate §14): the pane IS the module — real
+    support/fitting concepts, never fake FRAME/SASH profiles. `tree` must
+    still be a single BAY leaf carrying the glass spec; when `contour` is
+    also set, the pane takes the contour's boundary directly (no frame
+    inset exists to offset)."""
+
+    supports: list[FramelessSupport] = Field(default_factory=list)
+    fittings: list[FramelessFitting] = Field(default_factory=list)
+    # Edges of exposed glass — polishing authority's suggested preselection.
+    # None means the whole pane is exposed (all four edges).
+    exposed_edges: list[EdgeSide] | None = None
+
+
 class ProductModule(EngineModel):
     id: str
     # Nominal bounding rectangle — still drives plan-view layout and module
@@ -163,6 +221,8 @@ class ProductModule(EngineModel):
     # miters are corner interior / 2, and the fill region is the inward
     # offset. `tree` must then be a single BAY leaf carrying the region spec.
     contour: Contour | None = None
+    # Glass-only evaluation (mandate §14): pane + supports + fittings.
+    frameless: FramelessSpec | None = None
     tree: ParametricNode
 
 
@@ -941,6 +1001,12 @@ def _prefix_result(module_id: str, result: EngineResult) -> EngineResult:
             )
             for piece in result.panels
         ],
+        fittings=[
+            piece.model_copy(
+                update={"bay_id": bay(piece.bay_id), "leaf_id": leaf(piece.leaf_id)}
+            )
+            for piece in result.fittings
+        ],
         hardware_items=[
             item.model_copy(
                 update={
@@ -1354,6 +1420,158 @@ def _evaluate_contour_module(
     return result, issues, computation
 
 
+def _evaluate_frameless_module(
+    module: ProductModule,
+    *,
+    coupler_articles: dict[str, EffectiveProfileArticle],
+) -> tuple[EngineResult | None, list[ProductIssue]]:
+    """Evaluate a glass-only module (mandate §14): the pane IS the product —
+    no fake FRAME/SASH members exist to fit the old model. BOM is the glass
+    panel itself plus its real support/fitting concepts: channel runs as
+    profile cuts, clamps and declared fittings as counted pieces."""
+    issues: list[ProductIssue] = []
+    target = f"module:{module.id}"
+    assert module.frameless is not None
+    spec = module.frameless
+
+    if module.contour is not None:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.FRAMELESS_CONTOUR_UNSUPPORTED.value,
+                severity=Severity.ERROR,
+                target=target,
+            )
+        )
+        return None, issues
+
+    leaf = _single_region_leaf(module.tree)
+    if leaf is None:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.FRAMELESS_SPLITS_UNSUPPORTED.value,
+                severity=Severity.ERROR,
+                target=target,
+            )
+        )
+        return None, issues
+
+    opening = leaf.opening_type or BayOpeningType.FIXED
+    if opening is not BayOpeningType.FIXED:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.FRAMELESS_OPENING_UNSUPPORTED.value,
+                severity=Severity.WARNING,
+                target=target,
+                params={"opening": opening.value},
+            )
+        )
+    if leaf.panel_article_sku is not None:
+        issues.append(
+            ProductIssue(
+                code=IssueCode.FRAMELESS_PANEL_UNSUPPORTED.value,
+                severity=Severity.WARNING,
+                target=target,
+                params={"sku": leaf.panel_article_sku},
+            )
+        )
+
+    if leaf.glass_thickness_mm is None or leaf.glass_spec is None:
+        raise ValueError(
+            f"frameless module {module.id} requires glass_thickness_mm and glass_spec"
+        )
+
+    profile_cuts: list[ProfileCut] = []
+    glasses: list[GlassPiece] = []
+    fittings: list[FittingPiece] = []
+
+    thickness_net = derive_net_glass_thickness(leaf.glass_spec, leaf.glass_thickness_mm)
+    pane_area_mm2 = module.width_mm * module.height_mm
+    area_m2 = (pane_area_mm2 / Decimal("1000000")).quantize(
+        Decimal("0.0001"), rounding=ROUND_HALF_UP
+    )
+    weight_kg = (pane_area_mm2 / Decimal("1000000") * thickness_net * Decimal("2.50")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    exposed = spec.exposed_edges or [
+        EdgeSide.TOP,
+        EdgeSide.RIGHT,
+        EdgeSide.BOTTOM,
+        EdgeSide.LEFT,
+    ]
+    glasses.append(
+        GlassPiece(
+            bay_id=leaf.id,
+            width_mm=_q(module.width_mm),
+            height_mm=_q(module.height_mm),
+            area_m2=area_m2,
+            weight_kg=weight_kg,
+            thickness_net_mm=thickness_net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            glass_spec=leaf.glass_spec,
+            article_sku=leaf.glass_article_sku,
+            exposed_edges=[edge.value for edge in exposed],
+        )
+    )
+
+    for support in spec.supports:
+        edge_length = (
+            module.width_mm
+            if support.edge in (EdgeSide.TOP, EdgeSide.BOTTOM)
+            else module.height_mm
+        )
+        if support.kind is FramelessSupportKind.CHANNEL:
+            article = coupler_articles.get(support.article_sku)
+            if article is None:
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.FRAMELESS_ARTICLE_UNKNOWN.value,
+                        severity=Severity.WARNING,
+                        target=target,
+                        params={"sku": support.article_sku},
+                    )
+                )
+                continue
+            profile_cuts.append(
+                ProfileCut(
+                    sku=article.sku,
+                    role=ProfileRole.CHANNEL,
+                    material=article.material,
+                    length_mm=_q(edge_length),
+                    angle_left=Decimal("90"),
+                    angle_right=Decimal("90"),
+                    qty=support.qty,
+                    bay_id=leaf.id,
+                )
+            )
+        else:
+            fittings.append(
+                FittingPiece(
+                    kind=FramelessFittingKind.CLAMP.value,
+                    sku=support.article_sku,
+                    qty=support.qty,
+                    bay_id=leaf.id,
+                )
+            )
+    for fitting in spec.fittings:
+        fittings.append(
+            FittingPiece(
+                kind=fitting.kind.value,
+                sku=fitting.sku,
+                qty=fitting.qty,
+                bay_id=leaf.id,
+            )
+        )
+
+    return (
+        EngineResult(
+            profile_cuts=profile_cuts,
+            reinforcements=[],
+            glasses=glasses,
+            fittings=fittings,
+        ),
+        issues,
+    )
+
+
 def contour_module_computation(
     module: ProductModule,
     params: SystemParams,
@@ -1382,6 +1600,7 @@ def evaluate_product(
     modules = assembly.modules
     couplings = assembly.couplings
     issues: list[ProductIssue] = []
+    coupler_articles = coupler_articles or {}
 
     if len({module.id for module in modules}) != len(modules) or len(
         {coupling.id for coupling in couplings}
@@ -1414,7 +1633,12 @@ def evaluate_product(
         module_issues: list[ProductIssue] = []
         result: EngineResult | None = None
         try:
-            if module.contour is not None:
+            if module.frameless is not None:
+                result, frameless_issues = _evaluate_frameless_module(
+                    module, coupler_articles=coupler_articles
+                )
+                module_issues.extend(frameless_issues)
+            elif module.contour is not None:
                 result, contour_issues, _computation = _evaluate_contour_module(
                     module, params, is_foiled=is_foiled
                 )
@@ -1455,9 +1679,11 @@ def evaluate_product(
 
     coupler_cuts: list[ProfileCut] = []
     coupler_reinforcements: list[ReinforcementPiece] = []
-    coupler_articles = coupler_articles or {}
     module_by_id = {module.id: module for module in modules}
     claimed_edges: set[tuple[str, EdgeSide]] = set()
+    resolved_pairs = _resolved_pairs(modules, couplings)
+    stack_root = _resolve_stack_roots(modules, resolved_pairs)
+    column_index = {module.id: index for index, module in enumerate(modules)}
     for index, coupling in enumerate(couplings):
         target = f"coupling:{coupling.id}"
         if coupling.kind in (ConnectionKind.TEE, ConnectionKind.CORNER):
@@ -1489,6 +1715,17 @@ def evaluate_product(
             issues.append(
                 ProductIssue(
                     code=IssueCode.COUPLER_MODULE_UNKNOWN.value,
+                    severity=Severity.WARNING,
+                    target=target,
+                )
+            )
+            continue
+        if first.contour is not None or second.contour is not None:
+            # A contour edge is a shaped boundary — no straight coupler can
+            # close the seam until shaped joints have an authority.
+            issues.append(
+                ProductIssue(
+                    code=IssueCode.CONTOUR_COUPLING_UNSUPPORTED.value,
                     severity=Severity.WARNING,
                     target=target,
                 )
@@ -1526,6 +1763,31 @@ def evaluate_product(
                 )
             )
             continue
+        # Edge direction on INLINE seams: edges[i] claims a side of
+        # modules[i], and the join is only physical when the left column
+        # offers its RIGHT and the right column its LEFT. Column order comes
+        # from declaration order — a reversed pair otherwise cuts a coupler
+        # across the assembly's outer edges. (STACKED direction is defined by
+        # the edges themselves, so there is nothing to check there.)
+        if coupling.kind is ConnectionKind.INLINE:
+            first_is_left = column_index.get(
+                stack_root.get(first.id, first.id), -1
+            ) < column_index.get(stack_root.get(second.id, second.id), -1)
+            expected = (
+                (EdgeSide.RIGHT, EdgeSide.LEFT)
+                if first_is_left
+                else (EdgeSide.LEFT, EdgeSide.RIGHT)
+            )
+            if tuple(edges) != expected:
+                issues.append(
+                    ProductIssue(
+                        code=IssueCode.COUPLER_EDGE_INVALID.value,
+                        severity=Severity.WARNING,
+                        target=target,
+                        params={"kind": coupling.kind.value},
+                    )
+                )
+                continue
         pair_claims = {(first.id, edges[0]), (second.id, edges[1])}
         if claimed_edges & pair_claims:
             issues.append(
@@ -1636,6 +1898,7 @@ def evaluate_product(
             + coupler_reinforcements,
             glasses=[piece for r in aggregated for piece in r.glasses],
             panels=[piece for r in aggregated for piece in r.panels],
+            fittings=[piece for r in aggregated for piece in r.fittings],
             hardware_items=[
                 item for r in aggregated for item in r.hardware_items
             ],

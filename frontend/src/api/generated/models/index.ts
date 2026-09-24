@@ -142,6 +142,7 @@ export * from "./engineSystemsResponse";
 export * from "./environmentEnum";
 export * from "./errorDetail";
 export * from "./errorResponse";
+export * from "./fittingPiece";
 export * from "./fixabilityEnum";
 export * from "./flowAcknowledgement";
 export * from "./flowConfirmationRequest";

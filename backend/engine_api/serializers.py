@@ -64,6 +64,9 @@ class GlassPieceSerializer(serializers.Serializer):
     )
     glass_spec = serializers.CharField(allow_null=True)
     article_sku = serializers.CharField(allow_null=True)
+    exposed_edges = serializers.ListField(
+        child=serializers.CharField(), allow_null=True
+    )
 
 
 class PanelPieceSerializer(serializers.Serializer):
@@ -94,6 +97,16 @@ class HardwareItemSerializer(serializers.Serializer):
     contents = HardwareComponentSerializer(many=True)
 
 
+class FittingPieceSerializer(serializers.Serializer):
+    """Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support."""
+
+    kind = serializers.CharField()
+    sku = serializers.CharField()
+    qty = serializers.IntegerField()
+    bay_id = serializers.CharField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
+
+
 class LeafWeightSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
     leaf_id = serializers.CharField(allow_null=True)
@@ -110,6 +123,7 @@ class EngineResultPayloadSerializer(serializers.Serializer):
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)
     panels = PanelPieceSerializer(many=True)
+    fittings = FittingPieceSerializer(many=True)
     hardware_items = HardwareItemSerializer(many=True)
     leaf_weights = LeafWeightSerializer(many=True)
 

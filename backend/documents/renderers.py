@@ -1085,7 +1085,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         body += (
             "<h2>Bultos</h2>"
             + _table(
-                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
                 [
                     [
                         unit.get("label_code"),
@@ -1094,10 +1094,11 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
                         unit.get("glasses"),
                         unit.get("panels"),
                         unit.get("hardware"),
+                        unit.get("fittings"),
                     ]
                     for unit in units
                 ],
-                ["", "dimension", "dimension", "dimension", "dimension", "dimension"],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
             )
         )
     else:
@@ -1111,7 +1112,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
     body += (
         "<h2>Resumen de contenido</h2>"
         + _table(
-            ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+            ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
             [
                 [
                     totals.get("profiles"),
@@ -1119,9 +1120,10 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
                     totals.get("glasses"),
                     totals.get("panels"),
                     totals.get("hardware"),
+                    totals.get("fittings"),
                 ]
             ],
-            ["dimension", "dimension", "dimension", "dimension", "dimension"],
+            ["dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
         )
         + "<div class=\"signoff\"><div class=\"signature\"></div>"
         + "<p class=\"muted\">Despachado por / Recibido conforme</p></div></main>"
@@ -1427,7 +1429,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
         body += (
             "<h2>Bultos entregados</h2>"
             + _table(
-                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes"],
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
                 [
                     [
                         unit.get("label_code"),
@@ -1436,10 +1438,11 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
                         unit.get("glasses"),
                         unit.get("panels"),
                         unit.get("hardware"),
+                        unit.get("fittings"),
                     ]
                     for unit in units
                 ],
-                ["", "dimension", "dimension", "dimension", "dimension", "dimension"],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
             )
         )
     contact = _value(delivery.get("contact_name"))

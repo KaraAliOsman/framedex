@@ -84,6 +84,7 @@ function bom(sku: string): EngineCalculateResponse {
     reinforcements: [],
     glasses: [],
     panels: [],
+    fittings: [],
     hardware_items: [],
     leaf_weights: [],
     calculation_hash: `sha256:${"a".repeat(64)}`,
@@ -818,7 +819,7 @@ it("renders the design library with rendered starter cards", async () => {
   const list = await screen.findByRole("list", {
     name: t("assembly.starterLibrary"),
   });
-  expect(within(list).getAllByRole("listitem")).toHaveLength(14);
+  expect(within(list).getAllByRole("listitem")).toHaveLength(15);
   // Every card previews through the same front-elevation renderer.
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });

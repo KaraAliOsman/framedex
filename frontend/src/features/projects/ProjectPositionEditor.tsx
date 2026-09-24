@@ -657,6 +657,29 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
           {kit.name} × {kit.qty}
         </p>
       ))}
+      {(result.fittings ?? []).length > 0 && (
+        <div className="projects-table-scroll">
+          <table>
+            <caption>{t("projects.fittings")}</caption>
+            <thead>
+              <tr>
+                <th>{t("projects.article")}</th>
+                <th>{t("assembly.framelessFittings")}</th>
+                <th>{t("pricing.quantity")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(result.fittings ?? []).map((item, index) => (
+                <tr key={index}>
+                  <td>{item.sku}</td>
+                  <td>{item.kind}</td>
+                  <td>{item.qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {result.reinforcements.length > 0 && (
         <div className="projects-table-scroll">
           <table>

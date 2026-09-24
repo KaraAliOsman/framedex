@@ -32,6 +32,35 @@ export type ContourJson = {
   bulges: (string | null)[];
 };
 
+/** Edge of a module's elevation for frameless supports / exposed edges —
+ * mirrors dekopen_engine EdgeSide (lowercase). */
+export type FramelessEdge = "left" | "right" | "top" | "bottom";
+
+/** One supported edge run of a glass-only pane — mirrors FramelessSupport:
+ * CHANNEL runs a continuous seat along the edge, CLAMPS counts point clamps. */
+export type FramelessSupportJson = {
+  kind: "CHANNEL" | "CLAMPS";
+  edge: FramelessEdge;
+  article_sku: string;
+  qty: number;
+};
+
+/** A counted fitting on a glass-only pane — mirrors FramelessFitting. */
+export type FramelessFittingJson = {
+  kind: "PATCH_FITTING" | "CLAMP" | "HINGE" | "LOCK" | "CONNECTOR" | "SEAL" | "SUPPORT";
+  sku: string;
+  qty: number;
+};
+
+/** Glass-only module spec (mandate §14): the pane IS the module — real
+ * support/fitting concepts, never fake FRAME/SASH profiles. Omitted
+ * exposed_edges means the whole pane is exposed (all four edges). */
+export type FramelessSpecJson = {
+  supports: FramelessSupportJson[];
+  fittings: FramelessFittingJson[];
+  exposed_edges?: FramelessEdge[];
+};
+
 export type ProductModuleJson = {
   id: string;
   width_mm: string;
@@ -39,6 +68,8 @@ export type ProductModuleJson = {
   tree: IntentNode;
   /** Present only on non-rectangular modules; width/height stay the bbox. */
   contour?: ContourJson;
+  /** Present only on glass-only modules — no frame members exist. */
+  frameless?: FramelessSpecJson;
 };
 
 export type ProductJson = {
@@ -109,6 +140,29 @@ export function makeArchModule(
       bulges: [null, null, riseMm.toFixed(2), null],
     },
     tree,
+  };
+}
+
+/** Glass-only module (mandate §14): the pane IS the product — no frame
+ * members exist. The standard fixed-panel seat is a bottom channel run;
+ * its article resolves against the catalog's coupler articles, so the
+ * declared sku may be blank until the user picks one (the engine warns
+ * `frameless_article_unknown` rather than guessing). */
+export function makeFramelessModule(
+  id: string,
+  widthMm: string,
+  heightMm: string,
+  tree: IntentNode,
+): ProductModuleJson {
+  return {
+    id,
+    width_mm: widthMm,
+    height_mm: heightMm,
+    tree,
+    frameless: {
+      supports: [{ kind: "CHANNEL", edge: "bottom", article_sku: "", qty: 1 }],
+      fittings: [],
+    },
   };
 }
 
@@ -381,6 +435,17 @@ export function addAdjacentUnit(
     height_mm: edge.height_mm,
     tree: cloneTree(edge.tree),
     ...(edge.contour ? { contour: scaledContour(edge.contour, widthMm, edge.height_mm) } : {}),
+    ...(edge.frameless
+      ? {
+          frameless: {
+            supports: edge.frameless.supports.map((support) => ({ ...support })),
+            fittings: edge.frameless.fittings.map((fitting) => ({ ...fitting })),
+            ...(edge.frameless.exposed_edges
+              ? { exposed_edges: [...edge.frameless.exposed_edges] }
+              : {}),
+          },
+        }
+      : {}),
   };
   const coupling: CouplingJson = {
     id: nextCouplingId(product),
@@ -967,6 +1032,20 @@ export function setModulePanel(
 
 export function modulePanelSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.panel_article_sku ?? null;
+}
+
+/** Set or clear a module's glass-only spec. `null` returns the module to
+ * the framed path; a spec replaces it wholesale (the inspector edits rows
+ * by rebuilding the arrays). */
+export function setModuleFrameless(
+  product: ProductJson,
+  moduleId: string,
+  spec: FramelessSpecJson | null,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  const { frameless: _omitted, ...rest } = module;
+  return replaceModule(product, moduleId, spec === null ? rest : { ...rest, frameless: spec });
 }
 
 /** A bay's region extent along an axis — the span its local split_offset_mm

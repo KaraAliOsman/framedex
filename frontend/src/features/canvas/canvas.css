@@ -263,6 +263,78 @@
   font-size: 0.8rem;
 }
 
+.assembly-field--inline {
+  gap: 0.5rem;
+}
+
+.assembly-field--inline input[type="checkbox"] {
+  width: auto;
+}
+
+.inspector-note {
+  color: var(--theme-text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 0.4rem;
+}
+
+.inspector-subhead {
+  color: var(--theme-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0.6rem 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.frameless-rows {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.frameless-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.frameless-row select {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.3rem;
+}
+
+.frameless-row input[type="text"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-size: 0.8rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  width: 7rem;
+}
+
+.frameless-row input[type="number"] {
+  background: var(--theme-bg-canvas);
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-primary);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+  width: 3.5rem;
+}
+
+.frameless-edges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+}
+
 .assembly-workspace {
   display: grid;
   gap: 0.75rem;

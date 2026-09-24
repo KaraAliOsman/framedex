@@ -12685,6 +12685,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PanelPiece'
+        fittings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FittingPiece'
         hardware_items:
           type: array
           items:
@@ -12698,6 +12702,7 @@ components:
           pattern: ^sha256:[0-9a-f]{64}$
       required:
       - calculation_hash
+      - fittings
       - glasses
       - hardware_items
       - leaf_weights
@@ -12852,6 +12857,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PanelPiece'
+        fittings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FittingPiece'
         hardware_items:
           type: array
           items:
@@ -12861,6 +12870,7 @@ components:
           items:
             $ref: '#/components/schemas/LeafWeight'
       required:
+      - fittings
       - glasses
       - hardware_items
       - leaf_weights
@@ -12907,6 +12917,28 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - error
+    FittingPiece:
+      type: object
+      description: Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support.
+      properties:
+        kind:
+          type: string
+        sku:
+          type: string
+        qty:
+          type: integer
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - bay_id
+      - kind
+      - leaf_id
+      - qty
+      - sku
     FixabilityEnum:
       enum:
       - AUTO_FIXABLE
@@ -13032,10 +13064,16 @@ components:
         article_sku:
           type: string
           nullable: true
+        exposed_edges:
+          type: array
+          items:
+            type: string
+          nullable: true
       required:
       - area_m2
       - article_sku
       - bay_id
+      - exposed_edges
       - glass_spec
       - height_mm
       - leaf_id

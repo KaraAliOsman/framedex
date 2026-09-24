@@ -1220,6 +1220,7 @@ const messages = {
     "No se pudo completar la operación. Revisa los datos e inténtalo de nuevo.",
   "projects.reinforcements": "Refuerzos",
   "projects.panels": "Paneles",
+  "projects.fittings": "Herrajes",
   "projects.article": "Artículo",
   "projects.duplicatePosition": "Duplicar vano",
   "projects.deletePosition": "Eliminar vano",
@@ -1287,6 +1288,8 @@ const messages = {
     "La apertura {opening} no se fabrica aún sobre contornos — el marco y el vidrio sí se calculan",
   "assembly.issue.contourPanel":
     "El panel {sku} no se apoya aún en contornos — el marco y el vidrio sí se calculan",
+  "assembly.issue.contourCoupling":
+    "La unión {target} toca un módulo con contorno — las juntas sobre bordes curvos o inclinados aún no se fabrican",
   "assembly.issue.memberBending":
     "El miembro {edge} de {target} necesita curvado (flecha {sagitta_mm} mm) — sin regla de curvado declarada",
   "assembly.issue.couplerWidthMismatch":
@@ -1307,6 +1310,43 @@ const messages = {
   "assembly.issue.slidingLayoutInvalid": "La distribución corredera de {target} no es fabricable",
   "assembly.issue.slidingTracksUnsupported":
     "La serie no admite {tracks} rieles — el máximo es {rails}",
+  "assembly.issue.framelessContour":
+    "El vidrio sin marco de {target} no admite contorno por ahora — vuelve el módulo rectangular",
+  "assembly.issue.framelessSplits":
+    "El vidrio sin marco de {target} no admite divisiones internas — el paño es una sola pieza",
+  "assembly.issue.framelessOpening":
+    "La apertura {opening} no se fabrica aún en vidrio sin marco — el paño queda fijo",
+  "assembly.issue.framelessPanel":
+    "El panel {sku} no se apoya en vidrio sin marco — el paño es solo vidrio",
+  "assembly.issue.framelessArticleUnknown":
+    "El canal {sku} de {target} no existe en el catálogo — elige un artículo declarado",
+  "assembly.frameless": "Vidrio sin marco",
+  "assembly.framelessHint":
+    "Paño de vidrio estructural: soportes, herrajes y bordes expuestos — sin perfiles de marco.",
+  "assembly.makeFrameless": "Convertir a vidrio sin marco",
+  "assembly.framelessRemove": "Volver a módulo con marco",
+  "assembly.framelessSupports": "Soportes",
+  "assembly.framelessFittings": "Herrajes",
+  "assembly.framelessExposedEdges": "Bordes expuestos (pulido)",
+  "assembly.framelessAddSupport": "Agregar soporte",
+  "assembly.framelessAddFitting": "Agregar herraje",
+  "assembly.framelessKindChannel": "Canal",
+  "assembly.framelessKindClamps": "Soportes puntuales",
+  "assembly.framelessSku": "SKU",
+  "assembly.framelessQty": "Cant.",
+  "assembly.framelessEdgeBottom": "Inferior",
+  "assembly.framelessEdgeTop": "Superior",
+  "assembly.framelessEdgeLeft": "Izquierdo",
+  "assembly.framelessEdgeRight": "Derecho",
+  "assembly.fittingKind.PATCH_FITTING": "Herraje de parche",
+  "assembly.fittingKind.CLAMP": "Pinza",
+  "assembly.fittingKind.HINGE": "Bisagra",
+  "assembly.fittingKind.LOCK": "Cerradura",
+  "assembly.fittingKind.CONNECTOR": "Conector",
+  "assembly.fittingKind.SEAL": "Sellado",
+  "assembly.fittingKind.SUPPORT": "Soporte",
+  "assembly.starter.frameless": "Vidrio sin marco",
+  "assembly.starter.framelessHint": "Paño fijo estructural asentado en canal inferior",
   "assembly.reason.slidingLayoutRequired": "una corredera libre necesita su distribución",
   "assembly.reason.slidingDuplicateSlot": "dos paños llevan el mismo nombre",
   "assembly.reason.slidingBadTrack": "un paño corrediza declara un riel que no existe",
