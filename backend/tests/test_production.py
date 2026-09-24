@@ -86,16 +86,16 @@ def test_routing_follows_system_material() -> None:
         "reinforcements": [],
     }
     assert service._routing(engine, material="PVC") == [
-        "CUT", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+        "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
     assert service._routing(engine, material="PVC", end_milling_overlap_mm="1.50") == [
-        "CUT", "MACHINING", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+        "CUT", "MACHINING", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
     assert service._routing(engine, material="PVC", end_milling_overlap_mm="0.00") == [
-        "CUT", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+        "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
     assert service._routing(engine, material="ALUMINIUM") == [
-        "CUT", "MACHINING", "CRIMP", "HARDWARE", "GLAZE", "QC", "PACK"
+        "CUT", "MACHINING", "CRIMP", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
     assert service._routing(engine, material="unknown") == [
         "CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"
@@ -194,7 +194,7 @@ def test_release_routes_steps_by_system_material() -> None:
                     ),
                     "project_version_id": version["id"],
                     "created_at": "2026-09-23T00:00:00Z",
-                    "steps_total": 7,
+                    "steps_total": 8,
                     "steps_done": 0,
                 }
             ]
@@ -213,7 +213,7 @@ def test_release_routes_steps_by_system_material() -> None:
         )
     assert output["released"] == 1 and output["created"] == 1
     step_inserts = [q for q in inserted_rows if "production_steps" in q]
-    assert len(step_inserts) == 7  # CUT WELD CLEAN HARDWARE GLAZE QC PACK
+    assert len(step_inserts) == 8  # CUT WELD CLEAN SASH_ASSEMBLE HARDWARE GLAZE QC PACK
 
 
 def test_release_replay_returns_existing() -> None:

@@ -110,10 +110,15 @@ export function OperatorStepCard({
   step,
   trace,
   traceBusy,
+  hasMachiningStep = false,
 }: {
   step: ProductionStep;
   trace: ProductionOrderTrace | null;
   traceBusy: boolean;
+  /** True when the order's ladder includes MACHINING — member ops belong to
+   * that station then, not to the saw. Legacy orders without it keep member
+   * ops on CUT so older work orders still show their machining instructions. */
+  hasMachiningStep?: boolean;
 }) {
   const kinds = STEP_STOCK_KINDS[step.code] ?? [];
   const reservations = trace ? _reservations(trace) : [];
@@ -277,7 +282,7 @@ export function OperatorStepCard({
                       </tbody>
                     </table>
                   ) : null}
-                  {memberOps.length ? (
+                  {(step.code === "MACHINING" || !hasMachiningStep) && memberOps.length ? (
                     <table className="production-plan operator-ops">
                       <thead>
                         <tr>

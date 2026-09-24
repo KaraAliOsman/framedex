@@ -124,8 +124,8 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
         "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
         [str(org_id)],
     )
-    present = {str(center["code"]) for center in existing}
-    missing = [center for center in _DEFAULT_CENTERS if center[0] not in present]
+    present_kinds = {str(center["kind"]) for center in existing}
+    missing = [center for center in _DEFAULT_CENTERS if center[2] not in present_kinds]
     if missing:
         with transaction.atomic(), documentary_backend():
             for code, name, kind, order in missing:
@@ -141,7 +141,13 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
                 "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
                 [str(org_id)],
             )
-    return {str(center["kind"]): center for center in existing}
+    # First center of each kind wins (display_order ascending) — a custom
+    # station the org ordered first keeps step assignment over any default
+    # seeded later of the same kind.
+    by_kind: dict[str, dict[str, object]] = {}
+    for center in existing:
+        by_kind.setdefault(str(center["kind"]), center)
+    return by_kind
 
 
 def _routing(
@@ -169,11 +175,11 @@ def _routing(
     except ArithmeticError:
         milling = False
     if material == "ALUMINIUM":
-        routing += ["MACHINING", "CRIMP", "HARDWARE"]
+        routing += ["MACHINING", "CRIMP", "SASH_ASSEMBLE", "HARDWARE"]
     elif material == "PVC":
         if milling:
             routing.append("MACHINING")
-        routing += ["WELD", "CLEAN", "HARDWARE"]
+        routing += ["WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE"]
     else:
         routing.append("ASSEMBLE")
     if engine_result.get("glasses") or engine_result.get("panels"):
