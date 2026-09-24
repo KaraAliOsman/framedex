@@ -155,11 +155,43 @@ class HardwareKitRule(EngineModel):
     carriage_capacity_kg: Decimal | None = None
 
 
+class SectionPoint(EngineModel):
+    """One vertex of a catalog section polygon, profile-local mm."""
+
+    x_mm: Decimal
+    y_mm: Decimal
+
+
+class SectionAxis(EngineModel):
+    """A named reference axis through the section (glazing, web, fixing)."""
+
+    name: str
+    y_mm: Decimal
+
+
+class ProfileSection(EngineModel):
+    """Simplified technical cross-section of a catalog profile (mandate §15).
+
+    The polygon is the cross-section across the face: x spans the face width,
+    y runs the depth direction (0 = exterior face). `POLYGON` is a declared
+    simplified section; `DXF_REFERENCE` says the shape was taken from a real
+    manufacturer drawing (`drawing_ref` points at it). When `section` is
+    absent the renderer falls back to an approximate box — a visibly
+    different, explicitly approximate state, never a fake declaration."""
+
+    source: Literal["POLYGON", "DXF_REFERENCE"]
+    polygon: list[SectionPoint] = Field(min_length=3)
+    depth_mm: Decimal = Field(gt=0)
+    axes: list[SectionAxis] = Field(default_factory=list)
+    drawing_ref: str | None = None
+
+
 class EffectiveProfileArticle(EngineModel):
     sku: str
     role: ProfileRole
     material: MaterialType
     face_width_mm: Decimal
+    section: ProfileSection | None = None
     # UNKNOWN (None) is a first-class state — a catalog that never stated a
     # welding loss or reinforcement gap must not gain an invented one; the
     # consumers that need it (PVC weld math, steel reinforcement cuts) raise

@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.views import APIView
 
+from catalogs.serializers import ProfileSectionSerializer
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import rows
 from pricing.views import ERRORS, scope
@@ -16,6 +17,7 @@ class ProfileChoiceSerializer(serializers.Serializer):
     name = serializers.CharField()
     material = serializers.CharField()
     face_width_mm = serializers.CharField()
+    section = ProfileSectionSerializer(required=False, allow_null=True)
 
 
 class CouplerChoiceSerializer(serializers.Serializer):
@@ -23,12 +25,18 @@ class CouplerChoiceSerializer(serializers.Serializer):
     name = serializers.CharField()
     material = serializers.CharField()
     face_width_mm = serializers.CharField()
+    section = ProfileSectionSerializer(required=False, allow_null=True)
 
 
 class GlazingBeadChoiceSerializer(serializers.Serializer):
     glass_thickness_mm = serializers.CharField()
     bead_width_mm = serializers.CharField()
     sku = serializers.CharField()
+    section = ProfileSectionSerializer(required=False, allow_null=True)
+
+
+def _section_json(section):
+    return None if section is None else section.model_dump()
 
 
 class KitChoiceSerializer(serializers.Serializer):
@@ -89,6 +97,7 @@ class DesignOptionsView(APIView):
                             "name": names.get(item.sku, item.sku),
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
+                            "section": _section_json(item.section),
                         }
                         for item in params.effective_profile_articles.values()
                     ],
@@ -115,6 +124,7 @@ class DesignOptionsView(APIView):
                             "name": names.get(item.sku, item.sku),
                             "material": item.material.value,
                             "face_width_mm": str(item.face_width_mm),
+                            "section": _section_json(item.section),
                         }
                         for item in sorted(couplers.values(), key=lambda article: article.sku)
                     ],
@@ -123,6 +133,7 @@ class DesignOptionsView(APIView):
                             "glass_thickness_mm": str(thickness),
                             "bead_width_mm": str(rule.bead_width_mm),
                             "sku": rule.bead_article.sku,
+                            "section": _section_json(rule.bead_article.section),
                         }
                         for thickness, rule in sorted(params.glazing_bead_rules.items())
                     ],

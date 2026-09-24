@@ -5,10 +5,12 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProfileSection } from "./profileSection";
 
 export interface CouplerChoice {
   sku: string;
   name: string;
   material: string;
   face_width_mm: string;
+  section?: ProfileSection | null;
 }

@@ -93,10 +93,39 @@ class SystemWriteSerializer(StrictSerializer):
     is_active = serializers.BooleanField()
 
 
+class SectionPointSerializer(StrictSerializer):
+    x_mm = decimal_field(10, 2)
+    y_mm = decimal_field(10, 2)
+
+
+class SectionAxisSerializer(StrictSerializer):
+    name = serializers.CharField(max_length=50)
+    y_mm = decimal_field(10, 2)
+
+
+class ProfileSectionSerializer(StrictSerializer):
+    """Simplified technical cross-section; POLYGON is declared, DXF_REFERENCE
+    carries the manufacturer-drawing provenance in `drawing_ref`."""
+
+    source = serializers.ChoiceField(choices=["POLYGON", "DXF_REFERENCE"])
+    polygon = SectionPointSerializer(many=True)
+    depth_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    axes = SectionAxisSerializer(many=True, required=False)
+    drawing_ref = serializers.CharField(
+        max_length=500, allow_null=True, allow_blank=True, required=False
+    )
+
+    def validate_polygon(self, value):
+        if len(value) < 3:
+            raise serializers.ValidationError("A section polygon needs at least 3 points.")
+        return value
+
+
 class ArticleWriteSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     sku = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255)
+    section = ProfileSectionSerializer(required=False, allow_null=True)
     role = serializers.ChoiceField(
         choices=[
             "FRAME",

@@ -19,6 +19,7 @@ import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
 import { buildObjectTree } from "./objectTree";
 import { resolveMembers, type MemberGeometry } from "./members";
+import { SectionPreviewSvg } from "./SectionPreviewSvg";
 import {
   frontBounds,
   frontLayout,
@@ -854,6 +855,31 @@ function ModuleInspector({
           onCommit={(value) => commit(setAllModuleHeights(product, value))}
         />
       </details>
+      {!module.frameless && (
+        <details className="inspector-section">
+          <summary>{t("assembly.sectionTitle")}</summary>
+          <div className="section-preview-list">
+            <div>
+              <p className="inspector-note">{members.frame.sku ?? t("assembly.sectionTitle")}</p>
+              <SectionPreviewSvg
+                section={members.frame.section}
+                faceWidthMm={members.frame.faceWidthMm}
+                material={members.frame.material}
+              />
+            </div>
+            {members.sash.section && (
+              <div>
+                <p className="inspector-note">{members.sash.sku}</p>
+                <SectionPreviewSvg
+                  section={members.sash.section}
+                  faceWidthMm={members.sash.faceWidthMm}
+                  material={members.sash.material}
+                />
+              </div>
+            )}
+          </div>
+        </details>
+      )}
       {module.contour && (
         <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
       )}

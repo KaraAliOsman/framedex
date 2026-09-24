@@ -4,6 +4,7 @@ import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
+import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import {
   catalogApi,
   initialDraft,
@@ -598,6 +599,17 @@ function CatalogEditor({
             <div className="catalog-fields">{group.fields.map(control)}</div>
           </fieldset>
         ))}
+
+        {resource === "articles" && row && "section" in row && (
+          <fieldset className="catalog-group">
+            <legend>{ct("field.section")}</legend>
+            <SectionPreviewSvg
+              section={row.section}
+              faceWidthMm={Number(row.face_width_mm ?? 0)}
+              material={row.material}
+            />
+          </fieldset>
+        )}
 
         {resource === "hardware-kits" && (
           <fieldset className="catalog-group">

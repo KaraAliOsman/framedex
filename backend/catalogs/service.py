@@ -30,7 +30,7 @@ class Resource:
     def projection(self):
         columns = ("id", "org_id", *self.fields, *self.extra_columns)
         return ", ".join(
-            "contents::text AS contents" if name == "contents" else name for name in columns
+            f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
         )
 
 
@@ -61,12 +61,13 @@ def _fetch(resource, where, params, *, lock=False):
         row["read_only"] = (
             row["org_id"] is None or row.get("is_global", False) or row.get("is_demo", False)
         )
-        if "contents" in row:
-            row["contents"] = json.loads(
-                row["contents"],
-                parse_float=Decimal,
-                parse_int=Decimal,
-            )
+        for name in _JSONB_FIELDS:
+            if name in row and row[name] is not None:
+                row[name] = json.loads(
+                    row[name],
+                    parse_float=Decimal,
+                    parse_int=Decimal,
+                )
         row["revision"] = catalog_revision(row)
     return result
 
@@ -189,9 +190,34 @@ def _contents_json(components):
     return "[" + ",".join(encoded) + "]"
 
 
+_JSONB_FIELDS = {"contents", "section"}
+
+
+def _json_value(value):
+    """Serialize with Decimals as numeric literals so the stored JSONB keeps
+    exact numbers for the repository's parse_float=Decimal decode."""
+    if isinstance(value, dict):
+        items = (json.dumps(str(key)) + ":" + _json_value(item) for key, item in value.items())
+        return "{" + ",".join(items) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_json_value(item) for item in value) + "]"
+    if isinstance(value, Decimal):
+        return str(value)
+    return json.dumps(value)
+
+
+def _jsonb(value):
+    return None if value is None else _json_value(value)
+
+
 def _parameters(values):
     return [
-        _contents_json(value) if name == "contents" else value for name, value in values.items()
+        _contents_json(value)
+        if name == "contents"
+        else _jsonb(value)
+        if name == "section"
+        else value
+        for name, value in values.items()
     ]
 
 
@@ -234,7 +260,7 @@ def create(resource, org_id, values):
                     "catalogs.errors.catalog_constraint_conflict",
                 )
     columns = tuple(values)
-    placeholders = ["%s::jsonb" if name == "contents" else "%s" for name in columns]
+    placeholders = ["%s::jsonb" if name in _JSONB_FIELDS else "%s" for name in columns]
     with connection.cursor() as cursor:
         cursor.execute(
             f"INSERT INTO public.{resource.table} "
@@ -285,7 +311,7 @@ def update(resource, org_id, row_id, values, expected_revision=None):
     _bind_parent(resource, org_id, {**current, **values})
     if values:
         assignments = [
-            f"{name} = %s::jsonb" if name == "contents" else f"{name} = %s" for name in values
+            f"{name} = %s::jsonb" if name in _JSONB_FIELDS else f"{name} = %s" for name in values
         ]
         with connection.cursor() as cursor:
             cursor.execute(

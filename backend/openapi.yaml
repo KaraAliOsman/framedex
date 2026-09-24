@@ -10637,6 +10637,10 @@ components:
         name:
           type: string
           maxLength: 255
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSection'
+          nullable: true
         role:
           $ref: '#/components/schemas/CatalogProfileRoleEnum'
         material:
@@ -10706,6 +10710,10 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSectionRequest'
+          nullable: true
         role:
           $ref: '#/components/schemas/CatalogProfileRoleEnum'
         material:
@@ -11535,6 +11543,10 @@ components:
           type: string
         face_width_mm:
           type: string
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSection'
+          nullable: true
       required:
       - face_width_mm
       - material
@@ -13143,6 +13155,10 @@ components:
           type: string
         sku:
           type: string
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSection'
+          nullable: true
       required:
       - bead_width_mm
       - glass_thickness_mm
@@ -14606,6 +14622,10 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSectionRequest'
+          nullable: true
         role:
           $ref: '#/components/schemas/CatalogProfileRoleEnum'
         material:
@@ -15971,6 +15991,10 @@ components:
           type: string
         face_width_mm:
           type: string
+        section:
+          allOf:
+          - $ref: '#/components/schemas/ProfileSection'
+          nullable: true
       required:
       - face_width_mm
       - material
@@ -16022,6 +16046,62 @@ components:
       - role
       - sagitta_mm
       - sku
+    ProfileSection:
+      type: object
+      description: |-
+        Simplified technical cross-section; POLYGON is declared, DXF_REFERENCE
+        carries the manufacturer-drawing provenance in `drawing_ref`.
+      properties:
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionPoint'
+        depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        axes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionAxis'
+        drawing_ref:
+          type: string
+          nullable: true
+          maxLength: 500
+      required:
+      - depth_mm
+      - polygon
+      - source
+    ProfileSectionRequest:
+      type: object
+      description: |-
+        Simplified technical cross-section; POLYGON is declared, DXF_REFERENCE
+        carries the manufacturer-drawing provenance in `drawing_ref`.
+      properties:
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        polygon:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionPointRequest'
+        depth_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        axes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionAxisRequest'
+        drawing_ref:
+          type: string
+          nullable: true
+          maxLength: 500
+      required:
+      - depth_mm
+      - polygon
+      - source
     ProfileSystemSummary:
       type: object
       properties:
@@ -16738,6 +16818,61 @@ components:
         * `FAIL` - FAIL
         * `NOT_APPLICABLE` - NOT_APPLICABLE
         * `MISSING_INPUT` - MISSING_INPUT
+    SectionAxis:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        y_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - name
+      - y_mm
+    SectionAxisRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        y_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - name
+      - y_mm
+    SectionPoint:
+      type: object
+      properties:
+        x_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        y_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - x_mm
+      - y_mm
+    SectionPointRequest:
+      type: object
+      properties:
+        x_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        y_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - x_mm
+      - y_mm
     SegmentEnum:
       enum:
       - RETAIL
@@ -17036,6 +17171,14 @@ components:
       description: |-
         * `MOVING` - MOVING
         * `FIXED` - FIXED
+    SourceEnum:
+      enum:
+      - POLYGON
+      - DXF_REFERENCE
+      type: string
+      description: |-
+        * `POLYGON` - POLYGON
+        * `DXF_REFERENCE` - DXF_REFERENCE
     SourceKindEnum:
       enum:
       - PROFILE

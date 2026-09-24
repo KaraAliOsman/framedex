@@ -1,4 +1,4 @@
-import type { DesignOptions } from "../../api/generated/models";
+import type { DesignOptions, ProfileSection } from "../../api/generated/models";
 
 /** Drawing hierarchy resolved from the catalog: member face widths and the
  * system's rebate/overlap geometry. Everything optional — the demo/DOM paths
@@ -9,6 +9,9 @@ export interface MemberSpec {
   sku: string | null;
   material: "PVC" | "ALUMINIUM" | string;
   faceWidthMm: number;
+  /** Declared catalog cross-section; absent means the renderer must stay
+   * approximate — never a fabricated declaration. */
+  section?: ProfileSection | null;
 }
 
 export interface MemberGeometry {
@@ -47,6 +50,7 @@ function member(
     sku: profile?.sku ?? null,
     material: profile?.material ?? "PVC",
     faceWidthMm: profile && Number.isFinite(faceWidth) && faceWidth > 0 ? faceWidth : fallbackWidth,
+    section: profile?.section ?? null,
   };
 }
 
@@ -58,6 +62,7 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
       sku: item.sku,
       material: item.material,
       faceWidthMm: Number.isFinite(faceWidth) && faceWidth > 0 ? faceWidth : FALLBACK.mullion,
+      section: item.section ?? null,
     });
   }
   const beads = new Map<string, number>();

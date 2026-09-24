@@ -161,6 +161,46 @@ ON CONFLICT (id) DO UPDATE SET
     welding_loss_mm = EXCLUDED.welding_loss_mm,
     reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm;
 
+-- §15: declared simplified sections for the demo frame and sash. The polygon
+-- is the profile cross-section (x = face width, y = depth, exterior at y=0);
+-- source POLYGON marks a catalog-declared simplified shape, not a
+-- manufacturer-drawing extraction.
+UPDATE public.profile_articles AS article
+SET section = shapes.section::jsonb
+FROM (VALUES
+    ('MARCO', '{
+        "source": "POLYGON",
+        "polygon": [
+            {"x_mm": 0, "y_mm": 0}, {"x_mm": 60, "y_mm": 0},
+            {"x_mm": 60, "y_mm": 24}, {"x_mm": 40, "y_mm": 24},
+            {"x_mm": 40, "y_mm": 44}, {"x_mm": 60, "y_mm": 44},
+            {"x_mm": 60, "y_mm": 60}, {"x_mm": 0, "y_mm": 60}
+        ],
+        "depth_mm": 60,
+        "axes": [
+            {"name": "GLAZING", "y_mm": 24},
+            {"name": "WEB", "y_mm": 34}
+        ]
+    }'::text),
+    ('HOJA', '{
+        "source": "POLYGON",
+        "polygon": [
+            {"x_mm": 0, "y_mm": 0}, {"x_mm": 75, "y_mm": 0},
+            {"x_mm": 75, "y_mm": 30}, {"x_mm": 50, "y_mm": 30},
+            {"x_mm": 50, "y_mm": 52}, {"x_mm": 75, "y_mm": 52},
+            {"x_mm": 75, "y_mm": 75}, {"x_mm": 0, "y_mm": 75}
+        ],
+        "depth_mm": 75,
+        "axes": [
+            {"name": "GLAZING", "y_mm": 30},
+            {"name": "WEB", "y_mm": 41}
+        ]
+    }'::text)
+) AS shapes(sku, section)
+WHERE article.sku = shapes.sku
+  AND article.system_id = uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60')
+  AND article.org_id IS NULL;
+
 INSERT INTO public.hardware_kits (
     id,
     org_id,

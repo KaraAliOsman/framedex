@@ -1099,6 +1099,7 @@ const messages = {
   "catalog.group.hardware": "Herrajes, peso y capacidad",
 
   "catalog.field.name": "Nombre",
+  "catalog.field.section": "Sección de perfil",
   "catalog.field.code": "Código",
   "catalog.field.sku": "SKU comercial",
   "catalog.field.system_id": "Serie",
@@ -1345,6 +1346,10 @@ const messages = {
   "assembly.fittingKind.CONNECTOR": "Conector",
   "assembly.fittingKind.SEAL": "Sellado",
   "assembly.fittingKind.SUPPORT": "Soporte",
+  "assembly.sectionTitle": "Sección del perfil",
+  "assembly.sectionApproximate": "aproximada — sin sección de catálogo",
+  "assembly.sectionDeclared": "sección simplificada de catálogo",
+  "assembly.sectionExact": "sección exacta (plano del fabricante)",
   "assembly.starter.frameless": "Vidrio sin marco",
   "assembly.starter.framelessHint": "Paño fijo estructural asentado en canal inferior",
   "assembly.reason.slidingLayoutRequired": "una corredera libre necesita su distribución",

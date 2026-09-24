@@ -7,11 +7,16 @@ from catalogs.serializers import (
     KitWriteSerializer,
     ArticleWriteSerializer,
     CatalogHardwareComponentSerializer,
+    ProfileSectionSerializer,
     SystemWriteSerializer,
 )
-from catalogs.service import _contents_json, catalog_revision, require_revision
+from catalogs.service import _contents_json, _jsonb, catalog_revision, require_revision
 from authentication.errors import ContractAPIException
-from engine_api.repository import _hardware_contents
+from engine_api.repository import (
+    UnsupportedCatalogContract,
+    _hardware_contents,
+    _section,
+)
 
 
 def test_component_round_trip_remains_engine_decimal():
@@ -148,3 +153,47 @@ def test_component_rejects_untyped_extra_content():
         }
     )
     assert not serializer.is_valid()
+
+
+SECTION_POLYGON = {
+    "source": "POLYGON",
+    "polygon": [
+        {"x_mm": "0", "y_mm": "0"},
+        {"x_mm": "60", "y_mm": "0"},
+        {"x_mm": "60", "y_mm": "60"},
+        {"x_mm": "0", "y_mm": "60"},
+    ],
+    "depth_mm": "60.00",
+    "axes": [{"name": "GLAZING", "y_mm": "24.00"}],
+}
+
+
+def test_article_section_round_trip_preserves_engine_decimal():
+    serializer = ArticleWriteSerializer(data={"section": SECTION_POLYGON}, partial=True)
+    assert serializer.is_valid(), serializer.errors
+    section = _section(_jsonb(serializer.validated_data["section"]))
+    assert section is not None
+    assert section.source == "POLYGON"
+    assert section.depth_mm == Decimal("60.00")
+    assert section.polygon[0].x_mm == Decimal("0")
+    assert section.axes[0].y_mm == Decimal("24.00")
+
+
+@pytest.mark.parametrize(
+    "mutated",
+    [
+        {**SECTION_POLYGON, "polygon": SECTION_POLYGON["polygon"][:2]},
+        {**SECTION_POLYGON, "depth_mm": "0"},
+        {**SECTION_POLYGON, "source": "TRACING"},
+        {k: v for k, v in SECTION_POLYGON.items() if k != "polygon"},
+    ],
+)
+def test_article_section_rejects_noncanonical_shapes(mutated):
+    serializer = ProfileSectionSerializer(data=mutated)
+    assert not serializer.is_valid()
+
+
+def test_section_decoder_passes_absent_and_rejects_decoded_json():
+    assert _section(None) is None
+    with pytest.raises(UnsupportedCatalogContract):
+        _section({"source": "POLYGON"})

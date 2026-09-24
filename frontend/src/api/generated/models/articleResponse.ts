@@ -7,6 +7,7 @@
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 import type { MaterialEnum } from "./materialEnum";
+import type { ProfileSection } from "./profileSection";
 
 export interface ArticleResponse {
   system_id: string;
@@ -14,6 +15,7 @@ export interface ArticleResponse {
   sku: string;
   /** @maxLength 255 */
   name: string;
+  section?: ProfileSection | null;
   role: CatalogProfileRoleEnum;
   material: MaterialEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
