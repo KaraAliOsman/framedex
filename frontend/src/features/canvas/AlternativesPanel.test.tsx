@@ -59,7 +59,7 @@ function successResponse() {
             module_count: 1,
             openings: ["FIXED"],
             glass_area_m2: "2.80",
-            total_weight_kg: "34.00",
+            leaf_weight_kg: "34.00",
             status: "VALID",
             warnings: [] as string[],
           },
@@ -120,6 +120,18 @@ describe("AlternativesPanel", () => {
     rerender(<AlternativesPanel {...props} systemId="system-b" />);
     resolve(successResponse());
     await waitFor(() => expect(screen.queryByText("Paño fijo")).toBeNull());
+  });
+
+  it("marks cards stale and disables Usar when the canvas changes", async () => {
+    alternativesMock.mockResolvedValue(successResponse() as never);
+    const { props, rerender } = renderPanel();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "fijo" } });
+    fireEvent.click(screen.getByRole("button", { name: /Generar alternativas/i }));
+    expect(await screen.findByText("Paño fijo")).toBeTruthy();
+
+    rerender(<AlternativesPanel {...props} product={candidateProduct("AWNING")} />);
+    expect(screen.getByText(/El producto cambió/)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Usar" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("requires a saved position before generating", () => {

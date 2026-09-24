@@ -541,6 +541,17 @@ def _design_alternatives_output(input_payload: dict) -> dict:
                 "openings": ["SLIDING_2L"],
             }
         )
+    # Propose real catalog materials like a provider should: a glass SKU on
+    # glazed candidates, a coupler SKU on multi-module ones — both picked
+    # only from what the request's catalog supplied.
+    catalog = input_payload.get("catalog") or {}
+    glass_skus = sorted(catalog.get("glass_skus") or [])
+    coupler_skus = sorted(catalog.get("coupler_skus") or [])
+    for candidate in candidates:
+        if glass_skus and any(op != "DOOR_ENTRY" for op in candidate["openings"]):
+            candidate.setdefault("glass_sku", glass_skus[0])
+        if coupler_skus and len(candidate["openings"]) > 1:
+            candidate.setdefault("coupler_sku", coupler_skus[0])
     return {
         "alternatives": candidates[:count],
         "notes": f"{min(len(candidates), count)} alternativas para revisar.",

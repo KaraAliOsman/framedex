@@ -22,6 +22,9 @@ type Result = {
   model: string;
   credits: number;
   systemId: string | null;
+  /** The product the request was built on — a card that survives an
+   * intervening canvas edit is stale and must not overwrite it. */
+  snapshot: ProductJson;
 };
 
 const NO_ISSUES: never[] = [];
@@ -128,6 +131,7 @@ export function AlternativesPanel({
         .filter((item): item is Alternative => item !== null);
       setResult({
         alternatives,
+        snapshot: product,
         rejected: data.rejected.map((item) => ({
           label: typeof item["label"] === "string" ? (item["label"] as string) : null,
           reasons: Array.isArray(item["reasons"]) ? (item["reasons"] as unknown[]).map(String) : [],
@@ -185,6 +189,9 @@ export function AlternativesPanel({
             </button>
           </div>
           {message && <p className="assembly-hint">{message}</p>}
+          {result && result.systemId === systemId && result.snapshot !== product && (
+            <p className="assembly-hint">{t("assistant.stale")}</p>
+          )}
           {result && result.systemId === systemId && (
             <div className="alternatives-panel__result">
               {result.notes && <p className="assistant-panel__notes">{result.notes}</p>}
@@ -225,8 +232,8 @@ export function AlternativesPanel({
                               ),
                             metric(item.metrics, "glass_area_m2") &&
                               `${metric(item.metrics, "glass_area_m2")} m²`,
-                            metric(item.metrics, "total_weight_kg") &&
-                              `${metric(item.metrics, "total_weight_kg")} kg`,
+                            metric(item.metrics, "leaf_weight_kg") &&
+                              `${metric(item.metrics, "leaf_weight_kg")} kg`,
                           ]
                             .filter(Boolean)
                             .join(" · ")}
@@ -239,9 +246,12 @@ export function AlternativesPanel({
                         <button
                           type="button"
                           className="primary-button alternative-card__use"
-                          disabled={disabled || busy}
+                          disabled={disabled || busy || result.snapshot !== product}
                           onClick={() => {
                             onUse(item.product);
+                            // Adopted — a repeat brief is a new audited
+                            // generation, not a replay of these cards.
+                            operationKey.current = null;
                             setResult(null);
                             setBrief("");
                           }}

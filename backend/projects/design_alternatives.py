@@ -47,6 +47,7 @@ Cada alternativa:
 - "angle_deg": opcional, solo para conjuntos en quiebre (bow) — el mismo ángulo en cada unión.
 - "glass_sku": opcional, SOLO un valor de catalog.glass_skus.
 - "panel_sku": opcional, SOLO un valor de catalog.panel_skus.
+- "coupler_sku": opcional, SOLO un valor de catalog.coupler_skus.
 
 Reglas:
 - Alternativas realmente distintas entre sí (estructura, no solo nombres).
@@ -79,12 +80,26 @@ def _default_thickness(catalog: dict) -> Decimal:
     return thicknesses[0] if thicknesses else Decimal("4.00")
 
 
+def _catalog_sku(
+    spec: dict, field: str, allowed: set, reason: str
+) -> tuple[str | None, str | None]:
+    """A provider-supplied SKU must be a plain catalog string — anything
+    else (numbers, lists, dicts) rejects the spec, never crashes it."""
+    value = spec.get(field)
+    if value is None:
+        return None, None
+    if not isinstance(value, str) or value not in allowed:
+        return None, reason
+    return value, None
+
+
 def _build_product(
     spec: dict,
     *,
     width_mm: Decimal,
     height_mm: Decimal,
     catalog: dict,
+    coupler_skus: set,
 ) -> tuple[dict | None, str | None]:
     """Intent spec → product-v2 payload. Every opening is checked against
     the contract set and every SKU against the org-visible catalog before
@@ -94,28 +109,50 @@ def _build_product(
         not isinstance(openings, list)
         or not openings
         or len(openings) > MAX_MODULE_COUNT
-        or any(opening not in OPENINGS for opening in openings)
+        or any(
+            not isinstance(opening, str) or opening not in OPENINGS
+            for opening in openings
+        )
     ):
         return None, "aperturas_invalidas"
-    glass_sku = spec.get("glass_sku")
-    if glass_sku is not None and glass_sku not in catalog["glass_skus"]:
-        return None, "vidrio_desconocido"
-    panel_sku = spec.get("panel_sku")
-    if panel_sku is not None and panel_sku not in catalog["panel_skus"]:
-        return None, "panel_desconocido"
+    glass_sku, reason = _catalog_sku(
+        spec, "glass_sku", catalog["glass_skus"], "vidrio_desconocido"
+    )
+    if reason:
+        return None, reason
+    panel_sku, reason = _catalog_sku(
+        spec, "panel_sku", catalog["panel_skus"], "panel_desconocido"
+    )
+    if reason:
+        return None, reason
+    coupler_sku, reason = _catalog_sku(
+        spec, "coupler_sku", coupler_skus, "union_desconocida"
+    )
+    if reason:
+        return None, reason
     angle = spec.get("angle_deg")
     if angle is not None:
         try:
             angle = Decimal(str(angle))
         except ArithmeticError:
             return None, "angulo_invalido"
-        if not Decimal("-90") <= angle <= Decimal("90"):
+        if not angle.is_finite() or not Decimal("-90") <= angle <= Decimal("90"):
             return None, "angulo_invalido"
-    # A door needs a panel: when the catalog carries exactly one, the backend
-    # fills it (same rule as the estimator's defaults); ambiguity stays
-    # unresolved and the engine's refusal is reported instead of guessed.
+    # Unambiguous materials fill themselves — same rule as the estimator's
+    # defaults: exactly one catalog option resolves, several stay the
+    # estimator's call. A missing glass SKU is not a warning, it makes the
+    # position unpriceable, so a glazed spec without a resolvable glass is
+    # not an acceptable candidate.
+    if (
+        glass_sku is None
+        and any(opening != "DOOR_ENTRY" for opening in openings)
+        and len(catalog["glass_skus"]) == 1
+    ):
+        glass_sku = next(iter(sorted(catalog["glass_skus"])))
     if panel_sku is None and "DOOR_ENTRY" in openings and len(catalog["panel_skus"]) == 1:
         panel_sku = next(iter(sorted(catalog["panel_skus"])))
+    if coupler_sku is None and len(openings) > 1 and len(coupler_skus) == 1:
+        coupler_sku = next(iter(sorted(coupler_skus)))
     thickness = _default_thickness(catalog)
     quantum = Decimal("0.01")
     share = (width_mm / len(openings)).quantize(quantum)
@@ -149,7 +186,7 @@ def _build_product(
                 {
                     "id": f"c{index - 1}",
                     "angle_deg": str((angle or ZERO).quantize(Decimal("0.1"))),
-                    "coupler_profile_sku": None,
+                    "coupler_profile_sku": coupler_sku,
                 }
             )
     return {"version": "product-v2", "assembly": {"modules": modules, "couplings": couplings}}, None
@@ -193,11 +230,15 @@ def _metrics(evaluation, model) -> dict:
             "profile_cuts": len(bom.profile_cuts),
             "reinforcements": len(bom.reinforcements),
             "hardware_items": len(bom.hardware_items),
-            "total_weight_kg": str(
+            # Operable leaves only — a fixed pane has no leaf, so summing
+            # here would print a false 0.00 kg next to real glass.
+            "leaf_weight_kg": str(
                 sum((leaf.total_weight_kg for leaf in bom.leaf_weights), ZERO).quantize(
                     Decimal("0.01")
                 )
-            ),
+            )
+            if bom.leaf_weights
+            else None,
         }
     )
     return metrics
@@ -227,6 +268,7 @@ def alternatives(
     repository = SystemParamsRepository()
     params = repository.load_visible(system_id, org_id)
     coupler_articles = repository.load_coupler_articles(system_id, org_id)
+    coupler_skus = set(coupler_articles)
     envelope = gateway.invoke(
         org_id=org_id,
         user_id=user_id,
@@ -248,6 +290,7 @@ def alternatives(
             "catalog": {
                 "glass_skus": sorted(catalog["glass_skus"]),
                 "panel_skus": sorted(catalog["panel_skus"]),
+                "coupler_skus": sorted(coupler_skus),
                 "glazing_thicknesses": [
                     str(thickness) for thickness in sorted(catalog["thicknesses"])
                 ],
@@ -283,6 +326,7 @@ def alternatives(
             width_mm=width_mm,
             height_mm=height_mm,
             catalog=catalog,
+            coupler_skus=coupler_skus,
         )
         if reason is not None:
             rejected.append({"label": label, "reasons": [reason]})

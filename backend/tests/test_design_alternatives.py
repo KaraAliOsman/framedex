@@ -333,3 +333,95 @@ def test_live_dimensions_win_over_the_persisted_row(monkeypatch):
     module = out["alternatives"][0]["product"]["assembly"]["modules"][0]
     assert module["width_mm"] == "3000.00"
     assert module["height_mm"] == "2100.00"
+
+
+def test_malformed_spec_rejects_without_aborting_siblings(monkeypatch):
+    _patch(
+        monkeypatch,
+        {
+            "alternatives": [
+                {"label": "Rota", "openings": [["FIXED"]]},
+                {"label": "Buena", "openings": ["FIXED"]},
+            ]
+        },
+    )
+    out = _call()
+    assert [item["label"] for item in out["alternatives"]] == ["Buena"]
+    assert out["rejected"][0]["reasons"] == ["aperturas_invalidas"]
+
+
+def test_nan_angle_rejects_the_spec_not_the_response(monkeypatch):
+    _patch(
+        monkeypatch,
+        {
+            "alternatives": [
+                {"label": "NaN", "openings": ["FIXED", "FIXED"], "angle_deg": "NaN"},
+                {"label": "Buena", "openings": ["FIXED"]},
+            ]
+        },
+    )
+    out = _call()
+    assert [item["label"] for item in out["alternatives"]] == ["Buena"]
+    assert out["rejected"][0]["reasons"] == ["angulo_invalido"]
+
+
+def test_single_catalog_glass_fills_the_candidate(monkeypatch):
+    _patch(
+        monkeypatch,
+        {"alternatives": [{"label": "Fija", "openings": ["FIXED"]}]},
+        catalog=_catalog(glass_skus={"GLASS-4MM"}),
+    )
+    out = _call()
+    tree = out["alternatives"][0]["product"]["assembly"]["modules"][0]["tree"]
+    assert tree["glass_article_sku"] == "GLASS-4MM"
+
+
+def test_single_catalog_coupler_fills_the_union():
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED", "FIXED"]},
+        width_mm=Decimal("2400"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(),
+        coupler_skus={"COUPLER-A"},
+    )
+    assert reason is None
+    assert product["assembly"]["couplings"][0]["coupler_profile_sku"] == "COUPLER-A"
+
+
+def test_unknown_coupler_sku_rejects_the_spec():
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED", "FIXED"], "coupler_sku": "NOPE"},
+        width_mm=Decimal("2400"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(),
+        coupler_skus={"COUPLER-A"},
+    )
+    assert product is None and reason == "union_desconocida"
+
+
+def test_leaf_weight_only_when_leaves_exist(monkeypatch):
+    _patch(
+        monkeypatch,
+        {
+            "alternatives": [
+                {"label": "Fija", "openings": ["FIXED"]},
+                {"label": "Abatible", "openings": ["TILT_TURN_LEFT"]},
+            ]
+        },
+    )
+    # Leaf-sized live dimensions — a 2400 mm abatible honestly fails leaf
+    # limits, same as in the editor.
+    out = design_alternatives.alternatives(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        brief="dos",
+        count=2,
+        system_id=uuid4(),
+        operation_key="alt-leaf",
+        width_mm="900.00",
+        height_mm="1400.00",
+    )
+    fixed, operable = out["alternatives"][0], out["alternatives"][1]
+    assert fixed["metrics"]["leaf_weight_kg"] is None
+    assert operable["metrics"]["leaf_weight_kg"] is not None
