@@ -1,4 +1,4 @@
-import posthog, { type BeforeSendFn, type PostHogConfig } from "posthog-js";
+import type { BeforeSendFn, PostHogConfig } from "posthog-js";
 
 export const APPROVED_EVENTS = [
   "auth_magic_link_requested",
@@ -123,15 +123,30 @@ function configuredTransport(): TelemetryTransport | null {
   if (!key) {
     return null;
   }
-  try {
-    posthog.init(key, {
-      ...POSTHOG_PRIVACY_CONFIG,
-      api_host: import.meta.env.VITE_POSTHOG_HOST,
-    });
-    return posthog;
-  } catch {
-    return null;
-  }
+  // posthog-js is ~260 kB raw — importing it eagerly would put analytics on
+  // the first-paint critical path. The facade stays usable immediately;
+  // captures fired before the SDK resolves are dropped (telemetry is
+  // best-effort by contract, never auth or tenancy).
+  let live: TelemetryTransport | null = null;
+  void import("posthog-js")
+    .then((module) => {
+      try {
+        module.default.init(key, {
+          ...POSTHOG_PRIVACY_CONFIG,
+          api_host: import.meta.env.VITE_POSTHOG_HOST,
+        });
+        live = module.default;
+      } catch {
+        // Analytics initialization failure is itself best-effort.
+      }
+    })
+    .catch(() => {});
+  return {
+    capture: (event, properties) => live?.capture(event, properties),
+    identify: (userId) => live?.identify(userId),
+    group: (groupType, groupId) => live?.group(groupType, groupId),
+    reset: () => live?.reset(),
+  };
 }
 
 export const telemetry = new Telemetry(configuredTransport());

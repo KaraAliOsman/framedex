@@ -1,4 +1,4 @@
-"""Canonical SHOT-06 scope: 28 mapped, 23 consumed, 2 metadata, 3 reserved."""
+"""Canonical SHOT-06 scope: 25 mapped, 20 consumed, 2 metadata, 3 reserved."""
 
 import ast
 from collections.abc import Callable
@@ -8,15 +8,15 @@ import inspect
 import pytest
 
 from dekopen_engine import ParametricNode, SystemParams, calculate_geometry
-from dekopen_engine import geometry, hardware, weight
+from dekopen_engine import geometry, hardware
 from engine.tests.test_shot06_core import core_node
 
 CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "material": geometry.compute_geometry,
     "effective_profile_articles": geometry._article,
     "glazing_bead_rules": geometry.resolve_bead_rule,
-    "rebate_depth_mm": geometry._pocket_dimension,
-    "end_milling_overlap_mm": geometry._walk_node,
+    "rebate_depth_mm": geometry.rebate_depth,
+    "end_milling_overlap_mm": geometry._end_milling_overlap,
     "sash_overlap_mm": geometry.single_rectangular_sash_geometry,
     "glass_clearance_white_mm": geometry.compute_geometry,
     "glass_clearance_foil_mm": geometry.compute_geometry,
@@ -26,9 +26,6 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "door_threshold_mm": geometry._append_door,
     "door_bottom_clearance_mm": geometry._append_door,
     "rail_type": hardware.evaluate_hardware_candidates,
-    "pvc_weight_kg_m": weight.base_leaf_weight,
-    "steel_weight_kg_m": weight.base_leaf_weight,
-    "hardware_kit_weight_kg": weight.with_hardware_weight,
     "available_hardware_kits": hardware.evaluate_hardware_candidates,
     "sliding_glazing_deduction_width_mm": geometry._append_leaf,
     "sliding_glazing_deduction_height_mm": geometry._append_leaf,
@@ -41,7 +38,7 @@ RESERVED = {"sliding_lateral_clearance_mm", "corner_bracket_loss_mm", "hook_dept
 
 
 def test_every_system_parameter_has_an_explicit_scope() -> None:
-    assert len(CORE_CONSUMERS) == 23 and len(METADATA) == 2 and len(RESERVED) == 3
+    assert len(CORE_CONSUMERS) == 20 and len(METADATA) == 2 and len(RESERVED) == 3
     assert set(CORE_CONSUMERS) | METADATA | RESERVED == set(SystemParams.model_fields)
     for field, consumer in CORE_CONSUMERS.items():
         reads = {

@@ -383,3 +383,104 @@ def test_confirm_retry_rejects_other_system(monkeypatch):
             items=[_item(key="c1")],
         )
     assert failure.value.contract_code == "catalog_system_changed"
+
+
+def test_source_refs_ride_onto_candidates():
+    candidates = parse_catalog_lines(
+        [
+            ("MRC-100 Marco 78 mm", "página 2"),
+            ("HJA-200 Hoja 65 mm", "fila 14"),
+        ]
+    )
+    assert candidates[0]["source_ref"] == "página 2"
+    assert candidates[1]["source_ref"] == "fila 14"
+
+
+def test_reconcile_flags_existing_sku_conflicts(monkeypatch):
+    candidates = [
+        {"sku": "MRC-100", "role": "FRAME", "face_width_mm": "80", "warnings": []},
+        {"sku": "NEW-9", "role": "SASH", "face_width_mm": "60", "warnings": []},
+    ]
+    monkeypatch.setattr(
+        catalog_service,
+        "rows",
+        lambda *a, **k: [
+            {
+                "sku": "MRC-100",
+                "name": "Marco",
+                "role": "FRAME",
+                "face_width_mm": "78",
+                "system_code": "ALU-60",
+            }
+        ],
+    )
+    catalog_service._reconcile(uuid4(), candidates)
+    assert candidates[0]["conflict"] is True
+    assert "catalog_conflicts_existing" in candidates[0]["warnings"]
+    assert candidates[0]["existing"][0]["face_width_mm"] == "78"
+    assert candidates[0]["existing"][0]["system_code"] == "ALU-60"
+    assert "existing" not in candidates[1]
+
+
+def test_reconcile_identical_article_is_not_a_conflict(monkeypatch):
+    candidates = [
+        {"sku": "MRC-100", "role": "FRAME", "face_width_mm": "78", "warnings": []}
+    ]
+    monkeypatch.setattr(
+        catalog_service,
+        "rows",
+        lambda *a, **k: [
+            {
+                "sku": "MRC-100",
+                "name": "Marco",
+                "role": "FRAME",
+                "face_width_mm": "78",
+                "system_code": "ALU-60",
+            }
+        ],
+    )
+    catalog_service._reconcile(uuid4(), candidates)
+    assert "conflict" not in candidates[0]
+    assert candidates[0]["existing"][0]["role"] == "FRAME"
+
+
+def test_series_gaps_names_the_missing_roles():
+    assert catalog_service._series_gaps([{"role": "FRAME"}]) == (
+        "SASH,MULLION_V,MULLION_H,GLAZING_BEAD"
+    )
+    assert (
+        catalog_service._series_gaps(
+            [
+                {"role": "FRAME"},
+                {"role": "SASH"},
+                {"role": "MULLION_V"},
+                {"role": "MULLION_H"},
+                {"role": "GLAZING_BEAD"},
+            ]
+        )
+        is None
+    )
+    assert catalog_service._series_gaps([]) is None
+
+
+def test_create_catalog_import_rejects_path_like_filenames():
+    # The multipart filename lands verbatim in the storage key — separators or
+    # traversal would write the object outside catalog-imports/{org}/.
+    for bad_name in (
+        "../escape.pdf",
+        "a/b.csv",
+        "a\\b.pdf",
+        "lista\t.pdf",
+    ):
+        with pytest.raises(APIException) as caught:
+            catalog_service.create_catalog_import(
+                org_id=uuid4(),
+                actor_id=uuid4(),
+                file_name=bad_name,
+                content=b"x",
+                content_type="text/csv",
+            )
+        assert (
+            getattr(caught.value, "contract_code", None)
+            == "catalog_import_file_invalid"
+        )

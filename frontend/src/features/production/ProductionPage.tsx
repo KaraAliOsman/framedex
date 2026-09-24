@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import {
   productionOrderCncExport,
+  productionOrderOpsExport,
   productionOrderDelivery,
   productionOrderDeliveryConfirm,
   productionOrderDeliveryConfirmation,
@@ -20,21 +21,31 @@ import {
   productionOrderPacking,
   productionOrderRemake,
   productionOrders,
+  productionPieceTrace,
+  productionOrderTrace,
+  productionPrep,
+  productionRelease,
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
   Delivery,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestStatusEnum,
+  ProductionOrderTrace,
+  ProductionPieceTrace,
   MethodEnum,
   PackingLabel,
   PaymentKindEnum,
   ProductionOrder,
   ProductionOrderDetail,
+  ProductionPrepItem,
   ProductionStep,
 } from "../../api/generated/models";
+import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { useAssistantSurface } from "../assistant/assistantContext";
+import { cutRoleLabel } from "./labels";
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import {
   GlassSummary,
@@ -43,6 +54,8 @@ import {
   type PolishingEntry,
 } from "./GlassSummary";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
+import { OperatorStepCard } from "./OperatorCard";
+import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
 import "./production.css";
 
 type WorkOrderMaterials = {
@@ -59,6 +72,10 @@ type CncExport = {
   files?: Record<string, string>;
 };
 type DxfExport = CncExport;
+type OpsExport = CncExport & {
+  operation_count?: number;
+  counts_by_kind?: Record<string, number>;
+};
 
 type PackingUnit = {
   unit_index: number;
@@ -111,6 +128,8 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
   WO_DELIVERY_CONFIRMED: "production.eventDeliveryConfirmed",
   WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
+  WO_REMNANTS_SETTLED: "production.eventRemnantsSettled",
+  WO_OPS_EXPORTED: "production.eventOpsExported",
 };
 
 const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
@@ -119,6 +138,32 @@ const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
   DELIVERED: "production.deliveryStatusDelivered",
   FAILED: "production.deliveryStatusFailed",
 };
+
+/** Contract errors carry a human-readable detail — surface it so a refused
+ * step (shortage, gate, invalid transition) tells the operator why instead
+ * of collapsing into a generic toast. */
+function actionErrorDetail(error: unknown): string {
+  if (error instanceof ApiError) {
+    const payload = error.payload as {
+      error?: {
+        detail?: unknown;
+        short_skus?: unknown;
+        unmapped_stock_skus?: unknown;
+      };
+    } | null;
+    const detail = payload?.error?.detail;
+    if (typeof detail === "string" && detail.trim()) {
+      const shortList = payload?.error?.short_skus;
+      const unmappedList = payload?.error?.unmapped_stock_skus;
+      const skus = [
+        ...(Array.isArray(shortList) ? shortList : []),
+        ...(Array.isArray(unmappedList) ? unmappedList : []),
+      ].filter((sku): sku is string => typeof sku === "string" && sku.length > 0);
+      return skus.length ? `${detail} · ${skus.join(", ")}` : detail;
+    }
+  }
+  return t("production.actionError");
+}
 
 function stepActions(step: ProductionStep): StepAction[] {
   switch (step.status) {
@@ -153,10 +198,18 @@ export function ProductionPage(): JSX.Element {
   const [params, setParams] = useSearchParams();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [detail, setDetail] = useState<ProductionOrderDetail | null>(null);
+  const [prepVersions, setPrepVersions] = useState<ProductionPrepItem[]>([]);
+  // While a work order is open, Ask DEKOPEN answers inside that order's
+  // typed context — steps, status and shortages — not the generic list.
+  useAssistantSurface(
+    detail ? "work_order" : null,
+    detail ? { work_order_id: detail.id } : undefined,
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
+  const [optStrategy, setOptStrategy] = useState("auto");
   const [labels, setLabels] = useState<PackingLabel[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [deliveryForm, setDeliveryForm] = useState<DeliveryScheduleRequestRequest | null>(null);
@@ -168,23 +221,44 @@ export function ProductionPage(): JSX.Element {
   const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
   const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
   const [sigDrawn, setSigDrawn] = useState(false);
+  const [trace, setTrace] = useState<ProductionOrderTrace | null>(null);
+  const [traceBusy, setTraceBusy] = useState(false);
+  const [operatorStepId, setOperatorStepId] = useState<string | null>(null);
+  const [pieceQuery, setPieceQuery] = useState("");
+  const [pieceReport, setPieceReport] = useState<ProductionPieceTrace | null>(null);
+  const [pieceBusy, setPieceBusy] = useState(false);
   const sigRef = useRef<SignaturePadHandle | null>(null);
   const labelsGeneration = useRef(0);
   const selectedIdRef = useRef("");
   const mounted = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const selectedId = params.get("order") ?? "";
   selectedIdRef.current = selectedId;
+  /** Triage queue — deep-linkable: /production?status=HOLD lands on the held
+   * orders (dashboard attention items point here). */
+  const statusFilter = params.get("status") ?? "";
+  const shortageOnly = params.get("shortage") === "1";
+  const dispatchReadyOnly = params.get("dispatch_ready") === "1";
+  const filteredOrders = orders.filter(
+    (order) =>
+      (statusFilter === "" || order.status === statusFilter) &&
+      (!shortageOnly || order.shortage > 0) &&
+      (!dispatchReadyOnly || order.dispatch_ready),
+  );
+  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly;
 
   const loadOrders = useCallback(async () => {
-    const response = await productionOrders();
+    const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);
     if (response.status === 200) setOrders(response.data.orders);
+    // §8: versions approved for production but not yet released surface here
+    // — the workshop sees the approved work without waiting for a reminder.
+    if (prepResponse.status === 200) setPrepVersions(prepResponse.data.versions);
   }, []);
 
   const detailGeneration = useRef(0);
@@ -199,12 +273,27 @@ export function ProductionPage(): JSX.Element {
       if (response.status === 200) {
         setDetail(response.data);
         setLabels([]);
+        const sealedColor = response.data.payload?.color;
+        if (typeof sealedColor === "string" && sealedColor.trim()) {
+          setOptColor(sealedColor);
+        }
       }
       setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
       setDeliveryForm(null);
       setConfirmOpen(false);
     }
   }, []);
+
+  const loadTrace = useCallback(async () => {
+    if (!selectedId) return;
+    setTraceBusy(true);
+    try {
+      const response = await productionOrderTrace(selectedId);
+      if (response.status === 200) setTrace(response.data);
+    } finally {
+      setTraceBusy(false);
+    }
+  }, [selectedId]);
 
   useEffect(() => {
     void loadOrders().catch(() => setMessage(t("production.loadError")));
@@ -220,8 +309,25 @@ export function ProductionPage(): JSX.Element {
       setConfirmOpen(false);
       return;
     }
+    setTrace(null);
+    setOperatorStepId(null);
+    setPieceQuery("");
+    setPieceReport(null);
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
-  }, [selectedId, loadDetail]);
+    void loadTrace();
+  }, [selectedId, loadDetail, loadTrace]);
+
+  const lookupPiece = useCallback(async () => {
+    const query = pieceQuery.trim();
+    if (!query) return;
+    setPieceBusy(true);
+    try {
+      const response = await productionPieceTrace(query);
+      if (response.status === 200) setPieceReport(response.data);
+    } finally {
+      setPieceBusy(false);
+    }
+  }, [pieceQuery]);
 
   async function action(task: Promise<unknown>, orderId: string): Promise<void> {
     setBusy(true);
@@ -230,8 +336,8 @@ export function ProductionPage(): JSX.Element {
       await task;
       setNote("");
       await Promise.all([loadDetail(orderId), loadOrders()]);
-    } catch {
-      if (mounted.current) setMessage(t("production.actionError"));
+    } catch (error) {
+      if (mounted.current) setMessage(actionErrorDetail(error));
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -252,6 +358,25 @@ export function ProductionPage(): JSX.Element {
     void action(productionStepTransition(stepId, body), orderId);
   }
 
+  function release(versionId: string): void {
+    setBusy(true);
+    setMessage("");
+    productionRelease(versionId)
+      .then(async (response) => {
+        if ((response.status === 200 || response.status === 201) && mounted.current) {
+          await loadOrders();
+          const first = response.data.orders[0];
+          if (first) setParams({ order: first.id });
+        }
+      })
+      .catch((error) => {
+        if (mounted.current) setMessage(actionErrorDetail(error));
+      })
+      .finally(() => {
+        if (mounted.current) setBusy(false);
+      });
+  }
+
   function remake(orderId: string): void {
     setBusy(true);
     setMessage("");
@@ -263,8 +388,8 @@ export function ProductionPage(): JSX.Element {
           await loadOrders();
         }
       })
-      .catch(() => {
-        if (mounted.current) setMessage(t("production.actionError"));
+      .catch((error) => {
+        if (mounted.current) setMessage(actionErrorDetail(error));
       })
       .finally(() => {
         if (mounted.current) setBusy(false);
@@ -273,7 +398,13 @@ export function ProductionPage(): JSX.Element {
 
   function optimize(orderId: string): void {
     if (!optColor.trim()) return;
-    void action(productionOrderOptimize(orderId, { color: optColor.trim() }), orderId);
+    void action(
+      productionOrderOptimize(orderId, {
+        color: optColor.trim(),
+        strategy: optStrategy as "fast" | "deep" | "auto",
+      }),
+      orderId,
+    );
   }
 
   function exportCnc(orderId: string): void {
@@ -282,6 +413,10 @@ export function ProductionPage(): JSX.Element {
 
   function exportDxf(orderId: string): void {
     void action(productionOrderDxfExport(orderId), orderId);
+  }
+
+  function exportOperations(orderId: string): void {
+    void action(productionOrderOpsExport(orderId), orderId);
   }
 
   async function showLabels(orderId: string): Promise<void> {
@@ -510,9 +645,104 @@ export function ProductionPage(): JSX.Element {
       <div className="production-layout">
         <aside className="production-orders" aria-label={t("production.orders")}>
           <h2>{t("production.orders")}</h2>
+          {prepVersions.length > 0 ? (
+            <section className="production-prep" aria-label={t("production.prepTitle")}>
+              <h3>{t("production.prepTitle")}</h3>
+              <ul>
+                {prepVersions.map((version) => (
+                  <li key={version.version_id}>
+                    <span>
+                      {version.project_code} · {version.revision_code} · {version.positions}{" "}
+                      {t("production.prepPositions")}
+                    </span>
+                    {canWrite ? (
+                      <button
+                        type="button"
+                        className="production-prep-release"
+                        disabled={busy}
+                        onClick={() => release(version.version_id)}
+                      >
+                        {t("production.prepRelease")}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          <div
+            className="production-filters"
+            role="group"
+            aria-label={t("production.statusFilter")}
+          >
+            {["", "RELEASED", "IN_PROGRESS", "HOLD", "COMPLETED", "DISPATCHED", "INSTALLED"].map(
+              (status) => (
+                <button
+                  key={status || "all"}
+                  type="button"
+                  className={`production-filter${statusFilter === status ? " is-active" : ""}`}
+                  aria-pressed={statusFilter === status}
+                  onClick={() => {
+                    const next = new URLSearchParams(params);
+                    if (status) next.set("status", status);
+                    else next.delete("status");
+                    setParams(next);
+                  }}
+                >
+                  {status === ""
+                    ? t("production.statusAll")
+                    : t(orderStatusKey[status] ?? "production.orderReleased")}
+                </button>
+              ),
+            )}
+            <button
+              type="button"
+              className={`production-filter${shortageOnly ? " is-active" : ""}`}
+              aria-pressed={shortageOnly}
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (shortageOnly) next.delete("shortage");
+                else next.set("shortage", "1");
+                setParams(next);
+              }}
+            >
+              {t("production.filterShortage")}
+            </button>
+            <button
+              type="button"
+              className={`production-filter${dispatchReadyOnly ? " is-active" : ""}`}
+              aria-pressed={dispatchReadyOnly}
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (dispatchReadyOnly) next.delete("dispatch_ready");
+                else next.set("dispatch_ready", "1");
+                setParams(next);
+              }}
+            >
+              {t("production.filterDispatchReady")}
+            </button>
+            {listFiltered ? (
+              <button
+                type="button"
+                className="production-filter production-filter-clear"
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.delete("status");
+                  next.delete("shortage");
+                  next.delete("dispatch_ready");
+                  setParams(next);
+                }}
+              >
+                {t("production.clearFilters")}
+              </button>
+            ) : null}
+          </div>
           {orders.length === 0 ? <p>{t("production.empty")}</p> : null}
+          {listFiltered && orders.length > 0 && filteredOrders.length === 0 ? (
+            <p>{t("production.emptyFilter")}</p>
+          ) : null}
           <ul>
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <li key={order.id}>
                 <button
                   type="button"
@@ -528,6 +758,21 @@ export function ProductionPage(): JSX.Element {
                   <span className="production-order-progress">
                     {order.steps_done}/{order.steps_total} {t("production.stepsShort")}
                   </span>
+                  {order.next_step ? (
+                    <span className="production-order-next">
+                      {t("production.nextStep") + " · " + order.next_step.label}
+                    </span>
+                  ) : null}
+                  {order.shortage > 0 ? (
+                    <span className="production-chip is-warn">
+                      {t("production.shortageChip").replace("{count}", String(order.shortage))}
+                    </span>
+                  ) : null}
+                  {order.dispatch_ready ? (
+                    <span className="production-chip is-ready">
+                      {t("production.dispatchReadyChip")}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -544,6 +789,16 @@ export function ProductionPage(): JSX.Element {
                 {detail.quantity ? (
                   <span className="production-order-progress">
                     {detail.quantity} {t("production.units")}
+                  </span>
+                ) : null}
+                {detail.shortage > 0 ? (
+                  <span className="production-chip is-warn">
+                    {t("production.shortageChip").replace("{count}", String(detail.shortage))}
+                  </span>
+                ) : null}
+                {detail.dispatch_ready ? (
+                  <span className="production-chip is-ready">
+                    {t("production.dispatchReadyChip")}
                   </span>
                 ) : null}
                 {canWrite && detail.status === "COMPLETED" ? (
@@ -679,6 +934,15 @@ export function ProductionPage(): JSX.Element {
                           placeholder={t("production.optimizeColorPlaceholder")}
                           aria-label={t("production.optimizeColor")}
                         />
+                        <select
+                          value={optStrategy}
+                          onChange={(event) => setOptStrategy(event.target.value)}
+                          aria-label={t("production.optimizeStrategy")}
+                        >
+                          <option value="auto">{t("production.optimizeStrategyAuto")}</option>
+                          <option value="fast">{t("production.optimizeStrategyFast")}</option>
+                          <option value="deep">{t("production.optimizeStrategyDeep")}</option>
+                        </select>
                         <button
                           type="button"
                           disabled={busy || !optColor.trim()}
@@ -691,8 +955,10 @@ export function ProductionPage(): JSX.Element {
                     {(() => {
                       const cncExport = detail.payload?.cnc_export as CncExport | undefined;
                       const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
+                      const opsExport = detail.payload?.operations_export as OpsExport | undefined;
                       const files = Object.entries(cncExport?.files ?? {});
                       const dxfFiles = Object.entries(dxfExport?.files ?? {});
+                      const opsFiles = Object.entries(opsExport?.files ?? {});
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
@@ -715,6 +981,13 @@ export function ProductionPage(): JSX.Element {
                               >
                                 {t("production.dxfExportButton")}
                               </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportOperations(detail.id)}
+                              >
+                                {t("production.opsExportButton")}
+                              </button>
                             </>
                           ) : null}
                           {files.map(([filename, content]) => (
@@ -728,6 +1001,21 @@ export function ProductionPage(): JSX.Element {
                             </button>
                           ))}
                           {dxfFiles.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                          {opsExport?.operation_count ? (
+                            <span className="production-ops-count">
+                              {opsExport.operation_count} {t("production.opsOperationsCount")}
+                            </span>
+                          ) : null}
+                          {opsFiles.map(([filename, content]) => (
                             <button
                               key={filename}
                               type="button"
@@ -766,17 +1054,33 @@ export function ProductionPage(): JSX.Element {
                               {cutPlan.map((bar) => (
                                 <tr key={bar.bar_index}>
                                   <td>#{bar.bar_index}</td>
-                                  <td>{bar.commercial_sku}</td>
+                                  <td>
+                                    {bar.commercial_sku}
+                                    {bar.source === "REMNANT" ? (
+                                      <span className="production-remnant-tag">
+                                        {" "}
+                                        {t("production.optimizeRemnantBar")}
+                                      </span>
+                                    ) : null}
+                                  </td>
                                   <td>{bar.stock_length_mm} mm</td>
                                   <td>
                                     {bar.cuts
                                       .map(
                                         (cut) =>
-                                          `${cut.piece_id} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
+                                          `${cutRoleLabel(cut.role)} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
                                       )
                                       .join(" · ")}
                                   </td>
-                                  <td>{bar.remainder_mm} mm</td>
+                                  <td>
+                                    {bar.remainder_mm} mm
+                                    {bar.remainder_reusable ? (
+                                      <span className="production-remnant-tag">
+                                        {" "}
+                                        {t("production.optimizeRemnantReusable")}
+                                      </span>
+                                    ) : null}
+                                  </td>
                                   <td>{bar.yield_pct}%</td>
                                 </tr>
                               ))}
@@ -800,6 +1104,134 @@ export function ProductionPage(): JSX.Element {
                               .join(" · ")}
                           </p>
                         ) : null}
+                        {(() => {
+                          const reservations = optimization?.stock_reservations ?? [];
+                          const unmappedSkus = optimization?.unmapped_stock_skus ?? [];
+                          if (!reservations.length && !unmappedSkus.length) return null;
+                          return (
+                            <section
+                              className="production-stock-reserve"
+                              aria-label={t("production.stockReserveTitle")}
+                            >
+                              <h4>{t("production.stockReserveTitle")}</h4>
+                              {reservations.length ? (
+                                <table className="production-plan">
+                                  <thead>
+                                    <tr>
+                                      <th>{t("production.stockKind")}</th>
+                                      <th>{t("production.stockSku")}</th>
+                                      <th>{t("production.stockOnHand")}</th>
+                                      <th>{t("production.stockNeeded")}</th>
+                                      <th>{t("production.stockReserved")}</th>
+                                      <th>{t("production.stockShort")}</th>
+                                      <th>{t("production.stockConsumed")}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {reservations.map((row, index) => (
+                                      <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
+                                        <td>{row.name ?? row.sku ?? "—"}</td>
+                                        <td>
+                                          {row.sku ?? "—"} · {row.unit ?? ""}
+                                        </td>
+                                        <td>{row.on_hand ?? "0"}</td>
+                                        <td>{row.needed ?? "0"}</td>
+                                        <td>{row.reserved ?? "0"}</td>
+                                        <td>
+                                          {row.short && row.short !== "0" ? (
+                                            <strong className="production-stock-short">
+                                              {row.short}
+                                            </strong>
+                                          ) : (
+                                            "0"
+                                          )}
+                                        </td>
+                                        <td>
+                                          {row.consumed_at
+                                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
+                                            : "—"}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              ) : null}
+                              {unmappedSkus.length ? (
+                                <p className="production-stock-unmapped">
+                                  {t("production.stockUnmapped")}: {unmappedSkus.join(" · ")}
+                                </p>
+                              ) : null}
+                            </section>
+                          );
+                        })()}
+                        {(() => {
+                          const remnantLedger = optimization?.remnants;
+                          const consumed = remnantLedger?.consumed ?? [];
+                          const producedCount =
+                            (remnantLedger?.produced_bars?.length ?? 0) +
+                            (remnantLedger?.produced_sheets?.length ?? 0);
+                          const metrics = optimization?.bars?.metrics;
+                          const comparison = optimization?.bars?.strategy_comparison;
+                          const comparisonEntries = comparison
+                            ? (["fast", "deep"] as const)
+                                .filter((key) => comparison[key])
+                                .map((key) => ({ key, metrics: comparison[key] }))
+                            : [];
+                          const unplaced = optimization?.bars?.unplaced ?? [];
+                          return (
+                            <>
+                              {consumed.length || producedCount ? (
+                                <p className="production-optimize-remnants">
+                                  {consumed.length ? (
+                                    <span>
+                                      {t("production.optimizeRemnantsUsed")}: {consumed.length}
+                                    </span>
+                                  ) : null}
+                                  {producedCount ? (
+                                    <span>
+                                      {t("production.optimizeRemnantsProduced")}: {producedCount}
+                                    </span>
+                                  ) : null}
+                                </p>
+                              ) : null}
+                              {metrics ? (
+                                <p className="production-optimize-metrics">
+                                  {t("production.optimizeMetrics")}:{" "}
+                                  {[
+                                    `${metrics.bars ?? 0} barras`,
+                                    `${metrics.purchased_bars ?? 0} compra`,
+                                    `${metrics.remnant_bars ?? 0} remanentes`,
+                                    `${metrics.process_waste_mm ?? "0"} mm desperdicio`,
+                                    `${metrics.reusable_remnant_mm ?? "0"} mm reutilizable`,
+                                    `${metrics.cuts ?? 0} cortes`,
+                                  ].join(" · ")}
+                                </p>
+                              ) : null}
+                              {comparisonEntries.length > 1 ? (
+                                <p className="production-optimize-metrics">
+                                  {t("production.optimizeComparison")}:{" "}
+                                  {comparisonEntries
+                                    .map(
+                                      ({ key, metrics: m }) =>
+                                        `${key}${comparison?.chosen === key ? "*" : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
+                                    )
+                                    .join("  |  ")}
+                                </p>
+                              ) : null}
+                              {unplaced.length ? (
+                                <p className="production-optimize-unnested" role="alert">
+                                  {t("production.optimizeUnplaced")}:{" "}
+                                  {unplaced
+                                    .map(
+                                      (entry) =>
+                                        `${entry.piece?.piece_id ?? "?"} (${entry.reason ?? ""})`,
+                                    )
+                                    .join(" · ")}
+                                </p>
+                              ) : null}
+                            </>
+                          );
+                        })()}
                         {layouts.length ? (
                           <table className="production-plan">
                             <thead>
@@ -820,6 +1252,11 @@ export function ProductionPage(): JSX.Element {
                                     {layout.sheet_width_mm}×{layout.sheet_height_mm} mm
                                   </td>
                                   <td>
+                                    {layout.source === "REMNANT" ? (
+                                      <span className="production-remnant-tag">
+                                        {t("production.optimizeRemnantBar")}{" "}
+                                      </span>
+                                    ) : null}
                                     {layout.placements
                                       .map(
                                         (piece) =>
@@ -1293,39 +1730,111 @@ export function ProductionPage(): JSX.Element {
                   </section>
                 );
               })()}
-              <ol className="production-steps">
-                {detail.steps.map((step) => (
-                  <li key={step.id} className={`production-step step-${step.status.toLowerCase()}`}>
-                    <div className="production-step-head">
-                      <span className="production-step-seq">{step.sequence}</span>
-                      <span className="production-step-label">{step.label}</span>
-                      {step.work_center_code ? (
-                        <span className="production-step-center">{step.work_center_code}</span>
-                      ) : null}
-                      <span className={`production-chip status-${step.status.toLowerCase()}`}>
-                        {t(stepStatusKey[step.status] ?? "production.stepReady")}
-                      </span>
-                    </div>
-                    {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                    {detail.status !== "COMPLETED" &&
-                    detail.status !== "DISPATCHED" &&
-                    detail.status !== "INSTALLED" ? (
-                      <div className="production-step-actions">
-                        {stepActions(step).map((stepAction) => (
-                          <button
-                            key={stepAction}
-                            type="button"
-                            disabled={busy}
-                            onClick={() => transition(step.id, stepAction, detail.id)}
-                          >
-                            {t(actionLabel[stepAction])}
-                          </button>
-                        ))}
-                      </div>
+              {(() => {
+                const nextStep = detail.steps.find(
+                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
+                );
+                if (
+                  !nextStep ||
+                  detail.status === "COMPLETED" ||
+                  detail.status === "DISPATCHED" ||
+                  detail.status === "INSTALLED"
+                )
+                  return null;
+                return (
+                  <div
+                    className="production-next"
+                    role="group"
+                    aria-label={t("production.nextStep")}
+                  >
+                    <span className="production-next-label">
+                      {t("production.nextStep")}: <strong>{nextStep.label}</strong>
+                      {(nextStep.work_center_name ?? nextStep.work_center_code)
+                        ? ` · ${nextStep.work_center_name ?? nextStep.work_center_code}`
+                        : ""}
+                    </span>
+                    <span className="production-step-actions">
+                      {stepActions(nextStep).map((stepAction) => (
+                        <button
+                          key={stepAction}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => transition(nextStep.id, stepAction, detail.id)}
+                        >
+                          {t(actionLabel[stepAction])}
+                        </button>
+                      ))}
+                    </span>
+                  </div>
+                );
+              })()}
+              {(() => {
+                const nextStep = detail.steps.find(
+                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
+                );
+                const operatorStep =
+                  detail.steps.find((step) => step.id === operatorStepId) ??
+                  nextStep ??
+                  detail.steps[detail.steps.length - 1] ??
+                  null;
+                return (
+                  <>
+                    <ol className="production-steps">
+                      {detail.steps.map((step) => (
+                        <li
+                          key={step.id}
+                          className={`production-step step-${step.status.toLowerCase()}${
+                            operatorStep?.id === step.id ? " step-operator" : ""
+                          }`}
+                        >
+                          <div className="production-step-head">
+                            <span className="production-step-seq">{step.sequence}</span>
+                            <button
+                              type="button"
+                              className="production-step-operator"
+                              onClick={() =>
+                                setOperatorStepId((current) =>
+                                  current === step.id ? null : step.id,
+                                )
+                              }
+                            >
+                              {step.label}
+                            </button>
+                            {(step.work_center_name ?? step.work_center_code) ? (
+                              <span className="production-step-center">
+                                {step.work_center_name ?? step.work_center_code}
+                              </span>
+                            ) : null}
+                            <span className={`production-chip status-${step.status.toLowerCase()}`}>
+                              {t(stepStatusKey[step.status] ?? "production.stepReady")}
+                            </span>
+                          </div>
+                          {step.note ? <p className="production-step-note">{step.note}</p> : null}
+                          {detail.status !== "COMPLETED" &&
+                          detail.status !== "DISPATCHED" &&
+                          detail.status !== "INSTALLED" ? (
+                            <div className="production-step-actions">
+                              {stepActions(step).map((stepAction) => (
+                                <button
+                                  key={stepAction}
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => transition(step.id, stepAction, detail.id)}
+                                >
+                                  {t(actionLabel[stepAction])}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                    {operatorStep ? (
+                      <OperatorStepCard step={operatorStep} trace={trace} traceBusy={traceBusy} />
                     ) : null}
-                  </li>
-                ))}
-              </ol>
+                  </>
+                );
+              })()}
               <label className="production-note">
                 {t("production.noteLabel")}
                 <input
@@ -1335,6 +1844,48 @@ export function ProductionPage(): JSX.Element {
                   placeholder={t("production.notePlaceholder")}
                 />
               </label>
+              <section className="production-trace" aria-label={t("production.traceTitle")}>
+                <header className="production-optimize-head">
+                  <h3>{t("production.traceTitle")}</h3>
+                  {!trace ? (
+                    <button type="button" disabled={traceBusy} onClick={() => void loadTrace()}>
+                      {traceBusy ? t("production.traceLoading") : t("production.traceLoad")}
+                    </button>
+                  ) : null}
+                </header>
+                {trace ? (
+                  <div className="production-trace-body">
+                    <p className="production-trace-chain">
+                      {trace.project?.code ? String(trace.project.code) : "—"}
+                      {" → "}
+                      {trace.version?.revision_code ? String(trace.version.revision_code) : "—"}
+                      {" → "}
+                      {String(trace.work_order?.order_code ?? "—")}
+                    </p>
+                    {trace.plan ? <TracePlan plan={trace.plan} /> : null}
+                    {trace.stock ? <TraceStock stock={trace.stock} /> : null}
+                  </div>
+                ) : null}
+                <div className="production-trace-lookup">
+                  <label>
+                    {t("production.tracePieceLabel")}
+                    <input
+                      type="text"
+                      value={pieceQuery}
+                      onChange={(event) => setPieceQuery(event.target.value)}
+                      placeholder={t("production.tracePiecePlaceholder")}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={pieceBusy || !pieceQuery.trim()}
+                    onClick={() => void lookupPiece()}
+                  >
+                    {t("production.tracePieceLookup")}
+                  </button>
+                </div>
+                {pieceReport ? <TracePieceMatches report={pieceReport} /> : null}
+              </section>
               <section className="production-events" aria-label={t("production.events")}>
                 <h3>{t("production.events")}</h3>
                 <ol>

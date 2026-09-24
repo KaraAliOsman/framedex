@@ -22,10 +22,16 @@ class ProductionStepSerializer(serializers.Serializer):
     )
     work_center_id = serializers.UUIDField(allow_null=True)
     work_center_code = serializers.CharField(allow_null=True)
+    work_center_name = serializers.CharField(allow_null=True)
     started_at = serializers.DateTimeField(allow_null=True)
     finished_at = serializers.DateTimeField(allow_null=True)
     actor_id = serializers.UUIDField(allow_null=True)
     note = serializers.CharField(allow_null=True)
+
+
+class ProductionNextStepSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
 
 
 class ProductionOrderSerializer(serializers.Serializer):
@@ -37,9 +43,24 @@ class ProductionOrderSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(allow_null=True)
     steps_done = serializers.IntegerField()
     steps_total = serializers.IntegerField()
+    next_step = ProductionNextStepSerializer(allow_null=True)
+    dispatch_ready = serializers.BooleanField()
+    shortage = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     project_version_id = serializers.UUIDField(allow_null=True, required=False)
     payload = serializers.DictField(required=False)
+
+
+class ProductionPrepItemSerializer(serializers.Serializer):
+    version_id = serializers.UUIDField()
+    project_id = serializers.UUIDField()
+    project_code = serializers.CharField()
+    revision_code = serializers.CharField()
+    positions = serializers.IntegerField()
+
+
+class ProductionPrepSerializer(serializers.Serializer):
+    versions = ProductionPrepItemSerializer(many=True)
 
 
 class ProductionReleaseSerializer(serializers.Serializer):
@@ -96,6 +117,15 @@ class DxfExportSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()
     exported_at = serializers.CharField()
+    files = serializers.DictField(child=serializers.CharField())
+
+
+class OpsExportSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    exported_at = serializers.CharField()
+    operation_count = serializers.IntegerField()
+    counts_by_kind = serializers.DictField()
     files = serializers.DictField(child=serializers.CharField())
 
 
@@ -195,6 +225,9 @@ class WorkCenterRequestSerializer(StrictSerializer):
 class WorkOrderOptimizeRequestSerializer(StrictSerializer):
     color = serializers.CharField(max_length=50)
     cutting_profile_code = serializers.CharField(required=False, allow_null=True, max_length=50)
+    strategy = serializers.ChoiceField(
+        choices=["fast", "deep", "auto"], required=False, default="auto"
+    )
 
     def validate(self, data):
         data = super().validate(data)
@@ -285,3 +318,26 @@ class DeliveryConfirmRequestSerializer(StrictSerializer):
 class DeliveryConfirmResponseSerializer(serializers.Serializer):
     confirmation = DeliveryConfirmationSerializer()
     delivery = DeliverySerializer()
+
+
+class ProductionOrderTraceSerializer(serializers.Serializer):
+    work_order = serializers.DictField()
+    project = serializers.DictField(allow_null=True)
+    version = serializers.DictField(allow_null=True)
+    position_id = serializers.CharField(allow_null=True, required=False)
+    plan = serializers.DictField()
+    stock = serializers.DictField()
+    steps = serializers.ListField()
+    events = serializers.ListField()
+    operations = serializers.DictField()
+
+
+class ProductionPieceTraceSerializer(serializers.Serializer):
+    piece_id = serializers.CharField()
+    matches = serializers.ListField()
+
+
+class ProductionVersionTraceSerializer(serializers.Serializer):
+    version = serializers.DictField()
+    project = serializers.DictField(allow_null=True)
+    work_orders = serializers.ListField()

@@ -8,6 +8,7 @@
 import type { OperationalSummaryDeliveries } from "./operationalSummaryDeliveries";
 import type { OperationalSummaryDocuments } from "./operationalSummaryDocuments";
 import type { OperationalSummaryInventory } from "./operationalSummaryInventory";
+import type { OperationalSummaryPrep } from "./operationalSummaryPrep";
 import type { OperationalSummaryProjects } from "./operationalSummaryProjects";
 import type { OperationalSummarySupplierOrders } from "./operationalSummarySupplierOrders";
 import type { OperationalSummaryThroughput30d } from "./operationalSummaryThroughput30d";
@@ -21,6 +22,7 @@ export interface OperationalSummary {
   /** @nullable */
   avg_release_to_dispatch_hours: number | null;
   inventory: OperationalSummaryInventory;
+  prep: OperationalSummaryPrep;
   deliveries: OperationalSummaryDeliveries;
   documents: OperationalSummaryDocuments;
   projects: OperationalSummaryProjects;

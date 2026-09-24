@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { cutRoleLabel } from "./labels";
 import { t } from "../../i18n/es-CL";
 
 // Full engine payload contract (backend/production/service.py →
@@ -32,9 +33,13 @@ export type CutBar = {
   kerf_mm?: string;
   cuts: CutPlacement[];
   remainder_mm: string;
+  remainder_reusable?: boolean;
   waste_mm?: string;
   yield_pct: string;
   waste_pct?: string;
+  stock_authority_id?: string;
+  source?: "NEW" | "REMNANT";
+  remnant_id?: string | null;
 };
 export type PurchaseLine = {
   commercial_sku: string;
@@ -63,6 +68,10 @@ export type SheetLayout = {
   sheet_height_mm: string;
   yield_pct: string;
   placements: NestPlacement[];
+  workshop_sku?: string;
+  source?: "NEW" | "REMNANT";
+  remnant_id?: string | null;
+  produced_remnants?: { x_mm: string; y_mm: string; width_mm: string; height_mm: string }[];
 };
 export type UnnestedPiece = {
   kind: string;
@@ -71,16 +80,59 @@ export type UnnestedPiece = {
   height_mm: string;
   quantity: number;
 };
+export type OptimizationMetrics = {
+  bars?: number;
+  purchased_bars?: number;
+  remnant_bars?: number;
+  cuts?: number;
+  productive_length_mm?: string;
+  process_waste_mm?: string;
+  reusable_remnant_mm?: string;
+  unplaced?: number;
+};
+export type StrategyComparison = {
+  fast?: OptimizationMetrics;
+  deep?: OptimizationMetrics;
+  chosen?: string;
+};
+export type StockReservation = {
+  kind?: string;
+  sku?: string;
+  name?: string;
+  unit?: string;
+  needed?: string;
+  on_hand?: string;
+  reserved?: string;
+  short?: string;
+  consumed_at?: string | null;
+};
+
+export type RemnantLedger = {
+  consumed?: { id: string; kind: string }[];
+  produced_bars?: { stock_authority_id: string; remainder_mm: string }[];
+  produced_sheets?: { workshop_sku: string; width_mm: string; height_mm: string }[];
+};
 export type WorkOrderOptimization = {
   schema?: string;
   color?: string;
   units?: number;
   optimized_at?: string;
   actor_id?: string;
-  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
+  strategy?: string;
+  bars?: {
+    workshop_cut_plan?: CutBar[];
+    purchase_list?: PurchaseLine[];
+    metrics?: OptimizationMetrics;
+    strategy_comparison?: StrategyComparison;
+    plan_seed?: string;
+    unplaced?: { piece?: { piece_id?: string }; reason?: string }[];
+  };
   sheets?: SheetLayout[];
   sheet_purchases?: SheetPurchase[];
   unnested?: UnnestedPiece[];
+  remnants?: RemnantLedger;
+  stock_reservations?: StockReservation[];
+  unmapped_stock_skus?: string[];
 };
 
 type PieceRef = {
@@ -341,7 +393,7 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       sku: piece.workshop_sku ?? "—",
       material: cut.material ?? "—",
       color: cut.color ?? "—",
-      role: cut.role ?? "—",
+      role: cutRoleLabel(cut.role),
       position: shortId(piece.source_position_id),
       bay: shortId(piece.bay_id),
       leaf: shortId(piece.leaf_id),

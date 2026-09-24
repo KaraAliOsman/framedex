@@ -36,6 +36,11 @@ export function subtractDecimal(a: DecimalValue, b: DecimalValue): DecimalValue 
   };
 }
 
+export function midpointDecimal(a: DecimalValue, b: DecimalValue): DecimalValue {
+  const sum = addDecimal(a, b);
+  return { numerator: sum.numerator, denominator: sum.denominator * 2n };
+}
+
 export function compareDecimal(a: DecimalValue, b: DecimalValue): number {
   const left = a.numerator * b.denominator;
   const right = b.numerator * a.denominator;

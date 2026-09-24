@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
@@ -13,15 +13,19 @@ import {
   projectsUpdate,
   projectsClone,
   positionsDestroy,
+  positionsUpdate,
 } from "../../api/generated/dekopen";
 import type {
   ClientResponse,
   ProjectResponse,
   ProjectWriteRequest,
+  PositionDesignRequest,
   PositionResponse,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatMoney } from "../money";
+import { projectNameWrite } from "./projectNames";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
 import { ProjectBom } from "./ProjectPositionEditor";
@@ -51,6 +55,108 @@ const statuses: Record<ProjectResponse["status"], TranslationKey> = {
   COMPLETED: "projects.completed",
   CANCELLED: "projects.cancelled",
 };
+
+/** Derived per-position progression — the estimator reads "where in the
+ * job" each vano is: drafted → engine-evaluated → priced → sealed into a
+ * revision → released to production. It is derived, never stored: the
+ * project's own state machine is the authority. */
+const typologyKeys: Record<string, TranslationKey> = {
+  FIXED: "typology.fixed",
+  TURN: "typology.turn",
+  TILT_TURN: "typology.tiltTurn",
+  SLIDING_2L: "typology.sliding2l",
+  SLIDING_3L: "typology.sliding3l",
+  SLIDING_4L: "typology.sliding4l",
+  AWNING: "typology.awning",
+  DOOR_ENTRY: "typology.doorEntry",
+  COMPOSITE: "typology.composite",
+};
+
+function positionStatusKey(
+  project: ProjectResponse,
+  position: PositionResponse,
+): { key: TranslationKey; tone: string } {
+  if (project.status === "IN_PRODUCTION" || project.status === "COMPLETED")
+    return { key: "position.status.production", tone: "production" };
+  // A draft always carries a revision code; frozen only once the revision
+  // is actually sealed — otherwise evaluated/priced would never show.
+  const revisionSealed = (project.versions ?? []).some(
+    (version) => version.revision_code === project.current_revision,
+  );
+  if (project.status !== "DRAFT" || revisionSealed)
+    return { key: "position.status.frozen", tone: "frozen" };
+  if (project.pricing_current) return { key: "position.status.priced", tone: "priced" };
+  if (position.bom) return { key: "position.status.evaluated", tone: "evaluated" };
+  return { key: "position.status.draft", tone: "draft" };
+}
+
+/** Inline quantity edit in the positions grid — commits on Enter/blur via
+ * the same optimistic-lock PUT the editor uses; a conflict surfaces the
+ * shared reload path instead of silently losing the edit. */
+function PositionQtyInput({
+  position,
+  orgId,
+  disabled,
+  onSaved,
+  onConflict,
+}: {
+  position: PositionResponse;
+  orgId: string;
+  disabled: boolean;
+  onSaved(): Promise<unknown>;
+  onConflict(): void;
+}): JSX.Element {
+  const [value, setValue] = useState(String(position.quantity));
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setValue(String(position.quantity)), [position.quantity]);
+
+  async function commit(): Promise<void> {
+    const next = Number(value);
+    if (!Number.isInteger(next) || next < 1) {
+      setValue(String(position.quantity));
+      return;
+    }
+    if (next === position.quantity || saving) return;
+    setSaving(true);
+    try {
+      const response = await positionsUpdate(
+        position.id,
+        {
+          location_tag: position.location_tag ?? "",
+          quantity: next,
+          design: position.design as PositionDesignRequest,
+          expected_updated_at: position.updated_at,
+        },
+        { headers: { "X-Organization-ID": orgId } },
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      await onSaved();
+    } catch (caught) {
+      setValue(String(position.quantity));
+      if (caught instanceof ApiError && caught.status === 409) onConflict();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <input
+      aria-label={t("pricing.quantity")}
+      className="position-row__qty-input"
+      disabled={disabled || saving}
+      inputMode="numeric"
+      min={1}
+      onBlur={() => void commit()}
+      onChange={(event) => setValue(event.target.value)}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+      type="number"
+      value={value}
+    />
+  );
+}
 
 function metadata(project?: ProjectResponse): ProjectWriteRequest {
   return {
@@ -187,6 +293,7 @@ export function ProjectPages(): JSX.Element {
       id={id}
       canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
       canSendEnvio={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
+      isOwner={org.role === "OWNER"}
     />
   );
 }
@@ -202,12 +309,14 @@ function ProjectWorkspace({
   id,
   canWrite,
   canSendEnvio,
+  isOwner,
 }: {
   identity: string;
   orgId: string;
   id?: string;
   canWrite: boolean;
   canSendEnvio: boolean;
+  isOwner: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -215,6 +324,9 @@ function ProjectWorkspace({
   const [paymentsDirty, setPaymentsDirty] = useState(false);
   const [importsDirty, setImportsDirty] = useState(false);
   const [search, setSearch] = useState("");
+  const [params] = useSearchParams();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [factsCollapsed, setFactsCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -300,6 +412,7 @@ function ProjectWorkspace({
           throw new ApiError(response.status, response.data);
         }
         if (controller.signal.aborted) return;
+        projectNameWrite(orgId, id, submitted.value.name);
         setDraft(null);
         setNotice(t("projects.saved"));
         void query.refetch();
@@ -439,8 +552,13 @@ function ProjectWorkspace({
   const disabled = busy || query.isFetching || mustReload;
   const editable = canWrite && project?.status === "DRAFT" && !project.pricing_current;
   const needle = search.toLocaleLowerCase("es-CL");
-  const visible = items.filter((item) =>
-    `${item.code} ${item.name} ${item.client_name}`.toLocaleLowerCase("es-CL").includes(needle),
+  // Deep-linkable triage filter — the dashboard attention queue lands on
+  // /projects?status=QUOTED so the promised list is already filtered.
+  const statusFilter = params.get("status") ?? "";
+  const visible = items.filter(
+    (item) =>
+      (statusFilter === "" || item.status === statusFilter) &&
+      `${item.code} ${item.name} ${item.client_name}`.toLocaleLowerCase("es-CL").includes(needle),
   );
 
   return (
@@ -499,82 +617,120 @@ function ProjectWorkspace({
       )}
 
       {project ? (
-        <>
-          <p>{t(statuses[project.status])}</p>
-          {canWrite && !editable && (
-            <p className="project-locked" role="status">
-              {t(project.status === "DRAFT" ? "projects.lockedPriced" : "projects.lockedQuoted")}
-            </p>
-          )}
-          {!draft && (
-            <dl className="project-metadata">
-              {fields
-                .filter(([name]) => name !== "name")
-                .map(([name, label]) => (
-                  <div key={name}>
-                    <dt>{t(label)}</dt>
-                    <dd>{project[name] || "—"}</dd>
-                  </div>
-                ))}
-              <div>
-                <dt>{t("projects.updated")}</dt>
-                <dd>
-                  <time dateTime={project.updated_at}>
-                    {new Date(project.updated_at).toLocaleString("es-CL")}
-                  </time>
-                </dd>
-              </div>
-              <div>
-                <dt>{t("projects.positions")}</dt>
-                <dd>{project.position_count}</dd>
-              </div>
-              {project.pricing_current ? (
-                <>
+        <div className="project-desk">
+          {/* LEFT — project facts rail: the deal's identity plus the
+              quotation/cobranza/imports workflows as collapsible sections.
+              Collapsed it shrinks to a strip so the grid owns the room. */}
+          <aside className="project-facts" data-collapsed={factsCollapsed || undefined}>
+            <div className="project-facts__head">
+              <button
+                aria-expanded={!factsCollapsed}
+                className="ghost-button project-facts__toggle"
+                onClick={() => setFactsCollapsed((value) => !value)}
+                type="button"
+              >
+                {t(factsCollapsed ? "projects.factsShow" : "projects.factsHide")}
+              </button>
+              <p className="status-chip" data-status={project.status.toLowerCase()}>
+                {t(statuses[project.status])}
+              </p>
+            </div>
+            <div className="project-facts__body" hidden={factsCollapsed}>
+              <>
+                {canWrite && !editable && (
+                  <p className="project-locked" role="status">
+                    {t(
+                      project.status === "DRAFT"
+                        ? "projects.lockedPriced"
+                        : "projects.lockedQuoted",
+                    )}
+                  </p>
+                )}
+                <dl className="project-metadata project-facts__list">
+                  {fields
+                    .filter(([name]) => name !== "name")
+                    .map(([name, label]) => (
+                      <div key={name}>
+                        <dt>{t(label)}</dt>
+                        <dd>{project[name] || "—"}</dd>
+                      </div>
+                    ))}
                   <div>
-                    <dt>{t("projects.net")}</dt>
-                    <dd>{project.total_price_net}</dd>
+                    <dt>{t("projects.updated")}</dt>
+                    <dd>
+                      <time dateTime={project.updated_at}>
+                        {new Date(project.updated_at).toLocaleString("es-CL")}
+                      </time>
+                    </dd>
                   </div>
                   <div>
-                    <dt>{t("projects.tax")}</dt>
-                    <dd>{project.total_price_tax}</dd>
+                    <dt>{t("projects.positions")}</dt>
+                    <dd>{project.position_count}</dd>
                   </div>
-                  <div>
-                    <dt>{t("projects.total")}</dt>
-                    <dd>{project.total_price_gross}</dd>
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <dt>{t("projects.total")}</dt>
-                  <dd>{t("projects.unpriced")}</dd>
-                </div>
-              )}
-            </dl>
-          )}
-          <ProjectQuotationPanel
-            project={project}
-            orgId={orgId}
-            canWrite={canWrite}
-            onChanged={() => query.refetch()}
-            onDirtyChange={setQuotationDirty}
-          />
-          <ProjectPaymentsPanel
-            projectId={project.id}
-            orgId={orgId}
-            canWrite={canWrite}
-            canSendEnvio={canSendEnvio}
-            onDirtyChange={setPaymentsDirty}
-          />
-          <ProjectImportsPanel
-            projectId={project.id}
-            orgId={orgId}
-            canWrite={canWrite && editable}
-            onChanged={() => query.refetch()}
-            onDirtyChange={setImportsDirty}
-          />
-          <section>
+                  {project.pricing_current ? (
+                    <>
+                      <div>
+                        <dt>{t("projects.net")}</dt>
+                        <dd>{formatMoney(project.total_price_net, project.currency)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("projects.tax")}</dt>
+                        <dd>{formatMoney(project.total_price_tax, project.currency)}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("projects.total")}</dt>
+                        <dd>{formatMoney(project.total_price_gross, project.currency)}</dd>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <dt>{t("projects.total")}</dt>
+                      <dd>{t("projects.unpriced")}</dd>
+                    </div>
+                  )}
+                </dl>
+                <details className="project-facts__section">
+                  <summary>{t("projects.quoteSection")}</summary>
+                  <ProjectQuotationPanel
+                    project={project}
+                    orgId={orgId}
+                    canWrite={canWrite}
+                    canRelease={canSendEnvio}
+                    onChanged={() => query.refetch()}
+                    onDirtyChange={setQuotationDirty}
+                  />
+                </details>
+                <details className="project-facts__section">
+                  <summary>{t("projects.paymentsTitle")}</summary>
+                  <ProjectPaymentsPanel
+                    projectId={project.id}
+                    orgId={orgId}
+                    canWrite={canWrite}
+                    canSendEnvio={canSendEnvio}
+                    isOwner={isOwner}
+                    onDirtyChange={setPaymentsDirty}
+                  />
+                </details>
+                <details className="project-facts__section">
+                  <summary>{t("projects.importsSection")}</summary>
+                  <ProjectImportsPanel
+                    projectId={project.id}
+                    orgId={orgId}
+                    canWrite={canWrite && editable}
+                    onChanged={() => query.refetch()}
+                    onDirtyChange={setImportsDirty}
+                  />
+                </details>
+              </>
+            </div>
+          </aside>
+
+          {/* CENTER — the positions grid: dense rows, one per vano, with
+              inline quantity and a derived status chip. Clicking a row
+              selects it for the side pane. */}
+          <div className="project-desk__center">
             <div className="projects-actions">
-              <h2>{t("projects.positions")}</h2>
+              <h2 title={t("projects.positionsHint")}>{t("projects.positions")}</h2>
               {editable && (
                 <Link className="primary-action" to={`/projects/${project.id}/positions/new`}>
                   {t("projects.addPosition")}
@@ -588,42 +744,122 @@ function ProjectWorkspace({
                 )}
             </div>
             {project.position_count === 0 && <p>{t("projects.noPositions")}</p>}
-            {project.positions?.map((position) => (
-              <article className="project-position" key={position.id}>
-                <PositionThumb design={position.design} />
-                <div className="project-position-body">
-                  <div className="projects-actions">
-                    <strong>
+            <div className="position-grid" role="list">
+              {project.positions?.map((position) => {
+                const status = positionStatusKey(project, position);
+                return (
+                  <div
+                    aria-selected={selectedId === position.id}
+                    className="position-row"
+                    data-selected={selectedId === position.id || undefined}
+                    key={position.id}
+                    onClick={() => setSelectedId(position.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedId(position.id);
+                      }
+                    }}
+                    role="listitem"
+                    tabIndex={0}
+                  >
+                    <span className="position-row__thumb">
+                      <PositionThumb design={position.design} />
+                    </span>
+                    <span
+                      className="position-row__loc"
+                      title={
+                        position.location_tag
+                          ? `${position.position_index}. ${position.location_tag}`
+                          : undefined
+                      }
+                    >
                       {position.position_index}. {position.location_tag || t("projects.position")}
-                    </strong>
-                    <span>
-                      {position.design.nominal_width_mm} × {position.design.nominal_height_mm} mm
                     </span>
-                    <span>
-                      {t("pricing.quantity")}: {position.quantity}
+                    <span className="position-row__dims">
+                      {position.design.nominal_width_mm} × {position.design.nominal_height_mm}
                     </span>
+                    <span className="position-row__qty">
+                      {editable ? (
+                        <PositionQtyInput
+                          disabled={disabled}
+                          onConflict={() => setMustReload(true)}
+                          onSaved={() => query.refetch()}
+                          orgId={orgId}
+                          position={position}
+                        />
+                      ) : (
+                        `×${position.quantity}`
+                      )}
+                    </span>
+                    <span className="status-chip" data-status={status.tone}>
+                      {t(status.key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* RIGHT — the selected vano's summary and its actions; no
+              selection means an honest hint, never a fabricated detail. */}
+          <aside className="project-desk__side">
+            {(() => {
+              const selected = project.positions?.find((item) => item.id === selectedId);
+              if (!selected)
+                return <p className="project-desk__hint">{t("projects.positionHint")}</p>;
+              return (
+                <div className="position-detail">
+                  <h3>
+                    {t("projects.selectedPosition")} · {selected.position_index}
+                  </h3>
+                  <dl className="project-metadata">
+                    <div>
+                      <dt>{t("projects.location")}</dt>
+                      <dd>{selected.location_tag || "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("projects.dims")}</dt>
+                      <dd>
+                        {selected.design.nominal_width_mm} × {selected.design.nominal_height_mm} mm
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t("pricing.quantity")}</dt>
+                      <dd>{selected.quantity}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("projects.typology")}</dt>
+                      <dd>
+                        {typologyKeys[selected.typology]
+                          ? t(typologyKeys[selected.typology]!)
+                          : selected.typology}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="projects-actions">
                     {editable && (
-                      <Link to={`/projects/${project.id}/positions/${position.id}/edit`}>
+                      <Link to={`/projects/${project.id}/positions/${selected.id}/edit`}>
                         {t("projects.openPosition")}
                       </Link>
                     )}
                     {editable && (
-                      <Link to={`/projects/${project.id}/positions/new?copy=${position.id}`}>
+                      <Link to={`/projects/${project.id}/positions/new?copy=${selected.id}`}>
                         {t("projects.duplicatePosition")}
                       </Link>
                     )}
                     {editable && (
-                      <button disabled={disabled} onClick={() => void deletePosition(position)}>
+                      <button disabled={disabled} onClick={() => void deletePosition(selected)}>
                         {t("projects.deletePosition")}
                       </button>
                     )}
                   </div>
-                  <ProjectBom result={position.bom} />
+                  <ProjectBom result={selected.bom} />
                 </div>
-              </article>
-            ))}
-          </section>
-        </>
+              );
+            })()}
+          </aside>
+        </div>
       ) : (
         <>
           <label>
@@ -664,7 +900,9 @@ function ProjectWorkspace({
                       </time>
                     </td>
                     <td>
-                      {item.pricing_current ? item.total_price_gross : t("projects.unpriced")}
+                      {item.pricing_current
+                        ? formatMoney(item.total_price_gross, item.currency)
+                        : t("projects.unpriced")}
                     </td>
                   </tr>
                 ))}

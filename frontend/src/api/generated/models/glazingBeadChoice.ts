@@ -5,9 +5,11 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProfileSection } from "./profileSection";
 
 export interface GlazingBeadChoice {
   glass_thickness_mm: string;
   bead_width_mm: string;
   sku: string;
+  section?: ProfileSection | null;
 }

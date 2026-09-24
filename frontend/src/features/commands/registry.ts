@@ -7,6 +7,7 @@ import type {
   CommandSpec,
   CommandSurface,
   DesignOp,
+  DesignOpState,
   ResolvedCommand,
 } from "./types";
 import type { ProductJson } from "../canvas/productEditing";
@@ -84,10 +85,11 @@ export function applyDesignOpOn(
   specs: CommandSpec[],
   product: ProductJson,
   op: DesignOp,
+  state?: DesignOpState,
 ): ProductJson {
   for (const spec of specs) {
     if (spec.ai?.op !== op.op || !spec.apply) continue;
-    const args = spec.ai.decode(op, product);
+    const args = spec.ai.decode(op, product, state);
     if (args === null) continue;
     const ctx: CommandContext = {
       product,

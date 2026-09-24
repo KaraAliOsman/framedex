@@ -1,0 +1,59 @@
+/* §15 profile section preview — true-scale cross-section with provenance. */
+.section-preview {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.section-preview svg {
+  display: block;
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  border: 1px solid var(--line, #d8d8d8);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised, #fff);
+}
+
+.section-preview__shape {
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.section-preview__shape--approx {
+  fill: none;
+  stroke-dasharray: 3 2;
+}
+
+.section-preview__axis {
+  stroke: var(--line-strong, #9a9a9a);
+  stroke-width: 0.4;
+  stroke-dasharray: 4 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.section-preview__axis-label,
+.section-preview__dims {
+  fill: var(--ink-3, #6b6b6b);
+  font-family: var(--font-mono, monospace);
+}
+
+.section-preview figcaption {
+  font-size: 0.72rem;
+  color: var(--ink-3, #6b6b6b);
+}
+
+.section-preview[data-provenance="APPROXIMATE"] figcaption::before {
+  content: "◌ ";
+}
+
+.section-preview[data-provenance="POLYGON"] figcaption::before,
+.section-preview[data-provenance="DXF_REFERENCE"] figcaption::before {
+  content: "■ ";
+}
+
+.section-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

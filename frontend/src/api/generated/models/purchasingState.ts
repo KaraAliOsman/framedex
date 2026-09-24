@@ -8,6 +8,7 @@
 import type { ArtifactResponse } from "./artifactResponse";
 import type { PurchasingStateAllocationsItem } from "./purchasingStateAllocationsItem";
 import type { PurchasingStateBlockersItem } from "./purchasingStateBlockersItem";
+import type { PurchasingStateCoverage } from "./purchasingStateCoverage";
 import type { PurchasingStateEligibilitiesItem } from "./purchasingStateEligibilitiesItem";
 import type { PurchasingStateOrdersItem } from "./purchasingStateOrdersItem";
 import type { PurchasingStateRequirementsItem } from "./purchasingStateRequirementsItem";
@@ -23,4 +24,5 @@ export interface PurchasingState {
   orders?: PurchasingStateOrdersItem[];
   artifacts?: ArtifactResponse[];
   blockers?: PurchasingStateBlockersItem[];
+  coverage?: PurchasingStateCoverage;
 }

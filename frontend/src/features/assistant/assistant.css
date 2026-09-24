@@ -1,0 +1,221 @@
+/* Contextual Ask dock — a floating panel over the workspace corner. The
+ * trigger is one quiet affordance; the panel keeps the thread inside the
+ * current surface's context. */
+.ask-dock {
+  position: fixed;
+  right: 16px;
+  bottom: 40px; /* above the status bar */
+  z-index: 60;
+}
+.ask-dock__trigger {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  background: var(--theme-surface-panel, #ffffff);
+  color: var(--theme-text-primary, #1f2a29);
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 14%);
+}
+.ask-dock__trigger:hover {
+  background: var(--theme-accent-soft, #e4f3f1);
+}
+.ask-dock__panel {
+  width: 340px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+  background: var(--theme-surface-panel, #ffffff);
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgb(0 0 0 / 18%);
+  overflow: hidden;
+}
+.ask-dock__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--theme-border-subtle, #d9dfde);
+}
+.ask-dock__title {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+.ask-dock__surface {
+  font-size: 11px;
+  color: var(--theme-text-muted, #5c6c68);
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.ask-dock__close {
+  border: 0;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--theme-text-muted, #5c6c68);
+}
+.ask-dock__thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 80px;
+}
+.ask-dock__hint {
+  color: var(--theme-text-muted, #5c6c68);
+  font-size: 12.5px;
+  margin: 6px 0;
+}
+.ask-dock__turn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ask-dock__question {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 0;
+}
+.ask-dock__answer {
+  font-size: 12.5px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+.ask-dock__warnings {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--theme-warning, #b25e09);
+}
+.ask-dock__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ask-dock__action {
+  font-size: 12px;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  background: var(--theme-accent-soft, #e4f3f1);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.ask-dock__meta {
+  font-size: 10.5px;
+  color: var(--theme-text-muted, #5c6c68);
+  margin: 2px 0 0;
+}
+.ask-dock__busy {
+  font-size: 12px;
+  color: var(--theme-text-muted, #5c6c68);
+  margin: 0;
+}
+.ask-dock__error {
+  font-size: 12px;
+  color: var(--theme-danger, #b3372f);
+  margin: 0;
+  padding: 0 10px 6px;
+}
+.ask-dock__form {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--theme-border-subtle, #d9dfde);
+}
+.ask-dock__form input {
+  flex: 1;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 8px;
+  background: var(--theme-surface-panel, #ffffff);
+  color: var(--theme-text-primary, #1f2a29);
+}
+.ask-dock__form button {
+  font-size: 13px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--theme-accent, #0f817a);
+  color: #fff;
+  cursor: pointer;
+}
+.ask-dock__form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ask-dock__modes {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 8px;
+  padding: 1px;
+}
+.ask-dock__mode {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--theme-text-secondary, #576664);
+  cursor: pointer;
+}
+.ask-dock__mode--active {
+  background: var(--theme-accent, #0f817a);
+  color: #fff;
+}
+.ask-dock__queries {
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ask-dock__queries li {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--theme-surface-inset, #f0f4f3);
+  color: var(--theme-text-secondary, #576664);
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+}
+.ask-dock__ops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.ask-dock__ops ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--theme-text-primary, #1f2a29);
+}
+.ask-dock__ops .ask-dock__action {
+  align-self: flex-start;
+}
+.ask-dock__action--prepare {
+  border: 1px solid var(--theme-accent, #0f817a);
+  color: var(--theme-accent, #0f817a);
+}
+.ask-dock__form textarea {
+  flex: 1;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 8px;
+  background: var(--theme-surface-panel, #ffffff);
+  color: var(--theme-text-primary, #1f2a29);
+  resize: none;
+  font-family: inherit;
+}

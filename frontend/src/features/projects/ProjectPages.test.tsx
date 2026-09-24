@@ -123,6 +123,7 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     total_price_gross: "0.00",
     pricing_current: false,
     current_pricing_operation_id: null,
+    currency: "CLP",
     position_count: 0,
     positions: [],
     versions: [],
@@ -407,7 +408,8 @@ it("deletes using the exact position timestamp and renders the refreshed project
   vi.mocked(positionsDestroy).mockResolvedValue(response(204, undefined));
 
   mount();
-  await screen.findByText("1. Dormitorio principal");
+  // The delete action lives in the side pane — select the vano first.
+  fireEvent.click(await screen.findByText("1. Dormitorio principal"));
   fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
 
   expect(await screen.findByText(t("projects.noPositions"))).toBeInTheDocument();
@@ -444,7 +446,7 @@ it.each([
     );
 
     mount();
-    await screen.findByText("1. Dormitorio principal");
+    fireEvent.click(await screen.findByText("1. Dormitorio principal"));
     fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(t(message));
@@ -470,6 +472,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   const position = makePosition();
   const priced = makeProject({
     pricing_current: true,
+    currency: "CLP",
     current_pricing_operation_id: "operation-a",
     total_price_gross: "1190.00",
     position_count: 1,
@@ -539,7 +542,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
   await screen.findByText(t("projects.quoted"));
-  expect(screen.getAllByText("REV-A")).toHaveLength(2);
+  expect(screen.getAllByText("Revisión A")).toHaveLength(2);
   expect(apiMutator).toHaveBeenCalledTimes(3);
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   expect(JSON.parse(String((saveRequest[1] as RequestInit).body))).toMatchObject({
@@ -719,14 +722,12 @@ it("saves handle placement intents for operable leaves before emitting", async (
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
-  expect(heightInput.getAttribute("min")).toBe("900.3");
-  expect(heightInput.getAttribute("max")).toBe("1100.4");
+  expect(heightInput.getAttribute("placeholder")).toBe("900.3–1100.4");
   const referenceSelect = screen.getByLabelText(t("quotation.handleReference"));
   fireEvent.change(referenceSelect, { target: { value: "OUTER_BOTTOM" } });
   // OUTER_BOTTOM: outer 1400.10 − leafTop 100.20 − leaf-top bounds. Float math
   // would emit 399.599… and reject the exact boundary value the engine accepts.
-  expect(heightInput.getAttribute("min")).toBe("199.5");
-  expect(heightInput.getAttribute("max")).toBe("399.6");
+  expect(heightInput.getAttribute("placeholder")).toBe("199.5–399.6");
   fireEvent.change(heightInput, { target: { value: "1050" } });
   expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
   fireEvent.change(heightInput, { target: { value: "399.6" } });
@@ -997,7 +998,7 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
   mount();
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.editQuoted") }));
 
-  await screen.findByText("REV-B");
+  await screen.findByText("Revisión B");
   expect(apiMutator).toHaveBeenCalledTimes(1);
   expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
   expect(window.confirm).toHaveBeenCalledWith(t("quotation.successorConfirm"));

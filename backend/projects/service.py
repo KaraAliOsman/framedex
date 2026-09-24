@@ -88,7 +88,8 @@ def project_row(org_id, project_id, *, lock=False):
 def _pricing_authority(org_id, project_id, revision):
     with commercial_backend():
         values = rows(
-            "SELECT id FROM public.pricing_operations WHERE org_id=%s AND project_id=%s "
+            "SELECT id, request->>'currency' AS currency FROM public.pricing_operations "
+            "WHERE org_id=%s AND project_id=%s "
             "AND state='APPLIED' AND COALESCE(revision_code,'REV-A')=%s "
             "AND ((SELECT pricing_reset_at FROM public.projects WHERE id=%s) IS NULL "
             "OR approved_at > (SELECT pricing_reset_at FROM public.projects WHERE id=%s)) "
@@ -198,6 +199,9 @@ def project_public(org_id, row, *, detail=False):
         **row,
         "pricing_current": authority is not None,
         "current_pricing_operation_id": authority["id"] if authority else None,
+        # The applied operation's currency — a priced project's money needs it
+        # to render honestly; unpriced rows keep the org-default CLP fallback.
+        "currency": (authority or {}).get("currency") or "CLP",
     }
     for key in METADATA:
         value[key] = value[key] or ""

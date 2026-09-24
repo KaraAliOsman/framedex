@@ -94,12 +94,21 @@ const INITIAL_VIEWPORT: ViewportState = {
 
 function selectionResolves(inputs: CanvasDesignInputs, id: string): boolean {
   const product = inputs.product;
+  // Bay selections carry a composite `moduleId/bayId` — the tree only knows
+  // the bay id on its own, so resolve the pair against the owning module.
+  const separator = id.indexOf("/");
+  const moduleId = separator === -1 ? "" : id.slice(0, separator);
+  const bayId = separator === -1 ? id : id.slice(separator + 1);
   if (product !== null) {
     if (product.assembly.modules.some((m) => m.id === id)) return true;
     if (product.assembly.couplings.some((c) => c.id === id)) return true;
-    return product.assembly.modules.some((m) => intentBays(m.tree).some((bay) => bay.id === id));
+    return product.assembly.modules.some(
+      (m) =>
+        (moduleId === "" || m.id === moduleId) &&
+        intentBays(m.tree).some((bay) => bay.id === bayId),
+    );
   }
-  return intentBays(inputs.parametricTree).some((bay) => bay.id === id);
+  return moduleId === "" && intentBays(inputs.parametricTree).some((bay) => bay.id === id);
 }
 
 /** Selection is outside history but must always resolve against the

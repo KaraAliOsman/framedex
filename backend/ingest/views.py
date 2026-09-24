@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 
 _READERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 _WRITERS = ("OWNER", "ESTIMATOR")
+# Catalog imports belong to the workshop's catalog administration — the same
+# writer set CatalogPage uses for article editing.
+_CATALOG_WRITERS = ("OWNER", "WORKSHOP_MANAGER")
 
 
 def _payload(output: dict):
@@ -203,7 +206,7 @@ class CatalogImportsView(APIView):
     )
     def post(self, request):
         try:
-            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+            with documentary_scope(request, _CATALOG_WRITERS) as (token, _, org_id):
                 data = validate(ImportUploadSerializer, request.data)
                 upload = data["file"]
                 return _payload(
@@ -248,7 +251,7 @@ class CatalogImportConfirmView(APIView):
     )
     def post(self, request, import_id: UUID):
         try:
-            with documentary_scope(request, _WRITERS) as (_, _, org_id):
+            with documentary_scope(request, _CATALOG_WRITERS) as (_, _, org_id):
                 data = validate(CatalogImportConfirmSerializer, request.data)
                 return _payload(
                     catalog_service.confirm_catalog_import(

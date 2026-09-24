@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from dekopen_engine.models import HARDWARE_COMPONENT_CATEGORIES
+
 
 class DecimalStringField(serializers.DecimalField):
     def to_internal_value(self, data: object) -> object:
@@ -58,9 +60,11 @@ class GlassPieceSerializer(serializers.Serializer):
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     shape = PlanPointSerializer(many=True, allow_null=True)
     area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
-    weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
     thickness_net_mm = serializers.DecimalField(
-        max_digits=12, decimal_places=2, coerce_to_string=True
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
     )
     glass_spec = serializers.CharField(allow_null=True)
     article_sku = serializers.CharField(allow_null=True)
@@ -77,7 +81,9 @@ class PanelPieceSerializer(serializers.Serializer):
     width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
-    weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
 
 
 class HardwareComponentSerializer(serializers.Serializer):
@@ -85,6 +91,11 @@ class HardwareComponentSerializer(serializers.Serializer):
     name = serializers.CharField()
     qty = serializers.CharField(help_text="Exact Decimal quantity serialized as a string")
     unit = serializers.CharField()
+    category = serializers.ChoiceField(
+        choices=HARDWARE_COMPONENT_CATEGORIES,
+        required=False,
+        default="OTHER",
+    )
 
 
 class HardwareItemSerializer(serializers.Serializer):
@@ -110,12 +121,24 @@ class FittingPieceSerializer(serializers.Serializer):
 class LeafWeightSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
     leaf_id = serializers.CharField(allow_null=True)
-    pvc_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
-    steel_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
-    infill_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
-    hardware_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
-    total_weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
-    used_fallback = serializers.BooleanField()
+    pvc_weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+    steel_weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+    infill_weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+    hardware_weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+    total_weight_kg = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+    weight_unknown_reasons = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True
+    )
 
 
 class EngineResultPayloadSerializer(serializers.Serializer):

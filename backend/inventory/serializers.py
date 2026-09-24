@@ -112,3 +112,87 @@ class InventoryMovementRequestSerializer(StrictSerializer):
     quantity = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0"))
     lot_code = serializers.CharField(required=False, allow_null=True, max_length=100)
     note = serializers.CharField(max_length=500)
+
+
+class RemnantSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    kind = serializers.ChoiceField(choices=("BAR", "SHEET"))
+    stock_authority_id = serializers.UUIDField(allow_null=True)
+    sheet_workshop_sku = serializers.CharField(allow_null=True)
+    physical_stock_identity = serializers.UUIDField(allow_null=True)
+    material = serializers.CharField(allow_null=True)
+    color = serializers.CharField(allow_null=True)
+    length_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, allow_null=True
+    )
+    width_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, allow_null=True
+    )
+    height_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, allow_null=True
+    )
+    status = serializers.ChoiceField(
+        choices=("AVAILABLE", "RESERVED", "CONSUMED", "SCRAPPED")
+    )
+    origin = serializers.ChoiceField(choices=("RECEIPT", "PRODUCTION", "MANUAL"))
+    origin_order_id = serializers.UUIDField(allow_null=True)
+    reserved_order_id = serializers.UUIDField(allow_null=True)
+    consumed_order_id = serializers.UUIDField(allow_null=True)
+    rack_location = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class RemnantListSerializer(serializers.Serializer):
+    remnants = RemnantSerializer(many=True)
+
+
+class RemnantListQuerySerializer(StrictSerializer):
+    kind = serializers.ChoiceField(choices=("BAR", "SHEET"), required=False)
+    status = serializers.ChoiceField(
+        choices=("AVAILABLE", "RESERVED", "CONSUMED", "SCRAPPED"), required=False
+    )
+
+
+class RemnantCreateSerializer(StrictSerializer):
+    kind = serializers.ChoiceField(choices=("BAR", "SHEET"))
+    stock_authority_id = serializers.UUIDField(required=False, allow_null=True)
+    sheet_workshop_sku = serializers.CharField(
+        required=False, allow_null=True, max_length=100
+    )
+    physical_stock_identity = serializers.UUIDField(required=False, allow_null=True)
+    material = serializers.CharField(required=False, allow_null=True, max_length=50)
+    color = serializers.CharField(required=False, allow_null=True, max_length=50)
+    length_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, required=False, allow_null=True,
+        min_value=Decimal("0"),
+    )
+    width_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, required=False, allow_null=True,
+        min_value=Decimal("0"),
+    )
+    height_mm = serializers.DecimalField(
+        max_digits=14, decimal_places=2, required=False, allow_null=True,
+        min_value=Decimal("0"),
+    )
+    rack_location = serializers.CharField(
+        required=False, allow_null=True, max_length=100
+    )
+    notes = serializers.CharField(required=False, allow_null=True, max_length=500)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if data["kind"] == "BAR":
+            if not data.get("stock_authority_id") or not data.get("length_mm"):
+                raise serializers.ValidationError(
+                    "Bar remnants need stock_authority_id and a positive length_mm"
+                )
+        else:
+            if not data.get("sheet_workshop_sku") or not (
+                data.get("width_mm") and data.get("height_mm")
+            ):
+                raise serializers.ValidationError(
+                    "Sheet remnants need sheet_workshop_sku and positive width/height"
+                )
+        return data

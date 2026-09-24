@@ -4,8 +4,9 @@ import pytest
 from pydantic import ValidationError
 
 from dekopen_engine import BayOpeningType, MaterialType, ParametricNode, ProfileRole, RailType, SystemParams, calculate_geometry
+from dekopen_engine.geometry import compute_geometry
 from dekopen_engine.hardware import AmbiguousHardwareKit, NoCompatibleHardwareKit, normalize_opening_type, resolve_hardware_kit
-from dekopen_engine.weight import ExactLeafWeight, MissingWeightAuthority, base_leaf_weight, with_hardware_weight
+from dekopen_engine.weight import ExactLeafWeight, base_leaf_weight, with_hardware_weight
 from engine.tests.test_shot06_core import core_node
 
 D = Decimal
@@ -86,7 +87,7 @@ def test_each_candidate_contributes_its_own_hardware_mass(demo_60_params: System
 
 
 @pytest.mark.parametrize("profile_missing,steel_missing", [(False, False), (True, False), (False, True), (True, True)])
-def test_article_weights_precede_individual_fallbacks(
+def test_article_weights_report_missing_authority_as_unknown(
     demo_60_params: SystemParams, g3_node: ParametricNode,
     profile_missing: bool, steel_missing: bool,
 ) -> None:
@@ -99,45 +100,71 @@ def test_article_weights_precede_individual_fallbacks(
     params = demo_60_params.model_copy(update={"effective_profile_articles": articles})
     mass = base_leaf_weight(profile_cuts=result.profile_cuts, reinforcements=result.reinforcements,
                             infill_weight_kg=D("18.251520"), params=params)
-    assert mass.pvc_weight_kg == D("5.81856" if profile_missing else "8.8160")
-    assert mass.steel_weight_kg == D("7.97368" if steel_missing else "12.7920")
-    assert mass.used_fallback is (profile_missing or steel_missing)
+    assert mass.pvc_weight_kg == (None if profile_missing else D("8.8160"))
+    assert mass.steel_weight_kg == (None if steel_missing else D("12.7920"))
+    expected_reasons = ([f"missing_profile_mass:{articles[ProfileRole.SASH].sku}"] * profile_missing +
+                        [f"missing_steel_mass:{articles[ProfileRole.SASH].sku}"] * steel_missing)
+    assert list(mass.weight_unknown_reasons) == expected_reasons
+    assert mass.total_weight_kg is None if expected_reasons else True
 
 
 def test_persisted_and_missing_hardware_weights(demo_60_params: SystemParams) -> None:
     base = ExactLeafWeight(D("5"), D("7"), D("18"))
     kit = demo_60_params.available_hardware_kits[0]
     persisted = with_hardware_weight(base, kit, demo_60_params)
-    fallback = with_hardware_weight(base, kit.model_copy(update={"weight_kg": None}), demo_60_params)
-    assert persisted.hardware_weight_kg == D("2.50") and not persisted.used_fallback
-    assert fallback.hardware_weight_kg == D("2.75") and fallback.used_fallback
+    missing = with_hardware_weight(base, kit.model_copy(update={"weight_kg": None}), demo_60_params)
+    assert persisted.hardware_weight_kg == D("2.50") and persisted.weight_unknown_reasons == ()
+    assert missing.hardware_weight_kg is None
+    assert missing.weight_unknown_reasons == (f"missing_hardware_mass:{kit.sku}",)
     cap_kit = kit.model_copy(update={"max_leaf_weight_kg": D("32.60"), "weight_kg": None})
     with pytest.raises(NoCompatibleHardwareKit):
         resolve_hardware_kit(opening=BayOpeningType.TURN_LEFT, width_mm=D("800"), height_mm=D("1200"),
                              base_weight=base, params=demo_60_params.model_copy(update={"available_hardware_kits": [cap_kit]}))
 
 
-def test_missing_panel_and_non_pvc_authorities_fail_closed(
+def test_missing_infill_authority_surfaces_unknown_mass(
     demo_60_params: SystemParams, g3_node: ParametricNode,
 ) -> None:
+    # Strict mode refuses: the compatibility decision cannot be certified.
     panels = {sku: p.model_copy(update={"weight_kg_m2": None}) for sku, p in demo_60_params.available_panel_rules.items()}
-    with pytest.raises(MissingWeightAuthority, match="panel"):
+    with pytest.raises(NoCompatibleHardwareKit, match="undecidable.*missing_panel_mass"):
         calculate_geometry(core_node("G7"), demo_60_params.model_copy(update={"available_panel_rules": panels}))
+    # Diagnostic mode degrades: the computation is invalid and the leaf's
+    # technical facts carry the UNKNOWN mass + the missing authority's name.
+    computation = compute_geometry(
+        core_node("G7"), demo_60_params.model_copy(update={"available_panel_rules": panels}),
+        diagnostic=True,
+    )
+    assert computation.result is None  # contract invalid → no certified BOM
+    base = computation.leaves[0].base_weight
+    assert base.total_weight_kg is None
+    assert base.infill_weight_kg is None
+    assert "missing_panel_mass:PANEL-SANDWICH-DEMO-24" in base.weight_unknown_reasons
     with pytest.raises(ValueError, match="requires panel_article_sku"):
         calculate_geometry(core_node("G7").model_copy(update={"panel_article_sku": None}), demo_60_params)
+    # A non-PVC article without declared mass reports the same authority gap.
     result = calculate_geometry(g3_node, demo_60_params)
     articles = dict(demo_60_params.effective_profile_articles)
     articles[ProfileRole.SASH] = articles[ProfileRole.SASH].model_copy(update={"weight_kg_m": None, "material": MaterialType.ALUMINIUM})
-    with pytest.raises(MissingWeightAuthority, match="non-PVC"):
-        base_leaf_weight(profile_cuts=result.profile_cuts, reinforcements=result.reinforcements,
-                         infill_weight_kg=D("18.251520"), params=demo_60_params.model_copy(update={"effective_profile_articles": articles}))
+    mass = base_leaf_weight(profile_cuts=result.profile_cuts, reinforcements=result.reinforcements,
+                            infill_weight_kg=D("18.251520"), params=demo_60_params.model_copy(update={"effective_profile_articles": articles}))
+    assert mass.pvc_weight_kg is None
+    assert list(mass.weight_unknown_reasons) == [f"missing_profile_mass:{articles[ProfileRole.SASH].sku}"]
 
 
 def test_total_rounds_once_half_up_and_excludes_static_bom(demo_60_params: SystemParams) -> None:
     exact = ExactLeafWeight(D("1.004"), D("2.004"), D("3.004"), D("4.003"))
     public = exact.public_result("test", None)
     assert public.total_weight_kg == D("10.02")
-    assert public.pvc_weight_kg + public.steel_weight_kg + public.infill_weight_kg + public.hardware_weight_kg == D("10.00")
+    components = (
+        public.pvc_weight_kg, public.steel_weight_kg,
+        public.infill_weight_kg, public.hardware_weight_kg,
+    )
+    assert all(component is not None for component in components)
+    assert sum(
+        (component for component in components if component is not None),
+        D("0"),
+    ) == D("10.00")
     baseline = calculate_geometry(core_node("G7"), demo_60_params)
     articles = {role: article.model_copy(update={"weight_kg_m": D("9999")})
                 if role is not ProfileRole.SASH else article

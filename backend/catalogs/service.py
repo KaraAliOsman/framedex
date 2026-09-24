@@ -1,6 +1,7 @@
 """Tenant-scoped catalog persistence; callers enter authenticated RLS first."""
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal
 import json
 from hashlib import sha256
@@ -30,18 +31,34 @@ class Resource:
     def projection(self):
         columns = ("id", "org_id", *self.fields, *self.extra_columns)
         return ", ".join(
-            "contents::text AS contents" if name == "contents" else name for name in columns
+            f"{name}::text AS {name}" if name in _JSONB_FIELDS else name for name in columns
         )
 
+
+_PROVENANCE_COLUMNS = (
+    "data_provenance",
+    "technical_reviewed_at",
+    "technical_reviewed_by",
+    "review_pending",
+)
 
 SYSTEMS = Resource(
     "profile_systems",
     SystemWriteSerializer,
-    ("is_global", "is_demo"),
+    ("is_global", "is_demo", *_PROVENANCE_COLUMNS),
 )
-ARTICLES = Resource("profile_articles", ArticleWriteSerializer)
+ARTICLES = Resource(
+    "profile_articles",
+    ArticleWriteSerializer,
+    (
+        *_PROVENANCE_COLUMNS,
+        "section_revision",
+        "section_revised_at",
+        "section_revised_by",
+    ),
+)
 BEADS = Resource("glazing_bead_matrix", BeadWriteSerializer)
-KITS = Resource("hardware_kits", KitWriteSerializer)
+KITS = Resource("hardware_kits", KitWriteSerializer, _PROVENANCE_COLUMNS)
 
 
 def _not_found():
@@ -61,12 +78,13 @@ def _fetch(resource, where, params, *, lock=False):
         row["read_only"] = (
             row["org_id"] is None or row.get("is_global", False) or row.get("is_demo", False)
         )
-        if "contents" in row:
-            row["contents"] = json.loads(
-                row["contents"],
-                parse_float=Decimal,
-                parse_int=Decimal,
-            )
+        for name in _JSONB_FIELDS:
+            if name in row and row[name] is not None:
+                row[name] = json.loads(
+                    row[name],
+                    parse_float=Decimal,
+                    parse_int=Decimal,
+                )
         row["revision"] = catalog_revision(row)
     return result
 
@@ -189,10 +207,58 @@ def _contents_json(components):
     return "[" + ",".join(encoded) + "]"
 
 
+_JSONB_FIELDS = {"contents", "section"}
+
+
+def _json_value(value):
+    """Serialize with Decimals as numeric literals so the stored JSONB keeps
+    exact numbers for the repository's parse_float=Decimal decode."""
+    if isinstance(value, dict):
+        items = (json.dumps(str(key)) + ":" + _json_value(item) for key, item in value.items())
+        return "{" + ",".join(items) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_json_value(item) for item in value) + "]"
+    if isinstance(value, Decimal):
+        return str(value)
+    return json.dumps(value)
+
+
+def _jsonb(value):
+    return None if value is None else _json_value(value)
+
+
 def _parameters(values):
     return [
-        _contents_json(value) if name == "contents" else value for name, value in values.items()
+        _contents_json(value)
+        if name == "contents"
+        else _jsonb(value)
+        if name == "section"
+        else value
+        for name, value in values.items()
     ]
+
+
+def _stamp_section(values, current, actor_id):
+    """§8 revision tracking for the section payload: geometry changes bump
+    `section_revision` and record who/when. The stamp lives on real columns —
+    inside the JSONB it would ride the same payload it claims to audit."""
+    section = values["section"]
+    if current is None:
+        changed = section is not None
+        next_revision = 1
+    else:
+        prior = current.get("section")
+        changed = _json_value(prior) != _json_value(section)
+        next_revision = (
+            (int(current.get("section_revision") or 0) + 1)
+            if prior is not None
+            else 1
+        )
+    if not changed:
+        return
+    values["section_revision"] = next_revision
+    values["section_revised_at"] = datetime.now(timezone.utc)
+    values["section_revised_by"] = str(actor_id) if actor_id else None
 
 
 # Every non-bead, non-coupler role resolves to a single effective article per
@@ -217,8 +283,10 @@ def _lock_singleton_role(system_id):
         )
 
 
-def create(resource, org_id, values):
+def create(resource, org_id, values, actor_id=None):
     _bind_parent(resource, org_id, values)
+    if resource is ARTICLES and "section" in values:
+        _stamp_section(values, None, actor_id)
     if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
         _lock_singleton_role(values["system_id"])
         with connection.cursor() as cursor:
@@ -234,7 +302,7 @@ def create(resource, org_id, values):
                     "catalogs.errors.catalog_constraint_conflict",
                 )
     columns = tuple(values)
-    placeholders = ["%s::jsonb" if name == "contents" else "%s" for name in columns]
+    placeholders = ["%s::jsonb" if name in _JSONB_FIELDS else "%s" for name in columns]
     with connection.cursor() as cursor:
         cursor.execute(
             f"INSERT INTO public.{resource.table} "
@@ -246,7 +314,7 @@ def create(resource, org_id, values):
     return retrieve(resource, org_id, row_id)
 
 
-def update(resource, org_id, row_id, values, expected_revision=None):
+def update(resource, org_id, row_id, values, expected_revision=None, actor_id=None):
     _require_owned(retrieve(resource, org_id, row_id), org_id)
     current = retrieve(resource, org_id, row_id, lock=True)
     _require_owned(current, org_id)
@@ -260,6 +328,8 @@ def update(resource, org_id, row_id, values, expected_revision=None):
             error_extra={"fields": validator.errors},
         )
     values = validator.validated_data
+    if resource is ARTICLES and "section" in values:
+        _stamp_section(values, current, actor_id)
     if "system_id" in values and values["system_id"] != current["system_id"]:
         raise contract_error(
             400,
@@ -285,8 +355,18 @@ def update(resource, org_id, row_id, values, expected_revision=None):
     _bind_parent(resource, org_id, {**current, **values})
     if values:
         assignments = [
-            f"{name} = %s::jsonb" if name == "contents" else f"{name} = %s" for name in values
+            f"{name} = %s::jsonb" if name in _JSONB_FIELDS else f"{name} = %s" for name in values
         ]
+        if set(_PROVENANCE_COLUMNS) & set(current):
+            # Editing a reviewed technical row re-opens its review — the new
+            # values are unverified until reviewed again. review_pending keeps
+            # that visible to readiness: a never-reviewed authored row keeps
+            # FALSE, a reviewed-then-edited one becomes TRUE.
+            assignments += [
+                "technical_reviewed_at = NULL",
+                "technical_reviewed_by = NULL",
+                "review_pending = review_pending OR technical_reviewed_at IS NOT NULL",
+            ]
         with connection.cursor() as cursor:
             cursor.execute(
                 f"UPDATE public.{resource.table} SET {', '.join(assignments)} "
@@ -297,6 +377,30 @@ def update(resource, org_id, row_id, values, expected_revision=None):
                 raise contract_error(
                     409, "catalog_write_conflict", "catalogs.errors.catalog_constraint_conflict"
                 )
+    return retrieve(resource, org_id, row_id)
+
+
+def review(resource, org_id, row_id, user_id):
+    """Mark a catalog row technically reviewed. A LEGACY_UNVERIFIED row a
+    human has vouched for becomes MANUAL; other provenance stays truthful."""
+    if resource is BEADS:
+        raise _not_found()
+    current = retrieve(resource, org_id, row_id, lock=True)
+    _require_owned(current, org_id)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE public.{resource.table} SET "
+            "technical_reviewed_at = now(), technical_reviewed_by = %s, "
+            "review_pending = FALSE, "
+            "data_provenance = CASE WHEN data_provenance = 'LEGACY_UNVERIFIED' "
+            "THEN 'MANUAL' ELSE data_provenance END "
+            "WHERE id = %s AND org_id = %s",
+            [str(user_id), row_id, org_id],
+        )
+        if cursor.rowcount != 1:
+            raise contract_error(
+                409, "catalog_write_conflict", "catalogs.errors.catalog_constraint_conflict"
+            )
     return retrieve(resource, org_id, row_id)
 
 

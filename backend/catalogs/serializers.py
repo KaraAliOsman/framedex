@@ -8,7 +8,7 @@ from rest_framework import serializers
 from pricing.serializers import StrictSerializer
 from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
-from dekopen_engine.models import BayOpeningType
+from dekopen_engine.models import BayOpeningType, HARDWARE_COMPONENT_CATEGORIES
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -82,6 +82,12 @@ class SystemWriteSerializer(StrictSerializer):
     sliding_glazing_deduction_width_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     sliding_glazing_deduction_height_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
     door_leaf_side_clearance_mm = decimal_field(10, 2, min_value=Decimal("0.00"))
+    rebate_depth_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
+    end_milling_overlap_mm = decimal_field(
+        10, 2, min_value=Decimal("0.00"), required=False, allow_null=True
+    )
     chamber_clearance_mm = decimal_field(
         10,
         2,
@@ -93,10 +99,92 @@ class SystemWriteSerializer(StrictSerializer):
     is_active = serializers.BooleanField()
 
 
+class SectionPointSerializer(StrictSerializer):
+    x_mm = decimal_field(10, 2)
+    y_mm = decimal_field(10, 2)
+
+
+class SectionAxisSerializer(StrictSerializer):
+    name = serializers.CharField(max_length=50)
+    y_mm = decimal_field(10, 2)
+
+
+class ProfileSectionSerializer(StrictSerializer):
+    """Simplified technical cross-section; POLYGON is declared, DXF_REFERENCE
+    carries the manufacturer-drawing provenance in `drawing_ref`."""
+
+    source = serializers.ChoiceField(choices=["POLYGON", "DXF_REFERENCE"])
+    polygon = SectionPointSerializer(many=True)
+    depth_mm = decimal_field(10, 2, min_value=Decimal("0.01"))
+    axes = SectionAxisSerializer(many=True, required=False)
+    drawing_ref = serializers.CharField(
+        max_length=500, allow_null=True, allow_blank=True, required=False
+    )
+    orientation = serializers.ChoiceField(
+        choices=["EXTERIOR_DOWN", "EXTERIOR_UP", "EXTERIOR_LEFT", "EXTERIOR_RIGHT"],
+        required=False,
+        default="EXTERIOR_DOWN",
+    )
+    local_origin = serializers.ChoiceField(
+        choices=["TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT", "CENTROID"],
+        required=False,
+        default="TOP_LEFT",
+    )
+
+    def validate_axes(self, value):
+        # Under a propagated partial update an axis row may validate with a
+        # missing name or y_mm — an incomplete axis must never persist (the
+        # engine decoder would reject the stored section on load).
+        for axis in value:
+            if "name" not in axis or "y_mm" not in axis:
+                raise serializers.ValidationError(
+                    "Each section axis needs a name and y_mm."
+                )
+        return value
+
+    def validate_polygon(self, value):
+        if len(value) < 3:
+            raise serializers.ValidationError("A section polygon needs at least 3 points.")
+        points = []
+        for point in value:
+            if "x_mm" not in point or "y_mm" not in point:
+                raise serializers.ValidationError(
+                    "Each section point needs x_mm and y_mm."
+                )
+            points.append((point["x_mm"], point["y_mm"]))
+        if len(set(points)) != len(points):
+            raise serializers.ValidationError("A section polygon cannot repeat vertices.")
+        area = Decimal(0)
+        for index, (x1, y1) in enumerate(points):
+            x2, y2 = points[(index + 1) % len(points)]
+            area += x1 * y2 - x2 * y1
+        if area == 0:
+            raise serializers.ValidationError("A section polygon must enclose area.")
+        return value
+
+    def validate(self, attrs):
+        # `partial=True` propagates into this nested serializer on article
+        # PATCHes — a section write must still be complete: the column stores
+        # the shape wholesale, never a field-level merge.
+        missing = {"source", "polygon", "depth_mm"} - set(attrs)
+        if missing:
+            raise serializers.ValidationError(
+                {key: "This field is required for a complete section." for key in sorted(missing)}
+            )
+        if attrs.get("source") == "DXF_REFERENCE" and not (
+            attrs.get("drawing_ref") or ""
+        ).strip():
+            raise serializers.ValidationError(
+                {"drawing_ref": "A manufacturer-drawing section needs its drawing reference."}
+            )
+        return attrs
+
+
 class ArticleWriteSerializer(StrictSerializer):
     system_id = serializers.UUIDField()
     sku = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255)
+    section = ProfileSectionSerializer(required=False, allow_null=True)
     role = serializers.ChoiceField(
         choices=[
             "FRAME",
@@ -152,6 +240,9 @@ class CatalogHardwareComponentSerializer(StrictSerializer):
     name = serializers.CharField()
     qty = QuantityField()
     unit = serializers.CharField()
+    category = serializers.ChoiceField(
+        choices=list(HARDWARE_COMPONENT_CATEGORIES), default="OTHER"
+    )
 
 
 class KitWriteSerializer(StrictSerializer):
@@ -193,7 +284,20 @@ class CatalogReadinessSerializer(serializers.Serializer):
     reasons = serializers.ListField(child=serializers.CharField())
 
 
-class SystemResponseSerializer(SystemWriteSerializer):
+class ProvenanceFieldsMixin(serializers.Serializer):
+    """Read-only provenance/review state — written only by import jobs and
+    the technical-review endpoint, never by catalog CRUD."""
+
+    data_provenance = serializers.ChoiceField(
+        choices=["SEED_SYNTHETIC", "MANUAL", "IMPORT", "LEGACY_UNVERIFIED"],
+        read_only=True,
+    )
+    technical_reviewed_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    technical_reviewed_by = serializers.UUIDField(read_only=True, allow_null=True)
+    review_pending = serializers.BooleanField(read_only=True, default=False)
+
+
+class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):
     readiness = CatalogReadinessSerializer(read_only=True)
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
@@ -202,10 +306,13 @@ class SystemResponseSerializer(SystemWriteSerializer):
     is_demo = serializers.BooleanField()
 
 
-class ArticleResponseSerializer(ArticleWriteSerializer):
+class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()
+    section_revision = serializers.IntegerField(read_only=True)
+    section_revised_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    section_revised_by = serializers.UUIDField(read_only=True, allow_null=True)
 
 
 class BeadResponseSerializer(BeadWriteSerializer):
@@ -214,7 +321,7 @@ class BeadResponseSerializer(BeadWriteSerializer):
     id = serializers.UUIDField()
 
 
-class KitResponseSerializer(KitWriteSerializer):
+class KitResponseSerializer(ProvenanceFieldsMixin, KitWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()

@@ -10,6 +10,8 @@ from dekopen_engine.models import ParametricNode, SystemParams
 from dekopen_engine.purchasing import (
     AccessoryScheduleV1,
     EdgePolishingV1,
+    FittingPurchaseMappingV1,
+    FittingSelectionV1,
     GlassPolishingAuthorityV1,
     GlassPurchaseMappingV1,
     HardwarePurchaseMappingV1,
@@ -377,3 +379,74 @@ def test_missing_mapping_and_source_duplication_are_rejected(
         requirement.order_type in set(SupplierOrderType)
         for requirement in project_one(position, bindings).requirements
     )
+
+
+def _position_with_fittings(
+    position: PositionPurchaseInputV1, fittings: list[FittingSelectionV1]
+) -> PositionPurchaseInputV1:
+    return PositionPurchaseInputV1.model_validate(
+        {**position.model_dump(mode="python"), "fittings": [f.model_dump(mode="python") for f in fittings]}
+    )
+
+
+def _fitting_mapping(technical_sku: str) -> FittingPurchaseMappingV1:
+    return FittingPurchaseMappingV1(
+        authority_id=f"FITTING-MAP-{technical_sku}",
+        version=1,
+        system_id="DEMO_60",
+        technical_sku=technical_sku,
+        purchasing_sku=f"BUY-{technical_sku}",
+        manufacturer_name="DEMO FITTINGS",
+        provenance={"source": "synthetic"},
+    )
+
+
+def test_fittings_buy_through_declared_authority(demo_60_params: SystemParams) -> None:
+    """§9: counted fittings reach purchasing only through a declared
+    fitting_purchase_mapping — an unmapped sku fails closed."""
+    node = core_node("G6").model_copy(update={"glass_article_sku": "GLASS-TECH"})
+    position, bindings = position_source(node, demo_60_params, position_id="P", position_index=1)
+    fittings = [
+        FittingSelectionV1(
+            repetition_index=repetition,
+            bay_id="bay-1",
+            leaf_id=None,
+            technical_sku="CLAMP-SS-8",
+            kind="CLAMP",
+            quantity=4,
+        )
+        for repetition in range(1, position.quantity + 1)
+    ]
+    position = _position_with_fittings(position, fittings)
+
+    with pytest.raises(PurchaseAuthorityError, match="Fitting purchasing authority"):
+        project_one(position, bindings)
+
+    result = project_purchase_requirements_v1(
+        positions=[position],
+        stock_bindings=bindings,
+        glass_mappings=[glass_mapping()],
+        hardware_mappings=hardware_mappings(position),
+        panel_authorities=[],
+        fitting_mappings=[_fitting_mapping("CLAMP-SS-8")],
+    )
+    requirement = next(item for item in result.requirements if item.category == "FITTING")
+    assert requirement.order_type is SupplierOrderType.HARDWARE
+    assert requirement.unit == "EA"
+    assert requirement.purchasing_sku == "BUY-CLAMP-SS-8"
+    assert requirement.quantity == 4 * position.quantity
+    assert len(requirement.source_trace) == requirement.quantity
+    assert requirement.authority_ids == ["FITTING-MAP-CLAMP-SS-8"]
+
+
+def test_fitting_duplicates_are_rejected(demo_60_params: SystemParams) -> None:
+    node = core_node("G6").model_copy(update={"glass_article_sku": "GLASS-TECH"})
+    position, _ = position_source(node, demo_60_params, position_id="P", position_index=1)
+    duplicate = FittingSelectionV1(
+        repetition_index=1, bay_id="bay-1", leaf_id=None,
+        technical_sku="CLAMP-SS-8", kind="CLAMP", quantity=2,
+    )
+    with pytest.raises(ValidationError, match="Fitting source is duplicated"):
+        _position_with_fittings(position, [duplicate, duplicate])
+    with pytest.raises(ValidationError, match="outside position quantity"):
+        _position_with_fittings(position, [duplicate.model_copy(update={"repetition_index": 99})])

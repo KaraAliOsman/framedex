@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from math import ceil
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -19,6 +20,7 @@ from dekopen_engine.documentary_canonical import (
 from dekopen_engine.geometry import GeometryComputation, compute_geometry
 from dekopen_engine.inspection_models import (
     InspectionMode,
+    InspectorConfig,
     InspectorInput,
     InspectorResult,
     RuleEvaluationStatus,
@@ -42,6 +44,7 @@ from dekopen_engine.product import (
     frameless_module_computation,
 )
 from dekopen_engine.purchasing import (
+    FittingSelectionV1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
@@ -308,9 +311,13 @@ def _drop_bom_keys(
     payload: Mapping[str, object],
     bom_keys: frozenset[str],
     piece_keys: Mapping[str, frozenset[str]],
+    nested_keys: Mapping[str, tuple[str, frozenset[str]]] | None = None,
 ) -> dict[str, object]:
     """Payload with the given additive keys removed at BOM level and per
-    piece-list item — the preimage a stored identity hash was computed on."""
+    piece-list item — the preimage a stored identity hash was computed on.
+    ``nested_keys`` maps a piece list to ``(inner_list, keys)`` so additive
+    fields one level deeper (e.g. component rows inside hardware contents)
+    can be stripped the same way."""
     bom = {key: value for key, value in payload.items() if key not in bom_keys}
     for piece_list, keys in piece_keys.items():
         items = bom.get(piece_list)
@@ -329,6 +336,31 @@ def _drop_bom_keys(
                 for item in items
             ],
         }
+    for piece_list, (inner_list, keys) in (nested_keys or {}).items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    **item,
+                    inner_list: [
+                        {
+                            key: value
+                            for key, value in component.items()
+                            if key not in keys
+                        }
+                        if isinstance(component, dict)
+                        else component
+                        for component in item[inner_list]
+                    ],
+                }
+                if isinstance(item, dict) and isinstance(item.get(inner_list), list)
+                else item
+                for item in items
+            ],
+        }
     return bom
 
 
@@ -341,8 +373,14 @@ def _calculation_identity_hashes(
     shape/sagitta, glass spec/article) must project the current payload back
     to that era's preimage or positions sealed then can never freeze again."""
     payload = result_payload(result)
+    era9 = _drop_bom_keys(
+        payload,
+        frozenset(),
+        {},
+        {"hardware_items": ("contents", frozenset({"category"}))},
+    )
     era94 = _drop_bom_keys(
-        payload, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+        era9, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
     )
     era92 = _drop_bom_keys(
         era94,
@@ -360,6 +398,7 @@ def _calculation_identity_hashes(
     )
     return (
         calculation_hash(request, payload),
+        calculation_hash(request, era9),
         calculation_hash(request, era94),
         calculation_hash(request, era92),
         calculation_hash(request, era86),
@@ -422,7 +461,73 @@ def _without_additive_bom_fields(bom: object, reference: object = None) -> objec
                 for item in items
             ],
         }
-    return bom
+    return _without_component_category(bom, ref)
+
+
+def _without_component_category(bom: object, ref: object) -> object:
+    # `category` on hardware contents is additive (§9): a snapshot sealed
+    # before it existed must not read the declared kind as drift. Contents
+    # match their snapshot counterparts by (sku, name, qty, unit); the
+    # hardware item itself matches by (bay, leaf, kit_sku, qty).
+    if not isinstance(bom, dict):
+        return bom
+    items = bom.get("hardware_items")
+    if not isinstance(items, list):
+        return bom
+    ref_items: dict[tuple[object, ...], Mapping[str, object]] = {}
+    if isinstance(ref, dict) and isinstance(ref.get("hardware_items"), list):
+        ref_items = {
+            (
+                item.get("bay_id"),
+                item.get("leaf_id"),
+                item.get("kit_sku"),
+                item.get("qty"),
+            ): item
+            for item in ref["hardware_items"]
+            if isinstance(item, dict)
+        }
+
+    def ref_has_category(item: Mapping[str, object], component: Mapping[str, object]) -> bool:
+        ref_item = ref_items.get(
+            (item.get("bay_id"), item.get("leaf_id"), item.get("kit_sku"), item.get("qty"))
+        )
+        if not isinstance(ref_item, dict) or not isinstance(ref_item.get("contents"), list):
+            return False
+        identity = (
+            component.get("sku"),
+            component.get("name"),
+            component.get("qty"),
+            component.get("unit"),
+        )
+        return any(
+            isinstance(other, dict)
+            and (other.get("sku"), other.get("name"), other.get("qty"), other.get("unit"))
+            == identity
+            and other.get("category") is not None
+            for other in ref_item["contents"]
+        )
+
+    return {
+        **bom,
+        "hardware_items": [
+            {
+                **item,
+                "contents": [
+                    {
+                        key: value
+                        for key, value in component.items()
+                        if key != "category" or ref_has_category(item, component)
+                    }
+                    if isinstance(component, dict)
+                    else component
+                    for component in item["contents"]
+                ],
+            }
+            if isinstance(item, dict) and isinstance(item.get("contents"), list)
+            else item
+            for item in items
+        ],
+    }
 
 
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
@@ -617,6 +722,107 @@ def _workshop_targets(
     return {"bays": bays, "leaves": leaves, "spans": spans, "glass": glass}
 
 
+def _seed_workshop_defaults(
+    calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]],
+    existing: list[dict[str, object]],
+    config: InspectorConfig,
+) -> list[dict[str, object]]:
+    """Prefill what the workshop would otherwise have to type for every emit:
+    evenly spaced drains (R07), closing points within R08 spacing, the real
+    opening as continuous width, WHITE finish, no coupler. The estimator sees
+    and edits them — nothing is sealed silently — while true authorities
+    (structural inertia, measured QC) stay unset."""
+    keyed = {
+        (str(item["bay_id"]), item.get("leaf_id"))
+        for item in existing
+        if isinstance(item, dict)
+    }
+    seeded: list[dict[str, object]] = []
+    seeded_bay_rows: dict[str, dict[str, object]] = {}
+    for module_id, computation, _ in calculations:
+        prefix = f"{module_id}|" if module_id else ""
+        for opening in computation.openings:
+            bay_key = f"{prefix}{opening.bay_id}"
+            if (bay_key, None) in keyed:
+                continue
+            drains: list[str] | None = None
+            if opening.width_mm > config.R07.width_trigger_mm:
+                count = int(config.R07.required_bottom_drains)
+                drains = [
+                    str((opening.width_mm * (index + 1) / (count + 1)).quantize(D("0.01")))
+                    for index in range(count)
+                ]
+            bay_row: dict[str, object] = {
+                "bay_id": bay_key,
+                "leaf_id": None,
+                "bottom_drain_holes_mm": drains,
+                "closing_points_perimeter_mm": None,
+                "continuous_width_mm": str(opening.width_mm.quantize(D("0.01"))),
+                "finish_class": "WHITE",
+                "has_coupler": False,
+            }
+            seeded.append(bay_row)
+            seeded_bay_rows[bay_key] = bay_row
+        for leaf in computation.leaves:
+            bay_key = f"{prefix}{leaf.bay_id}"
+            leaf_key = (
+                f"{prefix}{leaf.leaf_id}"
+                if module_id and leaf.leaf_id is not None
+                else leaf.leaf_id
+            )
+            if (bay_key, leaf_key) in keyed:
+                continue
+            perimeter = (leaf.finished_width_mm + leaf.finished_height_mm) * 2
+            count = max(2, ceil(perimeter / config.R08.max_spacing_mm))
+            closing_points = [
+                str((perimeter * index / count).quantize(D("0.01")))
+                for index in range(count)
+            ]
+            if leaf_key is None:
+                # A leaf with no leaf identity shares the bay-level target;
+                # a second (bay, None) row would collide with it at freeze.
+                bay_row = seeded_bay_rows.get(bay_key)
+                if bay_row is not None and (
+                    bay_row["closing_points_perimeter_mm"] is None
+                ):
+                    bay_row["closing_points_perimeter_mm"] = closing_points
+                continue
+            seeded.append({
+                "bay_id": bay_key,
+                "leaf_id": leaf_key,
+                "bottom_drain_holes_mm": None,
+                "closing_points_perimeter_mm": closing_points,
+                "continuous_width_mm": None,
+                "finish_class": None,
+                "has_coupler": None,
+            })
+    return [*existing, *seeded]
+
+
+def _seed_polishing_defaults(
+    glass_targets: set[tuple[str, str | None]],
+    existing: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Every glass piece gets a declared 'no polished edges' row unless the
+    operator already chose something — declared coverage, not missing data."""
+    keyed = {
+        (str(item["bay_id"]), item.get("leaf_id"))
+        for item in existing
+        if isinstance(item, dict)
+    }
+    seeded = [
+        {
+            "schema_version": 1,
+            "bay_id": bay_key,
+            "leaf_id": leaf_key,
+            "edges": {"top": False, "right": False, "bottom": False, "left": False},
+        }
+        for bay_key, leaf_key in sorted(glass_targets)
+        if (bay_key, leaf_key) not in keyed
+    ]
+    return [*existing, *seeded]
+
+
 def _position_rows(project_id: UUID, org_id: UUID) -> list[dict[str, object]]:
     return rows(
         "SELECT position.*,input.id AS documentary_input_id,"
@@ -653,7 +859,7 @@ def _technical_bom(snapshot: dict[str, object]) -> dict[str, object]:
 def _collect_purchase_authorities(
     existing: PurchaseAuthorities | None, following: PurchaseAuthorities
 ) -> PurchaseAuthorities:
-    prior = existing or PurchaseAuthorities([], [], [], [])
+    prior = existing or PurchaseAuthorities([], [], [], [], [])
     return PurchaseAuthorities(
         _unique_by(prior.stock_bindings + following.stock_bindings, "binding_id",
                    "physical_stock_authority_conflict"),
@@ -663,6 +869,8 @@ def _collect_purchase_authorities(
                    "hardware_purchase_authority_conflict"),
         _unique_by(prior.panel_authorities + following.panel_authorities, "authority_id",
                    "panel_purchase_authority_conflict"),
+        _unique_by(prior.fitting_mappings + following.fitting_mappings, "authority_id",
+                   "fitting_purchase_authority_conflict"),
     )
 
 
@@ -932,6 +1140,14 @@ def freeze_revision_a(
                 quantity=item.qty,
                 contents=item.contents,
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
+            fittings = [FittingSelectionV1(
+                repetition_index=repetition,
+                bay_id=item.bay_id,
+                leaf_id=item.leaf_id,
+                technical_sku=item.sku,
+                kind=item.kind,
+                quantity=item.qty,
+            ) for repetition in range(1, quantity + 1) for item in result.fittings]
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
                 (
@@ -975,6 +1191,7 @@ def freeze_revision_a(
                     location_tag=location_tag,
                     manufacturing_units=units,
                     hardware=hardware,
+                    fittings=fittings,
                     glass_polishing=polishing,
                     accessory_schedule=accessories,
                 ))
@@ -1001,6 +1218,7 @@ def freeze_revision_a(
                 glass_skus=glass_skus,
                 hardware_skus={item.technical_kit_sku for item in hardware},
                 panel_skus=panel_skus,
+                fitting_skus={item.technical_sku for item in fittings},
             )
             purchase_authorities = _collect_purchase_authorities(
                 purchase_authorities, following
@@ -1016,6 +1234,8 @@ def freeze_revision_a(
                 "color_interior": str(position["color_interior"]),
                 "color_exterior": str(position["color_exterior"]),
                 "location_tag": location_tag,
+                "price_net": D(str(position["price_net"])),
+                "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
                 "workshop_annotations": [item.model_dump(mode="python") for item in annotations],
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
@@ -1065,9 +1285,15 @@ def freeze_revision_a(
             glass_mappings=purchase_authorities.glass_mappings,
             hardware_mappings=purchase_authorities.hardware_mappings,
             panel_authorities=purchase_authorities.panel_authorities,
+            fitting_mappings=purchase_authorities.fitting_mappings,
         ) if len(purchase_positions) == len(positions) else None
         bom_hash = bom_hash_v1(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
+        )
+        organization = one(
+            "SELECT name, tax_id FROM public.tenancy_organizations WHERE id = %s",
+            [str(org_id)],
+            "organization_not_found",
         )
         sealed_at = datetime.now(timezone.utc)
         snapshot = {
@@ -1075,6 +1301,12 @@ def freeze_revision_a(
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,
             "project_id": project_id,
             "org_id": org_id,
+            # Issuer identity for the letterhead — rendered only on revisions
+            # frozen after this field existed; older snapshots simply omit it.
+            "organization": {
+                "name": str(organization["name"]),
+                "tax_id": str(organization["tax_id"]),
+            },
             "revision": revision,
             "sealed_by": actor_id,
             "sealed_at": sealed_at,
@@ -1294,6 +1526,7 @@ def prepare_documentary_inputs(
         return options[0]["id"] if len(options) == 1 else None
 
     prepared = []
+    inspector_configs: dict[str, InspectorConfig] = {}
     for position in positions:
         identity = str(position["id"])
         existing = position_inputs.get(identity)
@@ -1406,6 +1639,16 @@ def prepare_documentary_inputs(
             and (item.get("bay_id"), item.get("leaf_id")) in valid_leaves
         ]
 
+        inspector_config = inspector_configs.setdefault(
+            system_id, InspectorRepository().load(system_id_uuid, org_id).config
+        )
+        # Suggestions stay a separate channel: prepare returns what the
+        # estimator actually stored, plus advisory defaults the emit form can
+        # prefill. Absence is never synthesized into stored authority — what
+        # the user sees and saves is what exists.
+        workshop_suggestions = _seed_workshop_defaults(calculations, [], inspector_config)
+        polishing_suggestions = _seed_polishing_defaults(valid_glass, [])
+
         prepared.append(
             {
                 "position_id": position["id"],
@@ -1427,6 +1670,8 @@ def prepare_documentary_inputs(
                 "workshop_annotations": workshop,
                 "structural_inputs": structural,
                 "glass_polishing": glass,
+                "workshop_suggestions": workshop_suggestions,
+                "polishing_suggestions": polishing_suggestions,
                 "handle_intents": intents,
                 "handle_requirements": [
                     {
@@ -1445,8 +1690,11 @@ def prepare_documentary_inputs(
                     if str(option["id"]) in handle_authorities
                 ],
                 "workshop_targets": _workshop_targets(calculations, trace_leaves),
-                "accessory_schedule": decoded(existing["accessory_schedule"])
-                if existing and existing["accessory_schedule"] is not None else None,
+                "accessory_schedule": (
+                    decoded(existing["accessory_schedule"])
+                    if existing and existing["accessory_schedule"] is not None
+                    else None
+                ),
                 "legacy_handle_migration_confirmed": bool(
                     existing and existing["legacy_handle_migration_confirmed"]
                 ),

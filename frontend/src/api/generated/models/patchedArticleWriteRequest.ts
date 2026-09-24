@@ -7,6 +7,7 @@
  */
 import type { CatalogProfileRoleEnum } from "./catalogProfileRoleEnum";
 import type { MaterialEnum } from "./materialEnum";
+import type { ProfileSectionRequest } from "./profileSectionRequest";
 
 export interface PatchedArticleWriteRequest {
   system_id?: string;
@@ -20,6 +21,7 @@ export interface PatchedArticleWriteRequest {
    * @maxLength 255
    */
   name?: string;
+  section?: ProfileSectionRequest | null;
   role?: CatalogProfileRoleEnum;
   material?: MaterialEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */

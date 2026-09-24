@@ -1,6 +1,7 @@
 import { type PointerEvent, useState } from "react";
 
 import type { EngineCalculateResponse } from "../../api/generated/models";
+import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, type DimensionAxis, useCanvasStore } from "./canvasStore";
 import { EditableDimension } from "./EditableDimension";
 import { fixedPresentationGeometry, toSvgNumber } from "./presentationGeometry";
@@ -108,10 +109,10 @@ export function CADViewportSvg({
     <section className="cad-viewport" aria-labelledby="canvas-title">
       <div className="cad-viewport__heading">
         <div>
-          <p className="eyebrow">POSICIÓN DEMO · G1</p>
+          <p className="eyebrow">Vano demo · G1</p>
           <h1 id="canvas-title">Editor paramétrico 2D</h1>
         </div>
-        <span className="canvas-system">DEMO_60</span>
+        <span className="canvas-system">{t("catalog.demo")}</span>
       </div>
       <svg
         className="cad-svg"
@@ -119,9 +120,9 @@ export function CADViewportSvg({
         viewBox={geometry.viewBox}
         preserveAspectRatio="xMidYMid meet"
         role="group"
-        aria-label="Paño FIXED con cotas editables"
+        aria-label="Paño fijo con cotas editables"
       >
-        <title>Paño FIXED calculado por el engine</title>
+        <title>Paño fijo calculado por el motor</title>
         <line className="dimension-line" x1="0" y1="-46" x2={geometry.nominalWidth} y2="-46" />
         <line className="dimension-tick" x1="0" y1="-62" x2="0" y2="-30" />
         <line

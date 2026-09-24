@@ -52,6 +52,13 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
             return {"n": 7}
         if "offcut_inventory" in lowered:
             return {"n": 2}
+        if "production_allowed" in lowered:
+            return {
+                "versions_ready": 2,
+                "work_orders_shortage": 1,
+                "dispatch_ready": 1,
+                "catalog_gaps": 0,
+            }
         if "deliveries" in lowered:
             seen_sql.append(lowered)
             return {"today": 2, "overdue": 1}
@@ -71,6 +78,9 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert out["throughput_30d"]["dispatched_30d"] == 3
     assert out["avg_release_to_dispatch_hours"] == 4.3
     assert out["inventory"] == {"items": 7, "offcuts": 2}
+    assert out["prep"]["versions_ready"] == 2
+    assert out["prep"]["work_orders_shortage"] == 1
+    assert out["prep"]["dispatch_ready"] == 1
     assert out["deliveries"] == {"today": 2, "overdue": 1}
     assert out["documents"] == {"DOC-03": 4}
     assert out["projects"]["sealed_versions"] == 3

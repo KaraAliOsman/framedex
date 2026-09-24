@@ -12,9 +12,9 @@
  * * `pack` - pack
  * * `legacy` - legacy
  */
-export type OriginEnum = (typeof OriginEnum)[keyof typeof OriginEnum];
+export type CreditLotOriginEnum = (typeof CreditLotOriginEnum)[keyof typeof CreditLotOriginEnum];
 
-export const OriginEnum = {
+export const CreditLotOriginEnum = {
   trial: "trial",
   monthly: "monthly",
   pack: "pack",

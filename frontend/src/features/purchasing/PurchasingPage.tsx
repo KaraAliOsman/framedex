@@ -6,10 +6,25 @@ import { documentaryArtifactAccess } from "../../api/generated/dekopen";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
 import "./purchasing.css";
 
 type OrderType =
   "SUPPLIER_PROFILE_PO" | "SUPPLIER_GLASS_PO" | "SUPPLIER_HARDWARE_PO" | "SUPPLIER_PANEL_PO";
+function categoryLabel(category: string): string {
+  const key = `purchasing.categoryValue.${category}` as Parameters<typeof t>[0];
+  const known: ReadonlySet<string> = new Set([
+    "PROFILE",
+    "REINFORCEMENT",
+    "GLASS",
+    "HARDWARE_KIT",
+    "PANEL",
+    "ACCESSORY",
+    "FITTING",
+  ]);
+  return known.has(category) ? t(key) : category;
+}
+
 const ORDER_TYPES: OrderType[] = [
   "SUPPLIER_PROFILE_PO",
   "SUPPLIER_GLASS_PO",
@@ -31,6 +46,8 @@ type Requirement = {
   technical_skus: string[];
   purchasing_sku: string | null;
   physical_stock_identity: string | null;
+  physical_stock_sku?: string | null;
+  physical_stock_name?: string | null;
   unit: string;
   quantity: string;
   specification: Record<string, unknown>;
@@ -94,12 +111,35 @@ type StockItem = {
 type VersionItem = {
   id: string;
   project_id: string;
+  project_code: string;
   revision_code: string;
   bom_hash: string;
   emitted_at: string;
 };
 type Version = VersionItem & { project_code: string; production_allowed: boolean };
 type Blocker = { order_type: OrderType; code: string; requirement_keys?: string[] };
+type CoverageLine = {
+  requirement_line_id: string;
+  order_type: string;
+  category: string;
+  purchasing_sku: string;
+  unit: string;
+  required: string;
+  on_hand: string;
+  reserved: string;
+  available: string;
+  ordered: string;
+  received: string;
+  open_ordered: string;
+  remnant_pool?: { kind: string; count: number; total_mm?: string } | null;
+  shortage: string;
+  recommended_purchase: string;
+};
+type Coverage = {
+  version_id?: string;
+  lines?: CoverageLine[];
+  shortages?: number;
+};
 type PurchasingState = {
   versions?: VersionItem[];
   version?: Version;
@@ -108,6 +148,7 @@ type PurchasingState = {
   allocations?: Allocation[];
   orders?: Order[];
   blockers?: Blocker[];
+  coverage?: Coverage;
 };
 
 type RequestFn = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
@@ -343,6 +384,8 @@ function PurchasingWorkspace({
   const allocations = state?.allocations ?? [];
   const orders = state?.orders ?? [];
   const blockers = state?.blockers ?? [];
+  const coverage = state?.coverage;
+  const coverageLines = coverage?.lines ?? [];
   const confirmedTypes = new Set(orders.map((order) => order.order_type));
 
   return (
@@ -365,7 +408,11 @@ function PurchasingWorkspace({
           >
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.revision_code} · {item.emitted_at}
+                {item.project_code} · {formatRevision(item.revision_code)} ·{" "}
+                {new Date(item.emitted_at).toLocaleString("es-CL", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
               </option>
             ))}
           </select>
@@ -374,7 +421,7 @@ function PurchasingWorkspace({
       {state?.version && (
         <p className="purchasing-version">
           {t("purchasing.project")}: <strong>{state.version.project_code}</strong> ·{" "}
-          {state.version.revision_code} · {t("purchasing.immutable")}
+          {formatRevision(state.version.revision_code)} · {t("purchasing.immutable")}
         </p>
       )}
       {blockers.length > 0 && (
@@ -388,6 +435,71 @@ function PurchasingWorkspace({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+      {coverageLines.length > 0 && (
+        <section className="purchasing-coverage" aria-label={t("purchasing.coverageTitle")}>
+          <h2>{t("purchasing.coverageTitle")}</h2>
+          {(coverage?.shortages ?? 0) > 0 && (
+            <p className="purchasing-coverage-alert" role="alert">
+              {t("purchasing.coverageShortages")}: {coverage?.shortages}
+            </p>
+          )}
+          <table>
+            <thead>
+              <tr>
+                <th>{t("purchasing.category")}</th>
+                <th>{t("purchasing.purchaseSku")}</th>
+                <th>{t("purchasing.coverageRequired")}</th>
+                <th>{t("purchasing.coverageOnHand")}</th>
+                <th>{t("purchasing.coverageReserved")}</th>
+                <th>{t("purchasing.coverageOrdered")}</th>
+                <th>{t("purchasing.coverageReceived")}</th>
+                <th>{t("purchasing.coverageRemnant")}</th>
+                <th>{t("purchasing.coverageShortage")}</th>
+                <th>{t("purchasing.coverageRecommended")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coverageLines.map((line) => (
+                <tr key={line.requirement_line_id}>
+                  <td>{categoryLabel(line.category)}</td>
+                  <td>
+                    {line.purchasing_sku}
+                    <span className="purchasing-coverage-unit"> {line.unit}</span>
+                  </td>
+                  <td>{line.required}</td>
+                  <td>{line.on_hand}</td>
+                  <td>{line.reserved}</td>
+                  <td>{line.open_ordered}</td>
+                  <td>
+                    {line.received !== "0" ? (
+                      <strong className="purchasing-coverage-received">
+                        {line.received} · {t("purchasing.receivedMark")}
+                      </strong>
+                    ) : (
+                      line.received
+                    )}
+                  </td>
+                  <td>
+                    {line.remnant_pool
+                      ? `${line.remnant_pool.count}${
+                          line.remnant_pool.total_mm ? ` · ${line.remnant_pool.total_mm} mm` : ""
+                        }`
+                      : "—"}
+                  </td>
+                  <td>
+                    {line.shortage !== "0" ? (
+                      <strong className="purchasing-coverage-short">{line.shortage}</strong>
+                    ) : (
+                      "0"
+                    )}
+                  </td>
+                  <td>{line.recommended_purchase}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
       {state?.version &&
@@ -602,13 +714,18 @@ function RequirementRow({
   const allocated = eligibilities.find((item) => item.id === allocation?.supplier_eligibility_id);
   return (
     <tr>
-      <td>{requirement.category}</td>
+      <td>{categoryLabel(requirement.category)}</td>
       <td>{requirement.technical_skus.join(", ") || "—"}</td>
       <td>
         {requirement.purchasing_sku ?? "—"}
         {requirement.physical_stock_identity && (
           <small>
-            {t("purchasing.stock")}: {requirement.physical_stock_identity}
+            {t("purchasing.stock")}:{" "}
+            {requirement.physical_stock_sku
+              ? `${requirement.physical_stock_sku}${
+                  requirement.physical_stock_name ? ` · ${requirement.physical_stock_name}` : ""
+                }`
+              : requirement.physical_stock_identity}
           </small>
         )}
       </td>
@@ -637,11 +754,24 @@ function RequirementRow({
                 ? t("purchasing.noEligibility")
                 : t("purchasing.chooseSupplier")}
             </option>
-            {eligibilities.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.supplier_name} · v{item.version}
-              </option>
-            ))}
+            {eligibilities
+              // A supplier re-declared at a newer version supersedes the
+              // older rows — offering both would allocate against stale data.
+              .filter(
+                (item) =>
+                  item.version ===
+                  Math.max(
+                    0,
+                    ...eligibilities
+                      .filter((o) => o.supplier_identity === item.supplier_identity)
+                      .map((o) => o.version),
+                  ),
+              )
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.supplier_name} · v{item.version}
+                </option>
+              ))}
           </select>
         )}
       </td>
@@ -761,7 +891,8 @@ function EligibilityForm({
             {requirements.map((item) => (
               <label key={item.id}>
                 <input type="checkbox" name={`key_${item.id}`} defaultChecked />
-                {item.category} · {item.purchasing_sku ?? item.requirement_key.slice(0, 12)}
+                {categoryLabel(item.category)} ·{" "}
+                {item.purchasing_sku ?? item.requirement_key.slice(0, 12)}
               </label>
             ))}
           </fieldset>

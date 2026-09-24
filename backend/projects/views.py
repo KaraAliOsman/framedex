@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny
 
 from ai_gateway.providers import ProviderError
 from authentication.errors import contract_error
+from engine_api.repository import SystemNotFound, UnsupportedCatalogContract
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
@@ -20,6 +21,7 @@ from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import (
     clients,
     credit_notes,
+    design_alternatives,
     design_assist,
     invoices,
     payment_links,
@@ -62,6 +64,8 @@ from projects.serializers import (
     SiiEnvioSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
+    DesignAlternativesRequestSerializer,
+    DesignAlternativesResponseSerializer,
     DesignAssistRequestSerializer,
     DesignAssistResponseSerializer,
     PositionResponseSerializer,
@@ -278,6 +282,68 @@ class PositionDesignAssistView(APIView):
                     error.code,
                     "El proveedor de IA no está disponible en este momento.",
                 ) from None
+            except SystemNotFound as error:
+                raise contract_error(
+                    404,
+                    "system_not_found",
+                    "La serie no está disponible para este taller.",
+                ) from error
+            except UnsupportedCatalogContract as error:
+                raise contract_error(
+                    422,
+                    "technical_authority_required",
+                    "Revisa las compatibilidades del catálogo de esta serie.",
+                ) from error
+
+
+class PositionDesignAlternativesView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="positions_design_alternatives",
+        request=DesignAlternativesRequestSerializer,
+        responses={
+            200: DesignAlternativesResponseSerializer,
+            502: ERRORS[503],
+            **ERRORS,
+        },
+        **SCHEMA,
+    )
+    def post(self, request, position_id):
+        data = validate(DesignAlternativesRequestSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            try:
+                return response(
+                    design_alternatives.alternatives(
+                        org_id=org,
+                        user_id=token.user_id,
+                        position=service.position_row(org, position_id),
+                        brief=str(data["brief"]),
+                        count=int(data.get("count") or 2),
+                        operation_key=str(data["operation_key"]),
+                        system_id=data["system_id"],
+                        width_mm=data.get("width_mm"),
+                        height_mm=data.get("height_mm"),
+                    )
+                )
+            except ProviderError as error:
+                raise contract_error(
+                    503,
+                    error.code,
+                    "El proveedor de IA no está disponible en este momento.",
+                ) from None
+            except SystemNotFound as error:
+                raise contract_error(
+                    404,
+                    "system_not_found",
+                    "La serie no está disponible para este taller.",
+                ) from error
+            except UnsupportedCatalogContract as error:
+                raise contract_error(
+                    422,
+                    "technical_authority_required",
+                    "Revisa las compatibilidades del catálogo de esta serie.",
+                ) from error
 
 
 class ProjectPaymentsView(APIView):

@@ -19,11 +19,19 @@ from uuid import UUID
 from django.db import transaction
 import segno
 
-from dekopen_engine.cutting import optimize_cut, pieces_from_result
+from dekopen_engine.cutting import CutBar, optimize_cut, pieces_from_result
+from dekopen_engine.manufacturing import ManufacturingFactsV1
 from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
+from dekopen_engine.operations import (
+    NeutralOpsPostProcessor,
+    operations_from_plan,
+    ops_document,
+)
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
+from inventory import remnants as remnants_service
+from inventory import production_stock
 from production.confirmations import confirmation_summary
 from production.dxf import dxf_files
 from production.dispatch_notes import issue_dispatch_note
@@ -53,6 +61,24 @@ _STEP_LABELS = {
     "QC": "Control de calidad",
     "PACK": "Embalaje",
 }
+
+# §10: which stock kinds a routing step physically consumes — bars and
+# sheets drop at the saw, kits and fittings land at assembly, panels at
+# glazing. Reservations stay open until their step completes.
+_STEP_CONSUMED_KINDS = {
+    "CUT": {"BAR", "SHEET"},
+    "ASSEMBLE": {"HARDWARE_KIT", "FITTING"},
+    "GLAZE": {"PANEL"},
+}
+
+# Glass and panel infills always carry a CUT_TO_SIZE purchase authority —
+# pieces no workshop sheet hosts are supplied finished, not short. Only an
+# unnesting reason outside the purchased-supply set may block completion.
+_PURCHASED_UNNESTED_REASONS = frozenset({
+    "shaped_glass_outline",
+    "no_declared_sheet",
+    "piece_larger_than_usable_sheet",
+})
 
 _EVENTS = {
     "START": "STEP_STARTED",
@@ -106,7 +132,8 @@ def _routing(engine_result: dict[str, object]) -> list[str]:
 
 
 def _work_order_payload(
-    position: dict[str, object], *, polishing: list | None = None
+    position: dict[str, object], *, polishing: list | None = None,
+    color: str | None = None,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     return {
@@ -114,6 +141,7 @@ def _work_order_payload(
         "position_id": str(position.get("position_id") or ""),
         "system_id": str(position.get("system_id") or ""),
         "quantity": position.get("quantity", 1),
+        "color": color,
         "materials": {
             key: engine.get(key) or []
             for key in (
@@ -135,6 +163,7 @@ def _public_step(step: dict[str, object]) -> dict[str, object]:
         "status": step["status"],
         "work_center_id": str(step["work_center_id"]) if step.get("work_center_id") else None,
         "work_center_code": step.get("work_center_code"),
+        "work_center_name": step.get("work_center_name"),
         "started_at": step["started_at"],
         "finished_at": step["finished_at"],
         "actor_id": str(step["actor_id"]) if step.get("actor_id") else None,
@@ -142,19 +171,50 @@ def _public_step(step: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _order_shortage(payload: dict[str, object] | None) -> int:
+    """§8 shortage signal: post-optimize the reservation ledger is freshest;
+    before that, the release-time prep count still warns the workshop."""
+    reservations = ((payload or {}).get("optimization") or {}).get("stock_reservations")
+    if reservations is not None:
+        return sum(
+            1
+            for entry in reservations
+            if str(entry.get("short") or "0") not in ("", "0", "0.00")
+        )
+    prep = (payload or {}).get("prep") or {}
+    try:
+        return int(prep.get("shortages") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _public_order(order: dict[str, object], *, include_payload: bool = False) -> dict[str, object]:
     payload = order.get("payload_json")
     if isinstance(payload, str):
         payload = json.loads(payload)
+    status = str(order["status"])
+    next_step = order.get("next_step_code")
     output = {
         "id": str(order["id"]),
         "order_code": order["order_code"],
         "order_type": str(order["order_type"]),
-        "status": str(order["status"]),
+        "status": status,
         "position_id": (payload or {}).get("position_id"),
         "quantity": (payload or {}).get("quantity"),
         "steps_done": order.get("steps_done", 0),
         "steps_total": order.get("steps_total", 0),
+        # §8 explicit workflow surfacing — all derived from sealed state.
+        "next_step": (
+            {"code": str(next_step), "label": _STEP_LABELS.get(str(next_step), str(next_step))}
+            if next_step
+            else None
+        ),
+        "dispatch_ready": bool(
+            (payload or {}).get("packing")
+            and status == "COMPLETED"
+            and not order.get("has_dispatch_note")
+        ),
+        "shortage": _order_shortage(payload),
         "created_at": order["created_at"],
     }
     if include_payload:
@@ -200,12 +260,26 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             for pos in snapshot.get("positions") or []
             if pos.get("id")
         }
+        # The sealed color is what the cut optimizer's stock variants are
+        # named after — WHITE only when both faces are WHITE, else FOILED.
+        color_by_position = {
+            str(pos.get("id")): (
+                "WHITE"
+                if pos.get("color_interior") == "WHITE"
+                and pos.get("color_exterior") == "WHITE"
+                else "FOILED"
+            )
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
+
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
             payload = _work_order_payload(
                 position,
                 polishing=polishing_by_position.get(str(position.get("position_id"))),
+                color=color_by_position.get(str(position.get("position_id"))),
             )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
@@ -282,12 +356,38 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                         json.dumps({"order_code": order_code, "position_id": payload["position_id"]}),
                     ],
                 )
+        # §8: the moment a version becomes work, the workshop should already
+        # see the material shortage signal the purchasing coverage computes —
+        # not only after someone clicks optimize. One coverage read stamps
+        # every released order's prep evidence.
+        coverage = production_stock.coverage_for_version(org_id=org_id, version_id=version_id)
+        prep_stamp = {
+            "schema": "work_order_prep_v1",
+            "shortages": int(coverage.get("shortages") or 0),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+        for order_id in order_ids:
+            rows(
+                """
+                UPDATE public.orders
+                SET payload_json = payload_json || %s::jsonb
+                WHERE id = %s AND org_id = %s
+                RETURNING id
+                """,
+                [json.dumps({"prep": prep_stamp}), str(order_id), str(org_id)],
+            )
         orders = rows(
             """
             SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                    o.project_version_id, o.created_at,
                    COUNT(s.id) AS steps_total,
-                   COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+                   COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+                   (SELECT s2.code FROM public.production_steps s2
+                    WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                    ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+                   EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                          WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                         ) AS has_dispatch_note
             FROM public.orders o
             LEFT JOIN public.production_steps s ON s.order_id = o.id
             WHERE o.id = ANY(%s::uuid[])
@@ -309,7 +409,13 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
-               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+               (SELECT s2.code FROM public.production_steps s2
+                WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+               EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                      WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                     ) AS has_dispatch_note
         FROM public.orders o
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
@@ -318,6 +424,43 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
         [str(org_id)],
     )
     return {"orders": [_public_order(order) for order in orders]}
+
+
+def production_prep(*, org_id: UUID) -> dict[str, object]:
+    """§8 project-approved → production preparation: sealed versions that are
+    allowed into production but have no workshop order yet. Deterministic —
+    no AI, just the state the release action consumes."""
+    with documentary_backend():
+        versions = rows(
+            """
+            SELECT v.id, v.project_id, v.revision_code, v.emitted_at,
+                   p.code AS project_code,
+                   jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb))
+                       AS positions
+            FROM public.project_versions v
+            JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id
+            WHERE v.org_id = %s AND v.production_allowed
+              AND NOT EXISTS (
+                  SELECT 1 FROM public.orders o
+                  WHERE o.org_id = v.org_id AND o.project_version_id = v.id
+                    AND o.order_type = 'WORKSHOP_OT'
+              )
+            ORDER BY v.emitted_at DESC NULLS LAST, v.id
+            """,
+            [str(org_id)],
+        )
+        return {
+            "versions": [
+                {
+                    "version_id": str(item["id"]),
+                    "project_id": str(item["project_id"]),
+                    "project_code": item["project_code"],
+                    "revision_code": item["revision_code"],
+                    "positions": int(item["positions"]),
+                }
+                for item in versions
+            ]
+        }
 
 
 def confirm_installation(
@@ -374,7 +517,13 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
-               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+               (SELECT s2.code FROM public.production_steps s2
+                WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+               EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                      WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                     ) AS has_dispatch_note
         FROM public.orders o
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.id = %s AND o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
@@ -386,7 +535,7 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
     steps = rows(
         """
         SELECT s.id, s.sequence, s.code, s.label, s.status, s.work_center_id,
-               w.code AS work_center_code, s.started_at, s.finished_at, s.actor_id, s.note
+               w.code AS work_center_code, w.name AS work_center_name, s.started_at, s.finished_at, s.actor_id, s.note
         FROM public.production_steps s
         LEFT JOIN public.work_centers w ON w.id = s.work_center_id
         WHERE s.order_id = %s ORDER BY s.sequence
@@ -543,7 +692,7 @@ def transition_step(
             """
             SELECT s.id, s.order_id, s.status, s.sequence, s.code, s.label,
                    s.work_center_id, s.started_at, s.finished_at, s.actor_id, s.note,
-                   w.code AS work_center_code
+                   w.code AS work_center_code, w.name AS work_center_name
             FROM public.production_steps s
             LEFT JOIN public.work_centers w ON w.id = s.work_center_id
             WHERE s.id = %s AND s.org_id = %s FOR UPDATE OF s
@@ -627,13 +776,227 @@ def transition_step(
                 }),
             ],
         )
+        # §6: completing CUT is where the physical drop goes on the saw —
+        # reserved remnants consume and the plan's usable remainders return
+        # to stock under this order's provenance, once.
+        if new_status == "DONE" and str(step["code"]) == "CUT":
+            payload_row = one(
+                """
+                SELECT payload_json FROM public.orders
+                WHERE id = %s AND org_id = %s
+                """,
+                [str(step["order_id"]), str(org_id)],
+                "work_order_not_found",
+            )
+            optimization = (_decoded(payload_row["payload_json"]).get("optimization") or {})
+            plan_remnants = optimization.get("remnants") or {}
+            # Every remnant the plan claims must still be RESERVED for this
+            # order — an operator can unreserve a drop manually, and another
+            # order may then have taken it; completing on the stale plan
+            # would settle stock the saw never had.
+            planned_ids = {
+                str(entry["id"])
+                for entry in (plan_remnants.get("consumed") or [])
+                if entry.get("id")
+            }
+            if planned_ids:
+                still_reserved = rows(
+                    """
+                    SELECT id FROM public.inventory_remnants
+                    WHERE org_id = %s AND reserved_order_id = %s
+                      AND status = 'RESERVED' AND id = ANY(%s::uuid[])
+                    """,
+                    [str(org_id), str(step["order_id"]), sorted(planned_ids)],
+                )
+                if {str(r["id"]) for r in still_reserved} != planned_ids:
+                    raise DocumentaryError("work_order_remnant_released")
+            consumed = remnants_service.consume_order_remnants(
+                org_id=org_id, order_id=step["order_id"]
+            )
+            produced = 0
+            # Produced remnants are written only once per order — a CUT
+            # resume/complete cycle can never double the ledger.
+            already = rows(
+                """
+                SELECT id FROM public.inventory_remnants
+                WHERE org_id = %s AND origin_order_id = %s AND origin = 'PRODUCTION'
+                LIMIT 1
+                """,
+                [str(org_id), str(step["order_id"])],
+            )
+            if not already and (
+                plan_remnants.get("produced_bars")
+                or plan_remnants.get("produced_sheets")
+            ):
+                produced = remnants_service.record_produced_remnants(
+                    org_id=org_id, order_id=step["order_id"],
+                    produced_bars=plan_remnants.get("produced_bars") or [],
+                    produced_sheets=plan_remnants.get("produced_sheets") or [],
+                )
+            if consumed or produced:
+                rows(
+                    """
+                    INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
+                    VALUES (%s, %s, %s, 'WO_REMNANTS_SETTLED', %s, %s::jsonb)
+                    RETURNING id
+                    """,
+                    [
+                        str(org_id),
+                        str(step["order_id"]),
+                        str(step_id),
+                        str(actor_id),
+                        json.dumps({
+                            "consumed": consumed,
+                            "produced": produced,
+                        }),
+                    ],
+                )
+        # §10 consumption: completing a step settles the stock reservations
+        # of the kinds that step physically uses — CONSUMPTION movements on
+        # the ledger, reservation entries stamped consumed_at in the plan.
+        consumed_kinds = _STEP_CONSUMED_KINDS.get(str(step["code"]))
+        if new_status == "DONE" and consumed_kinds:
+            payload_row = one(
+                """
+                SELECT payload_json FROM public.orders
+                WHERE id = %s AND org_id = %s
+                """,
+                [str(step["order_id"]), str(org_id)],
+                "work_order_not_found",
+            )
+            payload_full = _decoded(payload_row["payload_json"])
+            opt = payload_full.get("optimization") or {}
+            if not opt:
+                # A material-consuming step needs the optimization record:
+                # without it the order would complete with no material
+                # accounting whatsoever — not even a partial reservation.
+                raise DocumentaryError(
+                    "work_order_plan_missing",
+                    detail="La orden no tiene un plan de corte: optimízala antes de completar este paso.",
+                )
+            if opt.get("invalidated"):
+                # A released remnant (or any other stock change) voids the
+                # claim the layout carried — completing against it would settle
+                # reservations for stock the plan can no longer prove exists.
+                raise DocumentaryError(
+                    "work_order_plan_stale",
+                    detail=(
+                        "El plan de corte perdió material reservado: "
+                        "vuelve a optimizar la orden antes de completar este paso."
+                    ),
+                )
+            reservations = opt.get("stock_reservations") or []
+            # A consuming step can only complete when its material is fully
+            # accounted for: a short reservation, a piece no stock could
+            # host, or a sku with no stock mapping means the physical order
+            # is incomplete — refuse instead of settling only the reserved
+            # part and letting the order reach completion.
+            short_entries = [
+                entry for entry in reservations
+                if entry.get("kind") in consumed_kinds
+                and not entry.get("consumed_at")
+                and entry.get("short") not in (None, "", "0", "0.00")
+            ]
+            unplaced_plan = (
+                "BAR" in consumed_kinds
+                and bool((opt.get("bars") or {}).get("unplaced"))
+            ) or (
+                "SHEET" in consumed_kinds
+                and any(
+                    entry.get("reason") not in _PURCHASED_UNNESTED_REASONS
+                    for entry in (opt.get("unnested") or [])
+                )
+            )
+            if short_entries or unplaced_plan or opt.get("unmapped_stock_skus"):
+                raise DocumentaryError(
+                    "work_order_material_shortage",
+                    detail=(
+                        "La orden no tiene material suficiente para completar este paso: "
+                        "revisa los faltantes de la reserva, las piezas sin ubicar y los "
+                        "materiales sin equivalencia de stock en Compras."
+                    ),
+                    extra={
+                        "short_skus": sorted({
+                            str(entry.get("sku"))
+                            for entry in short_entries
+                            if entry.get("sku")
+                        }),
+                        "unmapped_stock_skus": sorted(
+                            opt.get("unmapped_stock_skus") or []
+                        ),
+                        "unplaced": sorted({
+                            kind
+                            for kind, blocked in (
+                                ("BAR", bool((opt.get("bars") or {}).get("unplaced"))),
+                                (
+                                    "SHEET",
+                                    any(
+                                        entry.get("reason")
+                                        not in _PURCHASED_UNNESTED_REASONS
+                                        for entry in (opt.get("unnested") or [])
+                                    ),
+                                ),
+                            )
+                            if blocked and kind in consumed_kinds
+                        }),
+                    },
+                )
+            open_entries = [
+                entry for entry in reservations
+                if entry.get("kind") in consumed_kinds
+                and not entry.get("consumed_at")
+                and entry.get("reserved") not in (None, "", "0", "0.00")
+            ]
+            if open_entries:
+                settled = production_stock.consume_for_order(
+                    org_id=org_id,
+                    order_id=step["order_id"],
+                    actor_id=actor_id,
+                    kinds=consumed_kinds,
+                    reservations=reservations,
+                )
+                opt["stock_reservations"] = settled
+                payload_full["optimization"] = opt
+                rows(
+                    """
+                    UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+                    WHERE id = %s AND org_id = %s
+                    RETURNING id
+                    """,
+                    [
+                        json.dumps(payload_full),
+                        datetime.now(timezone.utc),
+                        str(step["order_id"]),
+                        str(org_id),
+                    ],
+                )
+                rows(
+                    """
+                    INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
+                    VALUES (%s, %s, %s, 'WO_STOCK_CONSUMED', %s, %s::jsonb)
+                    RETURNING id
+                    """,
+                    [
+                        str(org_id),
+                        str(step["order_id"]),
+                        str(step_id),
+                        str(actor_id),
+                        json.dumps({
+                            "consumed": [
+                                {"sku": e["sku"], "qty": e["reserved"],
+                                 "kind": e["kind"]}
+                                for e in open_entries
+                            ],
+                        }),
+                    ],
+                )
         order_status = _refresh_order_status(
             org_id=org_id, order_id=step["order_id"], actor_id=actor_id
         )
         fresh = one(
             """
             SELECT s.id, s.sequence, s.code, s.label, s.status, s.work_center_id,
-                   w.code AS work_center_code, s.started_at, s.finished_at, s.actor_id, s.note
+                   w.code AS work_center_code, w.name AS work_center_name, s.started_at, s.finished_at, s.actor_id, s.note
             FROM public.production_steps s
             LEFT JOIN public.work_centers w ON w.id = s.work_center_id
             WHERE s.id = %s
@@ -667,6 +1030,7 @@ def create_remake(
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
         payload.pop("dxf_export", None)
+        payload.pop("operations_export", None)
         payload.pop("packing", None)  # labels carry the source order code
         payload["remake_of"] = str(source["id"])
         prior = one(
@@ -957,6 +1321,180 @@ def cnc_file_content(
         export.get("optimization_fingerprint")
         and _optimization_fingerprint(optimization if isinstance(optimization, dict) else {})
         != export["optimization_fingerprint"]
+    ):
+        return None
+    files = export.get("files") or {}
+    content = files.get(filename)
+    if content is None:
+        return None
+    return f"{order['order_code']}-{filename}", content
+
+
+def _ops_source_fingerprint(
+    optimization: dict[str, object], manufacturing: list[object]
+) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {"optimization": optimization, "manufacturing": manufacturing},
+            sort_keys=True, default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _raw_fact_units(
+    version_snapshot: dict[str, object], position_id: str | None
+) -> list[object]:
+    return [
+        unit for unit in (version_snapshot.get("manufacturing") or [])
+        if not position_id or str(unit.get("position_id")) == position_id
+    ]
+
+
+def _operations_fact_units(
+    version_snapshot: dict[str, object], position_id: str | None
+) -> list[ManufacturingFactsV1]:
+    return [
+        ManufacturingFactsV1.model_validate_json(json.dumps(unit))
+        for unit in _raw_fact_units(version_snapshot, position_id)
+    ]
+
+
+def export_operations(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """§7 machine-neutral operations export: derives the sealed plan's
+    manufacturing operations (saw boundaries, member machining with declared
+    authority), renders the machine-neutral document, stores it on the order
+    and records ``WO_OPS_EXPORTED``. Requires a prior optimization run."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json,
+                   project_version_id FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization")
+        if not isinstance(optimization, dict) or not optimization.get("bars"):
+            raise DocumentaryError("operations_requires_optimization")
+        version_row = one(
+            """
+            SELECT snapshot_json FROM public.project_versions
+            WHERE id = %s AND org_id = %s
+            """,
+            [str(order["project_version_id"]), str(org_id)],
+            "work_order_missing_version",
+        )
+        version_snapshot = _decoded(version_row["snapshot_json"])
+        fact_units = _operations_fact_units(
+            version_snapshot,
+            str(payload.get("position_id") or "") or None,
+        )
+        bars = [
+            CutBar.model_validate_json(json.dumps(bar))
+            for bar in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
+        ]
+        ops = operations_from_plan(bars=bars, fact_units=fact_units)
+        document = ops_document(
+            ops,
+            order_code=str(order["order_code"]),
+            plan_seed=(optimization.get("bars") or {}).get("plan_seed"),
+        )
+        files = NeutralOpsPostProcessor().render(document)
+        manufacturing = _raw_fact_units(
+            version_snapshot, str(payload.get("position_id") or "") or None
+        )
+        export = {
+            "schema": "work_order_ops_export_v1",
+            "source_fingerprint": _ops_source_fingerprint(
+                optimization, manufacturing
+            ),
+            "machine": document["machine"],
+            "operation_count": document["operation_count"],
+            "counts_by_kind": document["counts_by_kind"],
+            "unemitted_kinds": document["unemitted_kinds"],
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "files": files,
+        }
+        new_payload = {**payload, "operations_export": export}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_OPS_EXPORTED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "files": sorted(files),
+                    "operation_count": document["operation_count"],
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "exported_at": export["exported_at"],
+            "operation_count": document["operation_count"],
+            "counts_by_kind": document["counts_by_kind"],
+            "files": files,
+        }
+
+
+def operations_file_content(
+    *, org_id: UUID, order_id: UUID, filename: str
+) -> tuple[str, str] | None:
+    order = one(
+        """
+        SELECT order_code, payload_json, project_version_id FROM public.orders
+        WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    payload = _decoded(order["payload_json"])
+    export = payload.get("operations_export") or {}
+    optimization = payload.get("optimization")
+    version_row = one(
+        """
+        SELECT snapshot_json FROM public.project_versions
+        WHERE id = %s AND org_id = %s
+        """,
+        [str(order["project_version_id"]), str(org_id)],
+        "work_order_missing_version",
+    )
+    version_snapshot = _decoded(version_row["snapshot_json"])
+    manufacturing = _raw_fact_units(
+        version_snapshot, str(payload.get("position_id") or "") or None
+    )
+    if (
+        export.get("source_fingerprint")
+        and _ops_source_fingerprint(
+            optimization if isinstance(optimization, dict) else {},
+            manufacturing,
+        )
+        != export["source_fingerprint"]
     ):
         return None
     files = export.get("files") or {}
@@ -1366,6 +1904,7 @@ def optimize_work_order(
     actor_id: UUID,
     color: str,
     cutting_profile_code: str | None = None,
+    strategy: str = "auto",
 ) -> dict[str, object]:
     """Bar cutting plan (1D best-fit) + sheet nesting (2D guillotine) for one
     work order. Replaces any previous plan in ``payload_json.optimization`` and
@@ -1389,6 +1928,21 @@ def optimize_work_order(
             raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
+        # A plan writes fresh reservations for every stock kind, but only a
+        # consuming step that completes can settle them — replanning after a
+        # step already consumed its material would strand the new holds
+        # forever (a DONE step cannot complete again). Refuse instead.
+        consumed_rows = rows(
+            """
+            SELECT code::text AS code FROM public.production_steps
+            WHERE order_id = %s AND org_id = %s AND status = 'DONE'
+            """,
+            [str(order_id), str(org_id)],
+        )
+        if any(
+            str(row["code"]) in _STEP_CONSUMED_KINDS for row in consumed_rows
+        ):
+            raise DocumentaryError("work_order_replan_after_consumption")
         payload = _decoded(order["payload_json"])
         materials = payload.get("materials") or {}
         position_id = payload.get("position_id")
@@ -1433,6 +1987,12 @@ def optimize_work_order(
         stocks = CuttingRepository()
         authorities = stocks.for_result(result, UUID(str(system_id)), org_id, color)
         profile = stocks.cutting_profile(org_id, cutting_profile_code)
+        # §6: on-hand bar drops matching the plan's stock authorities are cut
+        # before any purchase; the engine consumes smallest-fitting-first.
+        bar_remnants = remnants_service.bar_remnants_for_authorities(
+            org_id=org_id,
+            authority_ids={s.stock_authority_id for s in authorities.stocks},
+        )
         per_unit = pieces_from_result(
             result,
             color=color,
@@ -1451,13 +2011,16 @@ def optimize_work_order(
             for repetition in range(1, quantity + 1)
             for piece in per_unit
         ]
-        bars = optimize_cut(pieces, authorities.stocks, profile).model_dump(mode="json")
+        bars = optimize_cut(
+            pieces, authorities.stocks, profile,
+            remnants=bar_remnants, strategy=strategy,
+        ).model_dump(mode="json")
 
         rules = _sheet_rules(org_id)
         sheets: list[dict[str, object]] = []
         sheet_purchases: list[dict[str, object]] = []
         unnested: list[dict[str, object]] = []
-        sheet_groups: list[tuple[SheetRule, list[NestPiece]]] = []
+        sheet_groups: list[tuple[SheetRule, list[NestPiece], str]] = []
         for group_key, entries, kind in (
             ("by_thickness", result.glasses, "GLASS"),
             ("by_sku", result.panels, "PANEL"),
@@ -1499,7 +2062,10 @@ def optimize_work_order(
                     rule,
                     [
                         NestPiece(
-                            piece_id=label,
+                            piece_id=(
+                                label if quantity == 1
+                                else f"{label}-{repetition:02d}"
+                            ),
                             workshop_sku=rule.workshop_sku,
                             width_mm=entry.width_mm,
                             height_mm=entry.height_mm,
@@ -1510,12 +2076,13 @@ def optimize_work_order(
                         )
                         for repetition in range(1, quantity + 1)
                     ],
+                    kind,
                 ))
         # Group by the full selected rule identity (format + trim + purchasing
         # identity), never just the SKU — pieces picked for different variants
         # of one SKU keep separate layouts and purchase lines.
-        merged: dict[tuple, tuple[SheetRule, list[NestPiece]]] = {}
-        for rule, pieces_group in sheet_groups:
+        merged: dict[tuple, tuple[SheetRule, list[NestPiece], str]] = {}
+        for rule, pieces_group, group_kind in sheet_groups:
             key = (
                 rule.workshop_sku,
                 str(rule.sheet_width_mm),
@@ -1523,18 +2090,30 @@ def optimize_work_order(
                 str(rule.edge_trim_mm),
                 rule.purchasing_sku,
             )
-            merged.setdefault(key, (rule, []))[1].extend(pieces_group)
-        for rule, group_pieces in merged.values():
-            outcome = nest_rects(group_pieces, rule)
+            merged.setdefault(key, (rule, [], group_kind))[1].extend(pieces_group)
+        for rule, group_pieces, group_kind in merged.values():
+            outcome = nest_rects(
+                group_pieces, rule,
+                remnants=remnants_service.sheet_remnants_for_sku(
+                    org_id=org_id, workshop_sku=rule.workshop_sku
+                ),
+            )
             for layout in outcome.layouts:
                 dumped = layout.model_dump(mode="json")
                 # sheet_index restarts per bin — renumber across the whole plan
                 # so layouts keep a stable globally-unique identity.
                 dumped["sheet_index"] = len(sheets) + 1
+                # Remnant identity: the workshop sku this layout nests under
+                # (produced_remnants rejoin the pool under the same key).
+                dumped["workshop_sku"] = rule.workshop_sku
                 sheets.append(dumped)
-            sheet_purchases.extend(
-                purchase.model_dump(mode="json") for purchase in outcome.purchase_list
-            )
+            for purchase in outcome.purchase_list:
+                dumped_purchase = purchase.model_dump(mode="json")
+                # The purchase row is bought sheet stock — tag which piece group
+                # it serves so stock needs can route it (glass sheets reserve at
+                # CUT; panel sheets stay on the PANEL authority path).
+                dumped_purchase["group_kind"] = group_kind
+                sheet_purchases.append(dumped_purchase)
             for piece in outcome.unplaced:
                 unnested.append({
                     "kind": "SHEET", "group": rule.workshop_sku,
@@ -1543,21 +2122,95 @@ def optimize_work_order(
                     "reason": "piece_larger_than_usable_sheet",
                 })
 
+        # §6 remnant lifecycle: the plan claims what it will cut (RESERVED
+        # inside this same transaction — never a drop double-booked) and
+        # reports what reusable material it will return to the rack.
+        consumed_bars = [
+            {"id": bar["remnant_id"], "kind": "BAR"}
+            for bar in bars.get("workshop_cut_plan") or []
+            if bar.get("source") == "REMNANT" and bar.get("remnant_id")
+        ]
+        consumed_sheets = [
+            {"id": sheet["remnant_id"], "kind": "SHEET"}
+            for sheet in sheets
+            if sheet.get("source") == "REMNANT" and sheet.get("remnant_id")
+        ]
+        produced_bars = [
+            {
+                "stock_authority_id": bar["stock_authority_id"],
+                "remainder_mm": bar["remainder_mm"],
+            }
+            for bar in bars.get("workshop_cut_plan") or []
+            if bar.get("remainder_reusable") and bar.get("stock_authority_id")
+        ]
+        produced_sheets = [
+            {
+                "workshop_sku": sheet["workshop_sku"],
+                "width_mm": remnant["width_mm"],
+                "height_mm": remnant["height_mm"],
+            }
+            for sheet in sheets
+            for remnant in sheet.get("produced_remnants") or []
+        ]
+        # Re-optimizing replaces the plan: the old reservation releases before
+        # the new one claims, atomically — for remnants and for ledger stock
+        # alike. Ledger reservations are capped at what is physically
+        # available under the item row lock, so two concurrent work orders can
+        # never hold the same stock; shortfall is reported, not invented.
+        remnants_service.release_reservations(org_id=org_id, order_id=order_id)
+        production_stock.release_for_order(
+            org_id=org_id, order_id=order_id, actor_id=actor_id
+        )
+        remnants_service.reserve_remnants(
+            org_id=org_id,
+            remnant_ids=[r["id"] for r in consumed_bars + consumed_sheets],
+            order_id=order_id,
+        )
+        stock_needs = production_stock.bar_stock_needs(
+            org_id=org_id, bars=bars.get("workshop_cut_plan") or []
+        )
+        unit_needs, unmapped_stock_skus = production_stock.unit_stock_needs(
+            org_id=org_id,
+            system_id=str(system_id),
+            quantity=quantity,
+            hardware_items=materials.get("hardware_items") or [],
+            fittings=materials.get("fittings") or [],
+            panels=materials.get("panels") or [],
+            sheet_purchases=sheet_purchases,
+        )
+        stock_reservations = production_stock.reserve_for_order(
+            org_id=org_id,
+            order_id=order_id,
+            actor_id=actor_id,
+            needs=[*stock_needs, *unit_needs],
+        )
         optimization = {
             "schema": "work_order_optimization_v1",
             "optimized_at": datetime.now(timezone.utc).isoformat(),
             "actor_id": str(actor_id),
             "color": color,
             "units": quantity,
+            "strategy": strategy,
             "bars": bars,
             "sheets": sheets,
             "sheet_purchases": sheet_purchases,
             "unnested": unnested,
+            "remnants": {
+                "consumed": consumed_bars + consumed_sheets,
+                "produced_bars": produced_bars,
+                "produced_sheets": produced_sheets,
+            },
+            # §10 ledger reservations this plan holds — what production
+            # claimed from stock, what it is short of, and (once the routing
+            # consumes them) when each hold settled.
+            "stock_reservations": stock_reservations,
+            "unmapped_stock_skus": unmapped_stock_skus,
         }
         # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
         new_payload.pop("cnc_export", None)
         new_payload.pop("dxf_export", None)
+        new_payload.pop("operations_export", None)
         rows(
             """
             UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
@@ -1583,6 +2236,13 @@ def optimize_work_order(
                     "bars": len(bars.get("workshop_cut_plan") or []),
                     "sheets": len(sheets),
                     "unnested": len(unnested),
+                    "remnants_consumed": len(consumed_bars + consumed_sheets),
+                    "stock_reserved": sum(
+                        1 for row in stock_reservations if row["reserved"] != "0"
+                    ),
+                    "stock_short": sum(
+                        1 for row in stock_reservations if row["short"] != "0"
+                    ),
                 }),
             ],
         )

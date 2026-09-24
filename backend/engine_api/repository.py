@@ -14,6 +14,7 @@ from django.db import connection
 from dekopen_engine import (
     EffectiveProfileArticle,
     GlazingBeadRule,
+    ProfileSection,
     HardwareKitRule,
     HardwareComponent,
     PanelRule,
@@ -61,12 +62,23 @@ def _decimal_or_none(value: object) -> Decimal | None:
     return None if value is None else _decimal(value)
 
 
+def _section(value: object) -> ProfileSection | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise UnsupportedCatalogContract("Section must be raw JSON text")
+    return ProfileSection.model_validate(
+        json.loads(value, parse_float=Decimal, parse_int=Decimal)
+    )
+
+
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
         material=MaterialType(str(row[offset + 8])),
         face_width_mm=_decimal(row[offset + 2]),
+        section=_section(row[offset + 9]),
         # NULL is UNKNOWN — welding/reinforcement/weight data the catalog does
         # not carry passes through so the honest consumers can refuse or flag.
         welding_loss_mm=_decimal_or_none(row[offset + 3]),
@@ -123,7 +135,7 @@ class SystemParamsRepository:
                        door_threshold_mm, door_bottom_clearance_mm, rail_type,
                        sliding_glazing_deduction_width_mm,
                        sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
-                       rail_count
+                       rail_count, rebate_depth_mm, end_milling_overlap_mm
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -163,6 +175,8 @@ class SystemParamsRepository:
             sliding_glazing_deduction_height_mm=_decimal(system[16]),
             door_leaf_side_clearance_mm=_decimal(system[17]),
             rail_count=None if system[18] is None else int(system[18]),
+            rebate_depth_mm=_decimal_or_none(system[19]),
+            end_milling_overlap_mm=_decimal_or_none(system[20]),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
@@ -175,7 +189,7 @@ class SystemParamsRepository:
                 """
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
-                       reinforcement_sku, material::text
+                       reinforcement_sku, material::text, section::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
                 ORDER BY sku
@@ -210,7 +224,7 @@ class SystemParamsRepository:
                 """
                 SELECT sku, role::text, face_width_mm, welding_loss_mm,
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
-                       reinforcement_sku, material::text
+                       reinforcement_sku, material::text, section::text
                 FROM public.profile_articles
                 WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
                   AND role = 'COUPLER'
@@ -253,7 +267,8 @@ class SystemParamsRepository:
                        article.sku, article.role::text, article.face_width_mm,
                        article.welding_loss_mm, article.reinforcement_gap_mm,
                        article.weight_kg_m, article.steel_weight_kg_m,
-                       article.reinforcement_sku, article.material::text
+                       article.reinforcement_sku, article.material::text,
+                       article.section::text
                 FROM public.glazing_bead_matrix AS matrix
                 JOIN public.profile_articles AS article
                   ON article.id = matrix.bead_article_id

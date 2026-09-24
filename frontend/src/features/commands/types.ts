@@ -7,6 +7,14 @@ import type { TranslationKey } from "../../i18n/es-CL";
  * backend can never silently drive an older editor. */
 export type DesignOp = { op: string } & Record<string, unknown>;
 
+/** Resolution state threaded through an op sequence: the real entity ids that
+ * earlier structural ops created, in creation order — what the wire's
+ * synthetic `added_m{n}`/`added_c{n}` refs point at. */
+export interface DesignOpState {
+  addedModules: string[];
+  addedCouplings: string[];
+}
+
 /** Editor tools a command may arm. */
 export type EditorTool = "select" | "split_v" | "split_h";
 
@@ -80,10 +88,13 @@ export interface CommandSpec {
   apply?(ctx: CommandContext, args: CommandArgs): ProductJson;
   /** Non-mutating commands (tool arming, history, view). */
   run?(ctx: CommandContext, args: CommandArgs): void;
-  /** AI exposure: the wire op name plus a decoder back into args. */
+  /** AI exposure: the wire op name plus a decoder back into args. `state`
+   * threads the ids minted by earlier structural ops in the same sequence so
+   * synthetic refs (added_m1, added_c2) resolve to the real modules they
+   * produced. */
   ai?: {
     op: string;
-    decode(op: DesignOp, product: ProductJson): CommandArgs | null;
+    decode(op: DesignOp, product: ProductJson, state?: DesignOpState): CommandArgs | null;
   };
 }
 

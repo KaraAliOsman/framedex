@@ -6,7 +6,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class EngineModel(BaseModel):
@@ -109,8 +109,10 @@ class GlassPiece(EngineModel):
     # it as unnested rather than silently cutting a bounding rectangle.
     shape: list[PlanPoint] | None = None
     area_m2: Decimal
-    weight_kg: Decimal
-    thickness_net_mm: Decimal
+    # UNKNOWN is first-class: a spec the composition authority cannot parse
+    # must not quietly borrow the package thickness and fabricate a mass.
+    weight_kg: Decimal | None
+    thickness_net_mm: Decimal | None
     # Composition (e.g. "4-16-4") and the supplier article the piece was
     # resolved against — None on results sealed before the fields existed.
     glass_spec: str | None = None
@@ -121,11 +123,27 @@ class GlassPiece(EngineModel):
     exposed_edges: list[str] | None = None
 
 
+HARDWARE_COMPONENT_CATEGORIES = (
+    "HANDLE", "HINGE", "LOCK", "ROLLER", "CONNECTOR", "DRAINAGE", "GASKET",
+    "SEAL", "SCREW", "CONSUMABLE", "FITTING", "SUPPORT", "CHANNEL", "OTHER",
+)
+
+HardwareComponentCategory = Literal[
+    "HANDLE", "HINGE", "LOCK", "ROLLER", "CONNECTOR", "DRAINAGE", "GASKET",
+    "SEAL", "SCREW", "CONSUMABLE", "FITTING", "SUPPORT", "CHANNEL", "OTHER",
+]
+
+
 class HardwareComponent(EngineModel):
     sku: str
     name: str
     qty: Decimal = Field(gt=Decimal("0"))
     unit: str
+    # Declared component kind — the catalog states what each kit line IS so
+    # production can distinguish handles, hinges, locks, rollers, seals,
+    # drainage and consumables instead of guessing from a name. Contents
+    # sealed before the field existed decode as OTHER (mandate §9).
+    category: HardwareComponentCategory = "OTHER"
 
 
 class HardwareItem(EngineModel):
@@ -155,11 +173,68 @@ class HardwareKitRule(EngineModel):
     carriage_capacity_kg: Decimal | None = None
 
 
+class SectionPoint(EngineModel):
+    """One vertex of a catalog section polygon, profile-local mm."""
+
+    x_mm: Decimal
+    y_mm: Decimal
+
+
+class SectionAxis(EngineModel):
+    """A named reference axis through the section (glazing, web, fixing)."""
+
+    name: str
+    y_mm: Decimal
+
+
+class ProfileSection(EngineModel):
+    """Simplified technical cross-section of a catalog profile (mandate §15).
+
+    The polygon is the cross-section across the face: x spans the face width,
+    y runs the depth direction (0 = exterior face). `POLYGON` is a declared
+    simplified section; `DXF_REFERENCE` says the shape was taken from a real
+    manufacturer drawing (`drawing_ref` points at it). When `section` is
+    absent the renderer falls back to an approximate box — a visibly
+    different, explicitly approximate state, never a fake declaration."""
+
+    source: Literal["POLYGON", "DXF_REFERENCE"]
+    polygon: list[SectionPoint] = Field(min_length=3)
+    depth_mm: Decimal = Field(gt=0)
+    axes: list[SectionAxis] = Field(default_factory=list)
+    drawing_ref: str | None = None
+    # Declared interpretation facts (mandate §8): which polygon edge faces the
+    # building exterior, and where the declared (0,0) anchor sits in polygon
+    # space. They tell renderers how to orient the drawing — they never feed
+    # fabrication math.
+    orientation: Literal[
+        "EXTERIOR_DOWN", "EXTERIOR_UP", "EXTERIOR_LEFT", "EXTERIOR_RIGHT"
+    ] = "EXTERIOR_DOWN"
+    local_origin: Literal[
+        "TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT", "CENTROID"
+    ] = "TOP_LEFT"
+
+    @model_validator(mode="after")
+    def _section_is_real(self) -> "ProfileSection":
+        points = [(point.x_mm, point.y_mm) for point in self.polygon]
+        if len(set(points)) != len(points):
+            raise ValueError("section polygon repeats vertices")
+        area = Decimal(0)
+        for index, (x1, y1) in enumerate(points):
+            x2, y2 = points[(index + 1) % len(points)]
+            area += x1 * y2 - x2 * y1
+        if area == 0:
+            raise ValueError("section polygon encloses no area")
+        if self.source == "DXF_REFERENCE" and not (self.drawing_ref or "").strip():
+            raise ValueError("DXF_REFERENCE section needs a drawing_ref")
+        return self
+
+
 class EffectiveProfileArticle(EngineModel):
     sku: str
     role: ProfileRole
     material: MaterialType
     face_width_mm: Decimal
+    section: ProfileSection | None = None
     # UNKNOWN (None) is a first-class state — a catalog that never stated a
     # welding loss or reinforcement gap must not gain an invented one; the
     # consumers that need it (PVC weld math, steel reinforcement cuts) raise
@@ -196,18 +271,21 @@ class PanelPiece(EngineModel):
     width_mm: Decimal
     height_mm: Decimal
     area_m2: Decimal
-    weight_kg: Decimal
+    weight_kg: Decimal | None
 
 
 class LeafWeight(EngineModel):
     bay_id: str
     leaf_id: str | None = None
-    pvc_weight_kg: Decimal
-    steel_weight_kg: Decimal
-    infill_weight_kg: Decimal
-    hardware_weight_kg: Decimal
-    total_weight_kg: Decimal
-    used_fallback: bool
+    # Any component the catalog does not declare stays UNKNOWN (None); the
+    # total is only present when every component resolved. Hardware
+    # compatibility is never certified on a fabricated mass.
+    pvc_weight_kg: Decimal | None
+    steel_weight_kg: Decimal | None
+    infill_weight_kg: Decimal | None
+    hardware_weight_kg: Decimal | None
+    total_weight_kg: Decimal | None
+    weight_unknown_reasons: list[str] = Field(default_factory=list)
 
 
 class SystemParams(EngineModel):
@@ -216,8 +294,10 @@ class SystemParams(EngineModel):
     material: MaterialType = MaterialType.PVC
     effective_profile_articles: dict[ProfileRole, EffectiveProfileArticle]
     glazing_bead_rules: dict[Decimal, GlazingBeadRule]
-    rebate_depth_mm: Decimal = Decimal("20.00")
-    end_milling_overlap_mm: Decimal = Decimal("0.00")
+    # Fabrication data the catalog must declare — the engine has no invented
+    # constants for the rebate bite or the mullion end-milling overlap.
+    rebate_depth_mm: Decimal | None = None
+    end_milling_overlap_mm: Decimal | None = None
     sash_overlap_mm: Decimal = Decimal("8.00")
     glass_clearance_white_mm: Decimal = Decimal("3.00")
     glass_clearance_foil_mm: Decimal = Decimal("5.00")
@@ -234,9 +314,6 @@ class SystemParams(EngineModel):
     # rail_type (MONO=1, DUAL=2); a catalog with a triple-rail profile
     # declares it explicitly — layouts may never exceed this capacity.
     rail_count: int | None = None
-    pvc_weight_kg_m: Decimal = Decimal("1.2000")
-    steel_weight_kg_m: Decimal = Decimal("1.7000")
-    hardware_kit_weight_kg: Decimal = Decimal("2.50")
     available_hardware_kits: list[HardwareKitRule] = Field(default_factory=list)
     sliding_glazing_deduction_width_mm: Decimal
     sliding_glazing_deduction_height_mm: Decimal

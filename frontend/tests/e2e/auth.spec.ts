@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import * as OTPAuth from "otpauth";
 
+import { formatMoney } from "../../src/features/money";
 import { environment } from "./support/environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
 
@@ -313,9 +314,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fijo comercial");
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
-  await page
-    .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+  await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
+    label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración",
+  });
   // Canvas-first editor: the single module is already selected on the drawing;
   // glazing choices live in its contextual inspector, not a separate form.
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
@@ -348,7 +349,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Recargar", exact: true }).click();
   await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
-  await expect(page.locator("dd").filter({ hasText: quote.project_gross })).toBeVisible();
+  await expect(
+    page.locator("dd").filter({ hasText: formatMoney(quote.project_gross, "CLP") }),
+  ).toBeVisible();
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);
   const project = await persisted.json();
@@ -370,6 +373,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
+  // The quotation panel lives inside the facts rail's collapsed "Cotización"
+  // section — expand it once; it stays open for the whole emission flow.
+  await page
+    .locator("details.project-facts__section")
+    .filter({ hasText: "Cotización" })
+    .locator("summary")
+    .click();
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepA;
   await page.getByLabel("Condiciones de pago", { exact: true }).fill("50% anticipo, 50% entrega");
@@ -388,7 +398,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect(frozenA.status(), await frozenA.text()).toBe(201);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   await expect(
-    page.locator(".quotation-history strong").filter({ hasText: "REV-A" }),
+    page.locator(".quotation-history strong").filter({ hasText: "Revisión A" }),
   ).toBeVisible();
 
   const successor = page.waitForResponse(
@@ -400,7 +410,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Editar cotización", exact: true }).click();
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
-  await expect(page.getByText("REV-B", { exact: true })).toBeVisible();
+  await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
+  // The desk grid is select-then-act: pick the vano row so the side pane
+  // offers Abrir diseño.
+  await page
+    .locator(".position-grid [role='listitem']")
+    .filter({ hasText: "Fijo comercial" })
+    .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
@@ -421,6 +437,11 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
+  await page
+    .locator("details.project-facts__section")
+    .filter({ hasText: "Cotización" })
+    .locator("summary")
+    .click();
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepB;
   await expect(page.getByLabel("Condiciones de pago", { exact: true })).toHaveValue(
@@ -437,14 +458,16 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect(frozenB.status(), await frozenB.text()).toBe(201);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   const history = page.locator(".quotation-history");
-  await expect(history.getByText("REV-A", { exact: true })).toBeVisible();
-  await expect(history.getByText("REV-B", { exact: true })).toBeVisible();
+  await expect(history.getByText("Revisión A", { exact: true })).toBeVisible();
+  await expect(history.getByText("Revisión B", { exact: true })).toBeVisible();
 
-  const revA = history.locator("li").filter({ has: page.getByText("REV-A", { exact: true }) });
+  const revA = history.locator("li").filter({ has: page.getByText("Revisión A", { exact: true }) });
+  // Emitted evidence is generated by the durable job system, not a direct
+  // artifact POST: enqueue → poll → access → blob download.
   const artifact = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/api/v1/documents/artifacts/",
+      new URL(response.url()).pathname === "/api/v1/jobs/",
   );
   const access = page.waitForResponse(
     (response) =>
@@ -476,9 +499,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   const compositeProject = (await (await compositeCreation).json()) as { id: string };
   await page.getByRole("link", { name: "Añadir vano", exact: true }).click();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
-  await page
-    .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+  await page.getByRole("combobox", { name: "Serie de perfiles", exact: true }).selectOption({
+    label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración",
+  });
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
   await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("GLASS-BASE");
   const dividedCalculation = page.waitForResponse(
@@ -500,9 +523,16 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
   await page.reload();
   await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
+  await page
+    .locator(".position-grid [role='listitem']")
+    .filter({ hasText: "Fachada compuesta" })
+    .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
-  await expect(page.locator(".module-divider")).toHaveCount(1);
-  await expect(page.locator(".module-glass")).toHaveCount(2);
+  // Scoped to the main canvas sheet — inspector previews and alternative
+  // thumbnails render their own members on the same page. The bay division
+  // draws a real mullion member between the two glass bays.
+  await expect(page.locator(".canvas-sheet .member-mullion")).toHaveCount(1);
+  await expect(page.locator(".canvas-sheet .module-glass")).toHaveCount(2);
   await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");

@@ -135,6 +135,7 @@ class ProjectResponseSerializer(ProjectWriteSerializer):
     total_price_gross = serializers.CharField()
     pricing_current = serializers.BooleanField()
     current_pricing_operation_id = serializers.UUIDField(allow_null=True)
+    currency = serializers.ChoiceField(choices=("CLP", "USD"))
     position_count = serializers.IntegerField()
     updated_at = serializers.DateTimeField()
     positions = PositionResponseSerializer(many=True, required=False)
@@ -401,6 +402,38 @@ class PaymentIntegrationStatusSerializer(serializers.Serializer):
     payer_return_url = serializers.CharField(required=False, allow_null=True)
     enabled = serializers.BooleanField(required=False)
     updated_at = serializers.CharField(required=False)
+
+
+class DesignAlternativesRequestSerializer(serializers.Serializer):
+    brief = serializers.CharField(max_length=2000, trim_whitespace=True)
+    count = serializers.IntegerField(min_value=1, max_value=3, required=False, default=2)
+    system_id = serializers.UUIDField()
+    operation_key = serializers.CharField(max_length=120)
+    width_mm = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
+    height_mm = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
+
+    def validate_brief(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Escribe una intención de diseño.")
+        return value
+
+    def validate_operation_key(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Falta la clave de operación.")
+        return value
+
+
+class DesignAlternativesResponseSerializer(serializers.Serializer):
+    audit_id = serializers.CharField()
+    model = serializers.CharField()
+    credits_debited = serializers.IntegerField()
+    alternatives = serializers.ListField(child=serializers.DictField())
+    rejected = serializers.ListField(child=serializers.DictField())
+    notes = serializers.CharField(allow_null=True, required=False)
 
 
 class DesignAssistRequestSerializer(serializers.Serializer):

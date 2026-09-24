@@ -65,6 +65,7 @@ class PurchasingStateSerializer(serializers.Serializer):
     orders = serializers.ListField(child=serializers.DictField(), required=False)
     artifacts = ArtifactResponseSerializer(many=True, required=False)
     blockers = serializers.ListField(child=serializers.DictField(), required=False)
+    coverage = serializers.DictField(required=False)
 
 
 class EligibilityResponseSerializer(serializers.Serializer):

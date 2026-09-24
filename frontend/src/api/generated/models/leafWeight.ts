@@ -10,15 +10,30 @@ export interface LeafWeight {
   bay_id: string;
   /** @nullable */
   leaf_id: string | null;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  pvc_weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  steel_weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  infill_weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  hardware_weight_kg: string;
-  /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
-  total_weight_kg: string;
-  used_fallback: boolean;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  pvc_weight_kg: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  steel_weight_kg: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  infill_weight_kg: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  hardware_weight_kg: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  total_weight_kg: string | null;
+  weight_unknown_reasons: string[];
 }

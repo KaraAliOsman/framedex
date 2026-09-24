@@ -268,7 +268,7 @@ def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     html = _doc01(revision_snapshot())
     assert "Cliente &lt;Seguro&gt;" in html
     assert "60000.00" not in html
-    assert "119000" in html
+    assert "$ 119.000" in html
 
 
 def test_client_quote_includes_deterministic_opening_drawings() -> None:

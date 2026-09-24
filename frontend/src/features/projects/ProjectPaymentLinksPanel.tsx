@@ -13,6 +13,7 @@ import type {
   PaymentLinkStatusEnum,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatMoney } from "../money";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -29,11 +30,7 @@ const LINK_STATUS_LABEL: Record<PaymentLinkStatusEnum, TranslationKey> = {
 };
 
 function formatClp(value: string): string {
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
+  return formatMoney(value, "CLP");
 }
 
 function formatDate(value: string): string {
@@ -44,12 +41,14 @@ export function ProjectPaymentLinksPanel({
   projectId,
   orgId,
   canWrite,
+  isOwner = false,
   onChanged,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  isOwner?: boolean;
   onChanged: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
@@ -78,15 +77,17 @@ export function ProjectPaymentLinksPanel({
     try {
       const [linksResponse, statusResponse] = await Promise.all([
         projectPaymentLinksList(projectId, requestOptions),
-        projectPaymentIntegrationStatus(requestOptions),
+        // Integration status is write-scoped — readers (e.g. taller) only
+        // need the links list; fetching it would 403 for them.
+        canWrite ? projectPaymentIntegrationStatus(requestOptions) : Promise.resolve(null),
       ]);
       if (generation.current !== current) return;
       if (linksResponse.status === 200) setLinks(linksResponse.data.links);
-      if (statusResponse.status === 200) setIntegration(statusResponse.data);
+      if (statusResponse?.status === 200) setIntegration(statusResponse.data);
     } catch {
       if (generation.current === current) setMessage(t("projects.paymentLinksLoadError"));
     }
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId, canWrite]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     void load();
@@ -183,7 +184,11 @@ export function ProjectPaymentLinksPanel({
       </div>
       {message && <p className="form-error">{message}</p>}
       {integration !== null && !configured && (
-        <p className="settings-hint">{t("projects.paymentLinkFlowRequired")}</p>
+        <p className="settings-hint">
+          {isOwner
+            ? t("projects.paymentLinkFlowRequired")
+            : t("projects.paymentLinkFlowRequiredOwner")}
+        </p>
       )}
       {showForm && (
         <form className="payments-form" onSubmit={create}>
@@ -283,7 +288,9 @@ export function ProjectPaymentLinksPanel({
           </tbody>
         </table>
       )}
-      {configured && links.length === 0 && !showForm && <p>{t("projects.paymentLinksEmpty")}</p>}
+      {links.length === 0 && !showForm && (
+        <p className="settings-hint">{t("projects.paymentLinksEmpty")}</p>
+      )}
     </section>
   );
 }

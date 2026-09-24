@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProductionNextStep } from "./productionNextStep";
 import type { ProductionOrderPayload } from "./productionOrderPayload";
 
 export interface ProductionOrder {
@@ -18,6 +19,9 @@ export interface ProductionOrder {
   quantity: number | null;
   steps_done: number;
   steps_total: number;
+  next_step: ProductionNextStep | null;
+  dispatch_ready: boolean;
+  shortage: number;
   created_at: string;
   /** @nullable */
   project_version_id?: string | null;

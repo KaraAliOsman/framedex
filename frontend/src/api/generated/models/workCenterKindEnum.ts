@@ -13,10 +13,9 @@
  * * `QC` - QC
  * * `PACK` - PACK
  */
-export type WorkCenterRequestKindEnum =
-  (typeof WorkCenterRequestKindEnum)[keyof typeof WorkCenterRequestKindEnum];
+export type WorkCenterKindEnum = (typeof WorkCenterKindEnum)[keyof typeof WorkCenterKindEnum];
 
-export const WorkCenterRequestKindEnum = {
+export const WorkCenterKindEnum = {
   CUT: "CUT",
   ASSEMBLY: "ASSEMBLY",
   GLAZING: "GLAZING",

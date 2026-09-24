@@ -17,6 +17,7 @@ from dekopen_engine.documentary_canonical import (
 )
 
 from documents.repository import DocumentaryError, decoded, documentary_backend, json_text, one, rows
+from inventory.production_stock import coverage_for_version
 
 
 ORDER_TYPES = (
@@ -89,6 +90,14 @@ def _line_snapshot(row: dict[str, object]) -> dict[str, object]:
             None if row["physical_stock_identity"] is None
             else str(row["physical_stock_identity"])
         ),
+        "physical_stock_sku": (
+            None if row.get("physical_stock_sku") is None
+            else str(row["physical_stock_sku"])
+        ),
+        "physical_stock_name": (
+            None if row.get("physical_stock_name") is None
+            else str(row["physical_stock_name"])
+        ),
         "unit": str(row["unit"]),
         "quantity": int(quantity),
         "specification": specification,
@@ -103,11 +112,19 @@ def _requirements(version_id: UUID, org_id: UUID,
     if order_type is not None:
         parameters.append(order_type)
     return rows(
-        "SELECT id,requirement_key,project_id,project_version_id,org_id,order_type::text,"
-        "category,technical_identity::text,purchasing_sku,physical_stock_identity,unit,"
-        "quantity,specification::text,source_trace::text "
-        "FROM public.purchase_requirement_lines WHERE project_version_id=%s AND org_id=%s"
-        + condition + " ORDER BY order_type,category,purchasing_sku,requirement_key",
+        "SELECT line.id,line.requirement_key,line.project_id,line.project_version_id,"
+        "line.org_id,line.order_type::text AS order_type,"
+        "line.category,line.technical_identity::text,line.purchasing_sku,"
+        "line.physical_stock_identity,line.unit,"
+        "line.quantity,line.specification::text,line.source_trace::text,"
+        "stock.sku AS physical_stock_sku,stock.name AS physical_stock_name "
+        "FROM public.purchase_requirement_lines line "
+        "LEFT JOIN public.inventory_stock stock "
+        "ON stock.org_id = line.org_id "
+        "AND stock.variant_key = line.physical_stock_identity::text "
+        "WHERE line.project_version_id=%s AND line.org_id=%s"
+        + condition
+        + " ORDER BY line.order_type,line.category,line.purchasing_sku,line.requirement_key",
         parameters,
     )
 
@@ -116,10 +133,15 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
     with documentary_backend():
         if version_id is None:
             versions = rows(
-                "SELECT id,project_id,revision_code,bom_hash,snapshot_sha256,"
-                "documentary_complete,emitted_at FROM public.project_versions "
-                "WHERE org_id=%s AND authority_version IN ('SHOT09_V1','SHOT10_V1') "
-                "ORDER BY emitted_at DESC,id",
+                "SELECT version.id,version.project_id,version.revision_code,"
+                "version.bom_hash,version.snapshot_sha256,version.documentary_complete,"
+                "version.emitted_at,project.code AS project_code "
+                "FROM public.project_versions version "
+                "JOIN public.projects project "
+                "ON project.id=version.project_id AND project.org_id=version.org_id "
+                "WHERE version.org_id=%s "
+                "AND version.authority_version IN ('SHOT09_V1','SHOT10_V1') "
+                "ORDER BY version.emitted_at DESC,version.id",
                 [org_id],
             )
             return {"versions": _public(versions)}
@@ -193,6 +215,9 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             "orders": _public(orders),
             "artifacts": _public(artifacts),
             "blockers": blockers,
+            # §10 coverage: required vs on-hand/reserved/open-ordered vs the
+            # remnant pool → shortage → recommended purchase, per line.
+            "coverage": coverage_for_version(org_id, version_id),
         }
 
 

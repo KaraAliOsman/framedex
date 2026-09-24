@@ -76,3 +76,15 @@ description: Local dev-stack recipe for DEKOPEN E2E testing — Supabase CLI sta
 - Labels: classic positions show "Vano N"/"Hoja N"/"Vidrio N"/"Travesaño N · X mm"; assembly targets namespace `<module_id>|<id>` — known leak: leaf labels use raw module id ("Unidad m2 · hoja 1") while bays/glass use ordinals ("Unidad 1 · Vano 1").
 - Fixture shortcuts: project/position creation via POST `/api/v1/projects/` + `/projects/{id}/positions/` is faster than the editor for repeat fixtures (TURN_LEFT tree: `{"type":"BAY","opening_type":"TURN_LEFT","glass_thickness_mm":"4.00","glass_spec":"4.00","glass_article_sku":"GLASS-BASE"}` — but note a saved UI-built position folds to this same shape; position ids like `00000000-0000-4000-8000-0000000000aa` work).
 - The split-position (Dividir en horizontal) produces a travesaño span target → structural editor appears; R12 is NOT_APPLICABLE for spans <4500mm so Ix/base are optional-but-stored (target_id "m1-sh1" = module-prefixed sash/sash-horizontal id).
+
+## Agente live-provider (mimo)
+
+- Source BOTH env files or the app silently breaks: `set -a; source /tmp/supa.env; source /home/ubuntu/.dekopen-mimo.env; set +a` — missing `/tmp/supa.env` → `invalid_token` + "Acceso tenant no disponible"; missing the mimo env → the gateway runs the MOCK provider (same goal, same product replays one audit row) and you are NOT testing real AI.
+- Restart Django with `--noreload` after pulling agent changes; a stale server serves the old code (the ops-loop fixes shipped mid-session needed a restart to take effect).
+- The agent endpoint is `POST /api/v1/ai/agent/` (capability `agent`, 8 credits/round — one goal debits per round, up to 3 rounds). Roles: OWNER/ESTIMATOR/WORKSHOP_MANAGER.
+- Ops loop (position surface): goal → ops card → "Aplicar N operaciones" → canvas mutates (dirty "Cambios sin guardar") → Guardar persists. Verify the DB afterwards (`project_positions.parametric_tree`) — the card alone doesn't prove the save.
+- `alto_no_declarado` / `*_no_declarado` rejections = the model emitted the wrong field names for an op (e.g. `value`/`refs.module_ids` instead of `height_mm`/`module`). Check the raw emitted JSON in `ai_audit_logs.output_payload` — the reason codes surface in `response.rejected`.
+- prepare steps deep-link only to their action's route template (emit_revision → `/projects/{id}/pricing`, payments/documents → `/projects/{id}`, WO actions → `/production`, catalog → `/catalogs/systems`, cert → `/settings/general`) — a prepare pointing elsewhere is dropped server-side; a missing card is often a rejected path, not a model miss.
+- `queries` chips include the caller's own surface (prepended) — "Consultó panel" appears even with zero model queries.
+- Pricing a NEW demo project needs `DEMO-BAR-COPLE-*` rows in `cost_list_items` (27 SKUs) or preview 422s.
+- `parametric_tree` comes back as undecoded text from raw cursors — if a projection shows modules/couplings null, suspect the decode, not the data.

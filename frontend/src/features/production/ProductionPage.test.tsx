@@ -67,6 +67,7 @@ const detail = {
 };
 
 function respond(url: string): { data: unknown; status: number } {
+  if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
   if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
   if (url === `/api/v1/production/orders/${order.id}/`) return { data: detail, status: 200 };
   return { data: detail, status: 200 };
@@ -88,9 +89,9 @@ describe("ProductionPage", () => {
     );
     const orderButton = await screen.findByRole("button", { name: /OT-REV-A-01/ });
     fireEvent.click(orderButton);
-    await waitFor(() => expect(screen.getByText("Corte")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Corte").length).toBeGreaterThan(0));
     expect(screen.getByText("Armado")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: t("production.actionStart") })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: t("production.actionStart") })).toHaveLength(3); // 2 steps + next-step callout
   });
 
   it("starts a step through the transition endpoint", async () => {

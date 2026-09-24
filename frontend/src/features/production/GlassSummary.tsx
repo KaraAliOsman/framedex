@@ -6,8 +6,8 @@ export type GlassPiece = {
   width_mm: string;
   height_mm: string;
   area_m2?: string;
-  weight_kg?: string;
-  thickness_net_mm?: string;
+  weight_kg?: string | null;
+  thickness_net_mm?: string | null;
   glass_spec?: string | null;
   article_sku?: string | null;
 };
@@ -45,6 +45,7 @@ type Group = {
   qty: number;
   areaScaled: bigint;
   weightScaled: bigint;
+  weightUnknown: boolean;
 };
 
 function polishKey(bay: string, leaf: string | null | undefined): string {
@@ -67,6 +68,7 @@ type SizeRow = {
   count: number;
   areaScaled: bigint;
   weightScaled: bigint;
+  weightUnknown: boolean;
 };
 
 function sizeRows(group: Group): SizeRow[] {
@@ -80,13 +82,24 @@ function sizeRows(group: Group): SizeRow[] {
       count: 0,
       areaScaled: 0n,
       weightScaled: 0n,
+      weightUnknown: false,
     };
     entry.count += 1;
     entry.areaScaled += scaled(item.piece.area_m2);
-    entry.weightScaled += scaled(item.piece.weight_kg);
+    if (item.piece.weight_kg == null) {
+      entry.weightUnknown = true;
+    } else {
+      entry.weightScaled += scaled(item.piece.weight_kg);
+    }
     perSize.set(key, entry);
   }
   return [...perSize.values()];
+}
+
+function weightText(scaledWeight: bigint, quantity: number, unknown: boolean): string {
+  return unknown
+    ? t("production.glassWeightUnknown")
+    : fmtScaled(scaledWeight * BigInt(quantity), 2);
 }
 
 export function glassSummaryCsv(groups: Group[], quantity: number): string {
@@ -105,6 +118,7 @@ export function glassSummaryCsv(groups: Group[], quantity: number): string {
   let totalQty = 0;
   let totalArea = 0n;
   let totalWeight = 0n;
+  let totalUnknown = false;
   for (const group of groups) {
     for (const row of sizeRows(group)) {
       rows.push([
@@ -114,13 +128,14 @@ export function glassSummaryCsv(groups: Group[], quantity: number): string {
         row.dims,
         String(row.count * quantity),
         fmtScaled(row.areaScaled * BigInt(quantity), 4),
-        fmtScaled(row.weightScaled * BigInt(quantity), 2),
+        weightText(row.weightScaled, quantity, row.weightUnknown),
         row.edges,
       ]);
     }
     totalQty += group.qty;
     totalArea += group.areaScaled;
     totalWeight += group.weightScaled;
+    totalUnknown ||= group.weightUnknown;
   }
   rows.push([
     t("production.glassTotals"),
@@ -129,7 +144,7 @@ export function glassSummaryCsv(groups: Group[], quantity: number): string {
     "",
     String(totalQty * quantity),
     fmtScaled(totalArea * BigInt(quantity), 4),
-    fmtScaled(totalWeight * BigInt(quantity), 2),
+    weightText(totalWeight, quantity, totalUnknown),
     "",
   ]);
   return rows
@@ -161,19 +176,33 @@ export function GlassSummary({
     const key = `${spec}|${sku}|${thickness}`;
     let group = groups.get(key);
     if (!group) {
-      group = { spec, sku, thickness, pieces: [], qty: 0, areaScaled: 0n, weightScaled: 0n };
+      group = {
+        spec,
+        sku,
+        thickness,
+        pieces: [],
+        qty: 0,
+        areaScaled: 0n,
+        weightScaled: 0n,
+        weightUnknown: false,
+      };
       groups.set(key, group);
     }
     const entry = polishByKey.get(polishKey(piece.bay_id, piece.leaf_id));
     group.pieces.push({ piece, edges: edgeLabel(entry?.edges) });
     group.qty += 1;
     group.areaScaled += scaled(piece.area_m2);
-    group.weightScaled += scaled(piece.weight_kg);
+    if (piece.weight_kg == null) {
+      group.weightUnknown = true;
+    } else {
+      group.weightScaled += scaled(piece.weight_kg);
+    }
   }
   const grouped = [...groups.values()];
   const totalQty = grouped.reduce((sum, group) => sum + group.qty, 0);
   const totalArea = grouped.reduce((sum, group) => sum + group.areaScaled, 0n);
   const totalWeight = grouped.reduce((sum, group) => sum + group.weightScaled, 0n);
+  const totalUnknown = grouped.some((group) => group.weightUnknown);
 
   return (
     <section className="production-glass" aria-label={t("production.glassSummaryTitle")}>
@@ -214,7 +243,9 @@ export function GlassSummary({
                   ) : null}
                   {rowIndex === 0 ? (
                     <td rowSpan={rows.length}>
-                      {fmtScaled(group.weightScaled * BigInt(quantity), 2)} kg
+                      {group.weightUnknown
+                        ? t("production.glassWeightUnknown")
+                        : `${fmtScaled(group.weightScaled * BigInt(quantity), 2)} kg`}
                     </td>
                   ) : null}
                   <td>{row.edges}</td>
@@ -225,7 +256,11 @@ export function GlassSummary({
               <td colSpan={4}>{t("production.glassTotals")}</td>
               <td>{totalQty * quantity}</td>
               <td>{fmtScaled(totalArea * BigInt(quantity), 4)} m²</td>
-              <td>{fmtScaled(totalWeight * BigInt(quantity), 2)} kg</td>
+              <td>
+                {totalUnknown
+                  ? t("production.glassWeightUnknown")
+                  : `${fmtScaled(totalWeight * BigInt(quantity), 2)} kg`}
+              </td>
               <td />
             </tr>
           </tbody>

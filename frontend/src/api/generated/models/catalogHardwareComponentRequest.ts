@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CategoryEnum } from "./categoryEnum";
 
 export interface CatalogHardwareComponentRequest {
   /** @minLength 1 */
@@ -14,4 +15,5 @@ export interface CatalogHardwareComponentRequest {
   qty: string;
   /** @minLength 1 */
   unit: string;
+  category?: CategoryEnum;
 }

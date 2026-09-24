@@ -4,16 +4,21 @@ import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
+import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import {
+  HARDWARE_COMPONENT_CATEGORIES,
   catalogApi,
   initialDraft,
+  initialSectionDraft,
   schemas,
+  sectionPreviewFromDraft,
   writeFromDraft,
   type CatalogData,
   type Field,
   type HardwareComponent,
   type Resource,
   type Row,
+  type SectionDraft,
 } from "./catalogModel";
 import "./catalogs.css";
 
@@ -130,6 +135,20 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     setNotice(ct("saved"));
   }
 
+  const [reviewing, setReviewing] = useState<string | null>(null);
+  async function reviewRow<R extends Resource>(kind: R, id: string) {
+    setReviewing(id);
+    setNotice("");
+    try {
+      accept(kind, await api.review(kind, id));
+      setNotice(ct("reviewed"));
+    } catch (caught) {
+      setNotice(failure(caught));
+    } finally {
+      if (!lifetime.current?.signal.aborted) setReviewing(null);
+    }
+  }
+
   function removed(kind: Resource, id: string) {
     if (lifetime.current?.signal.aborted) return;
     setEditor(null);
@@ -193,7 +212,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
 
       <CatalogImportsPanel
         orgId={orgId}
-        canWrite={role === "OWNER" || role === "ESTIMATOR"}
+        canWrite={canEdit}
         systems={data.systems
           .filter((system) => !system.is_global)
           .map((system) => ({ id: system.id, name: system.name, code: system.code }))}
@@ -324,6 +343,18 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                         {"is_active" in row && (
                           <span> · {ct(row.is_active ? "active" : "inactive")}</span>
                         )}
+                        {"data_provenance" in row &&
+                          (row.data_provenance === "LEGACY_UNVERIFIED" ||
+                            row.review_pending === true) && (
+                            <span className="catalog-provenance-legacy">
+                              {" · "}
+                              {ct(
+                                row.data_provenance === "LEGACY_UNVERIFIED"
+                                  ? "provenanceLegacy"
+                                  : "reviewPending",
+                              )}
+                            </span>
+                          )}
                       </td>
                       <td>
                         <button
@@ -338,6 +369,24 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                           {ct(row.read_only === false && canEdit ? "edit" : "view")}
                           <span className="catalog-sr-only"> {itemName(resource, row, data)}</span>
                         </button>
+                        {canEdit &&
+                          "data_provenance" in row &&
+                          (row.data_provenance === "LEGACY_UNVERIFIED" ||
+                            row.review_pending === true) &&
+                          row.read_only === false && (
+                            <button
+                              type="button"
+                              aria-label={`${ct("markReviewed")} ${itemName(resource, row, data)}`}
+                              disabled={editor !== null || reviewing !== null}
+                              onClick={() => void reviewRow(resource, row.id)}
+                            >
+                              {reviewing === row.id ? ct("reviewing") : ct("markReviewed")}
+                              <span className="catalog-sr-only">
+                                {" "}
+                                {itemName(resource, row, data)}
+                              </span>
+                            </button>
+                          )}
                       </td>
                     </tr>
                   ))}
@@ -395,6 +444,9 @@ function CatalogEditor({
       ? row.contents.map((component) => ({ ...component, key: crypto.randomUUID() }))
       : [],
   );
+  const [sectionDraft, setSectionDraft] = useState<SectionDraft>(() =>
+    initialSectionDraft(row && "section" in row ? row.section : null),
+  );
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertainCreate, setUncertainCreate] = useState(false);
@@ -431,6 +483,12 @@ function CatalogEditor({
     }));
   }
 
+  function changeSection(next: (current: SectionDraft) => SectionDraft) {
+    setDirty(true);
+    setError("");
+    setSectionDraft(next);
+  }
+
   function close() {
     if (!dirty || window.confirm(ct("discard"))) onClose();
   }
@@ -440,7 +498,7 @@ function CatalogEditor({
     if (readOnly || inFlight.current || noBeads || uncertainCreate) return;
     let body;
     try {
-      body = writeFromDraft(resource, draft, contents);
+      body = writeFromDraft(resource, draft, contents, sectionDraft);
     } catch {
       setError(ct("errorValidation"));
       return;
@@ -599,6 +657,280 @@ function CatalogEditor({
           </fieldset>
         ))}
 
+        {resource === "articles" && (
+          <fieldset className="catalog-group">
+            <legend>{ct("field.section")}</legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={sectionDraft.enabled}
+                onChange={(event) =>
+                  changeSection((current) => ({ ...current, enabled: event.target.checked }))
+                }
+              />
+              <span>{ct("section.declare")}</span>
+            </label>
+            {sectionDraft.enabled && (
+              <>
+                <div className="catalog-fields">
+                  <label htmlFor={`catalog-${resource}-section-source`}>
+                    <span>{ct("field.source")}</span>
+                    <select
+                      id={`catalog-${resource}-section-source`}
+                      value={sectionDraft.source}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          source: event.target.value as SectionDraft["source"],
+                        }))
+                      }
+                    >
+                      <option value="POLYGON">{ct("sectionSource.POLYGON")}</option>
+                      <option value="DXF_REFERENCE">{ct("sectionSource.DXF_REFERENCE")}</option>
+                    </select>
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-depth`}>
+                    <span>{ct("field.depth_mm")}</span>
+                    <input
+                      id={`catalog-${resource}-section-depth`}
+                      type="text"
+                      required
+                      inputMode="decimal"
+                      pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                      value={sectionDraft.depth_mm}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          depth_mm: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-ref`}>
+                    <span>
+                      {ct("field.drawing_ref")}
+                      {sectionDraft.source !== "DXF_REFERENCE" && (
+                        <small> · {ct("optional")}</small>
+                      )}
+                    </span>
+                    <input
+                      id={`catalog-${resource}-section-ref`}
+                      type="text"
+                      required={sectionDraft.source === "DXF_REFERENCE"}
+                      maxLength={500}
+                      value={sectionDraft.drawing_ref}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          drawing_ref: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-orientation`}>
+                    <span>{ct("field.orientation")}</span>
+                    <select
+                      id={`catalog-${resource}-section-orientation`}
+                      value={sectionDraft.orientation}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          orientation: event.target.value as SectionDraft["orientation"],
+                        }))
+                      }
+                    >
+                      <option value="EXTERIOR_DOWN">
+                        {ct("sectionOrientation.EXTERIOR_DOWN")}
+                      </option>
+                      <option value="EXTERIOR_UP">{ct("sectionOrientation.EXTERIOR_UP")}</option>
+                      <option value="EXTERIOR_LEFT">
+                        {ct("sectionOrientation.EXTERIOR_LEFT")}
+                      </option>
+                      <option value="EXTERIOR_RIGHT">
+                        {ct("sectionOrientation.EXTERIOR_RIGHT")}
+                      </option>
+                    </select>
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-origin`}>
+                    <span>{ct("field.local_origin")}</span>
+                    <select
+                      id={`catalog-${resource}-section-origin`}
+                      value={sectionDraft.local_origin}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          local_origin: event.target.value as SectionDraft["local_origin"],
+                        }))
+                      }
+                    >
+                      <option value="TOP_LEFT">{ct("sectionLocalOrigin.TOP_LEFT")}</option>
+                      <option value="TOP_RIGHT">{ct("sectionLocalOrigin.TOP_RIGHT")}</option>
+                      <option value="BOTTOM_LEFT">{ct("sectionLocalOrigin.BOTTOM_LEFT")}</option>
+                      <option value="BOTTOM_RIGHT">{ct("sectionLocalOrigin.BOTTOM_RIGHT")}</option>
+                      <option value="CENTROID">{ct("sectionLocalOrigin.CENTROID")}</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="catalog-table-scroll">
+                  <table className="catalog-contents">
+                    <caption className="catalog-sr-only">{ct("section.vertices")}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ct("field.x_mm")}</th>
+                        <th scope="col">{ct("field.y_mm")}</th>
+                        <th scope="col">{ct("actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sectionDraft.vertices.map((vertex, index) => (
+                        <tr key={vertex.key}>
+                          {(["x_mm", "y_mm"] as const).map((key) => (
+                            <td key={key}>
+                              <input
+                                aria-label={`${ct(`field.${key}`)} · ${ct("section.vertex")} ${index + 1}`}
+                                type="text"
+                                required
+                                inputMode="decimal"
+                                pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                                value={vertex[key]}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  changeSection((current) => ({
+                                    ...current,
+                                    vertices: current.vertices.map((item) =>
+                                      item.key === vertex.key ? { ...item, [key]: value } : item,
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </td>
+                          ))}
+                          <td>
+                            <button
+                              type="button"
+                              aria-label={`${ct("remove")} ${ct("section.vertex")} ${index + 1}`}
+                              disabled={sectionDraft.vertices.length <= 3}
+                              onClick={() =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  vertices: current.vertices.filter(
+                                    (item) => item.key !== vertex.key,
+                                  ),
+                                }))
+                              }
+                            >
+                              {ct("remove")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeSection((current) => ({
+                      ...current,
+                      vertices: [
+                        ...current.vertices,
+                        { key: crypto.randomUUID(), x_mm: "", y_mm: "" },
+                      ],
+                    }))
+                  }
+                >
+                  {ct("section.addVertex")}
+                </button>
+                <div className="catalog-table-scroll">
+                  <table className="catalog-contents">
+                    <caption className="catalog-sr-only">{ct("section.axes")}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ct("field.name")}</th>
+                        <th scope="col">{ct("field.y_mm")}</th>
+                        <th scope="col">{ct("actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sectionDraft.axes.map((axis, index) => (
+                        <tr key={axis.key}>
+                          <td>
+                            <input
+                              aria-label={`${ct("field.name")} · ${ct("section.axis")} ${index + 1}`}
+                              type="text"
+                              maxLength={50}
+                              value={axis.name}
+                              onChange={(event) =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.map((item) =>
+                                    item.key === axis.key
+                                      ? { ...item, name: event.target.value }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              aria-label={`${ct("field.y_mm")} · ${ct("section.axis")} ${index + 1}`}
+                              type="text"
+                              inputMode="decimal"
+                              pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                              value={axis.y_mm}
+                              onChange={(event) =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.map((item) =>
+                                    item.key === axis.key
+                                      ? { ...item, y_mm: event.target.value }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              aria-label={`${ct("remove")} ${ct("section.axis")} ${index + 1}`}
+                              onClick={() =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.filter((item) => item.key !== axis.key),
+                                }))
+                              }
+                            >
+                              {ct("remove")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeSection((current) => ({
+                      ...current,
+                      axes: [...current.axes, { key: crypto.randomUUID(), name: "", y_mm: "" }],
+                    }))
+                  }
+                >
+                  {ct("section.addAxis")}
+                </button>
+              </>
+            )}
+            <SectionPreviewSvg
+              section={sectionPreviewFromDraft(sectionDraft)}
+              faceWidthMm={Number(draft.face_width_mm ?? 0)}
+              material={draft.material || "PVC"}
+            />
+          </fieldset>
+        )}
+
         {resource === "hardware-kits" && (
           <fieldset className="catalog-group">
             <legend>{ct("contents")}</legend>
@@ -612,6 +944,7 @@ function CatalogEditor({
                         {ct(`field.${key}`)}
                       </th>
                     ))}
+                    <th scope="col">{ct("field.category")}</th>
                     <th scope="col">{ct("actions")}</th>
                   </tr>
                 </thead>
@@ -641,6 +974,31 @@ function CatalogEditor({
                         </td>
                       ))}
                       <td>
+                        <select
+                          aria-label={`${ct("field.category")} · ${ct("component")} ${index + 1}`}
+                          value={component.category ?? "OTHER"}
+                          onChange={(event) => {
+                            setDirty(true);
+                            setContents((current) =>
+                              current.map((item) =>
+                                item.key === component.key
+                                  ? {
+                                      ...item,
+                                      category: event.target.value as HardwareComponent["category"],
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                        >
+                          {HARDWARE_COMPONENT_CATEGORIES.map((category) => (
+                            <option key={category} value={category}>
+                              {ct(`componentCategory.${category}`)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
                         <button
                           type="button"
                           aria-label={`${ct("removeComponent")} ${index + 1}`}
@@ -666,7 +1024,14 @@ function CatalogEditor({
                 setDirty(true);
                 setContents((current) => [
                   ...current,
-                  { key: crypto.randomUUID(), sku: "", name: "", qty: "", unit: "" },
+                  {
+                    key: crypto.randomUUID(),
+                    sku: "",
+                    name: "",
+                    qty: "",
+                    unit: "",
+                    category: "OTHER",
+                  },
                 ]);
               }}
             >

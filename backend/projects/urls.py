@@ -24,6 +24,7 @@ from projects.views import (
     ProjectResetPricingView,
     ProjectView,
     ProjectsView,
+    PositionDesignAlternativesView,
     PositionDesignAssistView,
     PositionView,
     SiiCafsView,
@@ -92,5 +93,9 @@ urlpatterns = [
     path(
         "positions/<uuid:position_id>/design-assist/",
         PositionDesignAssistView.as_view(),
+    ),
+    path(
+        "positions/<uuid:position_id>/design-alternatives/",
+        PositionDesignAlternativesView.as_view(),
     ),
 ]

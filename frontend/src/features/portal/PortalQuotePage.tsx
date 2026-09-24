@@ -5,6 +5,8 @@ import { ApiError } from "../../api/apiMutator";
 import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/dekopen";
 import type { PortalQuote } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
+import "./portal.css";
 
 function money(raw: string): string {
   const value = Number(raw);
@@ -87,7 +89,7 @@ export function PortalQuotePage(): JSX.Element {
   return (
     <main className="portal-page">
       <section className="portal-card">
-        <p className="eyebrow">DEKOPEN · {quote.revision_code}</p>
+        <p className="eyebrow">DEKOPEN · {formatRevision(quote.revision_code)}</p>
         <h1>{t("portal.title")}</h1>
         <dl className="portal-facts">
           <div>

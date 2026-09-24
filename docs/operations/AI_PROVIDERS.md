@@ -21,11 +21,18 @@ AI_GATEWAY_{P}_API_KEY    bearer token (required)
 AI_GATEWAY_{P}_BASE_URL   https endpoint; e.g. https://api.xiaomimimo…/v1
 AI_GATEWAY_{P}_MODEL      optional — overrides the route's provider_model
 AI_GATEWAY_{P}_PROTOCOL   optional — openai | http
+AI_GATEWAY_{P}_TIMEOUT_S  optional — whole-request bound in s (default 60, 1-600)
 ```
 
-The OpenAI transport reads two control keys from `input_payload`: `system`
-(system prompt text) and `json_output` (requests `response_format` JSON mode).
-Everything else is serialized as the user message.
+`AI_GATEWAY_MOCK_ENABLED` gates the deterministic provider: `1` opts in
+explicitly, `0` forces it off. Unset, MOCK serves only development (`DEBUG=1`)
+and the test suite — a production stack with MOCK routes refuses
+`ai_provider_mock_disabled` instead of answering with fabricated content.
+
+The OpenAI transport takes two control options from the *server-owned*
+`provider_options` channel (callers can never set them): `system` (system
+prompt) and `json_output` (requests `response_format` JSON mode). Everything
+in `input_payload` is serialized as the user message.
 
 ## Activate MiMo for design_assist
 

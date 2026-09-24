@@ -78,6 +78,19 @@ READ_ROLES = ("OWNER", "WORKSHOP_MANAGER", "ESTIMATOR")
 WRITE_ROLES = ("OWNER", "WORKSHOP_MANAGER")
 
 
+def _reraise_catalog_error(error):
+    sqlstate = getattr(error.__cause__, "sqlstate", None)
+    if sqlstate == "23514" and "catalog_authority_referenced" in str(error):
+        raise contract_error(409, "catalog_authority_referenced", "catalogs.errors.referenced") from error
+    if sqlstate == "42501":
+        status, code = 403, "catalog_permission_denied"
+    elif sqlstate and (sqlstate.startswith("23") or sqlstate in ("P0001", "40001", "40P01")):
+        status, code = 409, "catalog_constraint_conflict"
+    else:
+        status, code = 503, "catalog_unavailable"
+    raise contract_error(status, code, f"catalogs.errors.{code}") from error
+
+
 @contextmanager
 def catalog_scope(request, *, roles=WRITE_ROLES):
     token = verified_request_token(request)
@@ -96,16 +109,7 @@ def catalog_scope(request, *, roles=WRITE_ROLES):
                 )
             yield tenant.active_organization.organization_id
     except DatabaseError as error:
-        sqlstate = getattr(error.__cause__, "sqlstate", None)
-        if sqlstate == "23514" and "catalog_authority_referenced" in str(error):
-            raise contract_error(409, "catalog_authority_referenced", "catalogs.errors.referenced") from error
-        if sqlstate == "42501":
-            status, code = 403, "catalog_permission_denied"
-        elif sqlstate and (sqlstate.startswith("23") or sqlstate in ("P0001", "40001", "40P01")):
-            status, code = 409, "catalog_constraint_conflict"
-        else:
-            status, code = 503, "catalog_unavailable"
-        raise contract_error(status, code, f"catalogs.errors.{code}") from error
+        _reraise_catalog_error(error)
 
 
 ERRORS = {code: OpenApiResponse(ErrorResponseSerializer) for code in (400, 401, 403, 404, 409, 503)}
@@ -142,7 +146,10 @@ class CatalogCollectionView(APIView):
     def post(self, request):
         with catalog_scope(request) as org_id:
             data = _validated(self.resource.serializer, request.data)
-            row = service.create(self.resource, org_id, data)
+            row = service.create(
+                self.resource, org_id, data,
+                actor_id=verified_request_token(request).user_id,
+            )
             output = self.response_serializer(row).data
         return Response(output, status=201)
 
@@ -165,7 +172,10 @@ class CatalogDetailView(APIView):
                 request.data,
                 partial=True,
             )
-            row = service.update(self.resource, org_id, row_id, data, request.headers.get("If-Match"))
+            row = service.update(
+                self.resource, org_id, row_id, data, request.headers.get("If-Match"),
+                actor_id=verified_request_token(request).user_id,
+            )
             output = self.response_serializer(row).data
         return Response(output)
 
@@ -173,6 +183,40 @@ class CatalogDetailView(APIView):
         with catalog_scope(request) as org_id:
             service.delete(self.resource, org_id, row_id, request.headers.get("If-Match"))
         return Response(status=204)
+
+
+class CatalogReviewView(APIView):
+    """POST {resource}/{id}/review/ — a human vouches for the row's technical
+    values; flips LEGACY_UNVERIFIED provenance to MANUAL."""
+
+    resource = None
+    response_serializer = None
+
+    def post(self, request, row_id):
+        token = verified_request_token(request)
+        try:
+            with authenticated_rls_context(token.claims):
+                tenant = resolve_tenant_context(
+                    MembershipRepository().list_active_for_user(token.user_id),
+                    request.headers.get("X-Organization-ID"),
+                )
+                enforce_owner_mfa(tenant, token.aal)
+                if tenant.active_organization.role not in WRITE_ROLES:
+                    raise contract_error(
+                        403,
+                        "catalog_permission_denied",
+                        "catalogs.errors.permission",
+                    )
+                row = service.review(
+                    self.resource,
+                    tenant.active_organization.organization_id,
+                    row_id,
+                    token.user_id,
+                )
+                output = self.response_serializer(row).data
+        except DatabaseError as error:
+            _reraise_catalog_error(error)
+        return Response(output)
 
 
 def _endpoint_classes(name, resource, response_serializer, list_serializer):
@@ -234,18 +278,46 @@ def _endpoint_classes(name, resource, response_serializer, list_serializer):
     return collection, detail
 
 
+def _review_view(name, resource, response_serializer):
+    return extend_schema_view(
+        post=extend_schema(
+            operation_id=f"catalog_{name.lower()}_review",
+            parameters=HEADERS,
+            request=None,
+            responses={200: response_serializer, **ERRORS},
+            tags=["catalogs"],
+            description=(
+                "Mark the row technically reviewed; LEGACY_UNVERIFIED "
+                "provenance becomes MANUAL."
+            ),
+        )
+    )(
+        type(
+            f"{name}ReviewView",
+            (CatalogReviewView,),
+            {
+                "__module__": __name__,
+                "resource": resource,
+                "response_serializer": response_serializer,
+            },
+        )
+    )
+
+
 SystemCollectionView, SystemDetailView = _endpoint_classes(
     "System",
     service.SYSTEMS,
     SystemResponseSerializer,
     SystemListSerializer,
 )
+SystemReviewView = _review_view("System", service.SYSTEMS, SystemResponseSerializer)
 ArticleCollectionView, ArticleDetailView = _endpoint_classes(
     "Article",
     service.ARTICLES,
     ArticleResponseSerializer,
     ArticleListSerializer,
 )
+ArticleReviewView = _review_view("Article", service.ARTICLES, ArticleResponseSerializer)
 BeadCollectionView, BeadDetailView = _endpoint_classes(
     "Bead",
     service.BEADS,
@@ -258,3 +330,4 @@ KitCollectionView, KitDetailView = _endpoint_classes(
     KitResponseSerializer,
     KitListSerializer,
 )
+KitReviewView = _review_view("Kit", service.KITS, KitResponseSerializer)

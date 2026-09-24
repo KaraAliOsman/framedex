@@ -95,29 +95,54 @@ export function DashboardPage(): JSX.Element {
 
   const workOrders = (opsQuery.data?.work_orders ?? {}) as Record<string, number>;
   const deliveries = (opsQuery.data?.deliveries ?? {}) as Record<string, number>;
+  const prep = (opsQuery.data?.prep ?? {}) as Record<string, number>;
   const attentionCandidates: { key: TranslationKey; count: number; to: string; warn: boolean }[] = [
+    {
+      key: "dashboard.prepVersions",
+      count: Number(prep.versions_ready ?? 0),
+      to: "/production",
+      warn: false,
+    },
+    {
+      key: "dashboard.prepShortage",
+      count: Number(prep.work_orders_shortage ?? 0),
+      to: "/production?shortage=1",
+      warn: true,
+    },
+    {
+      key: "dashboard.prepDispatch",
+      count: Number(prep.dispatch_ready ?? 0),
+      to: "/production?dispatch_ready=1",
+      warn: false,
+    },
+    {
+      key: "dashboard.catalogGaps",
+      count: Number(prep.catalog_gaps ?? 0),
+      to: "/catalogs",
+      warn: true,
+    },
     {
       key: "dashboard.deliveriesOverdue",
       count: Number(deliveries.overdue ?? 0),
-      to: "/production",
+      to: "/production?status=DISPATCHED",
       warn: true,
     },
     {
       key: "dashboard.deliveriesToday",
       count: Number(deliveries.today ?? 0),
-      to: "/production",
+      to: "/production?status=DISPATCHED",
       warn: false,
     },
     {
       key: "dashboard.ordersHold",
       count: Number(workOrders.HOLD ?? 0),
-      to: "/production",
+      to: "/production?status=HOLD",
       warn: true,
     },
     {
       key: "dashboard.quotesWaiting",
       count: items.filter((item) => item.status === "QUOTED").length,
-      to: "/projects",
+      to: "/projects?status=QUOTED",
       warn: false,
     },
   ];

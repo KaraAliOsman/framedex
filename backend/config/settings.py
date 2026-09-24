@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "billing.apps.BillingConfig",
     "ai_gateway.apps.AiGatewayConfig",
     "ingest.apps.IngestConfig",
+    "search.apps.SearchConfig",
 ]
 
 MIDDLEWARE = [
@@ -145,6 +146,8 @@ SPECTACULAR_SETTINGS = {
             "TILT_TURN_LEFT", "TILT_TURN_RIGHT", "TURN_LEFT", "TURN_RIGHT",
         ],
         "SiiEnvioStatusEnum": ["PENDING", "ACCEPTED", "REJECTED"],
+        "StockKindEnum": ["BAR", "SHEET"],
+        "WorkCenterKindEnum": ["CUT", "ASSEMBLY", "GLAZING", "QC", "PACK"],
     },
     "TITLE": "Dekopen API",
     "DESCRIPTION": "Authenticated tenant and engine API boundary.",

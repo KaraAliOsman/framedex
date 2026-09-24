@@ -161,6 +161,61 @@ ON CONFLICT (id) DO UPDATE SET
     welding_loss_mm = EXCLUDED.welding_loss_mm,
     reinforcement_gap_mm = EXCLUDED.reinforcement_gap_mm;
 
+-- §15: declared simplified sections for the demo frame and sash. The polygon
+-- is the profile cross-section (x = face width, y = depth, exterior at y=0);
+-- source POLYGON marks a catalog-declared simplified shape, not a
+-- manufacturer-drawing extraction. The schema-upgrade drills replay this seed
+-- against pre-§15 schemas, where the column does not exist — the statement is
+-- planned only when the schema carries it.
+DO $seed_sections$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'public'
+                 AND table_name = 'profile_articles'
+                 AND column_name = 'section') THEN
+        UPDATE public.profile_articles AS article
+        SET section = shapes.section::jsonb
+        FROM (VALUES
+    ('MARCO', '{
+        "source": "POLYGON",
+        "polygon": [
+            {"x_mm": 0, "y_mm": 0}, {"x_mm": 60, "y_mm": 0},
+            {"x_mm": 60, "y_mm": 24}, {"x_mm": 40, "y_mm": 24},
+            {"x_mm": 40, "y_mm": 44}, {"x_mm": 60, "y_mm": 44},
+            {"x_mm": 60, "y_mm": 60}, {"x_mm": 0, "y_mm": 60}
+        ],
+        "depth_mm": 60,
+        "orientation": "EXTERIOR_DOWN",
+        "local_origin": "TOP_LEFT",
+        "axes": [
+            {"name": "GLAZING", "y_mm": 24},
+            {"name": "WEB", "y_mm": 34}
+        ]
+    }'::text),
+    ('HOJA', '{
+        "source": "POLYGON",
+        "polygon": [
+            {"x_mm": 0, "y_mm": 0}, {"x_mm": 75, "y_mm": 0},
+            {"x_mm": 75, "y_mm": 30}, {"x_mm": 50, "y_mm": 30},
+            {"x_mm": 50, "y_mm": 52}, {"x_mm": 75, "y_mm": 52},
+            {"x_mm": 75, "y_mm": 75}, {"x_mm": 0, "y_mm": 75}
+        ],
+        "depth_mm": 75,
+        "orientation": "EXTERIOR_DOWN",
+        "local_origin": "TOP_LEFT",
+        "axes": [
+            {"name": "GLAZING", "y_mm": 30},
+            {"name": "WEB", "y_mm": 41}
+        ]
+    }'::text)
+) AS shapes(sku, section)
+        WHERE article.sku = shapes.sku
+          AND article.system_id = uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60')
+          AND article.org_id IS NULL;
+    END IF;
+END;
+$seed_sections$;
+
 INSERT INTO public.hardware_kits (
     id,
     org_id,
@@ -784,6 +839,15 @@ FROM public.profile_systems s CROSS JOIN (VALUES
 WHERE s.code = 'GLASS_45' AND s.is_global = TRUE
 ON CONFLICT (system_id, org_id, rule_id) DO NOTHING;
 
+-- The purchase-authority tail targets the post-shot-09 schema (physical
+-- stock identity, provenance, glass_spec). The pre-pricing upgrade drill
+-- replays this seed on a shot-07 schema; the tail is planned only when the
+-- column family exists.
+DO $post09$
+BEGIN
+IF EXISTS (SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'glass_purchase_mappings'
+             AND column_name = 'glass_spec') THEN
 INSERT INTO public.profile_purchase_mappings
  (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
   purchase_unit, physical_stock_identity, stock_color, cutting_profile_id, binding_version)
@@ -927,5 +991,54 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot09/reinforceme
  '{"schema_version": 1, "policy_id": "GLASS_45_REINFORCEMENT_CUT_V1", "version": 1, "rules": [{"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "FRAME", "profile_angle_left": "45.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "SASH", "profile_angle_left": "45.0", "profile_angle_right": "45.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_V", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}, {"role": "MULLION_H", "profile_angle_left": "90.0", "profile_angle_right": "90.0", "reinforcement_angle_left": "90.0", "reinforcement_angle_right": "90.0", "length_authority": "EXISTING_ENGINE", "compatible_with_existing_length": true}]}'::jsonb
 FROM public.profile_systems s WHERE s.code='GLASS_45' AND s.is_global=TRUE
 ON CONFLICT (id) DO NOTHING;
+
+-- §2 fabrication authority: the values the engine once invented as hard-coded
+-- constants are now catalog columns; the synthetic reference families declare
+-- their own and carry the fixture provenance label. Guarded on the column so
+-- the shot-07 upgrade drill skips it on the old schema.
+IF EXISTS (SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'profile_systems'
+             AND column_name = 'data_provenance') THEN
+UPDATE public.profile_systems SET
+    rebate_depth_mm = CASE code
+        WHEN 'DEMO_60' THEN 20.00
+        WHEN 'ALU_65' THEN 7.00
+        WHEN 'GLASS_45' THEN 5.00
+    END,
+    end_milling_overlap_mm = CASE code
+        WHEN 'DEMO_60' THEN 0.00
+        WHEN 'ALU_65' THEN 3.00
+        WHEN 'GLASS_45' THEN 2.00
+    END,
+    data_provenance = 'SEED_SYNTHETIC'
+WHERE is_global = TRUE AND org_id IS NULL
+  AND code IN ('DEMO_60', 'ALU_65', 'GLASS_45');
+UPDATE public.profile_articles a SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND a.org_id IS NULL;
+UPDATE public.infill_articles a SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND a.org_id IS NULL;
+UPDATE public.hardware_kits k SET data_provenance = 'SEED_SYNTHETIC'
+FROM public.profile_systems s
+WHERE k.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
+  AND k.org_id IS NULL;
+-- Per-article masses used to arrive through engine fallbacks (1.20 / 1.70
+-- kg·m⁻¹); since §2 they are catalog authority. The synthetic reference
+-- family declares the same values the canonical engine fixture carries so
+-- leaf weight — and therefore hardware certification — is decidable.
+UPDATE public.profile_articles a SET
+    weight_kg_m = 1.2000,
+    steel_weight_kg_m = 1.7000
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code = 'DEMO_60'
+  AND a.org_id IS NULL AND a.weight_kg_m IS NULL;
+END IF;
+
+END IF;
+END;
+$post09$;
 
 COMMIT;

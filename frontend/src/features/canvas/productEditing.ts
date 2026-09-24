@@ -3,6 +3,14 @@ import { SLIDING_PRESETS } from "./intentEditing";
 import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
 import type { MemberGeometry } from "./members";
 import { FALLBACK_MEMBERS, resolveMembers } from "./members";
+import type { GraphEdge } from "./assemblyGraph";
+import {
+  alreadyJoined,
+  chainEnd,
+  incidentCouplings,
+  resolveCouplings,
+  usedEdges,
+} from "./assemblyGraph";
 
 /** Compositional product model (product-v2) — modules joined by couplings.
  *
@@ -425,9 +433,13 @@ export function addAdjacentUnit(
   defaults: { widthMm?: string } = {},
 ): ProductJson {
   const { modules, couplings } = product.assembly;
-  const edge = side === "right" ? modules.at(-1) : modules[0];
+  // The chain end is a graph fact — the declaration-extreme module whose
+  // side edge carries no coupling — never "the last array element".
+  const edge = chainEnd(product, side);
   if (!edge) return product;
-  const outerCoupling = side === "right" ? couplings.at(-1) : couplings[0];
+  // The outermost joint is the edge module's existing connection — its
+  // angle and coupler are what the new unit continues.
+  const outerCoupling = incidentCouplings(product, edge.id).at(-1)?.coupling;
   const widthMm = defaults.widthMm ?? edge.width_mm;
   const module: ProductModuleJson = {
     id: nextModuleId(product),
@@ -447,10 +459,14 @@ export function addAdjacentUnit(
         }
       : {}),
   };
+  // An explicit intended relationship: the endpoints are named, not inferred.
   const coupling: CouplingJson = {
     id: nextCouplingId(product),
     angle_deg: outerCoupling?.angle_deg ?? "0.0",
     coupler_profile_sku: outerCoupling?.coupler_profile_sku ?? null,
+    kind: "INLINE",
+    modules: side === "right" ? [edge.id, module.id] : [module.id, edge.id],
+    edges: ["right", "left"],
   };
   return {
     ...product,
@@ -461,27 +477,190 @@ export function addAdjacentUnit(
   };
 }
 
-/** Remove a unit and heal the chain: when an interior module leaves, its two
- * neighboring modules re-join with a merged deflection (c_left + c_right) so
- * downstream modules keep their absolute orientation. */
+/** Remove a module and every incident connection — no coupling may reference
+ * a module that no longer exists. Unrelated connections are preserved byte
+ * for byte; members the removal disconnects stay modules and surface as
+ * `assembly_disconnected` rather than being silently re-attached.
+ *
+ * One honest repair exists: when the removed module bridged exactly two
+ * INLINE joints between two distinct rectangular survivors, they re-join
+ * with a merged deflection (c_left + c_right) so downstream modules keep
+ * their absolute orientation. Every other topology (stacked roots, TEE
+ * nodes, contour/frameless members) only removes — inventing replacement
+ * joints would fabricate structure the user never declared. */
 export function removeUnit(product: ProductJson, moduleId: string): ProductJson {
   const { modules, couplings } = product.assembly;
-  const index = modules.findIndex((module) => module.id === moduleId);
-  if (index === -1 || modules.length === 1) return product;
-  const nextModules = modules.filter((_, position) => position !== index);
-  const nextCouplings = couplings.filter(
-    (_, position) => position !== index && position !== index - 1,
-  );
-  if (index > 0 && index < modules.length - 1) {
-    const merged = Number(couplings[index - 1]!.angle_deg) + Number(couplings[index]!.angle_deg);
-    nextCouplings.splice(index - 1, 0, {
-      ...couplings[index - 1]!,
-      angle_deg: merged.toFixed(1),
+  if (!modules.some((module) => module.id === moduleId) || modules.length === 1) {
+    return product;
+  }
+  const resolved = resolveCouplings(product);
+  const incident = resolved.filter(({ pair }) => pair[0] === moduleId || pair[1] === moduleId);
+  const dropped = new Set(incident.map(({ index }) => index));
+  const nextModules = modules.filter((module) => module.id !== moduleId);
+  const nextCouplings = couplings.filter((_, index) => !dropped.has(index));
+
+  if (incident.length === 2 && incident.every(({ kind }) => kind === "INLINE")) {
+    const survivors = incident.map((resolvedCoupling) => {
+      const side = resolvedCoupling.pair[0] === moduleId ? 1 : 0;
+      return {
+        moduleId: resolvedCoupling.pair[side] as string,
+        edge: resolvedCoupling.edges[side],
+      };
     });
+    const first = survivors[0]!;
+    const second = survivors[1]!;
+    const byId = new Map(nextModules.map((module) => [module.id, module]));
+    const remaining = resolved.filter(({ index }) => !dropped.has(index));
+    const edgeFree = (moduleId_: string, edge: GraphEdge) =>
+      !remaining.some(
+        ({ pair, edges }) =>
+          (pair[0] === moduleId_ && edges[0] === edge) ||
+          (pair[1] === moduleId_ && edges[1] === edge),
+      );
+    const joinable =
+      first.moduleId !== second.moduleId &&
+      byId.has(first.moduleId) &&
+      byId.has(second.moduleId) &&
+      !byId.get(first.moduleId)!.contour &&
+      !byId.get(first.moduleId)!.frameless &&
+      !byId.get(second.moduleId)!.contour &&
+      !byId.get(second.moduleId)!.frameless &&
+      edgeFree(first.moduleId, first.edge) &&
+      edgeFree(second.moduleId, second.edge) &&
+      !alreadyJoined(product, first.moduleId, second.moduleId);
+    if (joinable) {
+      const order = new Map(nextModules.map((module, index) => [module.id, index]));
+      const [left, right] =
+        (order.get(first.moduleId) ?? -1) <= (order.get(second.moduleId) ?? -1)
+          ? ([first, second] as const)
+          : ([second, first] as const);
+      const earlier = incident[0]!.index <= incident[1]!.index ? incident[0]! : incident[1]!;
+      nextCouplings.splice(earlier.index, 0, {
+        id: earlier.coupling.id,
+        angle_deg: (
+          Number(incident[0]!.coupling.angle_deg) + Number(incident[1]!.coupling.angle_deg)
+        ).toFixed(1),
+        coupler_profile_sku:
+          incident[0]!.coupling.coupler_profile_sku ?? incident[1]!.coupling.coupler_profile_sku,
+        kind: "INLINE",
+        modules: [left.moduleId, right.moduleId],
+        edges: [left.edge, right.edge],
+      });
+    }
   }
   return {
     ...product,
     assembly: { modules: nextModules, couplings: nextCouplings },
+  };
+}
+
+/** Insert a module inside an existing INLINE joint: the seam opens, the new
+ * member inherits its left neighbor's structure, and the original deflection
+ * splits across the two replacement joints so the far side keeps its
+ * absolute heading. Only INLINE joints open this way — a stacked or corner
+ * junction has no coplanar seam to split. */
+export function insertModuleBetween(
+  product: ProductJson,
+  couplingId: string,
+  defaults: { widthMm?: string } = {},
+): ProductJson {
+  const { modules, couplings } = product.assembly;
+  const resolved = resolveCouplings(product).find((entry) => entry.coupling.id === couplingId);
+  if (!resolved || resolved.kind !== "INLINE") return product;
+  const byId = new Map(modules.map((module) => [module.id, module]));
+  const left = byId.get(resolved.pair[0] as string);
+  const right = byId.get(resolved.pair[1] as string);
+  // Shaped or glass-only members have no straight seam to inherit through.
+  if (!left || !right || left.contour || right.contour || left.frameless || right.frameless) {
+    return product;
+  }
+  const widthMm = defaults.widthMm ?? left.width_mm;
+  const inserted: ProductModuleJson = {
+    id: nextModuleId(product),
+    width_mm: widthMm,
+    height_mm: left.height_mm,
+    tree: cloneTree(left.tree),
+  };
+  const totalAngle = Number(resolved.coupling.angle_deg);
+  const halfAngle = totalAngle / 2;
+  const OPPOSITE: Record<GraphEdge, GraphEdge> = {
+    left: "right",
+    right: "left",
+    top: "bottom",
+    bottom: "top",
+  };
+  const first: CouplingJson = {
+    id: resolved.coupling.id,
+    angle_deg: halfAngle.toFixed(1),
+    coupler_profile_sku: resolved.coupling.coupler_profile_sku,
+    kind: "INLINE",
+    modules: [left.id, inserted.id],
+    edges: [resolved.edges[0], OPPOSITE[resolved.edges[0]]],
+  };
+  const second: CouplingJson = {
+    id: nextCouplingId(product),
+    angle_deg: (totalAngle - halfAngle).toFixed(1),
+    coupler_profile_sku: resolved.coupling.coupler_profile_sku,
+    kind: "INLINE",
+    modules: [inserted.id, right.id],
+    edges: [OPPOSITE[resolved.edges[1]], resolved.edges[1]],
+  };
+  const nextCouplings = [...couplings];
+  nextCouplings.splice(resolved.index, 1, first, second);
+  const insertAt = modules.findIndex((module) => module.id === right.id);
+  const nextModules = [...modules];
+  nextModules.splice(insertAt === -1 ? modules.length : insertAt, 0, inserted);
+  return {
+    ...product,
+    assembly: { modules: nextModules, couplings: nextCouplings },
+  };
+}
+
+/** Clone a module onto a free side edge — the copy inherits the whole unit
+ * (tree, contour scaled identically, frameless spec) and joins its source
+ * coplanar (0° INLINE, no coupler). Refuses when both side edges are taken:
+ * duplicating into an occupied seam would silently replace the declared
+ * joint. */
+export function duplicateModule(product: ProductJson, moduleId: string): ProductJson {
+  const { modules, couplings } = product.assembly;
+  const source = modules.find((module) => module.id === moduleId);
+  if (!source) return product;
+  const used = usedEdges(product, moduleId);
+  const side = !used.has("right") ? "right" : !used.has("left") ? "left" : null;
+  if (side === null) return product;
+  const copy: ProductModuleJson = {
+    ...source,
+    id: nextModuleId(product),
+    tree: cloneTree(source.tree),
+    ...(source.contour
+      ? { contour: scaledContour(source.contour, source.width_mm, source.height_mm) }
+      : {}),
+    ...(source.frameless
+      ? {
+          frameless: {
+            supports: source.frameless.supports.map((support) => ({ ...support })),
+            fittings: source.frameless.fittings.map((fitting) => ({ ...fitting })),
+            ...(source.frameless.exposed_edges
+              ? { exposed_edges: [...source.frameless.exposed_edges] }
+              : {}),
+          },
+        }
+      : {}),
+  };
+  const coupling: CouplingJson = {
+    id: nextCouplingId(product),
+    angle_deg: "0.0",
+    coupler_profile_sku: null,
+    kind: "INLINE",
+    modules: side === "right" ? [source.id, copy.id] : [copy.id, source.id],
+    edges: ["right", "left"],
+  };
+  const at = modules.findIndex((module) => module.id === moduleId);
+  const nextModules = [...modules];
+  nextModules.splice(side === "right" ? at + 1 : at, 0, copy);
+  return {
+    ...product,
+    assembly: { modules: nextModules, couplings: [...couplings, coupling] },
   };
 }
 
@@ -530,41 +709,25 @@ export function setAllCouplingAngles(product: ProductJson, angleDeg: string): Pr
 }
 
 export function setModuleCount(product: ProductJson, moduleCount: number): ProductJson {
-  const { modules, couplings } = product.assembly;
+  const { modules } = product.assembly;
   const current = modules.length;
   if (moduleCount < 1 || moduleCount === current) return product;
+  let next = product;
   if (moduleCount < current) {
-    return {
-      ...product,
-      assembly: {
-        modules: modules.slice(0, moduleCount),
-        couplings: couplings.slice(0, moduleCount - 1),
-      },
-    };
+    // Trim the declaration tail through the same graph-correct removal —
+    // explicit couplings and stack members heal or detach exactly like a
+    // hand-picked delete; a positional slice would orphan pair references.
+    while (next.assembly.modules.length > moduleCount) {
+      const tail = next.assembly.modules.at(-1)!;
+      next = removeUnit(next, tail.id);
+    }
+    return next;
   }
-  const last = modules.at(-1);
-  if (!last) return product;
-  const lastCoupling = couplings.at(-1);
-  const lastAngle = lastCoupling?.angle_deg ?? "15.0";
-  const lastSku = lastCoupling?.coupler_profile_sku ?? null;
-  const nextModules = [...modules];
-  const nextCouplings = [...couplings];
-  for (let index = current + 1; index <= moduleCount; index += 1) {
-    const growing: ProductJson = {
-      ...product,
-      assembly: { modules: nextModules, couplings: nextCouplings },
-    };
-    nextCouplings.push({
-      id: nextCouplingId(growing),
-      angle_deg: lastAngle,
-      coupler_profile_sku: lastSku,
-    });
-    nextModules.push({ ...last, id: nextModuleId(growing) });
+  // Grow the resolved right end — each append names its endpoints.
+  while (next.assembly.modules.length < moduleCount) {
+    next = addAdjacentUnit(next, "right");
   }
-  return {
-    ...product,
-    assembly: { modules: nextModules, couplings: nextCouplings },
-  };
+  return next;
 }
 
 /** Rescale a contour to a new bounding box — x and y scale independently.
@@ -898,6 +1061,18 @@ export function setCouplerSkuAll(product: ProductJson, sku: string | null): Prod
   };
 }
 
+/** Replace one module's parametric tree — bay-level edits land through
+ * updateBay upstream, this only swaps the validated result. */
+export function setModuleTree(
+  product: ProductJson,
+  moduleId: string,
+  tree: IntentNode,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  return replaceModule(product, moduleId, { ...module, tree });
+}
+
 export function setModuleOpening(
   product: ProductJson,
   moduleId: string,
@@ -976,11 +1151,20 @@ export function setModuleGlass(
   product: ProductJson,
   moduleId: string,
   glassArticleSku: string | null,
+  glassSpec?: string | null,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
   function withGlass(node: IntentNode): IntentNode {
-    if (node.type === "BAY") return { ...node, glass_article_sku: glassArticleSku };
+    if (node.type === "BAY") {
+      return {
+        ...node,
+        glass_article_sku: glassArticleSku,
+        // The article is the composition authority: pick one and its spec is
+        // sealed (null spec stays null — honest MISSING, never a thickness).
+        glass_spec: glassArticleSku == null ? node.glass_spec : (glassSpec ?? null),
+      };
+    }
     return { ...node, children: node.children?.map(withGlass) };
   }
   return replaceModule(product, moduleId, { ...module, tree: withGlass(module.tree) });
@@ -990,9 +1174,8 @@ export function moduleGlassSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.glass_article_sku ?? null;
 }
 
-/** Glazing thickness on every bay of a module (bead slot + monolithic spec
- * fallback). An existing glass composition is preserved — the thickness is
- * the physical slot, the spec the pane recipe. */
+/** Glazing thickness on every bay of a module (the physical bead slot).
+ * The composition spec is a separate authority — setModuleGlass writes it. */
 export function setModuleGlassThickness(
   product: ProductJson,
   moduleId: string,

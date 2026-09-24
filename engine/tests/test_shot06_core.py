@@ -46,7 +46,7 @@ def exact_weight_for_leaf(
         )
     else:
         glass = next(p for p in result.glasses if p.bay_id == bay_id and p.leaf_id == leaf_id)
-        infill = exact_glass_weight(glass.width_mm, glass.height_mm, "4-12-4", D("20.00"))
+        infill = exact_glass_weight(glass.width_mm, glass.height_mm, "4-12-4")
     item = next(p for p in result.hardware_items if p.bay_id == bay_id and p.leaf_id == leaf_id)
     kit = next(k for k in params.available_hardware_kits if k.sku == item.kit_sku)
     return with_hardware_weight(base_leaf_weight(
@@ -85,7 +85,7 @@ def test_g3_hardware_resolved_shot06_preserves_standalone_geometry(
     kit = next(k for k in demo_60_params.available_hardware_kits if k.sku == "KIT-TILT-TURN")
     assert kit.max_leaf_weight_kg == D("100.00")
     assert exact.total_weight_kg <= kit.max_leaf_weight_kg
-    assert not result.leaf_weights[0].used_fallback
+    assert result.leaf_weights[0].weight_unknown_reasons == []
 
 
 def test_g5_complete_bom_exact(demo_60_params: SystemParams) -> None:

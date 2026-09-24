@@ -14,6 +14,7 @@ import {
   moduleGlassSku,
   moduleOpening,
   modulePanelSku,
+  setModuleGlassThickness,
   moveModuleDivision,
   resizeModuleSeam,
   setModulePanel,
@@ -77,7 +78,14 @@ describe("addAdjacentUnit", () => {
     const grown = addAdjacentUnit(single, "left");
     expect(grown.assembly.modules.map((m) => m.id)).toEqual(["m2", "m1"]);
     expect(grown.assembly.couplings).toEqual([
-      { id: "c1", angle_deg: "0.0", coupler_profile_sku: null },
+      {
+        id: "c1",
+        angle_deg: "0.0",
+        coupler_profile_sku: null,
+        kind: "INLINE",
+        modules: ["m2", "m1"],
+        edges: ["right", "left"],
+      },
     ]);
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
@@ -417,6 +425,26 @@ describe("module commands", () => {
     const glazed = setModuleGlass(bow(), "m2", "GLASS-A");
     expect(moduleGlassSku(glazed.assembly.modules[1]!)).toBe("GLASS-A");
     expect(moduleGlassSku(glazed.assembly.modules[0]!)).toBeNull();
+  });
+
+  it("picking a thickness seeds the monolithic spec only when unset", () => {
+    const bare = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED" },
+      "1200.00",
+      "1500.00",
+    );
+    const picked = setModuleGlassThickness(bare, "m1", "20.00");
+    const pickedBay = picked.assembly.modules[0]!.tree;
+    expect(pickedBay.glass_thickness_mm).toBe("20.00");
+    expect(pickedBay.glass_spec).toBe("20.00");
+
+    const declared = wrapTreeAsProduct(
+      { id: "g1", type: "BAY", opening_type: "FIXED", glass_spec: "4-16-4" },
+      "1200.00",
+      "1500.00",
+    );
+    const kept = setModuleGlassThickness(declared, "m1", "24.00");
+    expect(kept.assembly.modules[0]!.tree.glass_spec).toBe("4-16-4");
   });
 
   it("assigns a panel sku to the matching module only", () => {

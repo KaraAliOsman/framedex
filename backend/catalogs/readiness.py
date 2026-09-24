@@ -42,26 +42,39 @@ def catalog_readiness(system_id, org_id):
         except (DocumentaryError, ValueError):
             reasons.append("manufacturing")
     if params is not None:
-        # Fabrication authorities the fixed geometry actually consumes — mirror
+        # Fabrication authorities the geometry actually consumes — mirror
         # the engine's own role/operation rules so UNKNOWN surfaces here, not
         # mid-calculation, without blocking catalogs whose gaps never reach a
         # calculation:
+        # * rebate_depth_mm / end_milling_overlap_mm are consumed by every
+        #   glazed bay and every mullion — NULL means the system cannot prove
+        #   its fabrication geometry (the engine raises instead of inventing).
         # * PVC: every welded-cut member needs weld loss + reinforcement gap —
         #   all effective roles except THRESHOLD (appended unwelded).
-        # * non-PVC: profile mass is consumed only by leaf weight, so only the
-        #   effective SASH needs a declared density (PVC has a declared system
-        #   fallback, so it needs no weight check).
+        # * Profile and steel mass feed leaf weight — there is no fallback
+        #   anymore, so the effective SASH needs both when it is reinforced.
+        # * A hardware kit with no declared mass makes weight-based
+        #   certification undecidable.
         # * Couplers load outside effective articles; any reinforced coupler
         #   runs reinforcement_cut_length regardless of material.
+        fabrication_missing = (
+            params.rebate_depth_mm is None or params.end_milling_overlap_mm is None
+        )
         if params.material is MaterialType.PVC:
-            fabrication_missing = any(
+            fabrication_missing = fabrication_missing or any(
                 article.welding_loss_mm is None or article.reinforcement_gap_mm is None
                 for role, article in params.effective_profile_articles.items()
                 if role is not ProfileRole.THRESHOLD
             )
-        else:
-            sash = params.effective_profile_articles.get(ProfileRole.SASH)
-            fabrication_missing = sash is not None and sash.weight_kg_m is None
+        sash = params.effective_profile_articles.get(ProfileRole.SASH)
+        if sash is not None:
+            fabrication_missing = fabrication_missing or (
+                sash.weight_kg_m is None
+                or (bool(sash.reinforcement_sku) and sash.steel_weight_kg_m is None)
+            )
+        fabrication_missing = fabrication_missing or any(
+            kit.weight_kg is None for kit in params.available_hardware_kits
+        )
         if not fabrication_missing:
             try:
                 couplers = SystemParamsRepository().load_coupler_articles(system_id, org_id)
@@ -74,6 +87,32 @@ def catalog_readiness(system_id, org_id):
                 fabrication_missing = True
         if fabrication_missing:
             reasons.append("fabrication")
+        # Production authority must not ride on values nobody ever verified:
+        # LEGACY_UNVERIFIED rows and rows whose technical values changed after
+        # their last review (review_pending) need a human review first —
+        # review() clears both gates.
+        if rows(
+            "SELECT 1 FROM public.profile_systems WHERE id=%s"
+            " AND (is_global = TRUE OR org_id=%s)"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
+            " UNION ALL"
+            " SELECT 1 FROM public.profile_articles WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s)"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
+            " UNION ALL"
+            " SELECT 1 FROM public.infill_articles WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s)"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
+            " UNION ALL"
+            " SELECT 1 FROM public.hardware_kits WHERE"
+            " (system_id=%s OR system_id IS NULL)"
+            " AND (org_id IS NULL OR org_id=%s)"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
+            " LIMIT 1",
+            [system_id, org_id, system_id, org_id,
+             system_id, org_id, system_id, org_id],
+        ):
+            reasons.append("catalog_review")
         try:
             frame = params.effective_profile_articles[ProfileRole.FRAME]
             profiles = [frame,
@@ -91,7 +130,8 @@ def catalog_readiness(system_id, org_id):
                 raise DocumentaryError("glass_purchase_mapping_required")
             load_purchase_authorities(system_id=system_id, org_id=org_id, color="WHITE",
                 profile_skus={article.sku for article in profiles}, reinforcement_skus=steels,
-                glass_skus={row["technical_sku"] for row in glass}, hardware_skus=set(), panel_skus=set())
+                glass_skus={row["technical_sku"] for row in glass}, hardware_skus=set(),
+                panel_skus=set(), fitting_skus=set())
         except (DocumentaryError, MissingStockAuthority, AmbiguousStockAuthority, ValueError):
             reasons.append("purchase")
     return {"quote_ready": not reasons, "scope": "WHITE_FIXED_CATALOG", "reasons": reasons}

@@ -17,6 +17,7 @@ from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from inventory import service
+from inventory import remnants as remnants_service
 from inventory.serializers import (
     InventoryMovementRequestSerializer,
     InventoryMovementSerializer,
@@ -25,6 +26,10 @@ from inventory.serializers import (
     MovementListQuerySerializer,
     OrderReceiptRequestSerializer,
     OrderReceivingSerializer,
+    RemnantCreateSerializer,
+    RemnantListQuerySerializer,
+    RemnantListSerializer,
+    RemnantSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +47,9 @@ def public_inventory_errors():
         raise contract_error(
             status_code,
             error.code,
-            "La operación de inventario fue rechazada; revisa el pedido y las cantidades.",
+            error.public_detail
+            or "La operación de inventario fue rechazada; revisa el pedido y las cantidades.",
+            error_extra=error.extra or None,
         ) from error
     except serializers.ValidationError as error:
         raise contract_error(
@@ -150,3 +157,86 @@ class OrderReceiptCreateView(APIView):
                     lines=data["lines"],
                 )
         return Response(output, status=201 if created else 200)
+
+
+class RemnantListView(APIView):
+    @extend_schema(
+        operation_id="inventory_remnants",
+        parameters=[ACTIVE_ORGANIZATION_HEADER, RemnantListQuerySerializer],
+        request=None,
+        responses={200: RemnantListSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def get(self, request):
+        query = validate(RemnantListQuerySerializer, request.query_params)
+        with public_inventory_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = remnants_service.list_remnants(
+                    org_id=org_id,
+                    kind=query.get("kind"),
+                    status=query.get("status"),
+                )
+        return Response(output)
+
+    @extend_schema(
+        operation_id="inventory_remnant_create",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=RemnantCreateSerializer,
+        responses={201: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request):
+        data = validate(RemnantCreateSerializer, request.data)
+        with public_inventory_errors():
+            with documentary_scope(request, _WRITERS) as (_, _, org_id):
+                output = remnants_service.create_remnant(
+                    org_id=org_id, **data,
+                )
+        return Response(output, status=201)
+
+
+class _RemnantTransitionView(APIView):
+    action: str
+
+    def post(self, request, remnant_id: UUID):
+        with public_inventory_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                if self.action == "scrap":
+                    output = remnants_service.scrap_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+                else:
+                    output = remnants_service.unreserve_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+        return Response(output)
+
+
+class RemnantScrapView(_RemnantTransitionView):
+    action = "scrap"
+
+    @extend_schema(
+        operation_id="inventory_remnant_scrap",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request, remnant_id: UUID):
+        return super().post(request, remnant_id)
+
+
+class RemnantReleaseView(_RemnantTransitionView):
+    action = "release"
+
+    @extend_schema(
+        operation_id="inventory_remnant_release",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request, remnant_id: UUID):
+        return super().post(request, remnant_id)

@@ -1,0 +1,396 @@
+/** §12 operator card — what the station makes, from which stock, in which
+ * order. Scoped to one routing step: material pull list (reservations and
+ * remnants of that step's stock kinds), the machining sequence for CUT
+ * (saw boundaries + member ops reconstructed from the sealed plan), and the
+ * piece list with dimensions/angles/origins. Every value is sealed evidence
+ * from the trace read — nothing is recomputed here. */
+
+import { t } from "../../i18n/es-CL";
+import type { ProductionOrderTrace, ProductionStep } from "../../api/generated/models";
+
+type Reservation = {
+  kind?: string;
+  sku?: string;
+  name?: string;
+  variant_key?: string;
+  unit?: string;
+  needed?: string;
+  on_hand?: string;
+  reserved?: string;
+  short?: string;
+  consumed_at?: string;
+};
+
+type Remnant = {
+  id?: string;
+  kind?: string;
+  status?: string;
+  rack_location?: string;
+  length_mm?: string;
+  width_mm?: string;
+  height_mm?: string;
+  sheet_workshop_sku?: string;
+  consumed_order_id?: string;
+};
+
+type Op = {
+  operation_id?: string;
+  kind?: string;
+  host_kind?: string;
+  host?: string;
+  x_mm?: string;
+  y_mm?: string;
+  angle_left_deg?: string;
+  angle_right_deg?: string;
+  depth_mm?: string;
+  basis?: string;
+  detail?: Record<string, unknown>;
+};
+
+type CutPiece = {
+  sequence?: number;
+  workshop_sku?: string;
+  role?: string;
+  length_mm?: string;
+  angle_left?: string;
+  angle_right?: string;
+  unit_index?: number;
+  bay_id?: string;
+  leaf_id?: string;
+  sagitta_mm?: string;
+  piece_id?: string;
+};
+
+type SheetPiece = {
+  piece_id?: string;
+  role?: string;
+  width_mm?: string;
+  height_mm?: string;
+  bay_id?: string;
+  leaf_id?: string;
+  unit_index?: number;
+};
+
+/** Stock kinds each routing step physically consumes — mirrors the backend's
+ * consume mapping (bars/sheets at CUT, kits/fittings at ASSEMBLE, panels at
+ * GLAZE); QC and PACK reserve nothing. */
+const STEP_STOCK_KINDS: Record<string, string[]> = {
+  CUT: ["BAR", "SHEET"],
+  ASSEMBLE: ["HARDWARE_KIT", "FITTING"],
+  GLAZE: ["PANEL"],
+};
+
+function _reservations(trace: ProductionOrderTrace): Reservation[] {
+  return (trace.stock?.reservations as Reservation[] | undefined) ?? [];
+}
+
+function _remnants(trace: ProductionOrderTrace): Remnant[] {
+  return (trace.stock?.remnants as Remnant[] | undefined) ?? [];
+}
+
+function _ops(trace: ProductionOrderTrace): Op[] {
+  const ops = trace.operations?.items;
+  return Array.isArray(ops) ? (ops as Op[]) : [];
+}
+
+function _bars(trace: ProductionOrderTrace): Array<Record<string, unknown>> {
+  return (trace.plan?.bars as Array<Record<string, unknown>> | undefined) ?? [];
+}
+
+function _sheets(trace: ProductionOrderTrace): Array<Record<string, unknown>> {
+  return (trace.plan?.sheets as Array<Record<string, unknown>> | undefined) ?? [];
+}
+
+function _isShort(value: string | undefined): boolean {
+  return !!value && Number(value) > 0;
+}
+
+export function OperatorStepCard({
+  step,
+  trace,
+  traceBusy,
+}: {
+  step: ProductionStep;
+  trace: ProductionOrderTrace | null;
+  traceBusy: boolean;
+}) {
+  const kinds = STEP_STOCK_KINDS[step.code] ?? [];
+  const reservations = trace ? _reservations(trace) : [];
+  const material = reservations.filter((row) => kinds.includes(row.kind ?? ""));
+  const remnants = trace ? _remnants(trace).filter((row) => kinds.includes(row.kind ?? "")) : [];
+  const unmapped = trace ? ((trace.stock?.unmapped_stock_skus as string[] | undefined) ?? []) : [];
+  const blockers = material.filter((row) => _isShort(row.short));
+  const ops = trace ? _ops(trace) : [];
+  const bars = trace ? _bars(trace) : [];
+  const sheets = trace ? _sheets(trace) : [];
+
+  const sawOps = ops.filter((op) => op.kind === "SAW_CUT");
+  const memberOps = ops.filter((op) => op.kind !== "SAW_CUT");
+  const cutPieces: Array<{ barIndex: number; source?: string } & CutPiece> = [];
+  if (step.code === "CUT") {
+    for (const bar of bars) {
+      const cuts = (bar.cuts as CutPiece[] | undefined) ?? [];
+      for (const cut of cuts) {
+        cutPieces.push({
+          barIndex: Number(bar.bar_index ?? 0),
+          source: String(bar.source ?? "NEW"),
+          ...cut,
+        });
+      }
+    }
+    cutPieces.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  }
+  const sheetPieces: SheetPiece[] = [];
+  if (step.code === "GLAZE" || step.code === "CUT") {
+    for (const sheet of sheets) {
+      for (const piece of (sheet.pieces as SheetPiece[] | undefined) ?? []) {
+        sheetPieces.push(piece);
+      }
+    }
+  }
+  const totalPieces =
+    bars.reduce((count, bar) => count + ((bar.cuts as unknown[] | undefined) ?? []).length, 0) +
+    sheetPieces.length;
+
+  return (
+    <section className="operator-card" aria-label={t("production.operatorTitle")}>
+      <header className="operator-card-head">
+        <h3>
+          {t("production.operatorTitle")}: {step.label}
+        </h3>
+        {(step.work_center_name ?? step.work_center_code) ? (
+          <span className="production-step-center">
+            {step.work_center_name ?? step.work_center_code}
+          </span>
+        ) : null}
+      </header>
+      {!trace ? (
+        <p className="production-trace-empty">
+          {traceBusy ? t("production.traceLoading") : t("production.operatorNoOps")}
+        </p>
+      ) : (
+        <div className="operator-card-body">
+          {blockers.length || (step.code === "CUT" && unmapped.length) ? (
+            <p className="operator-blockers" role="alert">
+              {t("production.operatorBlockers")}
+              {unmapped.length && step.code === "CUT"
+                ? ` · ${t("production.operatorUnmapped")}: ${unmapped.join(", ")}`
+                : ""}
+            </p>
+          ) : null}
+
+          {kinds.length ? (
+            <div className="operator-section">
+              <h4>{t("production.operatorMaterial")}</h4>
+              {material.length ? (
+                <table className="production-plan">
+                  <thead>
+                    <tr>
+                      <th>{t("production.stockSku")}</th>
+                      <th>{t("production.stockNeeded")}</th>
+                      <th>{t("production.stockReserved")}</th>
+                      <th>{t("production.stockShort")}</th>
+                      <th>{t("production.stockConsumed")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {material.map((row, index) => (
+                      <tr
+                        key={`${row.kind}-${row.sku}-${index}`}
+                        className={_isShort(row.short) ? "operator-row-short" : ""}
+                      >
+                        <td>
+                          {row.name ?? row.sku ?? "—"} · {row.sku ?? ""} {row.unit ?? ""}
+                        </td>
+                        <td>{row.needed ?? "0"}</td>
+                        <td>{row.reserved ?? "0"}</td>
+                        <td>
+                          {_isShort(row.short) ? (
+                            <strong className="production-stock-short">{row.short}</strong>
+                          ) : (
+                            "0"
+                          )}
+                        </td>
+                        <td>
+                          {row.consumed_at
+                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="production-trace-empty">{t("production.operatorNoStock")}</p>
+              )}
+              {remnants.length ? (
+                <ul className="operator-remnants">
+                  {remnants.map((remnant) => (
+                    <li key={remnant.id}>
+                      {remnant.kind} · {remnant.length_mm ? `${remnant.length_mm} mm` : ""}
+                      {remnant.width_mm ? ` × ${remnant.width_mm}` : ""}
+                      {remnant.height_mm ? ` × ${remnant.height_mm}` : ""}
+                      {remnant.sheet_workshop_sku ? ` · ${remnant.sheet_workshop_sku}` : ""}
+                      {remnant.rack_location
+                        ? ` · ${t("production.operatorRack")}: ${remnant.rack_location}`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step.code === "CUT" ? (
+            <div className="operator-section">
+              <h4>{t("production.operatorSequence")}</h4>
+              {ops.length ? (
+                <>
+                  {sawOps.length ? (
+                    <table className="production-plan operator-ops">
+                      <thead>
+                        <tr>
+                          <th>{t("production.traceBar")}</th>
+                          <th>x (mm)</th>
+                          <th>{t("production.operatorAngles")}</th>
+                          <th>{t("production.operatorCut")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sawOps.map((op) => (
+                          <tr key={op.operation_id}>
+                            <td>{String(op.host ?? "").replace("bar:", "")}</td>
+                            <td>{op.x_mm ?? "—"}</td>
+                            <td>
+                              {op.angle_left_deg ?? "—"}° / {op.angle_right_deg ?? "—"}°
+                            </td>
+                            <td>
+                              {op.detail?.boundary
+                                ? String(op.detail.boundary)
+                                : op.detail?.sequence
+                                  ? `#${String(op.detail.sequence)}`
+                                  : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : null}
+                  {memberOps.length ? (
+                    <table className="production-plan operator-ops">
+                      <thead>
+                        <tr>
+                          <th>{t("production.operatorMachining")}</th>
+                          <th>{t("production.operatorHost")}</th>
+                          <th>x/y (mm)</th>
+                          <th>{t("production.operatorDepth")}</th>
+                          <th>{t("production.operatorBasis")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {memberOps.map((op) => (
+                          <tr key={op.operation_id}>
+                            <td>{op.kind ?? "—"}</td>
+                            <td title={op.host ?? ""}>
+                              {String(op.detail?.role ?? op.host ?? "—")}
+                            </td>
+                            <td>
+                              {op.x_mm ?? "—"} / {op.y_mm ?? "—"}
+                            </td>
+                            <td>{op.depth_mm ?? "—"}</td>
+                            <td>{op.basis ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : null}
+                </>
+              ) : (
+                <p className="production-trace-empty">{t("production.operatorNoOps")}</p>
+              )}
+              {cutPieces.length ? (
+                <table className="production-plan operator-pieces">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>{t("production.optimizeSku")}</th>
+                      <th>{t("production.operatorRole")}</th>
+                      <th>{t("production.traceLength")}</th>
+                      <th>{t("production.operatorAngles")}</th>
+                      <th>{t("production.operatorOrigin")}</th>
+                      <th>{t("production.traceBar")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cutPieces.map((piece) => (
+                      <tr key={piece.piece_id ?? `${piece.barIndex}-${piece.sequence}`}>
+                        <td>{piece.sequence ?? "—"}</td>
+                        <td>{piece.workshop_sku ?? "—"}</td>
+                        <td>{piece.role ?? "—"}</td>
+                        <td>
+                          {piece.length_mm ?? "—"}
+                          {piece.sagitta_mm ? ` ↷${piece.sagitta_mm}` : ""}
+                        </td>
+                        <td>
+                          {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°
+                        </td>
+                        <td>
+                          {piece.unit_index ? `u${piece.unit_index}` : ""}
+                          {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
+                          {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
+                        </td>
+                        <td>
+                          {piece.barIndex}
+                          {piece.source === "REMNANT"
+                            ? ` · ${t("production.traceSourceRemnant")}`
+                            : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step.code === "GLAZE" && sheetPieces.length ? (
+            <div className="operator-section">
+              <h4>{t("production.operatorPieces")}</h4>
+              <table className="production-plan operator-pieces">
+                <thead>
+                  <tr>
+                    <th>{t("production.operatorRole")}</th>
+                    <th>{t("production.optimizeSize")}</th>
+                    <th>{t("production.operatorOrigin")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sheetPieces.map((piece, index) => (
+                    <tr key={piece.piece_id ?? index}>
+                      <td>{piece.role ?? "—"}</td>
+                      <td>
+                        {piece.width_mm ?? "—"} × {piece.height_mm ?? "—"}
+                      </td>
+                      <td>
+                        {piece.unit_index ? `u${piece.unit_index}` : ""}
+                        {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
+                        {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {!kinds.length ? (
+            <p className="operator-summary">
+              {t("production.operatorNoStock")} · {totalPieces}{" "}
+              {t("production.operatorPiecesTotal")}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}

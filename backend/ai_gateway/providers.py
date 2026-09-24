@@ -28,6 +28,39 @@ MAX_BODY_BYTES = 1_048_576
 _BASE_PATH_RE = re.compile(r"/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*")
 
 
+def _timeout_seconds(provider: str) -> float:
+    """AI_GATEWAY_{P}_TIMEOUT_S — whole-request bound in seconds. Defaults to
+    60; a malformed or out-of-range value refuses the provider outright so a
+    deployment mistake fails visibly instead of silently changing latency
+    guarantees."""
+    raw = os.environ.get(f"AI_GATEWAY_{provider}_TIMEOUT_S", "")
+    if not raw:
+        return 60.0
+    try:
+        value = float(raw)
+    except ValueError as error:
+        raise ProviderError("ai_provider_unavailable") from error
+    if not 1.0 <= value <= 600.0:
+        raise ProviderError("ai_provider_unavailable")
+    return value
+
+
+def _mock_enabled() -> bool:
+    """Whether the deterministic MOCK provider may serve this deployment.
+    Explicit AI_GATEWAY_MOCK_ENABLED wins either way; otherwise it serves
+    only development (DEBUG) and the test suite (pytest sets
+    PYTEST_CURRENT_TEST) — a production stack can never answer silently
+    with fabricated content."""
+    explicit = os.environ.get("AI_GATEWAY_MOCK_ENABLED", "").lower()
+    if explicit in {"1", "true", "yes"}:
+        return True
+    if explicit in {"0", "false", "no"}:
+        return False
+    return os.environ.get("DEBUG", "").lower() in {"1", "true", "yes"} or bool(
+        os.environ.get("PYTEST_CURRENT_TEST")
+    )
+
+
 def _resolve_provider_hosts(hostname: str) -> list[str] | None:
     """Resolve the configured host once and return every validated global
     answer in resolver order, or None. Literal IPs are checked directly; a
@@ -75,6 +108,10 @@ class HttpProvider:
         self.base_url = os.environ.get(f"AI_GATEWAY_{provider}_BASE_URL", "").rstrip("/")
         if not self.api_key or not self.base_url:
             raise ProviderError("ai_provider_unavailable")
+        # AI_GATEWAY_{P}_TIMEOUT_S bounds the whole HTTP exchange. A malformed
+        # value is a deployment mistake — it fails visibly, never clamps
+        # silently to an operator-surprising bound.
+        self.timeout = _timeout_seconds(provider)
         # Provider URLs are operator config, but a compromised value must not
         # turn the gateway into an authenticated proxy for internal services:
         # https-only, no userinfo/query/fragment, and the host must resolve
@@ -170,7 +207,7 @@ class HttpProvider:
         header_host = f"[{self._host}]" if ":" in self._host else self._host
         host_header = header_host if self._port == 443 else f"{header_host}:{self._port}"
         if client is None:
-            with httpx.Client(timeout=60.0) as owned:
+            with httpx.Client(timeout=self.timeout) as owned:
                 return self._attempts(
                     owned,
                     route,
@@ -230,6 +267,7 @@ class HttpProvider:
         provider_options: dict | None = None,
         client: httpx.Client | None = None,
         operation_key: str | None = None,
+        document_path: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         options = provider_options or {}
@@ -243,14 +281,17 @@ class HttpProvider:
             # Ephemeral fetch URLs are resolved at wire time, never carried in
             # input_payload: the audited input hash must stay identical across
             # retries even though a fresh signed URL is minted each attempt.
+            # document_path arrives only from the service's org-scoped source
+            # resolution — a request can name an owned document row but can
+            # never choose the object key that gets signed.
             wire_input = dict(input_payload)
-            if wire_input.get("storage_path"):
+            if document_path:
                 from documents.repository import DocumentaryError
                 from documents.storage import SupabaseDocumentStorage
 
                 try:
                     wire_input["document_url"] = SupabaseDocumentStorage().signed_url(
-                        str(wire_input["storage_path"])
+                        document_path
                     )
                 except DocumentaryError as error:
                     raise ProviderError("ai_provider_unavailable") from error
@@ -482,6 +523,122 @@ def _design_assist_output(input_payload: dict) -> dict:
     }
 
 
+def _design_alternatives_output(input_payload: dict) -> dict:
+    """Mock brief → intent-level candidate specs. Deterministic per brief:
+    a sliding mention proposes a corredera first, a door mention a porte,
+    otherwise the classic fixed/operable/sliding spread — every candidate
+    is still built and engine-validated server-side before it ships."""
+    brief = str(input_payload.get("brief") or "").lower()
+    count = max(1, min(3, int(input_payload.get("count") or 2)))
+    candidates: list[dict] = []
+    if re.search(r"corred|sliding|riel", brief):
+        candidates.append(
+            {
+                "label": "Corredera de dos hojas",
+                "rationale": "Una hoja corre sobre la otra — sin barrido interior.",
+                "openings": ["SLIDING_2L"],
+            }
+        )
+    if re.search(r"puerta|door|porte", brief):
+        # A door candidate is only buildable with a panel — pick from the
+        # catalog the request supplied, so the engine refusal isn't fake.
+        door: dict = {
+            "label": "Puerta de acceso",
+            "rationale": "Hoja de paso con apertura abatible.",
+            "openings": ["DOOR_ENTRY"],
+        }
+        panel_skus = (input_payload.get("catalog") or {}).get("panel_skus") or []
+        if panel_skus:
+            door["panel_sku"] = sorted(panel_skus)[0]
+        candidates.append(door)
+    if re.search(r"arco|bow|proa", brief):
+        candidates.append(
+            {
+                "label": "Bow de tres paños",
+                "rationale": "Tres módulos en quiebre suave.",
+                "openings": ["FIXED", "FIXED", "FIXED"],
+                "angle_deg": 22.5,
+            }
+        )
+    candidates.append(
+        {
+            "label": "Paño fijo",
+            "rationale": "Máxima luz y la solución más simple.",
+            "openings": ["FIXED"],
+        }
+    )
+    candidates.append(
+        {
+            "label": "Abatible + fijo",
+            "rationale": "Ventilación practicable junto a un paño fijo.",
+            "openings": ["TURN_LEFT", "FIXED"],
+        }
+    )
+    if "SLIDING_2L" not in {op for c in candidates for op in c["openings"]}:
+        candidates.append(
+            {
+                "label": "Corredera",
+                "rationale": "Alternativa sin barrido hacia el interior.",
+                "openings": ["SLIDING_2L"],
+            }
+        )
+    # Propose real catalog materials like a provider should: a glass SKU on
+    # glazed candidates, a coupler SKU on multi-module ones — both picked
+    # only from what the request's catalog supplied.
+    catalog = input_payload.get("catalog") or {}
+    glass_skus = sorted(catalog.get("glass_skus") or [])
+    coupler_skus = sorted(catalog.get("coupler_skus") or [])
+    for candidate in candidates:
+        if glass_skus and any(op != "DOOR_ENTRY" for op in candidate["openings"]):
+            candidate.setdefault("glass_sku", glass_skus[0])
+        if coupler_skus and len(candidate["openings"]) > 1:
+            candidate.setdefault("coupler_sku", coupler_skus[0])
+    return {
+        "alternatives": candidates[:count],
+        "notes": f"{min(len(candidates), count)} alternativas para revisar.",
+    }
+
+
+def _context_assist_output(input_payload: dict) -> dict:
+    """Mock contextual answer: the answer cites real values straight from the
+    server-built context — never invented. Deterministic per surface so tests
+    and every environment exercise the same response contract a real provider
+    must satisfy."""
+    surface = str(input_payload.get("surface") or "dashboard")
+    context = input_payload.get("context") or {}
+    org = context.get("organization") or {}
+    parts = [f"Estás en la superficie '{surface}' de {org.get('name') or 'tu organización'}."]
+    counts = context.get("counts")
+    if isinstance(counts, dict):
+        parts.append(
+            f"La organización registra {counts.get('projects', 0)} proyectos y "
+            f"{counts.get('work_orders_open', 0)} órdenes de producción abiertas."
+        )
+    if isinstance(context.get("projects"), list):
+        parts.append(f"Veo {len(context['projects'])} proyectos recientes en la lista.")
+    if isinstance(context.get("systems"), list):
+        parts.append(f"El catálogo muestra {len(context['systems'])} sistemas de perfiles.")
+    if isinstance(context.get("work_orders"), list):
+        parts.append(f"Hay {len(context['work_orders'])} órdenes de producción.")
+    if context.get("order_code"):
+        parts.append(f"La orden {context['order_code']} está en estado {context.get('status')}.")
+        if context.get("shortages"):
+            parts.append(f"Registra {context['shortages']} línea(s) con escasez de material.")
+    if context.get("code") and context.get("positions") is not None:
+        parts.append(
+            f"El proyecto {context['code']} tiene {len(context['positions'])} posiciones."
+        )
+    warnings: list[str] = []
+    if context.get("shortages"):
+        warnings.append("La orden tiene líneas de material sin reservar.")
+    return {
+        "answer": " ".join(parts)
+        + " Para una respuesta generativa configura un proveedor real en la ruta 'context_assist'.",
+        "actions": [],
+        "warnings": warnings,
+    }
+
+
 class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
@@ -493,16 +650,28 @@ class MockProvider:
         input_payload: dict,
         provider_options: dict | None = None,
         operation_key: str | None = None,
+        # Mock performs no fetch — the parameter exists so the service passes
+        # the resolved document path uniformly across providers.
+        document_path: str | None = None,
     ) -> dict[str, Any]:
         started = time.monotonic()
         digest = hashlib.sha256(
             json.dumps(input_payload, sort_keys=True, default=str).encode()
         ).hexdigest()[:16]
-        output = (
-            json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
-            if capability == "design_assist"
-            else f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
-        )
+        if capability == "design_assist":
+            output = json.dumps(_design_assist_output(input_payload), ensure_ascii=False)
+        elif capability == "design_alternatives":
+            output = json.dumps(
+                _design_alternatives_output(input_payload), ensure_ascii=False
+            )
+        elif capability == "context_assist":
+            output = json.dumps(
+                _context_assist_output(input_payload), ensure_ascii=False
+            )
+        else:
+            output = (
+                f"{route['public_name']} [{capability}] respuesta determinista para {digest}"
+            )
         serialized = json.dumps(input_payload, default=str)
         return {
             "output": output,
@@ -520,6 +689,8 @@ _OPENAI_PROTOCOL_PROVIDERS = {"MIMO", "OPENAI", "OPENROUTER", "DEEPSEEK", "QWEN"
 def provider_for(route: dict):
     name = str(route["provider"]).upper()
     if name == "MOCK":
+        if not _mock_enabled():
+            raise ProviderError("ai_provider_mock_disabled")
         return MockProvider()
     protocol = os.environ.get(f"AI_GATEWAY_{name}_PROTOCOL", "").lower()
     if protocol == "openai" or (not protocol and name in _OPENAI_PROTOCOL_PROVIDERS):

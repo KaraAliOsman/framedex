@@ -292,15 +292,37 @@ function Bay({
   node,
   region,
   members,
+  selected = false,
+  onSelect,
 }: {
   node: IntentNode;
   region: Region;
   members: MemberGeometry;
+  selected?: boolean;
+  onSelect?(): void;
 }): JSX.Element {
   const opening = node.opening_type ?? "FIXED";
   const bead = members.beadFor(node.glass_thickness_mm ?? null);
   const insulated = Number(node.glass_thickness_mm ?? "0") >= 12;
   const sashSurface = memberSurface(members.sash.material);
+  const baySelectProps = onSelect
+    ? {
+        onClick: (event: React.MouseEvent) => {
+          event.stopPropagation();
+          onSelect();
+        },
+        style: { cursor: "pointer" },
+      }
+    : {};
+  const selectRing = selected ? (
+    <rect
+      className="bay-select-ring"
+      x={region.x}
+      y={region.y}
+      width={Math.max(region.w, 0)}
+      height={Math.max(region.h, 0)}
+    />
+  ) : null;
 
   // Sliding topology (mandate §12): panels on rails — each slot is pitch
   // wide, a moving leaf covers its slot plus the meeting-stile overlap;
@@ -317,7 +339,10 @@ function Bay({
       .map((panel, index) => ({ panel, index }))
       .sort((a, b) => (a.panel.track ?? -1) - (b.panel.track ?? -1));
     return (
-      <g className="module-bay module-bay--sliding">
+      <g
+        className={`module-bay module-bay--sliding${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+        {...baySelectProps}
+      >
         {order.map(({ panel, index }) => {
           const slotX = region.x + pitch * index;
           if (panel.kind === "FIXED") {
@@ -396,6 +421,7 @@ function Bay({
             </g>
           );
         })}
+        {selectRing}
       </g>
     );
   }
@@ -438,7 +464,10 @@ function Bay({
       : null;
 
   return (
-    <g className="module-bay">
+    <g
+      className={`module-bay${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
+      {...baySelectProps}
+    >
       {operable && (
         <>
           <Member
@@ -526,6 +555,7 @@ function Bay({
           ))}
         </g>
       )}
+      {selectRing}
     </g>
   );
 }
@@ -555,6 +585,9 @@ function ModuleTree({
   liveOffsets,
   hitMm,
   onDividerDown,
+  moduleId,
+  selectedBayId,
+  onSelectBay,
 }: {
   node: IntentNode;
   region: Region;
@@ -570,6 +603,9 @@ function ModuleTree({
   /** Grip width in mm — sized from the viewport scale so it stays ~12px. */
   hitMm?: number;
   onDividerDown?: (info: DividerDragInfo) => void;
+  moduleId: string;
+  selectedBayId?: string | null;
+  onSelectBay?: (bayId: string) => void;
 }): JSX.Element {
   if (node.type === "ROOT" && node.children?.length === 1 && node.children[0]) {
     return (
@@ -581,6 +617,9 @@ function ModuleTree({
         liveOffsets={liveOffsets}
         hitMm={hitMm}
         onDividerDown={onDividerDown}
+        moduleId={moduleId}
+        selectedBayId={selectedBayId}
+        onSelectBay={onSelectBay}
       />
     );
   }
@@ -633,6 +672,9 @@ function ModuleTree({
           liveOffsets={liveOffsets}
           hitMm={hitMm}
           onDividerDown={onDividerDown}
+          moduleId={moduleId}
+          selectedBayId={selectedBayId}
+          onSelectBay={onSelectBay}
         />
         <Member
           x={bar.x}
@@ -669,11 +711,22 @@ function ModuleTree({
           liveOffsets={liveOffsets}
           hitMm={hitMm}
           onDividerDown={onDividerDown}
+          moduleId={moduleId}
+          selectedBayId={selectedBayId}
+          onSelectBay={onSelectBay}
         />
       </>
     );
   }
-  return <Bay node={node} region={region} members={members} />;
+  return (
+    <Bay
+      node={node}
+      region={region}
+      members={members}
+      selected={selectedBayId === node.id}
+      onSelect={onSelectBay ? () => onSelectBay(node.id) : undefined}
+    />
+  );
 }
 
 const TOP_GUTTER = 150;
@@ -1028,11 +1081,13 @@ export function ProductFrontContent({
   product,
   members,
   selectedId,
+  selectedBayId = null,
   issues,
   disabled,
   preview = false,
   divideTool = null,
   onSelectModule,
+  onSelectBay,
   onContextMenuModule,
   onAddUnit,
   onCommitModuleWidth,
@@ -1055,6 +1110,12 @@ export function ProductFrontContent({
    * clicking splits the leaf bay under the cursor at the cursor offset. */
   divideTool?: "SPLIT_V" | "SPLIT_H" | null;
   onSelectModule(moduleId: string): void;
+  /** Click a leaf bay: selects the "moduleId/bayId" composite — the right
+   * rail then edits that leaf's opening, glazing and handle. */
+  onSelectBay?(moduleId: string, bayId: string): void;
+  /** The leaf inside the selected module that owns the selection ring —
+   * a composite selection highlights the bay, not the whole module. */
+  selectedBayId?: string | null;
   /** Right-click on a module: select it and open the registry menu at the
    * cursor — commands always resolve against the clicked element, never a
    * stale earlier selection. */
@@ -1426,6 +1487,13 @@ export function ProductFrontContent({
                     height={Math.max(h - frameT * 2, 0)}
                   />
                   <ModuleTree
+                    moduleId={module.id}
+                    selectedBayId={selectedBayId}
+                    onSelectBay={
+                      interactive && !divideTool && onSelectBay
+                        ? (bayId) => onSelectBay(module.id, bayId)
+                        : undefined
+                    }
                     node={module.tree}
                     region={{
                       x: x + frameT,

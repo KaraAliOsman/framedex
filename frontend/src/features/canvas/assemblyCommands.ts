@@ -1,5 +1,11 @@
 import { t } from "../../i18n/es-CL";
-import type { CommandArgs, CommandContext, CommandSpec, DesignOp } from "../commands/types";
+import type {
+  CommandArgs,
+  CommandContext,
+  CommandSpec,
+  DesignOp,
+  DesignOpState,
+} from "../commands/types";
 import type { Opening } from "./intentEditing";
 import { OPENING_OPTIONS } from "./openings";
 import {
@@ -53,36 +59,84 @@ function selectedCoupling(ctx: CommandContext) {
   return ctx.product.assembly.couplings.find((coupling) => coupling.id === ctx.selection) ?? null;
 }
 
-function moduleAt(product: ProductJson, index: unknown): string | null {
-  return typeof index === "number" ? (product.assembly.modules[index]?.id ?? null) : null;
+/** Wire `module`/`coupling` address → entity id. A string is a stable domain
+ * ref — the module's own id, a synthetic `added_m{n}`/`added_c{n}` minted by
+ * an earlier structural op in the same sequence, or the `m{n}`/`c{n}`
+ * positional fallback — a number stays a legacy index. */
+function moduleAt(product: ProductJson, address: unknown, state?: DesignOpState): string | null {
+  if (typeof address === "number") {
+    return product.assembly.modules[address]?.id ?? null;
+  }
+  if (typeof address !== "string") return null;
+  const direct = product.assembly.modules.find((module) => module.id === address);
+  if (direct) return direct.id;
+  const added = /^added_m(\d+)$/.exec(address);
+  if (added) return state?.addedModules[Number(added[1]) - 1] ?? null;
+  const positional = /^m(\d+)$/.exec(address);
+  if (positional) return product.assembly.modules[Number(positional[1]) - 1]?.id ?? null;
+  return null;
 }
 
-function couplingAt(product: ProductJson, index: unknown): string | null {
-  return typeof index === "number" ? (product.assembly.couplings[index]?.id ?? null) : null;
+function couplingAt(product: ProductJson, address: unknown, state?: DesignOpState): string | null {
+  if (typeof address === "number") {
+    return product.assembly.couplings[address]?.id ?? null;
+  }
+  if (typeof address !== "string") return null;
+  const direct = product.assembly.couplings.find((coupling) => coupling.id === address);
+  if (direct) return direct.id;
+  const added = /^added_c(\d+)$/.exec(address);
+  if (added) return state?.addedCouplings[Number(added[1]) - 1] ?? null;
+  const positional = /^c(\d+)$/.exec(address);
+  if (positional) return product.assembly.couplings[Number(positional[1]) - 1]?.id ?? null;
+  return null;
 }
 
 function text(value: unknown): string | null {
   return typeof value === "string" && value.length ? value : null;
 }
 
-/** Wire `module` index → args `{module: <id>, target: "<n>"}`: the id drives
- * `apply`, the 1-based number stays for human descriptions. */
+/** Human position label for a wire address — '2' for the second module,
+ * 'nueva 1' for a unit an earlier op in the sequence just created. */
+function targetLabel(address: unknown, entities: { id: string }[]): string {
+  if (typeof address === "number") return String(address + 1);
+  if (typeof address !== "string") return "?";
+  const added = /^added_[mc](\d+)$/.exec(address);
+  if (added?.[1]) return `nueva ${added[1]}`;
+  const index = entities.findIndex((entity) => entity.id === address);
+  if (index >= 0) return String(index + 1);
+  const positional = /^[mc](\d+)$/.exec(address);
+  return positional?.[1] ?? "?";
+}
+
+/** Wire `module` address (ref or legacy index) → args `{module: <id>,
+ * target: "<n>"}`: the id drives `apply`, the position stays for human
+ * descriptions. */
 function decodeModule(
   op: DesignOp,
   product: ProductJson,
+  state?: DesignOpState,
   extra: CommandArgs = {},
 ): CommandArgs | null {
-  const id = moduleAt(product, op.module);
-  return id ? { module: id, target: String(Number(op.module) + 1), ...extra } : null;
+  const id = moduleAt(product, op.module, state);
+  return id
+    ? { module: id, target: targetLabel(op.module, product.assembly.modules), ...extra }
+    : null;
 }
 
 function decodeCoupling(
   op: DesignOp,
   product: ProductJson,
+  state?: DesignOpState,
   extra: CommandArgs = {},
 ): CommandArgs | null {
-  const id = couplingAt(product, op.coupling);
-  return id ? { coupling: id, target: String(Number(op.coupling) + 1), ...extra } : null;
+  const id = couplingAt(product, op.coupling, state);
+  return id
+    ? {
+        coupling: id,
+        target: targetLabel(op.coupling, product.assembly.couplings),
+        ...extra,
+      }
+    : null;
 }
 
 const OPENING_LABELS: Partial<Record<Opening, string>> = {
@@ -233,9 +287,9 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     describe: (args) => `${moduleLabel(args)}: ancho ${args.width ?? "?"} mm`,
     ai: {
       op: "set_module_width",
-      decode: (op, product) => {
+      decode: (op, product, state) => {
         const width = text(op.width_mm);
-        return width ? decodeModule(op, product, { width }) : null;
+        return width ? decodeModule(op, product, state, { width }) : null;
       },
     },
   },
@@ -262,9 +316,9 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
       `${moduleLabel(args)}: ${OPENING_LABELS[args.opening as Opening] ?? args.opening ?? "?"}`,
     ai: {
       op: "set_opening",
-      decode: (op, product) => {
+      decode: (op, product, state) => {
         const opening = text(op.opening);
-        return opening ? decodeModule(op, product, { opening }) : null;
+        return opening ? decodeModule(op, product, state, { opening }) : null;
       },
     },
   },
@@ -288,9 +342,9 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     describe: (args) => `${moduleLabel(args)}: vidrio ${args.glass ?? "?"}`,
     ai: {
       op: "set_glass",
-      decode: (op, product) => {
+      decode: (op, product, state) => {
         const sku = text(op.sku);
-        return sku ? decodeModule(op, product, { glass: sku }) : null;
+        return sku ? decodeModule(op, product, state, { glass: sku }) : null;
       },
     },
   },
@@ -317,7 +371,8 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     describe: (args) => `${moduleLabel(args)}: vidrio ${args.thickness ?? "?"} mm`,
     ai: {
       op: "set_glass_thickness",
-      decode: (op, product) => decodeModule(op, product, { thickness: text(op.mm) ?? "" }),
+      decode: (op, product, state) =>
+        decodeModule(op, product, state, { thickness: text(op.mm) ?? "" }),
     },
   },
   {
@@ -343,8 +398,8 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     describe: (args) => `${moduleLabel(args)}: panel ${args.panel || "ninguno"}`,
     ai: {
       op: "set_panel",
-      decode: (op, product) =>
-        decodeModule(op, product, { panel: op.sku === null ? "" : (text(op.sku) ?? "") }),
+      decode: (op, product, state) =>
+        decodeModule(op, product, state, { panel: op.sku === null ? "" : (text(op.sku) ?? "") }),
     },
   },
   {
@@ -426,9 +481,9 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
         : `unión ${args.target ?? "?"}: ${args.angle ?? "?"}°`,
     ai: {
       op: "set_coupling_angle",
-      decode: (op, product) => {
+      decode: (op, product, state) => {
         const angle = text(op.angle_deg);
-        return angle ? decodeCoupling(op, product, { angle }) : null;
+        return angle ? decodeCoupling(op, product, state, { angle }) : null;
       },
     },
   },

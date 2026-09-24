@@ -32,7 +32,9 @@ from dekopen_engine.technical_facts import (
     SpanTechnicalFacts,
 )
 from dekopen_engine.panel import build_panel_piece, exact_panel_weight
-from dekopen_engine.weight import base_leaf_weight
+from dekopen_engine.weight import (
+    MissingFabricationAuthority, base_leaf_weight,
+)
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
@@ -651,6 +653,21 @@ def single_rectangular_sash_geometry(
     )
 
 
+def rebate_depth(params: SystemParams) -> Decimal:
+    """Glass bite the catalog must declare — absent means the pane position
+    cannot be established and the calculation refuses, never guesses."""
+    if params.rebate_depth_mm is None:
+        raise MissingFabricationAuthority("Missing rebate authority: rebate_depth_mm")
+    return params.rebate_depth_mm
+
+
+def _end_milling_overlap(params: SystemParams) -> Decimal:
+    if params.end_milling_overlap_mm is None:
+        raise MissingFabricationAuthority(
+            "Missing end-milling authority: end_milling_overlap_mm")
+    return params.end_milling_overlap_mm
+
+
 def _pocket_dimension(
     finished_mm: Decimal,
     article: EffectiveProfileArticle,
@@ -660,7 +677,7 @@ def _pocket_dimension(
     return (
         finished_mm
         - _TWO * article.face_width_mm
-        + _TWO * params.rebate_depth_mm
+        + _TWO * rebate_depth(params)
         - _TWO * clearance_mm
     )
 
@@ -779,6 +796,10 @@ def _append_leaf(
             raise ValueError(f"Missing panel article: {node.panel_article_sku}") from error
         infill_thickness = rule.thickness_mm
         infill_weight = exact_panel_weight(width, height, rule)
+        infill_reason = (
+            None if infill_weight is not None
+            else f"missing_panel_mass:{rule.sku}"
+        )
         technical_sku = node.panel_article_sku
         composition = f"SANDWICH_PANEL:{node.panel_article_sku}"
         infill_kind = "PANEL"
@@ -795,7 +816,11 @@ def _append_leaf(
         if node.glass_thickness_mm is None or node.glass_spec is None:
             raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
         infill_thickness = node.glass_thickness_mm
-        infill_weight = exact_glass_weight(width, height, node.glass_spec, infill_thickness)
+        infill_weight = exact_glass_weight(width, height, node.glass_spec)
+        infill_reason = (
+            None if infill_weight is not None
+            else f"missing_glass_composition:{node.glass_spec}"
+        )
         technical_sku = node.glass_article_sku or ""
         composition = node.glass_spec
         infill_kind = "GLASS"
@@ -806,7 +831,6 @@ def _append_leaf(
                 width_mm=width,
                 height_mm=height,
                 glass_spec=node.glass_spec,
-                fallback_thickness_mm=infill_thickness,
                 article_sku=technical_sku or None,
             )
         )
@@ -829,8 +853,8 @@ def _append_leaf(
     if not sliding_infill:
         assert direct_rect is not None
         direct_infill_rect = _Rect(
-            direct_rect.x_mm + article.face_width_mm - params.rebate_depth_mm + clearance_mm,
-            direct_rect.y_mm + article.face_width_mm - params.rebate_depth_mm + clearance_mm,
+            direct_rect.x_mm + article.face_width_mm - rebate_depth(params) + clearance_mm,
+            direct_rect.y_mm + article.face_width_mm - rebate_depth(params) + clearance_mm,
             width,
             height,
         )
@@ -872,6 +896,7 @@ def _append_leaf(
         reinforcements=accumulator.reinforcements[steel_start:],
         infill_weight_kg=infill_weight,
         params=params,
+        infill_unknown_reason=infill_reason,
     )
     assert node.opening_type is not None
     candidates = evaluate_hardware_candidates(
@@ -944,8 +969,8 @@ def _append_frame_glazed_pane(
     if node.glass_thickness_mm is None or node.glass_spec is None:
         raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
     leaf_id = f"{node.id}:{leaf_slot}" if leaf_slot is not None else None
-    width = rect.width_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
-    height = rect.height_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
+    width = rect.width_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
+    height = rect.height_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
     accumulator.glasses.append(
         build_glass_piece(
             bay_id=node.id,
@@ -953,7 +978,6 @@ def _append_frame_glazed_pane(
             width_mm=width,
             height_mm=height,
             glass_spec=node.glass_spec,
-            fallback_thickness_mm=node.glass_thickness_mm,
             article_sku=node.glass_article_sku or None,
         )
     )
@@ -971,8 +995,8 @@ def _append_frame_glazed_pane(
         )
     )
     infill_rect = _Rect(
-        rect.x_mm - params.rebate_depth_mm + clearance_mm,
-        rect.y_mm - params.rebate_depth_mm + clearance_mm,
+        rect.x_mm - rebate_depth(params) + clearance_mm,
+        rect.y_mm - rebate_depth(params) + clearance_mm,
         width,
         height,
     )
@@ -1387,7 +1411,7 @@ def _walk_node(
             raise ValueError("SPLIT_V produces a non-positive BAY width")
         first_rect = _Rect(rect.x_mm, rect.y_mm, first_width_mm, rect.height_mm)
         second_rect = _Rect(second_x_mm, rect.y_mm, second_width_mm, rect.height_mm)
-        mullion_length_mm = rect.height_mm + _TWO * params.end_milling_overlap_mm
+        mullion_length_mm = rect.height_mm + _TWO * _end_milling_overlap(params)
         mullion_segment = _trace_segment(centerline_mm, rect.y_mm, centerline_mm, rect.bottom_mm)
     else:
         centerline_mm = local_origin_y_mm + node.split_offset_mm
@@ -1398,7 +1422,7 @@ def _walk_node(
             raise ValueError("SPLIT_H produces a non-positive BAY height")
         first_rect = _Rect(rect.x_mm, rect.y_mm, rect.width_mm, first_height_mm)
         second_rect = _Rect(rect.x_mm, second_y_mm, rect.width_mm, second_height_mm)
-        mullion_length_mm = rect.width_mm + _TWO * params.end_milling_overlap_mm
+        mullion_length_mm = rect.width_mm + _TWO * _end_milling_overlap(params)
         mullion_segment = _trace_segment(rect.x_mm, centerline_mm, rect.right_mm, centerline_mm)
 
     _append_mullion(

@@ -171,6 +171,9 @@ def run_auth_e2e(env: Mapping[str, str], *test_args: str) -> None:
     commands = [
         ([sys.executable, "backend/manage.py", "runserver", "127.0.0.1:8000", "--noreload"], ROOT, backend_env),
         ([node, "node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--strictPort"], FRONTEND, frontend_env),
+        # Durable-job worker — app flows that enqueue jobs (document
+        # generation, optimization) deadlock in e2e without it.
+        ([sys.executable, "backend/manage.py", "runjobs", "--poll", "0.5"], ROOT, backend_env),
     ]
     processes: list[subprocess.Popen[str]] = []
     flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0

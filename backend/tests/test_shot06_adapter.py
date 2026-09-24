@@ -69,9 +69,9 @@ def test_system_params_contract_accounts_for_every_field() -> None:
         "rebate_depth_mm", "end_milling_overlap_mm", "sash_overlap_mm", "glass_clearance_white_mm",
         "glass_clearance_foil_mm", "pulley_height_mm", "central_overlap_mm", "sliding_lateral_clearance_mm",
         "sliding_end_add_mm", "corner_bracket_loss_mm", "hook_depth_mm", "door_threshold_mm",
-        "door_bottom_clearance_mm", "rail_type", "pvc_weight_kg_m", "steel_weight_kg_m",
-        "hardware_kit_weight_kg", "available_hardware_kits", "sliding_glazing_deduction_width_mm",
+        "door_bottom_clearance_mm", "rail_type", "available_hardware_kits",
+        "sliding_glazing_deduction_width_mm",
         "sliding_glazing_deduction_height_mm", "door_leaf_side_clearance_mm", "available_panel_rules",
         "rail_count",
     }
-    assert len(demo_60_params().model_dump()) == 28
+    assert len(demo_60_params().model_dump()) == 25

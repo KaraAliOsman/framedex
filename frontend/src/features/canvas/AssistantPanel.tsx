@@ -4,7 +4,7 @@ import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAssist } from "../../api/generated/dekopen";
 import type { DesignAssistResponse } from "../../api/generated/models/designAssistResponse";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { describeDesignOp, type DesignOp } from "./designOps";
+import { describeDesignOp, designAssistProduct, type DesignOp } from "./designOps";
 import type { ProductJson } from "./productEditing";
 
 type Preview = {
@@ -113,15 +113,10 @@ export function AssistantPanel({
           prompt: trimmed,
           operation_key: operationKey.current.key,
           system_id: systemId,
-          product: {
-            modules: product.assembly.modules.map((module) => ({
-              width_mm: module.width_mm,
-              height_mm: module.height_mm,
-            })),
-            couplings: product.assembly.couplings.map((coupling) => ({
-              angle_deg: coupling.angle_deg,
-            })),
-          },
+          // The wire carries stable domain ids — the same ones commands and
+          // selection already use — so ops address modules/couplings by ref,
+          // never by position; endpoints expose the assembly graph itself.
+          product: designAssistProduct(product),
         },
         { headers: { "X-Organization-ID": organizationId } },
       );
@@ -199,7 +194,9 @@ export function AssistantPanel({
               {preview.ops.length > 0 && (
                 <ul className="assistant-panel__ops">
                   {preview.ops.map((op, index) => (
-                    <li key={`op-${index}`}>{describeDesignOp(op, preview.snapshot)}</li>
+                    <li key={`op-${index}`}>
+                      {describeDesignOp(op, preview.snapshot, preview.ops.slice(0, index))}
+                    </li>
                   ))}
                 </ul>
               )}

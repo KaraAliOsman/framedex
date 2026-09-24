@@ -9,6 +9,8 @@ from production.views import (
     ProductionOrderDispatchView,
     ProductionOrderDxfExportView,
     ProductionOrderDxfFileView,
+    ProductionOrderOpsExportView,
+    ProductionOrderOpsFileView,
     ProductionOrderDispatchNoteView,
     ProductionOrderDispatchNoteDteView,
     ProductionOrderInstallationView,
@@ -18,6 +20,10 @@ from production.views import (
     ProductionOrderListView,
     ProductionOrderOptimizeView,
     ProductionOrderPackingView,
+    ProductionPrepView,
+    ProductionOrderTraceView,
+    ProductionPieceTraceView,
+    ProductionVersionTraceView,
     ProductionOrderRemakeView,
     ProductionReleaseView,
     ProductionStepTransitionView,
@@ -25,7 +31,18 @@ from production.views import (
 )
 
 urlpatterns = [
+    path("prep/", ProductionPrepView.as_view(), name="production-prep"),
     path("orders/", ProductionOrderListView.as_view(), name="production-orders"),
+    path(
+        "orders/<uuid:order_id>/trace/",
+        ProductionOrderTraceView.as_view(),
+        name="production-order-trace",
+    ),
+    path(
+        "pieces/<str:piece_id>/trace/",
+        ProductionPieceTraceView.as_view(),
+        name="production-piece-trace",
+    ),
     path(
         "orders/<uuid:order_id>/",
         ProductionOrderDetailView.as_view(),
@@ -55,6 +72,16 @@ urlpatterns = [
         "orders/<uuid:order_id>/dxf-export/<str:filename>",
         ProductionOrderDxfFileView.as_view(),
         name="production-order-dxf-file",
+    ),
+    path(
+        "orders/<uuid:order_id>/operations-export/",
+        ProductionOrderOpsExportView.as_view(),
+        name="production-order-ops-export",
+    ),
+    path(
+        "orders/<uuid:order_id>/operations-export/<str:filename>",
+        ProductionOrderOpsFileView.as_view(),
+        name="production-order-ops-file",
     ),
     path(
         "orders/<uuid:order_id>/packing/",
@@ -115,6 +142,11 @@ urlpatterns = [
         "steps/<uuid:step_id>/transition/",
         ProductionStepTransitionView.as_view(),
         name="production-step-transition",
+    ),
+    path(
+        "versions/<uuid:version_id>/trace/",
+        ProductionVersionTraceView.as_view(),
+        name="production-version-trace",
     ),
     path(
         "versions/<uuid:version_id>/release/",

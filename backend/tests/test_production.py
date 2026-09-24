@@ -123,6 +123,8 @@ def test_release_creates_work_order_with_steps() -> None:
         "production.service.rows", side_effect=fake_rows
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -168,6 +170,8 @@ def test_release_replay_returns_existing() -> None:
         "production.service.rows", side_effect=fake_rows
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -338,6 +342,8 @@ def test_order_code_scopes_to_project() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -511,7 +517,16 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
         "production.service.CuttingRepository"
     ) as repo, patch(
         "production.service.optimize_cut", return_value=cut_result
-    ) as cut:
+    ) as cut, patch("production.service.remnants_service") as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
+        rem.bar_remnants_for_authorities.return_value = []
+        rem.sheet_remnants_for_sku.return_value = []
+        rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
         repo.return_value.for_result.return_value = authorities
         repo.return_value.cutting_profile.return_value = profile
         output = service.optimize_work_order(
@@ -589,7 +604,16 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
         "production.service.CuttingRepository"
     ) as repo, patch(
         "production.service.optimize_cut", return_value=cut_result
-    ):
+    ), patch("production.service.remnants_service") as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
+        rem.bar_remnants_for_authorities.return_value = []
+        rem.sheet_remnants_for_sku.return_value = []
+        rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
         repo.return_value.for_result.return_value = authorities
         repo.return_value.cutting_profile.return_value = profile
         output = service.optimize_work_order(
@@ -653,6 +677,8 @@ def test_release_seals_system_from_snapshot_positions() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
@@ -697,6 +723,8 @@ def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
@@ -723,6 +751,302 @@ def test_optimize_rejects_completed_order() -> None:
                 org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
             )
     assert error.value.code == "work_order_completed"
+
+
+def test_optimize_rejects_replan_after_consumed_step() -> None:
+    # A DONE material-consuming step already settled its reservations —
+    # replanning would strand the fresh holds forever (no second DONE
+    # transition can consume them).
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "IN_PRODUCTION",
+                "payload_json": {},
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "production_steps" in query:
+            return [{"code": "CUT"}]
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(),
+                color="BLANCO",
+            )
+    assert error.value.code == "work_order_replan_after_consumption"
+
+
+def test_complete_step_rejects_material_shortage() -> None:
+    # A consuming step cannot complete while the plan is short material —
+    # settling only the reserved part would let the order reach completion
+    # with pieces nobody can physically make.
+    step = _step_row(status="IN_PROGRESS", code="CUT")
+    payload = json.dumps({
+        "optimization": {
+            "stock_reservations": [
+                {"kind": "BAR", "sku": "COM-X", "reserved": "0",
+                 "short": "2", "consumed_at": None},
+            ],
+            "bars": {"unplaced": [{"piece_id": "p1"}]},
+            "unnested": [],
+        }
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.remnants_service.consume_order_remnants",
+        return_value=0,
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_material_shortage"
+
+
+def test_complete_cut_rejects_released_remnant() -> None:
+    # An operator unreserved a drop the plan still claims — completing CUT
+    # would settle stock another order may already have taken.
+    step = _step_row(status="IN_PROGRESS", code="CUT")
+    payload = json.dumps({
+        "optimization": {
+            "remnants": {
+                "consumed": [{"id": str(uuid4()), "kind": "BAR"}],
+            },
+            "stock_reservations": [],
+        }
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.remnants_service.consume_order_remnants",
+        return_value=0,
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_remnant_released"
+
+
+def test_complete_step_rejects_missing_plan() -> None:
+    # A consuming step needs the optimization record at all: an order that
+    # was never optimized carries no material accounting, so completion
+    # would silently skip every reservation and shortage check.
+    step = _step_row(status="IN_PROGRESS", code="ASSEMBLE")
+    payload = json.dumps({"position_id": "p-1"})
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_plan_missing"
+
+
+def test_complete_step_rejects_invalidated_plan() -> None:
+    # A plan that lost its claimed stock (e.g. a remnant released back to the
+    # pool) can no longer prove pieces fit real material — completing would
+    # settle reservations for stock that was never re-reserved. The order
+    # must re-optimize first.
+    step = _step_row(status="IN_PROGRESS", code="ASSEMBLE")
+    payload = json.dumps({
+        "position_id": "p-1",
+        "optimization": {"invalidated": True, "stock_reservations": []},
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_plan_stale"
+
+
+def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
+    # quantity>1 must not label two physical panes with the same piece_id —
+    # a label resolves to exactly one unit in the trace.
+    from decimal import Decimal
+
+    from dekopen_engine.cutting import (
+        CutOptimizationResult, CuttingProfile,
+    )
+    from dekopen_engine.nesting import (
+        NestPlacement, SheetLayout, SheetNestingResult,
+    )
+
+    order_id = uuid4()
+    payload = {
+        "position_id": str(uuid4()),
+        "system_id": str(uuid4()),
+        "quantity": 2,
+        "materials": {
+            "profile_cuts": [], "reinforcements": [],
+            "glasses": [
+                {
+                    "bay_id": "B1", "leaf_id": "L1",
+                    "width_mm": "1100.00", "height_mm": "900.00",
+                    "area_m2": "0.99", "weight_kg": "4.95",
+                    "thickness_net_mm": "4.00",
+                    "glass_spec": "4", "article_sku": "V4",
+                }
+            ],
+            "panels": [], "hardware_items": [],
+        },
+    }
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT-P-REV-A-01",
+                "status": "RELEASED", "payload_json": payload,
+            }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        return []
+
+    profile = CuttingProfile(
+        id="CP1", code="SAW01", kerf_mm=Decimal("5"),
+        head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+    )
+    cut_result = CutOptimizationResult(workshop_cut_plan=[], purchase_list=[])
+    authorities = SimpleNamespace(stocks=[], reinforcement_skus={}, inertias={})
+    rule = _sheet_rules_fake([("V4SHEET", "3210", "2250")])[0]
+
+    def fake_nest(pieces, _rule, remnants=()):
+        return SheetNestingResult(
+            layouts=[SheetLayout(
+                sheet_index=1, purchasing_sku=rule.purchasing_sku,
+                sheet_width_mm=rule.sheet_width_mm,
+                sheet_height_mm=rule.sheet_height_mm,
+                placements=[
+                    NestPlacement(
+                        **piece.model_dump(), sequence=i + 1,
+                        x_mm=Decimal("0"), y_mm=Decimal(i * 910),
+                    )
+                    for i, piece in enumerate(pieces)
+                ],
+                productive_area_mm2=Decimal("1980000"),
+                waste_area_mm2=Decimal("5242500"),
+                yield_pct=Decimal("27.41"),
+            )],
+            purchase_list=[], unplaced=[],
+        )
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service.CuttingRepository"
+    ) as repo, patch(
+        "production.service.optimize_cut", return_value=cut_result
+    ), patch(
+        "production.service._sheet_rules",
+        return_value={"by_sku": {}, "by_thickness": {"4.00": [rule]}},
+    ), patch("production.service.nest_rects", side_effect=fake_nest), patch(
+        "production.service.remnants_service"
+    ) as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
+        rem.bar_remnants_for_authorities.return_value = []
+        rem.sheet_remnants_for_sku.return_value = []
+        rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
+        repo.return_value.for_result.return_value = authorities
+        repo.return_value.cutting_profile.return_value = profile
+        output = service.optimize_work_order(
+            org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+        )
+    placements = output["optimization"]["sheets"][0]["placements"]
+    piece_ids = {placement["piece_id"] for placement in placements}
+    assert len(piece_ids) == 2
+    assert piece_ids == {"V-01-01", "V-01-02"}
 
 
 def test_optimize_requires_color() -> None:
@@ -1137,6 +1461,147 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert stored["schema"] == "work_order_dxf_export_v1"
     assert stored["optimization_fingerprint"]
     assert any("wo_dxf_exported" in s2 for s2, _ in writes)
+
+
+def _ops_snapshot() -> dict:
+    return {
+        "manufacturing": [
+            {
+                "position_id": "pos-1",
+                "position_index": 1,
+                "repetition_index": 1,
+                "nominal_width_mm": "1000",
+                "nominal_height_mm": "1200",
+                "placement_policy_id": "pp",
+                "placement_policy_version": 1,
+                "handle_policy_id": "hp",
+                "handle_policy_version": 1,
+                "reinforcement_policy_id": "rp",
+                "reinforcement_policy_version": 1,
+                "members": [],
+                "reinforcements": [],
+                "leaves": [],
+                "infills": [],
+                "handles": [],
+                "relationships": [],
+            }
+        ]
+    }
+
+
+def _ops_optimization() -> dict:
+    return {
+        "bars": {
+            "plan_seed": "seed-1",
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "MARCO-60",
+                    "material": "PVC",
+                    "color": "blanco",
+                    "stock_length_mm": "6000",
+                    "head_trim_mm": "10",
+                    "tail_trim_mm": "10",
+                    "kerf_mm": "5",
+                    "cuts": [
+                        {
+                            "piece_id": "M-01",
+                            "source_kind": "PROFILE",
+                            "workshop_sku": "MARCO-60",
+                            "material": "PVC",
+                            "color": "blanco",
+                            "length_mm": "2000",
+                            "role": "FRAME",
+                            "unit_index": 1,
+                            "sequence": 1,
+                            "angle_left": "90.0",
+                            "angle_right": "45.0",
+                        },
+                        {
+                            "piece_id": "M-02",
+                            "source_kind": "PROFILE",
+                            "workshop_sku": "MARCO-60",
+                            "material": "PVC",
+                            "color": "blanco",
+                            "length_mm": "1500",
+                            "role": "FRAME",
+                            "unit_index": 1,
+                            "sequence": 2,
+                            "angle_left": "45.0",
+                            "angle_right": "90.0",
+                        },
+                    ],
+                    "kerf_total_mm": "15",
+                    "productive_length_mm": "3500",
+                    "process_consumed_mm": "3525",
+                    "remainder_mm": "2455",
+                    "waste_mm": "25",
+                    "yield_pct": "58.33",
+                    "waste_pct": "0.42",
+                }
+            ],
+        }
+    }
+
+
+def test_export_operations_seals_machine_neutral_document(monkeypatch) -> None:
+    org_id, order_id, version_id = uuid4(), uuid4(), uuid4()
+    optimization = _ops_optimization()
+    calls = iter(
+        [
+            {
+                "id": str(order_id),
+                "order_code": "OT-OPS-01",
+                "status": "IN_PROGRESS",
+                "payload_json": {"optimization": optimization, "position_id": "pos-1"},
+                "project_version_id": str(version_id),
+            },
+            {"snapshot_json": _ops_snapshot()},
+        ]
+    )
+    monkeypatch.setattr(
+        "production.service.one", lambda *_a, **_k: next(calls)
+    )
+    writes: list[tuple[str, list]] = []
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, params=(): writes.append(
+            (" ".join(sql_text.lower().split()), list(params))
+        ) or [{"id": str(order_id)}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.export_operations(
+            org_id=org_id, order_id=order_id, actor_id=uuid4()
+        )
+    assert sorted(out["files"]) == ["operations.csv", "operations.json"]
+    update = next(p for s, p in writes if "update public.orders" in s)
+    stored = json.loads(update[0])["operations_export"]
+    assert stored["schema"] == "work_order_ops_export_v1"
+    assert stored["machine"]["machine_id"] == "machine-neutral-v1"
+    # head trim + two interior cuts + tail trim = 4 saw operations
+    assert stored["operation_count"] == 4
+    assert stored["counts_by_kind"] == {"SAW_CUT": 4}
+    assert stored["source_fingerprint"]
+    assert any("wo_ops_exported" in s for s, _ in writes)
+
+
+def test_export_operations_requires_optimization(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": "o",
+            "order_code": "OT",
+            "status": "RELEASED",
+            "payload_json": {},
+            "project_version_id": "v",
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="operations_requires_optimization"):
+        service.export_operations(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
 
 
 def test_export_dxf_requires_optimization(monkeypatch) -> None:
@@ -1792,3 +2257,74 @@ def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
     assert out["delivery"]["status"] == "DELIVERED"
     assert replay["delivery"]["status"] == "DELIVERED"
     assert len(events) == 1 and events[0][1][2] == "WO_DELIVERY_DELIVERED"
+
+
+def test_prep_lists_approved_versions_without_orders(monkeypatch) -> None:
+    version_id, project_id = uuid4(), uuid4()
+    seen = {}
+
+    def fake_rows(query, params=()):
+        seen["query"] = query
+        return [
+            {
+                "id": version_id,
+                "project_id": project_id,
+                "revision_code": "REV-A",
+                "project_code": "PRJ-1",
+                "positions": 3,
+            }
+        ]
+
+    monkeypatch.setattr(service, "rows", fake_rows)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    output = service.production_prep(org_id=uuid4())
+    assert "production_allowed" in seen["query"]
+    assert "NOT EXISTS" in seen["query"]
+    assert output["versions"] == [
+        {
+            "version_id": str(version_id),
+            "project_id": str(project_id),
+            "project_code": "PRJ-1",
+            "revision_code": "REV-A",
+            "positions": 3,
+        }
+    ]
+
+
+def test_public_order_surfaces_workflow_flags() -> None:
+    order = {
+        "id": uuid4(),
+        "order_code": "OT-1",
+        "order_type": "WORKSHOP_OT",
+        "status": "COMPLETED",
+        "payload_json": json.dumps(
+            {
+                "position_id": "p1",
+                "packing": {"units": []},
+                "optimization": {
+                    "stock_reservations": [
+                        {"short": "0.00"},
+                        {"short": "12.50"},
+                    ]
+                },
+            }
+        ),
+        "project_version_id": None,
+        "created_at": "2026-09-23T00:00:00Z",
+        "steps_total": 5,
+        "steps_done": 5,
+        "next_step_code": "GLAZE",
+        "has_dispatch_note": False,
+    }
+    output = service._public_order(order)
+    assert output["next_step"] == {"code": "GLAZE", "label": service._STEP_LABELS["GLAZE"]}
+    assert output["dispatch_ready"] is True
+    assert output["shortage"] == 1
+
+    order["has_dispatch_note"] = True
+    output = service._public_order(order)
+    assert output["dispatch_ready"] is False
+
+    order["payload_json"] = json.dumps({"prep": {"shortages": 2}})
+    output = service._public_order(order)
+    assert output["shortage"] == 2

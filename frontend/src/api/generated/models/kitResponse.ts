@@ -6,10 +6,21 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogHardwareComponent } from "./catalogHardwareComponent";
+import type { DataProvenanceEnum } from "./dataProvenanceEnum";
 import type { KitOpeningTypeEnum } from "./kitOpeningTypeEnum";
 import type { RailTypeEnum } from "./railTypeEnum";
 
+/**
+ * Read-only provenance/review state — written only by import jobs and
+ * the technical-review endpoint, never by catalog CRUD.
+ */
 export interface KitResponse {
+  readonly data_provenance: DataProvenanceEnum;
+  /** @nullable */
+  readonly technical_reviewed_at: string | null;
+  /** @nullable */
+  readonly technical_reviewed_by: string | null;
+  readonly review_pending: boolean;
   /** @nullable */
   system_id: string | null;
   /** @maxLength 100 */

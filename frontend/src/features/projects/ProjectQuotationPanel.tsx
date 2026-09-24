@@ -6,6 +6,7 @@ import {
   documentaryFreezeRevisionA,
   documentaryPrepareInputs,
   documentarySaveInputs,
+  productionRelease,
   projectQuoteLinkCreate,
   projectsStartSuccessor,
   projectsResetPricing,
@@ -28,10 +29,12 @@ import type {
   WorkshopGlassTarget,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
 import {
   addDecimal,
   compareDecimal,
   formatDecimal,
+  midpointDecimal,
   parseDecimal,
   subtractDecimal,
 } from "./decimal";
@@ -77,6 +80,7 @@ const EDGE_KEYS = {
 const OBLIGATION_KINDS = [
   "SEALING",
   "FASTENING",
+  "DRAINAGE",
   "INSTALLATION_ACCESSORY",
   "OTHER_DECLARED",
 ] as const;
@@ -84,6 +88,7 @@ const OBLIGATION_KINDS = [
 const OBLIGATION_KIND_KEYS: Record<(typeof OBLIGATION_KINDS)[number], TranslationKey> = {
   SEALING: "quotation.kindSealing",
   FASTENING: "quotation.kindFastening",
+  DRAINAGE: "quotation.kindDrainage",
   INSTALLATION_ACCESSORY: "quotation.kindInstallation",
   OTHER_DECLARED: "quotation.kindOther",
 };
@@ -319,16 +324,66 @@ function selectedPolicy(
   );
 }
 
+function annotationKey(bayId: string, leafId: string | null | undefined): string {
+  return `${bayId}|${leafId ?? ""}`;
+}
+
+/** Advisory defaults ride a separate channel so the backend never fabricates
+ * stored authority. The emit form prefills them as editable values — only what
+ * the estimator saves becomes data. Stored rows win per-field. */
+function mergePreparationSuggestions(
+  position: DocumentaryPreparationResponse["positions"][number],
+): DocumentaryPreparationResponse["positions"][number] {
+  const pending = new Map(
+    (position.workshop_suggestions ?? []).map((suggestion) => [
+      annotationKey(suggestion.bay_id, suggestion.leaf_id),
+      suggestion,
+    ]),
+  );
+  const annotations = position.workshop_annotations.map((row) => {
+    const key = annotationKey(row.bay_id, row.leaf_id);
+    const suggestion = pending.get(key);
+    if (!suggestion) return row;
+    pending.delete(key);
+    return {
+      ...row,
+      bottom_drain_holes_mm: row.bottom_drain_holes_mm ?? suggestion.bottom_drain_holes_mm,
+      closing_points_perimeter_mm:
+        row.closing_points_perimeter_mm ?? suggestion.closing_points_perimeter_mm,
+      continuous_width_mm: row.continuous_width_mm ?? suggestion.continuous_width_mm,
+      finish_class: row.finish_class ?? suggestion.finish_class,
+      has_coupler: row.has_coupler ?? suggestion.has_coupler,
+    };
+  });
+  const storedPolishing = new Set(
+    position.glass_polishing.map((row) => annotationKey(row.bay_id, row.leaf_id)),
+  );
+  return {
+    ...position,
+    workshop_annotations: [...annotations, ...pending.values()],
+    glass_polishing: [
+      ...position.glass_polishing,
+      ...(position.polishing_suggestions ?? []).filter(
+        (suggestion) => !storedPolishing.has(annotationKey(suggestion.bay_id, suggestion.leaf_id)),
+      ),
+    ],
+  };
+}
+
 export function ProjectQuotationPanel({
   project,
   orgId,
   canWrite,
+  canRelease = false,
   onChanged,
   onDirtyChange,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
+  /** OWNER/WORKSHOP_MANAGER — releasing a sealed version creates workshop
+   * orders, a warehouse-side authority estimators don't hold. */
+  canRelease?: boolean;
   onChanged(): Promise<unknown>;
   onDirtyChange?(dirty: boolean): void;
 }): JSX.Element {
@@ -357,7 +412,12 @@ export function ProjectQuotationPanel({
     try {
       const response = await documentaryPrepareInputs(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) setPreparation(response.data);
+      if (generation.current === current) {
+        setPreparation({
+          ...response.data,
+          positions: response.data.positions.map(mergePreparationSuggestions),
+        });
+      }
     } catch {
       if (generation.current === current) setMessage(t("quotation.loadError"));
     } finally {
@@ -548,7 +608,11 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
-      setMessage(`${t("quotation.emitted")} ${frozen.data.revision_code}`);
+      setMessage(
+        `${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}${
+          frozen.data.production_allowed ? "" : ` · ${t("quotation.quoteOnlyNotice")}`
+        }`,
+      );
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
@@ -609,6 +673,28 @@ export function ProjectQuotationPanel({
       await onChanged();
     } catch {
       setMessage(t("quotation.conflict"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Liberar a producción — one WORKSHOP_OT per sealed position. The
+   * endpoint is idempotent: re-pressing returns the existing orders, so the
+   * action can never duplicate work on the floor. */
+  async function release(versionId: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionRelease(versionId, requestOptions);
+      if (response.status !== 200 && response.status !== 201) {
+        throw new ApiError(response.status, response.data);
+      }
+      setMessage(
+        `${t("quotation.released")} ${String(response.data.released)} ${t("production.orders")}`,
+      );
+      await onChanged();
+    } catch {
+      setMessage(t("quotation.releaseError"));
     } finally {
       setBusy(false);
     }
@@ -695,7 +781,7 @@ export function ProjectQuotationPanel({
         <div>
           <h2>{t("quotation.title")}</h2>
           <p>
-            {t("quotation.current")}: <strong>{project.current_revision}</strong>
+            {t("quotation.current")}: <strong>{formatRevision(project.current_revision)}</strong>
           </p>
         </div>
         {canEmit && !preparation && (
@@ -811,6 +897,13 @@ export function ProjectQuotationPanel({
                       boundMax !== null &&
                       (compareDecimal(height, boundMin) < 0 ||
                         compareDecimal(height, boundMax) > 0);
+                    // The policy's permitted span midpoint is the sane
+                    // default — visible, editable, still the estimator's
+                    // call; true authority stays the sealed intent.
+                    const defaultHeight =
+                      boundMin !== null && boundMax !== null
+                        ? formatDecimal(midpointDecimal(boundMin, boundMax))
+                        : "";
                     return (
                       <div className="handle-row" key={intentKey(requirement)}>
                         <div className="handle-leaf">
@@ -831,15 +924,12 @@ export function ProjectQuotationPanel({
                           </label>
                           <input
                             id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                            type="number"
+                            type="text"
                             inputMode="decimal"
-                            min={bounds?.[0]}
-                            max={bounds?.[1]}
-                            step="any"
                             disabled={busy}
                             aria-invalid={outOfBounds || undefined}
                             placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
-                            value={intent?.requested_height_mm ?? ""}
+                            value={intent?.requested_height_mm ?? defaultHeight}
                             onChange={(event) =>
                               updateIntent(index, requirement, {
                                 requested_height_mm: event.target.value,
@@ -920,10 +1010,8 @@ export function ProjectQuotationPanel({
                           <label className="workshop-field">
                             <span>{t("quotation.continuousWidth")}</span>
                             <input
-                              type="number"
+                              type="text"
                               inputMode="decimal"
-                              step="any"
-                              min="0"
                               disabled={busy}
                               value={annotation?.continuous_width_mm ?? ""}
                               onChange={(event) =>
@@ -1006,10 +1094,8 @@ export function ProjectQuotationPanel({
                               <label className="workshop-field">
                                 <span>{t("quotation.requiredIx")}</span>
                                 <input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
-                                  step="any"
-                                  min="0"
                                   disabled={busy}
                                   value={structural?.required_ix_cm4 ?? ""}
                                   onChange={(event) =>
@@ -1276,7 +1362,7 @@ export function ProjectQuotationPanel({
           <ul>
             {project.versions?.map((version) => (
               <li key={version.id}>
-                <strong>{version.revision_code}</strong>
+                <strong>{formatRevision(version.revision_code)}</strong>
                 <time dateTime={version.emitted_at}>
                   {new Date(version.emitted_at).toLocaleString("es-CL")}
                 </time>
@@ -1287,9 +1373,30 @@ export function ProjectQuotationPanel({
                       : "quotation.designEvidence",
                   )}
                 </span>
+                <span>
+                  {t(
+                    version.production_allowed
+                      ? "quotation.productionReady"
+                      : "quotation.quoteOnlyChip",
+                  )}
+                </span>
                 <button disabled={busy} onClick={() => void openEvidence(version.id)}>
                   {t("quotation.openEvidence")}
                 </button>
+                {canRelease ? (
+                  version.production_allowed ? (
+                    <button
+                      type="button"
+                      className="primary-action"
+                      disabled={busy}
+                      onClick={() => void release(version.id)}
+                    >
+                      {t("quotation.release")}
+                    </button>
+                  ) : (
+                    <span className="handle-pending">{t("quotation.releaseBlocked")}</span>
+                  )
+                ) : null}
               </li>
             ))}
           </ul>

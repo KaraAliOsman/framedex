@@ -13,8 +13,8 @@
   width: min(560px, calc(100vw - 32px));
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 6px;
-  box-shadow: 0 12px 32px rgb(22 28 31 / 0.18);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
   overflow: hidden;
 }
 
@@ -41,7 +41,7 @@
   font-size: 11px;
   color: var(--theme-text-muted);
   border: 1px solid var(--theme-border-subtle);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 2px 6px;
   white-space: nowrap;
 }
@@ -66,7 +66,7 @@
   font: inherit;
   font-size: 14px;
   padding: 8px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--theme-text-primary);
   cursor: pointer;
 }

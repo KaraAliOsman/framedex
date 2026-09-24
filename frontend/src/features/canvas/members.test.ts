@@ -76,3 +76,23 @@ it("returns the neutral bead convention for unknown thicknesses", () => {
   expect(members.beadFor("999.00")).toBe(18); // convention, not a catalog bead
   expect(members.beadFor("24.00")).toBe(18); // catalog match still wins
 });
+
+it("carries a declared catalog section through to the member spec", () => {
+  const section = {
+    source: "POLYGON" as const,
+    polygon: [
+      { x_mm: "0", y_mm: "0" },
+      { x_mm: "60", y_mm: "0" },
+      { x_mm: "60", y_mm: "60" },
+      { x_mm: "0", y_mm: "60" },
+    ],
+    depth_mm: "60.00",
+  };
+  const members = resolveMembers({
+    ...CATALOG,
+    profiles: [{ ...CATALOG.profiles[0]!, section }, ...CATALOG.profiles.slice(1)],
+  });
+  expect(members.frame.section?.source).toBe("POLYGON");
+  expect(members.frame.section?.polygon).toHaveLength(4);
+  expect(members.sash.section).toBeNull();
+});

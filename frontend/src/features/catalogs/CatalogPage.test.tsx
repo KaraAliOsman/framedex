@@ -6,7 +6,13 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/apiMutator";
 import * as client from "../../api/generated/dekopen";
-import type { KitResponse, KitWriteRequest, SystemResponse } from "../../api/generated/models";
+import type {
+  ArticleResponse,
+  ArticleWriteRequest,
+  KitResponse,
+  KitWriteRequest,
+  SystemResponse,
+} from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { CatalogPage } from "./CatalogPage";
 
@@ -27,11 +33,22 @@ vi.mock("../../api/generated/dekopen");
 
 const SYSTEM_ID = "00000000-0000-4000-8000-000000000010";
 const KIT_ID = "00000000-0000-4000-8000-000000000020";
+const ARTICLE_ID = "00000000-0000-4000-8000-000000000030";
 const REVISION = `sha256:${"a".repeat(64)}`;
+const PROVENANCE = {
+  data_provenance: "MANUAL" as const,
+  technical_reviewed_at: null,
+  technical_reviewed_by: null,
+  review_pending: false,
+};
 const SAVED_REVISION = `sha256:${"b".repeat(64)}`;
 
 function ok<T>(data: T) {
   return { status: 200 as const, headers: new Headers(), data };
+}
+
+function created<T>(data: T) {
+  return { status: 201 as const, headers: new Headers(), data };
 }
 
 function system(): SystemResponse {
@@ -65,7 +82,7 @@ function system(): SystemResponse {
     is_demo: true,
     readiness: { quote_ready: true, scope: "WHITE_FIXED_CATALOG", reasons: [] },
     revision: REVISION,
-
+    ...PROVENANCE,
     read_only: true,
   };
 }
@@ -88,15 +105,60 @@ function kitWrite(): KitWriteRequest {
     carriage_capacity_kg: null,
     is_active: true,
     contents: [
-      { sku: "TEST-HINGE", name: "Bisagra de prueba", qty: "2", unit: "UNIT" },
-      { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT" },
+      { sku: "TEST-HINGE", name: "Bisagra de prueba", qty: "2", unit: "UNIT", category: "HINGE" },
+      { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT", category: "OTHER" },
     ],
   };
 }
 
 function kit(overrides: Partial<KitResponse> = {}): KitResponse {
-  return { ...kitWrite(), id: KIT_ID, revision: REVISION, read_only: false, ...overrides };
+  return {
+    ...kitWrite(),
+    id: KIT_ID,
+    revision: REVISION,
+    read_only: false,
+    ...PROVENANCE,
+    ...overrides,
+  };
 }
+
+function articleWrite(): ArticleWriteRequest {
+  return {
+    system_id: SYSTEM_ID,
+    sku: "MARCO-60",
+    name: "Marco de prueba",
+    material: "PVC",
+    role: "FRAME",
+    face_width_mm: "60.00",
+    commercial_length_mm: "6000.00",
+    welding_loss_mm: "3.00",
+    reinforcement_sku: null,
+    reinforcement_gap_mm: null,
+    weight_kg_m: null,
+    steel_weight_kg_m: null,
+    section: null,
+  };
+}
+
+function article(overrides: Partial<ArticleResponse> = {}): ArticleResponse {
+  return {
+    ...articleWrite(),
+    id: ARTICLE_ID,
+    revision: REVISION,
+    read_only: false,
+    section_revision: 1,
+    section_revised_at: null,
+    section_revised_by: null,
+    ...PROVENANCE,
+    ...overrides,
+  };
+}
+
+const SECTION_VERTEX = [
+  { x: "0", y: "0" },
+  { x: "60", y: "0" },
+  { x: "0", y: "60" },
+];
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -173,6 +235,31 @@ async function openKit(name = kit().name, readOnly = false) {
       name: `${t(readOnly ? "catalog.view" : "catalog.edit")} ${name}`,
     }),
   );
+}
+
+async function openArticle(name = article().name, readOnly = false) {
+  fireEvent.click(button("catalog.articles"));
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: `${t(readOnly ? "catalog.view" : "catalog.edit")} ${name}`,
+    }),
+  );
+}
+
+function sectionField(kind: "x_mm" | "y_mm", index: number) {
+  return screen.getByRole("textbox", {
+    name: `${t(`catalog.field.${kind}`)} · ${t("catalog.section.vertex")} ${index}`,
+  });
+}
+
+async function declareSection() {
+  fireEvent.click(screen.getByRole("checkbox", { name: t("catalog.section.declare") }));
+  for (const [index, vertex] of SECTION_VERTEX.entries()) {
+    fireEvent.click(screen.getByRole("button", { name: t("catalog.section.addVertex") }));
+    fireEvent.change(sectionField("x_mm", index + 1), { target: { value: vertex.x } });
+    fireEvent.change(sectionField("y_mm", index + 1), { target: { value: vertex.y } });
+  }
+  change("catalog.field.depth_mm", "60");
 }
 
 beforeEach(() => {
@@ -317,12 +404,14 @@ describe("CatalogPage typed kit editor", () => {
           name: "Bisagra de prueba",
           qty: "2.5000",
           unit: "UNIT",
+          category: "HINGE",
         },
         {
           sku: "TEST-GASKET",
           name: "Junta de prueba",
           qty: "0.1000000000000000001",
           unit: "M",
+          category: "OTHER",
         },
       ],
     };
@@ -331,6 +420,7 @@ describe("CatalogPage typed kit editor", () => {
       id: KIT_ID,
       revision: SAVED_REVISION,
       read_only: false,
+      ...PROVENANCE,
     };
     const pending = deferred<ReturnType<typeof ok<KitResponse>>>();
     vi.mocked(client.catalogKitUpdate).mockReturnValueOnce(pending.promise);
@@ -452,13 +542,15 @@ describe("CatalogPage typed kit editor", () => {
             name: "Bisagra de prueba",
             qty: "3.1250",
             unit: "UNIT",
+            category: "HINGE",
           },
-          { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT" },
+          { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT", category: "OTHER" },
           {
             sku: "TEST-ADDED",
             name: "Componente pendiente",
             qty: "0.5000",
             unit: "M",
+            category: "OTHER",
           },
         ],
       };
@@ -468,6 +560,7 @@ describe("CatalogPage typed kit editor", () => {
           id: KIT_ID,
           revision: SAVED_REVISION,
           read_only: false,
+          ...PROVENANCE,
         }),
       );
 
@@ -508,5 +601,86 @@ describe("Catalog creation recovery", () => {
     expect(button("catalog.save")).toBeDisabled();
     fireEvent.submit(editorForm());
     expect(client.catalogKitCreate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("CatalogPage article section editor", () => {
+  it("authors a declared section on create — polygon, depth and axes reach the request", async () => {
+    vi.mocked(client.catalogArticleCreate).mockResolvedValue(created(article()));
+    await mount();
+    fireEvent.click(button("catalog.articles"));
+    fireEvent.click(button("catalog.create"));
+    for (const [key, value] of Object.entries(articleWrite())) {
+      if (value !== null && key !== "section" && key !== "system_id") {
+        change(`catalog.field.${key}` as TranslationKey, String(value));
+      }
+    }
+    await declareSection();
+
+    fireEvent.submit(editorForm());
+
+    await waitFor(() => expect(client.catalogArticleCreate).toHaveBeenCalled());
+    const body = vi.mocked(client.catalogArticleCreate).mock.calls.at(0)![0];
+    expect(body.section).toEqual({
+      source: "POLYGON",
+      polygon: SECTION_VERTEX.map(({ x, y }) => ({ x_mm: x, y_mm: y })),
+      depth_mm: "60",
+      orientation: "EXTERIOR_DOWN",
+      local_origin: "TOP_LEFT",
+      axes: [],
+      drawing_ref: null,
+    });
+  });
+
+  it("clears a stored section to null when the user undeclares it", async () => {
+    const declared = article({
+      section: {
+        source: "POLYGON",
+        polygon: SECTION_VERTEX.map(({ x, y }) => ({ x_mm: x, y_mm: y })),
+        depth_mm: "60",
+        orientation: "EXTERIOR_DOWN",
+        local_origin: "TOP_LEFT",
+        axes: [],
+        drawing_ref: null,
+      },
+    });
+    vi.mocked(client.catalogArticleList).mockResolvedValue(ok({ items: [declared] }));
+    vi.mocked(client.catalogArticleUpdate).mockResolvedValue(ok(declared));
+    await mount();
+    await openArticle();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: t("catalog.section.declare") }));
+    fireEvent.submit(editorForm());
+
+    await waitFor(() => expect(client.catalogArticleUpdate).toHaveBeenCalled());
+    const body = vi.mocked(client.catalogArticleUpdate).mock.calls.at(0)![1];
+    expect(body?.section).toBeNull();
+  });
+
+  it("refuses an incomplete declared section instead of writing it", async () => {
+    vi.mocked(client.catalogArticleCreate).mockResolvedValue(created(article()));
+    await mount();
+    fireEvent.click(button("catalog.articles"));
+    fireEvent.click(button("catalog.create"));
+    for (const [key, value] of Object.entries(articleWrite())) {
+      if (value !== null && key !== "section" && key !== "system_id") {
+        change(`catalog.field.${key}` as TranslationKey, String(value));
+      }
+    }
+    // Declared but no vertices and no depth — the submit must fail locally.
+    fireEvent.click(screen.getByRole("checkbox", { name: t("catalog.section.declare") }));
+
+    fireEvent.submit(editorForm());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(t("catalog.errorValidation"));
+    expectNoWrites();
+  });
+
+  it("keeps section fields off the other catalog resources", async () => {
+    await mount();
+    await openKit();
+    expect(
+      screen.queryByRole("checkbox", { name: t("catalog.section.declare") }),
+    ).not.toBeInTheDocument();
   });
 });

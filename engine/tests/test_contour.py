@@ -250,7 +250,7 @@ class TestContourEvaluation:
         assert glass.shape is not None and len(glass.shape) == 4
         # pocket = nominal - 2*(face - rebate + clearance) per side
         assert glass.width_mm == D("2296.22")  # trapezoid sloped sides widen the inset
-        assert glass.area_m2 > 0 and glass.weight_kg > 0
+        assert glass.area_m2 > 0 and glass.weight_kg is not None and glass.weight_kg > 0
 
     def test_arch_emits_bent_member_and_incomplete_status(self) -> None:
         ev = evaluate_product(

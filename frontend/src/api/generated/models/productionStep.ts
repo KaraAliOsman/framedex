@@ -18,6 +18,8 @@ export interface ProductionStep {
   /** @nullable */
   work_center_code: string | null;
   /** @nullable */
+  work_center_name: string | null;
+  /** @nullable */
   started_at: string | null;
   /** @nullable */
   finished_at: string | null;

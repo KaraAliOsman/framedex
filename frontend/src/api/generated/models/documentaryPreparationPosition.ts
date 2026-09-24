@@ -38,4 +38,6 @@ export interface DocumentaryPreparationPosition {
   reinforcement_options: DocumentaryPolicyOption[];
   handle_requirements: HandlePolicyRequirements[];
   workshop_targets: WorkshopTargets;
+  workshop_suggestions: WorkshopAnnotation[];
+  polishing_suggestions: GlassPolishing[];
 }

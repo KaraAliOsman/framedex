@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CategoryEnum } from "./categoryEnum";
 
 export interface HardwareComponent {
   sku: string;
@@ -12,4 +13,5 @@ export interface HardwareComponent {
   /** Exact Decimal quantity serialized as a string */
   qty: string;
   unit: string;
+  category?: CategoryEnum;
 }

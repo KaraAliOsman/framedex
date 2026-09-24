@@ -18,6 +18,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import { useShellLeaf } from "../../app/shellLeaf";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
@@ -209,6 +210,9 @@ function PositionWorkspace({
   const [result, setResult] = useState<EngineCalculateResponse | null>(null);
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("1");
+  // The breadcrumb leaf is the estimator's own tag («Dormitorio») — the
+  // shell falls back to «Vano» while the field is blank.
+  useShellLeaf(location.trim() || null);
   // null baseline = nothing persisted yet for this route (copy) → always dirty.
   const [baseline, setBaseline] = useState<{
     design: string;
@@ -487,33 +491,79 @@ function PositionWorkspace({
     setLibraryOpen(false);
     onAssemblyChanged();
   };
-  // Position metadata lives in the right inspector column when no element is
-  // selected: system/materials is edited in context, not as a permanent form.
+  // Overview-level position facts — the editable fields live in the
+  // .position-head strip; this card answers "what is this vano" at a glance.
+  const systemName = systems.data?.find((system) => system.id === inputs.systemId)?.name ?? "—";
   const positionPanel = (
     <section className="assembly-inspector position-panel" aria-label={t("projects.positionData")}>
       <header className="assembly-inspector__header">
         <h4>{t("projects.positionData")}</h4>
       </header>
-      <details className="inspector-section" open>
-        <summary>{t("projects.identification")}</summary>
-        <fieldset disabled={busy}>
-          <label className="assembly-field">
-            <span>{t("projects.location")}</span>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} />
-          </label>
-          <label className="assembly-field">
-            <span>{t("pricing.quantity")}</span>
-            <input
-              inputMode="numeric"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-          </label>
-        </fieldset>
-      </details>
-      <details className="inspector-section" open>
-        <summary>{t("projects.system")}</summary>
-        <fieldset disabled={busy}>
+      <dl className="inspector-summary__list">
+        <div className="inspector-summary__row">
+          <dt>{t("projects.location")}</dt>
+          <dd>{location.trim() || "—"}</dd>
+        </div>
+        <div className="inspector-summary__row">
+          <dt>{t("pricing.quantity")}</dt>
+          <dd>{quantity || "1"}</dd>
+        </div>
+        <div className="inspector-summary__row">
+          <dt>{t("projects.system")}</dt>
+          <dd>{systemName}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+  return (
+    <section className="projects-page position-editor">
+      <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
+      <header className="projects-header">
+        <div>
+          <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>
+          <h1>{location || t("projects.position")}</h1>
+        </div>
+        <span role="status">
+          {dirty
+            ? t("projects.unsaved")
+            : saved === null
+              ? t("projects.draft")
+              : t("projects.savedState")}
+        </span>
+        <button disabled={!canUndo || busy} onClick={() => applyHistory("undo")}>
+          {t("projects.undo")}
+        </button>
+        <button disabled={!canRedo || busy} onClick={() => applyHistory("redo")}>
+          {t("projects.redo")}
+        </button>
+        <button
+          className="primary-action"
+          disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
+          title={!result || assemblyUnsaveable ? t("projects.saveBlocked") : undefined}
+          onClick={() => void save()}
+        >
+          {t("projects.save")}
+        </button>
+        {loaded && (assemblyUnsaveable || result === null) && (
+          <span className="handle-pending">{t("projects.saveBlocked")}</span>
+        )}
+      </header>
+      {message && <p role="status">{message}</p>}
+      <fieldset className="position-head" disabled={busy}>
+        <label className="position-head__field">
+          <span>{t("projects.location")}</span>
+          <input value={location} onChange={(e) => setLocation(e.target.value)} />
+        </label>
+        <label className="position-head__field">
+          <span>{t("pricing.quantity")}</span>
+          <input
+            inputMode="numeric"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+          />
+        </label>
+        <label className="position-head__field position-head__field--wide">
+          <span>{t("projects.system")}</span>
           <select
             className="assembly-select"
             aria-label={t("projects.system")}
@@ -536,39 +586,19 @@ function PositionWorkspace({
                 </option>
               ))}
           </select>
-          {(systems.isError || options.isError) && <p role="alert">{t("projects.catalogError")}</p>}
-          {(systems.isPending || (systemId && options.isPending)) && (
-            <p role="status">{t("projects.loading")}</p>
-          )}
-          <p className="assembly-hint">{t("projects.colorWhite")}</p>
-        </fieldset>
-      </details>
-    </section>
-  );
-  return (
-    <section className="projects-page position-editor">
-      <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
-      <header className="projects-header">
-        <div>
-          <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>
-          <h1>{location || t("projects.position")}</h1>
-        </div>
-        <span role="status">{dirty ? t("projects.unsaved") : t("projects.savedState")}</span>
-        <button disabled={!canUndo || busy} onClick={() => applyHistory("undo")}>
-          {t("projects.undo")}
-        </button>
-        <button disabled={!canRedo || busy} onClick={() => applyHistory("redo")}>
-          {t("projects.redo")}
-        </button>
-        <button
-          className="primary-action"
-          disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
-          onClick={() => void save()}
-        >
-          {t("projects.save")}
-        </button>
-      </header>
-      {message && <p role="status">{message}</p>}
+        </label>
+        {(systems.isError || options.isError) && (
+          <p className="position-head__alert" role="alert">
+            {t("projects.catalogError")}
+          </p>
+        )}
+        {(systems.isPending || (systemId && options.isPending)) && (
+          <p className="position-head__alert" role="status">
+            {t("projects.loading")}
+          </p>
+        )}
+        <p className="position-head__hint">{t("projects.colorWhite")}</p>
+      </fieldset>
       <div className="position-workspace">
         <details
           className="starter-library"
@@ -588,6 +618,7 @@ function PositionWorkspace({
           glassSkus={options.data?.glass_skus ?? []}
           panelSkus={options.data?.panel_skus ?? []}
           options={options.data}
+          optionsReady={options.data !== undefined || options.isError}
           disabled={busy}
           onChanged={onAssemblyChanged}
           onEvaluationChange={onAssemblyEvaluation}

@@ -9,6 +9,7 @@
 /**
  * * `SEALING` - SEALING
  * * `FASTENING` - FASTENING
+ * * `DRAINAGE` - DRAINAGE
  * * `INSTALLATION_ACCESSORY` - INSTALLATION_ACCESSORY
  * * `OTHER_DECLARED` - OTHER_DECLARED
  */
@@ -17,6 +18,7 @@ export type ObligationKindEnum = (typeof ObligationKindEnum)[keyof typeof Obliga
 export const ObligationKindEnum = {
   SEALING: "SEALING",
   FASTENING: "FASTENING",
+  DRAINAGE: "DRAINAGE",
   INSTALLATION_ACCESSORY: "INSTALLATION_ACCESSORY",
   OTHER_DECLARED: "OTHER_DECLARED",
 } as const;

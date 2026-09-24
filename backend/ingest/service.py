@@ -16,7 +16,7 @@ from django.db import transaction
 from authentication.errors import ContractAPIException, contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
-from ingest.extract import extract, kind_for
+from ingest.extract import extract, kind_for, safe_file_name
 from ingest.parser import candidates_from_rows, candidates_from_text
 from jobs import service as jobs_service
 from pricing.repository import rows
@@ -98,6 +98,12 @@ def create_import(
             422,
             "import_file_invalid",
             "El nombre del archivo es demasiado largo o está vacío.",
+        )
+    if not safe_file_name(file_name):
+        raise contract_error(
+            422,
+            "import_file_invalid",
+            "El nombre del archivo contiene caracteres no permitidos.",
         )
     # Fast-fail before the storage write; the authoritative gate re-locks the
     # row inside the atomic block below.
@@ -232,10 +238,11 @@ def extract_for_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict
                 input_payload={
                     "file_name": row["file_name"],
                     "kind": row["kind"],
-                    # Stable document identity only — the provider adapter
-                    # mints a fresh signed URL at wire time, so the audited
-                    # input hash survives a job retry and replays the paid OCR.
-                    "storage_path": row["storage_path"],
+                    # Stable document identity only — the gateway resolves the
+                    # row under the active org and signs its canonical object,
+                    # so the audited input survives a job retry and replays
+                    # the paid OCR instead of minting a new URL.
+                    "source": {"kind": "document_import", "id": str(import_id)},
                 },
             )
             audit_id = vision["audit_id"]

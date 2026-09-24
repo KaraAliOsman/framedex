@@ -490,10 +490,14 @@ def test_extract_vision_fallback_when_no_text(monkeypatch):
     )
     assert seen[0]["capability"] == "vision_ocr"
     assert seen[0]["operation_key"] == f"import:{row['id']}:vision"
-    # Only stable identity enters the audited input — the provider adapter
-    # mints the signed URL at wire time so a job retry replays the paid OCR
-    # instead of colliding on a fresh URL's hash.
-    assert seen[0]["input_payload"]["storage_path"].endswith("foto.png")
+    # Only stable identity enters the audited input — the gateway resolves
+    # the import row under the org and signs its canonical object at wire
+    # time, so a job retry replays the paid OCR instead of minting a new URL.
+    assert seen[0]["input_payload"]["source"] == {
+        "kind": "document_import",
+        "id": str(row["id"]),
+    }
+    assert "storage_path" not in seen[0]["input_payload"]
     assert "document_url" not in seen[0]["input_payload"]
     assert out["candidate_count"] == 1
 
@@ -662,6 +666,39 @@ def test_create_import_rejects_long_filename(monkeypatch):
             content_type="application/pdf",
         )
     assert getattr(caught.value, "contract_code", None) == "import_file_invalid"
+    assert uploads == []
+
+
+def test_create_import_rejects_path_like_filenames(monkeypatch):
+    # The multipart filename lands verbatim in the storage key — traversal or
+    # separators would write the object outside the org-scoped prefix.
+    uploads = []
+
+    class _Storage:
+        def upload_immutable(self, *a):
+            uploads.append(a)
+
+    monkeypatch.setattr(service, "SupabaseDocumentStorage", lambda: _Storage())
+    monkeypatch.setattr(
+        service.projects_service, "editable", lambda *a, **k: {"id": "p"}
+    )
+    for bad_name in (
+        "../escape.pdf",
+        "a/b.pdf",
+        "a\\b.pdf",
+        "lista\t.pdf",
+        "x\n.pdf",
+    ):
+        with pytest.raises(Exception) as caught:
+            service.create_import(
+                org_id=uuid4(),
+                project_id=uuid4(),
+                actor_id=uuid4(),
+                file_name=bad_name,
+                content=b"%PDF",
+                content_type="application/pdf",
+            )
+        assert getattr(caught.value, "contract_code", None) == "import_file_invalid"
     assert uploads == []
 
 

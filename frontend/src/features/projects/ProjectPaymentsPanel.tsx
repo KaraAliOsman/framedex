@@ -25,6 +25,8 @@ import type {
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatDate, formatMoney } from "../money";
+import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
@@ -46,17 +48,15 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PAID: "projects.paymentStatusPaid",
 };
 
-function formatMoney(value: string | null, currency: string): string {
-  if (value === null) return "—";
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: currency === "CLP" ? 0 : 2,
-  }).format(Number(value));
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(value));
+/** Contract errors carry actionable detail (e.g. `sii_caf_exhausted` tells
+ * the operator to load a CAF) — surface it instead of the generic toast. */
+function actionErrorDetail(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    const payload = error.payload as { error?: { detail?: unknown } } | null;
+    const detail = payload?.error?.detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+  }
+  return fallback;
 }
 
 export function ProjectPaymentsPanel({
@@ -64,12 +64,14 @@ export function ProjectPaymentsPanel({
   orgId,
   canWrite,
   canSendEnvio = false,
+  isOwner = false,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
   canSendEnvio?: boolean;
+  isOwner?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -154,8 +156,9 @@ export function ProjectPaymentsPanel({
       setAmount("");
       setReference("");
       setNote("");
-    } catch {
-      if (generation.current === current) setMessage(t("projects.paymentsRecordError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.paymentsRecordError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -171,8 +174,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
-    } catch {
-      if (generation.current === current) setMessage(t("projects.paymentsVoidError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.paymentsVoidError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -214,8 +219,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.invoiceEmitError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.invoiceEmitError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -257,8 +263,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.dteEmitError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -304,8 +312,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.envioSendError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.envioSendError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -354,8 +364,10 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.creditNoteEmitError"));
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.creditNoteEmitError")));
+      }
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -377,8 +389,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await load();
-    } catch {
-      if (generation.current === current) setMessage(t("projects.dteEmitError"));
+    } catch (error) {
+      if (generation.current === current)
+        setMessage(actionErrorDetail(error, t("projects.dteEmitError")));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -618,7 +631,7 @@ export function ProjectPaymentsPanel({
                   <tr key={invoice.id}>
                     <td>{formatDate(invoice.created_at)}</td>
                     <td>{invoice.invoice_code}</td>
-                    <td>{invoice.revision_code ?? "—"}</td>
+                    <td>{formatRevision(invoice.revision_code)}</td>
                     <td>
                       {invoice.credit_note ? (
                         <button
@@ -739,6 +752,7 @@ export function ProjectPaymentsPanel({
         projectId={projectId}
         orgId={orgId}
         canWrite={canWrite}
+        isOwner={isOwner}
         onChanged={load}
         onDirtyChange={setLinksDirty}
       />
