@@ -428,6 +428,9 @@ const messages = {
   "intent.tiltLeft": "Oscilobatiente izquierda",
   "intent.tiltRight": "Oscilobatiente derecha",
   "intent.sliding": "Corredera de dos hojas",
+  "intent.sliding3": "Corredera de tres hojas",
+  "intent.sliding4": "Corredera de cuatro hojas",
+  "intent.slidingLayout": "Corredera (distribución libre)",
   "intent.awning": "Proyectante",
   "intent.door": "Puerta de acceso",
   "intent.offset": "Distancia al eje del poste (mm)",
@@ -1278,6 +1281,48 @@ const messages = {
     "El acero del acoplador en {target} no es fabricable con su holgura.",
   "assembly.issue.couplerHeightMismatch":
     "El acoplador {sku} mide {coupler} mm pero el conjunto mide {module} mm de alto.",
+  "assembly.issue.contourInvalid": "El contorno de {target} no es fabricable",
+  "assembly.issue.contourSplits": "El contorno de {target} no admite divisiones internas por ahora",
+  "assembly.issue.contourOpening":
+    "La apertura {opening} no se fabrica aún sobre contornos — el marco y el vidrio sí se calculan",
+  "assembly.issue.contourPanel":
+    "El panel {sku} no se apoya aún en contornos — el marco y el vidrio sí se calculan",
+  "assembly.issue.memberBending":
+    "El miembro {edge} de {target} necesita curvado (flecha {sagitta_mm} mm) — sin regla de curvado declarada",
+  "assembly.issue.couplerWidthMismatch":
+    "El acoplador horizontal en {target} une módulos de {below_mm} y {above_mm} mm de ancho.",
+  "assembly.issue.couplerModuleUnknown":
+    "La unión {target} referencia un módulo que no existe en el conjunto.",
+  "assembly.issue.couplerEdgeInvalid": "La unión {target} declara caras incompatibles con su tipo.",
+  "assembly.issue.couplerEdgeConflict":
+    "La unión {target} reclama una cara ya ocupada por otra unión.",
+  "assembly.issue.connectionTypeUnsupported":
+    "La unión tipo {kind} en {target} se declara pero aún no es fabricable.",
+  "assembly.issue.assemblyDisconnected":
+    "El conjunto queda en {roots} partes sin unir — cada módulo debe conectarse por una unión.",
+  "assembly.issue.stackedCycle":
+    "{target} se apoya sobre sí mismo en un ciclo — ningún módulo de la pila tiene base.",
+  "assembly.issue.inlineNotAdjacent":
+    "{target} une columnas no consecutivas — una unión en línea sólo cierra columnas vecinas del frente.",
+  "assembly.issue.slidingLayoutInvalid": "La distribución corredera de {target} no es fabricable",
+  "assembly.issue.slidingTracksUnsupported":
+    "La serie no admite {tracks} rieles — el máximo es {rails}",
+  "assembly.reason.slidingLayoutRequired": "una corredera libre necesita su distribución",
+  "assembly.reason.slidingDuplicateSlot": "dos paños llevan el mismo nombre",
+  "assembly.reason.slidingBadTrack": "un paño corrediza declara un riel que no existe",
+  "assembly.reason.slidingFixedTrack": "un paño fijo no puede ocupar un riel",
+  "assembly.reason.slidingFixedAdjacent":
+    "dos paños fijos juntos necesitan un poste — sepáralos con una división",
+  "assembly.reason.slidingSameTrack": "dos corredizas juntas no pueden compartir el riel",
+  "assembly.reason.slidingNoMoving": "la corredera necesita al menos un paño corredizo",
+  "assembly.slidingLayout": "Distribución corredera",
+  "assembly.slidingTracks": "Rieles",
+  "assembly.slidingPanel": "Paño {index}",
+  "assembly.panelMoving": "Corredizo",
+  "assembly.panelFixed": "Fijo",
+  "assembly.panelTrack": "Riel",
+  "assembly.addPanel": "Agregar paño",
+  "assembly.removePanel": "Quitar paño",
   "assembly.module": "Módulo",
   "assembly.coupling": "Unión",
   "assembly.wholeAssembly": "el conjunto",
@@ -1288,6 +1333,9 @@ const messages = {
   "assembly.reason.bowTwoModules": "un arco necesita al menos dos módulos",
   "assembly.reason.oneModule": "el conjunto necesita al menos un módulo",
   "assembly.reason.doorNeedsBay": "una hoja de paso debe estar dentro de un paño",
+  "assembly.reason.contourDegenerate": "un borde del contorno no tiene largo",
+  "assembly.reason.contourSagitta": "la flecha supera la mitad de la cuerda",
+  "assembly.reason.contourSelfIntersect": "los bordes del contorno se cruzan",
   "assembly.reason.generic": "revisa los parámetros del elemento",
   "assembly.addUnitLeft": "Agregar unidad a la izquierda",
   "assembly.addUnitRight": "Agregar unidad a la derecha",
@@ -1307,6 +1355,8 @@ const messages = {
   "assembly.starter.twoSashHint": "Oscilobatiente doble con poste",
   "assembly.starter.sliding2": "Corredera 2 hojas",
   "assembly.starter.sliding2Hint": "Dos hojas correderas",
+  "assembly.starter.sliding3": "Corredera 3 hojas",
+  "assembly.starter.sliding3Hint": "Tres hojas correderas en dos rieles",
   "assembly.starter.awning": "Proyectante",
   "assembly.starter.awningHint": "Hoja abatible superior",
   "assembly.starter.awningBand": "Fijo + proyectante",
@@ -1321,6 +1371,15 @@ const messages = {
   "assembly.starter.bow3Hint": "Tres vanos en ángulo",
   "assembly.starter.bow5": "Bow ×5",
   "assembly.starter.bow5Hint": "Cinco vanos en ángulo",
+  "assembly.starter.trapezoid": "Trapecio",
+  "assembly.starter.trapezoidHint": "Fijo trapezoidal de borde superior inclinado",
+  "assembly.starter.arch": "Arco",
+  "assembly.starter.archHint": "Fijo con dintel en arco de medio punto",
+  "assembly.shape": "Forma",
+  "assembly.shapeOffsetLeft": "Desvío sup. izq.",
+  "assembly.shapeOffsetRight": "Desvío sup. der.",
+  "assembly.shapeRise": "Flecha del arco",
+  "assembly.shapeVertices": "Contorno libre de {count} vértices",
   "assembly.tools": "Herramientas",
   "assembly.toolSelect": "Seleccionar",
   "assembly.toolDivideV": "Dividir en vertical — clic sobre el vano",

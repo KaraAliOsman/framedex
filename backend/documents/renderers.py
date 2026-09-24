@@ -7,7 +7,11 @@ from decimal import Decimal
 from html import escape
 from pathlib import Path
 
+from dekopen_engine.contour import Contour, contour_points
+from dekopen_engine.models import PlanPoint
+from dekopen_engine.product import ElevationMember, elevation_layout
 from documents.repository import DocumentaryError
+from engine_api.adapter import parse_product_model
 
 _PDF_MEDIA = "application/pdf"
 _FONTS_DIR = Path(__file__).resolve().parent / "fonts"
@@ -266,21 +270,32 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             f'{_pt(mx)},{_pt(iy + ih)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
-    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L"):
-        leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}[str(opening)]
-        leaf_w = iw / leaf_count
-        for index in range(leaf_count):
+    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L", "SLIDING"):
+        layout = node.get("sliding_layout")
+        layout_panels = (
+            layout.get("panels")
+            if isinstance(layout, dict) and isinstance(layout.get("panels"), list)
+            and layout["panels"] else None
+        )
+        if layout_panels is None:
+            leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}.get(
+                str(opening), 2
+            )
+            layout_panels = [{"kind": "MOVING"} for _ in range(leaf_count)]
+        leaf_w = iw / len(layout_panels)
+        for index, panel in enumerate(layout_panels):
             lx = ix + leaf_w * index
             out.append(
                 f'<rect x="{_pt(lx)}" y="{_pt(iy)}" width="{_pt(leaf_w)}" '
                 f'height="{_pt(ih)}" fill="none" stroke="#075F5A" '
                 f'stroke-width="{stroke}"/>'
             )
-            out.append(
-                f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
-                f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
-                f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
-            )
+            if not isinstance(panel, dict) or panel.get("kind") == "MOVING":
+                out.append(
+                    f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
+                    f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
+                    f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
+                )
     elif opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         out.append(
             f'<line x1="{_pt(ix)}" y1="{_pt(iy + ih)}" x2="{_pt(ix + iw)}" '
@@ -293,6 +308,46 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
 
 
+def _contour_svg_path(
+    contour_payload: object,
+) -> tuple[str, Decimal, Decimal, Decimal, Decimal]:
+    """Sampled SVG `d` for a stored module contour, plus its sampled extrema.
+
+    The boundary comes from the engine's own sampler (vertices exact, arcs
+    chord-sampled), so issued documents render the same shape the geometry
+    evaluated — never a bounding-box stand-in. Returns (path_d, top, bottom,
+    left, right) — the sampled bounds in module-local coordinates. An arc
+    can overshoot the vertex box on any side, so the caller must bound the
+    viewBox from these extrema, not the nominal dims."""
+    raw = _object(contour_payload, "invalid_frozen_parametric_tree")
+    vertices = [
+        PlanPoint(
+            x_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("x_mm")),
+            y_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("y_mm")),
+        )
+        for point in _array(raw.get("vertices"), "invalid_frozen_parametric_tree")
+    ]
+    bulges = [
+        None if bulge is None else _num(bulge)
+        for bulge in _array(raw.get("bulges"), "invalid_frozen_parametric_tree")
+    ]
+    try:
+        points = contour_points(Contour(vertices=vertices, bulges=bulges))
+    except ValueError as error:
+        raise DocumentaryError("svg_dimension_invalid") from error
+    if not points:
+        raise DocumentaryError("svg_dimension_invalid")
+    top = max(point.y_mm for point in points)
+    bottom = min(point.y_mm for point in points)
+    left = min(point.x_mm for point in points)
+    right = max(point.x_mm for point in points)
+    commands = [
+        f"{'M' if index == 0 else 'L'}{_pt(point.x_mm)},{_pt(top - point.y_mm)}"
+        for index, point in enumerate(points)
+    ]
+    return " ".join(commands) + " Z", top, bottom, left, right
+
+
 def _position_svg(position: dict[str, object]) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
     marker = f"arrow-{_value(position.get('position_index'))}"
@@ -302,54 +357,106 @@ def _position_svg(position: dict[str, object]) -> str:
         'stroke-width="1"/></marker></defs>'
     ]
     if tree.get("version") == "product-v2":
-        # Assemblies draw every module's front view side by side; couplings
-        # become an orange joint line with the plan deflection annotated.
         assembly = _object(tree.get("assembly"), "invalid_frozen_parametric_tree")
         modules = [
             _object(module, "invalid_frozen_parametric_tree")
             for module in _array(assembly.get("modules"), "invalid_frozen_parametric_tree")
         ]
-        couplings = [
-            _object(coupling, "invalid_frozen_parametric_tree")
-            for coupling in _array(
-                assembly.get("couplings", []), "invalid_frozen_parametric_tree"
-            )
-        ]
-        width = Decimal("0")
-        height = Decimal("0")
-        for index, module in enumerate(modules):
-            module_width = _num(module.get("width_mm"))
-            module_height = _num(module.get("height_mm"))
-            if module_width <= 0 or module_height <= 0:
+        # The front elevation comes from the engine's layout: front columns
+        # advance left→right, STACKED members sit above their column root,
+        # and joints are typed (INLINE seams vertical, STACKED contacts
+        # horizontal) — never the side-by-side declaration order.
+        try:
+            layout = elevation_layout(parse_product_model(tree).assembly)
+        except (ValueError, KeyError, DocumentaryError) as error:
+            raise DocumentaryError("invalid_frozen_parametric_tree") from error
+        modules_by_id = {str(module.get("id")): module for module in modules}
+
+        # A contour may overshoot its nominal box (an arch rises above it; a
+        # down-swinging arc dips below). Members on one column share the
+        # column's baseline; every column still shares ONE sill line.
+        draws: list[
+            tuple[dict[str, object], ElevationMember, Decimal, Decimal, Decimal, str | None]
+        ] = []
+        top_edge = Decimal("0")
+        bottom_edge = Decimal("0")
+        left_edge = Decimal("0")
+        right_edge = Decimal("0")
+        for index, member in enumerate(layout.members):
+            module = modules_by_id.get(member.module_id)
+            if module is None:
+                raise DocumentaryError("invalid_frozen_parametric_tree")
+            if member.width_mm <= 0 or member.height_mm <= 0:
                 raise DocumentaryError("svg_dimension_invalid")
-            if index > 0:
-                joint_width = module_width / Decimal("60")
-                elements.append(
-                    f'<line x1="{_pt(width)}" y1="0" x2="{_pt(width)}" '
-                    f'y2="{_pt(module_height)}" stroke="#E56A32" '
-                    f'stroke-width="{_pt(joint_width)}"/>'
-                )
-                if index - 1 < len(couplings):
-                    angle = couplings[index - 1].get("angle_deg")
-                    if angle is not None:
-                        elements.append(
-                            f'<text x="{_pt(width)}" y="{_pt(module_height / Decimal("18"))}" '
-                            f'font-size="{_pt(module_height / Decimal("16"))}" '
-                            f'fill="#E56A32" text-anchor="middle">'
-                            f'{escape(_value(angle))}°</text>'
-                        )
-            _svg_elements(
-                _object(module.get("tree"), "invalid_frozen_parametric_tree"),
-                width, Decimal("0"), module_width, module_height, elements, marker,
+            path_d: str | None = None
+            member_top = member.height_mm
+            member_bottom = Decimal("0")
+            member_left = member.x_mm
+            member_right = member.x_mm + member.width_mm
+            contour_payload = module.get("contour")
+            if contour_payload is not None:
+                path_d, ctop, cbottom, cleft, cright = _contour_svg_path(contour_payload)
+                member_top = ctop
+                member_bottom = cbottom
+                member_left = member.x_mm + cleft
+                member_right = member.x_mm + cright
+            draws.append(
+                (module, member, member.width_mm, member.height_mm, member_top, path_d)
             )
+            top_edge = max(top_edge, member.sill_mm + member_top)
+            bottom_edge = min(bottom_edge, member.sill_mm + member_bottom)
+            left_edge = member_left if index == 0 else min(left_edge, member_left)
+            right_edge = member_right if index == 0 else max(right_edge, member_right)
+        height = top_edge - bottom_edge
+        width = right_edge - left_edge if layout.members else Decimal("0")
+
+        for module, member, module_width, module_height, member_top, path_d in draws:
+            x = member.x_mm - left_edge
+            baseline = top_edge - (member.sill_mm + member_top)
+            if path_d is not None:
+                stroke = module_width / Decimal("150")
+                elements.append(
+                    f'<g transform="translate({_pt(x)} {_pt(baseline)})">'
+                    f'<path d="{path_d}" fill="none" stroke="#252D31" '
+                    f'stroke-width="{_pt(stroke)}"/></g>'
+                )
+            else:
+                _svg_elements(
+                    _object(module.get("tree"), "invalid_frozen_parametric_tree"),
+                    x, baseline, module_width, module_height, elements, marker,
+                )
             elements.append(
-                f'<text x="{_pt(width + module_width / Decimal("30"))}" '
-                f'y="{_pt(module_height - module_height / Decimal("30"))}" '
+                f'<text x="{_pt(x + module_width / Decimal("30"))}" '
+                f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
                 f'font-size="{_pt(module_height / Decimal("18"))}" '
                 f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
-            width += module_width
-            height = max(height, module_height)
+        for joint in layout.column_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_top = top_edge - joint.top_mm
+            seam_bottom = top_edge
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_top)}" x2="{_pt(seam_x)}" '
+                f'y2="{_pt(seam_bottom)}" stroke="#E56A32" '
+                f'stroke-width="{_pt(joint_width)}"/>'
+            )
+            if joint.angle_deg is not None:
+                elements.append(
+                    f'<text x="{_pt(seam_x)}" y="{_pt(seam_bottom - joint.top_mm / Decimal("18"))}" '
+                    f'font-size="{_pt(joint.top_mm / Decimal("16"))}" '
+                    f'fill="#E56A32" text-anchor="middle">'
+                    f'{escape(str(joint.angle_deg))}°</text>'
+                )
+        for joint in layout.stack_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_y = top_edge - joint.y_mm
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_y)}" '
+                f'x2="{_pt(seam_x + joint.width_mm)}" y2="{_pt(seam_y)}" '
+                f'stroke="#E56A32" stroke-width="{_pt(joint_width)}"/>'
+            )
     else:
         width = _num(position.get("width_mm"))
         height = _num(position.get("height_mm"))

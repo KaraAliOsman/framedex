@@ -49,6 +49,9 @@ from dekopen_engine.models import (
     ProfileRole,
     RailType,
     ReinforcementPiece,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
 )
 
@@ -64,10 +67,157 @@ SUPPORTED_OPENING_TYPES = frozenset(
         BayOpeningType.TILT_TURN_LEFT,
         BayOpeningType.TILT_TURN_RIGHT,
         BayOpeningType.SLIDING_2L,
+        BayOpeningType.SLIDING_3L,
+        BayOpeningType.SLIDING_4L,
+        BayOpeningType.SLIDING,
         BayOpeningType.AWNING,
         BayOpeningType.DOOR_ENTRY,
     }
 )
+
+_SLIDING_OPENING_TYPES = frozenset(
+    {
+        BayOpeningType.SLIDING_2L,
+        BayOpeningType.SLIDING_3L,
+        BayOpeningType.SLIDING_4L,
+        BayOpeningType.SLIDING,
+    }
+)
+
+
+class SlidingLayoutError(ValueError):
+    """Domain rejection of a sliding topology — carries the issue code and
+    params the product evaluator surfaces verbatim."""
+
+    def __init__(self, code: str, message: str, params: dict[str, str]) -> None:
+        super().__init__(message)
+        self.code = code
+        self.params = params
+
+
+def _moving_panel(index: int, track: int) -> SlidingPanel:
+    return SlidingPanel(
+        slot=f"P{index + 1}", kind=SlidingPanelKind.MOVING, track=track
+    )
+
+
+# Canonical topologies behind the legacy leaf-count presets: every panel is
+# MOVING and adjacent leaves alternate rails — the physical requirement for
+# consecutive panels to slide past each other on a dual-rail frame.
+_SLIDING_PRESETS: dict[BayOpeningType, SlidingLayout] = {
+    BayOpeningType.SLIDING_2L: SlidingLayout(
+        tracks=2, panels=[_moving_panel(0, 0), _moving_panel(1, 1)]
+    ),
+    BayOpeningType.SLIDING_3L: SlidingLayout(
+        tracks=2,
+        panels=[_moving_panel(0, 0), _moving_panel(1, 1), _moving_panel(2, 0)],
+    ),
+    BayOpeningType.SLIDING_4L: SlidingLayout(
+        tracks=2,
+        panels=[
+            _moving_panel(0, 0),
+            _moving_panel(1, 1),
+            _moving_panel(2, 0),
+            _moving_panel(3, 1),
+        ],
+    ),
+}
+
+
+def resolved_sliding_layout(node: ParametricNode) -> SlidingLayout:
+    """Explicit layout wins; otherwise the SLIDING_*L preset supplies one."""
+    if node.sliding_layout is not None:
+        return node.sliding_layout
+    if node.opening_type is BayOpeningType.SLIDING:
+        raise SlidingLayoutError(
+            "sliding_layout_invalid",
+            f"BAY {node.id} opening SLIDING requires a sliding_layout",
+            {"bay": node.id},
+        )
+    try:
+        return _SLIDING_PRESETS[node.opening_type]
+    except KeyError as error:
+        raise SlidingLayoutError(
+            "sliding_layout_invalid",
+            f"BAY {node.id} is not a sliding opening",
+            {"bay": node.id},
+        ) from error
+
+
+def rail_count(params: SystemParams) -> int:
+    """Rails the frame profile physically provides — explicit catalog value,
+    else derived from the rail type (MONO=1, DUAL=2)."""
+    if params.rail_count is not None:
+        return params.rail_count
+    return 1 if params.rail_type is RailType.MONO else 2
+
+
+def validate_sliding_layout(layout: SlidingLayout, params: SystemParams) -> None:
+    """Structural + track rules of a sliding topology (mandate §12).
+
+    - every panel slot is unique and the unit keeps at least one MOVING leaf
+    - FIXED panels have no rail; MOVING panels ride a track < layout.tracks
+    - adjacent FIXED panels cannot join without a mullion (a split models it)
+    - adjacent MOVING panels on the same rail would collide before they
+      overlap — they must alternate tracks
+    - layout.tracks may not exceed the profile's rail capacity
+    """
+    rails = rail_count(params)
+    if layout.tracks > rails:
+        raise SlidingLayoutError(
+            "sliding_tracks_unsupported",
+            f"layout needs {layout.tracks} tracks but the system provides {rails}",
+            {"tracks": str(layout.tracks), "rails": str(rails)},
+        )
+    slots = [panel.slot for panel in layout.panels]
+    if len(set(slots)) != len(slots):
+        raise SlidingLayoutError(
+            "sliding_layout_invalid", "duplicate panel slot", {"slots": ",".join(slots)}
+        )
+    moving = 0
+    for index, panel in enumerate(layout.panels):
+        if panel.kind is SlidingPanelKind.MOVING:
+            moving += 1
+            if panel.track is None or not (0 <= panel.track < layout.tracks):
+                raise SlidingLayoutError(
+                    "sliding_layout_invalid",
+                    f"panel {panel.slot} rides an undeclared track",
+                    {"slot": panel.slot},
+                )
+        elif panel.track is not None:
+            raise SlidingLayoutError(
+                "sliding_layout_invalid",
+                f"fixed panel {panel.slot} cannot occupy a track",
+                {"slot": panel.slot},
+            )
+        if index == 0:
+            continue
+        previous = layout.panels[index - 1]
+        if (
+            panel.kind is SlidingPanelKind.FIXED
+            and previous.kind is SlidingPanelKind.FIXED
+        ):
+            raise SlidingLayoutError(
+                "sliding_layout_invalid",
+                "adjacent fixed panels need a mullion — model them with a split",
+                {"slot": panel.slot},
+            )
+        if (
+            panel.kind is SlidingPanelKind.MOVING
+            and previous.kind is SlidingPanelKind.MOVING
+            and panel.track == previous.track
+        ):
+            raise SlidingLayoutError(
+                "sliding_layout_invalid",
+                "adjacent moving panels cannot share a track",
+                {"slot": panel.slot},
+            )
+    if moving == 0:
+        raise SlidingLayoutError(
+            "sliding_layout_invalid",
+            "a sliding unit needs at least one moving panel",
+            {},
+        )
 
 _OPERABLE_OPENING_TYPES = frozenset(
     {
@@ -536,7 +686,7 @@ def _append_leaf(
     assembly = f"BAY:{node.id}:LEAF:{leaf_slot}"
     placement_domain: Literal[PlacementDomain.DIRECT, PlacementDomain.SLIDING_LEAF] = (
         PlacementDomain.SLIDING_LEAF
-        if node.opening_type is BayOpeningType.SLIDING_2L
+        if node.opening_type in _SLIDING_OPENING_TYPES
         else PlacementDomain.DIRECT
     )
     accumulator.semantic_leaves.append(
@@ -615,7 +765,7 @@ def _append_leaf(
     )
     width = _pocket_dimension(sash.finished_width_mm, article, params, clearance_mm)
     height = _pocket_dimension(sash.finished_height_mm, article, params, clearance_mm)
-    if node.opening_type is BayOpeningType.SLIDING_2L:
+    if node.opening_type in _SLIDING_OPENING_TYPES:
         width -= params.sliding_glazing_deduction_width_mm
         height -= params.sliding_glazing_deduction_height_mm
     infill_kind: Literal["GLASS", "PANEL"]
@@ -673,7 +823,7 @@ def _append_leaf(
         )
     )
     semantic_infill_id = f"{semantic_leaf_id}/infill"
-    sliding_infill = node.opening_type is BayOpeningType.SLIDING_2L
+    sliding_infill = node.opening_type in _SLIDING_OPENING_TYPES
     direct_infill_rect = None
     if not sliding_infill:
         assert direct_rect is not None
@@ -770,6 +920,169 @@ def _append_leaf(
     accumulator.leaf_weights.append(exact_weight.public_result(node.id, leaf_id))
 
 
+def _append_frame_glazed_pane(
+    accumulator: _GeometryAccumulator,
+    *,
+    node: ParametricNode,
+    topology_path: str,
+    rect: _Rect,
+    assembly: str,
+    semantic_infill_id: str,
+    leaf_slot: str | None,
+    params: SystemParams,
+    clearance_mm: Decimal,
+) -> None:
+    """Glazing sealed directly into the frame region — a FIXED bay or a fixed
+    "O" panel of a sliding unit. The pane extends `rebate_depth_mm` under the
+    member covering each edge (frame rebate, or the neighbouring leaf's
+    meeting stile for sliding slots) minus the glass clearance.
+
+    Sliding "O" slots share the bay id, so the pane takes the slot-scoped
+    leaf identity moving leaves already use — downstream targets
+    (polishing, workshop annotations) can address each fixed pane."""
+    if node.glass_thickness_mm is None or node.glass_spec is None:
+        raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
+    leaf_id = f"{node.id}:{leaf_slot}" if leaf_slot is not None else None
+    width = rect.width_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
+    height = rect.height_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
+    accumulator.glasses.append(
+        build_glass_piece(
+            bay_id=node.id,
+            leaf_id=leaf_id,
+            width_mm=width,
+            height_mm=height,
+            glass_spec=node.glass_spec,
+            fallback_thickness_mm=node.glass_thickness_mm,
+            article_sku=node.glass_article_sku or None,
+        )
+    )
+    accumulator.computation.infills.append(
+        InfillTechnicalFacts(
+            bay_id=node.id,
+            leaf_id=leaf_id,
+            kind="GLASS",
+            thickness_mm=node.glass_thickness_mm,
+            glass_spec=node.glass_spec,
+            width_mm=width,
+            height_mm=height,
+            exact_area_m2=exact_glass_area_m2(width, height),
+            bead_supported=node.glass_thickness_mm in params.glazing_bead_rules,
+        )
+    )
+    infill_rect = _Rect(
+        rect.x_mm - params.rebate_depth_mm + clearance_mm,
+        rect.y_mm - params.rebate_depth_mm + clearance_mm,
+        width,
+        height,
+    )
+    accumulator.semantic_infills.append(
+        SemanticInfillTraceV1(
+            semantic_infill_id=semantic_infill_id,
+            topology_path=topology_path,
+            assembly=assembly,
+            bay_id=node.id,
+            leaf_id=leaf_id,
+            leaf_slot=leaf_slot,
+            kind="GLASS",
+            technical_sku=node.glass_article_sku or "",
+            composition=node.glass_spec,
+            width_mm=width,
+            height_mm=height,
+            placement_domain=PlacementDomain.DIRECT,
+            direct_rect=_trace_rect(infill_rect),
+        )
+    )
+    _append_glazing_beads(
+        accumulator,
+        params=params,
+        bay_id=node.id,
+        leaf_id=leaf_id,
+        leaf_slot=leaf_slot,
+        topology_path=topology_path,
+        assembly=assembly,
+        semantic_infill_id=semantic_infill_id,
+        infill_thickness_mm=node.glass_thickness_mm,
+        width_mm=width,
+        height_mm=height,
+    )
+
+
+def _append_sliding(
+    accumulator: _GeometryAccumulator,
+    *,
+    node: ParametricNode,
+    topology_path: str,
+    rect: _Rect,
+    params: SystemParams,
+    clearance_mm: Decimal,
+) -> None:
+    """Sliding unit on an explicit or preset track topology (mandate §12).
+
+    The opening inside the frame is divided into N slots: every finished
+    panel spans `pitch + central_overlap_mm`, so adjacent panels overlap by
+    the system's central overlap. MOVING panels are sliding sash leaves;
+    FIXED panels are glazed straight into their slot.
+    """
+    layout = resolved_sliding_layout(node)
+    validate_sliding_layout(layout, params)
+    article = _article(params, ProfileRole.SASH)
+    count = len(layout.panels)
+    # Equal pitches floored to the canonical 0.01 mm grid; the last slot
+    # absorbs the remainder so the slots tile the frame exactly and every
+    # derived measure stays serializable (a raw n-division can repeat).
+    pitch = (
+        (rect.width_mm - params.central_overlap_mm) / count
+    ).quantize(Decimal("0.01"))
+    pitches = [pitch] * (count - 1) + [
+        rect.width_mm - params.central_overlap_mm - pitch * (count - 1)
+    ]
+    cut_height = rect.height_mm - _TWO * params.pulley_height_mm
+    adjustment = joint_adjustment_per_end(params, article)
+    slot_x = rect.x_mm
+    for index, panel in enumerate(layout.panels):
+        finished_width = pitches[index] + params.central_overlap_mm
+        if panel.kind is SlidingPanelKind.MOVING:
+            leaf_slot = f"L{index + 1}"
+            cut_width = finished_width + params.sliding_end_add_mm
+            sash = SashGeometry(
+                finished_width_mm=cut_width - _TWO * adjustment,
+                finished_height_mm=cut_height - _TWO * adjustment,
+                cut_width_mm=cut_width,
+                cut_height_mm=cut_height,
+            )
+            _append_leaf(
+                accumulator,
+                node=node,
+                leaf_id=f"{node.id}:{leaf_slot}",
+                leaf_slot=leaf_slot,
+                topology_path=topology_path,
+                reference_rect=rect,
+                direct_rect=None,
+                sash=sash,
+                params=params,
+                clearance_mm=clearance_mm,
+            )
+        else:
+            slot_rect = _Rect(
+                slot_x,
+                rect.y_mm,
+                finished_width,
+                rect.height_mm,
+            )
+            _append_frame_glazed_pane(
+                accumulator,
+                node=node,
+                topology_path=topology_path,
+                rect=slot_rect,
+                assembly=f"BAY:{node.id}:SLIDING_FIXED:{panel.slot}",
+                semantic_infill_id=f"{topology_path}/infill/{panel.slot}",
+                leaf_slot=panel.slot,
+                params=params,
+                clearance_mm=clearance_mm,
+            )
+        slot_x += pitches[index]
+
+
 def _append_bay(
     accumulator: _GeometryAccumulator,
     *,
@@ -802,70 +1115,16 @@ def _append_bay(
         )
     )
     if opening is BayOpeningType.FIXED:
-        if node.glass_thickness_mm is None or node.glass_spec is None:
-            raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
-        width = rect.width_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
-        height = rect.height_mm + _TWO * params.rebate_depth_mm - _TWO * clearance_mm
-        accumulator.glasses.append(
-            build_glass_piece(
-                bay_id=node.id,
-                width_mm=width,
-                height_mm=height,
-                glass_spec=node.glass_spec,
-                fallback_thickness_mm=node.glass_thickness_mm,
-                article_sku=node.glass_article_sku or None,
-            )
-        )
-        accumulator.computation.infills.append(
-            InfillTechnicalFacts(
-                bay_id=node.id,
-                leaf_id=None,
-                kind="GLASS",
-                thickness_mm=node.glass_thickness_mm,
-                glass_spec=node.glass_spec,
-                width_mm=width,
-                height_mm=height,
-                exact_area_m2=exact_glass_area_m2(width, height),
-                bead_supported=node.glass_thickness_mm in params.glazing_bead_rules,
-            )
-        )
-        assembly = f"BAY:{node.id}:FIXED"
-        semantic_infill_id = f"{topology_path}/infill"
-        infill_rect = _Rect(
-            rect.x_mm - params.rebate_depth_mm + clearance_mm,
-            rect.y_mm - params.rebate_depth_mm + clearance_mm,
-            width,
-            height,
-        )
-        accumulator.semantic_infills.append(
-            SemanticInfillTraceV1(
-                semantic_infill_id=semantic_infill_id,
-                topology_path=topology_path,
-                assembly=assembly,
-                bay_id=node.id,
-                leaf_id=None,
-                leaf_slot=None,
-                kind="GLASS",
-                technical_sku=node.glass_article_sku or "",
-                composition=node.glass_spec,
-                width_mm=width,
-                height_mm=height,
-                placement_domain=PlacementDomain.DIRECT,
-                direct_rect=_trace_rect(infill_rect),
-            )
-        )
-        _append_glazing_beads(
+        _append_frame_glazed_pane(
             accumulator,
-            params=params,
-            bay_id=node.id,
-            leaf_id=None,
-            leaf_slot=None,
+            node=node,
             topology_path=topology_path,
-            assembly=assembly,
-            semantic_infill_id=semantic_infill_id,
-            infill_thickness_mm=node.glass_thickness_mm,
-            width_mm=width,
-            height_mm=height,
+            rect=rect,
+            assembly=f"BAY:{node.id}:FIXED",
+            semantic_infill_id=f"{topology_path}/infill",
+            leaf_slot=None,
+            params=params,
+            clearance_mm=clearance_mm,
         )
         return
     article = _article(params, ProfileRole.SASH)
@@ -889,31 +1148,15 @@ def _append_bay(
             params=params,
             clearance_mm=clearance_mm,
         )
-    elif opening is BayOpeningType.SLIDING_2L:
-        if params.rail_type is not RailType.DUAL:
-            raise NotImplementedError("G10 monorail geometry is deferred to SHOT-24")
-        cut_width = (rect.width_mm + params.central_overlap_mm) / _TWO + params.sliding_end_add_mm
-        cut_height = rect.height_mm - _TWO * params.pulley_height_mm
-        adjustment = joint_adjustment_per_end(params, article)
-        sash = SashGeometry(
-            cut_width - _TWO * adjustment,
-            cut_height - _TWO * adjustment,
-            cut_width,
-            cut_height,
+    elif opening in _SLIDING_OPENING_TYPES:
+        _append_sliding(
+            accumulator,
+            node=node,
+            topology_path=topology_path,
+            rect=rect,
+            params=params,
+            clearance_mm=clearance_mm,
         )
-        for suffix in ("L1", "L2"):
-            _append_leaf(
-                accumulator,
-                node=node,
-                leaf_id=f"{node.id}:{suffix}",
-                leaf_slot=suffix,
-                topology_path=topology_path,
-                reference_rect=rect,
-                direct_rect=None,
-                sash=sash,
-                params=params,
-                clearance_mm=clearance_mm,
-            )
 
 
 def _append_door(

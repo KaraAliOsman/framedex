@@ -16,9 +16,19 @@ from dekopen_engine import (
     ProductEvaluation,
     ProductModel,
     ProductModule,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
     calculate_geometry,
     evaluate_product,
+)
+from dekopen_engine.contour import Contour
+from dekopen_engine.models import PlanPoint
+from dekopen_engine.product import (
+    ConnectionKind,
+    EdgeSide,
+    elevation_envelope as elevation_envelope,
 )
 
 
@@ -45,6 +55,7 @@ _NODE_FIELDS = {
     "panel_article_sku",
     "hardware_set_sku",
     "handle_height_mm",
+    "sliding_layout",
 }
 _DECIMAL_NODE_FIELDS = {
     "width_mm",
@@ -102,6 +113,9 @@ def parse_parametric_node(payload: object) -> ParametricNode:
                 raise InvalidEngineRequest(f"{field_name} must be a string")
             values[field_name] = raw[field_name]
 
+    if "sliding_layout" in raw and raw["sliding_layout"] is not None:
+        values["sliding_layout"] = _parse_sliding_layout(raw["sliding_layout"])
+
     children = raw.get("children", [])
     if not isinstance(children, list):
         raise InvalidEngineRequest("children must be an array")
@@ -110,6 +124,86 @@ def parse_parametric_node(payload: object) -> ParametricNode:
         return ParametricNode(**values)
     except ValueError as error:
         raise InvalidEngineRequest("Invalid parametric_tree") from error
+
+
+def _parse_sliding_layout(payload: object) -> SlidingLayout:
+    """Deserialize a node's declared sliding topology: rail count plus the
+    ordered panels with their kind/track."""
+    raw = _require_dict(payload, "sliding_layout")
+    unexpected = set(raw) - {"tracks", "panels"}
+    if unexpected:
+        raise InvalidEngineRequest(
+            f"sliding_layout contains unsupported fields: {sorted(unexpected)}"
+        )
+    if not isinstance(raw.get("tracks"), int) or isinstance(raw.get("tracks"), bool):
+        raise InvalidEngineRequest("sliding_layout.tracks must be an integer")
+    panels = raw.get("panels")
+    if not isinstance(panels, list) or not panels:
+        raise InvalidEngineRequest("sliding_layout.panels must be a non-empty array")
+    parsed_panels: list[SlidingPanel] = []
+    for index, panel in enumerate(panels):
+        panel_raw = _require_dict(panel, f"sliding_layout.panels[{index}]")
+        unexpected_panel = set(panel_raw) - {"slot", "kind", "track"}
+        if unexpected_panel:
+            raise InvalidEngineRequest(
+                "sliding_layout.panels contains unsupported fields: "
+                f"{sorted(unexpected_panel)}"
+            )
+        if not isinstance(panel_raw.get("slot"), str):
+            raise InvalidEngineRequest("sliding_layout.panels[].slot must be a string")
+        try:
+            kind = SlidingPanelKind(cast(str, panel_raw.get("kind")))
+        except ValueError as error:
+            raise InvalidEngineRequest(
+                "sliding_layout.panels[].kind must be MOVING or FIXED"
+            ) from error
+        track = panel_raw.get("track")
+        if track is not None and (
+            not isinstance(track, int) or isinstance(track, bool)
+        ):
+            raise InvalidEngineRequest("sliding_layout.panels[].track must be an integer or null")
+        parsed_panels.append(
+            SlidingPanel(slot=panel_raw["slot"], kind=kind, track=track)
+        )
+    return SlidingLayout(tracks=raw["tracks"], panels=parsed_panels)
+
+
+def parse_contour(payload: object) -> Contour | None:
+    """Deserialize a module contour: vertices + one signed sagitta per edge."""
+    if payload is None:
+        return None
+    raw = _require_dict(payload, "module.contour")
+    unexpected = set(raw) - {"vertices", "bulges"}
+    if unexpected:
+        raise InvalidEngineRequest(
+            f"module.contour contains unsupported fields: {sorted(unexpected)}"
+        )
+    raw_vertices = raw.get("vertices")
+    raw_bulges = raw.get("bulges")
+    if not isinstance(raw_vertices, list) or not raw_vertices:
+        raise InvalidEngineRequest("contour.vertices must be a non-empty array")
+    if not isinstance(raw_bulges, list) or len(raw_bulges) != len(raw_vertices):
+        raise InvalidEngineRequest("contour.bulges must match vertices one per edge")
+    vertices: list[PlanPoint] = []
+    for point in raw_vertices:
+        vertex = _require_dict(point, "contour.vertices[]")
+        unexpected = set(vertex) - {"x_mm", "y_mm"}
+        if unexpected:
+            raise InvalidEngineRequest("contour vertices carry only x_mm/y_mm")
+        vertices.append(
+            PlanPoint(
+                x_mm=_decimal_string(vertex.get("x_mm"), "contour x_mm"),
+                y_mm=_decimal_string(vertex.get("y_mm"), "contour y_mm"),
+            )
+        )
+    bulges: list[Decimal | None] = [
+        None if bulge is None else _decimal_string(bulge, "contour bulge")
+        for bulge in raw_bulges
+    ]
+    try:
+        return Contour(vertices=vertices, bulges=bulges)
+    except ValueError as error:
+        raise InvalidEngineRequest("Invalid module contour") from error
 
 
 def normalized_root_from_api(
@@ -152,8 +246,15 @@ def calculate_from_api(
 
 _PRODUCT_FIELDS = {"version", "assembly"}
 _ASSEMBLY_FIELDS = {"modules", "couplings"}
-_MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree"}
-_COUPLING_FIELDS = {"id", "angle_deg", "coupler_profile_sku"}
+_MODULE_FIELDS = {"id", "width_mm", "height_mm", "tree", "contour"}
+_COUPLING_FIELDS = {
+    "id",
+    "angle_deg",
+    "coupler_profile_sku",
+    "kind",
+    "modules",
+    "edges",
+}
 
 
 def _require_dict(payload: object, field_name: str) -> dict[str, object]:
@@ -210,13 +311,33 @@ def parse_product_model(payload: object) -> ProductModel:
         if module_id in seen_ids:
             raise InvalidEngineRequest("module ids must be unique")
         seen_ids.add(module_id)
+        width_mm = _decimal_string(module.get("width_mm"), "module.width_mm")
+        height_mm = _decimal_string(
+            module.get("height_mm"), "module.height_mm"
+        )
+        contour = parse_contour(module.get("contour"))
+        if contour is not None:
+            xs = [vertex.x_mm for vertex in contour.vertices]
+            ys = [vertex.y_mm for vertex in contour.vertices]
+            # The contour is module-local: its vertex bounding box IS the
+            # nominal footprint (arc apexes may overshoot it). A mismatched
+            # or translated bbox would conflict with plan layout and labels.
+            if (
+                min(xs) != Decimal("0")
+                or min(ys) != Decimal("0")
+                or max(xs) - min(xs) != width_mm
+                or max(ys) - min(ys) != height_mm
+            ):
+                raise InvalidEngineRequest(
+                    "contour vertices must be zero-based and bound "
+                    "module.width_mm x module.height_mm"
+                )
         modules.append(
             ProductModule(
                 id=module_id,
-                width_mm=_decimal_string(module.get("width_mm"), "module.width_mm"),
-                height_mm=_decimal_string(
-                    module.get("height_mm"), "module.height_mm"
-                ),
+                width_mm=width_mm,
+                height_mm=height_mm,
+                contour=contour,
                 tree=parse_parametric_node(module.get("tree")),
             )
         )
@@ -241,13 +362,53 @@ def parse_product_model(payload: object) -> ProductModel:
         if coupling_id in seen_coupling_ids:
             raise InvalidEngineRequest("coupling ids must be unique")
         seen_coupling_ids.add(coupling_id)
+        kind_raw = coupling.get("kind")
+        if kind_raw is not None and kind_raw not in ConnectionKind._value2member_map_:
+            raise InvalidEngineRequest(
+                "coupling.kind must be one of "
+                + ", ".join(member.value for member in ConnectionKind)
+            )
+        modules_raw = coupling.get("modules")
+        if modules_raw is not None:
+            if (
+                not isinstance(modules_raw, list)
+                or len(modules_raw) != 2
+                or not all(isinstance(m, str) for m in modules_raw)
+            ):
+                raise InvalidEngineRequest(
+                    "coupling.modules must be an array of two module ids"
+                )
+        edges_raw = coupling.get("edges")
+        if edges_raw is not None:
+            if (
+                not isinstance(edges_raw, list)
+                or len(edges_raw) != 2
+                or any(e not in EdgeSide._value2member_map_ for e in edges_raw)
+            ):
+                raise InvalidEngineRequest(
+                    "coupling.edges must be two sides from "
+                    + ", ".join(side.value for side in EdgeSide)
+                )
         couplings.append(
             CouplingDef(
                 id=coupling_id,
                 angle_deg=_decimal_string(
-                    coupling.get("angle_deg"), "coupling.angle_deg"
+                    coupling.get("angle_deg") if "angle_deg" in coupling else "0",
+                    "coupling.angle_deg",
                 ),
                 coupler_profile_sku=cast(str | None, sku),
+                kind=(
+                    ConnectionKind(kind_raw)
+                    if kind_raw is not None
+                    else ConnectionKind.INLINE
+                ),
+                modules=cast(list[str] | None, modules_raw),
+                edges=cast(
+                    list[EdgeSide] | None,
+                    [EdgeSide(e) for e in edges_raw]
+                    if edges_raw is not None
+                    else None,
+                ),
             )
         )
 

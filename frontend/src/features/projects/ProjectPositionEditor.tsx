@@ -26,10 +26,10 @@ import { starterContextSize, type StarterDefinition } from "../canvas/designLibr
 import { resolveMembers } from "../canvas/members";
 import { StarterGallery } from "../canvas/StarterGallery";
 import {
+  elevationEnvelopeMm,
   isProductModel,
   isSingleUnit,
   removeUnit,
-  totalModuleWidth,
   wrapTreeAsProduct,
   type ProductJson,
 } from "../canvas/productEditing";
@@ -168,10 +168,8 @@ function designPayload(inputs: CanvasDesignInputs): PositionDesignRequest | null
       }
     : {
         system_id: inputs.systemId,
-        nominal_width_mm: totalModuleWidth(product).toFixed(2),
-        nominal_height_mm: Math.max(
-          ...product.assembly.modules.map((module) => Number(module.height_mm)),
-        ).toFixed(2),
+        nominal_width_mm: elevationEnvelopeMm(product).width.toFixed(2),
+        nominal_height_mm: elevationEnvelopeMm(product).height.toFixed(2),
         color: inputs.color,
         parametric_tree: product,
       };
@@ -409,12 +407,16 @@ function PositionWorkspace({
     );
   }, []);
 
+  const assemblyUnsaveable =
+    assemblyEval?.status === "INVALID" ||
+    (assemblyEval?.modules ?? []).some((module) => module.result == null);
+
   async function save(): Promise<void> {
     if (
       uncertainCreate ||
       mutationLock.current ||
       !result ||
-      assemblyEval?.status !== "VALID" ||
+      assemblyUnsaveable ||
       busy ||
       inputs.color !== "WHITE" ||
       inputs.product === null ||
@@ -560,7 +562,7 @@ function PositionWorkspace({
         </button>
         <button
           className="primary-action"
-          disabled={uncertainCreate || busy || !result || assemblyEval?.status !== "VALID"}
+          disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
           onClick={() => void save()}
         >
           {t("projects.save")}

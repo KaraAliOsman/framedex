@@ -1456,6 +1456,22 @@ def optimize_work_order(
                 group = (
                     str(entry.thickness_net_mm) if kind == "GLASS" else entry.sku
                 )
+                if getattr(entry, "shape", None):
+                    # Non-rectangular glass cannot be guillotine-nested by a
+                    # bounding rect — it goes to the shape-cutting cell with
+                    # its true outline, never silently a rectangle.
+                    unnested.append({
+                        "kind": kind, "group": group,
+                        "width_mm": str(entry.width_mm),
+                        "height_mm": str(entry.height_mm), "quantity": quantity,
+                        "bay_id": entry.bay_id, "leaf_id": entry.leaf_id,
+                        "shape": [
+                            {"x_mm": str(p.x_mm), "y_mm": str(p.y_mm)}
+                            for p in entry.shape
+                        ],
+                        "reason": "shaped_glass_outline",
+                    })
+                    continue
                 rule = _pick_sheet_rule(
                     rules[group_key].get(group) or [], entry.width_mm, entry.height_mm
                 )

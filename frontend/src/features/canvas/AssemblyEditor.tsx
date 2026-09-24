@@ -28,7 +28,8 @@ import {
 } from "./ProductFrontSvg";
 
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
-import type { SplitType } from "./intentEditing";
+import type { SlidingLayout, SplitType } from "./intentEditing";
+import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import {
   addAdjacentUnit,
   equalizeCouplingAngles,
@@ -37,17 +38,22 @@ import {
   moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
+  modulePrimaryBay,
   moveModuleDivision,
   removeUnit,
   resizeModuleSeam,
   scaleModuleWidths,
+  contourTopCorners,
   setAllModuleHeights,
+  setContourBulge,
+  setContourVertex,
   setModuleGlass,
   setModuleGlassThickness,
   setModulePanel,
   setCouplerSku,
   setCouplingAngle,
   setModuleOpening,
+  setModuleSlidingLayout,
   setModuleWidth,
   splitModuleBay,
   type CouplingJson,
@@ -65,6 +71,21 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_profile_unknown: "assembly.issue.couplerProfileUnknown",
   coupler_height_mismatch: "assembly.issue.couplerHeightMismatch",
   coupler_reinforcement_nonpositive: "assembly.issue.couplerReinforcementNonpositive",
+  contour_invalid: "assembly.issue.contourInvalid",
+  contour_splits_unsupported: "assembly.issue.contourSplits",
+  contour_opening_unsupported: "assembly.issue.contourOpening",
+  contour_panel_unsupported: "assembly.issue.contourPanel",
+  member_bending_required: "assembly.issue.memberBending",
+  coupler_width_mismatch: "assembly.issue.couplerWidthMismatch",
+  coupler_module_unknown: "assembly.issue.couplerModuleUnknown",
+  coupler_edge_invalid: "assembly.issue.couplerEdgeInvalid",
+  coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
+  connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
+  assembly_disconnected: "assembly.issue.assemblyDisconnected",
+  stacked_cycle: "assembly.issue.stackedCycle",
+  inline_not_adjacent: "assembly.issue.inlineNotAdjacent",
+  sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
+  sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field
@@ -79,6 +100,17 @@ export const REASON_KEYS: [RegExp, TranslationKey][] = [
   [/requires at least one module/i, "assembly.reason.oneModule"],
   [/requires a top-level bay/i, "assembly.reason.doorNeedsBay"],
   [/requires an opening type/i, "assembly.reason.openingRequired"],
+  [/zero-length segment/i, "assembly.reason.contourDegenerate"],
+  [/sagitta exceeds/i, "assembly.reason.contourSagitta"],
+  [/self-intersect/i, "assembly.reason.contourSelfIntersect"],
+  [/requires a sliding_layout/i, "assembly.reason.slidingLayoutRequired"],
+  [/not a sliding opening/i, "assembly.reason.slidingLayoutRequired"],
+  [/duplicate panel slot/i, "assembly.reason.slidingDuplicateSlot"],
+  [/undeclared track/i, "assembly.reason.slidingBadTrack"],
+  [/cannot occupy a track/i, "assembly.reason.slidingFixedTrack"],
+  [/adjacent fixed panels/i, "assembly.reason.slidingFixedAdjacent"],
+  [/cannot share a track/i, "assembly.reason.slidingSameTrack"],
+  [/at least one moving panel/i, "assembly.reason.slidingNoMoving"],
 ];
 
 export function issueText(
@@ -130,6 +162,14 @@ function normalizeAngle(candidate: string): string | null {
   return value.toFixed(1);
 }
 
+/** Contour coordinates are signed: zero/negative carry meaning (a vertical
+ * side, an inward arc). Bounds keep the corner ordering the engine requires. */
+function normalizeRange(candidate: string, min: number, max: number): string | null {
+  const value = Number(candidate.replace(",", "."));
+  if (!Number.isFinite(value) || value < min || value >= max) return null;
+  return value.toFixed(2);
+}
+
 type DraftFieldProps = {
   label?: string;
   value: string;
@@ -178,6 +218,107 @@ function statusKey(status: string | undefined): TranslationKey {
   return "assembly.statusInvalid";
 }
 
+/** Editable semantic fields of a contour outline: the two top-corner
+ * offsets for a straight chord, plus one rise per bulged edge. Free-form
+ * outlines expose a vertex count until the polygon editor lands. */
+function ContourShapeSection({
+  module,
+  product,
+  busy,
+  commit,
+}: {
+  module: ProductModuleJson;
+  product: ProductJson;
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const contour = module.contour!;
+  const corners = contourTopCorners(contour);
+  const hasBulges = contour.bulges.some((bulge) => bulge !== null && bulge !== undefined);
+  const widthMm = Number(module.width_mm);
+  const leftBound = corners ? Number(contour.vertices[corners.rightIndex]!.x_mm) : 0;
+  const rightBound = corners ? widthMm - Number(contour.vertices[corners.leftIndex]!.x_mm) : 0;
+  // Sagitta is signed and bounded by half the chord (minor arcs only);
+  // zero straightens the edge back to a line.
+  const edgeChordMm = (edgeIndex: number): number => {
+    const n = contour.vertices.length;
+    const a = contour.vertices[edgeIndex % n]!;
+    const b = contour.vertices[(edgeIndex + 1) % n]!;
+    return Math.hypot(Number(b.x_mm) - Number(a.x_mm), Number(b.y_mm) - Number(a.y_mm));
+  };
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.shape")}</summary>
+      {corners && !hasBulges && (
+        <>
+          <DraftField
+            label={t("assembly.shapeOffsetLeft")}
+            value={Number(contour.vertices[corners.leftIndex]!.x_mm).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={(candidate) => normalizeRange(candidate, 0, leftBound)}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.leftIndex,
+                  value,
+                  contour.vertices[corners.leftIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+          <DraftField
+            label={t("assembly.shapeOffsetRight")}
+            value={(widthMm - Number(contour.vertices[corners.rightIndex]!.x_mm)).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={(candidate) => normalizeRange(candidate, 0, rightBound)}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.rightIndex,
+                  (widthMm - Number(value)).toFixed(2),
+                  contour.vertices[corners.rightIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+        </>
+      )}
+      {contour.bulges.map(
+        (bulge, edgeIndex) =>
+          bulge !== null &&
+          bulge !== undefined && (
+            <DraftField
+              key={edgeIndex}
+              label={t("assembly.shapeRise")}
+              value={bulge}
+              unit="mm"
+              disabled={busy}
+              normalize={(candidate) =>
+                normalizeRange(
+                  candidate,
+                  -edgeChordMm(edgeIndex) / 2,
+                  edgeChordMm(edgeIndex) / 2 + 0.01,
+                )
+              }
+              onCommit={(value) => commit(setContourBulge(product, module.id, edgeIndex, value))}
+            />
+          ),
+      )}
+      {!corners && !hasBulges && (
+        <p className="inspector-note">
+          {t("assembly.shapeVertices").replace("{count}", String(contour.vertices.length))}
+        </p>
+      )}
+    </details>
+  );
+}
+
 function ModuleInspector({
   module,
   product,
@@ -203,7 +344,14 @@ function ModuleInspector({
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY";
+  const slidingBay = isSlidingOpening(opening) ? modulePrimaryBay(module) : null;
+  const slidingLayout = slidingBay ? resolvedSlidingLayout(slidingBay) : null;
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
+  const commitSlidingLayout = (layout: SlidingLayout) => {
+    if (slidingBay) {
+      commit(setModuleSlidingLayout(product, module.id, layout, slidingBay.id));
+    }
+  };
   return (
     <section className="assembly-inspector" aria-label={t("assembly.module")}>
       <header className="assembly-inspector__header">
@@ -279,6 +427,131 @@ function ModuleInspector({
           </button>
         </div>
       </details>
+      {slidingLayout && (
+        <details className="inspector-section" open>
+          <summary>{t("assembly.slidingLayout")}</summary>
+          <div className="inspector-field">
+            <label htmlFor={`tracks-${module.id}`}>{t("assembly.slidingTracks")}</label>
+            <select
+              id={`tracks-${module.id}`}
+              value={slidingLayout.tracks}
+              disabled={busy}
+              onChange={(event) => {
+                const tracks = Number(event.target.value);
+                commitSlidingLayout({
+                  tracks,
+                  panels: slidingLayout.panels.map((panel, index) =>
+                    panel.kind === "MOVING" ? { ...panel, track: index % tracks } : panel,
+                  ),
+                });
+              }}
+            >
+              {[1, 2, 3, 4]
+                .filter(
+                  (count) =>
+                    count === slidingLayout.tracks ||
+                    count >=
+                      (slidingLayout.panels.filter((panel) => panel.kind === "MOVING").length > 1
+                        ? 2
+                        : 1),
+                )
+                .map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>
+            {slidingLayout.panels.map((panel, index) => (
+              <li key={panel.slot} className="sliding-panel">
+                <span className="sliding-panel__slot">
+                  {t("assembly.slidingPanel").replace("{index}", String(index + 1))}
+                </span>
+                <select
+                  aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("intent.opening")}`}
+                  value={panel.kind}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const kind = event.target.value as "MOVING" | "FIXED";
+                    const panels = slidingLayout.panels.map((item, at) =>
+                      at === index
+                        ? {
+                            ...item,
+                            kind,
+                            track:
+                              kind === "MOVING"
+                                ? (item.track ?? index % Math.max(slidingLayout.tracks, 1))
+                                : null,
+                          }
+                        : item,
+                    );
+                    commitSlidingLayout({ ...slidingLayout, panels });
+                  }}
+                >
+                  <option value="MOVING">{t("assembly.panelMoving")}</option>
+                  <option value="FIXED">{t("assembly.panelFixed")}</option>
+                </select>
+                {panel.kind === "MOVING" && (
+                  <select
+                    aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
+                    value={panel.track ?? 0}
+                    disabled={busy}
+                    onChange={(event) => {
+                      const track = Number(event.target.value);
+                      const panels = slidingLayout.panels.map((item, at) =>
+                        at === index ? { ...item, track } : item,
+                      );
+                      commitSlidingLayout({ ...slidingLayout, panels });
+                    }}
+                  >
+                    {Array.from({ length: slidingLayout.tracks }, (_, track) => (
+                      <option key={track} value={track}>
+                        {t("assembly.panelTrack")} {track + 1}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="inspector-actions">
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length >= 8}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: [
+                    ...slidingLayout.panels,
+                    {
+                      slot: `S${slidingLayout.panels.length + 1}`,
+                      kind: "MOVING",
+                      track: slidingLayout.panels.length % Math.max(slidingLayout.tracks, 1),
+                    },
+                  ],
+                })
+              }
+            >
+              {t("assembly.addPanel")}
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length <= 1}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: slidingLayout.panels.slice(0, -1),
+                })
+              }
+            >
+              {t("assembly.removePanel")}
+            </button>
+          </div>
+        </details>
+      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.dimensions")}</summary>
         <DraftField
@@ -298,6 +571,9 @@ function ModuleInspector({
           onCommit={(value) => commit(setAllModuleHeights(product, value))}
         />
       </details>
+      {module.contour && (
+        <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
+      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <label className="assembly-field">

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   addAdjacentUnit,
+  makeTrapezoidModule,
+  elevationLayoutMm,
   equalizeCouplingAngles,
   equalizeModuleWidths,
   isProductModel,
@@ -27,6 +29,7 @@ import {
   splitModuleBay,
   totalModuleWidth,
   wrapTreeAsProduct,
+  type ProductJson,
 } from "./productEditing";
 
 function bow(): ReturnType<typeof makeBowProduct> {
@@ -78,6 +81,33 @@ describe("addAdjacentUnit", () => {
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
     expect(grown.assembly.modules[0]!.tree).not.toBe(grown.assembly.modules[1]!.tree);
+  });
+
+  it("carries the edge module's contour — scaled, never silently rect", () => {
+    const trapezoid: ProductJson = {
+      version: "product-v2",
+      assembly: {
+        modules: [
+          makeTrapezoidModule("m1", "2400.00", "1400.00", 200, 200, {
+            id: "g1",
+            type: "BAY",
+            opening_type: "FIXED",
+          }),
+        ],
+        couplings: [],
+      },
+    };
+    const grown = addAdjacentUnit(trapezoid, "right", { widthMm: "1200.00" });
+    const added = grown.assembly.modules.at(-1)!;
+    expect(added.contour).toBeDefined();
+    expect(added.width_mm).toBe("1200.00");
+    // Scaled to the new width: right edge lands on 1200, top corners keep
+    // the same proportional inset (200/2400 → 100/1200).
+    const xs = added.contour!.vertices.map((v) => Number(v.x_mm));
+    expect(Math.max(...xs)).toBeCloseTo(1200, 2);
+    expect(Math.min(...xs)).toBeCloseTo(0, 2);
+    expect(Number(added.contour!.vertices[2]!.x_mm)).toBeCloseTo(1100, 2);
+    expect(Number(added.contour!.vertices[3]!.x_mm)).toBeCloseTo(100, 2);
   });
 });
 
@@ -300,6 +330,44 @@ describe("scaleModuleWidths", () => {
     expect(scaleModuleWidths(product, "0")).toBe(product);
     expect(scaleModuleWidths(product, "abc")).toBe(product);
     expect(scaleModuleWidths(product, "0.02")).toBe(product);
+  });
+
+  it("scales the elevation envelope, not the stacked width sum", () => {
+    // Door + transom share one column: widths sum 1800 but the elevation is
+    // 900 wide — a 1200 request must produce a 1200 mm envelope, not 600 mm
+    // of column plus a 600 mm overhang.
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const door = base.assembly.modules[0]!;
+    const transom = wrapTreeAsProduct(
+      makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 400, angleDeg: 0 }).assembly
+        .modules[0]!.tree,
+      "900.00",
+      "400.00",
+    ).assembly.modules[0]!;
+    const stacked: ProductJson = {
+      ...base,
+      assembly: {
+        modules: [door, { ...transom, id: "t1" }],
+        couplings: [
+          {
+            id: "c1",
+            modules: [door.id, "t1"],
+            edges: ["top", "bottom"],
+            kind: "STACKED",
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const scaled = scaleModuleWidths(stacked, "1200.00");
+    const layout = elevationLayoutMm(scaled);
+    const envelope =
+      Math.max(...layout.members.map((member) => member.x + member.w)) -
+      Math.min(...layout.members.map((member) => member.x));
+    expect(envelope).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[0]!.width_mm)).toBeCloseTo(1200, 2);
+    expect(Number(scaled.assembly.modules[1]!.width_mm)).toBeCloseTo(1200, 2);
   });
 });
 

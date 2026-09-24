@@ -69,6 +69,9 @@ from dekopen_engine.models import (
     ProfileRole,
     RailType,
     ReinforcementPiece,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
 )
 
@@ -111,6 +114,9 @@ __all__ = [
     "ProfileRole",
     "RailType",
     "ReinforcementPiece",
+    "SlidingLayout",
+    "SlidingPanel",
+    "SlidingPanelKind",
     "SystemParams",
     "__version__",
     "bom_hash_v1",

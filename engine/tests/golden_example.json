@@ -28,7 +28,7 @@
     "system_id": "3067da09-3119-5ad0-a1d5-498cd2dfd753"
   },
   "response": {
-    "calculation_hash": "sha256:a82ed54c15ddc3f78e13c4ca7330116272f762d229ef1abb7e1fc444b3bcf671",
+    "calculation_hash": "sha256:97bfb6f3cc5a8df32c352d168090ec24543f0a904be7e1aae9813b5c431912c7",
     "glasses": [
       {
         "area_m2": "0.8908",
@@ -37,6 +37,7 @@
         "glass_spec": "4-16-4 Float Incoloro",
         "height_mm": "1310.00",
         "leaf_id": null,
+        "shape": null,
         "thickness_net_mm": "8.00",
         "weight_kg": "17.82",
         "width_mm": "680.00"
@@ -48,6 +49,7 @@
         "glass_spec": "4-12-4 Float Incoloro",
         "height_mm": "1176.00",
         "leaf_id": null,
+        "shape": null,
         "thickness_net_mm": "8.00",
         "weight_kg": "12.84",
         "width_mm": "546.00"
@@ -87,6 +89,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "FRAME",
+        "sagitta_mm": null,
         "sku": "MARCO"
       },
       {
@@ -98,6 +101,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "FRAME",
+        "sagitta_mm": null,
         "sku": "MARCO"
       },
       {
@@ -109,6 +113,7 @@
         "material": "PVC",
         "qty": 1,
         "role": "MULLION_V",
+        "sagitta_mm": null,
         "sku": "POSTE-V"
       },
       {
@@ -120,6 +125,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "SASH",
+        "sagitta_mm": null,
         "sku": "HOJA"
       },
       {
@@ -131,6 +137,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "SASH",
+        "sagitta_mm": null,
         "sku": "HOJA"
       },
       {
@@ -142,6 +149,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
         "sku": "JQ-10"
       },
       {
@@ -153,6 +161,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
         "sku": "JQ-10"
       },
       {
@@ -164,6 +173,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
         "sku": "JQ-14"
       },
       {
@@ -175,6 +185,7 @@
         "material": "PVC",
         "qty": 2,
         "role": "GLAZING_BEAD",
+        "sagitta_mm": null,
         "sku": "JQ-14"
       }
     ],
@@ -186,7 +197,8 @@
         "parent_profile_sku": "MARCO",
         "qty": 2,
         "reinforcement_sku": null,
-        "role": "FRAME"
+        "role": "FRAME",
+        "sagitta_mm": null
       },
       {
         "bay_id": null,
@@ -195,7 +207,8 @@
         "parent_profile_sku": "MARCO",
         "qty": 2,
         "reinforcement_sku": null,
-        "role": "FRAME"
+        "role": "FRAME",
+        "sagitta_mm": null
       },
       {
         "bay_id": null,
@@ -204,7 +217,8 @@
         "parent_profile_sku": "POSTE-V",
         "qty": 1,
         "reinforcement_sku": null,
-        "role": "MULLION_V"
+        "role": "MULLION_V",
+        "sagitta_mm": null
       },
       {
         "bay_id": "bay_2",
@@ -213,7 +227,8 @@
         "parent_profile_sku": "HOJA",
         "qty": 2,
         "reinforcement_sku": null,
-        "role": "SASH"
+        "role": "SASH",
+        "sagitta_mm": null
       },
       {
         "bay_id": "bay_2",
@@ -222,7 +237,8 @@
         "parent_profile_sku": "HOJA",
         "qty": 2,
         "reinforcement_sku": null,
-        "role": "SASH"
+        "role": "SASH",
+        "sagitta_mm": null
       }
     ]
   }

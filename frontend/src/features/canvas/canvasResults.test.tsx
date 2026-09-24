@@ -18,6 +18,7 @@ const sentinelResponse: EngineCalculateResponse = {
       qty: 2,
       bay_id: "g1",
       leaf_id: null,
+      sagitta_mm: null,
     },
     {
       sku: "FRAME-SENTINEL",
@@ -29,6 +30,7 @@ const sentinelResponse: EngineCalculateResponse = {
       qty: 2,
       bay_id: "g1",
       leaf_id: null,
+      sagitta_mm: null,
     },
     {
       sku: "BEAD-SENTINEL",
@@ -40,6 +42,7 @@ const sentinelResponse: EngineCalculateResponse = {
       qty: 4,
       bay_id: "g1",
       leaf_id: null,
+      sagitta_mm: null,
     },
   ],
   reinforcements: [
@@ -51,6 +54,7 @@ const sentinelResponse: EngineCalculateResponse = {
       qty: 4,
       bay_id: "g1",
       leaf_id: null,
+      sagitta_mm: null,
     },
   ],
   glasses: [
@@ -59,9 +63,12 @@ const sentinelResponse: EngineCalculateResponse = {
       leaf_id: null,
       width_mm: "876.54",
       height_mm: "765.43",
+      shape: null,
       area_m2: "0.6708",
       weight_kg: "6.71",
       thickness_net_mm: "4.00",
+      glass_spec: null,
+      article_sku: null,
     },
   ],
   hardware_items: [],

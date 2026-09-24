@@ -78,6 +78,7 @@ function bom(sku: string): EngineCalculateResponse {
         qty: 2,
         bay_id: "bay-1",
         leaf_id: null,
+        sagitta_mm: null,
       },
     ],
     reinforcements: [],
@@ -407,14 +408,29 @@ it("evaluates live through the assembly endpoint when the system changes", async
   expect(screen.getByText(t("projects.unsaved"))).toBeInTheDocument();
 });
 
-it("keeps save disabled while the product is not manufacturing-ready", async () => {
-  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
+it("keeps save disabled only while the product is invalid", async () => {
+  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "INVALID")));
   mount();
   await screen.findByRole("heading", { name: "Cocina" });
   await screen.findByText("CUT-A");
   await waitFor(() => expect(evaluate).toHaveBeenCalled());
   expect(screen.getByRole("button", { name: t("projects.save") })).toBeDisabled();
   expect(update).not.toHaveBeenCalled();
+});
+
+it("saves a manufacturing-incomplete assembly as a draft", async () => {
+  // Warnings carry a complete BOM — the draft persists; sealing/production
+  // stay gated downstream.
+  evaluate.mockResolvedValue(ok(assemblyEval("CUT-A", "MANUFACTURING_INCOMPLETE")));
+  mount();
+  await screen.findByRole("heading", { name: "Cocina" });
+  await screen.findByText("CUT-A");
+  await waitFor(() => expect(evaluate).toHaveBeenCalled());
+  const button = screen.getByRole("button", { name: t("projects.save") });
+  expect(button).toBeEnabled();
+  fireEvent.click(button);
+  await screen.findByText(t("projects.saved"));
+  expect(update).toHaveBeenCalled();
 });
 
 it("builds a five-unit bow from the design library and edits a joint angle on plan", async () => {
@@ -802,7 +818,7 @@ it("renders the design library with rendered starter cards", async () => {
   const list = await screen.findByRole("list", {
     name: t("assembly.starterLibrary"),
   });
-  expect(within(list).getAllByRole("listitem")).toHaveLength(11);
+  expect(within(list).getAllByRole("listitem")).toHaveLength(14);
   // Every card previews through the same front-elevation renderer.
   expect(within(list).getAllByTestId("product-front").length).toBeGreaterThan(0);
 });

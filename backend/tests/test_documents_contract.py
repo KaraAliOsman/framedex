@@ -128,6 +128,38 @@ def test_client_quote_includes_deterministic_opening_drawings() -> None:
     assert _doc01(sliding) == sliding_html
 
 
+def test_client_quote_draws_stacked_assembly_as_a_column() -> None:
+    """A door + transom STACKED assembly draws the transom ABOVE its column —
+    a 1000×2200 door carrying a 1000×400 transom spans 1000×2600 with a
+    horizontal seam at the contact, not a 2000-wide side-by-side row."""
+    snapshot = revision_snapshot()
+    snapshot["positions"][0]["parametric_tree"] = {  # type: ignore[index]
+        "version": "product-v2",
+        "assembly": {
+            "modules": [
+                {
+                    "id": "door", "width_mm": "1000.00", "height_mm": "2200.00",
+                    "tree": {"id": "B1", "type": "BAY", "opening_type": "FIXED",
+                             "glass_spec": "4-12-4 Float Incoloro", "children": []},
+                },
+                {
+                    "id": "transom", "width_mm": "1000.00", "height_mm": "400.00",
+                    "tree": {"id": "B2", "type": "BAY", "opening_type": "FIXED",
+                             "glass_spec": "4-12-4 Float Incoloro", "children": []},
+                },
+            ],
+            "couplings": [{
+                "id": "c1", "kind": "STACKED", "modules": ["door", "transom"],
+                "edges": ["top", "bottom"],
+            }],
+        },
+    }
+    html = _doc01(snapshot)
+    assert 'viewBox="0 0 1000 2600"' in html
+    # The transom sill sits at 2200 mm elevation → svg y = 2600 − 2200 = 400.
+    assert 'x1="0" y1="400" x2="1000" y2="400"' in html
+
+
 def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None:
     snapshot = revision_snapshot()
     snapshot["manufacturing"] = [{  # type: ignore[index]

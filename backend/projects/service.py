@@ -16,6 +16,7 @@ from documents.repository import documentary_backend
 from engine_api.adapter import (
     calculate_from_api,
     evaluate_assembly_from_api,
+    elevation_envelope,
     parse_product_model,
     UnsupportedEngineContract,
 )
@@ -285,19 +286,50 @@ def calculate_design(org_id, design):
                     design["system_id"], org_id
                 ),
             )
-            if evaluation.status.value != "VALID" or evaluation.bom is None:
-                # Persisted positions are production-bound: a partial BOM must
-                # never be stored or read back as authoritative.
+            if (
+                evaluation.status.value == "INVALID"
+                or evaluation.bom is None
+                or any(
+                    module_eval.result is None
+                    for module_eval in evaluation.modules
+                )
+            ):
+                # An INVALID evaluation or a partial BOM can never persist:
+                # the sealed evidence would read a broken assembly back as
+                # authoritative. A module whose evaluation produced no result
+                # (geometry failed) is absent from the aggregated BOM — that
+                # is a partial BOM too. Draft persistence only tolerates
+                # warnings that leave every module's output whole: unassigned
+                # couplers and missing bending authority.
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",
-                    "El conjunto está incompleto: asigna acopladores y revisa cada módulo antes de guardar.",
+                    "El conjunto tiene errores que impiden guardarlo: asigna acopladores y revisa cada módulo.",
                 )
-            if design["nominal_width_mm"] != sum(
-                (module.width_mm for module in model.assembly.modules),
-                Decimal("0"),
-            ) or design["nominal_height_mm"] != max(
-                module.height_mm for module in model.assembly.modules
+            intent_unsupported = {
+                "contour_opening_unsupported",
+                "contour_panel_unsupported",
+            }
+            reported_codes = {
+                issue.code
+                for module_eval in evaluation.modules
+                for issue in module_eval.issues
+            } | {issue.code for issue in evaluation.issues}
+            if reported_codes & intent_unsupported:
+                # Draft tolerance covers warnings about authority the workshop
+                # lacks (member bending) — never a declared intent the engine
+                # cannot build at all. An operable leaf or panel on a contour
+                # would otherwise seal a fixed-pane BOM under a tilt-turn
+                # intent: the saved product would misdescribe itself.
+                raise contract_error(
+                    400,
+                    "manufacturing_incomplete",
+                    "La apertura o el panel declarado no se fabrica aún sobre contornos — cámbialo a fijo o vuelve el módulo rectangular.",
+                )
+            envelope_width, envelope_height = elevation_envelope(model.assembly)
+            if (
+                design["nominal_width_mm"] != envelope_width
+                or design["nominal_height_mm"] != envelope_height
             ):
                 raise contract_error(
                     400,

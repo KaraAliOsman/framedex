@@ -90,6 +90,78 @@ def test_pricing_request_cannot_supply_cost_or_actor():
     assert not PriceRequestSerializer(data=data).is_valid()
 
 
+def test_position_cost_uses_engine_area_for_shaped_glass(monkeypatch):
+    """A contoured glass piece prices by polygon area, never by bounding box."""
+    from types import SimpleNamespace
+
+    from dekopen_engine.models import GlassPiece, PlanPoint
+    import pricing.service as service
+
+    shape = [
+        PlanPoint(x_mm=Decimal("0.00"), y_mm=Decimal("0.00")),
+        PlanPoint(x_mm=Decimal("2000.00"), y_mm=Decimal("0.00")),
+        PlanPoint(x_mm=Decimal("1800.00"), y_mm=Decimal("1000.00")),
+        PlanPoint(x_mm=Decimal("200.00"), y_mm=Decimal("1000.00")),
+    ]
+    # bbox is 2.000000 m2; the engine polygon area is 1.800000 m2.
+    glass = GlassPiece(
+        bay_id="B1", width_mm=Decimal("2000.00"), height_mm=Decimal("1000.00"),
+        shape=shape, area_m2=Decimal("1.80"), weight_kg=Decimal("9.00"),
+        thickness_net_mm=Decimal("4.00"),
+    )
+    result = SimpleNamespace(
+        profile_cuts=[], reinforcements=[], glasses=[glass],
+        panels=[], hardware_items=[], leaf_weights=[],
+    )
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, sql):
+            return None
+
+    class Conn:
+        needs_rollback = False
+
+        def cursor(self):
+            return Cursor()
+
+    class Repo:
+        org_id = "org"
+
+        def cost(self, sku, unit):
+            assert (sku, unit) == ("V4", "M2")
+            return Decimal("100")
+
+    position = {
+        "system_id": "sys", "width_mm": Decimal("2000"),
+        "height_mm": Decimal("1000"),
+        "parametric_tree": {"id": "B1", "glass_article_sku": "V4"},
+        "color_interior": "WHITE", "color_exterior": "WHITE",
+    }
+    params_repo = SimpleNamespace(
+        load_visible=lambda *a, **k: None,
+        load_coupler_articles=lambda *a, **k: {},
+    )
+    monkeypatch.setattr(service, "connection", Conn())
+    monkeypatch.setattr(service, "SystemParamsRepository", lambda: params_repo)
+    monkeypatch.setattr(service, "CuttingRepository", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        service, "engine_result_from_api", lambda **kwargs: result
+    )
+    total, _area, _result = service.position_cost(
+        Repo(), position,
+        {"waste_factor_pct": Decimal("0"),
+         "labor_rate_per_m2": Decimal("0"),
+         "installation_rate_per_m2": Decimal("0")},
+    )
+    assert total == Decimal("180")
+
+
 def test_public_response_uses_line_total_strings():
     result = price_response({'lines':((1,Decimal('2')),),'project_net':Decimal('2'),
                              'project_tax':Decimal('0'),'project_gross':Decimal('2')})

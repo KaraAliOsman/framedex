@@ -13009,6 +13009,11 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        shape:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPoint'
+          nullable: true
         area_m2:
           type: string
           format: decimal
@@ -13021,11 +13026,20 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        glass_spec:
+          type: string
+          nullable: true
+        article_sku:
+          type: string
+          nullable: true
       required:
       - area_m2
+      - article_sku
       - bay_id
+      - glass_spec
       - height_mm
       - leaf_id
+      - shape
       - thickness_net_mm
       - weight_kg
       - width_mm
@@ -14147,10 +14161,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/EngineResultPayload'
           nullable: true
+        sliding:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlidingLayoutFacts'
       required:
       - issues
       - module_id
       - result
+      - sliding
     NodeLayout:
       type: object
       properties:
@@ -15949,6 +15968,11 @@ components:
         leaf_id:
           type: string
           nullable: true
+        sagitta_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - angle_left
       - angle_right
@@ -15958,6 +15982,7 @@ components:
       - material
       - qty
       - role
+      - sagitta_mm
       - sku
     ProfileSystemSummary:
       type: object
@@ -16590,6 +16615,11 @@ components:
         leaf_id:
           type: string
           nullable: true
+        sagitta_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - bay_id
       - leaf_id
@@ -16598,6 +16628,7 @@ components:
       - qty
       - reinforcement_sku
       - role
+      - sagitta_mm
     RemakeRequestRequest:
       type: object
       properties:
@@ -16926,6 +16957,47 @@ components:
         * `PENDING` - PENDING
         * `ACCEPTED` - ACCEPTED
         * `REJECTED` - REJECTED
+    SlidingLayoutFacts:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        tracks:
+          type: integer
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlidingPanelFacts'
+      required:
+      - bay_id
+      - panels
+      - tracks
+    SlidingPanelFacts:
+      type: object
+      properties:
+        slot:
+          type: string
+        kind:
+          $ref: '#/components/schemas/SlidingPanelFactsKindEnum'
+        track:
+          type: integer
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - kind
+      - leaf_id
+      - slot
+      - track
+    SlidingPanelFactsKindEnum:
+      enum:
+      - MOVING
+      - FIXED
+      type: string
+      description: |-
+        * `MOVING` - MOVING
+        * `FIXED` - FIXED
     SourceKindEnum:
       enum:
       - PROFILE
