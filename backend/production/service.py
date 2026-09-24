@@ -1785,14 +1785,20 @@ def transition_delivery(
             [str(order_id), str(org_id)],
             "work_order_not_found",
         )
-        delivery = one(
+        delivery_found = rows(
             """
             SELECT * FROM public.deliveries
             WHERE order_id = %s AND org_id = %s FOR UPDATE
             """,
             [str(order_id), str(org_id)],
-            "delivery_not_found",
         )
+        if not delivery_found:
+            # An installed legacy order predates delivery scheduling — keep the
+            # installed-order verdict instead of reporting a missing delivery.
+            if str(order["status"]) == "INSTALLED":
+                raise DocumentaryError("order_already_installed")
+            raise DocumentaryError("delivery_not_found")
+        delivery = delivery_found[0]
         current = str(delivery["status"])
         if current == target:
             # Idempotent replay stays successful after installation — the

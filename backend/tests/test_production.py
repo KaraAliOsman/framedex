@@ -1679,12 +1679,54 @@ def test_delivery_transition_rejected_after_installation(monkeypatch) -> None:
         "production.service.one",
         lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "INSTALLED"},
     )
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda *_a, **_k: [{"id": str(uuid4()), "status": "ON_ROUTE"}],
+    )
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
         with pytest.raises(DocumentaryError, match="order_already_installed"):
             service.transition_delivery(
                 org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            )
+
+
+def test_delivery_transition_installed_without_delivery_keeps_installed_error(
+    monkeypatch,
+) -> None:
+    """An installed legacy order has no delivery row — the verdict must stay
+    order_already_installed, not a 404 for a delivery that never existed."""
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "INSTALLED"},
+    )
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="order_already_installed"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            )
+
+
+def test_delivery_transition_missing_delivery_not_installed(monkeypatch) -> None:
+    """A live (non-installed) order without a delivery still reports
+    delivery_not_found."""
+    org_id, order_id = uuid4(), uuid4()
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"},
+    )
+    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError, match="delivery_not_found"):
+            service.transition_delivery(
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="ON_ROUTE"
             )
 
 
@@ -1718,6 +1760,9 @@ def test_delivery_transition_replays_stored_state_after_installation(monkeypatch
     }
     monkeypatch.setattr("production.service.one", fake_one)
     monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [delivery_row])
+    monkeypatch.setattr(
+        "production.service.get_delivery", lambda **kw: {"delivery": delivery_row}
+    )
     with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ):
@@ -1776,7 +1821,10 @@ def test_delivery_transition_requires_dispatched_order(monkeypatch) -> None:
         "production.service.one",
         lambda sql_text, params, code="nf": order if "orders" in sql_text else dict(delivery),
     )
-    monkeypatch.setattr("production.service.rows", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, *_a, **_k: [dict(delivery)] if "from public.deliveries" in " ".join(sql_text.lower().split()) else [],
+    )
     monkeypatch.setattr(
         "production.service.get_delivery", lambda **kw: {"delivery": {"status": delivery["status"]}}
     )
@@ -1805,6 +1853,8 @@ def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
 
     def fake_rows(sql_text: str, params: list) -> list:
         lowered = " ".join(sql_text.lower().split())
+        if "from public.deliveries" in lowered:
+            return [dict(delivery)]
         if "update public.deliveries set status" in lowered:
             delivery["status"] = params[0]
         if "insert into public.production_step_events" in lowered:
