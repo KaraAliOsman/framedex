@@ -742,7 +742,7 @@ const messages = {
   "page.settings": "Ajustes generales",
   "canvas.openDemo": "Abrir Demo G1",
   "canvas.loading": "Cargando catálogo demo…",
-  "canvas.calculating": "Calculando con el engine…",
+  "canvas.calculating": "Calculando con el motor…",
   "canvas.calculationRejected": "Cálculo rechazado",
   "canvas.viewport": "Vista",
   "canvas.zoomIn": "Acercar",
@@ -1642,7 +1642,7 @@ const messages = {
 
   "position.status.draft": "Borrador",
   "position.status.evaluated": "Evaluada",
-  "position.status.priced": "Preciada",
+  "position.status.priced": "Con precio",
   "position.status.frozen": "Congelada",
   "position.status.production": "En producción",
   "projects.factsHide": "Ocultar datos del proyecto",

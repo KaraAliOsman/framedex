@@ -9,23 +9,23 @@ export function CanvasTechnicalResults({ response }: CanvasTechnicalResultsProps
   const values = selectCanvasTechnicalValues(response);
   return (
     <aside className="canvas-technical-results" aria-labelledby="canvas-results-title">
-      <p className="eyebrow">RESULTADOS DEL ENGINE</p>
-      <h2 id="canvas-results-title">Despiece técnico G1</h2>
+      <p className="eyebrow">Resultados del motor</p>
+      <h2 id="canvas-results-title">Despiece técnico · G1</h2>
       <dl>
         <div>
-          <dt>FRAME cut</dt>
+          <dt>Corte marco</dt>
           <dd data-testid="technical-frame">{values.frame}</dd>
         </div>
         <div>
-          <dt>FRAME reinforcement</dt>
+          <dt>Refuerzo marco</dt>
           <dd data-testid="technical-reinforcement">{values.reinforcement}</dd>
         </div>
         <div>
-          <dt>Glass</dt>
+          <dt>Vidrio</dt>
           <dd data-testid="technical-glass">{values.glass}</dd>
         </div>
         <div>
-          <dt>Glazing bead</dt>
+          <dt>Junquillo</dt>
           <dd data-testid="technical-bead">{values.glazingBead}</dd>
         </div>
       </dl>

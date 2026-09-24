@@ -109,7 +109,7 @@ export function CADViewportSvg({
     <section className="cad-viewport" aria-labelledby="canvas-title">
       <div className="cad-viewport__heading">
         <div>
-          <p className="eyebrow">POSICIÓN DEMO · G1</p>
+          <p className="eyebrow">Vano demo · G1</p>
           <h1 id="canvas-title">Editor paramétrico 2D</h1>
         </div>
         <span className="canvas-system">{t("catalog.demo")}</span>
@@ -120,9 +120,9 @@ export function CADViewportSvg({
         viewBox={geometry.viewBox}
         preserveAspectRatio="xMidYMid meet"
         role="group"
-        aria-label="Paño FIXED con cotas editables"
+        aria-label="Paño fijo con cotas editables"
       >
-        <title>Paño FIXED calculado por el engine</title>
+        <title>Paño fijo calculado por el motor</title>
         <line className="dimension-line" x1="0" y1="-46" x2={geometry.nominalWidth} y2="-46" />
         <line className="dimension-tick" x1="0" y1="-62" x2="0" y2="-30" />
         <line
