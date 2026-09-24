@@ -34,7 +34,7 @@ const SignaturePad = forwardRef<SignaturePadHandle, { onDraw?: (hasDrawing: bool
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
-      ctx.strokeStyle = "#1a1f24";
+      ctx.strokeStyle = getComputedStyle(canvas).color;
       ctx.lineWidth = 2;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";

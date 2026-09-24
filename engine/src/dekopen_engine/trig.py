@@ -55,3 +55,58 @@ def sin_degrees(degrees: Decimal) -> Decimal:
 
 def cos_degrees(degrees: Decimal) -> Decimal:
     return _cos_series(_reduce(degrees * _DEG_TO_RAD))
+
+
+def _atan_series(x: Decimal) -> Decimal:
+    """atan(x) for small |x|; converges geometrically, ~1e-30 at |x|<=0.05."""
+    term = x
+    total = x
+    x_squared = x * x
+    n = 1
+    while True:
+        term = -term * x_squared
+        contribution = term / Decimal(n + 2)
+        total += contribution
+        if abs(contribution) < _EPSILON:
+            return total
+        n += 2
+
+
+def _atan_full(x: Decimal) -> Decimal:
+    """atan(x) in radians via the half-angle identity.
+
+    atan(x) = 2 * atan(x / (1 + sqrt(1 + x²))) halves the argument's
+    magnitude each step; a few iterations bring |x| under 0.05 where the
+    Taylor series converges to far below the engine quantum. The returned
+    value is the series result times 2^halvings.
+    """
+    factor = 1
+    while abs(x) > Decimal("0.05"):
+        x = x / (Decimal(1) + (Decimal(1) + x * x).sqrt())
+        factor *= 2
+    return _atan_series(x) * factor
+
+
+def atan2_degrees(y: Decimal, x: Decimal) -> Decimal:
+    """atan2(y, x) in degrees, range (-180, 180]."""
+    if x == 0:
+        if y > 0:
+            return Decimal("90")
+        if y < 0:
+            return Decimal("-90")
+        return Decimal("0")
+    base = _atan_full(y / x) / _DEG_TO_RAD
+    if x > 0:
+        return base
+    if y >= 0:
+        return base + Decimal("180")
+    return base - Decimal("180")
+
+
+def asin_degrees(x: Decimal) -> Decimal:
+    """asin(x) in degrees for |x| <= 1, range [-90, 90]."""
+    if x >= 1:
+        return Decimal("90")
+    if x <= -1:
+        return Decimal("-90")
+    return atan2_degrees(x, (Decimal(1) - x * x).sqrt())

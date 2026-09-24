@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAssist } from "../../api/generated/dekopen";
@@ -16,6 +16,9 @@ type Preview = {
   /** The product instance the ops were validated against — any later commit
    * produces a new identity and makes the index-based ops stale. */
   snapshot: ProductJson;
+  /** The catalog the ops were validated against — a system switch without a
+   * product commit keeps the same snapshot, so identity alone can't catch it. */
+  systemId: string | null;
 };
 
 /** NL design assistant: prompt → gateway-validated op preview → one commit.
@@ -27,6 +30,8 @@ export function AssistantPanel({
   systemId,
   product,
   disabled,
+  draft,
+  onDraftHandled,
   onApply,
 }: {
   organizationId: string;
@@ -34,12 +39,44 @@ export function AssistantPanel({
   systemId: string | null;
   product: ProductJson;
   disabled: boolean;
+  /** A queued prompt from an external affordance ("Fix with DEKOPEN",
+   * context menus): "" focuses the field, text replaces the draft. The
+   * human always confirms — nothing here calls the provider on its own. */
+  draft: string | null;
+  onDraftHandled(): void;
   onApply(ops: DesignOp[]): void;
 }): JSX.Element {
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  /** Request generation token — a handled draft (or product change) must
+   * invalidate any in-flight generate so its response can't restore ops
+   * under a different prompt. */
+  const requestSeq = useRef(0);
+
+  useEffect(() => {
+    if (draft === null) return;
+    requestSeq.current += 1;
+    setBusy(false);
+    if (draft) setPrompt(draft);
+    setMessage("");
+    setPreview(null);
+    setDetailsOpen(true);
+    // Focus after the (possibly closed) details re-renders open.
+    requestAnimationFrame(() => promptRef.current?.focus());
+    onDraftHandled();
+  }, [draft, onDraftHandled]);
+
+  /** A product commit or system switch invalidates anything in flight —
+   * responses are only valid under the exact (product, system) pair they
+   * were validated against. */
+  useEffect(() => {
+    requestSeq.current += 1;
+    setPreview(null);
+  }, [product, systemId]);
   /** One operation key per (prompt, product, system) — a retry after a lost
    * response replays the committed call instead of debiting twice. */
   const operationKey = useRef<{
@@ -68,6 +105,7 @@ export function AssistantPanel({
         systemId,
       };
     }
+    const seq = ++requestSeq.current;
     try {
       const response = await positionsDesignAssist(
         positionId,
@@ -88,9 +126,13 @@ export function AssistantPanel({
         { headers: { "X-Organization-ID": organizationId } },
       );
       if (response.status !== 200) throw new ApiError(response.status, response.data);
+      // A newer draft (or request) superseded this call — its ops must never
+      // surface under a different prompt.
+      if (seq !== requestSeq.current) return;
       const data = response.data as DesignAssistResponse;
       setPreview({
         snapshot: product,
+        systemId,
         ops: data.ops as DesignOp[],
         rejected: data.rejected.map((item) => ({
           op: typeof item.op === "string" ? item.op : null,
@@ -104,6 +146,7 @@ export function AssistantPanel({
         setMessage(t("assistant.empty"));
       }
     } catch (error) {
+      if (seq !== requestSeq.current) return;
       setMessage(
         error instanceof ApiError && typeof error.payload === "object" && error.payload !== null
           ? String(
@@ -113,18 +156,25 @@ export function AssistantPanel({
           : t("assistant.error"),
       );
     } finally {
-      setBusy(false);
+      // Only the newest request clears busy — a superseded response must not
+      // unlock the panel while a newer generate is still in flight.
+      if (seq === requestSeq.current) setBusy(false);
     }
   }
 
   return (
-    <details className="inspector-section assistant-panel" open>
+    <details
+      className="inspector-section assistant-panel"
+      open={detailsOpen}
+      onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+    >
       <summary>{t("assistant.title")}</summary>
       {!positionId ? (
         <p className="assembly-hint">{t("assistant.saveFirst")}</p>
       ) : (
         <>
           <textarea
+            ref={promptRef}
             className="assistant-panel__prompt"
             rows={2}
             placeholder={t("assistant.prompt")}
@@ -162,7 +212,7 @@ export function AssistantPanel({
                   ))}
                 </ul>
               )}
-              {preview.snapshot !== product ? (
+              {preview.snapshot !== product || preview.systemId !== systemId ? (
                 <p className="assembly-hint">{t("assistant.stale")}</p>
               ) : (
                 <div className="inspector-actions">

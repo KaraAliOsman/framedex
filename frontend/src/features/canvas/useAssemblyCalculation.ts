@@ -7,23 +7,18 @@ import type {
   EngineAssemblyCalculateResponse,
 } from "../../api/generated/models";
 import type { CanvasDesignInputs } from "./canvasStore";
+import { elevationEnvelopeMm } from "./productEditing";
 
 export function assemblyRequestFromInputs(
   inputs: CanvasDesignInputs,
 ): EngineAssemblyCalculateRequest {
   if (inputs.systemId === null) throw new Error("Engine system has not been resolved");
   if (inputs.product === null) throw new Error("Product model is not active");
-  const widths = inputs.product.assembly.modules.reduce(
-    (total, module) => total + Number(module.width_mm),
-    0,
-  );
-  const height = Math.max(
-    ...inputs.product.assembly.modules.map((module) => Number(module.height_mm)),
-  );
+  const envelope = elevationEnvelopeMm(inputs.product);
   return {
     system_id: inputs.systemId,
-    nominal_width_mm: widths.toFixed(2),
-    nominal_height_mm: height.toFixed(2),
+    nominal_width_mm: envelope.width.toFixed(2),
+    nominal_height_mm: envelope.height.toFixed(2),
     color: inputs.color,
     product: inputs.product,
   };
