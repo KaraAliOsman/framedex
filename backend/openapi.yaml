@@ -4,6 +4,87 @@ info:
   version: 1.0.0
   description: Authenticated tenant and engine API boundary.
 paths:
+  /api/v1/ai/agent/:
+    post:
+      operationId: ai_agent
+      description: |-
+        The agent surface: a goal becomes a bounded observe → plan → propose
+        loop. Queries run server-side inside typed projections; every emitted
+        step is validated before it reaches the client, and nothing consequential
+        executes without the human clicking on the real surface.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAgentRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiAgentRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiAgentRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAgentResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/ask/:
     post:
       operationId: ai_ask
@@ -11623,6 +11704,131 @@ components:
       required:
       - reason
       - values
+    AiAgentHistoryRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/AiAgentHistoryRoleEnum'
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - content
+      - role
+    AiAgentHistoryRoleEnum:
+      enum:
+      - user
+      - agent
+      type: string
+      description: |-
+        * `user` - user
+        * `agent` - agent
+    AiAgentQuery:
+      type: object
+      properties:
+        surface:
+          type: string
+        status:
+          type: string
+      required:
+      - status
+      - surface
+    AiAgentRejected:
+      type: object
+      properties:
+        op:
+          type: string
+          nullable: true
+        reason:
+          type: string
+      required:
+      - op
+      - reason
+    AiAgentRequestRequest:
+      type: object
+      properties:
+        surface:
+          type: string
+          minLength: 2
+          maxLength: 40
+        refs:
+          type: object
+          additionalProperties: {}
+        goal:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        product:
+          type: object
+          additionalProperties: {}
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAgentHistoryRequest'
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+      required:
+      - goal
+      - operation_key
+      - surface
+    AiAgentResponse:
+      type: object
+      properties:
+        audit_id:
+          type: string
+        model:
+          type: string
+        credits_debited:
+          type: integer
+        reply:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAgentStep'
+        queries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAgentQuery'
+        warnings:
+          type: array
+          items:
+            type: string
+        rejected:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAgentRejected'
+      required:
+      - audit_id
+      - credits_debited
+      - model
+      - queries
+      - rejected
+      - reply
+      - steps
+      - warnings
+    AiAgentStep:
+      type: object
+      properties:
+        kind:
+          type: string
+        label:
+          type: string
+        path:
+          type: string
+        action:
+          type: string
+        ops:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - kind
+      - label
     AiAskAction:
       type: object
       properties:

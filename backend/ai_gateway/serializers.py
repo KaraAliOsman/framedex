@@ -64,3 +64,60 @@ class AiAskResponseSerializer(serializers.Serializer):
     answer = serializers.CharField()
     actions = AiAskActionSerializer(many=True)
     warnings = serializers.ListField(child=serializers.CharField())
+
+
+class _RefsDictField(serializers.DictField):
+    """Identity refs are name → identifier only — anything payload-shaped is
+    not an identity and is refused, mirroring the ask contract."""
+
+    def run_validation(self, data=serializers.empty):
+        value = super().run_validation(data)
+        for key, item in value.items():
+            if not isinstance(key, str) or not isinstance(item, (str, int)) or isinstance(item, bool):
+                raise serializers.ValidationError(
+                    "Las referencias de contexto deben ser identificadores simples."
+                )
+        return value
+
+
+class AiAgentHistorySerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=["user", "agent"])
+    content = serializers.CharField(min_length=1, max_length=2000)
+
+
+class AiAgentRequestSerializer(serializers.Serializer):
+    surface = serializers.CharField(min_length=2, max_length=40)
+    refs = _RefsDictField(required=False)
+    goal = serializers.CharField(min_length=1, max_length=2000)
+    product = serializers.DictField(required=False)
+    history = AiAgentHistorySerializer(many=True, required=False, max_length=6)
+    operation_key = serializers.CharField(min_length=8, max_length=120)
+
+
+class AiAgentStepSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    label = serializers.CharField()
+    path = serializers.CharField(required=False)
+    action = serializers.CharField(required=False)
+    ops = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class AiAgentQuerySerializer(serializers.Serializer):
+    surface = serializers.CharField()
+    status = serializers.CharField()
+
+
+class AiAgentRejectedSerializer(serializers.Serializer):
+    op = serializers.CharField(allow_null=True)
+    reason = serializers.CharField()
+
+
+class AiAgentResponseSerializer(serializers.Serializer):
+    audit_id = serializers.CharField()
+    model = serializers.CharField()
+    credits_debited = serializers.IntegerField()
+    reply = serializers.CharField()
+    steps = AiAgentStepSerializer(many=True)
+    queries = AiAgentQuerySerializer(many=True)
+    warnings = serializers.ListField(child=serializers.CharField())
+    rejected = AiAgentRejectedSerializer(many=True)

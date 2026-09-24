@@ -3,10 +3,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
 import { matchPath, useLocation } from "react-router-dom";
+
+import type { DesignOp } from "../commands/types";
 
 /** The contextual assistant's (surface, refs) — derived from the route by
  * default; a page can override it (e.g. ProductionPage while a work order is
@@ -19,6 +22,21 @@ export interface AssistantContextValue {
 const AssistantSurface = createContext<{
   value: AssistantContextValue;
   setOverride: (value: AssistantContextValue | null) => void;
+} | null>(null);
+
+/** The canvas's live product + commit channel, published while a position
+ * editor is mounted — the agent dock sends that product for server-side op
+ * validation and applies the returned ops through the same registry commit a
+ * human click would use. Kept in its own context so product churn doesn't
+ * re-render every surface consumer. */
+export interface DesignOpsBridge {
+  product: { [key: string]: unknown };
+  apply: (ops: DesignOp[]) => void;
+}
+
+const DesignOpsBridge = createContext<{
+  bridge: DesignOpsBridge | null;
+  setBridge: (bridge: DesignOpsBridge | null) => void;
 } | null>(null);
 
 const SURFACE_ROUTES: {
@@ -67,11 +85,17 @@ export function routeContext(pathname: string): AssistantContextValue {
 export function AssistantSurfaceProvider({ children }: PropsWithChildren): JSX.Element {
   const location = useLocation();
   const [override, setOverride] = useState<AssistantContextValue | null>(null);
+  const [bridge, setBridge] = useState<DesignOpsBridge | null>(null);
   const value = useMemo(() => {
     const derived = override ?? routeContext(location.pathname);
     return { value: derived, setOverride };
   }, [location.pathname, override]);
-  return <AssistantSurface.Provider value={value}>{children}</AssistantSurface.Provider>;
+  const bridgeValue = useMemo(() => ({ bridge, setBridge }), [bridge]);
+  return (
+    <AssistantSurface.Provider value={value}>
+      <DesignOpsBridge.Provider value={bridgeValue}>{children}</DesignOpsBridge.Provider>
+    </AssistantSurface.Provider>
+  );
 }
 
 /** The live assistant context for the current route (or a page override). */
@@ -97,4 +121,34 @@ export function useAssistantSurface(surface: string | null, refs?: Record<string
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refsKey is the
     // stable serialization of refs; the raw object would re-fire per render.
   }, [setOverride, surface, refsKey]);
+}
+
+/** The canvas's design-ops bridge, when a position editor is mounted. */
+export function useDesignOpsBridge(): DesignOpsBridge | null {
+  const ctx = useContext(DesignOpsBridge);
+  return ctx?.bridge ?? null;
+}
+
+/** A live editor publishes its product + apply channel while mounted (and
+ * re-publishes on every product commit so the bridge always closes over the
+ * CURRENT product). Pass nulls to unregister. */
+export function useRegisterDesignOpsBridge(
+  product: { [key: string]: unknown } | null,
+  apply: ((ops: DesignOp[]) => void) | null,
+): void {
+  const ctx = useContext(DesignOpsBridge);
+  const setBridge = ctx?.setBridge;
+  // Callers pass fresh closures each render — forward the call through a ref
+  // so a new identity never re-registers the bridge in a loop.
+  const applyRef = useRef(apply);
+  applyRef.current = apply;
+  const stableApply = useRef<((ops: DesignOp[]) => void) | null>(null);
+  if (!stableApply.current && apply) {
+    stableApply.current = (ops) => applyRef.current?.(ops);
+  }
+  useEffect(() => {
+    if (!setBridge || !product || !stableApply.current) return;
+    setBridge({ product, apply: stableApply.current });
+    return () => setBridge(null);
+  }, [setBridge, product]);
 }

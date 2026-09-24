@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(18);
+SELECT plan(20);
 
 SELECT has_table('public', 'ai_routes', 'AI routing table exists');
 SELECT has_column('public', 'ai_routes', 'public_name', 'white-label name is stored');
@@ -24,8 +24,21 @@ SELECT ok(
     'route prices are strictly positive credits'
 );
 SELECT ok(
-    (SELECT count(*) = 8 FROM public.ai_routes WHERE provider = 'MOCK' AND enabled),
-    'eight deterministic MOCK capabilities are seeded'
+    (SELECT count(*) = 9 FROM public.ai_routes
+      WHERE provider = 'MIMO' AND provider_model = 'mimo-v2.6-pro' AND enabled),
+    'all nine capabilities are pinned to mimo-v2.6-pro'
+);
+SELECT ok(
+    (SELECT count(*) = 0 FROM public.ai_routes
+      WHERE provider <> 'MIMO' OR provider_model <> 'mimo-v2.6-pro'),
+    'no route may resolve to another provider or model'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM public.ai_routes
+        WHERE capability = 'agent' AND enabled
+    ),
+    'the orchestrating agent capability is routed'
 );
 SELECT ok(
     (SELECT relrowsecurity FROM pg_class WHERE relname = 'ai_routes'),

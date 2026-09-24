@@ -16,6 +16,8 @@ import { assemblyCommands } from "./assemblyCommands";
 import { AlternativesPanel } from "./AlternativesPanel";
 import { AssistantPanel } from "./AssistantPanel";
 import { applyDesignOps } from "./designOps";
+import { useRegisterDesignOpsBridge } from "../assistant/assistantContext";
+import type { DesignOp } from "../commands/types";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
@@ -1537,6 +1539,20 @@ export function AssemblyEditor({
     commitInputs({ ...inputs, product: next });
     onChanged();
   }
+
+  // The agent dock's ops bridge: publishes the live product plus an apply
+  // channel that commits through the same registry path as a human click.
+  // The hook forwards calls to the latest closure, so capturing `product` and
+  // `commit` always lands on the current product — and the published product
+  // re-registers on every commit so a stale-product apply is refused.
+  useRegisterDesignOpsBridge(
+    product && !disabled ? (product as unknown as { [key: string]: unknown }) : null,
+    product && !disabled
+      ? (ops: DesignOp[]) => {
+          if (product) commit(applyDesignOps(product, ops));
+        }
+      : null,
+  );
 
   if (!product) {
     return (

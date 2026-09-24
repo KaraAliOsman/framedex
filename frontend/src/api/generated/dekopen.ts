@@ -8,6 +8,8 @@
 import type {
   AdminResponse,
   AdminWriteRequest,
+  AiAgentRequestRequest,
+  AiAgentResponse,
   AiAskRequestRequest,
   AiAskResponse,
   AiInvokeRequestRequest,
@@ -187,6 +189,93 @@ import type {
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
+export type aiAgentResponse200 = {
+  data: AiAgentResponse;
+  status: 200;
+};
+
+export type aiAgentResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAgentResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAgentResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAgentResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAgentResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAgentResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAgentResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAgentResponseSuccess = aiAgentResponse200 & {
+  headers: Headers;
+};
+export type aiAgentResponseError = (
+  | aiAgentResponse400
+  | aiAgentResponse401
+  | aiAgentResponse403
+  | aiAgentResponse404
+  | aiAgentResponse409
+  | aiAgentResponse422
+  | aiAgentResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAgentResponse = aiAgentResponseSuccess | aiAgentResponseError;
+
+export const getAiAgentUrl = () => {
+  return `/api/v1/ai/agent/`;
+};
+
+/**
+ * The agent surface: a goal becomes a bounded observe → plan → propose
+ * loop. Queries run server-side inside typed projections; every emitted
+ * step is validated before it reaches the client, and nothing consequential
+ * executes without the human clicking on the real surface.
+ */
+export const aiAgent = async (
+  aiAgentRequestRequest: AiAgentRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAgentResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiAgentResponse>(getAiAgentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiAgentRequestRequest),
+  });
+};
+
 export type aiAskResponse200 = {
   data: AiAskResponse;
   status: 200;

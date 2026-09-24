@@ -11,16 +11,17 @@ SELECT ok(
     'context_assist route exists and is enabled'
 );
 SELECT is(
-    (SELECT provider FROM public.ai_routes WHERE capability = 'context_assist'),
-    'MOCK',
-    'context_assist defaults to the deterministic mock provider'
+    (SELECT provider || '|' || provider_model FROM public.ai_routes
+     WHERE capability = 'context_assist'),
+    'MIMO|mimo-v2.6-pro',
+    'context_assist is pinned to the sole MiMo model'
 );
 SELECT ok(
     (SELECT credits_cost > 0 FROM public.ai_routes WHERE capability = 'context_assist'),
     'context_assist carries a positive per-invocation price'
 );
 SELECT isnt_empty(
-    (SELECT public_name FROM public.ai_routes WHERE capability = 'context_assist'),
+    'SELECT public_name FROM public.ai_routes WHERE capability = ''context_assist''',
     'context_assist carries a white-label public name'
 );
 

@@ -5,6 +5,7 @@ import { ApiError } from "../../api/apiMutator";
 import { aiAsk } from "../../api/generated/dekopen";
 import type { AiAskResponse } from "../../api/generated/models/aiAskResponse";
 import { t } from "../../i18n/es-CL";
+import { AgentBody } from "./AgentBody";
 import { useAssistantContext } from "./assistantContext";
 import "./assistant.css";
 
@@ -21,6 +22,7 @@ export function AskDekopen({
   const { surface, refs } = useAssistantContext();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"ask" | "agent">("ask");
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -44,6 +46,7 @@ export function AskDekopen({
     setBusy(false);
     setMessage("");
     setThread([]);
+    setMode("ask");
     operationKey.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refsKey is the
     // stable serialization of refs.
@@ -95,7 +98,27 @@ export function AskDekopen({
       {open ? (
         <section className="ask-dock__panel" aria-label={t("ask.title")}>
           <header className="ask-dock__header">
-            <span className="ask-dock__title">{t("ask.title")}</span>
+            <span className="ask-dock__title">{t("assistant.dockTitle")}</span>
+            <span className="ask-dock__modes" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "ask"}
+                className={`ask-dock__mode${mode === "ask" ? " ask-dock__mode--active" : ""}`}
+                onClick={() => setMode("ask")}
+              >
+                {t("assistant.askMode")}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "agent"}
+                className={`ask-dock__mode${mode === "agent" ? " ask-dock__mode--active" : ""}`}
+                onClick={() => setMode("agent")}
+              >
+                {t("assistant.agentMode")}
+              </button>
+            </span>
             <span className="ask-dock__surface" title={t("ask.surfaceHint")}>
               {surface}
             </span>
@@ -108,65 +131,76 @@ export function AskDekopen({
               ×
             </button>
           </header>
-          <div className="ask-dock__thread">
-            {thread.length === 0 ? (
-              <p className="ask-dock__hint">{t("ask.hint")}</p>
-            ) : (
-              thread.map((turn, index) => (
-                <div key={index} className="ask-dock__turn">
-                  <p className="ask-dock__question">{turn.question}</p>
-                  <p className="ask-dock__answer">{turn.answer.answer}</p>
-                  {turn.answer.warnings?.length ? (
-                    <ul className="ask-dock__warnings">
-                      {turn.answer.warnings.map((warning, i) => (
-                        <li key={i}>{warning}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {turn.answer.actions?.length ? (
-                    <div className="ask-dock__actions">
-                      {turn.answer.actions.map((action, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ask-dock__action"
-                          onClick={() => navigate(action.path)}
-                        >
-                          {action.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  <p className="ask-dock__meta">
-                    {turn.answer.model} · {turn.answer.credits_debited} {t("assistant.credits")}
-                  </p>
-                </div>
-              ))
-            )}
-            {busy ? <p className="ask-dock__busy">{t("ask.thinking")}</p> : null}
-          </div>
-          {message ? <p className="ask-dock__error">{message}</p> : null}
-          <form
-            className="ask-dock__form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              ask().catch(() => undefined);
-            }}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              value={question}
-              maxLength={2000}
-              placeholder={t("ask.placeholder")}
-              aria-label={t("ask.placeholder")}
-              onChange={(event) => setQuestion(event.target.value)}
-              disabled={busy}
+          {mode === "agent" ? (
+            <AgentBody
+              key={`${surface}:${refsKey}`}
+              organizationId={orgId}
+              surface={surface}
+              refs={refs}
             />
-            <button type="submit" disabled={busy || !question.trim()}>
-              {t("ask.send")}
-            </button>
-          </form>
+          ) : (
+            <>
+              <div className="ask-dock__thread">
+                {thread.length === 0 ? (
+                  <p className="ask-dock__hint">{t("ask.hint")}</p>
+                ) : (
+                  thread.map((turn, index) => (
+                    <div key={index} className="ask-dock__turn">
+                      <p className="ask-dock__question">{turn.question}</p>
+                      <p className="ask-dock__answer">{turn.answer.answer}</p>
+                      {turn.answer.warnings?.length ? (
+                        <ul className="ask-dock__warnings">
+                          {turn.answer.warnings.map((warning, i) => (
+                            <li key={i}>{warning}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {turn.answer.actions?.length ? (
+                        <div className="ask-dock__actions">
+                          {turn.answer.actions.map((action, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className="ask-dock__action"
+                              onClick={() => navigate(action.path)}
+                            >
+                              {action.label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      <p className="ask-dock__meta">
+                        {turn.answer.model} · {turn.answer.credits_debited} {t("assistant.credits")}
+                      </p>
+                    </div>
+                  ))
+                )}
+                {busy ? <p className="ask-dock__busy">{t("ask.thinking")}</p> : null}
+              </div>
+              {message ? <p className="ask-dock__error">{message}</p> : null}
+              <form
+                className="ask-dock__form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  ask().catch(() => undefined);
+                }}
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={question}
+                  maxLength={2000}
+                  placeholder={t("ask.placeholder")}
+                  aria-label={t("ask.placeholder")}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  disabled={busy}
+                />
+                <button type="submit" disabled={busy || !question.trim()}>
+                  {t("ask.send")}
+                </button>
+              </form>
+            </>
+          )}
         </section>
       ) : (
         <button
