@@ -662,6 +662,7 @@ function ProjectWorkspace({
                     project={project}
                     orgId={orgId}
                     canWrite={canWrite}
+                    canRelease={canSendEnvio}
                     onChanged={() => query.refetch()}
                     onDirtyChange={setQuotationDirty}
                   />

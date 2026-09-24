@@ -6,6 +6,7 @@ import {
   documentaryFreezeRevisionA,
   documentaryPrepareInputs,
   documentarySaveInputs,
+  productionRelease,
   projectQuoteLinkCreate,
   projectsStartSuccessor,
   projectsResetPricing,
@@ -324,12 +325,16 @@ export function ProjectQuotationPanel({
   project,
   orgId,
   canWrite,
+  canRelease = false,
   onChanged,
   onDirtyChange,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
+  /** OWNER/WORKSHOP_MANAGER — releasing a sealed version creates workshop
+   * orders, a warehouse-side authority estimators don't hold. */
+  canRelease?: boolean;
   onChanged(): Promise<unknown>;
   onDirtyChange?(dirty: boolean): void;
 }): JSX.Element {
@@ -610,6 +615,28 @@ export function ProjectQuotationPanel({
       await onChanged();
     } catch {
       setMessage(t("quotation.conflict"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Liberar a producción — one WORKSHOP_OT per sealed position. The
+   * endpoint is idempotent: re-pressing returns the existing orders, so the
+   * action can never duplicate work on the floor. */
+  async function release(versionId: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionRelease(versionId, requestOptions);
+      if (response.status !== 200 && response.status !== 201) {
+        throw new ApiError(response.status, response.data);
+      }
+      setMessage(
+        `${t("quotation.released")} ${String(response.data.released)} ${t("production.orders")}`,
+      );
+      await onChanged();
+    } catch {
+      setMessage(t("quotation.releaseError"));
     } finally {
       setBusy(false);
     }
@@ -1291,6 +1318,16 @@ export function ProjectQuotationPanel({
                 <button disabled={busy} onClick={() => void openEvidence(version.id)}>
                   {t("quotation.openEvidence")}
                 </button>
+                {canRelease && version.documentary_complete ? (
+                  <button
+                    type="button"
+                    className="primary-action"
+                    disabled={busy}
+                    onClick={() => void release(version.id)}
+                  >
+                    {t("quotation.release")}
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

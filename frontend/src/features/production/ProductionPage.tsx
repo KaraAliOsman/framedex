@@ -181,6 +181,12 @@ export function ProductionPage(): JSX.Element {
 
   const selectedId = params.get("order") ?? "";
   selectedIdRef.current = selectedId;
+  /** Triage queue — deep-linkable: /production?status=HOLD lands on the held
+   * orders (dashboard attention items point here). */
+  const statusFilter = params.get("status") ?? "";
+  const filteredOrders = statusFilter
+    ? orders.filter((order) => order.status === statusFilter)
+    : orders;
 
   const loadOrders = useCallback(async () => {
     const response = await productionOrders();
@@ -510,9 +516,38 @@ export function ProductionPage(): JSX.Element {
       <div className="production-layout">
         <aside className="production-orders" aria-label={t("production.orders")}>
           <h2>{t("production.orders")}</h2>
+          <div
+            className="production-filters"
+            role="group"
+            aria-label={t("production.statusFilter")}
+          >
+            {["", "RELEASED", "IN_PROGRESS", "HOLD", "COMPLETED", "DISPATCHED", "INSTALLED"].map(
+              (status) => (
+                <button
+                  key={status || "all"}
+                  type="button"
+                  className={`production-filter${statusFilter === status ? " is-active" : ""}`}
+                  aria-pressed={statusFilter === status}
+                  onClick={() => {
+                    const next = new URLSearchParams(params);
+                    if (status) next.set("status", status);
+                    else next.delete("status");
+                    setParams(next);
+                  }}
+                >
+                  {status === ""
+                    ? t("production.statusAll")
+                    : t(orderStatusKey[status] ?? "production.orderReleased")}
+                </button>
+              ),
+            )}
+          </div>
           {orders.length === 0 ? <p>{t("production.empty")}</p> : null}
+          {statusFilter && orders.length > 0 && filteredOrders.length === 0 ? (
+            <p>{t("production.emptyFilter")}</p>
+          ) : null}
           <ul>
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <li key={order.id}>
                 <button
                   type="button"
@@ -1291,6 +1326,42 @@ export function ProductionPage(): JSX.Element {
                       </form>
                     ) : null}
                   </section>
+                );
+              })()}
+              {(() => {
+                const nextStep = detail.steps.find(
+                  (step) => step.status !== "DONE" && stepActions(step).length > 0,
+                );
+                if (
+                  !nextStep ||
+                  detail.status === "COMPLETED" ||
+                  detail.status === "DISPATCHED" ||
+                  detail.status === "INSTALLED"
+                )
+                  return null;
+                return (
+                  <div
+                    className="production-next"
+                    role="group"
+                    aria-label={t("production.nextStep")}
+                  >
+                    <span className="production-next-label">
+                      {t("production.nextStep")}: <strong>{nextStep.label}</strong>
+                      {nextStep.work_center_code ? ` · ${nextStep.work_center_code}` : ""}
+                    </span>
+                    <span className="production-step-actions">
+                      {stepActions(nextStep).map((stepAction) => (
+                        <button
+                          key={stepAction}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => transition(nextStep.id, stepAction, detail.id)}
+                        >
+                          {t(actionLabel[stepAction])}
+                        </button>
+                      ))}
+                    </span>
+                  </div>
                 );
               })()}
               <ol className="production-steps">

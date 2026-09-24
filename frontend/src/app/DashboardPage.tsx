@@ -111,7 +111,7 @@ export function DashboardPage(): JSX.Element {
     {
       key: "dashboard.ordersHold",
       count: Number(workOrders.HOLD ?? 0),
-      to: "/production",
+      to: "/production?status=HOLD",
       warn: true,
     },
     {
