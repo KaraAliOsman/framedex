@@ -60,7 +60,10 @@ it("marks mullions for split intents", () => {
     width_mm: "1600.00",
     height_mm: "1200.00",
     split_offset_mm: "800.00",
-    children: [makeBayTree("m1a", "FIXED", "4.00", "4"), makeBayTree("m1b", "TURN_LEFT", "4.00", "4")],
+    children: [
+      makeBayTree("m1a", "FIXED", "4.00", "4"),
+      makeBayTree("m1b", "TURN_LEFT", "4.00", "4"),
+    ],
   };
   const tree = buildObjectTree(product, members, [], t);
   const mullionRow = tree.children[0]!.children.find((node) => node.kind === "mullion");

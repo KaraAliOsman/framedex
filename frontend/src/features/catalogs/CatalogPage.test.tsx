@@ -216,15 +216,22 @@ describe("CatalogPage client permissions", () => {
     },
   );
 
-  it("denies ESTIMATOR before making catalog requests", () => {
+  it("admits ESTIMATOR read-only: catalog loads without CRUD affordances", async () => {
     identity.role = "ESTIMATOR";
-    render(<CatalogPage />);
+    await mount();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(t("catalog.permission"));
-    expect(screen.queryByRole("heading", { name: t("catalog.title") })).not.toBeInTheDocument();
+    // Reads run — the estimator reviews the catalog and the imports panel.
+    for (const request of reads) expect(request).toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: t("catalog.newSystem") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: t("catalog.create") })).not.toBeInTheDocument();
 
-    for (const request of reads) expect(request).not.toHaveBeenCalled();
+    // Own rows open view-only for roles outside catalog CRUD.
+    await openKit(kit().name, true);
+    expect(componentField("qty", 1)).toBeDisabled();
+    expect(button("catalog.addComponent")).toBeDisabled();
+    expect(button("catalog.save")).toBeDisabled();
+    expect(button("catalog.delete")).toBeDisabled();
+    fireEvent.submit(editorForm());
     expectNoWrites();
   });
 

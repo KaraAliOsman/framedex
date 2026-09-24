@@ -35,6 +35,9 @@ const CanvasEditor2DView = lazy(async () => {
 const ProjectPages = lazy(async () => ({
   default: (await import("./features/projects/ProjectPages")).ProjectPages,
 }));
+const ClientsPage = lazy(async () => ({
+  default: (await import("./features/projects/ClientsPage")).ClientsPage,
+}));
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
@@ -57,6 +60,16 @@ function ProjectSurface({ editor = false }: { editor?: boolean }): JSX.Element {
 const PurchasingPage = lazy(async () => {
   const module = await import("./features/purchasing/PurchasingPage");
   return { default: module.PurchasingPage };
+});
+
+const ProductionPage = lazy(async () => {
+  const module = await import("./features/production/ProductionPage");
+  return { default: module.ProductionPage };
+});
+
+const PortalQuotePage = lazy(async () => {
+  const module = await import("./features/portal/PortalQuotePage");
+  return { default: module.PortalQuotePage };
 });
 
 function HomeRedirect(): JSX.Element {
@@ -149,6 +162,14 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route path="/" element={<HomeRedirect />} />
+      <Route
+        path="/cotizacion/:token"
+        element={
+          <Suspense fallback={<p role="status">{t("portal.loading")}</p>}>
+            <PortalQuotePage />
+          </Suspense>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route
@@ -178,12 +199,36 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route
+        path="/clients"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("clients.loading")}</p>}>
+                <ClientsPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
         path="/purchasing"
         element={
           <ReadyGuard>
             <AppShell>
               <Suspense fallback={<p role="status">{t("purchasing.loading")}</p>}>
                 <PurchasingPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/production"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("production.loading")}</p>}>
+                <ProductionPage />
               </Suspense>
             </AppShell>
           </ReadyGuard>

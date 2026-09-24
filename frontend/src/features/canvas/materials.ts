@@ -10,6 +10,12 @@ export interface MemberSurface {
   edge: string;
   /** thin highlight line that reads as an extrusion edge */
   highlight: string;
+  /** Interior detail drawn inside wide-enough members:
+   *  - "chamber": the soft inner rebate line of a multi-chamber PVC profile;
+   *  - "thermal": the insulated break strip that splits an aluminium profile
+   *    into its interior/exterior halves;
+   *  - "none": flat fill (fallback materials, non-profile surfaces). */
+  detail: "chamber" | "thermal" | "none";
 }
 
 const SURFACES: Record<string, MemberSurface> = {
@@ -17,15 +23,17 @@ const SURFACES: Record<string, MemberSurface> = {
     fill: "var(--member-pvc-fill)",
     edge: "var(--member-pvc-edge)",
     highlight: "var(--member-pvc-highlight)",
+    detail: "chamber",
   },
   ALUMINIUM: {
     fill: "var(--member-aluminium-fill)",
     edge: "var(--member-aluminium-edge)",
     highlight: "var(--member-aluminium-highlight)",
+    detail: "thermal",
   },
 };
 
-const DEFAULT_SURFACE = SURFACES.PVC!;
+const DEFAULT_SURFACE = { ...SURFACES.PVC!, detail: "none" as const };
 
 export function memberSurface(material: string | null | undefined): MemberSurface {
   return SURFACES[material ?? ""] ?? DEFAULT_SURFACE;

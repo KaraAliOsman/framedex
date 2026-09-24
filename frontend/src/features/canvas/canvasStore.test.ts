@@ -60,6 +60,20 @@ describe("design command history", () => {
     expect(useCanvasStore.getState().inputs).toBe(before);
   });
 
+  it("replaceInputs normalizes without an undo step", () => {
+    const store = useCanvasStore.getState();
+    const before = useCanvasStore.getState().inputs;
+    const v1 = inputs({ nominalWidthMm: "1200.00" });
+    const normalized = inputs({ nominalWidthMm: "1250.00" });
+    store.commitInputs(v1);
+    useCanvasStore.getState().replaceInputs(normalized);
+    expect(useCanvasStore.getState().inputs).toBe(normalized);
+    expect(useCanvasStore.getState().past).toHaveLength(1);
+
+    useCanvasStore.getState().undo();
+    expect(useCanvasStore.getState().inputs).toBe(before);
+  });
+
   it("loadDesign and reset clear history", () => {
     useCanvasStore.getState().commitInputs(inputs({ nominalWidthMm: "9.00" }));
     useCanvasStore.getState().loadDesign(inputs());

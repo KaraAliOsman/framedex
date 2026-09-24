@@ -32,3 +32,29 @@ class ProductionRateThrottle(BaseThrottle):
 
     def wait(self):
         return 60
+
+
+class PortalRateThrottle(BaseThrottle):
+    """Anonymous portal endpoints: 30 requests/min per client IP.
+
+    Token probing and decision flooding get the same Redis quota as the
+    authenticated API, keyed on REMOTE_ADDR since no user exists.
+    """
+
+    LIMIT = 30
+
+    def allow_request(self, request, view):
+        if not settings.PRODUCTION:
+            return True
+        identity = request.META.get('REMOTE_ADDR', '')
+        key = 'dekopen:portal:' + hashlib.sha256(identity.encode()).hexdigest()
+        try:
+            with redis.Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2,
+                                      socket_timeout=2) as client:
+                return int(client.eval(WINDOW, 1, key)) <= self.LIMIT
+        except redis.RedisError:
+            raise contract_error(503, 'rate_limit_unavailable',
+                                 'El servicio está temporalmente ocupado. Intenta nuevamente.') from None
+
+    def wait(self):
+        return 60

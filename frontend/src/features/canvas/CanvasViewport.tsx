@@ -1,7 +1,9 @@
 import {
+  createContext,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -26,6 +28,15 @@ import {
  * bottom-left carries the same controls; the status readout sits bottom-right. */
 
 const PAN_STEP = 60;
+
+/** Current sheet scale in device px per content mm. Interactive children
+ * (divider grips, seams) size their hit areas with it so they stay a constant
+ * ~12px on screen at any zoom. SCALE_100 outside a viewport. */
+export const ViewportScaleContext = createContext<number>(SCALE_100);
+
+export function useViewportScale(): number {
+  return useContext(ViewportScaleContext);
+}
 
 export function CanvasViewport({
   contentBox,
@@ -75,6 +86,10 @@ export function CanvasViewport({
       return () => observer.disconnect();
     }
   }, []);
+
+  // Consumers size interactive hit areas in screen pixels — they read the
+  // current px/mm scale here (view.scale = device px per content mm).
+  const scaleContext = view.scale;
 
   useEffect(() => {
     if (size.w <= 0 || size.h <= 0) return;
@@ -242,7 +257,11 @@ export function CanvasViewport({
       onKeyDown={onKeyDown}
     >
       <svg className="canvas-sheet" role="img" data-testid="assembly-sheet">
-        <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>{children}</g>
+        <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
+          <ViewportScaleContext.Provider value={scaleContext}>
+            {children}
+          </ViewportScaleContext.Provider>
+        </g>
       </svg>
       <div className="viewport-island" role="toolbar" aria-label={t("canvas.viewport")}>
         <button
