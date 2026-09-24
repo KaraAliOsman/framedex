@@ -1083,10 +1083,14 @@ def dtes_by_credit_note(*, org_id: UUID, project_id: UUID) -> dict:
     }
 
 
-def _guia_destination(project: dict) -> str:
+def _guia_destination(payload: dict) -> str:
     """The DirRecep element of a guía: the destination sealed into the
-    dispatch note at dispatch time."""
-    address = str(project.get("delivery_address") or "").strip()
+    dispatch note at dispatch time. Newer payloads carry it under
+    `delivery.address`; notes sealed before the scheduled-destination
+    freeze keep it under `project.delivery_address`."""
+    delivery = payload.get("delivery") or {}
+    project = payload.get("project") or {}
+    address = str(delivery.get("address") or project.get("delivery_address") or "").strip()
     if not address:
         raise contract_error(
             422,
@@ -1096,7 +1100,7 @@ def _guia_destination(project: dict) -> str:
     return f"<DirRecep>{escape(address)}</DirRecep>"
 
 
-def _receptor_guia(project: dict) -> tuple[str, str, str]:
+def _receptor_guia(project: dict, delivery: dict | None = None) -> tuple[str, str, str]:
     """Receptor of a guía de venta: the customer the goods ship to, so
     DirRecep is the delivery address — never the commercial header
     address."""
@@ -1110,11 +1114,13 @@ def _receptor_guia(project: dict) -> tuple[str, str, str]:
     return (
         receptor,
         str(project.get("client_name") or "Cliente").strip(),
-        _guia_destination(project),
+        _guia_destination({"project": project, "delivery": delivery or {}}),
     )
 
 
-def _receptor_guia_interno(project: dict, caf: dict) -> tuple[str, str, str]:
+def _receptor_guia_interno(
+    project: dict, caf: dict, delivery: dict | None = None
+) -> tuple[str, str, str]:
     """Receptor of a traslado interno (IndTraslado=5): goods move between
     the issuer's own premises, so the taxpayer receiving them is the
     issuer itself — RUT and razón social come from the CAF. The
@@ -1122,7 +1128,7 @@ def _receptor_guia_interno(project: dict, caf: dict) -> tuple[str, str, str]:
     return (
         str(caf["rut_emisor"]),
         str(caf["razon_social"]).strip() or "Emisor",
-        _guia_destination(project),
+        _guia_destination({"project": project, "delivery": delivery or {}}),
     )
 
 
@@ -1137,9 +1143,9 @@ def _dte_xml_dispatch_note(
         else json.loads(note["payload_json"])
     )
     receptor, receptor_name, receptor_extra = (
-        _receptor_guia_interno(payload["project"], caf)
+        _receptor_guia_interno(payload["project"], caf, payload.get("delivery"))
         if ind_traslado == IND_TRASLADO_INTERNO
-        else _receptor_guia(payload["project"])
+        else _receptor_guia(payload["project"], payload.get("delivery"))
     )
     order_code = str(payload["order"]["code"])
     units = int(payload["totals"]["units"] or payload["order"].get("quantity") or 1)

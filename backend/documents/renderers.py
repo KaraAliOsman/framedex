@@ -1087,7 +1087,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         window = _value(delivery.get("time_window"))
         contact = _value(delivery.get("contact_name"))
         body += (
-            f"<p><strong>Entrega programada:</strong> {escape(scheduled)}"
+            f"<p><strong>Entrega programada al despachar:</strong> {escape(scheduled)}"
             + (f" · {escape(window)}" if window != "—" else "")
             + (f" · {escape(contact)}" if contact != "—" else "")
             + "</p>"
