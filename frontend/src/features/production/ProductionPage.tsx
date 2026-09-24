@@ -284,16 +284,20 @@ export function ProductionPage(): JSX.Element {
     }
   }, []);
 
-  const loadTrace = useCallback(async () => {
-    if (!selectedId) return;
-    setTraceBusy(true);
-    try {
-      const response = await productionOrderTrace(selectedId);
-      if (response.status === 200) setTrace(response.data);
-    } finally {
-      setTraceBusy(false);
-    }
-  }, [selectedId]);
+  const loadTrace = useCallback(
+    async (orderId?: string) => {
+      const id = orderId ?? selectedId;
+      if (!id) return;
+      setTraceBusy(true);
+      try {
+        const response = await productionOrderTrace(id);
+        if (response.status === 200) setTrace(response.data);
+      } finally {
+        setTraceBusy(false);
+      }
+    },
+    [selectedId],
+  );
 
   useEffect(() => {
     void loadOrders().catch(() => setMessage(t("production.loadError")));
@@ -335,7 +339,12 @@ export function ProductionPage(): JSX.Element {
     try {
       await task;
       setNote("");
-      await Promise.all([loadDetail(orderId), loadOrders()]);
+      // A mutating action (optimize, ops export, step transition) changes
+      // the trace — refetch it so an open operator card never shows stale
+      // reservations/ops until a manual reload.
+      const reloads = [loadDetail(orderId), loadOrders()];
+      if (trace) reloads.push(loadTrace(orderId));
+      await Promise.all(reloads);
     } catch (error) {
       if (mounted.current) setMessage(actionErrorDetail(error));
     } finally {
