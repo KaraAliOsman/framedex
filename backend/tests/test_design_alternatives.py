@@ -29,6 +29,7 @@ def _position():
 def _catalog(**overrides):
     catalog = {
         "glass_skus": {"GLASS-4MM", "DVH-4-12-4"},
+        "glass_recipes": {"GLASS-4MM": "4", "DVH-4-12-4": "4-12-4"},
         "panel_skus": {"PANEL-SANDWICH-DEMO-24"},
         "thicknesses": {Decimal("4"), Decimal("24")},
     }
@@ -397,6 +398,58 @@ def test_unknown_coupler_sku_rejects_the_spec():
         coupler_skus={"COUPLER-A"},
     )
     assert product is None and reason == "union_desconocida"
+
+
+def test_selected_glass_binds_recipe_and_matching_bead():
+    """A DVH SKU carries its composition: spec "4-12-4" weighs 8 mm of
+    glass and occupies a 20 mm unit — the 24 mm bead rule accepts it."""
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "DVH-4-12-4"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(),
+        coupler_skus=set(),
+    )
+    assert reason is None
+    tree = product["assembly"]["modules"][0]["tree"]
+    assert tree["glass_spec"] == "4-12-4"
+    assert tree["glass_thickness_mm"] == "24"
+
+
+def test_recipe_without_a_bead_rule_rejects_the_candidate():
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "DVH-4-12-4"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(thicknesses={Decimal("4")}),
+        coupler_skus=set(),
+    )
+    assert product is None and reason == "vidrio_incompatible"
+
+
+def test_unparseable_recipe_rejects_instead_of_guessing():
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "DVH-4-12-4"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(glass_recipes={"DVH-4-12-4": "templado incoloro"}),
+        coupler_skus=set(),
+    )
+    assert product is None and reason == "vidrio_incompatible"
+
+
+def test_spec_less_mapping_falls_back_to_the_slot_thickness():
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(glass_recipes={"GLASS-4MM": None}),
+        coupler_skus=set(),
+    )
+    assert reason is None
+    tree = product["assembly"]["modules"][0]["tree"]
+    assert tree["glass_spec"] == "4"
+    assert tree["glass_thickness_mm"] == "4"
 
 
 def test_leaf_weight_only_when_leaves_exist(monkeypatch):

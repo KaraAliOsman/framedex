@@ -37,6 +37,7 @@ function renderPanel(overrides: Partial<Parameters<typeof AlternativesPanel>[0]>
     members: MEMBERS,
     disabled: false,
     onUse,
+    catalogKey: "G4|C1|5",
     ...overrides,
   };
   return { props, onUse, ...render(<AlternativesPanel {...props} />) };

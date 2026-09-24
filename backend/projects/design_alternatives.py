@@ -11,6 +11,7 @@ as a usable product, and no number in the response comes from the model."""
 from __future__ import annotations
 
 import json
+import re
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -24,7 +25,9 @@ from projects.design_assist import OPENINGS, _catalog
 CAPABILITY = "design_alternatives"
 MAX_ALTERNATIVES = 3
 MAX_MODULE_COUNT = 12
-MIN_DIMENSION_MM = Decimal("150")
+# Same floor as the position serializer — an adoptable candidate must be
+# savable at the exact dimensions it was generated for.
+MIN_DIMENSION_MM = Decimal("250")
 MAX_WIDTH_MM = Decimal("6000")
 MAX_HEIGHT_MM = Decimal("4000")
 ZERO = Decimal("0")
@@ -78,6 +81,31 @@ def _dimensions(width: Any, height: Any) -> tuple[Decimal, Decimal]:
 def _default_thickness(catalog: dict) -> Decimal:
     thicknesses = sorted(Decimal(str(t)) for t in catalog["thicknesses"])
     return thicknesses[0] if thicknesses else Decimal("4.00")
+
+
+_RECIPE_PART = re.compile(r"\s*(\d+(?:[.,]\d+)?)")
+
+
+def _recipe_unit_thickness(recipe: str) -> Decimal | None:
+    """Total unit thickness a recipe occupies — panes AND chambers.
+    "4-16-4" is 24 mm of slot; unparseable recipes stay unknown."""
+    total = ZERO
+    for part in recipe.replace("+", "-").split("-"):
+        match = _RECIPE_PART.match(part.strip())
+        if match is None or part.strip() == "":
+            return None
+        total += Decimal(match.group(1).replace(",", "."))
+    return total if total > ZERO else None
+
+
+def _bead_for_unit(unit_mm: Decimal, catalog: dict) -> Decimal | None:
+    """The glazing slot a unit needs: an exact bead rule wins, otherwise
+    the smallest larger rule; nothing that fits rejects the candidate."""
+    rules = sorted(Decimal(str(t)) for t in catalog["thicknesses"])
+    for rule in rules:
+        if rule >= unit_mm:
+            return rule
+    return None
 
 
 def _catalog_sku(
@@ -153,7 +181,21 @@ def _build_product(
         panel_sku = next(iter(sorted(catalog["panel_skus"])))
     if coupler_sku is None and len(openings) > 1 and len(coupler_skus) == 1:
         coupler_sku = next(iter(sorted(coupler_skus)))
-    thickness = _default_thickness(catalog)
+    # The mapping's recipe is the composition authority — "4-16-4" weighs
+    # 8 mm of glass, not the slot's 24. A spec-less mapping keeps the
+    # monolithic fallback: spec == slot thickness, honestly what it is.
+    recipe = catalog["glass_recipes"].get(glass_sku) if glass_sku else None
+    if glass_sku and recipe:
+        unit_mm = _recipe_unit_thickness(recipe)
+        if unit_mm is None:
+            return None, "vidrio_incompatible"
+        thickness = _bead_for_unit(unit_mm, catalog)
+        if thickness is None:
+            return None, "vidrio_incompatible"
+        glass_spec = recipe
+    else:
+        thickness = _default_thickness(catalog)
+        glass_spec = str(thickness)
     quantum = Decimal("0.01")
     share = (width_mm / len(openings)).quantize(quantum)
     remaining = width_mm
@@ -167,7 +209,7 @@ def _build_product(
             "type": "BAY",
             "opening_type": opening,
             "glass_thickness_mm": str(thickness),
-            "glass_spec": str(thickness),
+            "glass_spec": glass_spec,
         }
         if glass_sku:
             tree["glass_article_sku"] = glass_sku

@@ -48,6 +48,7 @@ export function AlternativesPanel({
   members,
   disabled,
   onUse,
+  catalogKey,
 }: {
   organizationId: string;
   positionId: string | null;
@@ -56,6 +57,10 @@ export function AlternativesPanel({
   members: MemberGeometry;
   disabled: boolean;
   onUse(next: ProductJson): void;
+  /** Signature of the visible catalog options — the gateway hashes them
+   * into the request, so a catalog edit is a different operation, never
+   * a replay of the old one. */
+  catalogKey: string;
 }): JSX.Element {
   const [brief, setBrief] = useState("");
   const [busy, setBusy] = useState(false);
@@ -70,6 +75,7 @@ export function AlternativesPanel({
     brief: string;
     systemId: string | null;
     dims: string;
+    catalogKey: string;
   } | null>(null);
 
   /** A system switch invalidates anything in flight — candidates were
@@ -96,9 +102,16 @@ export function AlternativesPanel({
       !operationKey.current ||
       operationKey.current.brief !== trimmed ||
       operationKey.current.systemId !== systemId ||
-      operationKey.current.dims !== dims
+      operationKey.current.dims !== dims ||
+      operationKey.current.catalogKey !== catalogKey
     ) {
-      operationKey.current = { key: crypto.randomUUID(), brief: trimmed, systemId, dims };
+      operationKey.current = {
+        key: crypto.randomUUID(),
+        brief: trimmed,
+        systemId,
+        dims,
+        catalogKey,
+      };
     }
     const seq = ++requestSeq.current;
     try {

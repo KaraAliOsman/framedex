@@ -1580,6 +1580,14 @@ export function AssemblyEditor({
               members={members}
               disabled={disabled}
               onUse={(next) => commit(next)}
+              catalogKey={[
+                ...(options?.glass_skus ?? []),
+                ...(options?.panel_skus ?? []),
+                ...(options?.coupler_skus ?? []),
+                ...(options?.glazing_thicknesses ?? []),
+              ]
+                .sort()
+                .join("|")}
             />
           </div>
         )}

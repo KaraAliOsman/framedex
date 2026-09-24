@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny
 
 from ai_gateway.providers import ProviderError
 from authentication.errors import contract_error
+from engine_api.repository import SystemNotFound, UnsupportedCatalogContract
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from billing.flow import FlowError
 from billing.serializers import FlowAcknowledgementSerializer, FlowConfirmationSerializer
@@ -281,6 +282,18 @@ class PositionDesignAssistView(APIView):
                     error.code,
                     "El proveedor de IA no está disponible en este momento.",
                 ) from None
+            except SystemNotFound as error:
+                raise contract_error(
+                    404,
+                    "system_not_found",
+                    "La serie no está disponible para este taller.",
+                ) from error
+            except UnsupportedCatalogContract as error:
+                raise contract_error(
+                    422,
+                    "technical_authority_required",
+                    "Revisa las compatibilidades del catálogo de esta serie.",
+                ) from error
 
 
 class PositionDesignAlternativesView(APIView):
@@ -319,6 +332,18 @@ class PositionDesignAlternativesView(APIView):
                     error.code,
                     "El proveedor de IA no está disponible en este momento.",
                 ) from None
+            except SystemNotFound as error:
+                raise contract_error(
+                    404,
+                    "system_not_found",
+                    "La serie no está disponible para este taller.",
+                ) from error
+            except UnsupportedCatalogContract as error:
+                raise contract_error(
+                    422,
+                    "technical_authority_required",
+                    "Revisa las compatibilidades del catálogo de esta serie.",
+                ) from error
 
 
 class ProjectPaymentsView(APIView):
