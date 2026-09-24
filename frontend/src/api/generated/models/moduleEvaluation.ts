@@ -7,9 +7,11 @@
  */
 import type { EngineResultPayload } from "./engineResultPayload";
 import type { ProductIssue } from "./productIssue";
+import type { SlidingLayoutFacts } from "./slidingLayoutFacts";
 
 export interface ModuleEvaluation {
   module_id: string;
   issues: ProductIssue[];
   result: EngineResultPayload | null;
+  sliding: SlidingLayoutFacts[];
 }

@@ -2,10 +2,48 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
-import { projectsList } from "../api/generated/dekopen";
-import type { ProjectResponse } from "../api/generated/models";
+import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
+import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
+
+const WO_STATUSES = [
+  "RELEASED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "HOLD",
+  "DISPATCHED",
+  "INSTALLED",
+] as const;
+
+const woStatusKey: Record<string, TranslationKey> = {
+  RELEASED: "production.orderReleased",
+  IN_PROGRESS: "production.orderInProgress",
+  COMPLETED: "production.orderCompleted",
+  HOLD: "production.orderHold",
+  DISPATCHED: "production.orderDispatched",
+  INSTALLED: "production.orderInstalled",
+};
+
+const eventLabel: Record<string, TranslationKey> = {
+  STEP_STARTED: "production.eventStepStarted",
+  STEP_COMPLETED: "production.eventStepCompleted",
+  STEP_BLOCKED: "production.eventStepBlocked",
+  STEP_UNBLOCKED: "production.eventStepUnblocked",
+  NOTE: "production.eventNote",
+  WO_HOLD: "production.eventHold",
+  WO_REMADE: "production.eventRemade",
+  WO_RELEASED: "production.eventReleased",
+  WO_COMPLETED: "production.eventCompleted",
+  WO_OPTIMIZED: "production.eventOptimized",
+  QC_FAILED: "production.eventQcFailed",
+  WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_PACKED: "production.eventPacked",
+  WO_DISPATCHED: "production.eventDispatched",
+  WO_INSTALLED: "production.eventInstalled",
+};
+
+type RecentEvent = { event: string; order_code: string; at: string };
 
 const statuses: Record<ProjectResponse["status"], TranslationKey> = {
   DRAFT: "projects.draft",
@@ -34,15 +72,56 @@ export function DashboardPage(): JSX.Element {
     },
   });
 
+  const opsQuery = useQuery<OperationalSummary>({
+    queryKey: ["dashboard", "ops", org?.id],
+    enabled: org !== undefined,
+    queryFn: async ({ signal }) => {
+      const response = await analyticsOperationalSummary({
+        signal,
+        headers: { "X-Organization-ID": org!.id },
+      });
+      if (response.status !== 200) {
+        throw new ApiError(response.status, response.data);
+      }
+      return response.data;
+    },
+  });
+
   const items = query.data ?? [];
   const byActivity = [...items].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const recent = byActivity.slice(0, 8);
   const next = byActivity.find((item) => item.status === "DRAFT") ?? null;
-  const active = items.filter((item) => item.status === "DRAFT" || item.status === "QUOTED");
-  const inProduction = items.filter(
-    (item) => item.status === "APPROVED" || item.status === "IN_PRODUCTION",
-  );
   const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
+
+  const workOrders = (opsQuery.data?.work_orders ?? {}) as Record<string, number>;
+  const deliveries = (opsQuery.data?.deliveries ?? {}) as Record<string, number>;
+  const attentionCandidates: { key: TranslationKey; count: number; to: string; warn: boolean }[] = [
+    {
+      key: "dashboard.deliveriesOverdue",
+      count: Number(deliveries.overdue ?? 0),
+      to: "/production",
+      warn: true,
+    },
+    {
+      key: "dashboard.deliveriesToday",
+      count: Number(deliveries.today ?? 0),
+      to: "/production",
+      warn: false,
+    },
+    {
+      key: "dashboard.ordersHold",
+      count: Number(workOrders.HOLD ?? 0),
+      to: "/production",
+      warn: true,
+    },
+    {
+      key: "dashboard.quotesWaiting",
+      count: items.filter((item) => item.status === "QUOTED").length,
+      to: "/projects",
+      warn: false,
+    },
+  ];
+  const attention = attentionCandidates.filter((entry) => entry.count > 0);
 
   return (
     <section className="dashboard" aria-labelledby="page-title">
@@ -60,6 +139,33 @@ export function DashboardPage(): JSX.Element {
 
       {query.isError && <p role="alert">{t("projects.uncertain")}</p>}
 
+      <section className="dashboard-attention" aria-label={t("dashboard.attention")}>
+        <h2 className="eyebrow">{t("dashboard.attention")}</h2>
+        {query.isPending || opsQuery.isPending ? (
+          <p className="dashboard-attention-clear">{t("dashboard.attentionLoading")}</p>
+        ) : query.isError || opsQuery.isError ? (
+          <p className="dashboard-attention-clear" role="alert">
+            {t("dashboard.attentionError")}
+          </p>
+        ) : attention.length === 0 ? (
+          <p className="dashboard-attention-clear">{t("dashboard.allClear")}</p>
+        ) : (
+          <ul>
+            {attention.map((entry) => (
+              <li
+                key={entry.key}
+                className={entry.warn ? "attention-item is-warn" : "attention-item"}
+              >
+                <Link to={entry.to}>
+                  <span>{t(entry.key)}</span>
+                  <strong>{entry.count}</strong>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {next && (
         <Link to={`/projects/${next.id}`} className="dashboard-continue">
           <span className="eyebrow">{t("dashboard.continue")}</span>
@@ -76,20 +182,62 @@ export function DashboardPage(): JSX.Element {
         </Link>
       )}
 
-      <div className="dashboard-cards">
-        <div className="metric-card">
-          <span className="eyebrow">{t("dashboard.inProgress")}</span>
-          <strong>{active.length}</strong>
-        </div>
-        <div className="metric-card">
-          <span className="eyebrow">{t("dashboard.production")}</span>
-          <strong>{inProduction.length}</strong>
-        </div>
-        <div className="metric-card">
-          <span className="eyebrow">{t("projects.title")}</span>
-          <strong>{items.length}</strong>
-        </div>
-      </div>
+      {opsQuery.data ? (
+        <section className="dashboard-ops" aria-label={t("dashboard.opsTitle")}>
+          <h2 className="eyebrow">{t("dashboard.opsTitle")}</h2>
+          <div className="dashboard-funnel">
+            {WO_STATUSES.map((status) => {
+              const count = Number(
+                (opsQuery.data.work_orders as Record<string, number>)[status] ?? 0,
+              );
+              return (
+                <span key={status} className="status-chip" data-status={status.toLowerCase()}>
+                  {t(woStatusKey[status] ?? "production.orderReleased")} · {count}
+                </span>
+              );
+            })}
+          </div>
+          <div className="dashboard-cards">
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.dispatched30")}</span>
+              <strong>
+                {Number(
+                  (opsQuery.data.throughput_30d as Record<string, number>).dispatched_30d ?? 0,
+                )}
+              </strong>
+            </div>
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.installed30")}</span>
+              <strong>
+                {Number(
+                  (opsQuery.data.throughput_30d as Record<string, number>).installed_30d ?? 0,
+                )}
+              </strong>
+            </div>
+            <div className="metric-card">
+              <span className="eyebrow">{t("dashboard.leadHours")}</span>
+              <strong>
+                {opsQuery.data.avg_release_to_dispatch_hours !== null
+                  ? `${opsQuery.data.avg_release_to_dispatch_hours} h`
+                  : "—"}
+              </strong>
+            </div>
+          </div>
+          {((opsQuery.data.recent_events as RecentEvent[]) ?? []).length > 0 ? (
+            <ul className="dashboard-activity">
+              {(opsQuery.data.recent_events as RecentEvent[]).map((item, i) => (
+                <li key={`${item.order_code}-${item.event}-${i}`}>
+                  <span className="dashboard-activity-event">
+                    {t(eventLabel[item.event] ?? "production.eventStepCompleted")}
+                  </span>
+                  <span className="dashboard-activity-code">{item.order_code}</span>
+                  <time dateTime={item.at}>{new Date(item.at).toLocaleString("es-CL")}</time>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       {query.isPending ? (
         <p role="status">{t("projects.loading")}</p>

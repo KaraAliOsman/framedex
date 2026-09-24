@@ -200,7 +200,7 @@ def test_superadmin_is_only_modeled_from_app_metadata(normalized_migration: str)
 def test_demo_60_system_seed_is_exact(seed_sql: str) -> None:
     expected_values = (
         "'DEMO_60'",
-        "'Sistema Demo 60mm PVC'",
+        "'Sistema Demo 60mm PVC — referencia sintética'",
         "60.00",
         "'PVC'",
         "8.00",

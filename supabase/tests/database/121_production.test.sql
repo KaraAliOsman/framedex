@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(16);
+SELECT plan(19);
 
 SELECT has_table('public', 'work_centers', 'work centers table exists');
 SELECT has_table('public', 'production_steps', 'routing steps table exists');
@@ -102,6 +102,32 @@ SELECT ok(
           AND indexdef LIKE '%remake_of%'
     ),
     'release uniqueness excludes remake orders'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'order_status' AND e.enumlabel = 'DISPATCHED'
+    ),
+    'order status includes DISPATCHED for shipped work orders'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid
+        WHERE t.typname = 'order_status' AND e.enumlabel = 'INSTALLED'
+    ),
+    'order status includes INSTALLED for delivered work'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'production_step_events_event_check'
+          AND pg_get_constraintdef(oid) LIKE '%WO_PACKED%'
+          AND pg_get_constraintdef(oid) LIKE '%WO_DISPATCHED%'
+          AND pg_get_constraintdef(oid) LIKE '%WO_INSTALLED%'
+    ),
+    'step events accept packing, dispatch and installation outcomes'
 );
 SELECT * FROM finish();
 ROLLBACK;
