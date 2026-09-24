@@ -135,7 +135,10 @@ import type {
   PriceResponse,
   ProductionOrderDetail,
   ProductionOrderList,
+  ProductionOrderTrace,
+  ProductionPieceTrace,
   ProductionRelease,
+  ProductionVersionTrace,
   ProjectCreditNote,
   ProjectCreditNoteAccess,
   ProjectCreditNoteEmitRequest,
@@ -8228,6 +8231,150 @@ export const productionOrderRemake = async (
   });
 };
 
+export type productionOrderTraceResponse200 = {
+  data: ProductionOrderTrace;
+  status: 200;
+};
+
+export type productionOrderTraceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderTraceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderTraceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderTraceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderTraceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderTraceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderTraceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderTraceResponseSuccess = productionOrderTraceResponse200 & {
+  headers: Headers;
+};
+export type productionOrderTraceResponseError = (
+  | productionOrderTraceResponse400
+  | productionOrderTraceResponse401
+  | productionOrderTraceResponse403
+  | productionOrderTraceResponse404
+  | productionOrderTraceResponse409
+  | productionOrderTraceResponse422
+  | productionOrderTraceResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderTraceResponse =
+  productionOrderTraceResponseSuccess | productionOrderTraceResponseError;
+
+export const getProductionOrderTraceUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/trace/`;
+};
+
+export const productionOrderTrace = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderTraceResponse> => {
+  return apiMutator<productionOrderTraceResponse>(getProductionOrderTraceUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionPieceTraceResponse200 = {
+  data: ProductionPieceTrace;
+  status: 200;
+};
+
+export type productionPieceTraceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionPieceTraceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionPieceTraceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionPieceTraceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionPieceTraceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionPieceTraceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionPieceTraceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionPieceTraceResponseSuccess = productionPieceTraceResponse200 & {
+  headers: Headers;
+};
+export type productionPieceTraceResponseError = (
+  | productionPieceTraceResponse400
+  | productionPieceTraceResponse401
+  | productionPieceTraceResponse403
+  | productionPieceTraceResponse404
+  | productionPieceTraceResponse409
+  | productionPieceTraceResponse422
+  | productionPieceTraceResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionPieceTraceResponse =
+  productionPieceTraceResponseSuccess | productionPieceTraceResponseError;
+
+export const getProductionPieceTraceUrl = (pieceId: string) => {
+  return `/api/v1/production/pieces/${pieceId}/trace/`;
+};
+
+export const productionPieceTrace = async (
+  pieceId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionPieceTraceResponse> => {
+  return apiMutator<productionPieceTraceResponse>(getProductionPieceTraceUrl(pieceId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type productionStepTransitionResponse200 = {
   data: StepTransition;
   status: 200;
@@ -8387,6 +8534,78 @@ export const productionRelease = async (
   return apiMutator<productionReleaseResponse>(getProductionReleaseUrl(versionId), {
     ...options,
     method: "POST",
+  });
+};
+
+export type productionVersionTraceResponse200 = {
+  data: ProductionVersionTrace;
+  status: 200;
+};
+
+export type productionVersionTraceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionVersionTraceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionVersionTraceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionVersionTraceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionVersionTraceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionVersionTraceResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionVersionTraceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionVersionTraceResponseSuccess = productionVersionTraceResponse200 & {
+  headers: Headers;
+};
+export type productionVersionTraceResponseError = (
+  | productionVersionTraceResponse400
+  | productionVersionTraceResponse401
+  | productionVersionTraceResponse403
+  | productionVersionTraceResponse404
+  | productionVersionTraceResponse409
+  | productionVersionTraceResponse422
+  | productionVersionTraceResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionVersionTraceResponse =
+  productionVersionTraceResponseSuccess | productionVersionTraceResponseError;
+
+export const getProductionVersionTraceUrl = (versionId: string) => {
+  return `/api/v1/production/versions/${versionId}/trace/`;
+};
+
+export const productionVersionTrace = async (
+  versionId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionVersionTraceResponse> => {
+  return apiMutator<productionVersionTraceResponse>(getProductionVersionTraceUrl(versionId), {
+    ...options,
+    method: "GET",
   });
 };
 

@@ -21,12 +21,16 @@ import {
   productionOrderPacking,
   productionOrderRemake,
   productionOrders,
+  productionPieceTrace,
+  productionOrderTrace,
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
   Delivery,
   DeliveryScheduleRequestRequest,
   DeliveryTransitionRequestStatusEnum,
+  ProductionOrderTrace,
+  ProductionPieceTrace,
   MethodEnum,
   PackingLabel,
   PaymentKindEnum,
@@ -45,6 +49,7 @@ import {
   type PolishingEntry,
 } from "./GlassSummary";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
+import { TracePieceMatches, TracePlan, TraceStock } from "./TraceView";
 import "./production.css";
 
 type WorkOrderMaterials = {
@@ -177,6 +182,11 @@ export function ProductionPage(): JSX.Element {
   const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
   const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
   const [sigDrawn, setSigDrawn] = useState(false);
+  const [trace, setTrace] = useState<ProductionOrderTrace | null>(null);
+  const [traceBusy, setTraceBusy] = useState(false);
+  const [pieceQuery, setPieceQuery] = useState("");
+  const [pieceReport, setPieceReport] = useState<ProductionPieceTrace | null>(null);
+  const [pieceBusy, setPieceBusy] = useState(false);
   const sigRef = useRef<SignaturePadHandle | null>(null);
   const labelsGeneration = useRef(0);
   const selectedIdRef = useRef("");
@@ -235,8 +245,34 @@ export function ProductionPage(): JSX.Element {
       setConfirmOpen(false);
       return;
     }
+    setTrace(null);
+    setPieceQuery("");
+    setPieceReport(null);
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
   }, [selectedId, loadDetail]);
+
+  const loadTrace = useCallback(async () => {
+    if (!selectedId) return;
+    setTraceBusy(true);
+    try {
+      const response = await productionOrderTrace(selectedId);
+      if (response.status === 200) setTrace(response.data);
+    } finally {
+      setTraceBusy(false);
+    }
+  }, [selectedId]);
+
+  const lookupPiece = useCallback(async () => {
+    const query = pieceQuery.trim();
+    if (!query) return;
+    setPieceBusy(true);
+    try {
+      const response = await productionPieceTrace(query);
+      if (response.status === 200) setPieceReport(response.data);
+    } finally {
+      setPieceBusy(false);
+    }
+  }, [pieceQuery]);
 
   async function action(task: Promise<unknown>, orderId: string): Promise<void> {
     setBusy(true);
@@ -1607,6 +1643,48 @@ export function ProductionPage(): JSX.Element {
                   placeholder={t("production.notePlaceholder")}
                 />
               </label>
+              <section className="production-trace" aria-label={t("production.traceTitle")}>
+                <header className="production-optimize-head">
+                  <h3>{t("production.traceTitle")}</h3>
+                  {!trace ? (
+                    <button type="button" disabled={traceBusy} onClick={() => void loadTrace()}>
+                      {traceBusy ? t("production.traceLoading") : t("production.traceLoad")}
+                    </button>
+                  ) : null}
+                </header>
+                {trace ? (
+                  <div className="production-trace-body">
+                    <p className="production-trace-chain">
+                      {trace.project?.code ? String(trace.project.code) : "—"}
+                      {" → "}
+                      {trace.version?.revision_code ? String(trace.version.revision_code) : "—"}
+                      {" → "}
+                      {String(trace.work_order.order_code ?? "—")}
+                    </p>
+                    <TracePlan plan={trace.plan} />
+                    <TraceStock stock={trace.stock} />
+                  </div>
+                ) : null}
+                <div className="production-trace-lookup">
+                  <label>
+                    {t("production.tracePieceLabel")}
+                    <input
+                      type="text"
+                      value={pieceQuery}
+                      onChange={(event) => setPieceQuery(event.target.value)}
+                      placeholder={t("production.tracePiecePlaceholder")}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={pieceBusy || !pieceQuery.trim()}
+                    onClick={() => void lookupPiece()}
+                  >
+                    {t("production.tracePieceLookup")}
+                  </button>
+                </div>
+                {pieceReport ? <TracePieceMatches report={pieceReport} /> : null}
+              </section>
               <section className="production-events" aria-label={t("production.events")}>
                 <h3>{t("production.events")}</h3>
                 <ol>

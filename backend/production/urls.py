@@ -20,6 +20,9 @@ from production.views import (
     ProductionOrderListView,
     ProductionOrderOptimizeView,
     ProductionOrderPackingView,
+    ProductionOrderTraceView,
+    ProductionPieceTraceView,
+    ProductionVersionTraceView,
     ProductionOrderRemakeView,
     ProductionReleaseView,
     ProductionStepTransitionView,
@@ -28,6 +31,16 @@ from production.views import (
 
 urlpatterns = [
     path("orders/", ProductionOrderListView.as_view(), name="production-orders"),
+    path(
+        "orders/<uuid:order_id>/trace/",
+        ProductionOrderTraceView.as_view(),
+        name="production-order-trace",
+    ),
+    path(
+        "pieces/<str:piece_id>/trace/",
+        ProductionPieceTraceView.as_view(),
+        name="production-piece-trace",
+    ),
     path(
         "orders/<uuid:order_id>/",
         ProductionOrderDetailView.as_view(),
@@ -127,6 +140,11 @@ urlpatterns = [
         "steps/<uuid:step_id>/transition/",
         ProductionStepTransitionView.as_view(),
         name="production-step-transition",
+    ),
+    path(
+        "versions/<uuid:version_id>/trace/",
+        ProductionVersionTraceView.as_view(),
+        name="production-version-trace",
     ),
     path(
         "versions/<uuid:version_id>/release/",

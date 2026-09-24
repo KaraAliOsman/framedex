@@ -7448,6 +7448,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/orders/{order_id}/trace/:
+    get:
+      operationId: production_order_trace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: order_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionOrderTrace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/pieces/{piece_id}/trace/:
+    get:
+      operationId: production_piece_trace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: piece_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionPieceTrace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/steps/{step_id}/transition/:
     post:
       operationId: production_step_transition
@@ -7563,6 +7702,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductionRelease'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/production/versions/{version_id}/trace/:
+    get:
+      operationId: production_version_trace
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: version_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionVersionTrace'
           description: ''
         '400':
           content:
@@ -16853,6 +17062,54 @@ components:
             $ref: '#/components/schemas/ProductionOrder'
       required:
       - orders
+    ProductionOrderTrace:
+      type: object
+      properties:
+        work_order:
+          type: object
+          additionalProperties: {}
+        project:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        version:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        position_id:
+          type: string
+          nullable: true
+        plan:
+          type: object
+          additionalProperties: {}
+        stock:
+          type: object
+          additionalProperties: {}
+        steps:
+          type: array
+          items: {}
+        events:
+          type: array
+          items: {}
+      required:
+      - events
+      - plan
+      - project
+      - steps
+      - stock
+      - version
+      - work_order
+    ProductionPieceTrace:
+      type: object
+      properties:
+        piece_id:
+          type: string
+        matches:
+          type: array
+          items: {}
+      required:
+      - matches
+      - piece_id
     ProductionRelease:
       type: object
       properties:
@@ -16963,6 +17220,23 @@ components:
         * `IN_PROGRESS` - IN_PROGRESS
         * `DONE` - DONE
         * `BLOCKED` - BLOCKED
+    ProductionVersionTrace:
+      type: object
+      properties:
+        version:
+          type: object
+          additionalProperties: {}
+        project:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        work_orders:
+          type: array
+          items: {}
+      required:
+      - project
+      - version
+      - work_orders
     ProfileChoice:
       type: object
       properties:

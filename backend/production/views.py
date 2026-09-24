@@ -23,6 +23,7 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
+from production.trace import trace_piece, trace_version, trace_work_order
 from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
 from projects import sii
@@ -44,6 +45,9 @@ from production.serializers import (
     InstallationRequestSerializer,
     PackingLabelsSerializer,
     PackingManifestSerializer,
+    ProductionOrderTraceSerializer,
+    ProductionVersionTraceSerializer,
+    ProductionPieceTraceSerializer,
     ProductionOrderDetailSerializer,
     RemakeRequestSerializer,
     ProductionOrderListSerializer,
@@ -614,4 +618,49 @@ class ProductionOrderDeliveryTransitionView(APIView):
                     actor_id=token.user_id,
                     to_status=str(data["status"]),
                 )
+        return Response(output)
+
+
+class ProductionOrderTraceView(APIView):
+    @extend_schema(
+        operation_id="production_order_trace",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: ProductionOrderTraceSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = trace_work_order(org_id=org_id, order_id=order_id)
+        return Response(output)
+
+
+class ProductionPieceTraceView(APIView):
+    @extend_schema(
+        operation_id="production_piece_trace",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: ProductionPieceTraceSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, piece_id: str):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = trace_piece(org_id=org_id, piece_id=piece_id)
+        return Response(output)
+
+
+class ProductionVersionTraceView(APIView):
+    @extend_schema(
+        operation_id="production_version_trace",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: ProductionVersionTraceSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, version_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = trace_version(org_id=org_id, version_id=version_id)
         return Response(output)

@@ -297,3 +297,25 @@ class DeliveryConfirmRequestSerializer(StrictSerializer):
 class DeliveryConfirmResponseSerializer(serializers.Serializer):
     confirmation = DeliveryConfirmationSerializer()
     delivery = DeliverySerializer()
+
+
+class ProductionOrderTraceSerializer(serializers.Serializer):
+    work_order = serializers.DictField()
+    project = serializers.DictField(allow_null=True)
+    version = serializers.DictField(allow_null=True)
+    position_id = serializers.CharField(allow_null=True, required=False)
+    plan = serializers.DictField()
+    stock = serializers.DictField()
+    steps = serializers.ListField()
+    events = serializers.ListField()
+
+
+class ProductionPieceTraceSerializer(serializers.Serializer):
+    piece_id = serializers.CharField()
+    matches = serializers.ListField()
+
+
+class ProductionVersionTraceSerializer(serializers.Serializer):
+    version = serializers.DictField()
+    project = serializers.DictField(allow_null=True)
+    work_orders = serializers.ListField()
