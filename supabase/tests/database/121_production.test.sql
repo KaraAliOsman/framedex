@@ -135,8 +135,9 @@ SELECT ok(
         WHERE conname = 'production_step_events_event_check'
           AND pg_get_constraintdef(oid) LIKE '%WO_OPS_EXPORTED%'
           AND pg_get_constraintdef(oid) LIKE '%WO_REMNANTS_SETTLED%'
+          AND pg_get_constraintdef(oid) LIKE '%WO_STOCK_CONSUMED%'
     ),
-    'step events accept operations export and remnant settlement outcomes'
+    'step events accept operations export, remnant settlement and stock consumption outcomes'
 );
 SELECT * FROM finish();
 ROLLBACK;
