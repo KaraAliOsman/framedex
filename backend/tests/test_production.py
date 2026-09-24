@@ -78,6 +78,30 @@ def test_routing_skips_cut_and_glaze_without_materials() -> None:
     assert routing == ["CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"]
 
 
+def test_routing_follows_system_material() -> None:
+    engine = {
+        "profile_cuts": [{"sku": "x"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+    }
+    assert service._routing(engine, material="PVC") == [
+        "CUT", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(engine, material="PVC", end_milling_overlap_mm="1.50") == [
+        "CUT", "MACHINING", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(engine, material="PVC", end_milling_overlap_mm="0.00") == [
+        "CUT", "WELD", "CLEAN", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(engine, material="ALUMINIUM") == [
+        "CUT", "MACHINING", "CRIMP", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(engine, material="unknown") == [
+        "CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"
+    ]
+
+
 def test_release_rejects_not_allowed_version() -> None:
     version = _version_row({"bom": []})
     version["production_allowed"] = False
@@ -134,6 +158,62 @@ def test_release_creates_work_order_with_steps() -> None:
     assert len(step_inserts) == 5  # CUT ASSEMBLE GLAZE QC PACK
     event_inserts = [q for q in inserted_rows if "production_step_events" in q]
     assert len(event_inserts) == 1
+
+
+def test_release_routes_steps_by_system_material() -> None:
+    version = _version_row(_SNAPSHOT)
+    order_id = uuid4()
+    inserted_rows = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.profile_systems" in query:
+            return [
+                {
+                    "id": _SNAPSHOT["positions"][0]["system_id"],
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                }
+            ]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [
+                {
+                    "id": order_id,
+                    "order_code": "OT-REV-A-01",
+                    "order_type": "WORKSHOP_OT",
+                    "status": "RELEASED",
+                    "payload_json": service._work_order_payload(
+                        _SNAPSHOT["bom"][0],
+                        system_facts={"material": "PVC", "end_milling_overlap_mm": "0.00"},
+                    ),
+                    "project_version_id": version["id"],
+                    "created_at": "2026-09-23T00:00:00Z",
+                    "steps_total": 7,
+                    "steps_done": 0,
+                }
+            ]
+        inserted_rows.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ):
+        output = service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    assert output["released"] == 1 and output["created"] == 1
+    step_inserts = [q for q in inserted_rows if "production_steps" in q]
+    assert len(step_inserts) == 7  # CUT WELD CLEAN HARDWARE GLAZE QC PACK
 
 
 def test_release_replay_returns_existing() -> None:

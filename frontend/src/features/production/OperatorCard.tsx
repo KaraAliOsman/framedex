@@ -72,11 +72,12 @@ type SheetPiece = {
 };
 
 /** Stock kinds each routing step physically consumes — mirrors the backend's
- * consume mapping (bars/sheets at CUT, kits/fittings at ASSEMBLE, panels at
- * GLAZE); QC and PACK reserve nothing. */
+ * consume mapping (bars/sheets at CUT, kits/fittings at ASSEMBLE/HARDWARE,
+ * panels at GLAZE); QC, PACK and the process steps reserve nothing. */
 const STEP_STOCK_KINDS: Record<string, string[]> = {
   CUT: ["BAR", "SHEET"],
   ASSEMBLE: ["HARDWARE_KIT", "FITTING"],
+  HARDWARE: ["HARDWARE_KIT", "FITTING"],
   GLAZE: ["PANEL"],
 };
 
@@ -241,12 +242,12 @@ export function OperatorStepCard({
             </div>
           ) : null}
 
-          {step.code === "CUT" ? (
+          {step.code === "CUT" || step.code === "MACHINING" ? (
             <div className="operator-section">
               <h4>{t("production.operatorSequence")}</h4>
               {ops.length ? (
                 <>
-                  {sawOps.length ? (
+                  {step.code === "CUT" && sawOps.length ? (
                     <table className="production-plan operator-ops">
                       <thead>
                         <tr>
