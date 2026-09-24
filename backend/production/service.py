@@ -61,6 +61,7 @@ _DEFAULT_CENTERS = [
     ("CLEANING_STATION", "Limpiadora de esquinas", "CLEANING", 25),
     ("CRIMPING_MACHINE", "Prensadora de esquinas", "CRIMPING", 26),
     ("ASSEMBLY_BENCH", "Banco de armado", "ASSEMBLY", 30),
+    ("SASH_ASSEMBLY_BENCH", "Banco de armado de hojas", "SASH_ASSEMBLY", 31),
     ("HARDWARE_BENCH", "Banco de herrajes", "HARDWARE", 32),
     ("GLAZING_BENCH", "Banco de vidriado", "GLAZING", 40),
     ("QC_STATION", "Puesto de control", "QC", 50),
@@ -163,9 +164,19 @@ def _routing(
     is never invented where the catalog can't tell us which process applies.
     ``MACHINING`` lands whenever the material demands it (aluminium corner
     and connector prep is inherent) or the system declares end milling —
-    never for PVC systems whose declared overlap is zero."""
+    never for PVC systems whose declared overlap is zero. ``SASH_ASSEMBLE``
+    and ``HARDWARE`` follow the sealed result, not the material: a fixed
+    window has no sash to assemble and no hardware to mount."""
     routing: list[str] = []
-    if engine_result.get("profile_cuts") or engine_result.get("reinforcements"):
+    cuts = engine_result.get("profile_cuts") or []
+    has_sash = any(
+        isinstance(cut, dict) and str(cut.get("role") or "") == "SASH"
+        for cut in cuts
+    )
+    has_hardware = bool(
+        engine_result.get("hardware_items") or engine_result.get("fittings")
+    )
+    if cuts or engine_result.get("reinforcements"):
         routing.append("CUT")
     milling = False
     try:
@@ -175,11 +186,19 @@ def _routing(
     except ArithmeticError:
         milling = False
     if material == "ALUMINIUM":
-        routing += ["MACHINING", "CRIMP", "SASH_ASSEMBLE", "HARDWARE"]
+        routing += ["MACHINING", "CRIMP"]
+        if has_sash:
+            routing.append("SASH_ASSEMBLE")
+        if has_hardware:
+            routing.append("HARDWARE")
     elif material == "PVC":
         if milling:
             routing.append("MACHINING")
-        routing += ["WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE"]
+        routing += ["WELD", "CLEAN"]
+        if has_sash:
+            routing.append("SASH_ASSEMBLE")
+        if has_hardware:
+            routing.append("HARDWARE")
     else:
         routing.append("ASSEMBLE")
     if engine_result.get("glasses") or engine_result.get("panels"):

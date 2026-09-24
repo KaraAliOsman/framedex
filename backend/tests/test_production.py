@@ -60,11 +60,11 @@ _SNAPSHOT = {
             "position_id": _POSITION_ID,
             "quantity": 1,
             "engine_result": {
-                "profile_cuts": [{"sku": "MARCO", "length_mm": "900"}],
+                "profile_cuts": [{"sku": "MARCO", "role": "SASH", "length_mm": "900"}],
                 "reinforcements": [],
                 "glasses": [{"width_mm": "800", "height_mm": "600"}],
                 "panels": [],
-                "hardware_items": [],
+                "hardware_items": [{"sku": "KIT-1"}],
             },
         }
     ]
@@ -80,10 +80,11 @@ def test_routing_skips_cut_and_glaze_without_materials() -> None:
 
 def test_routing_follows_system_material() -> None:
     engine = {
-        "profile_cuts": [{"sku": "x"}],
+        "profile_cuts": [{"sku": "x", "role": "SASH"}],
         "glasses": [{"a": 1}],
         "panels": [],
         "reinforcements": [],
+        "hardware_items": [{"sku": "h"}],
     }
     assert service._routing(engine, material="PVC") == [
         "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
@@ -99,6 +100,21 @@ def test_routing_follows_system_material() -> None:
     ]
     assert service._routing(engine, material="unknown") == [
         "CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"
+    ]
+    # A fixed window has no sash to assemble and no hardware to mount — the
+    # stations follow the sealed result, not the material.
+    fixed = {
+        "profile_cuts": [{"sku": "x", "role": "FRAME"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+        "hardware_items": [],
+    }
+    assert service._routing(fixed, material="PVC") == [
+        "CUT", "WELD", "CLEAN", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(fixed, material="ALUMINIUM") == [
+        "CUT", "MACHINING", "CRIMP", "GLAZE", "QC", "PACK"
     ]
 
 
