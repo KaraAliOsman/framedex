@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import {
   productionOrderCncExport,
+  productionOrderOpsExport,
   productionOrderDelivery,
   productionOrderDeliveryConfirm,
   productionOrderDeliveryConfirmation,
@@ -60,6 +61,10 @@ type CncExport = {
   files?: Record<string, string>;
 };
 type DxfExport = CncExport;
+type OpsExport = CncExport & {
+  operation_count?: number;
+  counts_by_kind?: Record<string, number>;
+};
 
 type PackingUnit = {
   unit_index: number;
@@ -112,6 +117,8 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
   WO_DELIVERY_CONFIRMED: "production.eventDeliveryConfirmed",
   WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
+  WO_REMNANTS_SETTLED: "production.eventRemnantsSettled",
+  WO_OPS_EXPORTED: "production.eventOpsExported",
 };
 
 const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
@@ -296,6 +303,10 @@ export function ProductionPage(): JSX.Element {
 
   function exportDxf(orderId: string): void {
     void action(productionOrderDxfExport(orderId), orderId);
+  }
+
+  function exportOperations(orderId: string): void {
+    void action(productionOrderOpsExport(orderId), orderId);
   }
 
   async function showLabels(orderId: string): Promise<void> {
@@ -743,8 +754,10 @@ export function ProductionPage(): JSX.Element {
                     {(() => {
                       const cncExport = detail.payload?.cnc_export as CncExport | undefined;
                       const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
+                      const opsExport = detail.payload?.operations_export as OpsExport | undefined;
                       const files = Object.entries(cncExport?.files ?? {});
                       const dxfFiles = Object.entries(dxfExport?.files ?? {});
+                      const opsFiles = Object.entries(opsExport?.files ?? {});
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
@@ -767,6 +780,13 @@ export function ProductionPage(): JSX.Element {
                               >
                                 {t("production.dxfExportButton")}
                               </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportOperations(detail.id)}
+                              >
+                                {t("production.opsExportButton")}
+                              </button>
                             </>
                           ) : null}
                           {files.map(([filename, content]) => (
@@ -780,6 +800,21 @@ export function ProductionPage(): JSX.Element {
                             </button>
                           ))}
                           {dxfFiles.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                          {opsExport?.operation_count ? (
+                            <span className="production-ops-count">
+                              {opsExport.operation_count} {t("production.opsOperationsCount")}
+                            </span>
+                          ) : null}
+                          {opsFiles.map(([filename, content]) => (
                             <button
                               key={filename}
                               type="button"

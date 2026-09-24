@@ -1145,6 +1145,147 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert any("wo_dxf_exported" in s2 for s2, _ in writes)
 
 
+def _ops_snapshot() -> dict:
+    return {
+        "manufacturing": [
+            {
+                "position_id": "pos-1",
+                "position_index": 1,
+                "repetition_index": 1,
+                "nominal_width_mm": "1000",
+                "nominal_height_mm": "1200",
+                "placement_policy_id": "pp",
+                "placement_policy_version": 1,
+                "handle_policy_id": "hp",
+                "handle_policy_version": 1,
+                "reinforcement_policy_id": "rp",
+                "reinforcement_policy_version": 1,
+                "members": [],
+                "reinforcements": [],
+                "leaves": [],
+                "infills": [],
+                "handles": [],
+                "relationships": [],
+            }
+        ]
+    }
+
+
+def _ops_optimization() -> dict:
+    return {
+        "bars": {
+            "plan_seed": "seed-1",
+            "workshop_cut_plan": [
+                {
+                    "bar_index": 1,
+                    "commercial_sku": "MARCO-60",
+                    "material": "PVC",
+                    "color": "blanco",
+                    "stock_length_mm": "6000",
+                    "head_trim_mm": "10",
+                    "tail_trim_mm": "10",
+                    "kerf_mm": "5",
+                    "cuts": [
+                        {
+                            "piece_id": "M-01",
+                            "source_kind": "PROFILE",
+                            "workshop_sku": "MARCO-60",
+                            "material": "PVC",
+                            "color": "blanco",
+                            "length_mm": "2000",
+                            "role": "FRAME",
+                            "unit_index": 1,
+                            "sequence": 1,
+                            "angle_left": "90.0",
+                            "angle_right": "45.0",
+                        },
+                        {
+                            "piece_id": "M-02",
+                            "source_kind": "PROFILE",
+                            "workshop_sku": "MARCO-60",
+                            "material": "PVC",
+                            "color": "blanco",
+                            "length_mm": "1500",
+                            "role": "FRAME",
+                            "unit_index": 1,
+                            "sequence": 2,
+                            "angle_left": "45.0",
+                            "angle_right": "90.0",
+                        },
+                    ],
+                    "kerf_total_mm": "15",
+                    "productive_length_mm": "3500",
+                    "process_consumed_mm": "3525",
+                    "remainder_mm": "2455",
+                    "waste_mm": "25",
+                    "yield_pct": "58.33",
+                    "waste_pct": "0.42",
+                }
+            ],
+        }
+    }
+
+
+def test_export_operations_seals_machine_neutral_document(monkeypatch) -> None:
+    org_id, order_id, version_id = uuid4(), uuid4(), uuid4()
+    optimization = _ops_optimization()
+    calls = iter(
+        [
+            {
+                "id": str(order_id),
+                "order_code": "OT-OPS-01",
+                "status": "IN_PROGRESS",
+                "payload_json": {"optimization": optimization, "position_id": "pos-1"},
+                "project_version_id": str(version_id),
+            },
+            {"snapshot_json": _ops_snapshot()},
+        ]
+    )
+    monkeypatch.setattr(
+        "production.service.one", lambda *_a, **_k: next(calls)
+    )
+    writes: list[tuple[str, list]] = []
+    monkeypatch.setattr(
+        "production.service.rows",
+        lambda sql_text, params=(): writes.append(
+            (" ".join(sql_text.lower().split()), list(params))
+        ) or [{"id": str(order_id)}],
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        out = service.export_operations(
+            org_id=org_id, order_id=order_id, actor_id=uuid4()
+        )
+    assert sorted(out["files"]) == ["operations.csv", "operations.json"]
+    update = next(p for s, p in writes if "update public.orders" in s)
+    stored = json.loads(update[0])["operations_export"]
+    assert stored["schema"] == "work_order_ops_export_v1"
+    assert stored["machine"]["machine_id"] == "machine-neutral-v1"
+    # head trim + two interior cuts + tail trim = 4 saw operations
+    assert stored["operation_count"] == 4
+    assert stored["counts_by_kind"] == {"SAW_CUT": 4}
+    assert stored["source_fingerprint"]
+    assert any("wo_ops_exported" in s for s, _ in writes)
+
+
+def test_export_operations_requires_optimization(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "production.service.one",
+        lambda *_a, **_k: {
+            "id": "o",
+            "order_code": "OT",
+            "status": "RELEASED",
+            "payload_json": {},
+            "project_version_id": "v",
+        },
+    )
+    with patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), pytest.raises(DocumentaryError, match="operations_requires_optimization"):
+        service.export_operations(org_id=uuid4(), order_id=uuid4(), actor_id=uuid4())
+
+
 def test_export_dxf_requires_optimization(monkeypatch) -> None:
     monkeypatch.setattr(
         "production.service.one",

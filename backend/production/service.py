@@ -19,9 +19,15 @@ from uuid import UUID
 from django.db import transaction
 import segno
 
-from dekopen_engine.cutting import optimize_cut, pieces_from_result
+from dekopen_engine.cutting import CutBar, optimize_cut, pieces_from_result
+from dekopen_engine.manufacturing import ManufacturingFactsV1
 from dekopen_engine.models import EngineResult
 from dekopen_engine.nesting import NestPiece, SheetRule, nest_rects
+from dekopen_engine.operations import (
+    NeutralOpsPostProcessor,
+    operations_from_plan,
+    ops_document,
+)
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
 from inventory import remnants as remnants_service
@@ -723,6 +729,7 @@ def create_remake(
         payload.pop("optimization", None)  # stale plan — re-optimize the remake
         payload.pop("cnc_export", None)
         payload.pop("dxf_export", None)
+        payload.pop("operations_export", None)
         payload.pop("packing", None)  # labels carry the source order code
         payload["remake_of"] = str(source["id"])
         prior = one(
@@ -1013,6 +1020,180 @@ def cnc_file_content(
         export.get("optimization_fingerprint")
         and _optimization_fingerprint(optimization if isinstance(optimization, dict) else {})
         != export["optimization_fingerprint"]
+    ):
+        return None
+    files = export.get("files") or {}
+    content = files.get(filename)
+    if content is None:
+        return None
+    return f"{order['order_code']}-{filename}", content
+
+
+def _ops_source_fingerprint(
+    optimization: dict[str, object], manufacturing: list[object]
+) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {"optimization": optimization, "manufacturing": manufacturing},
+            sort_keys=True, default=str,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _raw_fact_units(
+    version_snapshot: dict[str, object], position_id: str | None
+) -> list[object]:
+    return [
+        unit for unit in (version_snapshot.get("manufacturing") or [])
+        if not position_id or str(unit.get("position_id")) == position_id
+    ]
+
+
+def _operations_fact_units(
+    version_snapshot: dict[str, object], position_id: str | None
+) -> list[ManufacturingFactsV1]:
+    return [
+        ManufacturingFactsV1.model_validate_json(json.dumps(unit))
+        for unit in _raw_fact_units(version_snapshot, position_id)
+    ]
+
+
+def export_operations(
+    *, org_id: UUID, order_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """§7 machine-neutral operations export: derives the sealed plan's
+    manufacturing operations (saw boundaries, member machining with declared
+    authority), renders the machine-neutral document, stores it on the order
+    and records ``WO_OPS_EXPORTED``. Requires a prior optimization run."""
+    with transaction.atomic(), documentary_backend():
+        order = one(
+            """
+            SELECT id, order_code, status::text, payload_json,
+                   project_version_id FROM public.orders
+            WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+            FOR UPDATE
+            """,
+            [str(order_id), str(org_id)],
+            "work_order_not_found",
+        )
+        if str(order["status"]) == "INSTALLED":
+            raise DocumentaryError("work_order_installed")
+        if str(order["status"]) == "DISPATCHED":
+            raise DocumentaryError("work_order_dispatched")
+        payload = _decoded(order["payload_json"])
+        optimization = payload.get("optimization")
+        if not isinstance(optimization, dict) or not optimization.get("bars"):
+            raise DocumentaryError("operations_requires_optimization")
+        version_row = one(
+            """
+            SELECT snapshot_json FROM public.project_versions
+            WHERE id = %s AND org_id = %s
+            """,
+            [str(order["project_version_id"]), str(org_id)],
+            "work_order_missing_version",
+        )
+        version_snapshot = _decoded(version_row["snapshot_json"])
+        fact_units = _operations_fact_units(
+            version_snapshot,
+            str(payload.get("position_id") or "") or None,
+        )
+        bars = [
+            CutBar.model_validate_json(json.dumps(bar))
+            for bar in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
+        ]
+        ops = operations_from_plan(bars=bars, fact_units=fact_units)
+        document = ops_document(
+            ops,
+            order_code=str(order["order_code"]),
+            plan_seed=(optimization.get("bars") or {}).get("plan_seed"),
+        )
+        files = NeutralOpsPostProcessor().render(document)
+        manufacturing = _raw_fact_units(
+            version_snapshot, str(payload.get("position_id") or "") or None
+        )
+        export = {
+            "schema": "work_order_ops_export_v1",
+            "source_fingerprint": _ops_source_fingerprint(
+                optimization, manufacturing
+            ),
+            "machine": document["machine"],
+            "operation_count": document["operation_count"],
+            "counts_by_kind": document["counts_by_kind"],
+            "unemitted_kinds": document["unemitted_kinds"],
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "actor_id": str(actor_id),
+            "files": files,
+        }
+        new_payload = {**payload, "operations_export": export}
+        rows(
+            """
+            UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+            WHERE id = %s AND org_id = %s
+            RETURNING id
+            """,
+            [json.dumps(new_payload), datetime.now(timezone.utc),
+             str(order_id), str(org_id)],
+        )
+        rows(
+            """
+            INSERT INTO public.production_step_events(org_id, order_id, event, actor_id, payload)
+            VALUES (%s, %s, 'WO_OPS_EXPORTED', %s, %s::jsonb)
+            RETURNING id
+            """,
+            [
+                str(org_id),
+                str(order_id),
+                str(actor_id),
+                json.dumps({
+                    "order_code": order["order_code"],
+                    "files": sorted(files),
+                    "operation_count": document["operation_count"],
+                }),
+            ],
+        )
+        return {
+            "order_id": str(order_id),
+            "order_code": order["order_code"],
+            "exported_at": export["exported_at"],
+            "operation_count": document["operation_count"],
+            "counts_by_kind": document["counts_by_kind"],
+            "files": files,
+        }
+
+
+def operations_file_content(
+    *, org_id: UUID, order_id: UUID, filename: str
+) -> tuple[str, str] | None:
+    order = one(
+        """
+        SELECT order_code, payload_json, project_version_id FROM public.orders
+        WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+        """,
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    payload = _decoded(order["payload_json"])
+    export = payload.get("operations_export") or {}
+    optimization = payload.get("optimization")
+    version_row = one(
+        """
+        SELECT snapshot_json FROM public.project_versions
+        WHERE id = %s AND org_id = %s
+        """,
+        [str(order["project_version_id"]), str(org_id)],
+        "work_order_missing_version",
+    )
+    version_snapshot = _decoded(version_row["snapshot_json"])
+    manufacturing = _raw_fact_units(
+        version_snapshot, str(payload.get("position_id") or "") or None
+    )
+    if (
+        export.get("source_fingerprint")
+        and _ops_source_fingerprint(
+            optimization if isinstance(optimization, dict) else {},
+            manufacturing,
+        )
+        != export["source_fingerprint"]
     ):
         return None
     files = export.get("files") or {}
@@ -1676,6 +1857,7 @@ def optimize_work_order(
         new_payload = {**payload, "optimization": optimization}
         new_payload.pop("cnc_export", None)
         new_payload.pop("dxf_export", None)
+        new_payload.pop("operations_export", None)
         rows(
             """
             UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s

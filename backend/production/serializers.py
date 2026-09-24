@@ -99,6 +99,15 @@ class DxfExportSerializer(serializers.Serializer):
     files = serializers.DictField(child=serializers.CharField())
 
 
+class OpsExportSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    order_code = serializers.CharField()
+    exported_at = serializers.CharField()
+    operation_count = serializers.IntegerField()
+    counts_by_kind = serializers.DictField()
+    files = serializers.DictField(child=serializers.CharField())
+
+
 class PackingManifestSerializer(serializers.Serializer):
     order_id = serializers.UUIDField()
     order_code = serializers.CharField()

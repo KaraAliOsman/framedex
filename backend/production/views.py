@@ -35,6 +35,7 @@ from production.serializers import (
     DeliveryTransitionRequestSerializer,
     CncExportSerializer,
     DxfExportSerializer,
+    OpsExportSerializer,
     DispatchNoteAccessSerializer,
     DispatchNoteDteAccessSerializer,
     DispatchNoteDteEmitSerializer,
@@ -275,6 +276,54 @@ class ProductionOrderDxfFileView(APIView):
             )
         download_name, content = found
         response = HttpResponse(content, content_type="application/dxf")
+        response["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        return response
+
+
+class ProductionOrderOpsExportView(APIView):
+    @extend_schema(
+        operation_id="production_order_ops_export",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={201: OpsExportSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = service.export_operations(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                )
+        return Response(output, status=201)
+
+
+class ProductionOrderOpsFileView(APIView):
+    @extend_schema(
+        operation_id="production_order_ops_file",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={(200, "application/octet-stream"): OpenApiTypes.STR, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID, filename: str):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                found = service.operations_file_content(
+                    org_id=org_id, order_id=order_id, filename=filename
+                )
+        if found is None:
+            raise contract_error(
+                404,
+                "ops_file_not_found",
+                "No hay un archivo de operaciones generado con ese nombre en la orden.",
+            )
+        download_name, content = found
+        content_type = (
+            "application/json" if download_name.endswith(".json") else "text/csv"
+        )
+        response = HttpResponse(content, content_type=content_type)
         response["Content-Disposition"] = f'attachment; filename="{download_name}"'
         return response
 

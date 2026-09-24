@@ -104,6 +104,7 @@ import type {
   KitResponse,
   KitWriteRequest,
   OperationalSummary,
+  OpsExport,
   OrderReceiptRequestRequest,
   OrderReceiving,
   OrderResponse,
@@ -7839,6 +7840,154 @@ export const productionOrderLabels = async (
     ...options,
     method: "GET",
   });
+};
+
+export type productionOrderOpsExportResponse201 = {
+  data: OpsExport;
+  status: 201;
+};
+
+export type productionOrderOpsExportResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderOpsExportResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderOpsExportResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderOpsExportResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderOpsExportResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderOpsExportResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderOpsExportResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderOpsExportResponseSuccess = productionOrderOpsExportResponse201 & {
+  headers: Headers;
+};
+export type productionOrderOpsExportResponseError = (
+  | productionOrderOpsExportResponse400
+  | productionOrderOpsExportResponse401
+  | productionOrderOpsExportResponse403
+  | productionOrderOpsExportResponse404
+  | productionOrderOpsExportResponse409
+  | productionOrderOpsExportResponse422
+  | productionOrderOpsExportResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderOpsExportResponse =
+  productionOrderOpsExportResponseSuccess | productionOrderOpsExportResponseError;
+
+export const getProductionOrderOpsExportUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/operations-export/`;
+};
+
+export const productionOrderOpsExport = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderOpsExportResponse> => {
+  return apiMutator<productionOrderOpsExportResponse>(getProductionOrderOpsExportUrl(orderId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export type productionOrderOpsFileResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionOrderOpsFileResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderOpsFileResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderOpsFileResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderOpsFileResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderOpsFileResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderOpsFileResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderOpsFileResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderOpsFileResponseSuccess = productionOrderOpsFileResponse200 & {
+  headers: Headers;
+};
+export type productionOrderOpsFileResponseError = (
+  | productionOrderOpsFileResponse400
+  | productionOrderOpsFileResponse401
+  | productionOrderOpsFileResponse403
+  | productionOrderOpsFileResponse404
+  | productionOrderOpsFileResponse409
+  | productionOrderOpsFileResponse422
+  | productionOrderOpsFileResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderOpsFileResponse =
+  productionOrderOpsFileResponseSuccess | productionOrderOpsFileResponseError;
+
+export const getProductionOrderOpsFileUrl = (orderId: string, filename: string) => {
+  return `/api/v1/production/orders/${orderId}/operations-export/${filename}`;
+};
+
+export const productionOrderOpsFile = async (
+  orderId: string,
+  filename: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderOpsFileResponse> => {
+  return apiMutator<productionOrderOpsFileResponse>(
+    getProductionOrderOpsFileUrl(orderId, filename),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export type productionOrderOptimizeResponse200 = {
