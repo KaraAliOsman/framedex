@@ -42,6 +42,7 @@ from dekopen_engine.product import (
     frameless_module_computation,
 )
 from dekopen_engine.purchasing import (
+    FittingSelectionV1,
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
@@ -308,9 +309,13 @@ def _drop_bom_keys(
     payload: Mapping[str, object],
     bom_keys: frozenset[str],
     piece_keys: Mapping[str, frozenset[str]],
+    nested_keys: Mapping[str, tuple[str, frozenset[str]]] | None = None,
 ) -> dict[str, object]:
     """Payload with the given additive keys removed at BOM level and per
-    piece-list item — the preimage a stored identity hash was computed on."""
+    piece-list item — the preimage a stored identity hash was computed on.
+    ``nested_keys`` maps a piece list to ``(inner_list, keys)`` so additive
+    fields one level deeper (e.g. component rows inside hardware contents)
+    can be stripped the same way."""
     bom = {key: value for key, value in payload.items() if key not in bom_keys}
     for piece_list, keys in piece_keys.items():
         items = bom.get(piece_list)
@@ -329,6 +334,31 @@ def _drop_bom_keys(
                 for item in items
             ],
         }
+    for piece_list, (inner_list, keys) in (nested_keys or {}).items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    **item,
+                    inner_list: [
+                        {
+                            key: value
+                            for key, value in component.items()
+                            if key not in keys
+                        }
+                        if isinstance(component, dict)
+                        else component
+                        for component in item[inner_list]
+                    ],
+                }
+                if isinstance(item, dict) and isinstance(item.get(inner_list), list)
+                else item
+                for item in items
+            ],
+        }
     return bom
 
 
@@ -341,8 +371,14 @@ def _calculation_identity_hashes(
     shape/sagitta, glass spec/article) must project the current payload back
     to that era's preimage or positions sealed then can never freeze again."""
     payload = result_payload(result)
+    era9 = _drop_bom_keys(
+        payload,
+        frozenset(),
+        {},
+        {"hardware_items": ("contents", frozenset({"category"}))},
+    )
     era94 = _drop_bom_keys(
-        payload, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+        era9, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
     )
     era92 = _drop_bom_keys(
         era94,
@@ -360,6 +396,7 @@ def _calculation_identity_hashes(
     )
     return (
         calculation_hash(request, payload),
+        calculation_hash(request, era9),
         calculation_hash(request, era94),
         calculation_hash(request, era92),
         calculation_hash(request, era86),
@@ -422,7 +459,73 @@ def _without_additive_bom_fields(bom: object, reference: object = None) -> objec
                 for item in items
             ],
         }
-    return bom
+    return _without_component_category(bom, ref)
+
+
+def _without_component_category(bom: object, ref: object) -> object:
+    # `category` on hardware contents is additive (§9): a snapshot sealed
+    # before it existed must not read the declared kind as drift. Contents
+    # match their snapshot counterparts by (sku, name, qty, unit); the
+    # hardware item itself matches by (bay, leaf, kit_sku, qty).
+    if not isinstance(bom, dict):
+        return bom
+    items = bom.get("hardware_items")
+    if not isinstance(items, list):
+        return bom
+    ref_items: dict[tuple[object, ...], Mapping[str, object]] = {}
+    if isinstance(ref, dict) and isinstance(ref.get("hardware_items"), list):
+        ref_items = {
+            (
+                item.get("bay_id"),
+                item.get("leaf_id"),
+                item.get("kit_sku"),
+                item.get("qty"),
+            ): item
+            for item in ref["hardware_items"]
+            if isinstance(item, dict)
+        }
+
+    def ref_has_category(item: Mapping[str, object], component: Mapping[str, object]) -> bool:
+        ref_item = ref_items.get(
+            (item.get("bay_id"), item.get("leaf_id"), item.get("kit_sku"), item.get("qty"))
+        )
+        if not isinstance(ref_item, dict) or not isinstance(ref_item.get("contents"), list):
+            return False
+        identity = (
+            component.get("sku"),
+            component.get("name"),
+            component.get("qty"),
+            component.get("unit"),
+        )
+        return any(
+            isinstance(other, dict)
+            and (other.get("sku"), other.get("name"), other.get("qty"), other.get("unit"))
+            == identity
+            and other.get("category") is not None
+            for other in ref_item["contents"]
+        )
+
+    return {
+        **bom,
+        "hardware_items": [
+            {
+                **item,
+                "contents": [
+                    {
+                        key: value
+                        for key, value in component.items()
+                        if key != "category" or ref_has_category(item, component)
+                    }
+                    if isinstance(component, dict)
+                    else component
+                    for component in item["contents"]
+                ],
+            }
+            if isinstance(item, dict) and isinstance(item.get("contents"), list)
+            else item
+            for item in items
+        ],
+    }
 
 
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
@@ -653,7 +756,7 @@ def _technical_bom(snapshot: dict[str, object]) -> dict[str, object]:
 def _collect_purchase_authorities(
     existing: PurchaseAuthorities | None, following: PurchaseAuthorities
 ) -> PurchaseAuthorities:
-    prior = existing or PurchaseAuthorities([], [], [], [])
+    prior = existing or PurchaseAuthorities([], [], [], [], [])
     return PurchaseAuthorities(
         _unique_by(prior.stock_bindings + following.stock_bindings, "binding_id",
                    "physical_stock_authority_conflict"),
@@ -663,6 +766,8 @@ def _collect_purchase_authorities(
                    "hardware_purchase_authority_conflict"),
         _unique_by(prior.panel_authorities + following.panel_authorities, "authority_id",
                    "panel_purchase_authority_conflict"),
+        _unique_by(prior.fitting_mappings + following.fitting_mappings, "authority_id",
+                   "fitting_purchase_authority_conflict"),
     )
 
 
@@ -932,6 +1037,14 @@ def freeze_revision_a(
                 quantity=item.qty,
                 contents=item.contents,
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
+            fittings = [FittingSelectionV1(
+                repetition_index=repetition,
+                bay_id=item.bay_id,
+                leaf_id=item.leaf_id,
+                technical_sku=item.sku,
+                kind=item.kind,
+                quantity=item.qty,
+            ) for repetition in range(1, quantity + 1) for item in result.fittings]
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
                 (
@@ -975,6 +1088,7 @@ def freeze_revision_a(
                     location_tag=location_tag,
                     manufacturing_units=units,
                     hardware=hardware,
+                    fittings=fittings,
                     glass_polishing=polishing,
                     accessory_schedule=accessories,
                 ))
@@ -1001,6 +1115,7 @@ def freeze_revision_a(
                 glass_skus=glass_skus,
                 hardware_skus={item.technical_kit_sku for item in hardware},
                 panel_skus=panel_skus,
+                fitting_skus={item.technical_sku for item in fittings},
             )
             purchase_authorities = _collect_purchase_authorities(
                 purchase_authorities, following
@@ -1067,6 +1182,7 @@ def freeze_revision_a(
             glass_mappings=purchase_authorities.glass_mappings,
             hardware_mappings=purchase_authorities.hardware_mappings,
             panel_authorities=purchase_authorities.panel_authorities,
+            fitting_mappings=purchase_authorities.fitting_mappings,
         ) if len(purchase_positions) == len(positions) else None
         bom_hash = bom_hash_v1(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom

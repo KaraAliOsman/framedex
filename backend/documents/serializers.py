@@ -76,7 +76,7 @@ class HandleIntentSerializer(StrictSerializer):
 class AccessoryLineSerializer(StrictSerializer):
     obligation_id = serializers.CharField(max_length=200)
     obligation_kind = serializers.ChoiceField(
-        choices=["SEALING", "FASTENING", "INSTALLATION_ACCESSORY", "OTHER_DECLARED"]
+        choices=["SEALING", "FASTENING", "DRAINAGE", "INSTALLATION_ACCESSORY", "OTHER_DECLARED"]
     )
     technical_sku = serializers.CharField(max_length=200)
     purchasing_sku = serializers.CharField(max_length=200)

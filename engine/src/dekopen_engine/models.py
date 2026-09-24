@@ -123,11 +123,27 @@ class GlassPiece(EngineModel):
     exposed_edges: list[str] | None = None
 
 
+HARDWARE_COMPONENT_CATEGORIES = (
+    "HANDLE", "HINGE", "LOCK", "ROLLER", "CONNECTOR", "DRAINAGE", "GASKET",
+    "SEAL", "SCREW", "CONSUMABLE", "FITTING", "SUPPORT", "CHANNEL", "OTHER",
+)
+
+HardwareComponentCategory = Literal[
+    "HANDLE", "HINGE", "LOCK", "ROLLER", "CONNECTOR", "DRAINAGE", "GASKET",
+    "SEAL", "SCREW", "CONSUMABLE", "FITTING", "SUPPORT", "CHANNEL", "OTHER",
+]
+
+
 class HardwareComponent(EngineModel):
     sku: str
     name: str
     qty: Decimal = Field(gt=Decimal("0"))
     unit: str
+    # Declared component kind — the catalog states what each kit line IS so
+    # production can distinguish handles, hinges, locks, rollers, seals,
+    # drainage and consumables instead of guessing from a name. Contents
+    # sealed before the field existed decode as OTHER (mandate §9).
+    category: HardwareComponentCategory = "OTHER"
 
 
 class HardwareItem(EngineModel):

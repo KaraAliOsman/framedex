@@ -18,6 +18,24 @@ export type ArticleWrite = ArticleWriteRequest;
 export type BeadWrite = BeadWriteRequest;
 export type KitWrite = KitWriteRequest;
 export type HardwareComponent = CatalogHardwareComponentRequest;
+
+/** §9 component-kind vocabulary — mirrors the engine enum. */
+export const HARDWARE_COMPONENT_CATEGORIES = [
+  "HANDLE",
+  "HINGE",
+  "LOCK",
+  "ROLLER",
+  "CONNECTOR",
+  "DRAINAGE",
+  "GASKET",
+  "SEAL",
+  "SCREW",
+  "CONSUMABLE",
+  "FITTING",
+  "SUPPORT",
+  "CHANNEL",
+  "OTHER",
+] as const;
 export type Writes = {
   systems: SystemWrite;
   articles: ArticleWrite;
@@ -393,6 +411,7 @@ export function writeFromDraft<R extends Resource>(
       name: item.name.trim(),
       qty: exact(item.qty),
       unit: item.unit.trim(),
+      category: item.category ?? "OTHER",
     }));
   }
   if (resource === "articles") {

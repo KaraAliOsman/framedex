@@ -20,6 +20,7 @@ function categoryLabel(category: string): string {
     "HARDWARE_KIT",
     "PANEL",
     "ACCESSORY",
+    "FITTING",
   ]);
   return known.has(category) ? t(key) : category;
 }

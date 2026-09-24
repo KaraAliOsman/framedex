@@ -58,6 +58,7 @@ export * from "./catalogItemRequest";
 export * from "./catalogKitListParams";
 export * from "./catalogProfileRoleEnum";
 export * from "./catalogReadiness";
+export * from "./categoryEnum";
 export * from "./changeInputRequest";
 export * from "./changeResult";
 export * from "./checkoutInputRequest";

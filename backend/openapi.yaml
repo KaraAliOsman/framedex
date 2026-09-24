@@ -11753,6 +11753,10 @@ components:
           format: decimal
         unit:
           type: string
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          default: OTHER
       required:
       - name
       - qty
@@ -11773,6 +11777,10 @@ components:
         unit:
           type: string
           minLength: 1
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          default: OTHER
       required:
       - name
       - qty
@@ -11975,6 +11983,38 @@ components:
       - quote_ready
       - reasons
       - scope
+    CategoryEnum:
+      enum:
+      - HANDLE
+      - HINGE
+      - LOCK
+      - ROLLER
+      - CONNECTOR
+      - DRAINAGE
+      - GASKET
+      - SEAL
+      - SCREW
+      - CONSUMABLE
+      - FITTING
+      - SUPPORT
+      - CHANNEL
+      - OTHER
+      type: string
+      description: |-
+        * `HANDLE` - HANDLE
+        * `HINGE` - HINGE
+        * `LOCK` - LOCK
+        * `ROLLER` - ROLLER
+        * `CONNECTOR` - CONNECTOR
+        * `DRAINAGE` - DRAINAGE
+        * `GASKET` - GASKET
+        * `SEAL` - SEAL
+        * `SCREW` - SCREW
+        * `CONSUMABLE` - CONSUMABLE
+        * `FITTING` - FITTING
+        * `SUPPORT` - SUPPORT
+        * `CHANNEL` - CHANNEL
+        * `OTHER` - OTHER
     ChangeInputRequest:
       type: object
       properties:
@@ -14168,6 +14208,10 @@ components:
           description: Exact Decimal quantity serialized as a string
         unit:
           type: string
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          default: OTHER
       required:
       - name
       - qty
@@ -15157,12 +15201,14 @@ components:
       enum:
       - SEALING
       - FASTENING
+      - DRAINAGE
       - INSTALLATION_ACCESSORY
       - OTHER_DECLARED
       type: string
       description: |-
         * `SEALING` - SEALING
         * `FASTENING` - FASTENING
+        * `DRAINAGE` - DRAINAGE
         * `INSTALLATION_ACCESSORY` - INSTALLATION_ACCESSORY
         * `OTHER_DECLARED` - OTHER_DECLARED
     Offer:

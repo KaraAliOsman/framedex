@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from dekopen_engine.models import HARDWARE_COMPONENT_CATEGORIES
+
 
 class DecimalStringField(serializers.DecimalField):
     def to_internal_value(self, data: object) -> object:
@@ -89,6 +91,11 @@ class HardwareComponentSerializer(serializers.Serializer):
     name = serializers.CharField()
     qty = serializers.CharField(help_text="Exact Decimal quantity serialized as a string")
     unit = serializers.CharField()
+    category = serializers.ChoiceField(
+        choices=HARDWARE_COMPONENT_CATEGORIES,
+        required=False,
+        default="OTHER",
+    )
 
 
 class HardwareItemSerializer(serializers.Serializer):

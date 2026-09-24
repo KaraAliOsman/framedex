@@ -104,8 +104,8 @@ function kitWrite(): KitWriteRequest {
     carriage_capacity_kg: null,
     is_active: true,
     contents: [
-      { sku: "TEST-HINGE", name: "Bisagra de prueba", qty: "2", unit: "UNIT" },
-      { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT" },
+      { sku: "TEST-HINGE", name: "Bisagra de prueba", qty: "2", unit: "UNIT", category: "HINGE" },
+      { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT", category: "OTHER" },
     ],
   };
 }
@@ -403,12 +403,14 @@ describe("CatalogPage typed kit editor", () => {
           name: "Bisagra de prueba",
           qty: "2.5000",
           unit: "UNIT",
+          category: "HINGE",
         },
         {
           sku: "TEST-GASKET",
           name: "Junta de prueba",
           qty: "0.1000000000000000001",
           unit: "M",
+          category: "OTHER",
         },
       ],
     };
@@ -539,13 +541,15 @@ describe("CatalogPage typed kit editor", () => {
             name: "Bisagra de prueba",
             qty: "3.1250",
             unit: "UNIT",
+            category: "HINGE",
           },
-          { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT" },
+          { sku: "TEST-STOP", name: "Tope de prueba", qty: "1", unit: "UNIT", category: "OTHER" },
           {
             sku: "TEST-ADDED",
             name: "Componente pendiente",
             qty: "0.5000",
             unit: "M",
+            category: "OTHER",
           },
         ],
       };

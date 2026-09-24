@@ -6,6 +6,7 @@ import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import {
+  HARDWARE_COMPONENT_CATEGORIES,
   catalogApi,
   initialDraft,
   initialSectionDraft,
@@ -937,6 +938,7 @@ function CatalogEditor({
                         {ct(`field.${key}`)}
                       </th>
                     ))}
+                    <th scope="col">{ct("field.category")}</th>
                     <th scope="col">{ct("actions")}</th>
                   </tr>
                 </thead>
@@ -966,6 +968,31 @@ function CatalogEditor({
                         </td>
                       ))}
                       <td>
+                        <select
+                          aria-label={`${ct("field.category")} · ${ct("component")} ${index + 1}`}
+                          value={component.category ?? "OTHER"}
+                          onChange={(event) => {
+                            setDirty(true);
+                            setContents((current) =>
+                              current.map((item) =>
+                                item.key === component.key
+                                  ? {
+                                      ...item,
+                                      category: event.target.value as HardwareComponent["category"],
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                        >
+                          {HARDWARE_COMPONENT_CATEGORIES.map((category) => (
+                            <option key={category} value={category}>
+                              {ct(`componentCategory.${category}`)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
                         <button
                           type="button"
                           aria-label={`${ct("removeComponent")} ${index + 1}`}
@@ -991,7 +1018,14 @@ function CatalogEditor({
                 setDirty(true);
                 setContents((current) => [
                   ...current,
-                  { key: crypto.randomUUID(), sku: "", name: "", qty: "", unit: "" },
+                  {
+                    key: crypto.randomUUID(),
+                    sku: "",
+                    name: "",
+                    qty: "",
+                    unit: "",
+                    category: "OTHER",
+                  },
                 ]);
               }}
             >

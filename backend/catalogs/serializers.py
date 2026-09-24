@@ -8,7 +8,7 @@ from rest_framework import serializers
 from pricing.serializers import StrictSerializer
 from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
-from dekopen_engine.models import BayOpeningType
+from dekopen_engine.models import BayOpeningType, HARDWARE_COMPONENT_CATEGORIES
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -240,6 +240,9 @@ class CatalogHardwareComponentSerializer(StrictSerializer):
     name = serializers.CharField()
     qty = QuantityField()
     unit = serializers.CharField()
+    category = serializers.ChoiceField(
+        choices=list(HARDWARE_COMPONENT_CATEGORIES), default="OTHER"
+    )
 
 
 class KitWriteSerializer(StrictSerializer):

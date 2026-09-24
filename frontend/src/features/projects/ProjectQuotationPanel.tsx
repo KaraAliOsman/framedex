@@ -79,6 +79,7 @@ const EDGE_KEYS = {
 const OBLIGATION_KINDS = [
   "SEALING",
   "FASTENING",
+  "DRAINAGE",
   "INSTALLATION_ACCESSORY",
   "OTHER_DECLARED",
 ] as const;
@@ -86,6 +87,7 @@ const OBLIGATION_KINDS = [
 const OBLIGATION_KIND_KEYS: Record<(typeof OBLIGATION_KINDS)[number], TranslationKey> = {
   SEALING: "quotation.kindSealing",
   FASTENING: "quotation.kindFastening",
+  DRAINAGE: "quotation.kindDrainage",
   INSTALLATION_ACCESSORY: "quotation.kindInstallation",
   OTHER_DECLARED: "quotation.kindOther",
 };

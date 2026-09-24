@@ -116,9 +116,40 @@ class HardwareSelectionV1(EngineModel):
     contents: list[HardwareComponent]
 
 
+class FittingPurchaseMappingV1(EngineModel):
+    """Declared purchase authority for one counted fitting article
+    (clamp, patch fitting, hinge, lock, connector, seal, point support).
+    Mirrors the glass/hardware mapping contract: org NULL = global
+    authority (mandate §9)."""
+
+    schema_version: Literal[1] = 1
+    authority_id: str
+    version: int = Field(ge=1)
+    system_id: str
+    technical_sku: str
+    purchasing_sku: str
+    manufacturer_name: str
+    purchase_unit: Literal["EA"] = "EA"
+    provenance: dict[str, str]
+
+
+class FittingSelectionV1(EngineModel):
+    """A counted fitting line expanded per position unit — the BOM's
+    declared pieces the purchase projection must buy (mandate §9)."""
+
+    repetition_index: int = Field(ge=1)
+    bay_id: str | None = None
+    leaf_id: str | None = None
+    technical_sku: str
+    kind: str
+    quantity: int = Field(ge=1)
+
+
 class AccessoryLineV1(EngineModel):
     obligation_id: str
-    obligation_kind: Literal["SEALING", "FASTENING", "INSTALLATION_ACCESSORY", "OTHER_DECLARED"]
+    obligation_kind: Literal[
+        "SEALING", "FASTENING", "DRAINAGE", "INSTALLATION_ACCESSORY", "OTHER_DECLARED"
+    ]
     technical_sku: str
     purchasing_sku: str
     manufacturer_name: str
@@ -156,6 +187,7 @@ class PositionPurchaseInputV1(EngineModel):
     location_tag: str
     manufacturing_units: list[ManufacturingFactsV1]
     hardware: list[HardwareSelectionV1]
+    fittings: list[FittingSelectionV1] = Field(default_factory=list)
     glass_polishing: list[GlassPolishingAuthorityV1]
     accessory_schedule: AccessoryScheduleV1
 
@@ -190,6 +222,17 @@ class PositionPurchaseInputV1(EngineModel):
         ]
         if len(hardware_targets) != len(set(hardware_targets)):
             raise ValueError("Hardware source is duplicated")
+        if any(item.repetition_index > self.quantity for item in self.fittings):
+            raise ValueError("Fitting source repetition is outside position quantity")
+        fitting_targets = [
+            (
+                item.repetition_index, item.bay_id, item.leaf_id,
+                item.technical_sku, item.kind,
+            )
+            for item in self.fittings
+        ]
+        if len(fitting_targets) != len(set(fitting_targets)):
+            raise ValueError("Fitting source is duplicated")
         return self
 
 
@@ -211,7 +254,10 @@ class StockGroupResultV1(EngineModel):
 class PurchaseRequirementV1(EngineModel):
     requirement_key: str = Field(pattern=r"^[0-9a-f]{64}$")
     order_type: SupplierOrderType
-    category: Literal["PROFILE", "REINFORCEMENT", "GLASS", "HARDWARE_KIT", "PANEL", "ACCESSORY"]
+    category: Literal[
+        "PROFILE", "REINFORCEMENT", "GLASS", "HARDWARE_KIT", "PANEL",
+        "ACCESSORY", "FITTING",
+    ]
     authority_ids: list[str]
     technical_skus: list[str]
     purchasing_sku: str
@@ -278,6 +324,13 @@ class PurchaseRequirementV1(EngineModel):
                 or self.location_tag is None
             ):
                 raise ValueError("Panel requirement lacks CUT_TO_SIZE authority")
+        elif self.category == "FITTING":
+            if (
+                self.order_type is not SupplierOrderType.HARDWARE
+                or self.unit != "EA"
+                or self.hardware_contents is not None
+            ):
+                raise ValueError("Fitting requirement lacks declared fitting authority")
         elif (
             self.unit != "EA"
             or self.accessory_obligation_id is None
@@ -297,7 +350,10 @@ class PurchaseRequirementsV1(EngineModel):
 
 class _RequirementDraft(EngineModel):
     order_type: SupplierOrderType
-    category: Literal["PROFILE", "REINFORCEMENT", "GLASS", "HARDWARE_KIT", "PANEL", "ACCESSORY"]
+    category: Literal[
+        "PROFILE", "REINFORCEMENT", "GLASS", "HARDWARE_KIT", "PANEL",
+        "ACCESSORY", "FITTING",
+    ]
     authority_ids: list[str]
     technical_skus: list[str]
     purchasing_sku: str
@@ -322,12 +378,13 @@ class _RequirementDraft(EngineModel):
 
 def _one_mapping(
     items: Sequence[
-        GlassPurchaseMappingV1 | HardwarePurchaseMappingV1 | PanelPurchaseAuthorityV1
+        GlassPurchaseMappingV1 | HardwarePurchaseMappingV1
+        | PanelPurchaseAuthorityV1 | FittingPurchaseMappingV1
     ],
     technical_sku: str,
     system_id: str,
     label: str,
-) -> GlassPurchaseMappingV1 | HardwarePurchaseMappingV1 | PanelPurchaseAuthorityV1:
+) -> GlassPurchaseMappingV1 | HardwarePurchaseMappingV1 | PanelPurchaseAuthorityV1 | FittingPurchaseMappingV1:
     matches = [
         item for item in items
         if item.system_id == system_id
@@ -440,6 +497,7 @@ def project_purchase_requirements_v1(
     glass_mappings: list[GlassPurchaseMappingV1],
     hardware_mappings: list[HardwarePurchaseMappingV1],
     panel_authorities: list[PanelPurchaseAuthorityV1],
+    fitting_mappings: list[FittingPurchaseMappingV1] = [],
 ) -> PurchaseRequirementsV1:
     position_ids = [item.position_id for item in positions]
     position_indexes = [item.position_index for item in positions]
@@ -567,6 +625,45 @@ def project_purchase_requirements_v1(
                     source_trace=[source_id],
                 ))
             non_accessory_technical.add(hardware.technical_kit_sku)
+            non_accessory_purchasing.add(mapping.purchasing_sku)
+        for fitting in sorted(position.fittings, key=lambda item: (
+            item.repetition_index, item.bay_id or "", item.leaf_id or "",
+            item.technical_sku, item.kind,
+        )):
+            # §9: counted fittings (frameless clamps/patch fittings/hinges/
+            # locks/connectors/seals/supports) buy through their declared
+            # fitting authority — never silently dropped from procurement.
+            mapping = _one_mapping(
+                fitting_mappings, fitting.technical_sku, position.system_id, "Fitting"
+            )
+            assert isinstance(mapping, FittingPurchaseMappingV1)
+            source_trace = [
+                documentary_sha256_v1({
+                    "kind": "fitting",
+                    "position_id": position.position_id,
+                    "repetition_index": fitting.repetition_index,
+                    "bay_id": fitting.bay_id,
+                    "leaf_id": fitting.leaf_id,
+                    "technical_sku": fitting.technical_sku,
+                    "fitting_kind": fitting.kind,
+                    "unit_index": unit_index,
+                })
+                for unit_index in range(1, fitting.quantity + 1)
+            ]
+            drafts.append(_RequirementDraft(
+                order_type=SupplierOrderType.HARDWARE,
+                category="FITTING",
+                authority_ids=[mapping.authority_id],
+                technical_skus=[fitting.technical_sku],
+                purchasing_sku=mapping.purchasing_sku,
+                manufacturer_name=mapping.manufacturer_name,
+                unit="EA",
+                quantity=len(source_trace),
+                location_tag=position.location_tag,
+                description=fitting.kind,
+                source_trace=source_trace,
+            ))
+            non_accessory_technical.add(fitting.technical_sku)
             non_accessory_purchasing.add(mapping.purchasing_sku)
 
     bound_pieces: dict[tuple[str, ...], list[tuple[CutPiece, PhysicalStockBindingV1]]] = defaultdict(list)

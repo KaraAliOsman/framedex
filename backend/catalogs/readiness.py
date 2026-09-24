@@ -124,7 +124,8 @@ def catalog_readiness(system_id, org_id):
                 raise DocumentaryError("glass_purchase_mapping_required")
             load_purchase_authorities(system_id=system_id, org_id=org_id, color="WHITE",
                 profile_skus={article.sku for article in profiles}, reinforcement_skus=steels,
-                glass_skus={row["technical_sku"] for row in glass}, hardware_skus=set(), panel_skus=set())
+                glass_skus={row["technical_sku"] for row in glass}, hardware_skus=set(),
+                panel_skus=set(), fitting_skus=set())
         except (DocumentaryError, MissingStockAuthority, AmbiguousStockAuthority, ValueError):
             reasons.append("purchase")
     return {"quote_ready": not reasons, "scope": "WHITE_FIXED_CATALOG", "reasons": reasons}

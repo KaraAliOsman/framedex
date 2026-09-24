@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 import json
 from uuid import UUID
@@ -30,6 +30,7 @@ from dekopen_engine.purchasing import (
     AccessoryLineV1,
     AccessoryScheduleV1,
     EdgePolishingV1,
+    FittingPurchaseMappingV1,
     GlassPolishingAuthorityV1,
     GlassPurchaseMappingV1,
     HardwarePurchaseMappingV1,
@@ -61,6 +62,9 @@ class PurchaseAuthorities:
     glass_mappings: list[GlassPurchaseMappingV1]
     hardware_mappings: list[HardwarePurchaseMappingV1]
     panel_authorities: list[PanelPurchaseAuthorityV1]
+    fitting_mappings: list[FittingPurchaseMappingV1] = field(
+        default_factory=list
+    )
 
 
 def json_text(value: object) -> str:
@@ -418,7 +422,7 @@ def _effective_one(values: list[dict[str, object]], org_id: UUID, code: str) -> 
 def load_purchase_authorities(
     *, system_id: UUID, org_id: UUID, color: str,
     profile_skus: set[str], reinforcement_skus: set[str], glass_skus: set[str],
-    hardware_skus: set[str], panel_skus: set[str],
+    hardware_skus: set[str], panel_skus: set[str], fitting_skus: set[str],
 ) -> PurchaseAuthorities:
     stocks: list[PhysicalStockBindingV1] = []
     for sku_value in sorted(profile_skus):
@@ -530,4 +534,24 @@ def load_purchase_authorities(
             manufacturer_name=str(row["manufacturer_name"]), supply_form="CUT_TO_SIZE",
             purchase_unit="EA", provenance=provenance,
         ))
-    return PurchaseAuthorities(stocks, glasses, hardware, panels)
+    fittings = []
+    for sku_value in sorted(fitting_skus):
+        row = _effective_one(rows(
+            "SELECT id,version,technical_sku,purchasing_sku,manufacturer_name,"
+            "purchase_unit,provenance::text,org_id FROM public.fitting_purchase_mappings "
+            "WHERE system_id=%s AND technical_sku=%s AND (org_id IS NULL OR org_id=%s)",
+            [system_id, sku_value, org_id],
+        ), org_id, "fitting_purchase_mapping_missing_or_ambiguous")
+        provenance = decoded(row["provenance"])
+        if not isinstance(provenance, dict) or not all(
+            isinstance(key, str) and isinstance(item, str) for key, item in provenance.items()
+        ):
+            raise DocumentaryError("invalid_fitting_purchase_provenance")
+        fittings.append(FittingPurchaseMappingV1(
+            authority_id=str(row["id"]), version=int(row["version"]),
+            system_id=str(system_id), technical_sku=str(row["technical_sku"]),
+            purchasing_sku=str(row["purchasing_sku"]),
+            manufacturer_name=str(row["manufacturer_name"]), purchase_unit="EA",
+            provenance=provenance,
+        ))
+    return PurchaseAuthorities(stocks, glasses, hardware, panels, fittings)
