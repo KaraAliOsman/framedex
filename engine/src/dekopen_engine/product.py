@@ -1588,6 +1588,25 @@ def contour_module_computation(
     return computation, issues
 
 
+_RETAINING_FITTINGS = frozenset(
+    {
+        FramelessFittingKind.PATCH_FITTING,
+        FramelessFittingKind.CLAMP,
+        FramelessFittingKind.HINGE,
+        FramelessFittingKind.SUPPORT,
+    }
+)
+
+
+def frameless_retention_declared(spec: FramelessSpec) -> bool:
+    """Whether the frameless spec declares hardware that retains the pane —
+    supported edges (channel/clamps) or retaining fittings. A pane with no
+    retention at all is not production-ready (inspector R06)."""
+    return bool(spec.supports) or any(
+        fitting.kind in _RETAINING_FITTINGS for fitting in spec.fittings
+    )
+
+
 def frameless_module_computation(
     module: ProductModule,
     *,
@@ -1619,12 +1638,13 @@ def frameless_module_computation(
         cut_length = _q(
             module.width_mm if horizontal else module.height_mm
         )
-        if support.edge is EdgeSide.BOTTOM:
+        # manufacturing origin is top-left, y downward — TOP sits at y=0
+        if support.edge is EdgeSide.TOP:
             segment = TraceSegmentV1(
                 start=TracePointV1(x_mm=Decimal("0"), y_mm=Decimal("0")),
                 end=TracePointV1(x_mm=module.width_mm, y_mm=Decimal("0")),
             )
-        elif support.edge is EdgeSide.TOP:
+        elif support.edge is EdgeSide.BOTTOM:
             segment = TraceSegmentV1(
                 start=TracePointV1(x_mm=Decimal("0"), y_mm=module.height_mm),
                 end=TracePointV1(
@@ -1718,7 +1738,7 @@ def frameless_module_computation(
                 width_mm=module.width_mm,
                 height_mm=module.height_mm,
                 exact_area_m2=pane.area_m2,
-                bead_supported=False,
+                bead_supported=frameless_retention_declared(spec),
             )
         ],
         node_dimensions={leaf.id: (module.width_mm, module.height_mm)},
