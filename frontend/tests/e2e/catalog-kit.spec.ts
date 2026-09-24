@@ -139,6 +139,8 @@ test("manager persists exact typed kit contents through real UI and DB", async (
     name: 'Componente sintético "exacto"',
     qty: quantity,
     unit: "unit",
+    // Components without a declared category persist the serializer default.
+    category: "OTHER",
   };
   const componentLabel = (key: "sku" | "name" | "qty" | "unit") =>
     `${t(`catalog.field.${key}`)} · ${t("catalog.component")} 1`;
