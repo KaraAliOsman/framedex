@@ -205,6 +205,40 @@ def test_create_link_rejects_non_clp_deal(monkeypatch):
     assert failure.value.contract_code == "payment_link_currency_unsupported"
 
 
+def test_create_link_fills_checkout_after_early_pending(monkeypatch):
+    """A status-1 webhook landing before the create response moves the claim
+    to PENDING without checkout details — the dispatch write must still fill
+    url/token (it updates PENDING claims too, never downgrades settled ones)."""
+    link = _link(status="DISPATCHING", url=None, flow_token=None, flow_order=None)
+    filled = _link(status="PENDING")
+    updated = []
+
+    def fake_rows(sql, params=None):
+        if "FROM public.org_payment_integrations" in sql:
+            return [_integration()]
+        if "INSERT INTO public.project_payment_links" in sql:
+            return [link]
+        if "UPDATE public.project_payment_links" in sql:
+            updated.append(sql)
+            return [filled]
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    out = payment_links.create_link(
+        org_id=link["org_id"],
+        project_id=link["project_id"],
+        actor_id=uuid4(),
+        data={
+            "operation_key": "op-link-1",
+            "kind": "ANTICIPO",
+            "amount": Decimal("250000"),
+            "payer_email": "a@b.cl",
+        },
+    )
+    assert out["link"]["url"] == "https://sandbox.flow.cl/pay?token=tok-1"
+    assert "('DISPATCHING','PENDING')" in updated[0]
+
+
 def test_create_link_replay_returns_existing(monkeypatch):
     link = _link()
     calls = []
@@ -929,18 +963,42 @@ def test_confirm_early_settle_stores_flow_token(monkeypatch):
     assert "tok-1" in paid[0][1]
 
 
-def test_confirm_paid_link_requires_own_token(monkeypatch):
-    """A retried callback acknowledges only when it carries the link's own
-    opaque Flow token — a bare link id must not forge settlement evidence."""
-    link = _link(status="PAID", project_payment_id=uuid4())
+def test_confirm_adopts_token_on_paid_link_without_one(monkeypatch):
+    """A PAID row settled through recovery (no stored flow_token) verifies the
+    callback through the provider and adopts its token — later retries ack."""
+    link = _link(status="PAID", flow_token=None, project_payment_id=uuid4())
+    updates = []
 
     def fake_rows(sql, params=None):
-        if "FROM public.project_payment_links" in sql or "payment_link_for_confirm" in sql:
+        if "payment_link_for_confirm" in sql:
+            return [link]
+        if "FOR UPDATE" in sql:
+            return [link]
+        if "UPDATE public.project_payment_links" in sql:
+            updates.append((sql, params))
             return [link]
         return []
 
     _patch_env(monkeypatch, fake_rows, client=_Client())
-    with pytest.raises(FlowError, match="flow_payment_binding_mismatch"):
+    out = payment_links.confirm_link(link_id=link["id"], token="tok-late")
+    assert out["link"]["status"] == "PAID"
+    assert any("flow_token=%s" in s and "tok-late" in p for s, p in updates)
+
+
+def test_confirm_paid_link_requires_own_token(monkeypatch):
+    """A retried callback acknowledges only when it carries the link's own
+    opaque Flow token — the definer lookup binds the token inside the DB, so
+    a wrong token resolves nothing (no existence oracle, no credential read)."""
+    link = _link(status="PAID", project_payment_id=uuid4())
+
+    def fake_rows(sql, params=None):
+        if "payment_link_for_confirm" in sql:
+            assert params == [str(link["id"]), "tok-other"]
+            return []  # token bound inside the function — no row resolves
+        return []
+
+    _patch_env(monkeypatch, fake_rows, client=_Client())
+    with pytest.raises(FlowError, match="payment_link_not_found"):
         payment_links.confirm_link(link_id=link["id"], token="tok-other")
 
 
@@ -962,7 +1020,9 @@ def test_cancel_link_tombstones_open_claim(monkeypatch):
         org_id=link["org_id"], project_id=link["project_id"], link_id=link["id"]
     )
     assert out["link"]["status"] == "CANCELLED"
-    assert len(writes) == 2
+    # The credential snapshot stays: cancellation is local — a late payer at
+    # the hosted checkout must still verify and land in the ledger.
+    assert len(writes) == 1
 
 
 def test_cancel_link_rejects_terminal_status(monkeypatch):

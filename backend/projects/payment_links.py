@@ -183,7 +183,10 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         # lock while clearing pricing — a reset that commits first must not let
         # this claim outlive the deal it was priced against. Locking as the
         # request role: documentary_backend cannot take FOR UPDATE on projects.
-        project_row(org_id, project_id, lock=True)
+        # Rebind project from the LOCKED row — a concurrent repricing that
+        # commits between the outer read and this lock must not freeze stale
+        # totals into the claim's deal snapshot.
+        project = project_row(org_id, project_id, lock=True)
         with documentary_backend():
             # An existing claim resolves before any new-dispatch validation — a
             # replay must return its link even if pricing was reset or the
@@ -311,12 +314,14 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
             503, "payment_link_dispatch_failed", "Flow no confirmó el link — reintenta verificar."
         ) from error
     with transaction.atomic(), documentary_backend():
-        # The webhook can settle the DISPATCHING claim while this request is
-        # still in flight — only take the link to PENDING if it is still ours.
+        # The webhook can settle the claim while this request is still in
+        # flight — a status-1 callback already moved it to PENDING without
+        # checkout details, so fill url/token/order for our own claim in
+        # either open state; never downgrade a settled/failed/cancelled one.
         updated = rows(
             "UPDATE public.project_payment_links SET status='PENDING', flow_order=%s, "
             "flow_token=%s, url=%s, updated_at=now() "
-            "WHERE org_id=%s AND id=%s AND status='DISPATCHING' RETURNING *",
+            "WHERE org_id=%s AND id=%s AND status IN ('DISPATCHING','PENDING') RETURNING *",
             [str(created["flowOrder"]), str(created.get("token") or ""), redirect,
              str(org_id), str(link["id"])],
         )
@@ -369,6 +374,15 @@ def _settle(
         if not found:
             raise contract_error(404, "payment_link_not_found", "El link de pago no existe.")
         link = found[0]
+        if str(link["status"]) == "PAID" and link["flow_token"] is None and token:
+            # Settled through recovery without a token — adopt the verified
+            # callback token so later retries acknowledge instead of 503ing.
+            link["flow_token"] = token
+            rows(
+                "UPDATE public.project_payment_links SET flow_token=%s "
+                "WHERE org_id=%s AND id=%s AND flow_token IS NULL",
+                [token, str(org_id), str(link_id)],
+            )
         if (
             link["operation_key"] != verified["commerceOrder"]
             or Decimal(str(link["amount"])) != verified["amount"]
@@ -389,16 +403,14 @@ def _settle(
                 link = updated[0]
             return {"link": _public_link(link)}
         if verified["status"] in (3, 4):
+            # FAILED stays provider-recoverable: keep the dispatch credential
+            # snapshot so recovery still queries THIS order after a rotation.
             link = rows(
                 "UPDATE public.project_payment_links SET status='FAILED', "
                 "flow_order=%s, updated_at=now() "
                 "WHERE org_id=%s AND id=%s AND status<>'PAID' RETURNING *",
                 [verified["flowOrder"], str(org_id), str(link_id)],
             )[0]
-            rows(
-                "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
-                [str(link_id)],
-            )
             return {"link": _public_link(link)}
         # status 2 — settled. The ledger's UNIQUE (org_id, operation_key) is the
         # dedup boundary: webhook retries and recoveries converge on one row.
@@ -522,12 +534,13 @@ def _settle_deal(*, org_id: UUID, project: dict, link: dict) -> dict:
 
 def cancel_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
     """Abandon a non-terminal link: a stuck charge must not pin the project's
-    pricing forever — the requester tombstones it explicitly, its dispatch
-    credentials drop with the transition, and the operation_key stays burned
-    so a replay of create still resolves the same (now cancelled) row."""
-    # billing scope, not documentary: the credential DELETE is only granted
-    # to billing_backend (the settle path), and the org-pinned billing context
-    # keeps the transition tenant-isolated.
+    pricing forever — the requester tombstones it explicitly, and the
+    operation_key stays burned so a replay of create still resolves the same
+    (now cancelled) row. Cancellation is a local tombstone — Flow can't
+    un-charge a hosted checkout, so the credential snapshot stays: a late
+    payer's money must still verify and land in the ledger."""
+    # billing scope, not documentary: the org-pinned billing context keeps
+    # the transition tenant-isolated.
     with transaction.atomic(), wallet.financial_transaction(org_id):
         found = rows(
             "UPDATE public.project_payment_links SET status='CANCELLED',updated_at=NOW() "
@@ -541,11 +554,6 @@ def cancel_link(*, org_id: UUID, project_id: UUID, link_id: UUID) -> dict:
                 "payment_link_not_cancellable",
                 "El link ya está resuelto — no se puede cancelar.",
             )
-        # The credential version only needs to outlive an in-flight charge.
-        rows(
-            "DELETE FROM public.project_payment_link_credentials WHERE link_id=%s",
-            [str(link_id)],
-        )
     return {"link": _public_link(found[0])}
 
 
@@ -557,17 +565,17 @@ def confirm_link(*, link_id: UUID, token: str) -> dict:
     # reads stay org-scoped; the link id itself is the capability.
     with documentary_backend():
         found = rows(
-            "SELECT * FROM private.payment_link_for_confirm(%s)",
-            [str(link_id)],
+            "SELECT * FROM private.payment_link_for_confirm(%s,%s)",
+            [str(link_id), token],
         )
     if not found:
         raise FlowError("payment_link_not_found")
     link = found[0]
     # Acknowledge a retried callback only when it carries the link's own
     # opaque Flow token — a bare link id must not forge settlement evidence.
-    if str(link["status"]) == "PAID":
-        if token != link["flow_token"]:
-            raise FlowError("flow_payment_binding_mismatch")
+    # A PAID row without a stored token (settled through recovery) falls
+    # through to provider verification, which adopts the verified token.
+    if str(link["status"]) == "PAID" and link["flow_token"] is not None:
         return {"link": _public_link(link)}
     client = _client_for_link(link)
     verified = _payment(client.payment_status(token))

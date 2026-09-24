@@ -46,7 +46,7 @@ CREATE POLICY billing_backend_restrict ON public.payment_receipts
 -- reads stay org-scoped for every role — no cross-tenant USING(true) anywhere.
 -- Lives here (not the credential migration) because the row's deal snapshot
 -- columns only exist after 20261009010000.
-CREATE FUNCTION private.payment_link_for_confirm(p_link_id UUID)
+CREATE FUNCTION private.payment_link_for_confirm(p_link_id UUID, p_token TEXT)
 RETURNS TABLE (
     id UUID, org_id UUID, project_id UUID, operation_key TEXT, kind TEXT,
     amount NUMERIC, payer_email TEXT, subject TEXT, status TEXT,
@@ -63,7 +63,10 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
            c.flow_api_url, c.flow_api_key, c.flow_secret_key
     FROM public.project_payment_links l
     LEFT JOIN public.project_payment_link_credentials c ON c.link_id = l.id
+    -- A bare link id never unlocks the credential snapshot: once the link
+    -- binds a Flow token, only a callback carrying that same token resolves.
     WHERE l.id = p_link_id
+      AND (l.flow_token IS NULL OR l.flow_token = p_token)
 $$;
-REVOKE ALL ON FUNCTION private.payment_link_for_confirm(UUID) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION private.payment_link_for_confirm(UUID) TO documentary_backend;
+REVOKE ALL ON FUNCTION private.payment_link_for_confirm(UUID, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.payment_link_for_confirm(UUID, TEXT) TO documentary_backend;

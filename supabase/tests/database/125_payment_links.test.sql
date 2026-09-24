@@ -92,11 +92,11 @@ SELECT ok(
 SELECT ok(
     has_function_privilege(
         'documentary_backend',
-        'private.payment_link_for_confirm(uuid)',
+        'private.payment_link_for_confirm(uuid,text)',
         'EXECUTE'
     ) AND NOT has_function_privilege(
         'authenticated',
-        'private.payment_link_for_confirm(uuid)',
+        'private.payment_link_for_confirm(uuid,text)',
         'EXECUTE'
     ),
     'webhook resolves its own link via a definer lookup; direct reads stay org-scoped'
