@@ -317,6 +317,9 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(unchangedSource).toEqual(source);
   await page.getByRole("button", { name: "Cambiar tema", exact: true }).click();
   await screenshot(page, info, "05-project-dark");
+  // Estimators can browse the catalog (and run supplier imports); structural
+  // edits stay owner/manager-only.
   await page.goto("/catalogs/systems");
-  await expect(page.getByRole("alert")).toContainText("propietario y el jefe de taller");
+  await expect(page.getByRole("heading", { name: "Catálogo técnico", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Crear serie", exact: true })).toHaveCount(0);
 });

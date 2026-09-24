@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import * as OTPAuth from "otpauth";
 
+import { formatMoney } from "../../src/features/money";
 import { environment } from "./support/environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
 
@@ -348,7 +349,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Recargar", exact: true }).click();
   await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
-  await expect(page.locator("dd").filter({ hasText: quote.project_gross })).toBeVisible();
+  await expect(
+    page.locator("dd").filter({ hasText: formatMoney(quote.project_gross, "CLP") }),
+  ).toBeVisible();
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);
   const project = await persisted.json();
