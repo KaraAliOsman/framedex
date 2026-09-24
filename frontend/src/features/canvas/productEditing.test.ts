@@ -77,7 +77,14 @@ describe("addAdjacentUnit", () => {
     const grown = addAdjacentUnit(single, "left");
     expect(grown.assembly.modules.map((m) => m.id)).toEqual(["m2", "m1"]);
     expect(grown.assembly.couplings).toEqual([
-      { id: "c1", angle_deg: "0.0", coupler_profile_sku: null },
+      {
+        id: "c1",
+        angle_deg: "0.0",
+        coupler_profile_sku: null,
+        kind: "INLINE",
+        modules: ["m2", "m1"],
+        edges: ["right", "left"],
+      },
     ]);
     expect(isSingleUnit(grown)).toBe(false);
     // the inherited unit is a deep copy, not a shared tree reference
