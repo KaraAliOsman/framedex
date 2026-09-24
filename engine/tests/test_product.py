@@ -4,21 +4,34 @@ from decimal import Decimal
 
 import pytest
 
+from dekopen_engine.contour import Contour
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
     MaterialType,
+    NodeType,
+    ParametricNode,
+    PlanPoint,
     ProfileRole,
+    SlidingLayout,
+    SlidingPanel,
+    SlidingPanelKind,
     SystemParams,
 )
 from dekopen_engine.product import (
+    ConnectionKind,
+    CoupledAssembly,
+    CouplingDef,
+    EdgeSide,
     IssueCode,
     ProductModel,
+    ProductModule,
     ProductStatus,
     Severity,
     coupling_ids,
     equalize_coupling_angles,
     equalize_module_widths,
+    elevation_envelope,
     evaluate_product,
     make_bow_assembly,
     module_ids,
@@ -521,3 +534,681 @@ class TestCommands:
         assert len(unit.assembly.couplings) == 0
         evaluation = evaluate_product(unit, demo_60_params)
         assert evaluation.status is ProductStatus.VALID
+
+
+class TestConnections:
+    """§6 general connection model: kinds, explicit endpoints, edge claims."""
+
+    @staticmethod
+    def _module(module_id: str, width: str, height: str) -> ProductModule:
+        return ProductModule(
+            id=module_id,
+            width_mm=Decimal(width),
+            height_mm=Decimal(height),
+            tree=ParametricNode(
+                id=module_id,
+                type=NodeType.BAY,
+                opening_type=BayOpeningType.FIXED,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            ),
+        )
+
+    def _product(
+        self, modules: list[ProductModule], couplings: list[CouplingDef]
+    ) -> ProductModel:
+        return ProductModel(
+            version="product-v2",
+            assembly=CoupledAssembly(modules=modules, couplings=couplings),
+        )
+
+    def test_stacked_transom_projects_onto_its_column(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # door 1000x2200 + transom 1000x400 stacked above: same plan footprint,
+        # horizontal coupler cut spans the shared WIDTH (1000), not the height.
+        product = self._product(
+            [self._module("door", "1000", "2200"), self._module("tr", "1000", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+        coupler = next(
+            c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
+        )
+        assert coupler.length_mm == Decimal("1000")
+        # The anchored transom shares the door's plan slot — no second column.
+        corners = {m.module_id: m.corners for m in evaluation.plan.modules}
+        assert corners["tr"] == corners["door"]
+
+    def test_storefront_door_transom_sidelight_validates(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The §36-E composition: door + transom over it + sidelight beside the
+        # door + transom over the sidelight — two stacked columns beside.
+        product = self._product(
+            [
+                self._module("door", "1000", "2200"),
+                self._module("trL", "1000", "400"),
+                self._module("sl", "600", "2200"),
+                self._module("trR", "600", "400"),
+            ],
+            [
+                CouplingDef(
+                    id="s1", kind=ConnectionKind.STACKED, modules=["door", "trL"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM], coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="s2", kind=ConnectionKind.STACKED, modules=["sl", "trR"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM], coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="i1", kind=ConnectionKind.INLINE, modules=["door", "sl"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT], coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+        spans = sorted(
+            c.length_mm for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
+        )
+        assert spans == [Decimal("600"), Decimal("1000"), Decimal("2200")]
+
+    def test_tee_is_declared_but_honestly_unsupported(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [
+                CouplingDef(
+                    id="t1", kind=ConnectionKind.TEE, modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                )
+            ],
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.CONNECTION_TYPE_UNSUPPORTED.value in codes
+        # No coupler cut was fabricated for the unsupported joint.
+        assert not any(
+            c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
+        )
+
+    def test_stacked_width_mismatch_flags(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1200", "2000")],
+            [
+                CouplingDef(
+                    id="s1", kind=ConnectionKind.STACKED, modules=["a", "b"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM], coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        mismatched = [
+            issue
+            for issue in evaluation.issues
+            if issue.code == IssueCode.COUPLER_WIDTH_MISMATCH.value
+        ]
+        assert len(mismatched) == 1
+        assert mismatched[0].params["below_mm"] == "1000"
+
+    def test_edge_claim_conflict_flags_second_coupling(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [
+                self._module("a", "1000", "2000"),
+                self._module("b", "1000", "400"),
+                self._module("c", "1000", "400"),
+            ],
+            [
+                CouplingDef(
+                    id="s1", kind=ConnectionKind.STACKED, modules=["a", "b"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM], coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="s2", kind=ConnectionKind.STACKED, modules=["a", "c"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM], coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        conflicts = [
+            issue
+            for issue in evaluation.issues
+            if issue.code == IssueCode.COUPLER_EDGE_CONFLICT.value
+        ]
+        assert len(conflicts) == 1 and conflicts[0].target == "coupling:s2"
+
+    def test_unknown_module_endpoint_flags(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [
+                CouplingDef(
+                    id="x1", kind=ConnectionKind.INLINE, modules=["a", "ghost"],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.COUPLER_MODULE_UNKNOWN.value in codes
+
+    def test_positional_stacked_coupling_keeps_legacy_binding(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # No explicit endpoints: a STACKED positional coupling binds modules
+        # i.top to i+1.bottom — module i+1 becomes the upper member.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+        coupler = next(
+            c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
+        )
+        assert coupler.length_mm == Decimal("1000")
+
+    def test_wrong_sides_for_kind_rejected(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # An INLINE joint between top/bottom edges is not an inline coupling.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [
+                CouplingDef(
+                    id="x1", kind=ConnectionKind.INLINE, modules=["a", "b"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.COUPLER_EDGE_INVALID.value in codes
+
+    def test_missing_couplings_disconnect_the_assembly(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Two modules, zero joints: two separate frames, never one product.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [],
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.ASSEMBLY_DISCONNECTED.value in codes
+        assert evaluation.status is ProductStatus.INVALID
+
+    def test_explicit_graph_must_reach_every_module(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [
+                self._module("a", "1000", "2000"),
+                self._module("b", "1000", "2000"),
+                self._module("c", "1000", "2000"),
+            ],
+            [
+                CouplingDef(
+                    id="x1", kind=ConnectionKind.INLINE, modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        codes = {issue.code for issue in evaluation.issues}
+        assert IssueCode.ASSEMBLY_DISCONNECTED.value in codes
+
+    def test_stacked_layout_is_order_independent(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The transom declared BEFORE its column still projects onto the
+        # door's footprint — declaration order cannot change the plan.
+        couplings = [
+            CouplingDef(
+                id="s1",
+                kind=ConnectionKind.STACKED,
+                modules=["door", "tr"],
+                edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                coupler_profile_sku="ACOPLE-60",
+            )
+        ]
+        forward = self._product(
+            [self._module("door", "1000", "2200"), self._module("tr", "1000", "400")],
+            couplings,
+        )
+        reversed_order = self._product(
+            [self._module("tr", "1000", "400"), self._module("door", "1000", "2200")],
+            couplings,
+        )
+        first = evaluate_product(
+            forward, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        second = evaluate_product(
+            reversed_order,
+            demo_60_params,
+            coupler_articles={"ACOPLE-60": COUPLER_ARTICLE},
+        )
+        corners = {
+            module.module_id: module.corners for module in second.plan.modules
+        }
+        assert corners["tr"] == corners["door"]
+        door_corners = next(
+            module.corners
+            for module in first.plan.modules
+            if module.module_id == "door"
+        )
+        assert corners["door"] == door_corners
+
+    def test_stacked_columns_derive_the_elevation_envelope(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A stacked member shares its column's width and adds its height —
+        # the nominal envelope is door 1000x2200 + transom 400 → 1000x2600.
+        product = self._product(
+            [self._module("door", "1000", "2200"), self._module("tr", "1000", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1000"),
+            Decimal("2600"),
+        )
+        # Order-independent: the transom declared first resolves the same root.
+        product = self._product(
+            [self._module("tr", "1000", "400"), self._module("door", "1000", "2200")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1000"),
+            Decimal("2600"),
+        )
+
+    def test_inline_angle_binds_the_joint_it_names(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # Couplings declared out of chain order: {a,b} turns 5°, {c,d} turns
+        # 10°, and the b→c joint stays straight. The angle must land on the
+        # joint the coupling names — never on a declaration position.
+        product = self._product(
+            [
+                self._module("a", "1000", "2200"),
+                self._module("b", "1000", "2200"),
+                self._module("c", "1000", "2200"),
+                self._module("d", "1000", "2200"),
+            ],
+            [
+                CouplingDef(
+                    id="cd",
+                    angle_deg=Decimal("10"),
+                    modules=["c", "d"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="ab",
+                    angle_deg=Decimal("5"),
+                    modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        corners = {m.module_id: m.corners for m in evaluation.plan.modules}
+        # b runs at 5° from the a→b joint; c inherits the same heading (the
+        # b→c joint declares no coupling); d accumulates to 15°.
+        single = Decimal("1000") * sin_degrees(Decimal("5"))
+        assert corners["b"][1].y_mm == single.quantize(Decimal("0.01"))
+        assert corners["c"][1].y_mm == (single * 2).quantize(Decimal("0.01"))
+        expected_d = (single * 2 + Decimal("1000") * sin_degrees(Decimal("15"))).quantize(
+            Decimal("0.01")
+        )
+        assert corners["d"][1].y_mm == expected_d
+
+    def test_stacked_wider_member_widens_the_envelope(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A stacked member wider than its column centre-and-protrudes: the
+        # nominal envelope spans the member extent, not the column band.
+        product = self._product(
+            [self._module("door", "900", "2100"), self._module("tr", "1200", "400")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["door", "tr"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                )
+            ],
+        )
+        assert elevation_envelope(product.assembly) == (
+            Decimal("1200"),
+            Decimal("2500"),
+        )
+
+    def test_stacked_cycle_is_invalid(self, demo_60_params: SystemParams) -> None:
+        # a hangs over b's top while b hangs over a's top — neither module has
+        # a physical bottom. The union sees one connected assembly, so without
+        # a dedicated error the impossible stack would evaluate VALID.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "1000", "2000")],
+            [
+                CouplingDef(
+                    id="s1",
+                    kind=ConnectionKind.STACKED,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.TOP, EdgeSide.BOTTOM],
+                ),
+                CouplingDef(
+                    id="s2",
+                    kind=ConnectionKind.STACKED,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.BOTTOM, EdgeSide.TOP],
+                ),
+            ],
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        assert evaluation.status is ProductStatus.INVALID
+        assert IssueCode.STACKED_CYCLE.value in {issue.code for issue in evaluation.issues}
+
+    def test_nonadjacent_inline_coupling_is_invalid(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # a–c bridges over b: the front lays columns a,b,c so a–c has no
+        # physical seam — connectivity alone would accept it and the BOM would
+        # still cut a coupler for a joint that cannot exist.
+        product = self._product(
+            [
+                self._module("a", "1000", "2000"),
+                self._module("b", "800", "2000"),
+                self._module("c", "1000", "2000"),
+            ],
+            [
+                CouplingDef(
+                    id="ac",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "c"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+                CouplingDef(
+                    id="bc",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "c"],
+                    edges=[EdgeSide.LEFT, EdgeSide.RIGHT],
+                    coupler_profile_sku="ACOPLE-60",
+                ),
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.INVALID
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.INLINE_NOT_ADJACENT.value
+        }
+        assert flagged == {"coupling:ac"}
+
+    def test_adjacent_inline_couplings_still_validate(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ab",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "b"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+
+    def test_reversed_inline_edges_claim_outer_seam(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # modules=[b,a] with edges=[right,left] names b's outer right and a's
+        # outer left — no seam exists there; only the side-set check let it
+        # through before.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ba",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "a"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.COUPLER_EDGE_INVALID.value
+        }
+        assert flagged == {"coupling:ba"}
+        assert not any(
+            c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
+        )
+
+    def test_reversed_module_order_inline_pair_still_cuts(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The same seam declared right-column first is valid — the edges just
+        # have to mirror the column order (b.left meets a.right).
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ba",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "a"],
+                    edges=[EdgeSide.LEFT, EdgeSide.RIGHT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+        coupler = next(
+            c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
+        )
+        assert coupler.length_mm == Decimal("2000")
+
+    def test_contour_module_refuses_couplings(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A contour edge is a shaped boundary: even a straight side edge is
+        # shorter than the nominal box, so no straight coupler closes it.
+        shaped = ProductModule(
+            id="tr",
+            width_mm=Decimal("1000"),
+            height_mm=Decimal("2000"),
+            contour=Contour(
+                vertices=[
+                    PlanPoint(x_mm=Decimal("0"), y_mm=Decimal("0")),
+                    PlanPoint(x_mm=Decimal("1000"), y_mm=Decimal("0")),
+                    PlanPoint(x_mm=Decimal("1000"), y_mm=Decimal("1800")),
+                    PlanPoint(x_mm=Decimal("0"), y_mm=Decimal("2000")),
+                ],
+                bulges=[Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")],
+            ),
+            tree=ParametricNode(
+                id="tr",
+                type=NodeType.BAY,
+                opening_type=BayOpeningType.FIXED,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            ),
+        )
+        product = self._product(
+            [self._module("a", "1000", "2000"), shaped],
+            [
+                CouplingDef(
+                    id="ab",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "tr"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.CONTOUR_COUPLING_UNSUPPORTED.value
+        }
+        assert flagged == {"coupling:ab"}
+        assert not any(
+            c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
+        )
+
+
+class TestSlidingTopologyEvaluation:
+    def _sliding_module(self, layout: "SlidingLayout | None") -> ProductModule:
+        return ProductModule(
+            id="s",
+            width_mm=Decimal("1800"),
+            height_mm=Decimal("1500"),
+            tree=ParametricNode(
+                id="s",
+                type=NodeType.BAY,
+                opening_type=BayOpeningType.SLIDING,
+                sliding_layout=layout,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            ),
+        )
+
+    def test_sliding_facts_describe_the_resolved_topology(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = ProductModel(
+            version="product-v2",
+            assembly=CoupledAssembly(
+                modules=[
+                    self._sliding_module(
+                        SlidingLayout(
+                            tracks=2,
+                            panels=[
+                                SlidingPanel(slot="fijo", kind=SlidingPanelKind.FIXED),
+                                SlidingPanel(
+                                    slot="corrediza",
+                                    kind=SlidingPanelKind.MOVING,
+                                    track=0,
+                                ),
+                                SlidingPanel(
+                                    slot="corrediza2",
+                                    kind=SlidingPanelKind.MOVING,
+                                    track=1,
+                                ),
+                            ],
+                        )
+                    )
+                ],
+                couplings=[],
+            ),
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        module = evaluation.modules[0]
+        assert module.sliding[0].bay_id == "s"
+        assert module.sliding[0].tracks == 2
+        assert [(p.slot, p.kind, p.track, p.leaf_id) for p in module.sliding[0].panels] == [
+            ("fijo", SlidingPanelKind.FIXED, None, None),
+            ("corrediza", SlidingPanelKind.MOVING, 0, "s:L2"),
+            ("corrediza2", SlidingPanelKind.MOVING, 1, "s:L3"),
+        ]
+        leaf_ids = {
+            cut.leaf_id for cut in (module.result.profile_cuts if module.result else [])
+            if cut.leaf_id
+        }
+        assert leaf_ids == {"s:L2", "s:L3", "s:fijo"}
+
+    def test_sliding_layout_errors_surface_as_issues(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        product = ProductModel(
+            version="product-v2",
+            assembly=CoupledAssembly(
+                modules=[self._sliding_module(None)], couplings=[]
+            ),
+        )
+        evaluation = evaluate_product(product, demo_60_params)
+        module = evaluation.modules[0]
+        assert module.result is None
+        assert [i.code for i in module.issues] == [
+            IssueCode.SLIDING_LAYOUT_INVALID.value
+        ]
+        assert module.issues[0].severity is Severity.ERROR
+        assert "sliding_layout" in module.issues[0].params["reason"]

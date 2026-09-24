@@ -53,6 +53,13 @@ class SupabaseDocumentStorage:
                     return
             raise DocumentaryError("document_storage_upload_failed")
 
+    def download(self, object_key: str) -> bytes:
+        with httpx.Client(timeout=30) as client:
+            response = client.get(self._object_url(object_key), headers=self._headers())
+        if response.status_code != 200:
+            raise DocumentaryError("document_storage_download_failed")
+        return response.content
+
     def delete_object(self, object_key: str) -> None:
         with httpx.Client(timeout=10) as client:
             response = client.delete(
@@ -61,13 +68,13 @@ class SupabaseDocumentStorage:
         if response.status_code not in (200, 204, 404):
             raise DocumentaryError("document_storage_delete_failed")
 
-    def signed_url(self, object_key: str) -> str:
+    def signed_url(self, object_key: str, expires_in: int | None = None) -> str:
         encoded = "/".join(quote(part, safe="") for part in object_key.split("/"))
         endpoint = f"{self.base_url}/storage/v1/object/sign/{self.bucket}/{encoded}"
         with httpx.Client(timeout=10) as client:
             response = client.post(
                 endpoint,
-                json={"expiresIn": SIGNED_URL_TTL_SECONDS},
+                json={"expiresIn": expires_in or SIGNED_URL_TTL_SECONDS},
                 headers=self._headers("application/json"),
             )
         if response.status_code != 200:
@@ -78,8 +85,7 @@ class SupabaseDocumentStorage:
             raise DocumentaryError("document_storage_sign_failed")
         if signed.startswith("http"):
             return signed
-        # signedURL is relative to the storage API root (/storage/v1).
-        path = signed.lstrip("/")
-        if path.startswith("storage/v1/"):
-            path = path.removeprefix("storage/v1/")
-        return urljoin(self.base_url + "/storage/v1/", path)
+        relative = signed.lstrip("/")
+        if not relative.startswith("storage/v1/"):
+            relative = f"storage/v1/{relative}"
+        return urljoin(self.base_url + "/", relative)

@@ -19,11 +19,23 @@ runtime/backup credentials through server secrets, never through the browser.
 When payment is enabled, select Supabase Pro, Small compute and seven-day PITR; verify
 the real recovery window and Storage recovery. Railway requires an active paid workspace
 before even creating the separate DEKOPEN project; use Pro for resource monitors.
-Create API, billing reconciliation and backup services from `KaraAliOsman/framedex`'s
-verified release SHA using `railway.toml`, `railway.billing.toml` and
-`railway.backup.toml`, respectively. Provision Redis and private service networking,
-then the public Cloudflare boundary and the measured alert thresholds described below.
-Do not reuse the unrelated existing OpenClaw service or its secrets.
+Create five services from `KaraAliOsman/framedex`'s verified release SHA:
+
+- **API** — `railway.toml`: gunicorn on the root Dockerfile, `/health/ready/` check.
+- **Frontend** — `railway.frontend.toml`: nginx serving the built SPA and proxying
+  `/api/` to the API's private origin; set `PORT`, `BACKEND_ORIGIN` as a fully
+  resolved URL (e.g. `http://api.railway.internal:8000` — no `$VAR` references),
+  and the `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` build args (optional
+  `VITE_POSTHOG_KEY`/`VITE_POSTHOG_HOST`). The proxy forwards the upstream host to
+  Django, so the API private hostname must appear in `ALLOWED_HOSTS`.
+- **Jobs worker** — `railway.worker.toml`: the same image running
+  `python backend/manage.py runjobs`; shares the API's server env but binds no port.
+- **Billing reconciliation** — `railway.billing.toml` (cron every 15 minutes).
+- **Backup** — `railway.backup.toml` (daily 03:00 encrypted dump to Supabase Storage).
+
+Provision Redis and private service networking, then the public Cloudflare boundary
+and the measured alert thresholds described below. Do not reuse the unrelated
+existing OpenClaw service or its secrets.
 
 No paid plan was activated and no Railway DEKOPEN project exists yet. The repository
 contains the service configuration; Flow credentials, production domains, secret

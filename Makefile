@@ -1,4 +1,4 @@
-.PHONY: help lint typecheck test test-engine test-backend test-frontend test-mutations test-db build check goldgen
+.PHONY: help lint typecheck test test-engine test-backend test-frontend test-mutations test-db build check goldgen runjobs
 
 PY := python
 NPM := npm --prefix frontend
@@ -11,6 +11,7 @@ help:
 	@echo "  make test-db        - live DB gate (Docker + Supabase CLI): pgTAP, RLS, auth e2e"
 	@echo "  make test-mutations - 0.01mm formula mutation drill (engine)"
 	@echo "  make build          - production frontend build"
+	@echo "  make runjobs        - durable background-job worker (claim + execute queue)"
 	@echo "  make check          - lint + typecheck + test + build"
 	@echo "  make goldgen        - regenerate engine golden snapshots"
 
@@ -49,6 +50,9 @@ test-db:
 
 build:
 	$(NPM) run build
+
+runjobs:
+	$(PY) backend/manage.py runjobs
 
 check: lint typecheck test build
 

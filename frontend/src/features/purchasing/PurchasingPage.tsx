@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { apiMutator } from "../../api/apiMutator";
+import { apiMutator, ApiError } from "../../api/apiMutator";
+import { documentaryArtifactAccess } from "../../api/generated/dekopen";
+import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import "./purchasing.css";
@@ -48,13 +50,46 @@ type Allocation = {
   supplier_eligibility_id: string;
   order_type: OrderType;
 };
+type OrderStatus = "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "FULFILLED" | "CANCELLED";
 type Order = {
   id: string;
   order_code: string;
   order_type: OrderType;
-  status: "DRAFT" | "SENT";
+  status: OrderStatus;
   supplier_name: string;
   order_snapshot_hash: string;
+};
+const orderStatusLabels: Record<OrderStatus, Parameters<typeof t>[0]> = {
+  DRAFT: "purchasing.draft",
+  SENT: "purchasing.sent",
+  PARTIALLY_RECEIVED: "purchasing.partiallyReceived",
+  FULFILLED: "purchasing.fulfilled",
+  CANCELLED: "purchasing.cancelled",
+};
+type ReceivingLine = {
+  id: string;
+  purchasing_sku: string | null;
+  category: string;
+  unit: string;
+  ordered_qty: string;
+  received_qty: string;
+  damaged_qty: string;
+  outstanding_qty: string;
+};
+type ReceivingState = {
+  order: { id: string; status: OrderStatus };
+  lines: ReceivingLine[];
+  receipts: Array<{ id: string; receipt_key: string; received_at: string }>;
+};
+type StockItem = {
+  item_id: string;
+  sku: string;
+  name: string;
+  category: string;
+  unit: string;
+  on_hand_qty: string;
+  reserved_qty: string;
+  available_qty: string;
 };
 type VersionItem = {
   id: string;
@@ -185,6 +220,7 @@ function PurchasingWorkspace({
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [versionId, setVersionId] = useState(initialVersionId);
   const [state, setState] = useState<PurchasingState | null>(null);
+  const [stock, setStock] = useState<StockItem[]>([]);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
@@ -202,6 +238,13 @@ function PurchasingWorkspace({
     setMessage("");
     void request<{ versions?: VersionItem[] }>("purchasing/versions/")
       .then((data) => {
+        void request<{ items?: StockItem[] }>("inventory/stock/")
+          .then((stockData) => {
+            if (current) setStock(stockData.items ?? []);
+          })
+          .catch(() => {
+            if (current) setStock([]);
+          });
         if (!current) return;
         const list = data.versions ?? [];
         setVersions(list);
@@ -269,17 +312,27 @@ function PurchasingWorkspace({
     if (!state?.version) return;
     setMessage("");
     try {
-      const artifact = await request<{ id: string }>("documents/artifacts/", "POST", {
-        document_type: documentType,
-        format,
-        project_version_id: state.version.id,
-        order_id: orderId ?? null,
-      });
-      const access = await request<{ signed_url: string }>(
-        `documents/artifacts/${artifact.id}/access/`,
-        "POST",
+      setMessage(t("purchasing.documentGenerating"));
+      const job = await runJob(
+        {
+          type: "document.artifact.generate",
+          payload: {
+            document_type: documentType,
+            format,
+            project_version_id: state.version.id,
+            order_id: orderId ?? null,
+          },
+          idempotency_key: `${documentType.toLowerCase()}:${format.toLowerCase()}:${state.version.id}:${orderId ?? ""}`,
+        },
+        { headers: { "X-Organization-ID": orgId } },
       );
-      window.open(access.signed_url, "_blank", "noopener,noreferrer");
+      const artifact = (job.result as { artifact: { id: string } }).artifact;
+      const access = await documentaryArtifactAccess(artifact.id, {
+        headers: { "X-Organization-ID": orgId },
+      });
+      if (access.status !== 200) throw new ApiError(access.status, access.data);
+      window.open(access.data.signed_url, "_blank", "noopener,noreferrer");
+      setMessage("");
     } catch {
       if (mounted.current) setMessage(t("purchasing.documentError"));
     }
@@ -367,6 +420,35 @@ function PurchasingWorkspace({
               onDocument={(type, format) => void openDocument(type, format, order.id)}
             />
           ))}
+        </section>
+      )}
+      {stock.length > 0 && (
+        <section className="purchasing-stock">
+          <h2>{t("purchasing.stockTitle")}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t("purchasing.purchaseSku")}</th>
+                <th>{t("purchasing.stockName")}</th>
+                <th>{t("purchasing.stockOnHand")}</th>
+                <th>{t("purchasing.stockReserved")}</th>
+                <th>{t("purchasing.stockAvailable")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stock.map((item) => (
+                <tr key={item.item_id}>
+                  <td>{item.sku}</td>
+                  <td>
+                    {item.name} · {item.unit}
+                  </td>
+                  <td>{item.on_hand_qty}</td>
+                  <td>{item.reserved_qty}</td>
+                  <td>{item.available_qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
       {state?.version && (
@@ -714,7 +796,7 @@ function OrderCard({
         <strong>{order.order_code}</strong>
         <span>
           {t(orderTypeLabels[order.order_type])} · {order.supplier_name} ·{" "}
-          {t(order.status === "SENT" ? "purchasing.sent" : "purchasing.draft")}
+          {t(orderStatusLabels[order.status])}
         </span>
       </header>
       {order.status === "DRAFT" && (
@@ -749,6 +831,186 @@ function OrderCard({
           </li>
         ))}
       </ul>
+      {(order.status === "SENT" || order.status === "PARTIALLY_RECEIVED") && (
+        <ReceivingPanel order={order} busy={busy} request={request} action={action} />
+      )}
     </article>
+  );
+}
+
+function ReceivingPanel({
+  order,
+  busy,
+  request,
+  action,
+}: {
+  order: Order;
+  busy: boolean;
+  request: RequestFn;
+  action: (task: Promise<unknown>) => Promise<boolean>;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<ReceivingState | null>(null);
+  const [note, setNote] = useState("");
+  const [quantities, setQuantities] = useState<
+    Record<string, { received: string; damaged: string }>
+  >({});
+  const [receiptKey, setReceiptKey] = useState(
+    () => `${order.order_code}-${crypto.randomUUID().slice(0, 8)}`,
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    let current = true;
+    void request<ReceivingState>(`inventory/orders/${order.id}/receiving/`)
+      .then((data) => {
+        if (!current) return;
+        setState(data);
+        setQuantities((previous) => {
+          const next = { ...previous };
+          for (const line of data.lines) {
+            next[line.id] ??= { received: line.outstanding_qty, damaged: "0" };
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        if (current) setState(null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [open, order.id, request]);
+
+  function submit(event: FormEvent): void {
+    event.preventDefault();
+    if (!state) return;
+    const lines = state.lines
+      .map((line) => {
+        const entry = quantities[line.id] ?? { received: "0", damaged: "0" };
+        return {
+          order_line_id: line.id,
+          received_qty: entry.received,
+          damaged_qty: entry.damaged,
+        };
+      })
+      .filter((line) => Number(line.received_qty) > 0);
+    if (lines.length === 0) return;
+    void action(
+      request(`inventory/orders/${order.id}/receipts/`, "POST", {
+        receipt_key: receiptKey,
+        note: note || null,
+        lines,
+      }),
+    ).then((ok) => {
+      if (!ok) return;
+      // One key = one physical receipt: a successful post starts the next one
+      // with a fresh key; a failed/uncertain submit keeps it for safe retry.
+      setReceiptKey(`${order.order_code}-${crypto.randomUUID().slice(0, 8)}`);
+      setQuantities({});
+      setNote("");
+      request(`inventory/orders/${order.id}/receiving/`)
+        .then((fresh) => setState(fresh as ReceivingState))
+        .catch(() => undefined);
+    });
+  }
+
+  return (
+    <details className="purchasing-receiving" open={open}>
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          setOpen((value) => !value);
+        }}
+      >
+        {t("purchasing.receiving")}
+      </summary>
+      {open && !state && <p>{t("purchasing.receivingLoading")}</p>}
+      {open && state && (
+        <form onSubmit={submit}>
+          <table>
+            <thead>
+              <tr>
+                <th>{t("purchasing.purchaseSku")}</th>
+                <th>{t("purchasing.receiveOrdered")}</th>
+                <th>{t("purchasing.receiveReceived")}</th>
+                <th>{t("purchasing.receiveOutstanding")}</th>
+                <th>{t("purchasing.receiveNow")}</th>
+                <th>{t("purchasing.receiveDamaged")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.lines.map((line) => (
+                <tr key={line.id}>
+                  <td>{line.purchasing_sku ?? line.category}</td>
+                  <td>
+                    {line.ordered_qty} {line.unit}
+                  </td>
+                  <td>{line.received_qty}</td>
+                  <td>{line.outstanding_qty}</td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      disabled={busy || Number(line.outstanding_qty) <= 0}
+                      value={quantities[line.id]?.received ?? "0"}
+                      onChange={(event) =>
+                        setQuantities((previous) => ({
+                          ...previous,
+                          [line.id]: {
+                            received: event.target.value,
+                            damaged: previous[line.id]?.damaged ?? "0",
+                          },
+                        }))
+                      }
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      disabled={busy || Number(line.outstanding_qty) <= 0}
+                      value={quantities[line.id]?.damaged ?? "0"}
+                      onChange={(event) =>
+                        setQuantities((previous) => ({
+                          ...previous,
+                          [line.id]: {
+                            received: previous[line.id]?.received ?? "0",
+                            damaged: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <label>
+            {t("purchasing.receiveNote")}
+            <input
+              type="text"
+              value={note}
+              disabled={busy}
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={busy || state.lines.every((line) => Number(line.outstanding_qty) <= 0)}
+          >
+            {t("purchasing.receiveSubmit")}
+          </button>
+          {state.receipts.length > 0 && (
+            <p>
+              {t("purchasing.receiveHistory")}:{" "}
+              {state.receipts.map((receipt) => receipt.receipt_key).join(" · ")}
+            </p>
+          )}
+        </form>
+      )}
+    </details>
   );
 }

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CatalogHardwareComponent } from "./catalogHardwareComponent";
-import type { OpeningTypeEnum } from "./openingTypeEnum";
+import type { KitOpeningTypeEnum } from "./kitOpeningTypeEnum";
 import type { RailTypeEnum } from "./railTypeEnum";
 
 export interface KitResponse {
@@ -16,7 +16,7 @@ export interface KitResponse {
   sku: string;
   /** @maxLength 255 */
   name: string;
-  opening_type: OpeningTypeEnum;
+  opening_type: KitOpeningTypeEnum;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   min_leaf_width_mm: string;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */

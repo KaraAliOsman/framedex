@@ -7,6 +7,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ApiError, apiMutator } from "../../api/apiMutator";
 import {
   positionsDestroy,
+  projectPaymentIntegrationStatus,
+  projectPaymentLinksList,
+  projectPaymentsList,
   projectsClone,
   projectsCreate,
   projectsList,
@@ -50,6 +53,13 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectsUpdate: vi.fn(),
     projectsClone: vi.fn(),
     positionsDestroy: vi.fn(),
+    projectPaymentsList: vi.fn(),
+    projectPaymentsRecord: vi.fn(),
+    projectPaymentVoid: vi.fn(),
+    projectPaymentLinksList: vi.fn(),
+    projectPaymentIntegrationStatus: vi.fn(),
+    projectPaymentLinkCreate: vi.fn(),
+    projectPaymentLinkRecover: vi.fn(),
   };
 });
 
@@ -82,6 +92,7 @@ function makePosition(): PositionResponse {
       reinforcements: [],
       glasses: [],
       panels: [],
+      fittings: [],
       hardware_items: [],
       leaf_weights: [],
       calculation_hash: `sha256:${"a".repeat(64)}`,
@@ -98,6 +109,9 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
     client_rut: "",
     client_email: "",
     client_phone: "",
+    client_giro: "",
+    client_comuna: "",
+    client_address: "",
     delivery_address: "",
     notes_commercial: "",
     notes_internal: "",
@@ -119,10 +133,14 @@ function makeProject(overrides: Partial<ProjectResponse> = {}): ProjectResponse 
 function expectedMetadata(project: ProjectResponse): ProjectWriteRequest {
   return {
     name: project.name,
+    client_id: project.client_id ?? null,
     client_name: project.client_name,
     client_rut: project.client_rut ?? "",
     client_email: project.client_email ?? "",
     client_phone: project.client_phone ?? "",
+    client_giro: project.client_giro ?? "",
+    client_comuna: project.client_comuna ?? "",
+    client_address: project.client_address ?? "",
     delivery_address: project.delivery_address ?? "",
     notes_commercial: project.notes_commercial ?? "",
     notes_internal: project.notes_internal ?? "",
@@ -183,6 +201,22 @@ beforeEach(() => {
   vi.spyOn(window, "confirm").mockReturnValue(true);
   vi.mocked(projectsList).mockResolvedValue(response(200, { items: [] }));
   vi.mocked(projectsRetrieve).mockResolvedValue(response(200, makeProject()));
+  vi.mocked(projectPaymentsList).mockResolvedValue(
+    response(200, {
+      payments: [],
+      invoices: [],
+      collected: "0",
+      quote_total_gross: null,
+      balance: null,
+      currency: "CLP",
+      status: "NO_DEAL",
+      sealed_revision: null,
+    }),
+  );
+  vi.mocked(projectPaymentLinksList).mockResolvedValue(response(200, { links: [] }));
+  vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
+    response(200, { configured: false, enabled: false }),
+  );
 });
 
 afterEach(() => {
@@ -228,10 +262,14 @@ it("creates a project, navigates to the server ID and renders persisted metadata
   const [body, options] = vi.mocked(projectsCreate).mock.calls[0]!;
   expect(body).toEqual({
     name: "Nombre ingresado",
+    client_id: null,
     client_name: "Cliente ingresado",
     client_rut: "",
     client_email: "ingresado@example.test",
     client_phone: "",
+    client_giro: "",
+    client_comuna: "",
+    client_address: "",
     delivery_address: "",
     notes_commercial: "",
     notes_internal: "Nota ingresada",
@@ -479,6 +517,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },
@@ -543,6 +582,7 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },
@@ -586,6 +626,297 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   await waitFor(() => expect(router.state.location.pathname).toBe("/projects"));
 });
 
+it("saves handle placement intents for operable leaves before emitting", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  const quoted = makeProject({
+    ...priced,
+    status: "QUOTED",
+    versions: [
+      {
+        id: "version-a",
+        revision_code: "REV-A",
+        authority_version: "SHOT10_V1",
+        bom_hash: "a".repeat(64),
+        snapshot_sha256: "b".repeat(64),
+        production_allowed: true,
+        documentary_complete: true,
+        emitted_at: "2026-09-19T12:00:00Z",
+      },
+    ],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(response(200, quoted));
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [{ id: "handle-a", label: "Manillas v1", version: 1 }],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            handle_intents: [],
+            handle_requirements: [
+              {
+                policy_id: "handle-a",
+                requirements: [
+                  {
+                    bay_id: "B1",
+                    leaf_id: null,
+                    leaf_label: "Hoja 1",
+                    opening_type: "TURN_LEFT",
+                    handle_domain_slot: "PRIMARY",
+                    host_member_side: "LEFT",
+                    outer_height_mm: "1400.10",
+                    mounting_min_from_leaf_top_mm: "900.30",
+                    mounting_max_from_leaf_top_mm: "1100.40",
+                    permitted_vertical_references: ["LEAF_TOP", "OUTER_BOTTOM"],
+                    leaf_rects: [
+                      {
+                        placement_policy_id: "placement-a",
+                        leaf_top_from_outer_top_mm: "100.20",
+                        leaf_height_mm: "1150.00",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    if (url.endsWith("/inputs/") && options.method === "PUT")
+      return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
+    if (url.endsWith("/freeze/") && options.method === "POST")
+      return response(201, { revision_code: "REV-A" }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
+  expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
+  expect(heightInput.getAttribute("min")).toBe("900.3");
+  expect(heightInput.getAttribute("max")).toBe("1100.4");
+  const referenceSelect = screen.getByLabelText(t("quotation.handleReference"));
+  fireEvent.change(referenceSelect, { target: { value: "OUTER_BOTTOM" } });
+  // OUTER_BOTTOM: outer 1400.10 − leafTop 100.20 − leaf-top bounds. Float math
+  // would emit 399.599… and reject the exact boundary value the engine accepts.
+  expect(heightInput.getAttribute("min")).toBe("199.5");
+  expect(heightInput.getAttribute("max")).toBe("399.6");
+  fireEvent.change(heightInput, { target: { value: "1050" } });
+  expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
+  fireEvent.change(heightInput, { target: { value: "399.6" } });
+  expect(screen.queryByText(t("quotation.handleOutOfBounds"))).toBeNull();
+  fireEvent.change(heightInput, { target: { value: "399.61" } });
+  expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
+  fireEvent.change(heightInput, { target: { value: "300" } });
+  expect(screen.queryByText(t("quotation.handleOutOfBounds"))).toBeNull();
+  change("quotation.paymentTerms", "50% anticipo");
+  change("quotation.validUntil", "2026-10-19");
+  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+
+  await screen.findByText(t("projects.quoted"));
+  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
+  expect(body.positions[0].handle_intents).toEqual([
+    {
+      bay_id: "B1",
+      leaf_id: null,
+      handle_domain_slot: "PRIMARY",
+      requested_height_mm: "300",
+      vertical_reference: "OUTER_BOTTOM",
+    },
+  ]);
+});
+
+it("reconciles handle intents when the handle policy changes", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  const quoted = makeProject({
+    ...priced,
+    status: "QUOTED",
+    versions: [
+      {
+        id: "version-a",
+        revision_code: "REV-A",
+        authority_version: "SHOT10_V1",
+        bom_hash: "a".repeat(64),
+        snapshot_sha256: "b".repeat(64),
+        production_allowed: true,
+        documentary_complete: true,
+        emitted_at: "2026-09-19T12:00:00Z",
+      },
+    ],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(response(200, quoted));
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [
+              { id: "handle-a", label: "Manillas v1", version: 1 },
+              { id: "handle-b", label: "Manillas v2", version: 2 },
+            ],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            handle_intents: [
+              {
+                bay_id: "B1",
+                leaf_id: null,
+                handle_domain_slot: "PRIMARY",
+                requested_height_mm: "1050",
+                vertical_reference: "LEAF_TOP",
+              },
+              {
+                bay_id: "B2",
+                leaf_id: null,
+                handle_domain_slot: "SECONDARY",
+                requested_height_mm: "1050",
+                vertical_reference: "LEAF_TOP",
+              },
+            ],
+            handle_requirements: [
+              {
+                policy_id: "handle-a",
+                requirements: [
+                  {
+                    bay_id: "B1",
+                    leaf_id: null,
+                    leaf_label: "Hoja 1",
+                    opening_type: "TURN_LEFT",
+                    handle_domain_slot: "PRIMARY",
+                    host_member_side: "LEFT",
+                    outer_height_mm: "1400.00",
+                    mounting_min_from_leaf_top_mm: "900.00",
+                    mounting_max_from_leaf_top_mm: "1100.00",
+                    permitted_vertical_references: ["LEAF_TOP"],
+                    leaf_rects: [
+                      {
+                        placement_policy_id: "placement-a",
+                        leaf_top_from_outer_top_mm: "100.00",
+                        leaf_height_mm: "1150.00",
+                      },
+                    ],
+                  },
+                  {
+                    bay_id: "B2",
+                    leaf_id: null,
+                    leaf_label: "Hoja 2",
+                    opening_type: "TURN_RIGHT",
+                    handle_domain_slot: "SECONDARY",
+                    host_member_side: "RIGHT",
+                    outer_height_mm: "1400.00",
+                    mounting_min_from_leaf_top_mm: "900.00",
+                    mounting_max_from_leaf_top_mm: "1100.00",
+                    permitted_vertical_references: ["LEAF_TOP"],
+                    leaf_rects: [],
+                  },
+                ],
+              },
+              {
+                policy_id: "handle-b",
+                requirements: [
+                  {
+                    bay_id: "B1",
+                    leaf_id: null,
+                    leaf_label: "Hoja 1",
+                    opening_type: "TURN_LEFT",
+                    handle_domain_slot: "PRIMARY",
+                    host_member_side: "LEFT",
+                    outer_height_mm: "1400.00",
+                    mounting_min_from_leaf_top_mm: "900.00",
+                    mounting_max_from_leaf_top_mm: "1100.00",
+                    permitted_vertical_references: ["OUTER_BOTTOM"],
+                    leaf_rects: [],
+                  },
+                ],
+              },
+            ],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    if (url.endsWith("/inputs/") && options.method === "PUT")
+      return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
+    if (url.endsWith("/freeze/") && options.method === "POST")
+      return response(201, { revision_code: "REV-A" }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  const policySelect = await screen.findByLabelText(t("quotation.handlePolicy"));
+  fireEvent.change(policySelect, { target: { value: "handle-b" } });
+  change("quotation.paymentTerms", "50% anticipo");
+  change("quotation.validUntil", "2026-10-19");
+  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+
+  await screen.findByText(t("projects.quoted"));
+  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
+  // B2's SECONDARY slot does not exist under handle-b: dropped. B1 survives
+  // but LEAF_TOP is not permitted there: reset to the only permitted value.
+  expect(body.positions[0].handle_intents).toEqual([
+    {
+      bay_id: "B1",
+      leaf_id: null,
+      handle_domain_slot: "PRIMARY",
+      requested_height_mm: "1050",
+      vertical_reference: "OUTER_BOTTOM",
+    },
+  ]);
+});
+
 it("asks before cloning away from dirty quotation preparation edits", async () => {
   const position = makePosition();
   const priced = makeProject({
@@ -624,6 +955,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
             structural_inputs: [],
             glass_polishing: [],
             handle_intents: [],
+            handle_requirements: [],
             accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
             legacy_handle_migration_confirmed: false,
           },

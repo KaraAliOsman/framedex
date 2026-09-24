@@ -57,19 +57,23 @@ def _decimal(value: object) -> Decimal:
     return result
 
 
+def _decimal_or_none(value: object) -> Decimal | None:
+    return None if value is None else _decimal(value)
+
+
 def _article_from_row(row: Sequence[object], *, offset: int = 0) -> EffectiveProfileArticle:
     return EffectiveProfileArticle(
         sku=str(row[offset]),
         role=ProfileRole(str(row[offset + 1])),
         material=MaterialType(str(row[offset + 8])),
         face_width_mm=_decimal(row[offset + 2]),
-        welding_loss_mm=_decimal(row[offset + 3]),
-        reinforcement_gap_mm=_decimal(row[offset + 4]),
-        weight_kg_m=_decimal(row[offset + 5]),
-        steel_weight_kg_m=_decimal(row[offset + 6]),
-        reinforcement_sku=(
-            str(row[offset + 7]) if row[offset + 7] is not None else None
-        ),
+        # NULL is UNKNOWN — welding/reinforcement/weight data the catalog does
+        # not carry passes through so the honest consumers can refuse or flag.
+        welding_loss_mm=_decimal_or_none(row[offset + 3]),
+        reinforcement_gap_mm=_decimal_or_none(row[offset + 4]),
+        weight_kg_m=_decimal_or_none(row[offset + 5]),
+        steel_weight_kg_m=_decimal_or_none(row[offset + 6]),
+        reinforcement_sku=(str(row[offset + 7]) if row[offset + 7] is not None else None),
     )
 
 
@@ -118,7 +122,8 @@ class SystemParamsRepository:
                        corner_bracket_loss_mm, hook_depth_mm,
                        door_threshold_mm, door_bottom_clearance_mm, rail_type,
                        sliding_glazing_deduction_width_mm,
-                       sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm
+                       sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm,
+                       rail_count
                 FROM public.profile_systems
                 WHERE id = %s AND is_active = TRUE
                   AND (is_global = TRUE OR org_id = %s)
@@ -157,6 +162,7 @@ class SystemParamsRepository:
             sliding_glazing_deduction_width_mm=_decimal(system[15]),
             sliding_glazing_deduction_height_mm=_decimal(system[16]),
             door_leaf_side_clearance_mm=_decimal(system[17]),
+            rail_count=None if system[18] is None else int(system[18]),
             available_panel_rules=self._load_panel_rules(system_id, active_org_id),
             available_hardware_kits=kits,
         )
@@ -215,6 +221,26 @@ class SystemParamsRepository:
             rows = cursor.fetchall()
         return {cast(str, row[0]): _article_from_row(row) for row in rows}
 
+    def load_article_names(self, system_id: UUID, active_org_id: UUID) -> dict[str, str]:
+        """Display names for every catalog profile article of a system.
+
+        Names are presentation metadata, not engineering parameters, so they
+        live outside EffectiveProfileArticle; options/design surfaces join
+        them by SKU.
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT sku, name
+                FROM public.profile_articles
+                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                ORDER BY sku
+                """,
+                [system_id, active_org_id],
+            )
+            rows = cursor.fetchall()
+        return {str(row[0]): str(row[1]) for row in rows}
+
     def _load_glazing_rules(
         self, system_id: UUID, active_org_id: UUID
     ) -> dict[Decimal, GlazingBeadRule]:
@@ -252,9 +278,7 @@ class SystemParamsRepository:
             for row in rows
         }
 
-    def _load_hardware_kits(
-        self, system_id: UUID, active_org_id: UUID
-    ) -> list[HardwareKitRule]:
+    def _load_hardware_kits(self, system_id: UUID, active_org_id: UUID) -> list[HardwareKitRule]:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -290,10 +314,7 @@ class SystemParamsRepository:
             for row in rows
         ]
 
-
-    def _load_panel_rules(
-        self, system_id: UUID, active_org_id: UUID
-    ) -> dict[str, PanelRule]:
+    def _load_panel_rules(self, system_id: UUID, active_org_id: UUID) -> dict[str, PanelRule]:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -308,7 +329,9 @@ class SystemParamsRepository:
             rows = cursor.fetchall()
         return {
             str(row[0]): PanelRule(
-                sku=str(row[0]), name=str(row[1]), kind=row[2],
+                sku=str(row[0]),
+                name=str(row[1]),
+                kind=row[2],
                 thickness_mm=_decimal(row[3]),
                 weight_kg_m2=_decimal(row[4]) if row[4] is not None else None,
             )

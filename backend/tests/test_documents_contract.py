@@ -108,6 +108,162 @@ def order_snapshot(order_type: str) -> dict[str, object]:
     }
 
 
+def test_additive_bom_normalizer_keeps_old_snapshots_comparable() -> None:
+    from documents.service import _without_additive_bom_fields
+
+    current = {
+        "profile_cuts": [
+            {
+                "sku": "MARCO-60",
+                "role": "FRAME",
+                "length_mm": "1000",
+                "bay_id": "B1",
+                "leaf_id": None,
+                "sagitta_mm": None,
+            }
+        ],
+        "reinforcements": [],
+        "glasses": [
+            {
+                "bay_id": "B1",
+                "leaf_id": None,
+                "width_mm": "900",
+                "height_mm": "1900",
+                "thickness_net_mm": "24",
+                "weight_kg": "10.26",
+                "shape": None,
+                "area_m2": None,
+                "exposed_edges": None,
+                "glass_spec": "4-16-4",
+                "article_sku": "DVH-4-16-4",
+            }
+        ],
+        "fittings": [],
+    }
+    legacy_stored = {
+        "profile_cuts": [
+            {
+                "sku": "MARCO-60",
+                "role": "FRAME",
+                "length_mm": "1000",
+                "bay_id": "B1",
+                "leaf_id": None,
+            }
+        ],
+        "reinforcements": [],
+        "glasses": [
+            {"bay_id": "B1", "leaf_id": None, "width_mm": "900", "height_mm": "1900"}
+        ],
+    }
+    # Fields the model gained after the snapshot was sealed drop out on both
+    # sides — the unchanged position stays comparable. Both sides normalize
+    # against the same older snapshot.
+    assert _without_additive_bom_fields(current, legacy_stored) == _without_additive_bom_fields(
+        legacy_stored, legacy_stored
+    )
+
+    # A value carried by the snapshot stays compared: a changed bend must flag.
+    bent_stored = {
+        **legacy_stored,
+        "profile_cuts": [
+            {**legacy_stored["profile_cuts"][0], "sagitta_mm": "500"}
+        ],
+    }
+    bent_current = {
+        **current,
+        "profile_cuts": [{**current["profile_cuts"][0], "sagitta_mm": "300"}],
+    }
+    assert _without_additive_bom_fields(bent_current, bent_stored) != _without_additive_bom_fields(
+        bent_stored, bent_stored
+    )
+
+    # A null in the snapshot is equivalent to the field never having existed —
+    # a non-null recomputed value must not flag drift.
+    null_stored = {
+        **legacy_stored,
+        "glasses": [
+            {
+                **legacy_stored["glasses"][0],
+                "glass_spec": None,
+                "article_sku": None,
+            }
+        ],
+    }
+    assert _without_additive_bom_fields(current, null_stored) == _without_additive_bom_fields(
+        null_stored, null_stored
+    )
+
+    # Same-role cuts of different lengths are distinct pieces: a drift on one
+    # must not be masked by the other's last-wins identity row.
+    double_stored = {
+        **legacy_stored,
+        "profile_cuts": [
+            {**legacy_stored["profile_cuts"][0], "sagitta_mm": "500"},
+            {
+                **legacy_stored["profile_cuts"][0],
+                "length_mm": "1400",
+                "sagitta_mm": "300",
+            },
+        ],
+    }
+    double_current = {
+        **current,
+        "profile_cuts": [
+            {**current["profile_cuts"][0], "sagitta_mm": "500"},
+            {
+                **current["profile_cuts"][0],
+                "length_mm": "1400",
+                "sagitta_mm": "620",
+            },
+        ],
+    }
+    assert _without_additive_bom_fields(double_current, double_stored) != _without_additive_bom_fields(
+        double_stored, double_stored
+    )
+
+
+def test_era_projections_reproduce_historical_preimages() -> None:
+    from documents.service import _drop_bom_keys
+
+    current = {
+        "profile_cuts": [{"sku": "MARCO-60", "sagitta_mm": None}],
+        "reinforcements": [{"parent_profile_sku": "MARCO-60", "sagitta_mm": None}],
+        "glasses": [
+            {
+                "bay_id": "B1",
+                "glass_spec": "4-16-4",
+                "article_sku": "DVH",
+                "shape": None,
+                "exposed_edges": None,
+            }
+        ],
+        "fittings": [],
+    }
+    era94 = _drop_bom_keys(
+        current, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+    )
+    assert "fittings" not in era94
+    assert "exposed_edges" not in era94["glasses"][0]
+    assert era94["glasses"][0]["shape"] is None  # era-92 fields survive
+    era92 = _drop_bom_keys(
+        era94,
+        frozenset(),
+        {
+            "glasses": frozenset({"shape"}),
+            "profile_cuts": frozenset({"sagitta_mm"}),
+            "reinforcements": frozenset({"sagitta_mm"}),
+        },
+    )
+    assert "shape" not in era92["glasses"][0]
+    assert "sagitta_mm" not in era92["profile_cuts"][0]
+    assert "sagitta_mm" not in era92["reinforcements"][0]
+    era86 = _drop_bom_keys(
+        era92, frozenset(), {"glasses": frozenset({"glass_spec", "article_sku"})}
+    )
+    assert "glass_spec" not in era86["glasses"][0]
+    assert "article_sku" not in era86["glasses"][0]
+
+
 def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     html = _doc01(revision_snapshot())
     assert "Cliente &lt;Seguro&gt;" in html
@@ -128,6 +284,38 @@ def test_client_quote_includes_deterministic_opening_drawings() -> None:
     assert _doc01(sliding) == sliding_html
 
 
+def test_client_quote_draws_stacked_assembly_as_a_column() -> None:
+    """A door + transom STACKED assembly draws the transom ABOVE its column —
+    a 1000×2200 door carrying a 1000×400 transom spans 1000×2600 with a
+    horizontal seam at the contact, not a 2000-wide side-by-side row."""
+    snapshot = revision_snapshot()
+    snapshot["positions"][0]["parametric_tree"] = {  # type: ignore[index]
+        "version": "product-v2",
+        "assembly": {
+            "modules": [
+                {
+                    "id": "door", "width_mm": "1000.00", "height_mm": "2200.00",
+                    "tree": {"id": "B1", "type": "BAY", "opening_type": "FIXED",
+                             "glass_spec": "4-12-4 Float Incoloro", "children": []},
+                },
+                {
+                    "id": "transom", "width_mm": "1000.00", "height_mm": "400.00",
+                    "tree": {"id": "B2", "type": "BAY", "opening_type": "FIXED",
+                             "glass_spec": "4-12-4 Float Incoloro", "children": []},
+                },
+            ],
+            "couplings": [{
+                "id": "c1", "kind": "STACKED", "modules": ["door", "transom"],
+                "edges": ["top", "bottom"],
+            }],
+        },
+    }
+    html = _doc01(snapshot)
+    assert 'viewBox="0 0 1000 2600"' in html
+    # The transom sill sits at 2200 mm elevation → svg y = 2600 − 2200 = 400.
+    assert 'x1="0" y1="400" x2="1000" y2="400"' in html
+
+
 def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None:
     snapshot = revision_snapshot()
     snapshot["manufacturing"] = [{  # type: ignore[index]
@@ -136,9 +324,30 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
         "repetition_index": 1,
         "nominal_width_mm": "1000.00",
         "nominal_height_mm": "1200.00",
-        "members": [],
-        "reinforcements": [],
-        "infills": [],
+        "members": [
+            {
+                "member_id": "a" * 64, "bay_id": "B1",
+                "identity": {"role": "FRAME", "physical_member_slot": "OUTER_LEFT"},
+                "workshop_sku": "P-101", "cut_length_mm": "1200.00",
+                "angle_left": "90.00", "angle_right": "90.00",
+                "start": {"x_mm": "0.00", "y_mm": "0.00"},
+                "end": {"x_mm": "0.00", "y_mm": "1200.00"},
+            },
+            {
+                "member_id": "d" * 64, "bay_id": "B1",
+                "identity": {"role": "FRAME", "physical_member_slot": "OUTER_RIGHT"},
+                "workshop_sku": "P-101", "cut_length_mm": "1200.00",
+                "angle_left": "90.00", "angle_right": "90.00",
+                "start": {"x_mm": "1000.00", "y_mm": "0.00"},
+                "end": {"x_mm": "1000.00", "y_mm": "1200.00"},
+            },
+        ],
+        "reinforcements": [{"reinforcement_id": "c" * 64, "parent_member_id": "d" * 64}],
+        "infills": [{
+            "infill_id": "e" * 64, "bay_id": "B1", "leaf_id": "L1",
+            "rect": {"width_mm": "900.00", "height_mm": "1100.00"},
+        }],
+        "leaves": [{"leaf_fact_id": "b" * 64, "bay_id": "B1", "leaf_id": "L1"}],
         "handles": [{
             "handle_id": "f" * 64,
             "bay_id": "B1",
@@ -152,6 +361,7 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
         "relationships": [
             {"relationship": "BELONGS_TO_LEAF", "source_id": "a" * 64, "target_id": "b" * 64},
             {"relationship": "REINFORCES", "source_id": "c" * 64, "target_id": "d" * 64},
+            {"relationship": "RETAINS_INFILL", "source_id": "a" * 64, "target_id": "e" * 64},
         ],
     }]
     html = _doc03(snapshot)
@@ -159,6 +369,11 @@ def test_workshop_order_prints_annotations_drawing_and_assembly_matrix() -> None
     assert "150.00" in html
     assert "Matriz de ensamble" in html
     assert "BELONGS_TO_LEAF" in html and "REINFORCES" in html
+    # heterogeneous endpoints resolve to the printed piece codes, not raw ids
+    assert "M-01" in html and "R-01" in html and "I-01" in html and "H-01" in html
+    matrix = html.split("Matriz de ensamble", 1)[1]
+    assert "a" * 64 not in matrix and "b" * 64 not in matrix
+    assert "c" * 64 not in matrix and "e" * 64 not in matrix
     assert "1050.00" in html
     assert "<svg" in html
 

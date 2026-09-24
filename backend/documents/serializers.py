@@ -138,6 +138,72 @@ class DocumentaryPolicyOptionSerializer(serializers.Serializer):
     version = serializers.IntegerField()
 
 
+class HandleLeafRectSerializer(serializers.Serializer):
+    placement_policy_id = serializers.UUIDField()
+    leaf_top_from_outer_top_mm = DecimalStringField(
+        max_digits=14, decimal_places=4
+    )
+    leaf_height_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
+class HandleRequirementSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    leaf_label = serializers.CharField()
+    opening_type = serializers.CharField()
+    handle_domain_slot = serializers.CharField()
+    host_member_side = serializers.ChoiceField(choices=["LEFT", "RIGHT"])
+    outer_height_mm = DecimalStringField(max_digits=14, decimal_places=4)
+    mounting_min_from_leaf_top_mm = DecimalStringField(
+        max_digits=14, decimal_places=4
+    )
+    mounting_max_from_leaf_top_mm = DecimalStringField(
+        max_digits=14, decimal_places=4
+    )
+    permitted_vertical_references = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=["OUTER_TOP", "OUTER_BOTTOM", "LEAF_TOP", "LEAF_BOTTOM"]
+        )
+    )
+    leaf_rects = HandleLeafRectSerializer(many=True)
+
+
+class HandlePolicyRequirementsSerializer(serializers.Serializer):
+    policy_id = serializers.UUIDField()
+    requirements = HandleRequirementSerializer(many=True)
+
+
+class WorkshopBayTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    label = serializers.CharField()
+    width_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
+class WorkshopLeafTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    leaf_label = serializers.CharField()
+
+
+class WorkshopSpanTargetSerializer(serializers.Serializer):
+    target_id = serializers.CharField()
+    label = serializers.CharField()
+    span_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
+class WorkshopGlassTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    label = serializers.CharField()
+
+
+class WorkshopTargetsSerializer(serializers.Serializer):
+    bays = WorkshopBayTargetSerializer(many=True)
+    leaves = WorkshopLeafTargetSerializer(many=True)
+    spans = WorkshopSpanTargetSerializer(many=True)
+    glass = WorkshopGlassTargetSerializer(many=True)
+
+
 class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerializer):
     system_name = serializers.CharField()
     manufacturing_placement_policy_id = serializers.UUIDField(allow_null=True)
@@ -146,6 +212,8 @@ class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerialize
     placement_options = DocumentaryPolicyOptionSerializer(many=True)
     handle_options = DocumentaryPolicyOptionSerializer(many=True)
     reinforcement_options = DocumentaryPolicyOptionSerializer(many=True)
+    handle_requirements = HandlePolicyRequirementsSerializer(many=True)
+    workshop_targets = WorkshopTargetsSerializer()
 
 
 class DocumentaryPreparationResponseSerializer(serializers.Serializer):
