@@ -528,7 +528,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
     .filter({ hasText: "Fachada compuesta" })
     .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
-  await expect(page.locator(".module-divider")).toHaveCount(1);
+  // The two-module facade draws one real coupler member at the module joint
+  // (post-refoundation the boundary is a member, not a divider bar).
+  await expect(page.locator(".member-coupler")).toHaveCount(1);
   await expect(page.locator(".module-glass")).toHaveCount(2);
   await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
