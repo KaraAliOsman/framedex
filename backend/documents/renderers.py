@@ -89,6 +89,11 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
+.sign-row { display: flex; gap: 8mm; margin-top: 10mm; }
+.sign-cell { flex: 1; height: 12mm; border-bottom: 0.5pt solid #465158; position: relative; }
+.sign-cell.sign-date { flex: 0 0 22mm; }
+.sign-label { position: absolute; bottom: -4.5mm; left: 0; font: 600 6pt 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #727D82; }
+.sol-table td.dimension, table td.dimension { text-align: right; }
 svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
 .figures { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 4mm; }
 .figures figure { margin: 0; width: 58mm; break-inside: avoid; }
@@ -171,6 +176,23 @@ _MITER = (
 
 
 _SVG_INSET = Decimal("0.06")
+
+
+def _money(amount: object, currency: object) -> str:
+    value = _num(amount)
+    code = _value(currency)
+    if code == "CLP":
+        grouped = f"{value:,.0f}".replace(",", ".")
+        return f"$ {grouped}"
+    return f"{code} {value:,.2f}"
+
+
+def _cldate(raw: object) -> str:
+    text = _value(raw)
+    if len(text) >= 10 and text[4] == "-" and text[7] == "-":
+        return f"{text[8:10]}-{text[5:7]}-{text[0:4]}"
+    return text[:10]
+
 
 
 def _num(value: object) -> Decimal:
@@ -504,6 +526,15 @@ def _revision_header(
     snapshot: dict[str, object], title: str, doc_code: str, workshop: bool = False
 ) -> tuple[str, str]:
     project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
+    issuer = ""
+    organization = snapshot.get("organization")
+    if isinstance(organization, dict):
+        issuer_name = _value(organization.get("name"))
+        if issuer_name:
+            issuer = (
+                f"{escape(issuer_name)}"
+                f" · RUT {escape(_value(organization.get('tax_id')))}<br>"
+            )
     bom_hash = _value(snapshot.get("bom_hash"))
     class_name = "workshop" if workshop else ""
     sealed_at = _value(snapshot.get("sealed_at"))
@@ -518,7 +549,7 @@ def _revision_header(
         f'<div class="tb-cell"><span class="tb-label">Rev.</span>'
         f'<span class="tb-value">{escape(revision)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(sealed_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(sealed_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Huella BOM</span>'
         f'<span class="tb-value">{escape(bom_hash)}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -529,9 +560,10 @@ def _revision_header(
         f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
+        f"{issuer}"
         f"<strong>{escape(project_code)}</strong><br>"
         f"{escape(doc_code)} · Rev. {escape(revision)}<br>"
-        f"{escape(sealed_at)}</div></div>"
+        f"{escape(_cldate(sealed_at))}</div></div>"
         '<div class="rule-stack"></div>'
         f"<h1>{escape(title)}</h1>"
     )
@@ -540,26 +572,76 @@ def _revision_header(
 
 def _doc01(snapshot: dict[str, object]) -> str:
     project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
+    currency = project.get("currency")
     positions = [_object(item, "invalid_frozen_position")
                  for item in _array(snapshot.get("positions"), "invalid_frozen_revision_snapshot")]
-    opening_rows = []
+    # Identical openings collapse into one row; location lists stay honest.
+    groups: dict[tuple[object, ...], dict[str, object]] = {}
     for position in positions:
-        specs = _position_glass_specs(position)
+        specs = ", ".join(_position_glass_specs(position)) or "Panel declarado"
+        key = (
+            _value(position.get("typology")), _value(position.get("width_mm")),
+            _value(position.get("height_mm")), specs,
+            _value(position.get("color_interior")),
+            _value(position.get("color_exterior")),
+            _value(position.get("price_net")),
+        )
+        bucket = groups.setdefault(key, {
+            "indexes": [], "locations": [], "quantity": Decimal("0"),
+            "price_net": Decimal("0"), "specs": specs, "priced": True,
+        })
+        bucket["indexes"].append(_value(position.get("position_index")))
+        location = _value(position.get("location_tag"))
+        if location and location not in bucket["locations"]:
+            bucket["locations"].append(location)
+        bucket["quantity"] += _num(position.get("quantity"))
+        if position.get("price_net") is None:
+            # Revisions frozen before line pricing carry no per-position net.
+            bucket["priced"] = False
+        else:
+            bucket["price_net"] += _num(position.get("price_net"))
+    opening_rows = []
+    for key, bucket in groups.items():
+        typology, width_mm, height_mm, specs, ci, ce, _ = key
         opening_rows.append([
-            position.get("position_index"), position.get("location_tag"),
-            f"{_value(position.get('width_mm'))} × {_value(position.get('height_mm'))}",
-            position.get("quantity"), ", ".join(specs) or "Panel declarado",
-            f"{_value(position.get('color_interior'))} / {_value(position.get('color_exterior'))}",
+            ", ".join(bucket["indexes"]),
+            ", ".join(bucket["locations"]) or "—",
+            _TYPOLOGY_ES.get(typology, typology),
+            f"{width_mm} × {height_mm}",
+            bucket["quantity"], specs, f"{ci} / {ce}",
+            _money(bucket["price_net"], currency) if bucket["priced"] else "—",
         ])
     body, _ = _revision_header(snapshot, "Cotización comercial", "DOC-01")
+    client_lines = []
+    for label, field in (("RUT", "client_rut"), ("Giro", "client_giro"),
+                         ("Comuna", "client_comuna"), ("Dirección", "client_address"),
+                         ("Contacto", "client_email"), ("Teléfono", "client_phone")):
+        value = _value(project.get(field))
+        if value and value != "—":
+            client_lines.append(f"<p><strong>{label}:</strong> {escape(value)}</p>")
+    delivery = _value(project.get("delivery_address"))
+    if delivery and delivery != "—":
+        client_lines.append(f"<p><strong>Entrega:</strong> {escape(delivery)}</p>")
     body += (
         '<section class="hero"><p>Preparado para</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
-        f"<p>{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Total: {escape(_value(project.get("currency")))} '
-        f'{escape(_value(project.get("total_price_gross")))}</p></section>'
+        + "".join(client_lines)
+        + f'<p class="total">Total: {_money(project.get("total_price_gross"), currency)}</p>'
+        "</section>"
         "<h2>Solución propuesta</h2>"
-        + _table(["Pos.", "Ubicación", "Dimensiones mm", "Cant.", "Relleno", "Acabado"], opening_rows)
+        '<table class="sol-table"><colgroup>'
+        '<col style="width:7%"><col style="width:15%"><col style="width:12%">'
+        '<col style="width:12%"><col style="width:7%"><col style="width:19%">'
+        '<col style="width:13%"><col style="width:15%">'
+        "</colgroup><thead><tr>"
+        "<th>Pos.</th><th>Ubicación</th><th>Tipología</th>"
+        "<th>Dimensiones mm</th><th>Cant.</th><th>Relleno</th>"
+        "<th>Acabado</th><th>Neto</th></tr></thead><tbody>"
+        + "".join(
+            _row(row, ["", "", "", "", "dimension", "", "", "dimension"])
+            for row in opening_rows
+        )
+        + "</tbody></table>"
     )
     body += '<h2>Vistas de vanos</h2><div class="figures">'
     for position in positions:
@@ -576,13 +658,22 @@ def _doc01(snapshot: dict[str, object]) -> str:
     body += (
         "<h2>Resumen comercial</h2>"
         + _table(["Neto", "Impuesto", "Total"], [[
-            project.get("total_price_net"), project.get("total_price_tax"),
-            project.get("total_price_gross"),
-        ]], ["", "", "dimension"])
+            _money(project.get("total_price_net"), currency),
+            _money(project.get("total_price_tax"), currency),
+            _money(project.get("total_price_gross"), currency),
+        ]], ["dimension", "dimension", "dimension"])
         + f"<h2>Condiciones</h2><p><strong>Pago:</strong> {escape(_value(project.get('payment_terms')))}</p>"
-        + f"<p><strong>Oferta válida hasta:</strong> {escape(_value(project.get('quotation_valid_until')))}</p>"
+        + "<p><strong>Oferta válida hasta:</strong> "
+        + escape(_cldate(project.get("quotation_valid_until"))) + "</p>"
         + f"<p>{escape(_value(project.get('notes_commercial')))}</p>"
-        + "<div class=\"signoff\"><div class=\"signature\"></div><p class=\"muted\">Aceptación del cliente</p></div></main>"
+        + '<div class="signoff"><div class="sign-row">'
+        '<div class="sign-cell"><span class="sign-label">Nombre</span></div>'
+        '<div class="sign-cell"><span class="sign-label">RUT</span></div>'
+        '<div class="sign-cell"><span class="sign-label">Firma</span></div>'
+        '<div class="sign-cell sign-date"><span class="sign-label">Fecha</span></div>'
+        "</div>"
+        '<p class="muted">Aceptación del cliente — la firma confirma la '
+        "aceptación de esta cotización.</p></div></main>"
     )
     return body
 
@@ -971,7 +1062,7 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f'<div class="tb-cell"><span class="tb-label">Recibo</span>'
         f'<span class="tb-value">{escape(receipt_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Operación</span>'
         f'<span class="tb-value">{escape(_value(payment.get("operation_key")))}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -984,21 +1075,20 @@ def _receipt_body(payload: dict[str, object]) -> str:
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
         f"<strong>{escape(receipt_code)}</strong><br>"
-        f"Comprobante de pago<br>{escape(issued_at)}</div></div>"
+        f"Comprobante de pago<br>{escape(_cldate(issued_at))}</div></div>"
         '<div class="rule-stack"></div>'
         "<h1>Comprobante de pago</h1>"
         '<section class="hero"><p>Recibido de</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
         f"{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Monto: {escape(currency)} '
-        f'{escape(_value(payment.get("amount")))}</p></section>'
+        f'<p class="total">Monto: {_money(payment.get("amount"), currency)}</p></section>'
     )
     body += (
         "<h2>Detalle del cobro</h2>"
         + _table(
             ["Concepto", "Método", "Referencia", "Fecha de cobro"],
-            [[kind, method, payment.get("reference"), _value(payment.get("recorded_at"))[:10]]],
+            [[kind, method, payment.get("reference"), _cldate(payment.get("recorded_at"))]],
         )
     )
     note = _value(payment.get("note"))
@@ -1010,9 +1100,9 @@ def _receipt_body(payload: dict[str, object]) -> str:
             ["Total cotizado", "Cobrado", "Saldo"],
             [
                 [
-                    f"{currency} {_value(balance.get('deal_total'))}",
-                    f"{currency} {_value(balance.get('collected'))}",
-                    f"{currency} {_value(balance.get('remaining'))}",
+                    _money(balance.get("deal_total"), currency),
+                    _money(balance.get("collected"), currency),
+                    _money(balance.get("remaining"), currency),
                 ]
             ],
             ["", "", "dimension"],
@@ -1057,7 +1147,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         f'<div class="tb-cell"><span class="tb-label">Guía</span>'
         f'<span class="tb-value">{escape(note_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
         f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -1070,7 +1160,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
         f"<strong>{escape(note_code)}</strong><br>"
-        f"Guía de despacho<br>{escape(issued_at)}</div></div>"
+        f"Guía de despacho<br>{escape(_cldate(issued_at))}</div></div>"
     )
     body += (
         '<div class="rule-stack"></div>'
@@ -1177,7 +1267,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
         f'<div class="tb-cell"><span class="tb-label">Factura</span>'
         f'<span class="tb-value">{escape(invoice_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
         f'<span class="tb-value">{escape(revision)}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -1190,15 +1280,14 @@ def _invoice_body(payload: dict[str, object]) -> str:
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
         f"<strong>{escape(invoice_code)}</strong><br>"
-        f"Factura<br>{escape(issued_at)}</div></div>"
+        f"Factura<br>{escape(_cldate(issued_at))}</div></div>"
         '<div class="rule-stack"></div>'
         "<h1>Factura</h1>"
         '<section class="hero"><p>Facturar a</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
         f"{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Total: {escape(currency)} '
-        f'{escape(_value(deal.get("total_gross")))}</p></section>'
+        f'<p class="total">Total: {_money(deal.get("total_gross"), currency)}</p></section>'
     )
     if positions:
         body += (
@@ -1235,11 +1324,11 @@ def _invoice_body(payload: dict[str, object]) -> str:
             ["Neto", "IVA", "Total", "Abonado", "Saldo"],
             [
                 [
-                    f"{currency} {_value(deal.get('total_net'))}",
-                    f"{currency} {_value(deal.get('total_tax'))}",
-                    f"{currency} {_value(deal.get('total_gross'))}",
-                    f"{currency} {_value(balance.get('collected'))}",
-                    f"{currency} {_value(balance.get('amount_due'))}",
+                    _money(deal.get("total_net"), currency),
+                    _money(deal.get("total_tax"), currency),
+                    _money(deal.get("total_gross"), currency),
+                    _money(balance.get("collected"), currency),
+                    _money(balance.get("amount_due"), currency),
                 ]
             ],
             ["dimension", "dimension", "dimension", "dimension", "dimension"],
@@ -1286,7 +1375,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
         f'<div class="tb-cell"><span class="tb-label">N. de crédito</span>'
         f'<span class="tb-value">{escape(credit_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
         f'<span class="tb-value">{escape(revision)}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -1299,14 +1388,13 @@ def _credit_note_body(payload: dict[str, object]) -> str:
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
         f"<strong>{escape(credit_code)}</strong><br>"
-        f"Nota de crédito<br>{escape(issued_at)}</div></div>"
+        f"Nota de crédito<br>{escape(_cldate(issued_at))}</div></div>"
         '<div class="rule-stack"></div>'
         "<h1>Nota de crédito</h1>"
         '<section class="hero"><p>Acreditar a</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
-        f'<p class="total">Crédito: {escape(currency)} '
-        f'{escape(_value(deal.get("total_gross")))}</p></section>'
+        f'<p class="total">Crédito: {_money(deal.get("total_gross"), currency)}</p></section>'
     )
     body += (
         f"<p><strong>Referencia:</strong> anula Factura {escape(invoice_code)}"
@@ -1352,9 +1440,9 @@ def _credit_note_body(payload: dict[str, object]) -> str:
             ["Neto", "IVA", "Total"],
             [
                 [
-                    f"{currency} {_value(deal.get('total_net'))}",
-                    f"{currency} {_value(deal.get('total_tax'))}",
-                    f"{currency} {_value(deal.get('total_gross'))}",
+                    _money(deal.get("total_net"), currency),
+                    _money(deal.get("total_tax"), currency),
+                    _money(deal.get("total_gross"), currency),
                 ]
             ],
             ["dimension", "dimension", "dimension"],
@@ -1388,6 +1476,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
     delivery = _object(payload.get("delivery"), "invalid_pod_delivery")
     receiver = _object(payload.get("receiver"), "invalid_pod_receiver")
     totals = _object(payload.get("totals"), "invalid_pod_totals")
+    currency = project.get("currency")
     units = payload.get("units") or []
     payment = payload.get("payment")
     issued_at = _value(payload.get("issued_at"))
@@ -1401,7 +1490,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
         f'<div class="tb-cell"><span class="tb-label">Comprobante</span>'
         f'<span class="tb-value">{escape(confirmation_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
-        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
         f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
         f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
@@ -1414,7 +1503,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
         '<span class="mark"></span></div></div>'
         '<div class="meta">'
         f"<strong>{escape(confirmation_code)}</strong><br>"
-        f"Comprobante de entrega<br>{escape(issued_at)}</div></div>"
+        f"Comprobante de entrega<br>{escape(_cldate(issued_at))}</div></div>"
         '<div class="rule-stack"></div>'
         "<h1>Comprobante de entrega</h1>"
         '<section class="hero"><p>Recibido por</p>'
@@ -1464,7 +1553,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
                     [
                         payment.get("method"),
                         payment.get("kind"),
-                        payment.get("amount"),
+                        _money(payment.get("amount"), currency),
                         payment.get("reference"),
                     ]
                 ],

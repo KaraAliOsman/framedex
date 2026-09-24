@@ -1016,6 +1016,8 @@ def freeze_revision_a(
                 "color_interior": str(position["color_interior"]),
                 "color_exterior": str(position["color_exterior"]),
                 "location_tag": location_tag,
+                "price_net": D(str(position["price_net"])),
+                "discount_pct": str(position["discount_pct"]),
                 "parametric_tree": tree,
                 "workshop_annotations": [item.model_dump(mode="python") for item in annotations],
                 "structural_inputs": [item.model_dump(mode="python") for item in structural],
@@ -1069,12 +1071,23 @@ def freeze_revision_a(
         bom_hash = bom_hash_v1(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
         )
+        organization = one(
+            "SELECT name, tax_id FROM public.tenancy_organizations WHERE id = %s",
+            [str(org_id)],
+            "organization_not_found",
+        )
         sealed_at = datetime.now(timezone.utc)
         snapshot = {
             "schema_version": 1,
             "canonical_version": DOCUMENTARY_CANONICAL_VERSION,
             "project_id": project_id,
             "org_id": org_id,
+            # Issuer identity for the letterhead — rendered only on revisions
+            # frozen after this field existed; older snapshots simply omit it.
+            "organization": {
+                "name": str(organization["name"]),
+                "tax_id": str(organization["tax_id"]),
+            },
             "revision": revision,
             "sealed_by": actor_id,
             "sealed_at": sealed_at,
