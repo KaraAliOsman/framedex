@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { PlanPoint } from "./planPoint";
 
 export interface GlassPiece {
   bay_id: string;
@@ -14,10 +15,18 @@ export interface GlassPiece {
   width_mm: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   height_mm: string;
+  /** @nullable */
+  shape: PlanPoint[] | null;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,4})?$ */
   area_m2: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   weight_kg: string;
   /** @pattern ^-?\d{0,10}(?:\.\d{0,2})?$ */
   thickness_net_mm: string;
+  /** @nullable */
+  glass_spec: string | null;
+  /** @nullable */
+  article_sku: string | null;
+  /** @nullable */
+  exposed_edges: string[] | null;
 }

@@ -19,14 +19,7 @@ from dekopen_engine.manufacturing_trace import (
     TraceRectV1,
     TraceSegmentV1,
 )
-from dekopen_engine.models import (
-    BayOpeningType,
-    EngineModel,
-    MaterialType,
-    ProfileCut,
-    ProfileRole,
-    ReinforcementPiece,
-)
+from dekopen_engine.models import BayOpeningType, EngineModel, MaterialType, ProfileRole
 
 
 class ManufacturingAuthorityError(ValueError):
@@ -141,6 +134,8 @@ class PhysicalMemberFactV1(EngineModel):
     axis: Axis
     start: TracePointV1
     end: TracePointV1
+    # Signed sagitta when the member is an arc — start/end stay the chord.
+    sagitta_mm: Decimal | None = None
 
 
 class ReinforcementFactV1(EngineModel):
@@ -184,6 +179,8 @@ class InfillLocationFactV1(EngineModel):
     technical_sku: str
     composition: str
     rect: TraceRectV1
+    # Sampled boundary of a shaped infill — rect stays its bounding box.
+    shape: list[TracePointV1] | None = None
 
 
 class HandleLocationFactV1(EngineModel):
@@ -213,7 +210,6 @@ class ManufacturingFactsV1(EngineModel):
     position_id: str
     position_index: int = Field(ge=1)
     repetition_index: int = Field(ge=1)
-    module_id: str | None = None
     view: Literal["BUILDING_INTERIOR_LOOKING_OUTWARD"] = (
         "BUILDING_INTERIOR_LOOKING_OUTWARD"
     )
@@ -299,34 +295,19 @@ def _vertical_coordinate(
     return leaf_rect.y_mm + leaf_rect.height_mm - intent.requested_height_mm
 
 
-def _reinforcement_rule_for(
-    policy: ReinforcementCutPolicyV1,
-    *,
-    role: ProfileRole,
-    profile_angle_left: Decimal,
-    profile_angle_right: Decimal,
+def _matching_reinforcement_rule(
+    policy: ReinforcementCutPolicyV1, member: SemanticMemberTraceV1
 ) -> ReinforcementCutRuleV1:
     matches = [
         rule
         for rule in policy.rules
-        if rule.role is role
-        and rule.profile_angle_left == profile_angle_left
-        and rule.profile_angle_right == profile_angle_right
+        if rule.role is member.role
+        and rule.profile_angle_left == member.angle_left
+        and rule.profile_angle_right == member.angle_right
     ]
     if len(matches) != 1:
         raise ManufacturingAuthorityError("Reinforcement cut authority is missing or ambiguous")
     return matches[0]
-
-
-def _matching_reinforcement_rule(
-    policy: ReinforcementCutPolicyV1, member: SemanticMemberTraceV1
-) -> ReinforcementCutRuleV1:
-    return _reinforcement_rule_for(
-        policy,
-        role=member.role,
-        profile_angle_left=member.angle_left,
-        profile_angle_right=member.angle_right,
-    )
 
 
 def project_manufacturing_facts_v1(
@@ -438,6 +419,7 @@ def project_manufacturing_facts_v1(
             technical_sku=infill.technical_sku,
             composition=infill.composition,
             rect=rect,
+            shape=infill.shape,
         ))
 
     infill_ids = {item.semantic_infill_id: item.infill_id for item in infill_facts}
@@ -493,6 +475,7 @@ def project_manufacturing_facts_v1(
             axis=trace_member.axis,
             start=segment.start,
             end=segment.end,
+            sagitta_mm=trace_member.sagitta_mm,
         ))
         member_trace_by_id[member_id] = trace_member
         if trace_member.parent_leaf_id is not None:
@@ -617,44 +600,10 @@ def project_manufacturing_facts_v1(
         raise ManufacturingAuthorityError("Handle intent has no required policy slot")
 
     relationships.sort(key=lambda item: (item.relationship, item.source_id, item.target_id))
-    if module_id is not None:
-        # Assembly modules share local topology (each has its own "B1"), so
-        # bay/leaf references inside the facts are namespaced to the module —
-        # the same convention saved inputs and workshop targets already use.
-        prefix = f"{module_id}|"
-        member_facts = [
-            fact.model_copy(update={
-                **({"bay_id": f"{prefix}{fact.bay_id}"} if fact.bay_id is not None else {}),
-                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
-            })
-            for fact in member_facts
-        ]
-        leaf_facts = [
-            fact.model_copy(update={
-                "bay_id": f"{prefix}{fact.bay_id}",
-                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
-            })
-            for fact in leaf_facts
-        ]
-        infill_facts = [
-            fact.model_copy(update={
-                "bay_id": f"{prefix}{fact.bay_id}",
-                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
-            })
-            for fact in infill_facts
-        ]
-        handles = [
-            fact.model_copy(update={
-                "bay_id": f"{prefix}{fact.bay_id}",
-                **({"leaf_id": f"{prefix}{fact.leaf_id}"} if fact.leaf_id is not None else {}),
-            })
-            for fact in handles
-        ]
     return ManufacturingFactsV1(
         position_id=position_id,
         position_index=position_index,
         repetition_index=repetition_index,
-        module_id=module_id,
         nominal_width_mm=trace.nominal_width_mm,
         nominal_height_mm=trace.nominal_height_mm,
         placement_policy_id=placement_policy.policy_id,
@@ -668,144 +617,5 @@ def project_manufacturing_facts_v1(
         leaves=leaf_facts,
         infills=infill_facts,
         handles=handles,
-        relationships=relationships,
-    )
-
-
-def project_coupling_facts_v1(
-    *,
-    coupler_cuts: list[ProfileCut],
-    coupler_reinforcements: list[ReinforcementPiece],
-    coupling_wedges: dict[str, list[TracePointV1]],
-    position_id: str,
-    position_index: int,
-    repetition_index: int,
-    nominal_width_mm: Decimal,
-    nominal_height_mm: Decimal,
-    placement_policy: ManufacturingPlacementPolicyV1,
-    handle_policy: HandleRequirementPolicyV1,
-    reinforcement_policy: ReinforcementCutPolicyV1,
-) -> ManufacturingFactsV1:
-    """Position-level coupling sources for an assembly repetition.
-
-    Coupler cuts live in the aggregate BOM, outside every module's
-    manufacturing trace. This mints them into the same physical-evidence
-    contract so purchase projection and DOC-03 cover the joint pieces
-    exactly once per repetition.
-
-    `coupling_wedges` maps coupling id to its plan wedge polygon
-    (``[front apex, back end, back left]`` from the assembly plan
-    geometry). Coupler members have no module-local elevation segment;
-    their ``start``/``end`` carry plan-frame coordinates — the front-chain
-    joint apex and the wedge's back-edge midpoint.
-    """
-    member_facts: list[PhysicalMemberFactV1] = []
-    member_by_target: dict[tuple[str | None, str], PhysicalMemberFactV1] = {}
-    for cut in sorted(coupler_cuts, key=lambda item: (item.bay_id or "", item.sku)):
-        wedge = coupling_wedges.get(cut.bay_id or "")
-        if wedge is None or len(wedge) < 3:
-            raise ManufacturingAuthorityError(
-                "Coupling plan wedge is missing for a BOM coupler cut"
-            )
-        apex = wedge[0]
-        physical_identity = PhysicalMemberIdentityV1(
-            position_id=position_id,
-            position_index=position_index,
-            repetition_index=repetition_index,
-            topology_path=f"coupling:{cut.bay_id}",
-            assembly="COUPLER",
-            leaf_slot=None,
-            role=ProfileRole.COUPLER,
-            physical_member_slot="COUPLER",
-        )
-        member_id = documentary_sha256_v1(
-            {"kind": "physical_member", **physical_identity.model_dump()}
-        )
-        member = PhysicalMemberFactV1(
-            member_id=member_id,
-            semantic_member_id=f"coupler:{cut.bay_id}",
-            identity=physical_identity,
-            bay_id=cut.bay_id,
-            leaf_id=None,
-            workshop_sku=cut.sku,
-            material=cut.material,
-            cut_length_mm=cut.length_mm,
-            angle_left=cut.angle_left,
-            angle_right=cut.angle_right,
-            axis=Axis.VERTICAL,
-            start=apex,
-            end=TracePointV1(
-                x_mm=(wedge[1].x_mm + wedge[2].x_mm) / 2,
-                y_mm=(wedge[1].y_mm + wedge[2].y_mm) / 2,
-            ),
-        )
-        member_facts.append(member)
-        member_by_target[(cut.bay_id, cut.sku)] = member
-
-    reinforcements: list[ReinforcementFactV1] = []
-    relationships: list[PhysicalRelationshipV1] = []
-    for piece in sorted(
-        coupler_reinforcements, key=lambda item: (item.bay_id or "", item.reinforcement_sku or "")
-    ):
-        try:
-            parent = member_by_target[(piece.bay_id, piece.parent_profile_sku)]
-        except KeyError as error:
-            raise ManufacturingAuthorityError(
-                "Coupler reinforcement parent member is missing"
-            ) from error
-        sku = piece.reinforcement_sku
-        if not sku:
-            raise ManufacturingAuthorityError("Coupler reinforcement stock identity is unresolved")
-        reinforcement_rule = _reinforcement_rule_for(
-            reinforcement_policy,
-            role=ProfileRole.COUPLER,
-            profile_angle_left=parent.angle_left,
-            profile_angle_right=parent.angle_right,
-        )
-        reinforcement_id = documentary_sha256_v1(
-            {
-                "kind": "reinforcement",
-                "parent_member_id": parent.member_id,
-                "workshop_sku": sku,
-            }
-        )
-        reinforcements.append(
-            ReinforcementFactV1(
-                reinforcement_id=reinforcement_id,
-                parent_member_id=parent.member_id,
-                workshop_sku=sku,
-                cut_length_mm=piece.length_mm,
-                angle_left=reinforcement_rule.reinforcement_angle_left,
-                angle_right=reinforcement_rule.reinforcement_angle_right,
-                policy_id=reinforcement_policy.policy_id,
-                policy_version=reinforcement_policy.version,
-            )
-        )
-        relationships.append(
-            PhysicalRelationshipV1(
-                relationship="REINFORCES",
-                source_id=reinforcement_id,
-                target_id=parent.member_id,
-            )
-        )
-    relationships.sort(key=lambda item: (item.relationship, item.source_id, item.target_id))
-    return ManufacturingFactsV1(
-        position_id=position_id,
-        position_index=position_index,
-        repetition_index=repetition_index,
-        module_id=None,
-        nominal_width_mm=nominal_width_mm,
-        nominal_height_mm=nominal_height_mm,
-        placement_policy_id=placement_policy.policy_id,
-        placement_policy_version=placement_policy.version,
-        handle_policy_id=handle_policy.policy_id,
-        handle_policy_version=handle_policy.version,
-        reinforcement_policy_id=reinforcement_policy.policy_id,
-        reinforcement_policy_version=reinforcement_policy.version,
-        members=member_facts,
-        reinforcements=reinforcements,
-        leaves=[],
-        infills=[],
-        handles=[],
         relationships=relationships,
     )

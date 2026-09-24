@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from decimal import Decimal
@@ -43,14 +43,9 @@ from pricing.repository import encode
 
 
 class DocumentaryError(ValueError):
-    """`details` travels into the error envelope's `error` body (see
-    `public_documentary_errors`) so clients can render failing inspector
-    targets instead of a bare code."""
-
-    def __init__(self, code: str, *, details: Mapping[str, object] | None = None) -> None:
+    def __init__(self, code: str) -> None:
         super().__init__(code)
         self.code = code
-        self.details = dict(details or {})
 
 
 @dataclass(frozen=True)
@@ -97,7 +92,16 @@ def one(
 
 @contextmanager
 def documentary_backend() -> Iterator[None]:
+    """Switch to the documentary role, restoring the caller's role on exit.
+
+    Nested contexts are safe: the previous role is captured rather than
+    hard-resetting to ``authenticated`` (an unset role restores to
+    ``authenticated``, matching the request context every caller starts in)."""
     with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        previous = str(cursor.fetchone()[0])
+        if previous == "none":
+            previous = "authenticated"
         cursor.execute("SET LOCAL ROLE documentary_backend")
     try:
         yield
@@ -106,12 +110,16 @@ def documentary_backend() -> Iterator[None]:
     except BaseException:
         if not connection.needs_rollback:
             with connection.cursor() as cursor:
-                cursor.execute("SET LOCAL ROLE authenticated")
+                cursor.execute(
+                    sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                )
         raise
     else:
         if not connection.needs_rollback:
             with connection.cursor() as cursor:
-                cursor.execute("SET LOCAL ROLE authenticated")
+                cursor.execute(
+                    sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                )
 
 
 def effective_scope(

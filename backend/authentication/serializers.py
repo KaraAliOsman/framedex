@@ -41,19 +41,10 @@ class AuthMeResponseSerializer(serializers.Serializer):
     memberships = MembershipSerializer(many=True)
 
 
-class FreezeFailureSerializer(serializers.Serializer):
-    rule_id = serializers.CharField()
-    status = serializers.ChoiceField(choices=("FAIL", "MISSING_INPUT"))
-    position_id = serializers.CharField()
-    bay_id = serializers.CharField(allow_null=True, required=False)
-    leaf_id = serializers.CharField(allow_null=True, required=False)
-
-
 class ErrorDetailSerializer(serializers.Serializer):
     code = serializers.CharField()
     detail = serializers.CharField()
     required_aal = serializers.ChoiceField(choices=("aal2",), required=False)
-    failures = FreezeFailureSerializer(many=True, required=False)
 
 
 class ErrorResponseSerializer(serializers.Serializer):

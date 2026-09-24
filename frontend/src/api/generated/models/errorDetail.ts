@@ -5,12 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { FreezeFailure } from "./freezeFailure";
 import type { RequiredAalEnum } from "./requiredAalEnum";
 
 export interface ErrorDetail {
   code: string;
   detail: string;
   required_aal?: RequiredAalEnum;
-  failures?: FreezeFailure[];
 }

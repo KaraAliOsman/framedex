@@ -79,7 +79,6 @@ def public_documentary_errors():
             status_code,
             error.code,
             "La evidencia documental no pudo guardarse; revisa el proyecto, sus autoridades y su estado.",
-            error_extra=error.details,
         ) from error
     except InvalidEngineRequest as error:
         raise contract_error(400, "validation_error", "Revisa los datos técnicos del proyecto.") from error

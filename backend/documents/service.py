@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
-from typing import TypeVar
+from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from django.db import connection
 
+from dekopen_engine.cutting import MissingStockAuthority
 from dekopen_engine.documentary_canonical import (
     DOCUMENTARY_CANONICAL_VERSION,
     bom_hash_v1,
@@ -28,23 +29,24 @@ from dekopen_engine.manufacturing import (
     HandleRequirementPolicyV1,
     ManufacturingFactsV1,
     ManufacturingPlacementPolicyV1,
-    project_coupling_facts_v1,
     project_manufacturing_facts_v1,
 )
 from dekopen_engine.manufacturing_trace import (
     GeometryManufacturingTraceV1,
     PlacementDomain,
     SemanticLeafTraceV1,
-    TracePointV1,
 )
-from dekopen_engine.models import EngineResult, ProfileRole
-from dekopen_engine.product import PlanGeometry
+from dekopen_engine.models import EngineResult
+from dekopen_engine.product import (
+    contour_module_computation,
+    frameless_module_computation,
+)
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
 )
-from dekopen_engine.snapshot import calculation_response
+from dekopen_engine.snapshot import calculation_hash, calculation_response, result_payload
 from engine_api.adapter import (
     evaluate_assembly_from_api,
     normalized_root_from_api,
@@ -63,7 +65,6 @@ from documents.repository import (
     accessory_schedule,
     decoded,
     documentary_backend,
-    effective_scope,
     glass_polishing,
     handle_intents,
     json_text,
@@ -281,6 +282,149 @@ def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
 
+_BOM_ADDITIVE_KEYS = frozenset({"fittings"})
+_PIECE_ADDITIVE_KEYS = {
+    # Output-additive metadata the model gained after BOMs were already
+    # sealed — dropping them when a stored snapshot lacks them keeps old
+    # positions comparable; when the snapshot carries them they stay
+    # compared, so a real value change still reads as drift.
+    "glasses": frozenset(
+        {
+            "glass_spec",
+            "article_sku",
+            "thickness_net_mm",
+            "weight_kg",
+            "shape",
+            "area_m2",
+            "exposed_edges",
+        }
+    ),
+    "profile_cuts": frozenset({"sagitta_mm"}),
+    "reinforcements": frozenset({"sagitta_mm"}),
+}
+
+
+def _drop_bom_keys(
+    payload: Mapping[str, object],
+    bom_keys: frozenset[str],
+    piece_keys: Mapping[str, frozenset[str]],
+) -> dict[str, object]:
+    """Payload with the given additive keys removed at BOM level and per
+    piece-list item — the preimage a stored identity hash was computed on."""
+    bom = {key: value for key, value in payload.items() if key not in bom_keys}
+    for piece_list, keys in piece_keys.items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in keys
+                }
+                if isinstance(item, dict)
+                else item
+                for item in items
+            ],
+        }
+    return bom
+
+
+def _calculation_identity_hashes(
+    request: Mapping[str, object], result: EngineResult
+) -> tuple[str, ...]:
+    """Current plus prior-era hashes for one engine result. Documentary
+    inputs seal ``hash(request, payload-at-save-time)`` — every era that
+    appended output fields (frameless fittings/exposed edges, contour
+    shape/sagitta, glass spec/article) must project the current payload back
+    to that era's preimage or positions sealed then can never freeze again."""
+    payload = result_payload(result)
+    era94 = _drop_bom_keys(
+        payload, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+    )
+    era92 = _drop_bom_keys(
+        era94,
+        frozenset(),
+        {
+            "glasses": frozenset({"shape"}),
+            "profile_cuts": frozenset({"sagitta_mm"}),
+            "reinforcements": frozenset({"sagitta_mm"}),
+        },
+    )
+    era86 = _drop_bom_keys(
+        era92,
+        frozenset(),
+        {"glasses": frozenset({"glass_spec", "article_sku"})},
+    )
+    return (
+        calculation_hash(request, payload),
+        calculation_hash(request, era94),
+        calculation_hash(request, era92),
+        calculation_hash(request, era86),
+    )
+
+
+def _piece_identity(item: Mapping[str, object]) -> tuple[object, ...]:
+    return (
+        item.get("bay_id"),
+        item.get("leaf_id"),
+        item.get("role"),
+        item.get("sku") or item.get("parent_profile_sku"),
+        item.get("length_mm"),
+        item.get("width_mm"),
+        item.get("height_mm"),
+        item.get("angle_left"),
+        item.get("angle_right"),
+        item.get("qty"),
+    )
+
+
+def _without_additive_bom_fields(bom: object, reference: object = None) -> object:
+    # glass_spec/article_sku and friends are output-additive metadata derived
+    # from the same inputs; the authoritative values are sealed in
+    # computation.infills. BOMs persisted before the fields existed must not
+    # read as drift. With `reference` (the older stored/priced snapshot) a key
+    # is dropped only when that snapshot lacks it or carries null — a non-null
+    # value in the snapshot stays on both sides, so real drift still flags.
+    # Both sides of a comparison are normalized against the same snapshot.
+    if not isinstance(bom, dict):
+        return bom
+    ref = reference if isinstance(reference, dict) else None
+    bom = {
+        key: value
+        for key, value in bom.items()
+        if key not in _BOM_ADDITIVE_KEYS or (ref is not None and ref.get(key) is not None)
+    }
+    for piece_list, keys in _PIECE_ADDITIVE_KEYS.items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        ref_items: dict[tuple[object, ...], Mapping[str, object]] = {}
+        if ref is not None and isinstance(ref.get(piece_list), list):
+            ref_items = {
+                _piece_identity(item): item
+                for item in ref[piece_list]
+                if isinstance(item, dict)
+            }
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in keys
+                    or ref_items.get(_piece_identity(item), {}).get(key) is not None
+                }
+                if isinstance(item, dict)
+                else item
+                for item in items
+            ],
+        }
+    return bom
+
+
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
     result: dict[str, T] = {}
     for item in items:
@@ -301,59 +445,69 @@ def _position_calculations(
     params: object,
     system_id: UUID,
     org_id: UUID,
-) -> tuple[
-    list[tuple[str | None, GeometryComputation, dict[str, object]]],
-    EngineResult,
-    PlanGeometry | None,
-]:
+) -> tuple[list[tuple[str | None, GeometryComputation, dict[str, object]]], EngineResult]:
     """Classic per-module geometry+trace for one persisted position.
 
-    Returns (calculations, result, plan): classic positions compute once
-    with a ``None`` module id; product-v2 assemblies evaluate for the BOM
-    and each module recomputes on its own tree, the ``module.id`` becoming
-    the ``"<module_id>|<id>"`` namespace used by the persisted BOM. ``plan``
-    is the assembly plan geometry (coupling wedges included) or ``None``
-    for classic positions.
+    Returns (calculations, result): classic positions compute once with a
+    ``None`` module id; product-v2 assemblies evaluate for the BOM and each
+    module recomputes on its own tree, the ``module.id`` becoming the
+    ``"<module_id>|<id>"`` namespace used by the persisted BOM.
     """
     calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
     is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
+    coupler_articles = (
+        SystemParamsRepository().load_coupler_articles(system_id, org_id)
+        if is_assembly
+        else {}
+    )
     if is_assembly:
         product = parse_product_model(tree)
         evaluation = evaluate_assembly_from_api(
             product=product,
             color=color,
             params=params,
-            coupler_articles=SystemParamsRepository().load_coupler_articles(
-                system_id, org_id
-            ),
+            coupler_articles=coupler_articles,
         )
         if evaluation.status.value != "VALID" or evaluation.bom is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         result = evaluation.bom
-        module_specs = [
-            (module.id, module.tree.model_dump(mode="json"), module.width_mm, module.height_mm)
-            for module in product.assembly.modules
-        ]
+        module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None
-        module_specs = [(None, tree, width_mm, height_mm)]
-    for module_id, module_tree, module_width, module_height in module_specs:
-        module_root = normalized_root_from_api(
-            parametric_tree=module_tree,
-            nominal_width_mm=module_width,
-            nominal_height_mm=module_height,
-            color=color,
-            params=params,
-        )
-        computation = compute_geometry(module_root, params, diagnostic=True)
+        module_specs = [(None, None)]
+    for module_id, module in module_specs:
+        if module is not None and module.contour is not None:
+            computation, _contour_issues = contour_module_computation(module, params)
+            if computation is None:
+                raise DocumentaryError("documentary_geometry_incomplete")
+        elif module is not None and module.frameless is not None:
+            computation, _frameless_issues = frameless_module_computation(
+                module, coupler_articles=coupler_articles
+            )
+            if computation is None:
+                raise DocumentaryError("documentary_geometry_incomplete")
+        else:
+            module_root = normalized_root_from_api(
+                parametric_tree=(
+                    module.tree.model_dump(mode="json") if module is not None else tree
+                ),
+                nominal_width_mm=module.width_mm if module is not None else width_mm,
+                nominal_height_mm=(
+                    module.height_mm if module is not None else height_mm
+                ),
+                color=color,
+                params=params,
+            )
+            computation = compute_geometry(module_root, params, diagnostic=True)
         if computation.result is None or computation.manufacturing_trace is None:
             raise DocumentaryError("documentary_geometry_incomplete")
+        module_tree = module.tree.model_dump(mode="json") if module is not None else tree
         calculations.append((module_id, computation, module_tree))
         if not is_assembly:
             result = computation.result
     if result is None:
         raise DocumentaryError("documentary_geometry_incomplete")
-    return calculations, result, evaluation.plan if is_assembly else None
+    return calculations, result
 
 
 def _valid_targets(
@@ -614,7 +768,7 @@ def freeze_revision_a(
             )
             system_id = UUID(str(position["system_id"]))
             params = SystemParamsRepository().load_visible(system_id, org_id)
-            calculations, result, plan = _position_calculations(
+            calculations, result = _position_calculations(
                 tree=tree,
                 width_mm=D(str(position["width_mm"])),
                 height_mm=D(str(position["height_mm"])),
@@ -626,9 +780,14 @@ def freeze_revision_a(
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
-            if position_id not in priced_bom or not _same_documentary_value(
-                current_bom, priced_bom[position_id]
-            ) or not _same_documentary_value(current_bom, stored_bom):
+            priced_ref = priced_bom.get(position_id)
+            if not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, stored_bom),
+                _without_additive_bom_fields(stored_bom, stored_bom),
+            ) or not isinstance(priced_ref, dict) or not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, priced_ref),
+                _without_additive_bom_fields(priced_ref, priced_ref),
+            ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
             annotations = workshop_annotations(position["workshop_annotations"])
@@ -666,8 +825,12 @@ def freeze_revision_a(
                 "nominal_height_mm": D(str(position["height_mm"])),
                 "color": color,
             }
-            source_hash = calculation_response(calculation_request, result)["calculation_hash"]
-            if position["documentary_calculation_hash"] != source_hash:
+            identity_hashes = _calculation_identity_hashes(
+                calculation_request, result
+            )
+            source_hash = identity_hashes[0]
+            stored_identity = position["documentary_calculation_hash"]
+            if stored_identity not in identity_hashes:
                 raise DocumentaryError("documentary_calculation_identity_stale")
             inspections: list[tuple[str | None, InspectorResult, bool, bool]] = []
             has_failures = False
@@ -676,9 +839,12 @@ def freeze_revision_a(
             for module_id, computation, _ in calculations:
                 inertias: dict[str, Decimal | None] = {}
                 for span in computation.spans:
-                    _, inertia = stock_repository.reinforcement_stock(
-                        system_id, org_id, span.parent_profile_sku, None, color
-                    )
+                    try:
+                        _, inertia = stock_repository.reinforcement_stock(
+                            system_id, org_id, span.parent_profile_sku, None, color
+                        )
+                    except MissingStockAuthority:
+                        inertia = None
                     inertias[span.target_id] = inertia
                 inspection = inspect(InspectorInput(
                     computation=computation,
@@ -709,33 +875,7 @@ def freeze_revision_a(
                 inspection.status == "RED" for _, inspection, _, _ in inspections
             )
             if has_failures or (is_red and not allow_incomplete_workshop):
-                failures: list[dict[str, object]] = []
-                for module_id, inspection, _, _ in inspections:
-                    prefix = f"{module_id}|" if module_id else ""
-                    failures.extend(
-                        {
-                            "rule_id": evaluation.rule_id.value,
-                            "status": evaluation.status.value,
-                            "position_id": position_id,
-                            "bay_id": (
-                                f"{prefix}{evaluation.bay_id}"
-                                if evaluation.bay_id is not None
-                                else None
-                            ),
-                            "leaf_id": (
-                                f"{prefix}{evaluation.leaf_id}"
-                                if evaluation.leaf_id is not None
-                                else None
-                            ),
-                        }
-                        for evaluation in inspection.evaluations
-                        if evaluation.status
-                        in (RuleEvaluationStatus.FAIL, RuleEvaluationStatus.MISSING_INPUT)
-                    )
-                raise DocumentaryError(
-                    "inspector_red_blocks_documentary_freeze",
-                    details={"failures": failures},
-                )
+                raise DocumentaryError("inspector_red_blocks_documentary_freeze")
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
@@ -749,7 +889,6 @@ def freeze_revision_a(
             intents = handle_intents(position["handle_intents"])
             quantity = int(position["quantity"])
             unit_models: list[tuple[str | None, ManufacturingFactsV1]] = []
-            skipped_module = False
             for module_id, computation, module_tree in calculations:
                 scoped_intents = _module_scoped(
                     intents, module_id, "bay_id", "leaf_id"
@@ -759,10 +898,9 @@ def freeze_revision_a(
                     policies.handles,
                     scoped_intents,
                 ):
-                    # A module whose handle intents were never saved is not
-                    # projected rather than blocking the commercial freeze;
-                    # skipped_module marks the seal incomplete below.
-                    skipped_module = True
+                    # Quote-only assemblies seal incomplete: a module whose
+                    # handle intents were never saved is not projected rather
+                    # than blocking the commercial freeze.
                     continue
                 for repetition in range(1, quantity + 1):
                     unit_models.append((
@@ -784,41 +922,6 @@ def freeze_revision_a(
                             module_id=module_id,
                         ),
                     ))
-            coupler_cuts = [
-                cut for cut in result.profile_cuts if cut.role is ProfileRole.COUPLER
-            ]
-            coupler_reinforcements = [
-                piece
-                for piece in result.reinforcements
-                if piece.role is ProfileRole.COUPLER
-            ]
-            if is_assembly and (coupler_cuts or coupler_reinforcements):
-                if plan is None:
-                    raise DocumentaryError("documentary_geometry_incomplete")
-                coupling_wedges = {
-                    wedge.coupling_id: [
-                        TracePointV1(x_mm=point.x_mm, y_mm=point.y_mm)
-                        for point in wedge.polygon
-                    ]
-                    for wedge in plan.couplings
-                }
-                for repetition in range(1, quantity + 1):
-                    unit_models.append((
-                        None,
-                        project_coupling_facts_v1(
-                            coupler_cuts=coupler_cuts,
-                            coupler_reinforcements=coupler_reinforcements,
-                            coupling_wedges=coupling_wedges,
-                            position_id=position_id,
-                            position_index=int(position["position_index"]),
-                            repetition_index=repetition,
-                            nominal_width_mm=D(str(position["width_mm"])),
-                            nominal_height_mm=D(str(position["height_mm"])),
-                            placement_policy=policies.placement,
-                            handle_policy=policies.handles,
-                            reinforcement_policy=policies.reinforcement,
-                        ),
-                    ))
             units = [unit for _, unit in unit_models]
             hardware = [HardwareSelectionV1(
                 repetition_index=repetition,
@@ -831,8 +934,13 @@ def freeze_revision_a(
             ) for repetition in range(1, quantity + 1) for item in result.hardware_items]
             polishing = glass_polishing(position["glass_polishing"])
             glass_targets = {
-                (infill.bay_id, infill.leaf_id)
-                for _, unit in unit_models
+                (
+                    f"{module_id}|{infill.bay_id}" if module_id else infill.bay_id,
+                    f"{module_id}|{infill.leaf_id}"
+                    if module_id and infill.leaf_id is not None
+                    else infill.leaf_id,
+                )
+                for module_id, unit in unit_models
                 for infill in unit.infills
                 if infill.kind == "GLASS"
             }
@@ -841,13 +949,14 @@ def freeze_revision_a(
                 if position["accessory_schedule"] is not None else None
             )
             purchase_complete = (
-                not skipped_module
-                and {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
+                {(item.bay_id, item.leaf_id) for item in polishing} == glass_targets
                 and accessories is not None
             )
-            # A skipped module means the sealed snapshot would omit its units:
-            # incomplete, never faked. When every module projects, assemblies
-            # carry purchase evidence under the same contract as classics.
+            if is_assembly:
+                # Per-module purchase projection is not yet defined for
+                # assemblies: they freeze honestly as quote-only, never
+                # faking production completeness.
+                purchase_complete = False
             if not purchase_complete:
                 if not allow_incomplete_workshop:
                     raise DocumentaryError("purchase_authority_incomplete")
@@ -869,8 +978,8 @@ def freeze_revision_a(
                     glass_polishing=polishing,
                     accessory_schedule=accessories,
                 ))
-            # Unit members now cover every profile SKU the BOM carries:
-            # assembly coupler cuts are minted as position-level sources too.
+            # Module units cover every profile SKU the freeze needs: assembly
+            # coupler cuts are quote-level BOM evidence, not purchase evidence.
             profile_skus = {member.workshop_sku for unit in units for member in unit.members}
             reinforcement_skus = {
                 item.workshop_sku for unit in units for item in unit.reinforcements
@@ -976,6 +1085,9 @@ def freeze_revision_a(
                 "client_rut": project["client_rut"],
                 "client_email": project["client_email"],
                 "client_phone": project["client_phone"],
+                "client_giro": project["client_giro"],
+                "client_comuna": project["client_comuna"],
+                "client_address": project["client_address"],
                 "delivery_address": project["delivery_address"],
                 "payment_terms": str(project_input["payment_terms"]),
                 "quotation_valid_until": project_input["quotation_valid_until"],
@@ -1138,25 +1250,20 @@ def prepare_documentary_inputs(
             return {}
         placeholders = ",".join(["%s"] * len(systems))
         values = rows(
-            f"SELECT id,system_id,org_id,version,authority->>'policy_id' AS label FROM public.{table} "
+            f"SELECT id,system_id,version,authority->>'policy_id' AS label FROM public.{table} "
             f"WHERE system_id IN ({placeholders}) AND (org_id IS NULL OR org_id=%s) "
             "ORDER BY system_id,version DESC,id",
             [*systems, org_id],
         )
         grouped = {}
-        for system_key in {str(value["system_id"]) for value in values}:
-            scoped = effective_scope(
-                [value for value in values if str(value["system_id"]) == system_key],
-                org_id,
-            )
-            grouped[system_key] = [
+        for value in values:
+            grouped.setdefault(str(value["system_id"]), []).append(
                 {
                     "id": value["id"],
                     "label": value["label"] or f"Versión {value['version']}",
                     "version": value["version"],
                 }
-                for value in scoped
-            ]
+            )
         return grouped
 
     placement = policy_options("manufacturing_placement_policies")
@@ -1184,9 +1291,7 @@ def prepare_documentary_inputs(
     def selected(existing, key, options):
         if existing and existing[key] is not None:
             return existing[key]
-        # Options arrive ordered version DESC: the newest authority is the
-        # default, and a saved selection always wins (immutable evidence).
-        return options[0]["id"] if options else None
+        return options[0]["id"] if len(options) == 1 else None
 
     prepared = []
     for position in positions:
@@ -1205,7 +1310,7 @@ def prepare_documentary_inputs(
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        calculations, result, _plan = _position_calculations(
+        calculations, result = _position_calculations(
             tree=tree,
             width_mm=D(str(position["width_mm"])),
             height_mm=D(str(position["height_mm"])),
@@ -1214,20 +1319,22 @@ def prepare_documentary_inputs(
             system_id=system_id_uuid,
             org_id=org_id,
         )
-        identity_hash = calculation_response({
-            "system_id": system_id, "parametric_tree": tree,
-            "nominal_width_mm": D(str(position["width_mm"])),
-            "nominal_height_mm": D(str(position["height_mm"])), "color": color,
-        }, result)["calculation_hash"]
-        if existing and existing["calculation_hash"] != identity_hash:
+        identity_hashes = _calculation_identity_hashes(
+            {
+                "system_id": system_id, "parametric_tree": tree,
+                "nominal_width_mm": D(str(position["width_mm"])),
+                "nominal_height_mm": D(str(position["height_mm"])), "color": color,
+            },
+            result,
+        )
+        identity_hash = identity_hashes[0]
+        if existing and existing["calculation_hash"] not in identity_hashes:
             existing = None
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
         trace_leaves: list[dict[str, object]] = []
         leaf_counts: dict[str | None, int] = {}
-        for module_index, (module_id, computation, _module_tree) in enumerate(
-            calculations, 1
-        ):
+        for module_id, computation, _module_tree in calculations:
             trace = computation.manufacturing_trace
             if trace is None:
                 continue
@@ -1247,7 +1354,7 @@ def prepare_documentary_inputs(
                             else leaf.leaf_id
                         ),
                         "leaf_label": (
-                            f"Unidad {module_index} · Hoja {number}"
+                            f"Unidad {module_id} · hoja {number}"
                             if module_id
                             else f"Hoja {number}"
                         ),
@@ -1393,7 +1500,7 @@ def save_documentary_inputs(
             else "FOILED"
         )
         params = SystemParamsRepository().load_visible(system_id_uuid, org_id)
-        calculations, result, _plan = _position_calculations(
+        calculations, result = _position_calculations(
             tree=tree,
             width_mm=D(str(pos["width_mm"])),
             height_mm=D(str(pos["height_mm"])),

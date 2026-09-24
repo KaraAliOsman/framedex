@@ -4,9 +4,9 @@ import { ApiError } from "../../api/apiMutator";
 import {
   documentaryArtifactAccess,
   documentaryFreezeRevisionA,
-  documentaryGenerateArtifact,
   documentaryPrepareInputs,
   documentarySaveInputs,
+  projectQuoteLinkCreate,
   projectsStartSuccessor,
   projectsResetPricing,
 } from "../../api/generated/dekopen";
@@ -27,8 +27,6 @@ import type {
   WorkshopAnnotation,
   WorkshopGlassTarget,
 } from "../../api/generated/models";
-import type { ErrorDetail } from "../../api/generated/models/errorDetail";
-import type { FreezeFailure } from "../../api/generated/models/freezeFailure";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import {
   addDecimal,
@@ -37,6 +35,7 @@ import {
   parseDecimal,
   subtractDecimal,
 } from "./decimal";
+import { runJob } from "../jobs/runJob";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -167,50 +166,6 @@ function GlassPolishingRow({
   );
 }
 
-const RULE_HINT_KEYS: Record<string, TranslationKey> = {
-  R05: "quotation.ruleR05",
-  R07: "quotation.ruleR07",
-  R08: "quotation.ruleR08",
-  R09: "quotation.ruleR09",
-};
-
-// Rules recorded against (bay_id, leaf_id) — leaf_id may be null for the
-// single leaf of an operable bay, so the pair still selects it.
-const LEAF_RULES = new Set(["R01", "R02", "R03", "R04", "R06", "R08", "R11", "R12", "R13", "R14"]);
-
-function freezeTargetLabel(
-  preparation: DocumentaryPreparationResponse | null,
-  failure: FreezeFailure,
-): string {
-  if (preparation) {
-    const scoped = preparation.positions.filter((item) => item.position_id === failure.position_id);
-    for (const position of scoped) {
-      const targets = position.workshop_targets;
-      if (!targets) continue;
-      if (LEAF_RULES.has(failure.rule_id)) {
-        const leaf = targets.leaves.find(
-          (item) => item.bay_id === failure.bay_id && (item.leaf_id ?? null) === failure.leaf_id,
-        );
-        if (leaf) return leaf.leaf_label;
-      }
-      // R05 records span.target_id in the evaluation's bay_id field.
-      const span =
-        failure.bay_id != null && targets.spans.find((item) => item.target_id === failure.bay_id);
-      if (span) return span.label;
-      const bay =
-        failure.bay_id != null && targets.bays.find((item) => item.bay_id === failure.bay_id);
-      if (bay) return bay.label;
-    }
-  }
-  return failure.leaf_id ?? failure.bay_id ?? "";
-}
-
-function freezeFailureText(failure: FreezeFailure): string {
-  const hint = RULE_HINT_KEYS[failure.rule_id];
-  const text = hint ? t(hint) : `${t("quotation.ruleOther")} ${failure.rule_id}`;
-  return failure.status === "MISSING_INPUT" ? `${text} (${t("quotation.handlePending")})` : text;
-}
-
 function nextObligationId(items: AccessoryLine[]): string {
   const used = new Set(items.map((item) => item.obligation_id));
   let index = items.length + 1;
@@ -225,11 +180,7 @@ function parseMmList(text: string): string[] | null {
     .filter(Boolean);
   if (parts.length === 0) return [];
   if (!parts.every((part) => /^\d+(?:\.\d{1,4})?$/.test(part))) return null;
-  // Canonical decimal spelling so "100" and "100.0" count as one coordinate;
-  // the inspector model rejects duplicated targets at freeze time.
-  const normalized = parts.map((part) => String(Number(part)));
-  if (new Set(normalized).size !== normalized.length) return null;
-  return normalized;
+  return parts;
 }
 
 function CsvMmField({
@@ -256,7 +207,7 @@ function CsvMmField({
         value={draft}
         disabled={disabled}
         inputMode="decimal"
-        placeholder="250, 500, 750"
+        placeholder="300, 600"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
           const parsed = parseMmList(draft);
@@ -385,7 +336,6 @@ export function ProjectQuotationPanel({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [failures, setFailures] = useState<FreezeFailure[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const generation = useRef(0);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -407,10 +357,7 @@ export function ProjectQuotationPanel({
     try {
       const response = await documentaryPrepareInputs(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) {
-        setPreparation(response.data);
-        setFailures([]);
-      }
+      if (generation.current === current) setPreparation(response.data);
     } catch {
       if (generation.current === current) setMessage(t("quotation.loadError"));
     } finally {
@@ -421,7 +368,6 @@ export function ProjectQuotationPanel({
   function updatePosition(index: number, update: Partial<DocumentaryPreparationPosition>): void {
     if (!preparation) return;
     setDirty(true);
-    setFailures([]);
     setPreparation({
       ...preparation,
       positions: preparation.positions.map((position, positionIndex) =>
@@ -470,11 +416,7 @@ export function ProjectQuotationPanel({
       (item) => item.bay_id === bayId && (item.leaf_id ?? null) === leafId,
     );
     if (existing) {
-      annotations[annotations.indexOf(existing)] = {
-        ...existing,
-        finish_class: existing.finish_class ?? "WHITE",
-        ...patch,
-      };
+      annotations[annotations.indexOf(existing)] = { ...existing, ...patch };
     } else {
       annotations.push({
         bay_id: bayId,
@@ -606,20 +548,10 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
-      setFailures([]);
       setMessage(`${t("quotation.emitted")} ${frozen.data.revision_code}`);
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
-      const payload =
-        error instanceof ApiError
-          ? (error.payload as { error?: ErrorDetail } | undefined)
-          : undefined;
-      setFailures(
-        payload?.error?.code === "inspector_red_blocks_documentary_freeze"
-          ? (payload.error.failures ?? [])
-          : [],
-      );
       setMessage(
         t(
           error instanceof ApiError && error.status === 409
@@ -687,24 +619,36 @@ export function ProjectQuotationPanel({
     setBusy(true);
     setMessage("");
     try {
-      const artifact = await documentaryGenerateArtifact(
+      setMessage(t("quotation.documentGenerating"));
+      const job = await runJob(
         {
-          document_type: "DOC-01",
-          format: "PDF",
-          project_version_id: versionId,
-          order_id: null,
+          type: "document.artifact.generate",
+          payload: {
+            document_type: "DOC-01",
+            format: "PDF",
+            project_version_id: versionId,
+            order_id: null,
+          },
+          idempotency_key: `doc01:${versionId}`,
         },
         requestOptions,
       );
-      if (artifact.status !== 200 && artifact.status !== 201) {
-        throw new ApiError(artifact.status, artifact.data);
-      }
-      const access = await documentaryArtifactAccess(artifact.data.id, requestOptions);
+      const artifact = (job.result as { artifact: { id: string } }).artifact;
+      const access = await documentaryArtifactAccess(artifact.id, requestOptions);
       if (access.status !== 200) {
         throw new ApiError(access.status, access.data);
       }
-      if (generation.current === current)
-        window.open(access.data.signed_url, "_blank", "noopener,noreferrer");
+      if (generation.current === current) {
+        const response = await fetch(access.data.signed_url);
+        if (!response.ok) throw new ApiError(response.status, {});
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = `DOC-01-${versionId}.pdf`;
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
+      }
     } catch {
       if (generation.current === current) setMessage(t("quotation.documentError"));
     } finally {
@@ -718,6 +662,32 @@ export function ProjectQuotationPanel({
     project.pricing_current &&
     project.current_pricing_operation_id !== null;
   const canRevise = canWrite && project.status === "QUOTED";
+  const canShare =
+    canWrite &&
+    (project.status === "QUOTED" || project.status === "APPROVED") &&
+    (project.versions?.length ?? 0) > 0;
+
+  async function shareQuote(): Promise<void> {
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteLinkCreate(project.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      const url = `${window.location.origin}${response.data.path}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setMessage(t("quotation.shareCopied"));
+      } catch {
+        setMessage(url);
+      }
+    } catch {
+      if (generation.current === current) setMessage(t("quotation.error"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
 
   return (
     <section className="quotation-panel" aria-busy={busy}>
@@ -743,19 +713,13 @@ export function ProjectQuotationPanel({
             {t("quotation.editQuoted")}
           </button>
         )}
+        {canShare && (
+          <button disabled={busy} onClick={() => void shareQuote()}>
+            {t("quotation.share")}
+          </button>
+        )}
       </header>
       {message && <p role="status">{message}</p>}
-      {failures.length > 0 && (
-        <ul className="freeze-failures" role="list">
-          {failures.map((failure, index) => (
-            <li key={index}>
-              <strong>{freezeTargetLabel(preparation, failure)}</strong>
-              {" — "}
-              {freezeFailureText(failure)}
-            </li>
-          ))}
-        </ul>
-      )}
       {canWrite && project.status === "DRAFT" && !project.pricing_current && (
         <p>{t("quotation.priceFirst")}</p>
       )}
@@ -770,7 +734,6 @@ export function ProjectQuotationPanel({
             value={preparation.payment_terms}
             onChange={(event) => {
               setDirty(true);
-              setFailures([]);
               setPreparation({ ...preparation, payment_terms: event.target.value });
             }}
           />
@@ -783,7 +746,6 @@ export function ProjectQuotationPanel({
             value={preparation.quotation_valid_until ?? ""}
             onChange={(event) => {
               setDirty(true);
-              setFailures([]);
               setPreparation({ ...preparation, quotation_valid_until: event.target.value });
             }}
           />
@@ -961,7 +923,7 @@ export function ProjectQuotationPanel({
                               type="number"
                               inputMode="decimal"
                               step="any"
-                              min="0.0001"
+                              min="0"
                               disabled={busy}
                               value={annotation?.continuous_width_mm ?? ""}
                               onChange={(event) =>
@@ -1047,7 +1009,7 @@ export function ProjectQuotationPanel({
                                   type="number"
                                   inputMode="decimal"
                                   step="any"
-                                  min="0.0001"
+                                  min="0"
                                   disabled={busy}
                                   value={structural?.required_ix_cm4 ?? ""}
                                   onChange={(event) =>
@@ -1301,7 +1263,6 @@ export function ProjectQuotationPanel({
                 setPreparation(null);
                 setConfirmed(false);
                 setDirty(false);
-                setFailures([]);
               }}
             >
               {t("projects.cancel")}

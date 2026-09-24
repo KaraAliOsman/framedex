@@ -51,6 +51,8 @@ type CanvasState = {
   acceptIntent(expected: CanvasDesignInputs, next: CanvasDesignInputs, selection: string): boolean;
   /** Typed design commands: record history, then apply. */
   commitInputs(next: CanvasDesignInputs): void;
+  /** Deterministic normalization: swap inputs without an undo step. */
+  replaceInputs(next: CanvasDesignInputs): void;
   past: CanvasDesignInputs[];
   future: CanvasDesignInputs[];
   undo(): void;
@@ -90,6 +92,25 @@ const INITIAL_VIEWPORT: ViewportState = {
   offsetY: 0,
 };
 
+function selectionResolves(inputs: CanvasDesignInputs, id: string): boolean {
+  const product = inputs.product;
+  if (product !== null) {
+    if (product.assembly.modules.some((m) => m.id === id)) return true;
+    if (product.assembly.couplings.some((c) => c.id === id)) return true;
+    return product.assembly.modules.some((m) => intentBays(m.tree).some((bay) => bay.id === id));
+  }
+  return intentBays(inputs.parametricTree).some((bay) => bay.id === id);
+}
+
+/** Selection is outside history but must always resolve against the
+ * restored inputs — keep it when it does, else land on the first module
+ * or bay so the inspector never points at a gone object. */
+function reconciledSelection(inputs: CanvasDesignInputs, current: string): string {
+  if (current && selectionResolves(inputs, current)) return current;
+  if (inputs.product !== null) return inputs.product.assembly.modules[0]?.id ?? "";
+  return intentBays(inputs.parametricTree)[0]?.id ?? "";
+}
+
 export const useCanvasStore = create<CanvasState>((set) => ({
   annotations: [],
   previewDiff: null,
@@ -117,16 +138,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   select(id) {
     set((state) => {
       if (id === null) return { selection: "" };
-      const product = state.inputs.product;
-      if (product !== null) {
-        if (product.assembly.modules.some((m) => m.id === id)) return { selection: id };
-        if (product.assembly.couplings.some((c) => c.id === id)) return { selection: id };
-        const bays = product.assembly.modules.flatMap((m) => intentBays(m.tree));
-        return bays.some((bay) => bay.id === id) ? { selection: id } : state;
-      }
-      return intentBays(state.inputs.parametricTree).some((bay) => bay.id === id)
-        ? { selection: id }
-        : state;
+      return selectionResolves(state.inputs, id) ? { selection: id } : state;
     });
   },
   loadDesign(inputs) {
@@ -173,6 +185,13 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       previewDiff: null,
     }));
   },
+  replaceInputs(next) {
+    set(() => ({
+      inputs: next,
+      draftDimension: null,
+      previewDiff: null,
+    }));
+  },
   past: [],
   future: [],
   undo() {
@@ -181,6 +200,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       if (previous === undefined) return state;
       return {
         inputs: previous,
+        selection: reconciledSelection(previous, state.selection),
         past: state.past.slice(0, -1),
         future: [...state.future, state.inputs],
         draftDimension: null,
@@ -193,6 +213,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
       if (next === undefined) return state;
       return {
         inputs: next,
+        selection: reconciledSelection(next, state.selection),
         past: [...state.past, state.inputs],
         future: state.future.slice(0, -1),
         draftDimension: null,

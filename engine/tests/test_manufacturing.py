@@ -14,17 +14,10 @@ from dekopen_engine.manufacturing import (
     ManufacturingPlacementPolicyV1,
     ReinforcementCutPolicyV1,
     VerticalReference,
-    project_coupling_facts_v1,
     project_manufacturing_facts_v1,
 )
-from dekopen_engine.manufacturing_trace import MemberSide, TracePointV1
-from dekopen_engine.models import (
-    BayOpeningType,
-    MaterialType,
-    ProfileCut,
-    ProfileRole,
-    ReinforcementPiece,
-)
+from dekopen_engine.manufacturing_trace import MemberSide
+from dekopen_engine.models import BayOpeningType, ProfileRole
 from engine.tests.test_shot06_core import core_node
 
 D = Decimal
@@ -241,86 +234,3 @@ def test_legacy_handle_height_needs_explicit_confirmation(
         project(core_node("G6"), demo_60_params, legacy=True)
     _, facts = project(core_node("G6"), demo_60_params, legacy=True, confirmed=True)
     assert facts.handles[0].requested_height_mm == D("300.00")
-
-
-def _coupler_cut(sku: str = "COPLE-60", bay_id: str = "c1") -> ProfileCut:
-    return ProfileCut(
-        sku=sku, role=ProfileRole.COUPLER, material=MaterialType.PVC,
-        length_mm=D("1400.00"), angle_left=D("90.0"), angle_right=D("90.0"),
-        qty=1, bay_id=bay_id,
-    )
-
-
-def _wedge(ax: str, ay: str, bx: str, by: str, cx: str, cy: str) -> list[TracePointV1]:
-    return [
-        TracePointV1(x_mm=D(ax), y_mm=D(ay)),
-        TracePointV1(x_mm=D(bx), y_mm=D(by)),
-        TracePointV1(x_mm=D(cx), y_mm=D(cy)),
-    ]
-
-
-def _coupling_facts(
-    *,
-    cuts: list[ProfileCut],
-    reinforcements: list[ReinforcementPiece] | None = None,
-    wedges: dict[str, list[TracePointV1]] | None = None,
-    reinforcement_policy: ReinforcementCutPolicyV1 | None = None,
-) -> ManufacturingFactsV1:
-    return project_coupling_facts_v1(
-        coupler_cuts=cuts,
-        coupler_reinforcements=reinforcements or [],
-        coupling_wedges=wedges or {},
-        position_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-        position_index=3,
-        repetition_index=1,
-        nominal_width_mm=D("2100.00"),
-        nominal_height_mm=D("1400.00"),
-        placement_policy=placement(),
-        handle_policy=handles(),
-        reinforcement_policy=reinforcement_policy
-        or steel((ProfileRole.COUPLER, "90.0", "90.0")),
-    )
-
-
-def test_coupler_facts_carry_real_plan_coordinates() -> None:
-    facts = _coupling_facts(
-        cuts=[_coupler_cut("COPLE-60", "c1"), _coupler_cut("COPLE-90", "c2")],
-        wedges={
-            "c1": _wedge("700", "0", "700", "-65", "640", "-32"),
-            "c2": _wedge("1328", "65", "1328", "0", "1390", "32"),
-        },
-    )
-    by_slot = {member.identity.topology_path: member for member in facts.members}
-    first, second = by_slot["coupling:c1"], by_slot["coupling:c2"]
-    assert first.start == TracePointV1(x_mm=D("700"), y_mm=D("0"))
-    assert first.end == TracePointV1(x_mm=D("670"), y_mm=D("-48.5"))
-    assert second.start == TracePointV1(x_mm=D("1328"), y_mm=D("65"))
-    assert second.end == TracePointV1(x_mm=D("1359"), y_mm=D("16"))
-    assert first.member_id != second.member_id
-    assert facts.module_id is None
-
-
-def test_coupler_facts_fail_closed_without_plan_wedge() -> None:
-    with pytest.raises(ManufacturingAuthorityError, match="plan wedge"):
-        _coupling_facts(cuts=[_coupler_cut()], wedges={})
-
-
-def test_coupler_steel_requires_coupler_cut_rule() -> None:
-    steel_piece = ReinforcementPiece(
-        parent_profile_sku="COPLE-60", reinforcement_sku="STEEL-COPLE",
-        role=ProfileRole.COUPLER, length_mm=D("1385.00"), qty=1, bay_id="c1",
-    )
-    wedges = {"c1": _wedge("700", "0", "700", "-65", "640", "-32")}
-    with pytest.raises(ManufacturingAuthorityError, match="authority"):
-        _coupling_facts(
-            cuts=[_coupler_cut()], reinforcements=[steel_piece], wedges=wedges,
-            reinforcement_policy=steel((ProfileRole.FRAME, "45.0", "45.0")),
-        )
-    facts = _coupling_facts(
-        cuts=[_coupler_cut()], reinforcements=[steel_piece], wedges=wedges,
-    )
-    reinforcement = facts.reinforcements[0]
-    assert reinforcement.angle_left == D("90.0")
-    assert reinforcement.angle_right == D("90.0")
-    assert reinforcement.parent_member_id == facts.members[0].member_id
-    assert reinforcement.policy_id == "STEEL-DEMO-V1"

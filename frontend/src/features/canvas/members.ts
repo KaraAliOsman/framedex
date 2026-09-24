@@ -24,7 +24,7 @@ export interface MemberGeometry {
   sashOverlapMm: number;
 }
 
-const FALLBACK = {
+export const FALLBACK_MEMBERS = {
   frame: 60,
   sash: 72,
   mullion: 70,
@@ -33,6 +33,8 @@ const FALLBACK = {
   rebate: 20,
   sashOverlap: 8,
 } as const;
+
+const FALLBACK = FALLBACK_MEMBERS;
 
 function member(
   options: DesignOptions | undefined,

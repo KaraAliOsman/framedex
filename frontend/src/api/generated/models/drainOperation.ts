@@ -5,11 +5,11 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { DrainOperationKindEnum } from "./drainOperationKindEnum";
 import type { InspectorTarget } from "./inspectorTarget";
-import type { KindEnum } from "./kindEnum";
 
 export interface DrainOperation {
-  kind: KindEnum;
+  kind: DrainOperationKindEnum;
   target: InspectorTarget;
   old_value: string[];
   new_value: string[];
