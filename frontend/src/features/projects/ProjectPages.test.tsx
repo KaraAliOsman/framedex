@@ -407,7 +407,8 @@ it("deletes using the exact position timestamp and renders the refreshed project
   vi.mocked(positionsDestroy).mockResolvedValue(response(204, undefined));
 
   mount();
-  await screen.findByText("1. Dormitorio principal");
+  // The delete action lives in the side pane — select the vano first.
+  fireEvent.click(await screen.findByText("1. Dormitorio principal"));
   fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
 
   expect(await screen.findByText(t("projects.noPositions"))).toBeInTheDocument();
@@ -444,7 +445,7 @@ it.each([
     );
 
     mount();
-    await screen.findByText("1. Dormitorio principal");
+    fireEvent.click(await screen.findByText("1. Dormitorio principal"));
     fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(t(message));

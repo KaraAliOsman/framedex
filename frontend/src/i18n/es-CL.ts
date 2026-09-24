@@ -1614,6 +1614,20 @@ const messages = {
   "crumb.settingsGeneral": "General",
   "crumb.settingsBilling": "Facturación",
   "crumb.settingsWallet": "Billetera",
+
+  "position.status.draft": "Borrador",
+  "position.status.evaluated": "Evaluada",
+  "position.status.priced": "Preciada",
+  "position.status.frozen": "Congelada",
+  "position.status.production": "En producción",
+  "projects.factsHide": "Ocultar datos del proyecto",
+  "projects.factsShow": "Datos del proyecto",
+  "projects.positionHint": "Selecciona un vano para ver su detalle y acciones.",
+  "projects.selectedPosition": "Vano seleccionado",
+  "projects.quoteSection": "Cotización",
+  "projects.importsSection": "Importar",
+  "projects.dims": "Medidas",
+  "projects.typology": "Tipología",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

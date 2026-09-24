@@ -561,6 +561,27 @@ a:focus-visible {
   color: var(--theme-danger);
 }
 
+/* Derived vano progression (position-statusKey tones) */
+.status-chip[data-status="evaluated"] {
+  background: var(--theme-info-soft);
+  color: var(--theme-info);
+}
+
+.status-chip[data-status="priced"] {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+
+.status-chip[data-status="frozen"] {
+  background: var(--theme-warning-soft);
+  color: var(--theme-warning);
+}
+
+.status-chip[data-status="production"] {
+  background: var(--theme-success-soft);
+  color: var(--theme-success);
+}
+
 .settings-grid {
   display: grid;
   gap: 0.75rem;
