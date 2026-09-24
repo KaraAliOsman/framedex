@@ -25,6 +25,9 @@ type Result = {
   /** The product the request was built on — a card that survives an
    * intervening canvas edit is stale and must not overwrite it. */
   snapshot: ProductJson;
+  /** The catalog signature the cards were validated against — a card
+   * that survives a catalog edit is stale the same way. */
+  catalogKey: string;
 };
 
 const NO_ISSUES: never[] = [];
@@ -78,13 +81,14 @@ export function AlternativesPanel({
     catalogKey: string;
   } | null>(null);
 
-  /** A system switch invalidates anything in flight — candidates were
-   * built and validated against the request's catalog. */
+  /** A system or catalog switch invalidates anything in flight —
+   * candidates were built and validated against the request's options,
+   * so a card from the old catalog can never be adopted into the new. */
   useEffect(() => {
     requestSeq.current += 1;
     setResult(null);
     setBusy(false);
-  }, [systemId]);
+  }, [systemId, catalogKey]);
 
   async function generate(): Promise<void> {
     if (!positionId || !systemId || !brief.trim() || product === null) return;
@@ -145,6 +149,7 @@ export function AlternativesPanel({
       setResult({
         alternatives,
         snapshot: product,
+        catalogKey,
         rejected: data.rejected.map((item) => ({
           label: typeof item["label"] === "string" ? (item["label"] as string) : null,
           reasons: Array.isArray(item["reasons"]) ? (item["reasons"] as unknown[]).map(String) : [],
@@ -202,9 +207,11 @@ export function AlternativesPanel({
             </button>
           </div>
           {message && <p className="assembly-hint">{message}</p>}
-          {result && result.systemId === systemId && result.snapshot !== product && (
-            <p className="assembly-hint">{t("assistant.stale")}</p>
-          )}
+          {result &&
+            result.systemId === systemId &&
+            (result.snapshot !== product || result.catalogKey !== catalogKey) && (
+              <p className="assembly-hint">{t("assistant.stale")}</p>
+            )}
           {result && result.systemId === systemId && (
             <div className="alternatives-panel__result">
               {result.notes && <p className="assistant-panel__notes">{result.notes}</p>}
@@ -259,7 +266,12 @@ export function AlternativesPanel({
                         <button
                           type="button"
                           className="primary-button alternative-card__use"
-                          disabled={disabled || busy || result.snapshot !== product}
+                          disabled={
+                            disabled ||
+                            busy ||
+                            result.snapshot !== product ||
+                            result.catalogKey !== catalogKey
+                          }
                           onClick={() => {
                             onUse(item.product);
                             // Adopted — a repeat brief is a new audited
