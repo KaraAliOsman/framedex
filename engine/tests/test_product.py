@@ -583,6 +583,7 @@ class TestConnections:
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
         assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None and evaluation.plan is not None
         coupler = next(
             c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
         )
@@ -622,6 +623,7 @@ class TestConnections:
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
         assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None
         spans = sorted(
             c.length_mm for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
         )
@@ -642,6 +644,7 @@ class TestConnections:
         evaluation = evaluate_product(product, demo_60_params)
         codes = {issue.code for issue in evaluation.issues}
         assert IssueCode.CONNECTION_TYPE_UNSUPPORTED.value in codes
+        assert evaluation.bom is not None
         # No coupler cut was fabricated for the unsupported joint.
         assert not any(
             c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
@@ -737,6 +740,7 @@ class TestConnections:
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
         assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None
         coupler = next(
             c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
         )
@@ -828,6 +832,7 @@ class TestConnections:
             demo_60_params,
             coupler_articles={"ACOPLE-60": COUPLER_ARTICLE},
         )
+        assert first.plan is not None and second.plan is not None
         corners = {
             module.module_id: module.corners for module in second.plan.modules
         }
@@ -909,6 +914,7 @@ class TestConnections:
         evaluation = evaluate_product(
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
+        assert evaluation.plan is not None
         corners = {m.module_id: m.corners for m in evaluation.plan.modules}
         # b runs at 5° from the a→b joint; c inherits the same heading (the
         # b→c joint declares no coupling); d accumulates to 15°.
@@ -1053,6 +1059,7 @@ class TestConnections:
             if issue.code == IssueCode.COUPLER_EDGE_INVALID.value
         }
         assert flagged == {"coupling:ba"}
+        assert evaluation.bom is not None
         assert not any(
             c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
         )
@@ -1078,6 +1085,7 @@ class TestConnections:
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
         assert evaluation.status is ProductStatus.VALID
+        assert evaluation.bom is not None
         coupler = next(
             c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
         )
@@ -1130,6 +1138,7 @@ class TestConnections:
             if issue.code == IssueCode.CONTOUR_COUPLING_UNSUPPORTED.value
         }
         assert flagged == {"coupling:ab"}
+        assert evaluation.bom is not None
         assert not any(
             c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
         )

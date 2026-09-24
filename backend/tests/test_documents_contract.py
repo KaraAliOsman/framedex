@@ -532,9 +532,10 @@ def test_document_role_matrix_keeps_doc07_owner_only() -> None:
 
 class FakeResponse:
     status_code = 200
+    signed_url_path = "/object/sign/documents/key?token=transient"
 
     def json(self):
-        return {"signedURL": "/storage/v1/object/sign/documents/key?token=transient"}
+        return {"signedURL": self.signed_url_path}
 
 
 class FakeClient:
@@ -561,6 +562,14 @@ def test_signed_url_uses_fixed_ttl_and_is_not_artifact_identity(
     settings.SUPABASE_SERVICE_ROLE_KEY = "local-test-service-key"
     settings.SUPABASE_STORAGE_BUCKET_DOCS = "documents"
     monkeypatch.setattr("documents.storage.httpx.Client", FakeClient)
-    signed = SupabaseDocumentStorage().signed_url("org_x/projects/p/rev/doc.pdf")
-    assert FakeClient.request_json == {"expiresIn": SIGNED_URL_TTL_SECONDS}
-    assert "token=transient" in signed
+    for path in (
+        "/object/sign/documents/key?token=transient",
+        "/storage/v1/object/sign/documents/key?token=transient",
+    ):
+        FakeResponse.signed_url_path = path
+        signed = SupabaseDocumentStorage().signed_url("org_x/projects/p/rev/doc.pdf")
+        assert FakeClient.request_json == {"expiresIn": SIGNED_URL_TTL_SECONDS}
+        assert signed == (
+            "http://127.0.0.1:25321/storage/v1/object/sign/documents/key"
+            "?token=transient"
+        )

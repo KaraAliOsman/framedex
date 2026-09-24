@@ -135,6 +135,7 @@ def resolved_sliding_layout(node: ParametricNode) -> SlidingLayout:
             {"bay": node.id},
         )
     try:
+        assert node.opening_type is not None
         return _SLIDING_PRESETS[node.opening_type]
     except KeyError as error:
         raise SlidingLayoutError(

@@ -716,17 +716,17 @@ def _plan_geometry(
     previous_index: int | None = None
     for index in front_indices:
         if previous_index is not None:
-            coupling = pair_coupling.get(
+            joint_coupling = pair_coupling.get(
                 frozenset({modules[previous_index].id, modules[index].id})
             )
-            if coupling is not None and coupling.kind is ConnectionKind.INLINE:
-                heading = heading + coupling.angle_deg
+            if joint_coupling is not None and joint_coupling.kind is ConnectionKind.INLINE:
+                heading = heading + joint_coupling.angle_deg
                 if abs(heading) > _MAX_HEADING_DEG:
                     issues.append(
                         ProductIssue(
                             code=IssueCode.ASSEMBLY_FOLDS_BACK.value,
                             severity=Severity.ERROR,
-                            target=f"coupling:{coupling.id}",
+                            target=f"coupling:{joint_coupling.id}",
                             params={"heading_deg": str(_q(heading))},
                         )
                     )
@@ -764,10 +764,10 @@ def _plan_geometry(
 
         next_index = next_front.get(index)
         if next_index is not None:
-            coupling = pair_coupling.get(
+            joint_coupling = pair_coupling.get(
                 frozenset({module.id, modules[next_index].id})
             )
-            if coupling is not None and coupling.kind is ConnectionKind.INLINE:
+            if joint_coupling is not None and joint_coupling.kind is ConnectionKind.INLINE:
                 next_theta = front_heading[next_index]
                 next_normal = PlanPoint(
                     x_mm=-sin_degrees(next_theta), y_mm=cos_degrees(next_theta)
@@ -779,7 +779,7 @@ def _plan_geometry(
                 )
                 plan_couplings.append(
                     PlanCoupling(
-                        coupling_id=coupling.id,
+                        coupling_id=joint_coupling.id,
                         polygon=[joint, back_end, back_left],
                     )
                 )

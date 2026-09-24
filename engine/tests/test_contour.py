@@ -40,7 +40,7 @@ def _pt(x: str, y: str) -> PlanPoint:
     return PlanPoint(x_mm=D(x), y_mm=D(y))
 
 
-def _bay(**over) -> ParametricNode:
+def _bay(**over: object) -> ParametricNode:
     return ParametricNode.model_validate(
         {
             "id": "B1",
@@ -260,6 +260,7 @@ class TestContourEvaluation:
         assert ev.status == ProductStatus.MANUFACTURING_INCOMPLETE
         codes = [i.code for i in ev.issues]
         assert IssueCode.MEMBER_BENDING_REQUIRED.value in codes
+        assert ev.bom is not None
         arc_cuts = [c for c in ev.bom.profile_cuts if c.sagitta_mm is not None]
         assert arc_cuts and all(c.length_mm > D("2400") for c in arc_cuts)
         glass = ev.bom.glasses[0]
@@ -282,6 +283,7 @@ class TestContourEvaluation:
         # 45/45 miters, glass pocket = nominal - 2*(face - rebate + clearance).
         ev = evaluate_product(_product(Contour.rect(D("1200"), D("800"))), demo_60_params())
         assert ev.status == ProductStatus.VALID
+        assert ev.bom is not None
         frames = sorted(c.length_mm for c in ev.bom.profile_cuts if c.role.value == "FRAME")
         assert frames == [D("806.00"), D("806.00"), D("1206.00"), D("1206.00")]
         assert all(
@@ -346,6 +348,7 @@ class TestContourEvaluation:
         )
         assert ev.status == ProductStatus.MANUFACTURING_INCOMPLETE
         assert any(i.code == IssueCode.CONTOUR_OPENING_UNSUPPORTED.value for i in ev.issues)
+        assert ev.bom is not None
         assert len([c for c in ev.bom.profile_cuts if c.role.value == "FRAME"]) == 4
 
     def test_panel_infill_warns(self) -> None:
@@ -416,6 +419,7 @@ class TestContourEvaluation:
         )
         assert computation is not None
         trace = computation.manufacturing_trace
+        assert trace is not None
         arc_members = [m for m in trace.members if m.sagitta_mm is not None]
         assert arc_members
         (infill,) = trace.infills
@@ -431,6 +435,7 @@ class TestContourEvaluation:
         )
         assert computation is not None
         trace = computation.manufacturing_trace
+        assert trace is not None
         beads = [m for m in trace.members if m.role.value == "GLAZING_BEAD"]
         assert len(beads) == 4
         assert all(
@@ -485,6 +490,7 @@ class TestContourEvaluation:
             product.assembly.modules[0], demo_60_params()
         )
         assert computation is not None
+        assert computation.manufacturing_trace is not None
         roles_and_angles = sorted(
             {
                 (member.role, str(member.angle_left), str(member.angle_right))
