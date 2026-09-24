@@ -44,7 +44,9 @@ export async function apiMutator<T>(url: string, options: RequestInit): Promise<
 
   const response = await fetch(url, { ...options, headers });
   const text = await response.text();
-  const payload: unknown = text.length === 0 ? null : JSON.parse(text);
+  const contentType = response.headers.get("Content-Type") ?? "";
+  const payload: unknown =
+    text.length === 0 ? null : contentType.includes("application/json") ? JSON.parse(text) : text;
   if (!response.ok) {
     throw new ApiError(response.status, payload);
   }
