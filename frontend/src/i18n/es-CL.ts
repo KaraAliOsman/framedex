@@ -1337,6 +1337,12 @@ const messages = {
   "catalog.importsWarnNameMissing": "Sin nombre",
   "catalog.importsWarnRoleUnknown": "Rol no reconocido",
   "catalog.importsWarnFaceMissing": "Sin ancho de cara",
+  "catalog.importsWarnConflict": "Conflicto con el artículo existente",
+  "catalog.importsWarnSeriesIncomplete":
+    "A la serie le faltan roles: {roles}. Sube la ficha técnica que los cubra.",
+  "catalog.importsOnlySafe": "Incluir solo seguros",
+  "catalog.importsEvidence": "Evidencia",
+  "catalog.importsExisting": "Existente en {system}",
   "catalog.importsErrorItemUnknown": "La fila no corresponde a un candidato del documento.",
   "catalog.importsErrorRoleInvalid": "El rol elegido no es válido.",
   "catalog.importsErrorSkuConflict": "El SKU ya existe en el sistema; se omitió la fila.",

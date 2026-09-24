@@ -9,11 +9,15 @@ from __future__ import annotations
 from io import BytesIO
 
 
-def pdf_text(content: bytes) -> str:
+def _pdf_pages(content: bytes) -> list[list[str]]:
     from pypdf import PdfReader
 
     reader = PdfReader(BytesIO(content))
-    return "\n".join(page.extract_text() or "" for page in reader.pages)
+    return [(page.extract_text() or "").splitlines() for page in reader.pages]
+
+
+def pdf_text(content: bytes) -> str:
+    return "\n".join(line for page in _pdf_pages(content) for line in page)
 
 
 def xlsx_rows(content: bytes) -> list[list[object]]:
@@ -42,6 +46,45 @@ def extract(kind: str, content: bytes) -> tuple[str, list[list[object]] | None]:
     return "", None
 
 
+def _csv_lines(content: bytes) -> list[str]:
+    import csv
+    import io
+
+    text = content.decode("utf-8-sig", errors="replace")
+    return [
+        " ".join(cell.strip() for cell in row if cell and cell.strip())
+        for row in csv.reader(io.StringIO(text))
+    ]
+
+
+def extract_tagged(kind: str, content: bytes) -> list[tuple[str, str]] | None:
+    """(line, source-ref) pairs for review evidence; None when the source has
+    no direct text layer (image / scan — those go through the AI compile)."""
+    if kind == "PDF":
+        pairs: list[tuple[str, str]] = []
+        for page_number, page_lines in enumerate(_pdf_pages(content), start=1):
+            pairs.extend(
+                (line, f"página {page_number}") for line in page_lines if line.strip()
+            )
+        return pairs
+    if kind == "XLSX":
+        pairs = []
+        for index, row in enumerate(xlsx_rows(content), start=1):
+            joined = " ".join(
+                str(cell) for cell in row if cell is not None and str(cell).strip()
+            )
+            if joined:
+                pairs.append((joined, f"fila {index}"))
+        return pairs
+    if kind == "CSV":
+        return [
+            (line, f"fila {index}")
+            for index, line in enumerate(_csv_lines(content), start=1)
+            if line
+        ]
+    return None
+
+
 def kind_for(file_name: str) -> str | None:
     lowered = file_name.lower()
     if lowered.endswith(".pdf"):
@@ -50,4 +93,6 @@ def kind_for(file_name: str) -> str | None:
         return "XLSX"
     if lowered.endswith((".png", ".jpg", ".jpeg", ".webp")):
         return "IMAGE"
+    if lowered.endswith(".csv"):
+        return "CSV"
     return None

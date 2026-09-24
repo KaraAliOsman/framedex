@@ -60,7 +60,9 @@ def _role_of(text: str) -> str | None:
     return None
 
 
-def parse_article_line(line: str, key: str) -> dict[str, Any] | None:
+def parse_article_line(
+    line: str, key: str, source_ref: str | None = None
+) -> dict[str, Any] | None:
     """Parse one catalog row; None when the line carries no article signal."""
     stripped = line.strip()
     if len(stripped) < 4:
@@ -138,14 +140,18 @@ def parse_article_line(line: str, key: str) -> dict[str, Any] | None:
         "confidence": "HIGH" if not warnings else "REVIEW_REQUIRED",
         "warnings": warnings,
         "source_text": stripped[:300],
+        "source_ref": source_ref,
     }
 
 
-def parse_catalog_lines(lines: list[str]) -> list[dict[str, Any]]:
+def parse_catalog_lines(lines: list[Any]) -> list[dict[str, Any]]:
+    """Entries may be plain lines or (line, source-ref) pairs — the ref rides
+    onto the candidate so review shows where in the document it came from."""
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for index, line in enumerate(lines):
-        parsed = parse_article_line(line, key=f"c{index}")
+    for index, entry in enumerate(lines):
+        text, ref = entry if isinstance(entry, tuple) else (entry, None)
+        parsed = parse_article_line(text, key=f"c{index}", source_ref=ref)
         if parsed is None or parsed["sku"] in seen:
             continue
         seen.add(parsed["sku"])

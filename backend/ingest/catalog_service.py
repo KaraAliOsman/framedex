@@ -9,6 +9,7 @@ organization (articles on a shared/global system would leak to every tenant).
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from uuid import UUID, uuid4
 
 from django.db import DatabaseError, transaction
@@ -17,7 +18,7 @@ from authentication.errors import contract_error
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from ingest.catalog_parser import ROLES, parse_catalog_lines
-from ingest.extract import extract, kind_for
+from ingest.extract import extract_tagged, kind_for
 from jobs import service as jobs_service
 from pricing.repository import rows
 
@@ -90,7 +91,7 @@ def create_catalog_import(
         raise contract_error(
             422,
             "catalog_import_kind_unsupported",
-            "Formato no soportado. Sube un PDF, XLSX o imagen (png, jpg, webp).",
+            "Formato no soportado. Sube un PDF, XLSX, CSV o imagen (png, jpg, webp).",
         )
     if not content or len(content) > MAX_UPLOAD_BYTES:
         raise contract_error(
@@ -147,6 +148,68 @@ def get_catalog_import(*, org_id: UUID, import_id: UUID) -> dict:
     return {"import": _public(_get(org_id, import_id))}
 
 
+# Roles a profile series must cover to be workable; a document missing some
+# gets flagged so the reviewer knows which technical sheet to ask for next.
+_CORE_ROLES = ("FRAME", "SASH", "MULLION_V", "MULLION_H", "GLAZING_BEAD")
+
+
+def _reconcile(org_id: UUID, candidates: list[dict]) -> None:
+    """Annotate candidates against the org's existing articles: same-SKU rows
+    surface as `existing` (current vs proposed) and differ-on-authority rows
+    get `conflict` + a review warning — before anything can write."""
+    skus = sorted({str(c.get("sku")) for c in candidates if c.get("sku")})
+    if not skus:
+        return
+    existing = rows(
+        "SELECT a.sku, a.name, a.role, a.face_width_mm, s.code AS system_code "
+        "FROM public.profile_articles a "
+        "JOIN public.profile_systems s ON s.id = a.system_id "
+        "WHERE a.org_id=%s AND s.org_id=%s AND a.sku = ANY(%s)",
+        [str(org_id), str(org_id), skus],
+    )
+    by_sku: dict[str, list[dict]] = {}
+    for article in existing:
+        by_sku.setdefault(article["sku"], []).append(article)
+    for candidate in candidates:
+        matches = by_sku.get(candidate.get("sku"), [])
+        if not matches:
+            continue
+        candidate["existing"] = [
+            {
+                "system_code": match["system_code"],
+                "name": match["name"],
+                "role": match["role"],
+                "face_width_mm": (
+                    str(match["face_width_mm"])
+                    if match["face_width_mm"] is not None
+                    else None
+                ),
+            }
+            for match in matches[:5]
+        ]
+        candidate_width = candidate.get("face_width_mm")
+        differs = any(
+            str(match["role"]) != str(candidate.get("role"))
+            or (
+                match["face_width_mm"] is not None
+                and candidate_width is not None
+                and Decimal(str(match["face_width_mm"]))
+                != Decimal(str(candidate_width))
+            )
+            for match in matches
+        )
+        if differs:
+            candidate["conflict"] = True
+            candidate.setdefault("warnings", []).append("catalog_conflicts_existing")
+
+
+def _series_gaps(candidates: list[dict]) -> str | None:
+    """Roles a workable profile series still lacks in this document."""
+    roles = {str(candidate.get("role")) for candidate in candidates}
+    missing = [role for role in _CORE_ROLES if role not in roles]
+    return ",".join(missing) if missing and candidates else None
+
+
 def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> dict:
     """The worker body: bytes → article candidates. Deterministic first; a
     text-less source goes through the catalog_compile capability — debited
@@ -183,21 +246,11 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
     warnings: list[str] = []
     audit_id = None
     try:
-        text, sheet_rows = extract(row["kind"], content)
+        tagged = extract_tagged(row["kind"], content)
     except Exception:
-        text, sheet_rows = "", None
+        tagged = None
         warnings.append("catalog.source_parse_failed")
-    lines: list[str] = []
-    if sheet_rows is not None:
-        for sheet_row in sheet_rows:
-            joined = " ".join(
-                str(cell) for cell in sheet_row if cell is not None and str(cell).strip()
-            )
-            if joined:
-                lines.append(joined)
-    elif text.strip():
-        lines = [line for line in text.splitlines() if line.strip()]
-    candidates = parse_catalog_lines(lines)
+    candidates = parse_catalog_lines(tagged or [])
     if not candidates:
         from ai_gateway.service import ProviderError, invoke
 
@@ -231,6 +284,11 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
             warnings.append(f"catalog.compile_failed:{code}")
     if not candidates:
         warnings.append("catalog.no_candidates")
+    else:
+        _reconcile(org_id, candidates)
+        missing = _series_gaps(candidates)
+        if missing:
+            warnings.append(f"catalog.series_incomplete:{missing}")
     if len(candidates) > MAX_CANDIDATES:
         candidates = candidates[:MAX_CANDIDATES]
         warnings.append("catalog.candidates_capped")
