@@ -398,7 +398,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect(frozenA.status(), await frozenA.text()).toBe(201);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   await expect(
-    page.locator(".quotation-history strong").filter({ hasText: "REV-A" }),
+    page.locator(".quotation-history strong").filter({ hasText: "Revisión A" }),
   ).toBeVisible();
 
   const successor = page.waitForResponse(
@@ -410,7 +410,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Editar cotización", exact: true }).click();
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
-  await expect(page.getByText("REV-B", { exact: true })).toBeVisible();
+  await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
   // The desk grid is select-then-act: pick the vano row so the side pane
   // offers Abrir diseño.
   await page
@@ -458,10 +458,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect(frozenB.status(), await frozenB.text()).toBe(201);
   await expect(page.getByText("Cotizado", { exact: true })).toBeVisible();
   const history = page.locator(".quotation-history");
-  await expect(history.getByText("REV-A", { exact: true })).toBeVisible();
-  await expect(history.getByText("REV-B", { exact: true })).toBeVisible();
+  await expect(history.getByText("Revisión A", { exact: true })).toBeVisible();
+  await expect(history.getByText("Revisión B", { exact: true })).toBeVisible();
 
-  const revA = history.locator("li").filter({ has: page.getByText("REV-A", { exact: true }) });
+  const revA = history.locator("li").filter({ has: page.getByText("Revisión A", { exact: true }) });
   const artifact = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
