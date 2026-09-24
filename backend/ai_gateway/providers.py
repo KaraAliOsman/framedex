@@ -28,6 +28,39 @@ MAX_BODY_BYTES = 1_048_576
 _BASE_PATH_RE = re.compile(r"/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]*")
 
 
+def _timeout_seconds(provider: str) -> float:
+    """AI_GATEWAY_{P}_TIMEOUT_S — whole-request bound in seconds. Defaults to
+    60; a malformed or out-of-range value refuses the provider outright so a
+    deployment mistake fails visibly instead of silently changing latency
+    guarantees."""
+    raw = os.environ.get(f"AI_GATEWAY_{provider}_TIMEOUT_S", "")
+    if not raw:
+        return 60.0
+    try:
+        value = float(raw)
+    except ValueError as error:
+        raise ProviderError("ai_provider_unavailable") from error
+    if not 1.0 <= value <= 600.0:
+        raise ProviderError("ai_provider_unavailable")
+    return value
+
+
+def _mock_enabled() -> bool:
+    """Whether the deterministic MOCK provider may serve this deployment.
+    Explicit AI_GATEWAY_MOCK_ENABLED wins either way; otherwise it serves
+    only development (DEBUG) and the test suite (pytest sets
+    PYTEST_CURRENT_TEST) — a production stack can never answer silently
+    with fabricated content."""
+    explicit = os.environ.get("AI_GATEWAY_MOCK_ENABLED", "").lower()
+    if explicit in {"1", "true", "yes"}:
+        return True
+    if explicit in {"0", "false", "no"}:
+        return False
+    return os.environ.get("DEBUG", "").lower() in {"1", "true", "yes"} or bool(
+        os.environ.get("PYTEST_CURRENT_TEST")
+    )
+
+
 def _resolve_provider_hosts(hostname: str) -> list[str] | None:
     """Resolve the configured host once and return every validated global
     answer in resolver order, or None. Literal IPs are checked directly; a
@@ -75,6 +108,10 @@ class HttpProvider:
         self.base_url = os.environ.get(f"AI_GATEWAY_{provider}_BASE_URL", "").rstrip("/")
         if not self.api_key or not self.base_url:
             raise ProviderError("ai_provider_unavailable")
+        # AI_GATEWAY_{P}_TIMEOUT_S bounds the whole HTTP exchange. A malformed
+        # value is a deployment mistake — it fails visibly, never clamps
+        # silently to an operator-surprising bound.
+        self.timeout = _timeout_seconds(provider)
         # Provider URLs are operator config, but a compromised value must not
         # turn the gateway into an authenticated proxy for internal services:
         # https-only, no userinfo/query/fragment, and the host must resolve
@@ -170,7 +207,7 @@ class HttpProvider:
         header_host = f"[{self._host}]" if ":" in self._host else self._host
         host_header = header_host if self._port == 443 else f"{header_host}:{self._port}"
         if client is None:
-            with httpx.Client(timeout=60.0) as owned:
+            with httpx.Client(timeout=self.timeout) as owned:
                 return self._attempts(
                     owned,
                     route,
@@ -652,6 +689,8 @@ _OPENAI_PROTOCOL_PROVIDERS = {"MIMO", "OPENAI", "OPENROUTER", "DEEPSEEK", "QWEN"
 def provider_for(route: dict):
     name = str(route["provider"]).upper()
     if name == "MOCK":
+        if not _mock_enabled():
+            raise ProviderError("ai_provider_mock_disabled")
         return MockProvider()
     protocol = os.environ.get(f"AI_GATEWAY_{name}_PROTOCOL", "").lower()
     if protocol == "openai" or (not protocol and name in _OPENAI_PROTOCOL_PROVIDERS):

@@ -52,7 +52,7 @@ def _patch(monkeypatch, *, rows_impl=None, output=None):
 def _good_output() -> str:
     return json.dumps(
         {
-            "answer": "Tienes 3 proyectos recientes.",
+            "answer": "El contexto muestra el estado actual del proyecto.",
             "actions": [{"kind": "navigate", "path": "/projects", "label": "Ver proyectos"}],
             "warnings": [],
         },
@@ -96,7 +96,7 @@ def test_ask_dashboard_projects_context_into_payload(monkeypatch):
         question="¿Cuántos proyectos hay?",
         operation_key="ask-1",
     )
-    assert result["answer"] == "Tienes 3 proyectos recientes."
+    assert result["answer"] == "El contexto muestra el estado actual del proyecto."
     assert result["actions"] == [
         {"kind": "navigate", "path": "/projects", "label": "Ver proyectos"}
     ]
@@ -294,3 +294,103 @@ def test_mock_provider_context_assist_shape():
     assert document["answer"].startswith("Estás en la superficie 'dashboard'")
     assert document["actions"] == []
     assert "2 proyectos" in document["answer"]
+
+
+def test_ask_answer_citing_uncited_number_refused(monkeypatch):
+    """§5: a number nowhere in the context or the question is an invention —
+    the answer is refused rather than passed off as an explanation."""
+    _patch(
+        monkeypatch,
+        output=json.dumps(
+            {
+                "answer": "El consumo estimado es 3,2 barras.",
+                "actions": [],
+                "warnings": [],
+            },
+            ensure_ascii=False,
+        ),
+    )
+    with pytest.raises(APIException) as error:
+        assist.ask(
+            org_id=uuid4(),
+            user_id=uuid4(),
+            surface="dashboard",
+            refs={},
+            question="¿cuántas barras necesito?",
+            operation_key="ask-1",
+        )
+    assert error.value.get_codes() == "ai_assist_ungrounded"
+    assert error.value.status_code == 502
+
+
+def test_ask_answer_may_cite_context_and_question_numbers(monkeypatch):
+    """A projected value is a citation; the user's own number in the question
+    grounds too ('2.400' in a 2.400 mm paño). Both must come through."""
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "count(*)" in sql:
+            return [
+                {
+                    "projects": 4,
+                    "positions": 9,
+                    "work_orders_open": 2,
+                    "clients": 20,
+                    "profile_systems": 3,
+                }
+            ]
+        return []
+
+    _patch(
+        monkeypatch,
+        rows_impl=fake_rows,
+        output=json.dumps(
+            {
+                "answer": "Tienes ~20 clientes y preguntas por un paño de 2.400 mm.",
+                "actions": [],
+                "warnings": [],
+            },
+            ensure_ascii=False,
+        ),
+    )
+    result = assist.ask(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="dashboard",
+        refs={},
+        question="¿qué paño de 2.400 mm conviene?",
+        operation_key="ask-1",
+    )
+    assert result["answer"].startswith("Tienes ~20 clientes")
+
+
+def test_mock_provider_refuses_when_disabled(monkeypatch):
+    """§9: a production stack can never answer silently with fabricated
+    content — MOCK off fails visibly instead of serving."""
+    from ai_gateway.providers import ProviderError, provider_for
+
+    monkeypatch.setenv("AI_GATEWAY_MOCK_ENABLED", "0")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.delenv("DEBUG", raising=False)
+    with pytest.raises(ProviderError) as failure:
+        provider_for({"provider": "MOCK"})
+    assert failure.value.code == "ai_provider_mock_disabled"
+    monkeypatch.setenv("AI_GATEWAY_MOCK_ENABLED", "1")
+    provider_for({"provider": "MOCK"})
+
+
+def test_provider_timeout_env_overrides_and_fails_visibly(monkeypatch):
+    from ai_gateway.providers import HttpProvider, ProviderError
+
+    monkeypatch.setenv("AI_GATEWAY_TO_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_TO_BASE_URL", "https://9.9.9.9/v1")
+    monkeypatch.setenv("AI_GATEWAY_TO_TIMEOUT_S", "12.5")
+    assert HttpProvider(provider="TO").timeout == 12.5
+    monkeypatch.setenv("AI_GATEWAY_TO_TIMEOUT_S", "abc")
+    with pytest.raises(ProviderError) as failure:
+        HttpProvider(provider="TO")
+    assert failure.value.code == "ai_provider_unavailable"
+    monkeypatch.setenv("AI_GATEWAY_TO_TIMEOUT_S", "0")
+    with pytest.raises(ProviderError):
+        HttpProvider(provider="TO")
