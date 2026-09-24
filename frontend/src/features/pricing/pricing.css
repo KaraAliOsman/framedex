@@ -77,11 +77,6 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
-.pricing-id {
-  color: var(--theme-text-secondary);
-  overflow-wrap: anywhere;
-  font-size: 0.8rem;
-}
 .pricing-page table {
   width: 100%;
   border-collapse: collapse;

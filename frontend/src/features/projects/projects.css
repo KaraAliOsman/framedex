@@ -217,85 +217,12 @@
   color: var(--theme-text-secondary);
   font-size: 0.78rem;
 }
-.position-design,
-.position-materials {
-  min-width: 0;
-}
-.position-design figure {
-  margin: 0;
-}
-.position-design .position-fixed-svg {
-  height: 18rem;
-  min-height: 18rem;
-  width: 100%;
-}
-.position-design figcaption {
-  color: var(--theme-text-secondary);
-  padding-block: 0.5rem;
-  font-variant-numeric: tabular-nums;
-}
 .projects-page select {
   font: inherit;
   color: inherit;
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
   padding: 0.625rem;
-  width: 100%;
-}
-.design-caption {
-  color: var(--theme-text-secondary);
-  margin-bottom: 0.75rem;
-}
-.design-split {
-  display: flex;
-  min-height: 15rem;
-  gap: 0.3rem;
-}
-.design-split.is-horizontal {
-  flex-direction: column;
-}
-.design-bay {
-  flex: 1;
-  width: 100%;
-  min-width: 0;
-  position: relative;
-  display: grid;
-  justify-items: center;
-}
-.design-bay.is-selected {
-  outline: 2px solid var(--theme-accent);
-  outline-offset: -2px;
-}
-.design-bay svg {
-  max-height: 12rem;
-  width: 100%;
-  fill: var(--theme-bg-canvas);
-  stroke: var(--theme-text-secondary);
-  stroke-width: 1;
-}
-.design-bay span {
-  padding: 0.25rem;
-  color: var(--theme-text-secondary);
-}
-.intent-editor {
-  padding-top: 1rem;
-}
-.intent-editor label {
-  margin-block: 0.25rem;
-}
-.intent-editor form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 0.75rem;
-  padding: 0;
-  border: 0;
-}
-.intent-editor form label {
-  flex: 1;
-  min-width: 6rem;
-}
-.intent-editor input {
   width: 100%;
 }
 .quotation-panel {
@@ -518,19 +445,6 @@
   padding-block: 0.5rem;
   border-bottom: 1px solid var(--theme-border-subtle);
 }
-.project-position {
-  background: var(--theme-surface-panel);
-  border: 1px solid var(--theme-border-subtle);
-  border-radius: 0.5rem;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 9rem 1fr;
-  margin-bottom: 0.75rem;
-  padding: 0.875rem;
-}
-.project-position:last-child {
-  margin-bottom: 0;
-}
 .position-thumb {
   align-self: start;
   background: var(--theme-bg-canvas);
@@ -540,9 +454,6 @@
   height: 7.5rem;
   object-fit: contain;
   width: 9rem;
-}
-.project-position-body {
-  min-width: 0;
 }
 .project-locked {
   background: var(--theme-accent-soft);
@@ -569,9 +480,6 @@
   height: 100%;
 }
 @media (max-width: 640px) {
-  .project-position {
-    grid-template-columns: 1fr;
-  }
   .position-thumb {
     width: 100%;
   }
@@ -908,11 +816,6 @@
   display: block;
   height: 100%;
   width: 100%;
-}
-
-.position-row__index {
-  color: var(--theme-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 
 .position-row__loc {

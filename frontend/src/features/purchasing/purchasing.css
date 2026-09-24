@@ -104,9 +104,6 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
-.purchasing-order-sent {
-  opacity: 0.85;
-}
 .purchasing-documents ul,
 .purchasing-order ul {
   list-style: none;

@@ -180,9 +180,6 @@
   font-family: var(--theme-font-mono);
   color: var(--theme-text-secondary);
 }
-.production-step-label {
-  font-weight: 600;
-}
 .production-step-center {
   font-size: 0.8rem;
   color: var(--theme-text-secondary);
