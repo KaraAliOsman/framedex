@@ -8,13 +8,16 @@ import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import {
   catalogApi,
   initialDraft,
+  initialSectionDraft,
   schemas,
+  sectionPreviewFromDraft,
   writeFromDraft,
   type CatalogData,
   type Field,
   type HardwareComponent,
   type Resource,
   type Row,
+  type SectionDraft,
 } from "./catalogModel";
 import "./catalogs.css";
 
@@ -396,6 +399,9 @@ function CatalogEditor({
       ? row.contents.map((component) => ({ ...component, key: crypto.randomUUID() }))
       : [],
   );
+  const [sectionDraft, setSectionDraft] = useState<SectionDraft>(() =>
+    initialSectionDraft(row && "section" in row ? row.section : null),
+  );
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertainCreate, setUncertainCreate] = useState(false);
@@ -432,6 +438,12 @@ function CatalogEditor({
     }));
   }
 
+  function changeSection(next: (current: SectionDraft) => SectionDraft) {
+    setDirty(true);
+    setError("");
+    setSectionDraft(next);
+  }
+
   function close() {
     if (!dirty || window.confirm(ct("discard"))) onClose();
   }
@@ -441,7 +453,7 @@ function CatalogEditor({
     if (readOnly || inFlight.current || noBeads || uncertainCreate) return;
     let body;
     try {
-      body = writeFromDraft(resource, draft, contents);
+      body = writeFromDraft(resource, draft, contents, sectionDraft);
     } catch {
       setError(ct("errorValidation"));
       return;
@@ -600,13 +612,233 @@ function CatalogEditor({
           </fieldset>
         ))}
 
-        {resource === "articles" && row && "section" in row && (
+        {resource === "articles" && (
           <fieldset className="catalog-group">
             <legend>{ct("field.section")}</legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={sectionDraft.enabled}
+                onChange={(event) =>
+                  changeSection((current) => ({ ...current, enabled: event.target.checked }))
+                }
+              />
+              <span>{ct("section.declare")}</span>
+            </label>
+            {sectionDraft.enabled && (
+              <>
+                <div className="catalog-fields">
+                  <label htmlFor={`catalog-${resource}-section-source`}>
+                    <span>{ct("field.source")}</span>
+                    <select
+                      id={`catalog-${resource}-section-source`}
+                      value={sectionDraft.source}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          source: event.target.value as SectionDraft["source"],
+                        }))
+                      }
+                    >
+                      <option value="POLYGON">{ct("sectionSource.POLYGON")}</option>
+                      <option value="DXF_REFERENCE">{ct("sectionSource.DXF_REFERENCE")}</option>
+                    </select>
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-depth`}>
+                    <span>{ct("field.depth_mm")}</span>
+                    <input
+                      id={`catalog-${resource}-section-depth`}
+                      type="text"
+                      required
+                      inputMode="decimal"
+                      pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                      value={sectionDraft.depth_mm}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          depth_mm: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label htmlFor={`catalog-${resource}-section-ref`}>
+                    <span>
+                      {ct("field.drawing_ref")}
+                      {sectionDraft.source !== "DXF_REFERENCE" && (
+                        <small> · {ct("optional")}</small>
+                      )}
+                    </span>
+                    <input
+                      id={`catalog-${resource}-section-ref`}
+                      type="text"
+                      required={sectionDraft.source === "DXF_REFERENCE"}
+                      maxLength={500}
+                      value={sectionDraft.drawing_ref}
+                      onChange={(event) =>
+                        changeSection((current) => ({
+                          ...current,
+                          drawing_ref: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="catalog-table-scroll">
+                  <table className="catalog-contents">
+                    <caption className="catalog-sr-only">{ct("section.vertices")}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ct("field.x_mm")}</th>
+                        <th scope="col">{ct("field.y_mm")}</th>
+                        <th scope="col">{ct("actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sectionDraft.vertices.map((vertex, index) => (
+                        <tr key={vertex.key}>
+                          {(["x_mm", "y_mm"] as const).map((key) => (
+                            <td key={key}>
+                              <input
+                                aria-label={`${ct(`field.${key}`)} · ${ct("section.vertex")} ${index + 1}`}
+                                type="text"
+                                required
+                                inputMode="decimal"
+                                pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                                value={vertex[key]}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  changeSection((current) => ({
+                                    ...current,
+                                    vertices: current.vertices.map((item) =>
+                                      item.key === vertex.key ? { ...item, [key]: value } : item,
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </td>
+                          ))}
+                          <td>
+                            <button
+                              type="button"
+                              aria-label={`${ct("remove")} ${ct("section.vertex")} ${index + 1}`}
+                              disabled={sectionDraft.vertices.length <= 3}
+                              onClick={() =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  vertices: current.vertices.filter(
+                                    (item) => item.key !== vertex.key,
+                                  ),
+                                }))
+                              }
+                            >
+                              {ct("remove")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeSection((current) => ({
+                      ...current,
+                      vertices: [
+                        ...current.vertices,
+                        { key: crypto.randomUUID(), x_mm: "", y_mm: "" },
+                      ],
+                    }))
+                  }
+                >
+                  {ct("section.addVertex")}
+                </button>
+                <div className="catalog-table-scroll">
+                  <table className="catalog-contents">
+                    <caption className="catalog-sr-only">{ct("section.axes")}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ct("field.name")}</th>
+                        <th scope="col">{ct("field.y_mm")}</th>
+                        <th scope="col">{ct("actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sectionDraft.axes.map((axis, index) => (
+                        <tr key={axis.key}>
+                          <td>
+                            <input
+                              aria-label={`${ct("field.name")} · ${ct("section.axis")} ${index + 1}`}
+                              type="text"
+                              maxLength={50}
+                              value={axis.name}
+                              onChange={(event) =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.map((item) =>
+                                    item.key === axis.key
+                                      ? { ...item, name: event.target.value }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              aria-label={`${ct("field.y_mm")} · ${ct("section.axis")} ${index + 1}`}
+                              type="text"
+                              inputMode="decimal"
+                              pattern="-?[0-9]+([.,][0-9]{1,2})?"
+                              value={axis.y_mm}
+                              onChange={(event) =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.map((item) =>
+                                    item.key === axis.key
+                                      ? { ...item, y_mm: event.target.value }
+                                      : item,
+                                  ),
+                                }))
+                              }
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              aria-label={`${ct("remove")} ${ct("section.axis")} ${index + 1}`}
+                              onClick={() =>
+                                changeSection((current) => ({
+                                  ...current,
+                                  axes: current.axes.filter((item) => item.key !== axis.key),
+                                }))
+                              }
+                            >
+                              {ct("remove")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeSection((current) => ({
+                      ...current,
+                      axes: [...current.axes, { key: crypto.randomUUID(), name: "", y_mm: "" }],
+                    }))
+                  }
+                >
+                  {ct("section.addAxis")}
+                </button>
+              </>
+            )}
             <SectionPreviewSvg
-              section={row.section}
-              faceWidthMm={Number(row.face_width_mm ?? 0)}
-              material={row.material}
+              section={sectionPreviewFromDraft(sectionDraft)}
+              faceWidthMm={Number(draft.face_width_mm ?? 0)}
+              material={draft.material || "PVC"}
             />
           </fieldset>
         )}

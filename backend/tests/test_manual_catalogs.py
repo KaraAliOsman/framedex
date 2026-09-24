@@ -186,11 +186,45 @@ def test_article_section_round_trip_preserves_engine_decimal():
         {**SECTION_POLYGON, "depth_mm": "0"},
         {**SECTION_POLYGON, "source": "TRACING"},
         {k: v for k, v in SECTION_POLYGON.items() if k != "polygon"},
+        # degenerate shapes: repeated vertices and a collinear chain enclose
+        # nothing — they must not pass as declared sections.
+        {**SECTION_POLYGON, "polygon": [{"x_mm": "0", "y_mm": "0"}] * 3},
+        {
+            **SECTION_POLYGON,
+            "polygon": [
+                {"x_mm": "0", "y_mm": "0"},
+                {"x_mm": "30", "y_mm": "0"},
+                {"x_mm": "60", "y_mm": "0"},
+            ],
+        },
+        # a manufacturer-drawing provenance without its drawing reference is
+        # an unverifiable claim, not an exact section.
+        {**SECTION_POLYGON, "source": "DXF_REFERENCE"},
+        {**SECTION_POLYGON, "source": "DXF_REFERENCE", "drawing_ref": "   "},
+        # partial payloads: the column is replaced wholesale — a present
+        # section must carry its complete shape.
+        {"depth_mm": "70"},
     ],
 )
 def test_article_section_rejects_noncanonical_shapes(mutated):
     serializer = ProfileSectionSerializer(data=mutated)
     assert not serializer.is_valid()
+
+
+def test_article_section_accepts_referenced_dxf():
+    serializer = ProfileSectionSerializer(
+        data={**SECTION_POLYGON, "source": "DXF_REFERENCE", "drawing_ref": "catalog.pdf#p4"}
+    )
+    assert serializer.is_valid(), serializer.errors
+
+
+def test_engine_rejects_a_degenerate_stored_section():
+    with pytest.raises(Exception):
+        _section(
+            '{"source": "POLYGON", "polygon": ['
+            '{"x_mm": 0, "y_mm": 0}, {"x_mm": 60, "y_mm": 0}, {"x_mm": 120, "y_mm": 0}],'
+            '"depth_mm": 60}'
+        )
 
 
 def test_section_decoder_passes_absent_and_rejects_decoded_json():

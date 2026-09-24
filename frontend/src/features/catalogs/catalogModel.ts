@@ -5,6 +5,8 @@ import type {
   BeadWriteRequest,
   KitWriteRequest,
   CatalogHardwareComponentRequest,
+  ProfileSection,
+  ProfileSectionRequest,
   SystemResponse,
   ArticleResponse,
   BeadResponse,
@@ -221,6 +223,94 @@ export const schemas: Record<Resource, Group[]> = {
 // Decimal strings remain strings throughout form state and transport.
 export const exact = (value: string): string => value.trim().replace(",", ".");
 
+/** §15 section authoring state — structured like the kit `contents` list:
+ * vertices/axes carry stable keys for the editable tables; string decimals
+ * stay strings until the request is built. */
+export interface SectionVertexDraft {
+  key: string;
+  x_mm: string;
+  y_mm: string;
+}
+
+export interface SectionAxisDraft {
+  key: string;
+  name: string;
+  y_mm: string;
+}
+
+export interface SectionDraft {
+  enabled: boolean;
+  source: "POLYGON" | "DXF_REFERENCE";
+  depth_mm: string;
+  drawing_ref: string;
+  vertices: SectionVertexDraft[];
+  axes: SectionAxisDraft[];
+}
+
+export function initialSectionDraft(section: ProfileSection | null | undefined): SectionDraft {
+  return {
+    enabled: section != null,
+    source: section?.source === "DXF_REFERENCE" ? "DXF_REFERENCE" : "POLYGON",
+    depth_mm: section?.depth_mm ?? "",
+    drawing_ref: section?.drawing_ref ?? "",
+    vertices: (section?.polygon ?? []).map((point) => ({
+      key: crypto.randomUUID(),
+      x_mm: point.x_mm,
+      y_mm: point.y_mm,
+    })),
+    axes: (section?.axes ?? []).map((axis) => ({
+      key: crypto.randomUUID(),
+      name: axis.name,
+      y_mm: axis.y_mm,
+    })),
+  };
+}
+
+export function sectionFromDraft(draft: SectionDraft | undefined): ProfileSectionRequest | null {
+  if (!draft?.enabled) return null;
+  const polygon = draft.vertices.map((vertex) => ({
+    x_mm: exact(vertex.x_mm),
+    y_mm: exact(vertex.y_mm),
+  }));
+  const depth = exact(draft.depth_mm);
+  const drawingRef = draft.drawing_ref.trim();
+  if (
+    polygon.length < 3 ||
+    polygon.some((point) => point.x_mm === "" || point.y_mm === "") ||
+    depth === "" ||
+    (draft.source === "DXF_REFERENCE" && drawingRef === "")
+  ) {
+    throw new Error("Invalid section");
+  }
+  return {
+    source: draft.source,
+    polygon,
+    depth_mm: depth,
+    axes: draft.axes
+      .filter((axis) => axis.name.trim() !== "" || axis.y_mm.trim() !== "")
+      .map((axis) => ({ name: axis.name.trim(), y_mm: exact(axis.y_mm) })),
+    drawing_ref: drawingRef === "" ? null : drawingRef,
+  };
+}
+
+/** Loose preview of the in-progress draft — tolerates empty cells so the
+ * editor shows the shape while the user is still typing it. */
+export function sectionPreviewFromDraft(draft: SectionDraft): ProfileSection | null {
+  if (!draft.enabled || draft.vertices.length < 3) return null;
+  return {
+    source: draft.source,
+    polygon: draft.vertices.map((vertex) => ({
+      x_mm: vertex.x_mm || "0",
+      y_mm: vertex.y_mm || "0",
+    })),
+    depth_mm: draft.depth_mm || "0",
+    axes: draft.axes
+      .filter((axis) => axis.name.trim() !== "")
+      .map((axis) => ({ name: axis.name.trim(), y_mm: axis.y_mm || "0" })),
+    drawing_ref: draft.drawing_ref.trim() || null,
+  };
+}
+
 export function fieldsFor(resource: Resource): Field[] {
   return schemas[resource].flatMap((group) => group.fields);
 }
@@ -247,8 +337,12 @@ export function writeFromDraft<R extends Resource>(
   resource: R,
   draft: Record<string, string>,
   contents: HardwareComponent[],
+  section?: SectionDraft,
 ): Writes[R] {
-  const values: Record<string, string | number | boolean | null | HardwareComponent[]> = {};
+  const values: Record<
+    string,
+    string | number | boolean | null | HardwareComponent[] | ProfileSectionRequest
+  > = {};
   for (const field of fieldsFor(resource)) {
     const value = draft[field.name]?.trim() ?? "";
     if (value === "" && field.optional) {
@@ -278,6 +372,9 @@ export function writeFromDraft<R extends Resource>(
       qty: exact(item.qty),
       unit: item.unit.trim(),
     }));
+  }
+  if (resource === "articles") {
+    values.section = sectionFromDraft(section);
   }
   // Only schema-declared writable fields enter the request.
   return values as unknown as Writes[R];

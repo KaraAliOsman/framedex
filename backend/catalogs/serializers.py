@@ -118,7 +118,33 @@ class ProfileSectionSerializer(StrictSerializer):
     def validate_polygon(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("A section polygon needs at least 3 points.")
+        points = [(point["x_mm"], point["y_mm"]) for point in value]
+        if len(set(points)) != len(points):
+            raise serializers.ValidationError("A section polygon cannot repeat vertices.")
+        area = Decimal(0)
+        for index, (x1, y1) in enumerate(points):
+            x2, y2 = points[(index + 1) % len(points)]
+            area += x1 * y2 - x2 * y1
+        if area == 0:
+            raise serializers.ValidationError("A section polygon must enclose area.")
         return value
+
+    def validate(self, attrs):
+        # `partial=True` propagates into this nested serializer on article
+        # PATCHes — a section write must still be complete: the column stores
+        # the shape wholesale, never a field-level merge.
+        missing = {"source", "polygon", "depth_mm"} - set(attrs)
+        if missing:
+            raise serializers.ValidationError(
+                {key: "This field is required for a complete section." for key in sorted(missing)}
+            )
+        if attrs.get("source") == "DXF_REFERENCE" and not (
+            attrs.get("drawing_ref") or ""
+        ).strip():
+            raise serializers.ValidationError(
+                {"drawing_ref": "A manufacturer-drawing section needs its drawing reference."}
+            )
+        return attrs
 
 
 class ArticleWriteSerializer(StrictSerializer):

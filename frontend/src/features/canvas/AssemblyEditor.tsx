@@ -860,23 +860,21 @@ function ModuleInspector({
           <summary>{t("assembly.sectionTitle")}</summary>
           <div className="section-preview-list">
             <div>
-              <p className="inspector-note">{members.frame.sku ?? t("assembly.sectionTitle")}</p>
+              <p className="inspector-note">{members.frame.sku ?? t("assembly.frame")}</p>
               <SectionPreviewSvg
                 section={members.frame.section}
                 faceWidthMm={members.frame.faceWidthMm}
                 material={members.frame.material}
               />
             </div>
-            {members.sash.section && (
-              <div>
-                <p className="inspector-note">{members.sash.sku}</p>
-                <SectionPreviewSvg
-                  section={members.sash.section}
-                  faceWidthMm={members.sash.faceWidthMm}
-                  material={members.sash.material}
-                />
-              </div>
-            )}
+            <div>
+              <p className="inspector-note">{members.sash.sku ?? t("assembly.sash")}</p>
+              <SectionPreviewSvg
+                section={members.sash.section}
+                faceWidthMm={members.sash.faceWidthMm}
+                material={members.sash.material}
+              />
+            </div>
           </div>
         </details>
       )}

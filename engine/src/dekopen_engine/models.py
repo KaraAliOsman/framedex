@@ -6,7 +6,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class EngineModel(BaseModel):
@@ -184,6 +184,21 @@ class ProfileSection(EngineModel):
     depth_mm: Decimal = Field(gt=0)
     axes: list[SectionAxis] = Field(default_factory=list)
     drawing_ref: str | None = None
+
+    @model_validator(mode="after")
+    def _section_is_real(self) -> "ProfileSection":
+        points = [(point.x_mm, point.y_mm) for point in self.polygon]
+        if len(set(points)) != len(points):
+            raise ValueError("section polygon repeats vertices")
+        area = Decimal(0)
+        for index, (x1, y1) in enumerate(points):
+            x2, y2 = points[(index + 1) % len(points)]
+            area += x1 * y2 - x2 * y1
+        if area == 0:
+            raise ValueError("section polygon encloses no area")
+        if self.source == "DXF_REFERENCE" and not (self.drawing_ref or "").strip():
+            raise ValueError("DXF_REFERENCE section needs a drawing_ref")
+        return self
 
 
 class EffectiveProfileArticle(EngineModel):
