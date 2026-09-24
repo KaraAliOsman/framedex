@@ -28,6 +28,7 @@ import type {
   WorkshopGlassTarget,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
 import {
   addDecimal,
   compareDecimal,
@@ -548,7 +549,7 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
-      setMessage(`${t("quotation.emitted")} ${frozen.data.revision_code}`);
+      setMessage(`${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}`);
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
@@ -695,7 +696,7 @@ export function ProjectQuotationPanel({
         <div>
           <h2>{t("quotation.title")}</h2>
           <p>
-            {t("quotation.current")}: <strong>{project.current_revision}</strong>
+            {t("quotation.current")}: <strong>{formatRevision(project.current_revision)}</strong>
           </p>
         </div>
         {canEmit && !preparation && (
@@ -1276,7 +1277,7 @@ export function ProjectQuotationPanel({
           <ul>
             {project.versions?.map((version) => (
               <li key={version.id}>
-                <strong>{version.revision_code}</strong>
+                <strong>{formatRevision(version.revision_code)}</strong>
                 <time dateTime={version.emitted_at}>
                   {new Date(version.emitted_at).toLocaleString("es-CL")}
                 </time>

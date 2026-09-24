@@ -1,6 +1,7 @@
 import { type PointerEvent, useState } from "react";
 
 import type { EngineCalculateResponse } from "../../api/generated/models";
+import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, type DimensionAxis, useCanvasStore } from "./canvasStore";
 import { EditableDimension } from "./EditableDimension";
 import { fixedPresentationGeometry, toSvgNumber } from "./presentationGeometry";
@@ -111,7 +112,7 @@ export function CADViewportSvg({
           <p className="eyebrow">POSICIÓN DEMO · G1</p>
           <h1 id="canvas-title">Editor paramétrico 2D</h1>
         </div>
-        <span className="canvas-system">DEMO_60</span>
+        <span className="canvas-system">{t("catalog.demo")}</span>
       </div>
       <svg
         className="cad-svg"

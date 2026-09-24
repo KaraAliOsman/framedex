@@ -539,7 +539,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
   await screen.findByText(t("projects.quoted"));
-  expect(screen.getAllByText("REV-A")).toHaveLength(2);
+  expect(screen.getAllByText("Revisión A")).toHaveLength(2);
   expect(apiMutator).toHaveBeenCalledTimes(3);
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   expect(JSON.parse(String((saveRequest[1] as RequestInit).body))).toMatchObject({
@@ -997,7 +997,7 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
   mount();
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.editQuoted") }));
 
-  await screen.findByText("REV-B");
+  await screen.findByText("Revisión B");
   expect(apiMutator).toHaveBeenCalledTimes(1);
   expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
   expect(window.confirm).toHaveBeenCalledWith(t("quotation.successorConfirm"));

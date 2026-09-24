@@ -6,6 +6,7 @@ import { documentaryArtifactAccess } from "../../api/generated/dekopen";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
 import "./purchasing.css";
 
 type OrderType =
@@ -365,7 +366,7 @@ function PurchasingWorkspace({
           >
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.revision_code} · {item.emitted_at}
+                {formatRevision(item.revision_code)} · {item.emitted_at}
               </option>
             ))}
           </select>
@@ -374,7 +375,7 @@ function PurchasingWorkspace({
       {state?.version && (
         <p className="purchasing-version">
           {t("purchasing.project")}: <strong>{state.version.project_code}</strong> ·{" "}
-          {state.version.revision_code} · {t("purchasing.immutable")}
+          {formatRevision(state.version.revision_code)} · {t("purchasing.immutable")}
         </p>
       )}
       {blockers.length > 0 && (

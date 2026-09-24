@@ -25,6 +25,7 @@ import type {
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
@@ -618,7 +619,7 @@ export function ProjectPaymentsPanel({
                   <tr key={invoice.id}>
                     <td>{formatDate(invoice.created_at)}</td>
                     <td>{invoice.invoice_code}</td>
-                    <td>{invoice.revision_code ?? "—"}</td>
+                    <td>{formatRevision(invoice.revision_code)}</td>
                     <td>
                       {invoice.credit_note ? (
                         <button

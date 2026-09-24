@@ -18,6 +18,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import { useShellLeaf } from "../../app/shellLeaf";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
@@ -209,6 +210,9 @@ function PositionWorkspace({
   const [result, setResult] = useState<EngineCalculateResponse | null>(null);
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("1");
+  // The breadcrumb leaf is the estimator's own tag («Dormitorio») — the
+  // shell falls back to «Vano» while the field is blank.
+  useShellLeaf(location.trim() || null);
   // null baseline = nothing persisted yet for this route (copy) → always dirty.
   const [baseline, setBaseline] = useState<{
     design: string;

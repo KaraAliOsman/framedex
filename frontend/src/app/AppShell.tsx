@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useEffect } from "react";
+import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
@@ -7,6 +7,8 @@ import { useAuthSession } from "../auth/AuthSessionProvider";
 import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
+import { ShellCrumbs } from "./ShellCrumbs";
+import { ShellLeafContext } from "./shellLeaf";
 
 /** Information architecture: the rail is organized around the fenestration
  * job — work surfaces first, secondary records next, account/admin concerns
@@ -25,10 +27,10 @@ const navGroups = [
   },
   {
     id: "records",
-    items: [
-      ["/clients", "nav.clients"],
-      ["/pricing/commercial", "pricing.calculate"],
-    ],
+    // Commercial pricing is a step inside the project, not a rail
+    // destination — the route stays deep-linked, it just never competes
+    // with the surfaces the job actually lives in.
+    items: [["/clients", "nav.clients"]],
   },
   {
     id: "account",
@@ -41,6 +43,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const [leaf, setLeafState] = useState<string | null>(null);
+  const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
+  const leafContext = useMemo(() => ({ leaf, setLeaf }), [leaf, setLeaf]);
   useEffect(() => {
     telemetry.capture("shell_route_viewed", { route_name: location.pathname });
   }, [location.pathname]);
@@ -48,7 +53,6 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   function navigationAllowed(to: string): boolean {
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
-    if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
     if (to === "/production")
       return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
     return true;
@@ -59,45 +63,50 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   );
 
   return (
-    <div className="app-shell" data-testid="app-shell">
-      <header className="app-ribbon">
-        <span className="brand">{t("app.brand")}</span>
-        <span className="context-title">{auth.me?.active_organization?.name ?? t("org.none")}</span>
-        <button type="button" onClick={toggleTheme} aria-label={t("theme.toggle")}>
-          {t(theme === "light" ? "theme.toDark" : "theme.toLight")}
-        </button>
-        <button type="button" onClick={() => void auth.signOut()}>
-          {t("auth.signOut")}
-        </button>
-      </header>
-      <nav className="tool-rail" aria-label={t("shell.navigation")}>
-        {navGroups.map((group, index) => {
-          const items = group.items.filter(([to]) => navigationAllowed(to));
-          if (items.length === 0) return null;
-          return (
-            <div
-              key={group.id}
-              className={`tool-rail__group${group.id === "account" ? " tool-rail__group--account" : ""}`}
-            >
-              {index > 0 && <span className="tool-rail__divider" aria-hidden />}
-              {items.map(([to, label]) => (
-                <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
-                  {t(label)}
-                </NavLink>
-              ))}
-            </div>
-          );
-        })}
-      </nav>
-      <main className="workspace">{children}</main>
-      <CommandPalette
-        navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
-        onNavigate={(to) => navigate(to)}
-      />
-      <footer className="status-bar">
-        <span>{t("shell.engineStatus")}</span>
-        <span>{t("shell.apiStatus")}</span>
-      </footer>
-    </div>
+    <ShellLeafContext.Provider value={leafContext}>
+      <div className="app-shell" data-testid="app-shell">
+        <header className="app-ribbon">
+          <span className="brand">{t("app.brand")}</span>
+          <span className="context-title">
+            {auth.me?.active_organization?.name ?? t("org.none")}
+          </span>
+          <button type="button" onClick={toggleTheme} aria-label={t("theme.toggle")}>
+            {t(theme === "light" ? "theme.toDark" : "theme.toLight")}
+          </button>
+          <button type="button" onClick={() => void auth.signOut()}>
+            {t("auth.signOut")}
+          </button>
+        </header>
+        <nav className="tool-rail" aria-label={t("shell.navigation")}>
+          {navGroups.map((group, index) => {
+            const items = group.items.filter(([to]) => navigationAllowed(to));
+            if (items.length === 0) return null;
+            return (
+              <div
+                key={group.id}
+                className={`tool-rail__group${group.id === "account" ? " tool-rail__group--account" : ""}`}
+              >
+                {index > 0 && <span className="tool-rail__divider" aria-hidden />}
+                {items.map(([to, label]) => (
+                  <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
+                    {t(label)}
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
+        </nav>
+        <ShellCrumbs leaf={leaf} />
+        <main className="workspace">{children}</main>
+        <CommandPalette
+          navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
+          onNavigate={(to) => navigate(to)}
+        />
+        <footer className="status-bar">
+          <span>{t("shell.engineStatus")}</span>
+          <span>{t("shell.apiStatus")}</span>
+        </footer>
+      </div>
+    </ShellLeafContext.Provider>
   );
 }
