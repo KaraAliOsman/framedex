@@ -7,7 +7,7 @@
  */
 import type { CurrencyEnum } from "./currencyEnum";
 import type { LineResponse } from "./lineResponse";
-import type { StateEnum } from "./stateEnum";
+import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
 
 export interface PriceResponse {
   id: string;
@@ -15,7 +15,7 @@ export interface PriceResponse {
   /** @pattern ^REV-[A-Z]+$ */
   revision_code: string;
   discount_pct: string;
-  state: StateEnum;
+  state: PriceResponseStateEnum;
   currency: CurrencyEnum;
   lines: LineResponse[];
   project_net: string;

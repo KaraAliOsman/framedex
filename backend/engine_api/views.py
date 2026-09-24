@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 
 from dekopen_engine.snapshot import calculation_response, evaluation_response
 from drf_spectacular.utils import OpenApiResponse, extend_schema
@@ -27,6 +26,7 @@ from engine_api.adapter import (
     UnsupportedEngineContract,
     calculate_from_api,
     evaluate_assembly_from_api,
+    elevation_envelope,
 )
 from engine_api.repository import (
     SystemNotFound,
@@ -236,16 +236,14 @@ class EngineAssemblyCalculateView(APIView):
                     data["system_id"], tenant.active_organization.organization_id
                 )
                 model = parse_product_model(data["product"])
-                modules = model.assembly.modules
+                envelope_width, envelope_height = elevation_envelope(model.assembly)
                 if (
-                    data["nominal_width_mm"]
-                    != sum((module.width_mm for module in modules), Decimal("0"))
-                    or data["nominal_height_mm"]
-                    != max(module.height_mm for module in modules)
+                    data["nominal_width_mm"] != envelope_width
+                    or data["nominal_height_mm"] != envelope_height
                 ):
                     raise InvalidEngineRequest(
-                        "nominal dimensions must equal the sum of module widths "
-                        "and the tallest module height"
+                        "nominal dimensions must equal the assembly envelope "
+                        "(width across columns, tallest stacked-column height)"
                     )
                 evaluation = evaluate_assembly_from_api(
                     product=model,

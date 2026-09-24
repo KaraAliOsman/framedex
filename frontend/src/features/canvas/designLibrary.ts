@@ -1,7 +1,10 @@
 import type { TranslationKey } from "../../i18n/es-CL";
 import type { IntentNode, Opening } from "./intentEditing";
 import {
+  makeArchModule,
   makeBowProduct,
+  makeFramelessModule,
+  makeTrapezoidModule,
   totalModuleWidth,
   wrapTreeAsProduct,
   type ProductJson,
@@ -80,27 +83,26 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "sash",
     titleKey: "assembly.starter.sash",
     hintKey: "assembly.starter.sashHint",
-    build: (w, h) =>
-      wrapTreeAsProduct(starterTree("TILT_TURN_LEFT"), w.toFixed(2), h.toFixed(2)),
+    build: (w, h) => wrapTreeAsProduct(starterTree("TILT_TURN_LEFT"), w.toFixed(2), h.toFixed(2)),
   },
   {
     key: "twoSash",
     titleKey: "assembly.starter.twoSash",
     hintKey: "assembly.starter.twoSashHint",
     build: (w, h) =>
-      splitBay(
-        "SPLIT_V",
-        [starterTree("TILT_TURN_LEFT"), starterTree("TILT_TURN_RIGHT")],
-        w,
-        h,
-      ),
+      splitBay("SPLIT_V", [starterTree("TILT_TURN_LEFT"), starterTree("TILT_TURN_RIGHT")], w, h),
   },
   {
     key: "sliding2",
     titleKey: "assembly.starter.sliding2",
     hintKey: "assembly.starter.sliding2Hint",
-    build: (w, h) =>
-      wrapTreeAsProduct(starterTree("SLIDING_2L"), w.toFixed(2), h.toFixed(2)),
+    build: (w, h) => wrapTreeAsProduct(starterTree("SLIDING_2L"), w.toFixed(2), h.toFixed(2)),
+  },
+  {
+    key: "sliding3",
+    titleKey: "assembly.starter.sliding3",
+    hintKey: "assembly.starter.sliding3Hint",
+    build: (w, h) => wrapTreeAsProduct(starterTree("SLIDING_3L"), w.toFixed(2), h.toFixed(2)),
   },
   {
     key: "awning",
@@ -112,29 +114,25 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     key: "awningBand",
     titleKey: "assembly.starter.awningBand",
     hintKey: "assembly.starter.awningBandHint",
-    build: (w, h) =>
-      splitBay("SPLIT_H", [starterTree("FIXED"), starterTree("AWNING")], w, h),
+    build: (w, h) => splitBay("SPLIT_H", [starterTree("FIXED"), starterTree("AWNING")], w, h),
   },
   {
     key: "coupled",
     titleKey: "assembly.starter.coupled",
     hintKey: "assembly.starter.coupledHint",
-    build: (w, h) =>
-      coupledModules(starterTree("TILT_TURN_LEFT"), starterTree("FIXED"), 0.5, w, h),
+    build: (w, h) => coupledModules(starterTree("TILT_TURN_LEFT"), starterTree("FIXED"), 0.5, w, h),
   },
   {
     key: "doorSide",
     titleKey: "assembly.starter.doorSide",
     hintKey: "assembly.starter.doorSideHint",
-    build: (w, h) =>
-      coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
+    build: (w, h) => coupledModules(starterTree("DOOR_ENTRY"), starterTree("FIXED"), 0.4, w, h),
   },
   {
     key: "slidingFixed",
     titleKey: "assembly.starter.slidingFixed",
     hintKey: "assembly.starter.slidingFixedHint",
-    build: (w, h) =>
-      coupledModules(starterTree("SLIDING_2L"), starterTree("FIXED"), 0.55, w, h),
+    build: (w, h) => coupledModules(starterTree("SLIDING_2L"), starterTree("FIXED"), 0.55, w, h),
   },
   {
     key: "bow3",
@@ -148,13 +146,62 @@ export const STARTER_DEFINITIONS: StarterDefinition[] = [
     hintKey: "assembly.starter.bow5Hint",
     build: (w, h) => makeBowProduct({ moduleCount: 5, widthMm: w, heightMm: h, angleDeg: 15 }),
   },
+  {
+    key: "trapezoid",
+    titleKey: "assembly.starter.trapezoid",
+    hintKey: "assembly.starter.trapezoidHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [
+          makeTrapezoidModule(
+            "m1",
+            w.toFixed(2),
+            h.toFixed(2),
+            Math.round(w * 0.15),
+            Math.round(w * 0.15),
+            starterTree("FIXED"),
+          ),
+        ],
+        couplings: [],
+      },
+    }),
+  },
+  {
+    key: "arch",
+    titleKey: "assembly.starter.arch",
+    hintKey: "assembly.starter.archHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [
+          makeArchModule(
+            "m1",
+            w.toFixed(2),
+            h.toFixed(2),
+            Math.round(w * 0.2),
+            starterTree("FIXED"),
+          ),
+        ],
+        couplings: [],
+      },
+    }),
+  },
+  {
+    key: "frameless",
+    titleKey: "assembly.starter.frameless",
+    hintKey: "assembly.starter.framelessHint",
+    build: (w, h) => ({
+      version: "product-v2" as const,
+      assembly: {
+        modules: [makeFramelessModule("m1", w.toFixed(2), h.toFixed(2), starterTree("FIXED"))],
+        couplings: [],
+      },
+    }),
+  },
 ];
 
 export type StarterKey = (typeof STARTER_DEFINITIONS)[number]["key"];
-
-export function starterByKey(key: string): StarterDefinition | undefined {
-  return STARTER_DEFINITIONS.find((definition) => definition.key === key);
-}
 
 /** Nominal canvas the library cards preview at — templates render their own
  * proportions (bow reads wider, door reads taller). */
@@ -166,9 +213,15 @@ export function starterNominalSize(key: string): { widthMm: number; heightMm: nu
       return { widthMm: 3000, heightMm: 1400 };
     case "doorSide":
       return { widthMm: 1600, heightMm: 2200 };
+    case "trapezoid":
+      return { widthMm: 2400, heightMm: 1400 };
+    case "arch":
+      return { widthMm: 1800, heightMm: 1600 };
     case "sliding2":
     case "slidingFixed":
       return { widthMm: 1800, heightMm: 1400 };
+    case "sliding3":
+      return { widthMm: 2400, heightMm: 1400 };
     case "awning":
     case "awningBand":
       return { widthMm: 1200, heightMm: 800 };

@@ -213,7 +213,11 @@ def test_manager_crud_and_exact_contents(real_rows):
 def test_management_roles_and_owner_aal1_denied(real_rows, role, resource):
     set_role(real_rows, role)
     client = client_for(real_rows)
-    assert client.get(f"/api/v1/catalogs/{resource}/").status_code == 403
+    # Estimators read the catalog to quote; management is still denied to
+    # them, and non-reader roles are denied entirely.
+    expected = 200 if role == "ESTIMATOR" else 403
+    assert client.get(f"/api/v1/catalogs/{resource}/").status_code == expected
+    assert client.post(f"/api/v1/catalogs/{resource}/", {}).status_code == 403
 
 
 @pytest.mark.parametrize("role", ["ESTIMATOR", "INSTALLER", "OWNER"])
