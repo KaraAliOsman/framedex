@@ -92,31 +92,34 @@ def create_client(org_id, actor_id, data):
 def update_client(org_id, client_id, data):
     # The locking read must run as documentary_backend — authenticated lost
     # UPDATE privilege in the hardening migration, so a FOR UPDATE under the
-    # request role is rejected before any edit can land.
-    with documentary_backend():
-        row = client_row(org_id, client_id, lock=True)
-        if row["updated_at"] != data["expected_updated_at"]:
-            raise contract_error(
-                409, "stale_edit", "Otra persona guardó cambios. Recarga antes de reemplazarlos."
-            )
-        values = {key: _clean(data[key]) for key in FIELDS if key in data}
-        if "name" in values and not values["name"]:
-            raise contract_error(
-                400, "validation_error", "El nombre del cliente es obligatorio."
-            )
-        if not values:
-            return _public(row)
-        try:
+    # request role is rejected before any edit can land. IntegrityError is
+    # caught outside the role context like create_client does: converting it
+    # inside would make the context attempt role restoration on the aborted
+    # transaction and mask the 409.
+    try:
+        with documentary_backend():
+            row = client_row(org_id, client_id, lock=True)
+            if row["updated_at"] != data["expected_updated_at"]:
+                raise contract_error(
+                    409, "stale_edit", "Otra persona guardó cambios. Recarga antes de reemplazarlos."
+                )
+            values = {key: _clean(data[key]) for key in FIELDS if key in data}
+            if "name" in values and not values["name"]:
+                raise contract_error(
+                    400, "validation_error", "El nombre del cliente es obligatorio."
+                )
+            if not values:
+                return _public(row)
             rows(
                 "UPDATE public.clients SET "
                 + ",".join(f"{key}=%s" for key in values)
                 + ",updated_at=clock_timestamp() WHERE id=%s AND org_id=%s RETURNING id",
                 [*values.values(), client_id, org_id],
             )
-        except IntegrityError as error:
-            raise contract_error(
-                409, "client_rut_conflict", "Ya existe un cliente con ese RUT."
-            ) from error
+    except IntegrityError as error:
+        raise contract_error(
+            409, "client_rut_conflict", "Ya existe un cliente con ese RUT."
+        ) from error
     return _public(client_row(org_id, client_id))
 
 
