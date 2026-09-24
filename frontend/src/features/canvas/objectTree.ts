@@ -10,16 +10,7 @@ export interface TreeNode {
   label: string;
   detail: string | null;
   kind:
-    | "root"
-    | "module"
-    | "bay"
-    | "leaf"
-    | "member"
-    | "glazing"
-    | "handle"
-    | "mullion"
-    | "coupler"
-    | "panel";
+    "root" | "module" | "bay" | "member" | "glazing" | "handle" | "mullion" | "coupler" | "panel";
   severity: "error" | "warning" | null;
   /** Canvas selection target (module or coupling id); null = structural row. */
   selectId: string | null;
@@ -34,6 +25,9 @@ const LEAF_KIND: Record<Opening, TranslationKey> = {
   TILT_TURN_RIGHT: "intent.tiltRight",
   AWNING: "intent.awning",
   SLIDING_2L: "intent.sliding",
+  SLIDING_3L: "intent.sliding3",
+  SLIDING_4L: "intent.sliding4",
+  SLIDING: "intent.slidingLayout",
   DOOR_ENTRY: "intent.door",
 };
 
@@ -56,75 +50,16 @@ function bayChildren(
   const rows: TreeNode[] = [];
   const opening = node.opening_type ?? "FIXED";
   const operable = opening !== "FIXED";
-
-  const sashRow = (idSuffix: string): TreeNode => ({
-    id: `${moduleId}/${node.id}/${idSuffix}`,
-    label: t("tree.sash"),
-    detail: members.sash.sku,
-    kind: "member",
-    severity: null,
-    selectId: moduleId,
-    children: [],
-  });
-  const infillRow = (idSuffix: string): TreeNode | null => {
-    if (node.panel_article_sku) {
-      return {
-        id: `${moduleId}/${node.id}/${idSuffix}`,
-        label: t("tree.panel"),
-        detail: node.panel_article_sku,
-        kind: "panel",
-        severity: null,
-        selectId: moduleId,
-        children: [],
-      };
-    }
-    const detail = [
-      node.glass_thickness_mm ? `${node.glass_thickness_mm} mm` : null,
-      node.glass_article_sku ?? node.glass_spec ?? null,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    return {
-      id: `${moduleId}/${node.id}/${idSuffix}`,
-      label: t("tree.glass"),
-      detail: detail || null,
-      kind: "glazing",
+  if (operable) {
+    rows.push({
+      id: `${moduleId}/${node.id}/sash`,
+      label: t("tree.sash"),
+      detail: members.sash.sku,
+      kind: "member",
       severity: null,
       selectId: moduleId,
       children: [],
-    };
-  };
-
-  if (opening === "SLIDING_2L") {
-    for (let leafIndex = 0; leafIndex < 2; leafIndex += 1) {
-      const infill = infillRow(`leaf${leafIndex + 1}/glass`);
-      rows.push({
-        id: `${moduleId}/${node.id}/leaf${leafIndex + 1}`,
-        label: `${t("tree.slidingLeaf")} ${leafIndex + 1}`,
-        detail: null,
-        kind: "leaf",
-        severity: null,
-        selectId: moduleId,
-        children: [
-          sashRow(`leaf${leafIndex + 1}/sash`),
-          {
-            id: `${moduleId}/${node.id}/leaf${leafIndex + 1}/handle`,
-            label: t("tree.handle"),
-            detail: node.handle_height_mm ? `${node.handle_height_mm} mm` : null,
-            kind: "handle",
-            severity: null,
-            selectId: moduleId,
-            children: [],
-          },
-          ...(infill ? [infill] : []),
-        ],
-      });
-    }
-    return rows;
-  }
-
-  if (operable) {
-    rows.push(sashRow("sash"));
+    });
     rows.push({
       id: `${moduleId}/${node.id}/handle`,
       label: t("tree.handle"),
@@ -194,9 +129,7 @@ function intentRows(
         kind: "mullion",
         severity: null,
         selectId: moduleId,
-        children: (node.children ?? []).flatMap((child) =>
-          intentRows(child, moduleId, members, t),
-        ),
+        children: (node.children ?? []).flatMap((child) => intentRows(child, moduleId, members, t)),
       },
     ];
   }

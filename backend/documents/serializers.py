@@ -173,6 +173,37 @@ class HandlePolicyRequirementsSerializer(serializers.Serializer):
     requirements = HandleRequirementSerializer(many=True)
 
 
+class WorkshopBayTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    label = serializers.CharField()
+    width_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
+class WorkshopLeafTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    leaf_label = serializers.CharField()
+
+
+class WorkshopSpanTargetSerializer(serializers.Serializer):
+    target_id = serializers.CharField()
+    label = serializers.CharField()
+    span_mm = DecimalStringField(max_digits=14, decimal_places=4)
+
+
+class WorkshopGlassTargetSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    leaf_id = serializers.CharField(allow_null=True)
+    label = serializers.CharField()
+
+
+class WorkshopTargetsSerializer(serializers.Serializer):
+    bays = WorkshopBayTargetSerializer(many=True)
+    leaves = WorkshopLeafTargetSerializer(many=True)
+    spans = WorkshopSpanTargetSerializer(many=True)
+    glass = WorkshopGlassTargetSerializer(many=True)
+
+
 class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerializer):
     system_name = serializers.CharField()
     manufacturing_placement_policy_id = serializers.UUIDField(allow_null=True)
@@ -182,6 +213,7 @@ class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerialize
     handle_options = DocumentaryPolicyOptionSerializer(many=True)
     reinforcement_options = DocumentaryPolicyOptionSerializer(many=True)
     handle_requirements = HandlePolicyRequirementsSerializer(many=True)
+    workshop_targets = WorkshopTargetsSerializer()
 
 
 class DocumentaryPreparationResponseSerializer(serializers.Serializer):

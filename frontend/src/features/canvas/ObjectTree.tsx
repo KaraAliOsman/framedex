@@ -18,7 +18,10 @@ function TreeRow({
   const expandable = node.children.length > 0;
   return (
     <li role="treeitem" aria-expanded={expandable ? open : undefined} aria-selected={selected}>
-      <div className={`tree-row tree-row--${node.kind}`} style={{ paddingLeft: `${6 + depth * 14}px` }}>
+      <div
+        className={`tree-row tree-row--${node.kind}`}
+        style={{ paddingLeft: `${6 + depth * 14}px` }}
+      >
         {expandable ? (
           <button
             type="button"
@@ -82,7 +85,9 @@ export function ObjectTree({
     <nav className="object-tree" aria-label={title}>
       <h3 className="object-tree__title">{title}</h3>
       <ul role="tree" className="tree-root">
-        <TreeRow key={root.id} node={root} depth={0} selection={selection} onSelect={onSelect} />
+        {root.children.map((node) => (
+          <TreeRow key={node.id} node={node} depth={0} selection={selection} onSelect={onSelect} />
+        ))}
       </ul>
     </nav>
   );
