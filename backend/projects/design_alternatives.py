@@ -83,18 +83,21 @@ def _default_thickness(catalog: dict) -> Decimal:
     return thicknesses[0] if thicknesses else Decimal("4.00")
 
 
-_RECIPE_PART = re.compile(r"\s*(\d+(?:[.,]\d+)?)")
+_RECIPE_PART = re.compile(r"\d+(?:[.,]\d+)?")
 
 
 def _recipe_unit_thickness(recipe: str) -> Decimal | None:
     """Total unit thickness a recipe occupies — panes AND chambers.
-    "4-16-4" is 24 mm of slot; unparseable recipes stay unknown."""
+    "4-16-4" is 24 mm of slot. Every component's leading token must be a
+    bare decimal — the same shape the engine's pane parser accepts — so a
+    spec it cannot read ("4-16-4garbage") stays unknown instead of being
+    counted here and misweighted there."""
     total = ZERO
     for part in recipe.replace("+", "-").split("-"):
-        match = _RECIPE_PART.match(part.strip())
-        if match is None or part.strip() == "":
+        tokens = part.split()
+        if not tokens or _RECIPE_PART.fullmatch(tokens[0]) is None:
             return None
-        total += Decimal(match.group(1).replace(",", "."))
+        total += Decimal(tokens[0].replace(",", "."))
     return total if total > ZERO else None
 
 
@@ -187,10 +190,13 @@ def _build_product(
     if glass_sku is None and any(opening != "DOOR_ENTRY" for opening in openings):
         return None, "vidrio_no_resuelto"
     # The mapping's recipe is the composition authority — "4-16-4" weighs
-    # 8 mm of glass, not the slot's 24. A spec-less mapping keeps the
-    # monolithic fallback: spec == slot thickness, honestly what it is.
+    # 8 mm of glass, not the slot's 24. An article WITHOUT a declared
+    # recipe has unknown panes: publishing a card weight for it would
+    # fabricate manufacturing truth, so the candidate rejects instead.
     recipe = catalog["glass_recipes"].get(glass_sku) if glass_sku else None
-    if glass_sku and recipe:
+    if glass_sku:
+        if not recipe:
+            return None, "vidrio_sin_composicion"
         unit_mm = _recipe_unit_thickness(recipe)
         if unit_mm is None:
             return None, "vidrio_incompatible"

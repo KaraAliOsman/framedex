@@ -289,7 +289,9 @@ def test_count_caps_evaluated_specs(monkeypatch):
     assert out["rejected"] == []
 
 
-def test_candidate_glass_spec_matches_catalog_thickness(monkeypatch):
+def test_recipeless_sku_rejects_instead_of_substituting_slot(monkeypatch):
+    """A glass article without a declared recipe cannot publish engine
+    weight — the bead slot is not a composition."""
     _patch(
         monkeypatch,
         {"alternatives": [{"openings": ["FIXED"], "glass_sku": "GLASS-4MM"}]},
@@ -299,9 +301,8 @@ def test_candidate_glass_spec_matches_catalog_thickness(monkeypatch):
         ),
     )
     out = _call()
-    tree = out["alternatives"][0]["product"]["assembly"]["modules"][0]["tree"]
-    assert tree["glass_thickness_mm"] == "6"
-    assert tree["glass_spec"] == "6"
+    assert out["alternatives"] == []
+    assert out["rejected"][0]["reasons"] == ["vidrio_sin_composicion"]
 
 
 def test_door_spec_fills_the_single_catalog_panel(monkeypatch):
@@ -478,7 +479,35 @@ def test_unparseable_recipe_rejects_instead_of_guessing():
     assert product is None and reason == "vidrio_incompatible"
 
 
-def test_spec_less_mapping_falls_back_to_the_slot_thickness():
+def test_trailing_garbage_recipe_rejects_instead_of_miscounting():
+    """A recipe with a corrupt token ("4-16-4garbage") must not be counted
+    here and misweighted by the engine there — it rejects the candidate."""
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "DVH-4-12-4"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(glass_recipes={"DVH-4-12-4": "4-16-4garbage"}),
+        coupler_skus=set(),
+    )
+    assert product is None and reason == "vidrio_incompatible"
+
+
+def test_recipeless_sku_rejects_instead_of_fabricating_weight():
+    """A bead slot is not a composition — an article without a declared
+    recipe cannot publish an engine-derived weight on the card."""
+    product, reason = design_alternatives._build_product(
+        {"openings": ["FIXED"], "glass_sku": "DVH-4-12-4"},
+        width_mm=Decimal("1200"),
+        height_mm=Decimal("1500"),
+        catalog=_catalog(glass_recipes={"DVH-4-12-4": None}),
+        coupler_skus=set(),
+    )
+    assert product is None and reason == "vidrio_sin_composicion"
+
+
+def test_spec_less_mapping_rejects_instead_of_substituting_the_slot():
+    """The slot dimension is not a recipe — an article without a declared
+    composition cannot publish a card weight."""
     product, reason = design_alternatives._build_product(
         {"openings": ["FIXED"], "glass_sku": "GLASS-4MM"},
         width_mm=Decimal("1200"),
@@ -486,10 +515,7 @@ def test_spec_less_mapping_falls_back_to_the_slot_thickness():
         catalog=_catalog(glass_recipes={"GLASS-4MM": None}),
         coupler_skus=set(),
     )
-    assert reason is None
-    tree = product["assembly"]["modules"][0]["tree"]
-    assert tree["glass_spec"] == "4"
-    assert tree["glass_thickness_mm"] == "4"
+    assert product is None and reason == "vidrio_sin_composicion"
 
 
 def test_leaf_weight_only_when_leaves_exist(monkeypatch):

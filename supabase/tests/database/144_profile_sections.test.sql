@@ -30,7 +30,7 @@ PREPARE bad AS
     VALUES (
         uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/test/section-bad'),
         (SELECT id FROM public.profile_systems WHERE code = 'DEMO_60' LIMIT 1),
-        NULL, 'TEST-SECTION-BAD', 'Sección Mala', 'ADDITIONAL', 'PVC', 10.00,
+        NULL, 'TEST-SECTION-BAD', 'Sección Mala', 'GLAZING_BEAD', 'PVC', 10.00,
         '{"source":"POLYGON","polygon":[{"x_mm":0,"y_mm":0},{"x_mm":1,"y_mm":0}],"depth_mm":60}'::jsonb
     );
 SELECT throws_ok('bad', 'a polygon with fewer than 3 points is rejected');

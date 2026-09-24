@@ -25,6 +25,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatMoney } from "../money";
+import { projectNameWrite } from "./projectNames";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
 import { ProjectBom } from "./ProjectPositionEditor";
@@ -77,7 +78,12 @@ function positionStatusKey(
 ): { key: TranslationKey; tone: string } {
   if (project.status === "IN_PRODUCTION" || project.status === "COMPLETED")
     return { key: "position.status.production", tone: "production" };
-  if (project.status !== "DRAFT" || project.current_revision)
+  // A draft always carries a revision code; frozen only once the revision
+  // is actually sealed — otherwise evaluated/priced would never show.
+  const revisionSealed = (project.versions ?? []).some(
+    (version) => version.revision_code === project.current_revision,
+  );
+  if (project.status !== "DRAFT" || revisionSealed)
     return { key: "position.status.frozen", tone: "frozen" };
   if (project.pricing_current) return { key: "position.status.priced", tone: "priced" };
   if (position.bom) return { key: "position.status.evaluated", tone: "evaluated" };
@@ -105,8 +111,12 @@ function PositionQtyInput({
   useEffect(() => setValue(String(position.quantity)), [position.quantity]);
 
   async function commit(): Promise<void> {
-    const next = Number.parseInt(value, 10);
-    if (!Number.isInteger(next) || next < 1 || next === position.quantity || saving) return;
+    const next = Number(value);
+    if (!Number.isInteger(next) || next < 1) {
+      setValue(String(position.quantity));
+      return;
+    }
+    if (next === position.quantity || saving) return;
     setSaving(true);
     try {
       const response = await positionsUpdate(
@@ -398,6 +408,7 @@ function ProjectWorkspace({
           throw new ApiError(response.status, response.data);
         }
         if (controller.signal.aborted) return;
+        projectNameWrite(orgId, id, submitted.value.name);
         setDraft(null);
         setNotice(t("projects.saved"));
         void query.refetch();
@@ -615,7 +626,7 @@ function ProjectWorkspace({
                 {t(statuses[project.status])}
               </p>
             </div>
-            {!factsCollapsed && (
+            <div className="project-facts__body" hidden={factsCollapsed}>
               <>
                 {canWrite && !editable && (
                   <p className="project-locked" role="status">
@@ -701,7 +712,7 @@ function ProjectWorkspace({
                   />
                 </details>
               </>
-            )}
+            </div>
           </aside>
 
           {/* CENTER — the positions grid: dense rows, one per vano, with

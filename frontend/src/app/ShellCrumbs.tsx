@@ -5,28 +5,31 @@ import { projectsRetrieve } from "../api/generated/dekopen";
 import { ApiError } from "../api/apiMutator";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
+import { projectNameCached, projectNameWrite } from "../features/projects/projectNames";
 
 export type Crumb = { label: string; to?: string };
 
-/** The project name is a fetch, not a route param — resolved once per id
- * and cached for the session so revisiting a project never re-reads it. */
-const projectNameCache = new Map<string, string>();
-
+/** The project name is a fetch, not a route param — resolved once per
+ * (org, id) and cached in features/projects/projectNames so revisiting a
+ * project never re-reads it and a rename writes through. */
 function useProjectName(id: string | null): string | null {
   const orgId = useAuthSession().me?.active_organization?.id;
-  const [name, setName] = useState<string | null>(id ? (projectNameCache.get(id) ?? null) : null);
+  const [name, setName] = useState<string | null>(
+    id && orgId ? projectNameCached(orgId, id) : null,
+  );
   useEffect(() => {
-    if (!id || !orgId || projectNameCache.has(id)) {
-      setName(id ? (projectNameCache.get(id) ?? null) : null);
+    const found = id && orgId ? projectNameCached(orgId, id) : null;
+    if (!id || !orgId || found !== null) {
+      setName(found);
       return;
     }
     let active = true;
     projectsRetrieve(id, { headers: { "X-Organization-ID": orgId } })
       .then((response) => {
         if (response.status !== 200) throw new ApiError(response.status, response.data);
-        const found = (response.data as { name?: string }).name ?? null;
-        if (found !== null) projectNameCache.set(id, found);
-        if (active) setName(found);
+        const fetched = (response.data as { name?: string }).name ?? null;
+        if (fetched !== null) projectNameWrite(orgId, id, fetched);
+        if (active) setName(fetched);
       })
       .catch(() => {
         if (active) setName(null);
