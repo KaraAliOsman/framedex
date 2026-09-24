@@ -15,9 +15,7 @@ from projects import design_assist
 
 def _product(modules=2, couplings=1):
     return {
-        "modules": [
-            {"width_mm": "1200", "height_mm": "1500"} for _ in range(modules)
-        ],
+        "modules": [{"width_mm": "1200", "height_mm": "1500"} for _ in range(modules)],
         "couplings": [{"angle_deg": "22.5"} for _ in range(couplings)],
     }
 
@@ -57,9 +55,7 @@ def _patch_invoke(monkeypatch, output, catalog=None):
         return _envelope(output)
 
     monkeypatch.setattr(design_assist.gateway, "invoke", fake_invoke)
-    monkeypatch.setattr(
-        design_assist, "_catalog", lambda system_id, org_id: catalog or _catalog()
-    )
+    monkeypatch.setattr(design_assist, "_catalog", lambda system_id, org_id: catalog or _catalog())
     return captured
 
 
@@ -159,7 +155,7 @@ def test_ranges_and_enums_enforced(monkeypatch):
         user_id=uuid4(),
         position=_position(),
         product=_product(),
-        prompt="todo al límite",
+        prompt="todo al límite: 99 módulos de 1200 mm y ángulo 120",
         system_id=uuid4(),
         operation_key="assist-5",
     )
@@ -193,7 +189,7 @@ def test_bad_provider_document_is_a_502(monkeypatch):
             product=_product(),
             prompt="x",
             system_id=uuid4(),
-        operation_key="assist-7",
+            operation_key="assist-7",
         )
     assert error.value.get_codes() == "design_assist_bad_output"
 
@@ -208,7 +204,7 @@ def test_invalid_product_summary_is_a_400(monkeypatch):
             product={"modules": []},
             prompt="x",
             system_id=uuid4(),
-        operation_key="assist-8",
+            operation_key="assist-8",
         )
     assert error.value.get_codes() == "design_assist_product_invalid"
 
@@ -322,7 +318,7 @@ def test_total_width_floor_tracks_the_simulated_module_count(monkeypatch):
         position=_position(),
         product=_product(modules=3, couplings=2),
         system_id=uuid4(),
-        prompt="angosto",
+        prompt="deja 1 módulo de 300 mm",
         operation_key="assist-13",
     )
     # 300 mm is below the 150×3 floor first; after shrinking to one module the
@@ -347,7 +343,7 @@ def test_thickness_must_match_a_glazing_bead_rule(monkeypatch):
         user_id=uuid4(),
         position=_position(),
         product=_product(),
-        prompt="espesores",
+        prompt="vidrios de 24 mm y de 9 mm",
         system_id=uuid4(),
         operation_key="assist-12",
     )
@@ -385,6 +381,133 @@ def test_mock_provider_bows_angles_and_empty_notes():
     )
     document = json.loads(out["output"])
     assert document["ops"] == [
-        {"op": "set_coupling_angle", "coupling": i, "angle_deg": 22.5}
-        for i in range(4)
+        {"op": "set_coupling_angle", "coupling": i, "angle_deg": 22.5} for i in range(4)
     ]
+
+
+def test_undeclared_dimensions_are_rejected_not_invented(monkeypatch):
+    """Trust boundary: the model may only cite numbers the user wrote. A
+    prompt like 'más ancha' declares no width — a model-invented 2400 must be
+    rejected, never applied."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_total_width", "width_mm": 2400},
+                {"op": "set_height", "height_mm": 1500},
+                {"op": "set_module_count", "count": 5},
+                {"op": "set_coupling_angle", "coupling": 0, "angle_deg": 30},
+                {"op": "set_glass_thickness", "module": 0, "mm": "4"},
+                {"op": "equalize_widths"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=3, couplings=2),
+        prompt="hazla más ancha y pareja",
+        system_id=uuid4(),
+        operation_key="assist-g1",
+    )
+    assert [op["op"] for op in out["ops"]] == ["equalize_widths"]
+    assert [item["reason"] for item in out["rejected"]] == [
+        "ancho_no_declarado",
+        "alto_no_declarado",
+        "cantidad_no_declarada",
+        "angulo_no_declarado",
+        "espesor_no_declarado",
+    ]
+
+
+def test_declared_units_ground_numeric_ops(monkeypatch):
+    """'2,4 metros' declares 2400 mm; 'tres módulos' declares count 3 —
+    Chilean-locale parsing must recognize both as user-entered values."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_total_width", "width_mm": "2400"},
+                {"op": "set_module_count", "count": 3},
+                {"op": "set_height", "height_mm": "1500"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=2, couplings=1),
+        prompt="tres módulos de 2,4 metros de ancho y 1500 mm de alto",
+        system_id=uuid4(),
+        operation_key="assist-g2",
+    )
+    assert [op["op"] for op in out["ops"]] == [
+        "set_total_width",
+        "set_module_count",
+        "set_height",
+    ]
+    assert out["rejected"] == []
+
+
+def test_unit_suffixed_literal_does_not_declare_its_raw_value(monkeypatch):
+    """'240 cm' declares 2400 mm only — a provider proposing width 240 must
+    not pass grounding on the token's unconverted literal."""
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "set_total_width", "width_mm": "240"}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=1, couplings=0),
+        prompt="ancho total 240 cm",
+        system_id=uuid4(),
+        operation_key="assist-g3",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "ancho_no_declarado"
+
+
+def test_signed_angle_declares_the_signed_value(monkeypatch):
+    """'ángulo -30 grados' must declare -30 — the sign binds to the number,
+    while range punctuation like '2400-1500' keeps both endpoints positive."""
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=2, couplings=1),
+        prompt="ángulo -30 grados",
+        system_id=uuid4(),
+        operation_key="assist-g4",
+    )
+    assert out["ops"] == [{"op": "set_coupling_angle", "coupling": 0, "angle_deg": "-30"}]
+    assert out["rejected"] == []
+
+
+def test_sign_binding_is_lexical_not_spacing_based(monkeypatch):
+    """A '-' subtracting from a preceding number is range punctuation however
+    it is spaced; only a non-subtraction '-' signs the value."""
+    _patch_invoke(monkeypatch, {"ops": []})
+    values = design_assist._declared_values
+    assert Decimal("-30") in values("ángulo -30 grados")
+    for prompt in (
+        "ángulo entre 30 -20 grados",
+        "ángulo entre 30 - 20 grados",
+        "ángulo 30-20 grados",
+        "ángulo entre 30° - 20°",
+        "ángulo 30 grados - 20 grados",
+        "30 mm - 20 mm",
+    ):
+        declared = values(prompt)
+        assert Decimal("-20") not in declared
+        assert Decimal("20") in declared and Decimal("30") in declared
+    for prompt in ("ángulos 30°; -20°", "+30°/-20°", "30, -20", "30 y -20"):
+        declared = values(prompt)
+        assert Decimal("-20") in declared and Decimal("30") in declared

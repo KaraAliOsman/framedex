@@ -68,13 +68,13 @@ class SupabaseDocumentStorage:
         if response.status_code not in (200, 204, 404):
             raise DocumentaryError("document_storage_delete_failed")
 
-    def signed_url(self, object_key: str) -> str:
+    def signed_url(self, object_key: str, expires_in: int | None = None) -> str:
         encoded = "/".join(quote(part, safe="") for part in object_key.split("/"))
         endpoint = f"{self.base_url}/storage/v1/object/sign/{self.bucket}/{encoded}"
         with httpx.Client(timeout=10) as client:
             response = client.post(
                 endpoint,
-                json={"expiresIn": SIGNED_URL_TTL_SECONDS},
+                json={"expiresIn": expires_in or SIGNED_URL_TTL_SECONDS},
                 headers=self._headers("application/json"),
             )
         if response.status_code != 200:

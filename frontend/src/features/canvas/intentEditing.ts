@@ -7,9 +7,70 @@ export const OPENINGS = [
   "TILT_TURN_LEFT",
   "TILT_TURN_RIGHT",
   "SLIDING_2L",
+  "SLIDING_3L",
+  "SLIDING_4L",
+  "SLIDING",
   "AWNING",
   "DOOR_ENTRY",
 ] as const;
+
+/** Ordered sliding topology of a bay (mandate §12): rail count plus one
+ * panel per slot, left to right. MOVING panels ride `track` (0-based);
+ * FIXED panels carry `track: null`.
+ */
+export type SlidingPanel = {
+  slot: string;
+  kind: "MOVING" | "FIXED";
+  track: number | null;
+};
+
+export type SlidingLayout = {
+  tracks: number;
+  panels: SlidingPanel[];
+};
+
+/** Presets mirrored from the engine (`geometry._SLIDING_PRESETS`) — every
+ * arrangement alternates tracks so adjacent leaves never collide. */
+export const SLIDING_PRESETS: Record<string, SlidingLayout> = {
+  SLIDING_2L: {
+    tracks: 2,
+    panels: [
+      { slot: "S1", kind: "MOVING", track: 0 },
+      { slot: "S2", kind: "MOVING", track: 1 },
+    ],
+  },
+  SLIDING_3L: {
+    tracks: 2,
+    panels: [
+      { slot: "S1", kind: "MOVING", track: 0 },
+      { slot: "S2", kind: "MOVING", track: 1 },
+      { slot: "S3", kind: "MOVING", track: 0 },
+    ],
+  },
+  SLIDING_4L: {
+    tracks: 2,
+    panels: [
+      { slot: "S1", kind: "MOVING", track: 0 },
+      { slot: "S2", kind: "MOVING", track: 1 },
+      { slot: "S3", kind: "MOVING", track: 0 },
+      { slot: "S4", kind: "MOVING", track: 1 },
+    ],
+  },
+};
+
+const SLIDING_OPENINGS = new Set<Opening>(["SLIDING_2L", "SLIDING_3L", "SLIDING_4L", "SLIDING"]);
+
+export function isSlidingOpening(opening: Opening | null | undefined): boolean {
+  return opening != null && SLIDING_OPENINGS.has(opening);
+}
+
+/** The topology a bay evaluates to: the declared layout wins, otherwise
+ * the preset table supplies it (engine `resolved_sliding_layout`). */
+export function resolvedSlidingLayout(node: IntentNode): SlidingLayout | null {
+  if (node.sliding_layout) return node.sliding_layout;
+  if (!node.opening_type) return null;
+  return SLIDING_PRESETS[node.opening_type] ?? null;
+}
 
 export type Opening = (typeof OPENINGS)[number];
 export type SplitType = "SPLIT_V" | "SPLIT_H";
@@ -23,6 +84,7 @@ export type IntentNode = {
   mullion_profile_sku?: string | null;
   children?: IntentNode[];
   opening_type?: Opening | null;
+  sliding_layout?: SlidingLayout | null;
   glass_thickness_mm?: string | null;
   glass_spec?: string | null;
   glass_article_sku?: string | null;
@@ -136,6 +198,13 @@ export function splitBay(
   }
 
   const first = omitDimensions(bay);
+  // A declared layout is whole-unit topology: splitting derives each half's
+  // own unit, so the stale layout drops and a layout-driven bay defaults
+  // back to the two-leaf preset on each side.
+  if (first.sliding_layout) {
+    delete first.sliding_layout;
+    if (first.opening_type === "SLIDING") first.opening_type = "SLIDING_2L";
+  }
   const replacement: IntentNode = {
     id: ids.split,
     type: division.type,

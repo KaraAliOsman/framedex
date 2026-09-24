@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import base64
 from decimal import Decimal
 from html import escape
 from pathlib import Path
 
+from dekopen_engine.contour import Contour, contour_points
+from dekopen_engine.models import PlanPoint
+from dekopen_engine.product import ElevationMember, elevation_layout
 from documents.repository import DocumentaryError
+from engine_api.adapter import parse_product_model
 
 _PDF_MEDIA = "application/pdf"
 _FONTS_DIR = Path(__file__).resolve().parent / "fonts"
@@ -142,6 +147,12 @@ def _url_fetcher(url: str, *args: object, **kwargs: object) -> object:
     Every other URL — remote or local — is denied so emitted documents can
     never exfiltrate or depend on network state.
     """
+    if url.startswith("data:"):
+        # Embedded bytes we generated server-side (e.g. a sealed signature
+        # PNG) — no fetch happens, so the frozen-authority contract holds.
+        from weasyprint import URLFetcher
+
+        return URLFetcher(allowed_protocols={"data"}).fetch(url)
     if url.startswith("file://"):
         target = Path(url.removeprefix("file://")).resolve()
         if target.parent == _FONTS_DIR and target.suffix == ".ttf":
@@ -259,21 +270,32 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             f'{_pt(mx)},{_pt(iy + ih)}" fill="none" stroke="#075F5A" '
             f'stroke-width="{stroke}"/>'
         )
-    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L"):
-        leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}[str(opening)]
-        leaf_w = iw / leaf_count
-        for index in range(leaf_count):
+    elif opening in ("SLIDING_2L", "SLIDING_3L", "SLIDING_4L", "SLIDING"):
+        layout = node.get("sliding_layout")
+        layout_panels = (
+            layout.get("panels")
+            if isinstance(layout, dict) and isinstance(layout.get("panels"), list)
+            and layout["panels"] else None
+        )
+        if layout_panels is None:
+            leaf_count = {"SLIDING_2L": 2, "SLIDING_3L": 3, "SLIDING_4L": 4}.get(
+                str(opening), 2
+            )
+            layout_panels = [{"kind": "MOVING"} for _ in range(leaf_count)]
+        leaf_w = iw / len(layout_panels)
+        for index, panel in enumerate(layout_panels):
             lx = ix + leaf_w * index
             out.append(
                 f'<rect x="{_pt(lx)}" y="{_pt(iy)}" width="{_pt(leaf_w)}" '
                 f'height="{_pt(ih)}" fill="none" stroke="#075F5A" '
                 f'stroke-width="{stroke}"/>'
             )
-            out.append(
-                f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
-                f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
-                f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
-            )
+            if not isinstance(panel, dict) or panel.get("kind") == "MOVING":
+                out.append(
+                    f'<line x1="{_pt(lx + leaf_w / 4)}" y1="{_pt(my)}" '
+                    f'x2="{_pt(lx + leaf_w * 3 / 4)}" y2="{_pt(my)}" stroke="#075F5A" '
+                    f'stroke-width="{stroke}" marker-end="url(#{marker})"/>'
+                )
     elif opening in ("DOOR_ENTRY", "DOOR_DOUBLE"):
         out.append(
             f'<line x1="{_pt(ix)}" y1="{_pt(iy + ih)}" x2="{_pt(ix + iw)}" '
@@ -286,6 +308,46 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
             )
 
 
+def _contour_svg_path(
+    contour_payload: object,
+) -> tuple[str, Decimal, Decimal, Decimal, Decimal]:
+    """Sampled SVG `d` for a stored module contour, plus its sampled extrema.
+
+    The boundary comes from the engine's own sampler (vertices exact, arcs
+    chord-sampled), so issued documents render the same shape the geometry
+    evaluated — never a bounding-box stand-in. Returns (path_d, top, bottom,
+    left, right) — the sampled bounds in module-local coordinates. An arc
+    can overshoot the vertex box on any side, so the caller must bound the
+    viewBox from these extrema, not the nominal dims."""
+    raw = _object(contour_payload, "invalid_frozen_parametric_tree")
+    vertices = [
+        PlanPoint(
+            x_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("x_mm")),
+            y_mm=_num(_object(point, "invalid_frozen_parametric_tree").get("y_mm")),
+        )
+        for point in _array(raw.get("vertices"), "invalid_frozen_parametric_tree")
+    ]
+    bulges = [
+        None if bulge is None else _num(bulge)
+        for bulge in _array(raw.get("bulges"), "invalid_frozen_parametric_tree")
+    ]
+    try:
+        points = contour_points(Contour(vertices=vertices, bulges=bulges))
+    except ValueError as error:
+        raise DocumentaryError("svg_dimension_invalid") from error
+    if not points:
+        raise DocumentaryError("svg_dimension_invalid")
+    top = max(point.y_mm for point in points)
+    bottom = min(point.y_mm for point in points)
+    left = min(point.x_mm for point in points)
+    right = max(point.x_mm for point in points)
+    commands = [
+        f"{'M' if index == 0 else 'L'}{_pt(point.x_mm)},{_pt(top - point.y_mm)}"
+        for index, point in enumerate(points)
+    ]
+    return " ".join(commands) + " Z", top, bottom, left, right
+
+
 def _position_svg(position: dict[str, object]) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
     marker = f"arrow-{_value(position.get('position_index'))}"
@@ -295,54 +357,106 @@ def _position_svg(position: dict[str, object]) -> str:
         'stroke-width="1"/></marker></defs>'
     ]
     if tree.get("version") == "product-v2":
-        # Assemblies draw every module's front view side by side; couplings
-        # become an orange joint line with the plan deflection annotated.
         assembly = _object(tree.get("assembly"), "invalid_frozen_parametric_tree")
         modules = [
             _object(module, "invalid_frozen_parametric_tree")
             for module in _array(assembly.get("modules"), "invalid_frozen_parametric_tree")
         ]
-        couplings = [
-            _object(coupling, "invalid_frozen_parametric_tree")
-            for coupling in _array(
-                assembly.get("couplings", []), "invalid_frozen_parametric_tree"
-            )
-        ]
-        width = Decimal("0")
-        height = Decimal("0")
-        for index, module in enumerate(modules):
-            module_width = _num(module.get("width_mm"))
-            module_height = _num(module.get("height_mm"))
-            if module_width <= 0 or module_height <= 0:
+        # The front elevation comes from the engine's layout: front columns
+        # advance left→right, STACKED members sit above their column root,
+        # and joints are typed (INLINE seams vertical, STACKED contacts
+        # horizontal) — never the side-by-side declaration order.
+        try:
+            layout = elevation_layout(parse_product_model(tree).assembly)
+        except (ValueError, KeyError, DocumentaryError) as error:
+            raise DocumentaryError("invalid_frozen_parametric_tree") from error
+        modules_by_id = {str(module.get("id")): module for module in modules}
+
+        # A contour may overshoot its nominal box (an arch rises above it; a
+        # down-swinging arc dips below). Members on one column share the
+        # column's baseline; every column still shares ONE sill line.
+        draws: list[
+            tuple[dict[str, object], ElevationMember, Decimal, Decimal, Decimal, str | None]
+        ] = []
+        top_edge = Decimal("0")
+        bottom_edge = Decimal("0")
+        left_edge = Decimal("0")
+        right_edge = Decimal("0")
+        for index, member in enumerate(layout.members):
+            module = modules_by_id.get(member.module_id)
+            if module is None:
+                raise DocumentaryError("invalid_frozen_parametric_tree")
+            if member.width_mm <= 0 or member.height_mm <= 0:
                 raise DocumentaryError("svg_dimension_invalid")
-            if index > 0:
-                joint_width = module_width / Decimal("60")
-                elements.append(
-                    f'<line x1="{_pt(width)}" y1="0" x2="{_pt(width)}" '
-                    f'y2="{_pt(module_height)}" stroke="#E56A32" '
-                    f'stroke-width="{_pt(joint_width)}"/>'
-                )
-                if index - 1 < len(couplings):
-                    angle = couplings[index - 1].get("angle_deg")
-                    if angle is not None:
-                        elements.append(
-                            f'<text x="{_pt(width)}" y="{_pt(module_height / Decimal("18"))}" '
-                            f'font-size="{_pt(module_height / Decimal("16"))}" '
-                            f'fill="#E56A32" text-anchor="middle">'
-                            f'{escape(_value(angle))}°</text>'
-                        )
-            _svg_elements(
-                _object(module.get("tree"), "invalid_frozen_parametric_tree"),
-                width, Decimal("0"), module_width, module_height, elements, marker,
+            path_d: str | None = None
+            member_top = member.height_mm
+            member_bottom = Decimal("0")
+            member_left = member.x_mm
+            member_right = member.x_mm + member.width_mm
+            contour_payload = module.get("contour")
+            if contour_payload is not None:
+                path_d, ctop, cbottom, cleft, cright = _contour_svg_path(contour_payload)
+                member_top = ctop
+                member_bottom = cbottom
+                member_left = member.x_mm + cleft
+                member_right = member.x_mm + cright
+            draws.append(
+                (module, member, member.width_mm, member.height_mm, member_top, path_d)
             )
+            top_edge = max(top_edge, member.sill_mm + member_top)
+            bottom_edge = min(bottom_edge, member.sill_mm + member_bottom)
+            left_edge = member_left if index == 0 else min(left_edge, member_left)
+            right_edge = member_right if index == 0 else max(right_edge, member_right)
+        height = top_edge - bottom_edge
+        width = right_edge - left_edge if layout.members else Decimal("0")
+
+        for module, member, module_width, module_height, member_top, path_d in draws:
+            x = member.x_mm - left_edge
+            baseline = top_edge - (member.sill_mm + member_top)
+            if path_d is not None:
+                stroke = module_width / Decimal("150")
+                elements.append(
+                    f'<g transform="translate({_pt(x)} {_pt(baseline)})">'
+                    f'<path d="{path_d}" fill="none" stroke="#252D31" '
+                    f'stroke-width="{_pt(stroke)}"/></g>'
+                )
+            else:
+                _svg_elements(
+                    _object(module.get("tree"), "invalid_frozen_parametric_tree"),
+                    x, baseline, module_width, module_height, elements, marker,
+                )
             elements.append(
-                f'<text x="{_pt(width + module_width / Decimal("30"))}" '
-                f'y="{_pt(module_height - module_height / Decimal("30"))}" '
+                f'<text x="{_pt(x + module_width / Decimal("30"))}" '
+                f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
                 f'font-size="{_pt(module_height / Decimal("18"))}" '
                 f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
             )
-            width += module_width
-            height = max(height, module_height)
+        for joint in layout.column_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_top = top_edge - joint.top_mm
+            seam_bottom = top_edge
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_top)}" x2="{_pt(seam_x)}" '
+                f'y2="{_pt(seam_bottom)}" stroke="#E56A32" '
+                f'stroke-width="{_pt(joint_width)}"/>'
+            )
+            if joint.angle_deg is not None:
+                elements.append(
+                    f'<text x="{_pt(seam_x)}" y="{_pt(seam_bottom - joint.top_mm / Decimal("18"))}" '
+                    f'font-size="{_pt(joint.top_mm / Decimal("16"))}" '
+                    f'fill="#E56A32" text-anchor="middle">'
+                    f'{escape(str(joint.angle_deg))}°</text>'
+                )
+        for joint in layout.stack_joints:
+            seam_x = joint.x_mm - left_edge
+            seam_y = top_edge - joint.y_mm
+            joint_width = joint.width_mm / Decimal("60")
+            elements.append(
+                f'<line x1="{_pt(seam_x)}" y1="{_pt(seam_y)}" '
+                f'x2="{_pt(seam_x + joint.width_mm)}" y2="{_pt(seam_y)}" '
+                f'stroke="#E56A32" stroke-width="{_pt(joint_width)}"/>'
+            )
     else:
         width = _num(position.get("width_mm"))
         height = _num(position.get("height_mm"))
@@ -817,6 +931,567 @@ def render_pdf_document(
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
         f"<style>{_CSS}</style></head><body>{body}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+_PAYMENT_KIND_ES = {"ANTICIPO": "Anticipo", "PARCIAL": "Abono parcial", "SALDO": "Saldo"}
+_PAYMENT_METHOD_ES = {
+    "TRANSFERENCIA": "Transferencia",
+    "EFECTIVO": "Efectivo",
+    "TARJETA": "Tarjeta",
+    "CHEQUE": "Cheque",
+    "FLOW": "Flow",
+    "OTRO": "Otro",
+}
+
+
+def _receipt_body(payload: dict[str, object]) -> str:
+    project = _object(payload.get("project"), "invalid_receipt_project")
+    payment = _object(payload.get("payment"), "invalid_receipt_payment")
+    balance = _object(payload.get("balance"), "invalid_receipt_balance")
+    issued_at = _value(payload.get("issued_at"))
+    receipt_code = _value(payload.get("receipt_code"))
+    currency = _value(project.get("currency"))
+    kind = _PAYMENT_KIND_ES.get(_value(payment.get("kind")), _value(payment.get("kind")))
+    method = _PAYMENT_METHOD_ES.get(
+        _value(payment.get("method")), _value(payment.get("method"))
+    )
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Comprobante de pago</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Recibo</span>'
+        f'<span class="tb-value">{escape(receipt_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Operación</span>'
+        f'<span class="tb-value">{escape(_value(payment.get("operation_key")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(receipt_code)}</strong><br>"
+        f"Comprobante de pago<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Comprobante de pago</h1>"
+        '<section class="hero"><p>Recibido de</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
+        f"{escape(_value(project.get('delivery_address')))}</p>"
+        f'<p class="total">Monto: {escape(currency)} '
+        f'{escape(_value(payment.get("amount")))}</p></section>'
+    )
+    body += (
+        "<h2>Detalle del cobro</h2>"
+        + _table(
+            ["Concepto", "Método", "Referencia", "Fecha de cobro"],
+            [[kind, method, payment.get("reference"), _value(payment.get("recorded_at"))[:10]]],
+        )
+    )
+    note = _value(payment.get("note"))
+    if note != "—":
+        body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
+    body += (
+        "<h2>Estado del trato</h2>"
+        + _table(
+            ["Total cotizado", "Cobrado", "Saldo"],
+            [
+                [
+                    f"{currency} {_value(balance.get('deal_total'))}",
+                    f"{currency} {_value(balance.get('collected'))}",
+                    f"{currency} {_value(balance.get('remaining'))}",
+                ]
+            ],
+            ["", "", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Recibido por</p></div></main>"
+    )
+    return body
+
+
+def render_payment_receipt(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_receipt_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+def _dispatch_note_body(payload: dict[str, object]) -> str:
+    order = _object(payload.get("order"), "invalid_dispatch_note_order")
+    project = _object(payload.get("project"), "invalid_dispatch_note_project")
+    totals = _object(payload.get("totals"), "invalid_dispatch_note_totals")
+    dispatch = _object(payload.get("dispatch"), "invalid_dispatch_note_dispatch")
+    units = payload.get("units") or []
+    issued_at = _value(payload.get("issued_at"))
+    note_code = _value(payload.get("note_code"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Guía de despacho</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Guía</span>'
+        f'<span class="tb-value">{escape(note_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
+        f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(note_code)}</strong><br>"
+        f"Guía de despacho<br>{escape(issued_at)}</div></div>"
+    )
+    body += (
+        '<div class="rule-stack"></div>'
+        "<h1>Guía de despacho</h1>"
+        '<section class="hero"><p>Destinatario</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
+        f"<p>{escape(_value(project.get('delivery_address')))}</p>"
+        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+    )
+    if units:
+        body += (
+            "<h2>Bultos</h2>"
+            + _table(
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
+                [
+                    [
+                        unit.get("label_code"),
+                        unit.get("profiles"),
+                        unit.get("reinforcements"),
+                        unit.get("glasses"),
+                        unit.get("panels"),
+                        unit.get("hardware"),
+                        unit.get("fittings"),
+                    ]
+                    for unit in units
+                ],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
+            )
+        )
+    else:
+        body += (
+            "<h2>Bultos</h2><p class=\"muted\">Sin manifiesto de embalaje "
+            "registrado — la orden se despacha sin desglose por bulto.</p>"
+        )
+    note = _value(dispatch.get("note"))
+    if note != "—":
+        body += f"<p><strong>Nota:</strong> {escape(note)}</p>"
+    body += (
+        "<h2>Resumen de contenido</h2>"
+        + _table(
+            ["Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
+            [
+                [
+                    totals.get("profiles"),
+                    totals.get("reinforcements"),
+                    totals.get("glasses"),
+                    totals.get("panels"),
+                    totals.get("hardware"),
+                    totals.get("fittings"),
+                ]
+            ],
+            ["dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Despachado por / Recibido conforme</p></div></main>"
+    )
+    return body
+
+
+def render_dispatch_note(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_dispatch_note_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+_TYPOLOGY_ES = {
+    "FIXED": "Fijo",
+    "TURN": "Abatible",
+    "TILT_TURN": "Oscilobatiente",
+    "SLIDING_2L": "Corredera 2 hojas",
+    "AWNING": "Proyectante",
+    "DOOR_ENTRY": "Puerta",
+    "COMPOSITE": "Conjunto",
+}
+
+
+def _invoice_body(payload: dict[str, object]) -> str:
+    project = _object(payload.get("project"), "invalid_invoice_project")
+    deal = _object(payload.get("deal"), "invalid_invoice_deal")
+    balance = _object(payload.get("balance"), "invalid_invoice_balance")
+    positions = payload.get("positions") or []
+    issued_at = _value(payload.get("issued_at"))
+    invoice_code = _value(payload.get("invoice_code"))
+    revision = _value(payload.get("revision_code"))
+    currency = _value(project.get("currency"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Factura</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Factura</span>'
+        f'<span class="tb-value">{escape(invoice_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
+        f'<span class="tb-value">{escape(revision)}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(invoice_code)}</strong><br>"
+        f"Factura<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Factura</h1>"
+        '<section class="hero"><p>Facturar a</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
+        f"{escape(_value(project.get('delivery_address')))}</p>"
+        f'<p class="total">Total: {escape(currency)} '
+        f'{escape(_value(deal.get("total_gross")))}</p></section>'
+    )
+    if positions:
+        body += (
+            "<h2>Detalle</h2>"
+            + _table(
+                ["Posición", "Tipología", "Medidas (mm)", "Cantidad"],
+                [
+                    [
+                        position.get("position_index"),
+                        _TYPOLOGY_ES.get(
+                            _value(position.get("typology")),
+                            _value(position.get("typology")),
+                        ),
+                        f"{_value(position.get('width_mm'))} × "
+                        f"{_value(position.get('height_mm'))}"
+                        + (
+                            f" · {_value(position.get('location_tag'))}"
+                            if _value(position.get("location_tag")) != "—"
+                            else ""
+                        ),
+                        position.get("quantity"),
+                    ]
+                    for position in positions
+                ],
+                ["dimension", "", "", "dimension"],
+            )
+        )
+    payment_terms = _value(project.get("payment_terms"))
+    if payment_terms != "—":
+        body += f"<p><strong>Condiciones de pago:</strong> {escape(payment_terms)}</p>"
+    body += (
+        "<h2>Totales</h2>"
+        + _table(
+            ["Neto", "IVA", "Total", "Abonado", "Saldo"],
+            [
+                [
+                    f"{currency} {_value(deal.get('total_net'))}",
+                    f"{currency} {_value(deal.get('total_tax'))}",
+                    f"{currency} {_value(deal.get('total_gross'))}",
+                    f"{currency} {_value(balance.get('collected'))}",
+                    f"{currency} {_value(balance.get('amount_due'))}",
+                ]
+            ],
+            ["dimension", "dimension", "dimension", "dimension", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Emitido por / Recibido conforme</p></div></main>"
+    )
+    return body
+
+
+def render_project_invoice(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_invoice_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+def _credit_note_body(payload: dict[str, object]) -> str:
+    invoice = _object(payload.get("invoice"), "invalid_credit_note_invoice")
+    project = _object(payload.get("project"), "invalid_credit_note_project")
+    deal = _object(payload.get("deal"), "invalid_credit_note_deal")
+    positions = payload.get("positions") or []
+    issued_at = _value(payload.get("issued_at"))
+    credit_code = _value(payload.get("credit_code"))
+    invoice_code = _value(invoice.get("invoice_code"))
+    revision = _value(payload.get("revision_code"))
+    currency = _value((deal or {}).get("currency")) or _value(project.get("currency"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Nota de crédito</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">N. de crédito</span>'
+        f'<span class="tb-value">{escape(credit_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Revisión</span>'
+        f'<span class="tb-value">{escape(revision)}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(credit_code)}</strong><br>"
+        f"Nota de crédito<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Nota de crédito</h1>"
+        '<section class="hero"><p>Acreditar a</p>'
+        f"<h2>{escape(_value(project.get('client_name')))}</h2>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
+        f'<p class="total">Crédito: {escape(currency)} '
+        f'{escape(_value(deal.get("total_gross")))}</p></section>'
+    )
+    body += (
+        f"<p><strong>Referencia:</strong> anula Factura {escape(invoice_code)}"
+        + (
+            f" emitida el {escape(str(invoice.get('issued_at'))[:10])}"
+            if invoice.get("issued_at")
+            else ""
+        )
+        + "</p>"
+    )
+    reason = _value(payload.get("reason"))
+    if reason != "—":
+        body += f"<p><strong>Motivo:</strong> {escape(reason)}</p>"
+    if positions:
+        body += (
+            "<h2>Detalle</h2>"
+            + _table(
+                ["Posición", "Tipología", "Medidas (mm)", "Cantidad"],
+                [
+                    [
+                        position.get("position_index"),
+                        _TYPOLOGY_ES.get(
+                            _value(position.get("typology")),
+                            _value(position.get("typology")),
+                        ),
+                        f"{_value(position.get('width_mm'))} × "
+                        f"{_value(position.get('height_mm'))}"
+                        + (
+                            f" · {_value(position.get('location_tag'))}"
+                            if _value(position.get("location_tag")) != "—"
+                            else ""
+                        ),
+                        position.get("quantity"),
+                    ]
+                    for position in positions
+                ],
+                ["dimension", "", "", "dimension"],
+            )
+        )
+    body += (
+        "<h2>Totales acreditados</h2>"
+        + _table(
+            ["Neto", "IVA", "Total"],
+            [
+                [
+                    f"{currency} {_value(deal.get('total_net'))}",
+                    f"{currency} {_value(deal.get('total_tax'))}",
+                    f"{currency} {_value(deal.get('total_gross'))}",
+                ]
+            ],
+            ["dimension", "dimension", "dimension"],
+        )
+        + "<div class=\"signoff\"><div class=\"signature\"></div>"
+        + "<p class=\"muted\">Emitido por / Recibido conforme</p></div></main>"
+    )
+    return body
+
+
+def render_credit_note(
+    payload: dict[str, object], *, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}</style></head><body>{_credit_note_body(payload)}</body></html>"
+    )
+    content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
+        pdf_identifier=pdf_identifier,
+    )
+    if not isinstance(content, bytes) or not content.startswith(b"%PDF-"):
+        raise DocumentaryError("pdf_generation_failed")
+    return content, _PDF_MEDIA
+
+
+def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
+    order = _object(payload.get("order"), "invalid_pod_order")
+    project = _object(payload.get("project"), "invalid_pod_project")
+    delivery = _object(payload.get("delivery"), "invalid_pod_delivery")
+    receiver = _object(payload.get("receiver"), "invalid_pod_receiver")
+    totals = _object(payload.get("totals"), "invalid_pod_totals")
+    units = payload.get("units") or []
+    payment = payload.get("payment")
+    issued_at = _value(payload.get("issued_at"))
+    confirmation_code = _value(payload.get("confirmation_code"))
+    titleblock = (
+        '<div class="titleblock">'
+        f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
+        f'<span class="tb-value">{escape(_value(project.get("code")))}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Documento</span>'
+        '<span class="tb-value">Comprobante de entrega</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Comprobante</span>'
+        f'<span class="tb-value">{escape(confirmation_code)}</span></div>'
+        f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
+        f'<span class="tb-value">{escape(issued_at[:10])}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Orden</span>'
+        f'<span class="tb-value">{escape(_value(order.get("code")))}</span></div>'
+        '<div class="tb-cell"><span class="tb-label">Página</span>'
+        '<span class="tb-value"><span class="pg"></span></span></div>'
+        "</div>"
+    )
+    body = (
+        f'<main>{titleblock}'
+        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
+        '<span class="mark"></span></div></div>'
+        '<div class="meta">'
+        f"<strong>{escape(confirmation_code)}</strong><br>"
+        f"Comprobante de entrega<br>{escape(issued_at)}</div></div>"
+        '<div class="rule-stack"></div>'
+        "<h1>Comprobante de entrega</h1>"
+        '<section class="hero"><p>Recibido por</p>'
+        f"<h2>{escape(_value(receiver.get('name')))}</h2>"
+        f"<p>RUT: {escape(_value(receiver.get('rut')))}</p>"
+        f"<p>{escape(_value(delivery.get('address')))} · "
+        f"{escape(_value(delivery.get('scheduled_date')))} "
+        f"{escape(_value(delivery.get('time_window')))}</p>"
+        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+    )
+    if units:
+        body += (
+            "<h2>Bultos entregados</h2>"
+            + _table(
+                ["Etiqueta", "Perfiles", "Refuerzos", "Vidrios", "Paneles", "Herrajes", "Accesorios"],
+                [
+                    [
+                        unit.get("label_code"),
+                        unit.get("profiles"),
+                        unit.get("reinforcements"),
+                        unit.get("glasses"),
+                        unit.get("panels"),
+                        unit.get("hardware"),
+                        unit.get("fittings"),
+                    ]
+                    for unit in units
+                ],
+                ["", "dimension", "dimension", "dimension", "dimension", "dimension", "dimension"],
+            )
+        )
+    contact = _value(delivery.get("contact_name"))
+    installer = _value(delivery.get("installer_name"))
+    detail_rows = [
+        ["Entrega programada", f"{_value(delivery.get('scheduled_date'))} · {_value(delivery.get('time_window'))}"],
+        ["Contacto en sitio", contact],
+        ["Cuadrilla", installer],
+    ]
+    body += "<h2>Entrega</h2>" + _table(
+        ["Campo", "Valor"], detail_rows, ["", ""]
+    )
+    if payment:
+        body += (
+            "<h2>Cobro contra entrega</h2>"
+            + _table(
+                ["Medio", "Tipo", "Monto", "Referencia"],
+                [
+                    [
+                        payment.get("method"),
+                        payment.get("kind"),
+                        payment.get("amount"),
+                        payment.get("reference"),
+                    ]
+                ],
+                ["", "", "dimension", ""],
+            )
+        )
+    body += (
+        "<h2>Firma del receptor</h2>"
+        f'<img class="pod-signature" src="data:image/png;base64,{signature_b64}" alt="Firma">'
+        '<div class="signoff"><div class="signature"></div>'
+        f'<p class="muted">{escape(_value(receiver.get("name")))} — Recibido conforme</p></div></main>'
+    )
+    return body
+
+
+def render_delivery_pod(
+    payload: dict[str, object], *, signature_png: bytes, pdf_identifier: str
+) -> tuple[bytes, str]:
+    from weasyprint import HTML
+
+    signature_b64 = base64.b64encode(signature_png).decode("ascii")
+    html = (
+        "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<style>{_CSS}"
+        ".pod-signature{max-width:70mm;max-height:28mm;border:0.4pt solid "
+        "#e5e7eb;border-radius:4px;padding:2mm;background:#fff}"
+        f"</style></head><body>{_delivery_pod_body(payload, signature_b64)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
         pdf_identifier=pdf_identifier,

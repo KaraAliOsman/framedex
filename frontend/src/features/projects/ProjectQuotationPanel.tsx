@@ -638,8 +638,17 @@ export function ProjectQuotationPanel({
       if (access.status !== 200) {
         throw new ApiError(access.status, access.data);
       }
-      if (generation.current === current)
-        window.open(access.data.signed_url, "_blank", "noopener,noreferrer");
+      if (generation.current === current) {
+        const response = await fetch(access.data.signed_url);
+        if (!response.ok) throw new ApiError(response.status, {});
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = `DOC-01-${versionId}.pdf`;
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
+      }
     } catch {
       if (generation.current === current) setMessage(t("quotation.documentError"));
     } finally {

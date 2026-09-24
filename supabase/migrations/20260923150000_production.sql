@@ -94,9 +94,9 @@ WITH CHECK (
     AND org_id IN (SELECT private.current_user_org_ids())
 );
 
-REVOKE ALL ON public.work_centers FROM anon;
-REVOKE ALL ON public.production_steps FROM anon;
-REVOKE ALL ON public.production_step_events FROM anon;
+REVOKE ALL ON public.work_centers FROM anon, authenticated;
+REVOKE ALL ON public.production_steps FROM anon, authenticated;
+REVOKE ALL ON public.production_step_events FROM anon, authenticated;
 -- Writes flow only through documentary_backend (API role checks + transition
 -- validation); org members keep read access for the paperless floor UI.
 GRANT SELECT ON public.work_centers TO authenticated;
