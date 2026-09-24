@@ -9,6 +9,7 @@ deleted — a consumed remnant stays traceable to the order that produced it.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
@@ -281,7 +282,9 @@ def unreserve_remnant(
     *, org_id: UUID, remnant_id: UUID, actor_id: UUID,
 ) -> dict[str, object]:
     """Return a RESERVED remnant to the pool — the operator decided this plan
-    won't cut it after all."""
+    won't cut it after all. The reserving order's plan must stop claiming the
+    drop in the same transaction: leaving the claim behind would let another
+    order book the physical remnant while the first plan still lists it."""
     with transaction.atomic(), documentary_backend():
         row = one(
             f"{_SELECT} WHERE id = %s AND org_id = %s FOR UPDATE",
@@ -290,6 +293,7 @@ def unreserve_remnant(
         )
         if row["status"] != "RESERVED":
             raise DocumentaryError("remnant_not_reserved")
+        order_id = row["reserved_order_id"]
         rows(
             """
             UPDATE public.inventory_remnants
@@ -298,12 +302,65 @@ def unreserve_remnant(
             """,
             [datetime.now(timezone.utc), str(remnant_id), str(org_id)],
         )
+        if order_id:
+            _evict_remnant_claim(
+                org_id=org_id,
+                order_id=UUID(str(order_id)),
+                remnant_id=remnant_id,
+            )
         refreshed = one(
             f"{_SELECT} WHERE id = %s AND org_id = %s",
             [str(remnant_id), str(org_id)],
             "remnant_not_found",
         )
     return _remnant_row(refreshed)
+
+
+def _evict_remnant_claim(
+    *, org_id: UUID, order_id: UUID, remnant_id: UUID
+) -> None:
+    """Rewrite the reserving order's plan so it no longer claims the released
+    drop: the layout rows keep their cut positions but now need fresh stock
+    (`source` → NEW, `remnant_id` cleared) and `remnants.consumed` loses the
+    entry. Physical identity and plan stay consistent in one transaction."""
+    row = one(
+        "SELECT payload_json FROM public.orders WHERE id = %s AND org_id = %s FOR UPDATE",
+        [str(order_id), str(org_id)],
+        "work_order_not_found",
+    )
+    payload = row["payload_json"]
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    optimization = payload.get("optimization")
+    if not isinstance(optimization, dict):
+        return
+    remnant_key = str(remnant_id)
+    remnants = optimization.get("remnants")
+    if isinstance(remnants, dict) and isinstance(remnants.get("consumed"), list):
+        remnants["consumed"] = [
+            entry
+            for entry in remnants["consumed"]
+            if str(entry.get("id")) != remnant_key
+        ]
+    bars = optimization.get("bars")
+    if isinstance(bars, dict) and isinstance(bars.get("workshop_cut_plan"), list):
+        for bar in bars["workshop_cut_plan"]:
+            if isinstance(bar, dict) and str(bar.get("remnant_id")) == remnant_key:
+                bar["remnant_id"] = None
+                bar["source"] = "NEW"
+    sheets = optimization.get("sheets")
+    if isinstance(sheets, list):
+        for sheet in sheets:
+            if isinstance(sheet, dict) and str(sheet.get("remnant_id")) == remnant_key:
+                sheet["remnant_id"] = None
+                sheet["source"] = "NEW"
+    rows(
+        """
+        UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+        WHERE id = %s AND org_id = %s RETURNING id
+        """,
+        [json.dumps(payload), datetime.now(timezone.utc), str(order_id), str(org_id)],
+    )
 
 
 def record_produced_remnants(

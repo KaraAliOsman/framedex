@@ -862,6 +862,39 @@ def test_complete_cut_rejects_released_remnant() -> None:
     assert error.value.code == "work_order_remnant_released"
 
 
+def test_complete_step_rejects_missing_plan() -> None:
+    # A consuming step needs the optimization record at all: an order that
+    # was never optimized carries no material accounting, so completion
+    # would silently skip every reservation and shortage check.
+    step = _step_row(status="IN_PROGRESS", code="ASSEMBLE")
+    payload = json.dumps({"position_id": "p-1"})
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_plan_missing"
+
+
 def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
     # quantity>1 must not label two physical panes with the same piece_id —
     # a label resolves to exactly one unit in the trace.

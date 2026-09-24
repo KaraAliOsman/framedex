@@ -756,6 +756,11 @@ def transition_step(
                     for entry in (opt.get("unnested") or [])
                 )
             )
+            if not opt:
+                # A material-consuming step needs the optimization record:
+                # without it the order would complete with no material
+                # accounting whatsoever — not even a partial reservation.
+                raise DocumentaryError("work_order_plan_missing")
             if short_entries or unplaced_plan or opt.get("unmapped_stock_skus"):
                 raise DocumentaryError("work_order_material_shortage")
             open_entries = [
