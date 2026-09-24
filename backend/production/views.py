@@ -28,6 +28,7 @@ from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
 from projects import sii
 from production.serializers import (
+    ProductionPrepSerializer,
     DeliveryConfirmRequestSerializer,
     DeliveryConfirmResponseSerializer,
     DeliveryConfirmationAccessSerializer,
@@ -101,6 +102,21 @@ def public_production_errors():
             "production_transaction_rejected",
             "La operación de producción entró en conflicto; reintenta.",
         ) from error
+
+
+class ProductionPrepView(APIView):
+    @extend_schema(
+        operation_id="production_prep",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: ProductionPrepSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = service.production_prep(org_id=org_id)
+        return Response(output)
 
 
 class ProductionReleaseView(APIView):

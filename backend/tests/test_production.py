@@ -123,6 +123,8 @@ def test_release_creates_work_order_with_steps() -> None:
         "production.service.rows", side_effect=fake_rows
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -168,6 +170,8 @@ def test_release_replay_returns_existing() -> None:
         "production.service.rows", side_effect=fake_rows
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         output = service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -338,6 +342,8 @@ def test_order_code_scopes_to_project() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
@@ -671,6 +677,8 @@ def test_release_seals_system_from_snapshot_positions() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
@@ -715,6 +723,8 @@ def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
         "production.service._ensure_work_centers", return_value={}
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
         service.release_production(
             org_id=uuid4(), version_id=uuid4(), actor_id=uuid4()
@@ -2177,3 +2187,74 @@ def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
     assert out["delivery"]["status"] == "DELIVERED"
     assert replay["delivery"]["status"] == "DELIVERED"
     assert len(events) == 1 and events[0][1][2] == "WO_DELIVERY_DELIVERED"
+
+
+def test_prep_lists_approved_versions_without_orders(monkeypatch) -> None:
+    version_id, project_id = uuid4(), uuid4()
+    seen = {}
+
+    def fake_rows(query, params=()):
+        seen["query"] = query
+        return [
+            {
+                "id": version_id,
+                "project_id": project_id,
+                "revision_code": "REV-A",
+                "project_code": "PRJ-1",
+                "positions": 3,
+            }
+        ]
+
+    monkeypatch.setattr(service, "rows", fake_rows)
+    monkeypatch.setattr(service, "documentary_backend", _atomic)
+    output = service.production_prep(org_id=uuid4())
+    assert "production_allowed" in seen["query"]
+    assert "NOT EXISTS" in seen["query"]
+    assert output["versions"] == [
+        {
+            "version_id": str(version_id),
+            "project_id": str(project_id),
+            "project_code": "PRJ-1",
+            "revision_code": "REV-A",
+            "positions": 3,
+        }
+    ]
+
+
+def test_public_order_surfaces_workflow_flags() -> None:
+    order = {
+        "id": uuid4(),
+        "order_code": "OT-1",
+        "order_type": "WORKSHOP_OT",
+        "status": "COMPLETED",
+        "payload_json": json.dumps(
+            {
+                "position_id": "p1",
+                "packing": {"units": []},
+                "optimization": {
+                    "stock_reservations": [
+                        {"short": "0.00"},
+                        {"short": "12.50"},
+                    ]
+                },
+            }
+        ),
+        "project_version_id": None,
+        "created_at": "2026-09-23T00:00:00Z",
+        "steps_total": 5,
+        "steps_done": 5,
+        "next_step_code": "GLAZE",
+        "has_dispatch_note": False,
+    }
+    output = service._public_order(order)
+    assert output["next_step"] == {"code": "GLAZE", "label": service._STEP_LABELS["GLAZE"]}
+    assert output["dispatch_ready"] is True
+    assert output["shortage"] == 1
+
+    order["has_dispatch_note"] = True
+    output = service._public_order(order)
+    assert output["dispatch_ready"] is False
+
+    order["payload_json"] = json.dumps({"prep": {"shortages": 2}})
+    output = service._public_order(order)
+    assert output["shortage"] == 2

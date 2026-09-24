@@ -140,6 +140,7 @@ import type {
   ProductionOrderList,
   ProductionOrderTrace,
   ProductionPieceTrace,
+  ProductionPrep,
   ProductionRelease,
   ProductionVersionTrace,
   ProjectCreditNote,
@@ -8460,6 +8461,76 @@ export const productionPieceTrace = async (
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionPieceTraceResponse> => {
   return apiMutator<productionPieceTraceResponse>(getProductionPieceTraceUrl(pieceId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type productionPrepResponse200 = {
+  data: ProductionPrep;
+  status: 200;
+};
+
+export type productionPrepResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionPrepResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionPrepResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionPrepResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionPrepResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionPrepResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionPrepResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionPrepResponseSuccess = productionPrepResponse200 & {
+  headers: Headers;
+};
+export type productionPrepResponseError = (
+  | productionPrepResponse400
+  | productionPrepResponse401
+  | productionPrepResponse403
+  | productionPrepResponse404
+  | productionPrepResponse409
+  | productionPrepResponse422
+  | productionPrepResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionPrepResponse = productionPrepResponseSuccess | productionPrepResponseError;
+
+export const getProductionPrepUrl = () => {
+  return `/api/v1/production/prep/`;
+};
+
+export const productionPrep = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionPrepResponse> => {
+  return apiMutator<productionPrepResponse>(getProductionPrepUrl(), {
     ...options,
     method: "GET",
   });

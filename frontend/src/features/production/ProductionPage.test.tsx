@@ -67,6 +67,7 @@ const detail = {
 };
 
 function respond(url: string): { data: unknown; status: number } {
+  if (url === "/api/v1/production/prep/") return { data: { versions: [] }, status: 200 };
   if (url === "/api/v1/production/orders/") return { data: { orders: [order] }, status: 200 };
   if (url === `/api/v1/production/orders/${order.id}/`) return { data: detail, status: 200 };
   return { data: detail, status: 200 };

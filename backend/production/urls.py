@@ -20,6 +20,7 @@ from production.views import (
     ProductionOrderListView,
     ProductionOrderOptimizeView,
     ProductionOrderPackingView,
+    ProductionPrepView,
     ProductionOrderTraceView,
     ProductionPieceTraceView,
     ProductionVersionTraceView,
@@ -30,6 +31,7 @@ from production.views import (
 )
 
 urlpatterns = [
+    path("prep/", ProductionPrepView.as_view(), name="production-prep"),
     path("orders/", ProductionOrderListView.as_view(), name="production-orders"),
     path(
         "orders/<uuid:order_id>/trace/",

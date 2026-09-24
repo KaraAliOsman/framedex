@@ -7667,6 +7667,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/production/prep/:
+    get:
+      operationId: production_prep
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - production
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionPrep'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/production/steps/{step_id}/transition/:
     post:
       operationId: production_step_transition
@@ -15678,6 +15742,9 @@ components:
         inventory:
           type: object
           additionalProperties: {}
+        prep:
+          type: object
+          additionalProperties: {}
         deliveries:
           type: object
           additionalProperties: {}
@@ -15695,6 +15762,7 @@ components:
       - deliveries
       - documents
       - inventory
+      - prep
       - projects
       - recent_events
       - schema
@@ -17154,6 +17222,16 @@ components:
       description: |-
         * `error` - error
         * `warning` - warning
+    ProductionNextStep:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+      required:
+      - code
+      - label
     ProductionOrder:
       type: object
       properties:
@@ -17176,6 +17254,14 @@ components:
           type: integer
         steps_total:
           type: integer
+        next_step:
+          allOf:
+          - $ref: '#/components/schemas/ProductionNextStep'
+          nullable: true
+        dispatch_ready:
+          type: boolean
+        shortage:
+          type: integer
         created_at:
           type: string
           format: date-time
@@ -17188,11 +17274,14 @@ components:
           additionalProperties: {}
       required:
       - created_at
+      - dispatch_ready
       - id
+      - next_step
       - order_code
       - order_type
       - position_id
       - quantity
+      - shortage
       - status
       - steps_done
       - steps_total
@@ -17217,6 +17306,14 @@ components:
         steps_done:
           type: integer
         steps_total:
+          type: integer
+        next_step:
+          allOf:
+          - $ref: '#/components/schemas/ProductionNextStep'
+          nullable: true
+        dispatch_ready:
+          type: boolean
+        shortage:
           type: integer
         created_at:
           type: string
@@ -17245,12 +17342,15 @@ components:
           nullable: true
       required:
       - created_at
+      - dispatch_ready
       - events
       - id
+      - next_step
       - order_code
       - order_type
       - position_id
       - quantity
+      - shortage
       - status
       - steps
       - steps_done
@@ -17316,6 +17416,36 @@ components:
       required:
       - matches
       - piece_id
+    ProductionPrep:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionPrepItem'
+      required:
+      - versions
+    ProductionPrepItem:
+      type: object
+      properties:
+        version_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        project_code:
+          type: string
+        revision_code:
+          type: string
+        positions:
+          type: integer
+      required:
+      - positions
+      - project_code
+      - project_id
+      - revision_code
+      - version_id
     ProductionRelease:
       type: object
       properties:

@@ -23,6 +23,8 @@ import {
   productionOrders,
   productionPieceTrace,
   productionOrderTrace,
+  productionPrep,
+  productionRelease,
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
@@ -36,6 +38,7 @@ import type {
   PaymentKindEnum,
   ProductionOrder,
   ProductionOrderDetail,
+  ProductionPrepItem,
   ProductionStep,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
@@ -168,6 +171,7 @@ export function ProductionPage(): JSX.Element {
   const [params, setParams] = useSearchParams();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [detail, setDetail] = useState<ProductionOrderDetail | null>(null);
+  const [prepVersions, setPrepVersions] = useState<ProductionPrepItem[]>([]);
   // While a work order is open, Ask DEKOPEN answers inside that order's
   // typed context — steps, status and shortages — not the generic list.
   useAssistantSurface(
@@ -217,8 +221,11 @@ export function ProductionPage(): JSX.Element {
     : orders;
 
   const loadOrders = useCallback(async () => {
-    const response = await productionOrders();
+    const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);
     if (response.status === 200) setOrders(response.data.orders);
+    // §8: versions approved for production but not yet released surface here
+    // — the workshop sees the approved work without waiting for a reminder.
+    if (prepResponse.status === 200) setPrepVersions(prepResponse.data.versions);
   }, []);
 
   const detailGeneration = useRef(0);
@@ -312,6 +319,25 @@ export function ProductionPage(): JSX.Element {
         ? { action: "COMPLETE" as const, qc_result: "FAIL" as const, note: noteValue ?? null }
         : { action: stepAction, note: noteValue ?? null };
     void action(productionStepTransition(stepId, body), orderId);
+  }
+
+  function release(versionId: string): void {
+    setBusy(true);
+    setMessage("");
+    productionRelease(versionId)
+      .then(async (response) => {
+        if ((response.status === 200 || response.status === 201) && mounted.current) {
+          await loadOrders();
+          const first = response.data.orders[0];
+          if (first) setParams({ order: first.id });
+        }
+      })
+      .catch(() => {
+        if (mounted.current) setMessage(t("production.actionError"));
+      })
+      .finally(() => {
+        if (mounted.current) setBusy(false);
+      });
   }
 
   function remake(orderId: string): void {
@@ -582,6 +608,31 @@ export function ProductionPage(): JSX.Element {
       <div className="production-layout">
         <aside className="production-orders" aria-label={t("production.orders")}>
           <h2>{t("production.orders")}</h2>
+          {prepVersions.length > 0 ? (
+            <section className="production-prep" aria-label={t("production.prepTitle")}>
+              <h3>{t("production.prepTitle")}</h3>
+              <ul>
+                {prepVersions.map((version) => (
+                  <li key={version.version_id}>
+                    <span>
+                      {version.project_code} · {version.revision_code} · {version.positions}{" "}
+                      {t("production.prepPositions")}
+                    </span>
+                    {canWrite ? (
+                      <button
+                        type="button"
+                        className="production-prep-release"
+                        disabled={busy}
+                        onClick={() => release(version.version_id)}
+                      >
+                        {t("production.prepRelease")}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <div
             className="production-filters"
             role="group"
@@ -629,6 +680,21 @@ export function ProductionPage(): JSX.Element {
                   <span className="production-order-progress">
                     {order.steps_done}/{order.steps_total} {t("production.stepsShort")}
                   </span>
+                  {order.next_step ? (
+                    <span className="production-order-next">
+                      {t("production.nextStep") + " · " + order.next_step.label}
+                    </span>
+                  ) : null}
+                  {order.shortage > 0 ? (
+                    <span className="production-chip is-warn">
+                      {t("production.shortageChip").replace("{count}", String(order.shortage))}
+                    </span>
+                  ) : null}
+                  {order.dispatch_ready ? (
+                    <span className="production-chip is-ready">
+                      {t("production.dispatchReadyChip")}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -645,6 +711,16 @@ export function ProductionPage(): JSX.Element {
                 {detail.quantity ? (
                   <span className="production-order-progress">
                     {detail.quantity} {t("production.units")}
+                  </span>
+                ) : null}
+                {detail.shortage > 0 ? (
+                  <span className="production-chip is-warn">
+                    {t("production.shortageChip").replace("{count}", String(detail.shortage))}
+                  </span>
+                ) : null}
+                {detail.dispatch_ready ? (
+                  <span className="production-chip is-ready">
+                    {t("production.dispatchReadyChip")}
                   </span>
                 ) : null}
                 {canWrite && detail.status === "COMPLETED" ? (

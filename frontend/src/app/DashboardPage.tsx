@@ -95,7 +95,32 @@ export function DashboardPage(): JSX.Element {
 
   const workOrders = (opsQuery.data?.work_orders ?? {}) as Record<string, number>;
   const deliveries = (opsQuery.data?.deliveries ?? {}) as Record<string, number>;
+  const prep = (opsQuery.data?.prep ?? {}) as Record<string, number>;
   const attentionCandidates: { key: TranslationKey; count: number; to: string; warn: boolean }[] = [
+    {
+      key: "dashboard.prepVersions",
+      count: Number(prep.versions_ready ?? 0),
+      to: "/production",
+      warn: false,
+    },
+    {
+      key: "dashboard.prepShortage",
+      count: Number(prep.work_orders_shortage ?? 0),
+      to: "/production",
+      warn: true,
+    },
+    {
+      key: "dashboard.prepDispatch",
+      count: Number(prep.dispatch_ready ?? 0),
+      to: "/production",
+      warn: false,
+    },
+    {
+      key: "dashboard.catalogGaps",
+      count: Number(prep.catalog_gaps ?? 0),
+      to: "/catalogs",
+      warn: true,
+    },
     {
       key: "dashboard.deliveriesOverdue",
       count: Number(deliveries.overdue ?? 0),

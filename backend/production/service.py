@@ -159,19 +159,50 @@ def _public_step(step: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _order_shortage(payload: dict[str, object] | None) -> int:
+    """§8 shortage signal: post-optimize the reservation ledger is freshest;
+    before that, the release-time prep count still warns the workshop."""
+    reservations = ((payload or {}).get("optimization") or {}).get("stock_reservations")
+    if reservations is not None:
+        return sum(
+            1
+            for entry in reservations
+            if str(entry.get("short") or "0") not in ("", "0", "0.00")
+        )
+    prep = (payload or {}).get("prep") or {}
+    try:
+        return int(prep.get("shortages") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _public_order(order: dict[str, object], *, include_payload: bool = False) -> dict[str, object]:
     payload = order.get("payload_json")
     if isinstance(payload, str):
         payload = json.loads(payload)
+    status = str(order["status"])
+    next_step = order.get("next_step_code")
     output = {
         "id": str(order["id"]),
         "order_code": order["order_code"],
         "order_type": str(order["order_type"]),
-        "status": str(order["status"]),
+        "status": status,
         "position_id": (payload or {}).get("position_id"),
         "quantity": (payload or {}).get("quantity"),
         "steps_done": order.get("steps_done", 0),
         "steps_total": order.get("steps_total", 0),
+        # §8 explicit workflow surfacing — all derived from sealed state.
+        "next_step": (
+            {"code": str(next_step), "label": _STEP_LABELS.get(str(next_step), str(next_step))}
+            if next_step
+            else None
+        ),
+        "dispatch_ready": bool(
+            (payload or {}).get("packing")
+            and status == "COMPLETED"
+            and not order.get("has_dispatch_note")
+        ),
+        "shortage": _order_shortage(payload),
         "created_at": order["created_at"],
     }
     if include_payload:
@@ -299,12 +330,38 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                         json.dumps({"order_code": order_code, "position_id": payload["position_id"]}),
                     ],
                 )
+        # §8: the moment a version becomes work, the workshop should already
+        # see the material shortage signal the purchasing coverage computes —
+        # not only after someone clicks optimize. One coverage read stamps
+        # every released order's prep evidence.
+        coverage = production_stock.coverage_for_version(org_id=org_id, version_id=version_id)
+        prep_stamp = {
+            "schema": "work_order_prep_v1",
+            "shortages": int(coverage.get("shortages") or 0),
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+        }
+        for order_id in order_ids:
+            rows(
+                """
+                UPDATE public.orders
+                SET payload_json = payload_json || %s::jsonb
+                WHERE id = %s AND org_id = %s
+                RETURNING id
+                """,
+                [json.dumps({"prep": prep_stamp}), str(order_id), str(org_id)],
+            )
         orders = rows(
             """
             SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                    o.project_version_id, o.created_at,
                    COUNT(s.id) AS steps_total,
-                   COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+                   COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+                   (SELECT s2.code FROM public.production_steps s2
+                    WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                    ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+                   EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                          WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                         ) AS has_dispatch_note
             FROM public.orders o
             LEFT JOIN public.production_steps s ON s.order_id = o.id
             WHERE o.id = ANY(%s::uuid[])
@@ -326,7 +383,13 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
-               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+               (SELECT s2.code FROM public.production_steps s2
+                WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+               EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                      WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                     ) AS has_dispatch_note
         FROM public.orders o
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
@@ -335,6 +398,43 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
         [str(org_id)],
     )
     return {"orders": [_public_order(order) for order in orders]}
+
+
+def production_prep(*, org_id: UUID) -> dict[str, object]:
+    """§8 project-approved → production preparation: sealed versions that are
+    allowed into production but have no workshop order yet. Deterministic —
+    no AI, just the state the release action consumes."""
+    with documentary_backend():
+        versions = rows(
+            """
+            SELECT v.id, v.project_id, v.revision_code, v.emitted_at,
+                   p.code AS project_code,
+                   jsonb_array_length(COALESCE(v.snapshot_json->'bom', '[]'::jsonb))
+                       AS positions
+            FROM public.project_versions v
+            JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id
+            WHERE v.org_id = %s AND v.production_allowed
+              AND NOT EXISTS (
+                  SELECT 1 FROM public.orders o
+                  WHERE o.org_id = v.org_id AND o.project_version_id = v.id
+                    AND o.order_type = 'WORKSHOP_OT'
+              )
+            ORDER BY v.emitted_at DESC NULLS LAST, v.id
+            """,
+            [str(org_id)],
+        )
+        return {
+            "versions": [
+                {
+                    "version_id": str(item["id"]),
+                    "project_id": str(item["project_id"]),
+                    "project_code": item["project_code"],
+                    "revision_code": item["revision_code"],
+                    "positions": int(item["positions"]),
+                }
+                for item in versions
+            ]
+        }
 
 
 def confirm_installation(
@@ -391,7 +491,13 @@ def get_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
         SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
                o.project_version_id, o.created_at,
                COUNT(s.id) AS steps_total,
-               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done
+               COUNT(s.id) FILTER (WHERE s.status = 'DONE') AS steps_done,
+               (SELECT s2.code FROM public.production_steps s2
+                WHERE s2.order_id = o.id AND s2.status <> 'DONE'
+                ORDER BY s2.sequence LIMIT 1) AS next_step_code,
+               EXISTS(SELECT 1 FROM public.dispatch_notes dn
+                      WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id
+                     ) AS has_dispatch_note
         FROM public.orders o
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.id = %s AND o.org_id = %s AND o.order_type = 'WORKSHOP_OT'

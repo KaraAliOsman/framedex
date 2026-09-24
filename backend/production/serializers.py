@@ -28,6 +28,11 @@ class ProductionStepSerializer(serializers.Serializer):
     note = serializers.CharField(allow_null=True)
 
 
+class ProductionNextStepSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+
+
 class ProductionOrderSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     order_code = serializers.CharField()
@@ -37,9 +42,24 @@ class ProductionOrderSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(allow_null=True)
     steps_done = serializers.IntegerField()
     steps_total = serializers.IntegerField()
+    next_step = ProductionNextStepSerializer(allow_null=True)
+    dispatch_ready = serializers.BooleanField()
+    shortage = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     project_version_id = serializers.UUIDField(allow_null=True, required=False)
     payload = serializers.DictField(required=False)
+
+
+class ProductionPrepItemSerializer(serializers.Serializer):
+    version_id = serializers.UUIDField()
+    project_id = serializers.UUIDField()
+    project_code = serializers.CharField()
+    revision_code = serializers.CharField()
+    positions = serializers.IntegerField()
+
+
+class ProductionPrepSerializer(serializers.Serializer):
+    versions = ProductionPrepItemSerializer(many=True)
 
 
 class ProductionReleaseSerializer(serializers.Serializer):
