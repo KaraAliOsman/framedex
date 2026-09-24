@@ -19,12 +19,15 @@ from pricing.repository import encode
 from pricing.views import DecimalJSONParser, ERRORS, scope, validate
 from projects import (
     clients,
+    credit_notes,
     design_assist,
     invoices,
     payment_links,
     payments,
     receipts,
     service,
+    sii,
+    sii_envio,
 )
 from projects.serializers import (
     ClientListResponseSerializer,
@@ -41,8 +44,22 @@ from projects.serializers import (
     PaymentRecordSerializer,
     PaymentsSummarySerializer,
     PaymentVoidSerializer,
+    ProjectCreditNoteAccessSerializer,
+    ProjectCreditNoteEmitSerializer,
+    ProjectCreditNoteSerializer,
+    ProjectDteAccessSerializer,
+    ProjectDteSerializer,
     ProjectInvoiceAccessSerializer,
     ProjectInvoiceSerializer,
+    SiiCafListSerializer,
+    SiiCafSerializer,
+    SiiCafUploadSerializer,
+    SiiCertificateSerializer,
+    SiiCertificateStatusSerializer,
+    SiiCertificateUploadSerializer,
+    SiiEnvioAccessSerializer,
+    SiiEnvioSendSerializer,
+    SiiEnvioSerializer,
     CloneProjectSerializer,
     DeletePositionSerializer,
     DesignAssistRequestSerializer,
@@ -466,6 +483,240 @@ class ProjectInvoiceAccessView(APIView):
         with scope(request, READ_ROLES) as (_, _, org):
             return response(
                 invoices.invoice_access(
+                    org_id=org, project_id=project_id, invoice_id=invoice_id
+                )
+            )
+
+
+class ProjectCreditNotesView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_emit",
+        request=ProjectCreditNoteEmitSerializer,
+        responses={201: ProjectCreditNoteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        data = validate(ProjectCreditNoteEmitSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                credit_notes.issue_credit_note(
+                    org_id=org,
+                    project=project,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                    reason=data.get("reason"),
+                ),
+                status=201,
+            )
+
+
+class ProjectCreditNoteAccessView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_access",
+        responses={200: ProjectCreditNoteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, credit_note_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                credit_notes.credit_note_access(
+                    org_id=org,
+                    project_id=project_id,
+                    credit_note_id=credit_note_id,
+                )
+            )
+
+
+class ProjectInvoiceDteView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_invoice_dte_emit",
+        request=None,
+        responses={201: ProjectDteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                sii.emit_dte(
+                    org_id=org,
+                    project=project,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_invoice_dte_access",
+        responses={200: ProjectDteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, invoice_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii.dte_access(
+                    org_id=org, project_id=project_id, invoice_id=invoice_id
+                )
+            )
+
+
+class ProjectCreditNoteDteView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_emit",
+        request=ProjectCreditNoteEmitSerializer,
+        responses={201: ProjectDteSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        data = validate(ProjectCreditNoteEmitSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (token, _, org):
+            project = service.project_row(org, project_id)
+            return response(
+                sii.emit_credit_note_dte(
+                    org_id=org,
+                    project=project,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                    reason=data.get("reason"),
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_credit_note_dte_access",
+        responses={200: ProjectDteAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, invoice_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii.credit_note_dte_access(
+                    org_id=org,
+                    project_id=project_id,
+                    invoice_id=invoice_id,
+                )
+            )
+
+
+class SiiCafsView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="sii_cafs_list",
+        responses={200: SiiCafListSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response({"items": sii.list_cafs(org_id=org)})
+
+    @extend_schema(
+        operation_id="sii_caf_register",
+        request=SiiCafUploadSerializer,
+        responses={201: SiiCafSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request):
+        data = validate(SiiCafUploadSerializer, request.data)
+        # CAF registration installs fiscal signing keys — owner-only, never
+        # the estimator scope that manages quotes and documents.
+        with scope(request, ("OWNER",)) as (token, _, org):
+            return response(
+                sii.register_caf(
+                    org_id=org,
+                    actor_id=token.user_id,
+                    caf_xml=data["caf_xml"],
+                    giro_emis=data.get("giro_emis"),
+                    dir_origen=data.get("dir_origen"),
+                    cmna_origen=data.get("cmna_origen"),
+                    acteco=data.get("acteco"),
+                ),
+                status=201,
+            )
+
+
+class SiiCertificateView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="sii_certificate_status",
+        responses={200: SiiCertificateStatusSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                {"certificate": sii_envio.certificate_status(org_id=org)}
+            )
+
+    @extend_schema(
+        operation_id="sii_certificate_upload",
+        request=SiiCertificateUploadSerializer,
+        responses={201: SiiCertificateSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request):
+        data = validate(SiiCertificateUploadSerializer, request.data)
+        # The digital certificate signs every envío sent to the SII —
+        # installing it is owner-only, never the estimator scope.
+        with scope(request, ("OWNER",)) as (token, _, org):
+            return response(
+                sii_envio.upload_certificate(
+                    org_id=org,
+                    actor_id=token.user_id,
+                    pfx_b64=data["pfx_b64"],
+                    password=data.get("password") or None,
+                    nro_resol=data["nro_resol"],
+                    fch_resol=data["fch_resol"],
+                ),
+                status=201,
+            )
+
+
+class ProjectInvoiceDteEnvioView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="project_invoice_dte_envio_send",
+        request=SiiEnvioSendSerializer,
+        responses={201: SiiEnvioSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def post(self, request, project_id, invoice_id):
+        data = validate(SiiEnvioSendSerializer, request.data)
+        # An envío submits signed fiscal documents with the org's certificate —
+        # the production side, never the estimator's commercial scope.
+        with scope(request, ("OWNER", "WORKSHOP_MANAGER")) as (token, _, org):
+            return response(
+                sii_envio.send_invoice_envio(
+                    org_id=org,
+                    project_id=project_id,
+                    invoice_id=invoice_id,
+                    actor_id=token.user_id,
+                    resubmit=bool(data.get("resubmit")),
+                ),
+                status=201,
+            )
+
+    @extend_schema(
+        operation_id="project_invoice_dte_envio_access",
+        responses={200: SiiEnvioAccessSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request, project_id, invoice_id):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(
+                sii_envio.invoice_envio_access(
                     org_id=org, project_id=project_id, invoice_id=invoice_id
                 )
             )

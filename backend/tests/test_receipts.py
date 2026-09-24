@@ -206,6 +206,16 @@ def test_record_payment_issues_receipt_with_the_deal(monkeypatch):
     monkeypatch.setattr(payments, "documentary_backend", _noop)
     monkeypatch.setattr(payments.transaction, "atomic", _noop)
     monkeypatch.setattr(
+        payments.sii,
+        "dtes_by_invoice",
+        lambda *, org_id, project_id: {},
+    )
+    monkeypatch.setattr(
+        payments.sii,
+        "dtes_by_credit_note",
+        lambda *, org_id, project_id: {},
+    )
+    monkeypatch.setattr(
         payments, "project_row", staticmethod(lambda *a, **kw: project_row)
     )
     monkeypatch.setattr(payments, "rows", fake_rows)

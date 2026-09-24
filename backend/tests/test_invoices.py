@@ -210,7 +210,18 @@ def test_issue_invoice_without_sealed_revision_raises_409(monkeypatch):
 def test_invoice_access_signs_the_stored_object(monkeypatch):
     row = _invoice_row()
     monkeypatch.setattr(invoices, "documentary_backend", _noop)
-    monkeypatch.setattr(invoices, "rows", lambda sql, params=None: [row])
+    monkeypatch.setattr(
+        invoices.sii,
+        "dtes_by_credit_note",
+        lambda *, org_id, project_id: {},
+    )
+    monkeypatch.setattr(
+        invoices,
+        "rows",
+        lambda sql, params=None: []
+        if "project_credit_notes" in sql
+        else [row],
+    )
     monkeypatch.setattr(invoices, "SupabaseDocumentStorage", lambda: _Storage())
     out = invoices.invoice_access(
         org_id=row["org_id"],

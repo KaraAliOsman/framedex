@@ -22,6 +22,12 @@ export interface PatchedProjectUpdateRequest {
   client_email?: string;
   /** @maxLength 50 */
   client_phone?: string;
+  /** @maxLength 80 */
+  client_giro?: string;
+  /** @maxLength 20 */
+  client_comuna?: string;
+  /** @maxLength 70 */
+  client_address?: string;
   /** @nullable */
   client_id?: string | null;
   delivery_address?: string;

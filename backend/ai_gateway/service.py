@@ -70,6 +70,8 @@ def _replay(
         return None
     audit = found[0]
     envelope = audit["output_payload"] or {}
+    if isinstance(envelope, str):
+        envelope = json.loads(envelope)
     if (
         envelope.get("capability") != capability
         or audit["state_hash_before"] != input_hash
@@ -135,7 +137,10 @@ def _audit(
             [
                 str(inserted[0]["id"]),
                 str(route["provider"]),
-                str(route["provider_model"]),
+                # The model the request actually ran on (provider-reported or
+                # its configured override) — never the route's label when the
+                # transport selected another model behind it.
+                str(result.get("model") or route["provider_model"]),
                 str(route["prompt_version"]),
             ],
         )
@@ -150,7 +155,12 @@ def invoke(
     operation_key: str,
     input_payload: dict,
     tool_name: str | None = None,
+    provider_options: dict | None = None,
 ) -> dict[str, Any]:
+    # provider_options is server-side transport config (system prompt, output
+    # mode). It is deliberately NOT part of input_payload: that hash covers the
+    # client's request semantics so a prompt-version change can never break
+    # replay, and the generic invoke endpoint can never smuggle in control keys.
     input_hash = _input_hash(input_payload)
     with wallet.financial_transaction(org_id):
         organization = wallet.reconcile(org_id)
@@ -194,6 +204,7 @@ def invoke(
             route=route,
             capability=capability,
             input_payload=input_payload,
+            provider_options=provider_options,
             # The wire key is org-namespaced: a real provider dedupes on the
             # header globally, so the raw org-scoped key alone would collide
             # across tenants sharing a capability-level key prefix.

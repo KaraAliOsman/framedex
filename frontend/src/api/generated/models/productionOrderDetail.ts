@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProductionOrderDetailDispatchNoteDte } from "./productionOrderDetailDispatchNoteDte";
 import type { ProductionOrderDetailPayload } from "./productionOrderDetailPayload";
 import type { ProductionStep } from "./productionStep";
 import type { ProductionStepEvent } from "./productionStepEvent";
@@ -28,4 +29,6 @@ export interface ProductionOrderDetail {
   events: ProductionStepEvent[];
   /** @nullable */
   dispatch_note_code?: string | null;
+  /** @nullable */
+  dispatch_note_dte?: ProductionOrderDetailDispatchNoteDte;
 }
