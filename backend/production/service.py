@@ -1842,7 +1842,7 @@ def optimize_work_order(
         sheets: list[dict[str, object]] = []
         sheet_purchases: list[dict[str, object]] = []
         unnested: list[dict[str, object]] = []
-        sheet_groups: list[tuple[SheetRule, list[NestPiece]]] = []
+        sheet_groups: list[tuple[SheetRule, list[NestPiece], str]] = []
         for group_key, entries, kind in (
             ("by_thickness", result.glasses, "GLASS"),
             ("by_sku", result.panels, "PANEL"),
@@ -1898,12 +1898,13 @@ def optimize_work_order(
                         )
                         for repetition in range(1, quantity + 1)
                     ],
+                    kind,
                 ))
         # Group by the full selected rule identity (format + trim + purchasing
         # identity), never just the SKU — pieces picked for different variants
         # of one SKU keep separate layouts and purchase lines.
-        merged: dict[tuple, tuple[SheetRule, list[NestPiece]]] = {}
-        for rule, pieces_group in sheet_groups:
+        merged: dict[tuple, tuple[SheetRule, list[NestPiece], str]] = {}
+        for rule, pieces_group, group_kind in sheet_groups:
             key = (
                 rule.workshop_sku,
                 str(rule.sheet_width_mm),
@@ -1911,8 +1912,8 @@ def optimize_work_order(
                 str(rule.edge_trim_mm),
                 rule.purchasing_sku,
             )
-            merged.setdefault(key, (rule, []))[1].extend(pieces_group)
-        for rule, group_pieces in merged.values():
+            merged.setdefault(key, (rule, [], group_kind))[1].extend(pieces_group)
+        for rule, group_pieces, group_kind in merged.values():
             outcome = nest_rects(
                 group_pieces, rule,
                 remnants=remnants_service.sheet_remnants_for_sku(
@@ -1928,9 +1929,13 @@ def optimize_work_order(
                 # (produced_remnants rejoin the pool under the same key).
                 dumped["workshop_sku"] = rule.workshop_sku
                 sheets.append(dumped)
-            sheet_purchases.extend(
-                purchase.model_dump(mode="json") for purchase in outcome.purchase_list
-            )
+            for purchase in outcome.purchase_list:
+                dumped_purchase = purchase.model_dump(mode="json")
+                # The purchase row is bought sheet stock — tag which piece group
+                # it serves so stock needs can route it (glass sheets reserve at
+                # CUT; panel sheets stay on the PANEL authority path).
+                dumped_purchase["group_kind"] = group_kind
+                sheet_purchases.append(dumped_purchase)
             for piece in outcome.unplaced:
                 unnested.append({
                     "kind": "SHEET", "group": rule.workshop_sku,

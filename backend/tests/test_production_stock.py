@@ -181,12 +181,19 @@ def test_unit_stock_needs_scales_by_quantity_and_surfaces_unmapped() -> None:
             hardware_items=[{"kit_sku": "KIT-1", "qty": 1, "name": "Kit 1"}],
             fittings=[{"sku": "FT-GHOST", "qty": 4}],
             panels=[{"sku": "PAN-A", "name": "Panel A"}],
-            sheet_purchases=[{"workshop_sku": "GL-4", "qty_sheets": 2}],
+            sheet_purchases=[
+                # Real SheetPurchase dumps carry purchasing_sku + group_kind.
+                {"purchasing_sku": "GL-4", "qty_sheets": 2, "group_kind": "GLASS"},
+                # Panel-group sheets already have a PANEL authority need —
+                # counting the sheet too would double-book the same stock.
+                {"purchasing_sku": "PAN-SHEET", "qty_sheets": 3, "group_kind": "PANEL"},
+            ],
         )
     by_kind = {n["kind"]: n for n in needs}
     assert by_kind["HARDWARE_KIT"]["needed"] == Decimal("2")
     assert by_kind["PANEL"]["needed"] == Decimal("2")
     assert by_kind["SHEET"]["needed"] == Decimal("2")
+    assert by_kind["SHEET"]["sku"] == "GL-4"
     assert unmapped == ["FT-GHOST"]
 
 
