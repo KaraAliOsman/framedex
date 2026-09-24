@@ -40,10 +40,11 @@ async function screenshot(page: Page, info: TestInfo, name: string): Promise<voi
   await info.attach(name, { path, contentType: "image/png" });
 }
 
-function card(page: Page, location: string) {
-  return page.locator("article.project-position").filter({
-    has: page.locator("strong", { hasText: location }),
-  });
+/** The desk grid is select-then-act: click the vano's row so the side pane
+ * offers its actions, then return the action link inside it. */
+async function card(page: Page, location: string, action: string) {
+  await page.locator(".position-grid [role='listitem']").filter({ hasText: location }).click();
+  return page.locator(".project-desk__side").getByRole("link", { name: action, exact: true });
 }
 
 test("SHOT-10 real project core path and visual evidence", async ({ page, manual }, info) => {
@@ -232,7 +233,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   expect(reopenedProject.position_count).toBe(1);
 
   const reopened = await responseTo<PositionResponse>(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original").getByRole("link", { name: "Abrir diseño", exact: true }).click(),
+    card(page, "Cocina original", "Abrir diseño").then((link) => link.click()),
   );
   expect(reopened).toEqual(saved);
   await expect(page.getByRole("textbox", { name: "Ancho mm" })).toHaveValue("1100.25");
@@ -247,7 +248,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   await responseTo(page, "GET", projectApi, 200, back);
   await responseTo(page, "GET", positionApi, 200, () =>
-    card(page, "Cocina original").getByRole("link", { name: "Duplicar vano", exact: true }).click(),
+    card(page, "Cocina original", "Duplicar vano").then((link) => link.click()),
   );
   await expect(page.getByText("Cambios sin guardar", { exact: true })).toBeVisible();
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Cocina duplicada");
@@ -303,7 +304,7 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
     () => page.reload(),
   );
   expect(reopenedClone.positions).toEqual(clone.positions);
-  await expect(page.locator("article.project-position")).toHaveCount(2);
+  await expect(page.locator(".position-grid [role='listitem']")).toHaveCount(2);
   await page.getByRole("heading", { level: 1 }).scrollIntoViewIfNeeded();
   await screenshot(page, info, "04-reopened-draft-clone");
 

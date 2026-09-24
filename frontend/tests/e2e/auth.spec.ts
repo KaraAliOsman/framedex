@@ -315,7 +315,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética" });
   // Canvas-first editor: the single module is already selected on the drawing;
   // glazing choices live in its contextual inspector, not a separate form.
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
@@ -401,6 +401,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("REV-B", { exact: true })).toBeVisible();
+  // The desk grid is select-then-act: pick the vano row so the side pane
+  // offers Abrir diseño.
+  await page
+    .locator(".position-grid [role='listitem']")
+    .filter({ hasText: "Fijo comercial" })
+    .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
@@ -478,7 +484,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC · Catálogo de demostración" });
+    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética" });
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
   await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("GLASS-BASE");
   const dividedCalculation = page.waitForResponse(
@@ -500,6 +506,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
   await page.reload();
   await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
+  await page
+    .locator(".position-grid [role='listitem']")
+    .filter({ hasText: "Fachada compuesta" })
+    .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
   await expect(page.locator(".module-divider")).toHaveCount(1);
   await expect(page.locator(".module-glass")).toHaveCount(2);
