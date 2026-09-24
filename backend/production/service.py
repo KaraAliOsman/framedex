@@ -1879,7 +1879,10 @@ def optimize_work_order(
                     rule,
                     [
                         NestPiece(
-                            piece_id=label,
+                            piece_id=(
+                                label if quantity == 1
+                                else f"{label}-{repetition:02d}"
+                            ),
                             workshop_sku=rule.workshop_sku,
                             width_mm=entry.width_mm,
                             height_mm=entry.height_mm,

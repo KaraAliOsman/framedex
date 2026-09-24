@@ -862,6 +862,113 @@ def test_complete_cut_rejects_released_remnant() -> None:
     assert error.value.code == "work_order_remnant_released"
 
 
+def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
+    # quantity>1 must not label two physical panes with the same piece_id —
+    # a label resolves to exactly one unit in the trace.
+    from decimal import Decimal
+
+    from dekopen_engine.cutting import (
+        CutOptimizationResult, CuttingProfile,
+    )
+    from dekopen_engine.nesting import (
+        NestPlacement, SheetLayout, SheetNestingResult,
+    )
+
+    order_id = uuid4()
+    payload = {
+        "position_id": str(uuid4()),
+        "system_id": str(uuid4()),
+        "quantity": 2,
+        "materials": {
+            "profile_cuts": [], "reinforcements": [],
+            "glasses": [
+                {
+                    "bay_id": "B1", "leaf_id": "L1",
+                    "width_mm": "1100.00", "height_mm": "900.00",
+                    "area_m2": "0.99", "weight_kg": "4.95",
+                    "thickness_net_mm": "4.00",
+                    "glass_spec": "4", "article_sku": "V4",
+                }
+            ],
+            "panels": [], "hardware_items": [],
+        },
+    }
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT-P-REV-A-01",
+                "status": "RELEASED", "payload_json": payload,
+            }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        return []
+
+    profile = CuttingProfile(
+        id="CP1", code="SAW01", kerf_mm=Decimal("5"),
+        head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+    )
+    cut_result = CutOptimizationResult(workshop_cut_plan=[], purchase_list=[])
+    authorities = SimpleNamespace(stocks=[], reinforcement_skus={}, inertias={})
+    rule = _sheet_rules_fake([("V4SHEET", "3210", "2250")])[0]
+
+    def fake_nest(pieces, _rule, remnants=()):
+        return SheetNestingResult(
+            layouts=[SheetLayout(
+                sheet_index=1, purchasing_sku=rule.purchasing_sku,
+                sheet_width_mm=rule.sheet_width_mm,
+                sheet_height_mm=rule.sheet_height_mm,
+                placements=[
+                    NestPlacement(
+                        **piece.model_dump(), sequence=i + 1,
+                        x_mm=Decimal("0"), y_mm=Decimal(i * 910),
+                    )
+                    for i, piece in enumerate(pieces)
+                ],
+                productive_area_mm2=Decimal("1980000"),
+                waste_area_mm2=Decimal("5242500"),
+                yield_pct=Decimal("27.41"),
+            )],
+            purchase_list=[], unplaced=[],
+        )
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service.CuttingRepository"
+    ) as repo, patch(
+        "production.service.optimize_cut", return_value=cut_result
+    ), patch(
+        "production.service._sheet_rules",
+        return_value={"by_sku": {}, "by_thickness": {"4.00": [rule]}},
+    ), patch("production.service.nest_rects", side_effect=fake_nest), patch(
+        "production.service.remnants_service"
+    ) as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
+        rem.bar_remnants_for_authorities.return_value = []
+        rem.sheet_remnants_for_sku.return_value = []
+        rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
+        repo.return_value.for_result.return_value = authorities
+        repo.return_value.cutting_profile.return_value = profile
+        output = service.optimize_work_order(
+            org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+        )
+    placements = output["optimization"]["sheets"][0]["placements"]
+    piece_ids = {placement["piece_id"] for placement in placements}
+    assert len(piece_ids) == 2
+    assert piece_ids == {"V-01-01", "V-01-02"}
+
+
 def test_optimize_requires_color() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.optimize_work_order(
