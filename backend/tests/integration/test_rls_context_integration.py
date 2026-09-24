@@ -403,6 +403,16 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
     for rule in expected_fields["glazing_bead_rules"].values():
         rule["bead_article"]["weight_kg_m"] = None
         rule["bead_article"]["steel_weight_kg_m"] = None
+    # The live seed declares simplified sections on MARCO/HOJA; the engine
+    # fixture leaves them undeclared. Assert the typed field deserializes,
+    # then normalize like the synthetic weights above.
+    assert any(
+        article["section"] is not None for article in actual_fields["effective_profile_articles"].values()
+    )
+    for article in actual_fields["effective_profile_articles"].values():
+        article["section"] = None
+    for article in expected_fields["effective_profile_articles"].values():
+        article["section"] = None
     # The live seed owns kit identities independently of the engine's golden
     # fixture; the typed field is still present and populated in both paths.
     assert actual_fields.pop("available_hardware_kits")
