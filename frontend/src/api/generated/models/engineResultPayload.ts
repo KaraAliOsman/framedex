@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { FittingPiece } from "./fittingPiece";
 import type { GlassPiece } from "./glassPiece";
 import type { HardwareItem } from "./hardwareItem";
 import type { LeafWeight } from "./leafWeight";
@@ -17,6 +18,7 @@ export interface EngineResultPayload {
   reinforcements: Reinforcement[];
   glasses: GlassPiece[];
   panels: PanelPiece[];
+  fittings: FittingPiece[];
   hardware_items: HardwareItem[];
   leaf_weights: LeafWeight[];
 }
