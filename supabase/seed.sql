@@ -796,15 +796,17 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' 
 FROM public.profile_articles article
 JOIN public.profile_systems s ON s.id = article.system_id
 WHERE s.code = 'ALU_65' AND s.is_global = TRUE AND article.org_id IS NULL
+-- A seed rerun must never clobber a binding an operator configured on the
+-- shared catalog: only fields still NULL are filled in, never overwritten.
 ON CONFLICT (id) DO UPDATE SET
- commercial_sku = EXCLUDED.commercial_sku,
- manufacturer_name = EXCLUDED.manufacturer_name,
- supplier_name = EXCLUDED.supplier_name,
- purchase_unit = EXCLUDED.purchase_unit,
- physical_stock_identity = EXCLUDED.physical_stock_identity,
- stock_color = EXCLUDED.stock_color,
- cutting_profile_id = EXCLUDED.cutting_profile_id,
- binding_version = EXCLUDED.binding_version;
+ commercial_sku = COALESCE(profile_purchase_mappings.commercial_sku, EXCLUDED.commercial_sku),
+ manufacturer_name = COALESCE(profile_purchase_mappings.manufacturer_name, EXCLUDED.manufacturer_name),
+ supplier_name = COALESCE(profile_purchase_mappings.supplier_name, EXCLUDED.supplier_name),
+ purchase_unit = COALESCE(profile_purchase_mappings.purchase_unit, EXCLUDED.purchase_unit),
+ physical_stock_identity = COALESCE(profile_purchase_mappings.physical_stock_identity, EXCLUDED.physical_stock_identity),
+ stock_color = COALESCE(profile_purchase_mappings.stock_color, EXCLUDED.stock_color),
+ cutting_profile_id = COALESCE(profile_purchase_mappings.cutting_profile_id, EXCLUDED.cutting_profile_id),
+ binding_version = COALESCE(profile_purchase_mappings.binding_version, EXCLUDED.binding_version);
 
 INSERT INTO public.profile_purchase_mappings
  (id, profile_article_id, org_id, commercial_sku, manufacturer_name, supplier_name,
@@ -818,15 +820,17 @@ SELECT uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/shot07/purchase/' 
 FROM public.profile_articles article
 JOIN public.profile_systems s ON s.id = article.system_id
 WHERE s.code = 'GLASS_45' AND s.is_global = TRUE AND article.org_id IS NULL
+-- A seed rerun must never clobber a binding an operator configured on the
+-- shared catalog: only fields still NULL are filled in, never overwritten.
 ON CONFLICT (id) DO UPDATE SET
- commercial_sku = EXCLUDED.commercial_sku,
- manufacturer_name = EXCLUDED.manufacturer_name,
- supplier_name = EXCLUDED.supplier_name,
- purchase_unit = EXCLUDED.purchase_unit,
- physical_stock_identity = EXCLUDED.physical_stock_identity,
- stock_color = EXCLUDED.stock_color,
- cutting_profile_id = EXCLUDED.cutting_profile_id,
- binding_version = EXCLUDED.binding_version;
+ commercial_sku = COALESCE(profile_purchase_mappings.commercial_sku, EXCLUDED.commercial_sku),
+ manufacturer_name = COALESCE(profile_purchase_mappings.manufacturer_name, EXCLUDED.manufacturer_name),
+ supplier_name = COALESCE(profile_purchase_mappings.supplier_name, EXCLUDED.supplier_name),
+ purchase_unit = COALESCE(profile_purchase_mappings.purchase_unit, EXCLUDED.purchase_unit),
+ physical_stock_identity = COALESCE(profile_purchase_mappings.physical_stock_identity, EXCLUDED.physical_stock_identity),
+ stock_color = COALESCE(profile_purchase_mappings.stock_color, EXCLUDED.stock_color),
+ cutting_profile_id = COALESCE(profile_purchase_mappings.cutting_profile_id, EXCLUDED.cutting_profile_id),
+ binding_version = COALESCE(profile_purchase_mappings.binding_version, EXCLUDED.binding_version);
 
 INSERT INTO public.hardware_purchase_mappings
  (id, hardware_kit_id, org_id, purchasing_sku, manufacturer_name, purchase_unit, version, provenance)
