@@ -115,6 +115,28 @@ type VersionItem = {
 };
 type Version = VersionItem & { project_code: string; production_allowed: boolean };
 type Blocker = { order_type: OrderType; code: string; requirement_keys?: string[] };
+type CoverageLine = {
+  requirement_line_id: string;
+  order_type: string;
+  category: string;
+  purchasing_sku: string;
+  unit: string;
+  required: string;
+  on_hand: string;
+  reserved: string;
+  available: string;
+  ordered: string;
+  received: string;
+  open_ordered: string;
+  remnant_pool?: { kind: string; count: number; total_mm?: string } | null;
+  shortage: string;
+  recommended_purchase: string;
+};
+type Coverage = {
+  version_id?: string;
+  lines?: CoverageLine[];
+  shortages?: number;
+};
 type PurchasingState = {
   versions?: VersionItem[];
   version?: Version;
@@ -123,6 +145,7 @@ type PurchasingState = {
   allocations?: Allocation[];
   orders?: Order[];
   blockers?: Blocker[];
+  coverage?: Coverage;
 };
 
 type RequestFn = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
@@ -358,6 +381,8 @@ function PurchasingWorkspace({
   const allocations = state?.allocations ?? [];
   const orders = state?.orders ?? [];
   const blockers = state?.blockers ?? [];
+  const coverage = state?.coverage;
+  const coverageLines = coverage?.lines ?? [];
   const confirmedTypes = new Set(orders.map((order) => order.order_type));
 
   return (
@@ -403,6 +428,63 @@ function PurchasingWorkspace({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+      {coverageLines.length > 0 && (
+        <section className="purchasing-coverage" aria-label={t("purchasing.coverageTitle")}>
+          <h2>{t("purchasing.coverageTitle")}</h2>
+          {(coverage?.shortages ?? 0) > 0 && (
+            <p className="purchasing-coverage-alert" role="alert">
+              {t("purchasing.coverageShortages")}: {coverage?.shortages}
+            </p>
+          )}
+          <table>
+            <thead>
+              <tr>
+                <th>{t("purchasing.category")}</th>
+                <th>{t("purchasing.purchaseSku")}</th>
+                <th>{t("purchasing.coverageRequired")}</th>
+                <th>{t("purchasing.coverageOnHand")}</th>
+                <th>{t("purchasing.coverageReserved")}</th>
+                <th>{t("purchasing.coverageOrdered")}</th>
+                <th>{t("purchasing.coverageReceived")}</th>
+                <th>{t("purchasing.coverageRemnant")}</th>
+                <th>{t("purchasing.coverageShortage")}</th>
+                <th>{t("purchasing.coverageRecommended")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coverageLines.map((line) => (
+                <tr key={line.requirement_line_id}>
+                  <td>{categoryLabel(line.category)}</td>
+                  <td>
+                    {line.purchasing_sku}
+                    <span className="purchasing-coverage-unit"> {line.unit}</span>
+                  </td>
+                  <td>{line.required}</td>
+                  <td>{line.on_hand}</td>
+                  <td>{line.reserved}</td>
+                  <td>{line.open_ordered}</td>
+                  <td>{line.received}</td>
+                  <td>
+                    {line.remnant_pool
+                      ? `${line.remnant_pool.count}${
+                          line.remnant_pool.total_mm ? ` · ${line.remnant_pool.total_mm} mm` : ""
+                        }`
+                      : "—"}
+                  </td>
+                  <td>
+                    {line.shortage !== "0" ? (
+                      <strong className="purchasing-coverage-short">{line.shortage}</strong>
+                    ) : (
+                      "0"
+                    )}
+                  </td>
+                  <td>{line.recommended_purchase}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
       {state?.version &&

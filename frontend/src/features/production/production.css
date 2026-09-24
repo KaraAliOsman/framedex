@@ -692,3 +692,15 @@
   color: var(--theme-text-secondary);
   margin: 0.4rem 0 0;
 }
+
+.production-stock-reserve h4 {
+  margin: 0 0 0.5em;
+  font-size: 0.95em;
+}
+.production-stock-short {
+  color: var(--theme-danger, #b3261e);
+}
+.production-stock-unmapped {
+  color: var(--theme-warning, #b45309);
+  font-size: 0.9em;
+}

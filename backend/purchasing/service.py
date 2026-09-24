@@ -17,6 +17,7 @@ from dekopen_engine.documentary_canonical import (
 )
 
 from documents.repository import DocumentaryError, decoded, documentary_backend, json_text, one, rows
+from inventory.production_stock import coverage_for_version
 
 
 ORDER_TYPES = (
@@ -193,6 +194,9 @@ def purchasing_state(org_id: UUID, version_id: UUID | None = None) -> dict[str, 
             "orders": _public(orders),
             "artifacts": _public(artifacts),
             "blockers": blockers,
+            # §10 coverage: required vs on-hand/reserved/open-ordered vs the
+            # remnant pool → shortage → recommended purchase, per line.
+            "coverage": coverage_for_version(org_id, version_id),
         }
 
 

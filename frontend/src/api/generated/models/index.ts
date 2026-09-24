@@ -327,6 +327,7 @@ export * from "./purchaseUnitEnum";
 export * from "./purchasingState";
 export * from "./purchasingStateAllocationsItem";
 export * from "./purchasingStateBlockersItem";
+export * from "./purchasingStateCoverage";
 export * from "./purchasingStateEligibilitiesItem";
 export * from "./purchasingStateOrdersItem";
 export * from "./purchasingStateRequirementsItem";

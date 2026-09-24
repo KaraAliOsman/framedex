@@ -17666,6 +17666,9 @@ components:
           items:
             type: object
             additionalProperties: {}
+        coverage:
+          type: object
+          additionalProperties: {}
     QcResultEnum:
       enum:
       - PASS

@@ -31,6 +31,7 @@ from dekopen_engine.operations import (
 from documents.repository import DocumentaryError, documentary_backend, one, rows
 from engine_api.cutting_repository import CuttingRepository
 from inventory import remnants as remnants_service
+from inventory import production_stock
 from production.confirmations import confirmation_summary
 from production.dxf import dxf_files
 from production.dispatch_notes import issue_dispatch_note
@@ -59,6 +60,15 @@ _STEP_LABELS = {
     "GLAZE": "Vidriado y paneles",
     "QC": "Control de calidad",
     "PACK": "Embalaje",
+}
+
+# §10: which stock kinds a routing step physically consumes — bars and
+# sheets drop at the saw, kits and fittings land at assembly, panels at
+# glazing. Reservations stay open until their step completes.
+_STEP_CONSUMED_KINDS = {
+    "CUT": {"BAR", "SHEET"},
+    "ASSEMBLE": {"HARDWARE_KIT", "FITTING"},
+    "GLAZE": {"PANEL"},
 }
 
 _EVENTS = {
@@ -686,6 +696,71 @@ def transition_step(
                         json.dumps({
                             "consumed": consumed,
                             "produced": produced,
+                        }),
+                    ],
+                )
+        # §10 consumption: completing a step settles the stock reservations
+        # of the kinds that step physically uses — CONSUMPTION movements on
+        # the ledger, reservation entries stamped consumed_at in the plan.
+        consumed_kinds = _STEP_CONSUMED_KINDS.get(str(step["code"]))
+        if new_status == "DONE" and consumed_kinds:
+            payload_row = one(
+                """
+                SELECT payload_json FROM public.orders
+                WHERE id = %s AND org_id = %s
+                """,
+                [str(step["order_id"]), str(org_id)],
+                "work_order_not_found",
+            )
+            payload_full = _decoded(payload_row["payload_json"])
+            opt = payload_full.get("optimization") or {}
+            reservations = opt.get("stock_reservations") or []
+            open_entries = [
+                entry for entry in reservations
+                if entry.get("kind") in consumed_kinds
+                and not entry.get("consumed_at")
+                and entry.get("reserved") not in (None, "", "0", "0.00")
+            ]
+            if open_entries:
+                settled = production_stock.consume_for_order(
+                    org_id=org_id,
+                    order_id=step["order_id"],
+                    actor_id=actor_id,
+                    kinds=consumed_kinds,
+                    reservations=reservations,
+                )
+                opt["stock_reservations"] = settled
+                payload_full["optimization"] = opt
+                rows(
+                    """
+                    UPDATE public.orders SET payload_json = %s::jsonb, updated_at = %s
+                    WHERE id = %s AND org_id = %s
+                    RETURNING id
+                    """,
+                    [
+                        json.dumps(payload_full),
+                        datetime.now(timezone.utc),
+                        str(step["order_id"]),
+                        str(org_id),
+                    ],
+                )
+                rows(
+                    """
+                    INSERT INTO public.production_step_events(org_id, order_id, step_id, event, actor_id, payload)
+                    VALUES (%s, %s, %s, 'WO_STOCK_CONSUMED', %s, %s::jsonb)
+                    RETURNING id
+                    """,
+                    [
+                        str(org_id),
+                        str(step["order_id"]),
+                        str(step_id),
+                        str(actor_id),
+                        json.dumps({
+                            "consumed": [
+                                {"sku": e["sku"], "qty": e["reserved"],
+                                 "kind": e["kind"]}
+                                for e in open_entries
+                            ],
                         }),
                     ],
                 )
@@ -1829,12 +1904,36 @@ def optimize_work_order(
             for remnant in sheet.get("produced_remnants") or []
         ]
         # Re-optimizing replaces the plan: the old reservation releases before
-        # the new one claims, atomically.
+        # the new one claims, atomically — for remnants and for ledger stock
+        # alike. Ledger reservations are capped at what is physically
+        # available under the item row lock, so two concurrent work orders can
+        # never hold the same stock; shortfall is reported, not invented.
         remnants_service.release_reservations(org_id=org_id, order_id=order_id)
+        production_stock.release_for_order(
+            org_id=org_id, order_id=order_id, actor_id=actor_id
+        )
         remnants_service.reserve_remnants(
             org_id=org_id,
             remnant_ids=[r["id"] for r in consumed_bars + consumed_sheets],
             order_id=order_id,
+        )
+        stock_needs = production_stock.bar_stock_needs(
+            org_id=org_id, bars=bars.get("workshop_cut_plan") or []
+        )
+        unit_needs, unmapped_stock_skus = production_stock.unit_stock_needs(
+            org_id=org_id,
+            system_id=str(system_id),
+            quantity=quantity,
+            hardware_items=materials.get("hardware_items") or [],
+            fittings=materials.get("fittings") or [],
+            panels=materials.get("panels") or [],
+            sheet_purchases=sheet_purchases,
+        )
+        stock_reservations = production_stock.reserve_for_order(
+            org_id=org_id,
+            order_id=order_id,
+            actor_id=actor_id,
+            needs=[*stock_needs, *unit_needs],
         )
         optimization = {
             "schema": "work_order_optimization_v1",
@@ -1852,6 +1951,11 @@ def optimize_work_order(
                 "produced_bars": produced_bars,
                 "produced_sheets": produced_sheets,
             },
+            # §10 ledger reservations this plan holds — what production
+            # claimed from stock, what it is short of, and (once the routing
+            # consumes them) when each hold settled.
+            "stock_reservations": stock_reservations,
+            "unmapped_stock_skus": unmapped_stock_skus,
         }
         # A fresh plan invalidates any machine files rendered from the old one.
         new_payload = {**payload, "optimization": optimization}
@@ -1884,6 +1988,12 @@ def optimize_work_order(
                     "sheets": len(sheets),
                     "unnested": len(unnested),
                     "remnants_consumed": len(consumed_bars + consumed_sheets),
+                    "stock_reserved": sum(
+                        1 for row in stock_reservations if row["reserved"] != "0"
+                    ),
+                    "stock_short": sum(
+                        1 for row in stock_reservations if row["short"] != "0"
+                    ),
                 }),
             ],
         )

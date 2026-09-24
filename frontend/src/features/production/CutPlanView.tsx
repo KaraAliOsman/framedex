@@ -95,6 +95,18 @@ export type StrategyComparison = {
   deep?: OptimizationMetrics;
   chosen?: string;
 };
+export type StockReservation = {
+  kind?: string;
+  sku?: string;
+  name?: string;
+  unit?: string;
+  needed?: string;
+  on_hand?: string;
+  reserved?: string;
+  short?: string;
+  consumed_at?: string | null;
+};
+
 export type RemnantLedger = {
   consumed?: { id: string; kind: string }[];
   produced_bars?: { stock_authority_id: string; remainder_mm: string }[];
@@ -119,6 +131,8 @@ export type WorkOrderOptimization = {
   sheet_purchases?: SheetPurchase[];
   unnested?: UnnestedPiece[];
   remnants?: RemnantLedger;
+  stock_reservations?: StockReservation[];
+  unmapped_stock_skus?: string[];
 };
 
 type PieceRef = {

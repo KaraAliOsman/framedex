@@ -114,6 +114,10 @@ class CutBar(EngineModel):
     material: CutMaterial
     color: str
     stock_length_mm: Decimal
+    # The stock authority this bar was bought under — lets the workshop link
+    # the plan back to the physical stock identity (remnant ledger, purchase
+    # mapping) without re-resolving the commercial sku.
+    stock_authority_id: str | None = None
     head_trim_mm: Decimal
     tail_trim_mm: Decimal
     kerf_mm: Decimal
@@ -445,6 +449,7 @@ def _emit_bars(
         bars.append(CutBar(
             bar_index=index + 1, commercial_sku=stock.commercial_sku,
             material=stock.material, color=stock.color, stock_length_mm=length,
+            stock_authority_id=stock.stock_authority_id,
             head_trim_mm=profile.head_trim_mm, tail_trim_mm=profile.tail_trim_mm,
             kerf_mm=profile.kerf_mm,
             cuts=[CutPlacement(**p.model_dump(), sequence=i + 1) for i, p in enumerate(cuts)],

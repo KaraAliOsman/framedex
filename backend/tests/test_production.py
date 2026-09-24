@@ -511,10 +511,16 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
         "production.service.CuttingRepository"
     ) as repo, patch(
         "production.service.optimize_cut", return_value=cut_result
-    ) as cut, patch("production.service.remnants_service") as rem:
+    ) as cut, patch("production.service.remnants_service") as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
         rem.bar_remnants_for_authorities.return_value = []
         rem.sheet_remnants_for_sku.return_value = []
         rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
         repo.return_value.for_result.return_value = authorities
         repo.return_value.cutting_profile.return_value = profile
         output = service.optimize_work_order(
@@ -592,10 +598,16 @@ def test_optimize_routes_shaped_glass_to_unnested() -> None:
         "production.service.CuttingRepository"
     ) as repo, patch(
         "production.service.optimize_cut", return_value=cut_result
-    ), patch("production.service.remnants_service") as rem:
+    ), patch("production.service.remnants_service") as rem, patch(
+        "production.service.production_stock"
+    ) as stock:
         rem.bar_remnants_for_authorities.return_value = []
         rem.sheet_remnants_for_sku.return_value = []
         rem.release_reservations.return_value = 0
+        stock.release_for_order.return_value = 0
+        stock.bar_stock_needs.return_value = []
+        stock.unit_stock_needs.return_value = ([], [])
+        stock.reserve_for_order.return_value = []
         repo.return_value.for_result.return_value = authorities
         repo.return_value.cutting_profile.return_value = profile
         output = service.optimize_work_order(

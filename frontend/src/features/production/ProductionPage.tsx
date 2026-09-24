@@ -904,6 +904,66 @@ export function ProductionPage(): JSX.Element {
                           </p>
                         ) : null}
                         {(() => {
+                          const reservations = optimization?.stock_reservations ?? [];
+                          const unmappedSkus = optimization?.unmapped_stock_skus ?? [];
+                          if (!reservations.length && !unmappedSkus.length) return null;
+                          return (
+                            <section
+                              className="production-stock-reserve"
+                              aria-label={t("production.stockReserveTitle")}
+                            >
+                              <h4>{t("production.stockReserveTitle")}</h4>
+                              {reservations.length ? (
+                                <table className="production-plan">
+                                  <thead>
+                                    <tr>
+                                      <th>{t("production.stockKind")}</th>
+                                      <th>{t("production.stockSku")}</th>
+                                      <th>{t("production.stockOnHand")}</th>
+                                      <th>{t("production.stockNeeded")}</th>
+                                      <th>{t("production.stockReserved")}</th>
+                                      <th>{t("production.stockShort")}</th>
+                                      <th>{t("production.stockConsumed")}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {reservations.map((row, index) => (
+                                      <tr key={`${row.kind ?? ""}-${row.sku ?? ""}-${index}`}>
+                                        <td>{row.name ?? row.sku ?? "—"}</td>
+                                        <td>
+                                          {row.sku ?? "—"} · {row.unit ?? ""}
+                                        </td>
+                                        <td>{row.on_hand ?? "0"}</td>
+                                        <td>{row.needed ?? "0"}</td>
+                                        <td>{row.reserved ?? "0"}</td>
+                                        <td>
+                                          {row.short && row.short !== "0" ? (
+                                            <strong className="production-stock-short">
+                                              {row.short}
+                                            </strong>
+                                          ) : (
+                                            "0"
+                                          )}
+                                        </td>
+                                        <td>
+                                          {row.consumed_at
+                                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
+                                            : "—"}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              ) : null}
+                              {unmappedSkus.length ? (
+                                <p className="production-stock-unmapped">
+                                  {t("production.stockUnmapped")}: {unmappedSkus.join(" · ")}
+                                </p>
+                              ) : null}
+                            </section>
+                          );
+                        })()}
+                        {(() => {
                           const remnantLedger = optimization?.remnants;
                           const consumed = remnantLedger?.consumed ?? [];
                           const producedCount =

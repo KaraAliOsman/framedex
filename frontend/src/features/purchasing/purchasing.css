@@ -126,3 +126,29 @@
     padding: 0.75rem;
   }
 }
+
+.purchasing-coverage {
+  margin: 1rem 0;
+}
+.purchasing-coverage table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.purchasing-coverage th,
+.purchasing-coverage td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--theme-line, #dde2e8);
+}
+.purchasing-coverage-alert {
+  color: var(--theme-danger, #b3261e);
+  font-weight: 600;
+}
+.purchasing-coverage-short {
+  color: var(--theme-danger, #b3261e);
+}
+.purchasing-coverage-unit {
+  color: var(--theme-text-secondary, #667085);
+  font-size: 0.8em;
+}
