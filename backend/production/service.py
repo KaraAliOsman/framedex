@@ -658,6 +658,26 @@ def transition_step(
             )
             optimization = (_decoded(payload_row["payload_json"]).get("optimization") or {})
             plan_remnants = optimization.get("remnants") or {}
+            # Every remnant the plan claims must still be RESERVED for this
+            # order — an operator can unreserve a drop manually, and another
+            # order may then have taken it; completing on the stale plan
+            # would settle stock the saw never had.
+            planned_ids = {
+                str(entry["id"])
+                for entry in (plan_remnants.get("consumed") or [])
+                if entry.get("id")
+            }
+            if planned_ids:
+                still_reserved = rows(
+                    """
+                    SELECT id FROM public.inventory_remnants
+                    WHERE org_id = %s AND reserved_order_id = %s
+                      AND status = 'RESERVED' AND id = ANY(%s::uuid[])
+                    """,
+                    [str(org_id), str(step["order_id"]), sorted(planned_ids)],
+                )
+                if {str(r["id"]) for r in still_reserved} != planned_ids:
+                    raise DocumentaryError("work_order_remnant_released")
             consumed = remnants_service.consume_order_remnants(
                 org_id=org_id, order_id=step["order_id"]
             )
@@ -715,6 +735,29 @@ def transition_step(
             payload_full = _decoded(payload_row["payload_json"])
             opt = payload_full.get("optimization") or {}
             reservations = opt.get("stock_reservations") or []
+            # A consuming step can only complete when its material is fully
+            # accounted for: a short reservation, a piece no stock could
+            # host, or a sku with no stock mapping means the physical order
+            # is incomplete — refuse instead of settling only the reserved
+            # part and letting the order reach completion.
+            short_entries = [
+                entry for entry in reservations
+                if entry.get("kind") in consumed_kinds
+                and not entry.get("consumed_at")
+                and entry.get("short") not in (None, "", "0", "0.00")
+            ]
+            unplaced_plan = (
+                "BAR" in consumed_kinds
+                and bool((opt.get("bars") or {}).get("unplaced"))
+            ) or (
+                "SHEET" in consumed_kinds
+                and any(
+                    entry.get("reason") != "shaped_glass_outline"
+                    for entry in (opt.get("unnested") or [])
+                )
+            )
+            if short_entries or unplaced_plan or opt.get("unmapped_stock_skus"):
+                raise DocumentaryError("work_order_material_shortage")
             open_entries = [
                 entry for entry in reservations
                 if entry.get("kind") in consumed_kinds

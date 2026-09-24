@@ -431,7 +431,7 @@ def _cost_key(metrics: CutPlanMetrics) -> tuple[int, int, Decimal, int]:
 
 def _emit_bars(
     bins: list[list[CutPiece]],
-    sources: list[tuple[StockRule, Decimal, str, str | None]],
+    sources: list[tuple[StockRule, Decimal, Literal["NEW", "REMNANT"], str | None]],
     group_stock: StockRule,
     profile: CuttingProfile,
 ) -> tuple[list[CutBar], dict[tuple[str, Decimal, CutMaterial, str, str], PurchaseLine]]:
@@ -497,7 +497,7 @@ def _pack_group(
     remnant could host but whose remnant capacity was already exhausted —
     they fit no purchasable variant either."""
     bins: list[list[CutPiece]] = []
-    sources: list[tuple[StockRule, Decimal, str, str | None]] = []
+    sources: list[tuple[StockRule, Decimal, Literal["NEW", "REMNANT"], str | None]] = []
     remaining = pieces
     for remnant in sorted(remnants, key=lambda r: (r.length_mm, r.remnant_id)):
         usable = _usable(remnant.length_mm, profile)

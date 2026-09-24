@@ -38,7 +38,7 @@ from dekopen_engine.nesting import (
 # ── Frozen legacy algorithms ────────────────────────────────────────────
 
 
-def _legacy_piece_order(piece: CutPiece) -> tuple:
+def _legacy_piece_order(piece: CutPiece) -> tuple[object, ...]:
     return (
         -piece.length_mm,
         piece.workshop_sku,
@@ -57,7 +57,7 @@ def legacy_cut_plan(
     profile: CuttingProfile,
 ) -> list[CutBar]:
     """optimize_cut @09f0957 verbatim — BFD into one stock length, nothing else."""
-    groups: list[tuple] = []
+    groups: list[tuple[object, ...]] = []
     authorities: list[StockRule] = []
     bar_pieces: list[list[CutPiece]] = []
     remainders: list[D] = []
@@ -225,15 +225,16 @@ SAW = CuttingProfile(
 )
 
 
-def _saw(**overrides) -> CuttingProfile:
-    base = dict(
-        id="saw-std",
-        code="SAW",
-        kerf_mm=D("4"),
-        head_trim_mm=D("15"),
-        tail_trim_mm=D("15"),
-    )
-    return CuttingProfile(**{**base, **overrides})
+def _saw(**overrides: object) -> CuttingProfile:
+    base: dict[str, object] = {
+        "id": "saw-std",
+        "code": "SAW",
+        "kerf_mm": D("4"),
+        "head_trim_mm": D("15"),
+        "tail_trim_mm": D("15"),
+    }
+    base.update(overrides)
+    return CuttingProfile.model_validate(base)
 
 
 def _rule(sku: str, length: str = "6000", material: str = "PVC", color: str = "WHITE",
@@ -255,25 +256,26 @@ def _rule(sku: str, length: str = "6000", material: str = "PVC", color: str = "W
 def _piece(length: str, index: int, sku: str = "FRAME", material: str = "PVC",
            color: str = "WHITE", angles: tuple[str, str] | None = None,
            prefix: str = "p") -> CutPiece:
-    kwargs: dict[str, object] = {}
+    data: dict[str, object] = {
+        "piece_id": f"{prefix}{index}",
+        "source_kind": "PROFILE",
+        "workshop_sku": sku,
+        "material": CutMaterial(material),
+        "color": color,
+        "length_mm": D(length),
+        "role": "FRAME",
+        "unit_index": 1,
+    }
     if angles:
-        kwargs["angle_left"], kwargs["angle_right"] = D(angles[0]), D(angles[1])
-    return CutPiece(
-        piece_id=f"{prefix}{index}",
-        source_kind="PROFILE",
-        workshop_sku=sku,
-        material=CutMaterial(material),
-        color=color,
-        length_mm=D(length),
-        role="FRAME",
-        unit_index=1,
-        **kwargs,
-    )
+        data["angle_left"], data["angle_right"] = D(angles[0]), D(angles[1])
+    return CutPiece.model_validate(data)
 
 
-def _pieces(lengths: list[str], prefix: str = "p", **kwargs) -> list[CutPiece]:
+def _pieces(lengths: list[str], prefix: str = "p", *, sku: str = "FRAME",
+            material: str = "PVC", color: str = "WHITE") -> list[CutPiece]:
     return [
-        _piece(length, i, prefix=prefix, **kwargs)
+        _piece(length, i, sku=sku, material=material, color=color,
+               prefix=prefix)
         for i, length in enumerate(lengths)
     ]
 
@@ -408,14 +410,14 @@ class _SheetCase:
         self.remnants = remnants or []
 
 
-def _npiece(w: str, h: str, index: int, **kwargs) -> NestPiece:
-    return NestPiece(
-        piece_id=f"np{index}",
-        workshop_sku="PANEL",
-        width_mm=D(w),
-        height_mm=D(h),
+def _npiece(w: str, h: str, index: int, **kwargs: object) -> NestPiece:
+    return NestPiece.model_validate({
+        "piece_id": f"np{index}",
+        "workshop_sku": "PANEL",
+        "width_mm": D(w),
+        "height_mm": D(h),
         **kwargs,
-    )
+    })
 
 
 def _sheet_cases() -> list[_SheetCase]:
@@ -427,10 +429,10 @@ def _sheet_cases() -> list[_SheetCase]:
         sheet_height_mm=D("1500"),
         edge_trim_mm=D("10"),
     )
-    awkward = [
-        "1240x820", "900x600", "1100x400", "700x1300", "500x500",
-        "1400x300", "800x900", "600x1100", "950x450", "1300x700",
-        "400x1200", "1050x350", "850x650", "1150x550", "750x950",
+    awkward: list[tuple[str, str]] = [
+        ("1240", "820"), ("900", "600"), ("1100", "400"), ("700", "1300"), ("500", "500"),
+        ("1400", "300"), ("800", "900"), ("600", "1100"), ("950", "450"), ("1300", "700"),
+        ("400", "1200"), ("1050", "350"), ("850", "650"), ("1150", "550"), ("750", "950"),
     ]
     large = [(str(150 + rng.randint(0, 1300)), str(150 + rng.randint(0, 1100))) for _ in range(100)]
     cases = [
@@ -441,7 +443,7 @@ def _sheet_cases() -> list[_SheetCase]:
         ),
         _SheetCase(
             "awkward-mix-15",
-            [_npiece(*s.split("x"), i) for i, s in enumerate(awkward)],
+            [_npiece(w, h, i) for i, (w, h) in enumerate(awkward)],
             sheet,
         ),
         _SheetCase(
@@ -596,12 +598,12 @@ def run_benchmark() -> str:
     )
     lines.append("|---|---|---|---|---|---|---|---|")
     s_totals = {"legacy_waste": D("0"), "new_waste": D("0"), "legacy_units": D("0"), "new_units": D("0")}
-    for case in _sheet_cases():
-        old_sheets, old_productive, old_unplaced = legacy_nest(case.pieces, case.rule)
-        old_area = case.rule.sheet_width_mm * case.rule.sheet_height_mm * old_sheets
+    for scase in _sheet_cases():
+        old_sheets, old_productive, old_unplaced = legacy_nest(scase.pieces, scase.rule)
+        old_area = scase.rule.sheet_width_mm * scase.rule.sheet_height_mm * old_sheets
         old_waste = old_area - old_productive
-        result = nest_rects(case.pieces, case.rule, remnants=case.remnants or None)
-        new_layouts = result.layouts
+        sresult = nest_rects(scase.pieces, scase.rule, remnants=scase.remnants or None)
+        new_layouts = sresult.layouts
         remnant_sheets = sum(1 for s in new_layouts if s.source == "REMNANT")
         new_sheets = len(new_layouts)
         new_productive = sum((s.productive_area_mm2 for s in new_layouts), D("0"))
@@ -615,9 +617,9 @@ def run_benchmark() -> str:
         s_totals["legacy_units"] += D(old_sheets)
         s_totals["new_units"] += D(new_sheets)
         lines.append(
-            f"| {case.name} | {old_sheets} | {new_sheets} | {old_waste} | "
+            f"| {scase.name} | {old_sheets} | {new_sheets} | {old_waste} | "
             f"{new_waste} | {delta} | {remnant_sheets} | "
-            f"{old_unplaced}/{len(result.unplaced)} |"
+            f"{old_unplaced}/{len(sresult.unplaced)} |"
         )
     s_saved = s_totals["legacy_waste"] - s_totals["new_waste"]
     lines.append(

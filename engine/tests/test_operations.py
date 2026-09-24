@@ -85,19 +85,18 @@ def _member(role: ProfileRole, span: str, overlap: str = "0") -> PhysicalMemberF
     )
 
 
-def _unit(**kwargs) -> ManufacturingFactsV1:
-    kwargs.setdefault("members", [])
-    kwargs.setdefault("handles", [])
-    return ManufacturingFactsV1(
-        position_id="pos-1", position_index=1, repetition_index=1,
-        nominal_width_mm=Decimal("1000"), nominal_height_mm=Decimal("1200"),
-        placement_policy_id="pp", placement_policy_version=1,
-        handle_policy_id="hp", handle_policy_version=2,
-        reinforcement_policy_id="rp", reinforcement_policy_version=1,
-        reinforcements=[], leaves=[], infills=[],
-        relationships=[],
-        **kwargs,
-    )
+def _unit(**kwargs: object) -> ManufacturingFactsV1:
+    data: dict[str, object] = {
+        "position_id": "pos-1", "position_index": 1, "repetition_index": 1,
+        "nominal_width_mm": Decimal("1000"), "nominal_height_mm": Decimal("1200"),
+        "placement_policy_id": "pp", "placement_policy_version": 1,
+        "handle_policy_id": "hp", "handle_policy_version": 2,
+        "reinforcement_policy_id": "rp", "reinforcement_policy_version": 1,
+        "reinforcements": [], "leaves": [], "infills": [],
+        "relationships": [], "members": [], "handles": [],
+    }
+    data.update(kwargs)
+    return ManufacturingFactsV1.model_validate(data)
 
 
 def _handle() -> HandleLocationFactV1:
@@ -112,7 +111,7 @@ def _handle() -> HandleLocationFactV1:
     )
 
 
-def test_saw_ops_cover_every_piece_boundary():
+def test_saw_ops_cover_every_piece_boundary() -> None:
     plan = optimize_cut(
         [_piece("p1", "2000"), _piece("p2", "1500")],
         [_stock()], _profile(),
@@ -138,7 +137,7 @@ def test_saw_ops_cover_every_piece_boundary():
     assert interior.detail["next_piece_id"] == "p2"
 
 
-def test_saw_ops_carry_angles():
+def test_saw_ops_carry_angles() -> None:
     piece = _piece("p1", "2000")
     piece.angle_left = Decimal("45")
     piece.angle_right = Decimal("45")
@@ -150,7 +149,7 @@ def test_saw_ops_carry_angles():
     assert piece_cut.angle_left_deg == Decimal("45")
 
 
-def test_no_ops_without_authority_kinds():
+def test_no_ops_without_authority_kinds() -> None:
     """Kinds with no authority (drainage, hinges…) emit nothing."""
     plan = optimize_cut([_piece("p1", "2000")], [_stock()], _profile())
     ops = operations_from_plan(
@@ -160,11 +159,12 @@ def test_no_ops_without_authority_kinds():
     assert OperationKind.DRAINAGE not in kinds
     assert OperationKind.HINGE_PREP not in kinds
     doc = ops_document(ops, order_code="OT-1")
-    assert "DRAINAGE" in doc["unemitted_kinds"]
+    unemitted = doc["unemitted_kinds"]
+    assert isinstance(unemitted, list) and "DRAINAGE" in unemitted
     assert doc["counts_by_kind"] == {"SAW_CUT": 3}
 
 
-def test_handle_prep_from_facts():
+def test_handle_prep_from_facts() -> None:
     unit = _unit(members=[_member(ProfileRole.FRAME, "1200")], handles=[_handle()])
     ops = operations_from_plan(bars=[], fact_units=[unit])
     handle_ops = [op for op in ops if op.kind == OperationKind.HANDLE_PREP]
@@ -176,7 +176,7 @@ def test_handle_prep_from_facts():
     assert op.coordinate_system == CoordinateSystem.MEMBER_PLAN
 
 
-def test_end_machining_only_with_overlap_authority():
+def test_end_machining_only_with_overlap_authority() -> None:
     member = _member(ProfileRole.MULLION_V, "1180", overlap="15")
     ops = operations_from_plan(
         bars=[], fact_units=[_unit(members=[member])]
@@ -187,7 +187,7 @@ def test_end_machining_only_with_overlap_authority():
     assert {op.detail["edge"] for op in end_ops} == {"START", "END"}
 
 
-def test_end_machining_absent_without_overlap():
+def test_end_machining_absent_without_overlap() -> None:
     member = _member(ProfileRole.MULLION_V, "1180", overlap="0")
     ops = operations_from_plan(
         bars=[], fact_units=[_unit(members=[member])]
@@ -195,7 +195,7 @@ def test_end_machining_absent_without_overlap():
     assert not [op for op in ops if op.kind == OperationKind.END_MACHINING]
 
 
-def test_end_machining_only_on_mullions():
+def test_end_machining_only_on_mullions() -> None:
     member = _member(ProfileRole.FRAME, "1180", overlap="15")
     ops = operations_from_plan(
         bars=[], fact_units=[_unit(members=[member])]
@@ -203,7 +203,7 @@ def test_end_machining_only_on_mullions():
     assert not [op for op in ops if op.kind == OperationKind.END_MACHINING]
 
 
-def test_determinism_and_ids():
+def test_determinism_and_ids() -> None:
     plan = optimize_cut([_piece("p1", "2000"), _piece("p2", "1500")],
                         [_stock()], _profile())
     unit = _unit(members=[_member(ProfileRole.MULLION_V, "1180", "15")],
@@ -216,7 +216,7 @@ def test_determinism_and_ids():
     assert len({op.operation_id for op in ops_a}) == len(ops_a)
 
 
-def test_postprocessor_renders_deterministically():
+def test_postprocessor_renders_deterministically() -> None:
     plan = optimize_cut([_piece("p1", "2000")], [_stock()], _profile())
     ops = operations_from_plan(
         bars=plan.workshop_cut_plan, fact_units=[])
@@ -229,5 +229,7 @@ def test_postprocessor_renders_deterministically():
     assert len(csv_lines) == len(ops) + 1
     assert "SAW_CUT" in csv_lines[1]
     # machine profile declares the neutral target explicitly
-    assert doc["machine"]["controller_family"] == "NEUTRAL"
-    assert doc["machine"] == NEUTRAL_MACHINE_PROFILE.model_dump(mode="json")
+    machine = doc["machine"]
+    assert isinstance(machine, dict)
+    assert machine["controller_family"] == "NEUTRAL"
+    assert machine == NEUTRAL_MACHINE_PROFILE.model_dump(mode="json")

@@ -55,7 +55,10 @@ class ExactLeafWeight:
         )
         if any(component is None for component in components):
             return None
-        return sum(component for component in components if component is not None)
+        return sum(
+            (component for component in components if component is not None),
+            Decimal("0"),
+        )
 
     @staticmethod
     def _quantize(value: Decimal | None) -> Decimal | None:

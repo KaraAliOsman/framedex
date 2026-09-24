@@ -36,6 +36,7 @@ from dekopen_engine.geometry import (
     SlidingLayoutError,
     calculate_geometry,
     joint_adjustment_per_end,
+    rebate_depth,
     reinforcement_cut_length,
     resolve_bead_rule,
     resolved_sliding_layout,
@@ -1224,7 +1225,7 @@ def _evaluate_contour_module(
     clearance_mm = params.glass_clearance_foil_mm if is_foiled else params.glass_clearance_white_mm
     # Inward offset that lands exactly on the rect-path pocket math:
     # pocket = finished - 2*face + 2*rebate - 2*clearance.
-    inset = frame.face_width_mm - params.rebate_depth_mm + clearance_mm
+    inset = frame.face_width_mm - rebate_depth(params) + clearance_mm
     try:
         fill = offset_contour(contour, inset)
     except ValueError as error:

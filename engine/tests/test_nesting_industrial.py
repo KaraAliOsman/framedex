@@ -12,20 +12,22 @@ from dekopen_engine.nesting import (
 )
 
 
-def rule(**overrides) -> SheetRule:
-    base = dict(
-        workshop_sku="GLASS-4", purchasing_sku="GLASS-4-SHEET",
-        sheet_width_mm=D("2000"), sheet_height_mm=D("1000"),
-        edge_trim_mm=D("0"), kerf_mm=D("0"),
-    )
-    return SheetRule(**{**base, **overrides})
+def rule(**overrides: object) -> SheetRule:
+    base: dict[str, object] = {
+        "workshop_sku": "GLASS-4", "purchasing_sku": "GLASS-4-SHEET",
+        "sheet_width_mm": D("2000"), "sheet_height_mm": D("1000"),
+        "edge_trim_mm": D("0"), "kerf_mm": D("0"),
+    }
+    base.update(overrides)
+    return SheetRule.model_validate(base)
 
 
-def piece(piece_id: str, width: str, height: str, **kw) -> NestPiece:
-    return NestPiece(
-        piece_id=piece_id, workshop_sku="GLASS-4",
-        width_mm=D(width), height_mm=D(height), **kw,
-    )
+def piece(piece_id: str, width: str, height: str,
+          **kw: object) -> NestPiece:
+    return NestPiece.model_validate({
+        "piece_id": piece_id, "workshop_sku": "GLASS-4",
+        "width_mm": D(width), "height_mm": D(height), **kw,
+    })
 
 
 def test_kerf_respected_between_pieces() -> None:

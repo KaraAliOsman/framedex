@@ -382,9 +382,12 @@ class NeutralOpsPostProcessor:
     )
 
     def render(self, document: dict[str, object]) -> dict[str, str]:
-        ops = document.get("operations") or []
+        raw_ops = document.get("operations")
+        ops = raw_ops if isinstance(raw_ops, list) else []
         rows = [self._CSV_HEADER]
         for op in ops:
+            if not isinstance(op, dict):
+                continue
             rows.append(
                 ",".join(
                     _cell(op.get(key))

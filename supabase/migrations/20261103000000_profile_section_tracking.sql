@@ -16,13 +16,13 @@ COMMENT ON COLUMN public.profile_articles.section_revised_at IS
 COMMENT ON COLUMN public.profile_articles.section_revised_by IS
     'Actor id of the last section change.';
 
--- Sections written before the keys existed were drawn under the declared
--- defaults (exterior face at y=0, origin at the polygon's top-left).
-UPDATE public.profile_articles
-SET section = section || '{"orientation":"EXTERIOR_DOWN","local_origin":"TOP_LEFT"}'::jsonb
-WHERE section IS NOT NULL
-  AND NOT (section ? 'orientation' AND section ? 'local_origin');
-
+-- Sections written before the keys existed are NOT backfilled: an UPDATE on
+-- an article of a technically locked system trips the catalog freeze trigger
+-- and would abort the whole migration on populated databases. Legacy rows
+-- load with the declared defaults at read time (EXTERIOR_DOWN exterior face,
+-- TOP_LEFT origin — serializer and engine defaults). The new shape CHECK is
+-- therefore added NOT VALID: pre-existing rows stay untouched, every new or
+-- updated section must declare orientation and local_origin.
 ALTER TABLE public.profile_articles
     DROP CONSTRAINT profile_articles_section_shape;
 ALTER TABLE public.profile_articles
@@ -45,4 +45,4 @@ ALTER TABLE public.profile_articles
                 'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT', 'CENTROID'
             )
         )
-    );
+    ) NOT VALID;

@@ -92,19 +92,24 @@ def catalog_readiness(system_id, org_id):
         # human review first (review flips its provenance to MANUAL).
         if rows(
             "SELECT 1 FROM public.profile_systems WHERE id=%s"
+            " AND (is_global = TRUE OR org_id=%s)"
             " AND data_provenance='LEGACY_UNVERIFIED'"
             " UNION ALL"
             " SELECT 1 FROM public.profile_articles WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s)"
             " AND data_provenance='LEGACY_UNVERIFIED'"
             " UNION ALL"
             " SELECT 1 FROM public.infill_articles WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s)"
             " AND data_provenance='LEGACY_UNVERIFIED'"
             " UNION ALL"
             " SELECT 1 FROM public.hardware_kits WHERE"
             " (system_id=%s OR system_id IS NULL)"
+            " AND (org_id IS NULL OR org_id=%s)"
             " AND data_provenance='LEGACY_UNVERIFIED'"
             " LIMIT 1",
-            [system_id, system_id, system_id, system_id],
+            [system_id, org_id, system_id, org_id,
+             system_id, org_id, system_id, org_id],
         ):
             reasons.append("catalog_review")
         try:

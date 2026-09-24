@@ -156,7 +156,15 @@ def test_total_rounds_once_half_up_and_excludes_static_bom(demo_60_params: Syste
     exact = ExactLeafWeight(D("1.004"), D("2.004"), D("3.004"), D("4.003"))
     public = exact.public_result("test", None)
     assert public.total_weight_kg == D("10.02")
-    assert public.pvc_weight_kg + public.steel_weight_kg + public.infill_weight_kg + public.hardware_weight_kg == D("10.00")
+    components = (
+        public.pvc_weight_kg, public.steel_weight_kg,
+        public.infill_weight_kg, public.hardware_weight_kg,
+    )
+    assert all(component is not None for component in components)
+    assert sum(
+        (component for component in components if component is not None),
+        D("0"),
+    ) == D("10.00")
     baseline = calculate_geometry(core_node("G7"), demo_60_params)
     articles = {role: article.model_copy(update={"weight_kg_m": D("9999")})
                 if role is not ProfileRole.SASH else article

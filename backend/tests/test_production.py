@@ -775,6 +775,93 @@ def test_optimize_rejects_replan_after_consumed_step() -> None:
     assert error.value.code == "work_order_replan_after_consumption"
 
 
+def test_complete_step_rejects_material_shortage() -> None:
+    # A consuming step cannot complete while the plan is short material —
+    # settling only the reserved part would let the order reach completion
+    # with pieces nobody can physically make.
+    step = _step_row(status="IN_PROGRESS", code="CUT")
+    payload = json.dumps({
+        "optimization": {
+            "stock_reservations": [
+                {"kind": "BAR", "sku": "COM-X", "reserved": "0",
+                 "short": "2", "consumed_at": None},
+            ],
+            "bars": {"unplaced": [{"piece_id": "p1"}]},
+            "unnested": [],
+        }
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.remnants_service.consume_order_remnants",
+        return_value=0,
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_material_shortage"
+
+
+def test_complete_cut_rejects_released_remnant() -> None:
+    # An operator unreserved a drop the plan still claims — completing CUT
+    # would settle stock another order may already have taken.
+    step = _step_row(status="IN_PROGRESS", code="CUT")
+    payload = json.dumps({
+        "optimization": {
+            "remnants": {
+                "consumed": [{"id": str(uuid4()), "kind": "BAR"}],
+            },
+            "stock_reservations": [],
+        }
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.remnants_service.consume_order_remnants",
+        return_value=0,
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_remnant_released"
+
+
 def test_optimize_requires_color() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.optimize_work_order(

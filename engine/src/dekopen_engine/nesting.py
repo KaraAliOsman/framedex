@@ -210,7 +210,7 @@ def _choose_split(
         if not rects:
             return (Decimal("0"), Decimal("0"))
         biggest = max(r.width_mm * r.height_mm for r in rects)
-        total = sum(r.width_mm * r.height_mm for r in rects)
+        total = sum((r.width_mm * r.height_mm for r in rects), Decimal("0"))
         return (biggest, total)
 
     score_a, score_b = score(splits["A"]), score(splits["B"])

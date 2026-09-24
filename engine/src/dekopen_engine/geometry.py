@@ -653,7 +653,7 @@ def single_rectangular_sash_geometry(
     )
 
 
-def _rebate(params: SystemParams) -> Decimal:
+def rebate_depth(params: SystemParams) -> Decimal:
     """Glass bite the catalog must declare — absent means the pane position
     cannot be established and the calculation refuses, never guesses."""
     if params.rebate_depth_mm is None:
@@ -677,7 +677,7 @@ def _pocket_dimension(
     return (
         finished_mm
         - _TWO * article.face_width_mm
-        + _TWO * _rebate(params)
+        + _TWO * rebate_depth(params)
         - _TWO * clearance_mm
     )
 
@@ -853,8 +853,8 @@ def _append_leaf(
     if not sliding_infill:
         assert direct_rect is not None
         direct_infill_rect = _Rect(
-            direct_rect.x_mm + article.face_width_mm - _rebate(params) + clearance_mm,
-            direct_rect.y_mm + article.face_width_mm - _rebate(params) + clearance_mm,
+            direct_rect.x_mm + article.face_width_mm - rebate_depth(params) + clearance_mm,
+            direct_rect.y_mm + article.face_width_mm - rebate_depth(params) + clearance_mm,
             width,
             height,
         )
@@ -969,8 +969,8 @@ def _append_frame_glazed_pane(
     if node.glass_thickness_mm is None or node.glass_spec is None:
         raise ValueError(f"BAY {node.id} requires glass_thickness_mm and glass_spec")
     leaf_id = f"{node.id}:{leaf_slot}" if leaf_slot is not None else None
-    width = rect.width_mm + _TWO * _rebate(params) - _TWO * clearance_mm
-    height = rect.height_mm + _TWO * _rebate(params) - _TWO * clearance_mm
+    width = rect.width_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
+    height = rect.height_mm + _TWO * rebate_depth(params) - _TWO * clearance_mm
     accumulator.glasses.append(
         build_glass_piece(
             bay_id=node.id,
@@ -995,8 +995,8 @@ def _append_frame_glazed_pane(
         )
     )
     infill_rect = _Rect(
-        rect.x_mm - _rebate(params) + clearance_mm,
-        rect.y_mm - _rebate(params) + clearance_mm,
+        rect.x_mm - rebate_depth(params) + clearance_mm,
+        rect.y_mm - rebate_depth(params) + clearance_mm,
         width,
         height,
     )

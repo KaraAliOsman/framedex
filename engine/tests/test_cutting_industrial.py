@@ -21,28 +21,35 @@ from dekopen_engine.cutting import (
 )
 
 
-def saw(**overrides) -> CuttingProfile:
-    base = dict(id="saw-1", code="SAW", kerf_mm=D("0"), head_trim_mm=D("0"),
-                tail_trim_mm=D("0"))
-    return CuttingProfile(**{**base, **overrides})
+def saw(**overrides: object) -> CuttingProfile:
+    base: dict[str, object] = {
+        "id": "saw-1", "code": "SAW", "kerf_mm": D("0"),
+        "head_trim_mm": D("0"), "tail_trim_mm": D("0"),
+    }
+    base.update(overrides)
+    return CuttingProfile.model_validate(base)
 
 
-def stock(**overrides) -> StockRule:
-    base = dict(
-        stock_authority_id="auth-a", workshop_sku="FRAME-A",
-        commercial_sku="STOCK-A", manufacturer_name="MFG",
-        supplier_name="SUP", purchase_unit="BAR", material=CutMaterial.PVC,
-        color="WHITE", stock_length_mm=D("6000"),
-    )
-    return StockRule(**{**base, **overrides})
+def stock(**overrides: object) -> StockRule:
+    base: dict[str, object] = {
+        "stock_authority_id": "auth-a", "workshop_sku": "FRAME-A",
+        "commercial_sku": "STOCK-A", "manufacturer_name": "MFG",
+        "supplier_name": "SUP", "purchase_unit": "BAR",
+        "material": CutMaterial.PVC,
+        "color": "WHITE", "stock_length_mm": D("6000"),
+    }
+    base.update(overrides)
+    return StockRule.model_validate(base)
 
 
-def piece(length: str, index: int, sku: str = "FRAME-A", **kw) -> CutPiece:
-    return CutPiece(
-        piece_id=f"p{index}", source_kind="PROFILE", workshop_sku=sku,
-        material=CutMaterial.PVC, color="WHITE", length_mm=D(length),
-        role="FRAME", unit_index=1, **kw,
-    )
+def piece(length: str, index: int, sku: str = "FRAME-A",
+          **kw: object) -> CutPiece:
+    return CutPiece.model_validate({
+        "piece_id": f"p{index}", "source_kind": "PROFILE",
+        "workshop_sku": sku,
+        "material": CutMaterial.PVC, "color": "WHITE", "length_mm": D(length),
+        "role": "FRAME", "unit_index": 1, **kw,
+    })
 
 
 def remnant(remnant_id: str, length: str, authority: str = "auth-a") -> RemnantBar:
@@ -100,10 +107,13 @@ def test_deep_tier_beats_bfd_fragmentation() -> None:
     assert len(deep.workshop_cut_plan) == 3
     auto = optimize_cut(the_pieces, [rule], saw(), strategy="auto")
     assert auto.metrics is not None and auto.metrics.bars == 3
-    assert auto.strategy_comparison is not None
-    assert auto.strategy_comparison["chosen"] == "deep"
-    assert auto.strategy_comparison["fast"]["bars"] == 4
-    assert auto.strategy_comparison["deep"]["bars"] == 3
+    comparison = auto.strategy_comparison
+    assert comparison is not None
+    assert comparison["chosen"] == "deep"
+    fast_comparison = comparison["fast"]
+    deep_comparison = comparison["deep"]
+    assert isinstance(fast_comparison, dict) and fast_comparison["bars"] == 4
+    assert isinstance(deep_comparison, dict) and deep_comparison["bars"] == 3
 
 
 def test_auto_prefers_fast_when_equal() -> None:

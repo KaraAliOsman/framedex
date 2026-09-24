@@ -15,7 +15,7 @@ CORE_CONSUMERS: dict[str, Callable[..., object]] = {
     "material": geometry.compute_geometry,
     "effective_profile_articles": geometry._article,
     "glazing_bead_rules": geometry.resolve_bead_rule,
-    "rebate_depth_mm": geometry._rebate,
+    "rebate_depth_mm": geometry.rebate_depth,
     "end_milling_overlap_mm": geometry._end_milling_overlap,
     "sash_overlap_mm": geometry.single_rectangular_sash_geometry,
     "glass_clearance_white_mm": geometry.compute_geometry,
