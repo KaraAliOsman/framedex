@@ -52,6 +52,7 @@ export function AlternativesPanel({
   disabled,
   onUse,
   catalogKey,
+  catalogReady,
 }: {
   organizationId: string;
   positionId: string | null;
@@ -64,6 +65,11 @@ export function AlternativesPanel({
    * into the request, so a catalog edit is a different operation, never
    * a replay of the old one. */
   catalogKey: string;
+  /** The design options for the selected system have arrived (or failed
+   * honestly) — generating before hydration would send an empty catalog
+   * signature, then the arriving options would invalidate the paid
+   * in-flight response. */
+  catalogReady: boolean;
 }): JSX.Element {
   const [brief, setBrief] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,7 +97,7 @@ export function AlternativesPanel({
   }, [systemId, catalogKey]);
 
   async function generate(): Promise<void> {
-    if (!positionId || !systemId || !brief.trim() || product === null) return;
+    if (!positionId || !systemId || !catalogReady || !brief.trim() || product === null) return;
     setBusy(true);
     setMessage("");
     setResult(null);
@@ -200,12 +206,15 @@ export function AlternativesPanel({
             <button
               type="button"
               className="primary-button"
-              disabled={busy || disabled || !systemId || !brief.trim()}
+              disabled={busy || disabled || !systemId || !catalogReady || !brief.trim()}
               onClick={() => void generate()}
             >
               {busy ? t("alternatives.generating") : t("alternatives.generate")}
             </button>
           </div>
+          {systemId && !catalogReady && (
+            <p className="assembly-hint">{t("alternatives.catalogLoading")}</p>
+          )}
           {message && <p className="assembly-hint">{message}</p>}
           {result &&
             result.systemId === systemId &&

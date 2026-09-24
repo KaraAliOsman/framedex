@@ -1563,6 +1563,7 @@ const messages = {
   "alternatives.brief": "Describe la intención: «algo que ventile sin ocupar espacio interior»",
   "alternatives.generate": "Generar alternativas",
   "alternatives.generating": "Generando…",
+  "alternatives.catalogLoading": "Cargando el catálogo del sistema…",
   "alternatives.saveFirst": "Guarda el vano para generar alternativas.",
   "alternatives.error": "No se pudieron generar alternativas.",
   "alternatives.empty": "No se propusieron alternativas.",

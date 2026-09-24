@@ -608,6 +608,7 @@ function PositionWorkspace({
           glassSkus={options.data?.glass_skus ?? []}
           panelSkus={options.data?.panel_skus ?? []}
           options={options.data}
+          optionsReady={options.data !== undefined || options.isError}
           disabled={busy}
           onChanged={onAssemblyChanged}
           onEvaluationChange={onAssemblyEvaluation}

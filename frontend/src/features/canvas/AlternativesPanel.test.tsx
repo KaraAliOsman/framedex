@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { positionsDesignAlternatives } from "../../api/generated/dekopen";
+import { t } from "../../i18n/es-CL";
 import { AlternativesPanel } from "./AlternativesPanel";
 import { resolveMembers } from "./members";
 import type { Opening } from "./intentEditing";
@@ -38,6 +39,7 @@ function renderPanel(overrides: Partial<Parameters<typeof AlternativesPanel>[0]>
     disabled: false,
     onUse,
     catalogKey: "G4|C1|5",
+    catalogReady: true,
     ...overrides,
   };
   return { props, onUse, ...render(<AlternativesPanel {...props} />) };
@@ -138,6 +140,13 @@ describe("AlternativesPanel", () => {
   it("requires a saved position before generating", () => {
     renderPanel({ positionId: null });
     expect(screen.getByText(/Guarda el vano/)).toBeTruthy();
+    expect(alternativesMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps generation closed while the catalog hydrates", () => {
+    renderPanel({ catalogReady: false });
+    expect(screen.getByRole("button", { name: t("alternatives.generate") })).toBeDisabled();
+    expect(screen.getByText(t("alternatives.catalogLoading"))).toBeInTheDocument();
     expect(alternativesMock).not.toHaveBeenCalled();
   });
 });

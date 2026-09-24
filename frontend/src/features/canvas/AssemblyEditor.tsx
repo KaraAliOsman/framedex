@@ -1423,6 +1423,7 @@ export function AssemblyEditor({
   onEvaluationChange,
   positionId,
   positionPanel,
+  optionsReady = options !== undefined,
 }: {
   organizationId: string;
   couplerSkus: string[];
@@ -1434,6 +1435,10 @@ export function AssemblyEditor({
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
   positionId: string | null;
   positionPanel?: JSX.Element;
+  /** The system's design options have hydrated (or errored) — paid AI
+   * generation must not start on an empty catalog signature. Defaults to
+   * the options value's presence for callers without a loading state. */
+  optionsReady?: boolean;
 }): JSX.Element | null {
   const inputs = useCanvasStore((state) => state.inputs);
   const commitInputs = useCanvasStore((state) => state.commitInputs);
@@ -2083,6 +2088,7 @@ export function AssemblyEditor({
               members={members}
               disabled={disabled}
               onUse={(next) => commit(next)}
+              catalogReady={optionsReady}
               catalogKey={[
                 ...(options?.glass_skus ?? []),
                 ...(options?.panel_skus ?? []),
