@@ -20,6 +20,7 @@ import json
 import zlib
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+from typing import Iterable
 from uuid import UUID
 
 from django.db import connection, transaction
@@ -166,6 +167,7 @@ def confirm_delivery(
     receiver_rut: str | None,
     signature_b64: str,
     payment: dict | None,
+    compensation_keys: list[str] | None = None,
 ) -> dict:
     """Seal the comprobante de entrega (and its cobro, if any) as one atomic
     act. The org advisory slot serializes CE codes; ``UNIQUE(order_id)``
@@ -176,7 +178,7 @@ def confirm_delivery(
         raise DocumentaryError("receiver_required")
     signature_png = _decode_signature(signature_b64 or "")
     payment_kwargs = _payment_kwargs(payment) if payment else None
-    object_keys: list[str] = []
+    object_keys: list[str] = compensation_keys if compensation_keys is not None else []
     try:
         with transaction.atomic(), documentary_backend():
             order = one(
@@ -387,7 +389,9 @@ def confirm_delivery(
                         storage.delete_object(key)
                     except Exception:  # noqa: BLE001 — retry after transaction rollback
                         failed_keys.append(key)
-                object_keys = failed_keys
+                # Mutate in place — the caller may share this list, so
+                # rebinding would drop its rollback coverage.
+                object_keys[:] = failed_keys
                 raise
 
             if str(delivery["status"]) != "DELIVERED":
@@ -441,13 +445,25 @@ def confirm_delivery(
                     # query between issuance and rollback coverage.
                     compensation_keys=object_keys,
                 )
-        # Cleared only after commit: a commit-time failure still purges.
-        object_keys = []
+        # Under the request's RLS context this atomic() is only a savepoint —
+        # the keys stay armed past it. If the enclosing transaction rolls
+        # back after this returns (the view's response read, the outer
+        # commit), the caller's failure path purges them via the shared
+        # ``compensation_keys`` list.
     except Exception:
         for key in object_keys:
             _purge_unreferenced_confirmation(org_id=org_id, object_key=key)
+        object_keys.clear()
         raise
     return _confirmation_public(row)
+
+
+def purge_confirmation_objects(*, org_id: UUID, object_keys: Iterable[str]) -> None:
+    """Compensating purge for a rolled-back request transaction: the view
+    calls this when the enclosing scope fails after confirm_delivery's
+    savepoint already released."""
+    for key in object_keys:
+        _purge_unreferenced_confirmation(org_id=org_id, object_key=key)
 
 
 def _purge_unreferenced_confirmation(*, org_id: UUID, object_key: str) -> None:

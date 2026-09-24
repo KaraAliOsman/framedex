@@ -349,3 +349,49 @@ def test_confirmation_access_signs_stored_object(monkeypatch):
     assert out["confirmation_code"] == "CE-0001"
     assert out["signed_url"].startswith("https://signed.example/")
     assert out["expires_in"] == confirmations.SIGNED_URL_TTL_SECONDS
+
+
+def test_confirm_keeps_compensation_keys_armed_for_the_caller(monkeypatch):
+    """The savepoint inside confirm_delivery is not the real commit — the
+    caller's list must still hold every uploaded key after return, so an
+    outer rollback can compensate them."""
+    storage = _Storage()
+    order, _ = _patch_env(monkeypatch, storage)
+    armed: list[str] = []
+    confirmations.confirm_delivery(
+        org_id=uuid4(),
+        order_id=order["id"],
+        actor_id=uuid4(),
+        receiver_name="Juan Pérez",
+        receiver_rut=None,
+        signature_b64=_SIG_B64,
+        payment=None,
+        compensation_keys=armed,
+    )
+    assert len(armed) == len(storage.uploads) == 2
+
+
+def test_caller_failure_path_purges_armed_keys(monkeypatch):
+    """Simulates the view's outer-transaction rollback: keys the caller is
+    still holding are purged through the compensation entry point."""
+    storage = _Storage()
+    order, _ = _patch_env(monkeypatch, storage)
+    armed: list[str] = []
+    confirmations.confirm_delivery(
+        org_id=uuid4(),
+        order_id=order["id"],
+        actor_id=uuid4(),
+        receiver_name="Juan Pérez",
+        receiver_rut=None,
+        signature_b64=_SIG_B64,
+        payment=None,
+        compensation_keys=armed,
+    )
+    purged: list[str] = []
+    monkeypatch.setattr(
+        confirmations,
+        "_purge_unreferenced_confirmation",
+        lambda *, org_id, object_key: purged.append(object_key),
+    )
+    confirmations.purge_confirmation_objects(org_id=uuid4(), object_keys=armed)
+    assert sorted(purged) == sorted(armed)

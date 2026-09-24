@@ -23,7 +23,11 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from engine_api.repository import SystemNotFound
 from production import service
-from production.confirmations import confirmation_access, confirm_delivery
+from production.confirmations import (
+    confirmation_access,
+    confirm_delivery,
+    purge_confirmation_objects,
+)
 from production.dispatch_notes import dispatch_note_access
 from projects import sii
 from production.serializers import (
@@ -512,23 +516,36 @@ class ProductionOrderDeliveryConfirmView(APIView):
     )
     def post(self, request, order_id: UUID):
         data = validate(DeliveryConfirmRequestSerializer, request.data)
-        with public_production_errors():
-            with documentary_scope(request, _STEP_ACTORS) as (token, _, org_id):
-                confirmation = confirm_delivery(
-                    org_id=org_id,
-                    order_id=order_id,
-                    actor_id=token.user_id,
-                    receiver_name=data["receiver_name"],
-                    receiver_rut=data.get("receiver_rut"),
-                    signature_b64=data["signature_png"],
-                    payment=data.get("payment"),
+        compensation_keys: list[str] = []
+        try:
+            with public_production_errors():
+                with documentary_scope(request, _STEP_ACTORS) as (token, _, org_id):
+                    confirmation = confirm_delivery(
+                        org_id=org_id,
+                        order_id=order_id,
+                        actor_id=token.user_id,
+                        receiver_name=data["receiver_name"],
+                        receiver_rut=data.get("receiver_rut"),
+                        signature_b64=data["signature_png"],
+                        payment=data.get("payment"),
+                        compensation_keys=compensation_keys,
+                    )
+                    output = {
+                        "confirmation": confirmation,
+                        "delivery": service.get_delivery(
+                            org_id=org_id, order_id=order_id
+                        )["delivery"],
+                    }
+        except Exception:
+            # The confirmation's atomic() is a savepoint inside this request's
+            # transaction — a failure here (the response read or the outer
+            # commit) rolls its rows back, so the uploaded objects must be
+            # compensated from this side of the boundary.
+            if compensation_keys:
+                purge_confirmation_objects(
+                    org_id=org_id, object_keys=compensation_keys
                 )
-                output = {
-                    "confirmation": confirmation,
-                    "delivery": service.get_delivery(
-                        org_id=org_id, order_id=order_id
-                    )["delivery"],
-                }
+            raise
         return Response(output, status=201)
 
 
