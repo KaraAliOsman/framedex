@@ -315,7 +315,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Cantidad", { exact: true }).fill("2");
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética" });
+    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración" });
   // Canvas-first editor: the single module is already selected on the drawing;
   // glazing choices live in its contextual inspector, not a separate form.
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
@@ -484,7 +484,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Ubicación del vano", { exact: true }).fill("Fachada compuesta");
   await page
     .getByRole("combobox", { name: "Serie de perfiles", exact: true })
-    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética" });
+    .selectOption({ label: "Sistema Demo 60mm PVC — referencia sintética · Catálogo de demostración" });
   await page.getByRole("combobox", { name: "Espesor de vidrio", exact: true }).selectOption("4.00");
   await page.getByRole("combobox", { name: "Vidrio", exact: true }).selectOption("GLASS-BASE");
   const dividedCalculation = page.waitForResponse(
