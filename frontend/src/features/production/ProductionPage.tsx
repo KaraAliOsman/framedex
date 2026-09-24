@@ -36,6 +36,12 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
+import {
+  GlassSummary,
+  glassSummaryCsv,
+  type GlassPiece,
+  type PolishingEntry,
+} from "./GlassSummary";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import "./production.css";
 
@@ -619,6 +625,23 @@ export function ProductionPage(): JSX.Element {
                       <dd>{materials.hardware_items?.length ?? 0}</dd>
                     </div>
                   </dl>
+                );
+              })()}
+              {(() => {
+                const materials = detail.payload?.materials as WorkOrderMaterials | undefined;
+                const glasses = (materials?.glasses ?? []) as GlassPiece[];
+                if (!glasses.length) return null;
+                const polishing = (detail.payload?.glass_polishing ?? []) as PolishingEntry[];
+                const quantity = Math.max(1, Number(detail.quantity) || 1);
+                return (
+                  <GlassSummary
+                    glasses={glasses}
+                    polishing={polishing}
+                    quantity={quantity}
+                    onExport={(groups) =>
+                      downloadCnc(detail.order_code, `glass.csv`, glassSummaryCsv(groups, quantity))
+                    }
+                  />
                 );
               })()}
               {(() => {

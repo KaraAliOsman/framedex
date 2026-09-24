@@ -10649,10 +10649,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         welding_loss_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         reinforcement_sku:
           type: string
           nullable: true
@@ -10661,14 +10663,17 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
         steel_weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
         revision:
           type: string
           readOnly: true
@@ -10678,20 +10683,15 @@ components:
           type: string
           format: uuid
       required:
-      - commercial_length_mm
       - face_width_mm
       - id
       - material
       - name
       - read_only
-      - reinforcement_gap_mm
       - revision
       - role
       - sku
-      - steel_weight_kg_m
       - system_id
-      - weight_kg_m
-      - welding_loss_mm
     ArticleWriteRequest:
       type: object
       properties:
@@ -10718,10 +10718,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         welding_loss_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         reinforcement_sku:
           type: string
           nullable: true
@@ -10730,26 +10732,24 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
         steel_weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
       required:
-      - commercial_length_mm
       - face_width_mm
       - material
       - name
-      - reinforcement_gap_mm
       - role
       - sku
-      - steel_weight_kg_m
       - system_id
-      - weight_kg_m
-      - welding_loss_mm
     ArtifactRequestRequest:
       type: object
       properties:
@@ -11139,10 +11139,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         welding_loss_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         reinforcement_sku:
           type: string
           default: ''
@@ -11151,10 +11153,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
         steel_weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
       required:
       - face_width_mm
       - key
@@ -12681,6 +12685,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PanelPiece'
+        fittings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FittingPiece'
         hardware_items:
           type: array
           items:
@@ -12694,6 +12702,7 @@ components:
           pattern: ^sha256:[0-9a-f]{64}$
       required:
       - calculation_hash
+      - fittings
       - glasses
       - hardware_items
       - leaf_weights
@@ -12848,6 +12857,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PanelPiece'
+        fittings:
+          type: array
+          items:
+            $ref: '#/components/schemas/FittingPiece'
         hardware_items:
           type: array
           items:
@@ -12857,6 +12870,7 @@ components:
           items:
             $ref: '#/components/schemas/LeafWeight'
       required:
+      - fittings
       - glasses
       - hardware_items
       - leaf_weights
@@ -12903,6 +12917,28 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - error
+    FittingPiece:
+      type: object
+      description: Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support.
+      properties:
+        kind:
+          type: string
+        sku:
+          type: string
+        qty:
+          type: integer
+        bay_id:
+          type: string
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - bay_id
+      - kind
+      - leaf_id
+      - qty
+      - sku
     FixabilityEnum:
       enum:
       - AUTO_FIXABLE
@@ -13005,6 +13041,11 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        shape:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPoint'
+          nullable: true
         area_m2:
           type: string
           format: decimal
@@ -13017,11 +13058,26 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        glass_spec:
+          type: string
+          nullable: true
+        article_sku:
+          type: string
+          nullable: true
+        exposed_edges:
+          type: array
+          items:
+            type: string
+          nullable: true
       required:
       - area_m2
+      - article_sku
       - bay_id
+      - exposed_edges
+      - glass_spec
       - height_mm
       - leaf_id
+      - shape
       - thickness_net_mm
       - weight_kg
       - width_mm
@@ -14143,10 +14199,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/EngineResultPayload'
           nullable: true
+        sliding:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlidingLayoutFacts'
       required:
       - issues
       - module_id
       - result
+      - sliding
     NodeLayout:
       type: object
       properties:
@@ -14242,6 +14303,9 @@ components:
         inventory:
           type: object
           additionalProperties: {}
+        deliveries:
+          type: object
+          additionalProperties: {}
         documents:
           type: object
           additionalProperties: {}
@@ -14253,6 +14317,7 @@ components:
           items: {}
       required:
       - avg_release_to_dispatch_hours
+      - deliveries
       - documents
       - inventory
       - projects
@@ -14553,10 +14618,12 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         welding_loss_mm:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         reinforcement_sku:
           type: string
           nullable: true
@@ -14565,14 +14632,17 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
         steel_weight_kg_m:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,4})?$
+          nullable: true
     PatchedBeadWriteRequest:
       type: object
       properties:
@@ -15936,6 +16006,11 @@ components:
         leaf_id:
           type: string
           nullable: true
+        sagitta_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - angle_left
       - angle_right
@@ -15945,6 +16020,7 @@ components:
       - material
       - qty
       - role
+      - sagitta_mm
       - sku
     ProfileSystemSummary:
       type: object
@@ -16577,6 +16653,11 @@ components:
         leaf_id:
           type: string
           nullable: true
+        sagitta_mm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - bay_id
       - leaf_id
@@ -16585,6 +16666,7 @@ components:
       - qty
       - reinforcement_sku
       - role
+      - sagitta_mm
     RemakeRequestRequest:
       type: object
       properties:
@@ -16913,6 +16995,47 @@ components:
         * `PENDING` - PENDING
         * `ACCEPTED` - ACCEPTED
         * `REJECTED` - REJECTED
+    SlidingLayoutFacts:
+      type: object
+      properties:
+        bay_id:
+          type: string
+        tracks:
+          type: integer
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlidingPanelFacts'
+      required:
+      - bay_id
+      - panels
+      - tracks
+    SlidingPanelFacts:
+      type: object
+      properties:
+        slot:
+          type: string
+        kind:
+          $ref: '#/components/schemas/SlidingPanelFactsKindEnum'
+        track:
+          type: integer
+          nullable: true
+        leaf_id:
+          type: string
+          nullable: true
+      required:
+      - kind
+      - leaf_id
+      - slot
+      - track
+    SlidingPanelFactsKindEnum:
+      enum:
+      - MOVING
+      - FIXED
+      type: string
+      description: |-
+        * `MOVING` - MOVING
+        * `FIXED` - FIXED
     SourceKindEnum:
       enum:
       - PROFILE

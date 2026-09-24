@@ -145,15 +145,21 @@ export const schemas: Record<Resource, Group[]> = {
     },
     {
       title: "profileGeometry",
-      fields: measures("face_width_mm", "commercial_length_mm", "welding_loss_mm"),
+      fields: [
+        ...measures("face_width_mm"),
+        // Fabrication fields accept UNKNOWN — an empty value writes null and
+        // downstream consumers refuse or flag rather than compute on a guess.
+        decimal("commercial_length_mm", 2, true),
+        decimal("welding_loss_mm", 2, true),
+      ],
     },
     {
       title: "reinforcement",
       fields: [
         text("reinforcement_sku", 100, true),
-        decimal("reinforcement_gap_mm"),
-        decimal("weight_kg_m", 4),
-        decimal("steel_weight_kg_m", 4),
+        decimal("reinforcement_gap_mm", 2, true),
+        decimal("weight_kg_m", 4, true),
+        decimal("steel_weight_kg_m", 4, true),
       ],
     },
   ],
