@@ -2,19 +2,47 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
+  productionOrderCncExport,
+  productionOrderDelivery,
+  productionOrderDeliveryConfirm,
+  productionOrderDeliveryConfirmation,
+  productionOrderDeliverySchedule,
+  productionOrderDeliveryTransition,
   productionOrderDetail,
+  productionOrderDispatch,
+  productionOrderDispatchNote,
+  productionOrderDispatchNoteDte,
+  productionOrderDispatchNoteDteEmit,
+  productionOrderDxfExport,
+  productionOrderInstall,
+  productionOrderLabels,
   productionOrderOptimize,
+  productionOrderPacking,
   productionOrderRemake,
   productionOrders,
   productionStepTransition,
 } from "../../api/generated/dekopen";
 import type {
+  Delivery,
+  DeliveryScheduleRequestRequest,
+  DeliveryTransitionRequestStatusEnum,
+  MethodEnum,
+  PackingLabel,
+  PaymentKindEnum,
   ProductionOrder,
   ProductionOrderDetail,
   ProductionStep,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
+import {
+  GlassSummary,
+  glassSummaryCsv,
+  type GlassPiece,
+  type PolishingEntry,
+} from "./GlassSummary";
+import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import "./production.css";
 
 type WorkOrderMaterials = {
@@ -26,55 +54,24 @@ type WorkOrderMaterials = {
 
 type StepAction = "START" | "COMPLETE" | "BLOCK" | "UNBLOCK" | "NOTE" | "QC_FAIL";
 
-type CutPlacement = {
-  piece_id: string;
-  length_mm: string;
-  unit_index?: number;
-  bay_id?: string | null;
-  leaf_id?: string | null;
+type CncExport = {
+  exported_at?: string;
+  files?: Record<string, string>;
 };
-type CutBar = {
-  bar_index: number;
-  commercial_sku: string;
-  stock_length_mm: string;
-  remainder_mm: string;
-  yield_pct: string;
-  cuts: CutPlacement[];
+type DxfExport = CncExport;
+
+type PackingUnit = {
+  unit_index: number;
+  label_code: string;
+  profiles?: number;
+  reinforcements?: number;
+  glasses?: number;
+  panels?: number;
+  hardware?: number;
 };
-type PurchaseLine = { commercial_sku: string; qty_bars: number; stock_length_mm: string };
-type SheetPurchase = { purchasing_sku: string; qty_sheets: number };
-type NestPlacement = {
-  piece_id: string;
-  x_mm: string;
-  y_mm: string;
-  width_mm: string;
-  height_mm: string;
-  rotated: boolean;
-  unit_index?: number;
-};
-type SheetLayout = {
-  sheet_index: number;
-  purchasing_sku: string;
-  sheet_width_mm: string;
-  sheet_height_mm: string;
-  yield_pct: string;
-  placements: NestPlacement[];
-};
-type UnnestedPiece = {
-  kind: string;
-  group: string;
-  width_mm: string;
-  height_mm: string;
-  quantity: number;
-};
-type WorkOrderOptimization = {
-  color?: string;
-  units?: number;
-  optimized_at?: string;
-  bars?: { workshop_cut_plan?: CutBar[]; purchase_list?: PurchaseLine[] };
-  sheets?: SheetLayout[];
-  sheet_purchases?: SheetPurchase[];
-  unnested?: UnnestedPiece[];
+type WorkOrderPacking = {
+  generated_at?: string;
+  units?: PackingUnit[];
 };
 
 const stepStatusKey: Record<string, Parameters<typeof t>[0]> = {
@@ -89,6 +86,8 @@ const orderStatusKey: Record<string, Parameters<typeof t>[0]> = {
   IN_PROGRESS: "production.orderInProgress",
   HOLD: "production.orderHold",
   COMPLETED: "production.orderCompleted",
+  DISPATCHED: "production.orderDispatched",
+  INSTALLED: "production.orderInstalled",
 };
 const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_RELEASED: "production.eventReleased",
@@ -102,6 +101,23 @@ const eventKey: Record<string, Parameters<typeof t>[0]> = {
   WO_OPTIMIZED: "production.eventOptimized",
   QC_FAILED: "production.eventQcFailed",
   WO_REMADE: "production.eventRemade",
+  WO_CNC_EXPORTED: "production.eventCncExported",
+  WO_DXF_EXPORTED: "production.eventDxfExported",
+  WO_PACKED: "production.eventPacked",
+  WO_DISPATCHED: "production.eventDispatched",
+  WO_INSTALLED: "production.eventInstalled",
+  WO_DELIVERY_SCHEDULED: "production.eventDeliveryScheduled",
+  WO_DELIVERY_ON_ROUTE: "production.eventDeliveryOnRoute",
+  WO_DELIVERY_DELIVERED: "production.eventDeliveryDelivered",
+  WO_DELIVERY_CONFIRMED: "production.eventDeliveryConfirmed",
+  WO_DELIVERY_FAILED: "production.eventDeliveryFailed",
+};
+
+const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
+  SCHEDULED: "production.deliveryStatusScheduled",
+  ON_ROUTE: "production.deliveryStatusOnRoute",
+  DELIVERED: "production.deliveryStatusDelivered",
+  FAILED: "production.deliveryStatusFailed",
 };
 
 function stepActions(step: ProductionStep): StepAction[] {
@@ -141,6 +157,20 @@ export function ProductionPage(): JSX.Element {
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");
   const [optColor, setOptColor] = useState("");
+  const [labels, setLabels] = useState<PackingLabel[]>([]);
+  const [delivery, setDelivery] = useState<Delivery | null>(null);
+  const [deliveryForm, setDeliveryForm] = useState<DeliveryScheduleRequestRequest | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
+  const [confirmRut, setConfirmRut] = useState("");
+  const [collectPayment, setCollectPayment] = useState(false);
+  const [collectAmount, setCollectAmount] = useState("");
+  const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
+  const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
+  const [sigDrawn, setSigDrawn] = useState(false);
+  const sigRef = useRef<SignaturePadHandle | null>(null);
+  const labelsGeneration = useRef(0);
+  const selectedIdRef = useRef("");
   const mounted = useRef(true);
   useEffect(
     () => () => {
@@ -150,6 +180,7 @@ export function ProductionPage(): JSX.Element {
   );
 
   const selectedId = params.get("order") ?? "";
+  selectedIdRef.current = selectedId;
 
   const loadOrders = useCallback(async () => {
     const response = await productionOrders();
@@ -160,9 +191,18 @@ export function ProductionPage(): JSX.Element {
 
   const loadDetail = useCallback(async (orderId: string) => {
     const generation = ++detailGeneration.current;
-    const response = await productionOrderDetail(orderId);
-    if (response.status === 200 && generation === detailGeneration.current) {
-      setDetail(response.data);
+    const [response, deliveryResponse] = await Promise.all([
+      productionOrderDetail(orderId),
+      productionOrderDelivery(orderId),
+    ]);
+    if (generation === detailGeneration.current) {
+      if (response.status === 200) {
+        setDetail(response.data);
+        setLabels([]);
+      }
+      setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
+      setDeliveryForm(null);
+      setConfirmOpen(false);
     }
   }, []);
 
@@ -171,9 +211,13 @@ export function ProductionPage(): JSX.Element {
   }, [loadOrders]);
 
   useEffect(() => {
+    labelsGeneration.current += 1;
     if (!selectedId) {
       detailGeneration.current += 1;
       setDetail(null);
+      setDelivery(null);
+      setDeliveryForm(null);
+      setConfirmOpen(false);
       return;
     }
     void loadDetail(selectedId).catch(() => setMessage(t("production.loadError")));
@@ -232,8 +276,221 @@ export function ProductionPage(): JSX.Element {
     void action(productionOrderOptimize(orderId, { color: optColor.trim() }), orderId);
   }
 
+  function exportCnc(orderId: string): void {
+    void action(productionOrderCncExport(orderId), orderId);
+  }
+
+  function exportDxf(orderId: string): void {
+    void action(productionOrderDxfExport(orderId), orderId);
+  }
+
+  async function showLabels(orderId: string): Promise<void> {
+    const generation = ++labelsGeneration.current;
+    setLabels([]);
+    setBusy(true);
+    try {
+      const response = await productionOrderLabels(orderId);
+      // A selection change bumps the generation, but a response can still
+      // land in the gap before the effect runs — check the order too.
+      if (generation !== labelsGeneration.current) return;
+      if (selectedIdRef.current !== orderId) return;
+      if (response.status !== 200) {
+        setMessage(t("production.labelsError"));
+        return;
+      }
+      setLabels(response.data.labels);
+    } catch {
+      if (generation === labelsGeneration.current && selectedIdRef.current === orderId) {
+        setMessage(t("production.labelsError"));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveDelivery(orderId: string): Promise<void> {
+    if (!deliveryForm) return;
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliverySchedule(orderId, deliveryForm);
+      if (response.status === 200) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.deliveryError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function transitionDelivery(
+    orderId: string,
+    status: DeliveryTransitionRequestStatusEnum,
+  ): Promise<void> {
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliveryTransition(orderId, { status });
+      if (response.status === 200) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.deliveryError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function openDeliveryForm(existing: Delivery | null): void {
+    setDeliveryForm({
+      scheduled_date: existing?.scheduled_date ?? "",
+      time_window: (existing?.time_window as DeliveryScheduleRequestRequest["time_window"]) ?? "AM",
+      address: existing?.address ?? "",
+      contact_name: existing?.contact_name ?? "",
+      contact_phone: existing?.contact_phone ?? "",
+      installer_name: existing?.installer_name ?? "",
+      notes: existing?.notes ?? "",
+    });
+  }
+
+  function pack(orderId: string): void {
+    void action(productionOrderPacking(orderId), orderId);
+  }
+
+  function dispatch(orderId: string): void {
+    void action(productionOrderDispatch(orderId, { note: note || undefined }), orderId);
+  }
+
+  function install(orderId: string): void {
+    void action(productionOrderInstall(orderId, { note: note || undefined }), orderId);
+  }
+
+  function openConfirmForm(): void {
+    setConfirmName(delivery?.contact_name ?? "");
+    setConfirmRut("");
+    setCollectPayment(false);
+    setCollectAmount("");
+    setCollectMethod("CASH");
+    setCollectKind("SALDO");
+    setSigDrawn(false);
+    setConfirmOpen(true);
+  }
+
+  async function submitConfirmation(orderId: string): Promise<void> {
+    const dataUrl = sigRef.current?.dataURL();
+    if (!dataUrl || !confirmName.trim()) return;
+    setBusy(true);
+    try {
+      const response = await productionOrderDeliveryConfirm(orderId, {
+        receiver_name: confirmName.trim(),
+        receiver_rut: confirmRut.trim() || undefined,
+        signature_png: dataUrl.split(",")[1] ?? "",
+        payment: collectPayment
+          ? {
+              amount: collectAmount,
+              method: collectMethod,
+              kind: collectKind,
+            }
+          : null,
+      });
+      if (response.status === 201 || response.status === 200) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.deliveryConfirmError"));
+      }
+    } catch {
+      setMessage(t("production.deliveryConfirmError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openConfirmation(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dispatchNoteError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDeliveryConfirmation(orderId);
+      if (response.status !== 200) throw new Error("confirmation_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dispatchNoteError"));
+    }
+  }
+
+  async function emitDispatchNoteDte(orderId: string): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionOrderDispatchNoteDteEmit(orderId, {
+        ind_traslado: 1,
+      });
+      if (response.status === 201) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.dteEmitError"));
+      }
+    } catch {
+      setMessage(t("production.dteEmitError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openDispatchNoteDte(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dteOpenError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNoteDte(orderId);
+      if (response.status !== 200) throw new Error("dte_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dteOpenError"));
+    }
+  }
+
+  async function openDispatchNote(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.dispatchNoteError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNote(orderId);
+      if (response.status !== 200) throw new Error("dispatch_note_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.dispatchNoteError"));
+    }
+  }
+
+  function downloadCnc(orderCode: string, filename: string, content: string): void {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${orderCode}-${filename}`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
   const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
+  const canStep = canWrite || role === "INSTALLER";
   if (!canAct) {
     return (
       <section className="production-page">
@@ -289,6 +546,56 @@ export function ProductionPage(): JSX.Element {
                     {detail.quantity} {t("production.units")}
                   </span>
                 ) : null}
+                {canWrite && detail.status === "COMPLETED" ? (
+                  <button
+                    type="button"
+                    className="production-dispatch"
+                    disabled={busy}
+                    onClick={() => dispatch(detail.id)}
+                  >
+                    {t("production.dispatchButton")}
+                  </button>
+                ) : null}
+                {canStep &&
+                detail.status === "DISPATCHED" &&
+                (!delivery || delivery.status === "DELIVERED") ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-install"
+                    disabled={busy}
+                    onClick={() => install(detail.id)}
+                  >
+                    {t("production.installButton")}
+                  </button>
+                ) : null}
+                {detail.dispatch_note_code ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-note"
+                    onClick={() => void openDispatchNote(detail.id)}
+                  >
+                    {detail.dispatch_note_code}
+                  </button>
+                ) : null}
+                {detail.dispatch_note_dte ? (
+                  <button
+                    type="button"
+                    className="production-dispatch production-note-dte"
+                    title={`${t("production.dteStatus")} · folio ${detail.dispatch_note_dte.folio}`}
+                    onClick={() => void openDispatchNoteDte(detail.id)}
+                  >
+                    {`${t("production.dteStatus")} · ${detail.dispatch_note_dte.folio}`}
+                  </button>
+                ) : canWrite && detail.dispatch_note_code ? (
+                  <button
+                    type="button"
+                    className="production-dispatch"
+                    disabled={busy}
+                    onClick={() => void emitDispatchNoteDte(detail.id)}
+                  >
+                    {t("production.dteEmit")}
+                  </button>
+                ) : null}
                 {canWrite && detail.status === "HOLD" ? (
                   <button
                     type="button"
@@ -321,6 +628,23 @@ export function ProductionPage(): JSX.Element {
                 );
               })()}
               {(() => {
+                const materials = detail.payload?.materials as WorkOrderMaterials | undefined;
+                const glasses = (materials?.glasses ?? []) as GlassPiece[];
+                if (!glasses.length) return null;
+                const polishing = (detail.payload?.glass_polishing ?? []) as PolishingEntry[];
+                const quantity = Math.max(1, Number(detail.quantity) || 1);
+                return (
+                  <GlassSummary
+                    glasses={glasses}
+                    polishing={polishing}
+                    quantity={quantity}
+                    onExport={(groups) =>
+                      downloadCnc(detail.order_code, `glass.csv`, glassSummaryCsv(groups, quantity))
+                    }
+                  />
+                );
+              })()}
+              {(() => {
                 const optimization = detail.payload?.optimization as
                   WorkOrderOptimization | undefined;
                 const canOptimize = role === "OWNER" || role === "WORKSHOP_MANAGER";
@@ -343,7 +667,10 @@ export function ProductionPage(): JSX.Element {
                         </time>
                       ) : null}
                     </header>
-                    {canOptimize && detail.status !== "COMPLETED" ? (
+                    {canOptimize &&
+                    detail.status !== "COMPLETED" &&
+                    detail.status !== "DISPATCHED" &&
+                    detail.status !== "INSTALLED" ? (
                       <div className="production-optimize-controls">
                         <input
                           type="text"
@@ -361,10 +688,68 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       </div>
                     ) : null}
+                    {(() => {
+                      const cncExport = detail.payload?.cnc_export as CncExport | undefined;
+                      const dxfExport = detail.payload?.dxf_export as DxfExport | undefined;
+                      const files = Object.entries(cncExport?.files ?? {});
+                      const dxfFiles = Object.entries(dxfExport?.files ?? {});
+                      if (!optimization) return null;
+                      return (
+                        <div className="production-cnc">
+                          {canOptimize &&
+                          detail.status !== "COMPLETED" &&
+                          detail.status !== "DISPATCHED" &&
+                          detail.status !== "INSTALLED" ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportCnc(detail.id)}
+                              >
+                                {t("production.cncExportButton")}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => exportDxf(detail.id)}
+                              >
+                                {t("production.dxfExportButton")}
+                              </button>
+                            </>
+                          ) : null}
+                          {files.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                          {dxfFiles.map(([filename, content]) => (
+                            <button
+                              key={filename}
+                              type="button"
+                              className="production-cnc-file"
+                              onClick={() => downloadCnc(detail.order_code, filename, content)}
+                            >
+                              {filename}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                     {!optimization ? (
                       <p className="production-optimize-empty">{t("production.optimizeEmpty")}</p>
                     ) : (
                       <>
+                        {cutPlan.length || layouts.length ? (
+                          <CutPlanView
+                            key={optimization.optimized_at ?? "optimization"}
+                            optimization={optimization}
+                          />
+                        ) : null}
                         {cutPlan.length ? (
                           <table className="production-plan">
                             <thead>
@@ -464,6 +849,450 @@ export function ProductionPage(): JSX.Element {
                   </section>
                 );
               })()}
+              {(() => {
+                const packing = detail.payload?.packing as WorkOrderPacking | undefined;
+                const units = packing?.units ?? [];
+                return (
+                  <section className="production-packing" aria-label={t("production.packingTitle")}>
+                    <header className="production-optimize-head">
+                      <h3>{t("production.packingTitle")}</h3>
+                      {packing?.generated_at ? (
+                        <time dateTime={packing.generated_at}>
+                          {new Date(packing.generated_at).toLocaleString("es-CL")}
+                        </time>
+                      ) : null}
+                      {canWrite &&
+                      detail.status !== "DISPATCHED" &&
+                      detail.status !== "INSTALLED" ? (
+                        <button type="button" disabled={busy} onClick={() => pack(detail.id)}>
+                          {packing
+                            ? t("production.packingRegenerate")
+                            : t("production.packingGenerate")}
+                        </button>
+                      ) : null}
+                      {units.length ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void showLabels(detail.id)}
+                        >
+                          {t("production.labelsShow")}
+                        </button>
+                      ) : null}
+                      {labels.length ? (
+                        <button type="button" onClick={() => window.print()}>
+                          {t("production.labelsPrint")}
+                        </button>
+                      ) : null}
+                    </header>
+                    {labels.length ? (
+                      <ul className="production-labels">
+                        {labels.map((label) => (
+                          <li key={label.label_code} className="production-label">
+                            <span className="production-label-code">{label.label_code}</span>
+                            <span
+                              className="production-label-qr"
+                              // Generated server-side by segno from the sealed manifest.
+                              dangerouslySetInnerHTML={{ __html: label.qr_svg }}
+                            />
+                            <span className="production-label-pieces">
+                              {t("production.labelsPieces")}: {label.pieces}
+                            </span>
+                            <span className="production-label-parts">
+                              {(
+                                [
+                                  ["M", label.profiles],
+                                  ["R", label.reinforcements],
+                                  ["V", label.glasses],
+                                  ["P", label.panels],
+                                  ["H", label.hardware],
+                                ] as Array<[string, number]>
+                              )
+                                .filter(([, count]) => count > 0)
+                                .map(([kind, count]) => `${kind}×${count}`)
+                                .join(" · ")}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {units.length ? (
+                      <table className="production-plan">
+                        <thead>
+                          <tr>
+                            <th>{t("production.packingLabel")}</th>
+                            <th>{t("production.packingProfiles")}</th>
+                            <th>{t("production.packingReinforcements")}</th>
+                            <th>{t("production.packingGlasses")}</th>
+                            <th>{t("production.packingPanels")}</th>
+                            <th>{t("production.packingHardware")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {units.map((unit) => (
+                            <tr key={unit.unit_index}>
+                              <td className="production-label-code">{unit.label_code}</td>
+                              <td>{unit.profiles ?? 0}</td>
+                              <td>{unit.reinforcements ?? 0}</td>
+                              <td>{unit.glasses ?? 0}</td>
+                              <td>{unit.panels ?? 0}</td>
+                              <td>{unit.hardware ?? 0}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="production-optimize-empty">{t("production.packingEmpty")}</p>
+                    )}
+                  </section>
+                );
+              })()}
+              {(() => {
+                const canSchedule =
+                  canWrite && (detail.status === "COMPLETED" || detail.status === "DISPATCHED");
+                return (
+                  <section
+                    className="production-delivery"
+                    aria-label={t("production.deliveryTitle")}
+                  >
+                    <header className="production-optimize-head">
+                      <h3>{t("production.deliveryTitle")}</h3>
+                      {delivery ? (
+                        <span
+                          className={`production-chip delivery-${delivery.status.toLowerCase()}`}
+                        >
+                          {t(
+                            deliveryStatusKey[delivery.status] ??
+                              "production.deliveryStatusScheduled",
+                          )}
+                        </span>
+                      ) : null}
+                      {!delivery && canSchedule && deliveryForm === null ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => openDeliveryForm(null)}
+                        >
+                          {t("production.deliverySchedule")}
+                        </button>
+                      ) : null}
+                      {canWrite && delivery && delivery.status !== "DELIVERED" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => openDeliveryForm(delivery)}
+                        >
+                          {t("production.deliveryReschedule")}
+                        </button>
+                      ) : null}
+                      {canStep &&
+                      delivery?.status === "SCHEDULED" &&
+                      detail.status === "DISPATCHED" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void transitionDelivery(detail.id, "ON_ROUTE")}
+                        >
+                          {t("production.deliveryOnRoute")}
+                        </button>
+                      ) : null}
+                      {canStep && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "DELIVERED")}
+                          >
+                            {t("production.deliveryDelivered")}
+                          </button>
+                          <button
+                            type="button"
+                            className="production-chip-danger"
+                            disabled={busy}
+                            onClick={() => void transitionDelivery(detail.id, "FAILED")}
+                          >
+                            {t("production.deliveryFailed")}
+                          </button>
+                        </>
+                      ) : null}
+                      {canStep &&
+                      delivery &&
+                      (delivery.status === "ON_ROUTE" || delivery.status === "DELIVERED") &&
+                      !delivery.confirmation &&
+                      !confirmOpen ? (
+                        <button type="button" disabled={busy} onClick={openConfirmForm}>
+                          {t("production.deliveryConfirm")}
+                        </button>
+                      ) : null}
+                      {delivery?.confirmation ? (
+                        <button
+                          type="button"
+                          className="production-chip delivery-delivered"
+                          onClick={() => void openConfirmation(detail.id)}
+                        >
+                          {delivery.confirmation.confirmation_code}
+                        </button>
+                      ) : null}
+                    </header>
+                    {delivery ? (
+                      <dl className="production-delivery-facts">
+                        <div>
+                          <dt>{t("production.deliveryDate")}</dt>
+                          <dd>
+                            {delivery.scheduled_date} · {delivery.time_window}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t("production.deliveryAddress")}</dt>
+                          <dd>{delivery.address}</dd>
+                        </div>
+                        {delivery.contact_name || delivery.contact_phone ? (
+                          <div>
+                            <dt>{t("production.deliveryContact")}</dt>
+                            <dd>
+                              {[delivery.contact_name, delivery.contact_phone]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </dd>
+                          </div>
+                        ) : null}
+                        {delivery.installer_name ? (
+                          <div>
+                            <dt>{t("production.deliveryInstaller")}</dt>
+                            <dd>{delivery.installer_name}</dd>
+                          </div>
+                        ) : null}
+                        {delivery.notes ? (
+                          <div>
+                            <dt>{t("production.deliveryNotes")}</dt>
+                            <dd>{delivery.notes}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    ) : null}
+                    {confirmOpen && canStep && delivery ? (
+                      <form
+                        className="production-delivery-form production-confirm-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void submitConfirmation(detail.id);
+                        }}
+                      >
+                        <label>
+                          {t("production.deliveryReceiver")}
+                          <input
+                            type="text"
+                            required
+                            maxLength={200}
+                            value={confirmName}
+                            onChange={(event) => setConfirmName(event.target.value)}
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryReceiverRut")}
+                          <input
+                            type="text"
+                            maxLength={30}
+                            value={confirmRut}
+                            onChange={(event) => setConfirmRut(event.target.value)}
+                          />
+                        </label>
+                        <div className="production-delivery-wide">
+                          {t("production.deliverySignature")}
+                          <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                        </div>
+                        <label className="production-confirm-collect">
+                          <input
+                            type="checkbox"
+                            checked={collectPayment}
+                            onChange={(event) => setCollectPayment(event.target.checked)}
+                          />
+                          {t("production.deliveryCollect")}
+                        </label>
+                        {collectPayment ? (
+                          <>
+                            <label>
+                              {t("production.deliveryCollectAmount")}
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                required
+                                value={collectAmount}
+                                onChange={(event) => setCollectAmount(event.target.value)}
+                              />
+                            </label>
+                            <label>
+                              {t("projects.paymentMethod")}
+                              <select
+                                value={collectMethod}
+                                onChange={(event) =>
+                                  setCollectMethod(event.target.value as MethodEnum)
+                                }
+                              >
+                                <option value="CASH">{t("projects.paymentMethodCash")}</option>
+                                <option value="TRANSFER">
+                                  {t("projects.paymentMethodTransfer")}
+                                </option>
+                                <option value="CARD">{t("projects.paymentMethodCard")}</option>
+                                <option value="CHECK">{t("projects.paymentMethodCheck")}</option>
+                                <option value="OTHER">{t("projects.paymentMethodOther")}</option>
+                              </select>
+                            </label>
+                            <label>
+                              {t("projects.paymentKind")}
+                              <select
+                                value={collectKind}
+                                onChange={(event) =>
+                                  setCollectKind(event.target.value as PaymentKindEnum)
+                                }
+                              >
+                                <option value="ANTICIPO">
+                                  {t("projects.paymentKindAnticipo")}
+                                </option>
+                                <option value="PARCIAL">{t("projects.paymentKindParcial")}</option>
+                                <option value="SALDO">{t("projects.paymentKindSaldo")}</option>
+                              </select>
+                            </label>
+                          </>
+                        ) : null}
+                        <div className="production-delivery-actions">
+                          <button type="submit" disabled={busy || !sigDrawn || !confirmName.trim()}>
+                            {t("production.deliveryConfirmSubmit")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => sigRef.current?.clear()}
+                          >
+                            {t("production.deliverySignatureClear")}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setConfirmOpen(false)}
+                          >
+                            {t("production.deliveryCancel")}
+                          </button>
+                        </div>
+                      </form>
+                    ) : null}
+                    {!delivery && deliveryForm === null ? (
+                      <p className="production-optimize-empty">{t("production.deliveryEmpty")}</p>
+                    ) : null}
+                    {deliveryForm !== null && canWrite ? (
+                      <form
+                        className="production-delivery-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void saveDelivery(detail.id);
+                        }}
+                      >
+                        <label>
+                          {t("production.deliveryDate")}
+                          <input
+                            type="date"
+                            required
+                            value={deliveryForm.scheduled_date}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                scheduled_date: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryWindow")}
+                          <select
+                            value={deliveryForm.time_window ?? "AM"}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                time_window: event.target
+                                  .value as DeliveryScheduleRequestRequest["time_window"],
+                              })
+                            }
+                          >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                            <option value="JORNADA">JORNADA</option>
+                          </select>
+                        </label>
+                        <label className="production-delivery-wide">
+                          {t("production.deliveryAddress")}
+                          <input
+                            required
+                            value={deliveryForm.address}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                address: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryContact")}
+                          <input
+                            value={deliveryForm.contact_name ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                contact_name: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryPhone")}
+                          <input
+                            value={deliveryForm.contact_phone ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                contact_phone: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t("production.deliveryInstaller")}
+                          <input
+                            value={deliveryForm.installer_name ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                installer_name: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="production-delivery-wide">
+                          {t("production.deliveryNotes")}
+                          <input
+                            value={deliveryForm.notes ?? ""}
+                            onChange={(event) =>
+                              setDeliveryForm({
+                                ...deliveryForm,
+                                notes: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <div className="production-delivery-actions">
+                          <button type="submit" disabled={busy}>
+                            {t("production.deliverySave")}
+                          </button>
+                          <button type="button" onClick={() => setDeliveryForm(null)}>
+                            {t("production.deliveryCancel")}
+                          </button>
+                        </div>
+                      </form>
+                    ) : null}
+                  </section>
+                );
+              })()}
               <ol className="production-steps">
                 {detail.steps.map((step) => (
                   <li key={step.id} className={`production-step step-${step.status.toLowerCase()}`}>
@@ -478,7 +1307,9 @@ export function ProductionPage(): JSX.Element {
                       </span>
                     </div>
                     {step.note ? <p className="production-step-note">{step.note}</p> : null}
-                    {detail.status !== "COMPLETED" ? (
+                    {detail.status !== "COMPLETED" &&
+                    detail.status !== "DISPATCHED" &&
+                    detail.status !== "INSTALLED" ? (
                       <div className="production-step-actions">
                         {stepActions(step).map((stepAction) => (
                           <button
