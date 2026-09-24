@@ -271,13 +271,9 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
         "ORDER BY emitted_at DESC LIMIT 3",
         [org_id, project["id"]],
     )
-    artifacts = rows(
-        "SELECT document_type, count(*) AS count FROM public.document_artifacts "
-        "WHERE org_id=%s AND artifact_scope_id IN "
-        "(SELECT id FROM public.project_versions WHERE org_id=%s AND project_id=%s) "
-        "GROUP BY document_type",
-        [org_id, org_id, project["id"]],
-    )
+    # Document counts deliberately don't query document_artifacts: the sealed
+    # evidence table is revoked from `authenticated` and served only through
+    # documentary_backend — a caller-scoped projection must not proxy it.
     return {
         "project": {
             "id": str(project["id"]),
@@ -300,15 +296,12 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
             }
             for v in versions
         ],
-        "documents": {
-            _cut(a["document_type"]) or "?": int(a["count"]) for a in artifacts
-        },
     }
 
 
 def _catalog(org_id: UUID) -> dict:
     systems = rows(
-        "SELECT code, name, material::text AS material, is_global, active "
+        "SELECT code, name, material::text AS material, is_global, is_active AS active "
         "FROM public.profile_systems "
         "WHERE org_id=%s OR (org_id IS NULL AND is_global) "
         "ORDER BY code LIMIT %s",
@@ -410,7 +403,7 @@ def _purchasing(org_id: UUID) -> dict:
     orders = rows(
         "SELECT order_code, order_type::text AS order_type, status::text AS status, "
         "supplier_name FROM public.orders "
-        "WHERE org_id=%s AND order_type LIKE 'SUPPLIER%' "
+        "WHERE org_id=%s AND order_type::text LIKE 'SUPPLIER%%' "
         "ORDER BY created_at DESC LIMIT %s",
         [org_id, MAX_LIST],
     )

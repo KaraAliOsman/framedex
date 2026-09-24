@@ -419,3 +419,33 @@ def test_unreserve_remnant_evicts_order_plan_claim() -> None:
     assert optimization["invalidated"] is True
     for export_key in ("cnc_export", "dxf_export", "operations_export"):
         assert export_key not in written
+
+
+def test_unreserve_remnant_refuses_moved_reservation() -> None:
+    # Lock order is probe(order) → remnant to match optimize_work_order. If the
+    # remnant's reservation moved to a different order between the probe and
+    # the lock, the order we locked first is not the plan owner — the write
+    # must refuse rather than evict a plan whose lock was never taken.
+    from inventory import remnants
+
+    org_id, remnant_id, order_a, order_b = uuid4(), uuid4(), uuid4(), uuid4()
+    probe_row = _remnant_row(remnant_id, order_a)
+    locked_row = _remnant_row(remnant_id, order_b)
+    remnant_reads = iter([probe_row, locked_row])
+
+    def fake_one(query, params=(), code=None):
+        if "inventory_remnants" in query:
+            return next(remnant_reads)
+        if "public.orders" in query:
+            return {"id": order_a}
+        raise AssertionError(query)
+
+    with patch("inventory.remnants.one", side_effect=fake_one), patch(
+        "inventory.remnants.transaction.atomic", return_value=_atomic()
+    ), patch(
+        "inventory.remnants.documentary_backend", return_value=_atomic()
+    ), pytest.raises(DocumentaryError) as error:
+        remnants.unreserve_remnant(
+            org_id=org_id, remnant_id=remnant_id, actor_id=uuid4()
+        )
+    assert error.value.code == "remnant_reservation_moved"

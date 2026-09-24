@@ -18,6 +18,7 @@ import pytest
 from pytest_django.plugin import DjangoDbBlocker
 from rest_framework.test import APIClient
 
+from ai_gateway.context import REQUIRED_REFS, build_context
 from authentication.jwt_verifier import AuthServerTokenVerifier
 from authentication.rls import authenticated_rls_context
 from authentication.tenancy import MembershipRepository, resolve_tenant_context
@@ -470,3 +471,34 @@ def test_inactive_panel_is_not_loaded_and_missing_weight_cannot_fallback(real_ro
                     assert params.available_panel_rules == {}
             transaction.set_rollback(True)
         assert_no_context()
+
+
+def test_ai_context_projections_execute_against_real_schema(
+    real_rows: RLSFixtures,
+) -> None:
+    """Every surface projection runs its real SELECTs on live Postgres — the
+    unit suite stubs `rows`, so a projection naming a column the table lacks
+    (the `active`/`is_active` regression) only fails here."""
+    token = real_rows.tokens["A"]
+    org_id = real_rows.organizations["A"]
+    with authenticated_rls_context(token.claims):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM public.projects WHERE org_id = %s AND code = 'RLS-FIXTURE'",
+                [org_id],
+            )
+            project_id = cursor.fetchone()[0]
+        covered = []
+        for surface in sorted(REQUIRED_REFS):
+            needed = REQUIRED_REFS[surface]
+            if needed and set(needed) != {"project_id"}:
+                # position/work_order refs need entities this fixture does not
+                # create; every other projection's SQL must execute for real.
+                continue
+            refs = {"project_id": str(project_id)} if needed else {}
+            context = build_context(org_id, surface, refs)
+            assert context["surface"] == surface
+            assert context["organization"]["name"]
+            covered.append(surface)
+        assert "catalog" in covered
+        assert len(covered) >= len(REQUIRED_REFS) - 2

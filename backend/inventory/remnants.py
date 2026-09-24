@@ -286,6 +286,25 @@ def unreserve_remnant(
     drop in the same transaction: leaving the claim behind would let another
     order book the physical remnant while the first plan still lists it."""
     with transaction.atomic(), documentary_backend():
+        # Lock order must match optimize_work_order's (order → remnant): taking
+        # the remnant first and the order second deadlocks against a replan
+        # that holds the order while claiming this remnant. The unlocked probe
+        # only decides WHICH order to lock first — the authoritative state is
+        # re-read under the remnant lock below.
+        probe = one(
+            f"{_SELECT} WHERE id = %s AND org_id = %s",
+            [str(remnant_id), str(org_id)],
+            "remnant_not_found",
+        )
+        expected_owner = (
+            probe["reserved_order_id"] if probe["status"] == "RESERVED" else None
+        )
+        if expected_owner:
+            one(
+                "SELECT id FROM public.orders WHERE id = %s AND org_id = %s FOR UPDATE",
+                [str(expected_owner), str(org_id)],
+                "work_order_not_found",
+            )
         row = one(
             f"{_SELECT} WHERE id = %s AND org_id = %s FOR UPDATE",
             [str(remnant_id), str(org_id)],
@@ -294,6 +313,11 @@ def unreserve_remnant(
         if row["status"] != "RESERVED":
             raise DocumentaryError("remnant_not_reserved")
         order_id = row["reserved_order_id"]
+        if str(order_id) != str(expected_owner):
+            # Ownership moved between the probe and the remnant lock — the row
+            # the plan now belongs to is not the one we locked first. Refuse:
+            # the caller retries and locks the right owner on the next pass.
+            raise DocumentaryError("remnant_reservation_moved")
         rows(
             """
             UPDATE public.inventory_remnants
