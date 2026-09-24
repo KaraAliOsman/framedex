@@ -14,6 +14,9 @@ export interface TreeNode {
   severity: "error" | "warning" | null;
   /** Canvas selection target (module or coupling id); null = structural row. */
   selectId: string | null;
+  /** Accessible name when the visible label alone is ambiguous (e.g. a bay
+   * whose opening name collides with the opening-type choice buttons). */
+  ariaLabel?: string;
   children: TreeNode[];
 }
 
@@ -100,22 +103,31 @@ function bayChildren(
   return rows;
 }
 
+interface BayContext {
+  moduleLabel: string;
+  bayCounter: { value: number };
+}
+
 function intentRows(
   node: IntentNode,
   moduleId: string,
   members: MemberGeometry,
   t: (key: TranslationKey) => string,
+  context: BayContext,
 ): TreeNode[] {
   if (node.type === "BAY") {
     const opening = node.opening_type ?? "FIXED";
+    const label = t(LEAF_KIND[opening]);
+    context.bayCounter.value += 1;
     return [
       {
         id: `${moduleId}/${node.id}`,
-        label: t(LEAF_KIND[opening]),
+        label,
         detail: null,
         kind: "bay",
         severity: null,
         selectId: `${moduleId}/${node.id}`,
+        ariaLabel: `${label} · ${t("tree.bay")} ${context.bayCounter.value} · ${context.moduleLabel}`,
         children: bayChildren(node, moduleId, members, t),
       },
     ];
@@ -129,11 +141,13 @@ function intentRows(
         kind: "mullion",
         severity: null,
         selectId: moduleId,
-        children: (node.children ?? []).flatMap((child) => intentRows(child, moduleId, members, t)),
+        children: (node.children ?? []).flatMap((child) =>
+          intentRows(child, moduleId, members, t, context),
+        ),
       },
     ];
   }
-  return (node.children ?? []).flatMap((child) => intentRows(child, moduleId, members, t));
+  return (node.children ?? []).flatMap((child) => intentRows(child, moduleId, members, t, context));
 }
 
 /** Modules interleaved with their couplings — the tree reads like the
@@ -166,7 +180,10 @@ export function buildObjectTree(
           selectId: module.id,
           children: [],
         },
-        ...intentRows(module.tree, module.id, members, t),
+        ...intentRows(module.tree, module.id, members, t, {
+          moduleLabel: `${t("tree.module")} ${index + 1}`,
+          bayCounter: { value: 0 },
+        }),
       ],
     });
     const coupling = couplings[index];

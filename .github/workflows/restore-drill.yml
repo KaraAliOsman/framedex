@@ -1,0 +1,27 @@
+name: Restore Drill
+
+# Backup recovery only counts if it is exercised. This runs the real
+# clean-instance restore proof (disposable Docker Postgres, SHA-bound)
+# weekly and on demand so a broken backup path is caught between releases,
+# not during an incident.
+on:
+  schedule:
+    - cron: "15 4 * * 1" # Mondays 04:15 UTC
+  workflow_dispatch:
+
+jobs:
+  restore-drill:
+    name: Restore Drill
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Run clean-instance restore proof
+        run: python scripts/check_restore_drill.py

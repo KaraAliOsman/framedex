@@ -39,6 +39,7 @@ function TreeRow({
         <button
           type="button"
           className={`tree-label${selected ? " is-selected" : ""}${node.selectId === null ? " is-static" : ""}`}
+          aria-label={node.ariaLabel}
           onClick={() => {
             if (node.selectId !== null) onSelect(node.selectId);
           }}

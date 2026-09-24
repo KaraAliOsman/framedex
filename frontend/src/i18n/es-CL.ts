@@ -764,6 +764,7 @@ const messages = {
   "tree.glass": "Vidrio",
   "tree.panel": "Panel",
   "tree.handle": "Manilla",
+  "tree.bay": "Paño",
   "inspector.dimensions": "Medidas",
   "inspector.glazing": "Relleno",
   "quotation.workshopData": "Datos de taller",
