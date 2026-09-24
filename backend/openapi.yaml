@@ -13694,6 +13694,14 @@ components:
             $ref: '#/components/schemas/HandlePolicyRequirements'
         workshop_targets:
           $ref: '#/components/schemas/WorkshopTargets'
+        workshop_suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkshopAnnotation'
+        polishing_suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlassPolishing'
       required:
       - accessory_schedule
       - calculation_hash
@@ -13705,12 +13713,14 @@ components:
       - location_tag
       - manufacturing_placement_policy_id
       - placement_options
+      - polishing_suggestions
       - position_id
       - reinforcement_cut_policy_id
       - reinforcement_options
       - structural_inputs
       - system_name
       - workshop_annotations
+      - workshop_suggestions
       - workshop_targets
     DocumentaryPreparationResponse:
       type: object

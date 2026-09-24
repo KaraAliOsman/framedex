@@ -1642,8 +1642,12 @@ def prepare_documentary_inputs(
         inspector_config = inspector_configs.setdefault(
             system_id, InspectorRepository().load(system_id_uuid, org_id).config
         )
-        workshop = _seed_workshop_defaults(calculations, workshop, inspector_config)
-        glass = _seed_polishing_defaults(valid_glass, glass)
+        # Suggestions stay a separate channel: prepare returns what the
+        # estimator actually stored, plus advisory defaults the emit form can
+        # prefill. Absence is never synthesized into stored authority — what
+        # the user sees and saves is what exists.
+        workshop_suggestions = _seed_workshop_defaults(calculations, [], inspector_config)
+        polishing_suggestions = _seed_polishing_defaults(valid_glass, [])
 
         prepared.append(
             {
@@ -1666,6 +1670,8 @@ def prepare_documentary_inputs(
                 "workshop_annotations": workshop,
                 "structural_inputs": structural,
                 "glass_polishing": glass,
+                "workshop_suggestions": workshop_suggestions,
+                "polishing_suggestions": polishing_suggestions,
                 "handle_intents": intents,
                 "handle_requirements": [
                     {
@@ -1687,7 +1693,7 @@ def prepare_documentary_inputs(
                 "accessory_schedule": (
                     decoded(existing["accessory_schedule"])
                     if existing and existing["accessory_schedule"] is not None
-                    else {"schema_version": 1, "coverage": "NONE_REQUIRED", "items": []}
+                    else None
                 ),
                 "legacy_handle_migration_confirmed": bool(
                     existing and existing["legacy_handle_migration_confirmed"]

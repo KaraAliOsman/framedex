@@ -214,6 +214,8 @@ class DocumentaryPreparationPositionSerializer(PositionDocumentaryInputSerialize
     reinforcement_options = DocumentaryPolicyOptionSerializer(many=True)
     handle_requirements = HandlePolicyRequirementsSerializer(many=True)
     workshop_targets = WorkshopTargetsSerializer()
+    workshop_suggestions = WorkshopAnnotationSerializer(many=True)
+    polishing_suggestions = GlassPolishingSerializer(many=True)
 
 
 class DocumentaryPreparationResponseSerializer(serializers.Serializer):

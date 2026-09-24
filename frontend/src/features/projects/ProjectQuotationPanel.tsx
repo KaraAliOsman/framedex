@@ -324,6 +324,52 @@ function selectedPolicy(
   );
 }
 
+function annotationKey(bayId: string, leafId: string | null | undefined): string {
+  return `${bayId}|${leafId ?? ""}`;
+}
+
+/** Advisory defaults ride a separate channel so the backend never fabricates
+ * stored authority. The emit form prefills them as editable values — only what
+ * the estimator saves becomes data. Stored rows win per-field. */
+function mergePreparationSuggestions(
+  position: DocumentaryPreparationResponse["positions"][number],
+): DocumentaryPreparationResponse["positions"][number] {
+  const pending = new Map(
+    (position.workshop_suggestions ?? []).map((suggestion) => [
+      annotationKey(suggestion.bay_id, suggestion.leaf_id),
+      suggestion,
+    ]),
+  );
+  const annotations = position.workshop_annotations.map((row) => {
+    const key = annotationKey(row.bay_id, row.leaf_id);
+    const suggestion = pending.get(key);
+    if (!suggestion) return row;
+    pending.delete(key);
+    return {
+      ...row,
+      bottom_drain_holes_mm: row.bottom_drain_holes_mm ?? suggestion.bottom_drain_holes_mm,
+      closing_points_perimeter_mm:
+        row.closing_points_perimeter_mm ?? suggestion.closing_points_perimeter_mm,
+      continuous_width_mm: row.continuous_width_mm ?? suggestion.continuous_width_mm,
+      finish_class: row.finish_class ?? suggestion.finish_class,
+      has_coupler: row.has_coupler ?? suggestion.has_coupler,
+    };
+  });
+  const storedPolishing = new Set(
+    position.glass_polishing.map((row) => annotationKey(row.bay_id, row.leaf_id)),
+  );
+  return {
+    ...position,
+    workshop_annotations: [...annotations, ...pending.values()],
+    glass_polishing: [
+      ...position.glass_polishing,
+      ...(position.polishing_suggestions ?? []).filter(
+        (suggestion) => !storedPolishing.has(annotationKey(suggestion.bay_id, suggestion.leaf_id)),
+      ),
+    ],
+  };
+}
+
 export function ProjectQuotationPanel({
   project,
   orgId,
@@ -366,7 +412,12 @@ export function ProjectQuotationPanel({
     try {
       const response = await documentaryPrepareInputs(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (generation.current === current) setPreparation(response.data);
+      if (generation.current === current) {
+        setPreparation({
+          ...response.data,
+          positions: response.data.positions.map(mergePreparationSuggestions),
+        });
+      }
     } catch {
       if (generation.current === current) setMessage(t("quotation.loadError"));
     } finally {
