@@ -53,7 +53,7 @@ def test_core_response_is_typed_and_complete(
     response = client.post("/api/v1/engine/calculate/", payload, format="json")
     assert response.status_code == 200
     actual = response.json()
-    assert set(actual) == {"profile_cuts", "reinforcements", "glasses", "panels", "hardware_items", "leaf_weights", "calculation_hash"}
+    assert set(actual) == {"profile_cuts", "reinforcements", "glasses", "panels", "hardware_items", "leaf_weights", "fittings", "calculation_hash"}
     assert actual["hardware_items"][0]["kit_sku"] == kit
     assert actual["leaf_weights"][0]["total_weight_kg"] == weight
     assert all("material" in p and "leaf_id" in p for p in actual["profile_cuts"])

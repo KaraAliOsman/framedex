@@ -108,6 +108,75 @@ def order_snapshot(order_type: str) -> dict[str, object]:
     }
 
 
+def test_additive_bom_normalizer_keeps_old_snapshots_comparable() -> None:
+    from documents.service import _without_additive_bom_fields
+
+    current = {
+        "profile_cuts": [
+            {
+                "sku": "MARCO-60",
+                "role": "FRAME",
+                "length_mm": "1000",
+                "bay_id": "B1",
+                "leaf_id": None,
+                "sagitta_mm": None,
+            }
+        ],
+        "reinforcements": [],
+        "glasses": [
+            {
+                "bay_id": "B1",
+                "leaf_id": None,
+                "width_mm": "900",
+                "height_mm": "1900",
+                "thickness_net_mm": "24",
+                "weight_kg": "10.26",
+                "shape": None,
+                "area_m2": None,
+                "exposed_edges": None,
+                "glass_spec": "4-16-4",
+                "article_sku": "DVH-4-16-4",
+            }
+        ],
+        "fittings": [],
+    }
+    legacy_stored = {
+        "profile_cuts": [
+            {
+                "sku": "MARCO-60",
+                "role": "FRAME",
+                "length_mm": "1000",
+                "bay_id": "B1",
+                "leaf_id": None,
+            }
+        ],
+        "reinforcements": [],
+        "glasses": [
+            {"bay_id": "B1", "leaf_id": None, "width_mm": "900", "height_mm": "1900"}
+        ],
+    }
+    # Fields the model gained after the snapshot was sealed drop out on both
+    # sides — the unchanged position stays comparable.
+    assert _without_additive_bom_fields(current, legacy_stored) == _without_additive_bom_fields(
+        legacy_stored, current
+    )
+
+    # A value carried by the snapshot stays compared: a changed bend must flag.
+    bent_stored = {
+        **legacy_stored,
+        "profile_cuts": [
+            {**legacy_stored["profile_cuts"][0], "sagitta_mm": "500"}
+        ],
+    }
+    bent_current = {
+        **current,
+        "profile_cuts": [{**current["profile_cuts"][0], "sagitta_mm": "300"}],
+    }
+    assert _without_additive_bom_fields(bent_current, bent_stored) != _without_additive_bom_fields(
+        bent_stored, bent_current
+    )
+
+
 def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     html = _doc01(revision_snapshot())
     assert "Cliente &lt;Seguro&gt;" in html

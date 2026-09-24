@@ -55,8 +55,13 @@ import {
   setModuleOpening,
   setModuleSlidingLayout,
   setModuleWidth,
+  setModuleFrameless,
   splitModuleBay,
   type CouplingJson,
+  type FramelessEdge,
+  type FramelessFittingJson,
+  type FramelessSpecJson,
+  type FramelessSupportJson,
   type ProductJson,
   type ProductModuleJson,
 } from "./productEditing";
@@ -75,6 +80,7 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   contour_splits_unsupported: "assembly.issue.contourSplits",
   contour_opening_unsupported: "assembly.issue.contourOpening",
   contour_panel_unsupported: "assembly.issue.contourPanel",
+  contour_coupling_unsupported: "assembly.issue.contourCoupling",
   member_bending_required: "assembly.issue.memberBending",
   coupler_width_mismatch: "assembly.issue.couplerWidthMismatch",
   coupler_module_unknown: "assembly.issue.couplerModuleUnknown",
@@ -86,6 +92,11 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   inline_not_adjacent: "assembly.issue.inlineNotAdjacent",
   sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
   sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
+  frameless_contour_unsupported: "assembly.issue.framelessContour",
+  frameless_splits_unsupported: "assembly.issue.framelessSplits",
+  frameless_opening_unsupported: "assembly.issue.framelessOpening",
+  frameless_panel_unsupported: "assembly.issue.framelessPanel",
+  frameless_article_unknown: "assembly.issue.framelessArticleUnknown",
 };
 
 /** Engine failure reasons arrive as `str(error)` — member ids and field
@@ -319,6 +330,276 @@ function ContourShapeSection({
   );
 }
 
+const FRAMELESS_EDGES: [FramelessEdge, TranslationKey][] = [
+  ["bottom", "assembly.framelessEdgeBottom"],
+  ["top", "assembly.framelessEdgeTop"],
+  ["left", "assembly.framelessEdgeLeft"],
+  ["right", "assembly.framelessEdgeRight"],
+];
+const FRAMELESS_FITTING_KINDS: FramelessFittingJson["kind"][] = [
+  "PATCH_FITTING",
+  "CLAMP",
+  "HINGE",
+  "LOCK",
+  "CONNECTOR",
+  "SEAL",
+  "SUPPORT",
+];
+
+function FramelessSection({
+  module,
+  product,
+  couplerSkus,
+  busy,
+  commit,
+}: {
+  module: ProductModuleJson;
+  product: ProductJson;
+  couplerSkus: string[];
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const spec = module.frameless;
+  const update = (next: FramelessSpecJson | null) =>
+    commit(setModuleFrameless(product, module.id, next));
+  if (!spec) {
+    return (
+      <details className="inspector-section">
+        <summary>{t("assembly.frameless")}</summary>
+        <p className="inspector-note">{t("assembly.framelessHint")}</p>
+        <div className="inspector-actions">
+          <button
+            type="button"
+            className="ghost-button"
+            disabled={busy}
+            onClick={() => update({ supports: [], fittings: [] })}
+          >
+            {t("assembly.makeFrameless")}
+          </button>
+        </div>
+      </details>
+    );
+  }
+  const exposed = spec.exposed_edges ?? ["left", "right", "top", "bottom"];
+  const setSupport = (index: number, next: Partial<FramelessSupportJson>) =>
+    update({
+      ...spec,
+      supports: spec.supports.map((item, at) => (at === index ? { ...item, ...next } : item)),
+    });
+  const setFitting = (index: number, next: Partial<FramelessFittingJson>) =>
+    update({
+      ...spec,
+      fittings: spec.fittings.map((item, at) => (at === index ? { ...item, ...next } : item)),
+    });
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.frameless")}</summary>
+      <p className="inspector-note">{t("assembly.framelessHint")}</p>
+      <h5 className="inspector-subhead">{t("assembly.framelessSupports")}</h5>
+      <ul className="frameless-rows">
+        {spec.supports.map((support, index) => (
+          <li key={index} className="frameless-row">
+            <select
+              aria-label={t("assembly.framelessSupports")}
+              value={support.edge}
+              disabled={busy}
+              onChange={(event) => setSupport(index, { edge: event.target.value as FramelessEdge })}
+            >
+              {FRAMELESS_EDGES.map(([edge, key]) => (
+                <option key={edge} value={edge}>
+                  {t(key)}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={t("assembly.framelessSupports")}
+              value={support.kind}
+              disabled={busy}
+              onChange={(event) =>
+                setSupport(index, {
+                  kind: event.target.value as FramelessSupportJson["kind"],
+                })
+              }
+            >
+              <option value="CHANNEL">{t("assembly.framelessKindChannel")}</option>
+              <option value="CLAMPS">{t("assembly.framelessKindClamps")}</option>
+            </select>
+            {support.kind === "CHANNEL" ? (
+              <select
+                aria-label={t("assembly.framelessSku")}
+                value={support.article_sku}
+                disabled={busy}
+                onChange={(event) => setSupport(index, { article_sku: event.target.value })}
+              >
+                <option value="">{t("assembly.framelessSku")}…</option>
+                {couplerSkus.map((sku) => (
+                  <option key={sku} value={sku}>
+                    {sku}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label={t("assembly.framelessSku")}
+                type="text"
+                value={support.article_sku}
+                disabled={busy}
+                onChange={(event) => setSupport(index, { article_sku: event.target.value })}
+              />
+            )}
+            <input
+              aria-label={t("assembly.framelessQty")}
+              type="number"
+              min={1}
+              value={support.qty}
+              disabled={busy}
+              onChange={(event) =>
+                setSupport(index, { qty: Math.max(1, Number(event.target.value) || 1) })
+              }
+            />
+            <button
+              type="button"
+              className="ghost-button is-danger"
+              aria-label="×"
+              disabled={busy}
+              onClick={() =>
+                update({ ...spec, supports: spec.supports.filter((_, at) => at !== index) })
+              }
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy}
+          onClick={() =>
+            update({
+              ...spec,
+              supports: [
+                ...spec.supports,
+                { kind: "CHANNEL", edge: "bottom", article_sku: "", qty: 1 },
+              ],
+            })
+          }
+        >
+          {t("assembly.framelessAddSupport")}
+        </button>
+      </div>
+      <h5 className="inspector-subhead">{t("assembly.framelessFittings")}</h5>
+      <ul className="frameless-rows">
+        {spec.fittings.map((fitting, index) => (
+          <li key={index} className="frameless-row">
+            <select
+              aria-label={t("assembly.framelessFittings")}
+              value={fitting.kind}
+              disabled={busy}
+              onChange={(event) =>
+                setFitting(index, {
+                  kind: event.target.value as FramelessFittingJson["kind"],
+                })
+              }
+            >
+              {FRAMELESS_FITTING_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {t(`assembly.fittingKind.${kind}` as TranslationKey)}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label={t("assembly.framelessSku")}
+              type="text"
+              value={fitting.sku}
+              disabled={busy}
+              onChange={(event) => setFitting(index, { sku: event.target.value })}
+            />
+            <input
+              aria-label={t("assembly.framelessQty")}
+              type="number"
+              min={1}
+              value={fitting.qty}
+              disabled={busy}
+              onChange={(event) =>
+                setFitting(index, { qty: Math.max(1, Number(event.target.value) || 1) })
+              }
+            />
+            <button
+              type="button"
+              className="ghost-button is-danger"
+              aria-label="×"
+              disabled={busy}
+              onClick={() =>
+                update({ ...spec, fittings: spec.fittings.filter((_, at) => at !== index) })
+              }
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy}
+          onClick={() =>
+            update({
+              ...spec,
+              fittings: [...spec.fittings, { kind: "PATCH_FITTING", sku: "", qty: 1 }],
+            })
+          }
+        >
+          {t("assembly.framelessAddFitting")}
+        </button>
+      </div>
+      <h5 className="inspector-subhead">{t("assembly.framelessExposedEdges")}</h5>
+      <div
+        className="frameless-edges"
+        role="group"
+        aria-label={t("assembly.framelessExposedEdges")}
+      >
+        {FRAMELESS_EDGES.map(([edge, key]) => (
+          <label key={edge} className="assembly-field assembly-field--inline">
+            <input
+              type="checkbox"
+              checked={exposed.includes(edge)}
+              disabled={busy}
+              onChange={(event) => {
+                const next = event.target.checked
+                  ? [...exposed, edge]
+                  : exposed.filter((item) => item !== edge);
+                update({
+                  ...spec,
+                  exposed_edges:
+                    next.length === 4
+                      ? undefined
+                      : FRAMELESS_EDGES.map(([candidate]) => candidate).filter((candidate) =>
+                          next.includes(candidate),
+                        ),
+                });
+              }}
+            />
+            <span>{t(key)}</span>
+          </label>
+        ))}
+      </div>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button is-danger"
+          disabled={busy}
+          onClick={() => update(null)}
+        >
+          {t("assembly.framelessRemove")}
+        </button>
+      </div>
+    </details>
+  );
+}
+
 function ModuleInspector({
   module,
   product,
@@ -327,6 +608,7 @@ function ModuleInspector({
   glazingThicknesses,
   panelSkus,
   mullionSkus,
+  couplerSkus,
   busy,
   commit,
   onAskAssistant,
@@ -338,6 +620,7 @@ function ModuleInspector({
   glazingThicknesses: string[];
   panelSkus: string[];
   mullionSkus: Partial<Record<SplitType, string>>;
+  couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
   onAskAssistant?(): void;
@@ -574,6 +857,13 @@ function ModuleInspector({
       {module.contour && (
         <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
       )}
+      <FramelessSection
+        module={module}
+        product={product}
+        couplerSkus={couplerSkus}
+        busy={busy}
+        commit={commit}
+      />
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <label className="assembly-field">
@@ -1214,6 +1504,7 @@ export function AssemblyEditor({
             glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}
             mullionSkus={mullionSkus}
+            couplerSkus={couplerSkus}
             busy={busy}
             commit={commit}
             onAskAssistant={

@@ -279,38 +279,92 @@ def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
 
-_GLASS_ADDITIVE_KEYS = frozenset({"glass_spec", "article_sku"})
+_BOM_ADDITIVE_KEYS = frozenset({"fittings"})
+_PIECE_ADDITIVE_KEYS = {
+    # Output-additive metadata the model gained after BOMs were already
+    # sealed — dropping them when a stored snapshot lacks them keeps old
+    # positions comparable; when the snapshot carries them they stay
+    # compared, so a real value change still reads as drift.
+    "glasses": frozenset(
+        {
+            "glass_spec",
+            "article_sku",
+            "thickness_net_mm",
+            "weight_kg",
+            "shape",
+            "area_m2",
+            "exposed_edges",
+        }
+    ),
+    "profile_cuts": frozenset({"sagitta_mm"}),
+    "reinforcements": frozenset({"sagitta_mm"}),
+}
 
 
 def _calculation_identity_hashes(
     request: Mapping[str, object], result: EngineResult
 ) -> tuple[str, str]:
     """(current, legacy-compatible) hashes for one engine result. The legacy
-    hash drops glass_spec/article_sku so documentary inputs saved before the
+    hash drops additive output fields so documentary inputs saved before the
     fields existed still prove calculation identity; the current hash is what
     gets sealed forward."""
     payload = result_payload(result)
     return (
         calculation_hash(request, payload),
-        calculation_hash(request, _without_additive_glass_fields(payload)),
+        calculation_hash(request, _without_additive_bom_fields(payload)),
     )
 
 
-def _without_additive_glass_fields(bom: object) -> object:
-    # glass_spec/article_sku are output-additive metadata derived from the
-    # same inputs; the authoritative values are sealed in computation.infills.
-    # BOMs persisted before the fields existed must not read as drift.
-    if not isinstance(bom, dict) or not isinstance(bom.get("glasses"), list):
+def _piece_identity(item: Mapping[str, object]) -> tuple[object, ...]:
+    return (
+        item.get("bay_id"),
+        item.get("leaf_id"),
+        item.get("role"),
+        item.get("sku") or item.get("parent_profile_sku"),
+    )
+
+
+def _without_additive_bom_fields(bom: object, reference: object = None) -> object:
+    # glass_spec/article_sku and friends are output-additive metadata derived
+    # from the same inputs; the authoritative values are sealed in
+    # computation.infills. BOMs persisted before the fields existed must not
+    # read as drift. With `reference` (the stored/priced snapshot) a key is
+    # dropped only when the snapshot lacks it or carries null — a non-null
+    # value in the snapshot stays on both sides, so real drift still flags.
+    if not isinstance(bom, dict):
         return bom
-    return {
-        **bom,
-        "glasses": [
-            {key: value for key, value in item.items() if key not in _GLASS_ADDITIVE_KEYS}
-            if isinstance(item, dict)
-            else item
-            for item in bom["glasses"]
-        ],
+    ref = reference if isinstance(reference, dict) else None
+    bom = {
+        key: value
+        for key, value in bom.items()
+        if key not in _BOM_ADDITIVE_KEYS or (ref is not None and bool(ref.get(key)))
     }
+    for piece_list, keys in _PIECE_ADDITIVE_KEYS.items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        ref_items: dict[tuple[object, ...], Mapping[str, object]] = {}
+        if ref is not None and isinstance(ref.get(piece_list), list):
+            ref_items = {
+                _piece_identity(item): item
+                for item in ref[piece_list]
+                if isinstance(item, dict)
+            }
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in keys
+                    or ref_items.get(_piece_identity(item), {}).get(key) is not None
+                }
+                if isinstance(item, dict)
+                else item
+                for item in items
+            ],
+        }
+    return bom
 
 
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
@@ -659,11 +713,13 @@ def freeze_revision_a(
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
-            comparable_current = _without_additive_glass_fields(current_bom)
-            if position_id not in priced_bom or not _same_documentary_value(
-                comparable_current, _without_additive_glass_fields(priced_bom[position_id])
-            ) or not _same_documentary_value(
-                comparable_current, _without_additive_glass_fields(stored_bom)
+            priced_ref = priced_bom.get(position_id)
+            if not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, stored_bom),
+                _without_additive_bom_fields(stored_bom, current_bom),
+            ) or not isinstance(priced_ref, dict) or not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, priced_ref),
+                _without_additive_bom_fields(priced_ref, current_bom),
             ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 

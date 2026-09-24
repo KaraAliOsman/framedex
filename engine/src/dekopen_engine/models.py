@@ -35,6 +35,8 @@ class ProfileRole(str, Enum):
     COUPLER = "COUPLER"
     ADDITIONAL = "ADDITIONAL"
     THRESHOLD = "THRESHOLD"
+    # Continuous edge channel seating a frameless glass pane (mandate §14).
+    CHANNEL = "CHANNEL"
 
 
 class NodeType(str, Enum):
@@ -113,6 +115,10 @@ class GlassPiece(EngineModel):
     # resolved against — None on results sealed before the fields existed.
     glass_spec: str | None = None
     article_sku: str | None = None
+    # Frameless panes declare which edges are exposed glass (mandate §14) —
+    # polishing authority consumes this as its suggested preselection; a
+    # framed pane leaves it None.
+    exposed_edges: list[str] | None = None
 
 
 class HardwareComponent(EngineModel):
@@ -275,6 +281,18 @@ class ProfileCut(EngineModel):
     sagitta_mm: Decimal | None = None
 
 
+class FittingPiece(EngineModel):
+    """A counted fitting — patch fitting, clamp, hinge, lock, connector,
+    seal or point support (mandate §14 frameless domain). Unit pieces, not
+    cut lengths; compatibility/mounting intelligence is the §22 concern."""
+
+    kind: str
+    sku: str
+    qty: int = Field(gt=0)
+    bay_id: str | None = None
+    leaf_id: str | None = None
+
+
 class ReinforcementPiece(EngineModel):
     parent_profile_sku: str
     reinforcement_sku: str | None = None
@@ -292,5 +310,6 @@ class EngineResult(EngineModel):
     reinforcements: list[ReinforcementPiece]
     glasses: list[GlassPiece]
     panels: list[PanelPiece] = Field(default_factory=list)
+    fittings: list[FittingPiece] = Field(default_factory=list)
     hardware_items: list[HardwareItem] = Field(default_factory=list)
     leaf_weights: list[LeafWeight] = Field(default_factory=list)

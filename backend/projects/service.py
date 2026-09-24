@@ -309,6 +309,7 @@ def calculate_design(org_id, design):
             intent_unsupported = {
                 "contour_opening_unsupported",
                 "contour_panel_unsupported",
+                "contour_coupling_unsupported",
             }
             reported_codes = {
                 issue.code
@@ -318,9 +319,10 @@ def calculate_design(org_id, design):
             if reported_codes & intent_unsupported:
                 # Draft tolerance covers warnings about authority the workshop
                 # lacks (member bending) — never a declared intent the engine
-                # cannot build at all. An operable leaf or panel on a contour
-                # would otherwise seal a fixed-pane BOM under a tilt-turn
-                # intent: the saved product would misdescribe itself.
+                # cannot build at all. An operable leaf, panel or joint on a
+                # contour would otherwise seal a fixed rectangular BOM under
+                # the declared shape: the saved product would misdescribe
+                # itself.
                 raise contract_error(
                     400,
                     "manufacturing_incomplete",

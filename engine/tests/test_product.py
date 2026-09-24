@@ -4,12 +4,14 @@ from decimal import Decimal
 
 import pytest
 
+from dekopen_engine.contour import Contour
 from dekopen_engine.models import (
     BayOpeningType,
     EffectiveProfileArticle,
     MaterialType,
     NodeType,
     ParametricNode,
+    PlanPoint,
     ProfileRole,
     SlidingLayout,
     SlidingPanel,
@@ -1023,6 +1025,114 @@ class TestConnections:
             product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
         )
         assert evaluation.status is ProductStatus.VALID
+
+    def test_reversed_inline_edges_claim_outer_seam(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # modules=[b,a] with edges=[right,left] names b's outer right and a's
+        # outer left — no seam exists there; only the side-set check let it
+        # through before.
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ba",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "a"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.COUPLER_EDGE_INVALID.value
+        }
+        assert flagged == {"coupling:ba"}
+        assert not any(
+            c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
+        )
+
+    def test_reversed_module_order_inline_pair_still_cuts(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # The same seam declared right-column first is valid — the edges just
+        # have to mirror the column order (b.left meets a.right).
+        product = self._product(
+            [self._module("a", "1000", "2000"), self._module("b", "800", "2000")],
+            [
+                CouplingDef(
+                    id="ba",
+                    kind=ConnectionKind.INLINE,
+                    modules=["b", "a"],
+                    edges=[EdgeSide.LEFT, EdgeSide.RIGHT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        assert evaluation.status is ProductStatus.VALID
+        coupler = next(
+            c for c in evaluation.bom.profile_cuts if c.role is ProfileRole.COUPLER
+        )
+        assert coupler.length_mm == Decimal("2000")
+
+    def test_contour_module_refuses_couplings(
+        self, demo_60_params: SystemParams
+    ) -> None:
+        # A contour edge is a shaped boundary: even a straight side edge is
+        # shorter than the nominal box, so no straight coupler closes it.
+        shaped = ProductModule(
+            id="tr",
+            width_mm=Decimal("1000"),
+            height_mm=Decimal("2000"),
+            contour=Contour(
+                vertices=[
+                    PlanPoint(x_mm=Decimal("0"), y_mm=Decimal("0")),
+                    PlanPoint(x_mm=Decimal("1000"), y_mm=Decimal("0")),
+                    PlanPoint(x_mm=Decimal("1000"), y_mm=Decimal("1800")),
+                    PlanPoint(x_mm=Decimal("0"), y_mm=Decimal("2000")),
+                ],
+                bulges=[Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")],
+            ),
+            tree=ParametricNode(
+                id="tr",
+                type=NodeType.BAY,
+                opening_type=BayOpeningType.FIXED,
+                glass_thickness_mm=GLASS_4_MM,
+                glass_spec=GLASS_4_SPEC,
+            ),
+        )
+        product = self._product(
+            [self._module("a", "1000", "2000"), shaped],
+            [
+                CouplingDef(
+                    id="ab",
+                    kind=ConnectionKind.INLINE,
+                    modules=["a", "tr"],
+                    edges=[EdgeSide.RIGHT, EdgeSide.LEFT],
+                    coupler_profile_sku="ACOPLE-60",
+                )
+            ],
+        )
+        evaluation = evaluate_product(
+            product, demo_60_params, coupler_articles={"ACOPLE-60": COUPLER_ARTICLE}
+        )
+        flagged = {
+            issue.target
+            for issue in evaluation.issues
+            if issue.code == IssueCode.CONTOUR_COUPLING_UNSUPPORTED.value
+        }
+        assert flagged == {"coupling:ab"}
+        assert not any(
+            c.role is ProfileRole.COUPLER for c in evaluation.bom.profile_cuts
+        )
 
 
 class TestSlidingTopologyEvaluation:
