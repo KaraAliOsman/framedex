@@ -164,10 +164,18 @@ ON CONFLICT (id) DO UPDATE SET
 -- §15: declared simplified sections for the demo frame and sash. The polygon
 -- is the profile cross-section (x = face width, y = depth, exterior at y=0);
 -- source POLYGON marks a catalog-declared simplified shape, not a
--- manufacturer-drawing extraction.
-UPDATE public.profile_articles AS article
-SET section = shapes.section::jsonb
-FROM (VALUES
+-- manufacturer-drawing extraction. The schema-upgrade drills replay this seed
+-- against pre-§15 schemas, where the column does not exist — the statement is
+-- planned only when the schema carries it.
+DO $seed_sections$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'public'
+                 AND table_name = 'profile_articles'
+                 AND column_name = 'section') THEN
+        UPDATE public.profile_articles AS article
+        SET section = shapes.section::jsonb
+        FROM (VALUES
     ('MARCO', '{
         "source": "POLYGON",
         "polygon": [
@@ -197,9 +205,12 @@ FROM (VALUES
         ]
     }'::text)
 ) AS shapes(sku, section)
-WHERE article.sku = shapes.sku
-  AND article.system_id = uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60')
-  AND article.org_id IS NULL;
+        WHERE article.sku = shapes.sku
+          AND article.system_id = uuid_generate_v5(uuid_ns_url(), 'https://dekopen.local/catalog/DEMO_60')
+          AND article.org_id IS NULL;
+    END IF;
+END;
+$seed_sections$;
 
 INSERT INTO public.hardware_kits (
     id,
