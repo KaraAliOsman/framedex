@@ -50,9 +50,7 @@ def test_parse_article_line_rejects_unusable_sku():
 
 
 def test_parse_article_line_face_width_bounds():
-    assert parse_article_line("ABC-1 marco 400 mm", "r0")[
-        "confidence"
-    ] == "REVIEW_REQUIRED"
+    assert parse_article_line("ABC-1 marco 400 mm", "r0")["confidence"] == "REVIEW_REQUIRED"
     candidate = parse_article_line("ABC-1 marco 45 mm", "r0")
     assert candidate["face_width_mm"] == Decimal("45")
 
@@ -151,11 +149,7 @@ def _confirm_patches(monkeypatch, row, system_found=True, insert_return=True):
         if "FROM public.catalog_imports" in sql:
             return [row]
         if "FROM public.profile_systems" in sql:
-            return (
-                [{"id": params[0], "material": "ALUMINIUM"}]
-                if system_found
-                else []
-            )
+            return [{"id": params[0], "material": "ALUMINIUM"}] if system_found else []
         if "INSERT INTO public.profile_articles" in sql:
             inserts.append(params)
             return [{"id": article_id}] if insert_return else []
@@ -244,12 +238,17 @@ def test_confirm_replays_confirmed_import(monkeypatch):
     assert out["errors"] == []
 
 
-def test_confirm_defaults_apply_to_null_fields(monkeypatch):
+def test_confirm_missing_fabrication_fields_stay_unknown(monkeypatch):
+    """A supplier document that never stated fabrication data must not gain
+    invented values — NULL is written so consumers refuse or flag honestly."""
     row = _import_row()
     _, inserts, _ = _confirm_patches(monkeypatch, row)
     item = _item(
-        commercial_length_mm=None, welding_loss_mm=None,
-        weight_kg_m=None, steel_weight_kg_m=None, reinforcement_sku=None,
+        commercial_length_mm=None,
+        welding_loss_mm=None,
+        weight_kg_m=None,
+        steel_weight_kg_m=None,
+        reinforcement_sku=None,
     )
     catalog_service.confirm_catalog_import(
         org_id=row["org_id"],
@@ -257,10 +256,10 @@ def test_confirm_defaults_apply_to_null_fields(monkeypatch):
         system_id=uuid4(),
         items=[item],
     )
-    assert inserts[0][7] == str(Decimal("6000"))
-    assert inserts[0][8] == str(Decimal("6"))
-    assert inserts[0][10] == str(Decimal("1.2"))
-    assert inserts[0][11] == str(Decimal("1.7"))
+    assert inserts[0][7] is None
+    assert inserts[0][8] is None
+    assert inserts[0][10] is None
+    assert inserts[0][11] is None
 
 
 def test_parse_article_line_threshold_role():
@@ -311,9 +310,7 @@ def test_confirm_singleton_role_conflict_is_per_key(monkeypatch):
         system_id=uuid4(),
         items=[_item()],
     )
-    assert out["errors"] == [
-        {"key": "c0", "code": "catalog_singleton_role_conflict"}
-    ]
+    assert out["errors"] == [{"key": "c0", "code": "catalog_singleton_role_conflict"}]
     assert out["created"] == []
     # Retryable: the import stays REVIEW_READY — no FAILED seal.
     assert updates[0][0].startswith("[")
@@ -353,9 +350,7 @@ def test_mark_failed_only_updates_inflight(monkeypatch):
 
     monkeypatch.setattr(catalog_service, "rows", _rows)
     monkeypatch.setattr(catalog_service, "documentary_backend", _backend)
-    catalog_service.mark_catalog_import_failed(
-        org_id=uuid4(), import_id=uuid4(), code="x" * 200
-    )
+    catalog_service.mark_catalog_import_failed(org_id=uuid4(), import_id=uuid4(), code="x" * 200)
     sql, params = statements[0]
     assert "UPLOADED" in sql and "EXTRACTING" in sql
     assert len(params[0]) == 80
@@ -378,9 +373,7 @@ def test_confirm_retry_rejects_other_system(monkeypatch):
         system_id=system_a,
         result=[{"key": "c0", "article_id": str(uuid4())}],
     )
-    monkeypatch.setattr(
-        catalog_service, "rows", lambda sql, params=None: [row]
-    )
+    monkeypatch.setattr(catalog_service, "rows", lambda sql, params=None: [row])
     monkeypatch.setattr(catalog_service, "documentary_backend", _backend)
     with pytest.raises(APIException) as failure:
         catalog_service.confirm_catalog_import(

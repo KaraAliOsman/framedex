@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from uuid import uuid4
 from decimal import Decimal
 
 import pytest
@@ -117,6 +118,9 @@ def test_invalid_engine_geometry_returns_domain_error_without_raw_tree_details(m
         ("TILT_TURN_LEFT", "TILT_TURN"),
         ("TILT_TURN_RIGHT", "TILT_TURN"),
         ("SLIDING_2L", "SLIDING_2L"),
+        ("SLIDING_3L", "SLIDING_3L"),
+        ("SLIDING_4L", "SLIDING_4L"),
+        ("SLIDING", "SLIDING"),
         ("AWNING", "AWNING"),
         ("DOOR_ENTRY", "DOOR_ENTRY"),
     ],
@@ -146,7 +150,10 @@ def test_revision_sequence_is_excel_style_without_skips():
     assert next_revision_code("REV-AA") == "REV-AB"
 
 
-def test_assembly_save_requires_manufacturing_complete(monkeypatch):
+def test_unassigned_couplers_save_as_manufacturing_incomplete(monkeypatch):
+    """Declared-but-unassigned couplers are warnings: the BOM is complete
+    structurally, so the position persists as a draft. Sealing/production
+    stay gated downstream."""
     from backend.tests.factories import SYSTEM_ID
     from backend.tests.test_engine_assembly import bow_product
 
@@ -163,10 +170,8 @@ def test_assembly_save_requires_manufacturing_complete(monkeypatch):
         "color": "WHITE",
         "parametric_tree": bow_product(),
     }
-    with pytest.raises(APIException) as caught:
-        calculate_design(ORG_A_ID, design)
-    assert caught.value.status_code == 400
-    assert "acopladores" in str(caught.value)
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
 
 
 def test_valid_assembly_saves_with_prefixed_bom(monkeypatch):
@@ -219,3 +224,298 @@ def test_assembly_save_rejects_conflicting_nominal_dimensions(monkeypatch):
         calculate_design(ORG_A_ID, design)
     assert caught.value.status_code == 400
     assert caught.value.get_codes() == "validation_error"
+
+
+def test_position_public_preserves_pre_upgrade_glass_metadata_hash():
+    """BOMs sealed before GlassPiece carried spec/sku must still validate:
+    absent keys stay absent (canonical identity unchanged)."""
+    import json as _json
+    from dekopen_engine.snapshot import calculation_hash
+
+    stored_glasses = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": None,
+            "width_mm": "680.00",
+            "height_mm": "1310.00",
+            "area_m2": "0.8908",
+            "weight_kg": "17.82",
+            "thickness_net_mm": "8.00",
+        }
+    ]
+    stored_bom = {
+        "profile_cuts": [],
+        "reinforcements": [],
+        "glasses": stored_glasses,
+        "panels": [],
+        "hardware_items": [],
+        "leaf_weights": [],
+    }
+    design = {
+        "system_id": str(uuid4()),
+        "nominal_width_mm": "1400.00",
+        "nominal_height_mm": "1200.00",
+        "color": "WHITE",
+        "parametric_tree": {"kind": "window", "width_mm": "1400", "height_mm": "1200"},
+    }
+    expected = calculation_hash(design, stored_bom)
+    row = {
+        "id": uuid4(),
+        "project_id": uuid4(),
+        "position_index": 0,
+        "location_tag": "",
+        "quantity": 1,
+        "typology": "FIXED",
+        "system_id": design["system_id"],
+        "width_mm": Decimal("1400.00"),
+        "height_mm": Decimal("1200.00"),
+        "color_interior": "WHITE",
+        "color_exterior": "WHITE",
+        "parametric_tree": _json.dumps(design["parametric_tree"]),
+        "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "updated_at": "2026-09-23T00:00:00Z",
+    }
+    public = service.position_public(row)
+    assert public["bom"]["calculation_hash"] == expected
+    assert public["bom"]["glasses"] == stored_glasses  # no injected null keys
+
+
+def test_position_public_reads_new_glass_metadata_fields():
+    """Post-upgrade BOMs hash with their explicit spec/sku keys present."""
+    import json as _json
+    from dekopen_engine.snapshot import calculation_hash
+
+    stored_glasses = [
+        {
+            "bay_id": "bay_1",
+            "leaf_id": "leaf_1",
+            "width_mm": "680.00",
+            "height_mm": "1310.00",
+            "area_m2": "0.8908",
+            "weight_kg": "17.82",
+            "thickness_net_mm": "8.00",
+            "glass_spec": "4-16-4 Float Incoloro",
+            "article_sku": "GLS-441",
+        }
+    ]
+    stored_bom = {
+        "profile_cuts": [],
+        "reinforcements": [],
+        "glasses": stored_glasses,
+        "panels": [],
+        "hardware_items": [],
+        "leaf_weights": [],
+    }
+    design = {
+        "system_id": str(uuid4()),
+        "nominal_width_mm": "1400.00",
+        "nominal_height_mm": "1200.00",
+        "color": "WHITE",
+        "parametric_tree": {"kind": "window", "width_mm": "1400", "height_mm": "1200"},
+    }
+    expected = calculation_hash(design, stored_bom)
+    row = {
+        "id": uuid4(),
+        "project_id": uuid4(),
+        "position_index": 0,
+        "location_tag": "",
+        "quantity": 1,
+        "typology": "FIXED",
+        "system_id": design["system_id"],
+        "width_mm": Decimal("1400.00"),
+        "height_mm": Decimal("1200.00"),
+        "color_interior": "WHITE",
+        "color_exterior": "WHITE",
+        "parametric_tree": _json.dumps(design["parametric_tree"]),
+        "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "updated_at": "2026-09-23T00:00:00Z",
+    }
+    public = service.position_public(row)
+    assert public["bom"]["calculation_hash"] == expected
+    assert public["bom"]["glasses"] == stored_glasses
+
+
+def test_manufacturing_incomplete_assembly_saves_as_draft(monkeypatch):
+    """An arch (member_bending_required warnings) carries a complete BOM —
+    it persists as a draft position while INVALID evaluations still refuse.
+    Sealing/production stay gated downstream."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import contour_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2400.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": contour_product(
+            [("0", "0"), ("2400", "0"), ("2400", "1400"), ("0", "1400")],
+            [None, None, "300.00", None],
+        ),
+    }
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
+    assert any(cut.get("sagitta_mm") for cut in result["profile_cuts"])
+
+
+def test_operable_contour_intent_refuses_to_save(monkeypatch):
+    """A contour module whose bay declares an operable opening still
+    evaluates: the engine emits the frame + infill it can build and warns
+    contour_opening_unsupported. Persisting that would seal a fixed-pane
+    BOM under a tilt-turn intent — the saved product would misdescribe
+    itself, so persistence refuses until the leaf is honestly fixed."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import contour_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = contour_product(
+        [("0", "0"), ("2400", "0"), ("2200", "1400"), ("200", "1400")],
+        [None, None, None, None],
+    )
+    product["assembly"]["modules"][0]["tree"]["opening_type"] = (
+        "TILT_TURN_LEFT"
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2400.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
+def test_invalid_assembly_still_refuses_to_save(monkeypatch):
+    """A disconnected assembly (a module no coupling reaches) is INVALID —
+    persistence must refuse it even though a partial BOM exists."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = bow_product()
+    product["assembly"]["modules"].append(
+        {
+            "id": "m4",
+            "width_mm": "700.00",
+            "height_mm": "1400.00",
+            "tree": {
+                "id": "m4",
+                "type": "BAY",
+                "opening_type": "FIXED",
+                "glass_thickness_mm": "4.00",
+                "glass_spec": "4",
+            },
+        }
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2800.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
+def test_module_geometry_failure_refuses_to_save(monkeypatch):
+    """A module whose evaluation produced no result is absent from the
+    aggregated BOM — saving it would persist a partial BOM as complete.
+    MANUFACTURING_INCOMPLETE only tolerates warnings that leave every
+    module's output whole (couplers, bending, unsupported contour leaves)."""
+    from backend.tests.factories import SYSTEM_ID
+    from backend.tests.test_engine_assembly import bow_product
+
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    product = bow_product()
+    product["assembly"]["modules"].append(
+        {
+            "id": "m4",
+            "width_mm": "700.00",
+            "height_mm": "1400.00",
+            "tree": {
+                "id": "m4",
+                "type": "BAY",
+                "opening_type": "FIXED",
+                "glass_thickness_mm": "4.00",
+                # no glass_spec — the leaf cannot resolve a recipe
+            },
+        }
+    )
+    # A module added but never coupled stays disconnected → INVALID covers
+    # it; couple it so only the geometry failure remains.
+    product["assembly"]["couplings"].append(
+        {"id": "c4", "kind": "INLINE", "modules": ["m3", "m4"], "angle_deg": "0"}
+    )
+    design = {
+        "system_id": SYSTEM_ID,
+        "nominal_width_mm": Decimal("2800.00"),
+        "nominal_height_mm": Decimal("1400.00"),
+        "color": "WHITE",
+        "parametric_tree": product,
+    }
+    with pytest.raises(APIException) as caught:
+        calculate_design(ORG_A_ID, design)
+    assert caught.value.status_code == 400
+    assert caught.value.get_codes() == "manufacturing_incomplete"
+
+
+@pytest.mark.parametrize(
+    "opening,expected",
+    [
+        ("SLIDING_3L", "SLIDING_3L"),
+        ("SLIDING_4L", "SLIDING_4L"),
+        ("SLIDING", "SLIDING"),
+    ],
+)
+def test_sliding_openings_survive_save_typology(opening, expected, monkeypatch):
+    """New sliding openings must reach persistence: a successful calculation
+    whose typology previously fell to 422 now derives a real label."""
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_visible", lambda *_: demo_60_params()
+    )
+    monkeypatch.setattr(
+        SystemParamsRepository, "load_coupler_articles", lambda *_: {}
+    )
+    design = g1_request()
+    # Wide enough that every preset's leaf lands inside the sliding kit's
+    # 400–1500 mm range (KIT-SLIDING on DEMO_60).
+    design["nominal_width_mm"] = Decimal("2400.00")
+    design["nominal_height_mm"] = Decimal("1400.00")
+    design["parametric_tree"]["opening_type"] = opening
+    if opening == "SLIDING":
+        design["parametric_tree"]["sliding_layout"] = {
+            "tracks": 2,
+            "panels": [
+                {"slot": "izq", "kind": "MOVING", "track": 0},
+                {"slot": "der", "kind": "MOVING", "track": 1},
+            ],
+        }
+    result = calculate_design(ORG_A_ID, design)
+    assert result["calculation_hash"].startswith("sha256:")
+    assert service._typology(design["parametric_tree"]) == expected

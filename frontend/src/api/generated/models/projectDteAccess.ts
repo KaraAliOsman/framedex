@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ProjectDteEnvio } from "./projectDteEnvio";
 
 export interface ProjectDteAccess {
   id: string;
@@ -12,6 +13,7 @@ export interface ProjectDteAccess {
   dte_type: number;
   folio: number;
   issued_at: string;
+  envio?: ProjectDteEnvio | null;
   signed_url: string;
   expires_in: number;
 }

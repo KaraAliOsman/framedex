@@ -206,12 +206,20 @@ class ProjectPaymentSerializer(serializers.Serializer):
     created_at = serializers.CharField()
 
 
+class ProjectDteEnvioSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    status = serializers.CharField()
+    track_id = serializers.CharField(allow_null=True)
+    attempted = serializers.BooleanField()
+
+
 class ProjectDteSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     invoice_id = serializers.UUIDField()
     dte_type = serializers.IntegerField()
     folio = serializers.IntegerField()
     issued_at = serializers.CharField()
+    envio = ProjectDteEnvioSerializer(allow_null=True, required=False)
 
 
 class ProjectDteAccessSerializer(ProjectDteSerializer):
@@ -276,6 +284,51 @@ class SiiCafUploadSerializer(serializers.Serializer):
     dir_origen = serializers.CharField(max_length=70, required=False, allow_blank=True)
     cmna_origen = serializers.CharField(max_length=20, required=False, allow_blank=True)
     acteco = serializers.IntegerField(required=False, allow_null=True)
+
+
+class SiiCertificateSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    subject = serializers.CharField()
+    rut_firma = serializers.CharField()
+    serial_number = serializers.CharField(allow_null=True)
+    valid_from = serializers.CharField()
+    valid_to = serializers.CharField()
+    nro_resol = serializers.IntegerField()
+    fch_resol = serializers.CharField()
+    active = serializers.BooleanField()
+    created_at = serializers.CharField()
+
+
+class SiiCertificateStatusSerializer(serializers.Serializer):
+    certificate = SiiCertificateSerializer(allow_null=True)
+
+
+class SiiCertificateUploadSerializer(serializers.Serializer):
+    pfx_b64 = serializers.CharField(max_length=90000)
+    password = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    nro_resol = serializers.IntegerField(min_value=0)
+    fch_resol = serializers.CharField(max_length=10)
+
+
+class SiiEnvioSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    dte_id = serializers.UUIDField()
+    status = serializers.ChoiceField(choices=("PENDING", "ACCEPTED", "REJECTED"))
+    track_id = serializers.CharField(allow_null=True)
+    glosa = serializers.CharField(allow_null=True)
+    sent_at = serializers.CharField()
+    attempted = serializers.BooleanField()
+
+
+class SiiEnvioSendSerializer(StrictSerializer):
+    # Explicit human recovery: a prior submit attempt may have reached the SII
+    # without its response reaching us — resending identical bytes is only
+    # allowed as a deliberate decision, never an automatic retry.
+    resubmit = serializers.BooleanField(required=False, default=False)
+
+
+class SiiEnvioAccessSerializer(SiiEnvioSerializer):
+    signed_url = serializers.CharField()
 
 
 class PaymentsSummarySerializer(serializers.Serializer):

@@ -8,6 +8,7 @@ never silently dropped: low-confidence intent must not mutate a position."""
 from __future__ import annotations
 
 import json
+import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
@@ -32,6 +33,42 @@ OPENINGS = {
 
 MAX_MODULE_COUNT = 12
 MAX_OPS = 50
+
+# The ops contract the provider must emit — sent as the system prompt so any
+# OpenAI-compatible model produces exactly this document shape. Every op the
+# model returns is validated server-side against the live product before it
+# reaches the client, so the prompt constrains intent, never trust.
+DESIGN_ASSIST_SYSTEM = """Eres el asistente de diseño de DEKOPEN, un editor profesional de ventanas y puertas de aluminio/PVC.
+
+Recibes un JSON con:
+- "prompt": la intención del usuario en lenguaje natural (español chileno).
+- "product": el conjunto actual — "modules" (unidades) y "couplings" (uniones entre unidades), índices 0-based.
+- "ops_contract": la lista de operaciones permitidas.
+- "catalog": los SKU y espesores que existen en el catálogo del cliente.
+
+Respondes SOLO un JSON: {"ops": [...], "notes": "resumen breve en español"}.
+
+Operaciones:
+- set_module_count {count}: redefine la cantidad de unidades (reparte el ancho).
+- add_unit {side}: agrega una unidad, side "left"|"right".
+- remove_unit {module}: elimina la unidad en ese índice.
+- set_module_width {module, width_mm}: ancho de una unidad en mm.
+- set_total_width {width_mm}: ancho total, reparte proporcional.
+- set_height {height_mm}: alto de todas las unidades.
+- equalize_widths: anchos iguales.
+- equalize_angles: ángulos iguales entre uniones.
+- set_coupling_angle {coupling, angle_deg}: ángulo de una unión (0 = recto).
+- set_opening {module, opening}: apertura — FIXED, TURN_LEFT, TURN_RIGHT, TILT_TURN_LEFT, TILT_TURN_RIGHT, SLIDING_2L, AWNING, DOOR_ENTRY.
+- set_glass {module, sku}: vidrio del catálogo.
+- set_glass_thickness {module, mm}: espesor del catálogo.
+- set_panel {module, sku|null}: panel del catálogo, null lo quita.
+
+Reglas:
+- Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
+- Índices válidos: 0..len(modules)-1 y 0..len(couplings)-1.
+- Las medidas numéricas (count, width_mm, height_mm, angle_deg, mm) solo pueden citar números que el usuario escribió en "prompt"; si el usuario no declaró una medida, no la inventes — explícalo en "notes".
+- Si la intención es ambigua, propón menos ops y explícalo en "notes"; nunca adivines medidas que el usuario no pidió.
+- Sin texto fuera del JSON."""
 
 
 def _number(value: Any) -> Decimal | None:
@@ -102,7 +139,133 @@ def _catalog(system_id: UUID, org_id: UUID) -> dict:
     }
 
 
-def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], list[dict]]:
+_NUMBER_WORDS = {
+    "un": 1,
+    "uno": 1,
+    "una": 1,
+    "dos": 2,
+    "tres": 3,
+    "cuatro": 4,
+    "cinco": 5,
+    "seis": 6,
+    "siete": 7,
+    "ocho": 8,
+    "nueve": 9,
+    "diez": 10,
+    "once": 11,
+    "doce": 12,
+}
+# '-' signs a number only when its left context is not a number or a unit:
+# 'ángulo -30' declares -30 while '30-20', '30 -20', '30 mm - 20 mm' and
+# '30° - 20°' all keep both endpoints positive.
+_UNITS = {
+    "mm",
+    "milimetro",
+    "milimetros",
+    "milímetro",
+    "milímetros",
+    "cm",
+    "m",
+    "mt",
+    "mts",
+    "metro",
+    "metros",
+    "grado",
+    "grados",
+}
+_LEFT_TOKEN_RE = re.compile(r"°|\d[\d.,]*|[\wáéíóúñü]+", re.IGNORECASE)
+_MEASURE_RE = re.compile(
+    r"(?<![\d.,])(-?\d+(?:[.,]\d+)*)\s*(mm|mil[ií]metros?|cm|metros?|mts?|m)\b",
+    re.IGNORECASE,
+)
+_BARE_NUMBER_RE = re.compile(r"(?<![\d.,])-?\d+(?:[.,]\d+)*")
+_WORD_NUMBER_RE = re.compile(
+    r"\b(uno?|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b",
+    re.IGNORECASE,
+)
+
+
+def _parse_number(token: str) -> Decimal | None:
+    """Chilean-locale number: '.' groups thousands (2.400 → 2400), ',' is the
+    decimal mark (2,4 → 2.4). A lone '.' with three trailing digits reads as
+    thousands so '2.400' means 2400, matching how users write medidas."""
+    try:
+        if "." in token and "," in token:
+            normalized = token.replace(".", "").replace(",", ".")
+        elif token.count(".") == 1 and len(token.rsplit(".", 1)[1]) == 3:
+            normalized = token.replace(".", "")
+        else:
+            normalized = token.replace(",", ".")
+        value = Decimal(normalized)
+    except ArithmeticError:
+        return None
+    return value if value.is_finite() else None
+
+
+def _unary_minus(text: str, start: int) -> bool:
+    """Whether the '-' before `start` signs the number rather than separating
+    a range or subtraction. The dash is binary only when it directly follows
+    a number, degree mark or unit (whitespace aside): '30 -20', '30mm-20mm',
+    '30° - 20°' stay positive, while 'ángulo -30' and '30°; -20°' — where a
+    clause delimiter sits between — keep the sign."""
+    left = None
+    left_end = None
+    for token in _LEFT_TOKEN_RE.finditer(text[:start]):
+        # Chilean numbers can carry a trailing '.' or ',' (2.400, 2,4) — but a
+        # token ending in punctuation is the number plus a delimiter: trim it
+        # so '30, -20' sees the comma as the clause break it is.
+        left = token.group(0).rstrip(".,;:")
+        left_end = token.start() + len(left)
+    if left is None or not left:
+        return True
+    if text[left_end:start].strip():
+        # A delimiter (semicolon, slash, comma, conjunction) starts a new
+        # clause — the minus signs what follows it.
+        return True
+    if left == "°" or left.lower() in _UNITS:
+        return False
+    return not left[0].isdigit()
+
+
+def _declared_values(prompt: str) -> set[Decimal]:
+    """Every number the user actually wrote — the grounding set numeric ops
+    must cite. The model proposes structure; it may never introduce a
+    measurement the request did not contain. Unit-suffixed measures normalize
+    to mm, bare numbers count literally, number words cover counts."""
+    values: set[Decimal] = set()
+    for match in _MEASURE_RE.finditer(prompt):
+        token = match.group(1)
+        if token.startswith("-") and not _unary_minus(prompt, match.start(1)):
+            token = token[1:]
+        number = _parse_number(token)
+        if number is None:
+            continue
+        unit = match.group(2).lower()
+        if unit == "cm":
+            factor = Decimal(10)
+        elif unit.startswith("mm") or unit.startswith("mil"):
+            factor = Decimal(1)
+        else:  # m, mt, mts, metro, metros
+            factor = Decimal(1000)
+        values.add(number * factor)
+    # Unit-suffixed spans are consumed by the first pass — their raw tokens
+    # must not re-enter the set unconverted ('240 cm' declares 2400mm, not 240).
+    scan = _MEASURE_RE.sub("", prompt)
+    for match in _BARE_NUMBER_RE.finditer(scan):
+        token = match.group(0)
+        if token.startswith("-") and not _unary_minus(scan, match.start()):
+            token = token[1:]
+        number = _parse_number(token)
+        if number is not None:
+            values.add(number)
+    for word in _WORD_NUMBER_RE.findall(prompt):
+        values.add(Decimal(_NUMBER_WORDS[word.lower()]))
+    return values
+
+
+def _validate_ops(
+    ops: Any, summary: dict, catalog: dict, declared: set[Decimal]
+) -> tuple[list[dict], list[dict]]:
     """Validate each op against a simulated assembly that evolves in op order —
     structural ops mutate the module/coupling counts every later op is checked
     against, so a proposal can never address a module that stopped existing or
@@ -111,9 +274,7 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
 
     def module_index(value: Any) -> bool:
         return (
-            isinstance(value, int)
-            and not isinstance(value, bool)
-            and 0 <= value < state["modules"]
+            isinstance(value, int) and not isinstance(value, bool) and 0 <= value < state["modules"]
         )
 
     def coupling_index(value: Any) -> bool:
@@ -136,9 +297,13 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             continue
         name = item["op"]
         if name == "set_module_count":
-            if isinstance(item.get("count"), int) and not isinstance(
-                item["count"], bool
-            ) and 1 <= item["count"] <= MAX_MODULE_COUNT:
+            if not (
+                isinstance(item.get("count"), int)
+                and not isinstance(item["count"], bool)
+                and Decimal(item["count"]) in declared
+            ):
+                rejected.append(reject(item, "cantidad_no_declarada"))
+            elif 1 <= item["count"] <= MAX_MODULE_COUNT:
                 accepted.append({"op": name, "count": item["count"]})
                 state["modules"] = item["count"]
                 state["couplings"] = max(0, item["count"] - 1)
@@ -159,7 +324,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "modulo_invalido"))
         elif name == "set_module_width":
-            if module_index(item.get("module")) and _in_range(
+            if _number(item.get("width_mm")) not in declared:
+                rejected.append(reject(item, "ancho_no_declarado"))
+            elif module_index(item.get("module")) and _in_range(
                 item.get("width_mm"), Decimal("150"), Decimal("6000")
             ):
                 accepted.append(
@@ -172,21 +339,21 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_total_width":
-            if _in_range(
+            if _number(item.get("width_mm")) not in declared:
+                rejected.append(reject(item, "ancho_no_declarado"))
+            elif _in_range(
                 item.get("width_mm"),
                 Decimal("150") * state["modules"],
                 Decimal("30000"),
             ):
-                accepted.append(
-                    {"op": name, "width_mm": str(_number(item["width_mm"]))}
-                )
+                accepted.append({"op": name, "width_mm": str(_number(item["width_mm"]))})
             else:
                 rejected.append(reject(item, "ancho_invalido"))
         elif name == "set_height":
-            if _in_range(item.get("height_mm"), Decimal("200"), Decimal("4000")):
-                accepted.append(
-                    {"op": name, "height_mm": str(_number(item["height_mm"]))}
-                )
+            if _number(item.get("height_mm")) not in declared:
+                rejected.append(reject(item, "alto_no_declarado"))
+            elif _in_range(item.get("height_mm"), Decimal("200"), Decimal("4000")):
+                accepted.append({"op": name, "height_mm": str(_number(item["height_mm"]))})
             else:
                 rejected.append(reject(item, "alto_invalido"))
         elif name == "equalize_widths":
@@ -194,7 +361,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
         elif name == "equalize_angles":
             accepted.append({"op": name})
         elif name == "set_coupling_angle":
-            if coupling_index(item.get("coupling")) and _in_range(
+            if _number(item.get("angle_deg")) not in declared:
+                rejected.append(reject(item, "angulo_no_declarado"))
+            elif coupling_index(item.get("coupling")) and _in_range(
                 item.get("angle_deg"), Decimal("-90"), Decimal("90")
             ):
                 accepted.append(
@@ -218,7 +387,9 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "apertura_invalida"))
         elif name == "set_glass_thickness":
-            if (
+            if _number(item.get("mm")) not in declared:
+                rejected.append(reject(item, "espesor_no_declarado"))
+            elif (
                 module_index(item.get("module"))
                 and _number(item.get("mm")) in catalog["thicknesses"]
             ):
@@ -232,22 +403,15 @@ def _validate_ops(ops: Any, summary: dict, catalog: dict) -> tuple[list[dict], l
             else:
                 rejected.append(reject(item, "espesor_invalido"))
         elif name == "set_glass":
-            if (
-                module_index(item.get("module"))
-                and item.get("sku") in catalog["glass_skus"]
-            ):
-                accepted.append(
-                    {"op": name, "module": item["module"], "sku": item["sku"]}
-                )
+            if module_index(item.get("module")) and item.get("sku") in catalog["glass_skus"]:
+                accepted.append({"op": name, "module": item["module"], "sku": item["sku"]})
             else:
                 rejected.append(reject(item, "vidrio_invalido"))
         elif name == "set_panel":
             if module_index(item.get("module")) and (
                 item.get("sku") is None or item["sku"] in catalog["panel_skus"]
             ):
-                accepted.append(
-                    {"op": name, "module": item["module"], "sku": item.get("sku")}
-                )
+                accepted.append({"op": name, "module": item["module"], "sku": item.get("sku")})
             else:
                 rejected.append(reject(item, "panel_invalido"))
         else:
@@ -281,6 +445,13 @@ def assist(
         capability=CAPABILITY,
         operation_key=operation_key,
         tool_name="design_assist",
+        # Transport controls ride in provider_options — they are server-side
+        # config, not client input, so they never touch the audited payload or
+        # its replay hash (a prompt edit must not break idempotent retries).
+        provider_options={
+            "system": DESIGN_ASSIST_SYSTEM,
+            "json_output": True,
+        },
         input_payload={
             "prompt": prompt,
             "position_id": str(position["id"]),
@@ -326,7 +497,7 @@ def assist(
             "design_assist_bad_output",
             "El asistente devolvió una respuesta inválida.",
         )
-    ops, rejected = _validate_ops(document.get("ops"), summary, catalog)
+    ops, rejected = _validate_ops(document.get("ops"), summary, catalog, _declared_values(prompt))
     return {
         "audit_id": envelope["audit_id"],
         "model": envelope["model"],

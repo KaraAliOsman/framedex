@@ -51,7 +51,8 @@ def _payment_row(**over):
 
 
 def _runner(captured, existing=None, payments_list=None, sealed_gross=None,
-            sealed_currency="CLP", applied=True):
+            sealed_currency="CLP", applied=True, invoices_list=None,
+            envios_list=None):
     def fake_rows(sql, params=None):
         captured.append((sql, params))
         if "SELECT * FROM public.project_payments WHERE org_id=%s AND operation_key=%s" in sql:
@@ -76,6 +77,10 @@ def _runner(captured, existing=None, payments_list=None, sealed_gross=None,
             return [{"currency": "CLP"}]
         if "FROM public.project_payments" in sql and "ORDER BY recorded_at,id" in sql:
             return list(payments_list or [])
+        if "FROM public.project_invoices" in sql:
+            return list(invoices_list or [])
+        if "FROM public.sii_envios" in sql:
+            return list(envios_list or [])
         if "INSERT INTO public.project_payments" in sql:
             return [] if existing else [_payment_row(project_id=params[1])]
         if "UPDATE public.project_payments" in sql:
@@ -118,6 +123,44 @@ def env(monkeypatch):
 
 def _patch_rows(monkeypatch, captured, **kwargs):
     monkeypatch.setattr(payments, "rows", _runner(captured, **kwargs))
+
+
+def test_summary_invoice_dte_carries_envio_badge(monkeypatch, env):
+    """The cobranza listing is where the envío chip lives — the summary must
+    attach the same envío badge the invoice listing builds."""
+    invoice = {
+        "id": uuid4(),
+        "invoice_code": "FAC-0001",
+        "payload_json": {"revision_code": "REV-A"},
+        "created_at": "2026-09-20T10:00:00+00:00",
+    }
+    dte = {"id": str(uuid4()), "folio": 7}
+    envio_row = {
+        "id": uuid4(),
+        "invoice_id": invoice["id"],
+        "status": "PENDING",
+        "track_id": None,
+        "attempted": True,
+    }
+    _patch_rows(
+        monkeypatch,
+        env,
+        invoices_list=[invoice],
+        envios_list=[envio_row],
+        sealed_gross=Decimal("800000"),
+    )
+    monkeypatch.setattr(
+        payments.sii,
+        "dtes_by_invoice",
+        lambda *, org_id, project_id: {str(invoice["id"]): dte},
+    )
+    out = payments.list_payments(org_id=uuid4(), project_id=uuid4())
+    assert out["invoices"][0]["dte"]["envio"] == {
+        "id": str(envio_row["id"]),
+        "status": "PENDING",
+        "track_id": None,
+        "attempted": True,
+    }
 
 
 def test_record_payment_inserts_and_returns_sealed_balance(monkeypatch, env):

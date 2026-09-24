@@ -9,7 +9,6 @@ organization (articles on a shared/global system would leak to every tenant).
 from __future__ import annotations
 
 import json
-from decimal import Decimal
 from uuid import UUID, uuid4
 
 from django.db import DatabaseError, transaction
@@ -26,12 +25,13 @@ MAX_UPLOAD_BYTES = 15_000_000
 MAX_CANDIDATES = 200
 JOB_TYPE = "ingest.catalog.extract"
 
-# profile_articles column defaults — mirrored so NULL candidate fields become
-# the documented catalog defaults instead of violating NOT NULL.
-DEFAULT_LENGTH_MM = Decimal("6000")
-DEFAULT_WELDING_LOSS_MM = Decimal("6")
-DEFAULT_WEIGHT_KG_M = Decimal("1.2")
-DEFAULT_STEEL_WEIGHT_KG_M = Decimal("1.7")
+# Missing manufacturing data stays UNKNOWN (NULL) — a supplier document that
+# does not state a stock length, welding loss or weight must never gain a
+# fabricated value here; downstream consumers refuse or flag instead.
+
+
+def _numeric_or_none(value: object) -> str | None:
+    return None if value is None else str(value)
 
 
 class CatalogImportError(Exception):
@@ -78,8 +78,12 @@ def _get(org_id: UUID, import_id: UUID) -> dict:
 
 
 def create_catalog_import(
-    *, org_id: UUID, actor_id: UUID, file_name: str,
-    content: bytes, content_type: str,
+    *,
+    org_id: UUID,
+    actor_id: UUID,
+    file_name: str,
+    content: bytes,
+    content_type: str,
 ) -> dict:
     kind = kind_for(file_name)
     if kind is None:
@@ -101,9 +105,7 @@ def create_catalog_import(
     import_id = uuid4()
     storage_path = f"catalog-imports/{org_id}/{import_id}/{file_name}"
     storage = SupabaseDocumentStorage()
-    storage.upload_immutable(
-        storage_path, content, content_type or "application/octet-stream"
-    )
+    storage.upload_immutable(storage_path, content, content_type or "application/octet-stream")
     try:
         with transaction.atomic():
             with documentary_backend():
@@ -111,8 +113,7 @@ def create_catalog_import(
                     "INSERT INTO public.catalog_imports("
                     "id, org_id, file_name, kind, storage_path, created_by)"
                     " VALUES (%s,%s,%s,%s,%s,%s) RETURNING *",
-                    [str(import_id), str(org_id), file_name, kind,
-                     storage_path, str(actor_id)],
+                    [str(import_id), str(org_id), file_name, kind, storage_path, str(actor_id)],
                 )[0]
             # job_runs is a service-owned table — service_role only, inside the
             # atomic so row and job commit together.
@@ -136,8 +137,7 @@ def create_catalog_import(
 
 def list_catalog_imports(*, org_id: UUID) -> dict:
     found = rows(
-        "SELECT * FROM public.catalog_imports "
-        "WHERE org_id=%s ORDER BY created_at DESC, id DESC",
+        "SELECT * FROM public.catalog_imports WHERE org_id=%s ORDER BY created_at DESC, id DESC",
         [str(org_id)],
     )
     return {"imports": [_public(row) for row in found]}
@@ -191,8 +191,7 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
     if sheet_rows is not None:
         for sheet_row in sheet_rows:
             joined = " ".join(
-                str(cell) for cell in sheet_row
-                if cell is not None and str(cell).strip()
+                str(cell) for cell in sheet_row if cell is not None and str(cell).strip()
             )
             if joined:
                 lines.append(joined)
@@ -286,8 +285,7 @@ def confirm_catalog_import(
     with transaction.atomic():
         with documentary_backend():
             found = rows(
-                "SELECT * FROM public.catalog_imports "
-                "WHERE id=%s AND org_id=%s FOR UPDATE",
+                "SELECT * FROM public.catalog_imports WHERE id=%s AND org_id=%s FOR UPDATE",
                 [str(import_id), str(org_id)],
             )
         if not found:
@@ -319,8 +317,7 @@ def confirm_catalog_import(
         # (the select policy opens global systems to all members) — the target
         # must be a system the organization owns.
         system = rows(
-            "SELECT id, material FROM public.profile_systems "
-            "WHERE id=%s AND org_id=%s",
+            "SELECT id, material FROM public.profile_systems WHERE id=%s AND org_id=%s",
             [str(system_id), str(org_id)],
         )
         if not system:
@@ -330,9 +327,7 @@ def confirm_catalog_import(
                 "El sistema destino debe pertenecer a tu organización.",
             )
         material = system[0]["material"]
-        candidate_keys = {
-            candidate.get("key") for candidate in _as_list(row["candidates"])
-        }
+        candidate_keys = {candidate.get("key") for candidate in _as_list(row["candidates"])}
         created = _as_list(row["result"])
         done = {str(entry.get("key")) for entry in created}
         errors: list[dict] = []
@@ -370,16 +365,13 @@ def confirm_catalog_import(
                             role,
                             material,
                             str(item["face_width_mm"]),
-                            str(item.get("commercial_length_mm")
-                                or DEFAULT_LENGTH_MM),
-                            str(item.get("welding_loss_mm")
-                                or DEFAULT_WELDING_LOSS_MM),
+                            _numeric_or_none(item.get("commercial_length_mm")),
+                            _numeric_or_none(item.get("welding_loss_mm")),
                             (str(item["reinforcement_sku"]).strip() or None)
                             if item.get("reinforcement_sku")
                             else None,
-                            str(item.get("weight_kg_m") or DEFAULT_WEIGHT_KG_M),
-                            str(item.get("steel_weight_kg_m")
-                                or DEFAULT_STEEL_WEIGHT_KG_M),
+                            _numeric_or_none(item.get("weight_kg_m")),
+                            _numeric_or_none(item.get("steel_weight_kg_m")),
                         ],
                     )
             except DatabaseError as error:
