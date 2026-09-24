@@ -1025,6 +1025,16 @@ UPDATE public.hardware_kits k SET data_provenance = 'SEED_SYNTHETIC'
 FROM public.profile_systems s
 WHERE k.system_id = s.id AND s.code IN ('DEMO_60', 'ALU_65', 'GLASS_45')
   AND k.org_id IS NULL;
+-- Per-article masses used to arrive through engine fallbacks (1.20 / 1.70
+-- kg·m⁻¹); since §2 they are catalog authority. The synthetic reference
+-- family declares the same values the canonical engine fixture carries so
+-- leaf weight — and therefore hardware certification — is decidable.
+UPDATE public.profile_articles a SET
+    weight_kg_m = 1.2000,
+    steel_weight_kg_m = 1.7000
+FROM public.profile_systems s
+WHERE a.system_id = s.id AND s.code = 'DEMO_60'
+  AND a.org_id IS NULL AND a.weight_kg_m IS NULL;
 END IF;
 
 END IF;

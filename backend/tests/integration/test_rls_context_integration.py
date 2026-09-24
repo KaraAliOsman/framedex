@@ -394,15 +394,10 @@ def test_shot06_all_28_catalog_fields_reach_typed_engine(real_rows: RLSFixtures)
     expected_fields = expected.model_dump()
     actual_fields["available_hardware_kits"] = sorted(actual_fields["available_hardware_kits"], key=lambda k: k["sku"])
     expected_fields["available_hardware_kits"] = sorted(expected_fields["available_hardware_kits"], key=lambda k: k["sku"])
-    assert len(SystemParams.model_fields) == len(actual_fields) == 28
-    # Demo seed leaves article mass authority unknown; the engine fixture has
-    # explicit synthetic weights for golden cases.
-    for article in expected_fields["effective_profile_articles"].values():
-        article["weight_kg_m"] = None
-        article["steel_weight_kg_m"] = None
-    for rule in expected_fields["glazing_bead_rules"].values():
-        rule["bead_article"]["weight_kg_m"] = None
-        rule["bead_article"]["steel_weight_kg_m"] = None
+    assert len(SystemParams.model_fields) == len(actual_fields) == 25
+    # The demo seed declares the same synthetic per-article masses the engine
+    # fixture carries — mass authority must reach the typed model
+    # field-for-field rather than arriving through a fallback.
     # The live seed declares simplified sections on MARCO/HOJA; the engine
     # fixture leaves them undeclared. Assert the typed field deserializes,
     # then normalize like the synthetic weights above.
@@ -446,14 +441,14 @@ def test_shot06_live_composite_response_matches_canonical_generator(real_rows: R
         params=params,
     )
     assert response.json() == calculation_response(request, expected)
-    assert response.json()["leaf_weights"][0]["used_fallback"] is True
+    assert response.json()["leaf_weights"][0]["weight_unknown_reasons"] == []
     assert_no_context()
 
 
 def test_inactive_panel_is_not_loaded_and_missing_weight_cannot_fallback(real_rows: RLSFixtures) -> None:
     from django.db import transaction
     from dekopen_engine import calculate_geometry
-    from dekopen_engine.weight import MissingWeightAuthority
+    from dekopen_engine.hardware import NoCompatibleHardwareKit
     from engine.tests.test_shot06_core import core_node
 
     # The global demo system can be technical_locked once positions reference
@@ -469,7 +464,7 @@ def test_inactive_panel_is_not_loaded_and_missing_weight_cannot_fallback(real_ro
             with authenticated_rls_context(real_rows.tokens["A"].claims):
                 params = SystemParamsRepository().load_visible(clone, real_rows.organizations["A"])
                 if assignment == "weight_kg_m2 = NULL":
-                    with pytest.raises(MissingWeightAuthority):
+                    with pytest.raises(NoCompatibleHardwareKit, match="missing_panel_mass"):
                         calculate_geometry(core_node("G7"), params)
                 else:
                     assert params.available_panel_rules == {}

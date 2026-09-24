@@ -570,8 +570,9 @@ def test_readiness_flags_missing_fabrication_authority(documentary_tenant, colum
 
 def test_readiness_skips_unwelded_and_fabrication_free_articles(documentary_tenant):
     """Readiness mirrors the engine's consumption rules: a THRESHOLD is appended
-    unwelded, and leaf weight never reads profile mass on a welded system — so
-    UNKNOWN there must not block an otherwise complete PVC catalog."""
+    unwelded, and only the effective SASH mass feeds leaf weight — so UNKNOWN
+    weld/gap there and UNKNOWN mass on members the engine never weighs must
+    not block an otherwise complete PVC catalog."""
     from backend.tests.integration.catalog_fixture import copy_fixed_catalog
     from catalogs.readiness import catalog_readiness
     org, _, users, _ = documentary_tenant
@@ -581,7 +582,7 @@ def test_readiness_skips_unwelded_and_fabrication_free_articles(documentary_tena
          "reinforcement_gap_mm=NULL WHERE system_id=%s AND role='THRESHOLD'"
          " RETURNING id", [system])
     rows("UPDATE public.profile_articles SET weight_kg_m=NULL"
-         " WHERE system_id=%s RETURNING id", [system])
+         " WHERE system_id=%s AND role <> 'SASH' RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "fabrication" not in catalog_readiness(system, org)["reasons"]
 
