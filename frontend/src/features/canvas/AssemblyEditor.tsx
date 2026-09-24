@@ -1576,6 +1576,7 @@ export function AssemblyEditor({
               organizationId={organizationId}
               positionId={positionId}
               systemId={inputs.systemId}
+              product={product}
               members={members}
               disabled={disabled}
               onUse={(next) => commit(next)}

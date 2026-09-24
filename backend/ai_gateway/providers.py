@@ -499,13 +499,17 @@ def _design_alternatives_output(input_payload: dict) -> dict:
             }
         )
     if re.search(r"puerta|door|porte", brief):
-        candidates.append(
-            {
-                "label": "Puerta de acceso",
-                "rationale": "Hoja de paso con apertura abatible.",
-                "openings": ["DOOR_ENTRY"],
-            }
-        )
+        # A door candidate is only buildable with a panel — pick from the
+        # catalog the request supplied, so the engine refusal isn't fake.
+        door: dict = {
+            "label": "Puerta de acceso",
+            "rationale": "Hoja de paso con apertura abatible.",
+            "openings": ["DOOR_ENTRY"],
+        }
+        panel_skus = (input_payload.get("catalog") or {}).get("panel_skus") or []
+        if panel_skus:
+            door["panel_sku"] = sorted(panel_skus)[0]
+        candidates.append(door)
     if re.search(r"arco|bow|proa", brief):
         candidates.append(
             {

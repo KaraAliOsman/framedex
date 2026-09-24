@@ -5,7 +5,7 @@ import { positionsDesignAlternatives } from "../../api/generated/dekopen";
 import type { DesignAlternativesResponse } from "../../api/generated/models/designAlternativesResponse";
 import { t } from "../../i18n/es-CL";
 import type { MemberGeometry } from "./members";
-import { isProductModel, type ProductJson } from "./productEditing";
+import { elevationEnvelopeMm, isProductModel, type ProductJson } from "./productEditing";
 import { ProductFrontSvg } from "./ProductFrontSvg";
 
 type Alternative = {
@@ -41,6 +41,7 @@ export function AlternativesPanel({
   organizationId,
   positionId,
   systemId,
+  product,
   members,
   disabled,
   onUse,
@@ -48,6 +49,7 @@ export function AlternativesPanel({
   organizationId: string;
   positionId: string | null;
   systemId: string | null;
+  product: ProductJson | null;
   members: MemberGeometry;
   disabled: boolean;
   onUse(next: ProductJson): void;
@@ -60,27 +62,40 @@ export function AlternativesPanel({
   const requestSeq = useRef(0);
   /** One operation key per (brief, system): a retry after a lost response
    * replays the committed call instead of debiting twice. */
-  const operationKey = useRef<{ key: string; brief: string; systemId: string | null } | null>(null);
+  const operationKey = useRef<{
+    key: string;
+    brief: string;
+    systemId: string | null;
+    dims: string;
+  } | null>(null);
 
   /** A system switch invalidates anything in flight — candidates were
    * built and validated against the request's catalog. */
   useEffect(() => {
     requestSeq.current += 1;
     setResult(null);
+    setBusy(false);
   }, [systemId]);
 
   async function generate(): Promise<void> {
-    if (!positionId || !systemId || !brief.trim()) return;
+    if (!positionId || !systemId || !brief.trim() || product === null) return;
     setBusy(true);
     setMessage("");
     setResult(null);
     const trimmed = brief.trim();
+    // Candidates are built at the dimensions the estimator currently sees —
+    // the live product, not the persisted row — so adopting one can't
+    // silently discard unsaved resize edits. Dimensions also key the
+    // operation: identical requests replay, changed ones are new audits.
+    const envelope = elevationEnvelopeMm(product);
+    const dims = `${envelope.width.toFixed(2)}x${envelope.height.toFixed(2)}`;
     if (
       !operationKey.current ||
       operationKey.current.brief !== trimmed ||
-      operationKey.current.systemId !== systemId
+      operationKey.current.systemId !== systemId ||
+      operationKey.current.dims !== dims
     ) {
-      operationKey.current = { key: crypto.randomUUID(), brief: trimmed, systemId };
+      operationKey.current = { key: crypto.randomUUID(), brief: trimmed, systemId, dims };
     }
     const seq = ++requestSeq.current;
     try {
@@ -91,6 +106,8 @@ export function AlternativesPanel({
           count: 3,
           system_id: systemId,
           operation_key: operationKey.current.key,
+          width_mm: envelope.width.toFixed(2),
+          height_mm: envelope.height.toFixed(2),
         },
         { headers: { "X-Organization-ID": organizationId } },
       );

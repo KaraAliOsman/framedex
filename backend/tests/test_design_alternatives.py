@@ -29,7 +29,7 @@ def _position():
 def _catalog(**overrides):
     catalog = {
         "glass_skus": {"GLASS-4MM", "DVH-4-12-4"},
-        "panel_skus": {"PANEL-SANDWICH-24"},
+        "panel_skus": {"PANEL-SANDWICH-DEMO-24"},
         "thicknesses": {Decimal("4"), Decimal("24")},
     }
     catalog.update(overrides)
@@ -253,3 +253,83 @@ def test_mock_provider_honors_count():
     )
     document = json.loads(out["output"])
     assert len(document["alternatives"]) == 1
+
+
+def test_count_caps_evaluated_specs(monkeypatch):
+    _patch(
+        monkeypatch,
+        {
+            "alternatives": [
+                {"label": "Una", "openings": ["FIXED"]},
+                {"label": "Dos", "openings": ["FIXED", "FIXED"]},
+                {"label": "Tres", "openings": ["FIXED"] * 3},
+            ]
+        },
+    )
+    out = design_alternatives.alternatives(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        brief="una",
+        count=1,
+        system_id=uuid4(),
+        operation_key="alt-count",
+    )
+    assert [item["label"] for item in out["alternatives"]] == ["Una"]
+    assert out["rejected"] == []
+
+
+def test_candidate_glass_spec_matches_catalog_thickness(monkeypatch):
+    _patch(
+        monkeypatch,
+        {"alternatives": [{"openings": ["FIXED"]}]},
+        catalog=_catalog(thicknesses={Decimal("6")}),
+    )
+    out = _call()
+    tree = out["alternatives"][0]["product"]["assembly"]["modules"][0]["tree"]
+    assert tree["glass_thickness_mm"] == "6"
+    assert tree["glass_spec"] == "6"
+
+
+def test_door_spec_fills_the_single_catalog_panel(monkeypatch):
+    _patch(
+        monkeypatch,
+        {"alternatives": [{"label": "Puerta", "openings": ["DOOR_ENTRY"]}]},
+    )
+    out = design_alternatives.alternatives(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        brief="puerta",
+        count=1,
+        system_id=uuid4(),
+        operation_key="alt-door",
+        # Door-sized live dimensions — a 2400 mm door is honestly refused.
+        width_mm="900.00",
+        height_mm="2100.00",
+    )
+    tree = out["alternatives"][0]["product"]["assembly"]["modules"][0]["tree"]
+    assert tree["panel_article_sku"] == "PANEL-SANDWICH-DEMO-24"
+
+
+def test_live_dimensions_win_over_the_persisted_row(monkeypatch):
+    captured = _patch(
+        monkeypatch,
+        {"alternatives": [{"openings": ["FIXED"]}]},
+    )
+    out = design_alternatives.alternatives(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        brief="una",
+        count=1,
+        system_id=uuid4(),
+        operation_key="alt-dims",
+        width_mm="3000.00",
+        height_mm="2100.00",
+    )
+    assert captured["input"]["width_mm"] == "3000.00"
+    assert captured["input"]["height_mm"] == "2100.00"
+    module = out["alternatives"][0]["product"]["assembly"]["modules"][0]
+    assert module["width_mm"] == "3000.00"
+    assert module["height_mm"] == "2100.00"

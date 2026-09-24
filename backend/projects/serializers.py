@@ -408,6 +408,12 @@ class DesignAlternativesRequestSerializer(serializers.Serializer):
     count = serializers.IntegerField(min_value=1, max_value=3, required=False, default=2)
     system_id = serializers.UUIDField()
     operation_key = serializers.CharField(max_length=120)
+    width_mm = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
+    height_mm = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
 
     def validate_brief(self, value):
         if not value.strip():

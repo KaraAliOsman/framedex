@@ -33,6 +33,7 @@ function renderPanel(overrides: Partial<Parameters<typeof AlternativesPanel>[0]>
     organizationId: "org-1",
     positionId: "pos-1",
     systemId: "system-a",
+    product: candidateProduct("FIXED"),
     members: MEMBERS,
     disabled: false,
     onUse,

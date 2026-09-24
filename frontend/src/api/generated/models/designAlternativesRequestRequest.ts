@@ -23,4 +23,14 @@ export interface DesignAlternativesRequestRequest {
    * @maxLength 120
    */
   operation_key: string;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  width_mm?: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  height_mm?: string | null;
 }

@@ -309,6 +309,8 @@ class PositionDesignAlternativesView(APIView):
                         count=int(data.get("count") or 2),
                         operation_key=str(data["operation_key"]),
                         system_id=data["system_id"],
+                        width_mm=data.get("width_mm"),
+                        height_mm=data.get("height_mm"),
                     )
                 )
             except ProviderError as error:

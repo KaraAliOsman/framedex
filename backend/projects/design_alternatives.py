@@ -111,6 +111,11 @@ def _build_product(
             return None, "angulo_invalido"
         if not Decimal("-90") <= angle <= Decimal("90"):
             return None, "angulo_invalido"
+    # A door needs a panel: when the catalog carries exactly one, the backend
+    # fills it (same rule as the estimator's defaults); ambiguity stays
+    # unresolved and the engine's refusal is reported instead of guessed.
+    if panel_sku is None and "DOOR_ENTRY" in openings and len(catalog["panel_skus"]) == 1:
+        panel_sku = next(iter(sorted(catalog["panel_skus"])))
     thickness = _default_thickness(catalog)
     quantum = Decimal("0.01")
     share = (width_mm / len(openings)).quantize(quantum)
@@ -125,7 +130,7 @@ def _build_product(
             "type": "BAY",
             "opening_type": opening,
             "glass_thickness_mm": str(thickness),
-            "glass_spec": "4",
+            "glass_spec": str(thickness),
         }
         if glass_sku:
             tree["glass_article_sku"] = glass_sku
@@ -207,9 +212,17 @@ def alternatives(
     count: int,
     operation_key: str,
     system_id: UUID,
+    width_mm: Any = None,
+    height_mm: Any = None,
 ) -> dict:
     count = max(1, min(MAX_ALTERNATIVES, int(count)))
-    width_mm, height_mm = _dimensions(position["width_mm"], position["height_mm"])
+    # Live canvas dimensions win over the persisted row — candidates must be
+    # built at the size the estimator currently sees, or adopting one would
+    # silently discard unsaved resize edits.
+    width_mm, height_mm = _dimensions(
+        width_mm if width_mm is not None else position["width_mm"],
+        height_mm if height_mm is not None else position["height_mm"],
+    )
     catalog = _catalog(system_id, org_id)
     repository = SystemParamsRepository()
     params = repository.load_visible(system_id, org_id)
@@ -260,7 +273,7 @@ def alternatives(
         raw_alternatives = []
     accepted: list[dict] = []
     rejected: list[dict] = []
-    for spec in raw_alternatives[:MAX_ALTERNATIVES]:
+    for spec in raw_alternatives[:count]:
         if not isinstance(spec, dict):
             rejected.append({"label": None, "reasons": ["formato_invalido"]})
             continue
