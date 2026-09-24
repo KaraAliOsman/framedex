@@ -22,4 +22,9 @@ export interface ProfileCut {
   bay_id: string | null;
   /** @nullable */
   leaf_id: string | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,10}(?:\.\d{0,2})?$
+   */
+  sagitta_mm: string | null;
 }

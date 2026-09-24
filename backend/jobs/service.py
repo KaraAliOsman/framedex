@@ -2,10 +2,37 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
+from typing import Iterator
 from uuid import UUID
 
+from django.db import connection
+from psycopg import sql
+
 from jobs import registry, repository
+
+
+@contextmanager
+def job_backend() -> Iterator[None]:
+    """job_runs is a service-owned table — only ``service_role`` holds its
+    grants. Same save/restore pattern as ``documentary_backend`` so the
+    enqueue can run inside a request transaction without widening tenant
+    grants on the queue."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        previous = str(cursor.fetchone()[0])
+        if previous == "none":
+            previous = "authenticated"
+        cursor.execute("SET LOCAL ROLE service_role")
+    try:
+        yield
+    finally:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                )
 
 
 class JobServiceError(ValueError):
