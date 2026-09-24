@@ -1,5 +1,6 @@
 import type { PlanGeometry, PlanModule } from "../../api/generated/models";
 import type { ProductJson, ProductModuleJson } from "./productEditing";
+import { modulePrimaryBay, resolveStacks } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
 import { resolvedSlidingLayout } from "./intentEditing";
 import { insetContourPoints } from "./contourGeometry";
@@ -28,7 +29,8 @@ export interface BoxSolid {
 }
 
 /** Member ring / pane extruded along the module's depth axis from a
- * module-local outline (x right, y up — the contour space). */
+ * module-local outline (x right, y up — the contour space). The extrusion
+ * spans z0..z0+depth so glazing can sit inside the profile depth. */
 export interface ShapeSolid {
   kind: "shape";
   owner: string;
@@ -36,6 +38,7 @@ export interface ShapeSolid {
   material: string;
   outline: Pt2[];
   holes: Pt2[][];
+  z0: number;
   depth: number;
 }
 
@@ -59,6 +62,8 @@ export interface ModuleScene {
    * → rotation about +Y. */
   position: Vec3;
   rotationY: number;
+  /** Module depth — stack coupler bars are emitted in this local frame. */
+  depth: number;
   solids: Solid3D[];
 }
 
@@ -192,7 +197,7 @@ function planTransform(
   planModule: PlanModule | undefined,
   rect: { x: number; sill: number },
   fallbackDepth: number,
-): { position: Vec3; rotationY: number; depth: number } {
+): { position: Vec3; rotationY: number; depth: number; fromPlan: boolean } {
   if (planModule && planModule.corners.length >= 4) {
     const [start, end, , backStart] = planModule.corners;
     if (start && end && backStart) {
@@ -208,10 +213,16 @@ function planTransform(
         position: [Number(start.x_mm), rect.sill, -Number(start.y_mm)],
         rotationY: theta,
         depth: Number.isFinite(depth) && depth > 0 ? depth : fallbackDepth,
+        fromPlan: true,
       };
     }
   }
-  return { position: [rect.x, rect.sill, 0], rotationY: 0, depth: fallbackDepth };
+  return {
+    position: [rect.x, rect.sill, 0],
+    rotationY: 0,
+    depth: fallbackDepth,
+    fromPlan: false,
+  };
 }
 
 /** Leaf bay solids: sliding panes ride their declared tracks at stepped
@@ -241,7 +252,11 @@ function leafSolids(
     const trackStep = Math.min(24, Math.max(depth * 0.18, 10));
     const sashD = Math.min(24, depth * 0.4);
     sliding.panels.forEach((panel, index) => {
-      const track = panel.track ?? index % Math.max(sliding.tracks, 1);
+      // FIXED panels declare track:null — they sit on the outer glazing
+      // plane (front-most slot), not on a moving rail.
+      const track =
+        panel.track ??
+        (panel.kind === "FIXED" ? sliding.tracks - 1 : index % Math.max(sliding.tracks, 1));
       const z0 = Math.min(glassZ + (sliding.tracks - 1 - track) * trackStep, depth - glassT);
       const paneRegion: Region = {
         x: region.x + index * paneW,
@@ -249,6 +264,23 @@ function leafSolids(
         w: paneW,
         h: region.h,
       };
+      if (panel.kind === "FIXED") {
+        // Fixed slots glaze directly — no sash, same as the front view.
+        solids.push(
+          box(
+            owner,
+            "glass",
+            "GLASS",
+            paneRegion.x + bead,
+            paneRegion.y + bead,
+            z0,
+            Math.max(paneW - 2 * bead, 1),
+            Math.max(paneRegion.h - 2 * bead, 1),
+            glassT,
+          ),
+        );
+        return;
+      }
       const sashW = Math.min(members.sash.faceWidthMm, paneW / 3, region.h / 3);
       memberBarRing(
         solids,
@@ -476,50 +508,92 @@ export function buildScene3D(
   const moduleScenes: ModuleScene[] = [];
   const worldPoints: Vec3[] = [];
 
+  const stacks = resolveStacks(product);
   for (const rect of rects) {
     const module = rect.module;
     const w = Number(module.width_mm);
     const h = Number(module.height_mm);
-    const { position, rotationY, depth } = planTransform(
+    const { position, rotationY, depth, fromPlan } = planTransform(
       planById.get(module.id),
       rect,
       fallbackDepth,
     );
+    // A stacked member shares its root's plan footprint; the elevation
+    // centres it inside the column, so offset along the root heading by
+    // the same width difference (negative when the member protrudes).
+    if (fromPlan && stacks.stackRoot.has(module.id)) {
+      const root = moduleById.get(stacks.stackRoot.get(module.id) as string);
+      const delta = (Number(root?.width_mm ?? w) - w) / 2;
+      if (delta !== 0) {
+        position[0] += delta * Math.cos(rotationY);
+        position[2] += -delta * Math.sin(rotationY);
+      }
+    }
     const solids: Solid3D[] = [];
 
     if (module.frameless) {
       framelessSolids(solids, module, w, h, depth);
-    } else {
-      if (module.contour) {
-        // Contour modules extrude the real outline; the aperture is the
-        // same inset polygon the 2D view draws as the glazing line.
+    } else if (module.contour) {
+      // Contour modules extrude the real outline; like the 2D front view
+      // they render no bay tree — the glazing is the contoured opening
+      // itself, so the pane can never overhang a sloped or arched edge.
+      solids.push({
+        kind: "shape",
+        owner: module.id,
+        surface: "frame",
+        material: members.frame.material,
+        outline: insetContourPoints(module.contour, 0).map((p) => [p.x, p.y] as Pt2),
+        holes: [insetContourPoints(module.contour, frameT).map((p) => [p.x, p.y] as Pt2)],
+        z0: 0,
+        depth,
+      });
+      const primaryBay = modulePrimaryBay(module);
+      const bead = members.beadFor(primaryBay?.glass_thickness_mm ?? null);
+      const declaredT = Number(primaryBay?.glass_thickness_mm);
+      const glassT = Math.max(
+        Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
+        4,
+      );
+      const glassOutline = insetContourPoints(module.contour, frameT + bead).map(
+        (p) => [p.x, p.y] as Pt2,
+      );
+      if (glassOutline.length >= 3) {
         solids.push({
           kind: "shape",
-          owner: module.id,
-          surface: "frame",
-          material: members.frame.material,
-          outline: insetContourPoints(module.contour, 0).map((p) => [p.x, p.y] as Pt2),
-          holes: [insetContourPoints(module.contour, frameT).map((p) => [p.x, p.y] as Pt2)],
-          depth,
+          owner: primaryBay ? `${module.id}/${primaryBay.id}` : module.id,
+          surface: "glass",
+          material: "GLASS",
+          outline: glassOutline,
+          holes: [],
+          z0: Math.max((depth - glassT) / 2, 0),
+          depth: glassT,
         });
-      } else {
-        memberBarRing(
-          solids,
-          module.id,
-          "frame",
-          members.frame.material,
-          { x: 0, y: 0, w, h },
-          frameT,
-          depth,
-          0,
-        );
       }
+    } else {
+      memberBarRing(
+        solids,
+        module.id,
+        "frame",
+        members.frame.material,
+        { x: 0, y: 0, w, h },
+        frameT,
+        depth,
+        0,
+      );
 
       const out = {
         bars: [] as { node: IntentNode; region: Region; vertical: boolean }[],
         leaves: [] as NodeRegion[],
       };
-      walkNode(module.tree, { x: 0, y: 0, w, h }, { x: 0, y: 0 }, members, out);
+      // The bay tree lives inside the frame aperture; split offsets stay
+      // absolute from the module's outer corner, as ModuleTree does in 2D.
+      walkNode(
+        module.tree,
+        { x: frameT, y: frameT, w: w - frameT * 2, h: h - frameT * 2 },
+        { x: 0, y: 0 },
+        members,
+        out,
+      );
       for (const bar of out.bars) {
         const mullion = bar.vertical ? members.mullionV : members.mullionH;
         solids.push(
@@ -541,7 +615,7 @@ export function buildScene3D(
       }
     }
 
-    moduleScenes.push({ moduleId: module.id, position, rotationY, solids });
+    moduleScenes.push({ moduleId: module.id, position, rotationY, depth, solids });
 
     const cos = Math.cos(rotationY);
     const sin = Math.sin(rotationY);
@@ -567,10 +641,12 @@ export function buildScene3D(
   // pair endpoints use the declared `modules` binding when present, else
   // the positional chain order (same convention the engine resolves).
   const couplers: Solid3D[] = [];
+  // Pairs resolve with the same explicit-or-positional convention the
+  // layout uses: `coupling.modules`, else index i binds modules i and i+1.
+  const pairByCoupling = new Map(stacks.pairs.map(({ coupling, pair }) => [coupling.id, pair]));
   const couplingHeight = (couplingId: string | null): number => {
-    const coupling = product.assembly.couplings.find((item) => item.id === couplingId);
-    if (!coupling) return 0;
-    const pair = coupling.modules ?? [];
+    const pair = couplingId === null ? undefined : pairByCoupling.get(couplingId);
+    if (!pair) return 0;
     const heights = pair
       .map((id) => moduleById.get(id))
       .filter((m): m is ProductModuleJson => Boolean(m))
@@ -598,25 +674,39 @@ export function buildScene3D(
       worldPoints.push([x, 0, z], [x, height, z]);
     }
   }
+  // Stack couplers live inside the member's local frame: the bar centres
+  // on the member's sill line and follows its column's plan heading.
   for (const joint of joints) {
     if (joint.kind !== "stack" || !joint.couplingId) continue;
     const coupling = product.assembly.couplings.find((item) => item.id === joint.couplingId);
-    const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 30;
-    couplers.push(
-      box(
-        joint.couplingId,
-        "coupler",
-        members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
-          members.frame.material,
-        joint.x,
-        joint.y - barW / 2,
-        0,
-        joint.w,
-        barW,
-        fallbackDepth,
-      ),
+    const pair = pairByCoupling.get(joint.couplingId);
+    const memberId = pair?.find((id) =>
+      pair.some((other) => other !== id && stacks.stackParent.get(id) === other),
     );
-    worldPoints.push([joint.x, joint.y, 0], [joint.x + joint.w, joint.y, 0]);
+    const memberScene = memberId
+      ? moduleScenes.find((scene) => scene.moduleId === memberId)
+      : undefined;
+    const memberModule = memberId ? moduleById.get(memberId) : undefined;
+    const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 30;
+    const solid = box(
+      joint.couplingId,
+      "coupler",
+      members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
+      0,
+      -barW / 2,
+      0,
+      memberModule ? Number(memberModule.width_mm) : joint.w,
+      barW,
+      memberScene?.depth ?? fallbackDepth,
+    );
+    if (memberScene) {
+      memberScene.solids.push(solid);
+    } else {
+      solid.center[0] = joint.x + solid.size[0] / 2;
+      solid.center[1] = joint.y - barW / 2 + solid.size[1] / 2;
+      couplers.push(solid);
+      worldPoints.push([joint.x, joint.y, 0], [joint.x + joint.w, joint.y, 0]);
+    }
   }
 
   if (worldPoints.length === 0) {

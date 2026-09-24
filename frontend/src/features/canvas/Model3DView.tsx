@@ -14,21 +14,30 @@ import type { MemberGeometry } from "./members";
 
 /** Surface treatments keyed to the catalog material — the same families
  * the 2D member palette distinguishes (PVC light, aluminium mid, glass
- * translucent, steel for fittings). */
-const SURFACE_COLORS: Record<string, string> = {
-  PVC: "#e7e5dc",
-  ALUMINIUM: "#848b91",
-  GLASS: "#8fb8cc",
-  STEEL: "#a9b2b8",
+ * translucent, steel for fittings). Colors come from the theme tokens:
+ * three.js needs resolved values, not `var()` strings, so each token is
+ * read once per render via getComputedStyle. */
+const SURFACE_TOKENS: Record<string, string> = {
+  PVC: "--member-pvc-fill",
+  ALUMINIUM: "--member-aluminium-fill",
 };
-const FALLBACK_COLOR = "#d6d3c9";
+
+function tokenColor(tokenExpr: string, fallback: string): string {
+  const name = tokenExpr.slice(4, -1).trim();
+  const value =
+    typeof window === "undefined"
+      ? ""
+      : getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
 
 function solidColor(solid: Solid3D): string {
-  if (solid.surface === "glass") return SURFACE_COLORS.GLASS!;
-  if (solid.surface === "panel") return "#b9bcc0";
-  if (solid.surface === "fitting" || solid.surface === "support") return SURFACE_COLORS.STEEL!;
-  if (solid.surface === "coupler") return "#5d6469";
-  return SURFACE_COLORS[solid.material] ?? FALLBACK_COLOR;
+  if (solid.surface === "glass") return tokenColor("var(--model3d-glass)", "#8fb8cc");
+  if (solid.surface === "panel") return tokenColor("var(--member-panel-fill)", "#b9bcc0");
+  if (solid.surface === "fitting" || solid.surface === "support")
+    return tokenColor("var(--model3d-steel)", "#a9b2b8");
+  if (solid.surface === "coupler") return tokenColor("var(--model3d-coupler)", "#5d6469");
+  return tokenColor(`var(${SURFACE_TOKENS[solid.material] ?? "--member-panel-fill"})`, "#d6d3c9");
 }
 
 function SolidMesh({
@@ -46,7 +55,12 @@ function SolidMesh({
       for (const hole of solid.holes) {
         shape.holes.push(new THREE.Path(hole.map(([x, y]) => new THREE.Vector2(x, y))));
       }
-      return new THREE.ExtrudeGeometry(shape, { depth: solid.depth, bevelEnabled: false });
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: solid.depth,
+        bevelEnabled: false,
+      });
+      geo.translate(0, 0, solid.z0);
+      return geo;
     }
     if (solid.kind === "prism") {
       // Plan polygon (x,z) → shape in (x,y), extrude along +z then rotate so
@@ -82,7 +96,7 @@ function SolidMesh({
         depthWrite={!glass}
         roughness={solid.surface === "glass" ? 0.15 : 0.75}
         metalness={solid.surface === "fitting" || solid.surface === "support" ? 0.55 : 0.05}
-        emissive={selected ? "#b45309" : "#000000"}
+        emissive={selected ? tokenColor("var(--theme-warning)", "#b45309") : "#000000"}
         emissiveIntensity={selected ? 0.55 : 0}
       />
     </mesh>

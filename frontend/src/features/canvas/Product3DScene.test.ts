@@ -141,11 +141,22 @@ describe("buildScene3D", () => {
     };
     const product = { ...base, assembly: { modules: [module], couplings: [] } } as ProductJson;
     const scene = buildScene3D(product, members);
-    const shape = scene.modules[0]!.solids.find((solid) => solid.kind === "shape") as ShapeSolid;
-    expect(shape).toBeDefined();
-    expect(shape.outline).toHaveLength(4);
-    expect(shape.holes).toHaveLength(1);
-    expect(shape.owner).toBe(module.id);
+    const shapes = scene.modules[0]!.solids.filter(
+      (solid) => solid.kind === "shape",
+    ) as ShapeSolid[];
+    const frame = shapes.find((solid) => solid.surface === "frame")!;
+    expect(frame.outline).toHaveLength(4);
+    expect(frame.holes).toHaveLength(1);
+    expect(frame.owner).toBe(module.id);
+    // the glazing conforms to the contoured opening — never a rectangle
+    // that could overhang the sloped top edge
+    const glass = shapes.find((solid) => solid.surface === "glass")!;
+    expect(glass.outline).toHaveLength(4);
+    expect(Math.max(...glass.outline.map(([, y]) => y))).toBeLessThan(1400);
+    expect(glass.owner).toMatch(/^m1\//);
+    expect(glass.z0).toBeGreaterThan(0);
+    // and like the front view, no bay tree is drawn inside a contour
+    expect(scene.modules[0]!.solids.some((solid) => solid.surface === "mullion")).toBe(false);
   });
 
   it("renders frameless modules as pane + declared supports", () => {
@@ -192,10 +203,146 @@ describe("buildScene3D", () => {
       },
     } as ProductJson;
     const scene = buildScene3D(product, members);
-    const coupler = scene.couplers.find((solid) => solid.owner === "c1") as BoxSolid;
+    // the bar lives in the member's local frame, centred on its sill line
+    const memberScene = scene.modules.find((item) => item.moduleId === "t1")!;
+    const coupler = memberScene.solids.find((solid) => solid.owner === "c1") as BoxSolid;
     expect(coupler).toBeDefined();
     expect(coupler.kind).toBe("box");
-    // the member's sill sits at the door top — the coupler bar centres on it
-    expect(coupler.center[1]).toBeCloseTo(2100, 0);
+    expect(coupler.center[1]).toBeCloseTo(0, 5);
+    expect(memberScene.position[1]).toBeCloseTo(2100, 5);
+  });
+
+  it("keeps positional inline couplers visible as plan prisms", () => {
+    const product = makeBowProduct({ moduleCount: 2, widthMm: 1400, heightMm: 1400, angleDeg: 15 });
+    const plan: PlanGeometry = {
+      front_chain: [],
+      modules: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "1400",
+      height_mm: "60",
+      couplings: [
+        {
+          coupling_id: "c1",
+          polygon: [
+            { x_mm: "700", y_mm: "0" },
+            { x_mm: "700", y_mm: "-60" },
+            { x_mm: "760", y_mm: "40" },
+          ],
+        },
+      ],
+    };
+    const scene = buildScene3D(product, members, plan);
+    const prism = scene.couplers.find((solid) => solid.owner === "c1");
+    expect(prism).toBeDefined();
+    expect(prism?.kind).toBe("prism");
+  });
+
+  it("centres a narrower stacked member inside its root's plan footprint", () => {
+    const door = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 2100, angleDeg: 0 });
+    const transom = wrapTreeAsProduct(
+      makeBowProduct({ moduleCount: 1, widthMm: 500, heightMm: 400, angleDeg: 0 }).assembly
+        .modules[0]!.tree,
+      "500.00",
+      "400.00",
+    ).assembly.modules[0]!;
+    const product = {
+      ...door,
+      assembly: {
+        modules: [door.assembly.modules[0]!, { ...transom, id: "t1" }],
+        couplings: [
+          {
+            id: "c1",
+            modules: [door.assembly.modules[0]!.id, "t1"],
+            edges: ["top", "bottom"],
+            kind: "STACKED" as const,
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const plan: PlanGeometry = {
+      front_chain: [],
+      couplings: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "900",
+      height_mm: "60",
+      modules: [
+        {
+          module_id: "m1",
+          corners: [
+            { x_mm: "0", y_mm: "0" },
+            { x_mm: "900", y_mm: "0" },
+            { x_mm: "900", y_mm: "-60" },
+            { x_mm: "0", y_mm: "-60" },
+          ],
+        },
+        {
+          module_id: "t1",
+          corners: [
+            { x_mm: "0", y_mm: "0" },
+            { x_mm: "900", y_mm: "0" },
+            { x_mm: "900", y_mm: "-60" },
+            { x_mm: "0", y_mm: "-60" },
+          ],
+        },
+      ],
+    };
+    const scene = buildScene3D(product, members, plan);
+    const member = scene.modules.find((item) => item.moduleId === "t1")!;
+    // (900 − 500)/2 = 200 mm inset along the column heading
+    expect(member.position[0]).toBeCloseTo(200, 5);
+  });
+
+  it("walks the bay tree inside the frame aperture, not the outer rect", () => {
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+    const module = { ...base.assembly.modules[0]!, tree: splitModule(450) };
+    const product = {
+      ...base,
+      assembly: { modules: [module], couplings: [] },
+    } as ProductJson;
+    const frameT = 60;
+    const scene = buildScene3D(product, resolveMembers(optionsWithMullion()));
+    const solids = scene.modules[0]!.solids;
+    const mullion = solids.find((solid) => solid.surface === "mullion") as BoxSolid;
+    // the divider sits inside the frame opening (450 mm from the module edge)
+    expect(mullion.center[0]).toBeCloseTo(450, 0);
+    // glass stays inside the aperture: x ≥ frameT + bead, never beneath the frame
+    for (const glass of solids.filter((solid) => solid.surface === "glass") as BoxSolid[]) {
+      expect(glass.center[0] - glass.size[0] / 2).toBeGreaterThanOrEqual(frameT);
+      expect(glass.center[1] - glass.size[1] / 2).toBeGreaterThanOrEqual(frameT);
+    }
+  });
+
+  it("glazes fixed sliding panels directly while moving panels keep sashes", () => {
+    const base = makeBowProduct({ moduleCount: 1, widthMm: 1200, heightMm: 1400, angleDeg: 0 });
+    const bay: IntentNode = {
+      id: "b1",
+      type: "BAY",
+      opening_type: "SLIDING",
+      glass_thickness_mm: "4.00",
+      sliding_layout: {
+        tracks: 2,
+        panels: [
+          { slot: "S1", kind: "FIXED", track: null },
+          { slot: "S2", kind: "MOVING", track: 1 },
+        ],
+      },
+    };
+    const module = {
+      ...base.assembly.modules[0]!,
+      tree: { id: "r", type: "ROOT" as const, children: [bay] },
+    };
+    const product = {
+      ...base,
+      assembly: { modules: [module], couplings: [] },
+    } as ProductJson;
+    const scene = buildScene3D(product, members);
+    const solids = scene.modules[0]!.solids;
+    // exactly one sash ring (4 bars) for the single MOVING panel
+    expect(solids.filter((solid) => solid.surface === "sash")).toHaveLength(4);
+    expect(solids.filter((solid) => solid.surface === "glass")).toHaveLength(2);
   });
 });
