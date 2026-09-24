@@ -527,6 +527,83 @@ def test_optimize_work_order_builds_bar_plan_and_event() -> None:
     assert any("WO_OPTIMIZED" in q for q in writes)
 
 
+def test_optimize_routes_shaped_glass_to_unnested() -> None:
+    from decimal import Decimal
+
+    from dekopen_engine.cutting import (
+        CutOptimizationResult, CuttingProfile,
+    )
+
+    order_id = uuid4()
+    shape = [
+        {"x_mm": "0.00", "y_mm": "0.00"},
+        {"x_mm": "2296.22", "y_mm": "0.00"},
+        {"x_mm": "2096.22", "y_mm": "1310.00"},
+        {"x_mm": "200.00", "y_mm": "1310.00"},
+    ]
+    payload = {
+        "position_id": str(uuid4()),
+        "system_id": str(uuid4()),
+        "quantity": 1,
+        "materials": {
+            "profile_cuts": [], "reinforcements": [],
+            "glasses": [
+                {
+                    "bay_id": "B1", "leaf_id": None,
+                    "width_mm": "2296.22", "height_mm": "1310.00",
+                    "shape": shape,
+                    "area_m2": "2.62", "weight_kg": "13.10",
+                    "thickness_net_mm": "4.00",
+                    "glass_spec": "4", "article_sku": "V4",
+                }
+            ],
+            "panels": [], "hardware_items": [],
+        },
+    }
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT-P-REV-A-01",
+                "status": "RELEASED", "payload_json": payload,
+            }
+        if "snapshot_json" in query:
+            return {"snapshot_json": {"positions": [], "manufacturing": []}}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        return []
+
+    profile = CuttingProfile(
+        id="CP1", code="SAW01", kerf_mm=Decimal("5"),
+        head_trim_mm=Decimal("10"), tail_trim_mm=Decimal("10"),
+    )
+    cut_result = CutOptimizationResult(workshop_cut_plan=[], purchase_list=[])
+    authorities = SimpleNamespace(stocks=[], reinforcement_skus={}, inertias={})
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", return_value=_atomic()), patch(
+        "production.service.documentary_backend", return_value=_atomic()
+    ), patch(
+        "production.service.CuttingRepository"
+    ) as repo, patch(
+        "production.service.optimize_cut", return_value=cut_result
+    ):
+        repo.return_value.for_result.return_value = authorities
+        repo.return_value.cutting_profile.return_value = profile
+        output = service.optimize_work_order(
+            org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="BLANCO",
+        )
+    optimization = output["optimization"]
+    assert optimization["sheets"] == []
+    assert len(optimization["unnested"]) == 1
+    flagged = optimization["unnested"][0]
+    assert flagged["kind"] == "GLASS"
+    assert flagged["reason"] == "shaped_glass_outline"
+    assert flagged["shape"] == shape
+
+
 def test_pick_sheet_rule_prefers_smallest_fitting() -> None:
     from decimal import Decimal
 

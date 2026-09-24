@@ -116,7 +116,10 @@ def _work_order_payload(
         "quantity": position.get("quantity", 1),
         "materials": {
             key: engine.get(key) or []
-            for key in ("profile_cuts", "reinforcements", "glasses", "panels", "hardware_items")
+            for key in (
+                "profile_cuts", "reinforcements", "glasses", "panels",
+                "fittings", "hardware_items",
+            )
         },
         "glass_polishing": list(polishing or []),
         "routing": _routing(engine),
@@ -1099,6 +1102,10 @@ def generate_packing_manifest(
                 int(item.get("qty") or 1)
                 for item in materials.get("hardware_items") or []
             ),
+            "fittings": sum(
+                int(item.get("qty") or 1)
+                for item in materials.get("fittings") or []
+            ),
         }
         units = [
             {
@@ -1175,6 +1182,7 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                 + int(unit.get("glasses") or 0)
                 + int(unit.get("panels") or 0)
                 + int(unit.get("hardware") or 0)
+                + int(unit.get("fittings") or 0)
             )
             qr_payload = (
                 f"DEKOPEN|{order['order_code']}|{unit['label_code']}|{pieces}"
@@ -1189,6 +1197,7 @@ def packing_labels(*, org_id: UUID, order_id: UUID) -> dict[str, object]:
                     "glasses": int(unit.get("glasses") or 0),
                     "panels": int(unit.get("panels") or 0),
                     "hardware": int(unit.get("hardware") or 0),
+                    "fittings": int(unit.get("fittings") or 0),
                     "qr_payload": qr_payload,
                     "qr_svg": segno.make(qr_payload, error="m").svg_inline(
                         border=2, scale=6
@@ -1415,6 +1424,7 @@ def optimize_work_order(
                 "reinforcements": materials.get("reinforcements") or [],
                 "glasses": materials.get("glasses") or [],
                 "panels": materials.get("panels") or [],
+                "fittings": materials.get("fittings") or [],
                 "hardware_items": materials.get("hardware_items") or [],
                 "leaf_weights": materials.get("leaf_weights") or [],
             },
@@ -1456,6 +1466,22 @@ def optimize_work_order(
                 group = (
                     str(entry.thickness_net_mm) if kind == "GLASS" else entry.sku
                 )
+                if getattr(entry, "shape", None):
+                    # Non-rectangular glass cannot be guillotine-nested by a
+                    # bounding rect — it goes to the shape-cutting cell with
+                    # its true outline, never silently a rectangle.
+                    unnested.append({
+                        "kind": kind, "group": group,
+                        "width_mm": str(entry.width_mm),
+                        "height_mm": str(entry.height_mm), "quantity": quantity,
+                        "bay_id": entry.bay_id, "leaf_id": entry.leaf_id,
+                        "shape": [
+                            {"x_mm": str(p.x_mm), "y_mm": str(p.y_mm)}
+                            for p in entry.shape
+                        ],
+                        "reason": "shaped_glass_outline",
+                    })
+                    continue
                 rule = _pick_sheet_rule(
                     rules[group_key].get(group) or [], entry.width_mm, entry.height_mm
                 )

@@ -86,6 +86,7 @@ export type WorkOrderOptimization = {
 type PieceRef = {
   kind: "cut" | "nest";
   key: string;
+  code: string;
   piece: CutPlacement | NestPlacement;
 };
 
@@ -137,6 +138,7 @@ function CutPlanBarSvg({
     const w = num(cut.length_mm);
     cursor += w + kerf;
     const key = `b${bar.bar_index}-c${index}`;
+    const code = `B${bar.bar_index}-${cut.sequence ?? index + 1}`;
     const keyOfPiece = memberKey(cut);
     const selected = selectedKey === key;
     const memberHit = selectedMember !== null && keyOfPiece === selectedMember;
@@ -151,20 +153,20 @@ function CutPlanBarSvg({
         className={`cutplan-cut ${materialClass(cut.material, cut.source_kind)}${
           memberHit ? " is-member" : ""
         }${selected ? " is-selected" : ""}`}
-        onClick={() => onSelect({ kind: "cut", key, piece: cut })}
+        onClick={() => onSelect({ kind: "cut", key, code, piece: cut })}
         role="button"
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            onSelect({ kind: "cut", key, piece: cut });
+            onSelect({ kind: "cut", key, code, piece: cut });
           }
         }}
       >
         <rect x={xSc} y={8} width={Math.max(wSc, 1)} height={barH - 16} rx={2} />
         {wSc > 52 ? (
           <text x={mid} y={30} textAnchor="middle" className="cutplan-cut-id">
-            {cut.piece_id}
+            {pieceLabel(cut, code)}
           </text>
         ) : null}
         {wSc > 40 ? (
@@ -269,6 +271,7 @@ function CutPlanSheetSvg({
       <rect className="cutplan-sheet-frame" x={0} y={0} width={vw} height={vh} rx={2} />
       {layout.placements.map((piece, index) => {
         const key = `s${layout.sheet_index}-p${index}`;
+        const code = `S${layout.sheet_index}-${piece.sequence ?? index + 1}`;
         const memberHit = selectedMember !== null && memberKey(piece) === selectedMember;
         const selected = selectedKey === key;
         const px = (num(piece.x_mm) / w) * vw;
@@ -281,20 +284,20 @@ function CutPlanSheetSvg({
             className={`cutplan-nest${memberHit ? " is-member" : ""}${
               selected ? " is-selected" : ""
             }`}
-            onClick={() => onSelect({ kind: "nest", key, piece })}
+            onClick={() => onSelect({ kind: "nest", key, code, piece })}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                onSelect({ kind: "nest", key, piece });
+                onSelect({ kind: "nest", key, code, piece });
               }
             }}
           >
             <rect x={px} y={py} width={pw} height={ph} rx={1} />
             {pw > 30 && ph > 12 ? (
               <text x={px + pw / 2} y={py + ph / 2} textAnchor="middle" dominantBaseline="middle">
-                {piece.piece_id}
+                {pieceLabel(piece, code)}
                 {piece.rotated ? " ⟳" : ""}
               </text>
             ) : null}
@@ -307,6 +310,13 @@ function CutPlanSheetSvg({
 
 function shortId(value: string | null | undefined): string {
   return value ? value.slice(0, 8) : "—";
+}
+
+/** Human piece identity for the workshop: the workshop SKU the printed
+ * manifest carries plus the cut code (bar/sheet + sequence — unique in the
+ * plan; sku + unit_index alone collide across piece groups). */
+function pieceLabel(piece: CutPlacement | NestPlacement, code: string): string {
+  return piece.workshop_sku ? `${piece.workshop_sku} · ${code}` : code;
 }
 
 export function CutPlanView({ optimization }: { optimization: WorkOrderOptimization }) {
@@ -326,7 +336,7 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
         ? `${cut.angle_left ?? "90"}° / ${cut.angle_right ?? "90"}°`
         : null;
     return {
-      id: piece.piece_id,
+      id: pieceLabel(piece, selected.code),
       kind: selected.kind,
       sku: piece.workshop_sku ?? "—",
       material: cut.material ?? "—",
