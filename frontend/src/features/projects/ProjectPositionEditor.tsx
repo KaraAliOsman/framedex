@@ -523,7 +523,13 @@ function PositionWorkspace({
           <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>
           <h1>{location || t("projects.position")}</h1>
         </div>
-        <span role="status">{dirty ? t("projects.unsaved") : t("projects.savedState")}</span>
+        <span role="status">
+          {dirty
+            ? t("projects.unsaved")
+            : saved === null
+              ? t("projects.draft")
+              : t("projects.savedState")}
+        </span>
         <button disabled={!canUndo || busy} onClick={() => applyHistory("undo")}>
           {t("projects.undo")}
         </button>
@@ -533,10 +539,14 @@ function PositionWorkspace({
         <button
           className="primary-action"
           disabled={uncertainCreate || busy || !result || assemblyUnsaveable}
+          title={!result || assemblyUnsaveable ? t("projects.saveBlocked") : undefined}
           onClick={() => void save()}
         >
           {t("projects.save")}
         </button>
+        {loaded && (assemblyUnsaveable || result === null) && (
+          <span className="handle-pending">{t("projects.saveBlocked")}</span>
+        )}
       </header>
       {message && <p role="status">{message}</p>}
       <fieldset className="position-head" disabled={busy}>

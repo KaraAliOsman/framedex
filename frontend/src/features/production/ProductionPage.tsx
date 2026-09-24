@@ -41,6 +41,7 @@ import type {
   ProductionPrepItem,
   ProductionStep,
 } from "../../api/generated/models";
+import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
@@ -138,6 +139,18 @@ const deliveryStatusKey: Record<string, Parameters<typeof t>[0]> = {
   FAILED: "production.deliveryStatusFailed",
 };
 
+/** Contract errors carry a human-readable detail — surface it so a refused
+ * step (shortage, gate, invalid transition) tells the operator why instead
+ * of collapsing into a generic toast. */
+function actionErrorDetail(error: unknown): string {
+  if (error instanceof ApiError) {
+    const payload = error.payload as { error?: { detail?: unknown } } | null;
+    const detail = payload?.error?.detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+  }
+  return t("production.actionError");
+}
+
 function stepActions(step: ProductionStep): StepAction[] {
   switch (step.status) {
     case "READY":
@@ -204,21 +217,27 @@ export function ProductionPage(): JSX.Element {
   const labelsGeneration = useRef(0);
   const selectedIdRef = useRef("");
   const mounted = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const selectedId = params.get("order") ?? "";
   selectedIdRef.current = selectedId;
   /** Triage queue — deep-linkable: /production?status=HOLD lands on the held
    * orders (dashboard attention items point here). */
   const statusFilter = params.get("status") ?? "";
-  const filteredOrders = statusFilter
-    ? orders.filter((order) => order.status === statusFilter)
-    : orders;
+  const shortageOnly = params.get("shortage") === "1";
+  const dispatchReadyOnly = params.get("dispatch_ready") === "1";
+  const filteredOrders = orders.filter(
+    (order) =>
+      (statusFilter === "" || order.status === statusFilter) &&
+      (!shortageOnly || order.shortage > 0) &&
+      (!dispatchReadyOnly || order.dispatch_ready),
+  );
+  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly;
 
   const loadOrders = useCallback(async () => {
     const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);
@@ -240,6 +259,10 @@ export function ProductionPage(): JSX.Element {
       if (response.status === 200) {
         setDetail(response.data);
         setLabels([]);
+        const sealedColor = response.data.payload?.color;
+        if (typeof sealedColor === "string" && sealedColor.trim()) {
+          setOptColor(sealedColor);
+        }
       }
       setDelivery(deliveryResponse.status === 200 ? deliveryResponse.data.delivery : null);
       setDeliveryForm(null);
@@ -299,8 +322,8 @@ export function ProductionPage(): JSX.Element {
       await task;
       setNote("");
       await Promise.all([loadDetail(orderId), loadOrders()]);
-    } catch {
-      if (mounted.current) setMessage(t("production.actionError"));
+    } catch (error) {
+      if (mounted.current) setMessage(actionErrorDetail(error));
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -332,8 +355,8 @@ export function ProductionPage(): JSX.Element {
           if (first) setParams({ order: first.id });
         }
       })
-      .catch(() => {
-        if (mounted.current) setMessage(t("production.actionError"));
+      .catch((error) => {
+        if (mounted.current) setMessage(actionErrorDetail(error));
       })
       .finally(() => {
         if (mounted.current) setBusy(false);
@@ -351,8 +374,8 @@ export function ProductionPage(): JSX.Element {
           await loadOrders();
         }
       })
-      .catch(() => {
-        if (mounted.current) setMessage(t("production.actionError"));
+      .catch((error) => {
+        if (mounted.current) setMessage(actionErrorDetail(error));
       })
       .finally(() => {
         if (mounted.current) setBusy(false);
@@ -658,9 +681,35 @@ export function ProductionPage(): JSX.Element {
                 </button>
               ),
             )}
+            <button
+              type="button"
+              className={`production-filter${shortageOnly ? " is-active" : ""}`}
+              aria-pressed={shortageOnly}
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (shortageOnly) next.delete("shortage");
+                else next.set("shortage", "1");
+                setParams(next);
+              }}
+            >
+              {t("production.filterShortage")}
+            </button>
+            <button
+              type="button"
+              className={`production-filter${dispatchReadyOnly ? " is-active" : ""}`}
+              aria-pressed={dispatchReadyOnly}
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (dispatchReadyOnly) next.delete("dispatch_ready");
+                else next.set("dispatch_ready", "1");
+                setParams(next);
+              }}
+            >
+              {t("production.filterDispatchReady")}
+            </button>
           </div>
           {orders.length === 0 ? <p>{t("production.empty")}</p> : null}
-          {statusFilter && orders.length > 0 && filteredOrders.length === 0 ? (
+          {listFiltered && orders.length > 0 && filteredOrders.length === 0 ? (
             <p>{t("production.emptyFilter")}</p>
           ) : null}
           <ul>

@@ -73,7 +73,13 @@ const ITEM_ERROR_LABEL: Record<string, string> = {
 function codeText(code: string): string {
   if (code.startsWith("catalog.compile_failed")) return ct("importsWarnCompileFailed");
   if (code.startsWith("catalog.series_incomplete"))
-    return ct("importsWarnSeriesIncomplete").replace("{roles}", code.split(":", 2)[1] || "");
+    return ct("importsWarnSeriesIncomplete").replace(
+      "{roles}",
+      (code.split(":", 2)[1] || "")
+        .split(",")
+        .map((role) => ct(`option.${role.trim()}`))
+        .join(", "),
+    );
   return ct(WARNING_LABEL[code] ?? ITEM_ERROR_LABEL[code] ?? "importsErrorUnknown");
 }
 
@@ -389,6 +395,7 @@ export function CatalogImportsPanel({
                   </option>
                 ))}
               </select>
+              <small>{ct("importsSystemHint")}</small>
             </label>
           </div>
           <div className="catalog-table-scroll">
@@ -547,7 +554,7 @@ export function CatalogImportsPanel({
                             {row.existing.map((match) => (
                               <span key={match.system_code} className="imports-existing">
                                 {ct("importsExisting").replace("{system}", match.system_code)}:{" "}
-                                {match.name} · {match.role}
+                                {match.name} · {ct(`option.${match.role}`)}
                                 {match.face_width_mm ? ` · ${match.face_width_mm} mm` : ""}
                               </span>
                             ))}

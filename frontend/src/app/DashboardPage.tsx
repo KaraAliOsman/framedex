@@ -106,13 +106,13 @@ export function DashboardPage(): JSX.Element {
     {
       key: "dashboard.prepShortage",
       count: Number(prep.work_orders_shortage ?? 0),
-      to: "/production",
+      to: "/production?shortage=1",
       warn: true,
     },
     {
       key: "dashboard.prepDispatch",
       count: Number(prep.dispatch_ready ?? 0),
-      to: "/production",
+      to: "/production?dispatch_ready=1",
       warn: false,
     },
     {
@@ -124,13 +124,13 @@ export function DashboardPage(): JSX.Element {
     {
       key: "dashboard.deliveriesOverdue",
       count: Number(deliveries.overdue ?? 0),
-      to: "/production",
+      to: "/production?status=DISPATCHED",
       warn: true,
     },
     {
       key: "dashboard.deliveriesToday",
       count: Number(deliveries.today ?? 0),
-      to: "/production",
+      to: "/production?status=DISPATCHED",
       warn: false,
     },
     {
@@ -142,7 +142,7 @@ export function DashboardPage(): JSX.Element {
     {
       key: "dashboard.quotesWaiting",
       count: items.filter((item) => item.status === "QUOTED").length,
-      to: "/projects",
+      to: "/projects?status=QUOTED",
       warn: false,
     },
   ];

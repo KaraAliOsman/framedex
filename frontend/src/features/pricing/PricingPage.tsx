@@ -686,6 +686,16 @@ function CommercialOperations({
   const projectLabel = (project: ProjectResponse) =>
     [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
 
+  // The audit requires a reason on every preview; seed the first quote's
+  // reason so the estimator isn't blocked before any price exists — still
+  // editable, still recorded verbatim in the audit trail.
+  useEffect(() => {
+    if (projectId && !reason && history.length === 0) {
+      setReason(t("pricing.firstQuoteReason"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, history.length]);
+
   useEffect(
     () => () => {
       generation.current += 1;
@@ -823,7 +833,12 @@ function CommercialOperations({
         </label>
         <label>
           {t("pricing.effectiveDate")}
-          <input name="effective_date" type="date" required />
+          <input
+            name="effective_date"
+            type="date"
+            defaultValue={new Date().toISOString().slice(0, 10)}
+            required
+          />
         </label>
         <label>
           {t("pricing.fxId")}
@@ -854,6 +869,7 @@ function CommercialOperations({
           <input
             name="reason"
             required
+            placeholder={t("pricing.reasonPlaceholder")}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />

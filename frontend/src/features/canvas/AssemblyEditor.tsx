@@ -5,6 +5,7 @@ import "./canvas.css";
 import type {
   DesignOptions,
   EngineAssemblyCalculateResponse,
+  GlassSpecChoice,
   ProductIssue,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
@@ -768,6 +769,7 @@ function BayInspector({
   bay,
   product,
   glassSkus,
+  glassSpecs,
   glazingThicknesses,
   panelSkus,
   busy,
@@ -778,6 +780,7 @@ function BayInspector({
   bay: IntentNode;
   product: ProductJson;
   glassSkus: string[];
+  glassSpecs: GlassSpecChoice[];
   glazingThicknesses: string[];
   panelSkus: string[];
   busy: boolean;
@@ -856,12 +859,7 @@ function BayInspector({
             aria-label={t("assembly.glassThickness")}
             disabled={busy}
             value={bay.glass_thickness_mm ?? ""}
-            onChange={(event) =>
-              patchBay({
-                glass_thickness_mm: event.target.value || null,
-                glass_spec: bay.glass_spec ?? (event.target.value || null),
-              })
-            }
+            onChange={(event) => patchBay({ glass_thickness_mm: event.target.value || null })}
           >
             <option value="">{t("assembly.chooseThickness")}</option>
             {glazingThicknesses.map((thickness) => (
@@ -877,7 +875,16 @@ function BayInspector({
             aria-label={t("assembly.glass")}
             disabled={busy}
             value={bay.glass_article_sku ?? ""}
-            onChange={(event) => patchBay({ glass_article_sku: event.target.value || null })}
+            onChange={(event) => {
+              const sku = event.target.value || null;
+              patchBay({
+                glass_article_sku: sku,
+                glass_spec:
+                  sku == null
+                    ? bay.glass_spec
+                    : (glassSpecs.find((item) => item.sku === sku)?.spec ?? null),
+              });
+            }}
           >
             <option value="">{t("assembly.noGlass")}</option>
             {glassSkus.map((sku) => (
@@ -1091,6 +1098,7 @@ function ModuleInspector({
   product,
   members,
   glassSkus,
+  glassSpecs,
   glazingThicknesses,
   panelSkus,
   mullionSkus,
@@ -1103,6 +1111,7 @@ function ModuleInspector({
   product: ProductJson;
   members: MemberGeometry;
   glassSkus: string[];
+  glassSpecs: GlassSpecChoice[];
   glazingThicknesses: string[];
   panelSkus: string[];
   mullionSkus: Partial<Record<SplitType, string>>;
@@ -1282,9 +1291,19 @@ function ModuleInspector({
             aria-label={t("assembly.glass")}
             disabled={busy}
             value={moduleGlassSku(module) ?? ""}
-            onChange={(event) =>
-              commit(setModuleGlass(product, module.id, event.target.value || null))
-            }
+            onChange={(event) => {
+              const sku = event.target.value || null;
+              commit(
+                setModuleGlass(
+                  product,
+                  module.id,
+                  sku,
+                  sku == null
+                    ? undefined
+                    : (glassSpecs.find((item) => item.sku === sku)?.spec ?? null),
+                ),
+              );
+            }}
           >
             <option value="">{t("assembly.noGlass")}</option>
             {glassSkus.map((sku) => (
@@ -2020,6 +2039,7 @@ export function AssemblyEditor({
             product={product}
             members={members}
             glassSkus={glassSkus}
+            glassSpecs={options?.glass_specs ?? []}
             glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}
             mullionSkus={mullionSkus}
@@ -2038,6 +2058,7 @@ export function AssemblyEditor({
             bay={selectedBayNode}
             product={product}
             glassSkus={glassSkus}
+            glassSpecs={options?.glass_specs ?? []}
             glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}
             busy={busy}

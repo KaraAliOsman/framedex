@@ -268,6 +268,8 @@ const messages = {
   "projects.loadError": "No pudimos cargar el proyecto. Vuelve a intentarlo.",
   "projects.saved": "Cambios guardados.",
   "projects.savedState": "Guardado",
+  "projects.saveBlocked":
+    "No se puede guardar todavía — el motor no completó la evaluación (datos de fabricación incompletos). Revisa los issue chips.",
   "projects.unsaved": "Cambios sin guardar",
   "projects.saveError":
     "No se guardó el cambio. Conservamos tu trabajo; revisa si otra persona editó el vano o si la revisión ya está cerrada.",
@@ -394,6 +396,11 @@ const messages = {
     "Confirmo la emisión: esta revisión, sus precios y su evidencia quedarán inmutables.",
   "quotation.emit": "Emitir cotización",
   "quotation.emitted": "Cotización emitida",
+  "quotation.quoteOnlyNotice":
+    "quedó sólo como cotización — el inspector marcó bloqueantes de producción",
+  "quotation.productionReady": "Apta para producción",
+  "quotation.quoteOnlyChip": "Sólo cotización",
+  "quotation.releaseBlocked": "Sólo cotización — no liberable a producción",
   "quotation.history": "Historial inmutable",
   "quotation.completeEvidence": "Evidencia completa",
   "quotation.release": "Liberar a producción",
@@ -542,6 +549,9 @@ const messages = {
   "pricing.reload": "Recargar",
   "pricing.empty": "Todavía no hay registros en esta sección.",
   "pricing.reason": "Motivo del cambio",
+  "pricing.reasonPlaceholder":
+    "Ej.: primera cotización · recotización por cliente · ajuste de lista",
+  "pricing.firstQuoteReason": "Cotización inicial",
   "pricing.created": "Fecha del registro",
   "pricing.edit": "Editar",
   "pricing.editRecord": "Editar registro",
@@ -831,6 +841,7 @@ const messages = {
   "purchasing.coverageReserved": "Reservado",
   "purchasing.coverageOrdered": "Ordenado",
   "purchasing.coverageReceived": "Recibido",
+  "purchasing.receivedMark": "recibido",
   "purchasing.coverageRemnant": "Remanentes",
   "purchasing.coverageShortage": "Faltante",
   "purchasing.coverageRecommended": "Compra sugerida",
@@ -978,7 +989,7 @@ const messages = {
   "production.optimizeTitle": "Plan de corte",
   "production.optimizeEmpty": "Aún no hay plan de corte. Optimiza para calcular barras y planchas.",
   "production.optimizeColor": "Color de perfil",
-  "production.optimizeColorPlaceholder": "BLANCO",
+  "production.optimizeColorPlaceholder": "WHITE / FOILED",
   "production.optimizeButton": "Optimizar corte",
   "production.optimizeBars": "Barras",
   "production.optimizeSheets": "Planchas",
@@ -1323,6 +1334,8 @@ const messages = {
   "catalog.importsCandidates": "Artículos",
   "catalog.importsSystem": "Sistema destino",
   "catalog.importsSystemChoose": "Selecciona el sistema",
+  "catalog.importsSystemHint":
+    "Los artículos que apruebes se agregan a este sistema — verifica que sea la serie correcta.",
   "catalog.importsReviewHint":
     "Revisa cada artículo antes de crearlo — solo las filas marcadas pasan al sistema elegido.",
   "catalog.importsConfirm": "Crear artículos marcados",
@@ -1606,6 +1619,8 @@ const messages = {
   "production.orderInstalled": "Instalada",
   "production.statusFilter": "Filtrar por estado",
   "production.statusAll": "Todas",
+  "production.filterShortage": "Con escasez",
+  "production.filterDispatchReady": "Listas para despacho",
   "production.emptyFilter": "Ninguna orden en este estado.",
   "production.nextStep": "Siguiente paso",
   "production.deliveryTitle": "Entrega",

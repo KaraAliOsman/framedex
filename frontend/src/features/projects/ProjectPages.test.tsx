@@ -722,14 +722,12 @@ it("saves handle placement intents for operable leaves before emitting", async (
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
   expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
-  expect(heightInput.getAttribute("min")).toBe("900.3");
-  expect(heightInput.getAttribute("max")).toBe("1100.4");
+  expect(heightInput.getAttribute("placeholder")).toBe("900.3–1100.4");
   const referenceSelect = screen.getByLabelText(t("quotation.handleReference"));
   fireEvent.change(referenceSelect, { target: { value: "OUTER_BOTTOM" } });
   // OUTER_BOTTOM: outer 1400.10 − leafTop 100.20 − leaf-top bounds. Float math
   // would emit 399.599… and reject the exact boundary value the engine accepts.
-  expect(heightInput.getAttribute("min")).toBe("199.5");
-  expect(heightInput.getAttribute("max")).toBe("399.6");
+  expect(heightInput.getAttribute("placeholder")).toBe("199.5–399.6");
   fireEvent.change(heightInput, { target: { value: "1050" } });
   expect(screen.getByText(t("quotation.handleOutOfBounds"))).toBeTruthy();
   fireEvent.change(heightInput, { target: { value: "399.6" } });

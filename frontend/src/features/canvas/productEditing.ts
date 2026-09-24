@@ -1151,11 +1151,20 @@ export function setModuleGlass(
   product: ProductJson,
   moduleId: string,
   glassArticleSku: string | null,
+  glassSpec?: string | null,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module) return product;
   function withGlass(node: IntentNode): IntentNode {
-    if (node.type === "BAY") return { ...node, glass_article_sku: glassArticleSku };
+    if (node.type === "BAY") {
+      return {
+        ...node,
+        glass_article_sku: glassArticleSku,
+        // The article is the composition authority: pick one and its spec is
+        // sealed (null spec stays null — honest MISSING, never a thickness).
+        glass_spec: glassArticleSku == null ? node.glass_spec : (glassSpec ?? null),
+      };
+    }
     return { ...node, children: node.children?.map(withGlass) };
   }
   return replaceModule(product, moduleId, { ...module, tree: withGlass(module.tree) });
@@ -1165,9 +1174,8 @@ export function moduleGlassSku(module: ProductModuleJson): string | null {
   return modulePrimaryBay(module)?.glass_article_sku ?? null;
 }
 
-/** Glazing thickness on every bay of a module (bead slot + monolithic spec
- * fallback). An existing glass composition is preserved — the thickness is
- * the physical slot, the spec the pane recipe. */
+/** Glazing thickness on every bay of a module (the physical bead slot).
+ * The composition spec is a separate authority — setModuleGlass writes it. */
 export function setModuleGlassThickness(
   product: ProductJson,
   moduleId: string,
@@ -1177,11 +1185,7 @@ export function setModuleGlassThickness(
   if (!module) return product;
   function withThickness(node: IntentNode): IntentNode {
     if (node.type === "BAY") {
-      return {
-        ...node,
-        glass_thickness_mm: glassThicknessMm,
-        glass_spec: node.glass_spec ?? glassThicknessMm,
-      };
+      return { ...node, glass_thickness_mm: glassThicknessMm };
     }
     return { ...node, children: node.children?.map(withThickness) };
   }

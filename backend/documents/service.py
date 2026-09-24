@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from math import ceil
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -19,6 +20,7 @@ from dekopen_engine.documentary_canonical import (
 from dekopen_engine.geometry import GeometryComputation, compute_geometry
 from dekopen_engine.inspection_models import (
     InspectionMode,
+    InspectorConfig,
     InspectorInput,
     InspectorResult,
     RuleEvaluationStatus,
@@ -718,6 +720,94 @@ def _workshop_targets(
                 "label": leaf_labels.get((bay_key, leaf_key), f"{unit}Vidrio {glass_count}"),
             })
     return {"bays": bays, "leaves": leaves, "spans": spans, "glass": glass}
+
+
+def _seed_workshop_defaults(
+    calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]],
+    existing: list[dict[str, object]],
+    config: InspectorConfig,
+) -> list[dict[str, object]]:
+    """Prefill what the workshop would otherwise have to type for every emit:
+    evenly spaced drains (R07), closing points within R08 spacing, the real
+    opening as continuous width, WHITE finish, no coupler. The estimator sees
+    and edits them — nothing is sealed silently — while true authorities
+    (structural inertia, measured QC) stay unset."""
+    keyed = {
+        (str(item["bay_id"]), item.get("leaf_id"))
+        for item in existing
+        if isinstance(item, dict)
+    }
+    seeded: list[dict[str, object]] = []
+    for module_id, computation, _ in calculations:
+        prefix = f"{module_id}|" if module_id else ""
+        for opening in computation.openings:
+            bay_key = f"{prefix}{opening.bay_id}"
+            if (bay_key, None) in keyed:
+                continue
+            drains: list[str] | None = None
+            if opening.width_mm > config.R07.width_trigger_mm:
+                count = int(config.R07.required_bottom_drains)
+                drains = [
+                    str((opening.width_mm * (index + 1) / (count + 1)).quantize(D("0.01")))
+                    for index in range(count)
+                ]
+            seeded.append({
+                "bay_id": bay_key,
+                "leaf_id": None,
+                "bottom_drain_holes_mm": drains,
+                "closing_points_perimeter_mm": None,
+                "continuous_width_mm": str(opening.width_mm.quantize(D("0.01"))),
+                "finish_class": "WHITE",
+                "has_coupler": False,
+            })
+        for leaf in computation.leaves:
+            bay_key = f"{prefix}{leaf.bay_id}"
+            leaf_key = (
+                f"{prefix}{leaf.leaf_id}"
+                if module_id and leaf.leaf_id is not None
+                else leaf.leaf_id
+            )
+            if (bay_key, leaf_key) in keyed:
+                continue
+            perimeter = (leaf.finished_width_mm + leaf.finished_height_mm) * 2
+            count = max(2, ceil(perimeter / config.R08.max_spacing_mm))
+            seeded.append({
+                "bay_id": bay_key,
+                "leaf_id": leaf_key,
+                "bottom_drain_holes_mm": None,
+                "closing_points_perimeter_mm": [
+                    str((perimeter * index / count).quantize(D("0.01")))
+                    for index in range(count)
+                ],
+                "continuous_width_mm": None,
+                "finish_class": None,
+                "has_coupler": None,
+            })
+    return [*existing, *seeded]
+
+
+def _seed_polishing_defaults(
+    glass_targets: set[tuple[str, str | None]],
+    existing: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Every glass piece gets a declared 'no polished edges' row unless the
+    operator already chose something — declared coverage, not missing data."""
+    keyed = {
+        (str(item["bay_id"]), item.get("leaf_id"))
+        for item in existing
+        if isinstance(item, dict)
+    }
+    seeded = [
+        {
+            "schema_version": 1,
+            "bay_id": bay_key,
+            "leaf_id": leaf_key,
+            "edges": {"top": False, "right": False, "bottom": False, "left": False},
+        }
+        for bay_key, leaf_key in sorted(glass_targets)
+        if (bay_key, leaf_key) not in keyed
+    ]
+    return [*existing, *seeded]
 
 
 def _position_rows(project_id: UUID, org_id: UUID) -> list[dict[str, object]]:
@@ -1423,6 +1513,7 @@ def prepare_documentary_inputs(
         return options[0]["id"] if len(options) == 1 else None
 
     prepared = []
+    inspector_configs: dict[str, InspectorConfig] = {}
     for position in positions:
         identity = str(position["id"])
         existing = position_inputs.get(identity)
@@ -1535,6 +1626,12 @@ def prepare_documentary_inputs(
             and (item.get("bay_id"), item.get("leaf_id")) in valid_leaves
         ]
 
+        inspector_config = inspector_configs.setdefault(
+            system_id, InspectorRepository().load(system_id_uuid, org_id).config
+        )
+        workshop = _seed_workshop_defaults(calculations, workshop, inspector_config)
+        glass = _seed_polishing_defaults(valid_glass, glass)
+
         prepared.append(
             {
                 "position_id": position["id"],
@@ -1574,8 +1671,11 @@ def prepare_documentary_inputs(
                     if str(option["id"]) in handle_authorities
                 ],
                 "workshop_targets": _workshop_targets(calculations, trace_leaves),
-                "accessory_schedule": decoded(existing["accessory_schedule"])
-                if existing and existing["accessory_schedule"] is not None else None,
+                "accessory_schedule": (
+                    decoded(existing["accessory_schedule"])
+                    if existing and existing["accessory_schedule"] is not None
+                    else {"schema_version": 1, "coverage": "NONE_REQUIRED", "items": []}
+                ),
                 "legacy_handle_migration_confirmed": bool(
                     existing and existing["legacy_handle_migration_confirmed"]
                 ),

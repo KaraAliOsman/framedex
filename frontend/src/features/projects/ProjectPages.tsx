@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
@@ -321,6 +321,7 @@ function ProjectWorkspace({
   const [paymentsDirty, setPaymentsDirty] = useState(false);
   const [importsDirty, setImportsDirty] = useState(false);
   const [search, setSearch] = useState("");
+  const [params] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [factsCollapsed, setFactsCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -548,8 +549,13 @@ function ProjectWorkspace({
   const disabled = busy || query.isFetching || mustReload;
   const editable = canWrite && project?.status === "DRAFT" && !project.pricing_current;
   const needle = search.toLocaleLowerCase("es-CL");
-  const visible = items.filter((item) =>
-    `${item.code} ${item.name} ${item.client_name}`.toLocaleLowerCase("es-CL").includes(needle),
+  // Deep-linkable triage filter — the dashboard attention queue lands on
+  // /projects?status=QUOTED so the promised list is already filtered.
+  const statusFilter = params.get("status") ?? "";
+  const visible = items.filter(
+    (item) =>
+      (statusFilter === "" || item.status === statusFilter) &&
+      `${item.code} ${item.name} ${item.client_name}`.toLocaleLowerCase("es-CL").includes(needle),
   );
 
   return (

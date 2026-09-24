@@ -212,7 +212,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
 
       <CatalogImportsPanel
         orgId={orgId}
-        canWrite={role === "OWNER" || role === "ESTIMATOR"}
+        canWrite={canEdit}
         systems={data.systems
           .filter((system) => !system.is_global)
           .map((system) => ({ id: system.id, name: system.name, code: system.code }))}

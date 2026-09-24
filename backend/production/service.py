@@ -71,6 +71,15 @@ _STEP_CONSUMED_KINDS = {
     "GLAZE": {"PANEL"},
 }
 
+# Glass and panel infills always carry a CUT_TO_SIZE purchase authority —
+# pieces no workshop sheet hosts are supplied finished, not short. Only an
+# unnesting reason outside the purchased-supply set may block completion.
+_PURCHASED_UNNESTED_REASONS = frozenset({
+    "shaped_glass_outline",
+    "no_declared_sheet",
+    "piece_larger_than_usable_sheet",
+})
+
 _EVENTS = {
     "START": "STEP_STARTED",
     "COMPLETE": "STEP_COMPLETED",
@@ -123,7 +132,8 @@ def _routing(engine_result: dict[str, object]) -> list[str]:
 
 
 def _work_order_payload(
-    position: dict[str, object], *, polishing: list | None = None
+    position: dict[str, object], *, polishing: list | None = None,
+    color: str | None = None,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     return {
@@ -131,6 +141,7 @@ def _work_order_payload(
         "position_id": str(position.get("position_id") or ""),
         "system_id": str(position.get("system_id") or ""),
         "quantity": position.get("quantity", 1),
+        "color": color,
         "materials": {
             key: engine.get(key) or []
             for key in (
@@ -248,12 +259,26 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
             for pos in snapshot.get("positions") or []
             if pos.get("id")
         }
+        # The sealed color is what the cut optimizer's stock variants are
+        # named after — WHITE only when both faces are WHITE, else FOILED.
+        color_by_position = {
+            str(pos.get("id")): (
+                "WHITE"
+                if pos.get("color_interior") == "WHITE"
+                and pos.get("color_exterior") == "WHITE"
+                else "FOILED"
+            )
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
+
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
             payload = _work_order_payload(
                 position,
                 polishing=polishing_by_position.get(str(position.get("position_id"))),
+                color=color_by_position.get(str(position.get("position_id"))),
             )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
@@ -858,7 +883,7 @@ def transition_step(
             ) or (
                 "SHEET" in consumed_kinds
                 and any(
-                    entry.get("reason") != "shaped_glass_outline"
+                    entry.get("reason") not in _PURCHASED_UNNESTED_REASONS
                     for entry in (opt.get("unnested") or [])
                 )
             )

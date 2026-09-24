@@ -34,6 +34,7 @@ import {
   addDecimal,
   compareDecimal,
   formatDecimal,
+  midpointDecimal,
   parseDecimal,
   subtractDecimal,
 } from "./decimal";
@@ -556,7 +557,11 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
-      setMessage(`${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}`);
+      setMessage(
+        `${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}${
+          frozen.data.production_allowed ? "" : ` · ${t("quotation.quoteOnlyNotice")}`
+        }`,
+      );
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
@@ -841,6 +846,13 @@ export function ProjectQuotationPanel({
                       boundMax !== null &&
                       (compareDecimal(height, boundMin) < 0 ||
                         compareDecimal(height, boundMax) > 0);
+                    // The policy's permitted span midpoint is the sane
+                    // default — visible, editable, still the estimator's
+                    // call; true authority stays the sealed intent.
+                    const defaultHeight =
+                      boundMin !== null && boundMax !== null
+                        ? formatDecimal(midpointDecimal(boundMin, boundMax))
+                        : "";
                     return (
                       <div className="handle-row" key={intentKey(requirement)}>
                         <div className="handle-leaf">
@@ -861,15 +873,12 @@ export function ProjectQuotationPanel({
                           </label>
                           <input
                             id={`handle-height-${position.position_id}-${intentKey(requirement)}`}
-                            type="number"
+                            type="text"
                             inputMode="decimal"
-                            min={bounds?.[0]}
-                            max={bounds?.[1]}
-                            step="any"
                             disabled={busy}
                             aria-invalid={outOfBounds || undefined}
                             placeholder={bounds ? `${bounds[0]}–${bounds[1]}` : undefined}
-                            value={intent?.requested_height_mm ?? ""}
+                            value={intent?.requested_height_mm ?? defaultHeight}
                             onChange={(event) =>
                               updateIntent(index, requirement, {
                                 requested_height_mm: event.target.value,
@@ -950,10 +959,8 @@ export function ProjectQuotationPanel({
                           <label className="workshop-field">
                             <span>{t("quotation.continuousWidth")}</span>
                             <input
-                              type="number"
+                              type="text"
                               inputMode="decimal"
-                              step="any"
-                              min="0"
                               disabled={busy}
                               value={annotation?.continuous_width_mm ?? ""}
                               onChange={(event) =>
@@ -1036,10 +1043,8 @@ export function ProjectQuotationPanel({
                               <label className="workshop-field">
                                 <span>{t("quotation.requiredIx")}</span>
                                 <input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
-                                  step="any"
-                                  min="0"
                                   disabled={busy}
                                   value={structural?.required_ix_cm4 ?? ""}
                                   onChange={(event) =>
@@ -1317,18 +1322,29 @@ export function ProjectQuotationPanel({
                       : "quotation.designEvidence",
                   )}
                 </span>
+                <span>
+                  {t(
+                    version.production_allowed
+                      ? "quotation.productionReady"
+                      : "quotation.quoteOnlyChip",
+                  )}
+                </span>
                 <button disabled={busy} onClick={() => void openEvidence(version.id)}>
                   {t("quotation.openEvidence")}
                 </button>
-                {canRelease && version.documentary_complete ? (
-                  <button
-                    type="button"
-                    className="primary-action"
-                    disabled={busy}
-                    onClick={() => void release(version.id)}
-                  >
-                    {t("quotation.release")}
-                  </button>
+                {canRelease ? (
+                  version.production_allowed ? (
+                    <button
+                      type="button"
+                      className="primary-action"
+                      disabled={busy}
+                      onClick={() => void release(version.id)}
+                    >
+                      {t("quotation.release")}
+                    </button>
+                  ) : (
+                    <span className="handle-pending">{t("quotation.releaseBlocked")}</span>
+                  )
                 ) : null}
               </li>
             ))}

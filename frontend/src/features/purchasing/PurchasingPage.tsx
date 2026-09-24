@@ -46,6 +46,8 @@ type Requirement = {
   technical_skus: string[];
   purchasing_sku: string | null;
   physical_stock_identity: string | null;
+  physical_stock_sku?: string | null;
+  physical_stock_name?: string | null;
   unit: string;
   quantity: string;
   specification: Record<string, unknown>;
@@ -109,6 +111,7 @@ type StockItem = {
 type VersionItem = {
   id: string;
   project_id: string;
+  project_code: string;
   revision_code: string;
   bom_hash: string;
   emitted_at: string;
@@ -405,7 +408,11 @@ function PurchasingWorkspace({
           >
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
-                {formatRevision(item.revision_code)} · {item.emitted_at}
+                {item.project_code} · {formatRevision(item.revision_code)} ·{" "}
+                {new Date(item.emitted_at).toLocaleString("es-CL", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
               </option>
             ))}
           </select>
@@ -465,7 +472,15 @@ function PurchasingWorkspace({
                   <td>{line.on_hand}</td>
                   <td>{line.reserved}</td>
                   <td>{line.open_ordered}</td>
-                  <td>{line.received}</td>
+                  <td>
+                    {line.received !== "0" ? (
+                      <strong className="purchasing-coverage-received">
+                        {line.received} · {t("purchasing.receivedMark")}
+                      </strong>
+                    ) : (
+                      line.received
+                    )}
+                  </td>
                   <td>
                     {line.remnant_pool
                       ? `${line.remnant_pool.count}${
@@ -705,7 +720,12 @@ function RequirementRow({
         {requirement.purchasing_sku ?? "—"}
         {requirement.physical_stock_identity && (
           <small>
-            {t("purchasing.stock")}: {requirement.physical_stock_identity}
+            {t("purchasing.stock")}:{" "}
+            {requirement.physical_stock_sku
+              ? `${requirement.physical_stock_sku}${
+                  requirement.physical_stock_name ? ` · ${requirement.physical_stock_name}` : ""
+                }`
+              : requirement.physical_stock_identity}
           </small>
         )}
       </td>
@@ -734,11 +754,24 @@ function RequirementRow({
                 ? t("purchasing.noEligibility")
                 : t("purchasing.chooseSupplier")}
             </option>
-            {eligibilities.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.supplier_name} · v{item.version}
-              </option>
-            ))}
+            {eligibilities
+              // A supplier re-declared at a newer version supersedes the
+              // older rows — offering both would allocate against stale data.
+              .filter(
+                (item) =>
+                  item.version ===
+                  Math.max(
+                    0,
+                    ...eligibilities
+                      .filter((o) => o.supplier_identity === item.supplier_identity)
+                      .map((o) => o.version),
+                  ),
+              )
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.supplier_name} · v{item.version}
+                </option>
+              ))}
           </select>
         )}
       </td>
