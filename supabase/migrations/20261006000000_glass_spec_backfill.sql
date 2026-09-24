@@ -1,20 +1,25 @@
 -- The shot-09 authority migration creates GLASS-BASE before the glass_spec
 -- column exists, so the seed's deterministic insert always conflicts and the
--- recipe stays NULL. immutable_authority on glass_purchase_mappings rejects
--- EVERY update unconditionally (not only locked systems), so the backfill
--- must bypass the trigger for exactly this one reviewed statement —
--- DEMO_60 may already be technical_locked on databases that have sealed
--- positions, which is why the original predicate-only update both skipped
--- its target and aborted fresh resets on unlocked ones.
+-- recipe stays NULL on every database. Two guards interact here:
+-- immutable_authority rejects EVERY update on the table unconditionally
+-- (fresh resets abort on unlocked DEMO_60), and the locked-system rule
+-- means a referenced system's authorities must never be mutated after
+-- sealing — a locked catalog keeps NULL and imports require the reviewer's
+-- explicit composition instead of silently re-resolving the SKU. So the
+-- backfill bypasses the unconditional trigger for exactly this one
+-- reviewed statement, and still only touches unlocked systems.
 ALTER TABLE public.glass_purchase_mappings DISABLE TRIGGER immutable_authority;
 ALTER TABLE public.glass_purchase_mappings DISABLE TRIGGER guard_referenced_catalog;
 
-UPDATE public.glass_purchase_mappings
+UPDATE public.glass_purchase_mappings mapping
 SET glass_spec = '4 Float Incoloro'
-WHERE id = uuid_generate_v5(
+FROM public.profile_systems system
+WHERE mapping.id = uuid_generate_v5(
         uuid_ns_url(),
         'https://dekopen.local/shot09/glass/DEMO_60/GLASS-BASE/V1')
-  AND glass_spec IS NULL;
+  AND system.id = mapping.system_id
+  AND system.technical_locked IS NOT TRUE
+  AND mapping.glass_spec IS NULL;
 
 ALTER TABLE public.glass_purchase_mappings ENABLE TRIGGER immutable_authority;
 ALTER TABLE public.glass_purchase_mappings ENABLE TRIGGER guard_referenced_catalog;
