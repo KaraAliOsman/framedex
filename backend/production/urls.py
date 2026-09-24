@@ -1,8 +1,18 @@
 from django.urls import path
 
 from production.views import (
+    ProductionOrderDeliveryConfirmationView,
+    ProductionOrderDeliveryConfirmView,
+    ProductionOrderDeliveryTransitionView,
+    ProductionOrderDeliveryView,
     ProductionOrderCncExportView,
     ProductionOrderDispatchView,
+    ProductionOrderDxfExportView,
+    ProductionOrderDxfFileView,
+    ProductionOrderDispatchNoteView,
+    ProductionOrderDispatchNoteDteView,
+    ProductionOrderInstallationView,
+    ProductionOrderLabelsView,
     ProductionOrderCncFileView,
     ProductionOrderDetailView,
     ProductionOrderListView,
@@ -37,14 +47,64 @@ urlpatterns = [
         name="production-order-cnc-file",
     ),
     path(
+        "orders/<uuid:order_id>/dxf-export/",
+        ProductionOrderDxfExportView.as_view(),
+        name="production-order-dxf-export",
+    ),
+    path(
+        "orders/<uuid:order_id>/dxf-export/<str:filename>",
+        ProductionOrderDxfFileView.as_view(),
+        name="production-order-dxf-file",
+    ),
+    path(
         "orders/<uuid:order_id>/packing/",
         ProductionOrderPackingView.as_view(),
         name="production-order-packing",
     ),
     path(
+        "orders/<uuid:order_id>/labels/",
+        ProductionOrderLabelsView.as_view(),
+        name="production-order-labels",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/",
+        ProductionOrderDeliveryView.as_view(),
+        name="production-order-delivery",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/transition/",
+        ProductionOrderDeliveryTransitionView.as_view(),
+        name="production-order-delivery-transition",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/confirm/",
+        ProductionOrderDeliveryConfirmView.as_view(),
+        name="production-order-delivery-confirm",
+    ),
+    path(
+        "orders/<uuid:order_id>/delivery/confirmation/",
+        ProductionOrderDeliveryConfirmationView.as_view(),
+        name="production-order-delivery-confirmation",
+    ),
+    path(
         "orders/<uuid:order_id>/dispatch/",
         ProductionOrderDispatchView.as_view(),
         name="production-order-dispatch",
+    ),
+    path(
+        "orders/<uuid:order_id>/dispatch-note/",
+        ProductionOrderDispatchNoteView.as_view(),
+        name="production-order-dispatch-note",
+    ),
+    path(
+        "orders/<uuid:order_id>/dispatch-note-dte/",
+        ProductionOrderDispatchNoteDteView.as_view(),
+        name="production-order-dispatch-note-dte",
+    ),
+    path(
+        "orders/<uuid:order_id>/install/",
+        ProductionOrderInstallationView.as_view(),
+        name="production-order-install",
     ),
     path(
         "orders/<uuid:order_id>/remake/",

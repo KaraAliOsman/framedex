@@ -72,6 +72,7 @@ def build_glass_piece(
     height_mm: Decimal,
     glass_spec: str,
     fallback_thickness_mm: Decimal,
+    article_sku: str | None = None,
 ) -> GlassPiece:
     """Build the public glass result while avoiding any double rounding."""
 
@@ -98,4 +99,6 @@ def build_glass_piece(
             _THICKNESS_OUTPUT_QUANTUM,
             rounding=ROUND_HALF_UP,
         ),
+        glass_spec=glass_spec,
+        article_sku=article_sku,
     )
