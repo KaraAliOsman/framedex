@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(13);
+SELECT plan(14);
 
 -- Tenants read but never write.
 SELECT ok(
@@ -65,6 +65,13 @@ SELECT ok(
     (SELECT relrowsecurity FROM pg_class
      WHERE oid = 'public.delivery_confirmations'::regclass),
     'row level security is enabled'
+);
+SELECT ok(
+    has_function_privilege('documentary_backend',
+        'private.delivery_object_referenced(uuid,text)', 'EXECUTE')
+    AND NOT has_function_privilege('authenticated',
+        'private.delivery_object_referenced(uuid,text)', 'EXECUTE'),
+    'definer reference check is backend-only'
 );
 
 SELECT * FROM finish();

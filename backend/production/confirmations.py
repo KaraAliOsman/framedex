@@ -480,18 +480,15 @@ def _purge_unreferenced_confirmation(*, org_id: UUID, object_key: str) -> None:
                     "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
                     [f"delivery_confirmations:{org_id}"],
                 )
-            referenced = rows(
-                "SELECT id FROM public.delivery_confirmations "
-                "WHERE org_id=%s AND (storage_object_key=%s OR signature_object_key=%s)",
-                [str(org_id), object_key, object_key],
+            # No JWT claims exist in this compensating transaction — the
+            # org-scoped definer check answers "does a committed row
+            # reference this key" under the same advisory slot that
+            # serializes confirm_delivery, so a racing committed retry wins.
+            verdict = rows(
+                "SELECT private.delivery_object_referenced(%s,%s) AS referenced",
+                [str(org_id), object_key],
             )
-            if not referenced:
-                referenced = rows(
-                    "SELECT id FROM public.payment_receipts "
-                    "WHERE org_id=%s AND storage_object_key=%s",
-                    [str(org_id), object_key],
-                )
-            if referenced:
+            if verdict and verdict[0].get("referenced"):
                 return
             SupabaseDocumentStorage().delete_object(object_key)
     except Exception as cleanup_error:  # noqa: BLE001
