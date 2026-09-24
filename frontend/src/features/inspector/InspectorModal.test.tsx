@@ -124,6 +124,7 @@ beforeEach(() => {
       reinforcements: [],
       glasses: [],
       panels: [],
+      fittings: [],
       hardware_items: [],
       leaf_weights: [],
     },
