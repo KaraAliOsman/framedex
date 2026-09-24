@@ -8,9 +8,26 @@ import { CommandPalette } from "./CommandPalette";
 import { useRegisterCommands } from "./registry";
 import type { ResolvedCommand } from "./types";
 
+const searchMock = vi.fn(
+  async (): Promise<{
+    status: number;
+    data: { results: import("../../api/generated/models").SearchResult[] };
+  }> => ({ status: 200, data: { results: [] } }),
+);
+vi.mock("../../api/generated/dekopen", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../api/generated/dekopen")>();
+  return { ...original, globalSearch: () => searchMock() };
+});
+
 afterEach(cleanup);
 
-function Harness({ commands }: { commands: ResolvedCommand[] }) {
+function Harness({
+  commands,
+  organizationId = null,
+}: {
+  commands: ResolvedCommand[];
+  organizationId?: string | null;
+}) {
   const surface = useMemo(() => ({ commands }), [commands]);
   useRegisterCommands(surface);
   const [navigated, setNavigated] = useState("");
@@ -19,6 +36,7 @@ function Harness({ commands }: { commands: ResolvedCommand[] }) {
       <CommandPalette
         navItems={[{ to: "/projects", label: "Proyectos" }]}
         onNavigate={setNavigated}
+        organizationId={organizationId}
       />
       <output data-testid="navigated">{navigated}</output>
     </>
@@ -231,4 +249,36 @@ it("closes on Escape and arrows move the cursor", () => {
   openPalette();
   fireEvent.keyDown(window, { key: "Escape" });
   expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+it("merges global search results into the list and navigates to their path", async () => {
+  searchMock.mockResolvedValueOnce({
+    status: 200,
+    data: {
+      results: [
+        {
+          group: "projects",
+          id: "p1",
+          title: "PRJ-1 · Hotel Sur",
+          subtitle: "Inmobiliaria",
+          path: "/projects/p1",
+        },
+      ],
+    },
+  });
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    render(<Harness commands={[]} organizationId="org-1" />);
+    openPalette();
+    fireEvent.change(screen.getByPlaceholderText(t("cmd.placeholder")), {
+      target: { value: "hotel" },
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    const option = await screen.findByRole("option", { name: /Hotel Sur/ });
+    fireEvent.click(option);
+    expect(screen.getByTestId("navigated").textContent).toBe("/projects/p1");
+    expect(searchMock).toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
 });

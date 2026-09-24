@@ -104,6 +104,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
           <CommandPalette
             navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
             onNavigate={(to) => navigate(to)}
+            organizationId={auth.me?.active_organization?.id ?? null}
           />
           <AskDekopen organizationId={auth.me?.active_organization?.id ?? null} />
           <footer className="status-bar">

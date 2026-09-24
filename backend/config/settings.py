@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "billing.apps.BillingConfig",
     "ai_gateway.apps.AiGatewayConfig",
     "ingest.apps.IngestConfig",
+    "search.apps.SearchConfig",
 ]
 
 MIDDLEWARE = [

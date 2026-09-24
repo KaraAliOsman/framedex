@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import "./commands.css";
 
-import { t } from "../../i18n/es-CL";
+import { ApiError } from "../../api/apiMutator";
+import { globalSearch } from "../../api/generated/dekopen";
+import type { SearchResult } from "../../api/generated/models";
+import { t, type TranslationKey } from "../../i18n/es-CL";
 import { useCommandSurface } from "./registry";
 import type { CommandParam, ResolvedCommand } from "./types";
 
@@ -30,12 +33,27 @@ function matches(query: string, title: string, keywords: string[] = []): boolean
     .every((token) => haystack.includes(token));
 }
 
+// §7: record results ride the same list as commands — the group chip keeps
+// them unmistakable, navigation is deterministic, nothing is re-ranked.
+const SEARCH_GROUP_LABEL: Record<string, TranslationKey> = {
+  projects: "search.groupProjects",
+  clients: "search.groupClients",
+  positions: "search.groupPositions",
+  systems: "search.groupSystems",
+  articles: "search.groupArticles",
+  orders: "search.groupOrders",
+  documents: "search.groupDocuments",
+  inventory: "search.groupInventory",
+};
+
 export function CommandPalette({
   navItems,
   onNavigate,
+  organizationId = null,
 }: {
   navItems: NavCommandItem[];
   onNavigate(to: string): void;
+  organizationId?: string | null;
 }): JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -46,6 +64,8 @@ export function CommandPalette({
     args: Record<string, string>;
   } | null>(null);
   const [invalidParam, setInvalidParam] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const searchSeq = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const surface = useCommandSurface();
 
@@ -54,6 +74,7 @@ export function CommandPalette({
     setQuery("");
     setCursor(0);
     setPending(null);
+    setSearchResults([]);
   }, []);
 
   useEffect(() => {
@@ -78,6 +99,28 @@ export function CommandPalette({
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open, pending]);
+
+  // Debounced global search — results land in `searchResults` and merge into
+  // the same navigable list below local commands/navigation.
+  useEffect(() => {
+    const needle = query.trim();
+    if (!open || pending || !organizationId || needle.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const seq = ++searchSeq.current;
+    const timer = window.setTimeout(() => {
+      void globalSearch({ q: needle }, { headers: { "X-Organization-ID": organizationId } })
+        .then((response) => {
+          if (response.status !== 200) throw new ApiError(response.status, response.data);
+          if (searchSeq.current === seq) setSearchResults(response.data.results);
+        })
+        .catch(() => {
+          if (searchSeq.current === seq) setSearchResults([]);
+        });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query, open, pending, organizationId]);
 
   const items = useMemo<Listed[]>(() => {
     const listed: Listed[] = [];
@@ -111,8 +154,20 @@ export function CommandPalette({
         },
       });
     }
+    for (const result of searchResults) {
+      const group = t(SEARCH_GROUP_LABEL[result.group] ?? "search.groupResults");
+      listed.push({
+        key: `search.${result.group}.${result.id}`,
+        title: result.title,
+        hint: result.subtitle ? `${group} · ${result.subtitle}` : group,
+        run: () => {
+          onNavigate(result.path);
+          close();
+        },
+      });
+    }
     return listed;
-  }, [query, surface, navItems, onNavigate, close]);
+  }, [query, surface, navItems, onNavigate, close, searchResults]);
 
   if (!open) return null;
 

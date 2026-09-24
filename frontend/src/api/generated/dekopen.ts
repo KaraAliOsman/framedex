@@ -85,6 +85,7 @@ import type {
   FlowConfirmationRequest,
   FreezeRequestRequest,
   FreezeResponse,
+  GlobalSearchParams,
   ImportConfirmRequest,
   ImportConfirmResponse,
   ImportCreateResponse,
@@ -157,6 +158,7 @@ import type {
   RemnantCreateRequest,
   RemnantList,
   ResetPricingRequest,
+  SearchResponse,
   SendOrderRequestRequest,
   ShareQuoteResponse,
   SignedAccessResponse,
@@ -12028,6 +12030,87 @@ export const purchasingCreateEligibility = async (
       body: JSON.stringify(eligibilityRequestRequest),
     },
   );
+};
+
+export type globalSearchResponse200 = {
+  data: SearchResponse;
+  status: 200;
+};
+
+export type globalSearchResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type globalSearchResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type globalSearchResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type globalSearchResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type globalSearchResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type globalSearchResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type globalSearchResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type globalSearchResponseSuccess = globalSearchResponse200 & {
+  headers: Headers;
+};
+export type globalSearchResponseError = (
+  | globalSearchResponse400
+  | globalSearchResponse401
+  | globalSearchResponse403
+  | globalSearchResponse404
+  | globalSearchResponse409
+  | globalSearchResponse422
+  | globalSearchResponse503
+) & {
+  headers: Headers;
+};
+
+export type globalSearchResponse = globalSearchResponseSuccess | globalSearchResponseError;
+
+export const getGlobalSearchUrl = (params: GlobalSearchParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/search/?${stringifiedParams}` : `/api/v1/search/`;
+};
+
+export const globalSearch = async (
+  params: GlobalSearchParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<globalSearchResponse> => {
+  return apiMutator<globalSearchResponse>(getGlobalSearchUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export type siiCafsListResponse200 = {
