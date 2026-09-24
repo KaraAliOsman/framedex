@@ -373,6 +373,13 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
+  // The quotation panel lives inside the facts rail's collapsed "Cotización"
+  // section — expand it once; it stays open for the whole emission flow.
+  await page
+    .locator("details.project-facts__section")
+    .filter({ hasText: "Cotización" })
+    .locator("summary")
+    .click();
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepA;
   await page.getByLabel("Condiciones de pago", { exact: true }).fill("50% anticipo, 50% entrega");
@@ -430,6 +437,11 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "GET" &&
       response.url().includes(`/api/v1/documents/projects/${draft.id}/inputs/`),
   );
+  await page
+    .locator("details.project-facts__section")
+    .filter({ hasText: "Cotización" })
+    .locator("summary")
+    .click();
   await page.getByRole("button", { name: "Preparar emisión", exact: true }).click();
   await prepB;
   await expect(page.getByLabel("Condiciones de pago", { exact: true })).toHaveValue(
