@@ -40,6 +40,9 @@ class Network:
         self.org, self.intent, self.ambiguous = org, intent, ambiguous
         self.plan_override = plan_override or {}
         self.subscription_override = subscription_override or {}
+        # (provider_environment, provider_subscription_id) is globally unique —
+        # a fixed fake id collides with committed residue from prior runs.
+        self.sub_id = f'sus_{intent["id"].hex[:16]}'
         self.created = []
         self.posts = 0
         self.lock = Lock()
@@ -47,7 +50,7 @@ class Network:
                                  transport=httpx.MockTransport(self.handle))
 
     def subscription(self):
-        value = dict(subscriptionId='sus_synthetic', customerId=self.intent['provider_customer_id'],
+        value = dict(subscriptionId=self.sub_id, customerId=self.intent['provider_customer_id'],
                     planId=self.intent['provider_plan_id'], subscription_start='2026-10-01 00:00:00',
                     trial_period_days=0)
         value.update(self.subscription_override)
@@ -67,7 +70,7 @@ class Network:
         elif path == '/api/subscription/get':
             value = self.subscription()
         elif path == '/api/invoice/get':
-            value = dict(id=765, subscriptionId='sus_synthetic', customerId=self.intent['provider_customer_id'],
+            value = dict(id=765, subscriptionId=self.sub_id, customerId=self.intent['provider_customer_id'],
                          currency='CLP', amount=43857, payment=self.payment())
         elif path == '/api/payment/getStatusByCommerceId':
             value = self.payment()
@@ -107,11 +110,11 @@ def test_native_create_replay_never_activates_unpaid_entitlements(committed_comm
     org, _, _ = committed_commercial_rows
     intent, _ = prepare(org)
     remote = Network(org, intent)
-    assert native.dispatch(org, intent['id'], remote.client) == 'sus_synthetic'
-    assert native.dispatch(org, intent['id'], remote.client) == 'sus_synthetic'
+    assert native.dispatch(org, intent['id'], remote.client) == remote.sub_id
+    assert native.dispatch(org, intent['id'], remote.client) == remote.sub_id
     assert remote.posts == 1
     local = one('SELECT * FROM public.subscriptions WHERE org_id=%s', [org])
-    assert local['provider_subscription_id'] == 'sus_synthetic' and local['status'] == 'pending'
+    assert local['provider_subscription_id'] == remote.sub_id and local['status'] == 'pending'
     assert wallet.summary(org)['plan'] == 'TRIAL'
     assert_consistent(org, 500)
     assert rows('SELECT * FROM public.payments WHERE org_id=%s', [org]) == []
@@ -125,7 +128,7 @@ def test_uncertain_native_create_is_recovered_by_get_without_second_subscription
         with pytest.raises(FlowError):
             native.dispatch(org, intent['id'], remote.client)
     assert remote.posts == 1
-    assert native.recover(org, intent['id'], remote.client) == 'sus_synthetic'
+    assert native.recover(org, intent['id'], remote.client) == remote.sub_id
     assert remote.posts == 1
     assert_consistent(org, 500)
 
@@ -144,7 +147,7 @@ def test_concurrent_native_create_claims_only_one_post(committed_commercial_rows
             close_old_connections()
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = list(pool.map(start, range(4)))
-    assert 'sus_synthetic' in results and remote.posts == 1
+    assert remote.sub_id in results and remote.posts == 1
 
 
 @pytest.mark.parametrize('override', [{'amount': 1}, {'currency': 'USD'}, {'interval': 4}, {'interval_count': 2}])
@@ -174,7 +177,7 @@ def test_intent_tenant_scope_and_immutable_terms(commercial_rows):
     with pytest.raises(FlowError):
         native._read(other, intent['id'], remote.client)
     with wallet.financial_transaction(other):
-        assert rows('SELECT * FROM public.flow_subscription_intents') == []
+        assert rows('SELECT * FROM public.flow_subscription_intents WHERE org_id=%s', [other]) == []
     with pytest.raises(DatabaseError), transaction.atomic():
         one('UPDATE public.flow_subscription_intents SET net_usd=1 WHERE id=%s RETURNING id', [intent['id']])
     with as_user(users['OWNER']):
@@ -216,7 +219,7 @@ def test_foreign_native_invoice_is_rejected(committed_commercial_rows):
     native.dispatch(org, intent['id'], remote.client)
     def foreign(request):
         assert request.url.path == '/api/invoice/get'
-        return httpx.Response(200, json=dict(id=765, subscriptionId='sus_foreign', customerId=intent['provider_customer_id'],
+        return httpx.Response(200, json=dict(id=765, subscriptionId=f'sus_foreign_{intent["id"].hex[:16]}', customerId=intent['provider_customer_id'],
                                            currency='CLP', amount=43857, payment=remote.payment()))
     client = FlowClient(api_url='https://sandbox.flow.cl/api', api_key='synthetic', secret_key='synthetic',
                         transport=httpx.MockTransport(foreign))
@@ -241,5 +244,5 @@ def test_crash_after_remote_create_before_local_commit_is_recoverable(committed_
     monkeypatch.setattr(native, 'one', original)
     assert remote.posts == 1
     assert one('SELECT provider_subscription_id FROM public.subscriptions WHERE org_id=%s', [org])['provider_subscription_id'] is None
-    assert native.recover(org, intent['id'], remote.client) == 'sus_synthetic'
+    assert native.recover(org, intent['id'], remote.client) == remote.sub_id
     assert remote.posts == 1

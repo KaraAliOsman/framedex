@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
 
@@ -8,12 +8,17 @@ import type {
   ProductIssue,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { useCanvasStore, type CanvasDesignInputs } from "./canvasStore";
+import { resolveCommands, useRegisterCommands } from "../commands/registry";
+import type { CommandContext, EditorTool } from "../commands/types";
+import { useCanvasStore } from "./canvasStore";
+import { assemblyCommands } from "./assemblyCommands";
+import { AssistantPanel } from "./AssistantPanel";
+import { applyDesignOps } from "./designOps";
 import { BowPlanContent, planBounds } from "./BowPlanSvg";
 import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
 import { buildObjectTree } from "./objectTree";
-import { resolveMembers } from "./members";
+import { resolveMembers, type MemberGeometry } from "./members";
 import {
   frontBounds,
   frontLayout,
@@ -21,43 +26,46 @@ import {
   OpeningGlyph,
   ProductFrontContent,
 } from "./ProductFrontSvg";
-import { unionBox } from "./viewport";
+
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
-import type { SplitType } from "./intentEditing";
+import type { SlidingLayout, SplitType } from "./intentEditing";
+import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
 import {
   addAdjacentUnit,
   equalizeCouplingAngles,
   equalizeModuleWidths,
-  makeBowProduct,
   moduleGlassSku,
   moduleGlassThicknessMm,
   moduleOpening,
   modulePanelSku,
+  modulePrimaryBay,
+  moveModuleDivision,
   removeUnit,
+  resizeModuleSeam,
   scaleModuleWidths,
+  contourTopCorners,
   setAllModuleHeights,
+  setContourBulge,
+  setContourVertex,
   setModuleGlass,
   setModuleGlassThickness,
   setModulePanel,
   setCouplerSku,
   setCouplingAngle,
   setModuleOpening,
+  setModuleSlidingLayout,
   setModuleWidth,
+  setModuleFrameless,
   splitModuleBay,
   type CouplingJson,
+  type FramelessEdge,
+  type FramelessFittingJson,
+  type FramelessSpecJson,
+  type FramelessSupportJson,
   type ProductJson,
+  type ProductModuleJson,
 } from "./productEditing";
-
-const OPENING_OPTIONS = [
-  ["FIXED", "intent.fixed"],
-  ["TURN_LEFT", "intent.turnLeft"],
-  ["TURN_RIGHT", "intent.turnRight"],
-  ["TILT_TURN_LEFT", "intent.tiltLeft"],
-  ["TILT_TURN_RIGHT", "intent.tiltRight"],
-  ["AWNING", "intent.awning"],
-  ["SLIDING_2L", "intent.sliding"],
-  ["DOOR_ENTRY", "intent.door"],
-] as const;
+import { OPENING_OPTIONS } from "./openings";
 
 const ISSUE_KEYS: Record<string, TranslationKey> = {
   couplings_count_mismatch: "assembly.issue.couplingsCountMismatch",
@@ -68,17 +76,88 @@ const ISSUE_KEYS: Record<string, TranslationKey> = {
   coupler_profile_unknown: "assembly.issue.couplerProfileUnknown",
   coupler_height_mismatch: "assembly.issue.couplerHeightMismatch",
   coupler_reinforcement_nonpositive: "assembly.issue.couplerReinforcementNonpositive",
+  contour_invalid: "assembly.issue.contourInvalid",
+  contour_splits_unsupported: "assembly.issue.contourSplits",
+  contour_opening_unsupported: "assembly.issue.contourOpening",
+  contour_panel_unsupported: "assembly.issue.contourPanel",
+  contour_coupling_unsupported: "assembly.issue.contourCoupling",
+  member_bending_required: "assembly.issue.memberBending",
+  coupler_width_mismatch: "assembly.issue.couplerWidthMismatch",
+  coupler_module_unknown: "assembly.issue.couplerModuleUnknown",
+  coupler_edge_invalid: "assembly.issue.couplerEdgeInvalid",
+  coupler_edge_conflict: "assembly.issue.couplerEdgeConflict",
+  connection_type_unsupported: "assembly.issue.connectionTypeUnsupported",
+  assembly_disconnected: "assembly.issue.assemblyDisconnected",
+  stacked_cycle: "assembly.issue.stackedCycle",
+  inline_not_adjacent: "assembly.issue.inlineNotAdjacent",
+  sliding_layout_invalid: "assembly.issue.slidingLayoutInvalid",
+  sliding_tracks_unsupported: "assembly.issue.slidingTracksUnsupported",
+  frameless_contour_unsupported: "assembly.issue.framelessContour",
+  frameless_splits_unsupported: "assembly.issue.framelessSplits",
+  frameless_opening_unsupported: "assembly.issue.framelessOpening",
+  frameless_panel_unsupported: "assembly.issue.framelessPanel",
+  frameless_article_unknown: "assembly.issue.framelessArticleUnknown",
 };
 
-function issueText(issue: ProductIssue): string {
+/** Engine failure reasons arrive as `str(error)` — member ids and field
+ * names never reach the user; each known cause maps to a readable phrase
+ * and anything unrecognized degrades to a generic sentence. */
+export const REASON_KEYS: [RegExp, TranslationKey][] = [
+  [/requires glass_thickness_mm and glass_spec/i, "assembly.reason.glassRequired"],
+  [/requires opening_type/i, "assembly.reason.openingRequired"],
+  [/requires panel_article_sku/i, "assembly.reason.panelRequired"],
+  [/requires split offset and mullion sku/i, "assembly.reason.splitMullionRequired"],
+  [/requires at least two modules/i, "assembly.reason.bowTwoModules"],
+  [/requires at least one module/i, "assembly.reason.oneModule"],
+  [/requires a top-level bay/i, "assembly.reason.doorNeedsBay"],
+  [/requires an opening type/i, "assembly.reason.openingRequired"],
+  [/zero-length segment/i, "assembly.reason.contourDegenerate"],
+  [/sagitta exceeds/i, "assembly.reason.contourSagitta"],
+  [/self-intersect/i, "assembly.reason.contourSelfIntersect"],
+  [/requires a sliding_layout/i, "assembly.reason.slidingLayoutRequired"],
+  [/not a sliding opening/i, "assembly.reason.slidingLayoutRequired"],
+  [/duplicate panel slot/i, "assembly.reason.slidingDuplicateSlot"],
+  [/undeclared track/i, "assembly.reason.slidingBadTrack"],
+  [/cannot occupy a track/i, "assembly.reason.slidingFixedTrack"],
+  [/adjacent fixed panels/i, "assembly.reason.slidingFixedAdjacent"],
+  [/cannot share a track/i, "assembly.reason.slidingSameTrack"],
+  [/at least one moving panel/i, "assembly.reason.slidingNoMoving"],
+];
+
+export function issueText(
+  issue: ProductIssue,
+  modules: ProductModuleJson[],
+  couplings: CouplingJson[],
+): string {
   const key = ISSUE_KEYS[issue.code];
   let text = key ? t(key) : issue.code;
   for (const [name, value] of Object.entries(issue.params)) {
+    if (name === "reason") continue;
     text = text.replace(`{${name}}`, value);
   }
-  text = text.replace("{target}", issue.target.replace("coupling:", "").replace("module:", ""));
+  const [kind, id] = issue.target.split(":", 2);
+  const ordinal =
+    kind === "module"
+      ? modules.findIndex((item) => item.id === id)
+      : kind === "coupling"
+        ? couplings.findIndex((item) => item.id === id)
+        : -1;
+  const noun =
+    kind === "coupling"
+      ? `la ${t("assembly.coupling").toLowerCase()}`
+      : `el ${t("assembly.module").toLowerCase()}`;
+  const target =
+    ordinal >= 0
+      ? `${noun} ${ordinal + 1}`
+      : kind === "assembly"
+        ? t("assembly.wholeAssembly")
+        : noun;
+  text = text.replace("{target}", target);
   const reason = issue.params["reason"];
-  if (reason && !text.includes(reason)) text += ` — ${reason}`;
+  if (reason && !text.includes(reason)) {
+    const matched = REASON_KEYS.find(([pattern]) => pattern.test(reason));
+    text += ` — ${matched ? t(matched[1]) : t("assembly.reason.generic")}`;
+  }
   return text;
 }
 
@@ -92,6 +171,14 @@ function normalizeAngle(candidate: string): string | null {
   const value = Number(candidate.replace(",", "."));
   if (!Number.isFinite(value) || Math.abs(value) >= 90) return null;
   return value.toFixed(1);
+}
+
+/** Contour coordinates are signed: zero/negative carry meaning (a vertical
+ * side, an inward arc). Bounds keep the corner ordering the engine requires. */
+function normalizeRange(candidate: string, min: number, max: number): string | null {
+  const value = Number(candidate.replace(",", "."));
+  if (!Number.isFinite(value) || value < min || value >= max) return null;
+  return value.toFixed(2);
 }
 
 type DraftFieldProps = {
@@ -136,51 +223,418 @@ function DraftField({
   );
 }
 
-export function createBowFromInputs(
-  inputs: CanvasDesignInputs,
-  glassThicknessMm = "4.00",
-  glassSpec = "4",
-  glassArticleSku: string | null = null,
-): ProductJson {
-  return makeBowProduct({
-    moduleCount: 3,
-    widthMm: Math.max(Number(inputs.nominalWidthMm) || 2100, 600),
-    heightMm: Math.max(Number(inputs.nominalHeightMm) || 1400, 400),
-    angleDeg: 15,
-    glassThicknessMm,
-    glassSpec,
-    glassArticleSku,
-  });
-}
-
 function statusKey(status: string | undefined): TranslationKey {
   if (status === "VALID") return "assembly.statusValid";
   if (status === "MANUFACTURING_INCOMPLETE") return "assembly.statusIncomplete";
   return "assembly.statusInvalid";
 }
 
+/** Editable semantic fields of a contour outline: the two top-corner
+ * offsets for a straight chord, plus one rise per bulged edge. Free-form
+ * outlines expose a vertex count until the polygon editor lands. */
+function ContourShapeSection({
+  module,
+  product,
+  busy,
+  commit,
+}: {
+  module: ProductModuleJson;
+  product: ProductJson;
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const contour = module.contour!;
+  const corners = contourTopCorners(contour);
+  const hasBulges = contour.bulges.some((bulge) => bulge !== null && bulge !== undefined);
+  const widthMm = Number(module.width_mm);
+  const leftBound = corners ? Number(contour.vertices[corners.rightIndex]!.x_mm) : 0;
+  const rightBound = corners ? widthMm - Number(contour.vertices[corners.leftIndex]!.x_mm) : 0;
+  // Sagitta is signed and bounded by half the chord (minor arcs only);
+  // zero straightens the edge back to a line.
+  const edgeChordMm = (edgeIndex: number): number => {
+    const n = contour.vertices.length;
+    const a = contour.vertices[edgeIndex % n]!;
+    const b = contour.vertices[(edgeIndex + 1) % n]!;
+    return Math.hypot(Number(b.x_mm) - Number(a.x_mm), Number(b.y_mm) - Number(a.y_mm));
+  };
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.shape")}</summary>
+      {corners && !hasBulges && (
+        <>
+          <DraftField
+            label={t("assembly.shapeOffsetLeft")}
+            value={Number(contour.vertices[corners.leftIndex]!.x_mm).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={(candidate) => normalizeRange(candidate, 0, leftBound)}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.leftIndex,
+                  value,
+                  contour.vertices[corners.leftIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+          <DraftField
+            label={t("assembly.shapeOffsetRight")}
+            value={(widthMm - Number(contour.vertices[corners.rightIndex]!.x_mm)).toFixed(2)}
+            unit="mm"
+            disabled={busy}
+            normalize={(candidate) => normalizeRange(candidate, 0, rightBound)}
+            onCommit={(value) =>
+              commit(
+                setContourVertex(
+                  product,
+                  module.id,
+                  corners.rightIndex,
+                  (widthMm - Number(value)).toFixed(2),
+                  contour.vertices[corners.rightIndex]!.y_mm,
+                ),
+              )
+            }
+          />
+        </>
+      )}
+      {contour.bulges.map(
+        (bulge, edgeIndex) =>
+          bulge !== null &&
+          bulge !== undefined && (
+            <DraftField
+              key={edgeIndex}
+              label={t("assembly.shapeRise")}
+              value={bulge}
+              unit="mm"
+              disabled={busy}
+              normalize={(candidate) =>
+                normalizeRange(
+                  candidate,
+                  -edgeChordMm(edgeIndex) / 2,
+                  edgeChordMm(edgeIndex) / 2 + 0.01,
+                )
+              }
+              onCommit={(value) => commit(setContourBulge(product, module.id, edgeIndex, value))}
+            />
+          ),
+      )}
+      {!corners && !hasBulges && (
+        <p className="inspector-note">
+          {t("assembly.shapeVertices").replace("{count}", String(contour.vertices.length))}
+        </p>
+      )}
+    </details>
+  );
+}
+
+const FRAMELESS_EDGES: [FramelessEdge, TranslationKey][] = [
+  ["bottom", "assembly.framelessEdgeBottom"],
+  ["top", "assembly.framelessEdgeTop"],
+  ["left", "assembly.framelessEdgeLeft"],
+  ["right", "assembly.framelessEdgeRight"],
+];
+const FRAMELESS_FITTING_KINDS: FramelessFittingJson["kind"][] = [
+  "PATCH_FITTING",
+  "CLAMP",
+  "HINGE",
+  "LOCK",
+  "CONNECTOR",
+  "SEAL",
+  "SUPPORT",
+];
+
+function FramelessSection({
+  module,
+  product,
+  couplerSkus,
+  busy,
+  commit,
+}: {
+  module: ProductModuleJson;
+  product: ProductJson;
+  couplerSkus: string[];
+  busy: boolean;
+  commit(next: ProductJson): void;
+}): JSX.Element {
+  const spec = module.frameless;
+  const update = (next: FramelessSpecJson | null) =>
+    commit(setModuleFrameless(product, module.id, next));
+  if (!spec) {
+    return (
+      <details className="inspector-section">
+        <summary>{t("assembly.frameless")}</summary>
+        <p className="inspector-note">{t("assembly.framelessHint")}</p>
+        <div className="inspector-actions">
+          <button
+            type="button"
+            className="ghost-button"
+            disabled={busy}
+            onClick={() => update({ supports: [], fittings: [] })}
+          >
+            {t("assembly.makeFrameless")}
+          </button>
+        </div>
+      </details>
+    );
+  }
+  const exposed = spec.exposed_edges ?? ["left", "right", "top", "bottom"];
+  const setSupport = (index: number, next: Partial<FramelessSupportJson>) =>
+    update({
+      ...spec,
+      supports: spec.supports.map((item, at) => (at === index ? { ...item, ...next } : item)),
+    });
+  const setFitting = (index: number, next: Partial<FramelessFittingJson>) =>
+    update({
+      ...spec,
+      fittings: spec.fittings.map((item, at) => (at === index ? { ...item, ...next } : item)),
+    });
+  return (
+    <details className="inspector-section" open>
+      <summary>{t("assembly.frameless")}</summary>
+      <p className="inspector-note">{t("assembly.framelessHint")}</p>
+      <h5 className="inspector-subhead">{t("assembly.framelessSupports")}</h5>
+      <ul className="frameless-rows">
+        {spec.supports.map((support, index) => (
+          <li key={index} className="frameless-row">
+            <select
+              aria-label={t("assembly.framelessSupports")}
+              value={support.edge}
+              disabled={busy}
+              onChange={(event) => setSupport(index, { edge: event.target.value as FramelessEdge })}
+            >
+              {FRAMELESS_EDGES.map(([edge, key]) => (
+                <option key={edge} value={edge}>
+                  {t(key)}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={t("assembly.framelessSupports")}
+              value={support.kind}
+              disabled={busy}
+              onChange={(event) =>
+                setSupport(index, {
+                  kind: event.target.value as FramelessSupportJson["kind"],
+                })
+              }
+            >
+              <option value="CHANNEL">{t("assembly.framelessKindChannel")}</option>
+              <option value="CLAMPS">{t("assembly.framelessKindClamps")}</option>
+            </select>
+            {support.kind === "CHANNEL" ? (
+              <select
+                aria-label={t("assembly.framelessSku")}
+                value={support.article_sku}
+                disabled={busy}
+                onChange={(event) => setSupport(index, { article_sku: event.target.value })}
+              >
+                <option value="">{t("assembly.framelessSku")}…</option>
+                {couplerSkus.map((sku) => (
+                  <option key={sku} value={sku}>
+                    {sku}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label={t("assembly.framelessSku")}
+                type="text"
+                value={support.article_sku}
+                disabled={busy}
+                onChange={(event) => setSupport(index, { article_sku: event.target.value })}
+              />
+            )}
+            <input
+              aria-label={t("assembly.framelessQty")}
+              type="number"
+              min={1}
+              value={support.qty}
+              disabled={busy}
+              onChange={(event) =>
+                setSupport(index, { qty: Math.max(1, Number(event.target.value) || 1) })
+              }
+            />
+            <button
+              type="button"
+              className="ghost-button is-danger"
+              aria-label="×"
+              disabled={busy}
+              onClick={() =>
+                update({ ...spec, supports: spec.supports.filter((_, at) => at !== index) })
+              }
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy}
+          onClick={() =>
+            update({
+              ...spec,
+              supports: [
+                ...spec.supports,
+                { kind: "CHANNEL", edge: "bottom", article_sku: "", qty: 1 },
+              ],
+            })
+          }
+        >
+          {t("assembly.framelessAddSupport")}
+        </button>
+      </div>
+      <h5 className="inspector-subhead">{t("assembly.framelessFittings")}</h5>
+      <ul className="frameless-rows">
+        {spec.fittings.map((fitting, index) => (
+          <li key={index} className="frameless-row">
+            <select
+              aria-label={t("assembly.framelessFittings")}
+              value={fitting.kind}
+              disabled={busy}
+              onChange={(event) =>
+                setFitting(index, {
+                  kind: event.target.value as FramelessFittingJson["kind"],
+                })
+              }
+            >
+              {FRAMELESS_FITTING_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {t(`assembly.fittingKind.${kind}` as TranslationKey)}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label={t("assembly.framelessSku")}
+              type="text"
+              value={fitting.sku}
+              disabled={busy}
+              onChange={(event) => setFitting(index, { sku: event.target.value })}
+            />
+            <input
+              aria-label={t("assembly.framelessQty")}
+              type="number"
+              min={1}
+              value={fitting.qty}
+              disabled={busy}
+              onChange={(event) =>
+                setFitting(index, { qty: Math.max(1, Number(event.target.value) || 1) })
+              }
+            />
+            <button
+              type="button"
+              className="ghost-button is-danger"
+              aria-label="×"
+              disabled={busy}
+              onClick={() =>
+                update({ ...spec, fittings: spec.fittings.filter((_, at) => at !== index) })
+              }
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={busy}
+          onClick={() =>
+            update({
+              ...spec,
+              fittings: [...spec.fittings, { kind: "PATCH_FITTING", sku: "", qty: 1 }],
+            })
+          }
+        >
+          {t("assembly.framelessAddFitting")}
+        </button>
+      </div>
+      <h5 className="inspector-subhead">{t("assembly.framelessExposedEdges")}</h5>
+      <div
+        className="frameless-edges"
+        role="group"
+        aria-label={t("assembly.framelessExposedEdges")}
+      >
+        {FRAMELESS_EDGES.map(([edge, key]) => (
+          <label key={edge} className="assembly-field assembly-field--inline">
+            <input
+              type="checkbox"
+              checked={exposed.includes(edge)}
+              disabled={busy}
+              onChange={(event) => {
+                const next = event.target.checked
+                  ? [...exposed, edge]
+                  : exposed.filter((item) => item !== edge);
+                update({
+                  ...spec,
+                  exposed_edges:
+                    next.length === 4
+                      ? undefined
+                      : FRAMELESS_EDGES.map(([candidate]) => candidate).filter((candidate) =>
+                          next.includes(candidate),
+                        ),
+                });
+              }}
+            />
+            <span>{t(key)}</span>
+          </label>
+        ))}
+      </div>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button is-danger"
+          disabled={busy}
+          onClick={() => update(null)}
+        >
+          {t("assembly.framelessRemove")}
+        </button>
+      </div>
+    </details>
+  );
+}
+
 function ModuleInspector({
   module,
   product,
+  members,
   glassSkus,
   glazingThicknesses,
   panelSkus,
   mullionSkus,
+  couplerSkus,
   busy,
   commit,
+  onAskAssistant,
 }: {
   module: ProductJson["assembly"]["modules"][number];
   product: ProductJson;
+  members: MemberGeometry;
   glassSkus: string[];
   glazingThicknesses: string[];
   panelSkus: string[];
   mullionSkus: Partial<Record<SplitType, string>>;
+  couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
+  onAskAssistant?(): void;
 }): JSX.Element {
   const opening = moduleOpening(module);
   const isDoor = opening === "DOOR_ENTRY";
+  const slidingBay = isSlidingOpening(opening) ? modulePrimaryBay(module) : null;
+  const slidingLayout = slidingBay ? resolvedSlidingLayout(slidingBay) : null;
   const ordinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
+  const commitSlidingLayout = (layout: SlidingLayout) => {
+    if (slidingBay) {
+      commit(setModuleSlidingLayout(product, module.id, layout, slidingBay.id));
+    }
+  };
   return (
     <section className="assembly-inspector" aria-label={t("assembly.module")}>
       <header className="assembly-inspector__header">
@@ -226,10 +680,12 @@ function ModuleInspector({
             disabled={busy || mullionSkus.SPLIT_V === undefined || isDoor}
             onClick={() =>
               commit(
-                splitModuleBay(product, module.id, {
-                  type: "SPLIT_V",
-                  mullionSku: mullionSkus.SPLIT_V ?? "",
-                }),
+                splitModuleBay(
+                  product,
+                  module.id,
+                  { type: "SPLIT_V", mullionSku: mullionSkus.SPLIT_V ?? "" },
+                  members,
+                ),
               )
             }
           >
@@ -241,10 +697,12 @@ function ModuleInspector({
             disabled={busy || mullionSkus.SPLIT_H === undefined || isDoor}
             onClick={() =>
               commit(
-                splitModuleBay(product, module.id, {
-                  type: "SPLIT_H",
-                  mullionSku: mullionSkus.SPLIT_H ?? "",
-                }),
+                splitModuleBay(
+                  product,
+                  module.id,
+                  { type: "SPLIT_H", mullionSku: mullionSkus.SPLIT_H ?? "" },
+                  members,
+                ),
               )
             }
           >
@@ -252,6 +710,131 @@ function ModuleInspector({
           </button>
         </div>
       </details>
+      {slidingLayout && (
+        <details className="inspector-section" open>
+          <summary>{t("assembly.slidingLayout")}</summary>
+          <div className="inspector-field">
+            <label htmlFor={`tracks-${module.id}`}>{t("assembly.slidingTracks")}</label>
+            <select
+              id={`tracks-${module.id}`}
+              value={slidingLayout.tracks}
+              disabled={busy}
+              onChange={(event) => {
+                const tracks = Number(event.target.value);
+                commitSlidingLayout({
+                  tracks,
+                  panels: slidingLayout.panels.map((panel, index) =>
+                    panel.kind === "MOVING" ? { ...panel, track: index % tracks } : panel,
+                  ),
+                });
+              }}
+            >
+              {[1, 2, 3, 4]
+                .filter(
+                  (count) =>
+                    count === slidingLayout.tracks ||
+                    count >=
+                      (slidingLayout.panels.filter((panel) => panel.kind === "MOVING").length > 1
+                        ? 2
+                        : 1),
+                )
+                .map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <ul className="sliding-panels" aria-label={t("assembly.slidingLayout")}>
+            {slidingLayout.panels.map((panel, index) => (
+              <li key={panel.slot} className="sliding-panel">
+                <span className="sliding-panel__slot">
+                  {t("assembly.slidingPanel").replace("{index}", String(index + 1))}
+                </span>
+                <select
+                  aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("intent.opening")}`}
+                  value={panel.kind}
+                  disabled={busy}
+                  onChange={(event) => {
+                    const kind = event.target.value as "MOVING" | "FIXED";
+                    const panels = slidingLayout.panels.map((item, at) =>
+                      at === index
+                        ? {
+                            ...item,
+                            kind,
+                            track:
+                              kind === "MOVING"
+                                ? (item.track ?? index % Math.max(slidingLayout.tracks, 1))
+                                : null,
+                          }
+                        : item,
+                    );
+                    commitSlidingLayout({ ...slidingLayout, panels });
+                  }}
+                >
+                  <option value="MOVING">{t("assembly.panelMoving")}</option>
+                  <option value="FIXED">{t("assembly.panelFixed")}</option>
+                </select>
+                {panel.kind === "MOVING" && (
+                  <select
+                    aria-label={`${t("assembly.slidingPanel").replace("{index}", String(index + 1))} ${t("assembly.panelTrack")}`}
+                    value={panel.track ?? 0}
+                    disabled={busy}
+                    onChange={(event) => {
+                      const track = Number(event.target.value);
+                      const panels = slidingLayout.panels.map((item, at) =>
+                        at === index ? { ...item, track } : item,
+                      );
+                      commitSlidingLayout({ ...slidingLayout, panels });
+                    }}
+                  >
+                    {Array.from({ length: slidingLayout.tracks }, (_, track) => (
+                      <option key={track} value={track}>
+                        {t("assembly.panelTrack")} {track + 1}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="inspector-actions">
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length >= 8}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: [
+                    ...slidingLayout.panels,
+                    {
+                      slot: `S${slidingLayout.panels.length + 1}`,
+                      kind: "MOVING",
+                      track: slidingLayout.panels.length % Math.max(slidingLayout.tracks, 1),
+                    },
+                  ],
+                })
+              }
+            >
+              {t("assembly.addPanel")}
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={busy || slidingLayout.panels.length <= 1}
+              onClick={() =>
+                commitSlidingLayout({
+                  ...slidingLayout,
+                  panels: slidingLayout.panels.slice(0, -1),
+                })
+              }
+            >
+              {t("assembly.removePanel")}
+            </button>
+          </div>
+        </details>
+      )}
       <details className="inspector-section" open>
         <summary>{t("inspector.dimensions")}</summary>
         <DraftField
@@ -271,6 +854,16 @@ function ModuleInspector({
           onCommit={(value) => commit(setAllModuleHeights(product, value))}
         />
       </details>
+      {module.contour && (
+        <ContourShapeSection module={module} product={product} busy={busy} commit={commit} />
+      )}
+      <FramelessSection
+        module={module}
+        product={product}
+        couplerSkus={couplerSkus}
+        busy={busy}
+        commit={commit}
+      />
       <details className="inspector-section" open>
         <summary>{t("inspector.glazing")}</summary>
         <label className="assembly-field">
@@ -330,6 +923,13 @@ function ModuleInspector({
           </label>
         )}
       </details>
+      {onAskAssistant && (
+        <div className="inspector-actions">
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
@@ -341,6 +941,7 @@ function CouplingInspector({
   couplerSkus,
   busy,
   commit,
+  onAskAssistant,
 }: {
   coupling: CouplingJson;
   product: ProductJson;
@@ -348,6 +949,7 @@ function CouplingInspector({
   couplerSkus: string[];
   busy: boolean;
   commit(next: ProductJson): void;
+  onAskAssistant?(): void;
 }): JSX.Element {
   return (
     <section className="assembly-inspector" aria-label={t("assembly.coupling")}>
@@ -391,8 +993,30 @@ function CouplingInspector({
         >
           {t("assembly.straighten")}
         </button>
+        {onAskAssistant && (
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        )}
       </div>
     </section>
+  );
+}
+
+function ToolIcon({ name }: { name: string }): JSX.Element {
+  const strokes: Record<string, JSX.Element> = {
+    select: <path d="M4 2l10 5.5-4.2 1.2L12 13l-2 1.4-2.2-4.3-3.8 2.9z" />,
+    split_v: <path d="M3 3h10v10H3z M8 3v10" />,
+    split_h: <path d="M3 3h10v10H3z M3 8h10" />,
+    couple_left: <path d="M6 3h7v10H6z M5.5 8H1 M2.5 5.5L1 8l1.5 2.5" />,
+    couple_right: <path d="M3 3h7v10H3z M10.5 8H15 M13.5 5.5L15 8l-1.5 2.5" />,
+    equalize: <path d="M3 5h10 M8 2.5L10.5 5 8 7.5 M3 11h10 M8 8.5L10.5 11 8 13.5" />,
+    tree: <path d="M4 3h9 M4 8h9 M4 13h9 M1 3h.5 M1 8h.5 M1 13h.5" />,
+  };
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="tool-icon">
+      {strokes[name]}
+    </svg>
   );
 }
 
@@ -405,6 +1029,8 @@ export function AssemblyEditor({
   disabled,
   onChanged,
   onEvaluationChange,
+  positionId,
+  positionPanel,
 }: {
   organizationId: string;
   couplerSkus: string[];
@@ -414,128 +1040,389 @@ export function AssemblyEditor({
   disabled: boolean;
   onChanged(): void;
   onEvaluationChange(evaluation: EngineAssemblyCalculateResponse | null): void;
+  positionId: string | null;
+  positionPanel?: JSX.Element;
 }): JSX.Element | null {
   const inputs = useCanvasStore((state) => state.inputs);
   const commitInputs = useCanvasStore((state) => state.commitInputs);
   const selection = useCanvasStore((state) => state.selection);
   const select = useCanvasStore((state) => state.select);
+  const undoHistory = useCanvasStore((state) => state.undo);
+  const redoHistory = useCanvasStore((state) => state.redo);
+  const canUndo = useCanvasStore((state) => state.past.length > 0);
+  const canRedo = useCanvasStore((state) => state.future.length > 0);
   const product = inputs.product;
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
   const members = useMemo(() => resolveMembers(options), [options]);
+  const [tool, setTool] = useState<EditorTool>("select");
+  const [treeOpen, setTreeOpen] = useState(true);
+  const [planOpen, setPlanOpen] = useState(true);
+  /** Queued prompt for the assistant — "" means focus only. Every "…with
+   * DEKOPEN" affordance funnels here; the human always confirms. */
+  const [assistantDraft, setAssistantDraft] = useState<string | null>(null);
+  const assistantSectionRef = useRef<HTMLDivElement>(null);
+  /** Canvas context menu — cursor position, closed on action/outside/Escape. */
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  /** Measured on-screen position — null until the first layout pass, so the
+   * menu can flip away from viewport edges instead of overflowing them. */
+  const [contextMenuPos, setContextMenuPos] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!contextMenu) {
+      setContextMenuPos(null);
+      return;
+    }
+    const menu = contextMenuRef.current;
+    if (!menu) return;
+    const rect = menu.getBoundingClientRect();
+    setContextMenuPos({
+      left: Math.max(0, Math.min(contextMenu.x, window.innerWidth - rect.width)),
+      top: Math.max(0, Math.min(contextMenu.y, window.innerHeight - rect.height)),
+    });
+  }, [contextMenu]);
 
   useEffect(() => {
     onEvaluationChange(evaluation);
   }, [evaluation, onEvaluationChange]);
 
+  /** Every "…with DEKOPEN" affordance: scroll the assistant into view and
+   * hand it a prompt draft — "" focuses the field untouched. */
+  function askAssistant(prompt: string): void {
+    assistantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setAssistantDraft(prompt);
+  }
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    function dismiss(): void {
+      setContextMenu(null);
+    }
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") dismiss();
+    }
+    window.addEventListener("mousedown", dismiss);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", dismiss);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [contextMenu]);
+
   function commit(next: ProductJson): void {
     if (next === product) return;
+    // Any product edit ends modal tool state — an armed divide must not
+    // survive an unrelated edit and surprise the next module click.
+    setTool("select");
     commitInputs({ ...inputs, product: next });
     onChanged();
   }
 
-  if (!product) return null;
+  if (!product) {
+    return (
+      <section className="assembly-editor assembly-editor--empty">
+        <div className="assembly-canvas canvas-empty">
+          <p className="assembly-hint">{t("assembly.pickStarter")}</p>
+        </div>
+        <aside className="assembly-side">
+          {positionPanel ?? <p className="assembly-hint">{t("assembly.elementHint")}</p>}
+        </aside>
+      </section>
+    );
+  }
+  const productJson = product;
   const modules = product.assembly.modules;
   const couplings = product.assembly.couplings;
   const selectedModule = modules.find((module) => module.id === selection);
   const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
-  const busy = disabled || isPending;
-  const mullionSkus: Partial<Record<SplitType, string>> = {
-    SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
-    SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
-  };
+  // isPending also holds while the query is disabled (no system/product yet):
+  // only an actual in-flight evaluation locks editing.
+  const evaluating = isPending && inputs.systemId !== null;
+  const busy = disabled || evaluating;
+  const mullionSkus: Partial<Record<SplitType, string>> = useMemo(
+    () => ({
+      SPLIT_V: options?.profiles.find((profile) => profile.role === "MULLION_V")?.sku,
+      SPLIT_H: options?.profiles.find((profile) => profile.role === "MULLION_H")?.sku,
+    }),
+    [options],
+  );
 
-  // One drawing sheet: front elevation on top, plan below it centered,
-  // sharing a single pan/zoom space so both views stay aligned.
-  const PLAN_GAP = 160;
   const front = frontLayout(product);
   const frontBox = frontBounds(product);
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
-  const planOffset = planBox
-    ? {
-        x: frontBox.x + (frontBox.w - planBox.w) / 2 - planBox.x,
-        y: frontBox.y + frontBox.h + PLAN_GAP - planBox.y,
-      }
-    : null;
-  const sheetBox =
-    planBox && planOffset
-      ? unionBox(frontBox, {
-          x: planBox.x + planOffset.x,
-          y: planBox.y + planOffset.y,
-          w: planBox.w,
-          h: planBox.h,
-        })
-      : frontBox;
   const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
-  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm${selection ? ` · ${selection}` : ""}`;
+
+  // The shared command registry: palette, keyboard and AI all dispatch the
+  // same typed commands; `commit` inside is the single undoable transaction.
+  const commandCtx = useMemo<CommandContext>(
+    () => ({
+      product,
+      selection,
+      catalog: {
+        glassThicknesses: options?.glazing_thicknesses ?? [],
+        glassSkus,
+        couplerSkus,
+        panelSkus,
+        mullionSkus,
+      },
+      disabled: busy,
+      commit,
+      select,
+      setTool,
+      focusAssistant: () => askAssistant(""),
+      undo: undoHistory,
+      redo: redoHistory,
+      canUndo,
+      canRedo,
+    }),
+    // `commit` is re-declared per render and always sees current inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      product,
+      selection,
+      options,
+      glassSkus,
+      couplerSkus,
+      panelSkus,
+      mullionSkus,
+      busy,
+      select,
+      undoHistory,
+      redoHistory,
+      canUndo,
+      canRedo,
+    ],
+  );
+  const surface = useMemo(
+    () => ({ commands: resolveCommands(commandCtx, assemblyCommands(commandCtx)) }),
+    [commandCtx],
+  );
+  useRegisterCommands(surface);
+  const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
+  // Labels derive from actual product membership — selection ids are
+  // arbitrary strings, so a coupling legitimately named "coupling-x" must
+  // still resolve (prefix sniffing would hide it).
+  const selectedLabel = selectedModule
+    ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
+    : selectedCoupling
+      ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
+      : null;
+
+  const divideToolType = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
+
+  // Divide tool: a canvas click splits the module at the cursor offset
+  // (direct manipulation), a tree click splits it at the center.
+  function pickModule(id: string): void {
+    const sku =
+      divideToolType === "SPLIT_V"
+        ? mullionSkus.SPLIT_V
+        : divideToolType === "SPLIT_H"
+          ? mullionSkus.SPLIT_H
+          : undefined;
+    if (divideToolType !== null && sku !== undefined) {
+      commit(splitModuleBay(productJson, id, { type: divideToolType, mullionSku: sku }, members));
+      setTool("select");
+    }
+    select(id);
+  }
+
+  function divideModule(id: string, bayId: string | null, offsetMm?: string): void {
+    const sku =
+      divideToolType === "SPLIT_V"
+        ? mullionSkus.SPLIT_V
+        : divideToolType === "SPLIT_H"
+          ? mullionSkus.SPLIT_H
+          : undefined;
+    if (divideToolType === null || sku === undefined) {
+      select(id);
+      return;
+    }
+    commit(
+      splitModuleBay(
+        productJson,
+        id,
+        {
+          type: divideToolType,
+          mullionSku: sku,
+          bayId: bayId ?? undefined,
+          offsetMm,
+        },
+        members,
+      ),
+    );
+    setTool("select");
+    select(id);
+  }
   const objectTree = useMemo(
     () => buildObjectTree(product, members, issues, t),
     [product, members, issues],
   );
 
+  function coupleUnit(side: "left" | "right"): void {
+    const next = addAdjacentUnit(productJson, side);
+    commit(next);
+    select(
+      next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ?? null,
+    );
+  }
+
+  const splitReady = { SPLIT_V: mullionSkus.SPLIT_V, SPLIT_H: mullionSkus.SPLIT_H };
   return (
-    <div className="assembly-editor" aria-label={t("assembly.frontView")}>
-      <div className="assembly-toolbar" role="toolbar">
+    <div
+      className={`assembly-editor${treeOpen ? "" : " assembly-editor--tree-closed"}`}
+      aria-label={t("assembly.frontView")}
+    >
+      <div className="assembly-tools" role="toolbar" aria-label={t("assembly.tools")}>
         <button
           type="button"
-          className="ghost-button"
+          className={`tool-button${tool === "select" ? " is-active" : ""}`}
+          title={t("assembly.toolSelect")}
+          aria-label={t("assembly.toolSelect")}
+          aria-pressed={tool === "select"}
+          onClick={() => setTool("select")}
+        >
+          <ToolIcon name="select" />
+        </button>
+        <button
+          type="button"
+          className={`tool-button${tool === "split_v" ? " is-active" : ""}`}
+          title={t("assembly.toolDivideV")}
+          aria-label={t("assembly.toolDivideV")}
+          aria-pressed={tool === "split_v"}
+          disabled={busy || splitReady.SPLIT_V === undefined}
+          onClick={() => setTool(tool === "split_v" ? "select" : "split_v")}
+        >
+          <ToolIcon name="split_v" />
+        </button>
+        <button
+          type="button"
+          className={`tool-button${tool === "split_h" ? " is-active" : ""}`}
+          title={t("assembly.toolDivideH")}
+          aria-label={t("assembly.toolDivideH")}
+          aria-pressed={tool === "split_h"}
+          disabled={busy || splitReady.SPLIT_H === undefined}
+          onClick={() => setTool(tool === "split_h" ? "select" : "split_h")}
+        >
+          <ToolIcon name="split_h" />
+        </button>
+        <span className="assembly-tools__divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.addUnitLeft")}
+          aria-label={t("assembly.addUnitLeft")}
+          disabled={busy}
+          onClick={() => coupleUnit("left")}
+        >
+          <ToolIcon name="couple_left" />
+        </button>
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.addUnitRight")}
+          aria-label={t("assembly.addUnitRight")}
+          disabled={busy}
+          onClick={() => coupleUnit("right")}
+        >
+          <ToolIcon name="couple_right" />
+        </button>
+        <span className="assembly-tools__divider" aria-hidden="true" />
+        <button
+          type="button"
+          className="tool-button"
+          title={t("assembly.equalizeModules")}
+          aria-label={t("assembly.equalizeModules")}
           disabled={busy || modules.length <= 1}
           onClick={() => commit(equalizeModuleWidths(product))}
         >
-          {t("assembly.equalizeModules")}
+          <ToolIcon name="equalize" />
         </button>
         <button
           type="button"
-          className="ghost-button"
+          className="tool-button"
+          title={t("assembly.equalizeAngles")}
+          aria-label={t("assembly.equalizeAngles")}
           disabled={busy || couplings.length === 0}
           onClick={() => commit(equalizeCouplingAngles(product))}
         >
-          {t("assembly.equalizeAngles")}
+          <ToolIcon name="equalize" />
         </button>
-        <span
-          className={`assembly-status assembly-status--${(evaluation?.status ?? "INVALID").toLowerCase()}`}
-          data-testid="assembly-status"
+        <span className="assembly-tools__spacer" aria-hidden="true" />
+        <button
+          type="button"
+          className={`tool-button${treeOpen ? " is-active" : ""}`}
+          title={t("assembly.toggleTree")}
+          aria-label={t("assembly.toggleTree")}
+          aria-pressed={treeOpen}
+          onClick={() => setTreeOpen((open) => !open)}
         >
-          {isPending
-            ? t("assembly.calculating")
-            : errorCode
-              ? t("assembly.calculateError")
-              : t(statusKey(evaluation?.status))}
-        </span>
+          <ToolIcon name="tree" />
+        </button>
       </div>
-      <div className="assembly-tree">
-        <ObjectTree
-          root={objectTree}
-          selection={selection}
-          onSelect={select}
-          title={t("tree.title")}
-        />
-      </div>
-      <div className="assembly-canvas">
-        <CanvasViewport contentBox={sheetBox} selectionBox={selectionBox} status={statusText}>
+      {treeOpen && (
+        <div className="assembly-tree">
+          <ObjectTree
+            root={objectTree}
+            selection={selection}
+            onSelect={(id) => {
+              if (id !== null && modules.some((module) => module.id === id)) pickModule(id);
+              else select(id);
+            }}
+            title={t("tree.title")}
+          />
+        </div>
+      )}
+      <div
+        className="assembly-canvas"
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setContextMenu({ x: event.clientX, y: event.clientY });
+        }}
+      >
+        <CanvasViewport contentBox={frontBox} selectionBox={selectionBox} status={statusText}>
           <ProductFrontContent
             product={product}
             members={members}
             selectedId={selectedModule?.id ?? null}
             issues={issues}
             disabled={busy}
-            onSelectModule={select}
-            onAddUnit={(side) => {
-              const next = addAdjacentUnit(product, side);
-              commit(next);
-              select(
-                next.assembly.modules[side === "left" ? 0 : next.assembly.modules.length - 1]?.id ??
-                  null,
-              );
+            divideTool={divideToolType}
+            onSelectModule={pickModule}
+            onContextMenuModule={(moduleId, pos) => {
+              select(moduleId);
+              setContextMenu(pos);
             }}
+            onAddUnit={coupleUnit}
             onCommitModuleWidth={(moduleId, widthMm) =>
               commit(setModuleWidth(product, moduleId, widthMm))
             }
             onCommitTotalWidth={(totalMm) => commit(scaleModuleWidths(product, totalMm))}
             onCommitHeight={(heightMm) => commit(setAllModuleHeights(product, heightMm))}
+            onCommitDivide={divideModule}
+            onMoveDivision={(moduleId, divisionId, offsetMm) =>
+              commit(moveModuleDivision(product, moduleId, divisionId, offsetMm))
+            }
+            onResizeSeam={(index, deltaMm) => commit(resizeModuleSeam(product, index, deltaMm))}
           />
-          {couplings.length > 0 && evaluation?.plan && planOffset && (
-            <g transform={`translate(${planOffset.x} ${planOffset.y})`}>
+        </CanvasViewport>
+        {couplings.length > 0 && evaluation?.plan && planBox && planOpen && (
+          <div className="plan-inset" role="complementary" aria-label={t("assembly.planView")}>
+            <div className="plan-inset__header">
+              <span>{t("assembly.planView")}</span>
+              <button
+                type="button"
+                aria-label={t("assembly.hidePlan")}
+                onClick={() => setPlanOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <svg
+              className="plan-inset__svg"
+              viewBox={`${planBox.x} ${planBox.y} ${planBox.w} ${planBox.h}`}
+              preserveAspectRatio="xMidYMid meet"
+            >
               <BowPlanContent
                 plan={evaluation.plan}
                 couplings={couplings}
@@ -544,27 +1431,87 @@ export function AssemblyEditor({
                 selectedCouplingId={selectedCoupling?.id ?? null}
                 issues={issues}
                 disabled={busy}
-                onSelectModule={select}
+                onSelectModule={pickModule}
                 onSelectCoupling={select}
+                onContextMenuElement={(elementId, pos) => {
+                  select(elementId);
+                  setContextMenu(pos);
+                }}
                 onCommitAngle={(couplingId, angleDeg) =>
                   commit(setCouplingAngle(product, couplingId, angleDeg))
                 }
               />
-            </g>
-          )}
-        </CanvasViewport>
+            </svg>
+          </div>
+        )}
+        {couplings.length > 0 && evaluation?.plan && !planOpen && (
+          <button type="button" className="plan-toggle" onClick={() => setPlanOpen(true)}>
+            {t("assembly.planView")}
+          </button>
+        )}
       </div>
+      {contextMenu && (
+        <div
+          ref={contextMenuRef}
+          className="context-menu"
+          role="menu"
+          style={{
+            left: contextMenuPos?.left ?? contextMenu.x,
+            top: contextMenuPos?.top ?? contextMenu.y,
+            visibility: contextMenuPos ? "visible" : "hidden",
+          }}
+          onMouseDown={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          {surface.commands
+            .filter((command) => !command.params?.length)
+            .map((command) => (
+              <button
+                key={command.id}
+                type="button"
+                role="menuitem"
+                className="context-menu__item"
+                onClick={() => {
+                  command.run({});
+                  setContextMenu(null);
+                }}
+              >
+                {command.title}
+              </button>
+            ))}
+          {selectedLabel && (
+            <button
+              type="button"
+              role="menuitem"
+              className="context-menu__item context-menu__item--assistant"
+              onClick={() => {
+                askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel));
+                setContextMenu(null);
+              }}
+            >
+              {t("assistant.modifyWith")}
+            </button>
+          )}
+        </div>
+      )}
       <div className="assembly-side">
         {selectedModule ? (
           <ModuleInspector
             module={selectedModule}
             product={product}
+            members={members}
             glassSkus={glassSkus}
             glazingThicknesses={options?.glazing_thicknesses ?? []}
             panelSkus={panelSkus}
             mullionSkus={mullionSkus}
+            couplerSkus={couplerSkus}
             busy={busy}
             commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
           />
         ) : selectedCoupling ? (
           <CouplingInspector
@@ -574,11 +1521,33 @@ export function AssemblyEditor({
             couplerSkus={couplerSkus}
             busy={busy}
             commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
           />
         ) : (
-          <section className="assembly-inspector">
-            <p className="assembly-hint">{t("assembly.elementHint")}</p>
-          </section>
+          !positionPanel && (
+            <section className="assembly-inspector">
+              <p className="assembly-hint">{t("assembly.elementHint")}</p>
+            </section>
+          )
+        )}
+        {positionPanel}
+        {product && (
+          <div ref={assistantSectionRef}>
+            <AssistantPanel
+              organizationId={organizationId}
+              positionId={positionId}
+              systemId={inputs.systemId}
+              product={product}
+              disabled={disabled}
+              draft={assistantDraft}
+              onDraftHandled={() => setAssistantDraft(null)}
+              onApply={(ops) => commit(applyDesignOps(product, ops))}
+            />
+          </div>
         )}
         {issues.length > 0 && (
           <ul className="assembly-issues" aria-label={t("assembly.issues")}>
@@ -594,13 +1563,60 @@ export function AssemblyEditor({
                     }
                   }}
                 >
-                  {issueText(issue)}
+                  {issueText(issue, modules, couplings)}
+                </button>
+                <button
+                  type="button"
+                  className="issue-fix"
+                  title={t("assistant.fixWith")}
+                  onClick={() =>
+                    askAssistant(
+                      `${t("assistant.fixPrompt")} ${issueText(issue, modules, couplings)}`,
+                    )
+                  }
+                >
+                  {t("assistant.fixWith")}
                 </button>
               </li>
             ))}
           </ul>
         )}
       </div>
+      <footer className="assembly-statusbar">
+        <span
+          className={`assembly-status assembly-status--${
+            inputs.systemId === null ? "idle" : (evaluation?.status ?? "INVALID").toLowerCase()
+          }`}
+          data-testid="assembly-status"
+        >
+          {evaluating
+            ? t("assembly.calculating")
+            : inputs.systemId === null
+              ? t("assembly.chooseSystemHint")
+              : errorCode
+                ? t("assembly.calculateError")
+                : t(statusKey(evaluation?.status))}
+        </span>
+        <span className="assembly-statusbar__dims">{statusText}</span>
+        {selectedLabel && <span className="assembly-statusbar__selection">{selectedLabel}</span>}
+        {issues.length > 0 && (
+          <button
+            type="button"
+            className="assembly-statusbar__issues"
+            onClick={() => {
+              const first = issues[0];
+              if (
+                first &&
+                (first.target.startsWith("module:") || first.target.startsWith("coupling:"))
+              ) {
+                select(first.target.slice(first.target.indexOf(":") + 1));
+              }
+            }}
+          >
+            {t("assembly.issueCount").replace("{count}", String(issues.length))}
+          </button>
+        )}
+      </footer>
     </div>
   );
 }

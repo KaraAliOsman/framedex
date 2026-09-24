@@ -55,8 +55,13 @@ def calculation_hash(request: Mapping[str, object], response: Mapping[str, objec
     return "sha256:" + hashlib.sha256(canonical_json(preimage)).hexdigest()
 
 
-def result_payload(result: EngineResult) -> dict[str, JsonValue]:
-    value = _json_value(result.model_dump())
+def result_payload(
+    result: EngineResult, *, exclude_unset: bool = False
+) -> dict[str, JsonValue]:
+    # exclude_unset=True preserves the persisted field presence when a stored
+    # BOM is re-validated after the model gained optional fields: absent keys
+    # stay absent (same canonical hash), explicit nulls stay present.
+    value = _json_value(result.model_dump(exclude_unset=exclude_unset))
     assert isinstance(value, dict)
     return value
 

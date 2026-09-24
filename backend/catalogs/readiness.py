@@ -42,6 +42,38 @@ def catalog_readiness(system_id, org_id):
         except (DocumentaryError, ValueError):
             reasons.append("manufacturing")
     if params is not None:
+        # Fabrication authorities the fixed geometry actually consumes — mirror
+        # the engine's own role/operation rules so UNKNOWN surfaces here, not
+        # mid-calculation, without blocking catalogs whose gaps never reach a
+        # calculation:
+        # * PVC: every welded-cut member needs weld loss + reinforcement gap —
+        #   all effective roles except THRESHOLD (appended unwelded).
+        # * non-PVC: profile mass is consumed only by leaf weight, so only the
+        #   effective SASH needs a declared density (PVC has a declared system
+        #   fallback, so it needs no weight check).
+        # * Couplers load outside effective articles; any reinforced coupler
+        #   runs reinforcement_cut_length regardless of material.
+        if params.material is MaterialType.PVC:
+            fabrication_missing = any(
+                article.welding_loss_mm is None or article.reinforcement_gap_mm is None
+                for role, article in params.effective_profile_articles.items()
+                if role is not ProfileRole.THRESHOLD
+            )
+        else:
+            sash = params.effective_profile_articles.get(ProfileRole.SASH)
+            fabrication_missing = sash is not None and sash.weight_kg_m is None
+        if not fabrication_missing:
+            try:
+                couplers = SystemParamsRepository().load_coupler_articles(system_id, org_id)
+                fabrication_missing = any(
+                    bool(article.reinforcement_sku)
+                    and (article.welding_loss_mm is None or article.reinforcement_gap_mm is None)
+                    for article in couplers.values()
+                )
+            except (ValueError, UnsupportedCatalogContract):
+                fabrication_missing = True
+        if fabrication_missing:
+            reasons.append("fabrication")
         try:
             frame = params.effective_profile_articles[ProfileRole.FRAME]
             profiles = [frame,
