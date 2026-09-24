@@ -314,3 +314,97 @@ def test_receipt_post_denies_estimator(monkeypatch) -> None:
         format="json",
     )
     assert response.status_code == 403
+
+
+def _remnant_row(remnant_id, order_id):
+    from datetime import datetime, timezone
+
+    return {
+        "id": remnant_id,
+        "kind": "BAR",
+        "stock_authority_id": uuid4(),
+        "sheet_workshop_sku": None,
+        "physical_stock_identity": "AUTH-1",
+        "material": "PVC",
+        "color": "WHITE",
+        "length_mm": Decimal("3000.00"),
+        "width_mm": None,
+        "height_mm": None,
+        "status": "RESERVED",
+        "origin": "PURCHASE",
+        "origin_order_id": None,
+        "reserved_order_id": order_id,
+        "consumed_order_id": None,
+        "rack_location": None,
+        "notes": None,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+
+def test_unreserve_remnant_evicts_order_plan_claim() -> None:
+    # Releasing a RESERVED drop frees the physical remnant — the reserving
+    # order's plan must stop claiming it in the same transaction, or a second
+    # order could book the drop while the first plan still lists it.
+    import json
+
+    from inventory import remnants
+
+    org_id, remnant_id, order_id = uuid4(), uuid4(), uuid4()
+    payload = {
+        "optimization": {
+            "remnants": {
+                "consumed": [
+                    {"id": str(remnant_id), "kind": "BAR"},
+                    {"id": str(uuid4()), "kind": "BAR"},
+                ]
+            },
+            "bars": {
+                "workshop_cut_plan": [
+                    {"remnant_id": str(remnant_id), "source": "REMNANT", "cuts": []},
+                    {"remnant_id": str(uuid4()), "source": "REMNANT", "cuts": []},
+                ]
+            },
+            "sheets": [
+                {"remnant_id": str(remnant_id), "source": "REMNANT"},
+            ],
+        }
+    }
+    updates: list = []
+
+    def fake_one(query, params=(), code=None):
+        if "inventory_remnants" in query:
+            return _remnant_row(remnant_id, order_id)
+        if "public.orders" in query:
+            return {"payload_json": payload}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        updates.append((query, params))
+        return [{"id": remnant_id}]
+
+    with patch("inventory.remnants.one", side_effect=fake_one), patch(
+        "inventory.remnants.rows", side_effect=fake_rows
+    ), patch(
+        "inventory.remnants.transaction.atomic", return_value=_atomic()
+    ), patch(
+        "inventory.remnants.documentary_backend", return_value=_atomic()
+    ):
+        output = remnants.unreserve_remnant(
+            org_id=org_id, remnant_id=remnant_id, actor_id=uuid4()
+        )
+
+    assert output["status"] == "RESERVED"  # refreshed stub row
+    order_update = next(u for u in updates if "payload_json" in u[0])
+    written = json.loads(order_update[1][0])
+    optimization = written["optimization"]
+    consumed_ids = [e["id"] for e in optimization["remnants"]["consumed"]]
+    assert str(remnant_id) not in consumed_ids
+    assert len(consumed_ids) == 1
+    plan = optimization["bars"]["workshop_cut_plan"]
+    evicted = next(b for b in plan if b["source"] == "NEW")
+    assert evicted["remnant_id"] is None
+    kept = next(b for b in plan if b["source"] == "REMNANT")
+    assert kept["remnant_id"] is not None
+    assert optimization["sheets"][0]["source"] == "NEW"
+    assert optimization["sheets"][0]["remnant_id"] is None

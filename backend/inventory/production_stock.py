@@ -424,7 +424,19 @@ def unit_stock_needs(
         _add("PANEL", purchasing, str(piece.get("name") or sku), multiplier)
 
     for purchase in sheet_purchases:
-        sku = str(purchase.get("workshop_sku") or purchase.get("commercial_sku") or "")
+        if str(purchase.get("group_kind") or "GLASS") != "GLASS":
+            # Panel-group sheet purchases stay on the panel purchase-authority
+            # path above (PANEL need at GLAZE; unmapped panels gate the step) —
+            # reserving the sheet too would book the same physical good twice.
+            continue
+        # `SheetPurchase` carries `purchasing_sku` — the commercial identity
+        # purchase orders and receiving book against — not `workshop_sku`.
+        sku = str(
+            purchase.get("purchasing_sku")
+            or purchase.get("workshop_sku")
+            or purchase.get("commercial_sku")
+            or ""
+        )
         if not sku:
             continue
         _add("SHEET", sku, sku, _dec(purchase.get("qty_sheets") or purchase.get("qty_bars") or 1))

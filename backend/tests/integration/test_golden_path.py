@@ -21,7 +21,7 @@ from tests.integration.test_shot09_documentary import (
     _freeze,
     _seed_project,
     as_user,
-    documentary_tenant,
+    documentary_tenant,  # noqa: F401 — pytest resolves the fixture by param name
 )
 
 pytestmark = pytest.mark.rls_integration
@@ -106,7 +106,8 @@ def _seed_stock(org: UUID, actor: UUID) -> None:
 
 
 def test_golden_path_emit_release_optimize_steps_dispatch(
-    documentary_tenant, monkeypatch: pytest.MonkeyPatch,
+    documentary_tenant,  # noqa: F811 — injected fixture, not a redefinition
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         "production.dispatch_notes.SupabaseDocumentStorage", FakeStorage
@@ -173,7 +174,9 @@ def test_golden_path_emit_release_optimize_steps_dispatch(
         assert str(dispatched["status"]) == "DISPATCHED"
 
 
-def test_golden_path_revision_immutable_after_change(documentary_tenant) -> None:
+def test_golden_path_revision_immutable_after_change(
+    documentary_tenant,  # noqa: F811 — injected fixture, not a redefinition
+) -> None:
     """§12.4: a repriced successor leaves the sealed revision untouched."""
     org, _, users, _ = documentary_tenant
     owner = users["OWNER"]
