@@ -288,7 +288,10 @@ export function ProductionPage(): JSX.Element {
   const loadTrace = useCallback(
     async (orderId?: string) => {
       const id = orderId ?? selectedId;
-      if (!id) return;
+      // Only the selected order's trace belongs in state — a mutating action
+      // whose order is no longer selected refreshes nothing (and must not
+      // cancel the selected order's in-flight request either).
+      if (!id || id !== selectedIdRef.current) return;
       const generation = ++traceGeneration.current;
       setTraceBusy(true);
       try {
@@ -299,6 +302,13 @@ export function ProductionPage(): JSX.Element {
         if (generation !== traceGeneration.current) return;
         if (selectedIdRef.current !== id) return;
         if (response.status === 200) setTrace(response.data);
+      } catch {
+        // On failure drop the stale data instead of leaving it displayed —
+        // the reload control reappears and the card can't mislead the
+        // operator with pre-mutation stock.
+        if (generation === traceGeneration.current && selectedIdRef.current === id) {
+          setTrace(null);
+        }
       } finally {
         if (generation === traceGeneration.current) setTraceBusy(false);
       }
