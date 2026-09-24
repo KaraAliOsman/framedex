@@ -8,6 +8,8 @@
 import type {
   AdminResponse,
   AdminWriteRequest,
+  AiAskRequestRequest,
+  AiAskResponse,
   AiInvokeRequestRequest,
   AiInvokeResponse,
   AllocationRequestRequest,
@@ -182,6 +184,92 @@ import type {
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
+export type aiAskResponse200 = {
+  data: AiAskResponse;
+  status: 200;
+};
+
+export type aiAskResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiAskResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiAskResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiAskResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiAskResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiAskResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiAskResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiAskResponseSuccess = aiAskResponse200 & {
+  headers: Headers;
+};
+export type aiAskResponseError = (
+  | aiAskResponse400
+  | aiAskResponse401
+  | aiAskResponse403
+  | aiAskResponse404
+  | aiAskResponse409
+  | aiAskResponse422
+  | aiAskResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiAskResponse = aiAskResponseSuccess | aiAskResponseError;
+
+export const getAiAskUrl = () => {
+  return `/api/v1/ai/ask/`;
+};
+
+/**
+ * Contextual "Preguntar a DEKOPEN" — the question and surface come from
+ * the client; every fact in the context is queried server-side under the
+ * caller's RLS. The provider answers inside that projection only.
+ */
+export const aiAsk = async (
+  aiAskRequestRequest: AiAskRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiAskResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiAskResponse>(getAiAskUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiAskRequestRequest),
+  });
+};
+
 export type aiInvokeResponse200 = {
   data: AiInvokeResponse;
   status: 200;

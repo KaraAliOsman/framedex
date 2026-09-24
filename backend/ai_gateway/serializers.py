@@ -31,3 +31,36 @@ class AiInvokeResponseSerializer(serializers.Serializer):
     tokens_completion = serializers.IntegerField()
     latency_ms = serializers.IntegerField()
     credits_debited = serializers.IntegerField()
+
+
+class AiAskRequestSerializer(serializers.Serializer):
+    surface = serializers.CharField(min_length=2, max_length=40)
+    refs = serializers.DictField(required=False)
+    question = serializers.CharField(min_length=1, max_length=2000)
+    operation_key = serializers.CharField(min_length=8, max_length=120)
+
+    def validate_refs(self, value):
+        # Refs are identifiers only — the server resolves them into the typed
+        # context itself. Anything else (a nested blob, a payload-shaped
+        # object) is not an identity and is refused.
+        for key, item in value.items():
+            if not isinstance(key, str) or not isinstance(item, (str, int)) or isinstance(item, bool):
+                raise serializers.ValidationError(
+                    "Las referencias de contexto deben ser identificadores simples."
+                )
+        return value
+
+
+class AiAskActionSerializer(serializers.Serializer):
+    kind = serializers.CharField()
+    path = serializers.CharField()
+    label = serializers.CharField()
+
+
+class AiAskResponseSerializer(serializers.Serializer):
+    audit_id = serializers.CharField()
+    model = serializers.CharField()
+    credits_debited = serializers.IntegerField()
+    answer = serializers.CharField()
+    actions = AiAskActionSerializer(many=True)
+    warnings = serializers.ListField(child=serializers.CharField())

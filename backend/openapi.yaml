@@ -4,6 +4,86 @@ info:
   version: 1.0.0
   description: Authenticated tenant and engine API boundary.
 paths:
+  /api/v1/ai/ask/:
+    post:
+      operationId: ai_ask
+      description: |-
+        Contextual "Preguntar a DEKOPEN" — the question and surface come from
+        the client; every fact in the context is queried server-side under the
+        caller's RLS. The provider answers inside that projection only.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAskRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiAskRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiAskRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAskResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/ai/invoke/:
     post:
       operationId: ai_invoke
@@ -11410,6 +11490,67 @@ components:
       required:
       - reason
       - values
+    AiAskAction:
+      type: object
+      properties:
+        kind:
+          type: string
+        path:
+          type: string
+        label:
+          type: string
+      required:
+      - kind
+      - label
+      - path
+    AiAskRequestRequest:
+      type: object
+      properties:
+        surface:
+          type: string
+          minLength: 2
+          maxLength: 40
+        refs:
+          type: object
+          additionalProperties: {}
+        question:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        operation_key:
+          type: string
+          minLength: 8
+          maxLength: 120
+      required:
+      - operation_key
+      - question
+      - surface
+    AiAskResponse:
+      type: object
+      properties:
+        audit_id:
+          type: string
+        model:
+          type: string
+        credits_debited:
+          type: integer
+        answer:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiAskAction'
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+      - actions
+      - answer
+      - audit_id
+      - credits_debited
+      - model
+      - warnings
     AiInvokeRequestRequest:
       type: object
       properties:

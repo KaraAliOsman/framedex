@@ -89,6 +89,7 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/projects/{project_id}/payment-links/",
         "/api/v1/projects/{project_id}/payment-links/{link_id}/recover/",
         "/api/v1/ai/invoke/",
+        "/api/v1/ai/ask/",
         "/api/v1/projects/{project_id}/imports/",
         "/api/v1/projects/{project_id}/imports/{import_id}/",
         "/api/v1/projects/{project_id}/imports/{import_id}/confirm/",

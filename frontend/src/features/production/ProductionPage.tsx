@@ -40,6 +40,7 @@ import type {
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { useAssistantSurface } from "../assistant/assistantContext";
 import { cutRoleLabel } from "./labels";
 import { CutPlanView, type WorkOrderOptimization } from "./CutPlanView";
 import {
@@ -167,6 +168,12 @@ export function ProductionPage(): JSX.Element {
   const [params, setParams] = useSearchParams();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [detail, setDetail] = useState<ProductionOrderDetail | null>(null);
+  // While a work order is open, Ask DEKOPEN answers inside that order's
+  // typed context — steps, status and shortages — not the generic list.
+  useAssistantSurface(
+    detail ? "work_order" : null,
+    detail ? { work_order_id: detail.id } : undefined,
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [note, setNote] = useState("");

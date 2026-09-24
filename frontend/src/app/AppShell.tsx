@@ -7,6 +7,8 @@ import { useAuthSession } from "../auth/AuthSessionProvider";
 import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
+import { AskDekopen } from "../features/assistant/AskDekopen";
+import { AssistantSurfaceProvider } from "../features/assistant/assistantContext";
 import { ShellCrumbs } from "./ShellCrumbs";
 import { ShellLeafContext } from "./shellLeaf";
 
@@ -64,49 +66,52 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
 
   return (
     <ShellLeafContext.Provider value={leafContext}>
-      <div className="app-shell" data-testid="app-shell">
-        <header className="app-ribbon">
-          <span className="brand">{t("app.brand")}</span>
-          <span className="context-title">
-            {auth.me?.active_organization?.name ?? t("org.none")}
-          </span>
-          <button type="button" onClick={toggleTheme} aria-label={t("theme.toggle")}>
-            {t(theme === "light" ? "theme.toDark" : "theme.toLight")}
-          </button>
-          <button type="button" onClick={() => void auth.signOut()}>
-            {t("auth.signOut")}
-          </button>
-        </header>
-        <nav className="tool-rail" aria-label={t("shell.navigation")}>
-          {navGroups.map((group, index) => {
-            const items = group.items.filter(([to]) => navigationAllowed(to));
-            if (items.length === 0) return null;
-            return (
-              <div
-                key={group.id}
-                className={`tool-rail__group${group.id === "account" ? " tool-rail__group--account" : ""}`}
-              >
-                {index > 0 && <span className="tool-rail__divider" aria-hidden />}
-                {items.map(([to, label]) => (
-                  <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
-                    {t(label)}
-                  </NavLink>
-                ))}
-              </div>
-            );
-          })}
-        </nav>
-        <ShellCrumbs leaf={leaf} />
-        <main className="workspace">{children}</main>
-        <CommandPalette
-          navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
-          onNavigate={(to) => navigate(to)}
-        />
-        <footer className="status-bar">
-          <span>{t("shell.engineStatus")}</span>
-          <span>{t("shell.apiStatus")}</span>
-        </footer>
-      </div>
+      <AssistantSurfaceProvider>
+        <div className="app-shell" data-testid="app-shell">
+          <header className="app-ribbon">
+            <span className="brand">{t("app.brand")}</span>
+            <span className="context-title">
+              {auth.me?.active_organization?.name ?? t("org.none")}
+            </span>
+            <button type="button" onClick={toggleTheme} aria-label={t("theme.toggle")}>
+              {t(theme === "light" ? "theme.toDark" : "theme.toLight")}
+            </button>
+            <button type="button" onClick={() => void auth.signOut()}>
+              {t("auth.signOut")}
+            </button>
+          </header>
+          <nav className="tool-rail" aria-label={t("shell.navigation")}>
+            {navGroups.map((group, index) => {
+              const items = group.items.filter(([to]) => navigationAllowed(to));
+              if (items.length === 0) return null;
+              return (
+                <div
+                  key={group.id}
+                  className={`tool-rail__group${group.id === "account" ? " tool-rail__group--account" : ""}`}
+                >
+                  {index > 0 && <span className="tool-rail__divider" aria-hidden />}
+                  {items.map(([to, label]) => (
+                    <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
+                      {t(label)}
+                    </NavLink>
+                  ))}
+                </div>
+              );
+            })}
+          </nav>
+          <ShellCrumbs leaf={leaf} />
+          <main className="workspace">{children}</main>
+          <CommandPalette
+            navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
+            onNavigate={(to) => navigate(to)}
+          />
+          <AskDekopen organizationId={auth.me?.active_organization?.id ?? null} />
+          <footer className="status-bar">
+            <span>{t("shell.engineStatus")}</span>
+            <span>{t("shell.apiStatus")}</span>
+          </footer>
+        </div>
+      </AssistantSurfaceProvider>
     </ShellLeafContext.Provider>
   );
 }

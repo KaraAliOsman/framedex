@@ -562,6 +562,46 @@ def _design_alternatives_output(input_payload: dict) -> dict:
     }
 
 
+def _context_assist_output(input_payload: dict) -> dict:
+    """Mock contextual answer: the answer cites real values straight from the
+    server-built context — never invented. Deterministic per surface so tests
+    and every environment exercise the same response contract a real provider
+    must satisfy."""
+    surface = str(input_payload.get("surface") or "dashboard")
+    context = input_payload.get("context") or {}
+    org = context.get("organization") or {}
+    parts = [f"Estás en la superficie '{surface}' de {org.get('name') or 'tu organización'}."]
+    counts = context.get("counts")
+    if isinstance(counts, dict):
+        parts.append(
+            f"La organización registra {counts.get('projects', 0)} proyectos y "
+            f"{counts.get('work_orders_open', 0)} órdenes de producción abiertas."
+        )
+    if isinstance(context.get("projects"), list):
+        parts.append(f"Veo {len(context['projects'])} proyectos recientes en la lista.")
+    if isinstance(context.get("systems"), list):
+        parts.append(f"El catálogo muestra {len(context['systems'])} sistemas de perfiles.")
+    if isinstance(context.get("work_orders"), list):
+        parts.append(f"Hay {len(context['work_orders'])} órdenes de producción.")
+    if context.get("order_code"):
+        parts.append(f"La orden {context['order_code']} está en estado {context.get('status')}.")
+        if context.get("shortages"):
+            parts.append(f"Registra {context['shortages']} línea(s) con escasez de material.")
+    if context.get("code") and context.get("positions") is not None:
+        parts.append(
+            f"El proyecto {context['code']} tiene {len(context['positions'])} posiciones."
+        )
+    warnings: list[str] = []
+    if context.get("shortages"):
+        warnings.append("La orden tiene líneas de material sin reservar.")
+    return {
+        "answer": " ".join(parts)
+        + " Para una respuesta generativa configura un proveedor real en la ruta 'context_assist'.",
+        "actions": [],
+        "warnings": warnings,
+    }
+
+
 class MockProvider:
     """Deterministic provider — a real output a test can assert, never I/O."""
 
@@ -586,6 +626,10 @@ class MockProvider:
         elif capability == "design_alternatives":
             output = json.dumps(
                 _design_alternatives_output(input_payload), ensure_ascii=False
+            )
+        elif capability == "context_assist":
+            output = json.dumps(
+                _context_assist_output(input_payload), ensure_ascii=False
             )
         else:
             output = (
