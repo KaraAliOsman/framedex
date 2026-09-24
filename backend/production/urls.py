@@ -10,6 +10,7 @@ from production.views import (
     ProductionOrderDxfExportView,
     ProductionOrderDxfFileView,
     ProductionOrderDispatchNoteView,
+    ProductionOrderDispatchNoteDteView,
     ProductionOrderInstallationView,
     ProductionOrderLabelsView,
     ProductionOrderCncFileView,
@@ -94,6 +95,11 @@ urlpatterns = [
         "orders/<uuid:order_id>/dispatch-note/",
         ProductionOrderDispatchNoteView.as_view(),
         name="production-order-dispatch-note",
+    ),
+    path(
+        "orders/<uuid:order_id>/dispatch-note-dte/",
+        ProductionOrderDispatchNoteDteView.as_view(),
+        name="production-order-dispatch-note-dte",
     ),
     path(
         "orders/<uuid:order_id>/install/",

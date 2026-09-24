@@ -7,6 +7,8 @@ import {
   projectPaymentIntegrationStatus,
   siiCafRegister,
   siiCafsList,
+  siiCertificateStatus,
+  siiCertificateUpload,
 } from "../api/generated/dekopen";
 import type {
   ApiUrlEnum,
@@ -14,6 +16,7 @@ import type {
   PaymentIntegrationStatus,
   RoleEnum,
   SiiCaf,
+  SiiCertificate,
 } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
@@ -273,6 +276,118 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
   );
 }
 
+function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
+  const [certificate, setCertificate] = useState<SiiCertificate | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+
+  const load = useCallback(async () => {
+    try {
+      const response = await siiCertificateStatus(requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setCertificate(response.data.certificate);
+    } catch {
+      setMessage({ text: t("settings.siiCertError"), error: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function upload(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
+      "input[type=file]",
+    );
+    const file = input?.files?.[0];
+    if (!file) return;
+    const form = event.target as HTMLFormElement;
+    const field = (name: string) =>
+      (form.elements.namedItem(name) as HTMLInputElement | null)?.value.trim() ?? "";
+    setBusy(true);
+    setMessage(null);
+    try {
+      const pfx_b64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? "").split(",")[1] ?? "");
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const response = await siiCertificateUpload(
+        {
+          pfx_b64,
+          password: field("password"),
+          nro_resol: Number(field("nro_resol") || "0"),
+          fch_resol: field("fch_resol"),
+        },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (input) input.value = "";
+      setMessage({ text: t("settings.siiCertUploaded"), error: false });
+      await load();
+    } catch {
+      setMessage({ text: t("settings.siiCertError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-card">
+      <h2 className="eyebrow">{t("settings.siiCertTitle")}</h2>
+      {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
+      {certificate === null ? (
+        <p className="settings-hint">{t("settings.siiCertEmpty")}</p>
+      ) : (
+        <dl className="settings-list">
+          <div className="settings-row">
+            <dt>{t("settings.siiCertSigner")}</dt>
+            <dd className="settings-mono">{certificate.rut_firma}</dd>
+          </div>
+          <div className="settings-row">
+            <dt>{t("settings.siiCertSubject")}</dt>
+            <dd>{certificate.subject}</dd>
+          </div>
+          <div className="settings-row">
+            <dt>{t("settings.siiCertValidUntil")}</dt>
+            <dd>{certificate.valid_to.slice(0, 10)}</dd>
+          </div>
+          <div className="settings-row">
+            <dt>{t("settings.siiCertResolution")}</dt>
+            <dd className="settings-mono">{`N° ${certificate.nro_resol} · ${certificate.fch_resol}`}</dd>
+          </div>
+        </dl>
+      )}
+      <form className="payments-form" onSubmit={upload}>
+        <label>
+          {t("settings.siiCertFile")}
+          <input type="file" accept=".pfx,.p12" required />
+        </label>
+        <label>
+          {t("settings.siiCertPassword")}
+          <input name="password" type="password" maxLength={200} autoComplete="off" />
+        </label>
+        <label>
+          {t("settings.siiCertNroResol")}
+          <input name="nro_resol" type="number" min={0} required />
+        </label>
+        <label>
+          {t("settings.siiCertFchResol")}
+          <input name="fch_resol" type="date" required />
+        </label>
+        <div className="payments-form-actions">
+          <button type="submit" className="primary-action" disabled={busy}>
+            {t("settings.siiCertUpload")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function SettingsPage(): JSX.Element {
   const auth = useAuthSession();
   const { theme, toggleTheme } = useTheme();
@@ -344,6 +459,8 @@ export function SettingsPage(): JSX.Element {
 
         {isOwner && org !== undefined && <SiiCafCard orgId={org.id} />}
 
+        {isOwner && org !== undefined && <SiiCertificateCard orgId={org.id} />}
+
         {isOwner && (
           <div className="settings-card">
             <h2 className="eyebrow">{t("settings.billing")}</h2>
@@ -351,6 +468,7 @@ export function SettingsPage(): JSX.Element {
             <div className="settings-links">
               <Link to="/settings/billing">{t("settings.billingPage")}</Link>
               <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
+              <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
             </div>
           </div>
         )}

@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from authentication.errors import ContractAPIException
+from projects import credit_notes as credit_notes_module
 from projects import sii
 
 
@@ -141,6 +142,70 @@ def _dte_row(invoice_id, folio=1, over=None):
     return row
 
 
+def _credit_note_row(invoice, over=None):
+    row = {
+        "id": uuid4(),
+        "org_id": invoice["org_id"],
+        "project_id": invoice["project_id"],
+        "invoice_id": invoice["id"],
+        "credit_code": "NC-0001",
+        "payload_json": {
+            "credit_code": "NC-0001",
+            "reason": "Anula por error en folio",
+            "invoice": {
+                "id": str(invoice["id"]),
+                "invoice_code": invoice["invoice_code"],
+            },
+            "revision_code": "REV-A",
+            "project": invoice["payload_json"]["project"],
+            "deal": invoice["payload_json"]["deal"],
+            "positions": invoice["payload_json"]["positions"],
+        },
+        "created_at": "2026-10-03T10:00:00+00:00",
+    }
+    row.update(over or {})
+    return row
+
+
+def _dispatch_note_row(order, over=None):
+    row = {
+        "id": uuid4(),
+        "org_id": order["org_id"],
+        "project_id": order["project_id"],
+        "work_order_id": order["id"],
+        "note_code": "GD-0001",
+        "payload_json": {
+            "note_code": "GD-0001",
+            "issued_at": "2026-10-04T10:00:00+00:00",
+            "order": {"code": order["order_code"], "id": str(order["id"]), "quantity": 2},
+            "project": {
+                "code": "PRJ-0001",
+                "name": "Proyecto",
+                "client_name": "Cliente Uno",
+                "client_rut": "76123456-0",
+                "delivery_address": "Av. Los Robles 123, Concepción",
+            },
+            "units": [],
+            "totals": {"units": 2},
+            "dispatch": {"dispatched_by": str(uuid4()), "note": None},
+        },
+        "created_at": "2026-10-04T10:00:00+00:00",
+    }
+    row.update(over or {})
+    return row
+
+
+def _order_row(over=None):
+    row = {
+        "id": uuid4(),
+        "org_id": uuid4(),
+        "project_id": uuid4(),
+        "order_code": "OT-0042",
+    }
+    row.update(over or {})
+    return row
+
+
 def _patch_env(
     monkeypatch,
     storage,
@@ -150,18 +215,38 @@ def _patch_env(
     invoice=None,
     existing=None,
     insert_row=None,
+    credit_note=None,
+    parents=None,
+    existing_nc=None,
     annulled=None,
+    order=None,
+    note=None,
+    existing_dte52=None,
 ):
     def fake_one(sql, params=None, *args, **kw):
         text = str(sql)
         if "INSERT INTO public.project_dtes" in text:
-            return insert_row or _dte_row(invoice["id"], folio=1)
+            return insert_row or _dte_row(
+                invoice["id"] if invoice else None, folio=1
+            )
         if "INSERT INTO public.sii_cafs" in text:
             return _caf_row(_parse(), org_id=uuid4())
+        if "INSERT INTO public.project_credit_notes" in text:
+            return credit_note or _credit_note_row(invoice)
+        if "COUNT(*) AS n" in text and "FROM public.project_credit_notes" in text:
+            return {"n": len(annulled or [])}
+        if "FROM public.orders" in text:
+            if order is None:
+                raise ContractAPIException(404, "work_order_not_found", "x")
+            return order
         if "FROM public.tenancy_organizations" in text:
             if org is None:
                 raise ContractAPIException(404, "org_not_found", "x")
             return org
+        if "FROM public.project_credit_notes" in text:
+            if credit_note is None:
+                raise ContractAPIException(404, "credit_note_not_found", "x")
+            return credit_note
         if "FROM public.project_invoices" in text:
             if invoice is None:
                 raise ContractAPIException(404, "invoice_not_found", "x")
@@ -179,10 +264,20 @@ def _patch_env(
             ]
         if "FROM public.sii_cafs" in sql:
             return list(cafs or [])
+        if "FROM public.project_dtes" in sql and "JOIN public.dispatch_notes" in sql:
+            return list(existing_dte52 or [])
+        if "FROM public.project_dtes" in sql and "dispatch_note_id=%s" in sql:
+            return list(existing_dte52 or [])
+        if "FROM public.project_dtes" in sql and "credit_note_id IS NULL" in sql:
+            return list(parents) if parents is not None else list(existing or [])
+        if "FROM public.project_dtes" in sql and "credit_note_id=%s" in sql:
+            return list(existing_nc or [])
         if "FROM public.project_dtes" in sql:
             return list(existing or [])
         if "FROM public.project_credit_notes" in sql:
             return list(annulled or [])
+        if "FROM public.dispatch_notes" in sql:
+            return [note] if note is not None else []
         if "UPDATE public.sii_cafs" in sql:
             return [{"folio_actual": 1}]
         return []
@@ -193,6 +288,18 @@ def _patch_env(
     monkeypatch.setattr(sii, "SupabaseDocumentStorage", lambda: storage)
     monkeypatch.setattr(sii.transaction, "atomic", _noop)
     monkeypatch.setattr(sii, "documentary_backend", _noop)
+    # emit_credit_note_dte seals the NC document through
+    # projects.credit_notes — stub its own module-level deps too.
+    monkeypatch.setattr(credit_notes_module, "one", fake_one)
+    monkeypatch.setattr(credit_notes_module, "SupabaseDocumentStorage", lambda: storage)
+    monkeypatch.setattr(
+        credit_notes_module,
+        "render_credit_note",
+        lambda payload, pdf_identifier=None: (b"%PDF-fake-cn", "application/pdf"),
+    )
+    monkeypatch.setattr(
+        credit_notes_module, "_purge_unreferenced_credit_note", lambda **kw: None
+    )
 
 
 def _parse(desde=1, hasta=10):
@@ -395,6 +502,196 @@ def test_dte_access_missing_raises_404(monkeypatch):
     assert excinfo.value.contract_code == "dte_not_found"
 
 
+def test_emit_credit_note_dte_references_parent_folio(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    parent = _dte_row(invoice["id"], folio=4)
+    insert_row = _dte_row(
+        invoice["id"], folio=1, over={"dte_type": 61, "credit_note_id": credit_note["id"]}
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        cafs=[caf61],
+        invoice=invoice,
+        credit_note=credit_note,
+        annulled=[credit_note],
+        parents=[parent],
+        insert_row=insert_row,
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    assert out["dte_type"] == 61 and out["folio"] == 1
+    object_key, content, media = storage.uploads[0]
+    assert "dte61-1_" in object_key and media == "application/xml"
+    text = content.decode("iso-8859-1")
+    assert "<TipoDTE>61</TipoDTE>" in text
+    assert (
+        "<NroLinRef>1</NroLinRef><TpoDocRef>33</TpoDocRef>"
+        "<FolioRef>4</FolioRef><FchRef>2026-10-02</FchRef>"
+        "<CodRef>1</CodRef>" in text
+    )
+    assert "Anula factura FAC-0001" in text
+    import defusedxml.ElementTree as ET
+
+    root = ET.fromstring(text)
+    dd = text[text.index("<DD>") : text.index("</DD>") + len("</DD>")]
+    frmt = base64.b64decode(
+        root.findtext(
+            ".//{http://www.sii.cl/SiiDte}TED/{http://www.sii.cl/SiiDte}FRMT"
+        )
+    )
+    public = rsa.RSAPublicNumbers(
+        int.from_bytes(base64.b64decode(caf61["rsapk_e"]), "big"),
+        int.from_bytes(base64.b64decode(caf61["rsapk_m"]), "big"),
+    ).public_key()
+    public.verify(
+        frmt, dd.encode("iso-8859-1"), padding.PKCS1v15(), hashes.SHA1()
+    )
+
+
+def test_emit_credit_note_dte_seals_credit_note_document(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    insert_row = _dte_row(
+        invoice["id"],
+        folio=1,
+        over={"dte_type": 61, "credit_note_id": str(uuid4())},
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        invoice=invoice,
+        cafs=[caf61],
+        parents=[_dte_row(invoice["id"], folio=4)],
+        insert_row=insert_row,
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+        reason="Anula por error en folio",
+    )
+    assert out["dte_type"] == 61 and out["folio"] == 1
+    assert len(storage.uploads) == 2
+    pdf_key, pdf_content, pdf_media = storage.uploads[0]
+    assert "credit-notes/nc-0001_" in pdf_key
+    assert pdf_media == "application/pdf"
+    xml_key, _, _ = storage.uploads[1]
+    assert "dte61-1_" in xml_key
+
+
+def test_emit_credit_note_dte_bounds_sii_field_lengths(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    credit_note["payload_json"]["reason"] = "x" * 300
+    caf61 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=10)[0]),
+        org_id=invoice["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        invoice=invoice,
+        credit_note=credit_note,
+        annulled=[credit_note],
+        parents=[_dte_row(invoice["id"], folio=4)],
+        cafs=[caf61],
+    )
+    sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    razon = text[text.index("<RazonRef>") + len("<RazonRef>") : text.index("</RazonRef>")]
+    assert razon == "x" * 90
+    nmb = text[text.index("<NmbItem>") + len("<NmbItem>") : text.index("</NmbItem>")]
+    assert nmb == "Anula factura FAC-0001"
+
+
+def test_emit_credit_note_dte_requires_timbred_parent(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    _patch_env(monkeypatch, storage, invoice=invoice, parents=[])
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_credit_note_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_reference_missing"
+    assert storage.uploads == []
+
+
+def test_emit_credit_note_dte_replay_and_exhaustion(monkeypatch):
+    storage = _Storage()
+    invoice = _invoice_row()
+    credit_note = _credit_note_row(invoice)
+    existing = _dte_row(
+        invoice["id"], folio=9, over={"dte_type": 61, "credit_note_id": credit_note["id"]}
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        invoice=invoice,
+        credit_note=credit_note,
+        annulled=[credit_note],
+        existing_nc=[existing],
+        parents=[_dte_row(invoice["id"], folio=4)],
+    )
+    out = sii.emit_credit_note_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    assert out["folio"] == 9 and storage.uploads == []
+
+    exhausted = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=61, desde=1, hasta=3)[0]),
+        org_id=invoice["org_id"],
+        actual=3,
+    )
+    _patch_env(
+        monkeypatch,
+        _Storage(),
+        invoice=invoice,
+        credit_note=credit_note,
+        annulled=[credit_note],
+        parents=[_dte_row(invoice["id"], folio=4)],
+        cafs=[exhausted],
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_credit_note_dte(
+            org_id=invoice["org_id"],
+            project={"id": invoice["project_id"]},
+            invoice_id=invoice["id"],
+            actor_id=uuid4(),
+        )
+    assert excinfo.value.contract_code == "sii_caf_exhausted"
+
+
 def test_emit_dte_refuses_annulled_invoice(monkeypatch):
     storage = _Storage()
     invoice = _invoice_row()
@@ -461,7 +758,7 @@ def test_rsask_roundtrip_wrap_unwrap(monkeypatch):
 
 
 def test_parse_caf_rejects_zero_based_range():
-    xml, _ = _caf_xml(desde=0, hasta=10)
+    xml, _ = _caf_xml(desde=0, hasta=50)
     with pytest.raises(ContractAPIException) as excinfo:
         sii._parse_caf(xml)
     assert excinfo.value.contract_code == "sii_caf_invalid"
@@ -481,6 +778,8 @@ def test_emit_dte_rejects_non_latin1_characters(monkeypatch):
             actor_id=uuid4(),
         )
     assert excinfo.value.contract_code == "sii_dte_unrepresentable"
+    # The folio is only committed after the XML is stamped, so a rejected
+    # render never consumes one.
     assert storage.uploads == []
 
 
@@ -644,3 +943,207 @@ def test_emit_dte_rejects_nonstandard_tax_rate(monkeypatch):
         )
     assert excinfo.value.contract_code == "sii_tax_rate_unsupported"
     assert storage.uploads == []
+
+
+def test_emit_dispatch_note_dte_stamps_and_replays(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    insert_row = _dte_row(
+        None,
+        folio=1,
+        over={"dte_type": 52, "dispatch_note_id": str(note["id"]), "invoice_id": None},
+    )
+    existing52 = []
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=note,
+        cafs=[caf52],
+        insert_row=insert_row,
+        existing_dte52=existing52,
+    )
+    out = sii.emit_dispatch_note_dte(
+        org_id=order["org_id"], order_id=order["id"], actor_id=uuid4()
+    )
+    assert out["dte_type"] == 52 and out["folio"] == 1
+    assert len(storage.uploads) == 1
+    object_key, content, media = storage.uploads[0]
+    assert "dte52-1_" in object_key and media == "application/xml"
+    text = content.decode("iso-8859-1")
+    assert "<TipoDTE>52</TipoDTE>" in text
+    assert "<IndTraslado>1</IndTraslado>" in text
+    # Amount-less guía: the schema still requires Totales/MontoItem —
+    # they stamp as 0 while QtyItem carries the moved units.
+    assert "<Totales><MntTotal>0</MntTotal></Totales>" in text
+    assert "<MontoItem>0</MontoItem>" in text
+    assert "<MntNeto>" not in text
+    assert "<QtyItem>2</QtyItem>" in text
+    assert (
+        "<NroLinRef>1</NroLinRef><TpoDocRef>OT</TpoDocRef>"
+        "<FolioRef>OT-0042</FolioRef><FchRef>2026-10-04</FchRef>" in text
+    )
+    assert "<DirRecep>Av. Los Robles 123, Concepción</DirRecep>" in text
+    assert "<GiroRecep>" not in text
+
+    # Replay: same guía returns the stored DTE without new folio or upload.
+    existing52.append(insert_row)
+    replay = sii.emit_dispatch_note_dte(
+        org_id=order["org_id"], order_id=order["id"], actor_id=uuid4()
+    )
+    assert replay["folio"] == 1 and len(storage.uploads) == 1
+
+
+def test_emit_dispatch_note_dte_ind_traslado_5(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=_dispatch_note_row(order),
+        cafs=[caf52],
+    )
+    sii.emit_dispatch_note_dte(
+        org_id=order["org_id"],
+        order_id=order["id"],
+        actor_id=uuid4(),
+        ind_traslado=5,
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert "<IndTraslado>5</IndTraslado>" in text
+    # Internal transfer: the receptor is the issuer itself, not the
+    # customer on the sealed guía.
+    assert "<RUTRecep>76123456-0</RUTRecep>" in text
+    assert "<RznSocRecep>Ventanas Prueba SpA</RznSocRecep>" in text
+    assert "<DirRecep>Av. Los Robles 123, Concepción</DirRecep>" in text
+
+
+def test_emit_dispatch_note_dte_ind_traslado_5_skips_client_rut(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    # A traslado interno never names the customer: a guía sealed with a
+    # blank client RUT still stamps, because the issuer is the receptor.
+    note["payload_json"]["project"]["client_rut"] = ""
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=note,
+        cafs=[caf52],
+    )
+    sii.emit_dispatch_note_dte(
+        org_id=order["org_id"],
+        order_id=order["id"],
+        actor_id=uuid4(),
+        ind_traslado=5,
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert "<RUTRecep>76123456-0</RUTRecep>" in text
+
+
+def test_emit_dispatch_note_dte_ind_traslado_5_needs_destination(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    note["payload_json"]["project"]["delivery_address"] = ""
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch,
+        storage,
+        order=order,
+        note=note,
+        cafs=[caf52],
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dispatch_note_dte(
+            org_id=order["org_id"],
+            order_id=order["id"],
+            actor_id=uuid4(),
+            ind_traslado=5,
+        )
+    assert excinfo.value.contract_code == "sii_receptor_incomplete"
+    assert storage.uploads == []
+
+
+def test_emit_dispatch_note_dte_requires_sealed_note(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    _patch_env(monkeypatch, storage, order=order, note=None)
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dispatch_note_dte(
+            org_id=order["org_id"], order_id=order["id"], actor_id=uuid4()
+        )
+    assert excinfo.value.contract_code == "dispatch_note_missing"
+    assert storage.uploads == []
+
+
+def test_emit_dispatch_note_dte_requires_caf_52(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    _patch_env(
+        monkeypatch, storage, order=order, note=_dispatch_note_row(order), cafs=[]
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dispatch_note_dte(
+            org_id=order["org_id"], order_id=order["id"], actor_id=uuid4()
+        )
+    assert excinfo.value.contract_code == "sii_caf_exhausted"
+    assert storage.uploads == []
+
+
+def test_emit_dispatch_note_dte_requires_receptor_rut(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    note["payload_json"]["project"]["client_rut"] = ""
+    caf52 = _caf_row(
+        sii._parse_caf(_caf_xml(tipo=52, desde=1, hasta=10)[0]),
+        org_id=order["org_id"],
+        actual=0,
+    )
+    _patch_env(
+        monkeypatch, storage, order=order, note=note, cafs=[caf52]
+    )
+    with pytest.raises(ContractAPIException) as excinfo:
+        sii.emit_dispatch_note_dte(
+            org_id=order["org_id"], order_id=order["id"], actor_id=uuid4()
+        )
+    assert excinfo.value.contract_code == "sii_receptor_missing"
+    assert storage.uploads == []
+
+
+def test_dispatch_note_dte_access_signs_the_stored_object(monkeypatch):
+    storage = _Storage()
+    order = _order_row()
+    note = _dispatch_note_row(order)
+    dte = _dte_row(
+        None,
+        folio=3,
+        over={"dte_type": 52, "dispatch_note_id": str(note["id"]), "invoice_id": None},
+    )
+    _patch_env(monkeypatch, storage, order=order, existing_dte52=[dte])
+    out = sii.dispatch_note_dte_access(org_id=order["org_id"], order_id=order["id"])
+    assert out["folio"] == 3 and out["dte_type"] == 52
+    assert dte["storage_object_key"] in out["signed_url"]

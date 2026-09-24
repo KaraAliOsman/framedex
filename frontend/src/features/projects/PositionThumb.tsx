@@ -25,12 +25,12 @@ function designProduct(design: PositionDesign): ProductJson {
  * The tight viewBox crops the dimension chains — only the product reads. */
 export function PositionThumb({ design }: { design: PositionDesign }): JSX.Element {
   const product = useMemo(() => designProduct(design), [design]);
-  const { totalW, height } = frontLayout(product);
+  const { totalW, height, lift, dip, leftOver, rightOver } = frontLayout(product);
   const pad = 8;
   return (
     <svg
       className="position-thumb"
-      viewBox={`${-pad} ${-pad} ${totalW + pad * 2} ${height + pad * 2}`}
+      viewBox={`${-pad - leftOver} ${-pad} ${totalW + leftOver + rightOver + pad * 2} ${height + lift + dip + pad * 2}`}
       role="img"
       aria-label={t("projects.positionThumb")}
     >

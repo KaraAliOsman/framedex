@@ -31,8 +31,9 @@ describe("applyDesignOps", () => {
       { op: "set_coupling_angle", coupling: 0, angle_deg: "30" },
       { op: "set_coupling_angle", coupling: 1, angle_deg: "30" },
     ]);
-    expect(next.assembly.couplings[0]!.angle_deg).toBe("30");
-    expect(next.assembly.couplings[1]!.angle_deg).toBe("30");
+    // Wire ops and palette runs converge on the canonical decimal form.
+    expect(next.assembly.couplings[0]!.angle_deg).toBe("30.0");
+    expect(next.assembly.couplings[1]!.angle_deg).toBe("30.0");
   });
 
   it("drops ops against missing indices instead of corrupting the product", () => {
@@ -70,10 +71,13 @@ describe("applyDesignOps", () => {
 
 describe("describeDesignOp", () => {
   it("renders human es-CL labels", () => {
-    expect(describeDesignOp({ op: "set_module_count", count: 3 })).toBe("3 módulos");
-    expect(describeDesignOp({ op: "equalize_widths" })).toBe("anchos iguales");
-    expect(describeDesignOp({ op: "set_total_width", width_mm: "2400" })).toContain("2400");
-    expect(describeDesignOp({ op: "set_opening", module: 0, opening: "DOOR_ENTRY" })).toBe(
+    const product = bow(3);
+    expect(describeDesignOp({ op: "set_module_count", count: 3 }, product)).toBe("3 módulos");
+    expect(describeDesignOp({ op: "equalize_widths" }, product)).toBe("anchos iguales");
+    expect(describeDesignOp({ op: "set_total_width", width_mm: "2400" }, product)).toContain(
+      "2400",
+    );
+    expect(describeDesignOp({ op: "set_opening", module: 0, opening: "DOOR_ENTRY" }, product)).toBe(
       "módulo 1: puerta",
     );
   });

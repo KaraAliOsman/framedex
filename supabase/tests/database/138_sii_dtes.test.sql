@@ -10,9 +10,9 @@ SELECT col_is_unique(
     'public', 'sii_cafs', ARRAY['org_id', 'tipo_dte', 'folio_desde'],
     'caf ranges unique inside an org'
 );
-SELECT col_is_unique(
-    'public', 'project_dtes', ARRAY['org_id', 'invoice_id'],
-    'one DTE per invoice makes emit replay-idempotent'
+SELECT index_is_unique(
+    'public', 'project_dtes', 'uk_org_invoice_dte',
+    'one parent DTE per invoice makes emit replay-idempotent'
 );
 SELECT col_is_unique(
     'public', 'project_dtes', ARRAY['org_id', 'dte_type', 'folio'],

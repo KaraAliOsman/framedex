@@ -60,27 +60,19 @@ ImportCreateResponseSerializer = type(
 class ConfirmItemSerializer(StrictSerializer):
     key = serializers.CharField(max_length=40)
     label = serializers.CharField(max_length=100, allow_blank=True)
-    width_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("250")
-    )
-    height_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("250")
-    )
+    width_mm = DecimalStringField(max_digits=10, decimal_places=2, min_value=Decimal("250"))
+    height_mm = DecimalStringField(max_digits=10, decimal_places=2, min_value=Decimal("250"))
     quantity = serializers.IntegerField(min_value=1, max_value=999)
     opening_type = serializers.ChoiceField(choices=sorted(_OPENING_TYPES))
     system_id = serializers.UUIDField()
     color = serializers.ChoiceField(choices=["WHITE"])
-    glass_thickness_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("1")
-    )
+    glass_thickness_mm = DecimalStringField(max_digits=10, decimal_places=2, min_value=Decimal("1"))
     # glass_spec is the physical composition; glass_article_sku is the
     # catalog/technical SKU — a saved position carries both. The spec is
     # optional on the request: the purchase mapping's recipe wins when the
     # catalog declares one, and only a mapping without a spec falls back to
     # this field — so the glazing-bead slot can never masquerade as panes.
-    glass_spec = serializers.CharField(
-        max_length=120, required=False, allow_blank=True
-    )
+    glass_spec = serializers.CharField(max_length=120, required=False, allow_blank=True)
     glass_article_sku = serializers.CharField(max_length=120)
     # Doors need the panel authority — required by the engine for DOOR_ENTRY,
     # enforced at confirm time only for that opening type.
@@ -144,23 +136,39 @@ class CatalogItemSerializer(StrictSerializer):
     sku = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255, allow_blank=True, default="")
     role = serializers.ChoiceField(choices=sorted(ROLES))
-    face_width_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("0.5")
-    )
+    face_width_mm = DecimalStringField(max_digits=10, decimal_places=2, min_value=Decimal("0.5"))
+    # UNKNOWN is a state: parser-extracted candidates may carry None for any
+    # fabrication field the supplier document never stated.
     commercial_length_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("1"), required=False
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("1"),
+        required=False,
+        allow_null=True,
     )
     welding_loss_mm = DecimalStringField(
-        max_digits=10, decimal_places=2, min_value=Decimal("0"), required=False
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("0"),
+        required=False,
+        allow_null=True,
     )
     reinforcement_sku = serializers.CharField(
         max_length=100, allow_blank=True, required=False, default=""
     )
     weight_kg_m = DecimalStringField(
-        max_digits=8, decimal_places=4, min_value=Decimal("0.0001"), required=False
+        max_digits=8,
+        decimal_places=4,
+        min_value=Decimal("0.0001"),
+        required=False,
+        allow_null=True,
     )
     steel_weight_kg_m = DecimalStringField(
-        max_digits=8, decimal_places=4, min_value=Decimal("0.0001"), required=False
+        max_digits=8,
+        decimal_places=4,
+        min_value=Decimal("0.0001"),
+        required=False,
+        allow_null=True,
     )
 
 
