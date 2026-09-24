@@ -10,9 +10,9 @@
  * * `BAR` - BAR
  * * `SHEET` - SHEET
  */
-export type Kind8acEnum = (typeof Kind8acEnum)[keyof typeof Kind8acEnum];
+export type StockKindEnum = (typeof StockKindEnum)[keyof typeof StockKindEnum];
 
-export const Kind8acEnum = {
+export const StockKindEnum = {
   BAR: "BAR",
   SHEET: "SHEET",
 } as const;

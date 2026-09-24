@@ -5,7 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { WorkCenterRequestKindEnum } from "./workCenterRequestKindEnum";
+import type { WorkCenterKindEnum } from "./workCenterKindEnum";
 
 export interface WorkCenterRequestRequest {
   /**
@@ -18,6 +18,6 @@ export interface WorkCenterRequestRequest {
    * @maxLength 200
    */
   name: string;
-  kind: WorkCenterRequestKindEnum;
+  kind: WorkCenterKindEnum;
   display_order?: number;
 }

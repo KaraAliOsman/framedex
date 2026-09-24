@@ -5,10 +5,10 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { Kind8acEnum } from "./kind8acEnum";
+import type { StockKindEnum } from "./stockKindEnum";
 
 export interface RemnantCreateRequest {
-  kind: Kind8acEnum;
+  kind: StockKindEnum;
   /** @nullable */
   stock_authority_id?: string | null;
   /**

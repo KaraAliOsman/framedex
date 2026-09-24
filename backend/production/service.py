@@ -1702,6 +1702,21 @@ def optimize_work_order(
             raise DocumentaryError("work_order_dispatched")
         if str(order["status"]) == "COMPLETED":
             raise DocumentaryError("work_order_completed")
+        # A plan writes fresh reservations for every stock kind, but only a
+        # consuming step that completes can settle them — replanning after a
+        # step already consumed its material would strand the new holds
+        # forever (a DONE step cannot complete again). Refuse instead.
+        consumed_rows = rows(
+            """
+            SELECT code::text AS code FROM public.production_steps
+            WHERE order_id = %s AND org_id = %s AND status = 'DONE'
+            """,
+            [str(order_id), str(org_id)],
+        )
+        if any(
+            str(row["code"]) in _STEP_CONSUMED_KINDS for row in consumed_rows
+        ):
+            raise DocumentaryError("work_order_replan_after_consumption")
         payload = _decoded(order["payload_json"])
         materials = payload.get("materials") or {}
         position_id = payload.get("position_id")

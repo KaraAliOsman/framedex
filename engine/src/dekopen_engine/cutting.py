@@ -286,12 +286,14 @@ def _bfd_fill(
     Returns (bins, unplaced) — unplaced can only occur when a piece exceeds
     this length's usable span (the caller filters those earlier)."""
     usable = _usable(stock_length, profile)
-    required_of = [piece.length_mm + profile.kerf_mm for piece in pieces]
     bins: list[list[CutPiece]] = []
     remainders: list[Decimal] = []
-    for piece, required in zip(pieces, required_of):
+    unplaced: list[CutPiece] = []
+    for piece in pieces:
+        required = piece.length_mm + profile.kerf_mm
         if required > usable:
-            return bins, pieces  # unreachable: caller pre-checks
+            unplaced.append(piece)
+            continue
         best: tuple[Decimal, int] | None = None
         for index, residual in enumerate(remainders):
             leftover = residual - required
@@ -303,7 +305,7 @@ def _bfd_fill(
         else:
             bins[best[1]].append(piece)
             remainders[best[1]] = best[0]
-    return bins, []
+    return bins, unplaced
 
 
 # Patterns are count vectors over the distinct lengths, enumerated
@@ -484,10 +486,16 @@ def _pack_group(
     remnants: list[RemnantBar],
     profile: CuttingProfile,
     strategy: Literal["fast", "deep"],
-) -> tuple[list[CutBar], dict[tuple[str, Decimal, CutMaterial, str, str], PurchaseLine]]:
+) -> tuple[
+    list[CutBar],
+    dict[tuple[str, Decimal, CutMaterial, str, str], PurchaseLine],
+    list[CutPiece],
+]:
     """One stock identity: remnants first (smallest fitting — zero
     procurement always beats buying), then new bars on the variant that
-    minimizes the cost tuple."""
+    minimizes the cost tuple. Returns (bars, purchases, unplaced): pieces a
+    remnant could host but whose remnant capacity was already exhausted —
+    they fit no purchasable variant either."""
     bins: list[list[CutPiece]] = []
     sources: list[tuple[StockRule, Decimal, str, str | None]] = []
     remaining = pieces
@@ -500,29 +508,67 @@ def _pack_group(
             continue
         bins.append(placed)
         sources.append((stock, remnant.length_mm, "REMNANT", remnant.remnant_id))
+    unplaced: list[CutPiece] = []
     if remaining:
-        best_bins: list[list[CutPiece]] | None = None
-        best_length: Decimal | None = None
-        for length in _variants_of(stock):
+        variants = _variants_of(stock)
+        candidates: list[
+            tuple[list[list[CutPiece]], list[Decimal]]
+        ] = []
+        # Candidate A — mixed variants: ascending lengths, each packs every
+        # remaining piece it can host (a 5600 on 6000 while 5500s ride 5800).
+        mixed_bins: list[list[CutPiece]] = []
+        mixed_lengths: list[Decimal] = []
+        leftover = list(remaining)
+        for length in variants:
+            if not leftover:
+                break
             usable = _usable(length, profile)
             if usable < Decimal("0"):
                 raise InvalidCutContract("Trims exceed stock")
+            fit = [p for p in leftover
+                   if _piece_fits(p, usable, profile.kerf_mm)]
+            if not fit:
+                continue
+            packed, _ = _bfd_fill(fit, length, profile)
+            placed_ids = {id(p) for bar in packed for p in bar}
+            leftover = [p for p in leftover if id(p) not in placed_ids]
+            for bar in packed:
+                mixed_bins.append(bar)
+                mixed_lengths.append(length)
+        if not leftover:
+            candidates.append((mixed_bins, mixed_lengths))
+        # Candidate B — best single variant hosting EVERY remaining piece.
+        # A variant that cannot host every piece is not a candidate: its
+        # plan would silently drop what it can't cut.
+        for length in variants:
+            usable = _usable(length, profile)
+            if usable < Decimal("0"):
+                raise InvalidCutContract("Trims exceed stock")
+            if any(not _piece_fits(piece, usable, profile.kerf_mm)
+                   for piece in remaining):
+                continue
             if strategy == "deep":
                 candidate = _deep_bins(remaining, length, profile)
                 if candidate is None:
                     candidate, _ = _bfd_fill(remaining, length, profile)
             else:
                 candidate, _ = _bfd_fill(remaining, length, profile)
-            key = (len(candidate), Decimal(len(candidate)) * length)
-            if best_bins is None or key < (
-                len(best_bins), Decimal(len(best_bins)) * (best_length or length)
-            ):
-                best_bins, best_length = candidate, length
-        assert best_bins is not None and best_length is not None
-        for bar in best_bins:
-            bins.append(bar)
-            sources.append((stock, best_length, "NEW", None))
-    return _emit_bars(bins, sources, stock, profile)
+            candidates.append((candidate, [length] * len(candidate)))
+        if not candidates:
+            unplaced = list(remaining)
+        else:
+            best_bins, best_lengths = min(
+                candidates,
+                key=lambda plan: (
+                    len(plan[0]),
+                    sum(plan[1], Decimal("0")),
+                ),
+            )
+            for bar, bar_length in zip(best_bins, best_lengths):
+                bins.append(bar)
+                sources.append((stock, bar_length, "NEW", None))
+    bars, purchases = _emit_bars(bins, sources, stock, profile)
+    return bars, purchases, unplaced
 
 
 def optimize_cut(
@@ -590,9 +636,10 @@ def optimize_cut(
     }
 
     def run(solve_as: Literal["fast", "deep"]) -> tuple[
-        list[CutBar], list[PurchaseLine]
+        list[CutBar], list[PurchaseLine], list[UnplacedCut]
     ]:
         bars: list[CutBar] = []
+        unplaced_group: list[UnplacedCut] = []
         purchases: dict[
             tuple[str, Decimal, CutMaterial, str, str], PurchaseLine
         ] = {}
@@ -617,8 +664,14 @@ def optimize_cut(
                     raise PieceLongerThanUsableStock(
                         "Piece plus kerf exceeds usable stock"
                     )
-            group_bars, group_purchases = _pack_group(
+            group_bars, group_purchases, group_unplaced = _pack_group(
                 group_pieces, stock, group_remnants[key], profile, solve_as
+            )
+            # Pieces that only a remnant could host but whose remnant was
+            # already spent — the plan reports them, never drops them.
+            unplaced_group.extend(
+                UnplacedCut(piece=p, reason="remnant_capacity_exhausted")
+                for p in group_unplaced
             )
             for purchase in group_purchases.values():
                 merge_key = (
@@ -640,17 +693,27 @@ def optimize_cut(
         # Re-index bars deterministically across groups.
         for index, bar in enumerate(bars):
             bars[index] = bar.model_copy(update={"bar_index": index + 1})
-        return bars, list(purchases[k] for k in sorted(purchases))
+        return (
+            bars,
+            list(purchases[k] for k in sorted(purchases)),
+            unplaced_group,
+        )
 
     if strategy == "auto":
-        fast_bars, fast_purchases = run("fast")
-        fast_metrics = _metrics_of(fast_bars, unplaced, profile)
-        deep_bars, deep_purchases = run("deep")
-        deep_metrics = _metrics_of(deep_bars, unplaced, profile)
+        fast_bars, fast_purchases, fast_unplaced = run("fast")
+        deep_bars, deep_purchases, deep_unplaced = run("deep")
+        fast_metrics = _metrics_of(
+            fast_bars, unplaced + fast_unplaced, profile
+        )
+        deep_metrics = _metrics_of(
+            deep_bars, unplaced + deep_unplaced, profile
+        )
         if _cost_key(deep_metrics) < _cost_key(fast_metrics):
             bars, purchase_lines, chosen = deep_bars, deep_purchases, "deep"
+            unplaced += deep_unplaced
         else:
             bars, purchase_lines, chosen = fast_bars, fast_purchases, "fast"
+            unplaced += fast_unplaced
         comparison: dict[str, object] | None = {
             "fast": fast_metrics.model_dump(mode="json"),
             "deep": deep_metrics.model_dump(mode="json"),
@@ -658,7 +721,8 @@ def optimize_cut(
         }
         metrics = deep_metrics if chosen == "deep" else fast_metrics
     else:
-        bars, purchase_lines = run(strategy)
+        bars, purchase_lines, group_unplaced = run(strategy)
+        unplaced += group_unplaced
         metrics = _metrics_of(bars, unplaced, profile)
         comparison = None
 

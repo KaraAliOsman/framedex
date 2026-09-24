@@ -30,12 +30,15 @@ def _identity_identities(org_id: UUID, authority_ids: set[str]) -> dict[str, dic
     if not authority_ids:
         return {}
     listed = sorted(authority_ids)
+    # Both authority tables carry global rows (org_id IS NULL) — the cutting
+    # repository's effective scope accepts them, so reservation lookup must
+    # too, or globally-mapped bars reserve against an empty variant key.
     profile = rows(
         """
         SELECT id::text AS authority_id, commercial_sku,
                physical_stock_identity::text AS physical_stock_identity
         FROM public.profile_purchase_mappings
-        WHERE org_id = %s AND id = ANY(%s::uuid[])
+        WHERE (org_id = %s OR org_id IS NULL) AND id = ANY(%s::uuid[])
         """,
         [str(org_id), listed],
     )
@@ -44,7 +47,7 @@ def _identity_identities(org_id: UUID, authority_ids: set[str]) -> dict[str, dic
         SELECT id::text AS authority_id, commercial_sku,
                physical_stock_identity::text AS physical_stock_identity
         FROM public.reinforcement_articles
-        WHERE org_id = %s AND id = ANY(%s::uuid[])
+        WHERE (org_id = %s OR org_id IS NULL) AND id = ANY(%s::uuid[])
         """,
         [str(org_id), listed],
     )

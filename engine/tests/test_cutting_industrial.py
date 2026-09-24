@@ -201,6 +201,41 @@ def test_variant_choice_prefers_fewer_then_less_scrap() -> None:
     assert {b.stock_length_mm for b in result.workshop_cut_plan} == {D("5800")}
 
 
+def test_variant_that_cannot_host_every_piece_is_never_picked() -> None:
+    # A 5000 piece with 4000/6000 variants must buy the 6000 — the empty
+    # plan a 4000 "packs" is not a plan, it drops the required cut.
+    rule = stock(stock_length_mm=D("4000"), alternative_lengths_mm=[D("6000")])
+    result = optimize_cut(pieces("5000"), [rule], saw())
+    assert result.metrics is not None and result.metrics.unplaced == 0
+    assert len(result.workshop_cut_plan) == 1
+    assert result.workshop_cut_plan[0].stock_length_mm == D("6000")
+    assert result.workshop_cut_plan[0].cuts[0].length_mm == D("5000")
+
+
+def test_mixed_variants_beat_one_size_for_split_capacity() -> None:
+    # {6100, 5500} on [5800, 6400]: the only single-variant plan is 2×6400
+    # (12800 mm); mixed 1×5800 (5500) + 1×6400 (6100) = 12200 mm.
+    rule = stock(stock_length_mm=D("5800"), alternative_lengths_mm=[D("6400")])
+    result = optimize_cut(pieces("6100", "5500"), [rule], saw())
+    assert result.metrics is not None and result.metrics.unplaced == 0
+    lengths = sorted(b.stock_length_mm for b in result.workshop_cut_plan)
+    assert lengths == [D("5800"), D("6400")]
+
+
+def test_remnant_only_piece_beyond_capacity_is_unplaced_not_dropped() -> None:
+    # Both pieces fit only the 6400 remnant, which hosts one. The second is
+    # reported unplaced — never a phantom purchase, never vanished.
+    result = optimize_cut(
+        pieces("6200", "6200"), [stock(stock_length_mm=D("6000"))], saw(),
+        remnants=[remnant("r1", "6400")],
+    )
+    assert [b.source for b in result.workshop_cut_plan] == ["REMNANT"]
+    assert result.workshop_cut_plan[0].remnant_id == "r1"
+    assert len(result.unplaced) == 1
+    assert result.unplaced[0].reason == "remnant_capacity_exhausted"
+    assert result.metrics is not None and result.metrics.unplaced == 1
+
+
 # ── 5. Saw feasibility ─────────────────────────────────────────────────────
 
 def test_angle_beyond_saw_limit_is_unplaced_with_reason() -> None:

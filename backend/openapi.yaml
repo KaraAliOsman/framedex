@@ -4467,7 +4467,7 @@ paths:
           description: ''
   /api/v1/inventory/remnants/{remnant_id}/release/:
     post:
-      operationId: inventory_remnant_scrap
+      operationId: inventory_remnant_release
       parameters:
       - in: header
         name: X-Organization-ID
@@ -4537,7 +4537,7 @@ paths:
           description: ''
   /api/v1/inventory/remnants/{remnant_id}/scrap/:
     post:
-      operationId: inventory_remnant_scrap_2
+      operationId: inventory_remnant_scrap
       parameters:
       - in: header
         name: X-Organization-ID
@@ -14982,14 +14982,6 @@ components:
         * `SUCCEEDED` - SUCCEEDED
         * `FAILED` - FAILED
         * `CANCELED` - CANCELED
-    Kind8acEnum:
-      enum:
-      - BAR
-      - SHEET
-      type: string
-      description: |-
-        * `BAR` - BAR
-        * `SHEET` - SHEET
     KitChoice:
       type: object
       properties:
@@ -18047,7 +18039,7 @@ components:
           type: string
           format: uuid
         kind:
-          $ref: '#/components/schemas/Kind8acEnum'
+          $ref: '#/components/schemas/StockKindEnum'
         stock_authority_id:
           type: string
           format: uuid
@@ -18132,7 +18124,7 @@ components:
       type: object
       properties:
         kind:
-          $ref: '#/components/schemas/Kind8acEnum'
+          $ref: '#/components/schemas/StockKindEnum'
         stock_authority_id:
           type: string
           format: uuid
@@ -18673,6 +18665,14 @@ components:
           - $ref: '#/components/schemas/NullEnum'
       required:
       - action
+    StockKindEnum:
+      enum:
+      - BAR
+      - SHEET
+      type: string
+      description: |-
+        * `BAR` - BAR
+        * `SHEET` - SHEET
     StrategyEnum:
       enum:
       - fast
@@ -19156,16 +19156,7 @@ components:
       - id
       - kind
       - name
-    WorkCenterList:
-      type: object
-      properties:
-        centers:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkCenter'
-      required:
-      - centers
-    WorkCenterRequestKindEnum:
+    WorkCenterKindEnum:
       enum:
       - CUT
       - ASSEMBLY
@@ -19179,6 +19170,15 @@ components:
         * `GLAZING` - GLAZING
         * `QC` - QC
         * `PACK` - PACK
+    WorkCenterList:
+      type: object
+      properties:
+        centers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkCenter'
+      required:
+      - centers
     WorkCenterRequestRequest:
       type: object
       properties:
@@ -19191,7 +19191,7 @@ components:
           minLength: 1
           maxLength: 200
         kind:
-          $ref: '#/components/schemas/WorkCenterRequestKindEnum'
+          $ref: '#/components/schemas/WorkCenterKindEnum'
         display_order:
           type: integer
           default: 0

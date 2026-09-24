@@ -184,7 +184,7 @@ def _money(amount: object, currency: object) -> str:
     if code == "CLP":
         grouped = f"{value:,.0f}".replace(",", ".")
         return f"$ {grouped}"
-    return f"{code} {value:,.2f}"
+    return f"{escape(code)} {value:,.2f}"
 
 
 def _cldate(raw: object) -> str:

@@ -225,3 +225,25 @@ def test_coverage_computes_shortage_and_recommendation() -> None:
     assert line["recommended_purchase"] == "5"
     assert line["remnant_pool"]["count"] == 2
     assert report["shortages"] == 1
+
+
+def test_identity_lookup_matches_global_authorities() -> None:
+    # Global stock authorities (org_id IS NULL) are accepted by the cutting
+    # repository's effective scope — the reservation lookup must match them
+    # too, or a globally-mapped bar reserves against an empty variant key.
+    queries: list[str] = []
+
+    def fake_rows(query, params=None):
+        queries.append(query)
+        return []
+
+    with patch("inventory.production_stock.rows", side_effect=fake_rows):
+        needs = production_stock.bar_stock_needs(
+            org_id=ORG,
+            bars=[{"source": "NEW", "stock_authority_id": "g1",
+                   "commercial_sku": "PROF-G"}],
+        )
+    identity_queries = [q for q in queries if "physical_stock_identity" in q]
+    assert len(identity_queries) == 2
+    assert all("org_id IS NULL" in q for q in identity_queries)
+    assert needs[0]["sku"] == "PROF-G"

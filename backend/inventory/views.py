@@ -193,7 +193,28 @@ class RemnantListView(APIView):
         return Response(output, status=201)
 
 
-class RemnantTransitionView(APIView):
+class _RemnantTransitionView(APIView):
+    action: str
+
+    def post(self, request, remnant_id: UUID):
+        with public_inventory_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                if self.action == "scrap":
+                    output = remnants_service.scrap_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+                else:
+                    output = remnants_service.unreserve_remnant(
+                        org_id=org_id, remnant_id=remnant_id,
+                        actor_id=token.user_id,
+                    )
+        return Response(output)
+
+
+class RemnantScrapView(_RemnantTransitionView):
+    action = "scrap"
+
     @extend_schema(
         operation_id="inventory_remnant_scrap",
         parameters=[ACTIVE_ORGANIZATION_HEADER],
@@ -202,19 +223,18 @@ class RemnantTransitionView(APIView):
         tags=["inventory"],
     )
     def post(self, request, remnant_id: UUID):
-        action = request.path.rstrip("/").rsplit("/", 1)[-1]
-        with public_inventory_errors():
-            with documentary_scope(request, _WRITERS) as (token, _, org_id):
-                if action == "scrap":
-                    output = remnants_service.scrap_remnant(
-                        org_id=org_id, remnant_id=remnant_id,
-                        actor_id=token.user_id,
-                    )
-                elif action == "release":
-                    output = remnants_service.unreserve_remnant(
-                        org_id=org_id, remnant_id=remnant_id,
-                        actor_id=token.user_id,
-                    )
-                else:
-                    raise contract_error(404, "remnant_action_unknown", "")
-        return Response(output)
+        return super().post(request, remnant_id)
+
+
+class RemnantReleaseView(_RemnantTransitionView):
+    action = "release"
+
+    @extend_schema(
+        operation_id="inventory_remnant_release",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: RemnantSerializer, **ERRORS},
+        tags=["inventory"],
+    )
+    def post(self, request, remnant_id: UUID):
+        return super().post(request, remnant_id)

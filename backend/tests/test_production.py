@@ -743,6 +743,38 @@ def test_optimize_rejects_completed_order() -> None:
     assert error.value.code == "work_order_completed"
 
 
+def test_optimize_rejects_replan_after_consumed_step() -> None:
+    # A DONE material-consuming step already settled its reservations —
+    # replanning would strand the fresh holds forever (no second DONE
+    # transition can consume them).
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "IN_PRODUCTION",
+                "payload_json": {},
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "production_steps" in query:
+            return [{"code": "CUT"}]
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(),
+                color="BLANCO",
+            )
+    assert error.value.code == "work_order_replan_after_consumption"
+
+
 def test_optimize_requires_color() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.optimize_work_order(
