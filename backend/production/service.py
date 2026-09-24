@@ -874,6 +874,17 @@ def transition_step(
                     "work_order_plan_missing",
                     detail="La orden no tiene un plan de corte: optimízala antes de completar este paso.",
                 )
+            if opt.get("invalidated"):
+                # A released remnant (or any other stock change) voids the
+                # claim the layout carried — completing against it would settle
+                # reservations for stock the plan can no longer prove exists.
+                raise DocumentaryError(
+                    "work_order_plan_stale",
+                    detail=(
+                        "El plan de corte perdió material reservado: "
+                        "vuelve a optimizar la orden antes de completar este paso."
+                    ),
+                )
             reservations = opt.get("stock_reservations") or []
             # A consuming step can only complete when its material is fully
             # accounted for: a short reservation, a piece no stock could

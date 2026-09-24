@@ -177,6 +177,7 @@ def _project(org_id: UUID, refs: dict) -> dict:
         [org_id, project["id"]],
     )
     context: dict[str, Any] = {
+        "id": str(project["id"]),
         "code": _cut(project["code"]),
         "name": _cut(project["name"]),
         "client": _cut(project["client_name"]),
@@ -228,7 +229,9 @@ def _position(org_id: UUID, refs: dict) -> dict:
     modules = assembly.get("modules") if isinstance(assembly, dict) else None
     couplings = assembly.get("couplings") if isinstance(assembly, dict) else None
     return {
+        "id": str(position["id"]),
         "project": {
+            "id": str(position["project_id"]),
             "code": _cut(position["project_code"]),
             "name": _cut(position["project_name"]),
         },
@@ -276,7 +279,11 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
         [org_id, org_id, project["id"]],
     )
     return {
-        "project": {"code": _cut(project["code"]), "name": _cut(project["name"])},
+        "project": {
+            "id": str(project["id"]),
+            "code": _cut(project["code"]),
+            "name": _cut(project["name"]),
+        },
         "current_revision": _cut(project["current_revision"]),
         "totals": {
             "net": _cut(project["total_price_net"]),
@@ -371,6 +378,7 @@ def _work_order(org_id: UUID, refs: dict) -> dict:
         else 0
     )
     return {
+        "id": str(order_id),
         "order_code": _cut(order[0]["order_code"]),
         "status": _cut(order[0]["status"]),
         "shortages": shortages,

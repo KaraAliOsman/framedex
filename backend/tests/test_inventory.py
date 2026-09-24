@@ -368,7 +368,12 @@ def test_unreserve_remnant_evicts_order_plan_claim() -> None:
             "sheets": [
                 {"remnant_id": str(remnant_id), "source": "REMNANT"},
             ],
-        }
+        },
+        # Exports rendered from the old plan must die with the claim — their
+        # fingerprints no longer match and their layout references the drop.
+        "cnc_export": {"files": []},
+        "dxf_export": {"files": []},
+        "operations_export": {"files": []},
     }
     updates: list = []
 
@@ -408,3 +413,9 @@ def test_unreserve_remnant_evicts_order_plan_claim() -> None:
     assert kept["remnant_id"] is not None
     assert optimization["sheets"][0]["source"] == "NEW"
     assert optimization["sheets"][0]["remnant_id"] is None
+    # The plan's claim on physical stock is gone — the layout can no longer
+    # prove the pieces fit real stock, so a consuming step must refuse until
+    # a fresh optimize re-reserves (work_order_plan_stale gate).
+    assert optimization["invalidated"] is True
+    for export_key in ("cnc_export", "dxf_export", "operations_export"):
+        assert export_key not in written

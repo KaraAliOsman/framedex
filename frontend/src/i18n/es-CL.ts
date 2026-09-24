@@ -1149,6 +1149,7 @@ const messages = {
   "catalog.active": "Activo",
   "catalog.inactive": "Inactivo",
   "catalog.provenanceLegacy": "Sin revisar",
+  "catalog.reviewPending": "Revisión pendiente",
   "catalog.markReviewed": "Marcar revisado",
   "catalog.reviewing": "Revisando…",
   "catalog.reviewed": "Revisión técnica registrada.",

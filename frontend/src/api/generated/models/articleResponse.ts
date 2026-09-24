@@ -20,6 +20,7 @@ export interface ArticleResponse {
   readonly technical_reviewed_at: string | null;
   /** @nullable */
   readonly technical_reviewed_by: string | null;
+  readonly review_pending: boolean;
   system_id: string;
   /** @maxLength 100 */
   sku: string;

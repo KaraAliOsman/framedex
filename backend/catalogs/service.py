@@ -39,6 +39,7 @@ _PROVENANCE_COLUMNS = (
     "data_provenance",
     "technical_reviewed_at",
     "technical_reviewed_by",
+    "review_pending",
 )
 
 SYSTEMS = Resource(
@@ -358,10 +359,13 @@ def update(resource, org_id, row_id, values, expected_revision=None, actor_id=No
         ]
         if set(_PROVENANCE_COLUMNS) & set(current):
             # Editing a reviewed technical row re-opens its review — the new
-            # values are unverified until reviewed again.
+            # values are unverified until reviewed again. review_pending keeps
+            # that visible to readiness: a never-reviewed authored row keeps
+            # FALSE, a reviewed-then-edited one becomes TRUE.
             assignments += [
                 "technical_reviewed_at = NULL",
                 "technical_reviewed_by = NULL",
+                "review_pending = review_pending OR technical_reviewed_at IS NOT NULL",
             ]
         with connection.cursor() as cursor:
             cursor.execute(
@@ -387,6 +391,7 @@ def review(resource, org_id, row_id, user_id):
         cursor.execute(
             f"UPDATE public.{resource.table} SET "
             "technical_reviewed_at = now(), technical_reviewed_by = %s, "
+            "review_pending = FALSE, "
             "data_provenance = CASE WHEN data_provenance = 'LEGACY_UNVERIFIED' "
             "THEN 'MANUAL' ELSE data_provenance END "
             "WHERE id = %s AND org_id = %s",

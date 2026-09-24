@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(13);
+SELECT plan(18);
 
 -- §2 fabrication authority: rebate/end-milling are real catalog columns and
 -- provenance marks who authored every technical row.
@@ -60,6 +60,26 @@ PREPARE locked_technical AS
     WHERE code = 'PGTAP145';
 SELECT throws_ok('locked_technical', '23514', 'catalog_authority_referenced',
     'a locked system still refuses technical edits');
+
+-- review_pending marks a stale review — cleared by review writes, set by
+-- the app on technical edits of reviewed rows. Column present + NOT NULL on
+-- every provenance table, and it rides the freeze-guard exemption.
+SELECT col_not_null('public', 'profile_systems', 'review_pending',
+    'systems track a stale-review marker');
+SELECT col_not_null('public', 'profile_articles', 'review_pending',
+    'articles track a stale-review marker');
+SELECT col_not_null('public', 'infill_articles', 'review_pending',
+    'infill rows track a stale-review marker');
+SELECT col_not_null('public', 'hardware_kits', 'review_pending',
+    'kits track a stale-review marker');
+
+PREPARE locked_review_clear AS
+    UPDATE public.profile_systems
+    SET technical_reviewed_at = now(), technical_reviewed_by = NULL,
+        review_pending = FALSE
+    WHERE code = 'PGTAP145';
+SELECT lives_ok('locked_review_clear',
+    'a locked system accepts a review write that clears the pending marker');
 
 SELECT ok((SELECT data_provenance FROM public.profile_systems
            WHERE code = 'DEMO_60' AND is_global LIMIT 1)

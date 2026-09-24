@@ -323,7 +323,8 @@ def test_system_accepts_nullable_fabrication_fields():
 
 
 @pytest.mark.parametrize(
-    "field", ["data_provenance", "technical_reviewed_at", "technical_reviewed_by"]
+    "field",
+    ["data_provenance", "technical_reviewed_at", "technical_reviewed_by", "review_pending"],
 )
 @pytest.mark.parametrize(
     "serializer_type",
@@ -368,6 +369,7 @@ def test_response_serializers_emit_provenance_triple():
             "data_provenance": "LEGACY_UNVERIFIED",
             "technical_reviewed_at": None,
             "technical_reviewed_by": None,
+            "review_pending": True,
             "readiness": {"quote_ready": False, "scope": "s", "reasons": []},
             "revision": "sha256:x",
         }
@@ -376,6 +378,7 @@ def test_response_serializers_emit_provenance_triple():
     assert output["data_provenance"] == "LEGACY_UNVERIFIED"
     assert output["technical_reviewed_at"] is None
     assert output["technical_reviewed_by"] is None
+    assert output["review_pending"] is True
 
 
 def test_engine_result_serializers_carry_unknown_weight():

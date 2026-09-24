@@ -334,6 +334,13 @@ def _evict_remnant_claim(
     optimization = payload.get("optimization")
     if not isinstance(optimization, dict):
         return
+    # The plan claimed a physical drop that no longer exists: its layout can
+    # no longer prove pieces fit real stock. Invalidate it so a consuming step
+    # refuses until a fresh optimize re-reserves — and drop the machine
+    # exports rendered from the old plan, whose fingerprints are now stale.
+    optimization["invalidated"] = True
+    for export_key in ("cnc_export", "dxf_export", "operations_export"):
+        payload.pop(export_key, None)
     remnant_key = str(remnant_id)
     remnants = optimization.get("remnants")
     if isinstance(remnants, dict) and isinstance(remnants.get("consumed"), list):

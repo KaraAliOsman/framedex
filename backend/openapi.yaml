@@ -11858,6 +11858,10 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        review_pending:
+          type: boolean
+          readOnly: true
+          default: false
         system_id:
           type: string
           format: uuid
@@ -11936,6 +11940,7 @@ components:
       - material
       - name
       - read_only
+      - review_pending
       - revision
       - role
       - section_revised_at
@@ -15322,6 +15327,10 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        review_pending:
+          type: boolean
+          readOnly: true
+          default: false
         system_id:
           type: string
           format: uuid
@@ -15403,6 +15412,7 @@ components:
       - opening_type
       - rail_type
       - read_only
+      - review_pending
       - revision
       - sku
       - stay_arms_qty
@@ -19170,6 +19180,10 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        review_pending:
+          type: boolean
+          readOnly: true
+          default: false
         name:
           type: string
           maxLength: 150
@@ -19304,6 +19318,7 @@ components:
       - rail_type
       - read_only
       - readiness
+      - review_pending
       - revision
       - sash_overlap_mm
       - sliding_end_add_mm

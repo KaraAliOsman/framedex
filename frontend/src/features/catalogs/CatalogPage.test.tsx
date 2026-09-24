@@ -39,6 +39,7 @@ const PROVENANCE = {
   data_provenance: "MANUAL" as const,
   technical_reviewed_at: null,
   technical_reviewed_by: null,
+  review_pending: false,
 };
 const SAVED_REVISION = `sha256:${"b".repeat(64)}`;
 

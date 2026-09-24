@@ -88,25 +88,26 @@ def catalog_readiness(system_id, org_id):
         if fabrication_missing:
             reasons.append("fabrication")
         # Production authority must not ride on values nobody ever verified:
-        # any LEGACY_UNVERIFIED row in this system's technical catalog needs a
-        # human review first (review flips its provenance to MANUAL).
+        # LEGACY_UNVERIFIED rows and rows whose technical values changed after
+        # their last review (review_pending) need a human review first —
+        # review() clears both gates.
         if rows(
             "SELECT 1 FROM public.profile_systems WHERE id=%s"
             " AND (is_global = TRUE OR org_id=%s)"
-            " AND data_provenance='LEGACY_UNVERIFIED'"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
             " UNION ALL"
             " SELECT 1 FROM public.profile_articles WHERE system_id=%s"
             " AND (org_id IS NULL OR org_id=%s)"
-            " AND data_provenance='LEGACY_UNVERIFIED'"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
             " UNION ALL"
             " SELECT 1 FROM public.infill_articles WHERE system_id=%s"
             " AND (org_id IS NULL OR org_id=%s)"
-            " AND data_provenance='LEGACY_UNVERIFIED'"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
             " UNION ALL"
             " SELECT 1 FROM public.hardware_kits WHERE"
             " (system_id=%s OR system_id IS NULL)"
             " AND (org_id IS NULL OR org_id=%s)"
-            " AND data_provenance='LEGACY_UNVERIFIED'"
+            " AND (data_provenance='LEGACY_UNVERIFIED' OR review_pending)"
             " LIMIT 1",
             [system_id, org_id, system_id, org_id,
              system_id, org_id, system_id, org_id],

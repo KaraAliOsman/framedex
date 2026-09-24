@@ -20,6 +20,7 @@ export interface KitResponse {
   readonly technical_reviewed_at: string | null;
   /** @nullable */
   readonly technical_reviewed_by: string | null;
+  readonly review_pending: boolean;
   /** @nullable */
   system_id: string | null;
   /** @maxLength 100 */

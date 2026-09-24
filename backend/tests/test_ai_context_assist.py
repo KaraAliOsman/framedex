@@ -394,3 +394,63 @@ def test_provider_timeout_env_overrides_and_fails_visibly(monkeypatch):
     monkeypatch.setenv("AI_GATEWAY_TO_TIMEOUT_S", "0")
     with pytest.raises(ProviderError):
         HttpProvider(provider="TO")
+
+
+def test_ask_navigation_actions_grounded_to_context_ids(monkeypatch):
+    """A provider can propose navigation — but only to entities the context
+    literally carries: a deep link to an id it never saw is dropped, not
+    passed through. Root section paths stay allowed."""
+    org_id, project_id, intruder_id = uuid4(), uuid4(), uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "FROM public.projects" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "PRJ-1",
+                    "name": "P",
+                    "client_name": "C",
+                    "status": "DRAFT",
+                    "current_revision": None,
+                    "total_price_net": 0,
+                    "total_price_tax": 0,
+                    "total_price_gross": 0,
+                }
+            ]
+        if "FROM public.project_payments" in sql:
+            return [{"count": 0, "collected": 0}]
+        return []
+
+    output = json.dumps(
+        {
+            "answer": "Ok.",
+            "actions": [
+                {
+                    "kind": "navigate",
+                    "path": f"/projects/{project_id}",
+                    "label": "Este proyecto",
+                },
+                {
+                    "kind": "navigate",
+                    "path": f"/projects/{intruder_id}",
+                    "label": "Otro proyecto",
+                },
+                {"kind": "navigate", "path": "/production", "label": "Producción"},
+            ],
+            "warnings": [],
+        },
+        ensure_ascii=False,
+    )
+    _patch(monkeypatch, rows_impl=fake_rows, output=output)
+    result = assist.ask(
+        org_id=org_id,
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        question="navega",
+        operation_key="ask-ids",
+    )
+    paths = [a["path"] for a in result["actions"]]
+    assert paths == [f"/projects/{project_id}", "/production"]

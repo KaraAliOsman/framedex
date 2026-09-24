@@ -33,6 +33,15 @@ _ALLOWED_PATHS = re.compile(
     r"^/(dashboard|projects|production|purchasing|catalogs|clients|pricing|settings)"
     r"(/[0-9a-zA-Z\-_/]*)?$|^/$"
 )
+_PATH_UUID = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
+
+
+def _context_refs(context: Any) -> frozenset[str]:
+    """Every entity id literally present in the projection — a navigate action
+    may only deep-link to entities the caller's own context already exposes."""
+    return frozenset(_PATH_UUID.findall(json.dumps(context, default=str)))
 
 ASK_SYSTEM = """Eres el asistente contextual de DEKOPEN, una aplicación profesional de ventanas y puertas (español chileno).
 
@@ -111,7 +120,7 @@ def _grounded(answer: str, values: set[Decimal]) -> bool:
     return True
 
 
-def _answer(document: Any) -> dict:
+def _answer(document: Any, context_refs: frozenset[str]) -> dict:
     if not isinstance(document, dict) or not isinstance(document.get("answer"), str):
         raise contract_error(
             502,
@@ -141,6 +150,9 @@ def _answer(document: Any) -> dict:
                 item.get("kind") == "navigate"
                 and isinstance(path, str)
                 and _ALLOWED_PATHS.match(path)
+                # Entity routes only when the id is in the served context —
+                # otherwise the provider could point at any record.
+                and all(ref in context_refs for ref in _PATH_UUID.findall(path))
             ):
                 actions.append(
                     {
@@ -221,7 +233,7 @@ def ask(
             "ai_assist_bad_output",
             "El asistente devolvió una respuesta inválida.",
         ) from None
-    validated = _answer(document)
+    validated = _answer(document, _context_refs(context))
     if not _grounded(validated["answer"], _grounding_values(context, question)):
         raise contract_error(
             502,

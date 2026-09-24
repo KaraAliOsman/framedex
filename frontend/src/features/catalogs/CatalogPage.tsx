@@ -344,10 +344,15 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                           <span> · {ct(row.is_active ? "active" : "inactive")}</span>
                         )}
                         {"data_provenance" in row &&
-                          row.data_provenance === "LEGACY_UNVERIFIED" && (
+                          (row.data_provenance === "LEGACY_UNVERIFIED" ||
+                            row.review_pending === true) && (
                             <span className="catalog-provenance-legacy">
                               {" · "}
-                              {ct("provenanceLegacy")}
+                              {ct(
+                                row.data_provenance === "LEGACY_UNVERIFIED"
+                                  ? "provenanceLegacy"
+                                  : "reviewPending",
+                              )}
                             </span>
                           )}
                       </td>
@@ -366,7 +371,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                         </button>
                         {canEdit &&
                           "data_provenance" in row &&
-                          row.data_provenance === "LEGACY_UNVERIFIED" &&
+                          (row.data_provenance === "LEGACY_UNVERIFIED" ||
+                            row.review_pending === true) &&
                           row.read_only === false && (
                             <button
                               type="button"

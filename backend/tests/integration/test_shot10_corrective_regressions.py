@@ -621,3 +621,69 @@ def test_readiness_nonpvc_weight_scoped_to_leaf_articles(documentary_tenant, rol
          " WHERE system_id=%s AND role=%s RETURNING id", [system, role])
     with as_user(users["OWNER"]):
         assert ("fabrication" in catalog_readiness(system, org)["reasons"]) is flagged
+
+
+def test_reviewed_catalog_edit_reopens_readiness(documentary_tenant):
+    """Devin Review: a reviewed row's technical edit cleared its stamps but
+    kept MANUAL provenance — readiness still passed with unverified values.
+    review_pending records the stale review so the gate re-opens, while a
+    never-reviewed authored edit stays eligible."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    from pricing.repository import rows
+
+    org, _, users, _ = documentary_tenant
+    owner = users["OWNER"]
+    system = copy_fixed_catalog(org)
+    article_id = rows(
+        "SELECT id FROM public.profile_articles"
+        " WHERE system_id=%s AND org_id=%s AND role='FRAME' LIMIT 1",
+        [system, org],
+    )[0]["id"]
+
+    def flagged() -> bool:
+        with as_user(owner):
+            return "catalog_review" in catalog_readiness(system, org)["reasons"]
+
+    # Legacy row → gates until reviewed; review clears both gates.
+    rows(
+        "UPDATE public.profile_articles SET data_provenance='LEGACY_UNVERIFIED'"
+        " WHERE id=%s RETURNING id",
+        [article_id],
+    )
+    assert flagged()
+    with as_user(owner):
+        catalog_service.review(catalog_service.ARTICLES, org, article_id, owner)
+    assert not flagged()
+
+    # Editing the reviewed row's technical values reopens the gate.
+    with as_user(owner):
+        row = catalog_service.retrieve(catalog_service.ARTICLES, org, article_id)
+        catalog_service.update(
+            catalog_service.ARTICLES, org, article_id,
+            {"weight_kg_m": "1.2345"}, f'"{row["revision"]}"',
+        )
+    assert flagged()
+
+    # Reviewing again clears it; a further technical edit reopens again.
+    with as_user(owner):
+        catalog_service.review(catalog_service.ARTICLES, org, article_id, owner)
+    assert not flagged()
+
+    # A never-reviewed authored row (provenance MANUAL, no prior review)
+    # stays eligible after edits — the gate only tracks stale reviews.
+    other_id = rows(
+        "SELECT id FROM public.profile_articles"
+        " WHERE system_id=%s AND org_id=%s AND role='SASH' LIMIT 1",
+        [system, org],
+    )[0]["id"]
+    with as_user(owner):
+        row = catalog_service.retrieve(catalog_service.ARTICLES, org, other_id)
+        catalog_service.update(
+            catalog_service.ARTICLES, org, other_id,
+            {"weight_kg_m": "2.0000"}, f'"{row["revision"]}"',
+        )
+        assert catalog_service.retrieve(catalog_service.ARTICLES, org, other_id)[
+            "review_pending"
+        ] is False
+    assert not flagged()

@@ -294,6 +294,7 @@ class ProvenanceFieldsMixin(serializers.Serializer):
     )
     technical_reviewed_at = serializers.DateTimeField(read_only=True, allow_null=True)
     technical_reviewed_by = serializers.UUIDField(read_only=True, allow_null=True)
+    review_pending = serializers.BooleanField(read_only=True, default=False)
 
 
 class SystemResponseSerializer(ProvenanceFieldsMixin, SystemWriteSerializer):

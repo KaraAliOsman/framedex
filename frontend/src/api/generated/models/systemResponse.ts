@@ -20,6 +20,7 @@ export interface SystemResponse {
   readonly technical_reviewed_at: string | null;
   /** @nullable */
   readonly technical_reviewed_by: string | null;
+  readonly review_pending: boolean;
   /** @maxLength 150 */
   name: string;
   /** @maxLength 50 */

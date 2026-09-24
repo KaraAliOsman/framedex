@@ -905,6 +905,43 @@ def test_complete_step_rejects_missing_plan() -> None:
     assert error.value.code == "work_order_plan_missing"
 
 
+def test_complete_step_rejects_invalidated_plan() -> None:
+    # A plan that lost its claimed stock (e.g. a remnant released back to the
+    # pool) can no longer prove pieces fit real material — completing would
+    # settle reservations for stock that was never re-reserved. The order
+    # must re-optimize first.
+    step = _step_row(status="IN_PROGRESS", code="ASSEMBLE")
+    payload = json.dumps({
+        "position_id": "p-1",
+        "optimization": {"invalidated": True, "stock_reservations": []},
+    })
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "SELECT payload_json FROM public.orders" in query:
+            return {"payload_json": payload}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch(
+        "production.service.transaction.atomic", side_effect=_atomic
+    ), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="COMPLETE",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_order_plan_stale"
+
+
 def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
     # quantity>1 must not label two physical panes with the same piece_id —
     # a label resolves to exactly one unit in the trace.
