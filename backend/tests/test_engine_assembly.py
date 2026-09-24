@@ -122,6 +122,42 @@ class TestAssemblyParse:
         with pytest.raises(InvalidEngineRequest):
             parse_product_model(product)
 
+    def test_parses_explicit_connection_endpoints(self) -> None:
+        product = bow_product()
+        product["assembly"]["couplings"] = [
+            {
+                "id": "s1",
+                "kind": "STACKED",
+                "modules": ["m1", "m2"],
+                "edges": ["top", "bottom"],
+                "coupler_profile_sku": "ACOPLE-60",
+            }
+        ]
+        model = parse_product_model(product)
+        coupling = model.assembly.couplings[0]
+        assert coupling.kind.value == "STACKED"
+        assert coupling.modules == ["m1", "m2"]
+        assert [edge.value for edge in coupling.edges] == ["top", "bottom"]
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("kind", "SPIRAL"),
+            ("modules", ["m1"]),
+            ("modules", "m1,m2"),
+            ("edges", ["top"]),
+            ("edges", ["top", "diagonal"]),
+        ],
+    )
+    def test_rejects_malformed_connection_fields(
+        self, field: str, value: object
+    ) -> None:
+        product = bow_product()
+        coupling = product["assembly"]["couplings"][0]
+        coupling[field] = value
+        with pytest.raises(InvalidEngineRequest):
+            parse_product_model(product)
+
 
 class TestAssemblyEndpoint:
     def test_bow_without_couplers_is_manufacturing_incomplete(
@@ -242,3 +278,118 @@ class TestAssemblyEndpoint:
             format="json",
         )
         assert response.status_code == 400
+
+
+def contour_product(
+    vertices: list[tuple[str, str]],
+    bulges: list[str | None],
+    width: str = "2400.00",
+    height: str = "1400.00",
+) -> dict[str, object]:
+    return {
+        "version": "product-v2",
+        "assembly": {
+            "modules": [
+                {
+                    "id": "m1",
+                    "width_mm": width,
+                    "height_mm": height,
+                    "contour": {
+                        "vertices": [
+                            {"x_mm": x, "y_mm": y} for x, y in vertices
+                        ],
+                        "bulges": bulges,
+                    },
+                    "tree": {
+                        "id": "m1",
+                        "type": "BAY",
+                        "opening_type": "FIXED",
+                        "glass_thickness_mm": "4.00",
+                        "glass_spec": "4",
+                    },
+                }
+            ],
+            "couplings": [],
+        },
+    }
+
+
+class TestContourEndpoint:
+    def test_trapezoid_evaluates_and_serializes_canonically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = APIClient()
+        configure_assembly_api(client, monkeypatch)
+        product = contour_product(
+            [("0", "0"), ("2400", "0"), ("2200", "1400"), ("200", "1400")],
+            [None, None, None, None],
+        )
+        request = bow_request(product)
+        request["nominal_width_mm"] = "2400.00"
+        request["nominal_height_mm"] = "1400.00"
+        response = client.post(
+            "/api/v1/engine/assembly/calculate/", request, format="json"
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "VALID"
+        frame = sorted(
+            cut["angle_left"]
+            for cut in payload["bom"]["profile_cuts"]
+            if cut["role"] == "FRAME"
+        )
+        # Miter angles ride the canonical 0.1° contract — not raw precision.
+        assert frame[0] == "40.9"
+        glass = payload["bom"]["glasses"][0]
+        assert glass["shape"] is not None
+        assert glass["area_m2"] > "0"
+
+    def test_arch_serializes_bent_members_canonically(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = APIClient()
+        configure_assembly_api(client, monkeypatch)
+        product = contour_product(
+            [("0", "0"), ("2400", "0"), ("2400", "1400"), ("0", "1400")],
+            [None, None, "300.00", None],
+        )
+        request = bow_request(product)
+        request["nominal_width_mm"] = "2400.00"
+        request["nominal_height_mm"] = "1400.00"
+        response = client.post(
+            "/api/v1/engine/assembly/calculate/", request, format="json"
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "MANUFACTURING_INCOMPLETE"
+        codes = {issue["code"] for issue in payload["issues"]}
+        assert "member_bending_required" in codes
+        bent = [
+            cut
+            for cut in payload["bom"]["profile_cuts"]
+            if cut.get("sagitta_mm") is not None
+        ]
+        assert bent and all(
+            len(cut["sagitta_mm"].split(".")[-1]) <= 2 for cut in bent
+        )
+
+    def test_rect_contour_glass_stays_nestable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client = APIClient()
+        configure_assembly_api(client, monkeypatch)
+        product = contour_product(
+            [("0", "0"), ("1200", "0"), ("1200", "800"), ("0", "800")],
+            [None, None, None, None],
+            width="1200.00",
+            height="800.00",
+        )
+        request = bow_request(product)
+        request["nominal_width_mm"] = "1200.00"
+        request["nominal_height_mm"] = "800.00"
+        response = client.post(
+            "/api/v1/engine/assembly/calculate/", request, format="json"
+        )
+        assert response.status_code == 200
+        glass = response.json()["bom"]["glasses"][0]
+        assert glass["shape"] is None

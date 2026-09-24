@@ -75,6 +75,8 @@ def test_openapi_contains_only_authorized_shot_11_paths_and_bearer_security() ->
         "/api/v1/projects/{project_id}/invoices/{invoice_id}/credit-note/",
         "/api/v1/projects/{project_id}/invoices/{invoice_id}/dte/",
         "/api/v1/sii/cafs/",
+        "/api/v1/sii/certificate/",
+        "/api/v1/projects/{project_id}/invoices/{invoice_id}/dte-envio/",
         "/api/v1/projects/{project_id}/credit-notes/{credit_note_id}/",
         "/api/v1/projects/{project_id}/invoices/{invoice_id}/credit-note-dte/",
         "/api/v1/projects/{project_id}/payment-links/",
@@ -122,7 +124,7 @@ def test_engine_response_includes_shot06_and_excludes_inspector() -> None:
     schema = yaml.safe_load(OPENAPI.read_text(encoding="utf-8"))
     assert set(schema["components"]["schemas"]["EngineCalculateResponse"]["properties"]) == {
         "calculation_hash", "profile_cuts", "reinforcements", "glasses",
-        "panels", "hardware_items", "leaf_weights",
+        "panels", "fittings", "hardware_items", "leaf_weights",
     }
 
 

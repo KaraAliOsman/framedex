@@ -26,7 +26,7 @@ from documents.repository import documentary_backend
 from documents.renderers import render_project_invoice
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
-from projects import sii
+from projects import sii, sii_envio
 
 logger = logging.getLogger(__name__)
 
@@ -270,11 +270,18 @@ def _purge_unreferenced_invoice(*, org_id: UUID, object_key: str) -> None:
         )
 
 
+def _dte_with_envio(dte, envios, invoice_id) -> dict | None:
+    if dte is None:
+        return None
+    return {**dte, "envio": envios.get(str(invoice_id))}
+
+
 def list_invoices(*, org_id: UUID, project_id: UUID) -> list[dict]:
     with documentary_backend():
         credit_notes = _credit_notes_by_invoice(org_id, project_id)
         dtes = sii.dtes_by_invoice(org_id=org_id, project_id=project_id)
         nc_dtes = sii.dtes_by_credit_note(org_id=org_id, project_id=project_id)
+        envios = sii_envio.envios_by_invoice(org_id=org_id, project_id=project_id)
         return [
             _invoice_public(
                 row,
@@ -285,7 +292,7 @@ def list_invoices(*, org_id: UUID, project_id: UUID) -> list[dict]:
                 )
                 if str(row["id"]) in credit_notes
                 else None,
-                dtes.get(str(row["id"])),
+                _dte_with_envio(dtes.get(str(row["id"])), envios, row["id"]),
             )
             for row in rows(
                 "SELECT * FROM public.project_invoices "

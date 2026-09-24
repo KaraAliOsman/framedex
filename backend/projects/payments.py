@@ -118,6 +118,26 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
         }
         dtes = sii.dtes_by_invoice(org_id=org_id, project_id=project_id)
         credit_dtes = sii.dtes_by_credit_note(org_id=org_id, project_id=project_id)
+        # The cobranza row is where the envío chip and resubmit live — the
+        # summary must carry the same envío badge the invoice listing builds.
+        # Queried through this module's rows so the read stays under the
+        # caller's claims (and the unit-test stubbing seam).
+        envios = {
+            str(row["invoice_id"]): {
+                "id": str(row["id"]),
+                "status": row["status"],
+                "track_id": row["track_id"],
+                "attempted": bool(row["attempted"]),
+            }
+            for row in rows(
+                "SELECT e.id, e.status, e.track_id, d.invoice_id, "
+                "(e.payload_json->'submit_attempted_at' IS NOT NULL) AS attempted "
+                "FROM public.sii_envios e "
+                "JOIN public.project_dtes d ON d.id = e.dte_id "
+                "WHERE e.org_id=%s AND e.project_id=%s AND d.credit_note_id IS NULL",
+                [str(org_id), str(project_id)],
+            )
+        }
         invoices = [
             {
                 "id": str(invoice["id"]),
@@ -136,7 +156,11 @@ def _summary(org_id: UUID, project_id: UUID, project: dict) -> dict:
                 }
                 if str(invoice["id"]) in credit_notes
                 else None,
-                "dte": dtes.get(str(invoice["id"])),
+                "dte": (
+                    {**dtes[str(invoice["id"])], "envio": envios.get(str(invoice["id"]))}
+                    if str(invoice["id"]) in dtes
+                    else None
+                ),
                 "created_at": invoice["created_at"].isoformat()
                 if hasattr(invoice["created_at"], "isoformat")
                 else invoice["created_at"],

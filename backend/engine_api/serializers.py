@@ -28,6 +28,9 @@ class ProfileCutSerializer(serializers.Serializer):
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
     leaf_id = serializers.CharField(allow_null=True)
+    sagitta_mm = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
 
 
 class ReinforcementSerializer(serializers.Serializer):
@@ -38,6 +41,14 @@ class ReinforcementSerializer(serializers.Serializer):
     qty = serializers.IntegerField()
     bay_id = serializers.CharField(allow_null=True)
     leaf_id = serializers.CharField(allow_null=True)
+    sagitta_mm = serializers.DecimalField(
+        max_digits=12, decimal_places=2, coerce_to_string=True, allow_null=True
+    )
+
+
+class PlanPointSerializer(serializers.Serializer):
+    x_mm = serializers.CharField()
+    y_mm = serializers.CharField()
 
 
 class GlassPieceSerializer(serializers.Serializer):
@@ -45,10 +56,16 @@ class GlassPieceSerializer(serializers.Serializer):
     leaf_id = serializers.CharField(allow_null=True)
     width_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     height_mm = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    shape = PlanPointSerializer(many=True, allow_null=True)
     area_m2 = serializers.DecimalField(max_digits=12, decimal_places=4, coerce_to_string=True)
     weight_kg = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     thickness_net_mm = serializers.DecimalField(
         max_digits=12, decimal_places=2, coerce_to_string=True
+    )
+    glass_spec = serializers.CharField(allow_null=True)
+    article_sku = serializers.CharField(allow_null=True)
+    exposed_edges = serializers.ListField(
+        child=serializers.CharField(), allow_null=True
     )
 
 
@@ -80,6 +97,16 @@ class HardwareItemSerializer(serializers.Serializer):
     contents = HardwareComponentSerializer(many=True)
 
 
+class FittingPieceSerializer(serializers.Serializer):
+    """Counted frameless fitting — patch/clamp/hinge/lock/connector/seal/support."""
+
+    kind = serializers.CharField()
+    sku = serializers.CharField()
+    qty = serializers.IntegerField()
+    bay_id = serializers.CharField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
+
+
 class LeafWeightSerializer(serializers.Serializer):
     bay_id = serializers.CharField()
     leaf_id = serializers.CharField(allow_null=True)
@@ -96,6 +123,7 @@ class EngineResultPayloadSerializer(serializers.Serializer):
     reinforcements = ReinforcementSerializer(many=True)
     glasses = GlassPieceSerializer(many=True)
     panels = PanelPieceSerializer(many=True)
+    fittings = FittingPieceSerializer(many=True)
     hardware_items = HardwareItemSerializer(many=True)
     leaf_weights = LeafWeightSerializer(many=True)
 
@@ -110,11 +138,6 @@ class EngineAssemblyCalculateSerializer(serializers.Serializer):
     nominal_height_mm = DecimalStringField(max_digits=10, decimal_places=2)
     color = serializers.CharField(max_length=50)
     product = serializers.JSONField()
-
-
-class PlanPointSerializer(serializers.Serializer):
-    x_mm = serializers.CharField()
-    y_mm = serializers.CharField()
 
 
 class PlanModuleSerializer(serializers.Serializer):
@@ -144,10 +167,24 @@ class ProductIssueSerializer(serializers.Serializer):
     params = serializers.DictField(child=serializers.CharField())
 
 
+class SlidingPanelFactsSerializer(serializers.Serializer):
+    slot = serializers.CharField()
+    kind = serializers.ChoiceField(choices=["MOVING", "FIXED"])
+    track = serializers.IntegerField(allow_null=True)
+    leaf_id = serializers.CharField(allow_null=True)
+
+
+class SlidingLayoutFactsSerializer(serializers.Serializer):
+    bay_id = serializers.CharField()
+    tracks = serializers.IntegerField()
+    panels = SlidingPanelFactsSerializer(many=True)
+
+
 class ModuleEvaluationSerializer(serializers.Serializer):
     module_id = serializers.CharField()
     issues = ProductIssueSerializer(many=True)
     result = EngineResultPayloadSerializer(allow_null=True)
+    sliding = SlidingLayoutFactsSerializer(many=True)
 
 
 class EngineAssemblyCalculateResponseSerializer(serializers.Serializer):

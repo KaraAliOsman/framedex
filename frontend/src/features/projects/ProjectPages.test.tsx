@@ -92,6 +92,7 @@ function makePosition(): PositionResponse {
       reinforcements: [],
       glasses: [],
       panels: [],
+      fittings: [],
       hardware_items: [],
       leaf_weights: [],
       calculation_hash: `sha256:${"a".repeat(64)}`,

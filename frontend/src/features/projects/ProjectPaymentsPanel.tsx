@@ -8,6 +8,8 @@ import {
   projectInvoiceAccess,
   projectInvoiceDteAccess,
   projectInvoiceDteEmit,
+  projectInvoiceDteEnvioAccess,
+  projectInvoiceDteEnvioSend,
   projectInvoiceEmit,
   projectPaymentsList,
   projectPaymentsRecord,
@@ -61,11 +63,13 @@ export function ProjectPaymentsPanel({
   projectId,
   orgId,
   canWrite,
+  canSendEnvio = false,
   onDirtyChange,
 }: {
   projectId: string;
   orgId: string;
   canWrite: boolean;
+  canSendEnvio?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
@@ -281,6 +285,53 @@ export function ProjectPaymentsPanel({
     } catch {
       tab.close();
       if (generation.current === current) setMessage(t("projects.dteOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function sendEnvio(invoice: ProjectInvoice, resubmit = false): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEnvioSend(
+        projectId,
+        invoice.id,
+        { resubmit },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch {
+      if (generation.current === current) setMessage(t("projects.envioSendError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openEnvio(invoice: ProjectInvoice): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.envioOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectInvoiceDteEnvioAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.envioOpenError"));
     } finally {
       if (generation.current === current) setBusy(false);
     }
@@ -606,6 +657,17 @@ export function ProjectPaymentsPanel({
                           {`${t("projects.dteCreditStatus")} · ${invoice.credit_note.dte.folio}`}
                         </button>
                       )}
+                      {invoice.dte?.envio && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.envioStatus")} · ${invoice.dte.envio.track_id ?? ""}`}
+                          onClick={() => void openEnvio(invoice)}
+                          disabled={busy}
+                        >
+                          {`${t("projects.envioStatus")} · ${invoice.dte.envio.status}`}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button
@@ -636,6 +698,31 @@ export function ProjectPaymentsPanel({
                           disabled={busy}
                         >
                           {t("projects.dteCreditEmit")}
+                        </button>
+                      )}
+                      {canSendEnvio && invoice.dte && !invoice.dte.envio && (
+                        <button
+                          type="button"
+                          onClick={() => void sendEnvio(invoice)}
+                          disabled={busy}
+                        >
+                          {t("projects.envioSend")}
+                        </button>
+                      )}
+                      {canSendEnvio && invoice.dte?.envio?.status === "PENDING" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void sendEnvio(
+                              invoice,
+                              invoice.dte?.envio?.attempted === true && !invoice.dte.envio.track_id,
+                            )
+                          }
+                          disabled={busy}
+                        >
+                          {invoice.dte.envio.attempted === true && !invoice.dte.envio.track_id
+                            ? t("projects.envioResend")
+                            : t("projects.envioRefresh")}
                         </button>
                       )}
                     </td>

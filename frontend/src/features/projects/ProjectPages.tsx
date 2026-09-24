@@ -186,6 +186,7 @@ export function ProjectPages(): JSX.Element {
       orgId={org.id}
       id={id}
       canWrite={org.role === "OWNER" || org.role === "ESTIMATOR"}
+      canSendEnvio={org.role === "OWNER" || org.role === "WORKSHOP_MANAGER"}
     />
   );
 }
@@ -200,11 +201,13 @@ function ProjectWorkspace({
   orgId,
   id,
   canWrite,
+  canSendEnvio,
 }: {
   identity: string;
   orgId: string;
   id?: string;
   canWrite: boolean;
+  canSendEnvio: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -559,6 +562,7 @@ function ProjectWorkspace({
             projectId={project.id}
             orgId={orgId}
             canWrite={canWrite}
+            canSendEnvio={canSendEnvio}
             onDirtyChange={setPaymentsDirty}
           />
           <ProjectImportsPanel

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
-from typing import TypeVar
+from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from django.db import connection
@@ -37,12 +37,16 @@ from dekopen_engine.manufacturing_trace import (
     SemanticLeafTraceV1,
 )
 from dekopen_engine.models import EngineResult
+from dekopen_engine.product import (
+    contour_module_computation,
+    frameless_module_computation,
+)
 from dekopen_engine.purchasing import (
     HardwareSelectionV1,
     PositionPurchaseInputV1,
     project_purchase_requirements_v1,
 )
-from dekopen_engine.snapshot import calculation_response
+from dekopen_engine.snapshot import calculation_hash, calculation_response, result_payload
 from engine_api.adapter import (
     evaluate_assembly_from_api,
     normalized_root_from_api,
@@ -278,6 +282,149 @@ def _same_documentary_value(left: object, right: object) -> bool:
     return documentary_canonical_json_v1(left) == documentary_canonical_json_v1(right)
 
 
+_BOM_ADDITIVE_KEYS = frozenset({"fittings"})
+_PIECE_ADDITIVE_KEYS = {
+    # Output-additive metadata the model gained after BOMs were already
+    # sealed — dropping them when a stored snapshot lacks them keeps old
+    # positions comparable; when the snapshot carries them they stay
+    # compared, so a real value change still reads as drift.
+    "glasses": frozenset(
+        {
+            "glass_spec",
+            "article_sku",
+            "thickness_net_mm",
+            "weight_kg",
+            "shape",
+            "area_m2",
+            "exposed_edges",
+        }
+    ),
+    "profile_cuts": frozenset({"sagitta_mm"}),
+    "reinforcements": frozenset({"sagitta_mm"}),
+}
+
+
+def _drop_bom_keys(
+    payload: Mapping[str, object],
+    bom_keys: frozenset[str],
+    piece_keys: Mapping[str, frozenset[str]],
+) -> dict[str, object]:
+    """Payload with the given additive keys removed at BOM level and per
+    piece-list item — the preimage a stored identity hash was computed on."""
+    bom = {key: value for key, value in payload.items() if key not in bom_keys}
+    for piece_list, keys in piece_keys.items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in keys
+                }
+                if isinstance(item, dict)
+                else item
+                for item in items
+            ],
+        }
+    return bom
+
+
+def _calculation_identity_hashes(
+    request: Mapping[str, object], result: EngineResult
+) -> tuple[str, ...]:
+    """Current plus prior-era hashes for one engine result. Documentary
+    inputs seal ``hash(request, payload-at-save-time)`` — every era that
+    appended output fields (frameless fittings/exposed edges, contour
+    shape/sagitta, glass spec/article) must project the current payload back
+    to that era's preimage or positions sealed then can never freeze again."""
+    payload = result_payload(result)
+    era94 = _drop_bom_keys(
+        payload, frozenset({"fittings"}), {"glasses": frozenset({"exposed_edges"})}
+    )
+    era92 = _drop_bom_keys(
+        era94,
+        frozenset(),
+        {
+            "glasses": frozenset({"shape"}),
+            "profile_cuts": frozenset({"sagitta_mm"}),
+            "reinforcements": frozenset({"sagitta_mm"}),
+        },
+    )
+    era86 = _drop_bom_keys(
+        era92,
+        frozenset(),
+        {"glasses": frozenset({"glass_spec", "article_sku"})},
+    )
+    return (
+        calculation_hash(request, payload),
+        calculation_hash(request, era94),
+        calculation_hash(request, era92),
+        calculation_hash(request, era86),
+    )
+
+
+def _piece_identity(item: Mapping[str, object]) -> tuple[object, ...]:
+    return (
+        item.get("bay_id"),
+        item.get("leaf_id"),
+        item.get("role"),
+        item.get("sku") or item.get("parent_profile_sku"),
+        item.get("length_mm"),
+        item.get("width_mm"),
+        item.get("height_mm"),
+        item.get("angle_left"),
+        item.get("angle_right"),
+        item.get("qty"),
+    )
+
+
+def _without_additive_bom_fields(bom: object, reference: object = None) -> object:
+    # glass_spec/article_sku and friends are output-additive metadata derived
+    # from the same inputs; the authoritative values are sealed in
+    # computation.infills. BOMs persisted before the fields existed must not
+    # read as drift. With `reference` (the older stored/priced snapshot) a key
+    # is dropped only when that snapshot lacks it or carries null — a non-null
+    # value in the snapshot stays on both sides, so real drift still flags.
+    # Both sides of a comparison are normalized against the same snapshot.
+    if not isinstance(bom, dict):
+        return bom
+    ref = reference if isinstance(reference, dict) else None
+    bom = {
+        key: value
+        for key, value in bom.items()
+        if key not in _BOM_ADDITIVE_KEYS or (ref is not None and ref.get(key) is not None)
+    }
+    for piece_list, keys in _PIECE_ADDITIVE_KEYS.items():
+        items = bom.get(piece_list)
+        if not isinstance(items, list):
+            continue
+        ref_items: dict[tuple[object, ...], Mapping[str, object]] = {}
+        if ref is not None and isinstance(ref.get(piece_list), list):
+            ref_items = {
+                _piece_identity(item): item
+                for item in ref[piece_list]
+                if isinstance(item, dict)
+            }
+        bom = {
+            **bom,
+            piece_list: [
+                {
+                    key: value
+                    for key, value in item.items()
+                    if key not in keys
+                    or ref_items.get(_piece_identity(item), {}).get(key) is not None
+                }
+                if isinstance(item, dict)
+                else item
+                for item in items
+            ],
+        }
+    return bom
+
+
 def _unique_by(items: list[T], attribute: str, code: str) -> list[T]:
     result: dict[str, T] = {}
     for item in items:
@@ -308,37 +455,53 @@ def _position_calculations(
     """
     calculations: list[tuple[str | None, GeometryComputation, dict[str, object]]] = []
     is_assembly = isinstance(tree, dict) and tree.get("version") == "product-v2"
+    coupler_articles = (
+        SystemParamsRepository().load_coupler_articles(system_id, org_id)
+        if is_assembly
+        else {}
+    )
     if is_assembly:
         product = parse_product_model(tree)
         evaluation = evaluate_assembly_from_api(
             product=product,
             color=color,
             params=params,
-            coupler_articles=SystemParamsRepository().load_coupler_articles(
-                system_id, org_id
-            ),
+            coupler_articles=coupler_articles,
         )
         if evaluation.status.value != "VALID" or evaluation.bom is None:
             raise DocumentaryError("documentary_geometry_incomplete")
         result = evaluation.bom
-        module_specs = [
-            (module.id, module.tree.model_dump(mode="json"), module.width_mm, module.height_mm)
-            for module in product.assembly.modules
-        ]
+        module_specs = [(module.id, module) for module in product.assembly.modules]
     else:
         result = None
-        module_specs = [(None, tree, width_mm, height_mm)]
-    for module_id, module_tree, module_width, module_height in module_specs:
-        module_root = normalized_root_from_api(
-            parametric_tree=module_tree,
-            nominal_width_mm=module_width,
-            nominal_height_mm=module_height,
-            color=color,
-            params=params,
-        )
-        computation = compute_geometry(module_root, params, diagnostic=True)
+        module_specs = [(None, None)]
+    for module_id, module in module_specs:
+        if module is not None and module.contour is not None:
+            computation, _contour_issues = contour_module_computation(module, params)
+            if computation is None:
+                raise DocumentaryError("documentary_geometry_incomplete")
+        elif module is not None and module.frameless is not None:
+            computation, _frameless_issues = frameless_module_computation(
+                module, coupler_articles=coupler_articles
+            )
+            if computation is None:
+                raise DocumentaryError("documentary_geometry_incomplete")
+        else:
+            module_root = normalized_root_from_api(
+                parametric_tree=(
+                    module.tree.model_dump(mode="json") if module is not None else tree
+                ),
+                nominal_width_mm=module.width_mm if module is not None else width_mm,
+                nominal_height_mm=(
+                    module.height_mm if module is not None else height_mm
+                ),
+                color=color,
+                params=params,
+            )
+            computation = compute_geometry(module_root, params, diagnostic=True)
         if computation.result is None or computation.manufacturing_trace is None:
             raise DocumentaryError("documentary_geometry_incomplete")
+        module_tree = module.tree.model_dump(mode="json") if module is not None else tree
         calculations.append((module_id, computation, module_tree))
         if not is_assembly:
             result = computation.result
@@ -617,9 +780,14 @@ def freeze_revision_a(
             current_bom = result.model_dump(mode="json")
             stored_bom = _json_object(position["bom_snapshot"], "invalid_stored_bom")
             stored_bom.pop("calculation_hash", None)
-            if position_id not in priced_bom or not _same_documentary_value(
-                current_bom, priced_bom[position_id]
-            ) or not _same_documentary_value(current_bom, stored_bom):
+            priced_ref = priced_bom.get(position_id)
+            if not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, stored_bom),
+                _without_additive_bom_fields(stored_bom, stored_bom),
+            ) or not isinstance(priced_ref, dict) or not _same_documentary_value(
+                _without_additive_bom_fields(current_bom, priced_ref),
+                _without_additive_bom_fields(priced_ref, priced_ref),
+            ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
             annotations = workshop_annotations(position["workshop_annotations"])
@@ -657,8 +825,12 @@ def freeze_revision_a(
                 "nominal_height_mm": D(str(position["height_mm"])),
                 "color": color,
             }
-            source_hash = calculation_response(calculation_request, result)["calculation_hash"]
-            if position["documentary_calculation_hash"] != source_hash:
+            identity_hashes = _calculation_identity_hashes(
+                calculation_request, result
+            )
+            source_hash = identity_hashes[0]
+            stored_identity = position["documentary_calculation_hash"]
+            if stored_identity not in identity_hashes:
                 raise DocumentaryError("documentary_calculation_identity_stale")
             inspections: list[tuple[str | None, InspectorResult, bool, bool]] = []
             has_failures = False
@@ -1147,12 +1319,16 @@ def prepare_documentary_inputs(
             system_id=system_id_uuid,
             org_id=org_id,
         )
-        identity_hash = calculation_response({
-            "system_id": system_id, "parametric_tree": tree,
-            "nominal_width_mm": D(str(position["width_mm"])),
-            "nominal_height_mm": D(str(position["height_mm"])), "color": color,
-        }, result)["calculation_hash"]
-        if existing and existing["calculation_hash"] != identity_hash:
+        identity_hashes = _calculation_identity_hashes(
+            {
+                "system_id": system_id, "parametric_tree": tree,
+                "nominal_width_mm": D(str(position["width_mm"])),
+                "nominal_height_mm": D(str(position["height_mm"])), "color": color,
+            },
+            result,
+        )
+        identity_hash = identity_hashes[0]
+        if existing and existing["calculation_hash"] not in identity_hashes:
             existing = None
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
