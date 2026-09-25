@@ -953,3 +953,129 @@ def test_purchase_plan_projection_coverage_unverifiable(monkeypatch):
     assert ctx["uncovered_total"] == 0
     assert ctx["suppliers"] is None
     assert ctx["truncated"] is False
+
+
+def test_project_from_documents_projection_candidates(monkeypatch):
+    """§08-WA — the project-from-documents projection carries each import's
+    extraction candidates (key/label/dims/opening/confidence), the active
+    catalog systems for typology mapping, and existing positions so the
+    draft can't duplicate them."""
+    org_id = uuid4()
+    project_id = uuid4()
+    import_id = uuid4()
+    system_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "FROM public.projects WHERE id" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "OB-9",
+                    "name": "Torre",
+                    "client_name": "C",
+                    "status": "DRAFT",
+                    "current_revision": "REV-A",
+                    "total_price_net": Decimal("0"),
+                    "total_price_tax": Decimal("0"),
+                    "total_price_gross": Decimal("0"),
+                }
+            ]
+        if "FROM public.document_imports" in sql:
+            return [
+                {
+                    "id": import_id,
+                    "file_name": "planilla.pdf",
+                    "kind": "PDF",
+                    "status": "REVIEW_READY",
+                    "error_code": None,
+                    "candidates": json.dumps(
+                        [
+                            {
+                                "key": "c1",
+                                "label": "V-1",
+                                "width_mm": "1200",
+                                "height_mm": "1400",
+                                "quantity": "2",
+                                "opening_type": "TILT_TURN_LEFT",
+                                "confidence": "0.92",
+                                "warnings": ["low_confidence_system"],
+                            }
+                        ]
+                    ),
+                    "warnings": "[]",
+                }
+            ]
+        if "FROM public.profile_systems" in sql:
+            return [
+                {
+                    "id": system_id,
+                    "code": "DEMO_60",
+                    "name": "Demo 60",
+                    "material": "PVC",
+                    "manufacturer": "Demo",
+                    "family": "60",
+                }
+            ]
+        if "FROM public.project_positions" in sql:
+            return [
+                {
+                    "position_index": 1,
+                    "location_tag": "V-0",
+                    "typology": "VENTANA",
+                    "width_mm": "900",
+                    "height_mm": "1000",
+                }
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(
+        org_id, "project_from_documents", {"project_id": str(project_id)}
+    )
+    assert ctx["surface"] == "project_from_documents"
+    doc = ctx["documents"][0]
+    assert doc["id"] == str(import_id)
+    assert doc["status"] == "REVIEW_READY"
+    assert doc["candidates_total"] == 1
+    cand = doc["candidates"][0]
+    assert cand["key"] == "c1"
+    assert cand["opening_type"] == "TILT_TURN_LEFT"
+    assert cand["confidence"] == "0.92"
+    assert ctx["systems"][0]["id"] == str(system_id)
+    assert ctx["positions"][0]["location"] == "V-0"
+
+
+def test_project_from_documents_projection_empty_project(monkeypatch):
+    """§08-WA — no imports → empty documents list; the draft reports there
+    is nothing to compile instead of fabricating candidates."""
+    org_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "FROM public.projects WHERE id" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "OB-2",
+                    "name": "Casa",
+                    "client_name": "C",
+                    "status": "DRAFT",
+                    "current_revision": "REV-A",
+                    "total_price_net": Decimal("0"),
+                    "total_price_tax": Decimal("0"),
+                    "total_price_gross": Decimal("0"),
+                }
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(
+        org_id, "project_from_documents", {"project_id": str(project_id)}
+    )
+    assert ctx["documents"] == []
+    assert ctx["systems"] == []
+    assert ctx["positions"] == []

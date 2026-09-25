@@ -2096,6 +2096,7 @@ export const messages = {
   "aiws.state.succeeded": "Completado",
   "aiws.state.canceled": "Cancelado",
   "aiws.artifact.product": "Borrador de producto",
+  "aiws.artifact.project": "Borrador de proyecto",
   "aiws.artifact.quote": "Borrador de cotización",
   "aiws.artifact.catalog": "Candidatos de catálogo",
   "aiws.artifact.purchase": "Plan de compra",

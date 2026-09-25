@@ -837,3 +837,115 @@ def test_agent_quotation_complete_uses_workflow_prompt(monkeypatch):
     assert result["artifacts"][0]["references"] == [str(project_id)]
     prepare = [s for s in result["steps"] if s["kind"] == "prepare"]
     assert prepare and prepare[0]["action"] == "emit_revision"
+
+
+def test_agent_project_from_documents_uses_workflow_prompt(monkeypatch):
+    """§08-WA — the project-from-documents job rides the runtime with the
+    DOC_DRAFT_SYSTEM contract: get_document_candidates tool, a project_draft
+    artifact carrying position proposals keyed to real candidate keys and
+    context system ids, and navigation to the project's import review."""
+    project_id = uuid4()
+    import_id = uuid4()
+    system_id = uuid4()
+    contexts = {
+        "project_from_documents": {
+            "surface": "project_from_documents",
+            "organization": {"name": "Org"},
+            "project": {
+                "id": str(project_id),
+                "code": "OB-9",
+                "name": "Torre",
+                "status": "DRAFT",
+            },
+            "documents": [
+                {
+                    "id": str(import_id),
+                    "file_name": "planilla.pdf",
+                    "kind": "PDF",
+                    "status": "REVIEW_READY",
+                    "error_code": None,
+                    "candidates_total": 1,
+                    "candidates": [
+                        {
+                            "key": "c1",
+                            "label": "V-1",
+                            "width_mm": "1200",
+                            "height_mm": "1400",
+                            "quantity": "2",
+                            "opening_type": "TILT_TURN_LEFT",
+                            "confidence": "0.92",
+                            "warnings": [],
+                        }
+                    ],
+                    "warnings": [],
+                }
+            ],
+            "systems": [
+                {
+                    "id": str(system_id),
+                    "code": "DEMO_60",
+                    "name": "Demo 60",
+                    "material": "PVC",
+                    "manufacturer": "Demo",
+                    "family": "60",
+                }
+            ],
+            "positions": [],
+        }
+    }
+    output = _doc(
+        reply="1 posición lista desde planilla.pdf, sistema DEMO_60 asignado.",
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "project_draft",
+                    "title": "Posiciones desde planilla.pdf",
+                    "payload": {
+                        "positions": [
+                            {
+                                "key": "c1",
+                                "label": "V-1",
+                                "width_mm": "1200",
+                                "height_mm": "1400",
+                                "quantity": "2",
+                                "opening_type": "TILT_TURN_LEFT",
+                                "system_id": str(system_id),
+                                "system_code": "DEMO_60",
+                                "state": "ready",
+                            }
+                        ],
+                        "unresolved": [],
+                    },
+                    "references": [str(import_id), str(system_id), str(uuid4())],
+                },
+            },
+            {
+                "kind": "navigate",
+                "path": f"/projects/{project_id}",
+                "label": "Revisar importaciones",
+            },
+        ],
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project_from_documents",
+        refs={"project_id": str(project_id)},
+        goal="Crea posiciones desde los documentos",
+        product=None,
+        history=[],
+        operation_key="doc-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.DOC_DRAFT_SYSTEM
+    assert result["queries"][0] == {
+        "surface": "project_from_documents",
+        "tool": "get_document_candidates",
+        "status": "ok",
+    }
+    artifact = result["artifacts"][0]
+    assert artifact["kind"] == "project_draft"
+    assert artifact["payload"]["positions"][0]["key"] == "c1"
+    # References keep only ids the context exposed — the invented one dropped.
+    assert artifact["references"] == [str(import_id), str(system_id)]

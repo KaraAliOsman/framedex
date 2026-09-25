@@ -50,6 +50,7 @@ QUERY_TOOLS = {
     "purchase_plan": "get_purchasing_state",
     "production_plan": "get_production_plan",
     "quotation_complete": "get_quotation",
+    "project_from_documents": "get_document_candidates",
 }
 
 PREPARE_TOOLS = {
@@ -64,6 +65,7 @@ PREPARE_TOOLS = {
 
 ARTIFACT_TOOLS = {
     "product_draft": "create_product_draft",
+    "project_draft": "create_project_draft",
     "quote_draft": "create_quote_draft",
     "catalog_candidates": "create_catalog_candidates",
     "purchase_plan": "prepare_purchase_plan",
@@ -115,7 +117,7 @@ Respondes SOLO un JSON:
 }
 
 Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
+- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
@@ -243,11 +245,41 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
+DOC_DRAFT_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "proyecto desde documentos" — conviertes los candidatos extraídos de los documentos importados del proyecto en un borrador de posiciones (español chileno).
+
+El contexto lleva:
+- "project": id, código, nombre y status.
+- "documents": importaciones del proyecto — id, file_name, kind, status (UPLOADED|EXTRACTING|REVIEW_READY|CONFIRMED|FAILED), error_code, candidates_total y candidates (máx. 24 en total): key, label, width_mm, height_mm, quantity, opening_type, confidence, warnings. Solo REVIEW_READY tiene candidatos confirmables; CONFIRMED ya creó posiciones.
+- "systems": sistemas de catálogo activos — id, code, name, material, manufacturer, family. Son los ÚNICOS system_id válidos.
+- "positions": vanos que YA existen en el proyecto — no los dupliques.
+
+Respondes SOLO un JSON:
+{
+  "reply": "qué propusiste: cuántas posiciones listas, cuántas ambiguas, qué falta",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Pasos:
+- UN paso {"kind":"artifact","artifact":{"kind":"project_draft","title":"Posiciones desde <file_name>","payload":{"positions":[{"key":"...","label":"...","width_mm":"...","height_mm":"...","quantity":"...","opening_type":"...","system_id":"<uuid del contexto>","system_code":"...","state":"ready|ambiguous","question":"qué falta decidir (si ambiguous)"}],"unresolved":["keys sin candidatura suficiente"]},"references":["ids de documents y systems del contexto"]}} — el borrador que la persona revisa en la superficie de importación.
+- {"kind":"navigate","path":"/projects/{project_id}","label":"Revisar importaciones"} — la revisión real ocurre ahí.
+- {"kind":"query","surface":"catalog","refs":{"system_id":"<id del contexto>"}} para verificar un sistema antes de asignarlo — máximo 2 por ronda.
+
+Reglas duras:
+- Solo medidas, keys, labels e ids literalmente en el contexto. NUNCA inventes medidas, tipologías ni system_id — un candidato sin sistema asignable va a "unresolved" o "ambiguous", nunca adivinado.
+- opening_type solo puede ser uno de los valores que el candidato ya trae o el set válido de la app (FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY); si el candidato no lo trae claro → "ambiguous" con la pregunta.
+- Posición que ya existe en "positions" (misma label) → no la propongas; dilo en el reply.
+- Documento UPLOADED/EXTRACTING/FAILED → warning con su estado, no candidates inventados.
+- Jamás "ops" ni "prepare" — el borrador se revisa y confirma en la superficie de importación.
+- Sin texto fuera del JSON."""
+
+
 WORKFLOW_SYSTEM: dict[str, str] = {
     "morning_brief": BRIEF_SYSTEM,
     "purchase_plan": PURCHASE_SYSTEM,
     "production_plan": PRODUCTION_SYSTEM,
     "quotation_complete": QUOTE_SYSTEM,
+    "project_from_documents": DOC_DRAFT_SYSTEM,
 }
 
 

@@ -45,6 +45,7 @@ OPEN_STATES = frozenset(
 ARTIFACT_KINDS = frozenset(
     {
         "product_draft",
+        "project_draft",
         "quote_draft",
         "catalog_candidates",
         "purchase_plan",

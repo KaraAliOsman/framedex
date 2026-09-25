@@ -44,6 +44,7 @@ const SURFACE_LABELS: Record<string, string> = {
   purchase_plan: "plan de compras",
   production_plan: "plan de producción",
   quotation_complete: "completar cotización",
+  project_from_documents: "proyecto desde documentos",
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
@@ -62,6 +63,7 @@ const NEW_JOB_SURFACES = [
   "purchase_plan",
   "production_plan",
   "quotation_complete",
+  "project_from_documents",
   "dashboard",
   "projects",
   "clients",
@@ -78,15 +80,18 @@ const GOAL_PRESETS: Record<string, string> = {
     "Propone el plan de producción: prioridad por entrega, material listo y estación que bloquea.",
   quotation_complete:
     "Diagnostica la cotización del proyecto: qué está listo, qué falta (diseño, precio, emisión, aprobación) y el siguiente paso.",
+  project_from_documents:
+    "Convierte los candidatos extraídos de los documentos del proyecto en un borrador de posiciones con su tipología.",
 };
 
 // Surfaces whose job is bound to a project — the form asks which one. The
 // backend REQUIRED_REFS list is the authority; only project-bound workflows
 // are launchable from the workspace (position/work_order bind via the dock).
-const REF_BOUND_PROJECT_SURFACES = new Set(["quotation_complete"]);
+const REF_BOUND_PROJECT_SURFACES = new Set(["quotation_complete", "project_from_documents"]);
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
   product_draft: "aiws.artifact.product",
+  project_draft: "aiws.artifact.project",
   quote_draft: "aiws.artifact.quote",
   catalog_candidates: "aiws.artifact.catalog",
   purchase_plan: "aiws.artifact.purchase",

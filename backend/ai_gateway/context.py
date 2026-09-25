@@ -40,6 +40,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "purchase_plan": (),
     "production_plan": (),
     "quotation_complete": ("project_id",),
+    "project_from_documents": ("project_id",),
 }
 
 
@@ -730,6 +731,108 @@ def _catalog_system(org_id: UUID, system_id: UUID) -> dict:
     }
 
 
+def _project_docs(org_id: UUID, refs: dict) -> dict:
+    """§08-WA project-from-documents: the project's document imports with
+    their extraction candidates, the active catalog systems for typology
+    mapping, and the positions that already exist so the draft doesn't
+    duplicate them. Candidates are review data — the human confirms them
+    on the import surface, never the agent."""
+    project = _project_row(org_id, _ref(refs, "project_id"))
+    imports = rows(
+        "SELECT id, file_name, kind, status, candidates, warnings, error_code "
+        "FROM public.document_imports "
+        "WHERE org_id=%s AND project_id=%s "
+        "ORDER BY created_at DESC LIMIT %s",
+        [org_id, project["id"], 6],
+    )
+    systems = rows(
+        "SELECT id, code, name, material::text AS material, "
+        "manufacturer, family "
+        "FROM public.profile_systems "
+        "WHERE (org_id=%s OR (org_id IS NULL AND is_global)) AND is_active "
+        "ORDER BY code LIMIT %s",
+        [org_id, MAX_LIST],
+    )
+    positions = rows(
+        "SELECT position_index, location_tag, typology, width_mm, height_mm "
+        "FROM public.project_positions WHERE org_id=%s AND project_id=%s "
+        "ORDER BY position_index LIMIT %s",
+        [org_id, project["id"], MAX_LIST],
+    )
+    # Candidates are capped across imports — a document can carry hundreds
+    # of rows; the draft proposes what fits and the rest stays in review.
+    budget = 24
+    documents = []
+    for imp in imports:
+        raw = _jsonb(imp["candidates"])
+        cands = raw if isinstance(raw, list) else []
+        take = cands[: max(budget, 0)]
+        budget -= len(take)
+        documents.append(
+            {
+                "id": str(imp["id"]),
+                "file_name": _cut(imp["file_name"]),
+                "kind": _cut(imp["kind"]),
+                "status": _cut(imp["status"]),
+                "error_code": _cut(imp["error_code"]),
+                "candidates_total": len(cands),
+                "candidates": [
+                    {
+                        "key": _cut(c.get("key"), 40),
+                        "label": _cut(c.get("label")),
+                        "width_mm": _cut(c.get("width_mm")),
+                        "height_mm": _cut(c.get("height_mm")),
+                        "quantity": _cut(c.get("quantity")),
+                        "opening_type": _cut(c.get("opening_type")),
+                        "confidence": _cut(c.get("confidence")),
+                        "warnings": [
+                            _cut(w)
+                            for w in (c.get("warnings") or [])[:4]
+                            if isinstance(w, str)
+                        ],
+                    }
+                    for c in take
+                    if isinstance(c, dict)
+                ],
+                "warnings": [
+                    _cut(w)
+                    for w in (_jsonb(imp["warnings"]) or [])[:6]
+                    if isinstance(w, str)
+                ],
+            }
+        )
+    return {
+        "project": {
+            "id": str(project["id"]),
+            "code": _cut(project["code"]),
+            "name": _cut(project["name"]),
+            "status": _cut(project["status"]),
+        },
+        "documents": documents,
+        "systems": [
+            {
+                "id": str(s["id"]),
+                "code": _cut(s["code"]),
+                "name": _cut(s["name"]),
+                "material": _cut(s["material"]),
+                "manufacturer": _cut(s.get("manufacturer")),
+                "family": _cut(s.get("family")),
+            }
+            for s in systems
+        ],
+        "positions": [
+            {
+                "index": int(p["position_index"]),
+                "location": _cut(p["location_tag"]),
+                "typology": _cut(p["typology"]),
+                "width_mm": _cut(p["width_mm"]),
+                "height_mm": _cut(p["height_mm"]),
+            }
+            for p in positions
+        ],
+    }
+
+
 def _production(org_id: UUID) -> dict:
     orders = rows(
         "SELECT o.id, o.order_code, o.status::text AS status, "
@@ -1061,6 +1164,7 @@ _BUILDERS = {
     "purchase_plan": _purchase_plan,
     "production_plan": _production_plan,
     "quotation_complete": _quotation,
+    "project_from_documents": _project_docs,
 }
 
 _REF_BUILDERS = {
@@ -1070,6 +1174,7 @@ _REF_BUILDERS = {
     "work_order",
     "catalog",
     "quotation_complete",
+    "project_from_documents",
 }
 
 
