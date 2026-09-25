@@ -126,16 +126,26 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
+def _query_key(surface: str, refs: dict) -> str:
+    """Dedupe identity for a query — (surface, refs), never the surface
+    alone: comparing two projects needs `project` queried once per id."""
+    normalized = ",".join(f"{key}={refs[key]}" for key in sorted(refs))
+    return f"{surface}|{normalized}"
+
+
 def _queries(
     *,
     org_id: UUID,
     document: Any,
     seen: set[str],
+    observed: frozenset[str],
 ) -> tuple[list[dict], frozenset[str]]:
     """Execute the model's query steps — each is just another typed
     projection under the caller's RLS. Failed lookups return their error code
     as the observation: the model learns the entity doesn't exist for this
-    caller instead of crashing the turn."""
+    caller instead of crashing the turn. Refs may only name entities an
+    earlier projection actually returned — a hallucinated UUID is an error
+    observation, not a fetch."""
     steps = document.get("steps") if isinstance(document, dict) else None
     observations: list[dict] = []
     refs_union: frozenset[str] = frozenset()
@@ -149,7 +159,7 @@ def _queries(
         if (
             not isinstance(surface, str)
             or surface not in _BUILDERS
-            or surface in seen
+            or _query_key(surface, refs) in seen
             or not isinstance(refs, dict)
             or not all(
                 isinstance(key, str)
@@ -159,11 +169,16 @@ def _queries(
             )
         ):
             continue
-        seen.add(surface)
+        seen.add(_query_key(surface, refs))
         needed = REQUIRED_REFS.get(surface, ())
         if any(name not in refs for name in needed):
             observations.append(
                 {"surface": surface, "refs": refs, "error": "ai_context_ref_invalid"}
+            )
+            continue
+        if not all(str(value) in observed for value in refs.values()):
+            observations.append(
+                {"surface": surface, "refs": refs, "error": "ai_context_ref_unobserved"}
             )
             continue
         try:
@@ -235,7 +250,8 @@ def _act(
 ) -> dict:
     context = build_context(org_id, surface, refs)
     contexts = [context]
-    seen_surfaces = {surface}
+    seen_queries = {_query_key(surface, refs)}
+    observed_refs = _context_refs(context)
     observations: list[dict] = []
     all_observations: list[dict] = []
     debited = 0
@@ -293,9 +309,13 @@ def _act(
                 "ai_agent_bad_output",
                 "El agente devolvió una respuesta inválida.",
             )
-        observations, _ = _queries(
-            org_id=org_id, document=document, seen=seen_surfaces
+        observations, new_observed = _queries(
+            org_id=org_id,
+            document=document,
+            seen=seen_queries,
+            observed=observed_refs,
         )
+        observed_refs = observed_refs | new_observed
         all_observations.extend(observations)
         contexts.extend(
             observation["context"]
