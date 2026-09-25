@@ -46,6 +46,7 @@ QUERY_TOOLS = {
     "clients": "get_clients",
     "purchasing": "get_inventory_state",
     "settings": "get_settings",
+    "morning_brief": "get_attention",
 }
 
 PREPARE_TOOLS = {
@@ -111,7 +112,7 @@ Respondes SOLO un JSON:
 }
 
 Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
+- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
@@ -124,6 +125,40 @@ Reglas duras:
 - Los pasos se ejecutan en orden: tus "query" ya vienen resueltas; los "navigate"/"ops"/"prepare" la persona los confirma. Máximo 8 pasos en total.
 - Meta ambigua → reply explicando lo que falta y cero pasos de mutación. Jamás adivines medidas, ids ni estados.
 - Sin texto fuera del JSON."""
+
+
+# §08-WH — workflow surfaces ride the same agent runtime but answer with a
+# dedicated format contract instead of the generic observe→act prompt. The
+# registry maps surface → system prompt; `_act` selects it per run so a
+# "morning_brief" job produces a prioritized brief, not a chat reply.
+BRIEF_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "brief del día" — el resumen matinal de una empresa de ventanas y puertas (español chileno).
+
+El contexto lleva:
+- "attention": conteos reales por categoría — quotes_unsent, quotes_stale, approvals_pending, versions_ready, work_orders_shortage, steps_blocked, dispatch_ready, catalog_gaps, deliveries_today, deliveries_overdue, failed_jobs. Cada número es el MISMO que muestra el dashboard.
+- "items": hasta 3 entidades por categoría con sus ids (proyectos llevan id/code/name; órdenes order_code; entregas scheduled_date/status; trabajos fallidos type/completed_at). Los ids son tu evidencia.
+
+Respondes SOLO un JSON:
+{
+  "reply": "el brief — líneas priorizadas de lo que necesita atención hoy, de más crítico a menos",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Formato del brief:
+- Una línea por tema que necesita acción HOY — no por categoría con conteo 0.
+- Cada línea: qué pasa + sobre qué entidad (código/nombre del contexto) — nunca un número que no esté en "attention".
+- Cero alarmismo: si todo está en orden, dilo en una línea y agrega los "dispatch_ready" o "versions_ready" como oportunidades, no problemas.
+
+Pasos: solo {"kind":"navigate","path","label"} hacia las superficies concretas — "/projects/<uuid>" con ids de "items", "/production", "/projects" (rutas reales de la app; cada UUID debe venir de items/contexto). También {"kind":"query","surface":"project|work_order|quotation|production|clients","refs":{...}} si una línea necesita profundizar en una entidad de "items" — máximo 3 por ronda. Y UN paso {"kind":"artifact","artifact":{"kind":"message","title":"Brief del día","body":"<el mismo brief>"}} para que el brief quede como artefacto inspeccionable en el trabajo.
+
+Reglas duras:
+- Solo citas números, códigos e ids literalmente presentes en el contexto u observaciones. Nada inventado ni estimado.
+- Jamás prepares acciones consecuentes en el brief — es lectura, no ejecución: nada de "prepare" ni "ops".
+- Sin texto fuera del JSON."""
+
+WORKFLOW_SYSTEM: dict[str, str] = {
+    "morning_brief": BRIEF_SYSTEM,
+}
 
 
 def _query_key(surface: str, refs: dict) -> str:
@@ -275,7 +310,10 @@ def _act(
             # instead of the second call replaying the first's output.
             operation_key=f"{operation_key}:r{round_index}",
             tool_name="agent",
-            provider_options={"system": AGENT_SYSTEM, "json_output": True},
+            provider_options={
+                "system": WORKFLOW_SYSTEM.get(surface, AGENT_SYSTEM),
+                "json_output": True,
+            },
             input_payload={
                 "goal": goal,
                 "surface": surface,

@@ -1,6 +1,7 @@
 """Contextual Ask: typed projections, server-owned context, answer contract."""
 
 import json
+from datetime import datetime
 from uuid import uuid4
 
 import pytest
@@ -606,3 +607,68 @@ def test_work_order_context_decodes_jsonb_reservations(monkeypatch):
     _patch(monkeypatch, rows_impl=fake_rows)
     ctx = context.build_context(org_id, "work_order", {"work_order_id": str(order_id)})
     assert ctx["shortages"] == 1
+
+
+def test_brief_projection_attention_and_item_ids(monkeypatch):
+    """§08-WH — the brief surface returns the attention counts plus
+    drill-down ids per category; job_runs is read under the documented
+    documentary-role exception, so it is stubbed as its own calls."""
+    import contextlib
+
+    org_id = uuid4()
+    project_id = uuid4()
+    order_id = uuid4()
+    job_id = uuid4()
+
+    def fake_one(sql, params=None):
+        if "job_runs" in sql:
+            return {"n": 2}
+        if "public.deliveries" in sql:
+            return {"today": 1, "overdue": 0}
+        return {
+            "catalog_gaps": 1,
+            "steps_blocked": 0,
+            "approvals_pending": 1,
+            "quotes_unsent": 2,
+            "quotes_stale": 0,
+            "versions_ready": 0,
+            "work_orders_shortage": 1,
+            "dispatch_ready": 0,
+        }
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "job_runs" in sql:
+            return [
+                {
+                    "id": job_id,
+                    "type": "catalog_import",
+                    "completed_at": datetime.fromisoformat(
+                        "2026-09-25T08:00:00+00:00"
+                    ),
+                }
+            ]
+        if "FROM public.projects p" in sql and "NOT EXISTS" in sql:
+            return [{"id": project_id, "code": "OB-1", "name": "Edificio Sur"}]
+        if "FROM public.projects p" in sql and "DISTINCT" in sql:
+            return [{"id": project_id, "code": "OB-1", "name": "Edificio Sur"}]
+        if "FROM public.orders o" in sql:
+            return [{"id": order_id, "order_code": "OT-9"}]
+        return []
+
+    monkeypatch.setattr(context, "rows", fake_rows)
+    monkeypatch.setattr(context, "one", fake_one)
+    monkeypatch.setattr(
+        context,
+        "documentary_backend",
+        lambda: contextlib.nullcontext(),
+    )
+    ctx = context.build_context(org_id, "morning_brief", {})
+    assert ctx["surface"] == "morning_brief"
+    assert ctx["attention"]["quotes_unsent"] == 2
+    assert ctx["attention"]["failed_jobs"] == 2
+    assert ctx["attention"]["deliveries_today"] == 1
+    assert ctx["items"]["quotes_unsent"][0]["id"] == str(project_id)
+    assert ctx["items"]["work_orders_shortage"][0]["order_code"] == "OT-9"
+    assert ctx["items"]["failed_jobs"][0]["id"] == str(job_id)

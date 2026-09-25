@@ -39,6 +39,7 @@ const STATE_LABELS: Record<string, string> = {
 };
 
 const SURFACE_LABELS: Record<string, string> = {
+  morning_brief: "brief del día",
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
@@ -53,6 +54,7 @@ const SURFACE_LABELS: Record<string, string> = {
 };
 
 const NEW_JOB_SURFACES = [
+  "morning_brief",
   "dashboard",
   "projects",
   "clients",
@@ -60,6 +62,10 @@ const NEW_JOB_SURFACES = [
   "production",
   "purchasing",
 ];
+
+const GOAL_PRESETS: Record<string, string> = {
+  morning_brief: "Genera el brief del día: qué necesita atención hoy y sobre qué entidades.",
+};
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
   product_draft: "aiws.artifact.product",
@@ -418,10 +424,7 @@ export function AssistantWorkspacePage(): JSX.Element {
     if (!last) return;
     setLoadingMore(true);
     try {
-      const response = await aiJobList(
-        { before: last.created_at, before_id: last.id },
-        headers,
-      );
+      const response = await aiJobList({ before: last.created_at, before_id: last.id }, headers);
       if (response.status === 200) {
         const page = response.data as unknown as AiJob[];
         setOlderJobs((prev) => [...prev, ...page]);
@@ -509,7 +512,16 @@ export function AssistantWorkspacePage(): JSX.Element {
           {!job ? (
             <select
               value={newSurface}
-              onChange={(event) => setNewSurface(event.target.value)}
+              onChange={(event) => {
+                const surface = event.target.value;
+                setNewSurface(surface);
+                const preset = GOAL_PRESETS[surface];
+                setDraft((current) =>
+                  preset && (!current.trim() || Object.values(GOAL_PRESETS).includes(current))
+                    ? preset
+                    : current,
+                );
+              }}
               aria-label={t("aiws.surface")}
             >
               {NEW_JOB_SURFACES.map((surface) => (

@@ -530,3 +530,68 @@ def test_agent_query_malformed_refs_are_skipped_not_crash(monkeypatch):
     # No malformed query reached the fetch layer — one round, no fetch calls.
     assert len(calls) == 1
     assert [q["surface"] for q in result["queries"]] == ["dashboard"]
+
+
+def test_agent_morning_brief_uses_workflow_prompt(monkeypatch):
+    """§08-WH — a morning_brief job rides the same agent runtime but answers
+    with the dedicated brief contract: WORKFLOW_SYSTEM selects the prompt
+    per surface so the job yields a prioritized brief, not a chat reply."""
+    project_id = uuid4()
+    contexts = {
+        "morning_brief": {
+            "surface": "morning_brief",
+            "organization": {"name": "Org"},
+            "attention": {"quotes_unsent": 1, "steps_blocked": 0},
+            "items": {
+                "quotes_unsent": [
+                    {"id": str(project_id), "code": "OB-1", "name": "Edificio Sur"}
+                ]
+            },
+        }
+    }
+    output = _doc(
+        reply="1 cotización sin enviar: OB-1.",
+        steps=[
+            {
+                "kind": "navigate",
+                "path": f"/projects/{project_id}",
+                "label": "Enviar OB-1",
+            },
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "message",
+                    "title": "Brief del día",
+                    "payload": {"body": "1 cotización sin enviar: OB-1."},
+                },
+            },
+        ],
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="morning_brief",
+        refs={},
+        goal="Genera el brief del día",
+        product=None,
+        history=[],
+        operation_key="brief-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.BRIEF_SYSTEM
+    assert calls[0]["input_payload"]["surface"] == "morning_brief"
+    assert result["reply"] == "1 cotización sin enviar: OB-1."
+    assert result["queries"][0] == {
+        "surface": "morning_brief",
+        "tool": "get_attention",
+        "status": "ok",
+    }
+    assert result["steps"] == [
+        {
+            "kind": "navigate",
+            "tool": "navigate",
+            "path": f"/projects/{project_id}",
+            "label": "Enviar OB-1",
+        }
+    ]
+    assert result["artifacts"][0]["kind"] == "message"

@@ -15,6 +15,7 @@ from typing import Any
 from uuid import UUID
 
 from authentication.errors import ContractAPIException
+from documents.repository import documentary_backend, one
 from pricing.repository import rows
 
 MAX_LIST = 20
@@ -34,6 +35,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "clients": (),
     "purchasing": (),
     "settings": (),
+    "morning_brief": (),
 }
 
 
@@ -126,6 +128,223 @@ def _dashboard(org_id: UUID) -> dict:
             }
             for p in recent
         ],
+    }
+
+
+def _brief(org_id: UUID) -> dict:
+    """§08-WH — the morning brief's attention board. Counts reuse the §03
+    operational-summary predicates verbatim so the brief's numbers are the
+    dashboard's numbers; each category also exposes up to three ids so a
+    line of the brief can drill into the entity it cites. job_runs is
+    service-owned, so its count follows the documented exception: read as
+    the documentary role with an explicit org filter — the same member-facing
+    information the dashboard already shows."""
+    counts = one(
+        """
+        SELECT
+            (SELECT count(*) FROM public.profile_systems s
+             WHERE s.org_id = %(o)s
+               AND (s.rebate_depth_mm IS NULL
+                    OR s.end_milling_overlap_mm IS NULL)) AS catalog_gaps,
+            (SELECT count(*) FROM public.production_steps s
+             JOIN public.orders o ON o.id = s.order_id AND o.org_id = s.org_id
+             WHERE s.org_id = %(o)s AND s.status = 'BLOCKED'
+               AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
+            (SELECT count(DISTINCT a.project_id) FROM public.customer_approvals a
+             JOIN public.project_versions v
+               ON v.id = a.project_version_id AND v.org_id = a.org_id
+             JOIN public.projects p
+               ON p.id = a.project_id AND p.org_id = a.org_id
+             WHERE a.org_id = %(o)s AND a.status = 'PENDING'
+               AND a.expires_at > now()
+               AND p.current_revision = v.revision_code
+               AND p.status = 'QUOTED') AS approvals_pending,
+            (SELECT count(*) FROM public.projects p
+             WHERE p.org_id = %(o)s AND p.status = 'QUOTED'
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision))
+                AS quotes_unsent,
+            (SELECT count(*) FROM public.projects p
+             WHERE p.org_id = %(o)s AND p.status = 'QUOTED'
+               AND EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision)
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision
+                     AND (a.status = 'APPROVED'
+                          OR (a.status = 'PENDING' AND a.expires_at > now()))))
+                AS quotes_stale,
+            (SELECT count(*) FROM public.project_versions v
+             WHERE v.org_id = %(o)s AND v.production_allowed
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.orders o
+                   WHERE o.org_id = v.org_id AND o.project_version_id = v.id
+                     AND o.order_type = 'WORKSHOP_OT')) AS versions_ready,
+            (SELECT count(*) FROM public.orders o
+             WHERE o.org_id = %(o)s AND o.order_type = 'WORKSHOP_OT'
+               AND o.status NOT IN ('CANCELLED', 'INSTALLED')
+               AND (COALESCE((o.payload_json->'prep'->>'shortages')::int, 0) > 0
+                    OR EXISTS (
+                        SELECT 1 FROM jsonb_array_elements(
+                            COALESCE(o.payload_json->'optimization'->'stock_reservations',
+                                     '[]'::jsonb)) r
+                        WHERE COALESCE((r->>'short')::numeric, 0) > 0)))
+                AS work_orders_shortage,
+            (SELECT count(*) FROM public.orders o
+             WHERE o.org_id = %(o)s AND o.order_type = 'WORKSHOP_OT'
+               AND o.status = 'COMPLETED' AND o.payload_json ? 'packing'
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.dispatch_notes dn
+                   WHERE dn.org_id = o.org_id AND dn.work_order_id = o.id))
+                AS dispatch_ready
+        """,
+        {"o": str(org_id)},
+    )
+    deliveries = one(
+        """
+        SELECT
+            count(*) FILTER (WHERE scheduled_date = local_today
+                AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS today,
+            count(*) FILTER (WHERE scheduled_date < local_today
+                AND status IN ('SCHEDULED','ON_ROUTE','FAILED')) AS overdue
+        FROM public.deliveries,
+            LATERAL (
+                SELECT (CURRENT_TIMESTAMP AT TIME ZONE org.timezone)::date AS local_today
+                FROM public.tenancy_organizations AS org
+                WHERE org.id = %s
+            ) AS zone
+        WHERE org_id = %s
+        """,
+        [str(org_id), str(org_id)],
+    )
+    with documentary_backend():
+        failed_jobs = one(
+            "SELECT count(*) AS n FROM public.job_runs "
+            "WHERE org_id = %s AND state = 'FAILED'",
+            [str(org_id)],
+        )["n"]
+        failed_job_items = rows(
+            "SELECT id, type, completed_at FROM public.job_runs "
+            "WHERE org_id = %s AND state = 'FAILED' "
+            "ORDER BY completed_at DESC LIMIT 3",
+            [str(org_id)],
+        )
+    return {
+        "attention": {
+            "quotes_unsent": int(counts["quotes_unsent"]),
+            "quotes_stale": int(counts["quotes_stale"]),
+            "approvals_pending": int(counts["approvals_pending"]),
+            "versions_ready": int(counts["versions_ready"]),
+            "work_orders_shortage": int(counts["work_orders_shortage"]),
+            "steps_blocked": int(counts["steps_blocked"]),
+            "dispatch_ready": int(counts["dispatch_ready"]),
+            "catalog_gaps": int(counts["catalog_gaps"]),
+            "deliveries_today": int(deliveries["today"]),
+            "deliveries_overdue": int(deliveries["overdue"]),
+            "failed_jobs": int(failed_jobs),
+        },
+        "items": {
+            "quotes_unsent": [
+                {"id": str(row["id"]), "code": _cut(row["code"]), "name": _cut(row["name"])}
+                for row in rows(
+                    "SELECT p.id, p.code, p.name FROM public.projects p "
+                    "WHERE p.org_id=%s AND p.status='QUOTED' AND NOT EXISTS ("
+                    "  SELECT 1 FROM public.customer_approvals a"
+                    "  JOIN public.project_versions v"
+                    "    ON v.id=a.project_version_id AND v.org_id=a.org_id"
+                    "  WHERE a.org_id=p.org_id AND a.project_id=p.id"
+                    "    AND v.revision_code=p.current_revision) "
+                    "ORDER BY p.updated_at DESC LIMIT 3",
+                    [org_id],
+                )
+            ],
+            "approvals_pending": [
+                {"id": str(row["id"]), "code": _cut(row["code"]), "name": _cut(row["name"])}
+                for row in rows(
+                    "SELECT DISTINCT p.id, p.code, p.name, p.updated_at "
+                    "FROM public.projects p "
+                    "JOIN public.customer_approvals a"
+                    "  ON a.project_id=p.id AND a.org_id=p.org_id "
+                    "JOIN public.project_versions v"
+                    "  ON v.id=a.project_version_id AND v.org_id=a.org_id "
+                    "WHERE p.org_id=%s AND a.status='PENDING' "
+                    "  AND a.expires_at>now() "
+                    "  AND p.current_revision=v.revision_code "
+                    "  AND p.status='QUOTED' "
+                    "ORDER BY p.updated_at DESC LIMIT 3",
+                    [org_id],
+                )
+            ],
+            "work_orders_shortage": [
+                {"id": str(row["id"]), "order_code": _cut(row["order_code"])}
+                for row in rows(
+                    "SELECT o.id, o.order_code FROM public.orders o "
+                    "WHERE o.org_id=%s AND o.order_type='WORKSHOP_OT' "
+                    "  AND o.status NOT IN ('CANCELLED','INSTALLED') "
+                    "  AND (COALESCE((o.payload_json->'prep'->>'shortages')::int,0)>0"
+                    "   OR EXISTS (SELECT 1 FROM jsonb_array_elements("
+                    "       COALESCE(o.payload_json->'optimization'->'stock_reservations',"
+                    "                '[]'::jsonb)) r"
+                    "    WHERE COALESCE((r->>'short')::numeric,0)>0)) "
+                    "ORDER BY o.updated_at DESC LIMIT 3",
+                    [org_id],
+                )
+            ],
+            "steps_blocked": [
+                {"id": str(row["id"]), "order_code": _cut(row["order_code"])}
+                for row in rows(
+                    "SELECT s.id, o.order_code FROM public.production_steps s "
+                    "JOIN public.orders o ON o.id=s.order_id AND o.org_id=s.org_id "
+                    "WHERE s.org_id=%s AND s.status='BLOCKED' "
+                    "  AND o.status NOT IN ('CANCELLED','INSTALLED') "
+                    "ORDER BY s.updated_at DESC LIMIT 3",
+                    [org_id],
+                )
+            ],
+            "deliveries": [
+                {
+                    "id": str(row["id"]),
+                    "order_code": _cut(row["order_code"]),
+                    "scheduled_date": _cut(row["scheduled_date"]),
+                    "status": _cut(row["status"]),
+                }
+                for row in rows(
+                    "SELECT d.id, d.scheduled_date::text AS scheduled_date, "
+                    "       d.status, o.order_code "
+                    "FROM public.deliveries d "
+                    "JOIN public.orders o ON o.id=d.order_id AND o.org_id=d.org_id, "
+                    "LATERAL (SELECT (CURRENT_TIMESTAMP AT TIME ZONE org.timezone)::date"
+                    "         AS local_today FROM public.tenancy_organizations org"
+                    "         WHERE org.id=%s) zone "
+                    "WHERE d.org_id=%s "
+                    "  AND d.status IN ('SCHEDULED','ON_ROUTE','FAILED') "
+                    "  AND d.scheduled_date <= zone.local_today "
+                    "ORDER BY d.scheduled_date ASC LIMIT 3",
+                    [str(org_id), str(org_id)],
+                )
+            ],
+            "failed_jobs": [
+                {
+                    "id": str(row["id"]),
+                    "type": _cut(row["type"]),
+                    "completed_at": row["completed_at"].isoformat()
+                    if row["completed_at"] is not None
+                    else None,
+                }
+                for row in failed_job_items
+            ],
+        },
     }
 
 
@@ -578,6 +797,7 @@ _BUILDERS = {
     "clients": _clients,
     "purchasing": _purchasing,
     "settings": _settings,
+    "morning_brief": _brief,
 }
 
 _REF_BUILDERS = {"project", "position", "quotation", "work_order", "catalog"}
