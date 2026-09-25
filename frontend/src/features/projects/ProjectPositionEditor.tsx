@@ -30,7 +30,6 @@ import {
   elevationEnvelopeMm,
   isProductModel,
   isSingleUnit,
-  removeUnit,
   wrapTreeAsProduct,
   type ProductJson,
 } from "../canvas/productEditing";
@@ -344,52 +343,6 @@ function PositionWorkspace({
       useCanvasStore.getState().replaceInputs({ ...inputs, product: resolved });
     }
   }, [inputs, options.data]);
-
-  useEffect(() => {
-    function onKey(event: KeyboardEvent): void {
-      const target = event.target;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      )
-        return;
-      if (event.key === "Escape") {
-        useCanvasStore.getState().select(null);
-        return;
-      }
-      if (event.key === "Delete" || event.key === "Backspace") {
-        const state = useCanvasStore.getState();
-        const product = state.inputs.product;
-        if (
-          product !== null &&
-          product.assembly.modules.length > 1 &&
-          product.assembly.modules.some((module) => module.id === state.selection)
-        ) {
-          event.preventDefault();
-          state.commitInputs({
-            ...state.inputs,
-            product: removeUnit(product, state.selection),
-          });
-          state.select(null);
-          setResult(null);
-          setAssemblyEval(null);
-        }
-        return;
-      }
-      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-      const key = event.key.toLowerCase();
-      if (key === "z") {
-        event.preventDefault();
-        applyHistory(event.shiftKey ? "redo" : "undo");
-      } else if (key === "y") {
-        event.preventDefault();
-        applyHistory("redo");
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   function applyHistory(direction: "undo" | "redo"): void {
     const store = useCanvasStore.getState();

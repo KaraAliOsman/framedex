@@ -588,6 +588,9 @@ function ModuleTree({
   moduleId,
   selectedBayId,
   onSelectBay,
+  selectedDivisionId = null,
+  onSelectDivision,
+  showSplitDims = false,
 }: {
   node: IntentNode;
   region: Region;
@@ -606,6 +609,10 @@ function ModuleTree({
   moduleId: string;
   selectedBayId?: string | null;
   onSelectBay?: (bayId: string) => void;
+  /** Division (mullion/transom) selection + technical split labels. */
+  selectedDivisionId?: string | null;
+  onSelectDivision?: (divisionId: string) => void;
+  showSplitDims?: boolean;
 }): JSX.Element {
   if (node.type === "ROOT" && node.children?.length === 1 && node.children[0]) {
     return (
@@ -620,6 +627,9 @@ function ModuleTree({
         moduleId={moduleId}
         selectedBayId={selectedBayId}
         onSelectBay={onSelectBay}
+        selectedDivisionId={selectedDivisionId}
+        onSelectDivision={onSelectDivision}
+        showSplitDims={showSplitDims}
       />
     );
   }
@@ -675,6 +685,9 @@ function ModuleTree({
           moduleId={moduleId}
           selectedBayId={selectedBayId}
           onSelectBay={onSelectBay}
+          selectedDivisionId={selectedDivisionId}
+          onSelectDivision={onSelectDivision}
+          showSplitDims={showSplitDims}
         />
         <Member
           x={bar.x}
@@ -682,15 +695,28 @@ function ModuleTree({
           w={Math.max(bar.w, 0)}
           h={Math.max(bar.h, 0)}
           surface={memberSurface(mullion?.material ?? members.frame.material)}
-          className="member-mullion"
+          className={`member-mullion${selectedDivisionId === node.id ? " is-selected" : ""}`}
         />
+        {showSplitDims && (
+          <text
+            className="split-dim"
+            x={vertical ? bar.x + bar.w + 6 : bar.x + 8}
+            y={vertical ? bar.y + 16 : bar.y - 6}
+          >
+            {offset.toFixed(0)}
+          </text>
+        )}
         {onDividerDown && (
           <rect
-            className={`divider-grip${vertical ? " is-vertical" : " is-horizontal"}`}
+            className={`divider-grip${vertical ? " is-vertical" : " is-horizontal"}${selectedDivisionId === node.id ? " is-selected" : ""}`}
             x={vertical ? axis - grip / 2 : bar.x}
             y={vertical ? bar.y : axis - grip / 2}
             width={vertical ? grip : Math.max(bar.w, 0)}
             height={vertical ? Math.max(bar.h, 0) : grip}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelectDivision?.(node.id);
+            }}
             onPointerDown={(event) =>
               onDividerDown({
                 event,
@@ -701,6 +727,19 @@ function ModuleTree({
                 extentMm: extent,
               })
             }
+          />
+        )}
+        {!onDividerDown && onSelectDivision && (
+          <rect
+            className="divider-grip"
+            x={vertical ? axis - grip / 2 : bar.x}
+            y={vertical ? bar.y : axis - grip / 2}
+            width={vertical ? grip : Math.max(bar.w, 0)}
+            height={vertical ? Math.max(bar.h, 0) : grip}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelectDivision(node.id);
+            }}
           />
         )}
         <ModuleTree
@@ -714,6 +753,9 @@ function ModuleTree({
           moduleId={moduleId}
           selectedBayId={selectedBayId}
           onSelectBay={onSelectBay}
+          selectedDivisionId={selectedDivisionId}
+          onSelectDivision={onSelectDivision}
+          showSplitDims={showSplitDims}
         />
       </>
     );
@@ -1082,12 +1124,16 @@ export function ProductFrontContent({
   members,
   selectedId,
   selectedBayId = null,
+  selectedDivisionId = null,
   issues,
   disabled,
   preview = false,
   divideTool = null,
+  dimLevel = "design",
   onSelectModule,
   onSelectBay,
+  onSelectDivision,
+  onSelectCoupling,
   onContextMenuModule,
   onAddUnit,
   onCommitModuleWidth,
@@ -1116,6 +1162,15 @@ export function ProductFrontContent({
   /** The leaf inside the selected module that owns the selection ring —
    * a composite selection highlights the bay, not the whole module. */
   selectedBayId?: string | null;
+  /** The selected division node (mullion/transom) — highlights its bar. */
+  selectedDivisionId?: string | null;
+  /** §04-E dimension verbosity: overview = overall W/H only, design adds
+   * per-column widths, technical adds split offsets + member heights. */
+  dimLevel?: "overview" | "design" | "technical";
+  onSelectDivision?(moduleId: string, divisionId: string): void;
+  /** Click the coupler band between members → selects the coupling (the
+   * object that owns the joint, not either neighbor module). */
+  onSelectCoupling?(couplingId: string): void;
   /** Right-click on a module: select it and open the registry menu at the
    * cursor — commands always resolve against the clicked element, never a
    * stale earlier selection. */
@@ -1383,25 +1438,65 @@ export function ProductFrontContent({
             onCommit={onCommitHeight}
           />
         </g>
-        {/* per-column width chain — stacked members share the column span */}
-        <DimRun
-          marks={columns.flatMap((column) => [column.x, column.x + column.w])}
-          edge={height}
-          at={height + 80}
-          vertical={false}
-        />
-        {columns.map((column) => (
-          <SvgDim
-            key={`dim-${column.rootId}`}
-            x={column.x + column.w / 2}
-            y={height + 80}
-            value={column.w.toFixed(2)}
-            label={`${t("assembly.module")} ${column.rootId} ${t("assembly.width")}`}
-            active={column.rootId === selectedId}
-            disabled={disabled}
-            onCommit={(value) => onCommitModuleWidth(column.rootId, value)}
-          />
-        ))}
+        {/* per-column width chain — stacked members share the column span
+            (design/technical only: overview keeps the overall W/H). */}
+        {dimLevel !== "overview" && (
+          <>
+            <DimRun
+              marks={columns.flatMap((column) => [column.x, column.x + column.w])}
+              edge={height}
+              at={height + 80}
+              vertical={false}
+            />
+            {columns.map((column) => (
+              <SvgDim
+                key={`dim-${column.rootId}`}
+                x={column.x + column.w / 2}
+                y={height + 80}
+                value={column.w.toFixed(2)}
+                label={`${t("assembly.module")} ${column.rootId} ${t("assembly.width")}`}
+                active={column.rootId === selectedId}
+                disabled={disabled}
+                onCommit={(value) => onCommitModuleWidth(column.rootId, value)}
+              />
+            ))}
+          </>
+        )}
+        {/* technical adds member heights for stacked columns — a transom
+            over a unit is dimensioned like a shop drawing, right gutter. */}
+        {dimLevel === "technical" &&
+          columns.map((column, columnIndex) => {
+            const membersOf = rects.filter(
+              (rect) =>
+                rect.x + rect.w / 2 >= column.x && rect.x + rect.w / 2 <= column.x + column.w,
+            );
+            if (membersOf.length < 2) return null;
+            const marks = [
+              ...new Set(
+                membersOf.flatMap((rect) => [height - rect.sill, height - rect.sill - rect.h]),
+              ),
+            ].sort((a, b) => a - b);
+            return (
+              <g key={`member-dims-${column.rootId}-${columnIndex}`}>
+                <DimRun
+                  marks={marks}
+                  edge={column.x + column.w}
+                  at={column.x + column.w + 30}
+                  vertical={true}
+                />
+                {membersOf.map((rect) => (
+                  <text
+                    key={`member-dim-${rect.module.id}`}
+                    className="member-dim"
+                    x={column.x + column.w + 38}
+                    y={height - rect.sill - rect.h / 2}
+                  >
+                    {rect.h.toFixed(0)}
+                  </text>
+                ))}
+              </g>
+            );
+          })}
         <AddHandle
           x={-70}
           y={midY}
@@ -1494,6 +1589,13 @@ export function ProductFrontContent({
                         ? (bayId) => onSelectBay(module.id, bayId)
                         : undefined
                     }
+                    selectedDivisionId={selectedDivisionId}
+                    onSelectDivision={
+                      interactive && !divideTool && onSelectDivision
+                        ? (divisionId) => onSelectDivision(module.id, divisionId)
+                        : undefined
+                    }
+                    showSplitDims={dimLevel === "technical"}
                     node={module.tree}
                     region={{
                       x: x + frameT,
@@ -1529,26 +1631,36 @@ export function ProductFrontContent({
             members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
               members.frame.material,
           );
-          return joint.kind === "column" ? (
-            <Member
-              key={joint.couplingId ?? `joint-${index}`}
-              x={joint.x - width / 2}
-              y={height - joint.top}
-              w={width}
-              h={joint.top}
-              surface={surface}
-              className="member-coupler"
-            />
-          ) : (
-            <Member
-              key={joint.couplingId ?? `joint-${index}`}
-              x={joint.x}
-              y={height - joint.y - width / 2}
-              w={joint.w}
-              h={width}
-              surface={surface}
-              className="member-coupler"
-            />
+          const pickable = interactive && !divideTool && onSelectCoupling && joint.couplingId;
+          const jointRect =
+            joint.kind === "column"
+              ? { x: joint.x - width / 2, y: height - joint.top, w: width, h: joint.top }
+              : { x: joint.x, y: height - joint.y - width / 2, w: joint.w, h: width };
+          const selectedJoint = selectedId === joint.couplingId;
+          return (
+            <g key={joint.couplingId ?? `joint-${index}`}>
+              <Member
+                x={jointRect.x}
+                y={jointRect.y}
+                w={jointRect.w}
+                h={jointRect.h}
+                surface={surface}
+                className={`member-coupler${selectedJoint ? " is-selected" : ""}`}
+              />
+              {pickable && (
+                <rect
+                  className={`joint-hit${selectedJoint ? " is-selected" : ""}`}
+                  x={jointRect.x}
+                  y={jointRect.y}
+                  width={jointRect.w}
+                  height={jointRect.h}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (joint.couplingId) onSelectCoupling?.(joint.couplingId);
+                  }}
+                />
+              )}
+            </g>
           );
         })}
         {/* Seam grips render above the coupler members so the drag target is

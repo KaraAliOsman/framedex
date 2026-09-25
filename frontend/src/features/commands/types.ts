@@ -48,7 +48,19 @@ export interface CommandContext {
   redo?(): void;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** Spec clipboard (power-user copy/apply): module carries the whole bay
+   * structure, bay carries transferable spec fields only. */
+  specClipboard?: SpecClipboard | null;
+  writeSpecClipboard?(clipboard: SpecClipboard): void;
+  /** The last mutating command that ran (id + args) — powers edit.repeat. */
+  lastMutation?: { specId: string; args: CommandArgs } | null;
+  recordMutation?(specId: string, args: CommandArgs): void;
 }
+
+/** What "Copiar especificación" stores for "Aplicar especificación". */
+export type SpecClipboard =
+  | { kind: "module"; tree: import("../canvas/intentEditing").IntentNode }
+  | { kind: "bay"; spec: Partial<import("../canvas/intentEditing").IntentNode> };
 
 /** A parameter a surface collects before running a command. Number params
  * accept the engine's decimal-string contract; choice params render as the
@@ -78,6 +90,10 @@ export interface CommandSpec {
   id: string;
   title: TranslationKey;
   keywords?: string[];
+  /** Global keyboard shortcut — "mod+z", "mod+shift+z", "v", "delete".
+   * mod = Ctrl (Windows/Linux) or Meta (macOS). Only param-less commands
+   * may bind one. */
+  shortcut?: string;
   /** Params the palette collects in order before running. */
   params?(ctx: CommandContext): CommandParam[];
   /** Listing predicate — absent or true means the command is offered. */
@@ -86,6 +102,10 @@ export interface CommandSpec {
   describe?(args: CommandArgs): string;
   /** Product mutation: returns the next product (never commits itself). */
   apply?(ctx: CommandContext, args: CommandArgs): ProductJson;
+  /** Follow-up side effects after an apply commits — selection moves to the
+   * created/affected element. `before`/`next` are the committed pair; the
+   * ctx still carries the pre-commit product. AI `apply` paths skip this. */
+  postCommit?(ctx: CommandContext, before: ProductJson, next: ProductJson, args: CommandArgs): void;
   /** Non-mutating commands (tool arming, history, view). */
   run?(ctx: CommandContext, args: CommandArgs): void;
   /** AI exposure: the wire op name plus a decoder back into args. `state`
@@ -106,6 +126,9 @@ export interface ResolvedCommand {
   title: string;
   /** Extra searchable terms (synonyms, English, object kinds). */
   keywords?: string[];
+  /** Keyboard shortcut (spec format) — rendered as the palette hint and
+   * matched by the global shortcut dispatcher. */
+  shortcut?: string;
   /** Parameters collected sequentially before `run`. */
   params?: CommandParam[];
   /** A short preview of what the command will change. Rendered under the list

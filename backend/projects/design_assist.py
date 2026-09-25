@@ -62,6 +62,11 @@ Operaciones:
 - set_glass {module, sku}: vidrio del catálogo.
 - set_glass_thickness {module, mm}: espesor del catálogo.
 - set_panel {module, sku|null}: panel del catálogo, null lo quita.
+- duplicate_module {module}: duplica una unidad sobre su borde libre (derecho o izquierdo) unida INLINE.
+- insert_module {coupling}: inserta una unidad dentro de una unión INLINE — la divide en dos uniones.
+- remove_coupling {coupling}: desconecta una unión — las unidades quedan pero separadas.
+- set_coupling_kind {coupling, kind}: tipo de unión — INLINE solo en bordes laterales (left/right); STACKED|TEE|CORNER solo en bordes top/bottom.
+- add_stacked_unit {module}: agrega una unidad apilada encima (fijo superior / transom) unida STACKED por el borde top.
 
 Reglas:
 - Solo ops de ops_contract; solo SKU y espesores del catalog; nada de valores inventados.
@@ -91,11 +96,11 @@ def _ref(raw: Any, prefix: str, index: int) -> str:
     assigned, falling back to a positional m{n}/c{n} when absent (legacy
     payloads without ids still resolve)."""
     if isinstance(raw, dict) and isinstance(raw.get("id"), str) and raw["id"].strip():
-        return raw["id"].strip()
+        return str(raw["id"].strip())
     return f"{prefix}{index + 1}"
 
 
-def _summary(product: Any) -> dict | None:
+def _summary(product: Any) -> dict[str, Any] | None:
     """The client-submitted product surface — the same modules and couplings
     the returned ops will be applied against, so bounds are derived here and
     can never drift against a stale persisted copy. Ops address entities by
@@ -156,7 +161,7 @@ def _summary(product: Any) -> dict | None:
     }
 
 
-def _catalog(system_id: UUID, org_id: UUID) -> dict:
+def _catalog(system_id: UUID, org_id: UUID) -> dict[str, Any]:
     """The selected system's authoritative material surface — a SKU is a
     catalog identifier, never free text, so proposed glass, panels and
     thicknesses must resolve against the same options the estimator sees.
@@ -309,8 +314,8 @@ def _declared_values(prompt: str) -> set[Decimal]:
 
 
 def _validate_ops(
-    ops: Any, summary: dict, catalog: dict, declared: set[Decimal]
-) -> tuple[list[dict], list[dict]]:
+    ops: Any, summary: dict[str, Any], catalog: dict[str, Any], declared: set[Decimal]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Validate each op against a simulated assembly that evolves in op order —
     structural ops mutate the ref sets every later op is checked against, so
     a proposal can never address a module that stopped existing or grow the
@@ -320,9 +325,30 @@ def _validate_ops(
     not position."""
     module_refs = [str(module["ref"]) for module in summary["modules"]]
     coupling_refs = [str(coupling["ref"]) for coupling in summary["couplings"]]
-    state = {
+    module_info = {str(module["ref"]): module for module in summary["modules"]}
+    coupling_info = {str(coupling["ref"]): coupling for coupling in summary["couplings"]}
+    # Which module edges couplings already claim — where a duplicate may land
+    # and which kinds a joint may take. Legacy couplings without endpoints are
+    # the linear chain i↔i+1 on right/left.
+    used_edges: dict[str, set[str]] = {}
+    for index, coupling in enumerate(summary["couplings"]):
+        members, edges = coupling.get("modules"), coupling.get("edges")
+        if (
+            isinstance(members, list)
+            and isinstance(edges, list)
+            and len(members) == len(edges) == 2
+        ):
+            for member, edge in zip(members, edges):
+                if isinstance(member, str) and isinstance(edge, str):
+                    used_edges.setdefault(member, set()).add(edge)
+        elif index + 1 < len(module_refs):
+            used_edges.setdefault(module_refs[index], set()).add("right")
+            used_edges.setdefault(module_refs[index + 1], set()).add("left")
+    state: dict[str, Any] = {
         "module_refs": module_refs,
         "coupling_refs": coupling_refs,
+        "used_edges": used_edges,
+        "extra_modules": 0,
         "added": {"m": 0, "c": 0},
     }
 
@@ -330,33 +356,68 @@ def _validate_ops(
         state["added"][prefix] += 1
         return f"added_{prefix}{state['added'][prefix]}"
 
+    _OPPOSITE = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+
+    def _claim(ref: str, edge: str) -> None:
+        if ref in state["module_refs"]:
+            state["used_edges"].setdefault(ref, set()).add(edge)
+
+    def _free(member: Any, edge: Any) -> None:
+        if isinstance(member, str) and isinstance(edge, str) and member in state["used_edges"]:
+            state["used_edges"][member].discard(edge)
+
+    def _coupling_edges(info: dict[str, Any] | None) -> list[Any] | None:
+        edges = info.get("edges") if isinstance(info, dict) else None
+        return edges if isinstance(edges, list) else None
+
+    def _seam_endpoints(info: dict[str, Any]) -> tuple[str | None, str | None]:
+        """(left_ref, right_ref) the seam joins — 'left' claims the right edge.
+        Explicit endpoints resolve only when both are still live refs; legacy
+        couplings without endpoints fall back to the linear chain index."""
+        members, edges = info.get("modules"), _coupling_edges(info)
+        if isinstance(members, list) and len(members) == 2 and edges is not None:
+            left_ref = right_ref = None
+            for member, edge in zip(members, edges):
+                if edge == "right":
+                    left_ref = member
+                elif edge == "left":
+                    right_ref = member
+            return (
+                left_ref if left_ref in state["module_refs"] else None,
+                right_ref if right_ref in state["module_refs"] else None,
+            )
+        index = state["coupling_refs"].index(str(info["ref"]))
+        if index + 1 < len(state["module_refs"]):
+            return state["module_refs"][index], state["module_refs"][index + 1]
+        return None, None
+
     def module_ref(value: Any) -> str | None:
         if isinstance(value, str) and value in state["module_refs"]:
             return value
         if (
             isinstance(value, int)
             and not isinstance(value, bool)
-            and 0 <= value < len(state["module_refs"])
+            and 0 <= value < len(module_refs)
         ):
-            return state["module_refs"][value]
+            return module_refs[value]
         return None
 
     def coupling_ref(value: Any) -> str | None:
-        if isinstance(value, str) and value in state["coupling_refs"]:
+        if isinstance(value, str) and value in coupling_refs:
             return value
         if (
             isinstance(value, int)
             and not isinstance(value, bool)
-            and 0 <= value < len(state["coupling_refs"])
+            and 0 <= value < len(coupling_refs)
         ):
-            return state["coupling_refs"][value]
+            return coupling_refs[value]
         return None
 
-    def reject(item: Any, reason: str) -> dict:
+    def reject(item: Any, reason: str) -> dict[str, Any]:
         return {"op": item.get("op") if isinstance(item, dict) else None, "reason": reason}
 
-    accepted: list[dict] = []
-    rejected: list[dict] = []
+    accepted: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
     if not isinstance(ops, list):
         return [], [{"op": None, "reason": "formato_invalido"}]
     for item in ops[:MAX_OPS]:
@@ -377,8 +438,8 @@ def _validate_ops(
                     state["module_refs"].append(_add_ref("m"))
                 while len(state["coupling_refs"]) < item["count"] - 1:
                     state["coupling_refs"].append(_add_ref("c"))
-                state["module_refs"] = state["module_refs"][: item["count"]]
-                state["coupling_refs"] = state["coupling_refs"][: item["count"] - 1]
+                del state["module_refs"][item["count"] :]
+                del state["coupling_refs"][item["count"] - 1 :]
             else:
                 rejected.append(reject(item, "cantidad_invalida"))
         elif name == "add_unit":
@@ -395,6 +456,15 @@ def _validate_ops(
                     state["coupling_refs"].append(_add_ref("c"))
             else:
                 rejected.append(reject(item, "lado_invalido"))
+                continue
+            # The new member claims the seam's free edge on both sides.
+            outer = state["module_refs"][-1 if item["side"] == "right" else 0]
+            if item["side"] == "right":
+                _claim(outer, "right")
+                state["used_edges"][accepted[-1]["ref"]] = {"left"}
+            else:
+                _claim(outer, "left")
+                state["used_edges"][accepted[-1]["ref"]] = {"right"}
         elif name == "remove_unit":
             ref = module_ref(item.get("module"))
             if ref is not None and len(state["module_refs"]) > 1:
@@ -405,17 +475,130 @@ def _validate_ops(
                 # surviving neighbors; the relink between former neighbors of
                 # the removed module mints a fresh coupling identity.
                 if p == 0:
-                    state["coupling_refs"] = state["coupling_refs"][1:]
+                    coupling_refs.pop(0)
                 elif p == len(state["module_refs"]):
-                    state["coupling_refs"] = state["coupling_refs"][:-1]
+                    coupling_refs.pop()
                 else:
-                    state["coupling_refs"] = (
-                        state["coupling_refs"][: p - 1]
-                        + [_add_ref("c")]
-                        + state["coupling_refs"][p + 1 :]
-                    )
+                    coupling_refs[p - 1 : p + 1] = [_add_ref("c")]
+                state["used_edges"].pop(ref, None)
+                # The relink claims each neighbor's edge toward the other.
+                if 0 < p < len(state["module_refs"]):
+                    _claim(state["module_refs"][p - 1], "right")
+                    _claim(state["module_refs"][p], "left")
             else:
                 rejected.append(reject(item, "modulo_invalido"))
+        elif name == "duplicate_module":
+            ref = module_ref(item.get("module"))
+            if ref is None:
+                rejected.append(reject(item, "modulo_invalido"))
+            elif len(state["module_refs"]) >= MAX_MODULE_COUNT:
+                rejected.append(reject(item, "limite_unidades"))
+            else:
+                claimed = state["used_edges"].get(ref, set())
+                side = (
+                    "right"
+                    if "right" not in claimed
+                    else "left"
+                    if "left" not in claimed
+                    else None
+                )
+                if side is None:
+                    rejected.append(reject(item, "sin_borde_libre"))
+                else:
+                    new_module = _add_ref("m")
+                    position = state["module_refs"].index(ref)
+                    state["module_refs"].insert(
+                        position + 1 if side == "right" else position, new_module
+                    )
+                    state["coupling_refs"].append(_add_ref("c"))
+                    _claim(ref, side)
+                    state["used_edges"][new_module] = {_OPPOSITE[side]}
+                    accepted.append({"op": name, "module": ref})
+        elif name == "insert_module":
+            ref = coupling_ref(item.get("coupling"))
+            info = coupling_info.get(ref) if ref else None
+            if ref is None or info is None or (info.get("kind") or "INLINE") != "INLINE":
+                rejected.append(reject(item, "union_invalida"))
+            elif len(state["module_refs"]) >= MAX_MODULE_COUNT:
+                rejected.append(reject(item, "limite_unidades"))
+            else:
+                left_ref, right_ref = _seam_endpoints(info)
+                straight = (
+                    left_ref is not None
+                    and right_ref is not None
+                    and module_info.get(left_ref, {}).get("shape", "RECT") == "RECT"
+                    and not module_info.get(left_ref, {}).get("frameless")
+                    and module_info.get(right_ref, {}).get("shape", "RECT") == "RECT"
+                    and not module_info.get(right_ref, {}).get("frameless")
+                )
+                if not straight:
+                    rejected.append(reject(item, "miembro_no_recto"))
+                else:
+                    new_module = _add_ref("m")
+                    state["module_refs"].insert(
+                        state["module_refs"].index(left_ref) + 1, new_module
+                    )
+                    # The seam's coupling ref survives as the first joint;
+                    # the second mints a fresh one.
+                    state["coupling_refs"].append(_add_ref("c"))
+                    members, edges = info.get("modules"), _coupling_edges(info)
+                    left_edge = right_edge = None
+                    if isinstance(members, list) and edges is not None:
+                        for member, edge in zip(members, edges):
+                            if member == left_ref:
+                                left_edge = edge
+                            elif member == right_ref:
+                                right_edge = edge
+                    state["used_edges"][new_module] = {
+                        _OPPOSITE.get(left_edge or "right", "left"),
+                        _OPPOSITE.get(right_edge or "left", "right"),
+                    }
+                    accepted.append({"op": name, "coupling": ref})
+        elif name == "remove_coupling":
+            ref = coupling_ref(item.get("coupling"))
+            if ref is None:
+                rejected.append(reject(item, "union_invalida"))
+            else:
+                state["coupling_refs"].remove(ref)
+                info = coupling_info.get(ref)
+                members, edges = (
+                    info.get("modules") if info else None
+                ), _coupling_edges(info)
+                if isinstance(members, list) and edges is not None:
+                    for member, edge in zip(members, edges):
+                        _free(member, edge)
+                accepted.append({"op": name, "coupling": ref})
+        elif name == "set_coupling_kind":
+            ref = coupling_ref(item.get("coupling"))
+            info = coupling_info.get(ref) if ref else None
+            edges = _coupling_edges(info)
+            horizontal = edges is None or all(edge in ("left", "right") for edge in edges)
+            allowed = {"INLINE"} if horizontal else {"STACKED", "TEE", "CORNER"}
+            if ref is None or item.get("kind") not in allowed:
+                rejected.append(reject(item, "tipo_invalido"))
+            else:
+                accepted.append({"op": name, "coupling": ref, "kind": item["kind"]})
+        elif name == "add_stacked_unit":
+            ref = module_ref(item.get("module"))
+            info = module_info.get(ref) if ref else None
+            if (
+                ref is None
+                or info is None
+                or info.get("shape") != "RECT"
+                or info.get("frameless")
+                or "top" in state["used_edges"].get(ref, set())
+                or len(state["module_refs"]) + state["extra_modules"] >= MAX_MODULE_COUNT
+            ):
+                rejected.append(reject(item, "modulo_invalido"))
+            else:
+                # The stacked member leaves the linear chain — its refs are
+                # minted so sequence numbering stays aligned, but nothing
+                # downstream may address a member it cannot see.
+                _add_ref("m")
+                _add_ref("c")
+                state["extra_modules"] += 1
+                _claim(ref, "top")
+                accepted.append({"op": name, "module": ref})
         elif name == "set_module_width":
             ref = module_ref(item.get("module"))
             if _number(item.get("width_mm")) not in declared:
@@ -521,12 +704,12 @@ def assist(
     *,
     org_id: UUID,
     user_id: UUID,
-    position: dict,
+    position: dict[str, Any],
     product: Any,
     prompt: str,
     operation_key: str,
     system_id: UUID,
-) -> dict:
+) -> dict[str, Any]:
     summary = _summary(product)
     if summary is None:
         raise contract_error(
@@ -555,11 +738,16 @@ def assist(
             "product": summary,
             "ops_contract": sorted(
                 {
+                    "add_stacked_unit",
                     "add_unit",
+                    "duplicate_module",
                     "equalize_angles",
                     "equalize_widths",
+                    "insert_module",
+                    "remove_coupling",
                     "remove_unit",
                     "set_coupling_angle",
+                    "set_coupling_kind",
                     "set_glass",
                     "set_glass_thickness",
                     "set_height",

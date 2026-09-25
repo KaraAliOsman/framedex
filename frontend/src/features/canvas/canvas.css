@@ -1655,6 +1655,162 @@
   margin-top: 4px;
 }
 
+.context-menu__item {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.context-menu__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-menu__hint {
+  background: transparent;
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-xs, 3px);
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 10px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* §04: mullion/transom + coupling selection affordances, technical dims,
+   provenance chips and power-user recents. */
+
+.member-mullion.is-selected,
+.member-coupler.is-selected {
+  stroke: var(--theme-accent);
+  stroke-width: 4;
+}
+
+.divider-grip.is-selected {
+  fill: var(--theme-accent);
+  fill-opacity: 0.22;
+  stroke: var(--theme-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.joint-hit {
+  cursor: pointer;
+  fill: transparent;
+  pointer-events: all;
+}
+
+.joint-hit:hover {
+  fill: var(--theme-accent);
+  fill-opacity: 0.14;
+  stroke: var(--theme-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.split-dim,
+.member-dim {
+  fill: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+
+.prov-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.prov-chip {
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 999px;
+  color: var(--theme-text-secondary);
+  font-size: 10.5px;
+  padding: 1px 8px 1px 3px;
+  white-space: nowrap;
+}
+
+.prov-chip__state {
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+.prov-chip--verified .prov-chip__state {
+  background: color-mix(in srgb, var(--theme-ok, #2f9e6e) 16%, transparent);
+  color: var(--theme-ok, #2f9e6e);
+}
+
+.prov-chip--declared .prov-chip__state {
+  background: color-mix(in srgb, var(--theme-accent) 14%, transparent);
+  color: var(--theme-accent-ink);
+}
+
+.prov-chip--unknown .prov-chip__state {
+  background: var(--theme-surface-raised);
+  color: var(--theme-text-muted);
+}
+
+.prov-chip--blocked .prov-chip__state {
+  background: color-mix(in srgb, var(--theme-danger) 14%, transparent);
+  color: var(--theme-danger);
+}
+
+.division-children {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.division-children li + li {
+  margin-top: 2px;
+}
+
+.recents {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.recents__label {
+  color: var(--theme-text-muted);
+  font-size: 11px;
+}
+
+.recents__chip {
+  background: var(--theme-surface-raised);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 999px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", monospace;
+  font-size: 10.5px;
+  max-width: 140px;
+  overflow: hidden;
+  padding: 2px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recents__chip:hover {
+  border-color: var(--theme-accent);
+  color: var(--theme-text-primary);
+}
+
 .issue-fix {
   background: transparent;
   border: none;

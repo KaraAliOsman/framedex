@@ -1,12 +1,22 @@
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
 import { SLIDING_PRESETS } from "./intentEditing";
-import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
+import {
+  findNode,
+  intentBays,
+  moveDivision,
+  parentSplitOf,
+  removeDivision,
+  splitBay,
+  updateBay,
+  walkIntent,
+} from "./intentEditing";
 import type { MemberGeometry } from "./members";
-import type { GraphEdge } from "./assemblyGraph";
+import type { CouplingKind, GraphEdge } from "./assemblyGraph";
 import {
   alreadyJoined,
   chainEnd,
   incidentCouplings,
+  linkModules,
   resolveCouplings,
   usedEdges,
 } from "./assemblyGraph";
@@ -1060,6 +1070,27 @@ export function setCouplerSkuAll(product: ProductJson, sku: string | null): Prod
   };
 }
 
+/** Kinds a coupling may take given the module edges it actually joins —
+ * INLINE is coplanar (left/right), every stacking kind is top/bottom. */
+export function allowedCouplingKinds(product: ProductJson, couplingId: string): CouplingKind[] {
+  const resolved = resolveCouplings(product).find((item) => item.coupling.id === couplingId);
+  if (!resolved) return [];
+  const horizontal = resolved.edges.every((edge) => edge === "left" || edge === "right");
+  return horizontal ? ["INLINE"] : ["STACKED", "TEE", "CORNER"];
+}
+
+/** Change a coupling's kind, only across compatible edges — the joint's
+ * geometry never moves, so an INLINE seam can never become a stack. */
+export function setCouplingKind(
+  product: ProductJson,
+  couplingId: string,
+  kind: CouplingKind,
+): ProductJson {
+  const coupling = product.assembly.couplings.find((item) => item.id === couplingId);
+  if (!coupling || !allowedCouplingKinds(product, couplingId).includes(kind)) return product;
+  return replaceCoupling(product, couplingId, { ...coupling, kind });
+}
+
 /** Replace one module's parametric tree — bay-level edits land through
  * updateBay upstream, this only swaps the validated result. */
 export function setModuleTree(
@@ -1330,4 +1361,102 @@ export function splitModuleBay(
   } catch {
     return product;
   }
+}
+
+/** Remove a mullion/transom division: its two leaf bays merge into the first
+ * child's spec. Refuses (returns product unchanged) on nested structure —
+ * inside splits must be collapsed first so nothing is silently dropped. */
+export function removeModuleDivision(
+  product: ProductJson,
+  moduleId: string,
+  divisionId: string,
+  keepChildId?: string,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  try {
+    const tree = removeDivision(module.tree, divisionId, keepChildId);
+    return replaceModule(product, moduleId, { ...module, tree });
+  } catch {
+    return product;
+  }
+}
+
+/** Remove a leaf bay by collapsing its parent split into the sibling — the
+ * tree-level form of "remove bay" (no-op when the bay's parent is nested or
+ * the tree is a single bay: a module always has at least one opening). */
+export function removeModuleBay(
+  product: ProductJson,
+  moduleId: string,
+  bayId: string,
+): ProductJson {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  if (!module) return product;
+  const parent = parentSplitOf(module.tree, bayId);
+  if (!parent) return product;
+  const sibling = (parent.children ?? []).find((child) => child.id !== bayId)?.id;
+  return removeModuleDivision(product, moduleId, parent.id, sibling);
+}
+
+/** Whether a division can merge — same predicate removeDivision enforces,
+ * so the command layer can hide the action instead of failing silently. */
+export function canRemoveModuleDivision(
+  product: ProductJson,
+  moduleId: string,
+  divisionId: string,
+): boolean {
+  const module = product.assembly.modules.find((item) => item.id === moduleId);
+  const node = module ? findNode(module.tree, divisionId) : null;
+  return (
+    !!node &&
+    (node.type === "SPLIT_V" || node.type === "SPLIT_H") &&
+    (node.children ?? []).length === 2 &&
+    (node.children ?? []).every((child) => child.type === "BAY")
+  );
+}
+
+/** Copy one leaf bay's spec onto another — the target may live in a
+ * different module (clipboard carry is spec-level, not tree-level). */
+export function copyBaySpec(
+  product: ProductJson,
+  targetModuleId: string,
+  targetBayId: string,
+  spec: Partial<IntentNode>,
+): ProductJson {
+  const target = product.assembly.modules.find((item) => item.id === targetModuleId);
+  if (!target) return product;
+  try {
+    const tree = updateBay(target.tree, targetBayId, spec);
+    return replaceModule(product, targetModuleId, { ...target, tree });
+  } catch {
+    return product;
+  }
+}
+
+/** Stack a new unit on top of an existing module — the transom-over-door /
+ * fanlight move. The member clones the base's spec and spans its width;
+ * `heightMm` is a display default the user then edits (never engine data).
+ * Refuses when the base's top edge is claimed or the base is shaped/bare. */
+export function addStackedUnit(
+  product: ProductJson,
+  baseId: string,
+  defaults: { heightMm?: string } = {},
+): ProductJson {
+  const base = product.assembly.modules.find((module) => module.id === baseId);
+  if (!base || base.contour || base.frameless) return product;
+  if (usedEdges(product, baseId).has("top")) return product;
+  const member: ProductModuleJson = {
+    id: nextModuleId(product),
+    width_mm: base.width_mm,
+    height_mm: defaults.heightMm ?? "600.00",
+    tree: cloneTree(base.tree),
+  };
+  const withMember: ProductJson = {
+    ...product,
+    assembly: {
+      ...product.assembly,
+      modules: [...product.assembly.modules, member],
+    },
+  };
+  return linkModules(withMember, baseId, "top", member.id, "bottom", "STACKED");
 }

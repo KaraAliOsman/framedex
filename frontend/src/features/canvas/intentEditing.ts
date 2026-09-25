@@ -126,6 +126,12 @@ export function selectedBay(tree: IntentNode, id: string): IntentNode {
   return node;
 }
 
+/** Any node by id — mullions and other divisions are objects too, not only
+ * leaf bays. Returns null instead of throwing so callers can probe. */
+export function findNode(tree: IntentNode, id: string): IntentNode | null {
+  return walkIntent(tree).find((candidate) => candidate.id === id) ?? null;
+}
+
 /** Formatting only: no rounding, unit conversion, or geometry calculation. */
 export function exactMm(value: string): string {
   const normalized = normalizeDimensionCandidate(value.trim().replace(",", "."));
@@ -222,6 +228,78 @@ export function moveDivision(tree: IntentNode, divisionId: string, offset: strin
   if (!node || (node.type !== "SPLIT_H" && node.type !== "SPLIT_V"))
     throw new Error("division_unavailable");
   return requestTree(replaceNode(tree, divisionId, { ...node, split_offset_mm: exactMm(offset) }));
+}
+
+/** Remove a division: its two leaf bays merge into one. The merged bay keeps
+ * `keepChildId`'s identity and spec (first child by default — the dropped
+ * bay's spec is discarded, so the op refuses when either child isn't a leaf
+ * BAY: nested structure must be collapsed inside-out, never silently lost). */
+export function removeDivision(
+  tree: IntentNode,
+  divisionId: string,
+  keepChildId?: string,
+): IntentNode {
+  const node = findNode(tree, divisionId);
+  if (!node || (node.type !== "SPLIT_H" && node.type !== "SPLIT_V"))
+    throw new Error("division_unavailable");
+  const children = node.children ?? [];
+  if (children.length !== 2 || children.some((child) => child.type !== "BAY"))
+    throw new Error("division_nested");
+  const merged = children.find((child) => child.id === keepChildId) ?? children[0]!;
+  return requestTree(replaceNode(tree, divisionId, merged));
+}
+
+/** The division node that owns a bay, when removing `bayId` would collapse
+ * the split into a single bay — null when the bay has no split parent or a
+ * nested sibling that would also be dropped. */
+export function parentSplitOf(tree: IntentNode, bayId: string): IntentNode | null {
+  const walk = (node: IntentNode): IntentNode | null => {
+    const children = node.children ?? [];
+    if (children.some((child) => child.id === bayId)) return node;
+    for (const child of children) {
+      const found = walk(child);
+      if (found) return found;
+    }
+    return null;
+  };
+  const parent = walk(tree);
+  if (!parent || (parent.type !== "SPLIT_H" && parent.type !== "SPLIT_V")) return null;
+  return (parent.children ?? []).every((child) => child.type === "BAY") ? parent : null;
+}
+
+/** The spec fields a bay can donate — structure never travels with them. */
+const BAY_SPEC_KEYS = [
+  "opening_type",
+  "sliding_layout",
+  "glass_thickness_mm",
+  "glass_spec",
+  "glass_article_sku",
+  "panel_article_sku",
+  "hardware_set_sku",
+  "handle_height_mm",
+] as const;
+
+/** The transferable spec of a leaf bay (opening, infill, hardware). */
+export function baySpec(node: IntentNode): Partial<IntentNode> {
+  const spec: Partial<IntentNode> = {};
+  for (const key of BAY_SPEC_KEYS) {
+    const value = node[key];
+    if (value !== undefined) (spec as Record<string, unknown>)[key] = value;
+  }
+  return spec;
+}
+
+/** Copy one leaf bay's spec onto another — ids and structure untouched. */
+export function applyBaySpec(
+  tree: IntentNode,
+  sourceBayId: string,
+  targetBayId: string,
+): IntentNode {
+  const source = selectedBay(tree, sourceBayId);
+  const target = selectedBay(tree, targetBayId);
+  return requestTree(
+    replaceNode(tree, targetBayId, { ...target, ...baySpec(source), id: target.id, type: "BAY" }),
+  );
 }
 
 /** Explicit per-bay edit: patch fields on one leaf without touching the

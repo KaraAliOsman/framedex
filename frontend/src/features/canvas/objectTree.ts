@@ -140,7 +140,7 @@ function intentRows(
         detail: node.mullion_profile_sku ?? null,
         kind: "mullion",
         severity: null,
-        selectId: moduleId,
+        selectId: `${moduleId}/${node.id}`,
         children: (node.children ?? []).flatMap((child) =>
           intentRows(child, moduleId, members, t, context),
         ),

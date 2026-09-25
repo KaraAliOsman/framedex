@@ -9,7 +9,12 @@ import type {
   ProductIssue,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { resolveCommands, useRegisterCommands } from "../commands/registry";
+import {
+  formatShortcut,
+  resolveCommands,
+  useCommandShortcuts,
+  useRegisterCommands,
+} from "../commands/registry";
 import type { CommandContext, EditorTool } from "../commands/types";
 import { useCanvasStore } from "./canvasStore";
 import { assemblyCommands } from "./assemblyCommands";
@@ -35,16 +40,17 @@ import {
 import { useAssemblyCalculation } from "./useAssemblyCalculation";
 import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEditing";
 import {
+  findNode,
   intentBays,
   isSlidingOpening,
   resolvedSlidingLayout,
-  selectedBay,
   topIntent,
   updateBay,
   SLIDING_PRESETS,
 } from "./intentEditing";
 import {
   addAdjacentUnit,
+  canRemoveModuleDivision,
   equalizeCouplingAngles,
   equalizeModuleWidths,
   moduleGlassSku,
@@ -53,6 +59,7 @@ import {
   modulePanelSku,
   modulePrimaryBay,
   moveModuleDivision,
+  removeModuleDivision,
   removeUnit,
   resizeModuleSeam,
   scaleModuleWidths,
@@ -801,6 +808,8 @@ function BayInspector({
   const bayOrdinal = bays.findIndex((node) => node.id === bay.id) + 1;
   const moduleOrdinal = product.assembly.modules.findIndex((item) => item.id === module.id) + 1;
   const isTopBay = topIntent(module.tree).id === bay.id;
+  const recentGlass = useCanvasStore((state) => state.recentGlass);
+  const pushRecentGlass = useCanvasStore((state) => state.pushRecentGlass);
 
   function patchBay(patch: Partial<IntentNode>): void {
     commit(setModuleTree(product, module.id, updateBay(module.tree, bay.id, patch)));
@@ -824,6 +833,27 @@ function BayInspector({
           {t("assembly.bay")} {bayOrdinal} · {t("assembly.module")} {moduleOrdinal}
         </h4>
       </header>
+      <ProvenanceStrip
+        items={[
+          { label: t("assembly.opening"), state: "DECLARED" },
+          {
+            label: t("assembly.glass"),
+            state: bay.glass_article_sku
+              ? "VERIFIED"
+              : opening === "FIXED" || isDoor
+                ? "UNKNOWN"
+                : "BLOCKED",
+          },
+          {
+            label: t("assembly.glassThickness"),
+            state: bay.glass_thickness_mm ? "DECLARED" : "UNKNOWN",
+          },
+          {
+            label: t("quotation.handleHeight"),
+            state: bay.handle_height_mm ? "DECLARED" : "UNKNOWN",
+          },
+        ]}
+      />
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
@@ -890,6 +920,7 @@ function BayInspector({
             value={bay.glass_article_sku ?? ""}
             onChange={(event) => {
               const sku = event.target.value || null;
+              if (sku) pushRecentGlass(sku);
               patchBay({
                 glass_article_sku: sku,
                 glass_spec:
@@ -907,6 +938,30 @@ function BayInspector({
             ))}
           </select>
         </label>
+        {recentGlass.length > 0 && (
+          <div className="recents" aria-label={t("assembly.recentGlass")}>
+            <span className="recents__label">{t("assembly.recentGlass")}</span>
+            {recentGlass
+              .filter((sku) => sku !== bay.glass_article_sku)
+              .map((sku) => (
+                <button
+                  key={sku}
+                  type="button"
+                  className="recents__chip"
+                  disabled={busy}
+                  title={sku}
+                  onClick={() => {
+                    patchBay({
+                      glass_article_sku: sku,
+                      glass_spec: glassSpecs.find((item) => item.sku === sku)?.spec ?? null,
+                    });
+                  }}
+                >
+                  {sku}
+                </button>
+              ))}
+          </div>
+        )}
         {isDoor && (
           <label className="assembly-field">
             <span>{t("assembly.panel")}</span>
@@ -941,6 +996,140 @@ function BayInspector({
           </button>
         </div>
       )}
+    </section>
+  );
+}
+
+/** §04-D technical provenance: which declared values are catalog-backed
+ * (VERIFIED), which are user intent (DECLARED), which are missing
+ * (UNKNOWN) and which block the design (BLOCKED). Rendered as a compact
+ * strip at the top of every inspector so the states are always obvious. */
+type FieldState = "VERIFIED" | "DECLARED" | "UNKNOWN" | "BLOCKED";
+
+function ProvenanceStrip({
+  items,
+}: {
+  items: { label: string; state: FieldState }[];
+}): JSX.Element {
+  return (
+    <ul className="prov-strip" aria-label={t("prov.title")}>
+      {items.map((item) => (
+        <li
+          key={item.label}
+          className={`prov-chip prov-chip--${item.state.toLowerCase()}`}
+          title={t(`prov.${item.state.toLowerCase()}` as TranslationKey)}
+        >
+          <span className="prov-chip__state">
+            {t(`prov.${item.state.toLowerCase()}` as TranslationKey)}
+          </span>
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Mullion/transom inspector — a division is a real object: its offset is
+ * editable, its profile is catalog authority, its bays are one click away,
+ * and merging it back is an explicit domain op (never index surgery). */
+function DivisionInspector({
+  module,
+  division,
+  product,
+  busy,
+  commit,
+  onSelect,
+  onAskAssistant,
+}: {
+  module: ProductModuleJson;
+  division: IntentNode;
+  product: ProductJson;
+  busy: boolean;
+  commit(next: ProductJson): void;
+  onSelect(id: string): void;
+  onAskAssistant?(): void;
+}): JSX.Element {
+  const vertical = division.type === "SPLIT_V";
+  const children = division.children ?? [];
+  const removable = canRemoveModuleDivision(product, module.id, division.id);
+  const bays = intentBays(module.tree);
+  const childLabel = (child: IntentNode): string =>
+    child.type === "BAY"
+      ? `${t("assembly.bay")} ${bays.findIndex((node) => node.id === child.id) + 1}`
+      : child.type === "SPLIT_V"
+        ? t("assembly.mullionV")
+        : child.type === "SPLIT_H"
+          ? t("assembly.transomH")
+          : child.id;
+  return (
+    <section className="assembly-inspector" aria-label={t("assembly.division")}>
+      <header className="assembly-inspector__header">
+        <h4>{vertical ? t("assembly.mullionV") : t("assembly.transomH")}</h4>
+      </header>
+      <ProvenanceStrip
+        items={[
+          { label: t("inspector.divisionType"), state: "DECLARED" },
+          { label: t("assembly.splitOffset"), state: "DECLARED" },
+          {
+            label: t("assembly.mullionProfile"),
+            state: division.mullion_profile_sku ? "VERIFIED" : "UNKNOWN",
+          },
+        ]}
+      />
+      <details className="inspector-section" open>
+        <summary>{t("inspector.dimensions")}</summary>
+        <DraftField
+          label={t("assembly.splitOffset")}
+          value={division.split_offset_mm ?? ""}
+          unit="mm"
+          disabled={busy}
+          normalize={normalizeMm}
+          onCommit={(value) => commit(moveModuleDivision(product, module.id, division.id, value))}
+        />
+        <div className="inspector-field">
+          <span className="inspector-field__label">{t("assembly.mullionProfile")}</span>
+          <code className="inspector-field__value">
+            {division.mullion_profile_sku ?? t("prov.unknown")}
+          </code>
+        </div>
+      </details>
+      <details className="inspector-section" open>
+        <summary>{t("assembly.divisionBays")}</summary>
+        <ul className="division-children">
+          {children.map((child) => (
+            <li key={child.id}>
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => onSelect(`${module.id}/${child.id}`)}
+              >
+                {childLabel(child)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="ghost-button ghost-button--danger"
+          disabled={busy || !removable}
+          onClick={() => {
+            const kept = children[0]?.id;
+            commit(removeModuleDivision(product, module.id, division.id));
+            onSelect(kept ? `${module.id}/${kept}` : module.id);
+          }}
+        >
+          {t("assembly.removeSplit")}
+        </button>
+        {!removable && <p className="assembly-hint">{t("assembly.removeSplitNested")}</p>}
+        {removable && <p className="assembly-hint">{t("assembly.removeSplitKeeps")}</p>}
+        {onAskAssistant && (
+          <button type="button" className="ghost-button" disabled={busy} onClick={onAskAssistant}>
+            {t("assistant.modifyWith")}
+          </button>
+        )}
+      </div>
     </section>
   );
 }
@@ -1160,6 +1349,19 @@ function ModuleInspector({
           ×
         </button>
       </header>
+      <ProvenanceStrip
+        items={[
+          { label: t("inspector.dimensions"), state: "DECLARED" },
+          {
+            label: t("assembly.glass"),
+            state: moduleGlassSku(module) !== null ? "VERIFIED" : "UNKNOWN",
+          },
+          {
+            label: t("assembly.coupler"),
+            state: couplerSkus.length > 0 ? "VERIFIED" : "UNKNOWN",
+          },
+        ]}
+      />
       <details className="inspector-section" open>
         <summary>{t("assembly.opening")}</summary>
         <div className="opening-grid" role="group" aria-label={t("assembly.opening")}>
@@ -1382,6 +1584,16 @@ function CouplingInspector({
           {t("assembly.coupling")} {ordinal}
         </h4>
       </header>
+      <ProvenanceStrip
+        items={[
+          { label: t("assembly.angle"), state: "DECLARED" },
+          { label: t("inspector.couplingType"), state: "DECLARED" },
+          {
+            label: t("assembly.coupler"),
+            state: coupling.coupler_profile_sku ? "VERIFIED" : "UNKNOWN",
+          },
+        ]}
+      />
       <DraftField
         label={t("assembly.angle")}
         value={coupling.angle_deg}
@@ -1480,6 +1692,8 @@ export function AssemblyEditor({
   const redoHistory = useCanvasStore((state) => state.redo);
   const canUndo = useCanvasStore((state) => state.past.length > 0);
   const canRedo = useCanvasStore((state) => state.future.length > 0);
+  const specClipboard = useCanvasStore((state) => state.specClipboard);
+  const lastMutation = useCanvasStore((state) => state.lastMutation);
   const product = inputs.product;
   const { evaluation, isPending, errorCode } = useAssemblyCalculation(organizationId, inputs);
   const issues = evaluation?.issues ?? [];
@@ -1585,20 +1799,21 @@ export function AssemblyEditor({
   const selectedCoupling = couplings.find((coupling) => coupling.id === selection);
   // Leaf granularity: canvas bay clicks and tree leaf rows select the
   // composite "moduleId/bayId" — resolved back into (module, bay node) here.
-  const baySelection = selection?.includes("/") ? selection.split("/") : null;
-  const selectedBayModule = baySelection
-    ? modules.find((module) => module.id === baySelection[0])
+  const treeSelection = selection?.includes("/") ? selection.split("/") : null;
+  const selectedTreeModule = treeSelection
+    ? modules.find((module) => module.id === treeSelection[0])
     : undefined;
-  const selectedBayNode = (() => {
-    if (!baySelection || !selectedBayModule) return null;
-    try {
-      return baySelection[1] !== undefined
-        ? selectedBay(selectedBayModule.tree, baySelection[1])
-        : null;
-    } catch {
-      return null;
-    }
+  const selectedNode = (() => {
+    if (!treeSelection || !selectedTreeModule || treeSelection[1] === undefined) return null;
+    return findNode(selectedTreeModule.tree, treeSelection[1]);
   })();
+  const selectedBayModule = selectedNode?.type === "BAY" ? selectedTreeModule : undefined;
+  const selectedBayNode = selectedNode?.type === "BAY" ? selectedNode : null;
+  const selectedDivisionModule =
+    selectedNode && (selectedNode.type === "SPLIT_V" || selectedNode.type === "SPLIT_H")
+      ? selectedTreeModule
+      : undefined;
+  const selectedDivisionNode = selectedDivisionModule ? selectedNode : null;
   // isPending also holds while the query is disabled (no system/product yet).
   // Evaluation is non-blocking: an in-flight recalc keeps the canvas live —
   // react-query keys on the product so stale results never land on newer
@@ -1640,6 +1855,10 @@ export function AssemblyEditor({
       redo: redoHistory,
       canUndo,
       canRedo,
+      specClipboard,
+      writeSpecClipboard: useCanvasStore.getState().setSpecClipboard,
+      lastMutation,
+      recordMutation: useCanvasStore.getState().recordMutation,
     }),
     // `commit` is re-declared per render and always sees current inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1657,6 +1876,8 @@ export function AssemblyEditor({
       redoHistory,
       canUndo,
       canRedo,
+      specClipboard,
+      lastMutation,
     ],
   );
   const surface = useMemo(
@@ -1664,6 +1885,7 @@ export function AssemblyEditor({
     [commandCtx],
   );
   useRegisterCommands(surface);
+  useCommandShortcuts(surface);
   const statusText = `${front.totalW.toFixed(0)} × ${front.height.toFixed(0)} mm`;
   // Labels derive from actual product membership — selection ids are
   // arbitrary strings, so a coupling legitimately named "coupling-x" must
@@ -1676,9 +1898,11 @@ export function AssemblyEditor({
     ? `${t("assembly.module")} ${modules.findIndex((item) => item.id === selection) + 1}`
     : selectedBayModule && selectedBayNode
       ? `${t("assembly.bay")} ${bayOrdinal} · ${t("assembly.module")} ${modules.findIndex((item) => item.id === selectedBayModule.id) + 1}`
-      : selectedCoupling
-        ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
-        : null;
+      : selectedDivisionModule && selectedDivisionNode
+        ? `${selectedDivisionNode.type === "SPLIT_V" ? t("assembly.mullionV") : t("assembly.transomH")} · ${t("assembly.module")} ${modules.findIndex((item) => item.id === selectedDivisionModule.id) + 1}`
+        : selectedCoupling
+          ? `${t("assembly.coupling")} ${couplings.findIndex((item) => item.id === selection) + 1}`
+          : null;
 
   const divideToolType = tool === "split_v" ? "SPLIT_V" : tool === "split_h" ? "SPLIT_H" : null;
 
@@ -1859,9 +2083,15 @@ export function AssemblyEditor({
             issues={issues}
             disabled={busy}
             divideTool={divideToolType}
+            dimLevel={detail}
             onSelectModule={pickModule}
             onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
+            onSelectDivision={(moduleId, divisionId) => select(`${moduleId}/${divisionId}`)}
+            onSelectCoupling={(couplingId) => select(couplingId)}
             selectedBayId={selectedBayModule && selectedBayNode ? selectedBayNode.id : null}
+            selectedDivisionId={
+              selectedDivisionModule && selectedDivisionNode ? selectedDivisionNode.id : null
+            }
             onContextMenuModule={(moduleId, pos) => {
               select(moduleId);
               setContextMenu(pos);
@@ -1978,7 +2208,10 @@ export function AssemblyEditor({
                   setContextMenu(null);
                 }}
               >
-                {command.title}
+                <span className="context-menu__label">{command.title}</span>
+                {command.shortcut && (
+                  <kbd className="context-menu__hint">{formatShortcut(command.shortcut)}</kbd>
+                )}
               </button>
             ))}
           {selectedLabel && (
@@ -2120,6 +2353,20 @@ export function AssemblyEditor({
             panelSkus={panelSkus}
             busy={busy}
             commit={commit}
+            onAskAssistant={
+              selectedLabel
+                ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))
+                : undefined
+            }
+          />
+        ) : selectedDivisionModule && selectedDivisionNode ? (
+          <DivisionInspector
+            module={selectedDivisionModule}
+            division={selectedDivisionNode}
+            product={product}
+            busy={busy}
+            commit={commit}
+            onSelect={(id) => select(id)}
             onAskAssistant={
               selectedLabel
                 ? () => askAssistant(t("assistant.modifyPrompt").replace("{target}", selectedLabel))

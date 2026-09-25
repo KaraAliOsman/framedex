@@ -582,3 +582,193 @@ def test_unknown_ref_is_rejected_not_floored_to_an_index(monkeypatch):
     )
     assert out["ops"] == []
     assert out["rejected"][0]["reason"] == "apertura_invalida"
+
+
+def _graph_product():
+    """Two-unit assembly with explicit coupling endpoints — the wire surface
+    the canvas client already sends (stable ids, edge topology)."""
+    return {
+        "modules": [
+            {"id": "m1", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m2", "width_mm": "900", "height_mm": "1500"},
+        ],
+        "couplings": [
+            {
+                "id": "c1",
+                "angle_deg": "0",
+                "kind": "INLINE",
+                "modules": ["m1", "m2"],
+                "edges": ["right", "left"],
+            }
+        ],
+    }
+
+
+def test_duplicate_module_lands_on_the_free_edge(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "duplicate_module", "module": "m2"},
+                {"op": "set_opening", "module": "added_m1", "opening": "TURN_LEFT"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_graph_product(),
+        prompt="duplica la segunda con apertura",
+        system_id=uuid4(),
+        operation_key="assist-d1",
+    )
+    assert out["ops"] == [
+        {"op": "duplicate_module", "module": "m2"},
+        {"op": "set_opening", "module": "added_m1", "opening": "TURN_LEFT"},
+    ]
+    assert out["rejected"] == []
+
+
+def test_duplicate_module_refused_when_both_edges_claimed(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "duplicate_module", "module": "m1"}]},
+    )
+    product = _graph_product()
+    product["modules"].append({"id": "m0", "width_mm": "700", "height_mm": "1500"})
+    product["couplings"].insert(
+        0,
+        {
+            "id": "c0",
+            "angle_deg": "0",
+            "kind": "INLINE",
+            "modules": ["m0", "m1"],
+            "edges": ["right", "left"],
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="duplica la del medio",
+        system_id=uuid4(),
+        operation_key="assist-d2",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "sin_borde_libre"
+
+
+def test_insert_module_splits_the_inline_seam(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "insert_module", "coupling": "c1"},
+                {"op": "set_coupling_angle", "coupling": "added_c1", "angle_deg": "12"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_graph_product(),
+        prompt="inserta una unidad en la unión con ángulo 12",
+        system_id=uuid4(),
+        operation_key="assist-d3",
+    )
+    assert out["ops"] == [
+        {"op": "insert_module", "coupling": "c1"},
+        {"op": "set_coupling_angle", "coupling": "added_c1", "angle_deg": "12"},
+    ]
+    assert out["rejected"] == []
+
+
+def test_insert_module_refuses_non_inline_joints(monkeypatch):
+    _patch_invoke(monkeypatch, {"ops": [{"op": "insert_module", "coupling": "c1"}]})
+    product = _graph_product()
+    product["couplings"][0]["kind"] = "STACKED"
+    product["couplings"][0]["edges"] = ["top", "bottom"]
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="inserta en la unión",
+        system_id=uuid4(),
+        operation_key="assist-d4",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "union_invalida"
+
+
+def test_remove_coupling_frees_the_edges(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_coupling", "coupling": "c1"},
+                {"op": "duplicate_module", "module": "m1"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_graph_product(),
+        prompt="desconecta la unión y duplica la primera",
+        system_id=uuid4(),
+        operation_key="assist-d5",
+    )
+    assert [op["op"] for op in out["ops"]] == ["remove_coupling", "duplicate_module"]
+    assert out["rejected"] == []
+
+
+def test_set_coupling_kind_follows_the_joint_edges(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_coupling_kind", "coupling": "c1", "kind": "STACKED"},
+                {"op": "set_coupling_kind", "coupling": "c1", "kind": "INLINE"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_graph_product(),
+        prompt="cambia el tipo de unión",
+        system_id=uuid4(),
+        operation_key="assist-d6",
+    )
+    # A left/right seam can only stay INLINE — the stacked kind is refused.
+    assert out["ops"] == [{"op": "set_coupling_kind", "coupling": "c1", "kind": "INLINE"}]
+    assert out["rejected"][0]["reason"] == "tipo_invalido"
+
+
+def test_stacked_unit_member_is_not_addressable_later(monkeypatch):
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "add_stacked_unit", "module": "m1"},
+                {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_graph_product(),
+        prompt="apila un fijo encima",
+        system_id=uuid4(),
+        operation_key="assist-d7",
+    )
+    assert out["ops"] == [{"op": "add_stacked_unit", "module": "m1"}]
+    assert out["rejected"][0]["reason"] == "apertura_invalida"
