@@ -2,7 +2,6 @@ import type { IntentNode, Opening, SlidingLayout, SplitType } from "./intentEdit
 import { SLIDING_PRESETS } from "./intentEditing";
 import { intentBays, moveDivision, splitBay, walkIntent } from "./intentEditing";
 import type { MemberGeometry } from "./members";
-import { FALLBACK_MEMBERS, resolveMembers } from "./members";
 import type { GraphEdge } from "./assemblyGraph";
 import {
   alreadyJoined,
@@ -1260,10 +1259,11 @@ function baySpanOnAxis(
   const path = pathTo(root);
   if (!path) return null;
   const frameFace = members.frame.faceWidthMm;
-  const mullionHalf =
-    (vertical
-      ? (members.mullionV?.faceWidthMm ?? FALLBACK_MEMBERS.mullion)
-      : (members.mullionH?.faceWidthMm ?? FALLBACK_MEMBERS.mullion)) / 2;
+  // A same-axis ancestor split can only bound the bay when the mullion's
+  // face width is declared — a guessed width would persist a fallback
+  // number as if it were authority.
+  const axisMullion = vertical ? members.mullionV : members.mullionH;
+  const mullionHalf = axisMullion === null ? null : axisMullion.faceWidthMm / 2;
   let lo = frameFace;
   let hi = Math.max(moduleSpanMm - frameFace, frameFace);
   for (const { node, index } of path) {
@@ -1271,6 +1271,7 @@ function baySpanOnAxis(
     if ((node.type === "SPLIT_V") !== vertical) continue;
     const offset = Number(node.split_offset_mm);
     if (!Number.isFinite(offset) || offset <= 0) continue;
+    if (mullionHalf === null) return null;
     const centerline = node === root ? offset : lo + offset;
     if (index === 0) hi = Math.min(hi, centerline - mullionHalf);
     else lo = Math.max(lo, centerline + mullionHalf);
@@ -1290,7 +1291,7 @@ export function splitModuleBay(
   product: ProductJson,
   moduleId: string,
   division: { type: SplitType; mullionSku: string; offsetMm?: string; bayId?: string },
-  members?: MemberGeometry,
+  members: MemberGeometry,
 ): ProductJson {
   const module = product.assembly.modules.find((item) => item.id === moduleId);
   if (!module || !division.mullionSku.trim()) return product;
@@ -1302,16 +1303,12 @@ export function splitModuleBay(
   if (!bay || moduleOpening(module) === "DOOR_ENTRY") return product;
   const size = division.type === "SPLIT_V" ? Number(module.width_mm) : Number(module.height_mm);
   if (!Number.isFinite(size) || size <= 0) return product;
-  const region = baySpanOnAxis(
-    root,
-    bay.id,
-    division.type === "SPLIT_V",
-    size,
-    members ?? resolveMembers(undefined),
-  );
+  const region = baySpanOnAxis(root, bay.id, division.type === "SPLIT_V", size, members);
   if (region === null || region.spanMm <= 0) return product;
-  // The top bay's split becomes the new root — its offset is module-relative.
-  // Deeper bays store bay-local offsets, so centering halves the bay's own span.
+  // The top bay's split becomes the new root — its default centers the
+  // module span, a pure product coordinate with no member geometry in it.
+  // Deeper bays store bay-local offsets, so centering halves the bay's own
+  // span — which only real (declared) member geometry may bound.
   const offset = division.offsetMm ?? (region.isTopBay ? size / 2 : region.spanMm / 2).toFixed(2);
   const used = new Set(walkIntent(module.tree).map((node) => node.id));
   const freeId = (base: string): string => {
