@@ -357,6 +357,9 @@ export function AssistantWorkspacePage(): JSX.Element {
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const [newProjectId, setNewProjectId] = useState("");
   const transcriptEnd = useRef<HTMLDivElement>(null);
+  // One operation key per draft: a retry/double-submit of the same message
+  // replays server-side instead of re-debiting the wallet for a fresh round.
+  const operationKey = useRef<{ key: string; draft: string } | null>(null);
 
   const headers = useMemo(() => ({ headers: { "X-Organization-ID": orgId ?? "" } }), [orgId]);
 
@@ -405,6 +408,9 @@ export function AssistantWorkspacePage(): JSX.Element {
   async function send(): Promise<void> {
     const message = draft.trim();
     if (!message || busy || !orgId) return;
+    if (!operationKey.current || operationKey.current.draft !== message) {
+      operationKey.current = { key: crypto.randomUUID(), draft: message };
+    }
     setBusy(true);
     setError("");
     try {
@@ -418,7 +424,7 @@ export function AssistantWorkspacePage(): JSX.Element {
         const response = await aiJobMessageCreate(
           job.id,
           { message, ...(product ? { product } : {}) },
-          headers,
+          { headers: { ...headers.headers, "X-Operation-Key": operationKey.current.key } },
         );
         if (response.status !== 200) throw new ApiError(response.status, response.data);
       } else {
@@ -434,7 +440,7 @@ export function AssistantWorkspacePage(): JSX.Element {
             refs: needsProject ? { project_id: newProjectId } : {},
             goal: message,
             history: [],
-            operation_key: crypto.randomUUID(),
+            operation_key: operationKey.current.key,
           },
           headers,
         );
@@ -443,6 +449,7 @@ export function AssistantWorkspacePage(): JSX.Element {
         if (jobId) setSearchParams({ job: jobId });
       }
       setDraft("");
+      operationKey.current = null;
       await queryClient.invalidateQueries({ queryKey: ["ai", "jobs", orgId] });
     } catch (cause) {
       setError(

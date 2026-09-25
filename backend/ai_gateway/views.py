@@ -33,6 +33,11 @@ from documents.views import ERRORS, documentary_scope, validate
 # ask, or the two AI surfaces contradict each other (review WM6).
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 _CALLERS = _AGENT_CALLERS
+# Generic invoke exists for the member-facing raw capabilities only. Every
+# richer capability has its own validated endpoint — letting a caller pick
+# 'agent'/'catalog_compile' here would bypass context builders and output
+# validation while spending org credits.
+_MEMBER_CAPABILITIES = frozenset({"nlp_command", "discount_suggest"})
 
 
 def _record_failure(request, *, goal, job_id, error, surface=None, refs=None,
@@ -103,6 +108,12 @@ class AiInvokeView(APIView):
     )
     def post(self, request):
         data = validate(AiInvokeRequestSerializer, request.data)
+        if str(data["capability"]) not in _MEMBER_CAPABILITIES:
+            raise contract_error(
+                422,
+                "ai_capability_forbidden",
+                "Esa capacidad se usa desde su propia superficie.",
+            )
         with documentary_scope(request, _CALLERS) as (token, _, org_id):
             try:
                 return Response(
@@ -112,7 +123,9 @@ class AiInvokeView(APIView):
                         capability=str(data["capability"]),
                         operation_key=str(data["operation_key"]),
                         input_payload=dict(data["input_payload"]),
-                        tool_name=str(data.get("tool_name") or "") or None,
+                        # tool_name is audit attribution — the member cannot
+                        # relabel a row as another tool (review AI-05).
+                        tool_name=None,
                     )
                 )
             except ProviderError as error:

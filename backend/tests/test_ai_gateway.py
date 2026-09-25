@@ -1738,7 +1738,7 @@ def test_act_artifacts_validate_against_allowlist(monkeypatch):
                 "steps": [
                     {"kind": "artifact", "artifact": {
                         "kind": "quote_draft", "title": "Borrador",
-                        "payload": {"total": 100}, "references": [entity_id]}},
+                        "payload": {"note": "borrador"}, "references": [entity_id]}},
                     {"kind": "artifact", "artifact": {
                         "kind": "exploit", "title": "x", "payload": {}}},
                 ],
@@ -2025,7 +2025,7 @@ def test_act_accumulates_artifacts_across_rounds(monkeypatch):
             "artifact": {
                 "kind": "quote_draft",
                 "title": "Cotización preliminar",
-                "payload": {"total": 1000},
+                "payload": {"estado": "borrador"},
                 "references": [entity_id],
             },
         }],

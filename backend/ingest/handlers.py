@@ -14,7 +14,7 @@ from ingest.serializers import ExtractPayloadSerializer
 
 @register(
     "ingest.document.extract",
-    roles=("OWNER", "ESTIMATOR"),
+    roles=("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"),
     payload_serializer=ExtractPayloadSerializer,
     label="Extraer posiciones del documento",
 )
@@ -40,7 +40,7 @@ def extract_document_job(
                 cursor.execute(
                     "SELECT 1 FROM public.tenancy_memberships "
                     "WHERE user_id=%s AND org_id=%s AND is_active "
-                    "AND role IN ('OWNER','ESTIMATOR')",
+                    "AND role IN ('OWNER','ESTIMATOR','WORKSHOP_MANAGER')",
                     [str(context.created_by), str(context.org_id)],
                 )
                 member = cursor.fetchone()
@@ -76,7 +76,7 @@ def extract_document_job(
 
 @register(
     "ingest.catalog.extract",
-    roles=("OWNER", "ESTIMATOR"),
+    roles=("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"),
     payload_serializer=ExtractPayloadSerializer,
     label="Extraer artículos del catálogo",
 )
@@ -104,7 +104,7 @@ def extract_catalog_job(
                 cursor.execute(
                     "SELECT 1 FROM public.tenancy_memberships "
                     "WHERE user_id=%s AND org_id=%s AND is_active "
-                    "AND role IN ('OWNER','ESTIMATOR')",
+                    "AND role IN ('OWNER','ESTIMATOR','WORKSHOP_MANAGER')",
                     [str(context.created_by), str(context.org_id)],
                 )
                 member = cursor.fetchone()

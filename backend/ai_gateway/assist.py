@@ -17,6 +17,13 @@ from ai_gateway.context import REQUIRED_REFS, _ContextError, build_context
 from authentication.errors import contract_error
 from projects.design_assist import _BARE_NUMBER_RE, _MEASURE_RE, _parse_number
 
+# Tokens that carry digits without quantitative meaning — scrubbed before the
+# grounding scan so they cannot back an invented number.
+_OPAQUE_TOKEN_RE = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|\d{4}-\d{2}-\d{2}(?:[T ][0-9:.]+(?:Z|[+-]\d{2}:?\d{2})?)?"
+)
+
 CAPABILITY = "context_assist"
 MAX_QUESTION = 2000
 MAX_ANSWER = 4000
@@ -92,7 +99,11 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
                 walk(item)
 
     walk(context)
-    for match in _BARE_NUMBER_RE.finditer(json.dumps(context)):
+    # Opaque identifiers and dates look numeric to a bare-digit scan but
+    # carry no quantitative meaning — scrub them so '2026-09-30' can't ground
+    # '2026 unidades' nor a UUID's hex digits a fabricated measure.
+    scrubbed = _OPAQUE_TOKEN_RE.sub(" ", json.dumps(context))
+    for match in _BARE_NUMBER_RE.finditer(scrubbed):
         number = _parse_number(match.group(0))
         if number is not None:
             values.add(number)
@@ -119,8 +130,11 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
 def _grounded(answer: str, values: set[Decimal]) -> bool:
     """Every number in the answer must be citable — within rounding tolerance
     of a grounding value ('el desperdicio es 20%' may cite a 20.4 in context,
-    but '3 barras' may not invent a consumption)."""
-    for match in _BARE_NUMBER_RE.finditer(answer):
+    but '3 barras' may not invent a consumption). Opaque tokens are scrubbed
+    before scanning: a date or UUID in the text is an identifier, not a
+    numeric claim ('entrega 2026-09-30' need not ground '2026')."""
+    scan = _OPAQUE_TOKEN_RE.sub(" ", answer)
+    for match in _BARE_NUMBER_RE.finditer(scan):
         number = _parse_number(match.group(0))
         if number is None:
             continue

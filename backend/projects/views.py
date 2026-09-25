@@ -265,15 +265,19 @@ class PositionDesignAssistView(APIView):
         data = validate(DesignAssistRequestSerializer, request.data)
         with scope(request, WRITE_ROLES) as (token, _, org):
             try:
+                position = service.position_row(org, position_id)
+                # Ops validate against the position's own catalog authority —
+                # the client's system_id is only the fallback for a position
+                # that doesn't declare one yet (review AI-11).
                 return response(
                     design_assist.assist(
                         org_id=org,
                         user_id=token.user_id,
-                        position=service.position_row(org, position_id),
+                        position=position,
                         product=data["product"],
                         prompt=str(data["prompt"]),
                         operation_key=str(data["operation_key"]),
-                        system_id=data["system_id"],
+                        system_id=position.get("system_id") or data["system_id"],
                     )
                 )
             except ProviderError as error:

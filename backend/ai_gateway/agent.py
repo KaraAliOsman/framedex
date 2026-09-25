@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -472,6 +473,25 @@ def _prepare_path_valid(action: str, path: str) -> bool:
     return bool(re.fullmatch(pattern, path))
 
 
+def _payload_grounded(node: Any, grounding: set) -> bool:
+    """An artifact payload is durable output — invented numbers inside a
+    quote or purchase plan render as fact. Every scalar carries the same
+    citable-numbers rule as the reply: literal numbers must sit inside the
+    grounding set, and strings face _grounded. Keys are structure, not
+    claims."""
+    if isinstance(node, dict):
+        return all(_payload_grounded(value, grounding) for value in node.values())
+    if isinstance(node, list):
+        return all(_payload_grounded(item, grounding) for item in node)
+    if isinstance(node, bool) or node is None:
+        return True
+    if isinstance(node, (int, float, Decimal)):
+        return any(
+            abs(Decimal(str(node)) - value) <= Decimal("0.5") for value in grounding
+        )
+    return _grounded(str(node), grounding)
+
+
 def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     """Navigate / prepare steps survive only when their path is allowlisted
     AND every UUID in it names an entity a projection actually returned."""
@@ -619,7 +639,12 @@ def _batch_ops_step(
             # ops contract speaks assembly refs.
             rejected.append({"op": "batch_ops", "reason": f"{at}:unsupported_product"})
             continue
-        system_id = str(position["system_id"])
+        try:
+            system_id = str(UUID(str(position["system_id"])))
+        except (TypeError, ValueError):
+            # A position with no bound system can't validate against a catalog.
+            rejected.append({"op": "batch_ops", "reason": f"{at}:catalog_unavailable"})
+            continue
         if system_id not in catalogs:
             catalogs[system_id] = design_assist._catalog(UUID(system_id), org_id)
         catalog = catalogs[system_id]
@@ -765,11 +790,19 @@ def _act(
             "ai_agent_ungrounded",
             "El agente citó datos que no están en el contexto.",
         )
-    warnings = [
-        str(item).strip()[:MAX_WARNING]
-        for item in (document.get("warnings") or [])
-        if isinstance(item, str) and item.strip()
-    ][:MAX_WARNINGS]
+    # Grounding binds every channel the model writes — warnings, plan,
+    # questions and artifact payloads face the same citable-numbers rule as
+    # the reply. Ungrounded items are dropped and counted, never rephrased.
+    dropped_ungrounded = 0
+    warnings: list[str] = []
+    for item in (document.get("warnings") or [])[:MAX_WARNINGS]:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        text = item.strip()[:MAX_WARNING]
+        if not _grounded(text, grounding):
+            dropped_ungrounded += 1
+            continue
+        warnings.append(text)
 
     context_refs = frozenset().union(*(_context_refs(c) for c in contexts))
 
@@ -781,7 +814,14 @@ def _act(
         summary = design_assist._summary(product)
         if summary is not None:
             position = projects_service.position_row(org_id, refs["position_id"])
-            catalog = design_assist._catalog(UUID(str(position["system_id"])), org_id)
+            try:
+                catalog = design_assist._catalog(
+                    UUID(str(position["system_id"])), org_id
+                )
+            except (TypeError, ValueError):
+                # A position without a bound system can't validate ops — skip
+                # cleanly instead of crashing the whole round on ValueError.
+                catalog = None
             declared = design_assist._declared_values(goal)
 
     steps: list[dict] = []
@@ -837,10 +877,15 @@ def _act(
         for item in (document.get("steps") or [])
         if isinstance(item, dict) and item.get("kind") == "artifact"
     ]
-    validated_artifacts = [
-        {**artifact, "tool": ARTIFACT_TOOLS.get(artifact.get("kind"), "create_draft")}
-        for artifact in jobs.artifacts(raw_artifacts, context_refs_all)
-    ]
+    validated_artifacts = []
+    for artifact in jobs.artifacts(raw_artifacts, context_refs_all):
+        # Ungrounded payloads are dropped, not displayed (review AI-02).
+        if not _payload_grounded(artifact.get("payload") or {}, grounding):
+            dropped_ungrounded += 1
+            continue
+        validated_artifacts.append(
+            {**artifact, "tool": ARTIFACT_TOOLS.get(artifact.get("kind"), "create_draft")}
+        )
     claims, references, dropped_claims = jobs.claims_and_references(
         document.get("claims"), context_refs_all
     )
@@ -852,16 +897,30 @@ def _act(
     for ref in model_refs:
         if ref not in references:
             references.append(ref)
-    plan = [
-        {"label": str(item.get("label") or "").strip()[:200]}
-        for item in (document.get("plan") or [])
-        if isinstance(item, dict) and str(item.get("label") or "").strip()
-    ][:6]
-    questions = [
-        str(item).strip()[:400]
-        for item in (document.get("questions") or [])
-        if isinstance(item, str) and item.strip()
-    ][:3]
+    plan = []
+    for item in (document.get("plan") or [])[:6]:
+        if not isinstance(item, dict):
+            continue
+        label = str(item.get("label") or "").strip()[:200]
+        if not label:
+            continue
+        if not _grounded(label, grounding):
+            dropped_ungrounded += 1
+            continue
+        plan.append({"label": label})
+    questions = []
+    for item in (document.get("questions") or [])[:3]:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        text = item.strip()[:400]
+        if not _grounded(text, grounding):
+            dropped_ungrounded += 1
+            continue
+        questions.append(text)
+    if dropped_ungrounded:
+        warnings.append(
+            f"{dropped_ungrounded} dato(s) del modelo sin evidencia en contexto descartado(s)"
+        )
 
     return {
         "audit_id": audit_id,

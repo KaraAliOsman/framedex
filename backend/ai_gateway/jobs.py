@@ -13,12 +13,42 @@ provider/validity failure; FAILED on exhaustion; CANCELED by the user.
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from django.db import DatabaseError, connection
 
 from pricing.repository import rows
+
+
+@contextmanager
+def _ai_backend():
+    """Job writes execute under the dedicated backend role: member-facing
+    `authenticated` lost INSERT/UPDATE on ai_jobs so PostgREST cannot rewrite
+    job state, transcripts, artifacts or results — the API is the only write
+    path and it runs inside the same org/user RLS policies under this role.
+    Mirrors commercial_backend: claims and policies stay unchanged.
+    SQLite has no roles — the context is a no-op there."""
+    if connection.vendor != "postgresql":
+        yield
+        return
+    with connection.cursor() as cursor:
+        cursor.execute("SET LOCAL ROLE ai_backend")
+    try:
+        yield
+    except DatabaseError:
+        raise
+    except BaseException:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL ROLE authenticated")
+        raise
+    else:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL ROLE authenticated")
 
 MAX_GOAL = 2000
 MAX_ARTIFACT_TITLE = 120
@@ -64,14 +94,17 @@ def _dump(value: Any) -> str:
 
 def create_job(*, org_id: UUID, user_id: UUID, surface: str,
                refs: dict, goal: str) -> dict:
-    record = rows(
-        "INSERT INTO public.ai_jobs (org_id, user_id, surface, refs, goal, state)"
-        " VALUES (%s, %s, %s, %s::jsonb, %s, 'RUNNING')"
-        " RETURNING id, org_id, user_id, surface, refs, goal, state, plan,"
-        " transcript, artifacts, warnings, result, error_code,"
-        " created_at, updated_at, completed_at",
-        [str(org_id), str(user_id), surface, _dump(refs or {}), goal[:MAX_GOAL]],
-    )[0]
+    with _ai_backend():
+        record = rows(
+            "INSERT INTO public.ai_jobs"
+            " (org_id, user_id, surface, refs, goal, state)"
+            " VALUES (%s, %s, %s, %s::jsonb, %s, 'RUNNING')"
+            " RETURNING id, org_id, user_id, surface, refs, goal, state, plan,"
+            " transcript, artifacts, warnings, result, error_code,"
+            " created_at, updated_at, completed_at",
+            [str(org_id), str(user_id), surface, _dump(refs or {}),
+             goal[:MAX_GOAL]],
+        )[0]
     return _decode(record)
 
 
@@ -127,7 +160,8 @@ def list_jobs(
 def finish_job(*, job_id: UUID, state: str, transcript: list, plan: list,
                artifacts: list, warnings: list, result: dict | None,
                error_code: str | None = None) -> dict:
-    record = rows(
+    with _ai_backend():
+        record = rows(
         "UPDATE public.ai_jobs SET state = %s, transcript = %s::jsonb,"
         # The plan column mirrors the latest round that produced one — a
         # question-only follow-up keeps the last real plan visible instead
@@ -144,7 +178,7 @@ def finish_job(*, job_id: UUID, state: str, transcript: list, plan: list,
             _dump(result) if result is not None else None, error_code,
             state, str(job_id),
         ],
-    )
+        )
     if not record:
         raise ValueError("ai_job_terminal")
     return {"id": str(record[0]["id"])}
@@ -155,14 +189,16 @@ def resume_job(*, job_id: UUID, transcript: list) -> dict:
     only WAITING_*/FAILED_RETRYABLE/SUCCEEDED states move to RUNNING, so a
     follow-up racing a live round or a closed job gets a conflict instead of
     silently writing its stale transcript over the other round's work."""
-    record = rows(
-        "UPDATE public.ai_jobs SET state = 'RUNNING', transcript = %s::jsonb,"
-        " result = NULL, error_code = NULL, completed_at = NULL, updated_at = NOW()"
-        " WHERE id = %s AND state IN"
-        " ('WAITING_FOR_USER','WAITING_FOR_APPROVAL','FAILED_RETRYABLE','SUCCEEDED')"
-        " RETURNING id",
-        [_dump(transcript), str(job_id)],
-    )
+    with _ai_backend():
+        record = rows(
+            "UPDATE public.ai_jobs SET state = 'RUNNING',"
+            " transcript = %s::jsonb, result = NULL, error_code = NULL,"
+            " completed_at = NULL, updated_at = NOW()"
+            " WHERE id = %s AND state IN"
+            " ('WAITING_FOR_USER','WAITING_FOR_APPROVAL','FAILED_RETRYABLE','SUCCEEDED')"
+            " RETURNING id",
+            [_dump(transcript), str(job_id)],
+        )
     if record:
         return {"id": str(record[0]["id"])}
     state = rows(
@@ -186,17 +222,18 @@ def create_failed_job(*, org_id: UUID, user_id: UUID, surface: str,
     the scope unwinds, the caller re-enters its RLS context and records the
     job here, so the workspace shows a resumable FAILED_RETRYABLE row
     instead of nothing at all."""
-    record = rows(
-        "INSERT INTO public.ai_jobs"
-        " (org_id, user_id, surface, refs, goal, state, transcript, error_code)"
-        " VALUES (%s, %s, %s, %s::jsonb, %s, 'FAILED_RETRYABLE', %s::jsonb, %s)"
-        " RETURNING id",
-        [
-            str(org_id), str(user_id), surface, _dump(refs or {}),
-            goal[:MAX_GOAL], _dump(_failure_turns(goal, error_code)),
-            error_code[:120],
-        ],
-    )
+    with _ai_backend():
+        record = rows(
+            "INSERT INTO public.ai_jobs"
+            " (org_id, user_id, surface, refs, goal, state, transcript, error_code)"
+            " VALUES (%s, %s, %s, %s::jsonb, %s, 'FAILED_RETRYABLE',"
+            " %s::jsonb, %s) RETURNING id",
+            [
+                str(org_id), str(user_id), surface, _dump(refs or {}),
+                goal[:MAX_GOAL], _dump(_failure_turns(goal, error_code)),
+                error_code[:120],
+            ],
+        )
     return {"id": str(record[0]["id"])}
 
 
@@ -209,7 +246,8 @@ def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
     transcript we resumed, so an exact match means the record can never
     overwrite a different round's claim or committed result (their
     transcript has moved on)."""
-    found = rows(
+    with _ai_backend():
+        found = rows(
         "UPDATE public.ai_jobs SET state = 'FAILED_RETRYABLE',"
         " transcript = transcript || %s::jsonb, result = NULL, error_code = %s,"
         " updated_at = NOW()"
@@ -223,14 +261,16 @@ def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
 
 
 def cancel_job(*, job_id: UUID) -> bool:
-    return bool(
-        rows(
-            "UPDATE public.ai_jobs SET state = 'CANCELED', updated_at = NOW(),"
-            " completed_at = NOW() WHERE id = %s"
-            " AND state NOT IN ('SUCCEEDED','FAILED','CANCELED') RETURNING id",
-            [str(job_id)],
+    with _ai_backend():
+        return bool(
+            rows(
+                "UPDATE public.ai_jobs SET state = 'CANCELED',"
+                " updated_at = NOW(), completed_at = NOW() WHERE id = %s"
+                " AND state NOT IN ('SUCCEEDED','FAILED','CANCELED')"
+                " RETURNING id",
+                [str(job_id)],
+            )
         )
-    )
 
 
 # ----------------------------------------------------------------- contract
