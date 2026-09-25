@@ -121,6 +121,23 @@ def _svg_unit_factor(value: str | None) -> Decimal | None:
     return SVG_UNIT_MM[match.group(1) or ""]
 
 
+def _svg_physical_mm(value: str | None) -> Decimal | None:
+    """A width/height attribute resolved to millimetres, or None when the
+    attribute is absent or declares no usable unit value."""
+    if value is None:
+        return None
+    match = re.match(
+        r"\s*([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)\s*(mm|cm|in|pt|pc|px)?\s*$",
+        value,
+    )
+    if not match:
+        return None
+    try:
+        return Decimal(match.group(1)) * SVG_UNIT_MM[match.group(2) or ""]
+    except InvalidOperation:
+        return None
+
+
 def _apply_matrix(m: tuple[float, ...], x: Decimal, y: Decimal) -> tuple[Decimal, Decimal]:
     a, b, c, d, e, f = m
     fx, fy = float(x), float(y)
@@ -422,15 +439,50 @@ def parse_svg(content: bytes) -> SectionImportResult:
 
     mm_per_unit: Decimal | None = None
     warnings: list[str] = []
-    for attr in ("width", "height"):
-        factor = _svg_unit_factor(root.get(attr))
-        if factor is not None:
-            mm_per_unit = factor
-            break
-    if mm_per_unit is not None and mm_per_unit == SVG_UNIT_MM["px"]:
-        warnings.append("SVG has no physical unit; px is assumed at 96 dpi — confirm scale.")
-    if mm_per_unit is None:
-        warnings.append("SVG declares no units — scale must be confirmed by the reviewer.")
+    viewbox = root.get("viewBox") or root.get("viewbox")
+    vb: list[Decimal] = []
+    if viewbox:
+        vb = [
+            Decimal(part)
+            for part in re.findall(
+                r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", viewbox
+            )
+        ]
+    w_mm = _svg_physical_mm(root.get("width"))
+    h_mm = _svg_physical_mm(root.get("height"))
+    aspect = (root.get("preserveAspectRatio") or "").split()
+    if len(vb) == 4 and vb[2] > 0 and vb[3] > 0:
+        # Paths live in viewBox user units; only the declared physical
+        # viewport size maps them to millimetres.
+        if aspect and aspect[0].lower() == "none":
+            warnings.append(
+                "SVG uses preserveAspectRatio='none' — x and y scale "
+                "independently; confirm a uniform scale."
+            )
+        else:
+            ratios = [
+                ratio
+                for ratio in (
+                    (w_mm / vb[2]) if w_mm is not None else None,
+                    (h_mm / vb[3]) if h_mm is not None else None,
+                )
+                if ratio is not None
+            ]
+            if ratios:
+                # Default 'meet' fits inside (min); 'slice' fills (max).
+                mm_per_unit = max(ratios) if "slice" in aspect else min(ratios)
+            else:
+                warnings.append(
+                    "SVG has a viewBox but no physical width/height — "
+                    "scale must be confirmed by the reviewer."
+                )
+    else:
+        # No viewBox → user units are CSS px by spec; a physical width alone
+        # says nothing about coordinate scale.
+        mm_per_unit = SVG_UNIT_MM["px"]
+        warnings.append(
+            "SVG has no physical unit; px is assumed at 96 dpi — confirm scale."
+        )
 
     candidates: list[SectionCandidate] = []
     open_count = 0
@@ -566,6 +618,7 @@ def parse_dxf(content: bytes) -> SectionImportResult:
     candidates: list[SectionCandidate] = []
     open_count = 0
     in_entities = False
+    in_vertex = False
     entity: str | None = None
     vertices: list[tuple[Decimal, Decimal, Decimal]] = []
     closed = False
@@ -598,23 +651,36 @@ def parse_dxf(content: bytes) -> SectionImportResult:
         if not in_entities:
             continue
         if code == "0":
-            flush()
-            entity = value
-            if entity == "VERTEX":
+            if value == "VERTEX" and entity == "POLYLINE":
+                # VERTEX records feed the open POLYLINE — the parent flushes
+                # only at SEQEND or the next non-vertex entity.
+                in_vertex = True
                 vertices.append((Decimal(0), Decimal(0), Decimal(0)))
+                continue
+            in_vertex = False
+            flush()
+            entity = None if value == "SEQEND" else value
             continue
-        if entity in ("LWPOLYLINE", "POLYLINE", "VERTEX"):
-            target_vertex = entity == "VERTEX" and vertices
+        if in_vertex:
+            x, y, bulge = vertices[-1]
             if code == "10":
-                if entity == "LWPOLYLINE":
-                    vertices.append((Decimal(value or "0"), Decimal(0), Decimal(0)))
-                elif target_vertex:
-                    vertices[-1] = (Decimal(value or "0"), vertices[-1][1], vertices[-1][2])
-            elif code == "20" and vertices and entity in ("LWPOLYLINE", "VERTEX"):
+                x = Decimal(value or "0")
+            elif code == "20":
+                y = Decimal(value or "0")
+            elif code == "42":
+                bulge = Decimal(value or "0")
+            else:
+                continue
+            vertices[-1] = (x, y, bulge)
+            continue
+        if entity in ("LWPOLYLINE", "POLYLINE"):
+            if code == "10" and entity == "LWPOLYLINE":
+                vertices.append((Decimal(value or "0"), Decimal(0), Decimal(0)))
+            elif code == "20" and vertices and entity == "LWPOLYLINE":
                 vertices[-1] = (vertices[-1][0], Decimal(value or "0"), vertices[-1][2])
-            elif code == "42" and vertices:
+            elif code == "42" and vertices and entity == "LWPOLYLINE":
                 vertices[-1] = (vertices[-1][0], vertices[-1][1], Decimal(value or "0"))
-            elif code == "70" and entity != "VERTEX":
+            elif code == "70":
                 try:
                     closed = bool(int(value) & 1)
                 except ValueError:

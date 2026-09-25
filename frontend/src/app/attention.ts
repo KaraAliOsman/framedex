@@ -29,8 +29,8 @@ export function attentionEntries(ops: OperationalSummary | undefined): Attention
       warn: false,
     },
     {
-      // QUOTED projects whose current revision still has no live approval
-      // link — already-sent links belong to approvalsPending, not here.
+      // QUOTED projects whose current revision was never shared — expired
+      // or declined links were still sent, so they don't belong here.
       key: "dashboard.quotesWaiting",
       action: "attention.action.sendQuote",
       count: Number(prep.quotes_unsent ?? 0),

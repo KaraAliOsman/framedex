@@ -5,7 +5,8 @@ from catalogs import section_import, service
 
 
 SQUARE_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="70mm">'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="70mm" '
+    'viewBox="0 0 60 70">'
     '<polygon points="0,0 60,0 60,70 0,70"/></svg>'
 ).encode()
 
@@ -17,6 +18,38 @@ def test_svg_polygon_mm_units():
     assert len(result.candidates) == 1
     assert result.candidates[0]["area"] == "4200.00"
     assert result.warnings == []
+
+
+def test_svg_viewbox_ratio_derives_scale():
+    content = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="70mm" '
+        'viewBox="0 0 600 700">'
+        '<polygon points="0,0 600,0 600,700 0,700"/></svg>'
+    ).encode()
+    result = section_import.import_section("scaled.svg", content)
+    # 60 physical mm across 600 user units → 0.1 mm per unit.
+    assert str(result.mm_per_unit) == "0.1"
+
+
+def test_svg_aspect_none_refuses_single_scale():
+    content = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="70mm" '
+        'viewBox="0 0 600 350" preserveAspectRatio="none">'
+        '<polygon points="0,0 600,0 600,350 0,350"/></svg>'
+    ).encode()
+    result = section_import.import_section("stretch.svg", content)
+    assert result.mm_per_unit is None
+    assert any("preserveAspectRatio" in w for w in result.warnings)
+
+
+def test_svg_viewbox_without_physical_size_needs_confirmation():
+    content = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70">'
+        '<polygon points="0,0 60,0 60,70 0,70"/></svg>'
+    ).encode()
+    result = section_import.import_section("unscaled.svg", content)
+    assert result.mm_per_unit is None
+    assert any("scale must be confirmed" in w for w in result.warnings)
 
 
 def test_svg_polyline_must_be_closed():
@@ -51,6 +84,21 @@ def test_svg_curved_path_samples_to_polygon():
     assert len(result.candidates) == 1
     # Curve sampled: more vertices than the 4 corners.
     assert len(result.candidates[0]["points"]) > 8
+
+
+def test_dxf_polyline_vertices_emit_candidate():
+    content = (
+        "0\nSECTION\n2\nENTITIES\n0\nPOLYLINE\n70\n1\n"
+        "0\nVERTEX\n10\n0\n20\n0\n"
+        "0\nVERTEX\n10\n60\n20\n0\n"
+        "0\nVERTEX\n10\n60\n20\n70\n"
+        "0\nVERTEX\n10\n0\n20\n70\n"
+        "0\nSEQEND\n0\nENDSEC\n0\nEOF\n"
+    ).encode()
+    result = section_import.import_section("frame.dxf", content)
+    assert len(result.candidates) == 1
+    assert result.candidates[0]["tag"].startswith("POLYLINE")
+    assert result.candidates[0]["area"] == "4200"
 
 
 def test_svg_px_flagged_for_review():

@@ -65,10 +65,10 @@ describe("SectionImportPanel", () => {
     expect(onApply).toHaveBeenCalledWith({
       drawingRef: RESULT.document_path,
       vertices: [
-        { x_mm: "0.000", y_mm: "0.000" },
-        { x_mm: "40.000", y_mm: "0.000" },
-        { x_mm: "40.000", y_mm: "40.000" },
-        { x_mm: "0.000", y_mm: "40.000" },
+        { x_mm: "0.00", y_mm: "0.00" },
+        { x_mm: "40.00", y_mm: "0.00" },
+        { x_mm: "40.00", y_mm: "40.00" },
+        { x_mm: "0.00", y_mm: "40.00" },
       ],
     });
   });

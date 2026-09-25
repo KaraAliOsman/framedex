@@ -80,10 +80,25 @@ export function SectionImportPanel({
 
   const scaledPoints = useMemo(() => {
     if (!picked || scaleValue === null) return null;
-    return picked.points.map(([x, y]) => ({
-      x_mm: (Number(x) * scaleValue).toFixed(3),
-      y_mm: (Number(y) * scaleValue).toFixed(3),
-    }));
+    // Section contract: 0.01 mm precision, distinct vertices — rounding can
+    // collapse adjacent sampled points, so dedupe consecutive equal pairs
+    // and drop a closing repeat before the polygon ever reaches the API.
+    const points: { x_mm: string; y_mm: string }[] = [];
+    for (const [x, y] of picked.points) {
+      const point = {
+        x_mm: (Number(x) * scaleValue).toFixed(2),
+        y_mm: (Number(y) * scaleValue).toFixed(2),
+      };
+      const last = points[points.length - 1];
+      if (last && last.x_mm === point.x_mm && last.y_mm === point.y_mm) continue;
+      points.push(point);
+    }
+    const first = points[0];
+    const last = points[points.length - 1];
+    if (first && last && first.x_mm === last.x_mm && first.y_mm === last.y_mm) {
+      points.pop();
+    }
+    return points.length >= 3 ? points : null;
   }, [picked, scaleValue]);
 
   const scaledBox = useMemo(() => {
