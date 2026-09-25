@@ -41,6 +41,7 @@ const STATE_LABELS: Record<string, string> = {
 const SURFACE_LABELS: Record<string, string> = {
   morning_brief: "brief del día",
   purchase_plan: "plan de compras",
+  production_plan: "plan de producción",
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
@@ -57,6 +58,7 @@ const SURFACE_LABELS: Record<string, string> = {
 const NEW_JOB_SURFACES = [
   "morning_brief",
   "purchase_plan",
+  "production_plan",
   "dashboard",
   "projects",
   "clients",
@@ -69,6 +71,8 @@ const GOAL_PRESETS: Record<string, string> = {
   morning_brief: "Genera el brief del día: qué necesita atención hoy y sobre qué entidades.",
   purchase_plan:
     "Prepara el plan de compras: líneas sin cubrir, proveedores elegibles y órdenes abiertas.",
+  production_plan:
+    "Propone el plan de producción: prioridad por entrega, material listo y estación que bloquea.",
 };
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {

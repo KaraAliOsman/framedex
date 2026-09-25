@@ -48,6 +48,7 @@ QUERY_TOOLS = {
     "settings": "get_settings",
     "morning_brief": "get_attention",
     "purchase_plan": "get_purchasing_state",
+    "production_plan": "get_production_plan",
 }
 
 PREPARE_TOOLS = {
@@ -113,7 +114,7 @@ Respondes SOLO un JSON:
 }
 
 Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
+- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
@@ -185,9 +186,33 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
+PRODUCTION_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "plan de producción" de una empresa de ventanas y puertas (español chileno).
+
+El contexto lleva "work_orders": cada orden abierta con code, status, project_code, created_at, delivery_date/delivery_status (la presión real de entrega), material_short (si su optimización dejó faltantes en stock_reservations), steps_done/total, next_step (la estación pendiente: kind/code/label) y blocked_steps.
+
+Respondes SOLO un JSON:
+{
+  "reply": "propuesta priorizada: qué orden atacar primero y por qué — presión de entrega, material listo, estación que bloquea",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Pasos:
+- UN paso {"kind":"artifact","artifact":{"kind":"production_plan","title":"Plan de producción","payload":{"schedule":[{"order_id":"...","order_code":"...","reason":"presión/material/estación del contexto","next_step":"{...}"}],"material_actions":[{"order_code":"...","missing":"qué falta del contexto"}]},"references":["ids de work_orders del contexto"]} — la propuesta ordenada.
+- {"kind":"navigate","path":"/production","label":"Abrir producción"} o "/purchasing" si el bloqueo es material.
+- {"kind":"query","surface":"work_order","refs":{"work_order_id":"<id del contexto>"}} para profundizar una orden — máximo 3 por ronda.
+
+Reglas duras:
+- Solo datos del contexto: NUNCA inventes fechas, duraciones, capacidad de estación ni materiales — si falta, warning.
+- Orden con material_short → no la agendes para producción sin antes una material_action; menciónalo explícito.
+- Jamás "prepare" ni "ops" — el plan es una propuesta que la persona ejecuta en Producción.
+- Sin texto fuera del JSON."""
+
+
 WORKFLOW_SYSTEM: dict[str, str] = {
     "morning_brief": BRIEF_SYSTEM,
     "purchase_plan": PURCHASE_SYSTEM,
+    "production_plan": PRODUCTION_SYSTEM,
 }
 
 

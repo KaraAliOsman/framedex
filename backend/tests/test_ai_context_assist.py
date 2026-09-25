@@ -736,3 +736,60 @@ def test_purchase_plan_projection_uncovered_lines(monkeypatch):
         "supplier": "Perfiles SA",
     }
     assert ctx["open_purchase_orders"][0]["id"] == str(po_id)
+
+
+def test_production_plan_projection_open_orders(monkeypatch):
+    """§08-WF — the production_plan surface serves open work orders with
+    their station queue, material flag and delivery pressure — everything a
+    proposed schedule can restate, and nothing it can't."""
+    org_id = uuid4()
+    order_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "FROM public.production_steps" in sql:
+            return [
+                {
+                    "order_id": order_id,
+                    "sequence": 1,
+                    "kind": "CUT",
+                    "code": "CUT-01",
+                    "label": "Corte de perfiles",
+                    "status": "DONE",
+                },
+                {
+                    "order_id": order_id,
+                    "sequence": 2,
+                    "kind": "GLAZING",
+                    "code": "GLZ-01",
+                    "label": "Acristalamiento",
+                    "status": "PENDING",
+                },
+            ]
+        if "FROM public.orders o" in sql:
+            return [
+                {
+                    "id": order_id,
+                    "order_code": "OT-9",
+                    "status": "IN_PROGRESS",
+                    "project_code": "OB-1",
+                    "created_at": "2026-09-24T10:00:00",
+                    "delivery_date": "2026-09-30",
+                    "delivery_status": "SCHEDULED",
+                    "short": True,
+                }
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "production_plan", {})
+    assert ctx["surface"] == "production_plan"
+    order = ctx["work_orders"][0]
+    assert order["id"] == str(order_id)
+    assert order["material_short"] is True
+    assert order["delivery_date"] == "2026-09-30"
+    assert order["steps_done"] == 1
+    assert order["steps_total"] == 2
+    assert order["next_step"]["code"] == "GLZ-01"
+    assert order["blocked_steps"] == []

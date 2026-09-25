@@ -680,3 +680,76 @@ def test_agent_purchase_plan_uses_workflow_prompt(monkeypatch):
     assert sorted(result["artifacts"][0]["references"]) == sorted(
         [str(line_id), str(version_id)]
     )
+
+def test_agent_production_plan_uses_workflow_prompt(monkeypatch):
+    """§08-WF — a production_plan job rides the runtime with the schedule
+    contract: PRODUCTION_SYSTEM prompt, get_production_plan tool, and the
+    production_plan artifact referencing only exposed order ids."""
+    order_id = uuid4()
+    contexts = {
+        "production_plan": {
+            "surface": "production_plan",
+            "organization": {"name": "Org"},
+            "work_orders": [
+                {
+                    "id": str(order_id),
+                    "code": "OT-9",
+                    "status": "IN_PROGRESS",
+                    "project_code": "OB-1",
+                    "created_at": "2026-09-24",
+                    "delivery_date": "2026-09-30",
+                    "delivery_status": "SCHEDULED",
+                    "material_short": False,
+                    "steps_done": 1,
+                    "steps_total": 4,
+                    "next_step": {"kind": "GLAZING", "code": "GLZ-01"},
+                    "blocked_steps": [],
+                }
+            ],
+            "truncated": False,
+        }
+    }
+    output = _doc(
+        reply="Priorizar OT-9: entrega 2026-09-30, material listo, sigue GLZ-01.",
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "production_plan",
+                    "title": "Plan de producción",
+                    "payload": {
+                        "schedule": [
+                            {
+                                "order_id": str(order_id),
+                                "order_code": "OT-9",
+                                "reason": "entrega 2026-09-30",
+                                "next_step": {"kind": "GLAZING", "code": "GLZ-01"},
+                            }
+                        ],
+                        "material_actions": [],
+                    },
+                    "references": [str(order_id), str(uuid4())],
+                },
+            },
+            {"kind": "navigate", "path": "/production", "label": "Abrir producción"},
+        ],
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="production_plan",
+        refs={},
+        goal="Propone el plan de producción",
+        product=None,
+        history=[],
+        operation_key="prod-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.PRODUCTION_SYSTEM
+    assert result["queries"][0] == {
+        "surface": "production_plan",
+        "tool": "get_production_plan",
+        "status": "ok",
+    }
+    assert result["artifacts"][0]["kind"] == "production_plan"
+    assert result["artifacts"][0]["references"] == [str(order_id)]

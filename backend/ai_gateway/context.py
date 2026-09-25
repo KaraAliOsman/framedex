@@ -38,6 +38,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "settings": (),
     "morning_brief": (),
     "purchase_plan": (),
+    "production_plan": (),
 }
 
 
@@ -860,6 +861,89 @@ def _purchase_plan(org_id: UUID) -> dict:
     }
 
 
+def _production_plan(org_id: UUID) -> dict:
+    """§08-WF — what a proposed production schedule can restate: every open
+    work order with its station queue, material state, and delivery pressure.
+    A plan orders these rows and names the next concrete step — it never
+    invents dates, durations, or station capacity."""
+    orders = rows(
+        """
+        SELECT o.id, o.order_code, o.status::text AS status,
+               p.code AS project_code, o.created_at,
+               d.scheduled_date AS delivery_date, d.status::text AS delivery_status,
+               EXISTS (
+                   SELECT 1 FROM jsonb_array_elements(
+                       COALESCE(o.payload_json->'optimization'->'stock_reservations',
+                                '[]'::jsonb)) r
+                   WHERE COALESCE((r->>'short')::numeric, 0) > 0
+               ) AS short
+        FROM public.orders o
+        JOIN public.project_versions v
+          ON v.id = o.project_version_id AND v.org_id = o.org_id
+        JOIN public.projects p
+          ON p.id = v.project_id AND p.org_id = v.org_id
+        LEFT JOIN public.deliveries d
+          ON d.order_id = o.id AND d.org_id = o.org_id
+        WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
+          AND o.status NOT IN ('CANCELLED', 'INSTALLED')
+        ORDER BY o.created_at DESC LIMIT %s
+        """,
+        [org_id, MAX_LIST],
+    )
+    order_ids = [str(o["id"]) for o in orders]
+    queues: dict[str, list[dict]] = {}
+    if order_ids:
+        steps = rows(
+            """
+            SELECT order_id, sequence, kind, code, label, status
+            FROM public.production_steps
+            WHERE org_id = %s AND order_id = ANY(%s::uuid[])
+            ORDER BY order_id, sequence LIMIT %s
+            """,
+            [org_id, order_ids, MAX_LIST * 8],
+        )
+        for step in steps:
+            queues.setdefault(str(step["order_id"]), []).append(
+                {
+                    "sequence": int(step["sequence"]),
+                    "kind": _cut(step["kind"]),
+                    "code": _cut(step["code"]),
+                    "label": _cut(step["label"]),
+                    "status": _cut(step["status"]),
+                }
+            )
+    out: list[dict] = []
+    for order in orders:
+        queue = queues.get(str(order["id"]), [])
+        pending = next(
+            (step for step in queue if step["status"] not in ("DONE", "SKIPPED")),
+            None,
+        )
+        out.append(
+            {
+                "id": str(order["id"]),
+                "code": _cut(order["order_code"]),
+                "status": _cut(order["status"]),
+                "project_code": _cut(order["project_code"]),
+                "created_at": str(order["created_at"])[:10],
+                "delivery_date": (
+                    str(order["delivery_date"])[:10]
+                    if order["delivery_date"]
+                    else None
+                ),
+                "delivery_status": _cut(order["delivery_status"]),
+                "material_short": bool(order["short"]),
+                "steps_done": sum(
+                    1 for s in queue if s["status"] in ("DONE", "SKIPPED")
+                ),
+                "steps_total": len(queue),
+                "next_step": pending,
+                "blocked_steps": [s for s in queue if s["status"] == "BLOCKED"],
+            }
+        )
+    return {"work_orders": out, "truncated": len(orders) == MAX_LIST}
+
+
 def _settings(org_id: UUID) -> dict:
     # The organization block already carries what the settings surface can
     # answer about; no extra projection needed.
@@ -880,6 +964,7 @@ _BUILDERS = {
     "settings": _settings,
     "morning_brief": _brief,
     "purchase_plan": _purchase_plan,
+    "production_plan": _production_plan,
 }
 
 _REF_BUILDERS = {"project", "position", "quotation", "work_order", "catalog"}
