@@ -1051,6 +1051,7 @@ const messages = {
   "production.operatorMaterial": "Material a retirar",
   "production.operatorSequence": "Secuencia de trabajo",
   "production.operatorMachining": "Mecanizado",
+  "production.operatorOperation": "Operación",
   "production.operatorHost": "Pieza",
   "production.operatorDepth": "Profundidad (mm)",
   "production.operatorBasis": "Base",

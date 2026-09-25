@@ -1863,7 +1863,6 @@ export function ProductionPage(): JSX.Element {
                         step={operatorStep}
                         trace={trace}
                         traceBusy={traceBusy}
-                        hasMachiningStep={detail.steps.some((step) => step.code === "MACHINING")}
                       />
                     ) : null}
                   </>

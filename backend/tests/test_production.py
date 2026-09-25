@@ -71,14 +71,33 @@ _SNAPSHOT = {
 }
 
 
+def _profile(
+    code: str,
+    stations: list[dict[str, str]],
+    *,
+    operation_station_map: dict[str, str] | None = None,
+) -> dict[str, object]:
+    return {
+        "id": "11111111-2222-3333-4444-555555555555",
+        "code": code,
+        "version": 1,
+        "joining_method": "WELD" if "WELD" in [s["code"] for s in stations] else "NONE",
+        "stations": stations,
+        "operation_station_map": operation_station_map or {},
+    }
+
+
 def test_routing_skips_cut_and_glaze_without_materials() -> None:
-    routing = service._routing({"glasses": [], "panels": [], "profile_cuts": [], "reinforcements": []})
+    routing = service._routing({"glasses": [], "panels": [], "profile_cuts": [], "reinforcements": []}, profile=None)
     assert routing == ["ASSEMBLE", "QC", "PACK"]
-    routing = service._routing({"profile_cuts": [{"sku": "x"}], "glasses": [{"a": 1}], "panels": []})
+    routing = service._routing(
+        {"profile_cuts": [{"sku": "x"}], "glasses": [{"a": 1}], "panels": []},
+        profile=None,
+    )
     assert routing == ["CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"]
 
 
-def test_routing_follows_system_material() -> None:
+def test_routing_follows_the_declared_profile_stations() -> None:
     engine = {
         "profile_cuts": [{"sku": "x", "role": "SASH"}],
         "glasses": [{"a": 1}],
@@ -86,23 +105,38 @@ def test_routing_follows_system_material() -> None:
         "reinforcements": [],
         "hardware_items": [{"sku": "h"}],
     }
-    assert service._routing(engine, material="PVC") == [
+    pvc = _profile("PVC_WELDED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "CLEAN", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    assert service._routing(engine, profile=pvc) == [
         "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
-    assert service._routing(engine, material="PVC", end_milling_overlap_mm="1.50") == [
+    assert service._routing(engine, profile=pvc, end_milling_overlap_mm="1.50") == [
         "CUT", "MACHINING", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
-    assert service._routing(engine, material="PVC", end_milling_overlap_mm="0.00") == [
-        "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
-    ]
-    assert service._routing(engine, material="ALUMINIUM") == [
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "required"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    assert service._routing(engine, profile=alu) == [
         "CUT", "MACHINING", "CRIMP", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
     ]
-    assert service._routing(engine, material="unknown") == [
-        "CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"
-    ]
     # A fixed window has no sash to assemble and no hardware to mount — the
-    # stations follow the sealed result, not the material.
+    # stations follow the sealed result under the declared template.
     fixed = {
         "profile_cuts": [{"sku": "x", "role": "FRAME"}],
         "glasses": [{"a": 1}],
@@ -110,12 +144,50 @@ def test_routing_follows_system_material() -> None:
         "reinforcements": [],
         "hardware_items": [],
     }
-    assert service._routing(fixed, material="PVC") == [
+    assert service._routing(fixed, profile=pvc) == [
         "CUT", "WELD", "CLEAN", "GLAZE", "QC", "PACK"
     ]
-    assert service._routing(fixed, material="ALUMINIUM") == [
+    assert service._routing(fixed, profile=alu) == [
         "CUT", "MACHINING", "CRIMP", "GLAZE", "QC", "PACK"
     ]
+
+
+def test_frameless_profile_never_acquires_joining_stations() -> None:
+    """The pane is the product: FRAMELESS_GLASS has no WELD/CRIMP in its
+    template regardless of the associated system's material family."""
+    frameless_profile = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    engine = {
+        "profile_cuts": [{"sku": "CANAL", "role": "CHANNEL"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+    }
+    routing = service._routing(engine, profile=frameless_profile)
+    assert "WELD" not in routing
+    assert "CRIMP" not in routing
+    assert routing == ["CUT", "HARDWARE", "GLAZE", "QC", "PACK"]
+
+
+def test_process_authority_freezes_the_declared_map() -> None:
+    authority = service._process_authority(
+        _profile(
+            "ALU_CRIMPED", [],
+            operation_station_map={"END_MACHINING": "MACHINING", "HANDLE_PREP": "HARDWARE"},
+        ),
+        "material_default",
+    )
+    assert authority["code"] == "ALU_CRIMPED"
+    assert authority["version"] == 1
+    assert authority["resolved_via"] == "material_default"
+    assert authority["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+    assert service._process_authority(None, None)["resolved_via"] == "fallback"
 
 
 def test_release_rejects_not_allowed_version() -> None:
@@ -176,7 +248,28 @@ def test_release_creates_work_order_with_steps() -> None:
     assert len(event_inserts) == 1
 
 
-def test_release_routes_steps_by_system_material() -> None:
+_PVC_PROFILE_ROW = {
+    "id": "11111111-2222-3333-4444-555555555555",
+    "org_id": None,
+    "code": "PVC_WELDED",
+    "version": 1,
+    "joining_method": "WELD",
+    "stations": [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "CLEAN", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ],
+    "operation_station_map": {"END_MACHINING": "MACHINING", "SAW_CUT": "CUT"},
+}
+
+
+def test_release_routes_steps_by_declared_process_profile() -> None:
     version = _version_row(_SNAPSHOT)
     order_id = uuid4()
     inserted_rows = []
@@ -193,8 +286,11 @@ def test_release_routes_steps_by_system_material() -> None:
                     "id": _SNAPSHOT["positions"][0]["system_id"],
                     "material": "PVC",
                     "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
                 }
             ]
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [_PVC_PROFILE_ROW]
         if "INSERT INTO public.orders" in query:
             return [{"id": order_id}]
         if "FROM public.orders" in query and "GROUP BY" in query:
@@ -230,6 +326,61 @@ def test_release_routes_steps_by_system_material() -> None:
     assert output["released"] == 1 and output["created"] == 1
     step_inserts = [q for q in inserted_rows if "production_steps" in q]
     assert len(step_inserts) == 8  # CUT WELD CLEAN SASH_ASSEMBLE HARDWARE GLAZE QC PACK
+
+
+def test_release_freezes_process_authority_into_the_payload() -> None:
+    version = _version_row(_SNAPSHOT)
+    order_id = uuid4()
+    payloads: list[dict[str, object]] = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.profile_systems" in query:
+            return [
+                {
+                    "id": _SNAPSHOT["positions"][0]["system_id"],
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
+                }
+            ]
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [_PVC_PROFILE_ROW]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [{"id": order_id, "order_code": "OT", "order_type": "WORKSHOP_OT",
+                     "status": "RELEASED", "payload_json": {},
+                     "project_version_id": version["id"], "created_at": "x",
+                     "steps_total": 0, "steps_done": 0}]
+        return []
+
+    original = service._work_order_payload
+
+    def capture(*args, **kwargs):
+        payload = original(*args, **kwargs)
+        payloads.append(payload)
+        return payload
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ), patch("production.service._work_order_payload", side_effect=capture):
+        service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    authority = payloads[0]["process_authority"]
+    assert authority["code"] == "PVC_WELDED"
+    assert authority["version"] == 1
+    assert authority["resolved_via"] == "material_default"
+    assert authority["operation_station_map"]["END_MACHINING"] == "MACHINING"
 
 
 def test_release_replay_returns_existing() -> None:

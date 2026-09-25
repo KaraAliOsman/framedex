@@ -151,68 +151,201 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
     return by_kind
 
 
+def _cut_roles(engine_result: dict[str, object]) -> set[str]:
+    return {
+        str(cut.get("role") or "")
+        for cut in (engine_result.get("profile_cuts") or [])
+        if isinstance(cut, dict)
+    }
+
+
+def _is_frameless(engine_result: dict[str, object]) -> bool:
+    """The pane is the product: channel runs/fittings serve a frameless
+    spec. Such a position must never inherit weld/crimp from whatever
+    material its associated system declares."""
+    if "CHANNEL" in _cut_roles(engine_result):
+        return True
+    if engine_result.get("fittings") and "FRAME" not in _cut_roles(engine_result):
+        return True
+    return any(
+        isinstance(piece, dict) and bool(piece.get("exposed_edges"))
+        for piece in (engine_result.get("glasses") or [])
+    )
+
+
+def _load_profile_for(
+    org_id: UUID,
+    *,
+    code: str | None = None,
+    profile_id: str | None = None,
+    material: str | None = None,
+    product_kind: str | None = None,
+) -> tuple[dict[str, object] | None, str | None]:
+    """Resolve the declared process authority. Org rows override the global
+    seeds; resolution order is explicit binding → product kind → material.
+    Returns (row, resolved_via)."""
+    where = "org_id IS NULL OR org_id = %s"
+    params: list[object] = [str(org_id)]
+    clause = ""
+    if profile_id:
+        clause = " AND id = %s"
+        params.append(profile_id)
+    elif code:
+        clause = " AND code = %s"
+        params.append(code)
+    elif product_kind:
+        clause = " AND product_kind = %s"
+        params.append(product_kind)
+    elif material:
+        clause = " AND material = %s AND product_kind = 'STANDARD'"
+        params.append(material)
+    else:
+        return None, None
+    record = rows(
+        f"""
+        SELECT * FROM public.manufacturing_process_profiles
+        WHERE ({where}){clause}
+        ORDER BY (org_id IS NOT NULL) DESC, version DESC
+        LIMIT 1
+        """,
+        params,
+    )
+    if not record:
+        return None, None
+    row = dict(record[0])
+    # jsonb columns arrive undecoded in some paths — normalize before the
+    # routing template consumes them.
+    for field in ("stations", "operation_station_map", "optional_operations",
+                  "machine_neutral_machining", "provenance"):
+        value = row.get(field)
+        if isinstance(value, str):
+            try:
+                row[field] = json.loads(value)
+            except (TypeError, ValueError):
+                row[field] = [] if field != "operation_station_map" else {}
+    via = (
+        "system_declared"
+        if profile_id
+        else ("product_kind" if product_kind else ("material_default" if material else "code"))
+    )
+    return row, via
+
+
+def _resolve_process_profile(
+    org_id: UUID,
+    engine_result: dict[str, object],
+    system_facts: dict[str, object] | None,
+) -> tuple[dict[str, object] | None, str | None]:
+    """sealed product → declared authority. Frameless wins over material
+    always; a system-bound profile wins over the material default."""
+    facts = system_facts or {}
+    if _is_frameless(engine_result):
+        row, via = _load_profile_for(org_id, product_kind="FRAMELESS")
+        if row:
+            return row, via
+    bound = facts.get("process_profile_id")
+    if bound:
+        row, via = _load_profile_for(org_id, profile_id=str(bound))
+        if row:
+            return row, via
+    material = str(facts.get("material") or "").upper() or None
+    if material:
+        row, via = _load_profile_for(org_id, material=material)
+        if row:
+            return row, via
+    row, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
+    return row, "generic_fallback" if row else via
+
+
+def _station_has_work(
+    code: str,
+    engine_result: dict[str, object],
+    *,
+    end_milling_overlap_mm: object = None,
+) -> bool:
+    """'auto' stations land only when the sealed result carries work."""
+    cuts = engine_result.get("profile_cuts") or []
+    roles = _cut_roles(engine_result)
+    if code == "CUT":
+        return bool(cuts or engine_result.get("reinforcements"))
+    if code == "MACHINING":
+        try:
+            return end_milling_overlap_mm is not None and Decimal(
+                str(end_milling_overlap_mm)
+            ) > 0
+        except ArithmeticError:
+            return False
+    if code == "SASH_ASSEMBLE":
+        return "SASH" in roles
+    if code == "HARDWARE":
+        return bool(engine_result.get("hardware_items") or engine_result.get("fittings"))
+    if code == "GLAZE":
+        return bool(engine_result.get("glasses") or engine_result.get("panels"))
+    return True
+
+
 def _routing(
     engine_result: dict[str, object],
     *,
-    material: str | None = None,
+    profile: dict[str, object] | None,
     end_milling_overlap_mm: object = None,
 ) -> list[str]:
-    """§29/§30: the routing ladder follows the physical build process of the
-    sealed system's material, not a generic one. PVC frames weld and clean
-    their corners; aluminium frames machine and crimp. A system whose
-    material authority is absent walks the legacy generic path — the ladder
-    is never invented where the catalog can't tell us which process applies.
-    ``MACHINING`` lands whenever the material demands it (aluminium corner
-    and connector prep is inherent) or the system declares end milling —
-    never for PVC systems whose declared overlap is zero. ``SASH_ASSEMBLE``
-    and ``HARDWARE`` follow the sealed result, not the material: a fixed
-    window has no sash to assemble and no hardware to mount."""
+    """The ladder is the declared profile's station template pruned by the
+    sealed result: required stations are process-inherent and always land;
+    auto stations land only with matching sealed work. Where no authority
+    resolved, the honest generic path (CUT/ASSEMBLE/GLAZE/QC/PACK) stands."""
+    stations = ((profile or {}).get("stations") or []) if profile else []
+    if not stations:
+        stations = [
+            {"code": "CUT", "when": "auto"},
+            {"code": "ASSEMBLE", "when": "auto"},
+            {"code": "GLAZE", "when": "auto"},
+            {"code": "QC", "when": "required"},
+            {"code": "PACK", "when": "required"},
+        ]
     routing: list[str] = []
-    cuts = engine_result.get("profile_cuts") or []
-    has_sash = any(
-        isinstance(cut, dict) and str(cut.get("role") or "") == "SASH"
-        for cut in cuts
-    )
-    has_hardware = bool(
-        engine_result.get("hardware_items") or engine_result.get("fittings")
-    )
-    if cuts or engine_result.get("reinforcements"):
-        routing.append("CUT")
-    milling = False
-    try:
-        milling = end_milling_overlap_mm is not None and Decimal(
-            str(end_milling_overlap_mm)
-        ) > 0
-    except ArithmeticError:
-        milling = False
-    if material == "ALUMINIUM":
-        routing += ["MACHINING", "CRIMP"]
-        if has_sash:
-            routing.append("SASH_ASSEMBLE")
-        if has_hardware:
-            routing.append("HARDWARE")
-    elif material == "PVC":
-        if milling:
-            routing.append("MACHINING")
-        routing += ["WELD", "CLEAN"]
-        if has_sash:
-            routing.append("SASH_ASSEMBLE")
-        if has_hardware:
-            routing.append("HARDWARE")
-    else:
-        routing.append("ASSEMBLE")
-    if engine_result.get("glasses") or engine_result.get("panels"):
-        routing.append("GLAZE")
-    routing += ["QC", "PACK"]
+    for station in stations:
+        if not isinstance(station, dict):
+            continue
+        code = str(station.get("code") or "")
+        if not code:
+            continue
+        if str(station.get("when") or "auto") == "required" or _station_has_work(
+            code, engine_result, end_milling_overlap_mm=end_milling_overlap_mm
+        ):
+            routing.append(code)
     return routing
+
+
+def _process_authority(
+    profile: dict[str, object] | None,
+    resolved_via: str | None,
+) -> dict[str, object]:
+    """The routing authority frozen into the work order's evidence — every
+    order names the profile and version it was routed under."""
+    if not profile:
+        return {"code": "GENERIC_LEGACY", "version": 0, "resolved_via": "fallback"}
+    return {
+        "profile_id": str(profile.get("id") or ""),
+        "code": str(profile.get("code") or ""),
+        "version": profile.get("version"),
+        "resolved_via": resolved_via,
+        "joining_method": profile.get("joining_method"),
+        "operation_station_map": profile.get("operation_station_map") or {},
+    }
 
 
 def _work_order_payload(
     position: dict[str, object], *, polishing: list | None = None,
     color: str | None = None,
     system_facts: dict[str, object] | None = None,
+    org_id: UUID | None = None,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
+    profile: dict[str, object] | None = None
+    resolved_via: str | None = None
+    if org_id is not None:
+        profile, resolved_via = _resolve_process_profile(org_id, engine, system_facts)
     return {
         "schema": "production_wo_v1",
         "position_id": str(position.get("position_id") or ""),
@@ -229,9 +362,10 @@ def _work_order_payload(
         "glass_polishing": list(polishing or []),
         "routing": _routing(
             engine,
-            material=str((system_facts or {}).get("material") or "").upper() or None,
+            profile=profile,
             end_milling_overlap_mm=(system_facts or {}).get("end_milling_overlap_mm"),
         ),
+        "process_authority": _process_authority(profile, resolved_via),
     }
 
 
@@ -349,7 +483,8 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                 str(row["id"]): row
                 for row in rows(
                     """
-                    SELECT id::text, material::text, end_milling_overlap_mm
+                    SELECT id::text, material::text, end_milling_overlap_mm,
+                           process_profile_id::text
                     FROM public.profile_systems
                     WHERE id = ANY(%s::uuid[])
                     """,
@@ -384,6 +519,7 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                 system_facts=system_facts.get(
                     str(position.get("system_id") or "")
                 ),
+                org_id=org_id,
             )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(

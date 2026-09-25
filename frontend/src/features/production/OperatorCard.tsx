@@ -110,15 +110,10 @@ export function OperatorStepCard({
   step,
   trace,
   traceBusy,
-  hasMachiningStep = false,
 }: {
   step: ProductionStep;
   trace: ProductionOrderTrace | null;
   traceBusy: boolean;
-  /** True when the order's ladder includes MACHINING — member ops belong to
-   * that station then, not to the saw. Legacy orders without it keep member
-   * ops on CUT so older work orders still show their machining instructions. */
-  hasMachiningStep?: boolean;
 }) {
   const kinds = STEP_STOCK_KINDS[step.code] ?? [];
   const reservations = trace ? _reservations(trace) : [];
@@ -130,8 +125,15 @@ export function OperatorStepCard({
   const bars = trace ? _bars(trace) : [];
   const sheets = trace ? _sheets(trace) : [];
 
-  const sawOps = ops.filter((op) => op.kind === "SAW_CUT");
-  const memberOps = ops.filter((op) => op.kind !== "SAW_CUT");
+  // Ops land on the station the frozen process authority declares for their
+  // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
+  // Orders frozen before the authority model fall back to the saw.
+  const stationMap = (trace?.operations?.station_map as Record<string, string> | undefined) ?? {};
+  const stepOps = ops.filter(
+    (op) => (stationMap[op.kind ?? ""] ?? "CUT") === step.code,
+  );
+  const sawOps = stepOps.filter((op) => op.kind === "SAW_CUT");
+  const memberOps = stepOps.filter((op) => op.kind !== "SAW_CUT");
   const cutPieces: Array<{ barIndex: number; source?: string } & CutPiece> = [];
   if (step.code === "CUT") {
     for (const bar of bars) {
@@ -247,12 +249,12 @@ export function OperatorStepCard({
             </div>
           ) : null}
 
-          {step.code === "CUT" || step.code === "MACHINING" ? (
+          {step.code === "CUT" || step.code === "MACHINING" || stepOps.length ? (
             <div className="operator-section">
               <h4>{t("production.operatorSequence")}</h4>
-              {ops.length ? (
+              {stepOps.length ? (
                 <>
-                  {step.code === "CUT" && sawOps.length ? (
+                  {sawOps.length ? (
                     <table className="production-plan operator-ops">
                       <thead>
                         <tr>
@@ -282,11 +284,11 @@ export function OperatorStepCard({
                       </tbody>
                     </table>
                   ) : null}
-                  {(step.code === "MACHINING" || !hasMachiningStep) && memberOps.length ? (
+                  {memberOps.length ? (
                     <table className="production-plan operator-ops">
                       <thead>
                         <tr>
-                          <th>{t("production.operatorMachining")}</th>
+                          <th>{t("production.operatorOperation")}</th>
                           <th>{t("production.operatorHost")}</th>
                           <th>x/y (mm)</th>
                           <th>{t("production.operatorDepth")}</th>

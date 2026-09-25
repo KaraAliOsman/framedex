@@ -277,7 +277,21 @@ def _trace_operations(
     by_kind: dict[str, int] = {}
     for op in ops:
         by_kind[str(op["kind"])] = by_kind.get(str(op["kind"]), 0) + 1
-    return {"count": len(ops), "by_kind": by_kind, "items": ops}
+    # The frozen process authority decides which station an op kind lands on —
+    # the UI groups by this declared map, never by a frontend guess. Orders
+    # frozen before the authority model keep a default-saw map.
+    station_map = dict(
+        ((payload.get("process_authority") or {}).get("operation_station_map"))
+        or {"SAW_CUT": "CUT"}
+    )
+    station_map.setdefault("SAW_CUT", "CUT")
+    return {
+        "count": len(ops),
+        "by_kind": by_kind,
+        "items": ops,
+        "station_map": station_map,
+        "process_authority": payload.get("process_authority") or {},
+    }
 
 
 def _piece_hits(order_row: dict[str, Any], piece_id: str) -> list[dict[str, Any]]:
