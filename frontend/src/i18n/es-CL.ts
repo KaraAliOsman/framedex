@@ -1935,6 +1935,7 @@ export const messages = {
   "assembly.view3dOutside": "Exterior",
   "assembly.view3dInside": "Interior",
   "assembly.view3dClip": "Corte",
+  "assembly.view3dExplode": "Despiece",
   "assembly.view3dOpen": "Abrir",
   "assembly.view3dClose": "Cerrar",
   "assembly.hide3d": "Ocultar 3D",
