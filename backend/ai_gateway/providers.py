@@ -8,6 +8,7 @@ performs network I/O."""
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import ipaddress
 import json
@@ -22,6 +23,20 @@ import httpx
 
 
 MAX_BODY_BYTES = 1_048_576
+# Above this size the base64 transport inflates the request more than a
+# signed URL is worth — the image goes to the provider as a fetchable URL.
+_IMAGE_WIRE_MAX_BYTES = 12 * 1024 * 1024
+_IMAGE_MIME = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+}
+
+
+def _image_mime(object_key: str) -> str:
+    _, dot, ext = object_key.lower().rpartition(".")
+    return _IMAGE_MIME.get(f".{ext}" if dot else "", "image/png")
 # A configured base path may only contain plain ASCII segments — no
 # encoded separators, dot segments, backslashes, or whitespace that could
 # redirect the authenticated request on the approved host.
@@ -295,6 +310,20 @@ class HttpProvider:
                     )
                 except DocumentaryError as error:
                     raise ProviderError("ai_provider_unavailable") from error
+                if input_payload.get("kind") == "IMAGE":
+                    # True multimodal: the image bytes ride inside the request
+                    # as a data URI so the provider never has to fetch the
+                    # document itself. Larger files keep the signed URL, which
+                    # the wire layer still emits as an image_url part.
+                    try:
+                        raw = SupabaseDocumentStorage().download(document_path)
+                        if len(raw) <= _IMAGE_WIRE_MAX_BYTES:
+                            wire_input["_document_image"] = {
+                                "mime": _image_mime(document_path),
+                                "data": base64.b64encode(raw).decode("ascii"),
+                            }
+                    except DocumentaryError:
+                        pass
             content = self._request(
                 route=route,
                 capability=capability,
@@ -413,6 +442,43 @@ class OpenAICompatibleProvider(HttpProvider):
             if self._base_path.endswith("/chat/completions")
             else f"{self._base_path}/chat/completions"
         )
+        # Wire-time artifacts (signed URL, inline image) are transport
+        # details, not document facts — the text part never sees them.
+        text_payload = {
+            key: value
+            for key, value in input_payload.items()
+            if not key.startswith("_") and key != "document_url"
+        }
+        text_json = json.dumps(text_payload, ensure_ascii=False, default=str)
+        image = input_payload.get("_document_image")
+        image_url = input_payload.get("document_url")
+        user_content: Any
+        if (
+            isinstance(image, dict)
+            and isinstance(image.get("data"), str)
+            and isinstance(image.get("mime"), str)
+        ):
+            user_content = [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{image['mime']};base64,{image['data']}",
+                    },
+                },
+                {"type": "text", "text": text_json},
+            ]
+        elif input_payload.get("kind") == "IMAGE" and isinstance(image_url, str):
+            user_content = [
+                {"type": "image_url", "image_url": {"url": image_url}},
+                {"type": "text", "text": text_json},
+            ]
+        else:
+            clean_payload = {
+                key: value
+                for key, value in input_payload.items()
+                if not key.startswith("_")
+            }
+            user_content = json.dumps(clean_payload, ensure_ascii=False, default=str)
         body: dict[str, Any] = {
             "model": self._requested_model(route),
             "messages": [
@@ -420,10 +486,7 @@ class OpenAICompatibleProvider(HttpProvider):
                     "role": "system",
                     "content": str(provider_options.get("system") or _DEFAULT_SYSTEM),
                 },
-                {
-                    "role": "user",
-                    "content": json.dumps(input_payload, ensure_ascii=False, default=str),
-                },
+                {"role": "user", "content": user_content},
             ],
             "temperature": 0,
         }

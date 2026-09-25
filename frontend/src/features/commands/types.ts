@@ -92,8 +92,9 @@ export interface CommandSpec {
   keywords?: string[];
   /** Global keyboard shortcut — "mod+z", "mod+shift+z", "v", "delete".
    * mod = Ctrl (Windows/Linux) or Meta (macOS). Only param-less commands
-   * may bind one. */
-  shortcut?: string;
+   * may bind one. A list binds several keys to the same command (first is
+   * the displayed hint). */
+  shortcut?: string | readonly string[];
   /** Params the palette collects in order before running. */
   params?(ctx: CommandContext): CommandParam[];
   /** Listing predicate — absent or true means the command is offered. */
@@ -129,9 +130,10 @@ export interface ResolvedCommand {
   title: string;
   /** Extra searchable terms (synonyms, English, object kinds). */
   keywords?: string[];
-  /** Keyboard shortcut (spec format) — rendered as the palette hint and
-   * matched by the global shortcut dispatcher. */
+  /** Primary keyboard shortcut (spec format) — rendered as the palette
+   * hint. `shortcuts` carries every bound key for the dispatcher. */
   shortcut?: string;
+  shortcuts?: readonly string[];
   /** Parameters collected sequentially before `run`. */
   params?: CommandParam[];
   /** A short preview of what the command will change. Rendered under the list

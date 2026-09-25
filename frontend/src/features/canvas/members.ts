@@ -25,6 +25,10 @@ export interface MemberGeometry {
   couplerFor(sku: string | null): MemberSpec | null;
   rebateMm: number;
   sashOverlapMm: number;
+  /** Serializable digest of the lookup tables the functions close over —
+   * JSON.stringify drops functions, so caches that key on this object need
+   * the bead/coupler mappings rendered as data. */
+  signature?: string;
 }
 
 export const FALLBACK_MEMBERS = {
@@ -70,6 +74,10 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
     const width = Number(bead.bead_width_mm);
     if (Number.isFinite(width) && width > 0) beads.set(bead.glass_thickness_mm, width);
   }
+  const signature = JSON.stringify({
+    beads: [...beads.entries()],
+    couplers: [...couplers.entries()],
+  });
   const rebate = Number(options?.rebate_depth_mm);
   const sashOverlap = Number(options?.sash_overlap_mm);
   return {
@@ -100,5 +108,6 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
     rebateMm: Number.isFinite(rebate) && rebate > 0 ? rebate : FALLBACK.rebate,
     sashOverlapMm:
       Number.isFinite(sashOverlap) && sashOverlap >= 0 ? sashOverlap : FALLBACK.sashOverlap,
+    signature,
   };
 }

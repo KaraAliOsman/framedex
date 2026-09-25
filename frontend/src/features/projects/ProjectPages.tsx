@@ -810,7 +810,7 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
               <ComparePosition
                 currency={entry.after ? headCurrency : baseCurrency}
                 entry={entry}
-                key={entry.position_index}
+                key={`${entry.change}-${entry.position_index}`}
               />
             ))}
             {positions.length === 0 && (

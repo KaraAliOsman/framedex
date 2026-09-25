@@ -531,14 +531,22 @@ def _validate_ops(
             elif 1 <= item["count"] <= MAX_MODULE_COUNT:
                 accepted.append({"op": name, "count": item["count"]})
                 while len(state["module_refs"]) < item["count"]:
-                    tail = state["module_refs"][-1] if state["module_refs"] else None
+                    # The client's addAdjacentUnit appends at the free right
+                    # chain end — a graph fact, never the declaration tail
+                    # (a stacked member can sit last). Re-walk each round:
+                    # the member just added becomes the new end. No free end
+                    # → the client stalls, so the sim stops the same way.
+                    tail = _chain_end("right")
+                    if tail is None:
+                        break
                     new_ref = _add_ref("m")
-                    module_info[new_ref] = {"shape": "RECT", "frameless": False}
+                    module_info[new_ref] = dict(
+                        module_info.get(tail, {"shape": "RECT", "frameless": False})
+                    )
                     state["module_refs"].append(new_ref)
-                    if tail is not None:
-                        state["coupling_refs"].append(
-                            _add_coupling([tail, new_ref], ["right", "left"])
-                        )
+                    state["coupling_refs"].append(
+                        _add_coupling([tail, new_ref], ["right", "left"])
+                    )
                 for dropped in state["module_refs"][item["count"] :]:
                     for c_ref in list(state["coupling_refs"]):
                         info = state["sim_couplings"].get(c_ref)

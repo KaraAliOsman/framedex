@@ -1499,3 +1499,71 @@ def test_source_resolves_canonical_path_to_provider(monkeypatch):
     assert captured[0]["input_payload"]["source"]["id"] == str(source_id)
     assert "storage_path" not in captured[0]["input_payload"]
     assert "document_url" not in captured[0]["input_payload"]
+
+
+def test_openai_provider_image_payload_is_true_multimodal(monkeypatch):
+    """A scanned drawing reaches the model as an image_url content part —
+    inline data URI when the gateway fetched the bytes, the signed URL as
+    fallback — never as text the model has to pretend it can open."""
+    from ai_gateway.providers import OpenAICompatibleProvider
+
+    monkeypatch.setenv("AI_GATEWAY_MIMO_API_KEY", "k")
+    monkeypatch.setenv("AI_GATEWAY_MIMO_BASE_URL", "https://mimo.example/v1")
+    _allow_dns(monkeypatch)
+    provider = OpenAICompatibleProvider(provider="MIMO")
+    route = _route(provider="MIMO", provider_model="mimo-v1-pro")
+
+    _, body = provider._wire_request(
+        route=route,
+        capability="vision_ocr",
+        input_payload={
+            "file_name": "plano.png",
+            "kind": "IMAGE",
+            "source": {"kind": "document_import", "id": "x"},
+            "document_url": "https://signed.example/doc",
+            "_document_image": {"mime": "image/png", "data": "aGk="},
+        },
+        provider_options={},
+    )
+    content = body["messages"][1]["content"]
+    assert isinstance(content, list)
+    assert content[0] == {
+        "type": "image_url",
+        "image_url": {"url": "data:image/png;base64,aGk="},
+    }
+    text = json.loads(content[1]["text"])
+    # Transport artifacts never reach the model's text.
+    assert text == {
+        "file_name": "plano.png",
+        "kind": "IMAGE",
+        "source": {"kind": "document_import", "id": "x"},
+    }
+
+    # Oversize / failed inline fetch: the signed URL still rides image_url.
+    _, body = provider._wire_request(
+        route=route,
+        capability="vision_ocr",
+        input_payload={
+            "kind": "IMAGE",
+            "file_name": "plano.png",
+            "document_url": "https://signed.example/doc",
+        },
+        provider_options={},
+    )
+    content = body["messages"][1]["content"]
+    assert content[0]["image_url"]["url"] == "https://signed.example/doc"
+    assert "document_url" not in json.loads(content[1]["text"])
+
+    # Non-image kinds keep the whole payload as text (PDF URL stays).
+    _, body = provider._wire_request(
+        route=route,
+        capability="vision_ocr",
+        input_payload={
+            "kind": "PDF",
+            "file_name": "tabla.pdf",
+            "document_url": "https://signed.example/doc",
+        },
+        provider_options={},
+    )
+    user = json.loads(body["messages"][1]["content"])
+    assert user["document_url"] == "https://signed.example/doc"

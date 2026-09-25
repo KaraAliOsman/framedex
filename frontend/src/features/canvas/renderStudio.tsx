@@ -94,6 +94,23 @@ function buildThreeScene(scene: Scene3D): THREE.Group {
   return root;
 }
 
+/** The PNG bakes resolved CSS tokens — a theme change must re-render. */
+function useDocumentTheme(): string | undefined {
+  const [theme, setTheme] = useState<string | undefined>(() =>
+    typeof document === "undefined" ? undefined : document.documentElement.dataset.theme,
+  );
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const observer = new MutationObserver(() => setTheme(document.documentElement.dataset.theme));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
+  return theme;
+}
+
 const cache = new Map<string, string>();
 const CACHE_LIMIT = 60;
 
@@ -188,6 +205,7 @@ export function StudioImage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [options?.inside, options?.width, options?.height],
   );
+  const theme = useDocumentTheme();
   useEffect(() => {
     let alive = true;
     // Defer the WebGL pass a tick so a grid mounts before rendering.
@@ -199,7 +217,7 @@ export function StudioImage({
       alive = false;
       window.clearTimeout(id);
     };
-  }, [product, members, plan, memoOptions]);
+  }, [product, members, plan, memoOptions, theme]);
   if (url === null) {
     return <div className={className} aria-label={alt} role="img" />;
   }

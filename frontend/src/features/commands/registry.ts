@@ -64,15 +64,24 @@ export function resolveCommands(ctx: CommandContext, specs: CommandSpec[]): Reso
         spec.applicable?.(ctx) !== false &&
         !(ctx.disabled && (spec.apply !== undefined || spec.mutates === true)),
     )
-    .map((spec) => ({
-      id: spec.id,
-      title: t(spec.title),
-      keywords: spec.keywords,
-      shortcut: spec.shortcut,
-      params: spec.params?.(ctx),
-      describe: spec.describe,
-      run: (args: CommandArgs) => runCommand(ctx, spec, args),
-    }));
+    .map((spec) => {
+      const shortcuts =
+        spec.shortcut === undefined
+          ? undefined
+          : Array.isArray(spec.shortcut)
+            ? [...spec.shortcut]
+            : [spec.shortcut];
+      return {
+        id: spec.id,
+        title: t(spec.title),
+        keywords: spec.keywords,
+        shortcut: shortcuts?.[0],
+        shortcuts,
+        params: spec.params?.(ctx),
+        describe: spec.describe,
+        run: (args: CommandArgs) => runCommand(ctx, spec, args),
+      };
+    });
 }
 
 /** Execute a command through the single shared path: mutation commands commit
@@ -141,8 +150,9 @@ export function useCommandShortcuts(surface: CommandSurface | null): void {
         return;
       }
       for (const command of surface.commands) {
-        if (!command.shortcut || command.params?.length) continue;
-        if (shortcutMatches(command.shortcut, event)) {
+        if (command.params?.length) continue;
+        const bindings = command.shortcuts ?? (command.shortcut ? [command.shortcut] : []);
+        if (bindings.some((binding) => shortcutMatches(binding, event))) {
           event.preventDefault();
           command.run({});
           return;

@@ -974,3 +974,32 @@ def test_added_module_ops_check_shape_and_frameless(monkeypatch):
     )
     assert [op["op"] for op in out["ops"]] == ["add_unit", "add_stacked_unit"]
     assert out["rejected"] == []
+
+
+def test_module_count_growth_joins_the_chain_end_past_a_stacked_member(
+    monkeypatch,
+):
+    """set_module_count grows through addAdjacentUnit("right") — the free
+    right chain end, never the declaration tail. Joining the trailing
+    stacked member instead would leave m2.right free in the sim and let a
+    later duplicate claim an edge the client already took."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "set_module_count", "count": 4},
+                {"op": "duplicate_module", "module": "m2"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_stacked_product(),
+        prompt="cuatro módulos y duplica la segunda",
+        system_id=uuid4(),
+        operation_key="assist-d11",
+    )
+    assert out["ops"] == [{"op": "set_module_count", "count": 4}]
+    assert out["rejected"][0]["reason"] == "sin_borde_libre"

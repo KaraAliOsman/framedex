@@ -912,7 +912,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     id: "edit.redo",
     title: "cmd.redo",
     keywords: ["rehacer", "adelante"],
-    shortcut: "mod+shift+z",
+    shortcut: ["mod+shift+z", "mod+y"],
     mutates: true,
     applicable: (ctx) => ctx.canRedo === true,
     run: (ctx) => ctx.redo?.(),

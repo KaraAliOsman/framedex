@@ -658,9 +658,7 @@ function leafSolids(
       ),
     );
     gasketAndBead(solids, owner, region, sashW, glassZ, glassT, depth);
-    if (bay.panel_article_sku == null) {
-      hardwareSolids(solids, owner, bay, region, sashW, depth);
-    }
+    hardwareSolids(solids, owner, bay, region, sashW, depth);
     // A door opening closes on a low threshold, not the frame's bottom
     // profile — the declared threshold member sits at the sill plane.
     if (bay.opening_type === "DOOR_ENTRY" && members.threshold !== null) {
