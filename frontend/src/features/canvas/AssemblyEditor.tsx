@@ -28,6 +28,7 @@ import { CanvasViewport } from "./CanvasViewport";
 import { ObjectTree } from "./ObjectTree";
 import { buildObjectTree } from "./objectTree";
 import { resolveMembers, type MemberGeometry } from "./members";
+import { SectionView } from "./SectionView";
 import { SectionPreviewSvg } from "./SectionPreviewSvg";
 import {
   frontBounds,
@@ -1189,11 +1190,19 @@ function TechnicalPanel({
   moduleId,
   bayId,
   moduleIndex,
+  members,
+  bayNode,
+  widthMm,
 }: {
   evaluation: EngineAssemblyCalculateResponse | null;
   moduleId?: string;
   bayId?: string | null;
   moduleIndex?: (moduleId: string) => number;
+  /** The declared member sections + bay the §05 section view cuts through
+   * — same product model as the canvas, never a separate drawing. */
+  members?: MemberGeometry;
+  bayNode?: IntentNode | null;
+  widthMm?: number;
 }): JSX.Element {
   const entries = (evaluation?.modules ?? []).filter(
     (entry) => !moduleId || entry.module_id === moduleId,
@@ -1207,6 +1216,12 @@ function TechnicalPanel({
   }
   return (
     <div className="tech-panel">
+      {members && widthMm !== undefined && widthMm > 0 && (
+        <details className="inspector-section" open>
+          <summary>{t("assembly.sectionView")}</summary>
+          <SectionView bay={bayNode ?? null} members={members} widthMm={widthMm} />
+        </details>
+      )}
       {entries.map((entry) => {
         const result = entry.result;
         const ordinal = moduleIndex ? moduleIndex(entry.module_id) : 0;
@@ -1882,8 +1897,16 @@ export function AssemblyEditor({
       select,
       setTool,
       focusAssistant: () => askAssistant(""),
-      undo: undoHistory,
-      redo: redoHistory,
+      undo: () => {
+        if (useCanvasStore.getState().past.length === 0) return;
+        undoHistory();
+        onChanged();
+      },
+      redo: () => {
+        if (useCanvasStore.getState().future.length === 0) return;
+        redoHistory();
+        onChanged();
+      },
       canUndo,
       canRedo,
       specClipboard,
@@ -2280,6 +2303,9 @@ export function AssemblyEditor({
             moduleId={selectedBayModule?.id ?? selectedModule?.id}
             bayId={selectedBayNode && selectedBayModule ? selectedBayNode.id : null}
             moduleIndex={(moduleId) => modules.findIndex((module) => module.id === moduleId) + 1}
+            members={members}
+            bayNode={selectedBayNode}
+            widthMm={Number((selectedBayModule ?? selectedModule)?.width_mm) || undefined}
           />
         ) : detail === "overview" ? (
           selectedModule ? (

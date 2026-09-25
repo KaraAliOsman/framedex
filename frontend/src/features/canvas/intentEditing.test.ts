@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { useCanvasStore } from "./canvasStore";
 import {
+  applyBaySpec,
+  baySpec,
   changeOpening,
   exactMm,
   intentBays,
@@ -163,6 +165,36 @@ describe("rectangular intent", () => {
       nominal_height_mm: "1000.00",
       color: "WHITE",
       parametric_tree: inputs.parametricTree,
+    });
+  });
+
+  it("clears recipient fields the copied bay never declared", () => {
+    const tree = divided();
+    // bay-b carries an opening the source never set; pasting bay-a's spec
+    // must null it out rather than leave the stale value behind.
+    const withExtra = requestTree(
+      JSON.parse(
+        JSON.stringify(tree).replace('"id":"bay-b"', '"id":"bay-b","handle_height_mm":"1234"'),
+      ) as IntentNode,
+    );
+    const applied = applyBaySpec(withExtra, "bay-a", "bay-b");
+    const target = intentBays(applied).find((node) => node.id === "bay-b")!;
+    expect(target.opening_type).toBe("FIXED");
+    expect(target.glass_thickness_mm).toBe("24.00");
+    expect(target.handle_height_mm).toBeNull();
+    // The source bay is untouched and the copy is complete.
+    expect(intentBays(applied).find((node) => node.id === "bay-a")).toEqual(
+      intentBays(withExtra).find((node) => node.id === "bay-a"),
+    );
+    expect(baySpec(bay)).toEqual({
+      opening_type: "FIXED",
+      sliding_layout: null,
+      glass_thickness_mm: "24.00",
+      glass_spec: "4-16-4",
+      glass_article_sku: "GLASS-A",
+      panel_article_sku: null,
+      hardware_set_sku: null,
+      handle_height_mm: null,
     });
   });
 

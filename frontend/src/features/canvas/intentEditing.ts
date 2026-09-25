@@ -279,12 +279,14 @@ const BAY_SPEC_KEYS = [
   "handle_height_mm",
 ] as const;
 
-/** The transferable spec of a leaf bay (opening, infill, hardware). */
+/** The transferable spec of a leaf bay (opening, infill, hardware). Every
+ * transferable key is present — fields the source doesn't declare emit
+ * `null`, so pasting clears stale recipient fields instead of inheriting
+ * whatever the target happened to carry. */
 export function baySpec(node: IntentNode): Partial<IntentNode> {
-  const spec: Partial<IntentNode> = {};
+  const spec: Record<string, unknown> = {};
   for (const key of BAY_SPEC_KEYS) {
-    const value = node[key];
-    if (value !== undefined) (spec as Record<string, unknown>)[key] = value;
+    spec[key] = node[key] ?? null;
   }
   return spec;
 }

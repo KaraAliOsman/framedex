@@ -664,10 +664,13 @@ function OperationDecision({
     (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
   );
   // Position metadata joins only when the operation targets the live
-  // revision — a stale operation's indexes can point at moved/deleted
-  // positions, so their labels stay empty rather than mislead.
+  // revision of the project it actually belongs to — a stale operation's
+  // indexes can point at moved/deleted positions, and a project fetched
+  // for another operation must never loan its labels, so both stay empty
+  // rather than mislead.
+  const isBoundProject = boundProject?.id === operation.project_id;
   const positions = new Map(
-    (operation.revision_code === boundProject?.current_revision
+    (isBoundProject && operation.revision_code === boundProject?.current_revision
       ? (boundProject.positions ?? [])
       : []
     ).map((position) => [position.position_index, position]),
@@ -675,6 +678,7 @@ function OperationDecision({
   // A delta is only meaningful when both sides share a currency — a
   // historical operation in another currency shows its own totals instead.
   const diff =
+    isBoundProject &&
     boundProject?.pricing_current &&
     boundProject.total_price_gross &&
     boundProject.currency === operation.currency
@@ -862,18 +866,20 @@ function CommercialOperations({
     [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
 
   // The decision surface needs position labels and the currently applied
-  // totals — fetch the operation's project once it exists.
+  // totals — fetch the operation's project once it exists. A new operation
+  // must never see the previous project's labels: clear first, rebind only
+  // when this operation's project answers, and never join across ids.
   useEffect(() => {
     let active = true;
+    setBoundProject(undefined);
     if (!orgId || !operation?.project_id) {
-      setBoundProject(undefined);
       return;
     }
     void projectsRetrieve(operation.project_id, {
       headers: { "X-Organization-ID": orgId },
     })
       .then((response) => {
-        if (response.status === 200 && active) setBoundProject(response.data);
+        if (active) setBoundProject(response.status === 200 ? response.data : undefined);
       })
       .catch(() => {
         if (active) setBoundProject(undefined);

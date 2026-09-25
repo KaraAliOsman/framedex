@@ -128,14 +128,22 @@ def retry(
     payload = job.get("payload")
     if not isinstance(payload, dict):
         payload = {}
-    if spec.authorize is not None and not spec.authorize(payload, role):
+    # The stored payload was validated at enqueue — but specs evolve, so a
+    # historical row can hold a shape today's serializer rejects. Revalidate
+    # against the CURRENT contract before requeueing: an invalid job must
+    # not reach the worker just because it ran under an older spec.
+    serializer = spec.payload_serializer(data=payload)
+    if not serializer.is_valid():
+        raise JobServiceError("job_payload_invalid")
+    validated = dict(serializer.validated_data)
+    if spec.authorize is not None and not spec.authorize(validated, role):
         raise JobServiceError("job_permission_denied")
     job_id = UUID(str(job["id"]))
     attempts = job.get("max_attempts")
     requeued = repository.requeue_terminal(
         org_id=org_id,
         job_id=job_id,
-        payload=payload,
+        payload=validated,
         max_attempts=int(str(attempts or "0")),
         run_after=datetime.now(timezone.utc),
         created_by=actor_id,

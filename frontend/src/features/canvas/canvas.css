@@ -618,7 +618,42 @@
   z-index: 3;
 }
 
-.model3d-inset .model3d-canvas {
+.model3d-inset .model3d-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.model3d-toolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.model3d-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.18rem 0.5rem;
+}
+
+.model3d-toolbar button:hover {
+  background: var(--theme-surface-hover);
+}
+
+.model3d-toolbar button.is-active {
+  background: var(--theme-accent-soft);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-ink);
+}
+
+.model3d-inset .model3d-view .model3d-canvas {
   flex: 1;
   min-height: 0;
 }
@@ -1867,4 +1902,62 @@
 
 .issue-fix:hover {
   text-decoration: underline;
+}
+
+/* §05-G technical section view — horizontal node cut through a bay. */
+.section-view {
+  display: block;
+  height: auto;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.section-member {
+  fill: var(--member-pvc-fill);
+  stroke: var(--member-pvc-edge);
+  stroke-width: 0.6;
+}
+
+.section-member--aluminium {
+  fill: var(--member-aluminium-fill);
+  stroke: var(--member-aluminium-edge);
+}
+
+.section-member--approx {
+  fill: none;
+  stroke-dasharray: 3 2;
+}
+
+.section-glass {
+  fill: var(--model3d-glass);
+  opacity: 0.75;
+}
+
+.section-gasket {
+  fill: var(--model3d-gasket);
+}
+
+.section-dim {
+  stroke: var(--theme-text-muted);
+  stroke-width: 0.5;
+}
+
+.section-dim__arrow {
+  fill: var(--theme-text-muted);
+}
+
+.section-dim__text {
+  fill: var(--theme-text-muted);
+  font-size: 9px;
+}
+
+.section-label {
+  fill: var(--theme-text-muted);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+
+.section-approx {
+  fill: var(--theme-warning);
+  font-size: 7px;
 }

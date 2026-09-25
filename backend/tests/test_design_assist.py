@@ -526,7 +526,7 @@ def test_stable_refs_address_modules_and_survive_structural_ops(monkeypatch):
                 {"op": "set_opening", "module": "mod-c", "opening": "AWNING"},
                 {"op": "add_unit", "side": "right"},
                 {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
-                {"op": "set_coupling_angle", "coupling": "added_c2", "angle_deg": "-15"},
+                {"op": "set_coupling_angle", "coupling": "added_c1", "angle_deg": "-15"},
             ],
             "notes": "",
         },
@@ -556,7 +556,7 @@ def test_stable_refs_address_modules_and_survive_structural_ops(monkeypatch):
         {"op": "set_opening", "module": "mod-c", "opening": "AWNING"},
         {"op": "add_unit", "side": "right", "ref": "added_m1"},
         {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
-        {"op": "set_coupling_angle", "coupling": "added_c2", "angle_deg": "-15"},
+        {"op": "set_coupling_angle", "coupling": "added_c1", "angle_deg": "-15"},
     ]
     assert out["rejected"] == []
     summary = captured["input"]["product"]
@@ -751,7 +751,9 @@ def test_set_coupling_kind_follows_the_joint_edges(monkeypatch):
     assert out["rejected"][0]["reason"] == "tipo_invalido"
 
 
-def test_stacked_unit_member_is_not_addressable_later(monkeypatch):
+def test_stacked_unit_member_is_addressable_later(monkeypatch):
+    """A stacked member joins the ref set like any module — capacity counts
+    it and later ops address it, exactly as the client applies them."""
     _patch_invoke(
         monkeypatch,
         {
@@ -770,8 +772,11 @@ def test_stacked_unit_member_is_not_addressable_later(monkeypatch):
         system_id=uuid4(),
         operation_key="assist-d7",
     )
-    assert out["ops"] == [{"op": "add_stacked_unit", "module": "m1"}]
-    assert out["rejected"][0]["reason"] == "apertura_invalida"
+    assert out["ops"] == [
+        {"op": "add_stacked_unit", "module": "m1"},
+        {"op": "set_opening", "module": "added_m1", "opening": "FIXED"},
+    ]
+    assert out["rejected"] == []
 
 
 def _stacked_product():
@@ -815,6 +820,58 @@ def test_add_unit_joins_the_chain_end_past_a_stacked_member(monkeypatch):
     )
     assert out["ops"] == [{"op": "add_unit", "side": "right", "ref": "added_m1"}]
     assert out["rejected"][0]["reason"] == "sin_borde_libre"
+
+
+def test_remove_unit_never_invents_a_joint_in_a_stacked_graph(monkeypatch):
+    """Removing m2 incident to an INLINE and a STACKED joint must not
+    relink — the client drops both and invents nothing. Then the chain
+    end is m1 (t1 is stacked), so append-right still joins a real seam."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_unit", "module": "m2"},
+                {"op": "add_unit", "side": "right"},
+                {"op": "set_opening", "module": "added_m1", "opening": "AWNING"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_stacked_product(),
+        prompt="saca la segunda y agrega otra a la derecha",
+        system_id=uuid4(),
+        operation_key="assist-d9",
+    )
+    assert out["ops"] == [
+        {"op": "remove_unit", "module": "m2"},
+        {"op": "add_unit", "side": "right", "ref": "added_m1"},
+        {"op": "set_opening", "module": "added_m1", "opening": "AWNING"},
+    ]
+    assert out["rejected"] == []
+
+
+def test_stacked_members_count_toward_module_capacity(monkeypatch):
+    """A stacked member is a real module — the ceiling counts it, so
+    add_stacked_unit cannot push the assembly past MAX_MODULE_COUNT."""
+    product = _product(modules=12, couplings=11)
+    _patch_invoke(
+        monkeypatch,
+        {"ops": [{"op": "add_stacked_unit", "module": 11}]},
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="apila un módulo encima",
+        system_id=uuid4(),
+        operation_key="assist-d10",
+    )
+    assert out["ops"] == []
+    assert out["rejected"][0]["reason"] == "modulo_invalido"
 
 
 def test_unstacking_makes_the_member_a_chain_end(monkeypatch):

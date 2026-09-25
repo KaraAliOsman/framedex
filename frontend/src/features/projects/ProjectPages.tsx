@@ -360,6 +360,15 @@ function commercialSteps(
   const rank = projectRank(project.status);
   const sent = currentApprovals.length > 0;
   const approvedRecord = currentApprovals.some((a) => a.status === "APPROVED");
+  // A PENDING link past its expires_at is dead — the portal refuses it — so
+  // the project is not "waiting on the client"; it needs a fresh link.
+  const now = Date.now();
+  const livePending = currentApprovals.some(
+    (a) => a.status === "PENDING" && Date.parse(a.expires_at) > now,
+  );
+  const stalePending = currentApprovals.some(
+    (a) => a.status === "PENDING" && Date.parse(a.expires_at) <= now,
+  );
   const quoted = project.pricing_current || (project.versions?.length ?? 0) > 0;
   const approved = rank >= 2 || approvedRecord;
   const collected = Number(payments?.collected ?? "0");
@@ -393,12 +402,14 @@ function commercialSteps(
     {
       key: "approved",
       labelKey: "projects.step.approved",
-      state: approved ? "done" : sent ? "current" : "pending",
+      state: approved ? "done" : livePending ? "current" : "pending",
       detail: approvedRecord
         ? formatDate(currentApprovals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
-        : sent && !approved
+        : livePending
           ? t("projects.stepWaitClient")
-          : undefined,
+          : stalePending
+            ? t("projects.stepLinkExpired")
+            : undefined,
     },
     {
       key: "deposit",

@@ -470,6 +470,25 @@ def test_retry_requeues_failed_with_stored_payload(monkeypatch) -> None:
     assert calls["job_id"] == job["id"]
 
 
+def test_retry_revalidates_stored_payload_against_current_spec(monkeypatch) -> None:
+    register_demo()
+    monkeypatch.setattr(
+        repository,
+        "get_job",
+        lambda **kwargs: failed_job(payload={"amount": 0}),
+    )
+    monkeypatch.setattr(
+        repository,
+        "requeue_terminal",
+        lambda **kwargs: pytest.fail("an invalid stored payload must not requeue"),
+    )
+    with pytest.raises(service.JobServiceError) as bad:
+        service.retry(
+            org_id=uuid4(), job_id=uuid4(), actor_id=uuid4(), role="OWNER"
+        )
+    assert bad.value.code == "job_payload_invalid"
+
+
 def test_retry_denies_roles_outside_spec(monkeypatch) -> None:
     register_demo()
     monkeypatch.setattr(repository, "get_job", lambda **kwargs: failed_job())

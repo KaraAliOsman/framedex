@@ -63,6 +63,8 @@
   --model3d-glass: #8fb8cc;
   --model3d-steel: #a9b2b8;
   --model3d-coupler: #5d6469;
+  --model3d-gasket: #2e3134;
+  --model3d-edge: #6b7075;
   --shadow-raise: 0 2px 10px rgb(22 28 31 / 0.1);
   --shadow-pop: 0 12px 32px rgb(22 28 31 / 0.18);
   --shadow-modal: 0 12px 40px rgba(15, 25, 24, 0.22);
@@ -115,6 +117,8 @@
   --model3d-glass: #5f7f92;
   --model3d-steel: #6b747a;
   --model3d-coupler: #8b939a;
+  --model3d-gasket: #181b1d;
+  --model3d-edge: #3d4448;
   --shadow-raise: 0 2px 10px rgba(0, 0, 0, 0.45);
   --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55);
   --shadow-modal: 0 12px 44px rgba(0, 0, 0, 0.6);
