@@ -471,6 +471,7 @@ def test_create_catalog_import_rejects_path_like_filenames():
         "a/b.csv",
         "a\\b.pdf",
         "lista\t.pdf",
+        "a%2Fb.csv",
     ):
         with pytest.raises(APIException) as caught:
             catalog_service.create_catalog_import(

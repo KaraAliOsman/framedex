@@ -94,6 +94,10 @@ def safe_file_name(file_name: str) -> bool:
         return False
     if "/" in name or "\\" in name:
         return False
+    # "%" would be re-encoded by the canonical storage key at read time — a
+    # name accepted here must remain the literal object segment it uploaded as.
+    if "%" in file_name:
+        return False
     # Control bytes scan the raw name — an edge space never masks a \t inside.
     return not any(ord(character) < 32 for character in file_name)
 

@@ -13,6 +13,30 @@ SIGNED_URL_TTL_SECONDS = 3600
 MAX_DOCUMENT_BYTES = 50 * 1024 * 1024
 
 
+def sanitize_storage_key(object_key: str) -> str:
+    """The one canonical storage-key rule shared by upload and read.
+
+    A canonical key is ``/``-joined segments where every segment is non-empty,
+    never ``.``/``..``, and carries no ``\\``, ``%``, control bytes or edge
+    whitespace. Rejected here rather than canonicalized so a corrupted row or
+    smuggled name can never be reshaped into another object's key — callers
+    get a deterministic ``storage_key_invalid`` instead of a foreign object.
+    """
+    if not isinstance(object_key, str) or not object_key:
+        raise DocumentaryError("storage_key_invalid")
+    segments = object_key.split("/")
+    for segment in segments:
+        if not segment or segment in (".", ".."):
+            raise DocumentaryError("storage_key_invalid")
+        if segment != segment.strip():
+            raise DocumentaryError("storage_key_invalid")
+        if "\\" in segment or "%" in segment:
+            raise DocumentaryError("storage_key_invalid")
+        if any(ord(char) < 32 for char in segment):
+            raise DocumentaryError("storage_key_invalid")
+    return object_key
+
+
 class SupabaseDocumentStorage:
     def __init__(self) -> None:
         self.base_url = str(settings.SUPABASE_URL).rstrip("/")
@@ -33,7 +57,9 @@ class SupabaseDocumentStorage:
         return result
 
     def _object_url(self, object_key: str) -> str:
-        encoded = "/".join(quote(part, safe="") for part in object_key.split("/"))
+        encoded = "/".join(
+            quote(part, safe="") for part in sanitize_storage_key(object_key).split("/")
+        )
         return f"{self.base_url}/storage/v1/object/{self.bucket}/{encoded}"
 
     def upload_immutable(self, object_key: str, content: bytes, content_type: str) -> None:
@@ -69,7 +95,9 @@ class SupabaseDocumentStorage:
             raise DocumentaryError("document_storage_delete_failed")
 
     def signed_url(self, object_key: str, expires_in: int | None = None) -> str:
-        encoded = "/".join(quote(part, safe="") for part in object_key.split("/"))
+        encoded = "/".join(
+            quote(part, safe="") for part in sanitize_storage_key(object_key).split("/")
+        )
         endpoint = f"{self.base_url}/storage/v1/object/sign/{self.bucket}/{encoded}"
         with httpx.Client(timeout=10) as client:
             response = client.post(
