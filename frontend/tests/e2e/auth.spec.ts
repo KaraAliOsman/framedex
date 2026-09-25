@@ -2,6 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
 import * as OTPAuth from "otpauth";
 
 import { formatMoney } from "../../src/features/money";
+import { t } from "../../src/i18n/es-CL";
 import { environment } from "./support/environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
 
@@ -112,13 +113,6 @@ async function requestMagicLink(page: Page, email: string): Promise<void> {
 }
 
 async function accessToken(page: Page): Promise<string> {
-  // The SPA persists the GoTrue session asynchronously after the auth
-  // callback mounts — poll for the key instead of racing a single read.
-  await page.waitForFunction(() =>
-    Object.keys(window.localStorage).some(
-      (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
-    ),
-  );
   return page.evaluate(() => {
     for (const key of Object.keys(window.localStorage)) {
       if (!key.startsWith("sb-") || !key.endsWith("-auth-token")) continue;
@@ -147,6 +141,14 @@ async function followRealMagicLink(page: Page, link: string): Promise<void> {
   );
   await page.goto(link);
   await callback;
+  // The callback resolves on navigation; the GoTrue session write lands
+  // asynchronously after it — wait for the persisted token so callers can
+  // read it deterministically.
+  await page.waitForFunction(() =>
+    Object.keys(window.localStorage).some(
+      (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
+    ),
+  );
 }
 
 async function assertRealIdentity(
@@ -416,8 +418,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === `/api/v1/projects/${draft.id}/successor/`,
   );
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Editar cotización", exact: true }).click();
+  // §F: in-app ConfirmDialog replaced window.confirm — the successor POST
+  // only fires after the product-surface confirmation.
+  const successorDialog = page.getByRole("dialog");
+  await expect(successorDialog).toContainText(t("quotation.successorConfirm"));
+  await successorDialog.getByRole("button", { name: t("ui.confirm"), exact: true }).click();
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();
