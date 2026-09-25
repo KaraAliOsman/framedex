@@ -436,12 +436,32 @@ function cloneTree(node: IntentNode): IntentNode {
  * panel), a reasonable default width, and a coupling whose angle/coupler
  * inherit the outermost existing joint — or straight (0°) for the first one.
  */
+/** Legacy couplings that omit explicit endpoints resolve positionally —
+ * coupling i joins modules i↔i+1 — so any mutation that reorders modules
+ * would silently re-aim their joints. Mutators that add, remove or reorder
+ * modules first pin every resolvable coupling to the pair it joins in the
+ * CURRENT product; couplings already explicit, or so broken no pair
+ * resolves, pass through untouched. */
+function materializeCouplings(product: ProductJson): CouplingJson[] {
+  const resolved = resolveCouplings(product);
+  const pairs = new Map(resolved.map((entry) => [entry.index, entry]));
+  return product.assembly.couplings.map((coupling, index) => {
+    const entry = pairs.get(index);
+    if (entry === undefined || (coupling.modules && coupling.edges)) return coupling;
+    return {
+      ...coupling,
+      modules: [entry.pair[0], entry.pair[1]],
+      edges: [entry.edges[0], entry.edges[1]],
+    };
+  });
+}
+
 export function addAdjacentUnit(
   product: ProductJson,
   side: "left" | "right",
   defaults: { widthMm?: string } = {},
 ): ProductJson {
-  const { modules, couplings } = product.assembly;
+  const { modules } = product.assembly;
   // The chain end is a graph fact — the declaration-extreme module whose
   // side edge carries no coupling — never "the last array element".
   const edge = chainEnd(product, side);
@@ -477,12 +497,13 @@ export function addAdjacentUnit(
     modules: side === "right" ? [edge.id, module.id] : [module.id, edge.id],
     edges: ["right", "left"],
   };
+  const materialized = materializeCouplings(product);
   return {
     ...product,
     assembly:
       side === "right"
-        ? { modules: [...modules, module], couplings: [...couplings, coupling] }
-        : { modules: [module, ...modules], couplings: [coupling, ...couplings] },
+        ? { modules: [...modules, module], couplings: [...materialized, coupling] }
+        : { modules: [module, ...modules], couplings: [coupling, ...materialized] },
   };
 }
 
@@ -498,7 +519,7 @@ export function addAdjacentUnit(
  * nodes, contour/frameless members) only removes — inventing replacement
  * joints would fabricate structure the user never declared. */
 export function removeUnit(product: ProductJson, moduleId: string): ProductJson {
-  const { modules, couplings } = product.assembly;
+  const { modules } = product.assembly;
   if (!modules.some((module) => module.id === moduleId) || modules.length === 1) {
     return product;
   }
@@ -506,7 +527,7 @@ export function removeUnit(product: ProductJson, moduleId: string): ProductJson 
   const incident = resolved.filter(({ pair }) => pair[0] === moduleId || pair[1] === moduleId);
   const dropped = new Set(incident.map(({ index }) => index));
   const nextModules = modules.filter((module) => module.id !== moduleId);
-  const nextCouplings = couplings.filter((_, index) => !dropped.has(index));
+  const nextCouplings = materializeCouplings(product).filter((_, index) => !dropped.has(index));
 
   if (incident.length === 2 && incident.every(({ kind }) => kind === "INLINE")) {
     const survivors = incident.map((resolvedCoupling) => {
@@ -573,7 +594,7 @@ export function insertModuleBetween(
   couplingId: string,
   defaults: { widthMm?: string } = {},
 ): ProductJson {
-  const { modules, couplings } = product.assembly;
+  const { modules } = product.assembly;
   const resolved = resolveCouplings(product).find((entry) => entry.coupling.id === couplingId);
   if (!resolved || resolved.kind !== "INLINE") return product;
   const byId = new Map(modules.map((module) => [module.id, module]));
@@ -614,7 +635,7 @@ export function insertModuleBetween(
     modules: [inserted.id, right.id],
     edges: [OPPOSITE[resolved.edges[1]], resolved.edges[1]],
   };
-  const nextCouplings = [...couplings];
+  const nextCouplings = materializeCouplings(product);
   nextCouplings.splice(resolved.index, 1, first, second);
   const insertAt = modules.findIndex((module) => module.id === right.id);
   const nextModules = [...modules];
@@ -631,7 +652,7 @@ export function insertModuleBetween(
  * duplicating into an occupied seam would silently replace the declared
  * joint. */
 export function duplicateModule(product: ProductJson, moduleId: string): ProductJson {
-  const { modules, couplings } = product.assembly;
+  const { modules } = product.assembly;
   const source = modules.find((module) => module.id === moduleId);
   if (!source) return product;
   const used = usedEdges(product, moduleId);
@@ -669,7 +690,10 @@ export function duplicateModule(product: ProductJson, moduleId: string): Product
   nextModules.splice(side === "right" ? at + 1 : at, 0, copy);
   return {
     ...product,
-    assembly: { modules: nextModules, couplings: [...couplings, coupling] },
+    assembly: {
+      modules: nextModules,
+      couplings: [...materializeCouplings(product), coupling],
+    },
   };
 }
 

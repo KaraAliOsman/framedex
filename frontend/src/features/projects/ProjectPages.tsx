@@ -486,7 +486,9 @@ function projectNextAction(
       if (!canWrite) return undefined;
       if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
       if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
-      return undefined;
+      // Approved and settled — the remaining work is releasing the sealed
+      // revision into production, which lives in the quote section.
+      return { labelKey: "projects.next.release", section: "quote" };
     case "IN_PRODUCTION":
       return { labelKey: "projects.next.production", to: "/production" };
     default:

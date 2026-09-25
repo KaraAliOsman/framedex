@@ -103,6 +103,9 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
+  // The workspace aggregates the same records under one fetch — saves must
+  // invalidate its cache without forcing a whole-list refetch.
+  const [workspaceKey, setWorkspaceKey] = useState(0);
   const lifetime = useRef<AbortController | null>(null);
   // Catalog CRUD accepts OWNER/WORKSHOP_MANAGER — an estimator reads the
   // catalog and writes only through the import-review flow.
@@ -153,6 +156,9 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     }
     setEditor(null);
     setNotice(ct("saved"));
+    // The system workspace aggregates these records — a record-level
+    // accept() alone would leave its fields/readiness/related rows stale.
+    setWorkspaceKey((value) => value + 1);
   }
 
   const [reviewing, setReviewing] = useState<string | null>(null);
@@ -343,7 +349,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
               api={api}
               systemId={currentSystem.id}
               canEdit={canEdit && currentSystem.read_only === false}
-              reloadKey={reload}
+              reloadKey={workspaceKey}
               onEdit={(kind, id) => {
                 setNotice("");
                 setEditor({ resource: kind, id });

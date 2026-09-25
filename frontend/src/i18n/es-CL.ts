@@ -2197,6 +2197,7 @@ export const messages = {
   "projects.next.deposit": "Registrar anticipo",
   "projects.next.balance": "Registrar saldo",
   "projects.next.production": "Ver producción",
+  "projects.next.release": "Liberar a producción",
   "projects.compareTitle": "Comparar revisiones",
   "projects.compareNoVersions": "Se necesitan al menos dos revisiones emitidas.",
   "projects.compareBase": "Desde",
