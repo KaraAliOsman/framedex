@@ -680,12 +680,22 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
     revision_code?: string;
     integrity?: string | null;
     currency?: string;
+    total_price_net?: string;
+    total_price_tax?: string;
     total_price_gross?: string;
   };
   const baseSide = result?.base as CompareSide | undefined;
   const headSide = result?.head as CompareSide | undefined;
   const baseCurrency = baseSide?.currency || project.currency;
   const headCurrency = headSide?.currency || project.currency;
+  // "Identical" means identical positions AND identical commercial totals —
+  // a currency or net/tax-only change with unchanged positions is still a
+  // commercial difference.
+  const totalsSame =
+    baseCurrency === headCurrency &&
+    (baseSide?.total_price_net ?? "") === (headSide?.total_price_net ?? "") &&
+    (baseSide?.total_price_tax ?? "") === (headSide?.total_price_tax ?? "") &&
+    (baseSide?.total_price_gross ?? "") === (headSide?.total_price_gross ?? "");
   const summary = result?.summary as
     | {
         added?: number;
@@ -784,10 +794,7 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
             {positions.length === 0 && (
               <li className="compare-row" data-change="unchanged">
                 <span className="compare-row__main">
-                  {summary?.price_gross_delta != null &&
-                  Number(summary.price_gross_delta) !== 0
-                    ? t("projects.compareTotalsOnly")
-                    : t("projects.compareIdentical")}
+                  {totalsSame ? t("projects.compareIdentical") : t("projects.compareTotalsOnly")}
                 </span>
               </li>
             )}

@@ -22,12 +22,26 @@ function typeLabel(type: string): string {
   return tDynamic("jobs.type", type);
 }
 
-function jobError(error: JobRun["error"]): string {
-  if (error === null || error === undefined) return "";
+interface JobFailure {
+  /** The wrapper code — `job_permanent_error` wraps the domain code. */
+  code: string;
+  /** The domain failure — `error.detail` for permanent wraps, else the code. */
+  detail: string;
+  permanent: boolean;
+}
+
+function jobFailure(error: JobRun["error"]): JobFailure | null {
+  if (error === null || error === undefined) return null;
   if (typeof error === "object" && "code" in (error as Record<string, unknown>)) {
-    return String((error as Record<string, unknown>).code);
+    const record = error as Record<string, unknown>;
+    const code = String(record.code);
+    return {
+      code,
+      detail: String(record.detail ?? code),
+      permanent: code === "job_permanent_error",
+    };
   }
-  return String(error);
+  return { code: "", detail: String(error), permanent: false };
 }
 
 /** Backend failure codes grouped into operator-facing recovery language; the
@@ -48,6 +62,13 @@ function jobErrorKey(code: string): TranslationKey {
     return "jobs.fail.invalid";
   return "jobs.fail.generic";
 }
+
+/** Permanent categories where re-running the same payload cannot help — the
+ * recovery is a different action (fix access / re-emit), so no retry button. */
+const NON_RETRYABLE: ReadonlySet<TranslationKey> = new Set([
+  "jobs.fail.notFound",
+  "jobs.fail.permission",
+]);
 
 /** Background work made visible: what ran, what's running, what failed —
  * with the recovery action (reintentar) next to the failure it fixes. */
@@ -137,46 +158,52 @@ export function JobsPage(): JSX.Element {
         </div>
       ) : (
         <ul className="jobs-list">
-          {items.map((job) => (
-            <li key={job.id} className="job-row" data-state={job.state.toLowerCase()}>
-              <div className="job-row-main">
-                <strong>{typeLabel(job.type)}</strong>
-                <span className="status-chip" data-status={job.state.toLowerCase()}>
-                  {t(STATE_KEYS[job.state] ?? "jobs.state.QUEUED")}
-                </span>
-              </div>
-              <div className="job-row-meta">
-                <span>
-                  {t("jobs.attempt")
-                    .replace("{attempt}", String(job.attempt))
-                    .replace("{max}", String(job.max_attempts))}
-                </span>
-                <span>{t("jobs.progress").replace("{percent}", job.progress)}</span>
-                <time dateTime={job.created_at}>
-                  {new Date(job.created_at).toLocaleString("es-CL")}
-                </time>
-              </div>
-              {job.state === "FAILED" && jobError(job.error) !== "" && (
-                <p className="job-row-error">
-                  {t(jobErrorKey(jobError(job.error)))}{" "}
-                  <code className="job-row-code">{jobError(job.error)}</code>
-                </p>
-              )}
-              {TERMINAL_RETRYABLE.has(job.state) && (
-                <button
-                  type="button"
-                  className="ui-button ui-button--small"
-                  disabled={retry.isPending}
-                  onClick={() => {
-                    setNotice("");
-                    retry.mutate(job.id);
-                  }}
-                >
-                  {retry.isPending ? t("jobs.retrying") : t("jobs.retry")}
-                </button>
-              )}
-            </li>
-          ))}
+          {items.map((job) => {
+            const failure = jobFailure(job.error);
+            const failureKey = failure ? jobErrorKey(failure.detail) : null;
+            const canRetry =
+              TERMINAL_RETRYABLE.has(job.state) &&
+              !(failure?.permanent && failureKey && NON_RETRYABLE.has(failureKey));
+            return (
+              <li key={job.id} className="job-row" data-state={job.state.toLowerCase()}>
+                <div className="job-row-main">
+                  <strong>{typeLabel(job.type)}</strong>
+                  <span className="status-chip" data-status={job.state.toLowerCase()}>
+                    {t(STATE_KEYS[job.state] ?? "jobs.state.QUEUED")}
+                  </span>
+                </div>
+                <div className="job-row-meta">
+                  <span>
+                    {t("jobs.attempt")
+                      .replace("{attempt}", String(job.attempt))
+                      .replace("{max}", String(job.max_attempts))}
+                  </span>
+                  <span>{t("jobs.progress").replace("{percent}", job.progress)}</span>
+                  <time dateTime={job.created_at}>
+                    {new Date(job.created_at).toLocaleString("es-CL")}
+                  </time>
+                </div>
+                {job.state === "FAILED" && failure !== null && failureKey !== null && (
+                  <p className="job-row-error">
+                    {t(failureKey)} <code className="job-row-code">{failure.detail}</code>
+                  </p>
+                )}
+                {canRetry && (
+                  <button
+                    type="button"
+                    className="ui-button ui-button--small"
+                    disabled={retry.isPending}
+                    onClick={() => {
+                      setNotice("");
+                      retry.mutate(job.id);
+                    }}
+                  >
+                    {retry.isPending ? t("jobs.retrying") : t("jobs.retry")}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
