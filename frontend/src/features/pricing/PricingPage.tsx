@@ -672,8 +672,12 @@ function OperationDecision({
       : []
     ).map((position) => [position.position_index, position]),
   );
+  // A delta is only meaningful when both sides share a currency — a
+  // historical operation in another currency shows its own totals instead.
   const diff =
-    boundProject?.pricing_current && boundProject.total_price_gross
+    boundProject?.pricing_current &&
+    boundProject.total_price_gross &&
+    boundProject.currency === operation.currency
       ? Number(operation.project_gross) - Number(boundProject.total_price_gross)
       : null;
   return (

@@ -2125,6 +2125,7 @@ export const messages = {
   "projects.compareChangeAdded": "Agregado",
   "projects.compareChangeRemoved": "Eliminado",
   "projects.compareChangeChanged": "Cambiado",
+  "projects.compareField.position_index": "Orden",
   "projects.compareField.location_tag": "Ubicación",
   "projects.compareField.quantity": "Cantidad",
   "projects.compareField.typology": "Tipología",

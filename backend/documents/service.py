@@ -1885,6 +1885,7 @@ def revision_snapshot(version_id: UUID, org_id: UUID) -> tuple[dict[str, object]
 
 
 _COMPARE_FIELDS = (
+    "position_index",
     "location_tag",
     "quantity",
     "typology",
@@ -2018,7 +2019,7 @@ def compare_versions(
     keys = sorted(
         set(base_positions) | set(head_positions),
         key=lambda key: (
-            (base_positions.get(key) or head_positions[key])["position_index"],
+            (base_positions.get(key) or head_positions.get(key))["position_index"],
             key[0],
         ),
     )

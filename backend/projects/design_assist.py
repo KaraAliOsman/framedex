@@ -410,7 +410,9 @@ def _validate_ops(
             and not isinstance(value, bool)
             and 0 <= value < len(coupling_refs)
         ):
-            return coupling_refs[value]
+            # A stale index may point at a ref removed earlier in the sequence.
+            ref = coupling_refs[value]
+            return ref if ref in state["coupling_refs"] else None
         return None
 
     def reject(item: Any, reason: str) -> dict[str, Any]:
@@ -457,14 +459,16 @@ def _validate_ops(
             else:
                 rejected.append(reject(item, "lado_invalido"))
                 continue
-            # The new member claims the seam's free edge on both sides.
-            outer = state["module_refs"][-1 if item["side"] == "right" else 0]
+            # The seam joins the previous end member's outer edge to the new
+            # member's inner edge — claim both so a later duplicate can't
+            # target the now-occupied seam.
+            new_ref = accepted[-1]["ref"]
             if item["side"] == "right":
-                _claim(outer, "right")
-                state["used_edges"][accepted[-1]["ref"]] = {"left"}
+                _claim(state["module_refs"][-2], "right")
+                state["used_edges"][new_ref] = {"left"}
             else:
-                _claim(outer, "left")
-                state["used_edges"][accepted[-1]["ref"]] = {"right"}
+                _claim(state["module_refs"][1], "left")
+                state["used_edges"][new_ref] = {"right"}
         elif name == "remove_unit":
             ref = module_ref(item.get("module"))
             if ref is not None and len(state["module_refs"]) > 1:

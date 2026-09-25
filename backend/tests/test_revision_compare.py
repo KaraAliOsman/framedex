@@ -249,3 +249,28 @@ def test_compare_flags_manufacturing_drift_same_engineering_hash(
     assert output["positions"][0]["changes"] == [
         {"field": "manufacturing", "before": "", "after": ""}
     ]
+
+
+def test_compare_reports_position_reorder(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A position that keeps its id but moves in the list is a real change —
+    the diff names the order field instead of reporting nothing."""
+    moved = str(uuid4())
+    a, b = str(uuid4()), str(uuid4())
+    output = _compare(
+        monkeypatch,
+        [_position(1, id=a), _position(2, id=moved), _position(3, id=b)],
+        [_position(1, id=a), _position(2, id=b), _position(3, id=moved)],
+        "500000",
+        "500000",
+    )
+    by_index = {entry["position_index"]: entry for entry in output["positions"]}
+    # The two swapped positions each report the order field — the unmoved one
+    # stays out of the diff.
+    assert set(by_index) == {2, 3}
+    assert by_index[3]["change"] == "CHANGED"
+    assert {
+        "field": "position_index",
+        "before": "2",
+        "after": "3",
+    } in by_index[3]["changes"]
+    assert output["summary"]["unchanged"] == 1

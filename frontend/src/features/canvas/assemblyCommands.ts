@@ -838,6 +838,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     title: "cmd.removeSelection",
     keywords: ["eliminar", "quitar", "borrar"],
     shortcut: "del",
+    mutates: true,
     applicable: (ctx) =>
       (selectedModule(ctx) !== null && ctx.product.assembly.modules.length > 1) ||
       selectedCoupling(ctx) !== null ||
@@ -886,6 +887,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     title: "cmd.repeatLast",
     keywords: ["repetir", "último", "otra vez"],
     shortcut: "mod+shift+d",
+    mutates: true,
     applicable: (ctx) =>
       ctx.lastMutation !== null &&
       ctx.lastMutation !== undefined &&
@@ -902,6 +904,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     title: "cmd.undo",
     keywords: ["deshacer", "volver"],
     shortcut: "mod+z",
+    mutates: true,
     applicable: (ctx) => ctx.canUndo === true,
     run: (ctx) => ctx.undo?.(),
   },
@@ -910,6 +913,7 @@ export const ASSEMBLY_COMMANDS: CommandSpec[] = [
     title: "cmd.redo",
     keywords: ["rehacer", "adelante"],
     shortcut: "mod+shift+z",
+    mutates: true,
     applicable: (ctx) => ctx.canRedo === true,
     run: (ctx) => ctx.redo?.(),
   },

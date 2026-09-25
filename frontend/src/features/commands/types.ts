@@ -98,6 +98,9 @@ export interface CommandSpec {
   params?(ctx: CommandContext): CommandParam[];
   /** Listing predicate — absent or true means the command is offered. */
   applicable?(ctx: CommandContext): boolean;
+  /** Mark a `run` command that mutates product state (history, dispatched
+   * removes). While `ctx.disabled` these are withheld like `apply` commands. */
+  mutates?: boolean;
   /** Human preview shown under the palette row / in AI proposals. */
   describe?(args: CommandArgs): string;
   /** Product mutation: returns the next product (never commits itself). */

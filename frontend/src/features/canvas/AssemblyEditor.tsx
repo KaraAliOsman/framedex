@@ -955,11 +955,11 @@ function BayInspector({
             </button>
           </span>
         </label>
-        {favoriteGlass.length > 0 && (
+        {favoriteGlass.some((sku) => glassSkus.includes(sku)) && (
           <div className="recents" aria-label={t("assembly.favoriteGlass")}>
             <span className="recents__label">{t("assembly.favoriteGlass")}</span>
             {favoriteGlass
-              .filter((sku) => sku !== bay.glass_article_sku)
+              .filter((sku) => sku !== bay.glass_article_sku && glassSkus.includes(sku))
               .map((sku) => (
                 <button
                   key={sku}
@@ -974,11 +974,11 @@ function BayInspector({
               ))}
           </div>
         )}
-        {recentGlass.length > 0 && (
+        {recentGlass.some((sku) => glassSkus.includes(sku)) && (
           <div className="recents" aria-label={t("assembly.recentGlass")}>
             <span className="recents__label">{t("assembly.recentGlass")}</span>
             {recentGlass
-              .filter((sku) => sku !== bay.glass_article_sku)
+              .filter((sku) => sku !== bay.glass_article_sku && glassSkus.includes(sku))
               .map((sku) => (
                 <button
                   key={sku}

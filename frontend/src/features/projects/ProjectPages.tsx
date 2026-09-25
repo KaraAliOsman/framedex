@@ -319,6 +319,7 @@ interface ComparePositionEntry {
 }
 
 const COMPARE_FIELD_KEYS: Record<string, TranslationKey> = {
+  position_index: "projects.compareField.position_index",
   location_tag: "projects.compareField.location_tag",
   quantity: "projects.compareField.quantity",
   typology: "projects.compareField.typology",
