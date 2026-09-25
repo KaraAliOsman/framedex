@@ -108,7 +108,7 @@ def _dashboard(org_id: UUID) -> dict:
         {"o": org_id},
     )
     recent = rows(
-        "SELECT code, name, client_name, status "
+        "SELECT id, code, name, client_name, status "
         "FROM public.projects WHERE org_id=%s ORDER BY updated_at DESC LIMIT 5",
         [org_id],
     )
@@ -116,6 +116,9 @@ def _dashboard(org_id: UUID) -> dict:
         "counts": {key: int(value) for key, value in (counts[0] if counts else {}).items()},
         "recent_projects": [
             {
+                # List entries expose their ids — the agent's drill-down
+                # queries are identified by them, not by name or code.
+                "id": str(p["id"]),
                 "code": _cut(p["code"]),
                 "name": _cut(p["name"]),
                 "client": _cut(p["client_name"]),
@@ -128,7 +131,7 @@ def _dashboard(org_id: UUID) -> dict:
 
 def _projects(org_id: UUID) -> dict:
     result = rows(
-        "SELECT p.code, p.name, p.client_name, p.status, "
+        "SELECT p.id, p.code, p.name, p.client_name, p.status, "
         "(SELECT count(*) FROM public.project_positions pp "
         " WHERE pp.project_id=p.id AND pp.org_id=%s) AS positions "
         "FROM public.projects p WHERE p.org_id=%s "
@@ -138,6 +141,7 @@ def _projects(org_id: UUID) -> dict:
     return {
         "projects": [
             {
+                "id": str(p["id"]),
                 "code": _cut(p["code"]),
                 "name": _cut(p["name"]),
                 "client": _cut(p["client_name"]),
@@ -178,7 +182,7 @@ def _payments(org_id: UUID, project_id: UUID) -> dict:
 def _project(org_id: UUID, refs: dict) -> dict:
     project = _project_row(org_id, _ref(refs, "project_id"))
     positions = rows(
-        "SELECT position_index, location_tag, typology, width_mm, height_mm "
+        "SELECT id, position_index, location_tag, typology, width_mm, height_mm "
         "FROM public.project_positions WHERE org_id=%s AND project_id=%s "
         "ORDER BY position_index LIMIT %s",
         [org_id, project["id"], MAX_LIST],
@@ -204,6 +208,7 @@ def _project(org_id: UUID, refs: dict) -> dict:
         "payments": _payments(org_id, project["id"]),
         "positions": [
             {
+                "id": str(p["id"]),
                 "index": int(p["position_index"]),
                 "location": _cut(p["location_tag"]),
                 "typology": _cut(p["typology"]),

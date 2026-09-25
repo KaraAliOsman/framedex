@@ -80,16 +80,29 @@ def get_job(*, org_id: UUID, user_id: UUID, job_id: UUID) -> dict | None:
     return _decode(found[0]) if found else None
 
 
-def list_jobs(*, org_id: UUID, user_id: UUID, limit: int = 30) -> list[dict]:
+def list_jobs(
+    *,
+    org_id: UUID,
+    user_id: UUID,
+    limit: int = 30,
+    before: str | None = None,
+) -> list[dict]:
+    params: list[object] = [str(org_id), str(user_id)]
+    cursor = ""
+    if before:
+        cursor = " AND created_at < %s"
+        params.append(before)
+    params.append(limit)
     return [
         _decode(row)
         for row in rows(
-            "SELECT id, org_id, user_id, surface, refs, goal, state,"
+            "SELECT id, org_id, user_id, surface, refs, goal, state, plan,"
             " artifacts, warnings, result, error_code,"
             " created_at, updated_at, completed_at"
             " FROM public.ai_jobs WHERE org_id = %s AND user_id = %s"
-            " ORDER BY created_at DESC LIMIT %s",
-            [str(org_id), str(user_id), limit],
+            + cursor
+            + " ORDER BY created_at DESC LIMIT %s",
+            params,
         )
     ]
 

@@ -1858,6 +1858,26 @@ def test_record_failure_binds_claimed_generation(monkeypatch):
     assert json.loads(written["params"][-1]) == claimed
 
 
+def test_list_jobs_includes_plan_and_pages_by_cursor(monkeypatch):
+    """The rail serializes plan (required field) and older pages are
+    reachable through the created_at cursor, not dropped past the limit."""
+    from ai_gateway import jobs
+
+    written = {}
+    monkeypatch.setattr(
+        jobs, "rows",
+        lambda sql, params: written.update(sql=sql, params=params) or [],
+    )
+    jobs.list_jobs(org_id=uuid4(), user_id=uuid4(), before="2026-09-20T10:00:00Z")
+    assert " plan," in written["sql"]
+    assert "created_at < %s" in written["sql"]
+    assert written["params"][-2] == "2026-09-20T10:00:00Z"
+
+    written.clear()
+    jobs.list_jobs(org_id=uuid4(), user_id=uuid4())
+    assert "created_at < %s" not in written["sql"]
+
+
 def _agent_client(monkeypatch):
     """Authenticated client whose documentary_scope is a canned resolution."""
     from types import SimpleNamespace

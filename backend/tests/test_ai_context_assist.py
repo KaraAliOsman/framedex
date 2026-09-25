@@ -79,6 +79,7 @@ def test_ask_dashboard_projects_context_into_payload(monkeypatch):
         if "ORDER BY updated_at DESC LIMIT 5" in sql:
             return [
                 {
+                    "id": uuid4(),
                     "code": "OB-1",
                     "name": "Edificio Sur",
                     "client_name": "Concesionaria X",
@@ -104,6 +105,8 @@ def test_ask_dashboard_projects_context_into_payload(monkeypatch):
     assert payload["surface"] == "dashboard"
     assert payload["context"]["counts"]["projects"] == 4
     assert payload["context"]["recent_projects"][0]["code"] == "OB-1"
+    # List entries expose their ids — drill-down queries key on them (§07-C).
+    assert payload["context"]["recent_projects"][0]["id"]
     assert payload["context"]["organization"]["name"] == "Demo Org"
 
 
@@ -209,6 +212,7 @@ def test_ask_actions_allowlist_strips_bad_paths(monkeypatch):
 def test_ask_project_surface_builds_projected_context(monkeypatch):
     org_id = uuid4()
     project_id = uuid4()
+    position_id = uuid4()
 
     def fake_rows(sql, params=None):
         if "tenancy_organizations" in sql:
@@ -230,6 +234,7 @@ def test_ask_project_surface_builds_projected_context(monkeypatch):
         if "FROM public.project_positions" in sql:
             return [
                 {
+                    "id": position_id,
                     "position_index": 1,
                     "location_tag": "Fachada",
                     "typology": "VENTANA",
@@ -263,6 +268,34 @@ def test_ask_project_surface_builds_projected_context(monkeypatch):
     assert ctx["payments"]["payments_collected"] == "50.00"
     assert ctx["latest_version"]["revision"] == "REV-A"
     assert ctx["positions"][0]["typology"] == "VENTANA"
+    assert ctx["positions"][0]["id"] == str(position_id)
+
+
+def test_projects_list_context_exposes_drilldown_ids(monkeypatch):
+    """§07-C — a list result without ids can never be drilled into: the
+    observed-ref guard would reject every follow-up query on those rows."""
+    org_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [_org_row()]
+        if "FROM public.projects p" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "OB-1",
+                    "name": "Edificio Sur",
+                    "client_name": "Concesionaria X",
+                    "status": "QUOTED",
+                    "positions": 3,
+                }
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "projects", {})
+    assert ctx["projects"][0]["id"] == str(project_id)
 
 
 def test_mock_provider_context_assist_shape():

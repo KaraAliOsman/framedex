@@ -99,6 +99,8 @@ function stateLabel(state: string): string {
   return key ? t(key as never) : state;
 }
 
+const JOBS_PAGE_SIZE = 30;
+
 function artifactKindLabel(kind: string | undefined): string {
   const key = kind ? ARTIFACT_KIND_LABELS[kind] : undefined;
   return key ? t(key as never) : (kind ?? "artefacto");
@@ -109,11 +111,17 @@ function JobRail({
   selected,
   onSelect,
   onNew,
+  hasMore,
+  loadingMore,
+  onLoadMore,
 }: {
   jobs: AiJob[];
   selected: string | null;
   onSelect: (id: string) => void;
   onNew: () => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
 }): JSX.Element {
   return (
     <aside className="aiws-rail" aria-label={t("aiws.jobs")}>
@@ -150,6 +158,16 @@ function JobRail({
           ))}
         </ul>
       )}
+      {hasMore ? (
+        <button
+          type="button"
+          className="ui-button ui-button--small aiws-more"
+          disabled={loadingMore}
+          onClick={onLoadMore}
+        >
+          {t("aiws.loadMore")}
+        </button>
+      ) : null}
     </aside>
   );
 }
@@ -291,6 +309,9 @@ export function AssistantWorkspacePage(): JSX.Element {
   const [newSurface, setNewSurface] = useState("dashboard");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [olderJobs, setOlderJobs] = useState<AiJob[]>([]);
+  const [hasMoreJobs, setHasMoreJobs] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
@@ -300,7 +321,7 @@ export function AssistantWorkspacePage(): JSX.Element {
     queryKey: ["ai", "jobs", orgId],
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const response = await aiJobList(headers);
+      const response = await aiJobList(undefined, headers);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       return response.data as unknown as AiJob[];
     },
@@ -338,7 +359,9 @@ export function AssistantWorkspacePage(): JSX.Element {
         // Follow-ups carry the live product on position jobs — design ops
         // validate against the current design, not a snapshot from creation.
         const product =
-          job.surface === "position" && bridge ? designAssistProduct(bridge.product as ProductJson) : null;
+          job.surface === "position" && bridge
+            ? designAssistProduct(bridge.product as ProductJson)
+            : null;
         const response = await aiJobMessageCreate(
           job.id,
           { message, ...(product ? { product } : {}) },
@@ -383,11 +406,37 @@ export function AssistantWorkspacePage(): JSX.Element {
     }
   }
 
+  const firstJobs = useMemo(() => jobsQuery.data ?? [], [jobsQuery.data]);
+  const jobs = useMemo(() => {
+    const seen = new Set(firstJobs.map((j) => j.id));
+    return [...firstJobs, ...olderJobs.filter((j) => !seen.has(j.id))];
+  }, [firstJobs, olderJobs]);
+  const hasMore = olderJobs.length > 0 ? hasMoreJobs : firstJobs.length === JOBS_PAGE_SIZE;
+
+  async function loadOlder(): Promise<void> {
+    const last = jobs[jobs.length - 1];
+    if (!last) return;
+    setLoadingMore(true);
+    try {
+      const response = await aiJobList({ before: last.created_at }, headers);
+      if (response.status === 200) {
+        const page = response.data as unknown as AiJob[];
+        setOlderJobs((prev) => [...prev, ...page]);
+        setHasMoreJobs(page.length === JOBS_PAGE_SIZE);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   return (
     <section className="aiws" aria-busy={busy}>
       <JobRail
-        jobs={jobsQuery.data ?? []}
+        jobs={jobs}
         selected={selectedId}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={() => void loadOlder()}
         onSelect={(id) => {
           setArtifact(null);
           setSearchParams({ job: id });

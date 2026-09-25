@@ -557,7 +557,14 @@ function ProjectHeader({
     return () => window.clearTimeout(id);
   }, [soonestExpiry]);
   const steps = commercialSteps(project, approvalsList, payments.data, now);
-  const action = projectNextAction(project, payments.data, canWrite, canRelease, approvalsList, now);
+  const action = projectNextAction(
+    project,
+    payments.data,
+    canWrite,
+    canRelease,
+    approvalsList,
+    now,
+  );
   return (
     <div className="project-head">
       <div className="project-head__row">

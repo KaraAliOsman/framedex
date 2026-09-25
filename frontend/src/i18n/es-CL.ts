@@ -857,6 +857,7 @@ export const messages = {
   "dashboard.deliveriesToday": "Entregas de hoy",
   "dashboard.ordersHold": "Órdenes en espera",
   "dashboard.quotesWaiting": "Cotizaciones por aprobar",
+  "dashboard.quotesStale": "Enlaces de cotización vencidos",
   "dashboard.stepsBlocked": "Pasos de producción bloqueados",
   "dashboard.jobsFailed": "Trabajos fallidos",
   "dashboard.approvalsPending": "Aprobaciones de cliente pendientes",
@@ -875,6 +876,7 @@ export const messages = {
   "attention.action.retryJobs": "Reintentar",
   "attention.action.viewApproval": "Ver aprobación",
   "attention.action.sendQuote": "Enviar",
+  "attention.action.reshare": "Reenviar enlace",
   "attention.action.quoteNow": "Cotizar",
   "jobs.title": "Trabajos en segundo plano",
   "jobs.subtitle": "Extracciones, compilaciones y generaciones corriendo para tu organización.",
@@ -2066,6 +2068,7 @@ export const messages = {
   "aiws.title": "Asistente",
   "aiws.jobs": "Trabajos",
   "aiws.new": "Nuevo",
+  "aiws.loadMore": "Ver trabajos anteriores",
   "aiws.jobsEmpty": "Todavía no hay trabajos. Lo que el asistente haga queda guardado aquí.",
   "aiws.hint":
     "Empieza un trabajo nuevo o elige uno de la lista. Las consultas, planes y artefactos quedan aquí, no se pierden en el chat.",

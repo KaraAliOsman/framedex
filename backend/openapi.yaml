@@ -245,6 +245,14 @@ paths:
     get:
       operationId: ai_job_list
       description: The caller's recent AI jobs — the workspace's left rail.
+      parameters:
+      - in: query
+        name: before
+        schema:
+          type: string
+          format: date-time
+        description: 'Cursor: return jobs created before this timestamp (the last
+          row''s created_at) — older pages of the job rail.'
       tags:
       - ai
       security:

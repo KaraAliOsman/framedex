@@ -121,9 +121,26 @@ def _summary(org_id: UUID) -> dict[str, Any]:
                      ON v.id = a.project_version_id AND v.org_id = a.org_id
                    WHERE a.org_id = p.org_id AND a.project_id = p.id
                      AND v.revision_code = p.current_revision))
-                AS quotes_unsent
+                AS quotes_unsent,
+            (SELECT count(*) FROM public.projects p
+             WHERE p.org_id = %s AND p.status = 'QUOTED'
+               AND EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision)
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision
+                     AND (a.status = 'APPROVED'
+                          OR (a.status = 'PENDING' AND a.expires_at > now()))))
+                AS quotes_stale
         """,
-        [str(org_id)] * 7,
+        [str(org_id)] * 8,
     )
     lead = one(
         """

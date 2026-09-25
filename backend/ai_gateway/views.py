@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -234,13 +234,24 @@ class AiJobCollectionView(APIView):
 
     @extend_schema(
         operation_id="ai_job_list",
+        parameters=[
+            OpenApiParameter(
+                "before", OpenApiTypes.DATETIME, OpenApiParameter.QUERY,
+                description="Cursor: return jobs created before this timestamp "
+                "(the last row's created_at) — older pages of the job rail.",
+            ),
+        ],
         responses={200: AiJobSerializer(many=True), **ERRORS},
         tags=["ai"],
     )
     def get(self, request):
         with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
             return Response(
-                jobs.list_jobs(org_id=org_id, user_id=token.user_id)
+                jobs.list_jobs(
+                    org_id=org_id,
+                    user_id=token.user_id,
+                    before=request.query_params.get("before"),
+                )
             )
 
 

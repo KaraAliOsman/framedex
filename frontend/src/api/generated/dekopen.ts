@@ -16,6 +16,7 @@ import type {
   AiInvokeResponse,
   AiJob,
   AiJobDetail,
+  AiJobListParams,
   AiJobMessageRequest,
   AllocationRequestRequest,
   AllocationResponse,
@@ -510,17 +511,30 @@ export type aiJobListResponseError = (
 
 export type aiJobListResponse = aiJobListResponseSuccess | aiJobListResponseError;
 
-export const getAiJobListUrl = () => {
-  return `/api/v1/ai/jobs/`;
+export const getAiJobListUrl = (params?: AiJobListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/jobs/?${stringifiedParams}`
+    : `/api/v1/ai/jobs/`;
 };
 
 /**
  * The caller's recent AI jobs — the workspace's left rail.
  */
 export const aiJobList = async (
+  params?: AiJobListParams,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<aiJobListResponse> => {
-  return apiMutator<aiJobListResponse>(getAiJobListUrl(), {
+  return apiMutator<aiJobListResponse>(getAiJobListUrl(params), {
     ...options,
     method: "GET",
   });

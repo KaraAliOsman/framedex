@@ -43,6 +43,7 @@ export * from "./aiJob";
 export * from "./aiJobDetail";
 export * from "./aiJobDetailRefs";
 export * from "./aiJobDetailResult";
+export * from "./aiJobListParams";
 export * from "./aiJobMessageRequest";
 export * from "./aiJobMessageRequestProduct";
 export * from "./aiJobRefs";

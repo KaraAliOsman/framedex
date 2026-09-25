@@ -38,6 +38,15 @@ export function attentionEntries(ops: OperationalSummary | undefined): Attention
       warn: false,
     },
     {
+      // Every current-revision link is expired or declined — the client can't
+      // open any of them, so the project needs a fresh share.
+      key: "dashboard.quotesStale",
+      action: "attention.action.reshare",
+      count: Number(prep.quotes_stale ?? 0),
+      to: "/projects?status=QUOTED",
+      warn: false,
+    },
+    {
       key: "dashboard.stepsBlocked",
       action: "attention.action.unblock",
       count: Number(prep.steps_blocked ?? 0),
