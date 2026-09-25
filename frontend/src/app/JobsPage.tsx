@@ -27,7 +27,6 @@ interface JobFailure {
   code: string;
   /** The domain failure — `error.detail` for permanent wraps, else the code. */
   detail: string;
-  permanent: boolean;
 }
 
 function jobFailure(error: JobRun["error"]): JobFailure | null {
@@ -35,13 +34,9 @@ function jobFailure(error: JobRun["error"]): JobFailure | null {
   if (typeof error === "object" && "code" in (error as Record<string, unknown>)) {
     const record = error as Record<string, unknown>;
     const code = String(record.code);
-    return {
-      code,
-      detail: String(record.detail ?? code),
-      permanent: code === "job_permanent_error",
-    };
+    return { code, detail: String(record.detail ?? code) };
   }
-  return { code: "", detail: String(error), permanent: false };
+  return { code: "", detail: String(error) };
 }
 
 /** Backend failure codes grouped into operator-facing recovery language; the
@@ -63,15 +58,11 @@ function jobErrorKey(code: string): TranslationKey {
   return "jobs.fail.generic";
 }
 
-/** Permanent categories where re-running the same payload cannot help — the
- * recovery is a different action (fix access / re-emit), so no retry button. */
-const NON_RETRYABLE: ReadonlySet<TranslationKey> = new Set([
-  "jobs.fail.notFound",
-  "jobs.fail.permission",
-]);
-
 /** Background work made visible: what ran, what's running, what failed —
- * with the recovery action (reintentar) next to the failure it fixes. */
+ * with the recovery action (reintentar) next to the failure it fixes.
+ * Retry stays available on every terminal job: the endpoint reauthorizes
+ * the current actor, so a failure whose cause was fixed (restored access,
+ * repaired storage) recovers through it. */
 export function JobsPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   const [params, setParams] = useSearchParams();
@@ -161,9 +152,6 @@ export function JobsPage(): JSX.Element {
           {items.map((job) => {
             const failure = jobFailure(job.error);
             const failureKey = failure ? jobErrorKey(failure.detail) : null;
-            const canRetry =
-              TERMINAL_RETRYABLE.has(job.state) &&
-              !(failure?.permanent && failureKey && NON_RETRYABLE.has(failureKey));
             return (
               <li key={job.id} className="job-row" data-state={job.state.toLowerCase()}>
                 <div className="job-row-main">
@@ -188,7 +176,7 @@ export function JobsPage(): JSX.Element {
                     {t(failureKey)} <code className="job-row-code">{failure.detail}</code>
                   </p>
                 )}
-                {canRetry && (
+                {TERMINAL_RETRYABLE.has(job.state) && (
                   <button
                     type="button"
                     className="ui-button ui-button--small"
