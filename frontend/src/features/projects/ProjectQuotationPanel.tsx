@@ -308,8 +308,9 @@ function reconciledHandlePolicy(
 /** A requirement with no stored intent must not pretend the displayed
  * midpoint is saved: seed it so the visible height IS what Guardar/Emitir
  * persists — the estimator's click stays the confirmation. Requirements
- * without computable bounds keep an empty height (their pending chip still
- * shows until the estimator types a value). */
+ * whose bounds cannot be resolved keep NO intent at all (a blank height
+ * fails the save serializer and would block even quote-only emission);
+ * their pending chip still shows until the estimator types a value. */
 function seedHandleIntents(
   position: DocumentaryPreparationPosition,
 ): DocumentaryPreparationPosition {
@@ -324,14 +325,12 @@ function seedHandleIntents(
     const bounds = heightBounds(position, requirement, reference);
     const boundMin = bounds ? parseDecimal(bounds[0]) : null;
     const boundMax = bounds ? parseDecimal(bounds[1]) : null;
+    if (boundMin === null || boundMax === null) continue;
     intents.push({
       bay_id: requirement.bay_id,
       leaf_id: requirement.leaf_id,
       handle_domain_slot: requirement.handle_domain_slot,
-      requested_height_mm:
-        boundMin !== null && boundMax !== null
-          ? formatDecimal(midpointDecimal(boundMin, boundMax))
-          : "",
+      requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
       vertical_reference: reference,
     });
     seeded = true;

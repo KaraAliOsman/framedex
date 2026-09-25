@@ -69,16 +69,26 @@ def insert_job(
     return existing, False
 
 
-def requeue_terminal(*, job_id: UUID, run_after: datetime) -> dict[str, object] | None:
+def requeue_terminal(
+    *,
+    job_id: UUID,
+    payload: dict[str, object],
+    max_attempts: int,
+    run_after: datetime,
+    created_by: UUID | None,
+) -> dict[str, object] | None:
     """Requeue a terminally failed/canceled job in place — a replayed
-    idempotent enqueue restarts the same row with a fresh attempt budget.
+    idempotent enqueue restarts the same row carrying the *new* request's
+    validated payload, retry budget and actor, with a fresh attempt budget.
     Returns None when the row already left the terminal states (another
     request or the worker won the race), so the caller dedupes instead."""
     record = rows(
         """
         UPDATE public.job_runs
         SET state = 'QUEUED',
+            payload = %s::jsonb,
             attempt = 0,
+            max_attempts = %s,
             progress = 0,
             error = NULL,
             result = NULL,
@@ -87,11 +97,18 @@ def requeue_terminal(*, job_id: UUID, run_after: datetime) -> dict[str, object] 
             run_after = %s,
             started_at = NULL,
             completed_at = NULL,
+            created_by = %s,
             updated_at = NOW()
         WHERE id = %s AND state IN ('FAILED', 'CANCELED')
         RETURNING *
         """,
-        [run_after, str(job_id)],
+        [
+            json_text(payload),
+            max_attempts,
+            run_after,
+            str(created_by) if created_by else None,
+            str(job_id),
+        ],
     )
     return _decode(record[0]) if record else None
 

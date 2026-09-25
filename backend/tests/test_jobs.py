@@ -355,13 +355,19 @@ def test_list_view_passes_filters(monkeypatch) -> None:
 
 def test_enqueue_requeues_a_terminal_row(monkeypatch) -> None:
     register_demo()
-    failed = {"id": uuid4(), "state": "FAILED"}
-    requeued = {"id": failed["id"], "state": "QUEUED"}
+    failed = {"id": uuid4(), "state": "FAILED", "payload": {"amount": 1}}
+    requeued = {"id": failed["id"], "state": "QUEUED", "payload": {"amount": 3}}
     calls: dict[str, object] = {}
     monkeypatch.setattr(repository, "insert_job", lambda **kwargs: (failed, False))
+    caller = uuid4()
 
-    def fake_requeue(*, job_id, run_after):
-        calls["job_id"] = job_id
+    def fake_requeue(*, job_id, payload, max_attempts, run_after, created_by):
+        calls.update(
+            job_id=job_id,
+            payload=payload,
+            max_attempts=max_attempts,
+            created_by=created_by,
+        )
         return requeued
 
     monkeypatch.setattr(repository, "requeue_terminal", fake_requeue)
@@ -370,11 +376,41 @@ def test_enqueue_requeues_a_terminal_row(monkeypatch) -> None:
         job_type="demo.echo",
         payload={"amount": 3},
         idempotency_key="k-9",
+        created_by=caller,
         role="ESTIMATOR",
     )
     assert job is requeued
     assert created is True
     assert calls["job_id"] == failed["id"]
+    # The retry carries the new request's validated payload and actor —
+    # corrected inputs under the retrier's identity, never the dead row's.
+    assert calls["payload"] == {"amount": 3}
+    assert calls["created_by"] == caller
+
+
+def test_enqueue_lost_requeue_race_returns_live_row(monkeypatch) -> None:
+    register_demo()
+    failed = {"id": uuid4(), "state": "FAILED"}
+    live = {"id": failed["id"], "state": "QUEUED"}
+    monkeypatch.setattr(repository, "insert_job", lambda **kwargs: (failed, False))
+    monkeypatch.setattr(repository, "requeue_terminal", lambda **kwargs: None)
+    fetched: dict[str, object] = {}
+
+    def spy(*, org_id, job_type, key):
+        fetched["key"] = key
+        return live
+
+    monkeypatch.setattr(repository, "get_job_by_key", spy)
+    job, created = service.enqueue(
+        org_id=uuid4(),
+        job_type="demo.echo",
+        payload={"amount": 3},
+        idempotency_key="k-9",
+        role="ESTIMATOR",
+    )
+    assert job is live
+    assert created is False
+    assert fetched["key"] == "k-9"
 
 
 def test_enqueue_keeps_terminal_success_deduped(monkeypatch) -> None:

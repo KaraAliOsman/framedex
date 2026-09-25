@@ -69,8 +69,9 @@ def enqueue(
         created_by=created_by,
     )
     # A replayed enqueue asks for a runnable job: a terminal row no longer
-    # satisfies that, so requeue it in place. SUCCEEDED stays deduped — the
-    # original result is the answer.
+    # satisfies that, so requeue it in place with this request's payload and
+    # actor — a retry with corrected inputs runs the correction, not the old
+    # row. SUCCEEDED stays deduped — the original result is the answer.
     job_id = job.get("id")
     if (
         not created
@@ -80,10 +81,19 @@ def enqueue(
     ):
         requeued = repository.requeue_terminal(
             job_id=UUID(str(job_id)),
+            payload=validated,
+            max_attempts=max_attempts,
             run_after=run_after or datetime.now(timezone.utc),
+            created_by=created_by,
         )
         if requeued is not None:
             return requeued, True
+        # Lost the race: another request or the worker already moved the row.
+        # Return its live state so the caller polls the running retry instead
+        # of treating the pre-update FAILED snapshot as terminal.
+        live = repository.get_job_by_key(org_id=org_id, job_type=job_type, key=idempotency_key)
+        if live is not None:
+            return live, False
     return job, created
 
 
