@@ -33,7 +33,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatDate, formatMoney } from "../money";
-import { formatRevision } from "../../format";
+import { formatDateTime, formatRevision } from "../../format";
 import { projectNameWrite } from "./projectNames";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
@@ -261,11 +261,14 @@ function ProjectMetadataForm({
             </select>
           </label>
         )}
-        {fields.map(([name, label, type, maxLength]) => {
+        {/* Required fields first and marked; the nine optional commercial
+         * fields collapse so the create flow reads as a step, not a wall
+         * (review m11). Details opens automatically when stored values exist. */}
+        {fields.slice(0, 2).map(([name, label, type, maxLength]) => {
           const props = {
             name,
             value: draft.value[name] ?? "",
-            required: name === "name" || name === "client_name",
+            required: true,
             maxLength,
             onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
               onChange({
@@ -280,6 +283,30 @@ function ProjectMetadataForm({
             </label>
           );
         })}
+        <details
+          className="project-metadata__extra"
+          open={fields.slice(2).some(([key]) => (draft.value[key] ?? "") !== "")}
+        >
+          <summary>{t("projects.moreFields")}</summary>
+          {fields.slice(2).map(([name, label, type, maxLength]) => {
+            const props = {
+              name,
+              value: draft.value[name] ?? "",
+              maxLength,
+              onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+                onChange({
+                  ...draft,
+                  value: { ...draft.value, [name]: event.target.value },
+                }),
+            };
+            return (
+              <label key={name}>
+                {t(label)}
+                {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
+              </label>
+            );
+          })}
+        </details>
         <button type="submit">{t("projects.save")}</button>
       </fieldset>
       <button type="button" disabled={disabled} onClick={onCancel}>
@@ -1250,7 +1277,11 @@ function ProjectWorkspace({
         />
       ) : (
         <div className="projects-actions">
-          {project && <Link to="/projects">{t("projects.back")}</Link>}
+          {project && (
+            <Link className="ui-backlink ui-backlink--back" to="/projects">
+              {t("projects.back")}
+            </Link>
+          )}
           {editable && (
             <button
               disabled={disabled}
@@ -1320,7 +1351,7 @@ function ProjectWorkspace({
                     <dt>{t("projects.updated")}</dt>
                     <dd>
                       <time dateTime={project.updated_at}>
-                        {new Date(project.updated_at).toLocaleString("es-CL")}
+                        {formatDateTime(project.updated_at)}
                       </time>
                     </dd>
                   </div>
@@ -1590,9 +1621,7 @@ function ProjectWorkspace({
                     <td>{t(statuses[item.status])}</td>
                     <td>{item.position_count}</td>
                     <td>
-                      <time dateTime={item.updated_at}>
-                        {new Date(item.updated_at).toLocaleString("es-CL")}
-                      </time>
+                      <time dateTime={item.updated_at}>{formatDateTime(item.updated_at)}</time>
                     </td>
                     <td>
                       {item.pricing_current

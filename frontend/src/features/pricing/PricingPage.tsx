@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { projectsList, projectsRetrieve } from "../../api/generated/dekopen";
 
 import type { PriceResponse, ProjectResponse } from "../../api/generated/models";
+import { formatDateTime } from "../../format";
 import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { actionErrorDetail } from "../errors";
@@ -50,6 +51,25 @@ const optionLabels: Record<string, Parameters<typeof t>[0]> = {
 function optionLabel(value: string): string {
   const key = optionLabels[value];
   return key ? t(key) : value;
+}
+/** The seeded DEFAULT context is a real value, not a display string — render
+ * the operator-facing label everywhere it surfaces (review m2). */
+function contextLabel(value: unknown): string {
+  return value === "DEFAULT" ? t("pricing.contextDefault") : String(value);
+}
+
+const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})/;
+/** Stored values are ISO; operators read DD-MM-AAAA everywhere else in the
+ * product. Render the business format, keep the raw value for submission. */
+function renderFieldValue(field: Field, value: unknown): string {
+  if (value === undefined || value === null || value === "") return "—";
+  const text = String(value);
+  if (field.type === "date") {
+    const match = ISO_DAY.exec(text);
+    if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  }
+  if (field.name === "created_at") return formatDateTime(text);
+  return text;
 }
 type Field = {
   name: string;
@@ -198,7 +218,11 @@ function CommercialWorkspace({
   const request = usePricingRequest(orgId);
   return (
     <section className="pricing-page">
-      {projectId && <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>}
+      {projectId && (
+        <Link className="ui-backlink ui-backlink--back" to={`/projects/${projectId}`}>
+          {t("projects.back")}
+        </Link>
+      )}
       <CommercialOperations request={request} owner={owner} boundProjectId={projectId} />
     </section>
   );
@@ -348,10 +372,9 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 {String(
                   item.supplier_name ??
                     item.sku ??
-                    item.context_code ??
-                    item.source ??
-                    item.entity ??
-                    t("pricing.rules"),
+                    (item.context_code !== undefined && item.context_code !== null
+                      ? contextLabel(item.context_code)
+                      : (item.source ?? item.entity ?? t("pricing.rules"))),
                 )}
               </strong>
               <dl>
@@ -363,7 +386,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 ).map((field) => (
                   <div key={field.name}>
                     <dt>{t(field.label)}</dt>
-                    <dd>{String(item[field.name] ?? "—")}</dd>
+                    <dd>{renderFieldValue(field, item[field.name])}</dd>
                   </div>
                 ))}
               </dl>
@@ -397,7 +420,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                       <option key={String(row.id)} value={String(row.id)}>
                         {field.name === "cost_list_id"
                           ? `${row.supplier_name} · ${row.currency} · ${row.valid_from}`
-                          : `${row.context_code} · ${optionLabel(String(row.typology))} · ${optionLabel(String(row.pricing_mode))}`}
+                          : `${contextLabel(row.context_code)} · ${optionLabel(String(row.typology))} · ${optionLabel(String(row.pricing_mode))}`}
                       </option>
                     ))}
                   </select>
@@ -731,9 +754,7 @@ function OperationDecision({
         )}
         <span className="operation-decision__meta">
           {operation.revision_code} · {t("pricing.discount")} {operation.discount_pct} ·{" "}
-          <time dateTime={operation.created_at}>
-            {new Date(operation.created_at).toLocaleString("es-CL")}
-          </time>
+          <time dateTime={operation.created_at}>{formatDateTime(operation.created_at)}</time>
         </span>
       </header>
 
@@ -812,7 +833,7 @@ function OperationDecision({
             : operation.requested_by.slice(0, 8)
           : "—"}
         {operation.approved_at &&
-          ` · ${t("pricing.auditDecided")} ${new Date(operation.approved_at).toLocaleString("es-CL")}`}
+          ` · ${t("pricing.auditDecided")} ${formatDateTime(operation.approved_at)}`}
       </p>
 
       <div className="operation-decision__actions">
@@ -1197,8 +1218,7 @@ function CommercialOperations({
                 </span>
               </p>
               <p className="operation-history__meta">
-                {item.revision_code} · {item.reason} ·{" "}
-                {new Date(item.created_at).toLocaleString("es-CL")}
+                {item.revision_code} · {item.reason} · {formatDateTime(item.created_at)}
               </p>
               <button
                 type="button"

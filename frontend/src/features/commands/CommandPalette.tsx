@@ -6,6 +6,7 @@ import { ApiError } from "../../api/apiMutator";
 import { globalSearch } from "../../api/generated/dekopen";
 import type { SearchResult } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { MOD_K_HINT } from "../../platform";
 import { useCommandSurface } from "./registry";
 import type { CommandParam, ResolvedCommand } from "./types";
 
@@ -262,7 +263,7 @@ export function CommandPalette({
             }}
             onKeyDown={onInputKeyDown}
           />
-          <kbd>Ctrl K</kbd>
+          <kbd>{MOD_K_HINT}</kbd>
         </div>
         {pending && currentParam ? (
           <ul className="command-palette-list" role="listbox">

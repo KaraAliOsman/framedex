@@ -5,7 +5,7 @@ import { ApiError } from "../../api/apiMutator";
 import { aiAsk } from "../../api/generated/dekopen";
 import type { AiAskResponse } from "../../api/generated/models/aiAskResponse";
 import { t } from "../../i18n/es-CL";
-import { AgentBody } from "./AgentBody";
+import { AgentBody, SURFACE_LABELS } from "./AgentBody";
 import { useAssistantContext } from "./assistantContext";
 import "./assistant.css";
 
@@ -130,7 +130,7 @@ export function AskDekopen({
               </button>
             </span>
             <span className="ask-dock__surface" title={t("ask.surfaceHint")}>
-              {surface}
+              {SURFACE_LABELS[surface] ?? surface}
             </span>
             <button
               type="button"

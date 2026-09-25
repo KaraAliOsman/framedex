@@ -57,8 +57,9 @@
   font-weight: 600;
 }
 
+/* Clear-filters reads as a control, not a placeholder — same solid chrome as
+ * the preset filters, de-emphasized by color only (review m12). */
 .production-filter-clear {
-  border-style: dashed;
   color: var(--theme-text);
 }
 

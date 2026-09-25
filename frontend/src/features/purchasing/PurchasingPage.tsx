@@ -7,7 +7,7 @@ import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
-import { formatRevision } from "../../format";
+import { formatDateTime, formatRevision } from "../../format";
 import "./purchasing.css";
 
 type OrderType =
@@ -394,7 +394,9 @@ function PurchasingWorkspace({
       <header>
         <h1>{t("purchasing.title")}</h1>
         <p>{t("purchasing.subtitle")}</p>
-        <Link to="/projects">{t("purchasing.workshop")}</Link>
+        <Link className="ui-backlink ui-backlink--back" to="/projects">
+          {t("purchasing.workshop")}
+        </Link>
       </header>
       {message && <p role="alert">{message}</p>}
       {busy && <p role="status">{t("purchasing.loading")}</p>}
@@ -410,10 +412,7 @@ function PurchasingWorkspace({
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.project_code} · {formatRevision(item.revision_code)} ·{" "}
-                {new Date(item.emitted_at).toLocaleString("es-CL", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
+                {formatDateTime(item.emitted_at)}
               </option>
             ))}
           </select>

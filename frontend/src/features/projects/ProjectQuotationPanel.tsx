@@ -30,7 +30,7 @@ import type {
   WorkshopGlassTarget,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { formatRevision } from "../../format";
+import { formatDateTime, formatRevision } from "../../format";
 import {
   addDecimal,
   compareDecimal,
@@ -1660,9 +1660,7 @@ export function ProjectQuotationPanel({
             {project.versions?.map((version) => (
               <li key={version.id}>
                 <strong>{formatRevision(version.revision_code)}</strong>
-                <time dateTime={version.emitted_at}>
-                  {new Date(version.emitted_at).toLocaleString("es-CL")}
-                </time>
+                <time dateTime={version.emitted_at}>{formatDateTime(version.emitted_at)}</time>
                 <span>
                   {t(
                     version.documentary_complete

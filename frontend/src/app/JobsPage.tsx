@@ -7,6 +7,7 @@ import { jobsList, jobsRetry } from "../api/generated/dekopen";
 import type { JobRun } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { jobErrorKey } from "../features/jobs/jobError";
+import { formatDateTime } from "../format";
 import { EmptyState } from "../ui";
 import { t, tDynamic, type TranslationKey } from "../i18n/es-CL";
 
@@ -164,9 +165,7 @@ export function JobsPage(): JSX.Element {
                       .replace("{max}", String(job.max_attempts))}
                   </span>
                   <span>{t("jobs.progress").replace("{percent}", job.progress)}</span>
-                  <time dateTime={job.created_at}>
-                    {new Date(job.created_at).toLocaleString("es-CL")}
-                  </time>
+                  <time dateTime={job.created_at}>{formatDateTime(job.created_at)}</time>
                 </div>
                 {job.state === "FAILED" && failure !== null && failureKey !== null && (
                   <p className="job-row-error">

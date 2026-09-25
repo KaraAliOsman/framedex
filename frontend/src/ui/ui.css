@@ -27,6 +27,25 @@ button.ui-button {
   border-color: var(--theme-border-strong);
 }
 
+/* Tertiary navigation links ("Volver al proyecto", "Ver todos") — quiet
+ * chrome, never default-browser blue (review m5). */
+a.ui-backlink {
+  align-items: center;
+  color: var(--theme-text-muted);
+  display: inline-flex;
+  font-size: var(--text-s);
+  text-decoration: none;
+}
+
+a.ui-backlink--back::before {
+  content: "‹";
+  margin-right: 0.125rem;
+}
+
+a.ui-backlink:hover {
+  color: var(--theme-text-primary);
+}
+
 .ui-button--primary {
   background: var(--theme-accent);
   border-color: var(--theme-accent);

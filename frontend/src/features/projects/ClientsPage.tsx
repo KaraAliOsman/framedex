@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
@@ -15,7 +15,7 @@ import type { ClientResponse, ProjectResponse } from "../../api/generated/models
 import type { PatchedClientUpdateRequest } from "../../api/generated/models/patchedClientUpdateRequest";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
-import { useConfirm } from "../../ui";
+import { DeniedState, useConfirm } from "../../ui";
 import "./projects.css";
 
 const clientFields = [
@@ -88,7 +88,7 @@ export function ClientsPage(): JSX.Element {
   const org = auth.me?.active_organization;
 
   if (!org || !["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role)) {
-    return <p role="alert">{t("projects.denied")}</p>;
+    return <DeniedState reason={t("projects.denied")} />;
   }
   return (
     <ClientsWorkspace
@@ -101,15 +101,30 @@ export function ClientsPage(): JSX.Element {
 
 function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolean }): JSX.Element {
   const confirm = useConfirm();
+  const navigate = useNavigate();
+  const { id: routeClientId } = useParams();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  // /clients/:id deep-links straight to a client's detail — selection mirrors
+  // the route so the address bar and the shell rail stay truthful (review m10).
+  const [selected, setSelected] = useState<string | null>(routeClientId ?? null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const lifetime = useRef<AbortController | null>(null);
+
+  const selectClient = (clientId: string | null) => {
+    setSelected(clientId);
+    navigate(clientId ? `/clients/${clientId}` : "/clients");
+  };
+
+  // Browser back/forward or a pasted link changes the route first — selection
+  // follows it, so the detail pane never disagrees with the address bar.
+  useEffect(() => {
+    setSelected(routeClientId ?? null);
+  }, [routeClientId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -268,7 +283,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
             onClick={() => {
               setCreating(true);
               setEditing(null);
-              setSelected(null);
+              selectClient(null);
               setDraft(empty());
             }}
           >
@@ -330,7 +345,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
         <div className="clients-desk">
           <div className="clients-list">
             <label className="ui-field">
-              <span>{t("projects.search")}</span>
+              <span>{t("clients.search")}</span>
               <input value={search} onChange={(event) => setSearch(event.target.value)} />
             </label>
             <ul>
@@ -343,15 +358,16 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                       type="button"
                       className={`clients-row${active ? " is-active" : ""}`}
                       aria-current={active ? "true" : undefined}
-                      onClick={() => setSelected(item.id)}
+                      onClick={() => selectClient(item.id)}
                     >
                       <span className="clients-row-name">{item.name}</span>
                       <span className="clients-row-meta">{item.rut || item.email || "—"}</span>
                       <span className="clients-row-meta">
-                        {t("clients.projectsCount").replace(
-                          "{count}",
-                          String(clientProjects.length),
-                        )}
+                        {t(
+                          clientProjects.length === 1
+                            ? "clients.projectsCountOne"
+                            : "clients.projectsCount",
+                        ).replace("{count}", String(clientProjects.length))}
                         {" · "}
                         <time dateTime={lastActivity(item, clientProjects)}>
                           {new Date(lastActivity(item, clientProjects)).toLocaleDateString("es-CL")}

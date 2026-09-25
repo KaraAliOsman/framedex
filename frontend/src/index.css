@@ -219,6 +219,18 @@ a:focus-visible {
   padding: 0;
 }
 
+/* Steps read as a sequence, not loose pills — each li carries a chevron
+ * connector into the next step (review m13). */
+.onboarding-step {
+  align-items: center;
+  display: flex;
+}
+
+.onboarding-step:not(:last-child)::after {
+  color: var(--theme-text-muted);
+  content: "›";
+}
+
 .onboarding-step button {
   align-items: center;
   border: 1px solid transparent;

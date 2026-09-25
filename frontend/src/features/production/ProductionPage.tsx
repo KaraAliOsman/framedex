@@ -43,6 +43,7 @@ import type {
 } from "../../api/generated/models";
 import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { formatDateTime } from "../../format";
 import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
@@ -951,7 +952,7 @@ export function ProductionPage(): JSX.Element {
                       {optimization?.optimized_at ? (
                         <time dateTime={optimization.optimized_at}>
                           {t("production.optimizeRunAt")}:
-                          {new Date(optimization.optimized_at).toLocaleString("es-CL")}
+                          {formatDateTime(optimization.optimized_at)}
                         </time>
                       ) : null}
                     </header>
@@ -1328,7 +1329,7 @@ export function ProductionPage(): JSX.Element {
                       <h3>{t("production.packingTitle")}</h3>
                       {packing?.generated_at ? (
                         <time dateTime={packing.generated_at}>
-                          {new Date(packing.generated_at).toLocaleString("es-CL")}
+                          {formatDateTime(packing.generated_at)}
                         </time>
                       ) : null}
                       {canWrite &&
@@ -1924,9 +1925,7 @@ export function ProductionPage(): JSX.Element {
                 <ol>
                   {detail.events.map((event) => (
                     <li key={event.id}>
-                      <time dateTime={event.created_at}>
-                        {new Date(event.created_at).toLocaleString("es-CL")}
-                      </time>
+                      <time dateTime={event.created_at}>{formatDateTime(event.created_at)}</time>
                       <span>{t(eventKey[event.event] ?? "production.eventNote")}</span>
                     </li>
                   ))}

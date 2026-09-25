@@ -27,7 +27,7 @@ function asDesignOps(step: AiAgentStep): DesignOp[] {
   return (step.ops ?? []).filter((item): item is DesignOp => typeof item.op === "string");
 }
 
-const SURFACE_LABELS: Record<string, string> = {
+export const SURFACE_LABELS: Record<string, string> = {
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",

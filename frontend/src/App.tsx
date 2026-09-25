@@ -220,7 +220,7 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route
-        path="/clients"
+        path="/clients/:id?"
         element={
           <ReadyGuard>
             <AppShell>

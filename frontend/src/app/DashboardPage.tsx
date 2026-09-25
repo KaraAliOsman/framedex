@@ -5,6 +5,7 @@ import { ApiError } from "../api/apiMutator";
 import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
 import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
+import { formatDateTime } from "../format";
 import { t, type TranslationKey } from "../i18n/es-CL";
 import { attentionEntries, attentionLabel } from "./attention";
 
@@ -149,9 +150,7 @@ export function DashboardPage(): JSX.Element {
           <span className="dashboard-continue-meta">
             {next.name ? `${next.code} · ` : ""}
             {next.client_name} ·{" "}
-            <time dateTime={next.updated_at}>
-              {new Date(next.updated_at).toLocaleString("es-CL")}
-            </time>
+            <time dateTime={next.updated_at}>{formatDateTime(next.updated_at)}</time>
           </span>
           <span className="dashboard-continue-cta">{t("dashboard.resume")}</span>
         </Link>
@@ -206,7 +205,7 @@ export function DashboardPage(): JSX.Element {
                     {t(eventLabel[item.event] ?? "production.eventStepCompleted")}
                   </span>
                   <span className="dashboard-activity-code">{item.order_code}</span>
-                  <time dateTime={item.at}>{new Date(item.at).toLocaleString("es-CL")}</time>
+                  <time dateTime={item.at}>{formatDateTime(item.at)}</time>
                 </li>
               ))}
             </ul>
@@ -234,7 +233,9 @@ export function DashboardPage(): JSX.Element {
         <div className="dashboard-list">
           <div className="dashboard-list-head">
             <h2 className="eyebrow">{t("dashboard.recent")}</h2>
-            <Link to="/projects">{t("dashboard.viewAll")}</Link>
+            <Link className="ui-backlink" to="/projects">
+              {t("dashboard.viewAll")}
+            </Link>
           </div>
           <ul>
             {recent.map((item) => (

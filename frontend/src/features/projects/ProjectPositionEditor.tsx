@@ -529,7 +529,12 @@ function PositionWorkspace({
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
       <header className="projects-header">
         <div>
-          <Link to={projectId ? `/projects/${projectId}` : "/projects"}>{t("projects.back")}</Link>
+          <Link
+            className="ui-backlink ui-backlink--back"
+            to={projectId ? `/projects/${projectId}` : "/projects"}
+          >
+            {t("projects.back")}
+          </Link>
           <h1>{location || t("projects.position")}</h1>
         </div>
         <span role="status">

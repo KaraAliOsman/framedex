@@ -20,6 +20,7 @@ import type {
 } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
+import { MOD_K_HINT, MOD_KEY_HINT } from "../platform";
 import { useTheme } from "../theme/ThemeProvider";
 
 const ROLE_KEYS: Record<RoleEnum, TranslationKey> = {
@@ -458,6 +459,32 @@ export function SettingsPage(): JSX.Element {
               </ul>
             </div>
           )}
+
+          {/* Every role gets the shortcuts reference — without it the
+           * non-owner settings page ends after three small cards (review m9). */}
+          <div className="settings-card">
+            <h3 className="eyebrow">{t("settings.shortcuts")}</h3>
+            <dl className="settings-list">
+              <div className="settings-row">
+                <dt>{t("settings.shortcutPalette")}</dt>
+                <dd>
+                  <kbd>{MOD_K_HINT}</kbd>
+                </dd>
+              </div>
+              <div className="settings-row">
+                <dt>{t("settings.shortcutEsc")}</dt>
+                <dd>
+                  <kbd>Esc</kbd>
+                </dd>
+              </div>
+              <div className="settings-row">
+                <dt>{t("settings.shortcutUndo")}</dt>
+                <dd>
+                  <kbd>{MOD_KEY_HINT}Z</kbd> / <kbd>{MOD_KEY_HINT}⇧Z</kbd>
+                </dd>
+              </div>
+            </dl>
+          </div>
         </div>
       </section>
 
@@ -484,9 +511,15 @@ export function SettingsPage(): JSX.Element {
               <h3 className="eyebrow">{t("settings.billing")}</h3>
               <p className="settings-hint">{t("settings.billingHint")}</p>
               <div className="settings-links">
-                <Link to="/settings/billing">{t("settings.billingPage")}</Link>
-                <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
-                <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
+                <Link className="ui-backlink" to="/settings/billing">
+                  {t("settings.billingPage")}
+                </Link>
+                <Link className="ui-backlink" to="/settings/wallet">
+                  {t("settings.walletPage")}
+                </Link>
+                <Link className="ui-backlink" to="/pricing/cost-lists">
+                  {t("pricing.lists")}
+                </Link>
               </div>
             </div>
           </div>

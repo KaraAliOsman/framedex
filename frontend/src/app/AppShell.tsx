@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { t, type TranslationKey } from "../i18n/es-CL";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
+import { MOD_K_HINT } from "../platform";
 import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
@@ -250,7 +251,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                     />
                   </svg>
                   <span>{t("shell.searchHint")}</span>
-                  <kbd>⌘K</kbd>
+                  <kbd>{MOD_K_HINT}</kbd>
                 </button>
                 <AttentionBell />
                 <button
