@@ -686,9 +686,15 @@ def test_purchase_plan_projection_uncovered_lines(monkeypatch):
     project_id = uuid4()
     po_id = uuid4()
 
+    import contextlib
+
     def fake_rows(sql, params=None):
         if "SELECT name, subscription_tier" in sql:
             return [_org_row()]
+        if "private.documentary_role" in sql:
+            return [{"can_verify": True}]
+        if "count(*) AS n" in sql:
+            return [{"n": 1}]
         if "purchase_requirement_lines" in sql:
             return [
                 {
@@ -724,9 +730,16 @@ def test_purchase_plan_projection_uncovered_lines(monkeypatch):
         return []
 
     _patch(monkeypatch, rows_impl=fake_rows)
+    monkeypatch.setattr(
+        context,
+        "documentary_backend",
+        lambda: contextlib.nullcontext(),
+    )
     ctx = context.build_context(org_id, "purchase_plan", {})
     assert ctx["surface"] == "purchase_plan"
     assert ctx["uncovered_total"] == 1
+    assert ctx["coverage_verified"] is True
+    assert ctx["truncated"] is False
     line = ctx["uncovered_lines"][0]
     assert line["id"] == str(line_id)
     assert line["requirement_key"] == "REQ-1"
@@ -793,3 +806,150 @@ def test_production_plan_projection_open_orders(monkeypatch):
     assert order["steps_total"] == 2
     assert order["next_step"]["code"] == "GLZ-01"
     assert order["blocked_steps"] == []
+
+
+def test_quotation_complete_projection_priced_approval_state(monkeypatch):
+    """§08-WB — the complete-quotation projection carries the checklist the
+    workflow narrates: position count, priced revision state (read via the
+    documented commercial_backend exception), approval link state on the
+    current revision, version documentary state, totals and payments."""
+    import contextlib
+
+    org_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "FROM public.pricing_operations" in sql:
+            return [{"currency": "CLP"}]
+        if "FROM public.projects WHERE id" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "OB-1",
+                    "name": "Edificio Sur",
+                    "client_name": "Cliente Uno",
+                    "status": "QUOTED",
+                    "current_revision": "REV-A",
+                    "total_price_net": Decimal("1000"),
+                    "total_price_tax": Decimal("190"),
+                    "total_price_gross": Decimal("1190"),
+                }
+            ]
+        if "bom_hash IS NOT NULL" in sql:
+            return [
+                {
+                    "revision_code": "REV-A",
+                    "documentary_complete": True,
+                    "production_allowed": False,
+                    "frozen": True,
+                }
+            ]
+        if "FROM public.project_positions" in sql:
+            return [{"total": 3}]
+        if "FROM public.customer_approvals" in sql:
+            return [{"status": "PENDING", "live": True}]
+        if "FROM public.project_payments" in sql:
+            return [{"count": 2, "collected": Decimal("7000")}]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    monkeypatch.setattr(
+        context,
+        "commercial_backend",
+        lambda: contextlib.nullcontext(),
+    )
+    ctx = context.build_context(
+        org_id, "quotation_complete", {"project_id": str(project_id)}
+    )
+    assert ctx["surface"] == "quotation_complete"
+    assert ctx["project"]["code"] == "OB-1"
+    assert ctx["project"]["status"] == "QUOTED"
+    assert ctx["positions"]["total"] == 3
+    assert ctx["priced"] == {"currency": "CLP"}
+    assert ctx["approval"] == {"status": "PENDING", "live": True}
+    assert ctx["versions"][0]["frozen"] is True
+    assert ctx["payments"]["payments_count"] == 2
+
+
+def test_quotation_complete_projection_unpriced(monkeypatch):
+    """§08-WB — no APPLIED pricing row → priced null, approval null; the
+    workflow's checklist reports them missing instead of inventing state."""
+    import contextlib
+
+    org_id = uuid4()
+    project_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "FROM public.pricing_operations" in sql:
+            return []
+        if "FROM public.projects WHERE id" in sql:
+            return [
+                {
+                    "id": project_id,
+                    "code": "OB-2",
+                    "name": "Casa Norte",
+                    "client_name": "Cliente Dos",
+                    "status": "DRAFT",
+                    "current_revision": "REV-A",
+                    "total_price_net": Decimal("0"),
+                    "total_price_tax": Decimal("0"),
+                    "total_price_gross": Decimal("0"),
+                }
+            ]
+        if "bom_hash IS NOT NULL" in sql:
+            return []
+        if "FROM public.project_positions" in sql:
+            return [{"total": 1}]
+        if "FROM public.project_payments" in sql:
+            return [{"count": 0, "collected": Decimal("0")}]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    monkeypatch.setattr(
+        context,
+        "commercial_backend",
+        lambda: contextlib.nullcontext(),
+    )
+    ctx = context.build_context(
+        org_id, "quotation_complete", {"project_id": str(project_id)}
+    )
+    assert ctx["priced"] is None
+    assert ctx["approval"] is None
+    assert ctx["versions"] == []
+
+
+def test_purchase_plan_projection_coverage_unverifiable(monkeypatch):
+    """§08-WE + r10 — an estimator can't see allocations/eligibility rows
+    under the documentary policies; the projection must report coverage as
+    unverifiable instead of fabricating uncovered lines and suppliers."""
+    import contextlib
+
+    org_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "private.documentary_role" in sql:
+            return [{"can_verify": False}]
+        if "LIKE 'SUPPLIER" in sql:
+            return []
+        if "purchase_requirement_lines" in sql:
+            raise AssertionError("coverage query must not run for this role")
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    monkeypatch.setattr(
+        context,
+        "documentary_backend",
+        lambda: contextlib.nullcontext(),
+    )
+    ctx = context.build_context(org_id, "purchase_plan", {})
+    assert ctx["coverage_verified"] is False
+    assert ctx["uncovered_lines"] == []
+    assert ctx["uncovered_total"] == 0
+    assert ctx["suppliers"] is None
+    assert ctx["truncated"] is False

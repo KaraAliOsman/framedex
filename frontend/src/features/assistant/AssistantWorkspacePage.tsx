@@ -10,6 +10,7 @@ import {
   aiJobList,
   aiJobMessageCreate,
   aiJobRetrieve,
+  projectsList,
 } from "../../api/generated/dekopen";
 import type { AiJob } from "../../api/generated/models/aiJob";
 import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
@@ -42,6 +43,7 @@ const SURFACE_LABELS: Record<string, string> = {
   morning_brief: "brief del día",
   purchase_plan: "plan de compras",
   production_plan: "plan de producción",
+  quotation_complete: "completar cotización",
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
@@ -59,6 +61,7 @@ const NEW_JOB_SURFACES = [
   "morning_brief",
   "purchase_plan",
   "production_plan",
+  "quotation_complete",
   "dashboard",
   "projects",
   "clients",
@@ -73,7 +76,14 @@ const GOAL_PRESETS: Record<string, string> = {
     "Prepara el plan de compras: líneas sin cubrir, proveedores elegibles y órdenes abiertas.",
   production_plan:
     "Propone el plan de producción: prioridad por entrega, material listo y estación que bloquea.",
+  quotation_complete:
+    "Diagnostica la cotización del proyecto: qué está listo, qué falta (diseño, precio, emisión, aprobación) y el siguiente paso.",
 };
+
+// Surfaces whose job is bound to a project — the form asks which one. The
+// backend REQUIRED_REFS list is the authority; only project-bound workflows
+// are launchable from the workspace (position/work_order bind via the dock).
+const REF_BOUND_PROJECT_SURFACES = new Set(["quotation_complete"]);
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
   product_draft: "aiws.artifact.product",
@@ -327,6 +337,7 @@ export function AssistantWorkspacePage(): JSX.Element {
   const [hasMoreJobs, setHasMoreJobs] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [artifact, setArtifact] = useState<Artifact | null>(null);
+  const [newProjectId, setNewProjectId] = useState("");
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
   const headers = useMemo(() => ({ headers: { "X-Organization-ID": orgId ?? "" } }), [orgId]);
@@ -356,6 +367,16 @@ export function AssistantWorkspacePage(): JSX.Element {
   });
 
   const job = jobQuery.data ?? null;
+
+  const projectPickerQuery = useQuery({
+    queryKey: ["ai", "project-picker", orgId],
+    enabled: Boolean(orgId && REF_BOUND_PROJECT_SURFACES.has(newSurface) && !job),
+    queryFn: async () => {
+      const response = await projectsList(headers);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data.items;
+    },
+  });
   const transcript = (job?.transcript ?? []) as TranscriptTurn[];
   const live = job !== null && LIVE_STATES.has(job.state);
 
@@ -383,10 +404,16 @@ export function AssistantWorkspacePage(): JSX.Element {
         );
         if (response.status !== 200) throw new ApiError(response.status, response.data);
       } else {
+        const needsProject = REF_BOUND_PROJECT_SURFACES.has(newSurface);
+        if (needsProject && !newProjectId) {
+          setError(t("aiws.project_required"));
+          setBusy(false);
+          return;
+        }
         const response = await aiAgent(
           {
             surface: newSurface,
-            refs: {},
+            refs: needsProject ? { project_id: newProjectId } : {},
             goal: message,
             history: [],
             operation_key: crypto.randomUUID(),
@@ -539,6 +566,21 @@ export function AssistantWorkspacePage(): JSX.Element {
               ))}
             </select>
           ) : null}
+          {!job && REF_BOUND_PROJECT_SURFACES.has(newSurface) ? (
+            <select
+              value={newProjectId}
+              onChange={(event) => setNewProjectId(event.target.value)}
+              aria-label={t("aiws.project")}
+              disabled={projectPickerQuery.isLoading}
+            >
+              <option value="">{t("aiws.project_pick")}</option>
+              {(projectPickerQuery.data ?? []).map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.code} — {project.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
           <textarea
             value={draft}
             rows={2}
@@ -554,7 +596,15 @@ export function AssistantWorkspacePage(): JSX.Element {
             }}
             disabled={busy || live}
           />
-          <button type="submit" disabled={busy || live || !draft.trim()}>
+          <button
+            type="submit"
+            disabled={
+              busy ||
+              live ||
+              !draft.trim() ||
+              (!job && REF_BOUND_PROJECT_SURFACES.has(newSurface) && !newProjectId)
+            }
+          >
             {t("agent.send")}
           </button>
         </form>

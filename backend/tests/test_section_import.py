@@ -71,8 +71,9 @@ def test_svg_path_and_transforms_apply():
     ).encode()
     result = section_import.import_section("sash.svg", content)
     pts = result.candidates[0]["points"]
-    # The Z-close duplicate is stripped — the contract wants distinct vertices.
-    assert [p[0] for p in pts] == ["10.0", "70.0", "70.0", "10.0"]
+    # The Z-close duplicate is stripped — the contract wants distinct vertices
+    # at the transform's fixed 0.000001mm precision.
+    assert [p[0] for p in pts] == ["10.000000", "70.000000", "70.000000", "10.000000"]
     assert result.candidates[0]["area"] == "4200.00"
 
 
@@ -99,7 +100,7 @@ def test_dxf_polyline_vertices_emit_candidate():
     result = section_import.import_section("frame.dxf", content)
     assert len(result.candidates) == 1
     assert result.candidates[0]["tag"].startswith("POLYLINE")
-    assert result.candidates[0]["area"] == "4200"
+    assert result.candidates[0]["area"] == "4200.00"
 
 
 def test_svg_px_flagged_for_review():
@@ -276,7 +277,7 @@ def test_svg_z_returns_pen_to_subpath_start():
     result = parse_svg(svg)
     assert len(result.candidates) == 2
     starts = {tuple(c["points"][0]) for c in result.candidates}
-    assert ("5.0", "5.0") in starts  # relative `m` after Z resolved from (0,0)
+    assert ("5.000000", "5.000000") in starts  # relative `m` after Z resolved from (0,0)
 
 
 def test_svg_path_token_budget():

@@ -15,9 +15,9 @@ from typing import Any
 from uuid import UUID
 
 from authentication.errors import ContractAPIException
-from documents.repository import one
+from documents.repository import documentary_backend, one
 from jobs.service import job_owner
-from pricing.repository import rows
+from pricing.repository import commercial_backend, rows
 
 MAX_LIST = 20
 MAX_FIELD = 120
@@ -39,6 +39,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "morning_brief": (),
     "purchase_plan": (),
     "production_plan": (),
+    "quotation_complete": ("project_id",),
 }
 
 
@@ -523,6 +524,38 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
         "ORDER BY emitted_at DESC LIMIT 3",
         [org_id, project["id"]],
     )
+    positions = rows(
+        "SELECT count(*) AS total FROM public.project_positions "
+        "WHERE org_id=%s AND project_id=%s",
+        [org_id, project["id"]],
+    )
+    # Priced state = an APPLIED pricing_operations row on the current
+    # revision — pricing_operations is service-owned, so the read follows
+    # the same documented exception as job_runs: the pricing role with the
+    # explicit org filter (mirrors _pricing_authority's predicate exactly).
+    with commercial_backend():
+        priced = rows(
+            "SELECT request->>'currency' AS currency "
+            "FROM public.pricing_operations "
+            "WHERE org_id=%s AND project_id=%s AND state='APPLIED' "
+            "AND COALESCE(revision_code,'REV-A')=%s "
+            "AND ((SELECT pricing_reset_at FROM public.projects WHERE id=%s) IS NULL "
+            "OR approved_at > (SELECT pricing_reset_at FROM public.projects WHERE id=%s)) "
+            "ORDER BY approved_at DESC, id DESC LIMIT 1",
+            [
+                org_id, project["id"], project["current_revision"],
+                project["id"], project["id"],
+            ],
+        )
+    approval = rows(
+        "SELECT a.status::text AS status, a.expires_at > now() AS live "
+        "FROM public.customer_approvals a "
+        "JOIN public.project_versions v "
+        "  ON v.id = a.project_version_id AND v.org_id = a.org_id "
+        "WHERE a.org_id=%s AND a.project_id=%s AND v.revision_code=%s "
+        "ORDER BY a.created_at DESC LIMIT 1",
+        [org_id, project["id"], project["current_revision"]],
+    )
     # Document counts deliberately don't query document_artifacts: the sealed
     # evidence table is revoked from `authenticated` and served only through
     # documentary_backend — a caller-scoped projection must not proxy it.
@@ -531,8 +564,21 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
             "id": str(project["id"]),
             "code": _cut(project["code"]),
             "name": _cut(project["name"]),
+            "status": _cut(project["status"]),
         },
         "current_revision": _cut(project["current_revision"]),
+        "positions": {"total": int(positions[0]["total"])},
+        "priced": (
+            {"currency": _cut(priced[0]["currency"])} if priced else None
+        ),
+        "approval": (
+            {
+                "status": _cut(approval[0]["status"]),
+                "live": bool(approval[0]["live"]),
+            }
+            if approval
+            else None
+        ),
         "totals": {
             "net": _cut(project["total_price_net"]),
             "tax": _cut(project["total_price_tax"]),
@@ -795,27 +841,59 @@ def _purchase_plan(org_id: UUID) -> dict:
         "WHERE org_id=%s AND authority_version IN ('SHOT09_V1','SHOT10_V1') "
         "ORDER BY project_id, emitted_at DESC"
     )
-    uncovered = rows(
-        "SELECT line.id, line.requirement_key, line.order_type::text AS order_type, "
-        "       line.category, line.purchasing_sku, line.unit, line.quantity, "
-        "       v.project_id, v.id AS version_id, p.code AS project_code "
-        "FROM public.purchase_requirement_lines line "
-        "JOIN public.project_versions v ON v.id = line.project_version_id "
-        "  AND v.org_id = line.org_id "
-        "JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id "
-        "LEFT JOIN public.purchase_allocations a "
-        "  ON a.requirement_line_id = line.id AND a.org_id = line.org_id "
-        f"WHERE line.org_id = %s AND a.id IS NULL AND v.id IN ({latest}) "
-        "ORDER BY v.emitted_at DESC, line.order_type, line.requirement_key LIMIT 12",
-        [org_id, org_id],
-    )
-    suppliers = rows(
-        "SELECT DISTINCT e.order_type::text AS order_type, e.supplier_name "
-        "FROM public.supplier_eligibility_versions e "
-        f"WHERE e.org_id = %s AND e.project_version_id IN ({latest}) "
-        "ORDER BY e.order_type, e.supplier_name LIMIT %s",
-        [org_id, org_id, MAX_LIST],
-    )
+    # Purchase-authority tables are revoked from member roles — the reads run
+    # under the documentary role with the explicit org filter (same documented
+    # exception as the brief's job_runs count). Coverage joins are only
+    # verifiable for roles the allocations/eligibility policies list (OWNER,
+    # WORKSHOP_MANAGER); for anyone else the allocation join is silently empty
+    # and would fabricate "uncovered" — so the probe runs first and the
+    # projection reports coverage as unverifiable instead.
+    with documentary_backend():
+        coverage = rows(
+            "SELECT private.documentary_role(%s, ARRAY['OWNER','WORKSHOP_MANAGER']) "
+            "AS can_verify",
+            [org_id],
+        )
+        can_verify = bool(coverage and coverage[0]["can_verify"])
+        uncovered = []
+        uncovered_total = 0
+        suppliers = []
+        if can_verify:
+            uncovered = rows(
+                "SELECT line.id, line.requirement_key, "
+                "line.order_type::text AS order_type, line.category, "
+                "line.purchasing_sku, line.unit, line.quantity, "
+                "v.project_id, v.id AS version_id, p.code AS project_code "
+                "FROM public.purchase_requirement_lines line "
+                "JOIN public.project_versions v "
+                "  ON v.id = line.project_version_id AND v.org_id = line.org_id "
+                "JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id "
+                "LEFT JOIN public.purchase_allocations a "
+                "  ON a.requirement_line_id = line.id AND a.org_id = line.org_id "
+                f"WHERE line.org_id = %s AND a.id IS NULL AND v.id IN ({latest}) "
+                "ORDER BY v.emitted_at DESC, line.order_type, "
+                "line.requirement_key LIMIT 12",
+                [org_id, org_id],
+            )
+            uncovered_total = int(
+                rows(
+                    "SELECT count(*) AS n "
+                    "FROM public.purchase_requirement_lines line "
+                    "JOIN public.project_versions v "
+                    "  ON v.id = line.project_version_id AND v.org_id = line.org_id "
+                    "LEFT JOIN public.purchase_allocations a "
+                    "  ON a.requirement_line_id = line.id AND a.org_id = line.org_id "
+                    f"WHERE line.org_id = %s AND a.id IS NULL AND v.id IN ({latest})",
+                    [org_id, org_id],
+                )[0]["n"]
+            )
+            suppliers = rows(
+                "SELECT DISTINCT e.order_type::text AS order_type, e.supplier_name "
+                "FROM public.supplier_eligibility_versions e "
+                f"WHERE e.org_id = %s AND e.project_version_id IN ({latest}) "
+                "ORDER BY e.order_type, e.supplier_name LIMIT %s",
+                [org_id, org_id, MAX_LIST],
+            )
     open_pos = rows(
         "SELECT id, order_code, order_type::text AS order_type, status::text AS status, "
         "supplier_name FROM public.orders "
@@ -840,14 +918,20 @@ def _purchase_plan(org_id: UUID) -> dict:
             }
             for row in uncovered
         ],
-        "uncovered_total": len(uncovered),
-        "suppliers": [
-            {
-                "order_type": _cut(row["order_type"]),
-                "supplier": _cut(row["supplier_name"]),
-            }
-            for row in suppliers
-        ],
+        "uncovered_total": uncovered_total,
+        "truncated": uncovered_total > len(uncovered),
+        "coverage_verified": can_verify,
+        "suppliers": (
+            [
+                {
+                    "order_type": _cut(row["order_type"]),
+                    "supplier": _cut(row["supplier_name"]),
+                }
+                for row in suppliers
+            ]
+            if can_verify
+            else None
+        ),
         "open_purchase_orders": [
             {
                 "id": str(row["id"]),
@@ -893,20 +977,31 @@ def _production_plan(org_id: UUID) -> dict:
     order_ids = [str(o["id"]) for o in orders]
     queues: dict[str, list[dict]] = {}
     if order_ids:
+        # Per-order cap via ROW_NUMBER — a global limit would starve the
+        # latest orders (they'd show fewer steps or no next_step at all).
         steps = rows(
             """
-            SELECT order_id, sequence, kind, code, label, status
-            FROM public.production_steps
-            WHERE org_id = %s AND order_id = ANY(%s::uuid[])
-            ORDER BY order_id, sequence LIMIT %s
+            SELECT order_id, sequence, code, label, status
+            FROM (
+                SELECT order_id, sequence, code, label, status,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY order_id ORDER BY sequence
+                       ) AS rn
+                FROM public.production_steps
+                WHERE org_id = %s AND order_id = ANY(%s::uuid[])
+            ) s
+            WHERE rn <= 160
+            ORDER BY order_id, sequence
             """,
-            [org_id, order_ids, MAX_LIST * 8],
+            [org_id, order_ids],
         )
         for step in steps:
             queues.setdefault(str(step["order_id"]), []).append(
                 {
                     "sequence": int(step["sequence"]),
-                    "kind": _cut(step["kind"]),
+                    # The step's station kind IS its code — production_steps
+                    # has no kind column (kind lives on work_centers).
+                    "kind": _cut(step["code"]),
                     "code": _cut(step["code"]),
                     "label": _cut(step["label"]),
                     "status": _cut(step["status"]),
@@ -965,9 +1060,17 @@ _BUILDERS = {
     "morning_brief": _brief,
     "purchase_plan": _purchase_plan,
     "production_plan": _production_plan,
+    "quotation_complete": _quotation,
 }
 
-_REF_BUILDERS = {"project", "position", "quotation", "work_order", "catalog"}
+_REF_BUILDERS = {
+    "project",
+    "position",
+    "quotation",
+    "work_order",
+    "catalog",
+    "quotation_complete",
+}
 
 
 def build_context(org_id: UUID, surface: str, refs: dict | None) -> dict:

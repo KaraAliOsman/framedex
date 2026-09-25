@@ -15,7 +15,7 @@ import math
 import re
 import uuid
 from dataclasses import dataclass, field
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Iterator
 
 from defusedxml import ElementTree
@@ -144,16 +144,29 @@ def _svg_physical_mm(value: str | None) -> Decimal | None:
         return None
 
 
-def _apply_matrix(m: tuple[float, ...], x: Decimal, y: Decimal) -> tuple[Decimal, Decimal]:
+_MICRO = Decimal("0.000001")
+
+
+def _trig(value: float) -> Decimal:
+    """Transcendental matrix terms are computed in double then captured at
+    full precision — never rounded early; the transform's own 0.000001mm
+    quantization is the only precision boundary."""
+    return Decimal(repr(value))
+
+
+def _apply_matrix(
+    m: tuple[Decimal, ...], x: Decimal, y: Decimal
+) -> tuple[Decimal, Decimal]:
     a, b, c, d, e, f = m
-    fx, fy = float(x), float(y)
     return (
-        Decimal(str(round(a * fx + c * fy + e, 6))),
-        Decimal(str(round(b * fx + d * fy + f, 6))),
+        (a * x + c * y + e).quantize(_MICRO, rounding=ROUND_HALF_UP),
+        (b * x + d * y + f).quantize(_MICRO, rounding=ROUND_HALF_UP),
     )
 
 
-def _compose(m1: tuple[float, ...], m2: tuple[float, ...]) -> tuple[float, ...]:
+def _compose(
+    m1: tuple[Decimal, ...], m2: tuple[Decimal, ...]
+) -> tuple[Decimal, ...]:
     a1, b1, c1, d1, e1, f1 = m1
     a2, b2, c2, d2, e2, f2 = m2
     return (
@@ -166,34 +179,65 @@ def _compose(m1: tuple[float, ...], m2: tuple[float, ...]) -> tuple[float, ...]:
     )
 
 
-def _parse_transform(value: str | None) -> tuple[float, ...]:
-    """SVG transform attribute → affine matrix, applied left to right."""
-    m = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+def _parse_transform(value: str | None) -> tuple[Decimal, ...]:
+    """SVG transform attribute → affine matrix, applied left to right.
+    Exact Decimal arithmetic — float never enters the declared-coordinate
+    path (rotate/skew trig arrives quantized only at application)."""
+    zero, one = Decimal(0), Decimal(1)
+    m: tuple[Decimal, ...] = (one, zero, zero, one, zero, zero)
     if not value:
         return m
     for kind, args in re.findall(r"(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)", value):
-        nums = [float(n) for n in re.findall(r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", args)]
-        step: tuple[float, ...]
+        nums = [Decimal(n) for n in re.findall(r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", args)]
+        step: tuple[Decimal, ...]
         if kind == "matrix" and len(nums) == 6:
-            step = tuple(nums)  # type: ignore[assignment]
+            step = tuple(nums)
         elif kind == "translate":
-            step = (1.0, 0.0, 0.0, 1.0, nums[0] if nums else 0.0, nums[1] if len(nums) > 1 else 0.0)
+            step = (
+                one,
+                zero,
+                zero,
+                one,
+                nums[0] if nums else zero,
+                nums[1] if len(nums) > 1 else zero,
+            )
         elif kind == "scale":
-            step = (nums[0], 0.0, 0.0, nums[1] if len(nums) > 1 else nums[0], 0.0, 0.0)
+            step = (
+                nums[0],
+                zero,
+                zero,
+                nums[1] if len(nums) > 1 else nums[0],
+                zero,
+                zero,
+            )
         elif kind == "rotate":
-            rad = math.radians(nums[0])
-            cos_, sin_ = math.cos(rad), math.sin(rad)
-            step = (cos_, sin_, -sin_, cos_, 0.0, 0.0)
+            rad = math.radians(float(nums[0]))
+            cos_, sin_ = _trig(math.cos(rad)), _trig(math.sin(rad))
+            step = (cos_, sin_, -sin_, cos_, zero, zero)
             if len(nums) >= 3:
                 cx, cy = nums[1], nums[2]
                 step = _compose(
-                    _compose((1.0, 0.0, 0.0, 1.0, cx, cy), step),
-                    (1.0, 0.0, 0.0, 1.0, -cx, -cy),
+                    _compose((one, zero, zero, one, cx, cy), step),
+                    (one, zero, zero, one, -cx, -cy),
                 )
         elif kind == "skewX":
-            step = (1.0, 0.0, math.tan(math.radians(nums[0])), 1.0, 0.0, 0.0)
+            step = (
+                one,
+                zero,
+                _trig(math.tan(math.radians(float(nums[0])))),
+                one,
+                zero,
+                zero,
+            )
         else:  # skewY
-            step = (1.0, math.tan(math.radians(nums[0])), 0.0, 1.0, 0.0, 0.0)
+            step = (
+                one,
+                _trig(math.tan(math.radians(float(nums[0])))),
+                zero,
+                one,
+                zero,
+                zero,
+            )
         m = _compose(m, step)
     return m
 
@@ -590,7 +634,10 @@ def parse_svg(content: bytes) -> SectionImportResult:
             else:
                 open_count += 1
 
-    walk(root, (1.0, 0.0, 0.0, 1.0, 0.0, 0.0))
+    walk(
+        root,
+        (Decimal(1), Decimal(0), Decimal(0), Decimal(1), Decimal(0), Decimal(0)),
+    )
     if deep_count:
         warnings.append(
             f"{deep_count} nested element(s) deeper than {MAX_DEPTH} levels skipped."
@@ -816,7 +863,9 @@ def _finish(
                 "index": index,
                 "tag": candidate.tag,
                 "points": [[str(x), str(y)] for x, y in points],
-                "area": str(area(points)),
+                "area": str(
+                    area(points).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                ),
             }
         )
     return result

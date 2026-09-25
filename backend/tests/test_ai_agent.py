@@ -753,3 +753,87 @@ def test_agent_production_plan_uses_workflow_prompt(monkeypatch):
     }
     assert result["artifacts"][0]["kind"] == "production_plan"
     assert result["artifacts"][0]["references"] == [str(order_id)]
+
+
+def test_agent_quotation_complete_uses_workflow_prompt(monkeypatch):
+    """§08-WB — the complete-quotation job rides the runtime with the quote
+    contract: QUOTE_SYSTEM via WORKFLOW_SYSTEM, the get_quotation tool, a
+    quote_draft artifact citing only context-exposed ids, and a prepare card
+    for the human's own emit click — never a self-approved price."""
+    project_id = uuid4()
+    contexts = {
+        "quotation_complete": {
+            "surface": "quotation_complete",
+            "organization": {"name": "Org"},
+            "project": {
+                "id": str(project_id),
+                "code": "OB-1",
+                "name": "Edificio Sur",
+                "status": "DRAFT",
+            },
+            "current_revision": "REV-A",
+            "positions": {"total": 3},
+            "priced": {"currency": "CLP"},
+            "approval": None,
+            "totals": {"net": "1000", "tax": "190", "gross": "1190"},
+            "payments": {"payments_count": 0, "payments_collected": "0"},
+            "versions": [
+                {
+                    "revision": "REV-A",
+                    "documentary_complete": True,
+                    "production_allowed": False,
+                    "frozen": False,
+                }
+            ],
+        }
+    }
+    output = _doc(
+        reply="REV-A tiene diseño y precio; falta emitir la revisión y la aprobación del cliente.",
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "quote_draft",
+                    "title": "Cotización OB-1",
+                    "payload": {
+                        "checklist": [
+                            {"item": "posiciones", "state": "ready", "detail": "3 vanos"},
+                            {"item": "precio", "state": "ready", "detail": "CLP aplicado"},
+                            {"item": "emision", "state": "missing", "detail": "REV-A sin emitir"},
+                            {"item": "aprobacion", "state": "missing", "detail": "sin enlace"},
+                        ],
+                        "totals": {"net": "1000", "tax": "190", "gross": "1190"},
+                    },
+                    "references": [str(project_id), str(uuid4())],
+                },
+            },
+            {
+                "kind": "prepare",
+                "action": "emit_revision",
+                "path": f"/projects/{project_id}/pricing",
+                "label": "Preparar emisión",
+            },
+        ],
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="quotation_complete",
+        refs={"project_id": str(project_id)},
+        goal="Completa la cotización",
+        product=None,
+        history=[],
+        operation_key="quote-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.QUOTE_SYSTEM
+    assert result["queries"][0] == {
+        "surface": "quotation_complete",
+        "tool": "get_quotation",
+        "status": "ok",
+    }
+    assert result["artifacts"][0]["kind"] == "quote_draft"
+    # References keep only ids the context exposed — the invented one dropped.
+    assert result["artifacts"][0]["references"] == [str(project_id)]
+    prepare = [s for s in result["steps"] if s["kind"] == "prepare"]
+    assert prepare and prepare[0]["action"] == "emit_revision"
