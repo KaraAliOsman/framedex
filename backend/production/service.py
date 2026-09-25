@@ -40,7 +40,15 @@ from projects.service import project_row
 
 _STEP_CODE_FOR_CENTER = {
     "CUT": "CUT",
+    "PROFILE_CUT": "PROFILE_CUT",
+    "REINFORCEMENT_CUT": "REINFORCEMENT_CUT",
+    "MACHINING": "MACHINING",
+    "WELDING": "WELD",
+    "CLEANING": "CLEAN",
+    "CRIMPING": "CRIMP",
+    "SASH_ASSEMBLY": "SASH_ASSEMBLE",
     "ASSEMBLY": "ASSEMBLE",
+    "HARDWARE": "HARDWARE",
     "GLAZING": "GLAZE",
     "QC": "QC",
     "PACK": "PACK",
@@ -48,15 +56,29 @@ _STEP_CODE_FOR_CENTER = {
 
 _DEFAULT_CENTERS = [
     ("CUT_SAW", "Sierra de corte", "CUT", 10),
-    ("ASSEMBLY_BENCH", "Banco de armado", "ASSEMBLY", 20),
-    ("GLAZING_BENCH", "Banco de vidriado", "GLAZING", 30),
-    ("QC_STATION", "Puesto de control", "QC", 40),
-    ("PACK_STATION", "Puesto de embalaje", "PACK", 50),
+    ("MACHINING_CELL", "Centro de mecanizado", "MACHINING", 15),
+    ("WELDER", "Soldadora", "WELDING", 20),
+    ("CLEANING_STATION", "Limpiadora de esquinas", "CLEANING", 25),
+    ("CRIMPING_MACHINE", "Prensadora de esquinas", "CRIMPING", 26),
+    ("ASSEMBLY_BENCH", "Banco de armado", "ASSEMBLY", 30),
+    ("SASH_ASSEMBLY_BENCH", "Banco de armado de hojas", "SASH_ASSEMBLY", 31),
+    ("HARDWARE_BENCH", "Banco de herrajes", "HARDWARE", 32),
+    ("GLAZING_BENCH", "Banco de vidriado", "GLAZING", 40),
+    ("QC_STATION", "Puesto de control", "QC", 50),
+    ("PACK_STATION", "Puesto de embalaje", "PACK", 60),
 ]
 
 _STEP_LABELS = {
     "CUT": "Corte de perfiles",
+    "PROFILE_CUT": "Corte de perfiles",
+    "REINFORCEMENT_CUT": "Corte de refuerzos",
+    "MACHINING": "Mecanizado",
+    "WELD": "Soldadura",
+    "CLEAN": "Limpieza de esquinas",
+    "CRIMP": "Prensado de esquinas",
+    "SASH_ASSEMBLE": "Armado de hojas",
     "ASSEMBLE": "Armado y herrajes",
+    "HARDWARE": "Montaje de herrajes",
     "GLAZE": "Vidriado y paneles",
     "QC": "Control de calidad",
     "PACK": "Embalaje",
@@ -68,6 +90,7 @@ _STEP_LABELS = {
 _STEP_CONSUMED_KINDS = {
     "CUT": {"BAR", "SHEET"},
     "ASSEMBLE": {"HARDWARE_KIT", "FITTING"},
+    "HARDWARE": {"HARDWARE_KIT", "FITTING"},
     "GLAZE": {"PANEL"},
 }
 
@@ -102,9 +125,11 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
         "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
         [str(org_id)],
     )
-    if not existing:
+    present_kinds = {str(center["kind"]) for center in existing}
+    missing = [center for center in _DEFAULT_CENTERS if center[2] not in present_kinds]
+    if missing:
         with transaction.atomic(), documentary_backend():
-            for code, name, kind, order in _DEFAULT_CENTERS:
+            for code, name, kind, order in missing:
                 rows(
                     """
                     INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
@@ -117,14 +142,65 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
                 "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
                 [str(org_id)],
             )
-    return {str(center["kind"]): center for center in existing}
+    # First center of each kind wins (display_order ascending) — a custom
+    # station the org ordered first keeps step assignment over any default
+    # seeded later of the same kind.
+    by_kind: dict[str, dict[str, object]] = {}
+    for center in existing:
+        by_kind.setdefault(str(center["kind"]), center)
+    return by_kind
 
 
-def _routing(engine_result: dict[str, object]) -> list[str]:
+def _routing(
+    engine_result: dict[str, object],
+    *,
+    material: str | None = None,
+    end_milling_overlap_mm: object = None,
+) -> list[str]:
+    """§29/§30: the routing ladder follows the physical build process of the
+    sealed system's material, not a generic one. PVC frames weld and clean
+    their corners; aluminium frames machine and crimp. A system whose
+    material authority is absent walks the legacy generic path — the ladder
+    is never invented where the catalog can't tell us which process applies.
+    ``MACHINING`` lands whenever the material demands it (aluminium corner
+    and connector prep is inherent) or the system declares end milling —
+    never for PVC systems whose declared overlap is zero. ``SASH_ASSEMBLE``
+    and ``HARDWARE`` follow the sealed result, not the material: a fixed
+    window has no sash to assemble and no hardware to mount."""
     routing: list[str] = []
-    if engine_result.get("profile_cuts") or engine_result.get("reinforcements"):
+    cuts = engine_result.get("profile_cuts") or []
+    has_sash = any(
+        isinstance(cut, dict) and str(cut.get("role") or "") == "SASH"
+        for cut in cuts
+    )
+    has_hardware = bool(
+        engine_result.get("hardware_items") or engine_result.get("fittings")
+    )
+    if cuts or engine_result.get("reinforcements"):
         routing.append("CUT")
-    routing.append("ASSEMBLE")
+    milling = False
+    try:
+        milling = end_milling_overlap_mm is not None and Decimal(
+            str(end_milling_overlap_mm)
+        ) > 0
+    except ArithmeticError:
+        milling = False
+    if material == "ALUMINIUM":
+        routing += ["MACHINING", "CRIMP"]
+        if has_sash:
+            routing.append("SASH_ASSEMBLE")
+        if has_hardware:
+            routing.append("HARDWARE")
+    elif material == "PVC":
+        if milling:
+            routing.append("MACHINING")
+        routing += ["WELD", "CLEAN"]
+        if has_sash:
+            routing.append("SASH_ASSEMBLE")
+        if has_hardware:
+            routing.append("HARDWARE")
+    else:
+        routing.append("ASSEMBLE")
     if engine_result.get("glasses") or engine_result.get("panels"):
         routing.append("GLAZE")
     routing += ["QC", "PACK"]
@@ -134,6 +210,7 @@ def _routing(engine_result: dict[str, object]) -> list[str]:
 def _work_order_payload(
     position: dict[str, object], *, polishing: list | None = None,
     color: str | None = None,
+    system_facts: dict[str, object] | None = None,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     return {
@@ -150,7 +227,11 @@ def _work_order_payload(
             )
         },
         "glass_polishing": list(polishing or []),
-        "routing": _routing(engine),
+        "routing": _routing(
+            engine,
+            material=str((system_facts or {}).get("material") or "").upper() or None,
+            end_milling_overlap_mm=(system_facts or {}).get("end_milling_overlap_mm"),
+        ),
     }
 
 
@@ -255,6 +336,26 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         # The sealed polishing choices live on the snapshot positions — the
         # work order embeds them so the workshop reads edge processing without
         # joining the documentary snapshot.
+        # §29: the routing ladder needs the physical process facts of each
+        # position's profile system — material decides weld-vs-crimp, the
+        # declared end-milling overlap decides the machining step. Missing
+        # or undeclared systems fall back to the generic path.
+        system_facts: dict[str, dict[str, object]] = {}
+        system_ids = sorted({
+            sid for sid in position_systems.values() if sid
+        })
+        if system_ids:
+            system_facts = {
+                str(row["id"]): row
+                for row in rows(
+                    """
+                    SELECT id::text, material::text, end_milling_overlap_mm
+                    FROM public.profile_systems
+                    WHERE id = ANY(%s::uuid[])
+                    """,
+                    [system_ids],
+                )
+            }
         polishing_by_position = {
             str(pos.get("id")): pos.get("glass_polishing") or []
             for pos in snapshot.get("positions") or []
@@ -280,6 +381,9 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                 position,
                 polishing=polishing_by_position.get(str(position.get("position_id"))),
                 color=color_by_position.get(str(position.get("position_id"))),
+                system_facts=system_facts.get(
+                    str(position.get("system_id") or "")
+                ),
             )
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(

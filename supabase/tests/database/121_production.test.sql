@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(20);
+SELECT plan(22);
 
 SELECT has_table('public', 'work_centers', 'work centers table exists');
 SELECT has_table('public', 'production_steps', 'routing steps table exists');
@@ -138,6 +138,30 @@ SELECT ok(
           AND pg_get_constraintdef(oid) LIKE '%WO_STOCK_CONSUMED%'
     ),
     'step events accept operations export, remnant settlement and stock consumption outcomes'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'production_steps_code_check'
+          AND pg_get_constraintdef(oid) LIKE '%MACHINING%'
+          AND pg_get_constraintdef(oid) LIKE '%WELD%'
+          AND pg_get_constraintdef(oid) LIKE '%CRIMP%'
+          AND pg_get_constraintdef(oid) LIKE '%HARDWARE%'
+          AND pg_get_constraintdef(oid) LIKE '%CLEAN%'
+    ),
+    'routing steps accept the real shop vocabulary (§29/§30)'
+);
+SELECT ok(
+    EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'work_centers_kind_check'
+          AND pg_get_constraintdef(oid) LIKE '%MACHINING%'
+          AND pg_get_constraintdef(oid) LIKE '%WELDING%'
+          AND pg_get_constraintdef(oid) LIKE '%CRIMPING%'
+          AND pg_get_constraintdef(oid) LIKE '%CLEANING%'
+          AND pg_get_constraintdef(oid) LIKE '%SASH_ASSEMBLY%'
+    ),
+    'work center kinds accept the real shop vocabulary (§29/§30)'
 );
 SELECT * FROM finish();
 ROLLBACK;
