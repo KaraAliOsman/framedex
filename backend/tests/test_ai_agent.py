@@ -1322,3 +1322,66 @@ def test_catalog_compiler_context_projects_pending_imports(monkeypatch):
     assert candidate["conflict"] is True
     assert candidate["existing"][0]["system_code"] == "D60"
     assert ctx["systems"][0]["id"] == str(system_id)
+
+
+def test_agent_customer_comms_drafts_message(monkeypatch):
+    """§08-WG — the comms workflow drafts the five customer communications
+    as message artifacts from project facts only."""
+    project_id = uuid4()
+    contexts = {
+        "customer_comms": {
+            "surface": "customer_comms",
+            "organization": {"name": "Org"},
+            "project": {"id": str(project_id), "code": "OB-3", "name": "Torre", "status": "QUOTED"},
+            "current_revision": "REV-B",
+            "client": {"name": "Inmobiliaria Andes", "email": "compras@andes.cl", "phone": "+56 2 2 555 123"},
+            "approval": {"status": "SENT", "live": True},
+            "totals": {"net": "1000", "tax": "190", "gross": "1190", "collected": "0", "pending": "1190"},
+            "positions_total": 4,
+            "payments": [],
+            "work_orders": [],
+            "versions": [
+                {"revision": "REV-B", "emitted_at": "2026-09-20", "documentary_complete": True},
+                {"revision": "REV-A", "emitted_at": "2026-09-10", "documentary_complete": True},
+            ],
+        }
+    }
+    output = _doc(
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "message",
+                    "title": "quote_email — OB-3",
+                    "payload": {
+                        "kind": "quote_email",
+                        "to": "compras@andes.cl",
+                        "subject": "Cotización OB-3 — Torre",
+                        "body": "Adjuntamos la cotización de la revisión vigente por $1.190 bruto.",
+                    },
+                    "references": [str(project_id)],
+                },
+            },
+            {
+                "kind": "navigate",
+                "path": f"/projects/{project_id}",
+                "label": "Abrir proyecto",
+            },
+        ]
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="customer_comms",
+        refs={"project_id": str(project_id)},
+        goal="Redacta el correo para enviar la cotización al cliente",
+        product=None,
+        history=[],
+        operation_key="comms-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.COMMS_SYSTEM
+    artifact = result["artifacts"][0]
+    assert artifact["kind"] == "message"
+    assert artifact["payload"]["to"] == "compras@andes.cl"
+    assert artifact["references"] == [str(project_id)]

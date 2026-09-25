@@ -42,6 +42,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "quotation_complete": ("project_id",),
     "project_from_documents": ("project_id",),
     "catalog_compiler": (),
+    "customer_comms": ("project_id",),
 }
 
 
@@ -1181,6 +1182,142 @@ def _production_plan(org_id: UUID) -> dict:
     return {"work_orders": out, "truncated": len(orders) == MAX_LIST}
 
 
+def _customer_comms(org_id: UUID, refs: dict) -> dict:
+    """§08-WG customer communications: every project fact one of the five
+    communications may cite — contact, quote state, collected vs pending,
+    production/delivery state, recent revisions for change summaries. The
+    message the model drafts is still a draft artifact the human reviews;
+    nothing sends."""
+    project = _project_row(org_id, _ref(refs, "project_id"))
+    client = (
+        rows(
+            "SELECT name, email, phone FROM public.clients "
+            "WHERE id=%s AND org_id=%s",
+            [project["client_id"], org_id],
+        )
+        if project.get("client_id")
+        else []
+    )
+    approval = rows(
+        "SELECT a.status::text AS status, a.expires_at > now() AS live "
+        "FROM public.customer_approvals a "
+        "JOIN public.project_versions v "
+        "  ON v.id = a.project_version_id AND v.org_id = a.org_id "
+        "WHERE a.org_id=%s AND a.project_id=%s AND v.revision_code=%s "
+        "ORDER BY a.created_at DESC LIMIT 1",
+        [org_id, project["id"], project["current_revision"]],
+    )
+    payments = rows(
+        "SELECT kind, amount, method, reference, created_at "
+        "FROM public.project_payments "
+        "WHERE org_id=%s AND project_id=%s AND voided_at IS NULL "
+        "ORDER BY created_at DESC LIMIT %s",
+        [org_id, project["id"], 8],
+    )
+    orders = rows(
+        """
+        SELECT o.order_code, o.status::text AS status,
+               d.scheduled_date AS delivery_date,
+               d.status::text AS delivery_status,
+               (SELECT s.label FROM public.production_steps s
+                 WHERE s.order_id = o.id AND s.org_id = o.org_id
+                   AND s.status NOT IN ('DONE', 'SKIPPED')
+                 ORDER BY s.sequence LIMIT 1) AS next_step
+        FROM public.orders o
+        JOIN public.project_versions v
+          ON v.id = o.project_version_id AND v.org_id = o.org_id
+        LEFT JOIN public.deliveries d
+          ON d.order_id = o.id AND d.org_id = o.org_id
+        WHERE o.org_id=%s AND v.project_id=%s
+          AND o.order_type='WORKSHOP_OT'
+          AND o.status NOT IN ('CANCELLED', 'INSTALLED')
+        ORDER BY o.created_at DESC LIMIT %s
+        """,
+        [org_id, project["id"], 8],
+    )
+    versions = rows(
+        "SELECT revision_code, emitted_at, documentary_complete "
+        "FROM public.project_versions WHERE org_id=%s AND project_id=%s "
+        "ORDER BY emitted_at DESC LIMIT 3",
+        [org_id, project["id"]],
+    )
+    positions = rows(
+        "SELECT count(*) AS total FROM public.project_positions "
+        "WHERE org_id=%s AND project_id=%s",
+        [org_id, project["id"]],
+    )
+    # collected vs gross — a payment reminder only makes sense against a
+    # real pending balance, so the projection carries both numbers.
+    collected = sum(
+        Decimal(str(p["amount"])) for p in payments if p["amount"] is not None
+    )
+    gross = Decimal(str(project["total_price_gross"])) if project["total_price_gross"] is not None else None
+    return {
+        "project": {
+            "id": str(project["id"]),
+            "code": _cut(project["code"]),
+            "name": _cut(project["name"]),
+            "status": _cut(project["status"]),
+        },
+        "current_revision": _cut(project["current_revision"]),
+        "client": (
+            {
+                "name": _cut(client[0]["name"]),
+                "email": _cut(client[0]["email"]),
+                "phone": _cut(client[0]["phone"]),
+            }
+            if client
+            else None
+        ),
+        "approval": (
+            {
+                "status": _cut(approval[0]["status"]),
+                "live": bool(approval[0]["live"]),
+            }
+            if approval
+            else None
+        ),
+        "totals": {
+            "net": _cut(project["total_price_net"]),
+            "tax": _cut(project["total_price_tax"]),
+            "gross": _cut(project["total_price_gross"]),
+            "collected": str(collected),
+            "pending": str(gross - collected) if gross is not None else None,
+        },
+        "positions_total": int(positions[0]["total"]),
+        "payments": [
+            {
+                "kind": _cut(p["kind"]),
+                "amount": _cut(p["amount"]),
+                "method": _cut(p["method"]),
+                "reference": _cut(p["reference"]),
+                "created_at": str(p["created_at"])[:10],
+            }
+            for p in payments
+        ],
+        "work_orders": [
+            {
+                "code": _cut(o["order_code"]),
+                "status": _cut(o["status"]),
+                "next_step": _cut(o["next_step"]),
+                "delivery_date": (
+                    str(o["delivery_date"])[:10] if o["delivery_date"] else None
+                ),
+                "delivery_status": _cut(o["delivery_status"]),
+            }
+            for o in orders
+        ],
+        "versions": [
+            {
+                "revision": _cut(v["revision_code"]),
+                "emitted_at": str(v["emitted_at"])[:10],
+                "documentary_complete": bool(v["documentary_complete"]),
+            }
+            for v in versions
+        ],
+    }
+
+
 def _catalog_compiler(org_id: UUID) -> dict:
     """§08-WD catalog compiler: the org's catalog imports with their article
     candidates — extract→classify→map→compare already ran deterministic
@@ -1302,6 +1439,7 @@ _BUILDERS = {
     "quotation_complete": _quotation,
     "project_from_documents": _project_docs,
     "catalog_compiler": _catalog_compiler,
+    "customer_comms": _customer_comms,
 }
 
 _REF_BUILDERS = {
@@ -1312,6 +1450,7 @@ _REF_BUILDERS = {
     "catalog",
     "quotation_complete",
     "project_from_documents",
+    "customer_comms",
 }
 
 

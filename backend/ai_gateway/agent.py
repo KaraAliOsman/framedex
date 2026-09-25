@@ -60,6 +60,7 @@ QUERY_TOOLS = {
     "quotation_complete": "get_quotation",
     "project_from_documents": "get_document_candidates",
     "catalog_compiler": "get_catalog_imports",
+    "customer_comms": "get_project",
 }
 
 PREPARE_TOOLS = {
@@ -153,7 +154,7 @@ Respondes SOLO un JSON:
 }
 
 Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents|catalog_compiler","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
+- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents|catalog_compiler|customer_comms","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
@@ -339,6 +340,40 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
+COMMS_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "comunicación con el cliente" de una empresa de ventanas y puertas (español chileno).
+
+El contexto lleva TODOS los hechos que una comunicación puede citar:
+- "project": id, código, nombre, status — la obra real.
+- "client": name, email, phone — o null si el proyecto no tiene cliente registrado.
+- "current_revision" y "versions": revisiones emitidas con fecha — el resumen de cambios compara la última contra la anterior.
+- "approval": status (SENT|VIEWED|APPROVED|CHANGES_REQUESTED|EXPIRED) y si sigue vivo — la invitación real del cliente.
+- "totals": net/tax/gross, collected y pending — los únicos montos citables.
+- "payments": cobros registrados (kind, amount, method, reference, fecha).
+- "positions_total": cuántos vanos.
+- "work_orders": code, status, next_step (la estación pendiente), delivery_date/delivery_status — el estado real de producción y entrega.
+
+Respondes SOLO un JSON:
+{
+  "reply": "qué redactaste y sobre qué hechos — breve y concreto",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Pasos:
+- UN paso {"kind":"artifact","artifact":{"kind":"message","title":"<tipo> — <código del proyecto>","payload":{"kind":"quote_email|change_summary|payment_reminder|production_update|delivery_notification","to":"correo del cliente o null","subject":"asunto","body":"cuerpo del mensaje"}},"references":["ids del contexto"]} — el borrador que la persona revisa y envía por su canal habitual.
+- {"kind":"navigate","path":"/projects/{project_id}","label":"Abrir proyecto"} — con el project_id del contexto.
+- {"kind":"query","surface":"quotation|production|project","refs":{...}} si un dato necesita profundizar — máximo 3 por ronda.
+
+Reglas duras:
+- Solo hechos del contexto: NUNCA inventes fechas, montos, estados de producción, plazos de entrega ni el correo del cliente — si falta el contacto, "to": null y warning explícito.
+- payment_reminder SOLO si totals.pending > 0; si está pagado o sin precio, dilo honesto en el reply y no redactes un cobro falso.
+- delivery_notification SOLO si existe delivery_date real en work_orders; sin fecha no hay aviso de entrega.
+- change_summary compara la revisión más reciente contra la anterior — sin versión anterior no hay cambios que resumir.
+- El cuerpo es español chileno de negocio: cordial, concreto, sin jerga técnica de fábrica ni datos internos (ids internos, estados en inglés).
+- Jamás "ops" ni "prepare" — el mensaje es un borrador; enviarlo es decisión humana.
+- Sin texto fuera del JSON."""
+
+
 WORKFLOW_SYSTEM: dict[str, str] = {
     "morning_brief": BRIEF_SYSTEM,
     "purchase_plan": PURCHASE_SYSTEM,
@@ -346,6 +381,7 @@ WORKFLOW_SYSTEM: dict[str, str] = {
     "quotation_complete": QUOTE_SYSTEM,
     "project_from_documents": DOC_DRAFT_SYSTEM,
     "catalog_compiler": COMPILER_SYSTEM,
+    "customer_comms": COMMS_SYSTEM,
 }
 
 
