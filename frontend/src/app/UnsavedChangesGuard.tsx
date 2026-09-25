@@ -4,7 +4,7 @@ import { UNSAFE_DataRouterContext, useBlocker } from "react-router-dom";
 import { t } from "../i18n/es-CL";
 import { Dialog } from "../ui";
 
-import { registerDirtySource } from "./shellUtils";
+import { consumeNavigationBypass, registerDirtySource } from "./shellUtils";
 
 // The production application uses a data router so browser Back and internal
 // navigation pass through the same guard as links.
@@ -31,7 +31,9 @@ export function UnsavedChangesGuard({
 }
 
 function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): JSX.Element | null {
-  const blocker = useBlocker(dirty);
+  // Function form so the bypass is evaluated per navigation attempt, and the
+  // one-shot consume cannot strand: the immediate guarded transition uses it.
+  const blocker = useBlocker(() => !consumeNavigationBypass() && dirty);
   if (blocker.state !== "blocked") return null;
   return (
     <Dialog

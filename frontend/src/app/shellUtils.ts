@@ -17,6 +17,20 @@ export function hasUnsavedWork(): boolean {
   return dirtySources.size > 0;
 }
 
+/** One-shot bypass for the next guarded navigation: a surface that already
+ * confirmed the discard (e.g. the org switcher's own dialog) must not make
+ * the route blocker ask a second time. Consumed by the first navigation it
+ * affects — it cannot leak into a later, unrelated transition. */
+let navigationBypassArmed = false;
+export function allowNextGuardedNavigation(): void {
+  navigationBypassArmed = true;
+}
+export function consumeNavigationBypass(): boolean {
+  const armed = navigationBypassArmed;
+  navigationBypassArmed = false;
+  return armed;
+}
+
 export const roleLabel: Record<RoleEnum, TranslationKey> = {
   OWNER: "shell.role.owner",
   ESTIMATOR: "shell.role.estimator",

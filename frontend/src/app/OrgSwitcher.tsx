@@ -5,7 +5,7 @@ import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
 import { useConfirm } from "../ui";
 
-import { hasUnsavedWork, roleLabel, useDismiss } from "./shellUtils";
+import { allowNextGuardedNavigation, hasUnsavedWork, roleLabel, useDismiss } from "./shellUtils";
 
 /** Current org identity + switcher. One membership renders read-only — a
  * switcher with nothing to switch to is noise. */
@@ -23,19 +23,23 @@ export function OrgSwitcher(): JSX.Element | null {
     setOpen(false);
     // Switching orgs remounts the session context, bypassing the route
     // blocker — gate on the shared dirty registry instead.
-    if (
-      hasUnsavedWork() &&
-      !(await confirm({
-        title: t("shell.leaveUnsavedTitle"),
-        body: t("shell.leaveUnsavedBody"),
-        confirmLabel: t("ui.confirm"),
-      }))
-    )
-      return;
+    if (hasUnsavedWork()) {
+      if (
+        !(await confirm({
+          title: t("shell.leaveUnsavedTitle"),
+          body: t("shell.leaveUnsavedBody"),
+          confirmLabel: t("ui.confirm"),
+        }))
+      )
+        return;
+      // The user already confirmed the discard — the route blocker must not
+      // ask again, and the context reload may unmount it before it resolves.
+      allowNextGuardedNavigation();
+    }
     // Entity routes (project, position, work order) belong to the old org —
     // land on a tenant-neutral surface before the new context resolves.
-    void auth.selectOrganization(organizationId);
     navigate("/dashboard");
+    void auth.selectOrganization(organizationId);
   }
   return (
     <div className="org-switcher" ref={rootRef}>

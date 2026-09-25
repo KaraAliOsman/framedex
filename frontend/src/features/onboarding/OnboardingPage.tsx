@@ -152,23 +152,39 @@ export function OnboardingPage(): JSX.Element {
   const options = useMemo(() => ({ headers: { "X-Organization-ID": orgId } }), [orgId]);
 
   // Creates carry no idempotency key: when the response is lost after a
-  // server-side commit, reconcile by name before letting the user submit
-  // again — never silently insert a duplicate.
-  async function adoptIfCreated(kind: "client" | "project", name: string): Promise<string | null> {
+  // server-side commit, reconcile before letting the user submit again — but
+  // names are not unique, so only a record fresh enough to BE this attempt
+  // (same name, updated within the attempt window, and for projects the same
+  // client) may be adopted. Anything older is an unrelated record.
+  async function adoptIfCreated(
+    kind: "client" | "project",
+    name: string,
+    attemptStart: number,
+    clientName?: string,
+  ): Promise<string | null> {
     const wanted = name.trim().toLowerCase();
+    const fresh = (updated: string): boolean =>
+      Math.abs(Date.parse(updated) - attemptStart) <= 60_000;
     try {
       if (kind === "client") {
         const response = await clientsList(options);
         if (response.status !== 200) return null;
         return (
-          response.data.items.find((entry) => entry.name.trim().toLowerCase() === wanted)?.id ??
-          null
+          response.data.items.find(
+            (entry) => entry.name.trim().toLowerCase() === wanted && fresh(entry.updated_at),
+          )?.id ?? null
         );
       }
+      const wantedClient = clientName?.trim().toLowerCase() ?? null;
       const response = await projectsList(options);
       if (response.status !== 200) return null;
       return (
-        response.data.items.find((entry) => entry.name.trim().toLowerCase() === wanted)?.id ?? null
+        response.data.items.find(
+          (entry) =>
+            entry.name.trim().toLowerCase() === wanted &&
+            fresh(entry.updated_at) &&
+            (wantedClient === null || entry.client_name.trim().toLowerCase() === wantedClient),
+        )?.id ?? null
       );
     } catch {
       return null;
@@ -180,6 +196,7 @@ export function OnboardingPage(): JSX.Element {
     if (busy || clientName.trim() === "") return;
     setError(null);
     setBusy(true);
+    const attemptStart = Date.now();
     try {
       const response = await clientsCreate(
         {
@@ -197,7 +214,7 @@ export function OnboardingPage(): JSX.Element {
       if (caught instanceof ApiError && caught.status < 500) {
         setError(t(caught.status === 422 ? "projects.invalid" : "onboarding.saveError"));
       } else {
-        const adopted = await adoptIfCreated("client", clientName);
+        const adopted = await adoptIfCreated("client", clientName, attemptStart);
         if (adopted) {
           setClientId(adopted);
           setStep(4);
@@ -215,6 +232,7 @@ export function OnboardingPage(): JSX.Element {
     if (busy || projectName.trim() === "") return;
     setError(null);
     setBusy(true);
+    const attemptStart = Date.now();
     try {
       const response = await projectsCreate(
         {
@@ -238,7 +256,7 @@ export function OnboardingPage(): JSX.Element {
           ),
         );
       } else {
-        const adopted = await adoptIfCreated("project", projectName);
+        const adopted = await adoptIfCreated("project", projectName, attemptStart, clientName);
         if (adopted) {
           setProjectId(adopted);
           void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
