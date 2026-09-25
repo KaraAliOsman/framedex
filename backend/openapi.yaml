@@ -6208,6 +6208,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/pricing/design-batch-preview/:
+    post:
+      operationId: pricing_design_batch_preview
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - pricing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignBatchPreviewRequestRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesignBatchPreviewResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/pricing/drafts/:
     post:
       operationId: pricing_create_draft
@@ -12531,6 +12601,11 @@ components:
           items:
             type: object
             additionalProperties: {}
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
       - kind
       - label
@@ -14498,6 +14573,80 @@ components:
       - notes
       - ops
       - rejected
+    DesignBatchPreviewItemRequest:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        design:
+          type: object
+          additionalProperties: {}
+      required:
+      - design
+      - position_id
+    DesignBatchPreviewItemResponse:
+      type: object
+      properties:
+        position_id:
+          type: string
+          format: uuid
+        index:
+          type: integer
+        ok:
+          type: boolean
+        error_code:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+        unit_cost_before:
+          type: string
+          nullable: true
+        unit_cost_after:
+          type: string
+          nullable: true
+        line_cost_before:
+          type: string
+          nullable: true
+        line_cost_after:
+          type: string
+          nullable: true
+      required:
+      - ok
+      - position_id
+    DesignBatchPreviewRequestRequest:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        effective_date:
+          type: string
+          format: date
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignBatchPreviewItemRequest'
+      required:
+      - effective_date
+      - items
+      - project_id
+    DesignBatchPreviewResponse:
+      type: object
+      properties:
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DesignBatchPreviewItemResponse'
+      required:
+      - currency
+      - items
     DesignOptions:
       type: object
       properties:

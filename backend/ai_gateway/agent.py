@@ -24,7 +24,15 @@ from ai_gateway.assist import (
     _grounded,
     _grounding_values,
 )
-from ai_gateway.context import REQUIRED_REFS, _BUILDERS, _ContextError, build_context
+from ai_gateway.context import (
+    REQUIRED_REFS,
+    _BUILDERS,
+    _ContextError,
+    _cut,
+    _jsonb,
+    build_context,
+    rows,
+)
 from authentication.errors import contract_error
 from projects import design_assist, service as projects_service
 
@@ -84,6 +92,32 @@ MAX_LABEL = 80
 MAX_WARNINGS = 8
 MAX_WARNING = 240
 
+# §08-WC — batch design ops. One proposal may span many positions of the
+# same project; every matched position is validated independently through the
+# design-assist validator and the human still confirms per project (the price
+# diff the client shows comes from the design-batch preview endpoint).
+MAX_BATCH_POSITIONS = 15
+MAX_BATCH_ITEMS = 15
+# Ops that may repeat across positions. Structural edits (add/remove units
+# and couplings) never batch — a per-position operation repeated blindly
+# across different geometries is a hallucination vector, not a shortcut.
+BATCH_OPS = {
+    "equalize_angles",
+    "equalize_widths",
+    "set_coupling_angle",
+    "set_coupling_kind",
+    "set_glass",
+    "set_glass_thickness",
+    "set_height",
+    "set_module_width",
+    "set_opening",
+    "set_panel",
+    "set_total_width",
+}
+# Ref fields that accept "*" — expanded per position into every real ref of
+# that kind so 'todas las hojas'/'todas las uniones' mean exactly that.
+BATCH_WILDCARD_FIELDS = {"module", "coupling"}
+
 # Consequential actions the agent may PREPARE as a card. Each action binds to
 # the real route where the action lives — the human still confirms there; the
 # agent never executes. {placeholder}s must be filled with a UUID a projection
@@ -123,6 +157,7 @@ Tipos de paso:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
   "module"/"coupling" toman el "ref" (id) de product.modules[]/product.couplings[]; para una unidad creada por add_unit en la misma secuencia usa "added_m1"... ("added_c1"... para uniones nuevas). Las medidas solo pueden citar números de la meta.
 - {"kind":"prepare","action":"emit_revision|release_work_order|optimize_work_order|register_payment|upload_document|review_catalog|upload_certificate","path":"/ruta","label":"..."} — prepara una acción consecuente; la persona la confirma en la superficie real. Nunca la ejecutes tú. El "path" DEBE seguir la plantilla de actions.prepare_routes[action] rellenando {id} con el UUID real de la entidad (uno que el contexto o las observaciones ya mostraron).
+- {"kind":"batch_ops","targets":{...},"ops":[...],"label":"..."} — SOLO en surface="project" con context.editable=true: propone el MISMO set de ops sobre muchas posiciones del proyecto a la vez ("todas las fijas a abatible", "copia el vidrio", "ancho total 1500"). targets: {"typology":"ALL"|tipología exacta del listado de posiciones, "position_ids":[uuid,...] (opcional — solo ids que context.positions u observaciones mostraron)}. ops: mismo contrato que "ops", pero solo ops de ajuste (set_opening, set_glass, set_glass_thickness, set_panel, set_module_width, set_total_width, set_height, equalize_widths, equalize_angles, set_coupling_kind, set_coupling_angle) — nunca agregar/quitar módulos ni uniones. "module" acepta el ref real de esa posición o "*" para TODOS los módulos de cada posición; "coupling" igual. Consulta surface="position" antes para conocer los refs reales; si no tienes refs y la op es por-módulo usa "*". Medidas solo citan números de la meta.
 
 Reglas duras:
 - Solo citas números (medidas, precios, cantidades, SKUs, ids) que estén literalmente en el contexto, las observaciones o la meta del usuario. Nada inventado.
@@ -401,6 +436,157 @@ def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     }
 
 
+def _batch_positions(
+    org_id: UUID,
+    project_id: str,
+    targets: dict,
+    observed_refs: frozenset[str],
+) -> tuple[list[dict], str | None]:
+    """Resolve batch targets to live position rows of the project. Explicit
+    position_ids must be UUIDs the context/observations already showed — an
+    unobserved id aborts the whole step rather than silently dropping it,
+    because the model claimed to aim at it."""
+    position_ids = targets.get("position_ids")
+    where = ""
+    params: list[Any] = [org_id, project_id]
+    if position_ids is not None:
+        if not isinstance(position_ids, list) or not position_ids:
+            return [], "batch_targets_invalid"
+        seen: list[str] = []
+        for value in position_ids:
+            if (
+                not isinstance(value, str)
+                or not _PATH_UUID.fullmatch(value)
+                or value not in observed_refs
+            ):
+                return [], "unobserved_ref"
+            if value not in seen:
+                seen.append(value)
+        if len(seen) > MAX_BATCH_POSITIONS:
+            return [], "batch_too_large"
+        where = "AND p.id = ANY(%s::uuid[])"
+        params.append(seen)
+    typology = targets.get("typology")
+    if typology is not None and (not isinstance(typology, str) or not typology.strip()):
+        return [], "batch_targets_invalid"
+    wanted = typology.strip().upper() if isinstance(typology, str) else None
+    positions = rows(
+        "SELECT p.id, p.position_index, p.location_tag, p.typology, "
+        "p.width_mm, p.height_mm, p.system_id, p.parametric_tree "
+        "FROM public.project_positions p "
+        "WHERE p.org_id=%s AND p.project_id=%s " + where + " ORDER BY p.position_index",
+        params,
+    )
+    matched = [
+        position
+        for position in positions
+        if wanted in (None, "ALL") or (position["typology"] or "").upper() == wanted
+    ]
+    return matched[:MAX_BATCH_POSITIONS], None
+
+
+def _expand_batch_ops(ops: list, summary: dict) -> tuple[list, str | None]:
+    """`module:"*"`/`coupling:"*"` fan out into one op per real ref of that
+    position — 'todas las hojas' means every module the position actually
+    has. Structural ops never batch: the same op cannot 'add a unit' on
+    geometries that differ per row."""
+    module_refs = [str(module["ref"]) for module in summary["modules"]]
+    coupling_refs = [str(coupling["ref"]) for coupling in summary["couplings"]]
+    expanded: list = []
+    for op in ops:
+        if not isinstance(op, dict) or op.get("op") not in BATCH_OPS:
+            return [], "batch_op_not_allowed"
+        wildcard = next(
+            (field for field in BATCH_WILDCARD_FIELDS if op.get(field) == "*"), None
+        )
+        if wildcard is None:
+            expanded.append(op)
+            continue
+        refs = module_refs if wildcard == "module" else coupling_refs
+        if not refs:
+            return [], "batch_no_refs"
+        expanded.extend({**op, wildcard: ref} for ref in refs)
+    return expanded, None
+
+
+def _batch_ops_step(
+    item: dict,
+    *,
+    surface: str,
+    org_id: UUID,
+    project_id: str,
+    project_editable: bool,
+    observed_refs: frozenset[str],
+    grounding: set,
+    rejected: list[dict],
+) -> dict | None:
+    """§08-WC — validate a proposed batch edit: the same op set against every
+    matched position, each through the design-assist validator on its own
+    catalog authority. The step the client renders carries the validated ops
+    per position; the human sees the count + price diff and confirms —
+    nothing applies here."""
+    if surface != "project" or not project_editable:
+        return None
+    targets = item.get("targets")
+    ops = item.get("ops")
+    if not isinstance(targets, dict) or not isinstance(ops, list) or not ops:
+        rejected.append({"op": "batch_ops", "reason": "batch_targets_invalid"})
+        return None
+    for entry in ops:
+        name = entry.get("op") if isinstance(entry, dict) else None
+        if isinstance(name, str) and name not in BATCH_OPS:
+            rejected.append({"op": "batch_ops", "reason": f"batch_op_not_allowed:{name}"})
+            return None
+    positions, error = _batch_positions(org_id, project_id, targets, observed_refs)
+    if error is not None:
+        rejected.append({"op": "batch_ops", "reason": error})
+        return None
+    catalogs: dict[str, dict | None] = {}
+    items: list[dict] = []
+    for position in positions[:MAX_BATCH_ITEMS]:
+        at = f"position_{position['position_index']}"
+        product = _jsonb(position.get("parametric_tree"))
+        summary = design_assist._summary(product)
+        if summary is None:
+            # Classic (non-assembly) positions can't be batch-edited — the
+            # ops contract speaks assembly refs.
+            rejected.append({"op": "batch_ops", "reason": f"{at}:unsupported_product"})
+            continue
+        system_id = str(position["system_id"])
+        if system_id not in catalogs:
+            catalogs[system_id] = design_assist._catalog(UUID(system_id), org_id)
+        catalog = catalogs[system_id]
+        if catalog is None:
+            rejected.append({"op": "batch_ops", "reason": f"{at}:catalog_unavailable"})
+            continue
+        expanded, werror = _expand_batch_ops(ops, summary)
+        if werror is not None:
+            rejected.append({"op": "batch_ops", "reason": f"{at}:{werror}"})
+            continue
+        accepted, dropped = design_assist._validate_ops(expanded, summary, catalog, grounding)
+        for entry in dropped:
+            rejected.append({**entry, "reason": f"{at}:{entry['reason']}"})
+        if accepted:
+            items.append(
+                {
+                    "position_id": str(position["id"]),
+                    "index": int(position["position_index"]),
+                    "location": _cut(position["location_tag"]),
+                    "typology": position["typology"],
+                    "ops": accepted,
+                }
+            )
+    if not items:
+        return None
+    return {
+        "kind": "batch_ops",
+        "tool": "preview_commands",
+        "items": items,
+        "label": str(item.get("label") or "").strip()[:MAX_LABEL]
+        or "Edición masiva de diseño",
+    }
+
+
 def _act(
     *,
     org_id: UUID,
@@ -558,6 +744,20 @@ def _act(
                         or "Cambios de diseño",
                     }
                 )
+            continue
+        if kind == "batch_ops":
+            out = _batch_ops_step(
+                item,
+                surface=surface,
+                org_id=org_id,
+                project_id=str(refs.get("project_id") or ""),
+                project_editable=bool((context or {}).get("editable")),
+                observed_refs=context_refs,
+                grounding=grounding,
+                rejected=rejected,
+            )
+            if out is not None:
+                steps.append(out)
             continue
         out = _step_out(item, context_refs=context_refs)
         if out is not None:

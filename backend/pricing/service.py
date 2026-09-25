@@ -225,6 +225,92 @@ def preview(org_id, actor, request):
             'created_at':record['created_at'].isoformat()}
 
 
+def design_batch_preview(org_id, _actor, request):
+    """§08-WC — honest money diff for a proposed batch design edit. Each
+    item's proposed design passes the same engine gate a save would
+    (calculate_design), then position_cost prices the stored position and
+    the proposed product under the same rules — the count + Δ the human
+    confirms is the real unit cost, never a model estimate."""
+    from authentication.errors import ContractAPIException
+    from projects.service import calculate_design
+
+    project = one('SELECT * FROM public.projects WHERE id=%s AND org_id=%s',
+                  [request['project_id'],org_id],'project_not_found')
+    if project['status'] != 'DRAFT':
+        raise PricingError('commercial_revision_required')
+    # Mirror editable(): a version row on the current revision means it is
+    # sealed — positions can no longer change, so a batch preview is moot.
+    if rows(
+        "SELECT id FROM public.project_versions WHERE org_id=%s AND project_id=%s "
+        "AND revision_code=%s LIMIT 1",
+        [org_id, project['id'], project['current_revision']],
+    ):
+        raise PricingError('commercial_revision_required')
+    rules = one('SELECT * FROM public.pricing_rules WHERE org_id=%s',[org_id],'pricing_rules_not_found')
+    organization = one('SELECT currency FROM public.tenancy_organizations WHERE id=%s',[org_id])
+    repo = PricingRepository(org_id,request['effective_date'],organization['currency'],None)
+    repo.authorities.append({'organization_currency':organization['currency']})
+    calculation_rules = {**rules,
+        'labor_rate_per_m2':repo.convert(rules['labor_rate_per_m2'],organization['currency']),
+        'installation_rate_per_m2':repo.convert(rules['installation_rate_per_m2'],organization['currency'])}
+    items = []
+    with localcontext() as context:
+        context.prec = 80
+        for entry in request['items']:
+            position_id = entry['position_id']
+            design = entry['design']
+            found = rows(
+                'SELECT * FROM public.project_positions WHERE id=%s AND org_id=%s AND project_id=%s',
+                [position_id,org_id,project['id']],
+            )
+            if not found:
+                items.append({'position_id':position_id,'ok':False,
+                              'error_code':'position_not_found','error':'La posición no existe en este proyecto.'})
+                continue
+            position = found[0]
+            try:
+                # Engine validity under the member-facing role, exactly like
+                # a save; cost reads swap roles internally as position_cost
+                # already does.
+                with connection.cursor() as cursor:
+                    cursor.execute('SET LOCAL ROLE authenticated')
+                try:
+                    calculate_design(org_id,{**design,'system_id':str(design['system_id'])})
+                finally:
+                    with connection.cursor() as cursor:
+                        cursor.execute('SET LOCAL ROLE pricing_backend')
+                before, _, _ = position_cost(repo,position,calculation_rules)
+                pseudo = {
+                    'system_id':design['system_id'],
+                    'parametric_tree':design['parametric_tree'],
+                    'width_mm':D(str(design['nominal_width_mm'])),
+                    'height_mm':D(str(design['nominal_height_mm'])),
+                    'color_interior':design['color'],
+                    'color_exterior':design['color'],
+                }
+                after, _, _ = position_cost(repo,pseudo,calculation_rules)
+            except ContractAPIException as error:
+                items.append({'position_id':position_id,'ok':False,
+                              'error_code':error.contract_code,'error':error.public_detail})
+                continue
+            except PricingError as error:
+                items.append({'position_id':position_id,'ok':False,
+                              'error_code':error.code,'error':error.code})
+                continue
+            quantity = position['quantity']
+            items.append({
+                'position_id':position_id,
+                'index':position['position_index'],
+                'ok':True,
+                'quantity':quantity,
+                'unit_cost_before':str(before),
+                'unit_cost_after':str(after),
+                'line_cost_before':str(before*quantity),
+                'line_cost_after':str(after*quantity),
+            })
+    return {'currency':organization['currency'],'items':items}
+
+
 def operation_public(operation):
     # The decision surface reads cost next to price: both were stored at
     # preview time from the same authority, so the margin the estimator sees

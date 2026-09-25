@@ -449,7 +449,41 @@ def _project(org_id: UUID, refs: dict) -> dict:
             "documentary_complete": bool(versions[0]["documentary_complete"]),
             "production_allowed": bool(versions[0]["production_allowed"]),
         }
+    # Positions are writable only while the current revision is unsealed —
+    # batch design ops are only offerable when this reads true.
+    context["editable"] = project["status"] == "DRAFT" and not (
+        versions and versions[0]["revision_code"] == project["current_revision"]
+    )
     return context
+
+
+def _module_intent(module: dict) -> dict:
+    """Batch-edit targeting surface: each module's declared openings and
+    commercial glass SKU — 'todas las fijas a abatible' or 'copia el vidrio
+    de esta posición' can only be proposed against this information, never
+    guessed (§08-WC). Walks the module's intent tree for BAY nodes."""
+    openings: list[str] = []
+    glass_skus: list[str] = []
+
+    def walk(node: object) -> None:
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "BAY":
+            opening = node.get("opening_type")
+            sku = node.get("glass_article_sku")
+            if isinstance(opening, str) and opening not in openings:
+                openings.append(opening)
+            if isinstance(sku, str) and sku and sku not in glass_skus:
+                glass_skus.append(sku)
+        children = node.get("children")
+        if isinstance(children, list):
+            for child in children:
+                walk(child)
+
+    tree = module.get("tree")
+    if isinstance(tree, dict):
+        walk(tree)
+    return {"openings": openings, "glass_skus": glass_skus}
 
 
 def _position(org_id: UUID, refs: dict) -> dict:
@@ -479,6 +513,9 @@ def _position(org_id: UUID, refs: dict) -> dict:
                 "single": True,
                 "width_mm": position["width_mm"],
                 "height_mm": position["height_mm"],
+                # Single-module positions persist the module's own tree —
+                # without it the intent surface would report no openings.
+                "tree": tree,
             }
         ]
     return {
@@ -504,6 +541,7 @@ def _position(org_id: UUID, refs: dict) -> dict:
                     "id": _cut(m.get("id"), 40),
                     "width_mm": _cut(m.get("width_mm")),
                     "height_mm": _cut(m.get("height_mm")),
+                    **_module_intent(m),
                     **({"single": True} if m.get("single") else {}),
                 }
                 for m in modules[:MAX_LIST]

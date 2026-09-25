@@ -21,7 +21,7 @@ from engine_api.adapter import (
     UnsupportedEngineContract,
 )
 from engine_api.repository import SystemParamsRepository, SystemNotFound, UnsupportedCatalogContract
-from pricing.repository import audit_reason, commercial_backend, json_text, rows
+from pricing.repository import audit_reason, commercial_backend, json_text, one, rows
 from pricing.service import decoded
 from projects.clients import linkable_client
 from projects.serializers import PositionWriteSerializer

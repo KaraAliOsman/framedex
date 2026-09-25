@@ -64,6 +64,8 @@ import type {
   DesignAlternativesResponse,
   DesignAssistRequestRequest,
   DesignAssistResponse,
+  DesignBatchPreviewRequestRequest,
+  DesignBatchPreviewResponse,
   DesignOptions,
   DispatchNoteAccess,
   DispatchNoteDte,
@@ -6952,6 +6954,88 @@ export const pricingAdminWrite = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(adminWriteRequest),
+  });
+};
+
+export type pricingDesignBatchPreviewResponse200 = {
+  data: DesignBatchPreviewResponse;
+  status: 200;
+};
+
+export type pricingDesignBatchPreviewResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type pricingDesignBatchPreviewResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type pricingDesignBatchPreviewResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type pricingDesignBatchPreviewResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type pricingDesignBatchPreviewResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type pricingDesignBatchPreviewResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type pricingDesignBatchPreviewResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type pricingDesignBatchPreviewResponseSuccess = pricingDesignBatchPreviewResponse200 & {
+  headers: Headers;
+};
+export type pricingDesignBatchPreviewResponseError = (
+  | pricingDesignBatchPreviewResponse400
+  | pricingDesignBatchPreviewResponse401
+  | pricingDesignBatchPreviewResponse403
+  | pricingDesignBatchPreviewResponse404
+  | pricingDesignBatchPreviewResponse409
+  | pricingDesignBatchPreviewResponse422
+  | pricingDesignBatchPreviewResponse503
+) & {
+  headers: Headers;
+};
+
+export type pricingDesignBatchPreviewResponse =
+  pricingDesignBatchPreviewResponseSuccess | pricingDesignBatchPreviewResponseError;
+
+export const getPricingDesignBatchPreviewUrl = () => {
+  return `/api/v1/pricing/design-batch-preview/`;
+};
+
+export const pricingDesignBatchPreview = async (
+  designBatchPreviewRequestRequest: DesignBatchPreviewRequestRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<pricingDesignBatchPreviewResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<pricingDesignBatchPreviewResponse>(getPricingDesignBatchPreviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(designBatchPreviewRequestRequest),
   });
 };
 

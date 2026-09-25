@@ -11,6 +11,7 @@ import type { DesignOp } from "../commands/types";
 import { describeDesignOp, designAssistProduct } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
+import { BatchOpsStep } from "./BatchOpsStep";
 
 type Turn = {
   goal: string;
@@ -48,6 +49,8 @@ export const SURFACE_LABELS: Record<string, string> = {
  * sending, and the answer stays evidence-bound either way. */
 const GOAL_CHIPS: Record<string, string[]> = {
   project: [
+    "Convierte todas las fijas del proyecto en abatibles.",
+    "Copia el vidrio del primer vano a todos los demás.",
     "Redacta el correo para enviar la cotización al cliente.",
     "Resume los cambios de la última revisión para el cliente.",
     "Redacta un recordatorio de pago pendiente.",
@@ -225,6 +228,16 @@ export function AgentBody({
                         >
                           {t("agent.prepare")} {step.label}
                         </button>
+                      );
+                    }
+                    if (step.kind === "batch_ops" && refs.project_id) {
+                      return (
+                        <BatchOpsStep
+                          key={stepIndex}
+                          step={step}
+                          organizationId={organizationId}
+                          projectId={refs.project_id}
+                        />
                       );
                     }
                     if (step.kind === "ops") {

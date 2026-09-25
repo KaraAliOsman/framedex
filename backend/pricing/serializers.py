@@ -179,6 +179,44 @@ class ImportRequestSerializer(StrictSerializer):
         return mapping
 
 
+class DesignBatchPreviewItemSerializer(StrictSerializer):
+    position_id = serializers.UUIDField()
+    design = serializers.DictField()
+
+    def validate_design(self, value):
+        # Same contract as a position save — imported lazily because
+        # projects.serializers already pulls StrictSerializer from this
+        # module (top-level import would cycle).
+        from projects.serializers import PositionDesignSerializer
+        serializer = PositionDesignSerializer(data=value)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data
+
+
+class DesignBatchPreviewRequestSerializer(StrictSerializer):
+    project_id = serializers.UUIDField()
+    effective_date = serializers.DateField()
+    items = DesignBatchPreviewItemSerializer(many=True,allow_empty=False,max_length=15)
+
+
+class DesignBatchPreviewItemResponseSerializer(serializers.Serializer):
+    position_id = serializers.UUIDField()
+    index = serializers.IntegerField(required=False)
+    ok = serializers.BooleanField()
+    error_code = serializers.CharField(required=False,allow_null=True)
+    error = serializers.CharField(required=False,allow_null=True)
+    quantity = serializers.IntegerField(required=False)
+    unit_cost_before = serializers.CharField(required=False,allow_null=True)
+    unit_cost_after = serializers.CharField(required=False,allow_null=True)
+    line_cost_before = serializers.CharField(required=False,allow_null=True)
+    line_cost_after = serializers.CharField(required=False,allow_null=True)
+
+
+class DesignBatchPreviewResponseSerializer(serializers.Serializer):
+    currency = serializers.CharField()
+    items = DesignBatchPreviewItemResponseSerializer(many=True)
+
+
 RESOURCE_SERIALIZERS = {
     'cost-lists':CostListSerializer,'cost-items':CostItemSerializer,'rules':RulesSerializer,
     'configurations':ConfigurationSerializer,'matrix-cells':MatrixCellSerializer,'fx':FxSerializer,

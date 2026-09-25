@@ -542,8 +542,20 @@ def test_position_context_decodes_jsonb_parametric_tree(monkeypatch):
     _patch(monkeypatch, rows_impl=fake_rows)
     ctx = context.build_context(org_id, "position", {"position_id": str(position_id)})
     assert ctx["modules"] == [
-        {"id": "m1", "width_mm": "1200", "height_mm": "1500"},
-        {"id": "m2", "width_mm": "1200", "height_mm": "1500"},
+        {
+            "id": "m1",
+            "width_mm": "1200",
+            "height_mm": "1500",
+            "openings": [],
+            "glass_skus": [],
+        },
+        {
+            "id": "m2",
+            "width_mm": "1200",
+            "height_mm": "1500",
+            "openings": [],
+            "glass_skus": [],
+        },
     ]
     assert ctx["couplings"] == 1
 
@@ -576,6 +588,8 @@ def test_position_context_wraps_single_module_tree(monkeypatch):
             "width_mm": "2400.00",
             "height_mm": "1500.00",
             "single": True,
+            "openings": [],
+            "glass_skus": [],
         }
     ]
     assert ctx["couplings"] is None

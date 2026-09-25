@@ -228,6 +228,62 @@
   border: 1px solid var(--theme-accent, #0f817a);
   color: var(--theme-accent, #0f817a);
 }
+
+/* §08-WC batch edit diff — one row per affected position, applied through
+   the canonical save after the human confirms. */
+.ask-dock__batch ul {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.ask-dock__batch-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-top: 1px dashed var(--theme-border-subtle, #d9dfde);
+}
+.ask-dock__batch-row:first-child {
+  border-top: 0;
+}
+.ask-dock__batch-where {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ask-dock__batch-ops {
+  color: var(--theme-text-secondary, #576664);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ask-dock__batch-cost {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ask-dock__batch-row.is-applied .ask-dock__batch-cost {
+  color: var(--theme-accent, #0f817a);
+  font-weight: 600;
+}
+.ask-dock__batch-row.is-failed .ask-dock__batch-cost,
+.ask-dock__batch-row.is-apply_failed .ask-dock__batch-cost {
+  color: var(--theme-danger, #b3261e);
+}
+.ask-dock__batch-row.is-unsupported {
+  color: var(--theme-text-muted, #8a9493);
+}
+.ask-dock__batch-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--theme-border-subtle, #d9dfde);
+  padding-top: 6px;
+  font-size: 12px;
+  color: var(--theme-text-secondary, #576664);
+}
 .ask-dock__form textarea {
   flex: 1;
   font-size: 13px;

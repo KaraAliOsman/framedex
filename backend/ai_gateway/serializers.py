@@ -101,6 +101,8 @@ class AiAgentStepSerializer(serializers.Serializer):
     path = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
     ops = serializers.ListField(child=serializers.DictField(), required=False)
+    # §08-WC batch edits: validated ops grouped per position.
+    items = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class AiAgentQuerySerializer(serializers.Serializer):

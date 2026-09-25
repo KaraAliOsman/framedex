@@ -238,3 +238,134 @@ def test_public_response_uses_line_total_strings():
                              'project_tax':Decimal('0'),'project_gross':Decimal('2')})
     assert result['lines']==[{'position_index':1,'line_net':'2'}]
     assert result['project_net']=='2'
+
+
+def test_design_batch_preview_prices_before_and_after(monkeypatch):
+    """§08-WC — the batch diff is the engine-checked proposed design priced
+    under the same rules; cost strings keep Decimal precision."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    import pricing.service as service
+    import projects.service as projects_service
+
+    org_id, project_id, position_id, system_id = uuid4(), uuid4(), uuid4(), uuid4()
+    tables = {
+        'projects': [{
+            'id': project_id, 'status': 'DRAFT', 'current_revision': 1,
+        }],
+        'project_versions': [],
+        'pricing_rules': [{
+            'waste_factor_pct': Decimal('0'),
+            'labor_rate_per_m2': Decimal('0'),
+            'installation_rate_per_m2': Decimal('0'),
+        }],
+        'tenancy_organizations': [{'currency': 'CLP'}],
+        'project_positions': [{
+            'id': position_id, 'position_index': 1, 'quantity': Decimal('2'),
+            'system_id': system_id, 'width_mm': Decimal('1000'),
+            'height_mm': Decimal('1000'), 'parametric_tree': {},
+            'color_interior': 'WHITE', 'color_exterior': 'WHITE',
+        }],
+    }
+
+    def _table(query):
+        return next(key for key in tables if f'public.{key}' in query)
+
+    monkeypatch.setattr(
+        service, 'one',
+        lambda query, params=(), code='missing': tables[_table(query)][0],
+    )
+    monkeypatch.setattr(
+        service, 'rows',
+        lambda query, params=(): tables[_table(query)],
+    )
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, sql):
+            return None
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+    monkeypatch.setattr(service, 'connection', Conn())
+    monkeypatch.setattr(
+        service, 'PricingRepository',
+        lambda *a: SimpleNamespace(authorities=[], convert=lambda value, c: value),
+    )
+    checked = []
+    monkeypatch.setattr(
+        projects_service, 'calculate_design',
+        lambda oid, design: checked.append(design),
+    )
+    priced = []
+
+    def fake_cost(repo, position, rules):
+        priced.append(position)
+        return (Decimal('100') if len(priced) == 1 else Decimal('120'), None, None)
+
+    monkeypatch.setattr(service, 'position_cost', fake_cost)
+
+    result = service.design_batch_preview(org_id, None, {
+        'project_id': str(project_id),
+        'effective_date': '2026-01-01',
+        'items': [{
+            'position_id': str(position_id),
+            'design': {
+                'system_id': str(system_id),
+                'nominal_width_mm': '1000',
+                'nominal_height_mm': '1000',
+                'color': 'WHITE',
+                'parametric_tree': {'version': 'product-v2'},
+            },
+        }],
+    })
+
+    assert len(checked) == 1  # engine gate ran per item, like a save
+    assert len(priced) == 2  # stored position + proposed pseudo-design
+    item = result['items'][0]
+    assert item['ok'] is True
+    assert item['unit_cost_before'] == '100'
+    assert item['unit_cost_after'] == '120'
+    assert item['line_cost_after'] == '240'
+    assert result['currency'] == 'CLP'
+
+
+def test_design_batch_preview_refuses_sealed_revision(monkeypatch):
+    """A sealed version at the current revision makes the preview moot —
+    positions can't change, so there is nothing to diff."""
+    from uuid import uuid4
+
+    import pricing.service as service
+
+    org_id, project_id = uuid4(), uuid4()
+    tables = {
+        'projects': [{'id': project_id, 'status': 'DRAFT', 'current_revision': 2}],
+        'project_versions': [{'id': uuid4()}],
+    }
+
+    monkeypatch.setattr(
+        service, 'one',
+        lambda query, params=(), code='missing': tables['projects'][0],
+    )
+    monkeypatch.setattr(
+        service, 'rows',
+        lambda query, params=(): tables['project_versions'],
+    )
+
+    try:
+        service.design_batch_preview(org_id, None, {
+            'project_id': str(project_id),
+            'effective_date': '2026-01-01',
+            'items': [],
+        })
+        raise AssertionError('expected PricingError')
+    except PricingError as error:
+        assert error.code == 'commercial_revision_required'

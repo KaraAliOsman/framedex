@@ -26,9 +26,11 @@ from pricing.repository import (admin_list, admin_write, audit_reason, commercia
 from pricing.serializers import (
     AdminResponseSerializer, AdminWriteSerializer, ApplySerializer, DraftProjectSerializer,
     DraftResponseSerializer, PriceRequestSerializer, PriceResponseSerializer, RESOURCE_SERIALIZERS,
-    ImportRequestSerializer,
+    ImportRequestSerializer, DesignBatchPreviewRequestSerializer,
+    DesignBatchPreviewResponseSerializer,
 )
-from pricing.service import apply_operation, operation_public, preview
+from pricing.service import (apply_operation, design_batch_preview, operation_public,
+                             preview)
 from pricing.xlsx_import import import_rows, parse_xlsx
 from projects.typology import derive_typology
 
@@ -99,7 +101,7 @@ def _preview_connection_ready():
         raise DatabaseError('Pricing preview requires an idle outermost connection')
 
 
-def _preview_attempt(token, claims, organization_header, data):
+def _preview_attempt(token, claims, organization_header, data, service=preview):
     _preview_connection_ready()
     with transaction.atomic(durable=True):
         with connection.cursor() as cursor:
@@ -114,7 +116,7 @@ def _preview_attempt(token, claims, organization_header, data):
             raise PricingError('pricing_permission_denied')
         attempt_data = {**data,'_actor_id':token.user_id}
         with commercial_backend():
-            output = preview(tenant.active_organization.organization_id,tenant,attempt_data)
+            output = service(tenant.active_organization.organization_id,tenant,attempt_data)
     return output
 
 
@@ -122,10 +124,10 @@ def _database_sqlstate(error):
     return getattr(error.__cause__,'sqlstate',None)
 
 
-def _preview_with_retry(token, claims, organization_header, data):
+def _preview_with_retry(token, claims, organization_header, data, service=preview):
     for attempt in range(3):
         try:
-            return _preview_attempt(token,claims,organization_header,data)
+            return _preview_attempt(token,claims,organization_header,data,service)
         except DatabaseError as error:
             if _database_sqlstate(error) not in ('40001','40P01') or attempt==2:
                 raise
@@ -174,6 +176,22 @@ class PreviewView(APIView):
         with public_pricing_errors():
             output = _preview_with_retry(token,claims,organization_header,data)
         return Response(price_response(output))
+
+
+class DesignBatchPreviewView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(operation_id='pricing_design_batch_preview',parameters=[ACTIVE_ORGANIZATION_HEADER],
+                   request=DesignBatchPreviewRequestSerializer,
+                   responses={200:DesignBatchPreviewResponseSerializer,**ERRORS},tags=['pricing'])
+    def post(self,request):
+        data = validate(DesignBatchPreviewRequestSerializer,request.data)
+        token = verified_request_token(request)
+        claims = dict(token.claims)
+        organization_header = request.headers.get('X-Organization-ID')
+        with public_pricing_errors():
+            output = _preview_with_retry(token,claims,organization_header,data,design_batch_preview)
+        return Response(json.loads(json_text(output)))
 
 
 class ApplyView(APIView):

@@ -949,3 +949,204 @@ def test_agent_project_from_documents_uses_workflow_prompt(monkeypatch):
     assert artifact["payload"]["positions"][0]["key"] == "c1"
     # References keep only ids the context exposed — the invented one dropped.
     assert artifact["references"] == [str(import_id), str(system_id)]
+
+
+def _batch_position_row(position_id, index, system_id, module_ids, typology="FIXED"):
+    return {
+        "id": position_id,
+        "position_index": index,
+        "location_tag": f"local {index}",
+        "typology": typology,
+        "width_mm": 1200,
+        "height_mm": 1000,
+        "system_id": system_id,
+        "parametric_tree": {
+            "version": "product-v2",
+            "assembly": {
+                "modules": [
+                    {"id": ref, "width_mm": 1200, "height_mm": 1000, "tree": {"id": "root"}}
+                    for ref in module_ids
+                ],
+                "couplings": [],
+            },
+        },
+    }
+
+
+def _patch_batch(monkeypatch, rows_value):
+    """Give the batch step its two authorities: position rows and the
+    design-assist catalog; _summary/_validate_ops are the real contract."""
+    monkeypatch.setattr(agent, "rows", lambda sql, params: rows_value)
+    monkeypatch.setattr(
+        agent.design_assist,
+        "_catalog",
+        lambda sid, oid: {"glass_skus": set(), "panel_skus": set(), "thicknesses": set()},
+    )
+
+
+def test_agent_batch_ops_expands_wildcard_per_position(monkeypatch):
+    """§08-WC — 'todas las fijas a abatibles' fans out module:"*" into every
+    module each matched position actually has, validated independently."""
+    project_id, pos_a, pos_b, system_id = uuid4(), uuid4(), uuid4(), uuid4()
+    contexts = {
+        "project": {
+            "surface": "project",
+            "id": str(project_id),
+            "editable": True,
+            "positions": [
+                {"id": str(pos_a), "typology": "FIXED"},
+                {"id": str(pos_b), "typology": "FIXED"},
+            ],
+        }
+    }
+    output = _doc(
+        steps=[
+            {
+                "kind": "batch_ops",
+                "label": "Todo abatible",
+                "targets": {"typology": "FIXED"},
+                "ops": [{"op": "set_opening", "module": "*", "opening": "TILT_TURN_LEFT"}],
+            }
+        ]
+    )
+    _patch(monkeypatch, contexts=contexts, outputs=[output])
+    _patch_batch(
+        monkeypatch,
+        [
+            _batch_position_row(pos_a, 1, system_id, ["a1"], "FIXED"),
+            _batch_position_row(pos_b, 2, system_id, ["b1", "b2"], "FIXED"),
+            _batch_position_row(uuid4(), 3, system_id, ["c1"], "TURN"),
+        ],
+    )
+    validated: list[list] = []
+
+    def fake_summary(product):
+        return {
+            "modules": [
+                {"ref": m["id"], "index": i, "width_mm": m["width_mm"], "height_mm": m["height_mm"]}
+                for i, m in enumerate(product["assembly"]["modules"])
+            ],
+            "couplings": [],
+        }
+
+    def fake_validate(ops, summary, catalog, declared):
+        validated.append(ops)
+        return ops, []
+
+    monkeypatch.setattr(agent.design_assist, "_summary", fake_summary)
+    monkeypatch.setattr(agent.design_assist, "_validate_ops", fake_validate)
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        goal="convierte todas las fijas en abatibles",
+        product=None,
+        history=[],
+        operation_key="batch-1",
+    )
+    step = result["steps"][0]
+    assert step["kind"] == "batch_ops"
+    assert step["tool"] == "preview_commands"
+    # Two FIXED positions matched; the TURN row was excluded by targets.
+    assert [item["position_id"] for item in step["items"]] == [str(pos_a), str(pos_b)]
+    # a1 expands alone; b1+b2 fan out to two ops on the second position.
+    assert validated[0] == [
+        {"op": "set_opening", "module": "a1", "opening": "TILT_TURN_LEFT"}
+    ]
+    assert validated[1] == [
+        {"op": "set_opening", "module": "b1", "opening": "TILT_TURN_LEFT"},
+        {"op": "set_opening", "module": "b2", "opening": "TILT_TURN_LEFT"},
+    ]
+
+
+def test_agent_batch_ops_rejects_structural_and_unobserved(monkeypatch):
+    project_id, pos_a, system_id = uuid4(), uuid4(), uuid4()
+    contexts = {
+        "project": {
+            "surface": "project",
+            "id": str(project_id),
+            "editable": True,
+            "positions": [{"id": str(pos_a), "typology": "FIXED"}],
+        }
+    }
+    structural = _doc(
+        steps=[
+            {
+                "kind": "batch_ops",
+                "targets": {"typology": "ALL"},
+                "ops": [{"op": "add_unit", "side": "right"}],
+            }
+        ]
+    )
+    _patch(monkeypatch, contexts=contexts, outputs=[structural])
+    _patch_batch(monkeypatch, [_batch_position_row(pos_a, 1, system_id, ["a1"])])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        goal="agrega un módulo a todo",
+        product=None,
+        history=[],
+        operation_key="batch-2",
+    )
+    assert result["steps"] == []
+    assert any("batch_op_not_allowed" in entry["reason"] for entry in result["rejected"])
+
+    unobserved = _doc(
+        steps=[
+            {
+                "kind": "batch_ops",
+                "targets": {"position_ids": [str(uuid4())]},
+                "ops": [{"op": "set_height", "height_mm": 1500}],
+            }
+        ]
+    )
+    _patch(monkeypatch, contexts=contexts, outputs=[unobserved])
+    _patch_batch(monkeypatch, [_batch_position_row(pos_a, 1, system_id, ["a1"])])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        goal="alto 1500 en la posición",
+        product=None,
+        history=[],
+        operation_key="batch-3",
+    )
+    assert result["steps"] == []
+    assert result["rejected"] == [{"op": "batch_ops", "reason": "unobserved_ref"}]
+
+
+def test_agent_batch_ops_dropped_when_not_editable(monkeypatch):
+    project_id = uuid4()
+    contexts = {
+        "project": {
+            "surface": "project",
+            "id": str(project_id),
+            "editable": False,
+            "positions": [{"id": str(uuid4()), "typology": "FIXED"}],
+        }
+    }
+    output = _doc(
+        steps=[
+            {
+                "kind": "batch_ops",
+                "targets": {"typology": "ALL"},
+                "ops": [{"op": "set_height", "height_mm": 1500}],
+            }
+        ]
+    )
+    _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="project",
+        refs={"project_id": str(project_id)},
+        goal="alto 1500 en todo",
+        product=None,
+        history=[],
+        operation_key="batch-4",
+    )
+    assert result["steps"] == []
