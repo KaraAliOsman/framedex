@@ -118,3 +118,9 @@
   outline-offset: 1px;
   border-color: var(--theme-accent);
 }
+
+.portal-code {
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+}

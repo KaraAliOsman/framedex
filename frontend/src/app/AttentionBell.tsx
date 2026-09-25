@@ -6,7 +6,7 @@ import { ApiError } from "../api/apiMutator";
 import { analyticsOperationalSummary } from "../api/generated/dekopen";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
-import { attentionEntries } from "./attention";
+import { attentionEntries, attentionLabel } from "./attention";
 import { useDismiss } from "./shellUtils";
 
 /** Topbar bell: the same action-required feed the dashboard renders, one
@@ -84,7 +84,7 @@ export function AttentionBell(): JSX.Element | null {
                     to={entry.to}
                     onClick={() => setOpen(false)}
                   >
-                    <span>{t(entry.key)}</span>
+                    <span>{attentionLabel(entry)}</span>
                     <strong>{entry.count}</strong>
                   </Link>
                 </li>

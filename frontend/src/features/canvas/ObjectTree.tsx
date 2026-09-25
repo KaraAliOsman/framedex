@@ -1,5 +1,6 @@
 import { useState, type JSX } from "react";
 
+import { t } from "../../i18n/es-CL";
 import type { TreeNode } from "./objectTree";
 
 function TreeRow({
@@ -26,7 +27,7 @@ function TreeRow({
           <button
             type="button"
             className="tree-disclosure"
-            aria-label={open ? "−" : "+"}
+            aria-label={`${open ? t("assembly.treeCollapse") : t("assembly.treeExpand")} ${node.label}`}
             onClick={() => setOpen((value) => !value)}
           >
             <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">

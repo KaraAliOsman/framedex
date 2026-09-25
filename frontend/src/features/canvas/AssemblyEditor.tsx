@@ -157,7 +157,9 @@ export function issueText(
   couplings: CouplingJson[],
 ): string {
   const key = ISSUE_KEYS[issue.code];
-  let text = key ? t(key) : issue.code;
+  // Unmapped engine codes still read as sentences — a chip that shows
+  // "R02_LEAF_PROPORTION" asks the user to decode our own identifier.
+  let text = key ? t(key) : issue.code.toLowerCase().replace(/_/g, " ");
   for (const [name, value] of Object.entries(issue.params)) {
     if (name === "reason") continue;
     text = text.replace(`{${name}}`, value);
@@ -1671,6 +1673,11 @@ function CouplingInspector({
           type="button"
           className="ghost-button"
           disabled={busy || Number(coupling.angle_deg) === 0}
+          title={
+            Number(coupling.angle_deg) === 0
+              ? t("assembly.straightenDisabled")
+              : t("assembly.straightenHint")
+          }
           onClick={() => commit(setCouplingAngle(product, coupling.id, "0"))}
         >
           {t("assembly.straighten")}
@@ -1755,6 +1762,7 @@ export function AssemblyEditor({
    * DEKOPEN" affordance funnels here; the human always confirms. */
   const [assistantDraft, setAssistantDraft] = useState<string | null>(null);
   const assistantSectionRef = useRef<HTMLDivElement>(null);
+  const issuesListRef = useRef<HTMLUListElement>(null);
   /** Canvas context menu — cursor position, closed on action/outside/Escape. */
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
@@ -2486,7 +2494,7 @@ export function AssemblyEditor({
           </div>
         )}
         {issues.length > 0 && (
-          <ul className="assembly-issues" aria-label={t("assembly.issues")}>
+          <ul className="assembly-issues" aria-label={t("assembly.issues")} ref={issuesListRef}>
             {issues.map((issue, index) => (
               <li key={`${issue.code}-${index}`}>
                 <button
@@ -2547,6 +2555,12 @@ export function AssemblyEditor({
               ) {
                 select(first.target.slice(first.target.indexOf(":") + 1));
               }
+              // The list lives at the end of the inspector column — surface
+              // it so the click visibly resolves to the issues, not silence.
+              issuesListRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+              });
             }}
           >
             {t("assembly.issueCount").replace("{count}", String(issues.length))}

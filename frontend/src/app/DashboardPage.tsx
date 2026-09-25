@@ -6,7 +6,7 @@ import { analyticsOperationalSummary, projectsList } from "../api/generated/deko
 import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
-import { attentionEntries } from "./attention";
+import { attentionEntries, attentionLabel } from "./attention";
 
 const WO_STATUSES = [
   "RELEASED",
@@ -133,7 +133,7 @@ export function DashboardPage(): JSX.Element {
               >
                 <Link to={entry.to}>
                   <strong>{entry.count}</strong>
-                  <span className="attention-label">{t(entry.key)}</span>
+                  <span className="attention-label">{attentionLabel(entry)}</span>
                   <span className="attention-cta">{t(entry.action)}</span>
                 </Link>
               </li>
@@ -241,8 +241,8 @@ export function DashboardPage(): JSX.Element {
             {recent.map((item) => (
               <li key={item.id}>
                 <Link to={`/projects/${item.id}`} className="dashboard-row">
-                  <span className="dashboard-row-code">{item.code}</span>
                   <span className="dashboard-row-name">{item.name}</span>
+                  <span className="dashboard-row-code">{item.code}</span>
                   <span className="dashboard-row-client">{item.client_name}</span>
                   <span className="status-chip" data-status={item.status.toLowerCase()}>
                     {t(statuses[item.status])}

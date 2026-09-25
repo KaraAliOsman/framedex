@@ -35,7 +35,7 @@
 .cad-viewport {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 38rem;
+  min-height: clamp(30rem, calc(100vh - 15rem), 52rem);
 }
 
 .cad-viewport__heading {
@@ -667,11 +667,13 @@
   justify-content: center;
 }
 
+/* The 3D toggle stacks above the floating zoom cluster — both anchor
+   bottom-left; one anchor must not swallow the other's hit area. */
 .model3d-toggle {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
   border-radius: var(--radius-sm);
-  bottom: 0.75rem;
+  bottom: 3rem;
   color: var(--theme-text-secondary);
   cursor: pointer;
   font-size: 0.78rem;
@@ -1964,4 +1966,10 @@
 .section-approx {
   fill: var(--theme-warning);
   font-size: 7px;
+}
+
+.section-break {
+  fill: none;
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
 }

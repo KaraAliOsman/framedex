@@ -63,6 +63,12 @@ export function SectionView({
   // Approximate depth shares: the frame band sits above the sash band, so
   // an undeclared frame still draws its region — a convention, not a depth.
   const frameApprox = Math.max(depth - sashD, depth * 0.2);
+  // A node detail only needs the two member joints — past a readable span
+  // the drawing crops the glass mid-span with a conventional break mark,
+  // so a 2 m bay doesn't flatten the section into a 20 px strip.
+  const CROP_SPAN = 760;
+  const cropped = widthMm > CROP_SPAN;
+  const span = cropped ? CROP_SPAN : widthMm;
   const members_drawn: SectionSpec[] = [
     {
       spec: members.frame,
@@ -73,7 +79,7 @@ export function SectionView({
     },
     {
       spec: members.frame,
-      u0: widthMm - members.frame.faceWidthMm,
+      u0: span - members.frame.faceWidthMm,
       v0: 0,
       slotW: members.frame.faceWidthMm,
       approxDepth: frameApprox,
@@ -91,14 +97,13 @@ export function SectionView({
       },
       {
         spec: members.sash,
-        u0: widthMm - members.rebateMm - sashW,
+        u0: span - members.rebateMm - sashW,
         v0: depth - sashD,
         slotW: sashW,
         approxDepth: sashD,
       },
     );
   }
-  const span = widthMm;
   const viewW = span + PAD * 2;
   const viewH = depth + PAD * 2 + 24;
   return (
@@ -139,6 +144,15 @@ export function SectionView({
         height={Math.min(glassT, 8)}
         className="section-glass"
       />
+      {/* conventional break marks where a wide span is cropped */}
+      {cropped &&
+        [span * 0.42, span * 0.58].map((x, index) => (
+          <path
+            key={`break-${index}`}
+            d={`M ${x - 6} ${glassZ + Math.min(glassT, 8) + 4} l 12 ${-(Math.min(glassT, 8) + 8)}`}
+            className="section-break"
+          />
+        ))}
       {/* gasket dots at the glazing seat */}
       {[members.frame.faceWidthMm + bead - GASKET_MM, span - members.frame.faceWidthMm - bead].map(
         (x, index) => (

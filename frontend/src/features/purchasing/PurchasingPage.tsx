@@ -721,11 +721,11 @@ function RequirementRow({
         {requirement.physical_stock_identity && (
           <small>
             {t("purchasing.stock")}:{" "}
-            {requirement.physical_stock_sku
-              ? `${requirement.physical_stock_sku}${
-                  requirement.physical_stock_name ? ` · ${requirement.physical_stock_name}` : ""
-                }`
-              : requirement.physical_stock_identity}
+            {requirement.physical_stock_sku || requirement.physical_stock_name
+              ? [requirement.physical_stock_sku, requirement.physical_stock_name]
+                  .filter(Boolean)
+                  .join(" · ")
+              : t("purchasing.stockUnassigned")}
           </small>
         )}
       </td>

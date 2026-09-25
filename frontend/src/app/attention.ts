@@ -1,5 +1,5 @@
 import type { OperationalSummary } from "../api/generated/models";
-import type { TranslationKey } from "../i18n/es-CL";
+import { t, tOptional, type TranslationKey } from "../i18n/es-CL";
 
 export type AttentionEntry = {
   /** Label of the queue row ("4 cotizaciones esperan envío"). */
@@ -118,4 +118,14 @@ export function attentionEntries(ops: OperationalSummary | undefined): Attention
     },
   ];
   return candidates.filter((entry) => entry.count > 0);
+}
+
+/** Singular when the count is 1 — "1 Cotización por aprobar", never
+ * "1 Cotizaciones". */
+export function attentionLabel(entry: AttentionEntry): string {
+  if (entry.count === 1) {
+    const single = tOptional(`${entry.key}.one`);
+    if (single !== undefined) return single;
+  }
+  return t(entry.key);
 }

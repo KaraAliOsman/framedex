@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   ArticleResponse,
   BeadResponse,
@@ -222,23 +222,24 @@ export function SystemWorkspaceView({
   const [workspace, setWorkspace] = useState<SystemWorkspace | null>(null);
   const [error, setError] = useState(false);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const alive = useRef(true);
 
   useEffect(() => {
-    alive.current = true;
+    // Per-effect flag: a shared ref lets a superseded fetch's AbortError
+    // set the error banner after the fresh one already loaded data.
+    let alive = true;
     const controller = new AbortController();
     setWorkspace(null);
     setError(false);
     void api
       .workspace(systemId, controller.signal)
       .then((result) => {
-        if (alive.current) setWorkspace(result);
+        if (alive) setWorkspace(result);
       })
       .catch(() => {
-        if (alive.current) setError(true);
+        if (alive && !controller.signal.aborted) setError(true);
       });
     return () => {
-      alive.current = false;
+      alive = false;
       controller.abort();
     };
   }, [api, systemId, reloadKey]);
@@ -710,15 +711,20 @@ export function SystemWorkspaceView({
               <div>
                 <h4>{wst("stations")}</h4>
                 <ul className="ws-stations">
-                  {(process_profile.stations as { code?: string; station?: string; when?: string; work_center?: string }[]).map(
-                    (station, index) => (
-                      <li key={index}>
-                        <strong>{station.code ?? station.station ?? "?"}</strong>
-                        {station.when && <small> · {station.when}</small>}
-                        {station.work_center && <small> · {station.work_center}</small>}
-                      </li>
-                    ),
-                  )}
+                  {(
+                    process_profile.stations as {
+                      code?: string;
+                      station?: string;
+                      when?: string;
+                      work_center?: string;
+                    }[]
+                  ).map((station, index) => (
+                    <li key={index}>
+                      <strong>{station.code ?? station.station ?? "?"}</strong>
+                      {station.when && <small> · {station.when}</small>}
+                      {station.work_center && <small> · {station.work_center}</small>}
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div>

@@ -181,14 +181,16 @@ export function AppRoutes(): JSX.Element {
           </Suspense>
         }
       />
-      <Route
-        path="/benchmark"
-        element={
-          <Suspense fallback={<p role="status" />}>
-            <BenchmarkPage />
-          </Suspense>
-        }
-      />
+      {import.meta.env.DEV && (
+        <Route
+          path="/benchmark"
+          element={
+            <Suspense fallback={<p role="status" />}>
+              <BenchmarkPage />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route

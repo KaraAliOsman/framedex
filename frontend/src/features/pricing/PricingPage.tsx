@@ -134,25 +134,37 @@ const sectionLabels = [
 type Row = Record<string, string | boolean | null>;
 
 function usePricingRequest(orgId: string): RequestFn {
-  const lifetime = useRef(new AbortController());
+  // Each request gets its own controller, registered in a live set aborted on
+  // unmount. A single shared controller cannot work: a child effect (e.g. the
+  // mount history load) may fire before this component's own effect assigns
+  // it, and StrictMode's remount must not cancel requests issued afterwards.
+  const live = useRef<Set<AbortController>>(new Set());
   useEffect(() => {
-    const controller = new AbortController();
-    lifetime.current = controller;
-    return () => controller.abort();
+    const controllers = live.current;
+    return () => {
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+    };
   }, []);
   return useCallback(
     async <T,>(path: string, method = "GET", body?: unknown): Promise<T> => {
       const form = body instanceof FormData;
-      const response = await apiMutator<{ data: T }>(`/api/v1/pricing/${path}`, {
-        method,
-        signal: lifetime.current.signal,
-        headers: {
-          "X-Organization-ID": orgId,
-          ...(form ? {} : { "Content-Type": "application/json" }),
-        },
-        ...(body === undefined ? {} : { body: form ? body : JSON.stringify(body) }),
-      });
-      return response.data;
+      const controller = new AbortController();
+      live.current.add(controller);
+      try {
+        const response = await apiMutator<{ data: T }>(`/api/v1/pricing/${path}`, {
+          method,
+          signal: controller.signal,
+          headers: {
+            "X-Organization-ID": orgId,
+            ...(form ? {} : { "Content-Type": "application/json" }),
+          },
+          ...(body === undefined ? {} : { body: form ? body : JSON.stringify(body) }),
+        });
+        return response.data;
+      } finally {
+        live.current.delete(controller);
+      }
     },
     [orgId],
   );
@@ -921,6 +933,18 @@ function CommercialOperations({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, history.length]);
+
+  // The applied operation is the page's primary state — load history on
+  // mount instead of waiting for a manual Recargar click. StrictMode's
+  // simulated remount must not issue a second read: the ref survives the
+  // double-invoked effects while the generation guard owns staleness.
+  const historyMounted = useRef(false);
+  useEffect(() => {
+    if (historyMounted.current) return;
+    historyMounted.current = true;
+    if (orgId) void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
 
   useEffect(
     () => () => {

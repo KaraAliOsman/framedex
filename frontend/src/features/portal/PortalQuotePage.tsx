@@ -95,7 +95,13 @@ export function PortalQuotePage(): JSX.Element {
           <div>
             <dt>{t("portal.project")}</dt>
             <dd>
-              {quote.project_code} · {quote.project_name}
+              {quote.project_name ? (
+                <>
+                  {quote.project_name} <span className="portal-code">{quote.project_code}</span>
+                </>
+              ) : (
+                quote.project_code
+              )}
             </dd>
           </div>
           <div>

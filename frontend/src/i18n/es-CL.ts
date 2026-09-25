@@ -58,6 +58,7 @@ export const messages = {
   "wallet.title": "Billetera de créditos IA",
   "wallet.balanceTitle": "Tu saldo",
   "wallet.ownerOnly": "Solo el propietario puede consultar la billetera.",
+  "billing.ownerOnly": "Solo el propietario puede ver la facturación de la cuenta.",
   "wallet.refresh": "Actualizar",
   "wallet.error": "No se pudo actualizar la billetera. Intenta nuevamente.",
   "wallet.loading": "Cargando billetera…",
@@ -353,6 +354,7 @@ export const messages = {
   "projects.positionData": "Vano y materiales",
   "projects.identification": "Identificación",
   "projects.location": "Ubicación del vano",
+  "projects.locationPlaceholder": "p. ej. Dormitorio, Living, Fachada sur",
   "projects.system": "Serie de perfiles",
   "projects.chooseSystem": "Seleccionar serie",
   "projects.synthetic": "Catálogo de demostración",
@@ -364,7 +366,9 @@ export const messages = {
   "projects.chooseGlassArticle": "Seleccionar artículo",
   "projects.hardware": "Kit de herraje",
   "projects.automaticKit": "Resolver kit compatible",
-  "projects.colorWhite": "Color: blanco",
+  "projects.color": "Acabado",
+  "projects.color.WHITE": "Blanco",
+  "projects.color.FOILED": "Foliado",
   "projects.calculate": "Validar diseño y materiales",
   "projects.calculationRequired": "Valida el diseño para ver un despiece actualizado.",
   "projects.distribution": "Distribución de paños · esquema de selección",
@@ -658,7 +662,7 @@ export const messages = {
   "auth.loginTitle": "Acceso seguro al taller",
   "auth.loginDescription": "Recibe un enlace de un solo uso en tu correo.",
   "auth.email": "Correo",
-  "auth.sendMagicLink": "Enviar Magic Link",
+  "auth.sendMagicLink": "Enviar enlace de acceso",
   "auth.sending": "Enviando…",
   "auth.magicLinkSent": "Revisa el buzón local para continuar.",
   "auth.magicLinkError": "No fue posible solicitar el enlace de acceso.",
@@ -862,6 +866,19 @@ export const messages = {
   "dashboard.jobsFailed": "Trabajos fallidos",
   "dashboard.approvalsPending": "Aprobaciones de cliente pendientes",
   "dashboard.draftsToQuote": "Borradores por cotizar",
+  "dashboard.prepVersions.one": "OT por liberar",
+  "dashboard.prepShortage.one": "Orden con faltante de material",
+  "dashboard.prepDispatch.one": "Guía por emitir",
+  "dashboard.catalogGaps.one": "Sistema con dato técnico faltante",
+  "dashboard.deliveriesOverdue.one": "Entrega atrasada",
+  "dashboard.deliveriesToday.one": "Entrega de hoy",
+  "dashboard.ordersHold.one": "Orden en espera",
+  "dashboard.quotesWaiting.one": "Cotización por aprobar",
+  "dashboard.quotesStale.one": "Enlace de cotización vencido",
+  "dashboard.stepsBlocked.one": "Paso de producción bloqueado",
+  "dashboard.jobsFailed.one": "Trabajo fallido",
+  "dashboard.approvalsPending.one": "Aprobación de cliente pendiente",
+  "dashboard.draftsToQuote.one": "Borrador por cotizar",
   "dashboard.allClear": "Nada pendiente — la operación está al día",
   "dashboard.attentionLoading": "Cargando la operación…",
   "dashboard.attentionError": "No pudimos cargar la operación de hoy.",
@@ -1036,6 +1053,7 @@ export const messages = {
   "purchasing.technicalSku": "SKU técnico",
   "purchasing.purchaseSku": "SKU de compra",
   "purchasing.stock": "Stock físico",
+  "purchasing.stockUnassigned": "asignado",
   "purchasing.quantity": "Cantidad",
   "purchasing.unit": "Unidad",
   "purchasing.trace": "Trazabilidad",
@@ -1847,6 +1865,10 @@ export const messages = {
   "assembly.splitV": "Dividir en vertical",
   "assembly.splitH": "Dividir en horizontal",
   "assembly.straighten": "Enderezar",
+  "assembly.treeCollapse": "Contraer",
+  "assembly.treeExpand": "Expandir",
+  "assembly.straightenDisabled": "La unión ya está a 0°",
+  "assembly.straightenHint": "Vuelve la unión a 0°",
   "assembly.elementHint": "Selecciona un módulo, un paño o una unión en el dibujo.",
   "assembly.mullionV": "Montante",
   "assembly.transomH": "Travesaño",
@@ -2326,6 +2348,11 @@ export type TranslationKey = keyof typeof messages;
 
 export function t(key: TranslationKey): string {
   return messages[key];
+}
+
+/** Lookup for keys composed at runtime — callers handle the fallback. */
+export function tOptional(key: string): string | undefined {
+  return messages[key as TranslationKey];
 }
 
 /** Type-tagged labels with graceful raw fallback — job types come from the

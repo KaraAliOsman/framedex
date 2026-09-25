@@ -400,7 +400,7 @@ function commercialSteps(
     {
       key: "sent",
       labelKey: "projects.step.sent",
-      state: sent ? "done" : quoted ? "blocked" : "pending",
+      state: sent ? "done" : quoted ? "current" : "pending",
       detail: latestApproval
         ? `${latestApproval.revision_code} · ${formatDate(latestApproval.created_at)}`
         : sent
@@ -412,7 +412,7 @@ function commercialSteps(
     {
       key: "approved",
       labelKey: "projects.step.approved",
-      state: approved ? "done" : livePending ? "current" : "pending",
+      state: approved ? "done" : livePending ? "current" : stalePending ? "blocked" : "pending",
       detail: approvedRecord
         ? formatDate(currentApprovals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
         : livePending
@@ -424,7 +424,7 @@ function commercialSteps(
     {
       key: "deposit",
       labelKey: "projects.step.deposit",
-      state: collected > 0 ? "done" : approved ? "blocked" : "pending",
+      state: collected > 0 ? "done" : approved ? "current" : "pending",
       detail:
         collected > 0 && payments
           ? formatMoney(payments.collected, payments.currency)
@@ -578,9 +578,7 @@ function ProjectHeader({
     <div className="project-head">
       <div className="project-head__row">
         <div>
-          <h1>
-            {project.code} · {project.name}
-          </h1>
+          <h1>{project.name ? `${project.code} · ${project.name}` : project.code}</h1>
           <p className="project-head__meta">
             <span className="status-chip" data-status={project.status.toLowerCase()}>
               {t(statuses[project.status])}

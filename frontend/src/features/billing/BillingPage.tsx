@@ -16,7 +16,7 @@ const date = (value: string) =>
 export function BillingPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
-  if (!org || org.role !== "OWNER") return <p role="alert">{t("wallet.ownerOnly")}</p>;
+  if (!org || org.role !== "OWNER") return <p role="alert">{t("billing.ownerOnly")}</p>;
   return <BillingWorkspace key={`${auth.session?.user.id}:${org.id}`} orgId={org.id} />;
 }
 

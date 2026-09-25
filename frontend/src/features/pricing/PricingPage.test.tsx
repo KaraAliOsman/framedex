@@ -61,8 +61,8 @@ it("keeps the current request alive after StrictMode cleanup and aborts on tenan
       <PricingPage />
     </StrictMode>,
   );
-  await waitFor(() => expect(apiMutator).toHaveBeenCalledTimes(2));
-  const previous = vi.mocked(apiMutator).mock.calls[1]?.[1].signal;
+  await waitFor(() => expect(apiMutator).toHaveBeenCalledTimes(3));
+  const previous = vi.mocked(apiMutator).mock.calls[2]?.[1].signal;
   expect(previous?.aborted).toBe(false);
   identity.id = "tenant-b";
   view.rerender(
@@ -85,7 +85,8 @@ it("lets an estimator calculate without requesting confidential administration",
   identity.role = "ESTIMATOR";
   render(<CommercialPricingPage />);
   expect(screen.getByText(t("pricing.calculate"))).toBeInTheDocument();
-  expect(apiMutator).not.toHaveBeenCalled();
+  await waitFor(() => expect(apiMutator).toHaveBeenCalledTimes(1));
+  expect(apiMutator).toHaveBeenLastCalledWith("/api/v1/pricing/operations/", expect.any(Object));
   expect(screen.queryByText(t("pricing.cost"))).not.toBeInTheDocument();
 });
 
@@ -215,6 +216,7 @@ it.each([false, true])(
     const a = deferred(),
       b = deferred();
     vi.mocked(apiMutator)
+      .mockResolvedValueOnce({ data: [] })
       .mockImplementationOnce(() => a.promise)
       .mockImplementationOnce(() => b.promise);
     render(<CommercialPricingPage />);
@@ -236,6 +238,7 @@ it("preview B alone wins when B completes before A", async () => {
   const a = deferred(),
     b = deferred();
   vi.mocked(apiMutator)
+    .mockResolvedValueOnce({ data: [] })
     .mockImplementationOnce(() => a.promise)
     .mockImplementationOnce(() => b.promise);
   render(<CommercialPricingPage />);
@@ -268,6 +271,7 @@ it.each(["apply", "reject"] as const)(
     const original = result("A", action === "reject" ? "PENDING" : "PREVIEW");
     const persisted = result("A", action === "reject" ? "REJECTED" : "APPLIED");
     vi.mocked(apiMutator)
+      .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({ data: original })
       .mockImplementationOnce(() => mutation.promise)
       .mockImplementationOnce(() => next.promise)
@@ -303,6 +307,7 @@ it.each(["apply", "reject"] as const)(
     const mutation = deferred(),
       next = deferred();
     vi.mocked(apiMutator)
+      .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({ data: result("A", action === "reject" ? "PENDING" : "PREVIEW") })
       .mockImplementationOnce(() => mutation.promise)
       .mockImplementationOnce(() => next.promise);
@@ -368,6 +373,8 @@ it.each([false, true])(
     const a = deferred(),
       b = deferred();
     vi.mocked(apiMutator)
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [] })
       .mockImplementationOnce(() => a.promise)
       .mockImplementationOnce(() => b.promise);
     const view = render(
@@ -409,6 +416,7 @@ it.each(["reload", "apply", "reject"] as const)(
   "current %s failure is shown and releases busy",
   async (action) => {
     const task = deferred();
+    vi.mocked(apiMutator).mockResolvedValueOnce({ data: [] });
     if (action !== "reload")
       vi.mocked(apiMutator).mockResolvedValueOnce({
         data: result("A", action === "reject" ? "PENDING" : "PREVIEW"),
@@ -421,6 +429,10 @@ it.each(["reload", "apply", "reject"] as const)(
       fireEvent.change(screen.getByLabelText(t("pricing.reason")), {
         target: { value: "Reviewed" },
       });
+    } else {
+      // The mount history load must finish first — the reload button is
+      // disabled while a request is in flight.
+      await waitFor(() => expect(previewButton()).toBeEnabled());
     }
     fireEvent.click(
       screen.getByRole("button", {
@@ -528,6 +540,7 @@ it.each(["apply", "reject"] as const)(
   async (action) => {
     const task = deferred();
     vi.mocked(apiMutator)
+      .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({ data: result("A", action === "reject" ? "PENDING" : "PREVIEW") })
       .mockImplementationOnce(() => task.promise)
       .mockResolvedValueOnce({ data: result("B") });
