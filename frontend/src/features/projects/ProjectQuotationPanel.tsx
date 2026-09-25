@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../api/apiMutator";
@@ -533,6 +534,7 @@ export function ProjectQuotationPanel({
 }): JSX.Element {
   const confirm = useConfirm();
   const prompt = usePrompt();
+  const queryClient = useQueryClient();
   const [preparation, setPreparation] = useState<DocumentaryPreparationResponse | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -930,6 +932,11 @@ export function ProjectQuotationPanel({
       const response = await projectQuoteLinkCreate(project.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
+      // The header's commercial timeline derives "sent" from the approvals
+      // list — refetch so the freshly created link shows immediately.
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "quote-approvals", orgId, project.id],
+      });
       const url = `${window.location.origin}${response.data.path}`;
       try {
         await navigator.clipboard.writeText(url);

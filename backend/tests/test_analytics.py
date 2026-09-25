@@ -52,6 +52,10 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
             return {"n": 7}
         if "offcut_inventory" in lowered:
             return {"n": 2}
+        if "job_runs" in lowered:
+            # job_runs is service-owned: read outside the member-facing role as
+            # the connection owner with the explicit org filter.
+            return {"n": 3}
         if "production_allowed" in lowered:
             return {
                 "versions_ready": 2,
@@ -79,6 +83,7 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert out["avg_release_to_dispatch_hours"] == 4.3
     assert out["inventory"] == {"items": 7, "offcuts": 2}
     assert out["prep"]["versions_ready"] == 2
+    assert out["prep"]["jobs_failed"] == 3
     assert out["prep"]["work_orders_shortage"] == 1
     assert out["prep"]["dispatch_ready"] == 1
     assert out["deliveries"] == {"today": 2, "overdue": 1}

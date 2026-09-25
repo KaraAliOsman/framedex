@@ -6,6 +6,7 @@ import { projectsList, projectsRetrieve } from "../../api/generated/dekopen";
 import type { PriceResponse, ProjectResponse } from "../../api/generated/models";
 import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
+import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
@@ -660,8 +661,14 @@ function OperationDecision({
   const costs = new Map(
     (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
   );
+  // Position metadata joins only when the operation targets the live
+  // revision — a stale operation's indexes can point at moved/deleted
+  // positions, so their labels stay empty rather than mislead.
   const positions = new Map(
-    (boundProject?.positions ?? []).map((position) => [position.position_index, position]),
+    (operation.revision_code === boundProject?.current_revision
+      ? (boundProject.positions ?? [])
+      : []
+    ).map((position) => [position.position_index, position]),
   );
   const diff =
     boundProject?.pricing_current && boundProject.total_price_gross
@@ -903,8 +910,8 @@ function CommercialOperations({
     try {
       const value = await action();
       if (generation.current === current) publish(value);
-    } catch {
-      if (generation.current === current) setError(t(errorKey));
+    } catch (error) {
+      if (generation.current === current) setError(actionErrorDetail(error, t(errorKey)));
     } finally {
       if (generation.current === current) setBusy(false);
     }

@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
@@ -25,6 +26,7 @@ import type {
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { actionErrorDetail } from "../errors";
 import { formatDate, formatMoney } from "../money";
 import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
@@ -49,17 +51,6 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PAID: "projects.paymentStatusPaid",
 };
 
-/** Contract errors carry actionable detail (e.g. `sii_caf_exhausted` tells
- * the operator to load a CAF) — surface it instead of the generic toast. */
-function actionErrorDetail(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    const payload = error.payload as { error?: { detail?: unknown } } | null;
-    const detail = payload?.error?.detail;
-    if (typeof detail === "string" && detail.trim()) return detail;
-  }
-  return fallback;
-}
-
 export function ProjectPaymentsPanel({
   projectId,
   orgId,
@@ -77,6 +68,7 @@ export function ProjectPaymentsPanel({
 }): JSX.Element {
   const confirm = useConfirm();
   const prompt = usePrompt();
+  const queryClient = useQueryClient();
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -155,6 +147,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, projectId],
+      });
       setShowForm(false);
       setAmount("");
       setReference("");
@@ -177,6 +172,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, projectId],
+      });
     } catch (error) {
       if (generation.current === current) {
         setMessage(actionErrorDetail(error, t("projects.paymentsVoidError")));

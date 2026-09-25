@@ -260,8 +260,8 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
     if reject:
         one("UPDATE public.pricing_operations SET state='REJECTED',approved_by=%s,approved_at=now(),reason=%s "
             'WHERE id=%s AND org_id=%s RETURNING id',[actor_id,reason,operation_id,org_id])
-        operation['state'] = 'REJECTED'
-        return operation_public(operation)
+        return operation_public(one('SELECT * FROM public.pricing_operations WHERE id=%s AND org_id=%s',
+                                    [operation_id,org_id]))
     project = one('SELECT * FROM public.projects WHERE id=%s AND org_id=%s FOR UPDATE',
                   [operation['project_id'],org_id])
     positions = rows('SELECT * FROM public.project_positions WHERE project_id=%s AND org_id=%s '
@@ -288,5 +288,5 @@ def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, rej
                         output['project_gross'],project['id'],org_id])
         cursor.execute("UPDATE public.pricing_operations SET state='APPLIED',approved_by=%s,approved_at=clock_timestamp(),reason=%s "
                        'WHERE id=%s AND org_id=%s',[actor_id,reason,operation_id,org_id])
-    operation['state'] = 'APPLIED'
-    return operation_public(operation)
+    return operation_public(one('SELECT * FROM public.pricing_operations WHERE id=%s AND org_id=%s',
+                                [operation_id,org_id]))

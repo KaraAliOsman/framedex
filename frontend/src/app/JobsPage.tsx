@@ -72,6 +72,8 @@ export function JobsPage(): JSX.Element {
     onSuccess: () => {
       setNotice(t("jobs.retryQueued"));
       void client.invalidateQueries({ queryKey: ["jobs", "list"] });
+      // The shell badge counts failed jobs — refetch after requeueing.
+      void client.invalidateQueries({ queryKey: ["shell", "attention"] });
     },
     onError: () => setNotice(t("jobs.retryFailed")),
   });

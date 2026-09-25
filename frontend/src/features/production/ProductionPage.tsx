@@ -245,13 +245,16 @@ export function ProductionPage(): JSX.Element {
   const statusFilter = params.get("status") ?? "";
   const shortageOnly = params.get("shortage") === "1";
   const dispatchReadyOnly = params.get("dispatch_ready") === "1";
+  // A blocked step recomputes the order to HOLD — the only source of HOLD.
+  const blockedOnly = params.get("blocked") === "1";
   const filteredOrders = orders.filter(
     (order) =>
       (statusFilter === "" || order.status === statusFilter) &&
+      (!blockedOnly || order.status === "HOLD") &&
       (!shortageOnly || order.shortage > 0) &&
       (!dispatchReadyOnly || order.dispatch_ready),
   );
-  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly;
+  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly || blockedOnly;
 
   const loadOrders = useCallback(async () => {
     const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);

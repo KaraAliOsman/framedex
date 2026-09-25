@@ -23,8 +23,20 @@ def _counts_by(sql: str, org_id: UUID) -> dict[str, int]:
 
 def operational_summary(*, org_id: UUID) -> dict[str, Any]:
     """One org's live operating picture: funnel, throughput, stock, output."""
-    with transaction.atomic(), documentary_backend():
-        return _summary(org_id)
+    with transaction.atomic():
+        with documentary_backend():
+            result = _summary(org_id)
+        # job_runs is a service-owned table (service_role grant only): read it
+        # as the connection owner with the explicit org filter, outside the
+        # member-facing role — the same pattern the jobs API uses.
+        result["prep"]["jobs_failed"] = int(
+            one(
+                "SELECT count(*) AS n FROM public.job_runs "
+                "WHERE org_id = %s AND state = 'FAILED'",
+                [str(org_id)],
+            )["n"]
+        )
+        return result
 
 
 def _summary(org_id: UUID) -> dict[str, Any]:
@@ -90,13 +102,11 @@ def _summary(org_id: UUID) -> dict[str, Any]:
              JOIN public.orders o ON o.id = s.order_id AND o.org_id = s.org_id
              WHERE s.org_id = %s AND s.status = 'BLOCKED'
                AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
-            (SELECT count(*) FROM public.job_runs j
-             WHERE j.org_id = %s AND j.state = 'FAILED') AS jobs_failed,
             (SELECT count(*) FROM public.customer_approvals a
              WHERE a.org_id = %s AND a.status = 'PENDING'
                AND a.expires_at > now()) AS approvals_pending
         """,
-        [str(org_id)] * 7,
+        [str(org_id)] * 6,
     )
     lead = one(
         """

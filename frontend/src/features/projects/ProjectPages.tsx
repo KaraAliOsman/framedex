@@ -352,15 +352,20 @@ function commercialSteps(
   approvals: ApprovalRecord[],
   payments: PaymentsSummary | undefined,
 ): CommercialStep[] {
+  // The timeline tracks the CURRENT revision — approvals sent against an
+  // older revision must not mark "sent" done for a revision never shared.
+  const currentApprovals = approvals.filter((a) => a.revision_code === project.current_revision);
   const rank = projectRank(project.status);
-  const sent = approvals.length > 0;
-  const approvedRecord = approvals.some((a) => a.status === "APPROVED");
+  const sent = currentApprovals.length > 0;
+  const approvedRecord = currentApprovals.some((a) => a.status === "APPROVED");
   const quoted = project.pricing_current || (project.versions?.length ?? 0) > 0;
   const approved = rank >= 2 || approvedRecord;
   const collected = Number(payments?.collected ?? "0");
   const paid = payments?.status === "PAID";
   const released = rank >= 3;
-  const latestApproval = [...approvals].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  const latestApproval = [...currentApprovals].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  )[0];
   return [
     {
       key: "quoted",
@@ -388,7 +393,7 @@ function commercialSteps(
       labelKey: "projects.step.approved",
       state: approved ? "done" : sent ? "current" : "pending",
       detail: approvedRecord
-        ? formatDate(approvals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
+        ? formatDate(currentApprovals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
         : sent && !approved
           ? t("projects.stepWaitClient")
           : undefined,
@@ -442,7 +447,7 @@ function projectNextAction(
         };
       if (!project.pricing_current)
         return { labelKey: "projects.next.quote", to: `/projects/${project.id}/pricing` };
-      return { labelKey: "projects.next.share", section: "quote" };
+      return { labelKey: "projects.next.emit", section: "quote" };
     case "QUOTED":
       return { labelKey: "projects.next.share", section: "quote" };
     case "APPROVED":
@@ -546,7 +551,13 @@ function snapshotDesign(row: SnapshotPosition): PositionDesign {
   };
 }
 
-function ComparePosition({ entry }: { entry: ComparePositionEntry }): JSX.Element {
+function ComparePosition({
+  currency,
+  entry,
+}: {
+  currency: string;
+  entry: ComparePositionEntry;
+}): JSX.Element {
   const row = entry.after ?? entry.before;
   return (
     <li className="compare-row" data-change={entry.change.toLowerCase()}>
@@ -577,7 +588,7 @@ function ComparePosition({ entry }: { entry: ComparePositionEntry }): JSX.Elemen
         </span>
         {entry.change === "ADDED" && row && (
           <span className="compare-row__detail">
-            {formatMoney(row.price_net ?? "0", "")} · ×{row.quantity}
+            {formatMoney(row.price_net ?? "0", currency)} · ×{row.quantity}
           </span>
         )}
         {entry.changes.length > 0 && (
@@ -679,7 +690,14 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
       <div className="compare-controls">
         <label className="ui-field">
           <span className="ui-field__label">{t("projects.compareBase")}</span>
-          <select value={baseCode} onChange={(e) => setBaseCode(e.target.value)}>
+          <select
+            value={baseCode}
+            onChange={(e) => {
+              setBaseCode(e.target.value);
+              setResult(undefined);
+              setError("");
+            }}
+          >
             {versions.map((v) => (
               <option key={v.revision_code} value={v.revision_code}>
                 {formatRevision(v.revision_code)} · {formatDate(v.emitted_at)}
@@ -689,7 +707,14 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
         </label>
         <label className="ui-field">
           <span className="ui-field__label">{t("projects.compareHead")}</span>
-          <select value={headCode} onChange={(e) => setHeadCode(e.target.value)}>
+          <select
+            value={headCode}
+            onChange={(e) => {
+              setHeadCode(e.target.value);
+              setResult(undefined);
+              setError("");
+            }}
+          >
             {versions.map((v) => (
               <option key={v.revision_code} value={v.revision_code}>
                 {formatRevision(v.revision_code)} · {formatDate(v.emitted_at)}
@@ -732,7 +757,11 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
           </p>
           <ul className="compare-list">
             {positions.map((entry) => (
-              <ComparePosition entry={entry} key={entry.position_index} />
+              <ComparePosition
+                currency={project.currency}
+                entry={entry}
+                key={entry.position_index}
+              />
             ))}
             {positions.length === 0 && (
               <li className="compare-row" data-change="unchanged">
@@ -1117,9 +1146,6 @@ function ProjectWorkspace({
               >
                 {t(factsCollapsed ? "projects.factsShow" : "projects.factsHide")}
               </button>
-              <p className="status-chip" data-status={project.status.toLowerCase()}>
-                {t(statuses[project.status])}
-              </p>
             </div>
             <div className="project-facts__body" hidden={factsCollapsed}>
               <>
@@ -1177,7 +1203,10 @@ function ProjectWorkspace({
                 </dl>
                 <details
                   className="project-facts__section"
-                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "quote" : null)}
+                  onToggle={(event) => {
+                    if (event.currentTarget.open) setOpenSection("quote");
+                    else if (openSection === "quote") setOpenSection(null);
+                  }}
                   open={openSection === "quote"}
                 >
                   <summary>{t("projects.quoteSection")}</summary>
@@ -1192,7 +1221,10 @@ function ProjectWorkspace({
                 </details>
                 <details
                   className="project-facts__section"
-                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "payments" : null)}
+                  onToggle={(event) => {
+                    if (event.currentTarget.open) setOpenSection("payments");
+                    else if (openSection === "payments") setOpenSection(null);
+                  }}
                   open={openSection === "payments"}
                 >
                   <summary>{t("projects.paymentsTitle")}</summary>
@@ -1207,7 +1239,10 @@ function ProjectWorkspace({
                 </details>
                 <details
                   className="project-facts__section"
-                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "imports" : null)}
+                  onToggle={(event) => {
+                    if (event.currentTarget.open) setOpenSection("imports");
+                    else if (openSection === "imports") setOpenSection(null);
+                  }}
                   open={openSection === "imports"}
                 >
                   <summary>{t("projects.importsSection")}</summary>
@@ -1221,7 +1256,10 @@ function ProjectWorkspace({
                 </details>
                 <details
                   className="project-facts__section"
-                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "compare" : null)}
+                  onToggle={(event) => {
+                    if (event.currentTarget.open) setOpenSection("compare");
+                    else if (openSection === "compare") setOpenSection(null);
+                  }}
                   open={openSection === "compare"}
                 >
                   <summary>{t("projects.compareTitle")}</summary>

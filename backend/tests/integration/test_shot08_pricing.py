@@ -604,7 +604,9 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
     assert response.status_code==200
     body = response.json()
     assert set(body)=={'id','project_id','revision_code','discount_pct','state','currency','lines',
-                      'project_net','project_tax','project_gross'}
+                      'project_net','project_tax','project_gross','cost_lines','total_cost',
+                      'reason','requested_by','approved_by','approved_at','created_at'}
+    assert body['approved_by'] is None and body['approved_at'] is None
     assert body['state']=='PREVIEW'
     assert body['project_id']==str(project)
     assert body['revision_code']=='REV-A'
