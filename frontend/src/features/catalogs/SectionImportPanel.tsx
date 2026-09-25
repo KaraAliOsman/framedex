@@ -17,6 +17,34 @@ export interface SectionImportPick {
   drawingRef: string;
 }
 
+// Coordinates and the user-confirmed scale are decimal strings — multiplying
+// through binary floats rounds boundaries like 1.005 to the wrong hundredth.
+// Keep the product exact in BigInt (section authority = mm decimals, never
+// float) and round half away from zero to the contract's 2 decimals.
+function parseDecimal(text: string): { num: bigint; den: bigint } | null {
+  const match = /^(-?\d+)(?:\.(\d+))?$/.exec(text.trim());
+  if (!match) return null;
+  const frac = match[2] ?? "";
+  return { num: BigInt(`${match[1]}${frac}`), den: 10n ** BigInt(frac.length) };
+}
+
+function scaleMmText(value: string, scaleText: string): string | null {
+  const coord = parseDecimal(value);
+  const scale = parseDecimal(scaleText);
+  if (!coord || !scale) return null;
+  const product = coord.num * scale.num * 100n;
+  const divisor = coord.den * scale.den;
+  const quotient = product / divisor;
+  const remainder = product % divisor;
+  const rounded =
+    (remainder >= 0n ? remainder : -remainder) * 2n >= divisor
+      ? quotient + (product >= 0n ? 1n : -1n)
+      : quotient;
+  const sign = rounded < 0n ? "-" : "";
+  const absolute = rounded < 0n ? -rounded : rounded;
+  return `${sign}${absolute / 100n}.${String(absolute % 100n).padStart(2, "0")}`;
+}
+
 function bbox(points: [string, string][]): { minX: number; minY: number; w: number; h: number } {
   const xs = points.map(([x]) => Number(x));
   const ys = points.map(([, y]) => Number(y));
@@ -73,22 +101,24 @@ export function SectionImportPanel({
       ? (result.candidates.find((candidate) => candidate.index === pickedIndex) ?? null)
       : null;
 
-  const scaleValue = useMemo(() => {
-    const value = Number(scale.replace(",", "."));
-    return Number.isFinite(value) && value > 0 ? value : null;
+  const scaleText = useMemo(() => {
+    const normalized = scale.replace(",", ".").trim();
+    const value = Number(normalized);
+    return Number.isFinite(value) && value > 0 ? normalized : null;
   }, [scale]);
 
   const scaledPoints = useMemo(() => {
-    if (!picked || scaleValue === null) return null;
+    if (!picked || scaleText === null) return null;
     // Section contract: 0.01 mm precision, distinct vertices — rounding can
     // collapse adjacent sampled points, so dedupe consecutive equal pairs
     // and drop a closing repeat before the polygon ever reaches the API.
     const points: { x_mm: string; y_mm: string }[] = [];
     for (const [x, y] of picked.points) {
-      const point = {
-        x_mm: (Number(x) * scaleValue).toFixed(2),
-        y_mm: (Number(y) * scaleValue).toFixed(2),
-      };
+      if (x === undefined || y === undefined) return null;
+      const x_mm = scaleMmText(x, scaleText);
+      const y_mm = scaleMmText(y, scaleText);
+      if (x_mm === null || y_mm === null) return null;
+      const point = { x_mm, y_mm };
       const last = points[points.length - 1];
       if (last && last.x_mm === point.x_mm && last.y_mm === point.y_mm) continue;
       points.push(point);
@@ -99,7 +129,7 @@ export function SectionImportPanel({
       points.pop();
     }
     return points.length >= 3 ? points : null;
-  }, [picked, scaleValue]);
+  }, [picked, scaleText]);
 
   const scaledBox = useMemo(() => {
     if (!scaledPoints) return null;

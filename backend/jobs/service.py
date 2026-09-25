@@ -33,6 +33,32 @@ def job_backend() -> Iterator[None]:
                 cursor.execute(sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous)))
 
 
+@contextmanager
+def job_owner() -> Iterator[None]:
+    """Read job_runs as the connection owner from INSIDE a member-facing RLS
+    scope. ``documentary_backend`` has no grant on the table and ``service_role``
+    needs matching JWT claims, so neither reaches it here — but the analytics
+    view reads the same count at the ambient role after its scope exits, where
+    the session user (the table owner) bypasses RLS. ``RESET ROLE`` restores
+    exactly that user; the explicit org filter in the caller's query remains
+    the tenant boundary. Same save/restore discipline as ``job_backend``."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('role')")
+        previous = str(cursor.fetchone()[0])
+        cursor.execute("RESET ROLE")
+    try:
+        yield
+    finally:
+        if not connection.needs_rollback:
+            with connection.cursor() as cursor:
+                if previous == "none":
+                    cursor.execute("RESET ROLE")
+                else:
+                    cursor.execute(
+                        sql.SQL("SET LOCAL ROLE {}").format(sql.Identifier(previous))
+                    )
+
+
 class JobServiceError(ValueError):
     def __init__(self, code: str) -> None:
         super().__init__(code)

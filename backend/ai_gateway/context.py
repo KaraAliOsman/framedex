@@ -15,7 +15,8 @@ from typing import Any
 from uuid import UUID
 
 from authentication.errors import ContractAPIException
-from documents.repository import documentary_backend, one
+from documents.repository import one
+from jobs.service import job_owner
 from pricing.repository import rows
 
 MAX_LIST = 20
@@ -36,6 +37,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "purchasing": (),
     "settings": (),
     "morning_brief": (),
+    "purchase_plan": (),
 }
 
 
@@ -136,9 +138,10 @@ def _brief(org_id: UUID) -> dict:
     operational-summary predicates verbatim so the brief's numbers are the
     dashboard's numbers; each category also exposes up to three ids so a
     line of the brief can drill into the entity it cites. job_runs is
-    service-owned, so its count follows the documented exception: read as
-    the documentary role with an explicit org filter — the same member-facing
-    information the dashboard already shows."""
+    service-owned and no member-facing role holds its grant, so its count
+    follows the documented exception: read as the connection owner (the
+    session user, same as the analytics view's ambient read) with the
+    explicit org filter — member-facing information the dashboard shows."""
     counts = one(
         """
         SELECT
@@ -228,7 +231,7 @@ def _brief(org_id: UUID) -> dict:
         """,
         [str(org_id), str(org_id)],
     )
-    with documentary_backend():
+    with job_owner():
         failed_jobs = one(
             "SELECT count(*) AS n FROM public.job_runs "
             "WHERE org_id = %s AND state = 'FAILED'",
@@ -759,7 +762,7 @@ def _clients(org_id: UUID) -> dict:
 
 def _purchasing(org_id: UUID) -> dict:
     orders = rows(
-        "SELECT order_code, order_type::text AS order_type, status::text AS status, "
+        "SELECT id, order_code, order_type::text AS order_type, status::text AS status, "
         "supplier_name FROM public.orders "
         "WHERE org_id=%s AND order_type::text LIKE 'SUPPLIER%%' "
         "ORDER BY created_at DESC LIMIT %s",
@@ -768,6 +771,7 @@ def _purchasing(org_id: UUID) -> dict:
     return {
         "supplier_orders": [
             {
+                "id": str(o["id"]),
                 "code": _cut(o["order_code"]),
                 "type": _cut(o["order_type"]),
                 "status": _cut(o["status"]),
@@ -776,6 +780,83 @@ def _purchasing(org_id: UUID) -> dict:
             for o in orders
         ],
         "truncated": len(orders) == MAX_LIST,
+    }
+
+
+def _purchase_plan(org_id: UUID) -> dict:
+    """§08-WE — what a purchase decision actually needs: requirement lines on
+    each project's latest documentary version that no allocation covers, the
+    supplier options those versions declared eligible, and the purchase
+    orders already open. A draft plan can only restate these rows — it
+    never invents supplier prices or lead times."""
+    latest = (
+        "SELECT DISTINCT ON (project_id) id FROM public.project_versions "
+        "WHERE org_id=%s AND authority_version IN ('SHOT09_V1','SHOT10_V1') "
+        "ORDER BY project_id, emitted_at DESC"
+    )
+    uncovered = rows(
+        "SELECT line.id, line.requirement_key, line.order_type::text AS order_type, "
+        "       line.category, line.purchasing_sku, line.unit, line.quantity, "
+        "       v.project_id, v.id AS version_id, p.code AS project_code "
+        "FROM public.purchase_requirement_lines line "
+        "JOIN public.project_versions v ON v.id = line.project_version_id "
+        "  AND v.org_id = line.org_id "
+        "JOIN public.projects p ON p.id = v.project_id AND p.org_id = v.org_id "
+        "LEFT JOIN public.purchase_allocations a "
+        "  ON a.requirement_line_id = line.id AND a.org_id = line.org_id "
+        f"WHERE line.org_id = %s AND a.id IS NULL AND v.id IN ({latest}) "
+        "ORDER BY v.emitted_at DESC, line.order_type, line.requirement_key LIMIT 12",
+        [org_id, org_id],
+    )
+    suppliers = rows(
+        "SELECT DISTINCT e.order_type::text AS order_type, e.supplier_name "
+        "FROM public.supplier_eligibility_versions e "
+        f"WHERE e.org_id = %s AND e.project_version_id IN ({latest}) "
+        "ORDER BY e.order_type, e.supplier_name LIMIT %s",
+        [org_id, org_id, MAX_LIST],
+    )
+    open_pos = rows(
+        "SELECT id, order_code, order_type::text AS order_type, status::text AS status, "
+        "supplier_name FROM public.orders "
+        "WHERE org_id=%s AND order_type::text LIKE 'SUPPLIER%%' "
+        "  AND status::text NOT IN ('RECEIVED','CANCELLED') "
+        "ORDER BY created_at DESC LIMIT 10",
+        [org_id],
+    )
+    return {
+        "uncovered_lines": [
+            {
+                "id": str(row["id"]),
+                "requirement_key": _cut(row["requirement_key"]),
+                "order_type": _cut(row["order_type"]),
+                "category": _cut(row["category"]),
+                "sku": _cut(row["purchasing_sku"]),
+                "unit": _cut(row["unit"]),
+                "quantity": _cut(row["quantity"]),
+                "project_id": str(row["project_id"]),
+                "version_id": str(row["version_id"]),
+                "project_code": _cut(row["project_code"]),
+            }
+            for row in uncovered
+        ],
+        "uncovered_total": len(uncovered),
+        "suppliers": [
+            {
+                "order_type": _cut(row["order_type"]),
+                "supplier": _cut(row["supplier_name"]),
+            }
+            for row in suppliers
+        ],
+        "open_purchase_orders": [
+            {
+                "id": str(row["id"]),
+                "code": _cut(row["order_code"]),
+                "type": _cut(row["order_type"]),
+                "status": _cut(row["status"]),
+                "supplier": _cut(row["supplier_name"]),
+            }
+            for row in open_pos
+        ],
     }
 
 
@@ -798,6 +879,7 @@ _BUILDERS = {
     "purchasing": _purchasing,
     "settings": _settings,
     "morning_brief": _brief,
+    "purchase_plan": _purchase_plan,
 }
 
 _REF_BUILDERS = {"project", "position", "quotation", "work_order", "catalog"}

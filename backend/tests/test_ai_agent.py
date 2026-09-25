@@ -595,3 +595,88 @@ def test_agent_morning_brief_uses_workflow_prompt(monkeypatch):
         }
     ]
     assert result["artifacts"][0]["kind"] == "message"
+
+def test_agent_purchase_plan_uses_workflow_prompt(monkeypatch):
+    """§08-WE — a purchase_plan job answers with the plan contract: the
+    WORKFLOW_SYSTEM registry routes the surface to PURCHASE_SYSTEM and the
+    draft plan artifact only references ids the projection exposed."""
+    line_id = uuid4()
+    version_id = uuid4()
+    contexts = {
+        "purchase_plan": {
+            "surface": "purchase_plan",
+            "organization": {"name": "Org"},
+            "uncovered_lines": [
+                {
+                    "id": str(line_id),
+                    "requirement_key": "REQ-1",
+                    "order_type": "SUPPLIER_PROFILE_PO",
+                    "category": "PROFILE",
+                    "sku": "MARCO-60",
+                    "unit": "m",
+                    "quantity": "48.000",
+                    "project_id": str(uuid4()),
+                    "version_id": str(version_id),
+                    "project_code": "OB-1",
+                }
+            ],
+            "uncovered_total": 1,
+            "suppliers": [
+                {"order_type": "SUPPLIER_PROFILE_PO", "supplier": "Perfiles SA"}
+            ],
+            "open_purchase_orders": [],
+        }
+    }
+    output = _doc(
+        reply="1 línea sin cubrir: REQ-1 MARCO-60 (OB-1).",
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "purchase_plan",
+                    "title": "Plan de compras",
+                    "payload": {
+                        "groups": [
+                            {
+                                "order_type": "SUPPLIER_PROFILE_PO",
+                                "lines": [
+                                    {
+                                        "requirement_key": "REQ-1",
+                                        "sku": "MARCO-60",
+                                        "quantity": "48.000",
+                                        "unit": "m",
+                                        "project_code": "OB-1",
+                                    }
+                                ],
+                                "suppliers": ["Perfiles SA"],
+                            }
+                        ]
+                    },
+                    "references": [str(line_id), str(version_id), str(uuid4())],
+                },
+            },
+            {"kind": "navigate", "path": "/purchasing", "label": "Abrir compras"},
+        ],
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="purchase_plan",
+        refs={},
+        goal="Prepara el plan de compras",
+        product=None,
+        history=[],
+        operation_key="plan-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.PURCHASE_SYSTEM
+    assert result["queries"][0] == {
+        "surface": "purchase_plan",
+        "tool": "get_purchasing_state",
+        "status": "ok",
+    }
+    assert result["artifacts"][0]["kind"] == "purchase_plan"
+    # References keep only ids the context exposed — the invented one dropped.
+    assert sorted(result["artifacts"][0]["references"]) == sorted(
+        [str(line_id), str(version_id)]
+    )

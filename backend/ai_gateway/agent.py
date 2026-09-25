@@ -47,6 +47,7 @@ QUERY_TOOLS = {
     "purchasing": "get_inventory_state",
     "settings": "get_settings",
     "morning_brief": "get_attention",
+    "purchase_plan": "get_purchasing_state",
 }
 
 PREPARE_TOOLS = {
@@ -150,15 +151,43 @@ Formato del brief:
 - Cada línea: qué pasa + sobre qué entidad (código/nombre del contexto) — nunca un número que no esté en "attention".
 - Cero alarmismo: si todo está en orden, dilo en una línea y agrega los "dispatch_ready" o "versions_ready" como oportunidades, no problemas.
 
-Pasos: solo {"kind":"navigate","path","label"} hacia las superficies concretas — "/projects/<uuid>" con ids de "items", "/production", "/projects" (rutas reales de la app; cada UUID debe venir de items/contexto). También {"kind":"query","surface":"project|work_order|quotation|production|clients","refs":{...}} si una línea necesita profundizar en una entidad de "items" — máximo 3 por ronda. Y UN paso {"kind":"artifact","artifact":{"kind":"message","title":"Brief del día","body":"<el mismo brief>"}} para que el brief quede como artefacto inspeccionable en el trabajo.
+Pasos: solo {"kind":"navigate","path","label"} hacia las superficies concretas — "/projects/<uuid>" con ids de "items", "/production", "/projects" (rutas reales de la app; cada UUID debe venir de items/contexto). También {"kind":"query","surface":"project|work_order|quotation|production|clients","refs":{...}} si una línea necesita profundizar en una entidad de "items" — máximo 3 por ronda. Y UN paso {"kind":"artifact","artifact":{"kind":"message","title":"Brief del día","payload":{"body":"<el mismo brief>"}}} para que el brief quede como artefacto inspeccionable en el trabajo.
 
 Reglas duras:
 - Solo citas números, códigos e ids literalmente presentes en el contexto u observaciones. Nada inventado ni estimado.
 - Jamás prepares acciones consecuentes en el brief — es lectura, no ejecución: nada de "prepare" ni "ops".
 - Sin texto fuera del JSON."""
 
+
+PURCHASE_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "plan de compras" de una empresa de ventanas y puertas (español chileno).
+
+El contexto lleva:
+- "uncovered_lines": líneas de requerimiento de las últimas versiones documentales de cada proyecto que NINGUNA asignación cubre — id, requirement_key, order_type, category, sku, unit, quantity, project_id/version_id, project_code. Son lo único que se puede comprar; no hay más demanda que esta.
+- "suppliers": proveedores declarados elegibles por order_type en esas versiones — solo esos nombres existen.
+- "open_purchase_orders": órdenes de compra ya abiertas — no dupliques demanda que ya está ordenada.
+
+Respondes SOLO un JSON:
+{
+  "reply": "resumen: cuántas líneas sin cubrir, agrupadas por order_type, y qué falta para poder comprar",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Pasos:
+- UN paso {"kind":"artifact","artifact":{"kind":"purchase_plan","title":"Plan de compras","payload":{"groups":[{"order_type":"...","lines":[{"requirement_key":"...","sku":"...","quantity":"...","unit":"...","project_code":"..."}],"suppliers":["nombres del contexto"]}]},"references":["ids de uncovered_lines y version_id del contexto"]} — el plan borrador, agrupado por order_type.
+- {"kind":"navigate","path":"/purchasing","label":"Abrir compras"} para la ejecución real.
+- {"kind":"query","surface":"project|purchasing","refs":{...}} si una línea necesita el proyecto completo — refs solo con ids que el contexto mostró.
+
+Reglas duras:
+- Solo números, skus, claves, ids y proveedores literalmente en el contexto. NUNCA inventes precios de proveedor, plazos ni cantidades — si falta, warning diciendo qué falta.
+- Una línea sin proveedor elegible → warning por línea, no la omitas del plan.
+- Jamás "prepare" ni "ops" — el plan es un borrador que la persona ejecuta en Compras.
+- Sin texto fuera del JSON."""
+
+
 WORKFLOW_SYSTEM: dict[str, str] = {
     "morning_brief": BRIEF_SYSTEM,
+    "purchase_plan": PURCHASE_SYSTEM,
 }
 
 

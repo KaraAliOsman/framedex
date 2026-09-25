@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -612,7 +613,7 @@ def test_work_order_context_decodes_jsonb_reservations(monkeypatch):
 def test_brief_projection_attention_and_item_ids(monkeypatch):
     """§08-WH — the brief surface returns the attention counts plus
     drill-down ids per category; job_runs is read under the documented
-    documentary-role exception, so it is stubbed as its own calls."""
+    connection-owner exception, so it is stubbed as its own calls."""
     import contextlib
 
     org_id = uuid4()
@@ -661,7 +662,7 @@ def test_brief_projection_attention_and_item_ids(monkeypatch):
     monkeypatch.setattr(context, "one", fake_one)
     monkeypatch.setattr(
         context,
-        "documentary_backend",
+        "job_owner",
         lambda: contextlib.nullcontext(),
     )
     ctx = context.build_context(org_id, "morning_brief", {})
@@ -672,3 +673,66 @@ def test_brief_projection_attention_and_item_ids(monkeypatch):
     assert ctx["items"]["quotes_unsent"][0]["id"] == str(project_id)
     assert ctx["items"]["work_orders_shortage"][0]["order_code"] == "OT-9"
     assert ctx["items"]["failed_jobs"][0]["id"] == str(job_id)
+
+
+def test_purchase_plan_projection_uncovered_lines(monkeypatch):
+    """§08-WE — the purchase_plan surface serves only uncovered requirement
+    lines on the latest documentary versions, the declared-eligible
+    suppliers, and the open purchase orders — everything a draft plan can
+    cite, and nothing it can't."""
+    org_id = uuid4()
+    line_id = uuid4()
+    version_id = uuid4()
+    project_id = uuid4()
+    po_id = uuid4()
+
+    def fake_rows(sql, params=None):
+        if "SELECT name, subscription_tier" in sql:
+            return [_org_row()]
+        if "purchase_requirement_lines" in sql:
+            return [
+                {
+                    "id": line_id,
+                    "requirement_key": "REQ-1",
+                    "order_type": "SUPPLIER_PROFILE_PO",
+                    "category": "PROFILE",
+                    "purchasing_sku": "MARCO-60",
+                    "unit": "m",
+                    "quantity": Decimal("48.000"),
+                    "project_id": project_id,
+                    "version_id": version_id,
+                    "project_code": "OB-1",
+                }
+            ]
+        if "supplier_eligibility_versions" in sql:
+            return [
+                {
+                    "order_type": "SUPPLIER_PROFILE_PO",
+                    "supplier_name": "Perfiles SA",
+                }
+            ]
+        if "LIKE 'SUPPLIER" in sql:
+            return [
+                {
+                    "id": po_id,
+                    "order_code": "OC-7",
+                    "order_type": "SUPPLIER_PROFILE_PO",
+                    "status": "SENT",
+                    "supplier_name": "Perfiles SA",
+                }
+            ]
+        return []
+
+    _patch(monkeypatch, rows_impl=fake_rows)
+    ctx = context.build_context(org_id, "purchase_plan", {})
+    assert ctx["surface"] == "purchase_plan"
+    assert ctx["uncovered_total"] == 1
+    line = ctx["uncovered_lines"][0]
+    assert line["id"] == str(line_id)
+    assert line["requirement_key"] == "REQ-1"
+    assert line["version_id"] == str(version_id)
+    assert ctx["suppliers"][0] == {
+        "order_type": "SUPPLIER_PROFILE_PO",
+        "supplier": "Perfiles SA",
+    }
+    assert ctx["open_purchase_orders"][0]["id"] == str(po_id)
