@@ -602,6 +602,50 @@
   z-index: 2;
 }
 
+/* §16 3D view — larger inset panel; orbit/pan/zoom inside, same selection. */
+.model3d-inset {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-md);
+  bottom: 0.75rem;
+  box-shadow: var(--shadow-raise);
+  display: flex;
+  flex-direction: column;
+  height: 22rem;
+  left: 0.75rem;
+  position: absolute;
+  width: 30rem;
+  z-index: 3;
+}
+
+.model3d-inset .model3d-canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+.model3d-loading {
+  align-items: center;
+  color: var(--theme-text-muted);
+  display: flex;
+  flex: 1;
+  font-size: 0.78rem;
+  justify-content: center;
+}
+
+.model3d-toggle {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-sm);
+  bottom: 0.75rem;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  left: 0.75rem;
+  z-index: 2;
+}
+
 /* Status bar — compact persistent state */
 .assembly-statusbar {
   align-items: center;
