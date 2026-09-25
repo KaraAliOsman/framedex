@@ -207,24 +207,42 @@ def preview(org_id, actor, request):
     record = one(
         'INSERT INTO public.pricing_operations(org_id,project_id,requested_by,request,input_snapshot,'
         'result,source_revision,revision_code,state,reason) '
-        'VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id',
+        'VALUES(%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING id,created_at',
         [org_id,project['id'],request['_actor_id'],
          json_text({key:value for key,value in request.items() if not key.startswith('_')}),
          json_text({'rules':rules,'authorities':repo.authorities,'positions':technical,'cost_lines':cost_lines}),
          json_text(asdict(output)),source_revision(project,positions),project['current_revision'],
          'PENDING' if state=='PENDING' else 'PREVIEW',request['reason']])
+    costs = [(index, D(str(cost))) for index, cost in cost_lines]
     return {'id':str(record['id']),'state':'PENDING' if state=='PENDING' else 'PREVIEW',
             'project_id':str(project['id']),'revision_code':project['current_revision'],
             'discount_pct':str(discount),
-            'currency':request['currency'],**asdict(output)}
+            'currency':request['currency'],**asdict(output),
+            'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
+            'total_cost':str(sum((cost for _, cost in costs), D('0'))),
+            'reason':request['reason'],'requested_by':str(request['_actor_id']),
+            'approved_by':None,'approved_at':None,
+            'created_at':record['created_at'].isoformat()}
 
 
 def operation_public(operation):
+    # The decision surface reads cost next to price: both were stored at
+    # preview time from the same authority, so the margin the estimator sees
+    # is the margin the approver audited.
+    snapshot = decoded(operation['input_snapshot'])
+    costs = snapshot.get('cost_lines') or []
     return {'id':str(operation['id']),'state':operation['state'],
             'project_id':str(operation['project_id']),
             'revision_code':operation.get('revision_code') or 'REV-A',
             'discount_pct':str(decoded(operation['request'])['discount_pct']),
-            'currency':decoded(operation['request'])['currency'],**decoded(operation['result'])}
+            'currency':decoded(operation['request'])['currency'],**decoded(operation['result']),
+            'cost_lines':[{'position_index':index,'line_cost':str(cost)} for index,cost in costs],
+            'total_cost':str(sum((D(str(cost)) for _, cost in costs), D('0'))),
+            'reason':str(operation['reason']),
+            'requested_by':str(operation['requested_by']),
+            'approved_by':str(operation['approved_by']) if operation['approved_by'] else None,
+            'approved_at':operation['approved_at'].isoformat() if operation['approved_at'] else None,
+            'created_at':operation['created_at'].isoformat()}
 
 
 def apply_operation(org_id, actor_id, role, operation_id, reason, confirmed, reject=False):

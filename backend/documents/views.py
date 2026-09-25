@@ -35,9 +35,16 @@ from documents.serializers import (
     DocumentaryPreparationResponseSerializer,
     FreezeRequestSerializer,
     FreezeResponseSerializer,
+    RevisionCompareQuerySerializer,
+    RevisionCompareResponseSerializer,
     SignedAccessResponseSerializer,
 )
-from documents.service import freeze_revision_a, prepare_documentary_inputs, save_documentary_inputs
+from documents.service import (
+    compare_versions,
+    freeze_revision_a,
+    prepare_documentary_inputs,
+    save_documentary_inputs,
+)
 
 logger = logging.getLogger(__name__)
 ERRORS = {
@@ -67,6 +74,7 @@ def public_documentary_errors():
             "purchase_requirement_not_found",
             "supplier_eligibility_not_found",
             "purchase_projection_not_found",
+            "version_not_found",
         ):
             status_code = 404
         elif error.code == "document_access_denied":
@@ -286,6 +294,29 @@ class ArtifactGenerateView(APIView):
                 file_format=data["format"],
             )
         return Response(output, status=201 if created else 200)
+
+
+class RevisionCompareView(APIView):
+    @extend_schema(
+        operation_id="documents_compare_versions",
+        parameters=[ACTIVE_ORGANIZATION_HEADER, RevisionCompareQuerySerializer],
+        request=None,
+        responses={200: RevisionCompareResponseSerializer, **ERRORS},
+        tags=["documents"],
+    )
+    def get(self, request, project_id: UUID):
+        query = validate(RevisionCompareQuerySerializer, request.query_params)
+        with documentary_scope(
+            request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
+        ) as (_, _, org_id):
+            return Response(
+                compare_versions(
+                    org_id=org_id,
+                    project_id=project_id,
+                    base_code=str(query["base"]),
+                    head_code=str(query["head"]),
+                )
+            )
 
 
 class ArtifactAccessView(APIView):

@@ -31,6 +31,16 @@ class PortalQuoteSerializer(serializers.Serializer):
     quote_pdf_url = serializers.CharField(allow_null=True)
 
 
+class ApprovalRecordSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    status = serializers.CharField()
+    revision_code = serializers.CharField()
+    decided_by = serializers.CharField(allow_null=True)
+    decided_at = serializers.DateTimeField(allow_null=True)
+    expires_at = serializers.DateTimeField()
+    created_at = serializers.DateTimeField()
+
+
 class DecideRequestSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(choices=["APPROVED", "DECLINED"])
     decided_by = serializers.CharField(max_length=255)

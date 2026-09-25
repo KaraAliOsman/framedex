@@ -10,6 +10,7 @@ import {
   projectPaymentIntegrationStatus,
   projectPaymentLinksList,
   projectPaymentsList,
+  projectQuoteLinksList,
   projectsClone,
   projectsCreate,
   projectsList,
@@ -61,6 +62,8 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectPaymentIntegrationStatus: vi.fn(),
     projectPaymentLinkCreate: vi.fn(),
     projectPaymentLinkRecover: vi.fn(),
+    projectQuoteLinksList: vi.fn(),
+    documentsCompareVersions: vi.fn(),
   };
 });
 
@@ -231,6 +234,7 @@ beforeEach(() => {
   vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
     response(200, { configured: false, enabled: false }),
   );
+  vi.mocked(projectQuoteLinksList).mockResolvedValue(response(200, []));
 });
 
 afterEach(() => {
@@ -555,7 +559,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   expect(screen.getAllByText("Revisión A")).toHaveLength(2);
   expect(apiMutator).toHaveBeenCalledTimes(3);
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
@@ -761,7 +765,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   expect(body.positions[0].handle_intents).toEqual([
@@ -922,7 +926,7 @@ it("reconciles handle intents when the handle policy changes", async () => {
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // B2's SECONDARY slot does not exist under handle-b: dropped. B1 survives
@@ -1048,7 +1052,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // The estimator typed 750 — the v2 reseed (bounds 700–900 → midpoint 800)

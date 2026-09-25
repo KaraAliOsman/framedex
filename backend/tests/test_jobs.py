@@ -431,3 +431,111 @@ def test_enqueue_keeps_terminal_success_deduped(monkeypatch) -> None:
     )
     assert job is succeeded
     assert created is False
+
+
+def failed_job(**overrides):
+    job = {
+        "id": uuid4(),
+        "type": "demo.echo",
+        "state": "FAILED",
+        "payload": {"amount": 7},
+        "max_attempts": 3,
+    }
+    job.update(overrides)
+    return job
+
+
+def test_retry_requeues_failed_with_stored_payload(monkeypatch) -> None:
+    register_demo()
+    job = failed_job()
+    requeued = {"id": job["id"], "state": "QUEUED"}
+    calls: dict[str, object] = {}
+    monkeypatch.setattr(repository, "get_job", lambda **kwargs: job)
+
+    def spy(**kwargs):
+        calls.update(kwargs)
+        return requeued
+
+    monkeypatch.setattr(repository, "requeue_terminal", spy)
+    actor = uuid4()
+    result = service.retry(
+        org_id=uuid4(), job_id=job["id"], actor_id=actor, role="OWNER"
+    )
+    assert result is requeued
+    # The retry reruns exactly what failed — payload and attempt budget from
+    # the stored row, identity from the retrying actor.
+    assert calls["payload"] == {"amount": 7}
+    assert calls["max_attempts"] == 3
+    assert calls["created_by"] == actor
+    assert calls["job_id"] == job["id"]
+
+
+def test_retry_denies_roles_outside_spec(monkeypatch) -> None:
+    register_demo()
+    monkeypatch.setattr(repository, "get_job", lambda **kwargs: failed_job())
+    monkeypatch.setattr(
+        repository,
+        "requeue_terminal",
+        lambda **kwargs: pytest.fail("denied role must not requeue"),
+    )
+    with pytest.raises(service.JobServiceError) as denied:
+        service.retry(
+            org_id=uuid4(), job_id=uuid4(), actor_id=uuid4(), role="INSTALLER"
+        )
+    assert denied.value.code == "job_permission_denied"
+
+
+def test_retry_rejects_non_terminal_and_missing_jobs(monkeypatch) -> None:
+    register_demo()
+    monkeypatch.setattr(
+        repository, "get_job", lambda **kwargs: failed_job(state="QUEUED")
+    )
+    with pytest.raises(service.JobServiceError) as running:
+        service.retry(
+            org_id=uuid4(), job_id=uuid4(), actor_id=uuid4(), role="OWNER"
+        )
+    assert running.value.code == "job_not_terminal"
+
+    monkeypatch.setattr(repository, "get_job", lambda **kwargs: None)
+    with pytest.raises(service.JobServiceError) as missing:
+        service.retry(
+            org_id=uuid4(), job_id=uuid4(), actor_id=uuid4(), role="OWNER"
+        )
+    assert missing.value.code == "job_not_found"
+
+
+def test_retry_spec_authorize_checked_as_retrying_actor(monkeypatch) -> None:
+    @registry.register(
+        "demo.guarded",
+        roles=("OWNER", "ESTIMATOR"),
+        payload_serializer=DemoPayloadSerializer,
+        authorize=lambda payload, role: role == "OWNER",
+    )
+    def guarded_run(payload, context, report):
+        return {}
+
+    monkeypatch.setattr(
+        repository,
+        "get_job",
+        lambda **kwargs: failed_job(type="demo.guarded"),
+    )
+    with pytest.raises(service.JobServiceError) as denied:
+        service.retry(
+            org_id=uuid4(), job_id=uuid4(), actor_id=uuid4(), role="ESTIMATOR"
+        )
+    assert denied.value.code == "job_permission_denied"
+
+
+def test_retry_lost_race_returns_live_row(monkeypatch) -> None:
+    register_demo()
+    job = failed_job()
+    live = {"id": job["id"], "state": "QUEUED"}
+    states = iter([job, live])
+    monkeypatch.setattr(
+        repository, "get_job", lambda **kwargs: next(states)
+    )
+    monkeypatch.setattr(repository, "requeue_terminal", lambda **kwargs: None)
+    result = service.retry(
+        org_id=uuid4(), job_id=job["id"], actor_id=uuid4(), role="OWNER"
+    )
+    assert result is live

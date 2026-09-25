@@ -19,6 +19,7 @@ from documents.repository import DocumentaryError
 from documents.views import ERRORS, documentary_scope, validate
 from portal import service
 from portal.serializers import (
+    ApprovalRecordSerializer,
     DecideRequestSerializer,
     PortalQuoteSerializer,
     ShareQuoteResponseSerializer,
@@ -79,6 +80,23 @@ class ProjectQuoteLinkView(APIView):
             )
             output["path"] = f"/cotizacion/{output['token']}"
             return Response(output)
+
+    @extend_schema(
+        operation_id="project_quote_links_list",
+        description="Every approval link minted for the project, newest first.",
+        request=None,
+        responses={200: ApprovalRecordSerializer(many=True), **ERRORS},
+    )
+    def get(self, request, project_id: UUID):
+        with public_portal_errors(), documentary_scope(
+            request, ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
+        ) as (_, _, org_id):
+            return Response(
+                ApprovalRecordSerializer(
+                    service.list_approvals(org_id=org_id, project_id=project_id),
+                    many=True,
+                ).data
+            )
 
 
 class PortalQuoteView(APIView):

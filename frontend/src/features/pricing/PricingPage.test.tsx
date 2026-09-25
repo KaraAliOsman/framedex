@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { apiMutator } from "../../api/apiMutator";
 import { t } from "../../i18n/es-CL";
 import { CommercialPricingPage, PricingPage } from "./PricingPage";
+import { formatMoney } from "../money";
 
 vi.mock("../../api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({
@@ -14,6 +15,16 @@ vi.mock("../../api/generated/dekopen", () => ({
         { id: "project-a", code: "P-001", name: "Casa", client_name: "Cliente" },
         { id: "project-A", code: "P-A", name: "Casa A", client_name: "Cliente A" },
         { id: "project-B", code: "P-B", name: "Casa B", client_name: "Cliente B" },
+      ],
+    },
+  }),
+  projectsRetrieve: vi.fn().mockResolvedValue({
+    status: 200,
+    data: {
+      id: "project-a",
+      positions: [
+        { position_index: 1, location_tag: "Living", quantity: 2 },
+        { position_index: 2, location_tag: "Dormitorio", quantity: 1 },
       ],
     },
   }),
@@ -92,7 +103,22 @@ it("does not apply a late preview after its financial input changes", async () =
   fireEvent.submit(submit.closest("form")!);
   fireEvent.change(screen.getByLabelText(t("pricing.discount")), { target: { value: "0.05" } });
   await act(async () =>
-    resolve({ data: { id: "stale", state: "PREVIEW", currency: "CLP", project_net: "1000" } }),
+    resolve({
+      data: {
+        id: "stale",
+        state: "PREVIEW",
+        currency: "CLP",
+        project_net: "1000",
+        lines: [],
+        cost_lines: [],
+        total_cost: "0",
+        reason: "r",
+        requested_by: "u",
+        approved_by: null,
+        approved_at: null,
+        created_at: "2026-09-25T00:00:00Z",
+      },
+    }),
   );
   expect(screen.queryByRole("button", { name: t("pricing.apply") })).not.toBeInTheDocument();
 });
@@ -101,12 +127,21 @@ it("allows an owner to review and reject a saved pending request", async () => {
   const pending = {
     id: "operation-a",
     project_id: "project-a",
+    revision_code: "REV-A",
     discount_pct: "0.15",
     state: "PENDING",
     currency: "CLP",
+    lines: [],
+    cost_lines: [],
+    total_cost: "700",
     project_net: "850",
     project_tax: "162",
     project_gross: "1012",
+    reason: "Cotización",
+    requested_by: "estimator-1",
+    approved_by: null,
+    approved_at: null,
+    created_at: "2026-09-25T00:00:00Z",
   };
   vi.mocked(apiMutator)
     .mockResolvedValueOnce({ data: [pending] })
@@ -141,12 +176,21 @@ function result(id: string, state = "PREVIEW") {
   return {
     id,
     project_id: `project-${id}`,
+    revision_code: "REV-A",
     discount_pct: "0.05",
     state,
     currency: "CLP",
+    lines: [],
+    cost_lines: [],
+    total_cost: "80",
     project_net: id === "B" ? "200" : "100",
     project_tax: "19",
-    project_gross: "119",
+    project_gross: id === "B" ? "238" : "119",
+    reason: "Cotización",
+    requested_by: "estimator-1",
+    approved_by: null,
+    approved_at: null,
+    created_at: "2026-09-25T00:00:00Z",
   };
 }
 function previewButton() {
@@ -295,9 +339,9 @@ it.each([false, true])(
     await settle(a, [result("A")], failure);
     expect(previewButton()).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.queryByText("100 CLP")).not.toBeInTheDocument();
+    expect(screen.queryByText(formatMoney("119", "CLP"))).not.toBeInTheDocument();
     await settle(b, [result("B")]);
-    expect(screen.getByText("200 CLP")).toBeInTheDocument();
+    expect(screen.getByText(formatMoney("238", "CLP"))).toBeInTheDocument();
     expect(previewButton()).toBeEnabled();
   },
 );
@@ -314,8 +358,8 @@ it("reload B remains authoritative after late reload A", async () => {
   fireEvent.click(screen.getByRole("button", { name: t("pricing.reload") }));
   await settle(b, [result("B")]);
   await settle(a, [result("A")]);
-  expect(screen.getByText("200 CLP")).toBeInTheDocument();
-  expect(screen.queryByText("100 CLP")).not.toBeInTheDocument();
+  expect(screen.getByText(formatMoney("238", "CLP"))).toBeInTheDocument();
+  expect(screen.queryByText(formatMoney("119", "CLP"))).not.toBeInTheDocument();
 });
 
 it.each([false, true])(

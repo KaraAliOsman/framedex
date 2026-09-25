@@ -117,6 +117,11 @@ class LineResponseSerializer(serializers.Serializer):
     line_net = serializers.CharField()
 
 
+class CostLineResponseSerializer(serializers.Serializer):
+    position_index = serializers.IntegerField()
+    line_cost = serializers.CharField()
+
+
 class PriceResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     project_id = serializers.UUIDField()
@@ -125,9 +130,16 @@ class PriceResponseSerializer(serializers.Serializer):
     state = serializers.ChoiceField(choices=['PREVIEW','PENDING','APPLIED','REJECTED'])
     currency = serializers.ChoiceField(choices=['CLP','USD'])
     lines = LineResponseSerializer(many=True)
+    cost_lines = CostLineResponseSerializer(many=True)
+    total_cost = serializers.CharField()
     project_net = serializers.CharField()
     project_tax = serializers.CharField()
     project_gross = serializers.CharField()
+    reason = serializers.CharField()
+    requested_by = serializers.CharField()
+    approved_by = serializers.CharField(allow_null=True)
+    approved_at = serializers.CharField(allow_null=True)
+    created_at = serializers.CharField()
 
 
 class DraftPositionSerializer(EngineCalculateRequestSerializer):

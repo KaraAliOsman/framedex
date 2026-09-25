@@ -85,9 +85,18 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             (SELECT count(*) FROM public.profile_systems s
              WHERE s.org_id = %s
                AND (s.rebate_depth_mm IS NULL
-                    OR s.end_milling_overlap_mm IS NULL)) AS catalog_gaps
+                    OR s.end_milling_overlap_mm IS NULL)) AS catalog_gaps,
+            (SELECT count(*) FROM public.production_steps s
+             JOIN public.orders o ON o.id = s.order_id AND o.org_id = s.org_id
+             WHERE s.org_id = %s AND s.status = 'BLOCKED'
+               AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
+            (SELECT count(*) FROM public.job_runs j
+             WHERE j.org_id = %s AND j.state = 'FAILED') AS jobs_failed,
+            (SELECT count(*) FROM public.customer_approvals a
+             WHERE a.org_id = %s AND a.status = 'PENDING'
+               AND a.expires_at > now()) AS approvals_pending
         """,
-        [str(org_id)] * 4,
+        [str(org_id)] * 7,
     )
     lead = one(
         """
@@ -148,9 +157,17 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             (SELECT count(*) FROM public.project_positions WHERE org_id = %s)
                 AS positions,
             (SELECT count(*) FROM public.project_versions
-             WHERE org_id = %s) AS sealed_versions
+             WHERE org_id = %s) AS sealed_versions,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'DRAFT') AS drafts,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'QUOTED') AS quoted,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'APPROVED') AS approved,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'IN_PRODUCTION') AS in_production
         """,
-        [str(org_id), str(org_id), str(org_id)],
+        [str(org_id)] * 7,
     )
     recent = [
         {

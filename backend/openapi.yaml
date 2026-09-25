@@ -3779,6 +3779,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/documents/projects/{project_id}/versions/compare/:
+    get:
+      operationId: documents_compare_versions
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: base
+        schema:
+          type: string
+          minLength: 1
+          pattern: ^REV-[A-Z]+$
+        required: true
+      - in: query
+        name: head
+        schema:
+          type: string
+          minLength: 1
+          pattern: ^REV-[A-Z]+$
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - documents
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionCompareResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/engine/assembly/calculate/:
     post:
       operationId: engine_assembly_calculate
@@ -4926,6 +5010,34 @@ paths:
   /api/v1/jobs/{job_id}/:
     get:
       operationId: jobs_get
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - jobs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobRun'
+          description: ''
+  /api/v1/jobs/{job_id}/retry/:
+    post:
+      operationId: jobs_retry
       parameters:
       - in: header
         name: X-Organization-ID
@@ -10213,6 +10325,71 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
   /api/v1/projects/{project_id}/quote-link/:
+    get:
+      operationId: project_quote_links_list
+      description: Every approval link minted for the project, newest first.
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApprovalRecord'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
     post:
       operationId: project_quote_link_create
       description: Mint a customer-approval link for the latest sealed version.
@@ -12035,6 +12212,36 @@ components:
           default: false
       required:
       - reason
+    ApprovalRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        revision_code:
+          type: string
+        decided_by:
+          type: string
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - decided_at
+      - decided_by
+      - expires_at
+      - id
+      - revision_code
+      - status
     ArticleList:
       type: object
       properties:
@@ -13039,6 +13246,16 @@ components:
       - quantity
       - system_id
       - width_mm
+    CostLineResponse:
+      type: object
+      properties:
+        position_index:
+          type: integer
+        line_cost:
+          type: string
+      required:
+      - line_cost
+      - position_index
     CouplerChoice:
       type: object
       properties:
@@ -17386,13 +17603,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LineResponse'
+        cost_lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostLineResponse'
+        total_cost:
+          type: string
         project_net:
           type: string
         project_tax:
           type: string
         project_gross:
           type: string
+        reason:
+          type: string
+        requested_by:
+          type: string
+        approved_by:
+          type: string
+          nullable: true
+        approved_at:
+          type: string
+          nullable: true
+        created_at:
+          type: string
       required:
+      - approved_at
+      - approved_by
+      - cost_lines
+      - created_at
       - currency
       - discount_pct
       - id
@@ -17401,8 +17640,11 @@ components:
       - project_id
       - project_net
       - project_tax
+      - reason
+      - requested_by
       - revision_code
       - state
+      - total_cost
     PriceResponseStateEnum:
       enum:
       - PREVIEW
@@ -18839,6 +19081,32 @@ components:
       - confirmed
       - expected_operation_id
       - reason
+    RevisionCompareResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+        project_code:
+          type: string
+        base:
+          type: object
+          additionalProperties: {}
+        head:
+          type: object
+          additionalProperties: {}
+        summary:
+          type: object
+          additionalProperties: {}
+        positions:
+          type: array
+          items: {}
+      required:
+      - base
+      - head
+      - positions
+      - project_code
+      - project_id
+      - summary
     RoleEnum:
       enum:
       - OWNER

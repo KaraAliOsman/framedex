@@ -1882,3 +1882,193 @@ def revision_snapshot(version_id: UUID, org_id: UUID) -> tuple[dict[str, object]
     if snapshot_sha256_v1(snapshot) != str(version["snapshot_sha256"]):
         raise DocumentaryError("frozen_revision_hash_mismatch")
     return version, snapshot
+
+
+_COMPARE_FIELDS = (
+    "location_tag",
+    "quantity",
+    "typology",
+    "system_id",
+    "width_mm",
+    "height_mm",
+    "color_interior",
+    "color_exterior",
+    "price_net",
+    "discount_pct",
+)
+
+
+def _compare_position(row: dict[str, object]) -> dict[str, object]:
+    """The commercially legible slice of a frozen position — enough to render
+    a thumbnail and read what changed, nothing the customer shouldn't see."""
+    return {
+        "position_index": int(row["position_index"]),
+        "location_tag": row.get("location_tag") or "",
+        "typology": str(row.get("typology") or ""),
+        "system_id": str(row.get("system_id") or ""),
+        "quantity": int(row.get("quantity") or 0),
+        "width_mm": str(row.get("width_mm") or ""),
+        "height_mm": str(row.get("height_mm") or ""),
+        "color_interior": str(row.get("color_interior") or ""),
+        "color_exterior": str(row.get("color_exterior") or ""),
+        "price_net": str(row.get("price_net") or ""),
+        "discount_pct": str(row.get("discount_pct") or ""),
+        "parametric_tree": row.get("parametric_tree"),
+        "calculation_hash": str(row.get("calculation_hash") or ""),
+    }
+
+
+def _public_position(row: dict[str, object] | None) -> dict[str, object] | None:
+    if row is None:
+        return None
+    return {key: value for key, value in row.items() if key != "calculation_hash"}
+
+
+def compare_versions(
+    *, org_id: UUID, project_id: UUID, base_code: str, head_code: str
+) -> dict[str, object]:
+    """Side-by-side diff of two frozen revisions of one project: positions
+    keyed by position_index, commercial fields compared string-for-string.
+    Snapshots that predate the hash columns are compared as stored; sealed
+    integrity fields are still reported so the reader sees what is proven."""
+    with documentary_backend():
+        project = one(
+            "SELECT id,code,name FROM public.projects WHERE id=%s AND org_id=%s",
+            [str(project_id), str(org_id)],
+            "project_not_found",
+        )
+        versions = {
+            str(row["revision_code"]): row
+            for row in rows(
+                "SELECT id,revision_code,snapshot_json::text,snapshot_sha256,"
+                "emitted_at FROM public.project_versions "
+                "WHERE org_id=%s AND project_id=%s AND revision_code IN (%s,%s)",
+                [str(org_id), str(project_id), base_code, head_code],
+            )
+        }
+    if base_code not in versions or head_code not in versions:
+        raise DocumentaryError("version_not_found")
+
+    def snapshot_of(code: str) -> dict[str, object]:
+        version = versions[code]
+        snapshot = _json_object(
+            version["snapshot_json"], "invalid_frozen_revision_snapshot"
+        )
+        integrity = None
+        if version["snapshot_sha256"]:
+            integrity = (
+                "VERIFIED"
+                if snapshot_sha256_v1(snapshot) == str(version["snapshot_sha256"])
+                else "MISMATCH"
+            )
+        return snapshot, integrity
+
+    base_snapshot, base_integrity = snapshot_of(base_code)
+    head_snapshot, head_integrity = snapshot_of(head_code)
+    base_positions = {
+        int(p["position_index"]): _compare_position(p)
+        for p in base_snapshot.get("positions", [])
+        if isinstance(p, dict) and p.get("position_index") is not None
+    }
+    head_positions = {
+        int(p["position_index"]): _compare_position(p)
+        for p in head_snapshot.get("positions", [])
+        if isinstance(p, dict) and p.get("position_index") is not None
+    }
+    entries: list[dict[str, object]] = []
+    added = removed = changed = unchanged = 0
+    for index in sorted(set(base_positions) | set(head_positions)):
+        before = base_positions.get(index)
+        after = head_positions.get(index)
+        if before is None:
+            added += 1
+            entries.append(
+                {
+                    "position_index": index,
+                    "change": "ADDED",
+                    "location_tag": after["location_tag"],
+                    "before": None,
+                    "after": _public_position(after),
+                    "changes": [],
+                }
+            )
+            continue
+        if after is None:
+            removed += 1
+            entries.append(
+                {
+                    "position_index": index,
+                    "change": "REMOVED",
+                    "location_tag": before["location_tag"],
+                    "before": _public_position(before),
+                    "after": None,
+                    "changes": [],
+                }
+            )
+            continue
+        fields = [
+            {"field": field, "before": str(before[field]), "after": str(after[field])}
+            for field in _COMPARE_FIELDS
+            if str(before[field]) != str(after[field])
+        ]
+        if before["calculation_hash"] != after["calculation_hash"]:
+            fields.append(
+                {"field": "spec", "before": "", "after": ""}
+            )
+        if fields:
+            changed += 1
+            entries.append(
+                {
+                    "position_index": index,
+                    "change": "CHANGED",
+                    "location_tag": after["location_tag"],
+                    "before": _public_position(before),
+                    "after": _public_position(after),
+                    "changes": fields,
+                }
+            )
+        else:
+            unchanged += 1
+
+    def totals(snapshot: dict[str, object]) -> dict[str, object]:
+        project_data = snapshot.get("project", {})
+        return {
+            "total_price_net": str(project_data.get("total_price_net") or ""),
+            "total_price_tax": str(project_data.get("total_price_tax") or ""),
+            "total_price_gross": str(project_data.get("total_price_gross") or ""),
+        }
+
+    base_totals = totals(base_snapshot)
+    head_totals = totals(head_snapshot)
+    price_delta = None
+    try:
+        price_delta = str(
+            D(str(head_totals["total_price_gross"]))
+            - D(str(base_totals["total_price_gross"]))
+        )
+    except Exception:
+        price_delta = None
+    return {
+        "project_id": str(project["id"]),
+        "project_code": str(project["code"]),
+        "base": {
+            "revision_code": base_code,
+            "emitted_at": versions[base_code]["emitted_at"].isoformat(),
+            "integrity": base_integrity,
+            **base_totals,
+        },
+        "head": {
+            "revision_code": head_code,
+            "emitted_at": versions[head_code]["emitted_at"].isoformat(),
+            "integrity": head_integrity,
+            **head_totals,
+        },
+        "summary": {
+            "added": added,
+            "removed": removed,
+            "changed": changed,
+            "unchanged": unchanged,
+            "price_gross_delta": price_delta,
+        },
+        "positions": entries,
+    }

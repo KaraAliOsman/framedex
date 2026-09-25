@@ -5,6 +5,7 @@ import { t } from "./i18n/es-CL";
 
 import { AppShell } from "./app/AppShell";
 import { DashboardPage } from "./app/DashboardPage";
+import { JobsPage } from "./app/JobsPage";
 import { SettingsPage } from "./app/SettingsPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
@@ -208,6 +209,18 @@ export function AppRoutes(): JSX.Element {
             <AppShell>
               <Suspense fallback={<p role="status">{t("clients.loading")}</p>}>
                 <ClientsPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/jobs"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("jobs.title")}</p>}>
+                <JobsPage />
               </Suspense>
             </AppShell>
           </ReadyGuard>

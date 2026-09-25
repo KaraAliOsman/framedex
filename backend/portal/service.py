@@ -108,6 +108,36 @@ def share_quote(
     return {"token": token, "expires_at": expires_at}
 
 
+def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]:
+    """The org-side record of every link minted for a project: who it went
+    to (the token stays opaque — the link URL is the capability), which
+    revision it carried, and how the client answered."""
+    with documentary_backend():
+        return [
+            {
+                "id": str(row["id"]),
+                "status": str(row["status"]),
+                "revision_code": str(row["revision_code"]),
+                "decided_by": row["decided_by"],
+                "decided_at": row["decided_at"].isoformat()
+                if row["decided_at"]
+                else None,
+                "expires_at": row["expires_at"].isoformat(),
+                "created_at": row["created_at"].isoformat(),
+            }
+            for row in rows(
+                "SELECT a.id,a.status,a.decided_by,a.decided_at,a.expires_at,"
+                "a.created_at,v.revision_code "
+                "FROM public.customer_approvals a "
+                "JOIN public.project_versions v "
+                "ON v.id = a.project_version_id "
+                "WHERE a.org_id=%s AND a.project_id=%s "
+                "ORDER BY a.created_at DESC",
+                [str(org_id), str(project_id)],
+            )
+        ]
+
+
 def _approval_for_token(token: str) -> dict[str, object]:
     found = rows(
         "SELECT * FROM public.customer_approvals WHERE token_hash=%s",

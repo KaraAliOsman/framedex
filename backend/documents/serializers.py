@@ -271,3 +271,17 @@ class SignedAccessResponseSerializer(serializers.Serializer):
     artifact_id = serializers.UUIDField()
     signed_url = serializers.URLField()
     expires_in = serializers.IntegerField(min_value=3600, max_value=3600)
+
+
+class RevisionCompareQuerySerializer(serializers.Serializer):
+    base = serializers.RegexField(r"^REV-[A-Z]+$")
+    head = serializers.RegexField(r"^REV-[A-Z]+$")
+
+
+class RevisionCompareResponseSerializer(serializers.Serializer):
+    project_id = serializers.CharField()
+    project_code = serializers.CharField()
+    base = serializers.DictField()
+    head = serializers.DictField()
+    summary = serializers.DictField()
+    positions = serializers.ListField()

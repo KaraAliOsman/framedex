@@ -132,8 +132,9 @@ export function DashboardPage(): JSX.Element {
                 className={entry.warn ? "attention-item is-warn" : "attention-item"}
               >
                 <Link to={entry.to}>
-                  <span>{t(entry.key)}</span>
                   <strong>{entry.count}</strong>
+                  <span className="attention-label">{t(entry.key)}</span>
+                  <span className="attention-cta">{t(entry.action)}</span>
                 </Link>
               </li>
             ))}

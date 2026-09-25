@@ -17,6 +17,7 @@ import type {
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
+  ApprovalRecord,
   ArticleList,
   ArticleResponse,
   ArticleWriteRequest,
@@ -67,6 +68,7 @@ import type {
   DocumentaryInputsRequest,
   DocumentaryInputsResponse,
   DocumentaryPreparationResponse,
+  DocumentsCompareVersionsParams,
   DraftProjectRequest,
   DraftResponse,
   DxfExport,
@@ -161,6 +163,7 @@ import type {
   RemnantCreateRequest,
   RemnantList,
   ResetPricingRequest,
+  RevisionCompareResponse,
   SearchResponse,
   SendOrderRequestRequest,
   ShareQuoteResponse,
@@ -4347,6 +4350,97 @@ export const documentarySaveInputs = async (
   });
 };
 
+export type documentsCompareVersionsResponse200 = {
+  data: RevisionCompareResponse;
+  status: 200;
+};
+
+export type documentsCompareVersionsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type documentsCompareVersionsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type documentsCompareVersionsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type documentsCompareVersionsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type documentsCompareVersionsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type documentsCompareVersionsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type documentsCompareVersionsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type documentsCompareVersionsResponseSuccess = documentsCompareVersionsResponse200 & {
+  headers: Headers;
+};
+export type documentsCompareVersionsResponseError = (
+  | documentsCompareVersionsResponse400
+  | documentsCompareVersionsResponse401
+  | documentsCompareVersionsResponse403
+  | documentsCompareVersionsResponse404
+  | documentsCompareVersionsResponse409
+  | documentsCompareVersionsResponse422
+  | documentsCompareVersionsResponse503
+) & {
+  headers: Headers;
+};
+
+export type documentsCompareVersionsResponse =
+  documentsCompareVersionsResponseSuccess | documentsCompareVersionsResponseError;
+
+export const getDocumentsCompareVersionsUrl = (
+  projectId: string,
+  params: DocumentsCompareVersionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/documents/projects/${projectId}/versions/compare/?${stringifiedParams}`
+    : `/api/v1/documents/projects/${projectId}/versions/compare/`;
+};
+
+export const documentsCompareVersions = async (
+  projectId: string,
+  params: DocumentsCompareVersionsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<documentsCompareVersionsResponse> => {
+  return apiMutator<documentsCompareVersionsResponse>(
+    getDocumentsCompareVersionsUrl(projectId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export type engineAssemblyCalculateResponse200 = {
   data: EngineAssemblyCalculateResponse;
   status: 200;
@@ -5553,6 +5647,30 @@ export const jobsGet = async (
   return apiMutator<jobsGetResponse>(getJobsGetUrl(jobId), {
     ...options,
     method: "GET",
+  });
+};
+
+export type jobsRetryResponse200 = {
+  data: JobRun;
+  status: 200;
+};
+
+export type jobsRetryResponseSuccess = jobsRetryResponse200 & {
+  headers: Headers;
+};
+export type jobsRetryResponse = jobsRetryResponseSuccess;
+
+export const getJobsRetryUrl = (jobId: string) => {
+  return `/api/v1/jobs/${jobId}/retry/`;
+};
+
+export const jobsRetry = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<jobsRetryResponse> => {
+  return apiMutator<jobsRetryResponse>(getJobsRetryUrl(jobId), {
+    ...options,
+    method: "POST",
   });
 };
 
@@ -11127,6 +11245,81 @@ export const positionsCreate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(positionWriteRequest),
+  });
+};
+
+export type projectQuoteLinksListResponse200 = {
+  data: ApprovalRecord[];
+  status: 200;
+};
+
+export type projectQuoteLinksListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinksListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinksListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinksListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinksListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinksListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinksListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinksListResponseSuccess = projectQuoteLinksListResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinksListResponseError = (
+  | projectQuoteLinksListResponse400
+  | projectQuoteLinksListResponse401
+  | projectQuoteLinksListResponse403
+  | projectQuoteLinksListResponse404
+  | projectQuoteLinksListResponse409
+  | projectQuoteLinksListResponse422
+  | projectQuoteLinksListResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinksListResponse =
+  projectQuoteLinksListResponseSuccess | projectQuoteLinksListResponseError;
+
+export const getProjectQuoteLinksListUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/quote-link/`;
+};
+
+/**
+ * Every approval link minted for the project, newest first.
+ */
+export const projectQuoteLinksList = async (
+  projectId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinksListResponse> => {
+  return apiMutator<projectQuoteLinksListResponse>(getProjectQuoteLinksListUrl(projectId), {
+    ...options,
+    method: "GET",
   });
 };
 

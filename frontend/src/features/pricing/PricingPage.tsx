@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { projectsList } from "../../api/generated/dekopen";
+import { projectsList, projectsRetrieve } from "../../api/generated/dekopen";
 
-import type { ProjectResponse } from "../../api/generated/models";
+import type { PriceResponse, ProjectResponse } from "../../api/generated/models";
+import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
@@ -623,16 +624,176 @@ function ImportCosts({
   );
 }
 
-type Operation = {
-  id: string;
-  project_id: string;
-  discount_pct: string;
-  state: string;
-  project_net: string;
-  project_tax: string;
-  project_gross: string;
-  currency: string;
-};
+type Operation = PriceResponse;
+
+/** Whole-percent-free margin: (net − cost) / net, both Decimal strings. */
+function marginText(net: string, cost: string, currency: string): string {
+  const netValue = Number(net);
+  const costValue = Number(cost);
+  if (!Number.isFinite(netValue) || !Number.isFinite(costValue) || netValue <= 0) return "—";
+  const margin = (netValue - costValue) / netValue;
+  return `${formatMoney(String(netValue - costValue), currency)} · ${(margin * 100).toFixed(1)} %`;
+}
+
+/** §03-D — the pricing decision surface: the estimator and the approver
+ * read the SAME frozen numbers — per-position cost vs selling, project
+ * margin, the recorded reason and who applied/rejected it. */
+function OperationDecision({
+  operation,
+  owner,
+  busy,
+  reasonReady,
+  boundProject,
+  projectLabel,
+  onApply,
+  onReject,
+}: {
+  operation: Operation;
+  owner: boolean;
+  busy: boolean;
+  reasonReady: boolean;
+  boundProject?: ProjectResponse;
+  projectLabel?: string;
+  onApply: () => void;
+  onReject: () => void;
+}): JSX.Element {
+  const costs = new Map(
+    (operation.cost_lines ?? []).map((line) => [line.position_index, line.line_cost]),
+  );
+  const positions = new Map(
+    (boundProject?.positions ?? []).map((position) => [position.position_index, position]),
+  );
+  const diff =
+    boundProject?.pricing_current && boundProject.total_price_gross
+      ? Number(operation.project_gross) - Number(boundProject.total_price_gross)
+      : null;
+  return (
+    <article className="operation-decision">
+      <header className="operation-decision__head">
+        <span className="status-chip" data-status={operation.state.toLowerCase()}>
+          {t(
+            operation.state === "PENDING"
+              ? "pricing.pending"
+              : operation.state === "APPLIED"
+                ? "pricing.applied"
+                : operation.state === "REJECTED"
+                  ? "pricing.rejected"
+                  : "pricing.notApplied",
+          )}
+        </span>
+        {projectLabel && (
+          <span className="operation-decision__meta">
+            {t("pricing.projectId")}: {projectLabel}
+          </span>
+        )}
+        <span className="operation-decision__meta">
+          {operation.revision_code} · {t("pricing.discount")} {operation.discount_pct} ·{" "}
+          <time dateTime={operation.created_at}>
+            {new Date(operation.created_at).toLocaleString("es-CL")}
+          </time>
+        </span>
+      </header>
+
+      <div className="operation-totals">
+        <div className="operation-total">
+          <dt>{t("pricing.totalCost")}</dt>
+          <dd>{formatMoney(operation.total_cost, operation.currency)}</dd>
+        </div>
+        <div className="operation-total">
+          <dt>{t("pricing.margin")}</dt>
+          <dd>{marginText(operation.project_net, operation.total_cost, operation.currency)}</dd>
+        </div>
+        <div className="operation-total">
+          <dt>{t("pricing.net")}</dt>
+          <dd>{formatMoney(operation.project_net, operation.currency)}</dd>
+        </div>
+        <div className="operation-total">
+          <dt>{t("pricing.taxTotal")}</dt>
+          <dd>{formatMoney(operation.project_tax, operation.currency)}</dd>
+        </div>
+        <div className="operation-total operation-total--gross">
+          <dt>{t("pricing.gross")}</dt>
+          <dd>{formatMoney(operation.project_gross, operation.currency)}</dd>
+        </div>
+        {diff !== null && diff !== 0 && (
+          <div className="operation-total">
+            <dt>{t("pricing.vsCurrent")}</dt>
+            <dd data-negative={diff < 0 || undefined}>
+              {diff > 0 ? "+" : ""}
+              {formatMoney(String(diff), operation.currency)}
+            </dd>
+          </div>
+        )}
+      </div>
+
+      <table className="operation-lines">
+        <caption>{t("pricing.perPosition")}</caption>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">{t("projects.location")}</th>
+            <th scope="col">{t("pricing.quantity")}</th>
+            <th scope="col">{t("pricing.cost")}</th>
+            <th scope="col">{t("pricing.net")}</th>
+            <th scope="col">{t("pricing.margin")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(operation.lines ?? []).map((line) => {
+            const position = positions.get(line.position_index);
+            return (
+              <tr key={line.position_index}>
+                <td>{line.position_index}</td>
+                <td>{position?.location_tag || "—"}</td>
+                <td>{position?.quantity ?? "—"}</td>
+                <td>{formatMoney(costs.get(line.position_index) ?? "0", operation.currency)}</td>
+                <td>{formatMoney(line.line_net, operation.currency)}</td>
+                <td>
+                  {marginText(
+                    line.line_net,
+                    costs.get(line.position_index) ?? "0",
+                    operation.currency,
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <p className="operation-decision__audit">
+        {t("pricing.auditReason")}: {operation.reason || "—"} · {t("pricing.auditBy")}{" "}
+        {operation.requested_by ? operation.requested_by.slice(0, 8) : "—"}
+        {operation.approved_at &&
+          ` · ${t("pricing.auditDecided")} ${new Date(operation.approved_at).toLocaleString("es-CL")}`}
+      </p>
+
+      <div className="operation-decision__actions">
+        {["PREVIEW", "PENDING"].includes(operation.state) &&
+          (owner || operation.state !== "PENDING") && (
+            <button
+              className="ui-button"
+              disabled={busy || !reasonReady}
+              onClick={onApply}
+              type="button"
+            >
+              {t("pricing.apply")}
+            </button>
+          )}
+        {owner && operation.state === "PENDING" && (
+          <button
+            className="ui-button ui-button--danger"
+            disabled={busy || !reasonReady}
+            onClick={onReject}
+            type="button"
+          >
+            {t("pricing.reject")}
+          </button>
+        )}
+      </div>
+    </article>
+  );
+}
 function CommercialOperations({
   request,
   owner,
@@ -650,6 +811,7 @@ function CommercialOperations({
   const [projectId, setProjectId] = useState(boundProjectId ?? "");
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
   const [history, setHistory] = useState<Operation[]>([]);
+  const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
   const generation = useRef(0);
 
   const orgId = useAuthSession().me?.active_organization?.id;
@@ -685,6 +847,28 @@ function CommercialOperations({
 
   const projectLabel = (project: ProjectResponse) =>
     [project.code, project.client_name, project.name].filter(Boolean).join(" · ");
+
+  // The decision surface needs position labels and the currently applied
+  // totals — fetch the operation's project once it exists.
+  useEffect(() => {
+    let active = true;
+    if (!orgId || !operation?.project_id) {
+      setBoundProject(undefined);
+      return;
+    }
+    void projectsRetrieve(operation.project_id, {
+      headers: { "X-Organization-ID": orgId },
+    })
+      .then((response) => {
+        if (response.status === 200 && active) setBoundProject(response.data);
+      })
+      .catch(() => {
+        if (active) setBoundProject(undefined);
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, operation?.project_id]);
 
   // The audit requires a reason on every preview; seed the first quote's
   // reason so the estimator isn't blocked before any price exists — still
@@ -728,6 +912,19 @@ function CommercialOperations({
   function reload(): Promise<void> {
     return runCurrent(() => request<Operation[]>("operations/"), setHistory, "pricing.loadError");
   }
+  function isOperation(value: unknown): value is Operation {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      typeof (value as Operation).id === "string" &&
+      typeof (value as Operation).state === "string" &&
+      Array.isArray((value as Operation).lines)
+    );
+  }
+  function publishOperation(value: Operation): void {
+    if (!isOperation(value)) throw new Error("pricing.malformedOperation");
+    setOperation(value);
+  }
   function apply(reject = false): Promise<void> {
     if (!operation) return Promise.resolve();
     return runCurrent(
@@ -737,7 +934,7 @@ function CommercialOperations({
           confirmed,
           ...(reject ? { reject: true } : {}),
         }),
-      setOperation,
+      publishOperation,
       "pricing.applyError",
     );
   }
@@ -778,7 +975,7 @@ function CommercialOperations({
           if (data.fx_snapshot_id === "") delete data.fx_snapshot_id;
           void runCurrent(
             () => request<Operation>("preview/", "POST", { ...data, confirmed }),
-            setOperation,
+            publishOperation,
             "pricing.calculateError",
           );
         }}
@@ -887,44 +1084,22 @@ function CommercialOperations({
       </form>
       {error && <p role="alert">{error}</p>}
       {operation && (
-        <article>
-          {!boundProjectId && (
-            <p>
-              {t("pricing.projectId")}:{" "}
-              {projectOptions.find((p) => p.id === operation.project_id)
+        <OperationDecision
+          boundProject={boundProject}
+          busy={busy}
+          onApply={() => void apply()}
+          onReject={() => void apply(true)}
+          operation={operation}
+          owner={owner}
+          projectLabel={
+            boundProjectId
+              ? undefined
+              : projectOptions.find((p) => p.id === operation.project_id)
                 ? projectLabel(projectOptions.find((p) => p.id === operation.project_id)!)
-                : t("projects.loadError")}
-            </p>
-          )}
-          <p>
-            {t("pricing.discount")}: {operation.discount_pct}
-          </p>
-          <p>
-            {t("pricing.net")}: {operation.project_net} {operation.currency}
-          </p>
-          <p>
-            {t("pricing.taxTotal")}: {operation.project_tax}
-          </p>
-          <strong>
-            {t("pricing.gross")}: {operation.project_gross}
-          </strong>
-          <p>{t(operation.state === "APPLIED" ? "pricing.applied" : "pricing.notApplied")}</p>
-          {["PREVIEW", "PENDING"].includes(operation.state) &&
-            (owner || operation.state !== "PENDING") && (
-              <button disabled={busy || !reason.trim()} onClick={() => void apply()}>
-                {t("pricing.apply")}
-              </button>
-            )}
-          {owner && operation.state === "PENDING" && (
-            <button
-              type="button"
-              disabled={busy || !reason.trim()}
-              onClick={() => void apply(true)}
-            >
-              {t("pricing.reject")}
-            </button>
-          )}
-        </article>
+                : t("projects.loadError")
+          }
+          reasonReady={reason.trim().length > 0}
+        />
       )}
       <h2>{t("pricing.history")}</h2>
       <button type="button" disabled={busy} onClick={() => void reload()}>
@@ -934,20 +1109,24 @@ function CommercialOperations({
         history
           .filter((item) => !boundProjectId || item.project_id === boundProjectId)
           .map((item) => (
-            <article key={item.id}>
+            <article className="operation-history__item" key={item.id}>
               <p>
-                {item.project_net} {item.currency}
+                <strong>{formatMoney(item.project_gross, item.currency)}</strong>{" "}
+                <span className="status-chip" data-status={item.state.toLowerCase()}>
+                  {t(
+                    item.state === "PENDING"
+                      ? "pricing.pending"
+                      : item.state === "APPLIED"
+                        ? "pricing.applied"
+                        : item.state === "REJECTED"
+                          ? "pricing.rejected"
+                          : "pricing.notApplied",
+                  )}
+                </span>
               </p>
-              <p>
-                {t(
-                  item.state === "PENDING"
-                    ? "pricing.pending"
-                    : item.state === "APPLIED"
-                      ? "pricing.applied"
-                      : item.state === "REJECTED"
-                        ? "pricing.rejected"
-                        : "pricing.notApplied",
-                )}
+              <p className="operation-history__meta">
+                {item.revision_code} · {item.reason} ·{" "}
+                {new Date(item.created_at).toLocaleString("es-CL")}
               </p>
               <button
                 type="button"
@@ -955,7 +1134,7 @@ function CommercialOperations({
                 onClick={() => {
                   invalidate();
                   setOperation(item);
-                  setReason("");
+                  setReason(item.reason);
                   setConfirmed(false);
                 }}
               >

@@ -50,6 +50,16 @@ def public_job_errors():
             raise contract_error(
                 403, error.code, "Tu rol no permite encolar este trabajo."
             ) from error
+        if error.code == "job_not_found":
+            raise contract_error(
+                404, error.code, "Trabajo no encontrado."
+            ) from error
+        if error.code == "job_not_terminal":
+            raise contract_error(
+                409,
+                error.code,
+                "Solo se reintenta un trabajo fallido o cancelado.",
+            ) from error
         raise contract_error(
             422, error.code, "Revisa los parámetros del trabajo."
         ) from error
@@ -149,4 +159,24 @@ class JobDetailView(APIView):
                 job = service.get(org_id=org_id, job_id=job_id)
         if job is None:
             raise contract_error(404, "job_not_found", "Trabajo no encontrado.")
+        return Response(JobRunSerializer(job).data)
+
+
+class JobRetryView(APIView):
+    @extend_schema(
+        operation_id="jobs_retry",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={200: JobRunSerializer},
+        tags=["jobs"],
+    )
+    def post(self, request, job_id: UUID):
+        with public_job_errors():
+            with job_scope(request) as (token, tenant, org_id):
+                job = service.retry(
+                    org_id=org_id,
+                    job_id=job_id,
+                    actor_id=token.user_id,
+                    role=tenant.active_organization.role,
+                )
         return Response(JobRunSerializer(job).data)

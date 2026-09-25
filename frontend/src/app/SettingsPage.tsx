@@ -96,7 +96,7 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h2 className="eyebrow">{t("settings.flow")}</h2>
+      <h3 className="eyebrow">{t("settings.flow")}</h3>
       <p className="settings-hint">{t("settings.flowHint")}</p>
       <p>
         <span
@@ -219,7 +219,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h2 className="eyebrow">{t("settings.siiTitle")}</h2>
+      <h3 className="eyebrow">{t("settings.siiTitle")}</h3>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {items.length === 0 ? (
         <p className="settings-hint">{t("settings.siiCafEmpty")}</p>
@@ -337,7 +337,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 
   return (
     <div className="settings-card">
-      <h2 className="eyebrow">{t("settings.siiCertTitle")}</h2>
+      <h3 className="eyebrow">{t("settings.siiCertTitle")}</h3>
       {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
       {certificate === null ? (
         <p className="settings-hint">{t("settings.siiCertEmpty")}</p>
@@ -404,75 +404,94 @@ export function SettingsPage(): JSX.Element {
         </div>
       </header>
 
-      <div className="settings-grid">
-        <div className="settings-card">
-          <h2 className="eyebrow">{t("settings.account")}</h2>
-          <dl className="settings-list">
-            <div className="settings-row">
-              <dt>{t("settings.email")}</dt>
-              <dd className="settings-mono">{me?.user.email}</dd>
-            </div>
-            <div className="settings-row">
-              <dt>{t("settings.twoFactor")}</dt>
-              <dd>{me?.aal === "aal2" ? t("settings.aal2") : t("settings.aal1")}</dd>
-            </div>
-            <div className="settings-row">
-              <dt>{t("settings.role")}</dt>
-              <dd>{org ? t(ROLE_KEYS[org.role]) : "—"}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="settings-card">
-          <h2 className="eyebrow">{t("settings.appearance")}</h2>
-          <div className="settings-theme" role="radiogroup" aria-label={t("settings.theme")}>
-            {(["light", "dark"] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={theme === option}
-                className="settings-theme-option"
-                data-active={theme === option}
-                onClick={() => {
-                  if (theme !== option) toggleTheme();
-                }}
-              >
-                {option === "light" ? t("settings.light") : t("settings.dark")}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {me !== null && me.memberships.length > 0 && (
+      <section aria-labelledby="settings-group-account" className="settings-group">
+        <h2 id="settings-group-account" className="settings-group__title">
+          {t("settings.groupAccount")}
+        </h2>
+        <div className="settings-grid">
           <div className="settings-card">
-            <h2 className="eyebrow">{t("settings.memberships")}</h2>
-            <ul className="settings-list settings-plain">
-              {me.memberships.map((membership) => (
-                <MembershipRow key={membership.organization_id} membership={membership} />
+            <h3 className="eyebrow">{t("settings.account")}</h3>
+            <dl className="settings-list">
+              <div className="settings-row">
+                <dt>{t("settings.email")}</dt>
+                <dd className="settings-mono">{me?.user.email}</dd>
+              </div>
+              <div className="settings-row">
+                <dt>{t("settings.twoFactor")}</dt>
+                <dd>{me?.aal === "aal2" ? t("settings.aal2") : t("settings.aal1")}</dd>
+              </div>
+              <div className="settings-row">
+                <dt>{t("settings.role")}</dt>
+                <dd>{org ? t(ROLE_KEYS[org.role]) : "—"}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="settings-card">
+            <h3 className="eyebrow">{t("settings.appearance")}</h3>
+            <div className="settings-theme" role="radiogroup" aria-label={t("settings.theme")}>
+              {(["light", "dark"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === option}
+                  className="settings-theme-option"
+                  data-active={theme === option}
+                  onClick={() => {
+                    if (theme !== option) toggleTheme();
+                  }}
+                >
+                  {option === "light" ? t("settings.light") : t("settings.dark")}
+                </button>
               ))}
-            </ul>
-          </div>
-        )}
-
-        {isOwner && org !== undefined && <FlowIntegrationCard orgId={org.id} />}
-
-        {isOwner && org !== undefined && <SiiCafCard orgId={org.id} />}
-
-        {isOwner && org !== undefined && <SiiCertificateCard orgId={org.id} />}
-
-        {isOwner && (
-          <div className="settings-card">
-            <h2 className="eyebrow">{t("settings.billing")}</h2>
-            <p className="settings-hint">{t("settings.billingHint")}</p>
-            <div className="settings-links">
-              <Link to="/settings/billing">{t("settings.billingPage")}</Link>
-              <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
-              <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
             </div>
           </div>
-        )}
-      </div>
+
+          {me !== null && me.memberships.length > 0 && (
+            <div className="settings-card">
+              <h3 className="eyebrow">{t("settings.memberships")}</h3>
+              <ul className="settings-list settings-plain">
+                {me.memberships.map((membership) => (
+                  <MembershipRow key={membership.organization_id} membership={membership} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {isOwner && org !== undefined && (
+        <section aria-labelledby="settings-group-charging" className="settings-group">
+          <h2 id="settings-group-charging" className="settings-group__title">
+            {t("settings.groupCharging")}
+          </h2>
+          <div className="settings-grid">
+            <FlowIntegrationCard orgId={org.id} />
+            <SiiCafCard orgId={org.id} />
+            <SiiCertificateCard orgId={org.id} />
+          </div>
+        </section>
+      )}
+
+      {isOwner && (
+        <section aria-labelledby="settings-group-plan" className="settings-group">
+          <h2 id="settings-group-plan" className="settings-group__title">
+            {t("settings.groupPlan")}
+          </h2>
+          <div className="settings-grid">
+            <div className="settings-card">
+              <h3 className="eyebrow">{t("settings.billing")}</h3>
+              <p className="settings-hint">{t("settings.billingHint")}</p>
+              <div className="settings-links">
+                <Link to="/settings/billing">{t("settings.billingPage")}</Link>
+                <Link to="/settings/wallet">{t("settings.walletPage")}</Link>
+                <Link to="/pricing/cost-lists">{t("pricing.lists")}</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </section>
   );
 }

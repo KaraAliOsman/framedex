@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { CostLineResponse } from "./costLineResponse";
 import type { CurrencyEnum } from "./currencyEnum";
 import type { LineResponse } from "./lineResponse";
 import type { PriceResponseStateEnum } from "./priceResponseStateEnum";
@@ -18,7 +19,16 @@ export interface PriceResponse {
   state: PriceResponseStateEnum;
   currency: CurrencyEnum;
   lines: LineResponse[];
+  cost_lines: CostLineResponse[];
+  total_cost: string;
   project_net: string;
   project_tax: string;
   project_gross: string;
+  reason: string;
+  requested_by: string;
+  /** @nullable */
+  approved_by: string | null;
+  /** @nullable */
+  approved_at: string | null;
+  created_at: string;
 }

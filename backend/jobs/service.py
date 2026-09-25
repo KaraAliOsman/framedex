@@ -105,3 +105,35 @@ def list_recent(
     *, org_id: UUID, job_type: str | None, state: str | None, limit: int
 ) -> list[dict[str, object]]:
     return repository.list_jobs(org_id=org_id, job_type=job_type, state=state, limit=limit)
+
+
+def retry(
+    *, org_id: UUID, job_id: UUID, actor_id: UUID, role: str
+) -> dict[str, object]:
+    """Requeue a terminally failed/canceled job with its stored payload —
+    same input the failed run carried, re-authorized as the retrying actor.
+    A job that already left the terminal states (worker or another retry
+    won the race) returns its live row instead of a phantom retry."""
+    job = repository.get_job(org_id=org_id, job_id=job_id)
+    if job is None:
+        raise JobServiceError("job_not_found")
+    if job["state"] not in ("FAILED", "CANCELED"):
+        raise JobServiceError("job_not_terminal")
+    spec = registry.spec_for(str(job["type"]))
+    if spec is None:
+        raise JobServiceError("job_type_unknown")
+    if role not in spec.roles:
+        raise JobServiceError("job_permission_denied")
+    if spec.authorize is not None and not spec.authorize(job["payload"], role):
+        raise JobServiceError("job_permission_denied")
+    requeued = repository.requeue_terminal(
+        job_id=UUID(str(job["id"])),
+        payload=job["payload"],
+        max_attempts=int(job["max_attempts"]),
+        run_after=datetime.now(timezone.utc),
+        created_by=actor_id,
+    )
+    if requeued is None:
+        live = repository.get_job(org_id=org_id, job_id=job_id)
+        return live if live is not None else job
+    return requeued

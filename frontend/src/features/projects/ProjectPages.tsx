@@ -7,6 +7,9 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import {
   clientsList,
+  documentsCompareVersions,
+  projectPaymentsList,
+  projectQuoteLinksList,
   projectsList,
   projectsCreate,
   projectsRetrieve,
@@ -16,15 +19,20 @@ import {
   positionsUpdate,
 } from "../../api/generated/dekopen";
 import type {
+  ApprovalRecord,
   ClientResponse,
-  ProjectResponse,
-  ProjectWriteRequest,
+  PaymentsSummary,
+  PositionDesign,
   PositionDesignRequest,
   PositionResponse,
+  ProjectResponse,
+  ProjectWriteRequest,
+  RevisionCompareResponse,
 } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
-import { formatMoney } from "../money";
+import { formatDate, formatMoney } from "../money";
+import { formatRevision } from "../../format";
 import { projectNameWrite } from "./projectNames";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
@@ -275,6 +283,469 @@ function ProjectMetadataForm({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* §03-C/E/F — project workspace header: lifecycle stepper with        */
+/* blockers, commercial state track and revision comparison.           */
+/* ------------------------------------------------------------------ */
+
+type FactsSection = "quote" | "payments" | "imports" | "compare";
+
+interface SnapshotPosition {
+  position_index: number;
+  location_tag?: string;
+  quantity: string;
+  typology: string;
+  system_id: string;
+  width_mm: string;
+  height_mm: string;
+  color_interior?: string;
+  price_net?: string;
+  parametric_tree?: unknown;
+}
+
+interface CompareFieldChange {
+  field: string;
+  before: string;
+  after: string;
+}
+
+interface ComparePositionEntry {
+  position_index: number;
+  change: "ADDED" | "REMOVED" | "CHANGED";
+  location_tag?: string;
+  before: SnapshotPosition | null;
+  after: SnapshotPosition | null;
+  changes: CompareFieldChange[];
+}
+
+const COMPARE_FIELD_KEYS: Record<string, TranslationKey> = {
+  location_tag: "projects.compareField.location_tag",
+  quantity: "projects.compareField.quantity",
+  typology: "projects.compareField.typology",
+  system_id: "projects.compareField.system_id",
+  width_mm: "projects.compareField.width_mm",
+  height_mm: "projects.compareField.height_mm",
+  color_interior: "projects.compareField.color_interior",
+  color_exterior: "projects.compareField.color_exterior",
+  price_net: "projects.compareField.price_net",
+  discount_pct: "projects.compareField.discount_pct",
+  spec: "projects.compareField.spec",
+};
+
+const PROJECT_ORDER = ["DRAFT", "QUOTED", "APPROVED", "IN_PRODUCTION", "COMPLETED"];
+
+function projectRank(status: string): number {
+  return PROJECT_ORDER.indexOf(status);
+}
+
+type CommercialState = "done" | "current" | "pending" | "blocked";
+
+interface CommercialStep {
+  key: string;
+  labelKey: TranslationKey;
+  state: CommercialState;
+  detail?: string;
+}
+
+function commercialSteps(
+  project: ProjectResponse,
+  approvals: ApprovalRecord[],
+  payments: PaymentsSummary | undefined,
+): CommercialStep[] {
+  const rank = projectRank(project.status);
+  const sent = approvals.length > 0;
+  const approvedRecord = approvals.some((a) => a.status === "APPROVED");
+  const quoted = project.pricing_current || (project.versions?.length ?? 0) > 0;
+  const approved = rank >= 2 || approvedRecord;
+  const collected = Number(payments?.collected ?? "0");
+  const paid = payments?.status === "PAID";
+  const released = rank >= 3;
+  const latestApproval = [...approvals].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  return [
+    {
+      key: "quoted",
+      labelKey: "projects.step.quoted",
+      state: quoted ? "done" : "current",
+      detail:
+        quoted && project.total_price_gross
+          ? formatMoney(project.total_price_gross, project.currency)
+          : undefined,
+    },
+    {
+      key: "sent",
+      labelKey: "projects.step.sent",
+      state: sent ? "done" : quoted ? "blocked" : "pending",
+      detail: latestApproval
+        ? `${latestApproval.revision_code} · ${formatDate(latestApproval.created_at)}`
+        : sent
+          ? undefined
+          : quoted
+            ? t("projects.stepBlockedSend")
+            : undefined,
+    },
+    {
+      key: "approved",
+      labelKey: "projects.step.approved",
+      state: approved ? "done" : sent ? "current" : "pending",
+      detail: approvedRecord
+        ? formatDate(approvals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
+        : sent && !approved
+          ? t("projects.stepWaitClient")
+          : undefined,
+    },
+    {
+      key: "deposit",
+      labelKey: "projects.step.deposit",
+      state: collected > 0 ? "done" : approved ? "blocked" : "pending",
+      detail:
+        collected > 0 && payments
+          ? formatMoney(payments.collected, payments.currency)
+          : approved && collected === 0
+            ? t("projects.stepBlockedDeposit")
+            : undefined,
+    },
+    {
+      key: "balance",
+      labelKey: "projects.step.balance",
+      state: paid ? "done" : collected > 0 ? "current" : "pending",
+      detail:
+        payments?.balance && Number(payments.balance) > 0
+          ? formatMoney(payments.balance, payments.currency)
+          : undefined,
+    },
+    {
+      key: "released",
+      labelKey: "projects.step.released",
+      state: released ? "done" : paid ? "current" : "pending",
+    },
+  ];
+}
+
+interface NextAction {
+  labelKey: TranslationKey;
+  to?: string;
+  section?: FactsSection;
+}
+
+function projectNextAction(
+  project: ProjectResponse,
+  payments: PaymentsSummary | undefined,
+): NextAction | undefined {
+  const paid = payments?.status === "PAID";
+  const collected = Number(payments?.collected ?? "0");
+  switch (project.status) {
+    case "DRAFT":
+      if (project.position_count === 0)
+        return {
+          labelKey: "projects.next.addPositions",
+          to: `/projects/${project.id}/positions/new`,
+        };
+      if (!project.pricing_current)
+        return { labelKey: "projects.next.quote", to: `/projects/${project.id}/pricing` };
+      return { labelKey: "projects.next.share", section: "quote" };
+    case "QUOTED":
+      return { labelKey: "projects.next.share", section: "quote" };
+    case "APPROVED":
+      if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
+      if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
+      return undefined;
+    case "IN_PRODUCTION":
+      return { labelKey: "projects.next.production", to: "/production" };
+    default:
+      return undefined;
+  }
+}
+
+function ProjectHeader({
+  project,
+  orgId,
+  onOpenSection,
+}: {
+  project: ProjectResponse;
+  orgId: string;
+  onOpenSection: (section: FactsSection) => void;
+}): JSX.Element {
+  const payments = useQuery({
+    queryKey: ["projects", "payments-summary", orgId, project.id],
+    queryFn: async () => {
+      const response = await projectPaymentsList(project.id);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data;
+    },
+  });
+  const approvals = useQuery({
+    queryKey: ["projects", "quote-approvals", orgId, project.id],
+    queryFn: async () => {
+      const response = await projectQuoteLinksList(project.id);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data;
+    },
+  });
+  const approvalsList = approvals.data ?? [];
+  const steps = commercialSteps(project, approvalsList, payments.data);
+  const action = projectNextAction(project, payments.data);
+  return (
+    <div className="project-head">
+      <div className="project-head__row">
+        <div>
+          <h1>
+            {project.code} · {project.name}
+          </h1>
+          <p className="project-head__meta">
+            <span className="status-chip" data-status={project.status.toLowerCase()}>
+              {t(statuses[project.status])}
+            </span>
+            {project.client_name && (
+              <>
+                {" · "}
+                {project.client_name}
+              </>
+            )}
+            {" · "}
+            <time dateTime={project.updated_at}>{formatDate(project.updated_at)}</time>
+          </p>
+        </div>
+        {action && (
+          <div className="project-head__action">
+            {action.to ? (
+              <Link className="primary-action" to={action.to}>
+                {t(action.labelKey)}
+              </Link>
+            ) : (
+              <button
+                className="primary-action"
+                onClick={() => action.section && onOpenSection(action.section)}
+                type="button"
+              >
+                {t(action.labelKey)}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <ol aria-label={t("projects.lifecycle")} className="commercial-track">
+        {steps.map((step) => (
+          <li className="commercial-step" data-state={step.state} key={step.key}>
+            <span className="commercial-step__marker" aria-hidden="true" />
+            <span className="commercial-step__label">{t(step.labelKey)}</span>
+            {step.detail && <span className="commercial-step__detail">{step.detail}</span>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function snapshotDesign(row: SnapshotPosition): PositionDesign {
+  return {
+    system_id: row.system_id,
+    nominal_width_mm: row.width_mm,
+    nominal_height_mm: row.height_mm,
+    color: "WHITE",
+    parametric_tree: row.parametric_tree,
+  };
+}
+
+function ComparePosition({ entry }: { entry: ComparePositionEntry }): JSX.Element {
+  const row = entry.after ?? entry.before;
+  return (
+    <li className="compare-row" data-change={entry.change.toLowerCase()}>
+      <span className="compare-row__index">{entry.position_index}</span>
+      <span className="compare-row__thumbs">
+        {entry.before && (
+          <span className="compare-thumb" title={t("projects.compareBase")}>
+            <PositionThumb design={snapshotDesign(entry.before)} />
+          </span>
+        )}
+        {entry.change === "CHANGED" && (
+          <span aria-hidden="true" className="compare-arrow">
+            →
+          </span>
+        )}
+        {entry.after && (
+          <span className="compare-thumb" title={t("projects.compareHead")}>
+            <PositionThumb design={snapshotDesign(entry.after)} />
+          </span>
+        )}
+      </span>
+      <span className="compare-row__main">
+        <span className="compare-row__loc">
+          {entry.location_tag || row?.location_tag || t("projects.position")}
+        </span>
+        <span className="compare-row__dims">
+          {row ? `${row.width_mm} × ${row.height_mm} mm` : ""}
+        </span>
+        {entry.change === "ADDED" && row && (
+          <span className="compare-row__detail">
+            {formatMoney(row.price_net ?? "0", "")} · ×{row.quantity}
+          </span>
+        )}
+        {entry.changes.length > 0 && (
+          <ul className="compare-row__changes">
+            {entry.changes.map((change) => (
+              <li key={change.field}>
+                {t(COMPARE_FIELD_KEYS[change.field] ?? "projects.compareField.spec")}
+                {change.field === "spec"
+                  ? ""
+                  : `: ${change.before || "—"} → ${change.after || "—"}`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </span>
+      <span className="status-chip compare-chip" data-status={entry.change.toLowerCase()}>
+        {t(
+          entry.change === "ADDED"
+            ? "projects.compareChangeAdded"
+            : entry.change === "REMOVED"
+              ? "projects.compareChangeRemoved"
+              : "projects.compareChangeChanged",
+        )}
+      </span>
+    </li>
+  );
+}
+
+function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.Element | undefined {
+  const versions = project.versions ?? [];
+  const [baseCode, setBaseCode] = useState("");
+  const [headCode, setHeadCode] = useState("");
+  const [result, setResult] = useState<RevisionCompareResponse | undefined>();
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (versions.length >= 2 && !baseCode && !headCode) {
+      setBaseCode(versions[versions.length - 2]!.revision_code);
+      setHeadCode(versions[versions.length - 1]!.revision_code);
+    }
+  }, [versions, baseCode, headCode]);
+
+  async function compare(): Promise<void> {
+    if (!baseCode || !headCode || baseCode === headCode) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await documentsCompareVersions(project.id, {
+        base: baseCode,
+        head: headCode,
+      });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setResult(response.data);
+    } catch (err) {
+      setResult(undefined);
+      setError(
+        t(
+          err instanceof ApiError && err.status === 404
+            ? "projects.compareNotFound"
+            : "projects.compareError",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (versions.length < 2) {
+    return <p className="project-desk__hint">{t("projects.compareNoVersions")}</p>;
+  }
+
+  type CompareSide = {
+    revision_code?: string;
+    integrity?: string | null;
+    total_price_gross?: string;
+  };
+  const baseSide = result?.base as CompareSide | undefined;
+  const headSide = result?.head as CompareSide | undefined;
+  const summary = result?.summary as
+    | {
+        added?: number;
+        removed?: number;
+        changed?: number;
+        unchanged?: number;
+        price_gross_delta?: string | null;
+      }
+    | undefined;
+  const positions = (result?.positions ?? []) as ComparePositionEntry[];
+  const integrity = (side: CompareSide | undefined) =>
+    side?.integrity === "VERIFIED"
+      ? t("projects.compareIntegrityVerified")
+      : side?.integrity === "MISMATCH"
+        ? t("projects.compareIntegrityMismatch")
+        : "";
+
+  return (
+    <div className="compare-panel">
+      <div className="compare-controls">
+        <label className="ui-field">
+          <span className="ui-field__label">{t("projects.compareBase")}</span>
+          <select value={baseCode} onChange={(e) => setBaseCode(e.target.value)}>
+            {versions.map((v) => (
+              <option key={v.revision_code} value={v.revision_code}>
+                {formatRevision(v.revision_code)} · {formatDate(v.emitted_at)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ui-field">
+          <span className="ui-field__label">{t("projects.compareHead")}</span>
+          <select value={headCode} onChange={(e) => setHeadCode(e.target.value)}>
+            {versions.map((v) => (
+              <option key={v.revision_code} value={v.revision_code}>
+                {formatRevision(v.revision_code)} · {formatDate(v.emitted_at)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="ui-button"
+          disabled={busy || !baseCode || !headCode || baseCode === headCode}
+          onClick={() => void compare()}
+          type="button"
+        >
+          {busy ? t("projects.compareLoading") : t("projects.compareRun")}
+        </button>
+      </div>
+      {error && <p role="alert">{error}</p>}
+      {result && (
+        <>
+          <p className="compare-summary">
+            <span>
+              {formatRevision(baseSide?.revision_code)} {integrity(baseSide)}
+            </span>
+            <span aria-hidden="true">→</span>
+            <span>
+              {formatRevision(headSide?.revision_code)} {integrity(headSide)}
+            </span>
+            {" · "}
+            <strong>{summary?.added ?? 0}</strong> {t("projects.compareAdded")} ·{" "}
+            <strong>{summary?.removed ?? 0}</strong> {t("projects.compareRemoved")} ·{" "}
+            <strong>{summary?.changed ?? 0}</strong> {t("projects.compareChanged")} ·{" "}
+            {summary?.unchanged ?? 0} {t("projects.compareUnchanged")}
+            {summary?.price_gross_delta != null && (
+              <>
+                {" · "}
+                {t("projects.compareDelta")}{" "}
+                <strong>{formatMoney(summary.price_gross_delta, project.currency)}</strong>
+              </>
+            )}
+          </p>
+          <ul className="compare-list">
+            {positions.map((entry) => (
+              <ComparePosition entry={entry} key={entry.position_index} />
+            ))}
+            {positions.length === 0 && (
+              <li className="compare-row" data-change="unchanged">
+                <span className="compare-row__main">{t("projects.compareIdentical")}</span>
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ProjectPages(): JSX.Element {
   const auth = useAuthSession();
   const { id } = useParams();
@@ -330,6 +801,7 @@ function ProjectWorkspace({
   const [params] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [factsCollapsed, setFactsCollapsed] = useState(false);
+  const [openSection, setOpenSection] = useState<FactsSection | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -568,7 +1040,18 @@ function ProjectWorkspace({
         dirty={draft !== null || quotationDirty || paymentsDirty || importsDirty}
         message={t("projects.leaveUnsaved")}
       />
-      <h1>{project ? `${project.code} · ${project.name}` : t("projects.title")}</h1>
+      {project ? (
+        <ProjectHeader
+          orgId={orgId}
+          onOpenSection={(section) => {
+            setFactsCollapsed(false);
+            setOpenSection(section);
+          }}
+          project={project}
+        />
+      ) : (
+        <h1>{t("projects.title")}</h1>
+      )}
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
       {mustReload && (
@@ -692,7 +1175,11 @@ function ProjectWorkspace({
                     </div>
                   )}
                 </dl>
-                <details className="project-facts__section">
+                <details
+                  className="project-facts__section"
+                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "quote" : null)}
+                  open={openSection === "quote"}
+                >
                   <summary>{t("projects.quoteSection")}</summary>
                   <ProjectQuotationPanel
                     project={project}
@@ -703,7 +1190,11 @@ function ProjectWorkspace({
                     onDirtyChange={setQuotationDirty}
                   />
                 </details>
-                <details className="project-facts__section">
+                <details
+                  className="project-facts__section"
+                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "payments" : null)}
+                  open={openSection === "payments"}
+                >
                   <summary>{t("projects.paymentsTitle")}</summary>
                   <ProjectPaymentsPanel
                     projectId={project.id}
@@ -714,7 +1205,11 @@ function ProjectWorkspace({
                     onDirtyChange={setPaymentsDirty}
                   />
                 </details>
-                <details className="project-facts__section">
+                <details
+                  className="project-facts__section"
+                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "imports" : null)}
+                  open={openSection === "imports"}
+                >
                   <summary>{t("projects.importsSection")}</summary>
                   <ProjectImportsPanel
                     projectId={project.id}
@@ -723,6 +1218,14 @@ function ProjectWorkspace({
                     onChanged={() => query.refetch()}
                     onDirtyChange={setImportsDirty}
                   />
+                </details>
+                <details
+                  className="project-facts__section"
+                  onToggle={(event) => setOpenSection(event.currentTarget.open ? "compare" : null)}
+                  open={openSection === "compare"}
+                >
+                  <summary>{t("projects.compareTitle")}</summary>
+                  <RevisionComparePanel project={project} />
                 </details>
               </>
             </div>
