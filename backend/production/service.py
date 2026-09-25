@@ -1090,16 +1090,16 @@ def transition_step(
             new_status = "BLOCKED"
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
-        # A step released while its center was inactive sits READY but
-        # unassigned — it must never silently progress. When a center of the
-        # required kind has since been activated the step adopts it here and
-        # the order's payload blocker clears; otherwise the transition refuses
-        # and the blocker stays the shop's to-do. Only READY steps take this
-        # path — an IN_PROGRESS step already had a center at START, so deeper
-        # validations (e.g. the cut plan) still surface first.
+        # A step released while its center was inactive — or copied unassigned
+        # into a remake — sits READY/PENDING without a center and must never
+        # silently progress. When a center of the required kind has since been
+        # activated the step adopts it here and the order's payload blocker
+        # clears; otherwise the transition refuses and the blocker stays the
+        # shop's to-do. An IN_PROGRESS step already had a center at START, so
+        # deeper validations (e.g. the cut plan) still surface first.
         if (
             action in ("START", "COMPLETE")
-            and str(step["status"]) == "READY"
+            and str(step["status"]) in ("READY", "PENDING")
             and step.get("work_center_id") is None
         ):
             # step.code is the station code (WELD, GLAZE…); work_centers.kind

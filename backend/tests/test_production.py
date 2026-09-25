@@ -773,6 +773,24 @@ def test_unassigned_step_adopts_a_later_activated_center() -> None:
     assert any("jsonb_set" in query for query in updates)
 
 
+def test_pending_remake_step_refuses_progress_without_a_center() -> None:
+    # Remake steps are copied unassigned as PENDING — the same gate must hold.
+    step = _step_row(status="PENDING", code="CUT")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_center_unassigned"
+
+
 def test_note_action_requires_text() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.transition_step(
