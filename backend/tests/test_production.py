@@ -208,6 +208,113 @@ def test_frameless_profile_never_acquires_joining_stations() -> None:
     assert routing == ["CUT", "HARDWARE", "GLAZE", "QC", "PACK"]
 
 
+def test_mixed_assembly_merges_frameless_into_the_declared_profile() -> None:
+    """A framed unit + a frameless pane in one position: the declared
+    profile keeps its joining authority while the pane contributes the
+    stations/op mappings only frameless work produces."""
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "required"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={
+        "SAW_CUT": "CUT", "END_MACHINING": "MACHINING",
+        "HANDLE_PREP": "MACHINING", "DRAINAGE": "MACHINING",
+    })
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "HARDWARE"})
+    frameless["optional_operations"] = ["HANDLE_PREP"]
+
+    merged = service._merge_frameless(alu, frameless)
+    codes = [s["code"] for s in merged["stations"]]
+    assert "CRIMP" in codes and "HARDWARE" in codes
+    # A pane is never machined: its prep ops land on the fitting station.
+    assert merged["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+    assert merged["operation_station_map"]["END_MACHINING"] == "MACHINING"
+    assert "HANDLE_PREP" in merged["optional_operations"]
+
+
+def test_mixed_resolution_keeps_joining_and_routes_pane_ops() -> None:
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "MACHINING"})
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+    ], operation_station_map={"HANDLE_PREP": "HARDWARE"})
+    frameless["optional_operations"] = ["HANDLE_PREP"]
+
+    def fake_load(org_id, **kwargs):
+        if kwargs.get("product_kind") == "FRAMELESS":
+            return frameless, "product_kind"
+        if kwargs.get("material") == "ALUMINIUM":
+            return alu, "material_default"
+        return None, None
+
+    # Framed sash + frameless channel pane in the same sealed result.
+    engine = {
+        "profile_cuts": [
+            {"sku": "MARCO", "role": "FRAME"},
+            {"sku": "CANAL", "role": "CHANNEL"},
+        ],
+        "glasses": [{"a": 1, "exposed_edges": [0]}],
+        "panels": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+        "hardware_items": [{"sku": "h"}],
+    }
+    with patch("production.service._load_profile_for", side_effect=fake_load):
+        profile, via = service._resolve_process_profile(
+            uuid4(), engine, {"material": "ALUMINIUM"}
+        )
+    assert via == "material_default_mixed"
+    assert profile["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+
+
+def test_handle_ops_land_on_the_profile_declared_station() -> None:
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "HARDWARE"})
+    engine = {
+        "profile_cuts": [{"sku": "CANAL", "role": "CHANNEL"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+    }
+    routing = service._routing(engine, profile=frameless, has_handles=True)
+    assert "HARDWARE" in routing
+    assert "MACHINING" not in routing
+    # And a profile that maps prep to the mill still lands MACHINING.
+    pvc = _profile("PVC_WELDED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "MACHINING"})
+    framed = {"profile_cuts": [{"sku": "x", "role": "SASH"}], "glasses": [{"a": 1}]}
+    assert service._routing(framed, profile=pvc, has_handles=True) == [
+        "CUT", "MACHINING", "WELD", "QC", "PACK"
+    ]
+
+
 def test_process_authority_freezes_the_declared_map() -> None:
     authority = service._process_authority(
         _profile(

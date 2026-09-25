@@ -921,6 +921,132 @@ it("reconciles handle intents when the handle policy changes", async () => {
   ]);
 });
 
+it("keeps a manually edited height when the handle policy changes", async () => {
+  const position = makePosition();
+  const priced = makeProject({
+    pricing_current: true,
+    current_pricing_operation_id: "operation-a",
+    total_price_gross: "1190.00",
+    position_count: 1,
+    positions: [position],
+  });
+  const quoted = makeProject({
+    ...priced,
+    status: "QUOTED",
+    versions: [
+      {
+        id: "version-a",
+        revision_code: "REV-A",
+        authority_version: "SHOT10_V1",
+        bom_hash: "a".repeat(64),
+        snapshot_sha256: "b".repeat(64),
+        production_allowed: true,
+        documentary_complete: true,
+        emitted_at: "2026-09-19T12:00:00Z",
+      },
+    ],
+  });
+  vi.mocked(projectsRetrieve)
+    .mockResolvedValueOnce(response(200, priced))
+    .mockResolvedValue(response(200, quoted));
+  const requirement = (policyId: string, minMm: string, maxMm: string) => ({
+    policy_id: policyId,
+    requirements: [
+      {
+        bay_id: "B1",
+        leaf_id: null,
+        leaf_label: "Hoja 1",
+        opening_type: "TURN_LEFT",
+        handle_domain_slot: "PRIMARY",
+        host_member_side: "LEFT",
+        outer_height_mm: "1400.00",
+        mounting_min_from_leaf_top_mm: minMm,
+        mounting_max_from_leaf_top_mm: maxMm,
+        permitted_vertical_references: ["LEAF_TOP"],
+        leaf_rects: [
+          {
+            placement_policy_id: "placement-a",
+            leaf_top_from_outer_top_mm: "100.00",
+            leaf_height_mm: "1150.00",
+          },
+        ],
+      },
+    ],
+  });
+  vi.mocked(apiMutator).mockImplementation(async (url, options) => {
+    if (url.endsWith("/inputs/") && options.method === "GET")
+      return response(200, {
+        project_id: priced.id,
+        revision_code: "REV-A",
+        payment_terms: "",
+        quotation_valid_until: null,
+        positions: [
+          {
+            position_id: position.id,
+            calculation_hash: "sha256:" + "a".repeat(64),
+            location_tag: position.location_tag,
+            system_name: "Demo 60",
+            manufacturing_placement_policy_id: "placement-a",
+            handle_requirement_policy_id: "handle-a",
+            reinforcement_cut_policy_id: "reinforcement-a",
+            placement_options: [{ id: "placement-a", label: "Fabricación v1", version: 1 }],
+            handle_options: [
+              { id: "handle-a", label: "Manillas v1", version: 1 },
+              { id: "handle-b", label: "Manillas v2", version: 2 },
+            ],
+            reinforcement_options: [{ id: "reinforcement-a", label: "Refuerzos v1", version: 1 }],
+            workshop_annotations: [],
+            structural_inputs: [],
+            glass_polishing: [],
+            // No stored intent: the app seeds the displayed midpoint and
+            // tracks the seed — the estimator's edit must detach it.
+            handle_intents: [],
+            handle_requirements: [
+              requirement("handle-a", "900.00", "1100.00"),
+              // The same slot exists under v2 with different bounds — a
+              // reseed would recompute the height it seeded under v1.
+              requirement("handle-b", "700.00", "900.00"),
+            ],
+            accessory_schedule: { schema_version: 1, coverage: "NONE_REQUIRED", items: [] },
+            legacy_handle_migration_confirmed: false,
+          },
+        ],
+      }) as never;
+    if (url.endsWith("/inputs/") && options.method === "PUT")
+      return response(200, { project_id: priced.id, positions_saved: 1 }) as never;
+    if (url.endsWith("/freeze/") && options.method === "POST")
+      return response(201, { revision_code: "REV-A" }) as never;
+    throw new Error(`Unexpected lifecycle request ${options.method} ${url}`);
+  });
+
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
+  const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
+  expect(heightInput).toHaveValue("1000");
+  fireEvent.change(heightInput, { target: { value: "750" } });
+  const policySelect = screen.getByLabelText(t("quotation.handlePolicy"));
+  fireEvent.change(policySelect, { target: { value: "handle-b" } });
+  change("quotation.paymentTerms", "50% anticipo");
+  change("quotation.validUntil", "2026-10-19");
+  fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
+  fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
+
+  await screen.findByText(t("projects.quoted"));
+  const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
+  const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
+  // The estimator typed 750 — the v2 reseed (bounds 700–900 → midpoint 800)
+  // must not overwrite it with its own recomputed value.
+  expect(body.positions[0].handle_intents).toEqual([
+    {
+      bay_id: "B1",
+      leaf_id: null,
+      handle_domain_slot: "PRIMARY",
+      requested_height_mm: "750",
+      vertical_reference: "LEAF_TOP",
+    },
+  ]);
+});
+
 it("asks before cloning away from dirty quotation preparation edits", async () => {
   const position = makePosition();
   const priced = makeProject({

@@ -89,7 +89,11 @@ def safe_file_name(file_name: str) -> bool:
     """Storage-key safety: the name becomes a segment of the object's path, so
     separators, traversal or control characters would escape the org prefix.
     The multipart transport supplies this value verbatim — never trust it."""
-    name = file_name.strip()
+    if file_name != file_name.strip():
+        # Edge whitespace would fail the canonical key check after upload
+        # validation already passed — refuse the name, not the stored object.
+        return False
+    name = file_name
     if not name or name in (".", ".."):
         return False
     if "/" in name or "\\" in name:

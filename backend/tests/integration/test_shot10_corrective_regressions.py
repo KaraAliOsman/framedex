@@ -725,6 +725,7 @@ def test_readiness_levels_report_exact_blockers(documentary_tenant):
     with as_user(users["WORKSHOP_MANAGER"]), documentary_backend():
         for code, name, kind, order in (
             ("CUT_SAW", "Sierra", "CUT", 10),
+            ("MACHINING_CENTER", "Mecanizado", "MACHINING", 15),
             ("WELDER", "Soldadora", "WELDING", 20),
             ("CLEANING_STATION", "Limpiadora", "CLEANING", 25),
             ("QC_STATION", "Control", "QC", 50),
@@ -818,8 +819,10 @@ def test_readiness_levels_flag_unmapped_machine_ops(documentary_tenant):
             readiness = catalog_readiness(demo, org)
         levels = {level["level"]: level for level in readiness["levels"]}
         assert levels["CNC_READY"]["ok"] is False
-        blocker = levels["CNC_READY"]["blockers"][0]
-        assert blocker["code"] == "station_map"
+        blocker = next(
+            b for b in levels["CNC_READY"]["blockers"]
+            if b["code"] == "station_map"
+        )
         assert "END_MACHINING" in blocker["affected"]
     finally:
         with as_user(users["WORKSHOP_MANAGER"]):

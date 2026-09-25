@@ -17,7 +17,7 @@ from authentication.errors import contract_error
 from ai_gateway.providers import ProviderError, provider_for
 from billing import wallet
 from documents.repository import DocumentaryError, rows
-from documents.storage import sanitize_storage_key
+from documents.storage import readable_storage_key
 
 RETENTION_DAYS = 90
 MAX_OUTPUT_CHARS = 256_000
@@ -78,7 +78,9 @@ def _source_document_path(org_id: UUID, source: object) -> str | None:
         # the org's canonical prefix; refuse rather than sign a foreign object.
         raise ProviderError("ai_source_unreadable")
     try:
-        sanitize_storage_key(path)
+        # Read-path rule: a '%' written through the upload path stays
+        # readable — anything that could escape the bucket still refuses.
+        readable_storage_key(path)
     except DocumentaryError:
         raise ProviderError("ai_source_unreadable") from None
     return path

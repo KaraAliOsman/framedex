@@ -588,6 +588,12 @@ export function ProjectQuotationPanel({
         vertical_reference: reference,
       });
     }
+    // A manual edit detaches the slot from reseed: the next placement/policy
+    // change must keep the estimator's value, not recompute over it.
+    const keys = seededIntentKeys.current.get(String(position.position_id));
+    if (existing) {
+      keys?.delete(seedKeyForIntent(existing));
+    }
     updatePosition(index, { handle_intents: intents });
   }
 

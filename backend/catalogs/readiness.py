@@ -240,40 +240,49 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
             "vincular un perfil de proceso al sistema"))
 
     stations = (profile or {}).get("stations") or []
+    station_map = (profile or {}).get("operation_station_map") or {}
+    station_codes = {s["code"] for s in stations}
     required = [s["code"] for s in stations if s.get("when") == "required"]
-    if profile is not None and required:
+
+    # Ops the system can actually emit decide which 'auto' stations carry
+    # work: an inactive center on any of them strands the step at release
+    # (centers are never silently reactivated).
+    potential_ops = {"SAW_CUT"}
+    if params is not None and any(
+        role in params.effective_profile_articles
+        for role in (ProfileRole.MULLION_V, ProfileRole.MULLION_H)
+    ):
+        potential_ops.add("END_MACHINING")
+    if params is not None and rows(
+        "SELECT 1 FROM public.handle_requirement_policies WHERE system_id=%s"
+        " AND (org_id IS NULL OR org_id=%s) LIMIT 1",
+        [system_id, org_id],
+    ):
+        potential_ops.add("HANDLE_PREP")
+    emit_stations = {
+        str(station_map[op]) for op in potential_ops
+        if op in station_map and station_map[op] in station_codes
+    }
+    needed = sorted(set(required) | emit_stations)
+    if profile is not None and needed:
         centers = rows(
             "SELECT kind FROM public.work_centers WHERE org_id=%s AND active",
             [org_id],
         )
         have = {row["kind"] for row in centers}
         missing = sorted(
-            s for s in required
+            s for s in needed
             if s in _CENTER_KIND_FOR_STEP and _CENTER_KIND_FOR_STEP[s] not in have
         )
         if missing:
             prod_b.append(_blocker(
                 "work_centers", "centros de trabajo activos",
                 ", ".join(missing),
-                "una estación requerida sin centro no puede recibir trabajo",
+                "una estación requerida o con trabajo emitible sin centro no puede recibir pasos",
                 "crear los centros de trabajo de las estaciones faltantes"))
 
     # ── CNC level: every machine op the system can emit maps to a station ──
     if profile is not None and params is not None:
-        potential_ops = {"SAW_CUT"}
-        if any(
-            role in params.effective_profile_articles
-            for role in (ProfileRole.MULLION_V, ProfileRole.MULLION_H)
-        ):
-            potential_ops.add("END_MACHINING")
-        if rows(
-            "SELECT 1 FROM public.handle_requirement_policies WHERE system_id=%s"
-            " AND (org_id IS NULL OR org_id=%s) LIMIT 1",
-            [system_id, org_id],
-        ):
-            potential_ops.add("HANDLE_PREP")
-        station_map = profile.get("operation_station_map") or {}
-        station_codes = {s["code"] for s in stations}
         unmapped = sorted(
             op for op in potential_ops
             if op not in station_map or station_map[op] not in station_codes
@@ -295,8 +304,8 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         "reasons": reasons,
         "levels": [
             {"level": "DESIGN_VALID", "ok": not design_b, "blockers": design_b},
-            {"level": "QUOTE_READY", "ok": not (design_b + quote_b),
-             "blockers": design_b + quote_b},
+            {"level": "QUOTE_READY", "ok": not (design_b + quote_b + mfg_b),
+             "blockers": design_b + quote_b + mfg_b},
             {"level": "MANUFACTURING_INCOMPLETE",
              "state": "INCOMPLETE" if mfg_b else "COMPLETE",
              "blockers": mfg_b},

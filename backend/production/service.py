@@ -178,6 +178,57 @@ def _is_frameless(engine_result: dict[str, object]) -> bool:
     )
 
 
+_FRAMED_CUT_ROLES = {
+    "FRAME", "SASH", "MULLION_V", "MULLION_H", "COUPLER", "THRESHOLD", "INVERSOR",
+}
+
+
+def _has_framed_work(engine_result: dict[str, object]) -> bool:
+    """A framed unit inside the same position — the joining steps must
+    survive even when a frameless pane shares the work order."""
+    return bool(_cut_roles(engine_result) & _FRAMED_CUT_ROLES)
+
+
+def _merge_frameless(
+    base: dict[str, object],
+    frameless: dict[str, object],
+) -> dict[str, object]:
+    """Mixed assembly: the declared/material profile keeps its joining
+    authority; the frameless template contributes the stations and op
+    mappings only the pane can produce (a pane is never machined)."""
+    merged = dict(base)
+    merged_stations = [dict(s) for s in (merged.get("stations") or []) if isinstance(s, dict)]
+    by_code = {str(s["code"]): s for s in merged_stations}
+    for station in (frameless.get("stations") or []):
+        if not isinstance(station, dict):
+            continue
+        code = str(station.get("code") or "")
+        if not code:
+            continue
+        if code in by_code:
+            if station.get("when") == "required":
+                by_code[code]["when"] = "required"
+            continue
+        # Frameless-only stations slot before the QC/PACK tail.
+        insert_at = next(
+            (i for i, s in enumerate(merged_stations) if str(s.get("code")) in ("QC", "PACK")),
+            len(merged_stations),
+        )
+        merged_stations.insert(insert_at, dict(station))
+        by_code[code] = merged_stations[insert_at]
+    merged["stations"] = merged_stations
+    frameless_ops = set(frameless.get("optional_operations") or [])
+    merged_map = dict(base.get("operation_station_map") or {})
+    for op, station in (frameless.get("operation_station_map") or {}).items():
+        if str(op) in frameless_ops or op not in merged_map:
+            merged_map[op] = station
+    merged["operation_station_map"] = merged_map
+    merged["optional_operations"] = sorted(
+        set(base.get("optional_operations") or []) | frameless_ops
+    )
+    return merged
+
+
 def _load_profile_for(
     org_id: UUID,
     *,
@@ -241,25 +292,33 @@ def _resolve_process_profile(
     engine_result: dict[str, object],
     system_facts: dict[str, object] | None,
 ) -> tuple[dict[str, object] | None, str | None]:
-    """sealed product → declared authority. Frameless wins over material
-    always; a system-bound profile wins over the material default."""
+    """sealed product → declared authority. A pure frameless position wins
+    over material always; a system-bound profile wins over the material
+    default; a MIXED framed+frameless assembly resolves the declared profile
+    and merges the frameless stations/mappings the pane needs — the framed
+    module never loses its joining steps to its sibling's pane."""
     facts = system_facts or {}
-    if _is_frameless(engine_result):
+    if _is_frameless(engine_result) and not _has_framed_work(engine_result):
         row, via = _load_profile_for(org_id, product_kind="FRAMELESS")
         if row:
             return row, via
     bound = facts.get("process_profile_id")
+    row: dict[str, object] | None = None
+    via: str | None = None
     if bound:
         row, via = _load_profile_for(org_id, profile_id=str(bound))
-        if row:
-            return row, via
-    material = str(facts.get("material") or "").upper() or None
-    if material:
-        row, via = _load_profile_for(org_id, material=material)
-        if row:
-            return row, via
-    row, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
-    return row, "generic_fallback" if row else via
+    if row is None:
+        material = str(facts.get("material") or "").upper() or None
+        if material:
+            row, via = _load_profile_for(org_id, material=material)
+    if row is None:
+        row, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
+        via = "generic_fallback" if row else via
+    if row is not None and _is_frameless(engine_result) and _has_framed_work(engine_result):
+        frameless, _ = _load_profile_for(org_id, product_kind="FRAMELESS")
+        if frameless is not None:
+            return _merge_frameless(row, frameless), f"{via}_mixed"
+    return row, via
 
 
 def _station_has_work(
@@ -268,18 +327,21 @@ def _station_has_work(
     *,
     end_milling_overlap_mm: object = None,
     has_handles: bool = False,
+    handle_station: str = "MACHINING",
 ) -> bool:
     """'auto' stations land only when the sealed result carries work."""
     cuts = engine_result.get("profile_cuts") or []
     roles = _cut_roles(engine_result)
+    # A handle op exists wherever the profile sends HANDLE_PREP — frameless
+    # and mixed profiles route it to HARDWARE, never assume the mill.
+    if has_handles and code == handle_station:
+        return True
     if code == "CUT":
         return bool(cuts or engine_result.get("reinforcements"))
     if code == "MACHINING":
         # Every member op the sealed facts can emit lands here: END_MACHINING
-        # (overlap authority) and HANDLE_PREP (handle intents). Omitting the
-        # station while an op maps to it would leave work unrouted.
-        if has_handles:
-            return True
+        # (overlap authority) and HANDLE_PREP when the profile maps it so.
+        # Omitting the station while an op maps to it would leave work unrouted.
         try:
             return end_milling_overlap_mm is not None and Decimal(
                 str(end_milling_overlap_mm)
@@ -315,6 +377,10 @@ def _routing(
             {"code": "QC", "when": "required"},
             {"code": "PACK", "when": "required"},
         ]
+    handle_station = str(
+        ((profile or {}).get("operation_station_map") or {}).get("HANDLE_PREP")
+        or "MACHINING"
+    )
     routing: list[str] = []
     for station in stations:
         if not isinstance(station, dict):
@@ -327,6 +393,7 @@ def _routing(
             engine_result,
             end_milling_overlap_mm=end_milling_overlap_mm,
             has_handles=has_handles,
+            handle_station=handle_station,
         ):
             routing.append(code)
     return routing

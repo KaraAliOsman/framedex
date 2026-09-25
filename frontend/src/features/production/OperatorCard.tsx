@@ -133,11 +133,7 @@ export function OperatorStepCard({
   const stationMap = trace?.operations?.station_map as Record<string, string> | undefined;
   const stepOps = stationMap
     ? ops.filter((op) => stationMap[String(op.kind ?? "")] === step.code)
-    : ops.filter(
-        (op) =>
-          (op.kind === "SAW_CUT") === (step.code === "CUT") ||
-          (op.kind !== "SAW_CUT" && step.code === "MACHINING"),
-      );
+    : ops.filter((op) => (op.kind === "SAW_CUT" ? step.code === "CUT" : step.code === "MACHINING"));
   const unassignedOps = stationMap
     ? ops.filter((op) => !(String(op.kind ?? "") in stationMap))
     : [];
