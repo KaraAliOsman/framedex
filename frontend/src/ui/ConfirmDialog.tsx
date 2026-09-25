@@ -44,24 +44,38 @@ export function usePrompt(): PromptFn {
 type PendingRequest = {
   request: ConfirmRequest;
   resolve: (value: boolean | string | null) => void;
+  settled: boolean;
 };
 
 export function ConfirmProvider({ children }: PropsWithChildren): JSX.Element {
   // Requests queue: a second confirmation while one is open must not strand
-  // the first caller — it waits for its own dialog, shown next.
+  // the first caller — it waits for its own dialog, shown next. `currentRef`
+  // mirrors the active request so enqueue/settle never mutate inside a state
+  // updater (updaters may run twice) and repeated events settle one request
+  // at most once.
   const queueRef = useRef<PendingRequest[]>([]);
+  const currentRef = useRef<PendingRequest | null>(null);
   const [current, setCurrent] = useState<PendingRequest | null>(null);
   const [draft, setDraft] = useState("");
   const request = current?.request ?? null;
 
+  const activate = useCallback((next: PendingRequest | null): void => {
+    currentRef.current = next;
+    setCurrent(next);
+    setDraft("");
+  }, []);
+
   const enqueue = useCallback(
     (next: ConfirmRequest): Promise<boolean | string | null> =>
       new Promise<boolean | string | null>((resolve) => {
-        queueRef.current.push({ request: next, resolve });
-        setCurrent((previous) => previous ?? queueRef.current.shift() ?? null);
-        setDraft("");
+        const pending: PendingRequest = { request: next, resolve, settled: false };
+        if (currentRef.current === null) {
+          activate(pending);
+        } else {
+          queueRef.current.push(pending);
+        }
       }),
-    [],
+    [activate],
   );
 
   const confirm = useCallback<ConfirmFn>(async (next) => Boolean(await enqueue(next)), [enqueue]);
@@ -73,12 +87,14 @@ export function ConfirmProvider({ children }: PropsWithChildren): JSX.Element {
 
   const settle = useCallback(
     (value: boolean) => {
-      const answer = request?.input ? (value ? draft.trim() : null) : value;
-      current?.resolve(answer);
-      setCurrent(queueRef.current.shift() ?? null);
-      setDraft("");
+      const pending = currentRef.current;
+      if (!pending || pending.settled) return;
+      pending.settled = true;
+      const answer = pending.request.input ? (value ? draft.trim() : null) : value;
+      pending.resolve(answer);
+      activate(queueRef.current.shift() ?? null);
     },
-    [current, draft, request],
+    [activate, draft],
   );
 
   const api = useMemo(() => confirm, [confirm]);
@@ -121,6 +137,9 @@ export function ConfirmProvider({ children }: PropsWithChildren): JSX.Element {
                   className="ui-field__input"
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
+                    // Dialog's document-level Enter handler also clicks the
+                    // primary button — settle via one path only.
+                    if (event.key === "Enter") event.stopPropagation();
                     if (event.key === "Enter" && draft.trim()) settle(true);
                   }}
                   placeholder={request.input.placeholder}

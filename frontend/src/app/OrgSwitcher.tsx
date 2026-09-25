@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
@@ -11,6 +12,7 @@ import { hasUnsavedWork, roleLabel, useDismiss } from "./shellUtils";
 export function OrgSwitcher(): JSX.Element | null {
   const auth = useAuthSession();
   const confirm = useConfirm();
+  const navigate = useNavigate();
   const org = auth.me?.active_organization;
   const [open, setOpen] = useState(false);
   const rootRef = useDismiss<HTMLDivElement>(open, () => setOpen(false));
@@ -30,7 +32,10 @@ export function OrgSwitcher(): JSX.Element | null {
       }))
     )
       return;
+    // Entity routes (project, position, work order) belong to the old org —
+    // land on a tenant-neutral surface before the new context resolves.
     void auth.selectOrganization(organizationId);
+    navigate("/dashboard");
   }
   return (
     <div className="org-switcher" ref={rootRef}>

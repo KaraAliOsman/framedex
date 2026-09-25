@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
@@ -321,6 +321,7 @@ function ProjectWorkspace({
 }): JSX.Element {
   const navigate = useNavigate();
   const confirm = useConfirm();
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
@@ -418,6 +419,7 @@ function ProjectWorkspace({
         setDraft(null);
         setNotice(t("projects.saved"));
         void query.refetch();
+        void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
       } else {
         const response = await projectsCreate(submitted.value, options);
         if (response.status !== 201) {
@@ -425,6 +427,7 @@ function ProjectWorkspace({
         }
         if (controller.signal.aborted) return;
         flushSync(() => setDraft(null));
+        void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
         navigate(`/projects/${encodeURIComponent(response.data.id)}`);
       }
     } catch (caught) {
@@ -521,6 +524,7 @@ function ProjectWorkspace({
         setPaymentsDirty(false);
         setImportsDirty(false);
       });
+      void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
       navigate(`/projects/${response.data.id}`);
     } catch (caught) {
       if (controller.signal.aborted) return;

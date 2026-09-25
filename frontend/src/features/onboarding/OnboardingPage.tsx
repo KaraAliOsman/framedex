@@ -6,13 +6,15 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "../../api/apiMutator";
 import {
   catalogSystemList,
   clientsCreate,
+  clientsList,
   projectsCreate,
+  projectsList,
   type catalogSystemListResponse,
 } from "../../api/generated/dekopen";
 import type { SystemResponse } from "../../api/generated/models/systemResponse";
@@ -89,6 +91,7 @@ export function OnboardingPage(): JSX.Element {
   const org = auth.me?.active_organization;
   const orgId = org?.id ?? "";
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [step, setStep] = useState<Step>(0);
   const [systemId, setSystemId] = useState<string | null>(null);
@@ -148,6 +151,30 @@ export function OnboardingPage(): JSX.Element {
   const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
   const options = useMemo(() => ({ headers: { "X-Organization-ID": orgId } }), [orgId]);
 
+  // Creates carry no idempotency key: when the response is lost after a
+  // server-side commit, reconcile by name before letting the user submit
+  // again — never silently insert a duplicate.
+  async function adoptIfCreated(kind: "client" | "project", name: string): Promise<string | null> {
+    const wanted = name.trim().toLowerCase();
+    try {
+      if (kind === "client") {
+        const response = await clientsList(options);
+        if (response.status !== 200) return null;
+        return (
+          response.data.items.find((entry) => entry.name.trim().toLowerCase() === wanted)?.id ??
+          null
+        );
+      }
+      const response = await projectsList(options);
+      if (response.status !== 200) return null;
+      return (
+        response.data.items.find((entry) => entry.name.trim().toLowerCase() === wanted)?.id ?? null
+      );
+    } catch {
+      return null;
+    }
+  }
+
   async function createClient(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (busy || clientName.trim() === "") return;
@@ -167,13 +194,17 @@ export function OnboardingPage(): JSX.Element {
       setClientId(response.data.id);
       setStep(4);
     } catch (caught) {
-      setError(
-        t(
-          caught instanceof ApiError && caught.status === 422
-            ? "projects.invalid"
-            : "onboarding.saveError",
-        ),
-      );
+      if (caught instanceof ApiError && caught.status < 500) {
+        setError(t(caught.status === 422 ? "projects.invalid" : "onboarding.saveError"));
+      } else {
+        const adopted = await adoptIfCreated("client", clientName);
+        if (adopted) {
+          setClientId(adopted);
+          setStep(4);
+        } else {
+          setError(t("onboarding.saveError"));
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -195,15 +226,27 @@ export function OnboardingPage(): JSX.Element {
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       setProjectId(response.data.id);
+      void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
       setStep(5);
     } catch (caught) {
-      setError(
-        t(
-          caught instanceof ApiError && (caught.status === 409 || caught.status === 412)
-            ? "projects.conflict"
-            : "projects.invalid",
-        ),
-      );
+      if (caught instanceof ApiError && caught.status < 500) {
+        setError(
+          t(
+            caught.status === 409 || caught.status === 412
+              ? "projects.conflict"
+              : "projects.invalid",
+          ),
+        );
+      } else {
+        const adopted = await adoptIfCreated("project", projectName);
+        if (adopted) {
+          setProjectId(adopted);
+          void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
+          setStep(5);
+        } else {
+          setError(t("onboarding.saveError"));
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -281,6 +324,11 @@ export function OnboardingPage(): JSX.Element {
                     type="button"
                     role="listitem"
                     className={`onboarding-system${systemId === system.id ? " is-picked" : ""}`}
+                    // A non-quotable system cannot produce the first quote —
+                    // offer it for context only; the catalog flow fixes its
+                    // readiness before the editor handoff can use it.
+                    disabled={!system.readiness.quote_ready}
+                    title={system.readiness.quote_ready ? undefined : system.readiness.reasons[0]}
                     onClick={() => setSystemId(system.id)}
                   >
                     <span className="onboarding-system__meta">
