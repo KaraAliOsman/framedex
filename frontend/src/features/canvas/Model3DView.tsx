@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { PlanGeometry } from "../../api/generated/models";
@@ -116,6 +116,28 @@ function SolidMesh({
   );
 }
 
+/** Keeps the live camera fitted when the scene bounds change — the Canvas
+ * `camera` prop only applies at mount, so a growing assembly would leave
+ * the original frustum. Refits along the current view direction so the
+ * user's orbit angle survives a product edit. */
+function CameraRig({ radius }: { radius: number }): null {
+  const camera = useThree((state) => state.camera);
+  const controls = useThree((state) => state.controls) as unknown as {
+    update?: () => void;
+  } | null;
+  useEffect(() => {
+    const distance = radius * 2.4;
+    const dir = camera.position.clone();
+    if (dir.lengthSq() === 0) dir.set(0.5, 0.55, 1);
+    camera.position.copy(dir.normalize().multiplyScalar(distance));
+    camera.near = 1;
+    camera.far = distance * 10;
+    camera.updateProjectionMatrix();
+    controls?.update?.();
+  }, [camera, controls, radius]);
+  return null;
+}
+
 function SceneContent({
   scene,
   selection,
@@ -167,6 +189,7 @@ function SceneContent({
         minDistance={scene.radius * 0.2}
         maxDistance={scene.radius * 8}
       />
+      <CameraRig radius={scene.radius} />
     </>
   );
 }

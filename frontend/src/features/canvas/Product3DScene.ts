@@ -671,17 +671,55 @@ export function buildScene3D(
       .filter((top): top is number => typeof top === "number");
     return tops.length > 0 ? Math.min(...tops) : 0;
   };
+  const jointByCoupling = new Map(
+    joints
+      .filter((joint) => joint.kind === "column" && joint.couplingId !== null)
+      .map((joint) => [joint.couplingId as string, joint]),
+  );
   for (const polygon of plan?.couplings ?? []) {
     const coupling = product.assembly.couplings.find((item) => item.id === polygon.coupling_id);
     const height = couplingHeight(polygon.coupling_id);
     if (polygon.polygon.length < 3 || height <= 0) continue;
+    const material =
+      members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ?? members.frame.material;
+    // A straight (0°) joint leaves a zero-area plan triangle — extrude a
+    // bar on the seam instead so the coupler stays visible and pickable.
+    const area = Math.abs(
+      polygon.polygon.reduce((acc, p, i) => {
+        const q = polygon.polygon[(i + 1) % polygon.polygon.length]!;
+        return acc + Number(p.x_mm) * Number(q.y_mm) - Number(q.x_mm) * Number(p.y_mm);
+      }, 0) / 2,
+    );
+    if (area < 1) {
+      const joint = jointByCoupling.get(polygon.coupling_id);
+      if (!joint) continue;
+      const pair = pairByCoupling.get(polygon.coupling_id) ?? [];
+      const depths = pair
+        .map((id) => moduleScenes.find((scene) => scene.moduleId === id)?.depth)
+        .filter((d): d is number => typeof d === "number");
+      const depth = depths.length > 0 ? Math.min(...depths) : fallbackDepth;
+      const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? frameT;
+      couplers.push(
+        box(
+          polygon.coupling_id,
+          "coupler",
+          material,
+          joint.x - barW / 2,
+          0,
+          0,
+          barW,
+          height,
+          depth,
+        ),
+      );
+      worldPoints.push([joint.x - barW / 2, 0, 0], [joint.x + barW / 2, height, depth]);
+      continue;
+    }
     couplers.push({
       kind: "prism",
       owner: polygon.coupling_id,
       surface: "coupler",
-      material:
-        members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ??
-        members.frame.material,
+      material,
       outline: polygon.polygon.map((p) => [Number(p.x_mm), -Number(p.y_mm)] as Pt2),
       y0: 0,
       y1: height,

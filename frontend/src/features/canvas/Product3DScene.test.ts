@@ -490,4 +490,52 @@ describe("buildScene3D", () => {
     // the door's column top includes its 400 mm transom → 2500, not 2100
     if (prism?.kind === "prism") expect(prism.y1).toBeCloseTo(2500, 5);
   });
+
+  it("draws a straight inline coupler as a bar on the seam", () => {
+    const product = makeBowProduct({ moduleCount: 2, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+    const productWithCoupling = {
+      ...product,
+      assembly: {
+        modules: product.assembly.modules,
+        couplings: [
+          {
+            id: "c1",
+            modules: [product.assembly.modules[0]!.id, product.assembly.modules[1]!.id],
+            edges: ["right", "left"],
+            kind: "INLINE" as const,
+            coupler_profile_sku: null,
+            angle_deg: "0.00",
+          },
+        ],
+      },
+    } as ProductJson;
+    const plan: PlanGeometry = {
+      front_chain: [],
+      modules: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "1800",
+      height_mm: "60",
+      couplings: [
+        {
+          coupling_id: "c1",
+          // a 0° joint's plan triangle degenerates to zero area
+          polygon: [
+            { x_mm: "900", y_mm: "0" },
+            { x_mm: "900", y_mm: "-60" },
+            { x_mm: "900", y_mm: "-60" },
+          ],
+        },
+      ],
+    };
+    const scene = buildScene3D(productWithCoupling, members, plan);
+    const coupler = scene.couplers.find((solid) => solid.owner === "c1") as BoxSolid;
+    expect(coupler).toBeDefined();
+    expect(coupler.kind).toBe("box");
+    // the bar sits on the column seam (two 450 mm columns → x=450), full
+    // height and module depth
+    expect(coupler.center[0]).toBeCloseTo(450, 5);
+    expect(coupler.size[1]).toBeCloseTo(1400, 5);
+    expect(coupler.size[2]).toBeCloseTo(60, 5);
+  });
 });
