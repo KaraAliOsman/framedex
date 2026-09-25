@@ -772,3 +772,78 @@ def test_stacked_unit_member_is_not_addressable_later(monkeypatch):
     )
     assert out["ops"] == [{"op": "add_stacked_unit", "module": "m1"}]
     assert out["rejected"][0]["reason"] == "apertura_invalida"
+
+
+def _stacked_product():
+    """Two inline roots plus a transom stacked on the second — the declared
+    order ends in a stacked member, so the chain end is not the list tail."""
+    product = _graph_product()
+    product["modules"].append({"id": "t1", "width_mm": "900", "height_mm": "400"})
+    product["couplings"].append(
+        {
+            "id": "c2",
+            "angle_deg": "0",
+            "kind": "STACKED",
+            "modules": ["m2", "t1"],
+            "edges": ["top", "bottom"],
+        }
+    )
+    return product
+
+
+def test_add_unit_joins_the_chain_end_past_a_stacked_member(monkeypatch):
+    """A trailing stacked member leaves the true chain end free — claiming
+    its edge instead would let a later duplicate validate a seam the client
+    refuses."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "add_unit", "side": "right"},
+                {"op": "duplicate_module", "module": "m2"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_stacked_product(),
+        prompt="agrega una unidad a la derecha y duplica la segunda",
+        system_id=uuid4(),
+        operation_key="assist-d8",
+    )
+    assert out["ops"] == [{"op": "add_unit", "side": "right", "ref": "added_m1"}]
+    assert out["rejected"][0]["reason"] == "sin_borde_libre"
+
+
+def test_unstacking_makes_the_member_a_chain_end(monkeypatch):
+    """Once the transom's STACKED coupling is removed it is a plain root —
+    appending right joins it."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_coupling", "coupling": "c2"},
+                {"op": "add_unit", "side": "right"},
+                {"op": "duplicate_module", "module": "t1"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_stacked_product(),
+        prompt="desconecta el transom, agrega a la derecha y duplica el transom",
+        system_id=uuid4(),
+        operation_key="assist-d9",
+    )
+    # t1 is now the right chain end: add_unit claims t1.right, so the
+    # duplicate lands on t1's free left — all three ops apply.
+    assert [op["op"] for op in out["ops"]] == [
+        "remove_coupling",
+        "add_unit",
+        "duplicate_module",
+    ]
+    assert out["rejected"] == []

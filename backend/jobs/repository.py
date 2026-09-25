@@ -71,6 +71,7 @@ def insert_job(
 
 def requeue_terminal(
     *,
+    org_id: UUID,
     job_id: UUID,
     payload: dict[str, object],
     max_attempts: int,
@@ -99,7 +100,7 @@ def requeue_terminal(
             completed_at = NULL,
             created_by = %s,
             updated_at = NOW()
-        WHERE id = %s AND state IN ('FAILED', 'CANCELED')
+        WHERE org_id = %s AND id = %s AND state IN ('FAILED', 'CANCELED')
         RETURNING *
         """,
         [
@@ -107,6 +108,7 @@ def requeue_terminal(
             max_attempts,
             run_after,
             str(created_by) if created_by else None,
+            str(org_id),
             str(job_id),
         ],
     )

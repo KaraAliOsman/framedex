@@ -344,10 +344,26 @@ def _validate_ops(
         elif index + 1 < len(module_refs):
             used_edges.setdefault(module_refs[index], set()).add("right")
             used_edges.setdefault(module_refs[index + 1], set()).add("left")
+    # Members hanging at the "bottom" edge of a STACKED coupling — the
+    # front chain end resolves over roots first, exactly as the client's
+    # isStackedMember does.
+    stacked_members: set[str] = set()
+    for coupling in summary["couplings"]:
+        members, edges = coupling.get("modules"), coupling.get("edges")
+        if (
+            (coupling.get("kind") or "INLINE") == "STACKED"
+            and isinstance(members, list)
+            and isinstance(edges, list)
+            and len(members) == len(edges) == 2
+        ):
+            for member, edge in zip(members, edges):
+                if edge == "bottom" and isinstance(member, str):
+                    stacked_members.add(member)
     state: dict[str, Any] = {
         "module_refs": module_refs,
         "coupling_refs": coupling_refs,
         "used_edges": used_edges,
+        "stacked_members": stacked_members,
         "extra_modules": 0,
         "added": {"m": 0, "c": 0},
     }
@@ -365,6 +381,19 @@ def _validate_ops(
     def _free(member: Any, edge: Any) -> None:
         if isinstance(member, str) and isinstance(edge, str) and member in state["used_edges"]:
             state["used_edges"][member].discard(edge)
+
+    def _chain_end(side: str) -> str | None:
+        """The declaration-extreme module whose `side` edge is free — the
+        same end the client appends to: roots win over stacked members."""
+        candidates: list[str] = [
+            ref for ref in state["module_refs"]
+            if side not in state["used_edges"].get(ref, set())
+        ]
+        if not candidates:
+            return None
+        roots = [ref for ref in candidates if ref not in state["stacked_members"]]
+        preferred = roots if roots else candidates
+        return str(preferred[-1] if side == "right" else preferred[0])
 
     def _coupling_edges(info: dict[str, Any] | None) -> list[Any] | None:
         edges = info.get("edges") if isinstance(info, dict) else None
@@ -442,6 +471,7 @@ def _validate_ops(
                     state["coupling_refs"].append(_add_ref("c"))
                 del state["module_refs"][item["count"] :]
                 del state["coupling_refs"][item["count"] - 1 :]
+                state["stacked_members"].intersection_update(state["module_refs"])
             else:
                 rejected.append(reject(item, "cantidad_invalida"))
         elif name == "add_unit":
@@ -449,26 +479,25 @@ def _validate_ops(
                 item.get("side") in ("left", "right")
                 and len(state["module_refs"]) < MAX_MODULE_COUNT
             ):
+                # The seam joins the free chain end's outer edge to the new
+                # member's inner edge — the end is a graph fact (a trailing
+                # stacked member is not the chain end), never the list
+                # tail. Resolve before inserting so the new member can't
+                # nominate itself as the end.
+                end = _chain_end(item["side"])
                 accepted.append({"op": name, "side": item["side"], "ref": _add_ref("m")})
+                new_ref = accepted[-1]["ref"]
                 if item["side"] == "left":
-                    state["module_refs"].insert(0, accepted[-1]["ref"])
+                    state["module_refs"].insert(0, new_ref)
                     state["coupling_refs"].insert(0, _add_ref("c"))
                 else:
-                    state["module_refs"].append(accepted[-1]["ref"])
+                    state["module_refs"].append(new_ref)
                     state["coupling_refs"].append(_add_ref("c"))
+                if end is not None:
+                    _claim(end, item["side"])
+                state["used_edges"][new_ref] = {_OPPOSITE[item["side"]]}
             else:
                 rejected.append(reject(item, "lado_invalido"))
-                continue
-            # The seam joins the previous end member's outer edge to the new
-            # member's inner edge — claim both so a later duplicate can't
-            # target the now-occupied seam.
-            new_ref = accepted[-1]["ref"]
-            if item["side"] == "right":
-                _claim(state["module_refs"][-2], "right")
-                state["used_edges"][new_ref] = {"left"}
-            else:
-                _claim(state["module_refs"][1], "left")
-                state["used_edges"][new_ref] = {"right"}
         elif name == "remove_unit":
             ref = module_ref(item.get("module"))
             if ref is not None and len(state["module_refs"]) > 1:
@@ -485,6 +514,7 @@ def _validate_ops(
                 else:
                     coupling_refs[p - 1 : p + 1] = [_add_ref("c")]
                 state["used_edges"].pop(ref, None)
+                state["stacked_members"].discard(ref)
                 # The relink claims each neighbor's edge toward the other.
                 if 0 < p < len(state["module_refs"]):
                     _claim(state["module_refs"][p - 1], "right")
@@ -571,6 +601,10 @@ def _validate_ops(
                 if isinstance(members, list) and edges is not None:
                     for member, edge in zip(members, edges):
                         _free(member, edge)
+                    if isinstance(info, dict) and (info.get("kind") or "INLINE") == "STACKED":
+                        for member, edge in zip(members, edges):
+                            if edge == "bottom" and isinstance(member, str):
+                                state["stacked_members"].discard(member)
                 accepted.append({"op": name, "coupling": ref})
         elif name == "set_coupling_kind":
             ref = coupling_ref(item.get("coupling"))
@@ -581,6 +615,18 @@ def _validate_ops(
             if ref is None or item.get("kind") not in allowed:
                 rejected.append(reject(item, "tipo_invalido"))
             else:
+                # Kind changes re-derive stacked membership: only a STACKED
+                # coupling's "bottom" endpoint is a stacked member.
+                members, edges_list = (
+                    info.get("modules") if isinstance(info, dict) else None
+                ), edges
+                if isinstance(members, list) and edges_list is not None:
+                    for member, edge in zip(members, edges_list):
+                        if edge == "bottom" and isinstance(member, str):
+                            if item["kind"] == "STACKED":
+                                state["stacked_members"].add(member)
+                            else:
+                                state["stacked_members"].discard(member)
                 accepted.append({"op": name, "coupling": ref, "kind": item["kind"]})
         elif name == "add_stacked_unit":
             ref = module_ref(item.get("module"))

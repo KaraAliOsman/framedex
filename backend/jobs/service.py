@@ -80,6 +80,7 @@ def enqueue(
         and job_id is not None
     ):
         requeued = repository.requeue_terminal(
+            org_id=org_id,
             job_id=UUID(str(job_id)),
             payload=validated,
             max_attempts=max_attempts,
@@ -124,12 +125,18 @@ def retry(
         raise JobServiceError("job_type_unknown")
     if role not in spec.roles:
         raise JobServiceError("job_permission_denied")
-    if spec.authorize is not None and not spec.authorize(job["payload"], role):
+    payload = job.get("payload")
+    if not isinstance(payload, dict):
+        payload = {}
+    if spec.authorize is not None and not spec.authorize(payload, role):
         raise JobServiceError("job_permission_denied")
+    job_id = UUID(str(job["id"]))
+    attempts = job.get("max_attempts")
     requeued = repository.requeue_terminal(
-        job_id=UUID(str(job["id"])),
-        payload=job["payload"],
-        max_attempts=int(job["max_attempts"]),
+        org_id=org_id,
+        job_id=job_id,
+        payload=payload,
+        max_attempts=int(str(attempts or "0")),
         run_after=datetime.now(timezone.utc),
         created_by=actor_id,
     )

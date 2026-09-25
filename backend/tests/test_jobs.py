@@ -361,7 +361,7 @@ def test_enqueue_requeues_a_terminal_row(monkeypatch) -> None:
     monkeypatch.setattr(repository, "insert_job", lambda **kwargs: (failed, False))
     caller = uuid4()
 
-    def fake_requeue(*, job_id, payload, max_attempts, run_after, created_by):
+    def fake_requeue(*, org_id, job_id, payload, max_attempts, run_after, created_by):
         calls.update(
             job_id=job_id,
             payload=payload,
