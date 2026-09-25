@@ -121,6 +121,22 @@ class SectionAxisSerializer(StrictSerializer):
     y_mm = decimal_field(10, 2)
 
 
+class SectionImportCandidateSerializer(serializers.Serializer):
+    index = serializers.IntegerField()
+    tag = serializers.CharField()
+    points = serializers.ListField(child=serializers.ListField(child=serializers.CharField()))
+    area = serializers.CharField()
+
+
+class SectionImportResponseSerializer(serializers.Serializer):
+    document_path = serializers.CharField()
+    format = serializers.CharField()
+    parser_version = serializers.CharField()
+    mm_per_unit = serializers.CharField(allow_null=True)
+    candidates = SectionImportCandidateSerializer(many=True)
+    warnings = serializers.ListField(child=serializers.CharField())
+
+
 class ProfileSectionSerializer(StrictSerializer):
     """Simplified technical cross-section; POLYGON is declared, DXF_REFERENCE
     carries the manufacturer-drawing provenance in `drawing_ref`."""

@@ -6,6 +6,7 @@ import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
+import { SectionImportPanel } from "./SectionImportPanel";
 import { useConfirm } from "../../ui";
 import type { ProcessProfileOption } from "../../api/generated/models";
 import {
@@ -517,6 +518,7 @@ function CatalogEditor({
   const [sectionDraft, setSectionDraft] = useState<SectionDraft>(() =>
     initialSectionDraft(row && "section" in row ? row.section : null),
   );
+  const [sectionImportOpen, setSectionImportOpen] = useState(false);
   const confirm = useConfirm();
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -769,6 +771,29 @@ function CatalogEditor({
             </label>
             {sectionDraft.enabled && (
               <>
+                {!readOnly && !sectionImportOpen && (
+                  <button type="button" onClick={() => setSectionImportOpen(true)}>
+                    {ct("sectionImport.open")}
+                  </button>
+                )}
+                {!readOnly && sectionImportOpen && (
+                  <SectionImportPanel
+                    api={api}
+                    onClose={() => setSectionImportOpen(false)}
+                    onApply={(pick) => {
+                      changeSection((current) => ({
+                        ...current,
+                        source: "DXF_REFERENCE",
+                        drawing_ref: pick.drawingRef,
+                        vertices: pick.vertices.map((vertex) => ({
+                          key: crypto.randomUUID(),
+                          ...vertex,
+                        })),
+                      }));
+                      setSectionImportOpen(false);
+                    }}
+                  />
+                )}
                 <div className="catalog-fields">
                   <label htmlFor={`catalog-${resource}-section-source`}>
                     <span>{ct("field.source")}</span>

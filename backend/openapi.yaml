@@ -2717,6 +2717,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/section-imports/:
+    post:
+      operationId: catalog_section_import_create
+      description: |-
+        POST section-imports/ — upload a DXF/SVG drawing, get back the stored
+        document path + detected outline candidates for human review.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SectionImportResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/systems/:
     get:
       operationId: catalog_system_list
@@ -19716,6 +19786,53 @@ components:
       required:
       - name
       - y_mm
+    SectionImportCandidate:
+      type: object
+      properties:
+        index:
+          type: integer
+        tag:
+          type: string
+        points:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        area:
+          type: string
+      required:
+      - area
+      - index
+      - points
+      - tag
+    SectionImportResponse:
+      type: object
+      properties:
+        document_path:
+          type: string
+        format:
+          type: string
+        parser_version:
+          type: string
+        mm_per_unit:
+          type: string
+          nullable: true
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionImportCandidate'
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+      - candidates
+      - document_path
+      - format
+      - mm_per_unit
+      - parser_version
+      - warnings
     SectionPoint:
       type: object
       properties:

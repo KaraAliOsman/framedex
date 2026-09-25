@@ -12,7 +12,7 @@ from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -41,6 +41,7 @@ from catalogs.serializers import (
     SystemResponseSerializer,
     ProcessProfileOptionListSerializer,
     SystemWorkspaceSerializer,
+    SectionImportResponseSerializer,
 )
 
 
@@ -350,6 +351,33 @@ class SystemWorkspaceView(APIView):
             data = service.system_workspace(org_id, str(row_id))
             output = SystemWorkspaceSerializer(data).data
         return Response(output)
+
+
+class SectionImportCollectionView(APIView):
+    """POST section-imports/ — upload a DXF/SVG drawing, get back the stored
+    document path + detected outline candidates for human review."""
+
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        operation_id="catalog_section_import_create",
+        parameters=HEADERS,
+        request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+        responses={200: SectionImportResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def post(self, request):
+        upload = request.FILES.get("file")
+        if upload is None:
+            raise contract_error(400, "section_file_missing", "catalogs.errors.section_file_missing")
+        with catalog_scope(request, roles=WRITE_ROLES) as org_id:
+            data = service.import_section_drawing(
+                org_id=org_id,
+                file_name=upload.name,
+                content=upload.read(5_000_001),
+                content_type=upload.content_type or "",
+            )
+        return Response(SectionImportResponseSerializer(data).data)
 
 
 class ProcessProfileCollectionView(APIView):

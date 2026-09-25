@@ -1,0 +1,679 @@
+"""Section drawing ingestion — parse a manufacturer DXF or SVG into
+candidate closed outlines in drawing units.
+
+The parser DETECTS geometry; it never certifies it. Callers persist the
+uploaded document, return the candidates for human review, and only a
+confirmed article PATCH (orientation, origin, role, scale) turns one
+outline into a ProfileSection with `source=DXF_REFERENCE` + `drawing_ref`.
+A detected contour is evidence, not authority — matching the same rule
+catalog imports follow for prose extraction.
+"""
+
+from __future__ import annotations
+
+import math
+import re
+import uuid
+from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
+from typing import Any, Iterator
+
+from defusedxml import ElementTree
+
+PARSER_VERSION = "section-import/1.0"
+
+# Enough segments that a bead groove or rounded pull doesn't collapse to a
+# chord visibly different from the drawing — while staying a straight-edged
+# polygon the ProfileSection contract accepts.
+ARC_SEGMENTS = 12
+MAX_CANDIDATES = 8
+MAX_POINTS = 2000
+# $INSUNITS → millimetres per drawing unit (AutoCAD/DXF spec).
+INSUNIT_MM = {
+    1: Decimal("25.4"),        # inches
+    2: Decimal("304.8"),       # feet
+    4: Decimal("1"),           # millimetres
+    5: Decimal("10"),          # centimetres
+    6: Decimal("1000"),        # metres
+    7: Decimal("1000000"),     # kilometres
+    8: Decimal("0.0000254"),   # microinches
+    9: Decimal("0.0254"),      # mils
+    10: Decimal("914.4"),      # yards
+    11: Decimal("0.0000001"),  # angstroms
+    12: Decimal("0.000001"),   # nanometres
+    13: Decimal("0.001"),      # microns
+    14: Decimal("100"),        # decimetres
+}
+SVG_UNIT_MM = {
+    "mm": Decimal("1"),
+    "cm": Decimal("10"),
+    "in": Decimal("25.4"),
+    "pt": Decimal("25.4") / 72,
+    "pc": Decimal("25.4") / 6,
+    # CSS px at 96dpi — a declared standard, flagged in warnings.
+    "px": Decimal("25.4") / 96,
+    "": Decimal("25.4") / 96,
+}
+
+
+class SectionImportError(ValueError):
+    """Raised when a drawing cannot be parsed into the import contract."""
+
+    def __init__(self, code: str, detail: str):
+        super().__init__(detail)
+        self.code = code
+        self.detail = detail
+
+
+@dataclass
+class SectionCandidate:
+    tag: str
+    points: list[tuple[Decimal, Decimal]]
+    closed: bool = True
+
+
+@dataclass
+class SectionImportResult:
+    format: str
+    mm_per_unit: Decimal | None
+    candidates: list[dict[str, Any]] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+
+def detect_format(file_name: str, content: bytes) -> str:
+    name = file_name.lower().rsplit(".", 1)[-1]
+    if name in ("svg", "dxf"):
+        return name
+    head = content[:512].lstrip()
+    if head.startswith(b"<") and (b"<svg" in head or head.startswith(b"<?xml")):
+        return "svg"
+    # A DXF starts with code/value pairs — a bare integer line is enough.
+    first = head.split(None, 1)[0] if head else b""
+    if re.fullmatch(rb"\s*\d+\s*", first):
+        return "dxf"
+    raise SectionImportError(
+        "section_format_unknown", "The file is neither SVG nor DXF."
+    )
+
+
+# ---------------------------------------------------------------- SVG ----
+
+
+def _num(value: str | None, default: Decimal = Decimal(0)) -> Decimal:
+    if value is None:
+        return default
+    match = re.match(r"\s*([+-]?\d*\.?\d+(?:[eE][+-]?\d+)?)", value)
+    if not match:
+        return default
+    try:
+        return Decimal(match.group(1))
+    except InvalidOperation:
+        return default
+
+
+def _svg_unit_factor(value: str | None) -> Decimal | None:
+    """Unit suffix on a width/height attribute gives the drawing's scale."""
+    if value is None:
+        return None
+    match = re.match(r"\s*[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?\s*(mm|cm|in|pt|pc|px)?\s*$", value)
+    if not match:
+        return None
+    return SVG_UNIT_MM[match.group(1) or ""]
+
+
+def _apply_matrix(m: tuple[float, ...], x: Decimal, y: Decimal) -> tuple[Decimal, Decimal]:
+    a, b, c, d, e, f = m
+    fx, fy = float(x), float(y)
+    return (
+        Decimal(str(round(a * fx + c * fy + e, 6))),
+        Decimal(str(round(b * fx + d * fy + f, 6))),
+    )
+
+
+def _compose(m1: tuple[float, ...], m2: tuple[float, ...]) -> tuple[float, ...]:
+    a1, b1, c1, d1, e1, f1 = m1
+    a2, b2, c2, d2, e2, f2 = m2
+    return (
+        a1 * a2 + c1 * b2,
+        b1 * a2 + d1 * b2,
+        a1 * c2 + c1 * d2,
+        b1 * c2 + d1 * d2,
+        a1 * e2 + c1 * f2 + e1,
+        b1 * e2 + d1 * f2 + f1,
+    )
+
+
+def _parse_transform(value: str | None) -> tuple[float, ...]:
+    """SVG transform attribute → affine matrix, applied left to right."""
+    m = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+    if not value:
+        return m
+    for kind, args in re.findall(r"(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)", value):
+        nums = [float(n) for n in re.findall(r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", args)]
+        step: tuple[float, ...]
+        if kind == "matrix" and len(nums) == 6:
+            step = tuple(nums)  # type: ignore[assignment]
+        elif kind == "translate":
+            step = (1.0, 0.0, 0.0, 1.0, nums[0] if nums else 0.0, nums[1] if len(nums) > 1 else 0.0)
+        elif kind == "scale":
+            step = (nums[0], 0.0, 0.0, nums[1] if len(nums) > 1 else nums[0], 0.0, 0.0)
+        elif kind == "rotate":
+            rad = math.radians(nums[0])
+            cos_, sin_ = math.cos(rad), math.sin(rad)
+            step = (cos_, sin_, -sin_, cos_, 0.0, 0.0)
+            if len(nums) >= 3:
+                cx, cy = nums[1], nums[2]
+                step = _compose(
+                    _compose((1.0, 0.0, 0.0, 1.0, cx, cy), step),
+                    (1.0, 0.0, 0.0, 1.0, -cx, -cy),
+                )
+        elif kind == "skewX":
+            step = (1.0, 0.0, math.tan(math.radians(nums[0])), 1.0, 0.0, 0.0)
+        else:  # skewY
+            step = (1.0, math.tan(math.radians(nums[0])), 0.0, 1.0, 0.0, 0.0)
+        m = _compose(m, step)
+    return m
+
+
+def _sample_cubic(
+    p0: tuple[float, float],
+    p1: tuple[float, float],
+    p2: tuple[float, float],
+    p3: tuple[float, float],
+) -> list[tuple[float, float]]:
+    out = []
+    for i in range(1, ARC_SEGMENTS + 1):
+        t = i / ARC_SEGMENTS
+        u = 1 - t
+        out.append(
+            (
+                u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0],
+                u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1],
+            )
+        )
+    return out
+
+
+def _sample_quadratic(
+    p0: tuple[float, float],
+    p1: tuple[float, float],
+    p2: tuple[float, float],
+) -> list[tuple[float, float]]:
+    out = []
+    for i in range(1, ARC_SEGMENTS + 1):
+        t = i / ARC_SEGMENTS
+        u = 1 - t
+        out.append(
+            (
+                u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0],
+                u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1],
+            )
+        )
+    return out
+
+
+def _sample_elliptic(
+    p0: tuple[float, float], rx: float, ry: float, rot: float, large: int, sweep: int, p1: tuple[float, float]
+) -> list[tuple[float, float]]:
+    """SVG arc → parametric sampling on the true ellipse (SVG 1.1 F.6.5)."""
+    if rx == 0 or ry == 0 or (p0[0] == p1[0] and p0[1] == p1[1]):
+        return [p1]
+    phi = math.radians(rot % 360)
+    cos_phi, sin_phi = math.cos(phi), math.sin(phi)
+    dx, dy = (p0[0] - p1[0]) / 2, (p0[1] - p1[1]) / 2
+    x1p = cos_phi * dx + sin_phi * dy
+    y1p = -sin_phi * dx + cos_phi * dy
+    rx, ry = abs(rx), abs(ry)
+    lam = x1p * x1p / (rx * rx) + y1p * y1p / (ry * ry)
+    if lam > 1:
+        scale = math.sqrt(lam)
+        rx, ry = rx * scale, ry * scale
+    num = rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p
+    den = rx * rx * y1p * y1p + ry * ry * x1p * x1p
+    coef = math.sqrt(max(0.0, num / den)) if den else 0.0
+    if large == sweep:
+        coef = -coef
+    cxp = coef * rx * y1p / ry
+    cyp = -coef * ry * x1p / rx
+    cx = cos_phi * cxp - sin_phi * cyp + (p0[0] + p1[0]) / 2
+    cy = sin_phi * cxp + cos_phi * cyp + (p0[1] + p1[1]) / 2
+
+    def angle(ux: float, uy: float, vx: float, vy: float) -> float:
+        dot = ux * vx + uy * vy
+        mag = math.hypot(ux, uy) * math.hypot(vx, vy)
+        value = math.acos(max(-1.0, min(1.0, dot / mag))) if mag else 0.0
+        return -value if ux * vy - uy * vx < 0 else value
+
+    start = angle(1.0, 0.0, (x1p - cxp) / rx, (y1p - cyp) / ry)
+    delta = angle(
+        (x1p - cxp) / rx,
+        (y1p - cyp) / ry,
+        (-x1p - cxp) / rx,
+        (-y1p - cyp) / ry,
+    )
+    if not sweep and delta > 0:
+        delta -= 2 * math.pi
+    elif sweep and delta < 0:
+        delta += 2 * math.pi
+    steps = max(2, int(ARC_SEGMENTS * abs(delta) / math.pi))
+    out = []
+    for i in range(1, steps + 1):
+        theta = start + delta * i / steps
+        out.append(
+            (
+                cx + rx * math.cos(theta) * cos_phi - ry * math.sin(theta) * sin_phi,
+                cy + rx * math.cos(theta) * sin_phi + ry * math.sin(theta) * cos_phi,
+            )
+        )
+    out[-1] = p1
+    return out
+
+
+def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
+    """Path `d` → list of subpath polylines. Curves and arcs are sampled to
+    straight segments so every candidate satisfies the polygon contract."""
+    tokens = re.findall(
+        r"[MmLlHhVvCcSsQqTtAaZz]|[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", d
+    )
+    subpaths: list[list[tuple[Decimal, Decimal]]] = []
+    current: list[tuple[Decimal, Decimal]] = []
+    pos = (0.0, 0.0)
+    start: tuple[float, float] | None = None
+    pending = ""
+    closed_here = False
+    i = 0
+    pending_smooth: tuple[float, float] | None = None
+
+    def flush() -> None:
+        nonlocal current, start, closed_here
+        if current:
+            if closed_here and current[0] != current[-1]:
+                current.append(current[0])
+            subpaths.append(current)
+        current = []
+        start = None
+        closed_here = False
+
+    def take(n: int) -> list[float]:
+        nonlocal i
+        out: list[float] = []
+        while len(out) < n and i < len(tokens):
+            token = tokens[i]
+            if re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz]", token):
+                break
+            out.append(float(token))
+            i += 1
+        return out
+
+    while i < len(tokens):
+        token = tokens[i]
+        if re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz]", token):
+            pending = token
+            i += 1
+            if pending in "Zz":
+                closed_here = True
+                flush()
+                pending = ""
+            continue
+        if pending == "":
+            i += 1
+            continue
+        rel = pending.islower()
+        cmd = pending.upper()
+
+        def pt(x: float, y: float) -> tuple[float, float]:
+            return (pos[0] + x, pos[1] + y) if rel else (x, y)
+
+        if cmd == "M":
+            values = take(2)
+            if len(values) < 2:
+                continue
+            flush()
+            nxt = pt(values[0], values[1])
+            pos = nxt
+            start = nxt
+            current = [(Decimal(str(round(nxt[0], 6))), Decimal(str(round(nxt[1], 6))))]
+            pending = "l" if rel else "L"  # implicit line-tos follow
+        elif cmd == "L":
+            values = take(2)
+            if len(values) < 2:
+                continue
+            nxt = pt(values[0], values[1])
+            pos = nxt
+            current.append((Decimal(str(round(nxt[0], 6))), Decimal(str(round(nxt[1], 6)))))
+            pending_smooth = None
+        elif cmd == "H":
+            values = take(1)
+            if not values:
+                continue
+            x = pos[0] + values[0] if rel else values[0]
+            pos = (x, pos[1])
+            current.append((Decimal(str(round(x, 6))), Decimal(str(round(pos[1], 6)))))
+            pending_smooth = None
+        elif cmd == "V":
+            values = take(1)
+            if not values:
+                continue
+            y = pos[1] + values[0] if rel else values[0]
+            pos = (pos[0], y)
+            current.append((Decimal(str(round(pos[0], 6))), Decimal(str(round(y, 6)))))
+            pending_smooth = None
+        elif cmd == "C":
+            values = take(6)
+            if len(values) < 6:
+                continue
+            c1, c2, nxt = pt(*values[0:2]), pt(*values[2:4]), pt(*values[4:6])
+            for x, y in _sample_cubic(pos, c1, c2, nxt):
+                current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
+            pos = nxt
+            pending_smooth = c2
+        elif cmd == "S":
+            values = take(4)
+            if len(values) < 4:
+                continue
+            c1 = (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1]) if pending_smooth else pos
+            c2, nxt = pt(*values[0:2]), pt(*values[2:4])
+            for x, y in _sample_cubic(pos, c1, c2, nxt):
+                current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
+            pos = nxt
+            pending_smooth = c2
+        elif cmd == "Q":
+            values = take(4)
+            if len(values) < 4:
+                continue
+            c1, nxt = pt(*values[0:2]), pt(*values[2:4])
+            for x, y in _sample_quadratic(pos, c1, nxt):
+                current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
+            pos = nxt
+            pending_smooth = c1
+        elif cmd == "T":
+            values = take(2)
+            if len(values) < 2:
+                continue
+            c1 = (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1]) if pending_smooth else pos
+            nxt = pt(*values[0:2])
+            for x, y in _sample_quadratic(pos, c1, nxt):
+                current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
+            pos = nxt
+            pending_smooth = c1
+        elif cmd == "A":
+            values = take(7)
+            if len(values) < 7:
+                continue
+            nxt = pt(values[5], values[6])
+            for x, y in _sample_elliptic(
+                pos, values[0], values[1], values[2], int(values[3]), int(values[4]), nxt
+            ):
+                current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
+            pos = nxt
+            pending_smooth = None
+    flush()
+    return subpaths, bool(subpaths)
+
+
+def parse_svg(content: bytes) -> SectionImportResult:
+    try:
+        root = ElementTree.fromstring(content)
+    except ElementTree.ParseError as error:
+        raise SectionImportError("section_svg_invalid", f"SVG does not parse: {error}")
+    tag_name = root.tag.rsplit("}", 1)[-1]
+    if tag_name.lower() != "svg":
+        raise SectionImportError("section_svg_invalid", "Document root is not <svg>.")
+
+    mm_per_unit: Decimal | None = None
+    warnings: list[str] = []
+    for attr in ("width", "height"):
+        factor = _svg_unit_factor(root.get(attr))
+        if factor is not None:
+            mm_per_unit = factor
+            break
+    if mm_per_unit is not None and mm_per_unit == SVG_UNIT_MM["px"]:
+        warnings.append("SVG has no physical unit; px is assumed at 96 dpi — confirm scale.")
+    if mm_per_unit is None:
+        warnings.append("SVG declares no units — scale must be confirmed by the reviewer.")
+
+    candidates: list[SectionCandidate] = []
+    open_count = 0
+
+    def local(tag: str) -> str:
+        return tag.rsplit("}", 1)[-1].lower()
+
+    def walk(element, transform):
+        nonlocal open_count
+        m = _compose(transform, _parse_transform(element.get("transform")))
+        name = local(element.tag)
+        points: list[tuple[Decimal, Decimal]] = []
+        closed = False
+        if name in ("polygon", "polyline"):
+            nums = [
+                Decimal(n)
+                for n in re.findall(
+                    r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", element.get("points") or ""
+                )
+            ]
+            points = [(nums[i], nums[i + 1]) for i in range(0, len(nums) - 1, 2)]
+            closed = name == "polygon" or (
+                len(points) > 2 and points[0] == points[-1]
+            )
+        elif name == "path":
+            subs, _ = _path_points(element.get("d") or "")
+            for sub in subs:
+                if len(sub) >= 3 and sub[0] == sub[-1]:
+                    points = sub
+                    closed = True
+        for child in element:
+            walk(child, m)
+        if not points:
+            return
+        world = [_apply_matrix(m, x, y) for x, y in points]
+        if closed:
+            candidates.append(
+                SectionCandidate(tag=f"{name}#{len(candidates) + 1}", points=world)
+            )
+        else:
+            open_count += 1
+
+    walk(root, (1.0, 0.0, 0.0, 1.0, 0.0, 0.0))
+    if open_count:
+        warnings.append(f"{open_count} open outline(s) skipped — only closed shapes qualify.")
+    return _finish("svg", mm_per_unit, candidates, warnings)
+
+
+# ---------------------------------------------------------------- DXF ----
+
+
+def _dxf_pairs(content: bytes) -> Iterator[tuple[str, str]]:
+    try:
+        text = content.decode("utf-8", errors="replace")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+    lines = [line.rstrip("\r") for line in text.split("\n")]
+    for index in range(0, len(lines) - 1, 2):
+        yield lines[index].strip(), lines[index + 1].rstrip()
+
+
+def _dxf_insunits(pairs: Iterator[tuple[str, str]]) -> tuple[Decimal | None, int]:
+    """Scan HEADER for $INSUNITS; returns the mm hint and 0 — pairs are a
+    generator, so the caller must rebuild it for a second pass."""
+    insunits: int | None = None
+    in_header = False
+    collecting = False
+    for code, value in pairs:
+        if code == "2" and value == "HEADER":
+            in_header = True
+        elif code == "2" and in_header and value == "ENTITIES":
+            break
+        elif code == "2" and in_header:
+            in_header = value != "ENDSEC" or in_header
+        if in_header and code == "9" and value == "$INSUNITS":
+            collecting = True
+        elif collecting and code == "70":
+            try:
+                insunits = int(value)
+            except ValueError:
+                insunits = None
+            collecting = False
+    return (INSUNIT_MM.get(insunits or -1), insunits or -1)
+
+
+def _bulge_arc(
+    p1: tuple[Decimal, Decimal], p2: tuple[Decimal, Decimal], bulge: Decimal
+) -> list[tuple[Decimal, Decimal]]:
+    """DXF bulge → sampled arc points between p1 and p2 (p2 excluded)."""
+    b = float(bulge)
+    if b == 0:
+        return []
+    x1, y1, x2, y2 = float(p1[0]), float(p1[1]), float(p2[0]), float(p2[1])
+    theta = 4 * math.atan(b)
+    chord = math.hypot(x2 - x1, y2 - y1)
+    if chord == 0:
+        return []
+    radius = chord / (2 * math.sin(theta / 2))
+    mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+    h = radius * math.cos(theta / 2)
+    nx, ny = -(y2 - y1) / chord, (x2 - x1) / chord
+    cx, cy = mx + nx * h, my + ny * h
+    a1 = math.atan2(y1 - cy, x1 - cx)
+    a2 = math.atan2(y2 - cy, x2 - cx)
+    delta = a2 - a1
+    # Match bulge direction: positive bulge sweeps counter-clockwise.
+    if b > 0:
+        while delta < 0:
+            delta += 2 * math.pi
+    else:
+        while delta > 0:
+            delta -= 2 * math.pi
+    steps = max(2, int(ARC_SEGMENTS * abs(delta) / math.pi))
+    out = []
+    for i in range(1, steps):
+        angle = a1 + delta * i / steps
+        out.append(
+            (
+                Decimal(str(round(cx + abs(radius) * math.cos(angle), 6))),
+                Decimal(str(round(cy + abs(radius) * math.sin(angle), 6))),
+            )
+        )
+    return out
+
+
+def parse_dxf(content: bytes) -> SectionImportResult:
+    pairs = list(_dxf_pairs(content))
+    mm_per_unit, _ = _dxf_insunits(iter(pairs))
+    warnings: list[str] = []
+    if mm_per_unit is None:
+        warnings.append("DXF has no $INSUNITS or an unmapped unit — confirm scale.")
+
+    candidates: list[SectionCandidate] = []
+    open_count = 0
+    in_entities = False
+    entity: str | None = None
+    vertices: list[tuple[Decimal, Decimal, Decimal]] = []
+    closed = False
+    tag_index = 0
+
+    def flush() -> None:
+        nonlocal vertices, closed, tag_index, open_count
+        if entity in ("LWPOLYLINE", "POLYLINE") and len(vertices) >= 3:
+            points: list[tuple[Decimal, Decimal]] = []
+            for i, (x, y, bulge) in enumerate(vertices):
+                points.append((x, y))
+                if bulge != 0:
+                    nxt = vertices[(i + 1) % len(vertices)]
+                    if i + 1 < len(vertices) or closed:
+                        points.extend(_bulge_arc((x, y), (nxt[0], nxt[1]), bulge))
+            if closed:
+                tag_index += 1
+                candidates.append(
+                    SectionCandidate(tag=f"{entity}#{tag_index}", points=points)
+                )
+            else:
+                open_count += 1
+        vertices = []
+        closed = False
+
+    for code, value in pairs:
+        if code == "2" and value == "ENTITIES":
+            in_entities = True
+            continue
+        if not in_entities:
+            continue
+        if code == "0":
+            flush()
+            entity = value
+            if entity == "VERTEX":
+                vertices.append((Decimal(0), Decimal(0), Decimal(0)))
+            continue
+        if entity in ("LWPOLYLINE", "POLYLINE", "VERTEX"):
+            target_vertex = entity == "VERTEX" and vertices
+            if code == "10":
+                if entity == "LWPOLYLINE":
+                    vertices.append((Decimal(value or "0"), Decimal(0), Decimal(0)))
+                elif target_vertex:
+                    vertices[-1] = (Decimal(value or "0"), vertices[-1][1], vertices[-1][2])
+            elif code == "20" and vertices and entity in ("LWPOLYLINE", "VERTEX"):
+                vertices[-1] = (vertices[-1][0], Decimal(value or "0"), vertices[-1][2])
+            elif code == "42" and vertices:
+                vertices[-1] = (vertices[-1][0], vertices[-1][1], Decimal(value or "0"))
+            elif code == "70" and entity != "VERTEX":
+                try:
+                    closed = bool(int(value) & 1)
+                except ValueError:
+                    closed = False
+    flush()
+    if open_count:
+        warnings.append(f"{open_count} open polyline(s) skipped — only closed shapes qualify.")
+    return _finish("dxf", mm_per_unit, candidates, warnings)
+
+
+# ------------------------------------------------------------- shared ----
+
+
+def _finish(
+    fmt: str,
+    mm_per_unit: Decimal | None,
+    candidates: list[SectionCandidate],
+    warnings: list[str],
+) -> SectionImportResult:
+    if not candidates:
+        raise SectionImportError(
+            "section_no_candidates",
+            "The drawing contains no closed outline to review.",
+        )
+
+    def area(points: list[tuple[Decimal, Decimal]]) -> Decimal:
+        total = Decimal(0)
+        for i, (x1, y1) in enumerate(points):
+            x2, y2 = points[(i + 1) % len(points)]
+            total += x1 * y2 - x2 * y1
+        return abs(total) / 2
+
+    ranked = sorted(candidates, key=lambda c: -area(c.points))[:MAX_CANDIDATES]
+    result = SectionImportResult(format=fmt, mm_per_unit=mm_per_unit, warnings=warnings)
+    if len(candidates) > MAX_CANDIDATES:
+        warnings.append(
+            f"{len(candidates) - MAX_CANDIDATES} smaller outline(s) omitted — review the largest."
+        )
+    for index, candidate in enumerate(ranked):
+        points = candidate.points[:MAX_POINTS]
+        if len(candidate.points) > MAX_POINTS:
+            warnings.append(f"{candidate.tag} exceeded {MAX_POINTS} points — truncated.")
+        result.candidates.append(
+            {
+                "index": index,
+                "tag": candidate.tag,
+                "points": [[str(x), str(y)] for x, y in points],
+                "area": str(area(points)),
+            }
+        )
+    return result
+
+
+def import_section(file_name: str, content: bytes) -> SectionImportResult:
+    if not content:
+        raise SectionImportError("section_file_empty", "The uploaded file is empty.")
+    fmt = detect_format(file_name, content)
+    return parse_svg(content) if fmt == "svg" else parse_dxf(content)
+
+
+def storage_key(org_id: str, file_name: str) -> str:
+    return f"section-imports/{org_id}/{uuid.uuid4()}/{file_name}"

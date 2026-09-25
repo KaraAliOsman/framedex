@@ -628,3 +628,61 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* §06-G section drawing import */
+.section-import {
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.section-import-warnings {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--theme-warn, #9a6700);
+  font-size: 0.85rem;
+}
+.section-import-candidates {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.section-import-candidate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 96px;
+  padding: 0.4rem;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--theme-text);
+  cursor: pointer;
+}
+.section-import-candidate[aria-pressed="true"] {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent-soft, rgba(60, 90, 200, 0.08));
+}
+.section-import-candidate svg {
+  width: 72px;
+  height: 72px;
+  display: block;
+}
+.section-import-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 320px;
+}
+.section-import-preview svg {
+  width: 140px;
+  height: 140px;
+  display: block;
+}

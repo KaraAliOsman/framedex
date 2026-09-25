@@ -9,6 +9,7 @@ from hashlib import sha256
 from django.db import connection
 
 from authentication.errors import contract_error
+from documents.repository import DocumentaryError
 from catalogs.serializers import (
     ArticleWriteSerializer,
     BeadWriteSerializer,
@@ -87,6 +88,42 @@ def _fetch(resource, where, params, *, lock=False):
                 )
         row["revision"] = catalog_revision(row)
     return result
+
+
+def import_section_drawing(*, org_id, file_name, content, content_type):
+    """Parse a DXF/SVG section drawing into review candidates.
+
+    The document is stored immutable BEFORE the candidates are returned so a
+    confirmed pick can reference real provenance (`drawing_ref`); nothing
+    reaches an article until a human PATCHes the chosen polygon in.
+    """
+    from catalogs import section_import
+    from documents.storage import SupabaseDocumentStorage
+    from ingest.extract import safe_file_name
+
+    if not safe_file_name(file_name):
+        raise contract_error(400, "section_file_name", "catalogs.errors.section_file_name")
+    if not content or len(content) > 5_000_000:
+        raise contract_error(400, "section_file_size", "catalogs.errors.section_file_size")
+    try:
+        result = section_import.import_section(file_name, content)
+    except section_import.SectionImportError as error:
+        raise contract_error(400, error.code, f"catalogs.errors.{error.code}") from error
+    path = section_import.storage_key(str(org_id), file_name)
+    try:
+        SupabaseDocumentStorage().upload_immutable(
+            path, content, content_type or "application/octet-stream"
+        )
+    except DocumentaryError as error:
+        raise contract_error(503, "section_storage_failed", "catalogs.errors.section_storage") from error
+    return {
+        "document_path": path,
+        "format": result.format,
+        "parser_version": section_import.PARSER_VERSION,
+        "mm_per_unit": result.mm_per_unit,
+        "candidates": result.candidates,
+        "warnings": result.warnings,
+    }
 
 
 def catalog_revision(row):

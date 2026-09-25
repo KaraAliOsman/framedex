@@ -1,5 +1,7 @@
 import * as client from "../../api/generated/dekopen";
 import type {
+  ErrorResponse,
+  SectionImportResponse,
   SystemWriteRequest,
   SystemWorkspace,
   ProcessProfileOption,
@@ -497,6 +499,14 @@ export function catalogApi(orgId: string) {
         signal,
       });
       if (response.status !== 200) throw new Error("catalog_read_failed");
+      return response.data;
+    },
+    async sectionImport(file: File): Promise<SectionImportResponse> {
+      const response = await client.catalogSectionImportCreate({ file }, options);
+      if (response.status !== 200) {
+        const detail = (response.data as ErrorResponse).error;
+        throw new Error(detail?.code ?? "section_import_failed");
+      }
       return response.data;
     },
     async processProfiles(signal?: AbortSignal): Promise<ProcessProfileOption[]> {

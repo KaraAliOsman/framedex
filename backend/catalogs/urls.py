@@ -20,6 +20,11 @@ urlpatterns = [
         name="catalog-process-profiles",
     ),
     path(
+        "section-imports/",
+        views.SectionImportCollectionView.as_view(),
+        name="catalog-section-imports",
+    ),
+    path(
         "systems/<uuid:row_id>/workspace/",
         views.SystemWorkspaceView.as_view(),
         name="catalog-system-workspace",

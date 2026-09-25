@@ -36,6 +36,7 @@ import type {
   CatalogImportDetailResponse,
   CatalogImportListResponse,
   CatalogKitListParams,
+  CatalogSectionImportCreateBody,
   ChangeInputRequest,
   ChangeResult,
   CheckoutInputRequest,
@@ -166,6 +167,7 @@ import type {
   ResetPricingRequest,
   RevisionCompareResponse,
   SearchResponse,
+  SectionImportResponse,
   SendOrderRequestRequest,
   ShareQuoteResponse,
   SignedAccessResponse,
@@ -3211,6 +3213,82 @@ export const catalogProcessProfileList = async (
   return apiMutator<catalogProcessProfileListResponse>(getCatalogProcessProfileListUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export type catalogSectionImportCreateResponse200 = {
+  data: SectionImportResponse;
+  status: 200;
+};
+
+export type catalogSectionImportCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSectionImportCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSectionImportCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSectionImportCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSectionImportCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSectionImportCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSectionImportCreateResponseSuccess = catalogSectionImportCreateResponse200 & {
+  headers: Headers;
+};
+export type catalogSectionImportCreateResponseError = (
+  | catalogSectionImportCreateResponse400
+  | catalogSectionImportCreateResponse401
+  | catalogSectionImportCreateResponse403
+  | catalogSectionImportCreateResponse404
+  | catalogSectionImportCreateResponse409
+  | catalogSectionImportCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSectionImportCreateResponse =
+  catalogSectionImportCreateResponseSuccess | catalogSectionImportCreateResponseError;
+
+export const getCatalogSectionImportCreateUrl = () => {
+  return `/api/v1/catalogs/section-imports/`;
+};
+
+/**
+ * POST section-imports/ — upload a DXF/SVG drawing, get back the stored
+ * document path + detected outline candidates for human review.
+ */
+export const catalogSectionImportCreate = async (
+  catalogSectionImportCreateBody?: CatalogSectionImportCreateBody,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSectionImportCreateResponse> => {
+  const formData = new FormData();
+  if (catalogSectionImportCreateBody?.file !== undefined) {
+    formData.append(`file`, catalogSectionImportCreateBody.file);
+  }
+
+  return apiMutator<catalogSectionImportCreateResponse>(getCatalogSectionImportCreateUrl(), {
+    ...options,
+    method: "POST",
+    body: formData,
   });
 };
 
