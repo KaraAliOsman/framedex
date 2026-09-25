@@ -810,9 +810,20 @@ function BayInspector({
   const isTopBay = topIntent(module.tree).id === bay.id;
   const recentGlass = useCanvasStore((state) => state.recentGlass);
   const pushRecentGlass = useCanvasStore((state) => state.pushRecentGlass);
+  const favoriteGlass = useCanvasStore((state) => state.favoriteGlass);
+  const toggleFavoriteGlass = useCanvasStore((state) => state.toggleFavoriteGlass);
 
   function patchBay(patch: Partial<IntentNode>): void {
     commit(setModuleTree(product, module.id, updateBay(module.tree, bay.id, patch)));
+  }
+
+  function pickGlass(sku: string | null): void {
+    if (sku) pushRecentGlass(sku);
+    patchBay({
+      glass_article_sku: sku,
+      glass_spec:
+        sku == null ? bay.glass_spec : (glassSpecs.find((item) => item.sku === sku)?.spec ?? null),
+    });
   }
 
   function pickOpening(next: Opening): void {
@@ -914,30 +925,55 @@ function BayInspector({
         </label>
         <label className="assembly-field">
           <span>{t("assembly.glass")}</span>
-          <select
-            aria-label={t("assembly.glass")}
-            disabled={busy}
-            value={bay.glass_article_sku ?? ""}
-            onChange={(event) => {
-              const sku = event.target.value || null;
-              if (sku) pushRecentGlass(sku);
-              patchBay({
-                glass_article_sku: sku,
-                glass_spec:
-                  sku == null
-                    ? bay.glass_spec
-                    : (glassSpecs.find((item) => item.sku === sku)?.spec ?? null),
-              });
-            }}
-          >
-            <option value="">{t("assembly.noGlass")}</option>
-            {glassSkus.map((sku) => (
-              <option key={sku} value={sku}>
-                {sku}
-              </option>
-            ))}
-          </select>
+          <span className="assembly-field__row">
+            <select
+              aria-label={t("assembly.glass")}
+              disabled={busy}
+              value={bay.glass_article_sku ?? ""}
+              onChange={(event) => pickGlass(event.target.value || null)}
+            >
+              <option value="">{t("assembly.noGlass")}</option>
+              {glassSkus.map((sku) => (
+                <option key={sku} value={sku}>
+                  {sku}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={`star-toggle${
+                favoriteGlass.includes(bay.glass_article_sku ?? "") ? " is-active" : ""
+              }`}
+              aria-label={t("assembly.favoriteGlass")}
+              aria-pressed={favoriteGlass.includes(bay.glass_article_sku ?? "")}
+              disabled={busy || bay.glass_article_sku == null}
+              onClick={() => {
+                if (bay.glass_article_sku) toggleFavoriteGlass(bay.glass_article_sku);
+              }}
+            >
+              ★
+            </button>
+          </span>
         </label>
+        {favoriteGlass.length > 0 && (
+          <div className="recents" aria-label={t("assembly.favoriteGlass")}>
+            <span className="recents__label">{t("assembly.favoriteGlass")}</span>
+            {favoriteGlass
+              .filter((sku) => sku !== bay.glass_article_sku)
+              .map((sku) => (
+                <button
+                  key={sku}
+                  type="button"
+                  className="recents__chip recents__chip--favorite"
+                  disabled={busy}
+                  title={sku}
+                  onClick={() => pickGlass(sku)}
+                >
+                  {sku}
+                </button>
+              ))}
+          </div>
+        )}
         {recentGlass.length > 0 && (
           <div className="recents" aria-label={t("assembly.recentGlass")}>
             <span className="recents__label">{t("assembly.recentGlass")}</span>
@@ -950,12 +986,7 @@ function BayInspector({
                   className="recents__chip"
                   disabled={busy}
                   title={sku}
-                  onClick={() => {
-                    patchBay({
-                      glass_article_sku: sku,
-                      glass_spec: glassSpecs.find((item) => item.sku === sku)?.spec ?? null,
-                    });
-                  }}
+                  onClick={() => pickGlass(sku)}
                 >
                   {sku}
                 </button>

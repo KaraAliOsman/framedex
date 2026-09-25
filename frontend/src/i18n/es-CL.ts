@@ -1748,6 +1748,7 @@ export const messages = {
   "assembly.removeSplitNested": "Solo se puede quitar una división entre dos paños.",
   "assembly.removeSplitKeeps": "Queda un solo paño con la especificación del primero.",
   "assembly.recentGlass": "Vidrios recientes",
+  "assembly.favoriteGlass": "Vidrios favoritos",
   "assembly.kindInline": "En línea",
   "assembly.kindStacked": "Apilado",
   "assembly.kindTee": "Te (T)",
