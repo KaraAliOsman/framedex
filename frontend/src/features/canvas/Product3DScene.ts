@@ -683,13 +683,20 @@ export function buildScene3D(
     const material =
       members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ?? members.frame.material;
     // Straight joints extrude nothing: an exactly-0° coupling collapses
-    // its plan triangle to coincident points — detect that, not the tiny
-    // real wedges a shallow angle legitimately produces. A 0.01° joint
-    // keeps its angled prism.
-    const angleDeg = coupling?.angle_deg != null ? Number(coupling.angle_deg) : Number.NaN;
+    // its plan triangle to coincident points — detect true degeneracy in
+    // the polygon itself (the emitted geometry is the authority), not the
+    // tiny real wedges a shallow angle legitimately produces.
     const uniquePoints = new Set(polygon.polygon.map((p) => `${Number(p.x_mm)},${Number(p.y_mm)}`))
       .size;
-    if (angleDeg === 0 || uniquePoints < 3) {
+    const degenerate =
+      uniquePoints < 3 ||
+      Math.abs(
+        polygon.polygon.reduce((acc, p, i) => {
+          const q = polygon.polygon[(i + 1) % polygon.polygon.length]!;
+          return acc + Number(p.x_mm) * Number(q.y_mm) - Number(q.x_mm) * Number(p.y_mm);
+        }, 0) / 2,
+      ) === 0;
+    if (degenerate) {
       const joint = jointByCoupling.get(polygon.coupling_id);
       if (!joint) continue;
       const pair = pairByCoupling.get(polygon.coupling_id) ?? [];
