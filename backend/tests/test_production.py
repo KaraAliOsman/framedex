@@ -642,6 +642,8 @@ def _transition_fakes(step: dict, order_status: str):
             return {"order_id": step["order_id"]}
         if "FROM public.orders" in query:
             return {"id": step["order_id"], "status": order_status}
+        if "sequence < %s" in query:
+            return {"remaining": 0}
         if "FOR UPDATE OF s" in query:
             return step
         raise AssertionError(query)
@@ -731,6 +733,35 @@ def test_unassigned_step_refuses_progress_until_a_center_exists() -> None:
     assert error.value.code == "work_center_unassigned"
 
 
+def test_start_refused_while_an_earlier_step_is_open() -> None:
+    # Routing is sequential: GLAZE may not start while CUT is still open —
+    # the stepper is a sequence, not a checklist.
+    step = _step_row(status="READY", code="GLAZE", sequence=2)
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        if "FOR UPDATE OF s" in query:
+            return step
+        if "sequence < %s" in query:
+            return {"remaining": 1}
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "step_sequence_blocked"
+
+
 def test_unassigned_step_adopts_a_later_activated_center() -> None:
     step = _step_row(status="READY", code="CUT")
     center = {"id": uuid4(), "code": "SAW-1", "name": "Saw"}
@@ -741,6 +772,8 @@ def test_unassigned_step_adopts_a_later_activated_center() -> None:
             return {"order_id": step["order_id"]}
         if "FOR UPDATE OF s" in query:
             return step
+        if "sequence < %s" in query:
+            return {"remaining": 0}
         if "SELECT status::text" in query:
             return {"status": "IN_PROGRESS"}
         if "FROM public.production_steps s" in query:

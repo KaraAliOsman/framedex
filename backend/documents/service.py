@@ -23,6 +23,7 @@ from dekopen_engine.inspection_models import (
     InspectorConfig,
     InspectorInput,
     InspectorResult,
+    InspectorSeverity,
     RuleEvaluationStatus,
 )
 from dekopen_engine.inspector import inspect
@@ -1095,8 +1096,18 @@ def freeze_revision_a(
                 inspections.append(
                     (module_id, inspection, module_complete, module_allowed)
                 )
+                # Only RED-severity failures block unconditionally — a
+                # YELLOW finding is a warning the inspector itself classifies
+                # as production-allowed, so blocking on it made a healthy
+                # freeze fail invisibly (review WB3).
+                red_rules = {
+                    finding.rule_id
+                    for finding in inspection.findings
+                    if finding.severity is InspectorSeverity.RED
+                }
                 has_failures = has_failures or any(
                     evaluation.status is RuleEvaluationStatus.FAIL
+                    and evaluation.rule_id in red_rules
                     for evaluation in inspection.evaluations
                 )
                 position_production_allowed = (
@@ -1107,7 +1118,28 @@ def freeze_revision_a(
                 inspection.status == "RED" for _, inspection, _, _ in inspections
             )
             if has_failures or (is_red and not allow_incomplete_workshop):
-                raise DocumentaryError("inspector_red_blocks_documentary_freeze")
+                # Serialize the blocking rules — a bare "inspector_red_blocks"
+                # left the emission form unable to say WHAT failed (review WB2).
+                failures = [
+                    {
+                        "rule": str(finding.rule_id.value),
+                        "severity": str(finding.severity.value),
+                        "title": finding.title,
+                        "diagnosis": finding.diagnosis,
+                        "recommendation": finding.recommendation,
+                        "module_id": module_id,
+                        "bay_id": finding.bay_id,
+                        "leaf_id": finding.leaf_id,
+                    }
+                    for module_id, inspection, _, _ in inspections
+                    for finding in inspection.findings
+                    if finding.severity is InspectorSeverity.RED
+                ]
+                raise DocumentaryError(
+                    "inspector_red_blocks_documentary_freeze",
+                    detail="Una regla del inspector bloquea el congelamiento documental.",
+                    extra={"inspector_failures": failures},
+                )
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
@@ -1586,8 +1618,10 @@ def prepare_documentary_inputs(
             result,
         )
         identity_hash = identity_hashes[0]
-        if existing and existing["calculation_hash"] not in identity_hashes:
-            existing = None
+        # A changed product no longer discards the estimator's work (review
+        # WM3): saved values carry forward and the per-target filters below
+        # drop only the entries whose bay/leaf/span disappeared — an
+        # untouched leaf keeps its recorded measurements across re-prepare.
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
         trace_leaves: list[dict[str, object]] = []

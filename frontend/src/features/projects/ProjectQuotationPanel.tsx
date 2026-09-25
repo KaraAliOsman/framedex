@@ -111,6 +111,34 @@ const ORDER_TYPE_KEYS: Record<(typeof ORDER_TYPES)[number], TranslationKey> = {
 
 const EMPTY_EDGES: PolishingEdges = { top: false, right: false, bottom: false, left: false };
 
+/** One inspector rule that blocked the freeze, from the 422's
+ * `error.inspector_failures` extra (review WB2). */
+interface InspectorFailure {
+  rule: string;
+  severity: string;
+  title: string;
+  diagnosis: string;
+  recommendation: string;
+  module_id: string | null;
+  bay_id: string | null;
+  leaf_id: string | null;
+}
+
+function readInspectorFailures(payload: unknown): InspectorFailure[] {
+  if (typeof payload !== "object" || payload === null) return [];
+  const error = (payload as { error?: unknown }).error;
+  if (typeof error !== "object" || error === null) return [];
+  const failures = (error as { inspector_failures?: unknown }).inspector_failures;
+  if (!Array.isArray(failures)) return [];
+  return failures.filter(
+    (item): item is InspectorFailure =>
+      typeof item === "object" &&
+      item !== null &&
+      typeof (item as InspectorFailure).rule === "string" &&
+      typeof (item as InspectorFailure).title === "string",
+  );
+}
+
 function GlassPolishingRow({
   target,
   record,
@@ -539,6 +567,9 @@ export function ProjectQuotationPanel({
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // Inspector rules that blocked the last freeze attempt — the 422's
+  // inspector_failures payload so the estimator sees WHAT failed (WB2).
+  const [inspectorFailures, setInspectorFailures] = useState<InspectorFailure[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const generation = useRef(0);
   // Which handle intents the app seeded (vs typed by the estimator) —
@@ -779,6 +810,13 @@ export function ProjectQuotationPanel({
       setPreparation(null);
       setConfirmed(false);
       setDirty(false);
+      setInspectorFailures([]);
+      // A new sealed revision rebases the commercial deal — the header
+      // stepper's "Saldo" must recompute against THIS revision, not the
+      // previously emitted one (review WM5).
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, project.id],
+      });
       setMessage(
         `${t("quotation.emitted")} ${formatRevision(frozen.data.revision_code)}${
           frozen.data.production_allowed ? "" : ` · ${t("quotation.quoteOnlyNotice")}`
@@ -787,6 +825,7 @@ export function ProjectQuotationPanel({
       await onChanged();
     } catch (error) {
       if (generation.current !== current) return;
+      setInspectorFailures(error instanceof ApiError ? readInspectorFailures(error.payload) : []);
       setMessage(
         t(
           error instanceof ApiError && error.status === 409
@@ -918,7 +957,10 @@ export function ProjectQuotationPanel({
     project.status === "DRAFT" &&
     project.pricing_current &&
     project.current_pricing_operation_id !== null;
-  const canRevise = canWrite && project.status === "QUOTED";
+  // APPROVED stays revisable — the client portal can flip a quote to
+  // APPROVED and still request changes; the sealed revision is immutable
+  // and the successor just needs a fresh approval (review WM7).
+  const canRevise = canWrite && (project.status === "QUOTED" || project.status === "APPROVED");
   const canShare =
     canWrite &&
     (project.status === "QUOTED" || project.status === "APPROVED") &&
@@ -982,6 +1024,23 @@ export function ProjectQuotationPanel({
         )}
       </header>
       {message && <p role="status">{message}</p>}
+      {inspectorFailures.length > 0 && (
+        <ul className="quotation-inspector-failures" role="alert">
+          {inspectorFailures.map((failure, index) => (
+            <li key={`${failure.rule}-${failure.bay_id ?? ""}-${index}`}>
+              <strong>{failure.rule}</strong> · {failure.title}
+              {failure.bay_id ? (
+                <>
+                  {" · "}
+                  {t("quotation.inspectorAffected")} {failure.bay_id}
+                  {failure.leaf_id ? `/${failure.leaf_id}` : ""}
+                </>
+              ) : null}
+              {failure.recommendation ? <p>{failure.recommendation}</p> : null}
+            </li>
+          ))}
+        </ul>
+      )}
       {canWrite && project.status === "DRAFT" && !project.pricing_current && (
         <p>{t("quotation.priceFirst")}</p>
       )}

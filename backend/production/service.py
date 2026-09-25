@@ -577,6 +577,21 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         )
         if not version["production_allowed"]:
             raise DocumentaryError("version_not_releasable")
+        # A sealed version stays valid only while it is the newest one —
+        # once a later revision froze, releasing the superseded quote would
+        # build the wrong product (review WM2).
+        # Revision codes are base-26 (REV-Z → REV-AA), so recency sorts by
+        # suffix length then lexicographically, never plain text order.
+        latest = rows(
+            """
+            SELECT revision_code::text AS code FROM public.project_versions
+            WHERE project_id = %s AND org_id = %s
+            ORDER BY length(revision_code) DESC, revision_code DESC LIMIT 1
+            """,
+            [str(version["project_id"]), str(org_id)],
+        )
+        if latest and str(latest[0]["code"]) != str(version["revision_code"]):
+            raise DocumentaryError("version_superseded")
         snapshot = version["snapshot_json"]
         if isinstance(snapshot, str):
             snapshot = json.loads(snapshot)
@@ -1090,6 +1105,20 @@ def transition_step(
             new_status = "BLOCKED"
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
+        # Routing is sequential: a station may only start once every earlier
+        # step finished — otherwise GLAZE could run before CUT and the stepper
+        # was decorative rather than a sequence (review WM1).
+        if action == "START":
+            pending_earlier = one(
+                """
+                SELECT COUNT(*)::int AS remaining FROM public.production_steps
+                WHERE order_id = %s AND org_id = %s AND sequence < %s AND status <> 'DONE'
+                """,
+                [str(step["order_id"]), str(org_id), step["sequence"]],
+                "production_step_not_found",
+            )
+            if int(pending_earlier["remaining"]) > 0:
+                raise DocumentaryError("step_sequence_blocked")
         # A step released while its center was inactive — or copied unassigned
         # into a remake — sits READY/PENDING without a center and must never
         # silently progress. When a center of the required kind has since been

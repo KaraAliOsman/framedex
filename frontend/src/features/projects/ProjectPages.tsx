@@ -9,6 +9,7 @@ import {
   clientsList,
   documentsCompareVersions,
   projectPaymentsList,
+  projectQuoteLinkCreate,
   projectQuoteLinksList,
   projectsList,
   projectsCreate,
@@ -453,6 +454,10 @@ interface NextAction {
   labelKey: TranslationKey;
   to?: string;
   section?: FactsSection;
+  /** "Enviar al cliente" performs the share itself — mint the portal link
+   * and copy it — instead of merely revealing the rail where it lives
+   * (review WB1). */
+  share?: boolean;
 }
 
 function projectNextAction(
@@ -488,7 +493,7 @@ function projectNextAction(
           Date.parse(a.expires_at) > now,
       )
         ? { labelKey: "projects.next.awaiting", section: "quote" }
-        : { labelKey: "projects.next.share", section: "quote" };
+        : { labelKey: "projects.next.share", share: true };
     case "APPROVED":
       // Payment recording is estimator/owner work; release is owner/WM.
       // Check each capability separately — a WM (canRelease, !canWrite)
@@ -516,12 +521,14 @@ function ProjectHeader({
   canWrite,
   canRelease,
   onOpenSection,
+  onShareQuote,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
   canRelease: boolean;
   onOpenSection: (section: FactsSection) => void;
+  onShareQuote: () => void;
 }): JSX.Element {
   const payments = useQuery({
     queryKey: ["projects", "payments-summary", orgId, project.id],
@@ -602,7 +609,9 @@ function ProjectHeader({
             ) : (
               <button
                 className="primary-action"
-                onClick={() => action.section && onOpenSection(action.section)}
+                onClick={() =>
+                  action.share ? onShareQuote() : action.section && onOpenSection(action.section)
+                }
                 type="button"
               >
                 {t(action.labelKey)}
@@ -1161,6 +1170,32 @@ function ProjectWorkspace({
   const disabled = busy || query.isFetching || mustReload;
   const editable = canWrite && project?.status === "DRAFT" && !project.pricing_current;
   const needle = search.toLocaleLowerCase("es-CL");
+
+  // The header's "Enviar al cliente" CTA performs the share itself — mint
+  // the portal link, copy it, refresh the approvals track (review WB1).
+  async function shareQuote(): Promise<void> {
+    if (!project) return;
+    setNotice("");
+    setError("");
+    try {
+      const response = await projectQuoteLinkCreate(project.id, {
+        headers: { "X-Organization-ID": orgId },
+      });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "quote-approvals", orgId, project.id],
+      });
+      const url = `${window.location.origin}${response.data.path}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setNotice(t("quotation.shareCopied"));
+      } catch {
+        setNotice(url);
+      }
+    } catch {
+      setError(t("quotation.error"));
+    }
+  }
   // Deep-linkable triage filter — the dashboard attention queue lands on
   // /projects?status=QUOTED so the promised list is already filtered.
   const statusFilter = params.get("status") ?? "";
@@ -1185,6 +1220,7 @@ function ProjectWorkspace({
             setFactsCollapsed(false);
             setOpenSection(section);
           }}
+          onShareQuote={() => void shareQuote()}
           project={project}
         />
       ) : (
@@ -1241,7 +1277,10 @@ function ProjectWorkspace({
       )}
 
       {project ? (
-        <div className="project-desk">
+        /* data-facts-open widens the facts column while a workflow section
+         * (quote/payments/imports/compare) is open — the emission form is
+         * unusable at the idle rail's ~280px (review WM4). */
+        <div className="project-desk" data-facts-open={openSection || undefined}>
           {/* LEFT — project facts rail: the deal's identity plus the
               quotation/cobranza/imports workflows as collapsible sections.
               Collapsed it shrinks to a strip so the grid owns the room. */}

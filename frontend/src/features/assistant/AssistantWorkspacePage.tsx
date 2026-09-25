@@ -17,6 +17,7 @@ import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
 import { designAssistProduct } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
+import { jobErrorKey } from "../jobs/jobError";
 import { t } from "../../i18n/es-CL";
 
 /* ------------------------------------------------------------------ */
@@ -506,7 +507,7 @@ export function AssistantWorkspacePage(): JSX.Element {
                 </span>
                 {" · "}
                 {SURFACE_LABELS[job.surface] ?? job.surface}
-                {job.error_code ? ` · ${job.error_code}` : ""}
+                {job.error_code ? ` · ${t(jobErrorKey(job.error_code))}` : ""}
               </p>
             </div>
             {live ? (

@@ -122,7 +122,15 @@ export function ProjectPaymentsPanel({
 
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
-    setBaseline({ kind, method });
+    // Follow the deal's position — registering against an outstanding
+    // balance should open as SALDO prefilled with what is owed, not the
+    // anticipo the first payment was (review WM7).
+    const collected = summary ? Number(summary.collected) : 0;
+    const balance = summary ? Number(summary.balance) : 0;
+    const nextKind: PaymentKindEnum = collected > 0 && balance > 0 ? "SALDO" : "ANTICIPO";
+    setKind(nextKind);
+    if (nextKind === "SALDO") setAmount(String(balance));
+    setBaseline({ kind: nextKind, method });
     setShowForm(true);
   }
 

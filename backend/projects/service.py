@@ -663,8 +663,26 @@ def start_successor(org_id, project_id, expected_current_revision=None):
             **project_public(org_id, project_row(org_id, project_id), detail=True),
             "successor_created": False,
         }
-    if project["status"] != "QUOTED" or project["current_revision"] != expected:
+    # QUOTED and APPROVED are both revisable — the client portal can flip a
+    # quote to APPROVED and the client may still request changes; the sealed
+    # revision stays immutable and the successor simply needs a fresh
+    # approval (review WM7). But once live workshop orders exist the product
+    # is on the factory floor — revising it would silently change what is
+    # being built, so production in flight blocks the successor.
+    if project["status"] not in ("QUOTED", "APPROVED") or project["current_revision"] != expected:
         raise contract_error(409, "successor_source_stale", "La revisión actual del proyecto no coincide con la esperada.")
+    if project["status"] == "APPROVED":
+        live_orders = one(
+            """
+            SELECT COUNT(*)::int AS live FROM public.orders
+            WHERE project_id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
+              AND status NOT IN ('COMPLETED', 'DISPATCHED', 'INSTALLED', 'CANCELLED', 'FULFILLED')
+            """,
+            [project_id, org_id],
+            "order_lookup_failed",
+        )
+        if live_orders["live"] > 0:
+            raise contract_error(409, "successor_in_production", "El proyecto tiene órdenes de producción en curso; no se puede revisar.")
     if latest["revision_code"] != project["current_revision"]:
         raise contract_error(409, "revision_source_drift", "La revisión emitida no coincide con el proyecto.")
     _assert_live_matches_version(org_id, project_id, latest)

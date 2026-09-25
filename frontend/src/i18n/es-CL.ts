@@ -432,6 +432,7 @@ export const messages = {
   "quotation.loadError": "No pudimos preparar la emisión. Revisa las autoridades técnicas.",
   "quotation.error":
     "No se pudo emitir. Conservamos los datos para que puedas corregir y reintentar.",
+  "quotation.inspectorAffected": "Pieza afectada",
   "quotation.conflict": "El proyecto cambió durante la emisión. Recarga y vuelve a revisar.",
   "quotation.successorConfirm":
     "Se abrirá una nueva revisión editable y el precio actual dejará de ser vigente. ¿Continuar?",
@@ -917,6 +918,8 @@ export const messages = {
   "jobs.error": "No pudimos cargar los trabajos.",
   "jobs.fail.notFound":
     "No encuentra su referencia — el proyecto o la revisión cambió. Reemite desde el proyecto.",
+  "jobs.fail.missingAuthority":
+    "Falta una autoridad de precios (lista de costos o configuración). Revisa Precios → Catálogo antes de reintentar.",
   "jobs.fail.permission": "Tu rol no permite completar este trabajo.",
   "jobs.fail.storage":
     "El almacenamiento de documentos falló. Reintenta; si persiste, revisa la configuración.",

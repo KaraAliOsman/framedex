@@ -802,6 +802,16 @@
   grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr) minmax(13rem, 17rem);
 }
 
+/* An open workflow section (quote/payments/imports/compare) is real work —
+ * the emission form needs far more than the idle rail's 15–19rem; steal from
+ * the positions column while it is open (review WM4). Desktop only — under
+ * the 1100px breakpoint the desk stays a single column. */
+@media (min-width: 1101px) {
+  .project-desk[data-facts-open] {
+    grid-template-columns: minmax(26rem, 34vw) minmax(0, 1fr) minmax(13rem, 17rem);
+  }
+}
+
 .project-facts {
   background: var(--theme-surface-panel);
   border: 1px solid var(--theme-border-subtle);
@@ -892,11 +902,16 @@
 }
 
 .position-row__loc {
+  display: -webkit-box;
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  /* A location name is the position's identity — "Cocina, ventana sobre
+   * mesón" clipped to "Cocina, ventana sobre…" reads as a different vano;
+   * wrap to two lines instead of truncating (review WM7). */
+  white-space: normal;
 }
 
 .position-row__dims {

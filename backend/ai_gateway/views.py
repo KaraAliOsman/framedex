@@ -28,8 +28,11 @@ from authentication.errors import ContractAPIException, contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
 
-_CALLERS = ("OWNER", "ESTIMATOR")
+# Ask and invoke answer inside the caller's RLS projection exactly like the
+# agent loop — a workshop manager who may run the agent must also be able to
+# ask, or the two AI surfaces contradict each other (review WM6).
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
+_CALLERS = _AGENT_CALLERS
 
 
 def _record_failure(request, *, goal, job_id, error, surface=None, refs=None,
