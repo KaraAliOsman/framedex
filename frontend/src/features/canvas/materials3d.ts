@@ -37,12 +37,16 @@ const MEMBER_TOKENS: Record<string, string> = {
  * families read as coated metal, polymer as satin plastic, foil as a
  * wood-toned skin over PVC. Unknown materials stay neutral. */
 const MEMBER_RESPONSE: Record<string, { color: string; roughness: number; metalness: number }> = {
-  PVC: { color: "#d6d3c9", roughness: 0.55, metalness: 0.08 },
+  // PVC blanco stays a desaturated polymer white — the previous warm
+  // (#d6d3c9) cast read as tan under the key light (review M6).
+  PVC: { color: "#dfe1dc", roughness: 0.55, metalness: 0.08 },
   PVC_FOIL: { color: "#7b5a3b", roughness: 0.5, metalness: 0.05 },
   ALUMINIUM: { color: "#8f959a", roughness: 0.42, metalness: 0.55 },
-  ALUMINIUM_ANTHRACITE: { color: "#3f444a", roughness: 0.45, metalness: 0.6 },
+  // Powder-coated anthracite is near-matte — the previous metalness 0.6
+  // caught the environment and washed to grey (review M7 / §05-H notes).
+  ALUMINIUM_ANTHRACITE: { color: "#363a40", roughness: 0.55, metalness: 0.35 },
 };
-const MEMBER_RESPONSE_DEFAULT = { color: "#d6d3c9", roughness: 0.55, metalness: 0.08 };
+const MEMBER_RESPONSE_DEFAULT = { color: "#dfe1dc", roughness: 0.55, metalness: 0.08 };
 
 /** Grain follows the member's run axis: a long box's long dimension, a
  * profile's extrusion direction (v), a contour ring's perimeter (u). */

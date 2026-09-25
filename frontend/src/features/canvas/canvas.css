@@ -1012,6 +1012,12 @@
   fill: none;
 }
 
+/* A contour module's inset path IS the lite — the transparent base class
+ * left Trapecio/Arco elevations as a bare member slab (review M2). */
+.module-opening--lite {
+  fill: var(--theme-glass-pane);
+}
+
 .member-sash {
   stroke-width: 2;
 }
@@ -1030,7 +1036,9 @@
 }
 
 .module-glass {
-  fill: var(--theme-glass-tint);
+  /* Opaque pane — a translucent tint showed the dark member slab beneath,
+   * so anthracite/foil lites rendered as solid slabs (rendering review M1). */
+  fill: var(--theme-glass-pane);
   stroke: var(--theme-border-subtle);
   stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
@@ -1972,4 +1980,68 @@
   fill: none;
   stroke: var(--theme-text-muted);
   stroke-width: 1.2;
+}
+
+/* Frameless (glass-only) modules: no member slab — the pane runs edge to
+ * edge, supports/fittings mark their declared edges (review M4). */
+.module-frameless .module-glass {
+  stroke: var(--theme-border-strong);
+}
+
+.frameless-exposed {
+  fill: var(--theme-bg-canvas);
+  stroke: none;
+  opacity: 0.35;
+}
+
+.frameless-channel {
+  fill: var(--model3d-steel);
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.frameless-clamp,
+.frameless-fitting {
+  fill: var(--model3d-steel);
+  stroke: var(--theme-text-primary);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.frameless-fitting--patch_fitting,
+.frameless-fitting--clamp {
+  fill: var(--member-aluminium-edge);
+}
+
+.frameless-fitting--hinge,
+.frameless-fitting--lock {
+  fill: var(--theme-text-secondary);
+}
+
+.frameless-seal {
+  fill: none;
+  stroke: var(--theme-text-muted);
+  stroke-dasharray: 10 6;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Corredera notation: head/sill rails behind the leaves and a slide
+ * direction arrow per moving leaf — the .sliding-arrow path previously
+ * had no stroke and rendered invisible (review M3). */
+.sliding-track {
+  stroke: var(--theme-text-muted);
+  stroke-width: 1.6;
+  stroke-dasharray: 7 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.sliding-arrow {
+  fill: none;
+  stroke: var(--theme-text-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }

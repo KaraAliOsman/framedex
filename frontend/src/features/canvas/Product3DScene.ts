@@ -606,9 +606,14 @@ function hardwareSolids(
     );
   const handleX =
     hingeLeft || door ? region.x + region.w - HANDLE_OFFSET_MM - 30 : region.x + HANDLE_OFFSET_MM;
+  // The rose/lever must stand proud of the leaf face — flush at zInterior
+  // they z-fought the sash front and read invisible (review M5). A ~130 mm
+  // lever pointing into the leaf reads at real handle proportion.
+  const plateX = handleX + 8;
+  const leverX = hingeRight ? plateX + 18 : plateX - 130;
   solids.push(
-    box(owner, "handle", "STEEL", handleX + 14, handleY - 26, zInterior, 14, 52, 8),
-    box(owner, "handle", "STEEL", handleX, handleY - 4, zInterior + 2, 34, 12, 12),
+    box(owner, "handle", "STEEL", plateX, handleY - 30, zInterior + 2, 18, 60, 10),
+    box(owner, "handle", "STEEL", leverX, handleY - 6, zInterior + 10, 130, 12, 40),
   );
 }
 
@@ -1144,6 +1149,9 @@ export function buildScene3D(
   const columnTransform = new Map<string, { x: number; y: number; theta: number }>();
   {
     const columnSeams = joints.filter((joint) => joint.kind === "column");
+    const couplingById = new Map(
+      product.assembly.couplings.map((coupling) => [coupling.id, coupling]),
+    );
     let chainX = 0;
     let chainY = 0;
     let theta = 0;
@@ -1152,7 +1160,12 @@ export function buildScene3D(
       chainX += column.w * Math.cos(theta);
       chainY += column.w * Math.sin(theta);
       const seam = columnSeams[index];
-      if (seam?.angleDeg) theta += (Number(seam.angleDeg) * Math.PI) / 180;
+      // The elevation nulls angleDeg on non-INLINE seams because a front
+      // view does not bend — the scene walk still folds on every declared
+      // coupling angle, so a CORNER joint angles the following columns.
+      const angleDeg =
+        seam?.angleDeg ?? (seam?.couplingId ? couplingById.get(seam.couplingId)?.angle_deg : null);
+      if (angleDeg) theta += (Number(angleDeg) * Math.PI) / 180;
     });
   }
   for (const rect of rects) {

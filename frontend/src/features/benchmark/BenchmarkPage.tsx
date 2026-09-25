@@ -242,7 +242,7 @@ export function BenchmarkPage(): JSX.Element {
                   />
                 </div>
               </figure>
-              <figure className="benchmark-capture model3d-inset">
+              <figure className="benchmark-capture benchmark-capture--three">
                 <figcaption>{t("benchmark.view3d")}</figcaption>
                 <LazyThree product={fixture.product} members={members} />
               </figure>

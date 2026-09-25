@@ -11,6 +11,9 @@ import {
   elevationLayoutMm,
   MIN_MODULE_WIDTH_MM,
   resolveStacks,
+  type FramelessEdge,
+  type FramelessFittingJson,
+  type FramelessSpecJson,
   type ProductJson,
 } from "./productEditing";
 import { useViewportScale } from "./CanvasViewport";
@@ -271,6 +274,154 @@ function InsulatedRing({ pane }: { pane: Region }): JSX.Element | null {
   );
 }
 
+/** A glass-only module (mandate §14): the pane IS the module — drawn edge to
+ * edge, never with a phantom frame. Declared supports run along their edge
+ * (continuous CHANNEL seat, spaced CLAMPS) and fittings mark their edge/corner
+ * positions. Support/fitting marks are presentation conventions; articles and
+ * counts come from the model. */
+function FramelessModule({
+  spec,
+  x,
+  top,
+  w,
+  h,
+}: {
+  spec: FramelessSpecJson;
+  x: number;
+  top: number;
+  w: number;
+  h: number;
+}): JSX.Element {
+  const channelD = Math.min(24, Math.min(w, h) * 0.18);
+  const clamp = Math.min(26, Math.min(w, h) * 0.22);
+  const edgeRect = (edge: FramelessEdge, depth: number): Region => {
+    if (edge === "top") return { x, y: top, w, h: depth };
+    if (edge === "bottom") return { x, y: top + h - depth, w, h: depth };
+    if (edge === "left") return { x, y: top, w: depth, h };
+    return { x: x + w - depth, y: top, w: depth, h };
+  };
+  const along = (edge: FramelessEdge, index: number, count: number): Region => {
+    const frac = count <= 1 ? 0.5 : (index + 0.5) / count;
+    const horizontal = edge === "top" || edge === "bottom";
+    const rect = edgeRect(edge, channelD);
+    const offset = clamp / 2;
+    return horizontal
+      ? { x: rect.x + rect.w * frac - offset, y: rect.y, w: clamp, h: clamp }
+      : { x: rect.x, y: rect.y + rect.h * frac - offset, w: clamp, h: clamp };
+  };
+  // Fittings have no positional authority in the model — mark them by kind at
+  // conventional spots: corner patches, left-edge hinges, right-edge locks,
+  // top connectors, bottom supports. A seal draws as the dashed inset line.
+  const fittingSpot = (kind: FramelessFittingJson["kind"], index: number): Region => {
+    const size = Math.min(20, Math.min(w, h) * 0.16);
+    const spots: Record<FramelessFittingJson["kind"], Region> = {
+      PATCH_FITTING: [
+        { x, y: top, w: size, h: size },
+        { x: x + w - size, y: top, w: size, h: size },
+        { x, y: top + h - size, w: size, h: size },
+        { x: x + w - size, y: top + h - size, w: size, h: size },
+      ][index % 4] as Region,
+      CLAMP: along("bottom", index, 3),
+      HINGE: along("left", index, 3),
+      LOCK: along("right", index, 3),
+      CONNECTOR: along("top", index, 3),
+      SEAL: { x, y: top, w: size, h: size },
+      SUPPORT: along("bottom", index + 1, 4),
+    };
+    const spot = spots[kind];
+    return {
+      x: spot.x,
+      y: spot.y,
+      w: Math.min(spot.w, size),
+      h: Math.min(spot.h, size),
+    };
+  };
+  const fittingIndex = new Map<string, number>();
+  return (
+    <g className="module-frameless">
+      <rect className="module-glass" x={x} y={top} width={w} height={h} />
+      {w > 30 && h > 30 && (
+        <line
+          className="glass-sheen"
+          x1={x + w * 0.18}
+          y1={top + h * 0.82}
+          x2={x + w * 0.82}
+          y2={top + h * 0.18}
+        />
+      )}
+      {(spec.exposed_edges ?? []).map((edge) => {
+        const rect = edgeRect(edge, Math.min(10, channelD * 0.5));
+        return (
+          <rect
+            key={`exposed-${edge}`}
+            className="frameless-exposed"
+            x={rect.x}
+            y={rect.y}
+            width={rect.w}
+            height={rect.h}
+          />
+        );
+      })}
+      {spec.supports.map((support, index) => {
+        if (support.kind === "CHANNEL") {
+          const rect = edgeRect(support.edge, channelD);
+          return (
+            <rect
+              key={`support-${index}`}
+              className="frameless-channel"
+              x={rect.x}
+              y={rect.y}
+              width={rect.w}
+              height={rect.h}
+            />
+          );
+        }
+        return Array.from({ length: Math.max(support.qty, 1) }, (_, at) => {
+          const rect = along(support.edge, at, Math.max(support.qty, 1));
+          return (
+            <rect
+              key={`support-${index}-${at}`}
+              className="frameless-clamp"
+              x={rect.x}
+              y={rect.y}
+              width={rect.w}
+              height={rect.h}
+            />
+          );
+        });
+      })}
+      {spec.fittings.some((fitting) => fitting.kind === "SEAL") && (
+        <rect
+          className="frameless-seal"
+          x={x + 6}
+          y={top + 6}
+          width={Math.max(w - 12, 0)}
+          height={Math.max(h - 12, 0)}
+        />
+      )}
+      {spec.fittings
+        .filter((fitting) => fitting.kind !== "SEAL")
+        .flatMap((fitting) => {
+          const index = fittingIndex.get(fitting.kind) ?? 0;
+          fittingIndex.set(fitting.kind, index + fitting.qty);
+          return Array.from({ length: Math.max(fitting.qty, 1) }, (_, at) => {
+            const rect = fittingSpot(fitting.kind, index + at);
+            return (
+              <rect
+                key={`fitting-${fitting.kind}-${index + at}`}
+                className={`frameless-fitting frameless-fitting--${fitting.kind.toLowerCase()}`}
+                x={rect.x}
+                y={rect.y}
+                width={rect.w}
+                height={rect.h}
+              />
+            );
+          });
+        })}
+    </g>
+  );
+}
+
 /** Handle lever on the sash's handle edge (≈55% up, EN convention). */
 function HandleLever({
   x,
@@ -347,6 +498,22 @@ function Bay({
         className={`module-bay module-bay--sliding${selected ? " is-selected" : ""}${onSelect ? " bay-pickable" : ""}`}
         {...baySelectProps}
       >
+        {/* Rail notation: two head/sill grooves behind the leaves — the
+         * corredera reading a reviewer could not see (review M3). */}
+        <line
+          className="sliding-track"
+          x1={region.x}
+          y1={region.y + 4}
+          x2={region.x + region.w}
+          y2={region.y + 4}
+        />
+        <line
+          className="sliding-track"
+          x1={region.x}
+          y1={region.y + region.h - 4}
+          x2={region.x + region.w}
+          y2={region.y + region.h - 4}
+        />
         {order.map(({ panel, index }) => {
           const slotX = region.x + pitch * index;
           if (panel.kind === "FIXED") {
@@ -1554,7 +1721,11 @@ export function ProductFrontContent({
                       : undefined,
                   })}
             >
-              {module.contour ? (
+              {module.frameless ? (
+                <g transform={`translate(${x} ${top})`}>
+                  <FramelessModule spec={module.frameless} x={0} top={0} w={w} h={h} />
+                </g>
+              ) : module.contour ? (
                 <g transform={`translate(${x} ${top})`}>
                   <path
                     className="member-frame"
@@ -1564,7 +1735,7 @@ export function ProductFrontContent({
                     strokeWidth={2}
                   />
                   <path
-                    className="module-opening"
+                    className="module-opening module-opening--lite"
                     d={pointsPathD(insetContourPoints(module.contour, frameT), h)}
                   />
                 </g>

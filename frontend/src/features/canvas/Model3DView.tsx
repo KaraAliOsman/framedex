@@ -28,12 +28,14 @@ function drawGrain(axis: "u" | "v"): THREE.Texture {
   if (ctx) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, 256, 256);
-    for (let index = 0; index < 42; index += 1) {
+    // Grain needs real contrast to read at member scale (review M7) —
+    // faint 4–11% streaks vanished against the foil base coat.
+    for (let index = 0; index < 46; index += 1) {
       const at = Math.random() * 256;
       const wave = 4 + Math.random() * 14;
-      const alpha = 0.04 + Math.random() * 0.07;
+      const alpha = 0.1 + Math.random() * 0.16;
       ctx.strokeStyle = `rgba(52, 34, 16, ${alpha.toFixed(3)})`;
-      ctx.lineWidth = 0.8 + Math.random() * 2.6;
+      ctx.lineWidth = 0.9 + Math.random() * 3.2;
       ctx.beginPath();
       if (axis === "u") {
         ctx.moveTo(-8, at);
@@ -245,7 +247,11 @@ function SolidMesh({
         metalness={material.metalness}
         emissive={emissive}
         emissiveIntensity={selected ? 0.55 : 0}
-        clippingPlanes={clipPlane ? [clipPlane] : undefined}
+        // An empty array — never undefined: r3f applies this prop onto
+        // material.clippingPlanes and three's WebGLClipping crashes on a
+        // missing .length, leaving the whole canvas blank once Corte was
+        // toggled off.
+        clippingPlanes={clipPlane ? [clipPlane] : []}
       />
       {/* Approximate member boxes (no declared catalog section) get the
        * schematic edge look — visually distinct from a real extruded
