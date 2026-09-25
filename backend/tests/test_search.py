@@ -90,10 +90,12 @@ def test_queries_are_org_scoped_and_pattern_safe(fake_rows):
     for sql, params in calls:
         # org binding is a %s parameter in every query — bare "org_id=%s" for
         # tenant-only tables, the canonical visibility rule for catalog ones.
+        # Queries joining a parent table bind it again for parent scope.
         assert "org_id=%s" in sql or "org_id = %s" in sql
         assert params[0] == str(org)
         assert "POSITION" in sql
-        assert all(p == "%_;drop--" for p in params[1:]), params
+        assert all(p == "%_;drop--" or p == str(org) for p in params[1:]), params
+        assert any(p == "%_;drop--" for p in params)
 
 
 def test_catalog_queries_use_canonical_visibility(fake_rows):
@@ -106,3 +108,19 @@ def test_catalog_queries_use_canonical_visibility(fake_rows):
     assert len(global_aware) == 3
     for sql in global_aware:
         assert "org_id = %s OR" in sql
+
+
+def test_joined_parents_are_tenant_scoped(fake_rows):
+    """A child row matching the caller's org must not leak a parent that
+    belongs to another tenant through the subtitle join."""
+    calls, _ = fake_rows
+    service.search(uuid4(), "ma")
+    joins = {
+        "project_positions": "JOIN public.projects pr ON pr.id = p.project_id",
+        "profile_articles": "JOIN public.profile_systems s ON s.id = a.system_id",
+        "project_invoices": "JOIN public.projects pr ON pr.id = i.project_id",
+        "dispatch_notes": "JOIN public.orders o ON o.id = d.work_order_id",
+    }
+    for marker in joins.values():
+        sql = next(s for s, _ in calls if marker in s)
+        assert sql.count("org_id") >= 2, sql

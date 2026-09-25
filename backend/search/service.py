@@ -28,10 +28,10 @@ def search(org_id: UUID, query: str) -> dict:
     if len(needle) < 2 or len(needle) > MAX_QUERY_LEN:
         return {"results": []}
 
-    def org(sql: str, *columns: str) -> list[dict]:
+    def org(sql: str, *columns: str, org_params: int = 1) -> list[dict]:
         return rows(
             sql.replace("__WHERE__", _where(columns)),
-            [str(org_id)] + [needle] * len(columns),
+            [str(org_id)] * org_params + [needle] * len(columns),
         )
 
     results: list[dict] = []
@@ -76,10 +76,11 @@ def search(org_id: UUID, query: str) -> dict:
         "SELECT p.id, p.project_id, p.location_tag, p.typology,"
         " pr.code AS project_code, pr.name AS project_name"
         " FROM public.project_positions p JOIN public.projects pr ON pr.id = p.project_id"
-        " WHERE p.org_id=%s AND (__WHERE__)"
+        " WHERE p.org_id=%s AND pr.org_id=%s AND (__WHERE__)"
         f" ORDER BY p.updated_at DESC LIMIT {GROUP_LIMIT}",
         "p.location_tag",
         "p.typology",
+        org_params=2,
     ):
         results.append(
             {
@@ -112,10 +113,13 @@ def search(org_id: UUID, query: str) -> dict:
         "SELECT a.id, a.sku, a.name, s.code AS system_code"
         " FROM public.profile_articles a"
         " JOIN public.profile_systems s ON s.id = a.system_id"
-        f" WHERE {visibility_sql(child=True, alias='a')} AND (__WHERE__)"
+        f" WHERE {visibility_sql(child=True, alias='a')}"
+        " AND (s.org_id = %s OR (s.org_id IS NULL AND s.is_global))"
+        " AND (__WHERE__)"
         f" ORDER BY a.sku LIMIT {GROUP_LIMIT}",
         "a.sku",
         "a.name",
+        org_params=2,
     ):
         results.append(
             {
@@ -165,9 +169,10 @@ def search(org_id: UUID, query: str) -> dict:
     for row in org(
         "SELECT i.id, i.invoice_code, i.project_id, pr.code AS project_code"
         " FROM public.project_invoices i JOIN public.projects pr ON pr.id = i.project_id"
-        " WHERE i.org_id=%s AND (__WHERE__)"
+        " WHERE i.org_id=%s AND pr.org_id=%s AND (__WHERE__)"
         f" ORDER BY i.created_at DESC LIMIT {GROUP_LIMIT}",
         "i.invoice_code",
+        org_params=2,
     ):
         results.append(
             {
@@ -182,9 +187,10 @@ def search(org_id: UUID, query: str) -> dict:
     for row in org(
         "SELECT d.id, d.note_code, o.order_code"
         " FROM public.dispatch_notes d JOIN public.orders o ON o.id = d.work_order_id"
-        " WHERE d.org_id=%s AND (__WHERE__)"
+        " WHERE d.org_id=%s AND o.org_id=%s AND (__WHERE__)"
         f" ORDER BY d.created_at DESC LIMIT {GROUP_LIMIT}",
         "d.note_code",
+        org_params=2,
     ):
         results.append(
             {
