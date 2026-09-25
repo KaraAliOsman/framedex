@@ -316,8 +316,10 @@ class HttpProvider:
                     # document itself. Larger files keep the signed URL, which
                     # the wire layer still emits as an image_url part.
                     try:
-                        raw = SupabaseDocumentStorage().download(document_path)
-                        if len(raw) <= _IMAGE_WIRE_MAX_BYTES:
+                        raw = SupabaseDocumentStorage().download_bounded(
+                            document_path, _IMAGE_WIRE_MAX_BYTES
+                        )
+                        if raw is not None:
                             wire_input["_document_image"] = {
                                 "mime": _image_mime(document_path),
                                 "data": base64.b64encode(raw).decode("ascii"),

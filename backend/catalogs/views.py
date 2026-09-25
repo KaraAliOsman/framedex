@@ -39,6 +39,7 @@ from catalogs.serializers import (
     KitResponseSerializer,
     SystemListSerializer,
     SystemResponseSerializer,
+    ProcessProfileOptionListSerializer,
     SystemWorkspaceSerializer,
 )
 
@@ -348,4 +349,22 @@ class SystemWorkspaceView(APIView):
         with catalog_scope(request, roles=READ_ROLES) as org_id:
             data = service.system_workspace(org_id, str(row_id))
             output = SystemWorkspaceSerializer(data).data
+        return Response(output)
+
+
+class ProcessProfileCollectionView(APIView):
+    """GET process-profiles/ — the declared process authorities an org may
+    bind a system to (global library plus org-owned rows)."""
+
+    @extend_schema(
+        operation_id="catalog_process_profile_list",
+        parameters=HEADERS,
+        responses={200: ProcessProfileOptionListSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request):
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
+            output = ProcessProfileOptionListSerializer(
+                {"items": service.process_profile_options(org_id)}
+            ).data
         return Response(output)

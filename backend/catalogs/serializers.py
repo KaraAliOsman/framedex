@@ -447,3 +447,19 @@ class SystemWorkspaceSerializer(serializers.Serializer):
     reinforcements = ReinforcementRowSerializer(many=True)
     purchase_mappings = PurchaseMappingRowSerializer(many=True)
     process_profile = ProcessProfileRowSerializer(allow_null=True)
+
+
+class ProcessProfileOptionSerializer(serializers.Serializer):
+    """Compact option for the system→process-profile binding picker."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField(allow_null=True)
+    code = serializers.CharField()
+    version = serializers.IntegerField()
+    label = serializers.CharField()
+    material = serializers.CharField(allow_null=True)
+    product_kind = serializers.CharField(allow_null=True)
+
+
+class ProcessProfileOptionListSerializer(serializers.Serializer):
+    items = ProcessProfileOptionSerializer(many=True)

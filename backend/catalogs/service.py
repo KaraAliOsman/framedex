@@ -471,7 +471,7 @@ def system_workspace(org_id, system_id):
             "SELECT m.id,m.org_id,m.profile_article_id,m.commercial_sku,"
             "m.manufacturer_name,m.supplier_name,m.purchase_unit,m.is_active "
             "FROM public.profile_purchase_mappings m "
-            "WHERE m.profile_article_id = ANY(%s) "
+            "WHERE m.profile_article_id = ANY(%s::uuid[]) "
             "AND (m.org_id = %s OR m.org_id IS NULL) "
             "ORDER BY m.profile_article_id,m.commercial_sku",
             [article_ids, org_id],
@@ -539,3 +539,16 @@ def _check_process_profile(org_id, values):
                 "invalid_process_profile",
                 "catalogs.errors.invalid_process_profile",
             )
+
+
+def process_profile_options(org_id):
+    """Process authorities visible to this org — global rows and its own —
+    for the system→profile binding picker. Bounded deliberately: this feeds
+    a select, not a bulk export."""
+    return _rows_dicts(
+        "SELECT id,org_id,code,version,label,material,product_kind "
+        "FROM public.manufacturing_process_profiles "
+        "WHERE org_id IS NULL OR org_id = %s "
+        "ORDER BY org_id NULLS FIRST,code,version DESC LIMIT 200",
+        [org_id],
+    )

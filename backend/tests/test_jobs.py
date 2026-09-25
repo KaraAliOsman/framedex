@@ -343,13 +343,14 @@ def test_list_view_passes_filters(monkeypatch) -> None:
         "list_recent",
         lambda **kwargs: seen.update(kwargs) or [],
     )
-    response = client.get("/api/v1/jobs/?state=FAILED&type=demo.echo&limit=5")
+    response = client.get("/api/v1/jobs/?state=FAILED&type=demo.echo&limit=5&offset=20")
     assert response.status_code == 200
     assert seen == {
         "org_id": org_id,
         "job_type": "demo.echo",
         "state": "FAILED",
         "limit": 5,
+        "offset": 20,
     }
 
 

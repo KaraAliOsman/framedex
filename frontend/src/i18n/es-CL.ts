@@ -886,6 +886,7 @@ export const messages = {
   "jobs.state.FAILED": "Fallido",
   "jobs.state.CANCELED": "Cancelado",
   "jobs.retry": "Reintentar",
+  "jobs.loadMore": "Mostrar más",
   "jobs.retrying": "Reintentando…",
   "jobs.retryQueued": "Trabajo reencolado",
   "jobs.retryFailed": "No pudimos reencolar el trabajo.",

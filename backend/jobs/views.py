@@ -108,6 +108,7 @@ class JobListCreateView(APIView):
                     job_type=query.get("type"),
                     state=query.get("state"),
                     limit=query.get("limit", 50),
+                    offset=query.get("offset", 0),
                 )
         return Response(JobRunSerializer(items, many=True).data)
 

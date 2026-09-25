@@ -140,6 +140,7 @@ import type {
   PositionsDestroyParams,
   PriceRequestRequest,
   PriceResponse,
+  ProcessProfileOptionList,
   ProductionOrderDetail,
   ProductionOrderList,
   ProductionOrderTrace,
@@ -3141,6 +3142,75 @@ export const catalogKitReview = async (
   return apiMutator<catalogKitReviewResponse>(getCatalogKitReviewUrl(rowId), {
     ...options,
     method: "POST",
+  });
+};
+
+export type catalogProcessProfileListResponse200 = {
+  data: ProcessProfileOptionList;
+  status: 200;
+};
+
+export type catalogProcessProfileListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogProcessProfileListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogProcessProfileListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogProcessProfileListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogProcessProfileListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogProcessProfileListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogProcessProfileListResponseSuccess = catalogProcessProfileListResponse200 & {
+  headers: Headers;
+};
+export type catalogProcessProfileListResponseError = (
+  | catalogProcessProfileListResponse400
+  | catalogProcessProfileListResponse401
+  | catalogProcessProfileListResponse403
+  | catalogProcessProfileListResponse404
+  | catalogProcessProfileListResponse409
+  | catalogProcessProfileListResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogProcessProfileListResponse =
+  catalogProcessProfileListResponseSuccess | catalogProcessProfileListResponseError;
+
+export const getCatalogProcessProfileListUrl = () => {
+  return `/api/v1/catalogs/process-profiles/`;
+};
+
+/**
+ * GET process-profiles/ — the declared process authorities an org may
+ * bind a system to (global library plus org-owned rows).
+ */
+export const catalogProcessProfileList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogProcessProfileListResponse> => {
+  return apiMutator<catalogProcessProfileListResponse>(getCatalogProcessProfileListUrl(), {
+    ...options,
+    method: "GET",
   });
 };
 

@@ -63,15 +63,18 @@ function jobErrorKey(code: string): TranslationKey {
  * Retry stays available on every terminal job: the endpoint reauthorizes
  * the current actor, so a failure whose cause was fixed (restored access,
  * repaired storage) recovers through it. */
+const PAGE_SIZE = 100;
+
 export function JobsPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   const [params, setParams] = useSearchParams();
   const [notice, setNotice] = useState("");
   const client = useQueryClient();
   const stateFilter = params.get("state") ?? "";
+  const [pages, setPages] = useState(1);
 
   const query = useQuery<JobRun[]>({
-    queryKey: ["jobs", "list", org?.id, stateFilter],
+    queryKey: ["jobs", "list", org?.id, stateFilter, pages],
     enabled: org !== undefined,
     // A running job is a living row — poll fast while anything can still
     // move; idle keeps a slow beat so jobs started elsewhere still appear.
@@ -80,14 +83,25 @@ export function JobsPage(): JSX.Element {
         ? 4_000
         : 60_000,
     queryFn: async ({ signal }) => {
-      const response = await jobsList(
-        { limit: 100, state: stateFilter === "" ? undefined : (stateFilter as never) },
-        { signal, headers: { "X-Organization-ID": org!.id } },
-      );
-      if (response.status !== 200) {
-        throw new ApiError(response.status, response.data);
+      // Older failures stay reachable: fetch every loaded page so "mostrar
+      // más" can always reach past the newest 100.
+      const all: JobRun[] = [];
+      for (let page = 0; page < pages; page += 1) {
+        const response = await jobsList(
+          {
+            limit: PAGE_SIZE,
+            offset: page * PAGE_SIZE,
+            state: stateFilter === "" ? undefined : (stateFilter as never),
+          },
+          { signal, headers: { "X-Organization-ID": org!.id } },
+        );
+        if (response.status !== 200) {
+          throw new ApiError(response.status, response.data);
+        }
+        all.push(...response.data);
+        if (response.data.length < PAGE_SIZE) break;
       }
-      return response.data;
+      return all;
     },
   });
 
@@ -111,6 +125,7 @@ export function JobsPage(): JSX.Element {
   });
 
   const items = query.data ?? [];
+  const hasMore = items.length === pages * PAGE_SIZE;
   return (
     <section className="dashboard" aria-labelledby="page-title">
       <header className="dashboard-head">
@@ -200,6 +215,16 @@ export function JobsPage(): JSX.Element {
             );
           })}
         </ul>
+      )}
+      {!query.isPending && !query.isError && hasMore && (
+        <button
+          type="button"
+          className="ui-button"
+          disabled={query.isFetching}
+          onClick={() => setPages((value) => value + 1)}
+        >
+          {query.isFetching ? t("dashboard.attentionLoading") : t("jobs.loadMore")}
+        </button>
       )}
     </section>
   );

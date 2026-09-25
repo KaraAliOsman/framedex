@@ -578,7 +578,12 @@ def _validate_ops(
                     continue
                 accepted.append({"op": name, "side": item["side"], "ref": _add_ref("m")})
                 new_ref = accepted[-1]["ref"]
-                module_info[new_ref] = {"shape": "RECT", "frameless": False}
+                # The client's addAdjacentUnit clones the chain-end member —
+                # contour/frameless come with it, so a stacked or seam-insert
+                # op on the clone must meet the same shape gates here.
+                module_info[new_ref] = dict(
+                    module_info.get(end, {"shape": "RECT", "frameless": False})
+                )
                 if item["side"] == "left":
                     state["module_refs"].insert(0, new_ref)
                     if end is not None:

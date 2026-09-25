@@ -15,6 +15,11 @@ urlpatterns = [
         name="catalog-system-review",
     ),
     path(
+        "process-profiles/",
+        views.ProcessProfileCollectionView.as_view(),
+        name="catalog-process-profiles",
+    ),
+    path(
         "systems/<uuid:row_id>/workspace/",
         views.SystemWorkspaceView.as_view(),
         name="catalog-system-workspace",

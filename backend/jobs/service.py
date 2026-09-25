@@ -103,9 +103,11 @@ def get(*, org_id: UUID, job_id: UUID) -> dict[str, object] | None:
 
 
 def list_recent(
-    *, org_id: UUID, job_type: str | None, state: str | None, limit: int
+    *, org_id: UUID, job_type: str | None, state: str | None, limit: int, offset: int = 0
 ) -> list[dict[str, object]]:
-    return repository.list_jobs(org_id=org_id, job_type=job_type, state=state, limit=limit)
+    return repository.list_jobs(
+        org_id=org_id, job_type=job_type, state=state, limit=limit, offset=offset
+    )
 
 
 def retry(

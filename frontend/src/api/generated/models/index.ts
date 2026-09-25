@@ -309,6 +309,8 @@ export * from "./priceRequestRequest";
 export * from "./priceResponse";
 export * from "./priceResponseStateEnum";
 export * from "./pricingModeEnum";
+export * from "./processProfileOption";
+export * from "./processProfileOptionList";
 export * from "./processProfileRow";
 export * from "./processProfileRowOperationStationMap";
 export * from "./processProfileRowProvenance";

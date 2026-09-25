@@ -140,6 +140,7 @@ def list_jobs(
     job_type: str | None = None,
     state: str | None = None,
     limit: int = 50,
+    offset: int = 0,
 ) -> list[dict[str, object]]:
     clauses = ["org_id = %s"]
     parameters: list[object] = [str(org_id)]
@@ -149,15 +150,15 @@ def list_jobs(
     if state:
         clauses.append("state = %s")
         parameters.append(state)
-    parameters.append(limit)
+    parameters.extend([limit, offset])
     return [
         _decode(record)
         for record in rows(
             f"""
             SELECT * FROM public.job_runs
             WHERE {" AND ".join(clauses)}
-            ORDER BY created_at DESC
-            LIMIT %s
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s OFFSET %s
             """,
             parameters,
         )

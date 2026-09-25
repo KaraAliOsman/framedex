@@ -1100,3 +1100,34 @@ def test_add_unit_keeps_numeric_address_on_the_original_module(monkeypatch):
         {"op": "set_opening", "module": "m1", "opening": "AWNING"},
     ]
     assert out["rejected"] == []
+
+
+def test_add_unit_clone_keeps_the_end_modules_shape(monkeypatch):
+    """addAdjacentUnit clones the chain-end member — a contoured end produces
+    a contoured clone, so a stacked op on `added_m1` must be refused exactly
+    as the client refuses it. Recording the clone as RECT would validate an
+    op the UI silently drops."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "add_unit", "side": "right"},
+                {"op": "add_stacked_unit", "module": "added_m1"},
+            ]
+        },
+    )
+    product = {
+        "modules": [{"id": "m1", "width_mm": "1200", "height_mm": "1500", "contour": {}}],
+        "couplings": [],
+    }
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="agrega a la derecha y apila la nueva",
+        system_id=uuid4(),
+        operation_key="assist-e3",
+    )
+    assert [op["op"] for op in out["ops"]] == ["add_unit"]
+    assert out["rejected"][0]["reason"] == "modulo_invalido"

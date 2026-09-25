@@ -2656,6 +2656,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/process-profiles/:
+    get:
+      operationId: catalog_process_profile_list
+      description: |-
+        GET process-profiles/ — the declared process authorities an org may
+        bind a system to (global library plus org-owned rows).
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessProfileOptionList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/catalogs/systems/:
     get:
       operationId: catalog_system_list
@@ -4999,6 +5060,12 @@ paths:
           maximum: 100
           minimum: 1
           default: 50
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       - in: query
         name: state
         schema:
@@ -17774,6 +17841,46 @@ components:
         * `FIXED_PRICE_MATRIX_DIMENSIONAL` - FIXED_PRICE_MATRIX_DIMENSIONAL
         * `TARGET_GROSS_MARGIN_PROJECT` - TARGET_GROSS_MARGIN_PROJECT
         * `COMMERCIAL_LIST_WITH_DISCOUNTS` - COMMERCIAL_LIST_WITH_DISCOUNTS
+    ProcessProfileOption:
+      type: object
+      description: Compact option for the system→process-profile binding picker.
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+        version:
+          type: integer
+        label:
+          type: string
+        material:
+          type: string
+          nullable: true
+        product_kind:
+          type: string
+          nullable: true
+      required:
+      - code
+      - id
+      - label
+      - material
+      - org_id
+      - product_kind
+      - version
+    ProcessProfileOptionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessProfileOption'
+      required:
+      - items
     ProcessProfileRow:
       type: object
       description: |-
