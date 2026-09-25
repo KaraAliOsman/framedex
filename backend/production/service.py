@@ -1094,8 +1094,14 @@ def transition_step(
         # unassigned — it must never silently progress. When a center of the
         # required kind has since been activated the step adopts it here and
         # the order's payload blocker clears; otherwise the transition refuses
-        # and the blocker stays the shop's to-do.
-        if action in ("START", "COMPLETE") and step.get("work_center_id") is None:
+        # and the blocker stays the shop's to-do. Only READY steps take this
+        # path — an IN_PROGRESS step already had a center at START, so deeper
+        # validations (e.g. the cut plan) still surface first.
+        if (
+            action in ("START", "COMPLETE")
+            and str(step["status"]) == "READY"
+            and step.get("work_center_id") is None
+        ):
             # step.code is the station code (WELD, GLAZE…); work_centers.kind
             # is the step vocabulary (WELDING, GLAZING…).
             kind = _CENTER_KIND_FOR_STATION.get(str(step["code"]))
