@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
+const NOOP = () => {};
+
 import { ApiError } from "../../api/apiMutator";
 import { positionsDesignAlternatives } from "../../api/generated/dekopen";
 import type { DesignAlternativesResponse } from "../../api/generated/models/designAlternativesResponse";
 import { t } from "../../i18n/es-CL";
 import type { MemberGeometry } from "./members";
 import { elevationEnvelopeMm, isProductModel, type ProductJson } from "./productEditing";
-import { StudioImage } from "./renderStudio";
+import { ProductFrontSvg } from "./ProductFrontSvg";
+import { StudioImage, webglAvailable } from "./renderStudio";
 
 type Alternative = {
   label: string;
@@ -231,13 +234,31 @@ export function AlternativesPanel({
                     return (
                       <div key={`alt-${index}`} className="alternative-card">
                         <span className="alternative-card__thumb">
-                          <StudioImage
-                            product={item.product}
-                            members={members}
-                            options={{ width: 360, height: 240 }}
-                            alt={item.label}
-                            className="alternative-card__render"
-                          />
+                          {webglAvailable() ? (
+                            <StudioImage
+                              product={item.product}
+                              members={members}
+                              options={{ width: 360, height: 240 }}
+                              alt={item.label}
+                              className="alternative-card__render"
+                            />
+                          ) : (
+                            /* No WebGL → the technical elevation keeps the
+                             * card legible instead of an empty studio box. */
+                            <ProductFrontSvg
+                              product={item.product}
+                              members={members}
+                              selectedId={null}
+                              issues={[]}
+                              disabled
+                              preview
+                              onSelectModule={NOOP}
+                              onAddUnit={NOOP}
+                              onCommitModuleWidth={NOOP}
+                              onCommitTotalWidth={NOOP}
+                              onCommitHeight={NOOP}
+                            />
+                          )}
                         </span>
                         <p className="alternative-card__label">{item.label}</p>
                         {item.rationale && (

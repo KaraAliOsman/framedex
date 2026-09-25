@@ -104,7 +104,7 @@ def _summary(org_id: UUID) -> dict[str, Any]:
              JOIN public.orders o ON o.id = s.order_id AND o.org_id = s.org_id
              WHERE s.org_id = %s AND s.status = 'BLOCKED'
                AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
-            (SELECT count(*) FROM public.customer_approvals a
+            (SELECT count(DISTINCT a.project_id) FROM public.customer_approvals a
              JOIN public.project_versions v
                ON v.id = a.project_version_id AND v.org_id = a.org_id
              JOIN public.projects p

@@ -353,6 +353,7 @@ function commercialSteps(
   project: ProjectResponse,
   approvals: ApprovalRecord[],
   payments: PaymentsSummary | undefined,
+  now: number,
 ): CommercialStep[] {
   // The timeline tracks the CURRENT revision — approvals sent against an
   // older revision must not mark "sent" done for a revision never shared.
@@ -362,7 +363,6 @@ function commercialSteps(
   const approvedRecord = currentApprovals.some((a) => a.status === "APPROVED");
   // A PENDING link past its expires_at is dead — the portal refuses it — so
   // the project is not "waiting on the client"; it needs a fresh link.
-  const now = Date.now();
   const livePending = currentApprovals.some(
     (a) => a.status === "PENDING" && Date.parse(a.expires_at) > now,
   );
@@ -454,6 +454,7 @@ function projectNextAction(
   payments: PaymentsSummary | undefined,
   canWrite: boolean,
   approvals: ApprovalRecord[],
+  now: number,
 ): NextAction | undefined {
   const paid = payments?.status === "PAID";
   const collected = Number(payments?.collected ?? "0");
@@ -477,7 +478,7 @@ function projectNextAction(
         (a) =>
           a.revision_code === project.current_revision &&
           a.status === "PENDING" &&
-          Date.parse(a.expires_at) > Date.now(),
+          Date.parse(a.expires_at) > now,
       )
         ? { labelKey: "projects.next.awaiting", section: "quote" }
         : { labelKey: "projects.next.share", section: "quote" };
@@ -527,8 +528,27 @@ function ProjectHeader({
         : false,
   });
   const approvalsList = approvals.data ?? [];
-  const steps = commercialSteps(project, approvalsList, payments.data);
-  const action = projectNextAction(project, payments.data, canWrite, approvalsList);
+  // "Now" is state, not a render-time read: the live-PENDING checks above
+  // must re-evaluate the moment a link dies, or the timeline would keep
+  // showing "waiting for the client" after the link expired. Tick once at
+  // the soonest pending expiry — no continuous polling needed since the
+  // refetch interval already dies with the last live link.
+  const [now, setNow] = useState(() => Date.now());
+  const soonestExpiry = approvalsList
+    .filter((a) => a.status === "PENDING")
+    .map((a) => Date.parse(a.expires_at))
+    .filter((ts) => Number.isFinite(ts) && ts > now)
+    .sort((a, b) => a - b)[0];
+  useEffect(() => {
+    if (soonestExpiry === undefined) return;
+    const id = window.setTimeout(
+      () => setNow(Date.now()),
+      Math.max(0, soonestExpiry - Date.now() + 250),
+    );
+    return () => window.clearTimeout(id);
+  }, [soonestExpiry]);
+  const steps = commercialSteps(project, approvalsList, payments.data, now);
+  const action = projectNextAction(project, payments.data, canWrite, approvalsList, now);
   return (
     <div className="project-head">
       <div className="project-head__row">

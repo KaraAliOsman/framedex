@@ -750,12 +750,16 @@ def _validate_ops(
                     assert left_ref is not None and right_ref is not None
                     new_module = _add_ref("m")
                     # The inserted member inherits its left neighbor's
-                    # structure — the client clones it the same way.
+                    # structure — the client clones it the same way. The
+                    # declaration slot is the client contract: insertModuleBetween
+                    # splices the member immediately BEFORE the seam's right
+                    # endpoint, so a seam spanning non-adjacent declarations
+                    # lands here, not after the left one.
                     module_info[new_module] = dict(
                         module_info.get(left_ref, {"shape": "RECT"})
                     )
                     state["module_refs"].insert(
-                        state["module_refs"].index(left_ref) + 1, new_module
+                        state["module_refs"].index(right_ref), new_module
                     )
                     # The seam's coupling ref survives as the first joint
                     # (left↔new); the second joint mints a fresh ref and

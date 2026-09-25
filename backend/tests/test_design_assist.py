@@ -1131,3 +1131,52 @@ def test_add_unit_clone_keeps_the_end_modules_shape(monkeypatch):
     )
     assert [op["op"] for op in out["ops"]] == ["add_unit"]
     assert out["rejected"][0]["reason"] == "modulo_invalido"
+
+
+def test_insert_module_lands_before_the_seams_right_endpoint(monkeypatch):
+    """insertModuleBetween splices the new member immediately BEFORE the
+    seam's second endpoint — a seam whose declarations aren't neighbors
+    (m1↔m3 with m2 between) places the clone at index 2: [m1,m2,new,m3].
+    Simulating after-the-left ([m1,new,m2,m3]) makes a later count
+    reduction trim a different member than the client keeps."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "insert_module", "coupling": "c1"},
+                {"op": "set_module_count", "count": 3},
+                {"op": "set_module_count", "count": 2},
+                {"op": "set_opening", "module": "m2", "opening": "AWNING"},
+            ]
+        },
+    )
+    product = {
+        "modules": [
+            {"id": "m1", "width_mm": "1200", "height_mm": "1500"},
+            {"id": "m2", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m3", "width_mm": "900", "height_mm": "1500"},
+        ],
+        "couplings": [
+            {"id": "c1", "angle_deg": "0", "modules": ["m1", "m3"], "edges": ["right", "left"]},
+        ],
+    }
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="inserta entre m1 y m3, recuenta a 2, abre m2",
+        system_id=uuid4(),
+        operation_key="assist-e4",
+    )
+    # The client order is [m1,m2,new,m3]; reducing to 3 then 2 leaves
+    # [m1,m2] — m2 is still addressable. Under the after-left placement
+    # the second reduction drops m2 instead and the opening is refused.
+    assert out["rejected"] == []
+    assert [op["op"] for op in out["ops"]] == [
+        "insert_module",
+        "set_module_count",
+        "set_module_count",
+        "set_opening",
+    ]
+    assert out["ops"][3]["module"] == "m2"
