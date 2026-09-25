@@ -75,6 +75,10 @@ const PortalQuotePage = lazy(async () => {
   const module = await import("./features/portal/PortalQuotePage");
   return { default: module.PortalQuotePage };
 });
+const BenchmarkPage = lazy(async () => {
+  const module = await import("./features/benchmark/BenchmarkPage");
+  return { default: module.BenchmarkPage };
+});
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -171,6 +175,14 @@ export function AppRoutes(): JSX.Element {
         element={
           <Suspense fallback={<p role="status">{t("portal.loading")}</p>}>
             <PortalQuotePage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/benchmark"
+        element={
+          <Suspense fallback={<p role="status" />}>
+            <BenchmarkPage />
           </Suspense>
         }
       />
