@@ -292,7 +292,51 @@ function reconciledHandlePolicy(
     const [fallback] = requirement.permitted_vertical_references;
     return fallback ? [{ ...intent, vertical_reference: fallback }] : [];
   });
-  return { handle_requirement_policy_id: policyId, handle_intents: intents };
+  // Requirements only present under the new policy get their seeded intent
+  // here too — same displayed-value contract as the initial load.
+  const merged = {
+    ...position,
+    handle_requirement_policy_id: policyId,
+    handle_intents: intents,
+  };
+  return {
+    handle_requirement_policy_id: policyId,
+    handle_intents: seedHandleIntents(merged).handle_intents,
+  };
+}
+
+/** A requirement with no stored intent must not pretend the displayed
+ * midpoint is saved: seed it so the visible height IS what Guardar/Emitir
+ * persists — the estimator's click stays the confirmation. Requirements
+ * without computable bounds keep an empty height (their pending chip still
+ * shows until the estimator types a value). */
+function seedHandleIntents(
+  position: DocumentaryPreparationPosition,
+): DocumentaryPreparationPosition {
+  const requirements = requirementsFor(position);
+  if (requirements.length === 0) return position;
+  const intents = [...position.handle_intents];
+  let seeded = false;
+  for (const requirement of requirements) {
+    if (intentFor(position, requirement)) continue;
+    const reference = requirement.permitted_vertical_references[0];
+    if (!reference) continue;
+    const bounds = heightBounds(position, requirement, reference);
+    const boundMin = bounds ? parseDecimal(bounds[0]) : null;
+    const boundMax = bounds ? parseDecimal(bounds[1]) : null;
+    intents.push({
+      bay_id: requirement.bay_id,
+      leaf_id: requirement.leaf_id,
+      handle_domain_slot: requirement.handle_domain_slot,
+      requested_height_mm:
+        boundMin !== null && boundMax !== null
+          ? formatDecimal(midpointDecimal(boundMin, boundMax))
+          : "",
+      vertical_reference: reference,
+    });
+    seeded = true;
+  }
+  return seeded ? { ...position, handle_intents: intents } : position;
 }
 
 function selectedPolicy(
@@ -415,7 +459,9 @@ export function ProjectQuotationPanel({
       if (generation.current === current) {
         setPreparation({
           ...response.data,
-          positions: response.data.positions.map(mergePreparationSuggestions),
+          positions: response.data.positions.map((position) =>
+            seedHandleIntents(mergePreparationSuggestions(position)),
+          ),
         });
       }
     } catch {

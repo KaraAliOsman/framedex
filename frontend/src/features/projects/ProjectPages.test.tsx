@@ -721,7 +721,10 @@ it("saves handle placement intents for operable leaves before emitting", async (
   mount();
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   const heightInput = await screen.findByLabelText(t("quotation.handleHeight"));
-  expect(screen.getByText(t("quotation.handlePending"))).toBeTruthy();
+  // Missing intents are seeded with the displayed midpoint — the visible
+  // value is exactly what Guardar/Emitir persists (no pending trap).
+  expect(heightInput).toHaveValue("1000.35");
+  expect(screen.queryByText(t("quotation.handlePending"))).toBeNull();
   expect(heightInput.getAttribute("placeholder")).toBe("900.3–1100.4");
   const referenceSelect = screen.getByLabelText(t("quotation.handleReference"));
   fireEvent.change(referenceSelect, { target: { value: "OUTER_BOTTOM" } });

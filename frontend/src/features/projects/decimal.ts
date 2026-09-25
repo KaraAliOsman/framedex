@@ -47,14 +47,21 @@ export function compareDecimal(a: DecimalValue, b: DecimalValue): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-/** Exact decimal presentation — denominators are powers of ten so the value
- * formats without rounding, trailing zeros trimmed. */
+/** Exact decimal presentation — long division keeps non-power-of-10
+ * denominators (midpoints carry ×2) honest: 70/200 formats as .35, never
+ * a mis-scaled .7. Trailing zeros trimmed; non-terminating expansions cap
+ * at 40 digits (bounds inputs are always terminating). */
 export function formatDecimal(value: DecimalValue): string {
   const negative = value.numerator < 0n;
   const magnitude = negative ? -value.numerator : value.numerator;
   const whole = magnitude / value.denominator;
-  const fraction = magnitude % value.denominator;
-  if (fraction === 0n) return `${negative ? "-" : ""}${whole}`;
-  const digits = fraction.toString().padStart(value.denominator.toString().length - 1, "0");
+  let remainder = magnitude % value.denominator;
+  if (remainder === 0n) return `${negative ? "-" : ""}${whole}`;
+  let digits = "";
+  while (remainder !== 0n && digits.length < 40) {
+    remainder *= 10n;
+    digits += (remainder / value.denominator).toString();
+    remainder %= value.denominator;
+  }
   return `${negative ? "-" : ""}${whole}.${digits.replace(/0+$/, "")}`;
 }

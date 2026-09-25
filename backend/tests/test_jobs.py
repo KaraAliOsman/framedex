@@ -114,9 +114,7 @@ def test_worker_marks_failure_with_error_payload(monkeypatch) -> None:
     def boom(payload, context, report):
         raise RuntimeError("upstream offline")
 
-    registry.register(
-        "demo.boom", roles=("OWNER",), payload_serializer=DemoPayloadSerializer
-    )(boom)
+    registry.register("demo.boom", roles=("OWNER",), payload_serializer=DemoPayloadSerializer)(boom)
     outcomes: list[dict[str, object]] = []
     monkeypatch.setattr(repository, "renew_lock", lambda **kwargs: None)
     monkeypatch.setattr(repository, "report_progress", lambda **kwargs: None)
@@ -173,9 +171,7 @@ def test_enqueue_payload_authorizer_denies_role(monkeypatch) -> None:
     def gated(payload, context, report):
         return {}
 
-    monkeypatch.setattr(
-        repository, "insert_job", lambda **kwargs: ({"id": uuid4()}, True)
-    )
+    monkeypatch.setattr(repository, "insert_job", lambda **kwargs: ({"id": uuid4()}, True))
     with pytest.raises(service.JobServiceError) as denied:
         service.enqueue(
             org_id=uuid4(),
@@ -208,9 +204,7 @@ def test_heartbeat_stops_when_lease_lost(monkeypatch) -> None:
     monkeypatch.setattr(worker, "LEASE_RENEW_SECONDS", 0.01)
     monkeypatch.setattr(worker.repository, "renew_lock", lambda **kwargs: False)
     stop = threading.Event()
-    thread = threading.Thread(
-        target=worker._heartbeat, args=(uuid4(), "w1", stop), daemon=True
-    )
+    thread = threading.Thread(target=worker._heartbeat, args=(uuid4(), "w1", stop), daemon=True)
     thread.start()
     thread.join(timeout=2)
     assert not thread.is_alive()
@@ -220,15 +214,13 @@ def test_worker_marks_permanent_failure_without_retry(monkeypatch) -> None:
     def forbidden(payload, context, report):
         raise registry.JobPermanentError("document_access_denied")
 
-    registry.register(
-        "demo.forbidden", roles=("OWNER",), payload_serializer=DemoPayloadSerializer
-    )(forbidden)
+    registry.register("demo.forbidden", roles=("OWNER",), payload_serializer=DemoPayloadSerializer)(
+        forbidden
+    )
     outcomes: list[dict[str, object]] = []
     monkeypatch.setattr(repository, "renew_lock", lambda **kwargs: None)
     monkeypatch.setattr(repository, "report_progress", lambda **kwargs: None)
-    monkeypatch.setattr(
-        repository, "fail_permanent", lambda **kwargs: outcomes.append(kwargs)
-    )
+    monkeypatch.setattr(repository, "fail_permanent", lambda **kwargs: outcomes.append(kwargs))
     monkeypatch.setattr(
         repository,
         "fail_or_retry",
@@ -252,20 +244,14 @@ def test_worker_marks_permanent_failure_without_retry(monkeypatch) -> None:
 
 
 def test_enqueue_serializer_rejects_unknown_fields() -> None:
-    serializer = JobEnqueueSerializer(
-        data={"type": "demo.echo", "payload": {}, "surprise": True}
-    )
+    serializer = JobEnqueueSerializer(data={"type": "demo.echo", "payload": {}, "surprise": True})
     assert not serializer.is_valid()
-    serializer = JobEnqueueSerializer(
-        data={"type": "demo.echo", "payload": {"amount": 3}}
-    )
+    serializer = JobEnqueueSerializer(data={"type": "demo.echo", "payload": {"amount": 3}})
     assert serializer.is_valid()
 
 
 def _tenant(role: str, org_id):
-    return SimpleNamespace(
-        active_organization=SimpleNamespace(organization_id=org_id, role=role)
-    )
+    return SimpleNamespace(active_organization=SimpleNamespace(organization_id=org_id, role=role))
 
 
 def _client_with_scope(monkeypatch, role: str):
@@ -281,9 +267,7 @@ def _client_with_scope(monkeypatch, role: str):
 
     monkeypatch.setattr(job_views, "job_scope", fake_scope)
     client = APIClient()
-    client.force_authenticate(
-        user=SimpleNamespace(is_authenticated=True), token=object()
-    )
+    client.force_authenticate(user=SimpleNamespace(is_authenticated=True), token=object())
     return client, token, org_id
 
 
@@ -301,9 +285,7 @@ def test_enqueue_view_denies_role_outside_spec(monkeypatch) -> None:
 
 def test_enqueue_view_rejects_unknown_type(monkeypatch) -> None:
     client, _, _ = _client_with_scope(monkeypatch, "OWNER")
-    response = client.post(
-        "/api/v1/jobs/", {"type": "demo.ghost", "payload": {}}, format="json"
-    )
+    response = client.post("/api/v1/jobs/", {"type": "demo.ghost", "payload": {}}, format="json")
     assert response.status_code == 422
     assert response.data["error"]["code"] == "job_type_unknown"
 
@@ -369,3 +351,47 @@ def test_list_view_passes_filters(monkeypatch) -> None:
         "state": "FAILED",
         "limit": 5,
     }
+
+
+def test_enqueue_requeues_a_terminal_row(monkeypatch) -> None:
+    register_demo()
+    failed = {"id": uuid4(), "state": "FAILED"}
+    requeued = {"id": failed["id"], "state": "QUEUED"}
+    calls: dict[str, object] = {}
+    monkeypatch.setattr(repository, "insert_job", lambda **kwargs: (failed, False))
+
+    def fake_requeue(*, job_id, run_after):
+        calls["job_id"] = job_id
+        return requeued
+
+    monkeypatch.setattr(repository, "requeue_terminal", fake_requeue)
+    job, created = service.enqueue(
+        org_id=uuid4(),
+        job_type="demo.echo",
+        payload={"amount": 3},
+        idempotency_key="k-9",
+        role="ESTIMATOR",
+    )
+    assert job is requeued
+    assert created is True
+    assert calls["job_id"] == failed["id"]
+
+
+def test_enqueue_keeps_terminal_success_deduped(monkeypatch) -> None:
+    register_demo()
+    succeeded = {"id": uuid4(), "state": "SUCCEEDED"}
+    monkeypatch.setattr(repository, "insert_job", lambda **kwargs: (succeeded, False))
+    monkeypatch.setattr(
+        repository,
+        "requeue_terminal",
+        lambda **kwargs: pytest.fail("terminal success must not requeue"),
+    )
+    job, created = service.enqueue(
+        org_id=uuid4(),
+        job_type="demo.echo",
+        payload={"amount": 3},
+        idempotency_key="k-9",
+        role="ESTIMATOR",
+    )
+    assert job is succeeded
+    assert created is False

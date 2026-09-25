@@ -69,6 +69,33 @@ def insert_job(
     return existing, False
 
 
+def requeue_terminal(*, job_id: UUID, run_after: datetime) -> dict[str, object] | None:
+    """Requeue a terminally failed/canceled job in place — a replayed
+    idempotent enqueue restarts the same row with a fresh attempt budget.
+    Returns None when the row already left the terminal states (another
+    request or the worker won the race), so the caller dedupes instead."""
+    record = rows(
+        """
+        UPDATE public.job_runs
+        SET state = 'QUEUED',
+            attempt = 0,
+            progress = 0,
+            error = NULL,
+            result = NULL,
+            locked_by = NULL,
+            locked_at = NULL,
+            run_after = %s,
+            started_at = NULL,
+            completed_at = NULL,
+            updated_at = NOW()
+        WHERE id = %s AND state IN ('FAILED', 'CANCELED')
+        RETURNING *
+        """,
+        [run_after, str(job_id)],
+    )
+    return _decode(record[0]) if record else None
+
+
 def get_job(*, org_id: UUID, job_id: UUID) -> dict[str, object] | None:
     record = rows(
         "SELECT * FROM public.job_runs WHERE org_id = %s AND id = %s",
@@ -109,7 +136,7 @@ def list_jobs(
         for record in rows(
             f"""
             SELECT * FROM public.job_runs
-            WHERE {' AND '.join(clauses)}
+            WHERE {" AND ".join(clauses)}
             ORDER BY created_at DESC
             LIMIT %s
             """,
@@ -198,9 +225,7 @@ def renew_lock(*, job_id: UUID, worker_id: str) -> bool:
 
 def release_stale(*, now: datetime | None = None) -> int:
     """Requeue RUNNING jobs whose worker disappeared (crash recovery)."""
-    cutoff = (now or datetime.now(timezone.utc)) - timedelta(
-        seconds=STALE_LOCK_SECONDS
-    )
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(seconds=STALE_LOCK_SECONDS)
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -279,11 +304,7 @@ def fail_or_retry(
 ) -> str:
     """Requeue with quadratic backoff, or mark FAILED after the last attempt."""
     terminal = attempt >= max_attempts
-    state_update = (
-        "state = 'FAILED', completed_at = NOW()"
-        if terminal
-        else "state = 'QUEUED'"
-    )
+    state_update = "state = 'FAILED', completed_at = NOW()" if terminal else "state = 'QUEUED'"
     _terminal_update(
         job_id=job_id,
         worker_id=worker_id,
