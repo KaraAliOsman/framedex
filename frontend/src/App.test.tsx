@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AppRoutes } from "./App";
 import { AuthSessionContext, type AuthSessionContextValue } from "./auth/AuthSessionProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
+import { ConfirmProvider } from "./ui";
 vi.mock("./api/generated/dekopen", () => ({
   projectsList: vi.fn().mockResolvedValue({ status: 200, data: { items: [] } }),
 }));
@@ -55,9 +56,11 @@ function renderRoute(path: string, auth: AuthSessionContextValue) {
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
         <ThemeProvider>
-          <MemoryRouter initialEntries={[path]}>
-            <AppRoutes />
-          </MemoryRouter>
+          <ConfirmProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <AppRoutes />
+            </MemoryRouter>
+          </ConfirmProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </AuthSessionContext.Provider>,
@@ -73,8 +76,8 @@ describe("SHOT-04 application routes", () => {
   it("opens the real project list from the authenticated shell", async () => {
     renderRoute("/dashboard", authValue("ready"));
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
-    expect(screen.getByLabelText("Proyectos")).toHaveAttribute("href", "/projects");
-    fireEvent.click(screen.getByLabelText("Proyectos"));
+    expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
+    fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
     expect(await screen.findByRole("heading", { name: "Proyectos" })).toBeInTheDocument();
   });
 

@@ -48,11 +48,7 @@ export function Skeleton({ lines = 3 }: { lines?: number }): JSX.Element {
   return (
     <div aria-busy="true" className="ui-skeleton" role="status">
       {Array.from({ length: lines }, (_, index) => (
-        <span
-          className="ui-skeleton__line"
-          key={index}
-          style={{ width: `${88 - index * 14}%` }}
-        />
+        <span className="ui-skeleton__line" key={index} style={{ width: `${88 - index * 14}%` }} />
       ))}
     </div>
   );

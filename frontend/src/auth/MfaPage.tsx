@@ -106,37 +106,59 @@ export function MfaPage(): JSX.Element {
   return (
     <main className="auth-screen" data-testid="mfa-page">
       <section className="auth-card">
-        <p className="eyebrow">{t("auth.mfaEyebrow")}</p>
-        <h1>{t("auth.mfaTitle")}</h1>
+        <div className="auth-card__brand">
+          <span className="brand">{t("app.brand")}</span>
+          <span className="brand-os">{t("app.brandOs")}</span>
+        </div>
+        <header className="auth-card__header">
+          <p className="eyebrow">{t("auth.mfaEyebrow")}</p>
+          <h1>{t("auth.mfaTitle")}</h1>
+        </header>
         {factor === null ? (
-          <button type="button" disabled={busy || loadingFactors} onClick={() => void enroll()}>
-            {t("auth.mfaEnroll")}
+          <button
+            type="button"
+            className="ui-button ui-button--primary"
+            disabled={busy || loadingFactors}
+            onClick={() => void enroll()}
+          >
+            {loadingFactors ? t("auth.mfaLoading") : t("auth.mfaEnroll")}
           </button>
         ) : (
           <>
-            {factor.qrCode ? <img src={factor.qrCode} alt={t("auth.mfaQr")} /> : null}
+            {factor.qrCode ? (
+              <img className="auth-qr" src={factor.qrCode} alt={t("auth.mfaQr")} />
+            ) : null}
             {factor.secret ? (
-              <p>
+              <p className="auth-hint">
                 {t("auth.mfaManual")} <code data-testid="totp-secret">{factor.secret}</code>
               </p>
             ) : null}
-            <form onSubmit={(event) => void verify(event)}>
+            <form className="auth-form" onSubmit={(event) => void verify(event)}>
               <label htmlFor="totp-code">{t("auth.mfaCode")}</label>
               <input
                 id="totp-code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoFocus
                 required
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
               />
-              <button type="submit" disabled={busy || loadingFactors}>
-                {t("auth.mfaVerify")}
+              <button
+                type="submit"
+                className="ui-button ui-button--primary"
+                disabled={busy || loadingFactors || code.trim() === ""}
+              >
+                {busy ? t("auth.mfaVerifying") : t("auth.mfaVerify")}
               </button>
             </form>
           </>
         )}
-        {error ? <p role="alert">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="auth-notice auth-notice--error">
+            {error}
+          </p>
+        ) : null}
       </section>
     </main>
   );

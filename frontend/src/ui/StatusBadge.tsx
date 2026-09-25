@@ -1,11 +1,5 @@
 export type StatusTone =
-  | "success"
-  | "warning"
-  | "danger"
-  | "info"
-  | "unknown"
-  | "blocked"
-  | "neutral";
+  "success" | "warning" | "danger" | "info" | "unknown" | "blocked" | "neutral";
 
 export function StatusBadge({
   tone = "neutral",

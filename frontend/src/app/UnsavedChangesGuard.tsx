@@ -36,7 +36,12 @@ function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): JS
           <button onClick={() => blocker.reset()} type="button">
             {t("ui.cancel")}
           </button>
-          <button className="ui-button--primary" data-primary onClick={() => blocker.proceed()} type="button">
+          <button
+            className="ui-button--primary"
+            data-primary
+            onClick={() => blocker.proceed()}
+            type="button"
+          >
             {t("ui.confirm")}
           </button>
         </>

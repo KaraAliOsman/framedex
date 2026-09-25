@@ -17,7 +17,13 @@ export type DialogProps = PropsWithChildren<{
  * data-primary control in the footer. Focus lands on the dialog on open and
  * returns to the invoking element on close.
  */
-export function Dialog({ title, onClose, footer, width = "m", children }: DialogProps): JSX.Element {
+export function Dialog({
+  title,
+  onClose,
+  footer,
+  width = "m",
+  children,
+}: DialogProps): JSX.Element {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<Element | null>(null);
 

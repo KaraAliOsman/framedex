@@ -6,6 +6,7 @@ import { analyticsOperationalSummary, projectsList } from "../api/generated/deko
 import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../i18n/es-CL";
+import { attentionEntries } from "./attention";
 
 const WO_STATUSES = [
   "RELEASED",
@@ -93,60 +94,9 @@ export function DashboardPage(): JSX.Element {
   const next = byActivity.find((item) => item.status === "DRAFT") ?? null;
   const canWrite = org?.role === "OWNER" || org?.role === "ESTIMATOR";
 
-  const workOrders = (opsQuery.data?.work_orders ?? {}) as Record<string, number>;
-  const deliveries = (opsQuery.data?.deliveries ?? {}) as Record<string, number>;
-  const prep = (opsQuery.data?.prep ?? {}) as Record<string, number>;
-  const attentionCandidates: { key: TranslationKey; count: number; to: string; warn: boolean }[] = [
-    {
-      key: "dashboard.prepVersions",
-      count: Number(prep.versions_ready ?? 0),
-      to: "/production",
-      warn: false,
-    },
-    {
-      key: "dashboard.prepShortage",
-      count: Number(prep.work_orders_shortage ?? 0),
-      to: "/production?shortage=1",
-      warn: true,
-    },
-    {
-      key: "dashboard.prepDispatch",
-      count: Number(prep.dispatch_ready ?? 0),
-      to: "/production?dispatch_ready=1",
-      warn: false,
-    },
-    {
-      key: "dashboard.catalogGaps",
-      count: Number(prep.catalog_gaps ?? 0),
-      to: "/catalogs/systems",
-      warn: true,
-    },
-    {
-      key: "dashboard.deliveriesOverdue",
-      count: Number(deliveries.overdue ?? 0),
-      to: "/production?status=DISPATCHED",
-      warn: true,
-    },
-    {
-      key: "dashboard.deliveriesToday",
-      count: Number(deliveries.today ?? 0),
-      to: "/production?status=DISPATCHED",
-      warn: false,
-    },
-    {
-      key: "dashboard.ordersHold",
-      count: Number(workOrders.HOLD ?? 0),
-      to: "/production?status=HOLD",
-      warn: true,
-    },
-    {
-      key: "dashboard.quotesWaiting",
-      count: items.filter((item) => item.status === "QUOTED").length,
-      to: "/projects?status=QUOTED",
-      warn: false,
-    },
-  ];
-  const attention = attentionCandidates.filter((entry) => entry.count > 0);
+  // One canonical attention feed — the topbar bell renders the same queue,
+  // so the surfaces can never disagree about what needs a human.
+  const attention = attentionEntries(opsQuery.data, items);
 
   return (
     <section className="dashboard" aria-labelledby="page-title">
@@ -270,9 +220,14 @@ export function DashboardPage(): JSX.Element {
         <div className="dashboard-empty">
           <p>{t("dashboard.empty")}</p>
           {canWrite && (
-            <Link className="primary-action" to="/projects">
-              {t("dashboard.emptyCta")}
-            </Link>
+            <div className="dashboard-empty__actions">
+              <Link className="primary-action" to="/projects">
+                {t("dashboard.emptyCta")}
+              </Link>
+              <Link className="ui-button" to="/onboarding">
+                {t("dashboard.onboardingCta")}
+              </Link>
+            </div>
           )}
         </div>
       ) : (
