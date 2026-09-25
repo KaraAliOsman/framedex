@@ -32,6 +32,56 @@ _CALLERS = ("OWNER", "ESTIMATOR")
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 
 
+def _record_failure(request, *, goal, job_id, error, surface=None, refs=None):
+    """§07-B — the round's rollback undid every job write; a fresh RLS scope
+    writes FAILED_RETRYABLE so the workspace can show and resume the failed
+    job instead of losing it silently."""
+    code = str(getattr(error, "code", None) or "ai_job_failed")[:120]
+    try:
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            if job_id is None:
+                jobs.create_failed_job(
+                    org_id=org_id,
+                    user_id=token.user_id,
+                    surface=surface,
+                    refs=refs or {},
+                    goal=goal,
+                    error_code=code,
+                )
+            else:
+                jobs.record_failure(
+                    job_id=job_id, goal=goal, error_code=code
+                )
+    except Exception:  # failure bookkeeping must never mask the real error
+        pass
+
+
+def _raise_agent_error(error: Exception):
+    if isinstance(error, _ContextError):
+        if error.code == "ai_context_ref_invalid":
+            raise contract_error(
+                400,
+                "ai_context_ref_invalid",
+                "La referencia de contexto no es válida.",
+            ) from None
+        raise contract_error(
+            404,
+            "ai_context_not_found",
+            "El contexto solicitado no existe o no está disponible.",
+        ) from None
+    if isinstance(error, ProviderError):
+        raise contract_error(
+            503,
+            error.code,
+            "El proveedor de IA no está disponible en este momento.",
+        ) from None
+    if isinstance(error, ValueError) and str(error) == "ai_job_terminal":
+        raise contract_error(
+            409, "ai_job_terminal", "El trabajo ya terminó."
+        ) from None
+    raise error
+
+
 class AiInvokeView(APIView):
     @extend_schema(
         operation_id="ai_invoke",
@@ -127,37 +177,31 @@ class AiAgentView(APIView):
                     "ai_context_ref_required",
                     f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
                 )
+            failure = None
             try:
-                return Response(
-                    act(
-                        org_id=org_id,
-                        user_id=token.user_id,
-                        surface=surface,
-                        refs=refs,
-                        goal=str(data["goal"]),
-                        product=data.get("product"),
-                        history=list(data.get("history") or []),
-                        operation_key=str(data["operation_key"]),
-                    )
+                result = act(
+                    org_id=org_id,
+                    user_id=token.user_id,
+                    surface=surface,
+                    refs=refs,
+                    goal=str(data["goal"]),
+                    product=data.get("product"),
+                    history=list(data.get("history") or []),
+                    operation_key=str(data["operation_key"]),
                 )
-            except _ContextError as error:
-                if error.code == "ai_context_ref_invalid":
-                    raise contract_error(
-                        400,
-                        "ai_context_ref_invalid",
-                        "La referencia de contexto no es válida.",
-                    ) from None
-                raise contract_error(
-                    404,
-                    "ai_context_not_found",
-                    "El contexto solicitado no existe o no está disponible.",
-                ) from None
-            except ProviderError as error:
-                raise contract_error(
-                    503,
-                    error.code,
-                    "El proveedor de IA no está disponible en este momento.",
-                ) from None
+            except Exception as error:  # recorded + mapped outside the scope
+                failure = error
+            else:
+                return Response(result)
+        _record_failure(
+            request,
+            goal=str(data["goal"]),
+            job_id=None,
+            surface=surface,
+            refs=refs,
+            error=failure,
+        )
+        _raise_agent_error(failure)
 
 
 class AiJobCollectionView(APIView):
@@ -256,42 +300,40 @@ class AiJobMessagesView(APIView):
                 jobs.resume_job(
                     job_id=job_id, transcript=list(job.get("transcript") or [])
                 )
-            except ValueError:
-                raise contract_error(
-                    409, "ai_job_terminal", "El trabajo ya terminó."
-                ) from None
-            try:
-                return Response(
-                    act(
-                        org_id=org_id,
-                        user_id=token.user_id,
-                        surface=str(job["surface"]),
-                        refs=dict(job.get("refs") or {}),
-                        goal=str(data["message"]),
-                        product=None,
-                        history=history,
-                        operation_key=str(
-                            request.headers.get("X-Operation-Key")
-                            or f"{job_id}:{len(history)}"
-                        ),
-                        job=job,
-                    )
-                )
-            except _ContextError as error:
-                if error.code == "ai_context_ref_invalid":
+            except ValueError as error:
+                if str(error) == "ai_job_terminal":
                     raise contract_error(
-                        400,
-                        "ai_context_ref_invalid",
-                        "La referencia de contexto no es válida.",
+                        409, "ai_job_terminal", "El trabajo ya terminó."
                     ) from None
                 raise contract_error(
-                    404,
-                    "ai_context_not_found",
-                    "El contexto solicitado no existe o no está disponible.",
+                    409,
+                    "ai_job_running",
+                    "Ya hay una instrucción en curso en este trabajo.",
                 ) from None
-            except ProviderError as error:
-                raise contract_error(
-                    503,
-                    error.code,
-                    "El proveedor de IA no está disponible en este momento.",
-                ) from None
+            failure = None
+            try:
+                result = act(
+                    org_id=org_id,
+                    user_id=token.user_id,
+                    surface=str(job["surface"]),
+                    refs=dict(job.get("refs") or {}),
+                    goal=str(data["message"]),
+                    product=None,
+                    history=history,
+                    operation_key=str(
+                        request.headers.get("X-Operation-Key")
+                        or f"{job_id}:{len(history)}"
+                    ),
+                    job=job,
+                )
+            except Exception as error:  # recorded + mapped outside the scope
+                failure = error
+            else:
+                return Response(result)
+        _record_failure(
+            request,
+            goal=str(data["message"]),
+            job_id=job_id,
+            error=failure,
+        )
+        _raise_agent_error(failure)

@@ -31,11 +31,12 @@ SELECT ok(
     ),
     'ai_jobs records are never deleted'
 );
-SELECT is(
-    (SELECT granted_roles::text FROM information_schema.role_table_grants
-     WHERE table_schema = 'public' AND table_name = 'ai_jobs'
-       AND privilege_type = 'DELETE' AND grantee = 'authenticated' LIMIT 1),
-    NULL,
+SELECT ok(
+    NOT EXISTS (
+        SELECT 1 FROM information_schema.role_table_grants
+        WHERE table_schema = 'public' AND table_name = 'ai_jobs'
+          AND privilege_type = 'DELETE' AND grantee = 'authenticated'
+    ),
     'authenticated holds no DELETE grant on ai_jobs'
 );
 SELECT throws_ok(

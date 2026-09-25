@@ -103,8 +103,7 @@ def finish_job(*, job_id: UUID, state: str, transcript: list,
         " error_code = %s, updated_at = NOW(),"
         " completed_at = CASE WHEN %s IN ('SUCCEEDED','FAILED','CANCELED')"
         " THEN NOW() ELSE completed_at END"
-        " WHERE id = %s AND state NOT IN ('SUCCEEDED','FAILED','CANCELED')"
-        " RETURNING id",
+        " WHERE id = %s AND state = 'RUNNING' RETURNING id",
         [
             state, _dump(transcript), _dump(artifacts), _dump(warnings),
             _dump(result) if result is not None else None, error_code,
@@ -117,18 +116,70 @@ def finish_job(*, job_id: UUID, state: str, transcript: list,
 
 
 def resume_job(*, job_id: UUID, transcript: list) -> dict:
-    """A follow-up message reopens a settled/open job: transcript already
-    carries the new user turn; state goes back to RUNNING."""
+    """Claim a settled job for a new round. The UPDATE itself is the lock:
+    only WAITING_*/FAILED_RETRYABLE/SUCCEEDED states move to RUNNING, so a
+    follow-up racing a live round or a closed job gets a conflict instead of
+    silently writing its stale transcript over the other round's work."""
     record = rows(
         "UPDATE public.ai_jobs SET state = 'RUNNING', transcript = %s::jsonb,"
         " result = NULL, error_code = NULL, completed_at = NULL, updated_at = NOW()"
-        " WHERE id = %s AND state NOT IN ('CANCELED')"
+        " WHERE id = %s AND state IN"
+        " ('WAITING_FOR_USER','WAITING_FOR_APPROVAL','FAILED_RETRYABLE','SUCCEEDED')"
         " RETURNING id",
         [_dump(transcript), str(job_id)],
     )
-    if not record:
+    if record:
+        return {"id": str(record[0]["id"])}
+    state = rows(
+        "SELECT state FROM public.ai_jobs WHERE id = %s", [str(job_id)]
+    )
+    if state and state[0]["state"] in TERMINAL_STATES:
         raise ValueError("ai_job_terminal")
+    raise ValueError("ai_job_running")
+
+
+def _failure_turns(goal: str, error_code: str) -> list[dict]:
+    return [
+        {"role": "user", "text": goal[:MAX_GOAL]},
+        {"role": "error", "code": error_code[:120]},
+    ]
+
+
+def create_failed_job(*, org_id: UUID, user_id: UUID, surface: str,
+                      refs: dict, goal: str, error_code: str) -> dict:
+    """§07-B — a failed first round outlives the rolled-back request: after
+    the scope unwinds, the caller re-enters its RLS context and records the
+    job here, so the workspace shows a resumable FAILED_RETRYABLE row
+    instead of nothing at all."""
+    record = rows(
+        "INSERT INTO public.ai_jobs"
+        " (org_id, user_id, surface, refs, goal, state, transcript, error_code)"
+        " VALUES (%s, %s, %s, %s::jsonb, %s, 'FAILED_RETRYABLE', %s::jsonb, %s)"
+        " RETURNING id",
+        [
+            str(org_id), str(user_id), surface, _dump(refs or {}),
+            goal[:MAX_GOAL], _dump(_failure_turns(goal, error_code)),
+            error_code[:120],
+        ],
+    )
     return {"id": str(record[0]["id"])}
+
+
+def record_failure(*, job_id: UUID, goal: str, error_code: str) -> dict | None:
+    """A failed follow-up lands on the existing job after its round rolled
+    back: the user turn stays in the transcript and the row goes
+    FAILED_RETRYABLE. A CANCELED job is left alone — the user's cancel
+    wins over a late failure record."""
+    found = rows(
+        "UPDATE public.ai_jobs SET state = 'FAILED_RETRYABLE',"
+        " transcript = transcript || %s::jsonb, result = NULL, error_code = %s,"
+        " updated_at = NOW()"
+        " WHERE id = %s AND state <> 'CANCELED'"
+        " RETURNING id",
+        [_dump(_failure_turns(goal, error_code)), error_code[:120],
+         str(job_id)],
+    )
+    return {"id": str(found[0]["id"])} if found else None
 
 
 def cancel_job(*, job_id: UUID) -> bool:

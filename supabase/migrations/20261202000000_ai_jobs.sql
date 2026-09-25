@@ -5,7 +5,7 @@
 
 CREATE TABLE public.ai_jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    org_id UUID NOT NULL REFERENCES public.tenancy_organizations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
     surface VARCHAR(40) NOT NULL,
     refs JSONB NOT NULL DEFAULT '{}',

@@ -398,38 +398,24 @@ def act(
     """§07-B — every agent run is a durable job. The transcript carries the
     user's turn plus the model's grounded round; artifacts, claims and
     warnings land on the row so the workspace can inspect them after the
-    conversation scrolls. Failures persist as FAILED_RETRYABLE — the same
-    goal resumes cleanly with a new operation key."""
+    conversation scrolls. On a failed round the exception propagates: the
+    caller records FAILED_RETRYABLE after the request rolls back, so the
+    failure itself survives the transaction."""
     job = job or jobs.create_job(
         org_id=org_id, user_id=user_id, surface=surface, refs=refs, goal=goal
     )
     transcript = list(job.get("transcript") or [])
     transcript.append({"role": "user", "text": goal[:MAX_GOAL]})
-    try:
-        result = _act(
-            org_id=org_id,
-            user_id=user_id,
-            surface=surface,
-            refs=refs,
-            goal=goal,
-            product=product,
-            history=history,
-            operation_key=operation_key,
-        )
-    except Exception as error:
-        try:
-            jobs.finish_job(
-                job_id=UUID(job["id"]),
-                state="FAILED_RETRYABLE",
-                transcript=transcript,
-                artifacts=[],
-                warnings=[],
-                result=None,
-                error_code=str(getattr(error, "code", "ai_job_failed"))[:120],
-            )
-        except Exception:
-            pass
-        raise
+    result = _act(
+        org_id=org_id,
+        user_id=user_id,
+        surface=surface,
+        refs=refs,
+        goal=goal,
+        product=product,
+        history=history,
+        operation_key=operation_key,
+    )
 
     has_actions = any(
         step.get("kind") in ("prepare", "ops") for step in result["steps"]

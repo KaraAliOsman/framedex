@@ -1784,4 +1784,49 @@ def test_act_failure_marks_retryable(monkeypatch):
             org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
             goal="x", product=None, history=[], operation_key="k",
         )
-    assert calls["state"] == "FAILED_RETRYABLE"
+    # A failed round must not write inside the doomed transaction — the view
+    # records FAILED_RETRYABLE in a fresh scope after the rollback.
+    assert calls == {}
+
+
+def test_resume_job_claims_settled_states_only(monkeypatch):
+    from ai_gateway import jobs
+    import pytest
+
+    def fake_rows(sql, params):
+        if sql.startswith("UPDATE"):
+            return []  # claim lost — state already moved
+        return [{"state": "RUNNING"}]
+
+    monkeypatch.setattr(jobs, "rows", fake_rows)
+    with pytest.raises(ValueError, match="ai_job_running"):
+        jobs.resume_job(job_id=uuid4(), transcript=[])
+
+
+def test_resume_job_reports_terminal(monkeypatch):
+    from ai_gateway import jobs
+    import pytest
+
+    def fake_rows(sql, params):
+        if sql.startswith("UPDATE"):
+            return []
+        return [{"state": "CANCELED"}]
+
+    monkeypatch.setattr(jobs, "rows", fake_rows)
+    with pytest.raises(ValueError, match="ai_job_terminal"):
+        jobs.resume_job(job_id=uuid4(), transcript=[])
+
+
+def test_record_failure_appends_turns(monkeypatch):
+    from ai_gateway import jobs
+
+    written = {}
+    monkeypatch.setattr(
+        jobs, "rows",
+        lambda sql, params: written.update(sql=sql, params=params)
+        or [{"id": "j1"}],
+    )
+    result = jobs.record_failure(job_id=uuid4(), goal="hazlo", error_code="boom")
+    assert result == {"id": "j1"}
+    assert "FAILED_RETRYABLE" in written["sql"]
+    assert "CANCELED" in written["sql"]

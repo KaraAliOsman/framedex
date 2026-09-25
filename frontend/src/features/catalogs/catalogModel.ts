@@ -405,7 +405,12 @@ export function writeFromDraft<R extends Resource>(
   > = {};
   for (const field of fieldsFor(resource)) {
     const value = draft[field.name]?.trim() ?? "";
-    if (value === "" && field.optional) {
+    if (field.kind === "csv") {
+      values[field.name] = value
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "");
+    } else if (value === "" && field.optional) {
       values[field.name] = null;
     } else if (field.kind === "integer") {
       // Integer counters only; never dimensions, weights, quantities or money.
@@ -421,11 +426,6 @@ export function writeFromDraft<R extends Resource>(
     } else if (field.kind === "boolean") {
       if (value !== "true" && value !== "false") throw new Error("Missing boolean");
       values[field.name] = value === "true";
-    } else if (field.kind === "csv") {
-      values[field.name] = value
-        .split(",")
-        .map((item) => item.trim())
-        .filter((item) => item !== "");
     } else if (field.kind === "processProfile") {
       values[field.name] = value === "" ? null : value;
     } else {
