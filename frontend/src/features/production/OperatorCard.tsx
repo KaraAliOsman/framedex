@@ -129,9 +129,7 @@ export function OperatorStepCard({
   // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
   // Orders frozen before the authority model fall back to the saw.
   const stationMap = (trace?.operations?.station_map as Record<string, string> | undefined) ?? {};
-  const stepOps = ops.filter(
-    (op) => (stationMap[op.kind ?? ""] ?? "CUT") === step.code,
-  );
+  const stepOps = ops.filter((op) => (stationMap[op.kind ?? ""] ?? "CUT") === step.code);
   const sawOps = stepOps.filter((op) => op.kind === "SAW_CUT");
   const memberOps = stepOps.filter((op) => op.kind !== "SAW_CUT");
   const cutPieces: Array<{ barIndex: number; source?: string } & CutPiece> = [];

@@ -96,8 +96,7 @@ const CONFIDENCE_LABEL: Record<string, string> = {
  * human confirm; REVIEW_REQUIRED/LOW rows are never pre-selected. */
 function isSafe(candidate: Candidate): boolean {
   return (
-    (candidate.confidence === "VERIFIED_STRUCTURED" ||
-      candidate.confidence === "HIGH_CANDIDATE") &&
+    (candidate.confidence === "VERIFIED_STRUCTURED" || candidate.confidence === "HIGH_CANDIDATE") &&
     !candidate.conflict
   );
 }
