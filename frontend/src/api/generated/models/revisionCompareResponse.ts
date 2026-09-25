@@ -5,15 +5,15 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { RevisionCompareResponseBase } from "./revisionCompareResponseBase";
-import type { RevisionCompareResponseHead } from "./revisionCompareResponseHead";
-import type { RevisionCompareResponseSummary } from "./revisionCompareResponseSummary";
+import type { RevisionCompareEntry } from "./revisionCompareEntry";
+import type { RevisionCompareSide } from "./revisionCompareSide";
+import type { RevisionCompareSummary } from "./revisionCompareSummary";
 
 export interface RevisionCompareResponse {
   project_id: string;
   project_code: string;
-  base: RevisionCompareResponseBase;
-  head: RevisionCompareResponseHead;
-  summary: RevisionCompareResponseSummary;
-  positions: unknown[];
+  base: RevisionCompareSide;
+  head: RevisionCompareSide;
+  summary: RevisionCompareSummary;
+  positions: RevisionCompareEntry[];
 }

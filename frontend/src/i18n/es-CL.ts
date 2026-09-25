@@ -481,6 +481,7 @@ export const messages = {
   "pricing.perPosition": "Por vano",
   "pricing.auditReason": "Motivo",
   "pricing.auditBy": "por",
+  "pricing.auditYou": "tú",
   "pricing.auditDecided": "decidido",
   "pricing.pending": "Pendiente de aprobación del propietario",
   "pricing.rejected": "Rechazada",

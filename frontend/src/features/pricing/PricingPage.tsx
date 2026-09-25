@@ -629,13 +629,24 @@ type Operation = PriceResponse;
 
 /** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
  * computed in cents so the display never carries a float artifact. */
+function moneyCents(value: string): bigint | null {
+  const match = value.trim().match(/^(-?)(\d*)(?:\.(\d*))?$/);
+  if (match === null || (match[2] === "" && (match[3] ?? "") === "")) return null;
+  const units = match[2] === "" ? "0" : match[2];
+  const fraction = `${match[3] ?? ""}00`.slice(0, 2);
+  return BigInt(`${match[1]}${units}${fraction}`);
+}
 function marginText(net: string, cost: string, currency: string): string {
-  const netCents = Math.round(Number(net) * 100);
-  const costCents = Math.round(Number(cost) * 100);
-  if (!Number.isFinite(netCents) || !Number.isFinite(costCents) || netCents <= 0) return "—";
+  const netCents = moneyCents(net);
+  const costCents = moneyCents(cost);
+  if (netCents === null || costCents === null || netCents <= 0n) return "—";
   const diffCents = netCents - costCents;
-  const margin = diffCents / netCents;
-  return `${formatMoney((diffCents / 100).toFixed(2), currency)} · ${(margin * 100).toFixed(1)} %`;
+  const margin = Number((diffCents * 10_000n) / netCents) / 100;
+  const whole = diffCents / 100n;
+  const cents = diffCents % 100n;
+  const signed = diffCents < 0n ? "-" : "";
+  const text = `${signed}${whole < 0n ? -whole : whole}.${`${cents < 0n ? -cents : cents}`.padStart(2, "0")}`;
+  return `${formatMoney(text, currency)} · ${margin.toFixed(1)} %`;
 }
 
 /** §03-D — the pricing decision surface: the estimator and the approver
@@ -648,6 +659,7 @@ function OperationDecision({
   reasonReady,
   boundProject,
   projectLabel,
+  currentUserId,
   onApply,
   onReject,
 }: {
@@ -657,6 +669,7 @@ function OperationDecision({
   reasonReady: boolean;
   boundProject?: ProjectResponse;
   projectLabel?: string;
+  currentUserId?: string;
   onApply: () => void;
   onReject: () => void;
 }): JSX.Element {
@@ -780,7 +793,11 @@ function OperationDecision({
 
       <p className="operation-decision__audit">
         {t("pricing.auditReason")}: {operation.reason || "—"} · {t("pricing.auditBy")}{" "}
-        {operation.requested_by ? operation.requested_by.slice(0, 8) : "—"}
+        {operation.requested_by
+          ? operation.requested_by === currentUserId
+            ? t("pricing.auditYou")
+            : operation.requested_by.slice(0, 8)
+          : "—"}
         {operation.approved_at &&
           ` · ${t("pricing.auditDecided")} ${new Date(operation.approved_at).toLocaleString("es-CL")}`}
       </p>
@@ -831,7 +848,9 @@ function CommercialOperations({
   const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
   const generation = useRef(0);
 
-  const orgId = useAuthSession().me?.active_organization?.id;
+  const me = useAuthSession().me;
+  const orgId = me?.active_organization?.id;
+  const currentUserId = me?.user?.id;
 
   const [projectOptions, setProjectOptions] = useState<ProjectResponse[]>([]);
 
@@ -953,7 +972,10 @@ function CommercialOperations({
           confirmed,
           ...(reject ? { reject: true } : {}),
         }),
-      publishOperation,
+      (value) => {
+        publishOperation(value);
+        setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
+      },
       "pricing.applyError",
     );
   }
@@ -1105,6 +1127,7 @@ function CommercialOperations({
       {operation && (
         <OperationDecision
           boundProject={boundProject}
+          currentUserId={currentUserId}
           busy={busy}
           onApply={() => void apply()}
           onReject={() => void apply(true)}

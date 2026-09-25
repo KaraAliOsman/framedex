@@ -5,5 +5,6 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import { IntegrityEnum } from "./integrityEnum";
 
-export type RevisionCompareResponseHead = { [key: string]: unknown };
+export const RevisionCompareSideIntegrity = { ...IntegrityEnum } as const;

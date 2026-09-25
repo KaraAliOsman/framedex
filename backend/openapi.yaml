@@ -12923,6 +12923,16 @@ components:
         * `SUPPORT` - SUPPORT
         * `CHANNEL` - CHANNEL
         * `OTHER` - OTHER
+    ChangeEnum:
+      enum:
+      - ADDED
+      - REMOVED
+      - CHANGED
+      type: string
+      description: |-
+        * `ADDED` - ADDED
+        * `REMOVED` - REMOVED
+        * `CHANGED` - CHANGED
     ChangeInputRequest:
       type: object
       properties:
@@ -15464,6 +15474,14 @@ components:
         note:
           type: string
           maxLength: 500
+    IntegrityEnum:
+      enum:
+      - VERIFIED
+      - MISMATCH
+      type: string
+      description: |-
+        * `VERIFIED` - VERIFIED
+        * `MISMATCH` - MISMATCH
     InventoryMovement:
       type: object
       properties:
@@ -19081,6 +19099,90 @@ components:
       - confirmed
       - expected_operation_id
       - reason
+    RevisionCompareEntry:
+      type: object
+      properties:
+        position_index:
+          type: integer
+        change:
+          $ref: '#/components/schemas/ChangeEnum'
+        location_tag:
+          type: string
+        before:
+          allOf:
+          - $ref: '#/components/schemas/RevisionComparePosition'
+          nullable: true
+        after:
+          allOf:
+          - $ref: '#/components/schemas/RevisionComparePosition'
+          nullable: true
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevisionCompareField'
+      required:
+      - after
+      - before
+      - change
+      - changes
+      - location_tag
+      - position_index
+    RevisionCompareField:
+      type: object
+      properties:
+        field:
+          type: string
+        before:
+          type: string
+        after:
+          type: string
+      required:
+      - after
+      - before
+      - field
+    RevisionComparePosition:
+      type: object
+      properties:
+        id:
+          type: string
+        position_index:
+          type: integer
+        location_tag:
+          type: string
+        typology:
+          type: string
+        system_id:
+          type: string
+        quantity:
+          type: integer
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        color_interior:
+          type: string
+        color_exterior:
+          type: string
+        price_net:
+          type: string
+        discount_pct:
+          type: string
+        parametric_tree:
+          nullable: true
+      required:
+      - color_exterior
+      - color_interior
+      - discount_pct
+      - height_mm
+      - id
+      - location_tag
+      - parametric_tree
+      - position_index
+      - price_net
+      - quantity
+      - system_id
+      - typology
+      - width_mm
     RevisionCompareResponse:
       type: object
       properties:
@@ -19089,17 +19191,15 @@ components:
         project_code:
           type: string
         base:
-          type: object
-          additionalProperties: {}
+          $ref: '#/components/schemas/RevisionCompareSide'
         head:
-          type: object
-          additionalProperties: {}
+          $ref: '#/components/schemas/RevisionCompareSide'
         summary:
-          type: object
-          additionalProperties: {}
+          $ref: '#/components/schemas/RevisionCompareSummary'
         positions:
           type: array
-          items: {}
+          items:
+            $ref: '#/components/schemas/RevisionCompareEntry'
       required:
       - base
       - head
@@ -19107,6 +19207,54 @@ components:
       - project_code
       - project_id
       - summary
+    RevisionCompareSide:
+      type: object
+      properties:
+        revision_code:
+          type: string
+        emitted_at:
+          type: string
+        integrity:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/IntegrityEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        currency:
+          type: string
+        total_price_net:
+          type: string
+        total_price_tax:
+          type: string
+        total_price_gross:
+          type: string
+      required:
+      - currency
+      - emitted_at
+      - integrity
+      - revision_code
+      - total_price_gross
+      - total_price_net
+      - total_price_tax
+    RevisionCompareSummary:
+      type: object
+      properties:
+        added:
+          type: integer
+        removed:
+          type: integer
+        changed:
+          type: integer
+        unchanged:
+          type: integer
+        price_gross_delta:
+          type: string
+          nullable: true
+      required:
+      - added
+      - changed
+      - price_gross_delta
+      - removed
+      - unchanged
     RoleEnum:
       enum:
       - OWNER

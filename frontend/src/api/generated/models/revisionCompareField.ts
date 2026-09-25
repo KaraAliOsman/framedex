@@ -6,4 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type RevisionCompareResponseBase = { [key: string]: unknown };
+export interface RevisionCompareField {
+  field: string;
+  before: string;
+  after: string;
+}

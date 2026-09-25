@@ -73,11 +73,12 @@ export function JobsPage(): JSX.Element {
   const query = useQuery<JobRun[]>({
     queryKey: ["jobs", "list", org?.id, stateFilter],
     enabled: org !== undefined,
-    // A running job is a living row — poll while anything can still move.
+    // A running job is a living row — poll fast while anything can still
+    // move; idle keeps a slow beat so jobs started elsewhere still appear.
     refetchInterval: (result) =>
       (result.state.data ?? []).some((job) => job.state === "QUEUED" || job.state === "RUNNING")
         ? 4_000
-        : false,
+        : 60_000,
     queryFn: async ({ signal }) => {
       const response = await jobsList(
         { limit: 100, state: stateFilter === "" ? undefined : (stateFilter as never) },

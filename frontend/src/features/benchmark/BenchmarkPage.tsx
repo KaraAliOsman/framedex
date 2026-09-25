@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { STARTER_DEFINITIONS, starterNominalSize, type StarterKey } from "../canvas/designLibrary";
@@ -16,6 +16,46 @@ import "./benchmark.css";
  * not a user-facing page; material chips keep ~10 WebGL contexts alive. */
 
 const NOOP = (): void => undefined;
+
+/** A fixture wall of ten canvases would hold ~10 WebGL contexts at once —
+ * near the browser ceiling. The 3D capture mounts only while its card is
+ * inside (or near) the viewport, so at most a few contexts stay alive. */
+function LazyThree({
+  product,
+  members,
+}: {
+  product: ProductJson;
+  members: MemberGeometry;
+}): JSX.Element {
+  const body = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const node = body.current;
+    if (node === null) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) setVisible(entry.isIntersecting);
+      },
+      { rootMargin: "120px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div ref={body} className="benchmark-capture__body benchmark-capture__body--three">
+      {visible && (
+        <Model3DView
+          product={product}
+          members={members}
+          selection={null}
+          onSelectModule={NOOP}
+          onSelectBay={NOOP}
+          onSelectCoupling={NOOP}
+        />
+      )}
+    </div>
+  );
+}
 
 type BenchMaterialKey = "pvc" | "pvcFoil" | "aluAnthracite";
 
@@ -204,16 +244,7 @@ export function BenchmarkPage(): JSX.Element {
               </figure>
               <figure className="benchmark-capture model3d-inset">
                 <figcaption>{t("benchmark.view3d")}</figcaption>
-                <div className="benchmark-capture__body benchmark-capture__body--three">
-                  <Model3DView
-                    product={fixture.product}
-                    members={members}
-                    selection={null}
-                    onSelectModule={NOOP}
-                    onSelectBay={NOOP}
-                    onSelectCoupling={NOOP}
-                  />
-                </div>
+                <LazyThree product={fixture.product} members={members} />
               </figure>
             </div>
           </article>
