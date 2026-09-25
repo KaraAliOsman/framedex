@@ -453,6 +453,7 @@ function projectNextAction(
   project: ProjectResponse,
   payments: PaymentsSummary | undefined,
   canWrite: boolean,
+  approvals: ApprovalRecord[],
 ): NextAction | undefined {
   const paid = payments?.status === "PAID";
   const collected = Number(payments?.collected ?? "0");
@@ -468,7 +469,18 @@ function projectNextAction(
         return { labelKey: "projects.next.quote", to: `/projects/${project.id}/pricing` };
       return { labelKey: "projects.next.emit", section: "quote" };
     case "QUOTED":
-      return canWrite ? { labelKey: "projects.next.share", section: "quote" } : undefined;
+      if (!canWrite) return undefined;
+      // A live PENDING link on the current revision means the client already
+      // has the quote — the next action is reviewing that outstanding link,
+      // not minting another one.
+      return approvals.some(
+        (a) =>
+          a.revision_code === project.current_revision &&
+          a.status === "PENDING" &&
+          Date.parse(a.expires_at) > Date.now(),
+      )
+        ? { labelKey: "projects.next.awaiting", section: "quote" }
+        : { labelKey: "projects.next.share", section: "quote" };
     case "APPROVED":
       if (!canWrite) return undefined;
       if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
@@ -516,7 +528,7 @@ function ProjectHeader({
   });
   const approvalsList = approvals.data ?? [];
   const steps = commercialSteps(project, approvalsList, payments.data);
-  const action = projectNextAction(project, payments.data, canWrite);
+  const action = projectNextAction(project, payments.data, canWrite, approvalsList);
   return (
     <div className="project-head">
       <div className="project-head__row">

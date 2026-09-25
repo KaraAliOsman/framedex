@@ -6,7 +6,7 @@ import type { IntentNode } from "../canvas/intentEditing";
 import { resolveMembers } from "../canvas/members";
 import { isProductModel, wrapTreeAsProduct, type ProductJson } from "../canvas/productEditing";
 import { frontLayout, ProductFrontContent } from "../canvas/ProductFrontSvg";
-import { StudioImage } from "../canvas/renderStudio";
+import { StudioImage, webglAvailable } from "../canvas/renderStudio";
 
 const NO_ISSUES: ProductIssue[] = [];
 const NOOP = () => {};
@@ -36,7 +36,9 @@ export function PositionThumb({
 }): JSX.Element {
   const product = useMemo(() => designProduct(design), [design]);
   const { totalW, height, lift, dip, leftOver, rightOver } = frontLayout(product);
-  if (variant === "studio") {
+  // No WebGL → the technical elevation keeps rendering; the studio card
+  // would otherwise degrade to an empty placeholder.
+  if (variant === "studio" && webglAvailable()) {
     return (
       <StudioImage
         product={product}

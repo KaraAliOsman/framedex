@@ -2112,6 +2112,7 @@ export const messages = {
   "projects.next.quote": "Cotizar proyecto",
   "projects.next.emit": "Ir a emitir cotización",
   "projects.next.share": "Enviar al cliente",
+  "projects.next.awaiting": "Revisar envío al cliente",
   "projects.next.deposit": "Registrar anticipo",
   "projects.next.balance": "Registrar saldo",
   "projects.next.production": "Ver producción",

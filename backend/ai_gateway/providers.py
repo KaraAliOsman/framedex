@@ -322,7 +322,7 @@ class HttpProvider:
                                 "mime": _image_mime(document_path),
                                 "data": base64.b64encode(raw).decode("ascii"),
                             }
-                    except DocumentaryError:
+                    except (DocumentaryError, httpx.HTTPError):
                         pass
             content = self._request(
                 route=route,

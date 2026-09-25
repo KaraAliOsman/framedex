@@ -14,6 +14,10 @@ import {
   type ProductJson,
 } from "./productEditing";
 import { useViewportScale } from "./CanvasViewport";
+// The front view's fills/strokes live in canvas.css — importing it here
+// keeps the renderer self-contained: surfaces outside the editor
+// (/benchmark, thumbnails, alternatives) get the same real drawing.
+import "./canvas.css";
 
 /** Front elevation of the compositional product as a real fenestration
  * drawing: frame/sash/mullion/bead/threshold members at their catalog face

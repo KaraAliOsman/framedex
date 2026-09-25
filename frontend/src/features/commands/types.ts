@@ -13,6 +13,11 @@ export type DesignOp = { op: string } & Record<string, unknown>;
 export interface DesignOpState {
   addedModules: string[];
   addedCouplings: string[];
+  /** The product as the op sequence's author saw it. Numeric addresses and
+   * `m{n}`/`c{n}` positional refs resolve against THIS list — the same
+   * original-index contract the backend validator applies — never against
+   * the live product an earlier structural op already mutated. */
+  origin?: ProductJson;
 }
 
 /** Editor tools a command may arm. */

@@ -113,6 +113,11 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
     to (the token stays opaque — the link URL is the capability), which
     revision it carried, and how the client answered."""
     with documentary_backend():
+        one(
+            "SELECT id FROM public.projects WHERE id=%s AND org_id=%s",
+            [str(project_id), str(org_id)],
+            "project_not_found",
+        )
         return [
             {
                 "id": str(row["id"]),

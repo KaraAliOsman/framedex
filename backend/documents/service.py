@@ -2060,10 +2060,16 @@ def compare_versions(
             for field in _COMPARE_FIELDS
             if str(before[field]) != str(after[field])
         ]
-        if before["calculation_hash"] != after["calculation_hash"]:
-            fields.append(
-                {"field": "spec", "before": "", "after": ""}
-            )
+        spec_drift = before["calculation_hash"] != after["calculation_hash"]
+        if not (before["calculation_hash"] and after["calculation_hash"]):
+            # Pre-hash snapshots cannot prove design equality by hash — fall
+            # back to the canonical tree so a bay that changed FIXED→TURN_LEFT
+            # still surfaces instead of reading as unchanged.
+            spec_drift = documentary_canonical_json_v1(
+                before.get("parametric_tree")
+            ) != documentary_canonical_json_v1(after.get("parametric_tree"))
+        if spec_drift:
+            fields.append({"field": "spec", "before": "", "after": ""})
         if before["documentary_signature"] != after["documentary_signature"]:
             fields.append(
                 {"field": "manufacturing", "before": "", "after": ""}

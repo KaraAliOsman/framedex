@@ -25,9 +25,10 @@ export type StudioOptions = {
 const RENDER_W = 640;
 const RENDER_H = 480;
 
-let renderer: THREE.WebGLRenderer | null = null;
+let renderer: THREE.WebGLRenderer | null | "unavailable" = null;
 
 function getRenderer(): THREE.WebGLRenderer | null {
+  if (renderer === "unavailable") return null;
   if (renderer) return renderer;
   if (typeof document === "undefined") return null;
   try {
@@ -40,9 +41,15 @@ function getRenderer(): THREE.WebGLRenderer | null {
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
   } catch {
-    renderer = null;
+    renderer = "unavailable";
   }
-  return renderer;
+  return renderer instanceof THREE.WebGLRenderer ? renderer : null;
+}
+
+/** True when a WebGL context can be created — callers render a vector
+ * fallback instead of the empty studio placeholder. */
+export function webglAvailable(): boolean {
+  return getRenderer() !== null;
 }
 
 function tokenColor(token: string, fallback: string): string {

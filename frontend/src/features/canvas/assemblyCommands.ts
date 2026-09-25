@@ -144,31 +144,42 @@ function createdModule(before: ProductJson, after: ProductJson): string | null {
  * ref — the module's own id, a synthetic `added_m{n}`/`added_c{n}` minted by
  * an earlier structural op in the same sequence, or the `m{n}`/`c{n}`
  * positional fallback — a number stays a legacy index. */
+/** Positional addresses (a bare number or `m{n}`/`c{n}`) name the sequence
+ * author's ORIGINAL ordering — the backend validator resolves them against
+ * the immutable summary list, so the client resolves them against the
+ * sequence-start product in state.origin. A member removed mid-sequence is
+ * no longer addressable by position on either side. */
 function moduleAt(product: ProductJson, address: unknown, state?: DesignOpState): string | null {
+  const positional = state?.origin ?? product;
+  const live = (id: string | undefined): string | null =>
+    id && product.assembly.modules.some((module) => module.id === id) ? id : null;
   if (typeof address === "number") {
-    return product.assembly.modules[address]?.id ?? null;
+    return live(positional.assembly.modules[address]?.id);
   }
   if (typeof address !== "string") return null;
   const direct = product.assembly.modules.find((module) => module.id === address);
   if (direct) return direct.id;
   const added = /^added_m(\d+)$/.exec(address);
   if (added) return state?.addedModules[Number(added[1]) - 1] ?? null;
-  const positional = /^m(\d+)$/.exec(address);
-  if (positional) return product.assembly.modules[Number(positional[1]) - 1]?.id ?? null;
+  const index = /^m(\d+)$/.exec(address);
+  if (index) return live(positional.assembly.modules[Number(index[1]) - 1]?.id);
   return null;
 }
 
 function couplingAt(product: ProductJson, address: unknown, state?: DesignOpState): string | null {
+  const positional = state?.origin ?? product;
+  const live = (id: string | undefined): string | null =>
+    id && product.assembly.couplings.some((coupling) => coupling.id === id) ? id : null;
   if (typeof address === "number") {
-    return product.assembly.couplings[address]?.id ?? null;
+    return live(positional.assembly.couplings[address]?.id);
   }
   if (typeof address !== "string") return null;
   const direct = product.assembly.couplings.find((coupling) => coupling.id === address);
   if (direct) return direct.id;
   const added = /^added_c(\d+)$/.exec(address);
   if (added) return state?.addedCouplings[Number(added[1]) - 1] ?? null;
-  const positional = /^c(\d+)$/.exec(address);
-  if (positional) return product.assembly.couplings[Number(positional[1]) - 1]?.id ?? null;
+  const index = /^c(\d+)$/.exec(address);
+  if (index) return live(positional.assembly.couplings[Number(index[1]) - 1]?.id);
   return null;
 }
 

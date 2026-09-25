@@ -486,6 +486,7 @@ function planTransform(
   planModule: PlanModule | undefined,
   rect: { x: number; sill: number },
   fallbackDepth: number,
+  declared?: { x: number; y: number; theta: number },
 ): { position: Vec3; rotationY: number; depth: number; fromPlan: boolean } {
   if (planModule && planModule.corners.length >= 4) {
     const [start, end, , backStart] = planModule.corners;
@@ -505,6 +506,18 @@ function planTransform(
         fromPlan: true,
       };
     }
+  }
+  if (declared) {
+    // No engine plan — reproduce the plan's front chain from the declared
+    // coupling angles: the member starts at its column's chain point and
+    // runs along the accumulated heading. Only the front edge is
+    // authoritative here; the back edge keeps the fallback depth.
+    return {
+      position: [declared.x, rect.sill, declared.y === 0 ? 0 : -declared.y],
+      rotationY: declared.theta,
+      depth: fallbackDepth,
+      fromPlan: true,
+    };
   }
   return {
     position: [rect.x, rect.sill, 0],
@@ -878,14 +891,34 @@ export function buildScene3D(
   const worldPoints: Vec3[] = [];
 
   const stacks = resolveStacks(product);
+  // Declared-angle front chain for plan-less products — mirrors the engine's
+  // plan walk: column i's heading adds the seam's angle_deg, each column's
+  // front-start is the previous one's front-end. Corner/bow assemblies
+  // fold; a straight chain degenerates to the flat elevation.
+  const columnTransform = new Map<string, { x: number; y: number; theta: number }>();
+  {
+    const columnSeams = joints.filter((joint) => joint.kind === "column");
+    let chainX = 0;
+    let chainY = 0;
+    let theta = 0;
+    columns.forEach((column, index) => {
+      columnTransform.set(column.rootId, { x: chainX, y: chainY, theta });
+      chainX += column.w * Math.cos(theta);
+      chainY += column.w * Math.sin(theta);
+      const seam = columnSeams[index];
+      if (seam?.angleDeg) theta += (Number(seam.angleDeg) * Math.PI) / 180;
+    });
+  }
   for (const rect of rects) {
     const module = rect.module;
     const w = Number(module.width_mm);
     const h = Number(module.height_mm);
+    const rootId = stacks.stackRoot.get(module.id) ?? module.id;
     const { position, rotationY, depth, fromPlan } = planTransform(
       planById.get(module.id),
       rect,
       fallbackDepth,
+      columnTransform.get(rootId),
     );
     // A stacked member shares its root's plan footprint; the elevation
     // centres it inside the column, so offset along the root heading by

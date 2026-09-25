@@ -1003,3 +1003,62 @@ def test_module_count_growth_joins_the_chain_end_past_a_stacked_member(
     )
     assert out["ops"] == [{"op": "set_module_count", "count": 4}]
     assert out["rejected"][0]["reason"] == "sin_borde_libre"
+
+
+def _chain3_product():
+    """Three inline units — enough room to insert into one seam, then remove
+    a member and see which incident joint survives (earlier ref wins)."""
+    return {
+        "modules": [
+            {"id": "m1", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m2", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m3", "width_mm": "900", "height_mm": "1500"},
+        ],
+        "couplings": [
+            {
+                "id": "c1",
+                "angle_deg": "0",
+                "kind": "INLINE",
+                "modules": ["m1", "m2"],
+                "edges": ["right", "left"],
+            },
+            {
+                "id": "c2",
+                "angle_deg": "0",
+                "kind": "INLINE",
+                "modules": ["m2", "m3"],
+                "edges": ["right", "left"],
+            },
+        ],
+    }
+
+
+def test_insert_then_remove_keeps_the_same_surviving_joint(monkeypatch):
+    """insert_module splices the minted joint right after the seam (client
+    order), so a later removal preserves the earlier incident ref — the same
+    joint the client's relink keeps."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "insert_module", "coupling": "c1"},
+                {"op": "remove_unit", "module": "m2"},
+                {"op": "remove_coupling", "coupling": "added_c1"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_chain3_product(),
+        prompt="inserta en la primera unión, quita el medio y luego la unión nueva",
+        system_id=uuid4(),
+        operation_key="assist-e1",
+    )
+    assert out["ops"] == [
+        {"op": "insert_module", "coupling": "c1"},
+        {"op": "remove_unit", "module": "m2"},
+        {"op": "remove_coupling", "coupling": "added_c1"},
+    ]
+    assert out["rejected"] == []

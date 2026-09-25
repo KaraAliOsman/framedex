@@ -750,17 +750,21 @@ def _validate_ops(
                         state["module_refs"].index(left_ref) + 1, new_module
                     )
                     # The seam's coupling ref survives as the first joint
-                    # (left↔new); the second joint mints a fresh ref.
+                    # (left↔new); the second joint mints a fresh ref and
+                    # splices in IMMEDIATELY after the seam — the client's
+                    # splice at the resolved index, so removals later keep
+                    # the same "earlier incident joint" on both sides.
                     seam_left = left_edge or "right"
                     seam_right = right_edge or "left"
                     info["modules"] = [left_ref, new_module]
                     info["edges"] = [seam_left, _OPPOSITE[seam_left]]
                     _claim(new_module, _OPPOSITE[seam_left])
-                    state["coupling_refs"].append(
+                    state["coupling_refs"].insert(
+                        state["coupling_refs"].index(ref) + 1,
                         _add_coupling(
                             [new_module, right_ref],
                             [_OPPOSITE[seam_right], seam_right],
-                        )
+                        ),
                     )
                     accepted.append({"op": name, "coupling": ref})
         elif name == "remove_coupling":
