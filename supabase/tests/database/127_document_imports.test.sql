@@ -18,7 +18,7 @@ SELECT ok(
     EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'public' AND tablename = 'document_imports'
-          AND policyname = 'document_imports_isolation'
+          AND policyname = 'document_imports_member_read'
     ),
     'tenant isolation policy exists'
 );

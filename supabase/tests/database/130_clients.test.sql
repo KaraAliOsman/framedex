@@ -33,8 +33,12 @@ SELECT col_is_fk(
 );
 SELECT policies_are(
     'public', 'clients',
-    ARRAY['clients_isolation'],
-    'exactly the org isolation policy'
+    ARRAY[
+        'clients_member_insert',
+        'clients_member_read',
+        'clients_member_update'
+    ],
+    'exactly the member policies'
 );
 SELECT ok(
     (SELECT relrowsecurity FROM pg_class
