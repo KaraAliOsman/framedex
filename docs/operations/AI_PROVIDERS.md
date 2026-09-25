@@ -18,7 +18,7 @@ deterministic default and performs no network I/O.
 
 ```text
 AI_GATEWAY_{P}_API_KEY    bearer token (required)
-AI_GATEWAY_{P}_BASE_URL   https endpoint; e.g. https://api.xiaomimimo…/v1
+AI_GATEWAY_{P}_BASE_URL   https endpoint; e.g. https://api.primalabs.ai/v1
 AI_GATEWAY_{P}_MODEL      optional — overrides the route's provider_model
 AI_GATEWAY_{P}_PROTOCOL   optional — openai | http
 AI_GATEWAY_{P}_TIMEOUT_S  optional — whole-request bound in s (default 60, 1-600)
@@ -36,20 +36,18 @@ in `input_payload` is serialized as the user message.
 
 ## Activate MiMo for design_assist
 
-1. Set `AI_GATEWAY_MIMO_API_KEY`, `AI_GATEWAY_MIMO_BASE_URL`
-   (pay-as-you-go `sk-` keys use `https://api.xiaomimimo.com/v1`;
-   Token Plan `tp-` keys use the dedicated base URL shown on the plan
-   page, e.g. `https://token-plan-sgp.xiaomimimo.com/v1`),
-   `AI_GATEWAY_MIMO_MODEL` — or leave the model unset so the route's own
-   `provider_model` pin decides.
-2. Point the capability route at the provider — a privileged operational
-   statement (routes are backend-read-only). Current deployments pin every
-   capability to `mimo-v2.6-pro`:
+1. Set `AI_GATEWAY_MIMO_API_KEY` (the `sk-…` key from the Primalabs
+   console) and `AI_GATEWAY_MIMO_BASE_URL=https://api.primalabs.ai/v1`.
+   `AI_GATEWAY_MIMO_MODEL` stays unset so the route's own `provider_model`
+   pin decides — migrations pin every capability to the wire name
+   `primalabs-ai/MiMo-V2.6-Pro-RL`.
+2. Capability routing stays explicit — a privileged operational statement
+   when a capability needs a different model:
 
    ```sql
    UPDATE public.ai_routes
       SET provider = 'MIMO',
-          provider_model = 'mimo-v2.6-pro',
+          provider_model = 'primalabs-ai/MiMo-V2.6-Pro-RL',
           prompt_version = 'design-assist-v2'
     WHERE capability = 'design_assist';
    ```
