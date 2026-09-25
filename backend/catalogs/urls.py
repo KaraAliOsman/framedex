@@ -14,6 +14,11 @@ urlpatterns = [
         views.SystemReviewView.as_view(),
         name="catalog-system-review",
     ),
+    path(
+        "systems/<uuid:row_id>/workspace/",
+        views.SystemWorkspaceView.as_view(),
+        name="catalog-system-workspace",
+    ),
     path("articles/", views.ArticleCollectionView.as_view(), name="catalog-article-list"),
     path(
         "articles/<uuid:row_id>/",

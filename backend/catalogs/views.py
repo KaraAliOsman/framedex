@@ -39,6 +39,7 @@ from catalogs.serializers import (
     KitResponseSerializer,
     SystemListSerializer,
     SystemResponseSerializer,
+    SystemWorkspaceSerializer,
 )
 
 
@@ -331,3 +332,20 @@ KitCollectionView, KitDetailView = _endpoint_classes(
     KitListSerializer,
 )
 KitReviewView = _review_view("Kit", service.KITS, KitResponseSerializer)
+
+
+class SystemWorkspaceView(APIView):
+    """GET systems/<id>/workspace/ — the §06 aggregate read: identity +
+    readiness + every entity bound to the system in one fetch."""
+
+    @extend_schema(
+        operation_id="catalog_system_workspace",
+        parameters=HEADERS,
+        responses={200: SystemWorkspaceSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request, row_id):
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
+            data = service.system_workspace(org_id, str(row_id))
+            output = SystemWorkspaceSerializer(data).data
+        return Response(output)

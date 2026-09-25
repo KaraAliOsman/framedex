@@ -3046,6 +3046,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/catalogs/systems/{row_id}/workspace/:
+    get:
+      operationId: catalog_system_workspace
+      description: |-
+        GET systems/<id>/workspace/ — the §06 aggregate read: identity +
+        readiness + every entity bound to the system in one fetch.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: path
+        name: row_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - catalogs
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemWorkspace'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/clients/:
     get:
       operationId: clients_list
@@ -16856,6 +16923,24 @@ components:
           minimum: 1
         is_active:
           type: boolean
+        manufacturer:
+          type: string
+          nullable: true
+          maxLength: 255
+        family:
+          type: string
+          nullable: true
+          maxLength: 150
+        applications:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        process_profile_id:
+          type: string
+          format: uuid
+          nullable: true
     Payment:
       type: object
       properties:
@@ -17689,6 +17774,83 @@ components:
         * `FIXED_PRICE_MATRIX_DIMENSIONAL` - FIXED_PRICE_MATRIX_DIMENSIONAL
         * `TARGET_GROSS_MARGIN_PROJECT` - TARGET_GROSS_MARGIN_PROJECT
         * `COMMERCIAL_LIST_WITH_DISCOUNTS` - COMMERCIAL_LIST_WITH_DISCOUNTS
+    ProcessProfileRow:
+      type: object
+      description: |-
+        The declared manufacturing process a system binds — stations, corner
+        method, glazing/QC/pack flags. org_id NULL = a global authority.
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+        version:
+          type: integer
+        label:
+          type: string
+        material:
+          type: string
+          nullable: true
+        product_kind:
+          type: string
+          nullable: true
+        joining_method:
+          type: string
+        corner_process:
+          type: string
+        cleaning_process:
+          type: boolean
+        stations:
+          type: array
+          items: {}
+        operation_station_map:
+          type: object
+          additionalProperties: {}
+        sash_assembly_required:
+          type: boolean
+        hardware_station:
+          type: boolean
+        glazing:
+          type: boolean
+        qc:
+          type: boolean
+        packaging:
+          type: boolean
+        optional_operations:
+          type: array
+          items: {}
+        machine_neutral_machining:
+          type: array
+          items: {}
+        provenance:
+          type: object
+          additionalProperties: {}
+      required:
+      - cleaning_process
+      - code
+      - corner_process
+      - glazing
+      - hardware_station
+      - id
+      - joining_method
+      - label
+      - machine_neutral_machining
+      - material
+      - operation_station_map
+      - optional_operations
+      - org_id
+      - packaging
+      - product_kind
+      - provenance
+      - qc
+      - sash_assembly_required
+      - stations
+      - version
     ProductIssue:
       type: object
       properties:
@@ -18728,6 +18890,40 @@ components:
       - stock_length_mm
       - supplier
       - unit
+    PurchaseMappingRow:
+      type: object
+      description: Catalog article → commercial purchase identity.
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+          nullable: true
+        profile_article_id:
+          type: string
+          format: uuid
+        commercial_sku:
+          type: string
+        manufacturer_name:
+          type: string
+        supplier_name:
+          type: string
+          nullable: true
+        purchase_unit:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - commercial_sku
+      - id
+      - is_active
+      - manufacturer_name
+      - org_id
+      - profile_article_id
+      - purchase_unit
+      - supplier_name
     PurchaseUnitEnum:
       enum:
       - BAR
@@ -18896,6 +19092,67 @@ components:
       - reinforcement_sku
       - role
       - sagitta_mm
+    ReinforcementRow:
+      type: object
+      description: |-
+        A declared reinforcement profile bound to a parent article — steel
+        authority the workspace surfaces alongside the profile it stiffens.
+      properties:
+        id:
+          type: string
+          format: uuid
+        org_id:
+          type: string
+          format: uuid
+          nullable: true
+        system_id:
+          type: string
+          format: uuid
+        parent_profile_article_id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        commercial_sku:
+          type: string
+        name:
+          type: string
+        manufacturer_name:
+          type: string
+          nullable: true
+        supplier_name:
+          type: string
+          nullable: true
+        stock_length_mm:
+          type: string
+        thickness_mm:
+          type: string
+          nullable: true
+        ix_cm4:
+          type: string
+          nullable: true
+        purchase_unit:
+          type: string
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+      required:
+      - commercial_sku
+      - id
+      - is_active
+      - is_default
+      - ix_cm4
+      - manufacturer_name
+      - name
+      - org_id
+      - parent_profile_article_id
+      - purchase_unit
+      - sku
+      - stock_length_mm
+      - supplier_name
+      - system_id
+      - thickness_mm
     RemakeRequestRequest:
       type: object
       properties:
@@ -19943,6 +20200,23 @@ components:
           minimum: 1
         is_active:
           type: boolean
+        manufacturer:
+          type: string
+          nullable: true
+          maxLength: 255
+        family:
+          type: string
+          nullable: true
+          maxLength: 150
+        applications:
+          type: array
+          items:
+            type: string
+            maxLength: 60
+        process_profile_id:
+          type: string
+          format: uuid
+          nullable: true
         readiness:
           allOf:
           - $ref: '#/components/schemas/CatalogReadiness'
@@ -19992,6 +20266,46 @@ components:
       - technical_reviewed_at
       - technical_reviewed_by
       - version
+    SystemWorkspace:
+      type: object
+      description: |-
+        The §06 system home: identity + readiness + the entities bound to
+        this system across every catalog domain, in one fetch.
+      properties:
+        system:
+          $ref: '#/components/schemas/SystemResponse'
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleResponse'
+        beads:
+          type: array
+          items:
+            $ref: '#/components/schemas/BeadResponse'
+        kits:
+          type: array
+          items:
+            $ref: '#/components/schemas/KitResponse'
+        reinforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReinforcementRow'
+        purchase_mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseMappingRow'
+        process_profile:
+          allOf:
+          - $ref: '#/components/schemas/ProcessProfileRow'
+          nullable: true
+      required:
+      - articles
+      - beads
+      - kits
+      - process_profile
+      - purchase_mappings
+      - reinforcements
+      - system
     SystemWriteRequest:
       type: object
       properties:
@@ -20092,6 +20406,24 @@ components:
           minimum: 1
         is_active:
           type: boolean
+        manufacturer:
+          type: string
+          nullable: true
+          maxLength: 255
+        family:
+          type: string
+          nullable: true
+          maxLength: 150
+        applications:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        process_profile_id:
+          type: string
+          format: uuid
+          nullable: true
       required:
       - central_overlap_mm
       - chamber_count

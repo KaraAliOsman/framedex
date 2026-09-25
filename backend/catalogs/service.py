@@ -299,6 +299,8 @@ def _lock_singleton_role(system_id):
 
 def create(resource, org_id, values, actor_id=None):
     _bind_parent(resource, org_id, values)
+    if resource is SYSTEMS:
+        _check_process_profile(org_id, values)
     if resource is ARTICLES and "section" in values:
         _stamp_section(values, None, actor_id)
     if resource is ARTICLES and values.get("role") in SINGLETON_ROLES:
@@ -367,6 +369,8 @@ def update(resource, org_id, row_id, values, expected_revision=None, actor_id=No
                     "catalogs.errors.catalog_constraint_conflict",
                 )
     _bind_parent(resource, org_id, {**current, **values})
+    if resource is SYSTEMS:
+        _check_process_profile(org_id, values)
     if values:
         assignments = [
             f"{name} = %s::jsonb" if name in _JSONB_FIELDS else f"{name} = %s" for name in values
@@ -431,4 +435,107 @@ def delete(resource, org_id, row_id, expected_revision=None):
         if cursor.rowcount != 1:
             raise contract_error(
                 409, "catalog_write_conflict", "catalogs.errors.catalog_constraint_conflict"
+            )
+
+
+_WORKSPACE_JSONB = (
+    "stations",
+    "operation_station_map",
+    "optional_operations",
+    "machine_neutral_machining",
+    "provenance",
+)
+
+
+def _rows_dicts(query, params):
+    with connection.cursor() as cursor:
+        cursor.execute(query, params)
+        names = [column[0] for column in cursor.description]
+        return [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
+
+
+def system_workspace(org_id, system_id):
+    """§06 system home — one aggregate read for the workspace: the system
+    (with readiness), its articles, beads, kits, reinforcement profiles,
+    purchase mappings and bound process profile. Same visibility canon as
+    every other catalog read — an org sees its own rows plus NULL-org rows
+    on global authorities."""
+    system = retrieve(SYSTEMS, org_id, system_id)
+    articles = list_rows(ARTICLES, org_id, system_id)
+    beads = list_rows(BEADS, org_id, system_id)
+    kits = list_rows(KITS, org_id, system_id)
+
+    article_ids = [str(article["id"]) for article in articles]
+    purchase_mappings = (
+        _rows_dicts(
+            "SELECT m.id,m.org_id,m.profile_article_id,m.commercial_sku,"
+            "m.manufacturer_name,m.supplier_name,m.purchase_unit,m.is_active "
+            "FROM public.profile_purchase_mappings m "
+            "WHERE m.profile_article_id = ANY(%s) "
+            "AND (m.org_id = %s OR m.org_id IS NULL) "
+            "ORDER BY m.profile_article_id,m.commercial_sku",
+            [article_ids, org_id],
+        )
+        if article_ids
+        else []
+    )
+    reinforcements = _rows_dicts(
+        "SELECT r.id,r.org_id,r.system_id,r.parent_profile_article_id,r.sku,"
+        "r.commercial_sku,r.name,r.manufacturer_name,r.supplier_name,"
+        "r.stock_length_mm::text,r.thickness_mm::text,r.ix_cm4::text,"
+        "r.purchase_unit,r.is_default,r.is_active "
+        "FROM public.reinforcement_articles r "
+        f"WHERE r.system_id = %s AND {visibility_sql(child=True, alias='r')} "
+        "ORDER BY r.parent_profile_article_id,r.sku",
+        [system_id, org_id],
+    )
+    process_profile = None
+    if system.get("process_profile_id"):
+        rows_found = _rows_dicts(
+            "SELECT p.id,p.org_id,p.code,p.version,p.label,p.material,"
+            "p.product_kind,p.joining_method,p.corner_process,p.cleaning_process,"
+            "p.stations::text,p.operation_station_map::text,"
+            "p.sash_assembly_required,p.hardware_station,p.glazing,p.qc,"
+            "p.packaging,p.optional_operations::text,"
+            "p.machine_neutral_machining::text,p.provenance::text "
+            "FROM public.manufacturing_process_profiles p "
+            "WHERE p.id = %s AND (p.org_id IS NULL OR p.org_id = %s)",
+            [system["process_profile_id"], org_id],
+        )
+        if rows_found:
+            process_profile = rows_found[0]
+            for name in _WORKSPACE_JSONB:
+                if process_profile.get(name) is not None:
+                    process_profile[name] = json.loads(
+                        process_profile[name], parse_float=Decimal, parse_int=Decimal
+                    )
+    return {
+        "system": system,
+        "articles": articles,
+        "beads": beads,
+        "kits": kits,
+        "reinforcements": reinforcements,
+        "purchase_mappings": purchase_mappings,
+        "process_profile": process_profile,
+    }
+
+
+def _check_process_profile(org_id, values):
+    """A system may bind only a global or org-owned process profile — the
+    trigger enforces it too, but the API must refuse with a contract error
+    before the write reaches the trigger's 500."""
+    profile_id = values.get("process_profile_id")
+    if not profile_id:
+        return
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM public.manufacturing_process_profiles "
+            "WHERE id = %s AND (org_id IS NULL OR org_id = %s)",
+            [str(profile_id), org_id],
+        )
+        if cursor.fetchone() is None:
+            raise contract_error(
+                400,
+                "invalid_process_profile",
+                "catalogs.errors.invalid_process_profile",
             )

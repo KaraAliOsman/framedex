@@ -182,6 +182,7 @@ import type {
   SuccessorRequestRequest,
   SystemList,
   SystemResponse,
+  SystemWorkspace,
   SystemWriteRequest,
   Wallet,
   WorkCenter,
@@ -3559,6 +3560,76 @@ export const catalogSystemReview = async (
   return apiMutator<catalogSystemReviewResponse>(getCatalogSystemReviewUrl(rowId), {
     ...options,
     method: "POST",
+  });
+};
+
+export type catalogSystemWorkspaceResponse200 = {
+  data: SystemWorkspace;
+  status: 200;
+};
+
+export type catalogSystemWorkspaceResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type catalogSystemWorkspaceResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type catalogSystemWorkspaceResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type catalogSystemWorkspaceResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type catalogSystemWorkspaceResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type catalogSystemWorkspaceResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type catalogSystemWorkspaceResponseSuccess = catalogSystemWorkspaceResponse200 & {
+  headers: Headers;
+};
+export type catalogSystemWorkspaceResponseError = (
+  | catalogSystemWorkspaceResponse400
+  | catalogSystemWorkspaceResponse401
+  | catalogSystemWorkspaceResponse403
+  | catalogSystemWorkspaceResponse404
+  | catalogSystemWorkspaceResponse409
+  | catalogSystemWorkspaceResponse503
+) & {
+  headers: Headers;
+};
+
+export type catalogSystemWorkspaceResponse =
+  catalogSystemWorkspaceResponseSuccess | catalogSystemWorkspaceResponseError;
+
+export const getCatalogSystemWorkspaceUrl = (rowId: string) => {
+  return `/api/v1/catalogs/systems/${rowId}/workspace/`;
+};
+
+/**
+ * GET systems/<id>/workspace/ — the §06 aggregate read: identity +
+ * readiness + every entity bound to the system in one fetch.
+ */
+export const catalogSystemWorkspace = async (
+  rowId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<catalogSystemWorkspaceResponse> => {
+  return apiMutator<catalogSystemWorkspaceResponse>(getCatalogSystemWorkspaceUrl(rowId), {
+    ...options,
+    method: "GET",
   });
 };
 
