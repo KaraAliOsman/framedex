@@ -1,6 +1,8 @@
 import * as client from "../../api/generated/dekopen";
 import type {
   SystemWriteRequest,
+  SystemWorkspace,
+  ProcessProfileOption,
   ArticleWriteRequest,
   BeadWriteRequest,
   KitWriteRequest,
@@ -54,7 +56,16 @@ export type CatalogData = { [R in Resource]: Row<R>[] };
 
 export type Field = {
   name: string;
-  kind: "text" | "decimal" | "integer" | "boolean" | "select" | "system" | "bead";
+  kind:
+    | "text"
+    | "decimal"
+    | "integer"
+    | "boolean"
+    | "select"
+    | "system"
+    | "bead"
+    | "csv"
+    | "processProfile";
   optional?: boolean;
   places?: number;
   maxLength?: number;
@@ -100,6 +111,11 @@ export const schemas: Record<Resource, Group[]> = {
         text("name", 150),
         text("code", 50),
         material,
+        // §06 system identity — who makes it, which family, what it covers.
+        text("manufacturer", 255, true),
+        text("family", 150, true),
+        { name: "applications", kind: "csv", optional: true, maxLength: 60 },
+        { name: "process_profile_id", kind: "processProfile", optional: true },
         decimal("depth_mm"),
         integer("chamber_count"),
         integer("version"),
@@ -368,7 +384,9 @@ export function initialDraft(
         ? field.name === "system_id"
           ? (systemId ?? "")
           : ""
-        : String(source[field.name]),
+        : Array.isArray(source[field.name])
+          ? (source[field.name] as string[]).join(", ")
+          : String(source[field.name]),
     ]),
   );
 }
@@ -381,7 +399,7 @@ export function writeFromDraft<R extends Resource>(
 ): Writes[R] {
   const values: Record<
     string,
-    string | number | boolean | null | HardwareComponent[] | ProfileSectionRequest
+    string | number | boolean | null | string[] | HardwareComponent[] | ProfileSectionRequest
   > = {};
   for (const field of fieldsFor(resource)) {
     const value = draft[field.name]?.trim() ?? "";
@@ -401,6 +419,13 @@ export function writeFromDraft<R extends Resource>(
     } else if (field.kind === "boolean") {
       if (value !== "true" && value !== "false") throw new Error("Missing boolean");
       values[field.name] = value === "true";
+    } else if (field.kind === "csv") {
+      values[field.name] = value
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "");
+    } else if (field.kind === "processProfile") {
+      values[field.name] = value === "" ? null : value;
     } else {
       values[field.name] = field.kind === "decimal" ? exact(value) : value;
     }
@@ -465,6 +490,19 @@ export function catalogApi(orgId: string) {
       if (response.status !== 200 && response.status !== 201)
         throw new Error("catalog_write_failed");
       return response.data as Row<R>;
+    },
+    async workspace(systemId: string, signal?: AbortSignal): Promise<SystemWorkspace> {
+      const response = await client.catalogSystemWorkspace(systemId, {
+        ...options,
+        signal,
+      });
+      if (response.status !== 200) throw new Error("catalog_read_failed");
+      return response.data;
+    },
+    async processProfiles(signal?: AbortSignal): Promise<ProcessProfileOption[]> {
+      const response = await client.catalogProcessProfileList({ ...options, signal });
+      if (response.status !== 200) throw new Error("catalog_read_failed");
+      return response.data.items;
     },
     async review<R extends Resource>(resource: R, id: string): Promise<Row<R>> {
       // Glazing rows have no provenance — never called for them by the UI.

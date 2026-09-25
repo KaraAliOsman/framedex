@@ -329,6 +329,8 @@ describe("CatalogPage client permissions", () => {
 
   it("keeps a global system read-only, including a direct submit event", async () => {
     await mount();
+    // The workspace is the system home — the ficha record lives one tab away.
+    fireEvent.click(button("catalog.systems"));
     fireEvent.click(
       screen.getByRole("button", {
         name: `${t("catalog.view")} ${system().name}`,
