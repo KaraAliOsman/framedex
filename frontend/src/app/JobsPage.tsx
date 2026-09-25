@@ -174,7 +174,13 @@ export function JobsPage(): JSX.Element {
                 </div>
                 {job.state === "FAILED" && failure !== null && failureKey !== null && (
                   <p className="job-row-error">
-                    {t(failureKey)} <code className="job-row-code">{failure.detail}</code>
+                    {t(failureKey)}
+                    {failureKey === "jobs.fail.generic" && (
+                      <>
+                        {" "}
+                        <code className="job-row-code">{failure.detail}</code>
+                      </>
+                    )}
                   </p>
                 )}
                 {TERMINAL_RETRYABLE.has(job.state) && (

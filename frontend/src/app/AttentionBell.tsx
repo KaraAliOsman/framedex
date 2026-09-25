@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
-import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
+import { analyticsOperationalSummary } from "../api/generated/dekopen";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
 import { attentionEntries } from "./attention";
@@ -21,13 +21,12 @@ export function AttentionBell(): JSX.Element | null {
     enabled: org !== undefined,
     staleTime: 60_000,
     queryFn: async ({ signal }) => {
-      const [ops, projects] = await Promise.all([
-        analyticsOperationalSummary({ signal, headers: { "X-Organization-ID": org!.id } }),
-        projectsList({ signal, headers: { "X-Organization-ID": org!.id } }),
-      ]);
+      const ops = await analyticsOperationalSummary({
+        signal,
+        headers: { "X-Organization-ID": org!.id },
+      });
       if (ops.status !== 200) throw new ApiError(ops.status, ops.data);
-      if (projects.status !== 200) throw new ApiError(projects.status, projects.data);
-      return attentionEntries(ops.data, projects.data.items);
+      return attentionEntries(ops.data);
     },
   });
 

@@ -1,4 +1,4 @@
-import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
+import type { OperationalSummary } from "../api/generated/models";
 import type { TranslationKey } from "../i18n/es-CL";
 
 export type AttentionEntry = {
@@ -15,18 +15,11 @@ export type AttentionEntry = {
  * and the shell bell render the same feed so the surfaces can never drift.
  * Order is the working order of the day: commercial attention first (a client
  * waiting beats an internal queue), then blockers, then routine work. */
-export function attentionEntries(
-  ops: OperationalSummary | undefined,
-  projects: ProjectResponse[],
-): AttentionEntry[] {
+export function attentionEntries(ops: OperationalSummary | undefined): AttentionEntry[] {
   const workOrders = (ops?.work_orders ?? {}) as Record<string, number>;
   const deliveries = (ops?.deliveries ?? {}) as Record<string, number>;
   const prep = (ops?.prep ?? {}) as Record<string, number>;
-  const projectsByStatus = projects.reduce<Record<string, number>>((counts, project) => {
-    const status = project.status ?? "";
-    counts[status] = (counts[status] ?? 0) + 1;
-    return counts;
-  }, {});
+  const projects = (ops?.projects ?? {}) as Record<string, number>;
   const candidates: AttentionEntry[] = [
     {
       key: "dashboard.approvalsPending",
@@ -110,7 +103,7 @@ export function attentionEntries(
     {
       key: "dashboard.draftsToQuote",
       action: "attention.action.quoteNow",
-      count: projectsByStatus.DRAFT ?? 0,
+      count: Number(projects.drafts ?? 0),
       to: "/projects?status=DRAFT",
       warn: false,
     },

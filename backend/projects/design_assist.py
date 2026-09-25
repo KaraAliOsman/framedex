@@ -386,8 +386,11 @@ def _validate_ops(
                 "kind": "INLINE",
             }
     state: dict[str, Any] = {
-        "module_refs": module_refs,
-        "coupling_refs": coupling_refs,
+        # Copied: structural ops mutate these lists while positional
+        # addresses resolve against the ORIGINAL `module_refs`/`coupling_refs`
+        # — sharing the object would corrupt the positional map.
+        "module_refs": list(module_refs),
+        "coupling_refs": list(coupling_refs),
         "used_edges": used_edges,
         "stacked_members": stacked_members,
         "sim_couplings": sim_couplings,

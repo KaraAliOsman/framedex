@@ -230,12 +230,16 @@ def test_structural_ops_validate_against_the_evolving_assembly(monkeypatch):
         system_id=uuid4(),
         operation_key="assist-9",
     )
+    # Positional addresses name the original 11 modules — `module: 11` and
+    # `module: 12` are out of bounds even though sim pads added refs to 12;
+    # the client resolves numerics against its saved product, never the
+    # mutated list.
     assert [op["op"] for op in out["ops"]] == [
         "set_module_count",
-        "set_opening",
     ]
     assert [item["reason"] for item in out["rejected"]] == [
         "lado_invalido",
+        "apertura_invalida",
         "apertura_invalida",
     ]
 
@@ -262,14 +266,18 @@ def test_remove_unit_shifts_the_validation_surface(monkeypatch):
         system_id=uuid4(),
         operation_key="assist-10",
     )
+    # Positional addresses keep naming the original order after remove_unit:
+    # index 1 → m2 and index 2 → m3 (both still live). The second set_opening
+    # on m3 simply overwrites the earlier one.
     assert [op["op"] for op in out["ops"]] == [
         "remove_unit",
+        "set_opening",
         "set_opening",
         "add_unit",
         "set_opening",
     ]
-    assert out["ops"][3]["module"] == "m3"
-    assert [item["reason"] for item in out["rejected"]] == ["apertura_invalida"]
+    assert out["ops"][4]["module"] == "m3"
+    assert out["rejected"] == []
 
 
 def test_catalog_skus_are_enforced(monkeypatch):
@@ -1060,5 +1068,35 @@ def test_insert_then_remove_keeps_the_same_surviving_joint(monkeypatch):
         {"op": "insert_module", "coupling": "c1"},
         {"op": "remove_unit", "module": "m2"},
         {"op": "remove_coupling", "coupling": "added_c1"},
+    ]
+    assert out["rejected"] == []
+
+
+def test_add_unit_keeps_numeric_address_on_the_original_module(monkeypatch):
+    """`module: 0` names the ORIGINAL first module — after add_unit splices a
+    new member at index 0, positional addresses still resolve through the
+    original ordering, exactly like the client's saved product. Aliasing the
+    mutable sim list would make this resolve to `added_m1`."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "add_unit", "side": "left"},
+                {"op": "set_opening", "module": 0, "opening": "AWNING"},
+            ]
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=3, couplings=2),
+        prompt="agrega a la izquierda y abre el primer módulo",
+        system_id=uuid4(),
+        operation_key="assist-e2",
+    )
+    assert out["ops"] == [
+        {"op": "add_unit", "side": "left", "ref": "added_m1"},
+        {"op": "set_opening", "module": "m1", "opening": "AWNING"},
     ]
     assert out["rejected"] == []

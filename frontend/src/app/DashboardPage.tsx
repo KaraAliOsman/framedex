@@ -96,7 +96,7 @@ export function DashboardPage(): JSX.Element {
 
   // One canonical attention feed — the topbar bell renders the same queue,
   // so the surfaces can never disagree about what needs a human.
-  const attention = attentionEntries(opsQuery.data, items);
+  const attention = attentionEntries(opsQuery.data);
 
   return (
     <section className="dashboard" aria-labelledby="page-title">
