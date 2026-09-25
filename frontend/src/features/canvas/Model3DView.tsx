@@ -1,15 +1,146 @@
-import { useEffect, useMemo, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { PlanGeometry } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
 import type { ProductJson } from "./productEditing";
 import { useTheme } from "../../theme/ThemeProvider";
-import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
+import { buildScene3D, type LeafMotion, type Scene3D, type Solid3D } from "./Product3DScene";
 import { solidToGeometry } from "./scene3dGeometry";
 import { solidMaterial, type MaterialMode } from "./materials3d";
 import type { MemberGeometry } from "./members";
+
+const SWING_RAD = (32 * Math.PI) / 180;
+const TILT_RAD = (13 * Math.PI) / 180;
+
+/** Wood-grain skin for foil-finished members (§05-C): a generated
+ * CanvasTexture, license-free, with streaks running along the member's
+ * run axis — never a flat brown fill. One base per orientation; solids
+ * clone it with a repeat matched to their run length so grain density
+ * stays physical. */
+const grainCache = new Map<string, THREE.Texture>();
+
+function drawGrain(axis: "u" | "v"): THREE.Texture {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 256, 256);
+    for (let index = 0; index < 42; index += 1) {
+      const at = Math.random() * 256;
+      const wave = 4 + Math.random() * 14;
+      const alpha = 0.04 + Math.random() * 0.07;
+      ctx.strokeStyle = `rgba(52, 34, 16, ${alpha.toFixed(3)})`;
+      ctx.lineWidth = 0.8 + Math.random() * 2.6;
+      ctx.beginPath();
+      if (axis === "u") {
+        ctx.moveTo(-8, at);
+        ctx.bezierCurveTo(64, at + wave, 192, at - wave, 264, at + wave * 0.5);
+      } else {
+        ctx.moveTo(at, -8);
+        ctx.bezierCurveTo(at + wave, 64, at - wave, 192, at + wave * 0.5, 264);
+      }
+      ctx.stroke();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function runLength(solid: Solid3D): number {
+  switch (solid.kind) {
+    case "box":
+      return Math.max(solid.size[0], solid.size[1]);
+    case "profile":
+      return Math.max(Math.abs(solid.a1 - solid.a0), 1);
+    case "prism":
+      return Math.max(Math.abs(solid.y1 - solid.y0), 1);
+    default: {
+      let extent = 1;
+      for (const [x, y] of solid.outline) {
+        extent = Math.max(extent, Math.abs(x), Math.abs(y));
+      }
+      return extent;
+    }
+  }
+}
+
+function foilGrainTexture(axis: "u" | "v", runMm: number): THREE.Texture {
+  let base = grainCache.get(axis);
+  if (!base) {
+    base = drawGrain(axis);
+    grainCache.set(axis, base);
+  }
+  const texture = base.clone();
+  const repeat = Math.max(1, Math.round(runMm / 400));
+  if (axis === "u") texture.repeat.set(repeat, 1);
+  else texture.repeat.set(1, repeat);
+  return texture;
+}
+
+/** Enables per-material clipping planes once — the Corte toggle then just
+ * supplies the plane through the scene center. */
+function ClipSetup(): null {
+  const gl = useThree((state) => state.gl);
+  useEffect(() => {
+    gl.localClippingEnabled = true;
+    return () => {
+      gl.localClippingEnabled = false;
+    };
+  }, [gl]);
+  return null;
+}
+
+/** §05-E — a leaf's presentation pose. Wraps the solids carrying its
+ * leafId and eases them toward open/closed when the toggle flips — the
+ * motion is UI state only and never feeds back into the product model.
+ * Swing rotates about the hinge edge (+Y), tilt about the pivot edge (+X),
+ * slide translates along X. */
+function LeafGroup({
+  motion,
+  open,
+  children,
+}: {
+  motion: LeafMotion;
+  open: boolean;
+  children: React.ReactNode;
+}): JSX.Element {
+  const outer = useRef<THREE.Group>(null);
+  const inner = useRef<THREE.Group>(null);
+  const progress = useRef(0);
+  const invalidate = useThree((state) => state.invalidate);
+  const target = open ? 1 : 0;
+  useFrame((_, delta) => {
+    if (progress.current === target) return;
+    const next = progress.current + (target - progress.current) * Math.min(1, delta * 5.5);
+    progress.current = Math.abs(next - target) < 0.004 ? target : next;
+    const pose = progress.current;
+    const outerGroup = outer.current;
+    const innerGroup = inner.current;
+    if (!outerGroup || !innerGroup) return;
+    if (motion.kind === "swing") {
+      outerGroup.position.set(motion.pivot, 0, 0);
+      innerGroup.position.set(-motion.pivot, 0, 0);
+      innerGroup.rotation.y = motion.dir * pose * SWING_RAD;
+    } else if (motion.kind === "tilt") {
+      outerGroup.position.set(0, motion.pivot, 0);
+      innerGroup.position.set(0, -motion.pivot, 0);
+      innerGroup.rotation.x = motion.dir * pose * TILT_RAD;
+    } else {
+      outerGroup.position.set(motion.dir * pose * motion.travel, 0, 0);
+    }
+    invalidate();
+  });
+  return (
+    <group ref={outer}>
+      <group ref={inner}>{children}</group>
+    </group>
+  );
+}
 
 /** §16 synchronized 3D view (§05 physical renderer) — the scene derives
  * from the same product model the editor renders (no separate 3D data).
@@ -32,6 +163,7 @@ function SolidMesh({
   selected,
   theme,
   mode,
+  clipPlane,
   onPick,
 }: {
   solid: Solid3D;
@@ -40,6 +172,7 @@ function SolidMesh({
    * flip CSS variables without otherwise re-rendering this subtree. */
   theme: string;
   mode: MaterialMode;
+  clipPlane: THREE.Plane | null;
   onPick(owner: string): void;
 }): JSX.Element {
   const geometry = useMemo(() => solidToGeometry(solid), [solid]);
@@ -57,6 +190,13 @@ function SolidMesh({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selected, theme],
   );
+  const map = useMemo(
+    () =>
+      material.grain && mode === "commercial"
+        ? foilGrainTexture(material.grain, runLength(solid))
+        : null,
+    [solid, material, mode],
+  );
   return (
     <mesh
       geometry={geometry ?? undefined}
@@ -69,6 +209,7 @@ function SolidMesh({
       {solid.kind === "box" && <boxGeometry args={solid.size} />}
       <meshStandardMaterial
         color={color}
+        map={map ?? undefined}
         transparent={material.transparent}
         opacity={material.opacity}
         depthWrite={!material.glass}
@@ -76,6 +217,7 @@ function SolidMesh({
         metalness={material.metalness}
         emissive={emissive}
         emissiveIntensity={selected ? 0.55 : 0}
+        clippingPlanes={clipPlane ? [clipPlane] : undefined}
       />
       {/* Approximate member boxes (no declared catalog section) get the
        * schematic edge look — visually distinct from a real extruded
@@ -121,6 +263,8 @@ function SceneContent({
   theme,
   mode,
   inside,
+  open,
+  clip,
   onPick,
 }: {
   scene: Scene3D;
@@ -128,10 +272,27 @@ function SceneContent({
   theme: string;
   mode: MaterialMode;
   inside: boolean;
+  open: boolean;
+  clip: boolean;
   onPick(owner: string): void;
 }): JSX.Element {
+  // Corte: a vertical section through the scene center keeps the left
+  // half — exposes frame/sash/glazing layering in cross-section.
+  const clipPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0), []);
+  const renderSolid = (solid: Solid3D, key: string): JSX.Element => (
+    <SolidMesh
+      key={key}
+      solid={solid}
+      selected={selection === solid.owner}
+      theme={theme}
+      mode={mode}
+      clipPlane={clip ? clipPlane : null}
+      onPick={onPick}
+    />
+  );
   return (
     <>
+      <ClipSetup />
       <ambientLight intensity={mode === "commercial" ? 0.55 : 0.85} />
       {/* Commercial mode gets studio key/fill; technical stays flat-lit. */}
       <directionalLight
@@ -154,28 +315,24 @@ function SceneContent({
               position={module.position}
               rotation={[0, module.rotationY, 0]}
             >
-              {module.solids.map((solid, index) => (
-                <SolidMesh
-                  key={`${module.moduleId}-${index}`}
-                  solid={solid}
-                  selected={selection === solid.owner}
-                  theme={theme}
-                  mode={mode}
-                  onPick={onPick}
-                />
+              {/* Leaf solids animate as presentation pose — the leaf group
+               * rotates/translates around its declared hinge/pivot; fixed
+               * members stay put. */}
+              {module.leaves.map((motion) => (
+                <LeafGroup key={motion.leafId} motion={motion} open={open}>
+                  {module.solids
+                    .filter((solid) => solid.leafId === motion.leafId)
+                    .map((solid, index) =>
+                      renderSolid(solid, `${module.moduleId}-${motion.leafId}-${index}`),
+                    )}
+                </LeafGroup>
               ))}
+              {module.solids
+                .filter((solid) => solid.leafId == null)
+                .map((solid, index) => renderSolid(solid, `${module.moduleId}-f-${index}`))}
             </group>
           ))}
-          {scene.couplers.map((solid, index) => (
-            <SolidMesh
-              key={`coupler-${index}`}
-              solid={solid}
-              selected={selection === solid.owner}
-              theme={theme}
-              mode={mode}
-              onPick={onPick}
-            />
-          ))}
+          {scene.couplers.map((solid, index) => renderSolid(solid, `coupler-${index}`))}
         </group>
       </group>
       <OrbitControls
@@ -211,7 +368,13 @@ export default function Model3DView({
   const { theme } = useTheme();
   const [mode, setMode] = useState<MaterialMode>("commercial");
   const [inside, setInside] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [clip, setClip] = useState(false);
   const scene = useMemo(() => buildScene3D(product, members, plan), [product, members, plan]);
+  const hasLeaves = useMemo(
+    () => scene.modules.some((module) => module.leaves.length > 0),
+    [scene],
+  );
   const moduleIds = useMemo(
     () => new Set(product.assembly.modules.map((module) => module.id)),
     [product],
@@ -256,6 +419,22 @@ export default function Model3DView({
         <button type="button" className={inside ? "is-active" : ""} onClick={() => setInside(true)}>
           {t("assembly.view3dInside")}
         </button>
+        {hasLeaves && (
+          <button
+            type="button"
+            className={open ? "is-active" : ""}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? t("assembly.view3dClose") : t("assembly.view3dOpen")}
+          </button>
+        )}
+        <button
+          type="button"
+          className={clip ? "is-active" : ""}
+          onClick={() => setClip((value) => !value)}
+        >
+          {t("assembly.view3dClip")}
+        </button>
       </div>
       <Canvas
         frameloop="demand"
@@ -274,6 +453,8 @@ export default function Model3DView({
           theme={theme}
           mode={mode}
           inside={inside}
+          open={open}
+          clip={clip}
           onPick={pick}
         />
       </Canvas>

@@ -20,6 +20,10 @@ export interface SolidMaterial {
   glass: boolean;
   /** Detail surfaces render as lines/dark in technical mode. */
   detail: boolean;
+  /** Wood-grain axis for foil-finished members: "u" runs grain along the
+   * texture's u coordinate (long box axis, contour sidewalls), "v" along v
+   * (profile extrusion run, prism run). Undefined = no grain map. */
+  grain?: "u" | "v";
 }
 
 const MEMBER_TOKENS: Record<string, string> = {
@@ -39,6 +43,14 @@ const MEMBER_RESPONSE: Record<string, { color: string; roughness: number; metaln
   ALUMINIUM_ANTHRACITE: { color: "#3f444a", roughness: 0.45, metalness: 0.6 },
 };
 const MEMBER_RESPONSE_DEFAULT = { color: "#d6d3c9", roughness: 0.55, metalness: 0.08 };
+
+/** Grain follows the member's run axis: a long box's long dimension, a
+ * profile's extrusion direction (v), a contour ring's perimeter (u). */
+function grainAxis(solid: Solid3D): "u" | "v" {
+  if (solid.kind === "box") return solid.size[0] >= solid.size[1] ? "u" : "v";
+  if (solid.kind === "shape") return "u";
+  return "v";
+}
 
 export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial {
   const commercial = mode === "commercial";
@@ -112,6 +124,19 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
         glass: false,
         detail: true,
       };
+    case "spacer":
+      // IGU edge spacer — mill-finish aluminium, the thin metal line at
+      // the glass border; a detail surface like the bead/track.
+      return {
+        colorToken: "--member-aluminium-fill",
+        colorFallback: "#b9bdc2",
+        roughness: commercial ? 0.35 : 0.6,
+        metalness: commercial ? 0.7 : 0.3,
+        transparent: false,
+        opacity: 1,
+        glass: false,
+        detail: true,
+      };
     case "coupler":
       return {
         colorToken: "--model3d-coupler",
@@ -145,6 +170,8 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
         opacity: 1,
         glass: false,
         detail: false,
+        // Foil is a wood-toned skin over PVC — grain runs along the member.
+        grain: solid.material === "PVC_FOIL" ? grainAxis(solid) : undefined,
       };
     }
   }

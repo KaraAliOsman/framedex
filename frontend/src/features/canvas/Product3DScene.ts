@@ -1,5 +1,5 @@
 import type { PlanGeometry, PlanModule } from "../../api/generated/models";
-import type { ProductJson, ProductModuleJson } from "./productEditing";
+import type { ContourJson, ProductJson, ProductModuleJson } from "./productEditing";
 import { modulePrimaryBay, resolveStacks } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
 import { resolvedSlidingLayout } from "./intentEditing";
@@ -30,7 +30,8 @@ export type SolidKind =
   | "handle"
   | "hinge"
   | "track"
-  | "threshold";
+  | "threshold"
+  | "spacer";
 
 export interface BoxSolid {
   kind: "box";
@@ -43,6 +44,10 @@ export interface BoxSolid {
    * section) — renderers must show it as approximate, never as the
    * manufacturer profile. */
   approximate?: boolean;
+  /** Presentation grouping: the operable leaf this solid belongs to, so
+   * the view can swing/slide it without touching the owner→selection
+   * convention. Fixed members carry no leafId. */
+  leafId?: string;
 }
 
 /** Member ring / pane extruded along the module's depth axis from a
@@ -58,6 +63,7 @@ export interface ShapeSolid {
   z0: number;
   depth: number;
   approximate?: boolean;
+  leafId?: string;
 }
 
 /** Member run with a declared catalog cross-section (§05-B): `outline` is
@@ -80,6 +86,7 @@ export interface ProfileSolid {
   /** Never set on profile solids — a declared section is never approximate;
    * the field exists so the union keeps one schema. */
   approximate?: boolean;
+  leafId?: string;
 }
 
 /** Coupler wedge in world space: a plan polygon (x,z) extruded vertically. */
@@ -92,9 +99,31 @@ export interface PrismSolid {
   y0: number;
   y1: number;
   approximate?: boolean;
+  leafId?: string;
 }
 
 export type Solid3D = BoxSolid | ShapeSolid | PrismSolid | ProfileSolid;
+
+/** §05-E — a leaf's presentation motion, derived from its declared opening
+ * type and region. This is UI state only: it never changes the product
+ * model, dimensions or BOM — the engine stays the authority on what the
+ * product IS; the motion only shows how it would open.
+ *
+ * Coordinates live in module space (x right, y up, z into the wall — +z is
+ * the room side). `pivot` is the hinge edge: the leaf's left/right edge x
+ * for a swing, its bottom/top edge y for a tilt. `dir` signs the pose:
+ * swing −1 opens a left-hinge leaf, +1 a right-hinge leaf (rotation about
+ * +Y at pivotX so the free edge moves +z); tilt +1 tips the free edge
+ * toward the room (TILT_TURN bottom pivot) or out (AWNING top pivot, same
+ * sign — the pivot placement makes the difference); slide ±1 along +x by
+ * `travel`. */
+export interface LeafMotion {
+  leafId: string;
+  kind: "swing" | "tilt" | "slide";
+  pivot: number;
+  dir: number;
+  travel: number;
+}
 
 export interface ModuleScene {
   moduleId: string;
@@ -106,6 +135,7 @@ export interface ModuleScene {
   /** Module depth — stack coupler bars are emitted in this local frame. */
   depth: number;
   solids: Solid3D[];
+  leaves: LeafMotion[];
 }
 
 export interface Scene3D {
@@ -132,6 +162,161 @@ const TRACK_MM = 10;
 
 type Region = { x: number; y: number; w: number; h: number };
 type NodeRegion = { node: IntentNode; region: Region };
+
+const SPACER_MM = 10;
+const SPACER_INSET_MM = 5;
+
+/** Parse a declared glass composition — "4-16-4" (pane/cavity/pane) or
+ * "4-16-4-16-4" (triple glazing): panes at even indices, air chambers at
+ * odd. Free text like "4 Float Incoloro" and implausible numbers return
+ * null — the renderer then draws one slab, never a fabricated stack. */
+export function iguSpec(
+  spec: string | null | undefined,
+): { panes: number[]; chambers: number[] } | null {
+  if (!spec) return null;
+  const parts = spec.split("-").map((part) => Number(part.trim()));
+  if (parts.length < 3 || parts.length % 2 === 0 || parts.some((part) => !Number.isFinite(part))) {
+    return null;
+  }
+  const panes = parts.filter((_, index) => index % 2 === 0);
+  const chambers = parts.filter((_, index) => index % 2 === 1);
+  if (panes.some((t) => t < 2 || t > 19) || chambers.some((t) => t < 4 || t > 40)) {
+    return null;
+  }
+  return { panes, chambers };
+}
+
+/** The aluminium edge spacer of a real IGU cavity — a perimeter bar just
+ * inside the glazing edge, the thin metal line visible at the glass
+ * border on any real insulated unit. */
+function spacerRing(
+  solids: Solid3D[],
+  owner: string,
+  x: number,
+  y: number,
+  z0: number,
+  w: number,
+  h: number,
+  t: number,
+): void {
+  const inset = Math.min(SPACER_INSET_MM, w / 8, h / 8);
+  const bar = Math.min(SPACER_MM, w / 4, h / 4);
+  const sx = x + inset;
+  const sy = y + inset;
+  const sw = w - 2 * inset;
+  const sh = h - 2 * inset;
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy, z0, sw, bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy + sh - bar, z0, sw, bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy + bar, z0, bar, sh - 2 * bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx + sw - bar, sy + bar, z0, bar, sh - 2 * bar, t));
+}
+
+/** The glazing infill of a bay. One slab when no composition is declared;
+ * a real IGU stack — declared panes separated by spacer bars — when
+ * `glass_spec` declares the pane/cavity layout. The stack scales into the
+ * glazing slot thickness, so declared proportions stay intact and a
+ * "4-16-4" never draws as a 20mm slab of glass. */
+function glassInfill(
+  solids: Solid3D[],
+  owner: string,
+  x: number,
+  y: number,
+  z0: number,
+  w: number,
+  h: number,
+  glassT: number,
+  spec: string | null | undefined,
+): void {
+  const igu = iguSpec(spec);
+  if (!igu) {
+    solids.push(box(owner, "glass", "GLASS", x, y, z0, w, h, glassT));
+    return;
+  }
+  const declared =
+    igu.panes.reduce((sum, t) => sum + t, 0) + igu.chambers.reduce((sum, t) => sum + t, 0);
+  const scale = declared > 0 ? glassT / declared : 1;
+  let cursor = z0;
+  igu.panes.forEach((paneT, index) => {
+    const thickness = paneT * scale;
+    solids.push(box(owner, "glass", "GLASS", x, y, cursor, w, h, thickness));
+    cursor += thickness;
+    const cavityT = (igu.chambers[index] ?? 0) * scale;
+    if (cavityT > 0) {
+      spacerRing(solids, owner, x, y, cursor, w, h, cavityT);
+      cursor += cavityT;
+    }
+  });
+}
+
+/** Contour glazing — the same IGU stack as `glassInfill`, but each pane is
+ * the contoured outline and the spacer is a contour-inset ring, since a
+ * rectangular bar would overhang a sloped or arched edge. */
+function contourGlassInfill(
+  solids: Solid3D[],
+  owner: string,
+  contour: ContourJson,
+  insetMm: number,
+  z0: number,
+  glassT: number,
+  spec: string | null | undefined,
+): void {
+  const outline = insetContourPoints(contour, insetMm).map((p) => [p.x, p.y] as Pt2);
+  if (outline.length < 3) return;
+  const igu = iguSpec(spec);
+  if (!igu) {
+    solids.push({
+      kind: "shape",
+      owner,
+      surface: "glass",
+      material: "GLASS",
+      outline,
+      holes: [],
+      z0,
+      depth: glassT,
+    });
+    return;
+  }
+  const declared =
+    igu.panes.reduce((sum, t) => sum + t, 0) + igu.chambers.reduce((sum, t) => sum + t, 0);
+  const scale = declared > 0 ? glassT / declared : 1;
+  let cursor = z0;
+  igu.panes.forEach((paneT, index) => {
+    const thickness = paneT * scale;
+    solids.push({
+      kind: "shape",
+      owner,
+      surface: "glass",
+      material: "GLASS",
+      outline,
+      holes: [],
+      z0: cursor,
+      depth: thickness,
+    });
+    cursor += thickness;
+    const cavityT = (igu.chambers[index] ?? 0) * scale;
+    if (cavityT > 0) {
+      const ringOutline = insetContourPoints(contour, insetMm + SPACER_INSET_MM).map(
+        (p) => [p.x, p.y] as Pt2,
+      );
+      const ringHole = insetContourPoints(contour, insetMm + SPACER_INSET_MM + SPACER_MM).map(
+        (p) => [p.x, p.y] as Pt2,
+      );
+      if (ringOutline.length >= 3 && ringHole.length >= 3) {
+        solids.push({
+          kind: "shape",
+          owner,
+          surface: "spacer",
+          material: "ALUMINIUM",
+          outline: ringOutline,
+          holes: [ringHole],
+          z0: cursor,
+          depth: cavityT,
+        });
+      }
+      cursor += cavityT;
+    }
+  });
+}
 
 function box(
   owner: string,
@@ -527,11 +712,21 @@ function planTransform(
   };
 }
 
+/** Mark the solids appended since `from` as belonging to `leafId`. */
+function tagLeaf(solids: Solid3D[], from: number, leafId: string): void {
+  for (let index = from; index < solids.length; index += 1) {
+    const solid = solids[index];
+    if (solid) solid.leafId = leafId;
+  }
+}
+
 /** Leaf bay solids: sliding panes ride their declared tracks at stepped
  * depths, operable leaves get a sash ring + pane, fixed leaves a pane,
- * panels an opaque slab. */
+ * panels an opaque slab. Operable leaves also register a presentation-only
+ * LeafMotion so the view can open them. */
 function leafSolids(
   solids: Solid3D[],
+  leaves: LeafMotion[],
   module: ProductModuleJson,
   bay: IntentNode,
   region: Region,
@@ -568,18 +763,16 @@ function leafSolids(
       const slotX = region.x + pitch * index;
       if (panel.kind === "FIXED") {
         // Fixed slots glaze directly — no sash, same as the front view.
-        solids.push(
-          box(
-            owner,
-            "glass",
-            "GLASS",
-            slotX + bead,
-            region.y + bead,
-            z0,
-            Math.max(pitch - 2 * bead, 1),
-            Math.max(region.h - 2 * bead, 1),
-            glassT,
-          ),
+        glassInfill(
+          solids,
+          owner,
+          slotX + bead,
+          region.y + bead,
+          z0,
+          Math.max(pitch - 2 * bead, 1),
+          Math.max(region.h - 2 * bead, 1),
+          glassT,
+          bay.glass_spec,
         );
         return;
       }
@@ -588,6 +781,8 @@ function leafSolids(
         region.x + region.w - leafW,
       );
       const paneRegion: Region = { x: leafX, y: region.y, w: leafW, h: region.h };
+      const leafId = `${bay.id}:${index}`;
+      const leafFrom = solids.length;
       const sashW = Math.min(members.sash.faceWidthMm, leafW / 3, region.h / 3);
       memberBarRing(
         solids,
@@ -599,20 +794,28 @@ function leafSolids(
         sashD,
         Math.max(z0 - sashD, 0),
       );
-      solids.push(
-        box(
-          owner,
-          "glass",
-          "GLASS",
-          paneRegion.x + sashW,
-          paneRegion.y + sashW,
-          z0,
-          Math.max(leafW - 2 * sashW, 1),
-          Math.max(paneRegion.h - 2 * sashW, 1),
-          glassT,
-        ),
+      glassInfill(
+        solids,
+        owner,
+        paneRegion.x + sashW,
+        paneRegion.y + sashW,
+        z0,
+        Math.max(leafW - 2 * sashW, 1),
+        Math.max(paneRegion.h - 2 * sashW, 1),
+        glassT,
+        bay.glass_spec,
       );
       gasketAndBead(solids, owner, paneRegion, sashW, z0, glassT, depth);
+      tagLeaf(solids, leafFrom, leafId);
+      // Presentation only: adjacent leaves fan apart — the direction is a
+      // readability convention since the product declares no leaf travel.
+      leaves.push({
+        leafId,
+        kind: "slide",
+        pivot: 0,
+        dir: index % 2 === 0 ? -1 : 1,
+        travel: Math.min(leafW * 0.55, region.w * 0.45),
+      });
     });
     // Sliding leaves ride rails — the track channels at the sill plane are
     // a physical detail, one per declared track.
@@ -652,24 +855,40 @@ function leafSolids(
   }
 
   if (operable) {
+    const leafId = owner;
+    const leafFrom = solids.length;
     const sashW = Math.min(members.sash.faceWidthMm, region.w / 3, region.h / 3);
     const sashD = depth * 0.45;
     memberBarRing(solids, owner, "sash", members.sash, region, sashW, sashD, depth - sashD);
     // An operable bay's infill sits inside its sash — an opaque panel for
     // panel doors, glazing otherwise (the front view wraps both the same).
-    solids.push(
-      box(
+    if (bay.panel_article_sku) {
+      solids.push(
+        box(
+          owner,
+          "panel",
+          members.frame.material,
+          region.x + sashW,
+          region.y + sashW,
+          glassZ,
+          Math.max(region.w - 2 * sashW, 1),
+          Math.max(region.h - 2 * sashW, 1),
+          glassT,
+        ),
+      );
+    } else {
+      glassInfill(
+        solids,
         owner,
-        bay.panel_article_sku ? "panel" : "glass",
-        bay.panel_article_sku ? members.frame.material : "GLASS",
         region.x + sashW,
         region.y + sashW,
         glassZ,
         Math.max(region.w - 2 * sashW, 1),
         Math.max(region.h - 2 * sashW, 1),
         glassT,
-      ),
-    );
+        bay.glass_spec,
+      );
+    }
     gasketAndBead(solids, owner, region, sashW, glassZ, glassT, depth);
     hardwareSolids(solids, owner, bay, region, sashW, depth);
     // A door opening closes on a low threshold, not the frame's bottom
@@ -690,21 +909,50 @@ function leafSolids(
         ),
       );
     }
+    tagLeaf(solids, leafFrom, leafId);
+    // Hinge conventions mirror hardwareSolids: TURN_LEFT/DOOR hinge on the
+    // leaf's left edge, TURN_RIGHT on the right; TILT_TURN tips the top in
+    // on a bottom pivot, AWNING swings its bottom out on a top pivot.
+    const opening = bay.opening_type;
+    if (opening === "AWNING") {
+      leaves.push({
+        leafId,
+        kind: "tilt",
+        pivot: region.y + region.h,
+        dir: 1,
+        travel: 0,
+      });
+    } else if (opening === "TILT_TURN_LEFT" || opening === "TILT_TURN_RIGHT") {
+      leaves.push({
+        leafId,
+        kind: "tilt",
+        pivot: region.y,
+        dir: 1,
+        travel: 0,
+      });
+    } else {
+      const hingeLeft = opening === "TURN_LEFT" || opening === "DOOR_ENTRY";
+      leaves.push({
+        leafId,
+        kind: "swing",
+        pivot: hingeLeft ? region.x : region.x + region.w,
+        dir: hingeLeft ? -1 : 1,
+        travel: 0,
+      });
+    }
     return;
   }
 
-  solids.push(
-    box(
-      owner,
-      "glass",
-      "GLASS",
-      region.x + bead,
-      region.y + bead,
-      glassZ,
-      Math.max(region.w - 2 * bead, 1),
-      Math.max(region.h - 2 * bead, 1),
-      glassT,
-    ),
+  glassInfill(
+    solids,
+    owner,
+    region.x + bead,
+    region.y + bead,
+    glassZ,
+    Math.max(region.w - 2 * bead, 1),
+    Math.max(region.h - 2 * bead, 1),
+    glassT,
+    bay.glass_spec,
   );
   gasketAndBead(solids, owner, region, bead, glassZ, glassT, depth);
 }
@@ -767,18 +1015,16 @@ function framelessSolids(
     Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
     4,
   );
-  solids.push(
-    box(
-      owner,
-      "glass",
-      "GLASS",
-      reveal,
-      reveal,
-      Math.max((depth - glassT) / 2, 0),
-      Math.max(w - 2 * reveal, 1),
-      Math.max(h - 2 * reveal, 1),
-      glassT,
-    ),
+  glassInfill(
+    solids,
+    owner,
+    reveal,
+    reveal,
+    Math.max((depth - glassT) / 2, 0),
+    Math.max(w - 2 * reveal, 1),
+    Math.max(h - 2 * reveal, 1),
+    glassT,
+    modulePrimaryBay(module)?.glass_spec,
   );
   const edgeSpan = (edge: string): Region => {
     switch (edge) {
@@ -932,6 +1178,7 @@ export function buildScene3D(
       }
     }
     const solids: Solid3D[] = [];
+    const leaves: LeafMotion[] = [];
 
     if (module.frameless) {
       framelessSolids(solids, module, w, h, depth);
@@ -956,21 +1203,15 @@ export function buildScene3D(
         Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
         4,
       );
-      const glassOutline = insetContourPoints(module.contour, frameT + bead).map(
-        (p) => [p.x, p.y] as Pt2,
+      contourGlassInfill(
+        solids,
+        primaryBay ? `${module.id}/${primaryBay.id}` : module.id,
+        module.contour,
+        frameT + bead,
+        Math.max((depth - glassT) / 2, 0),
+        glassT,
+        primaryBay?.glass_spec,
       );
-      if (glassOutline.length >= 3) {
-        solids.push({
-          kind: "shape",
-          owner: primaryBay ? `${module.id}/${primaryBay.id}` : module.id,
-          surface: "glass",
-          material: "GLASS",
-          outline: glassOutline,
-          holes: [],
-          z0: Math.max((depth - glassT) / 2, 0),
-          depth: glassT,
-        });
-      }
     } else {
       memberBarRing(
         solids,
@@ -1032,11 +1273,11 @@ export function buildScene3D(
         });
       }
       for (const leaf of out.leaves) {
-        leafSolids(solids, module, leaf.node, leaf.region, members, depth);
+        leafSolids(solids, leaves, module, leaf.node, leaf.region, members, depth);
       }
     }
 
-    moduleScenes.push({ moduleId: module.id, position, rotationY, depth, solids });
+    moduleScenes.push({ moduleId: module.id, position, rotationY, depth, solids, leaves });
 
     const cos = Math.cos(rotationY);
     const sin = Math.sin(rotationY);
