@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(12);
+SELECT plan(15);
 
 -- Consolidation A: routing authority is a declared, versioned catalog row —
 -- never inferred from the material family alone.
@@ -55,5 +55,45 @@ SELECT ok(
     'authenticated cannot author process profiles'
 );
 
+-- Review fix: org-owned profiles are tenant-private — RLS scopes member
+-- reads to (own org ∪ global library), otherwise routing declarations leak
+-- cross-tenant through PostgREST.
+INSERT INTO public.tenancy_organizations (id, name, tax_id) VALUES
+    ('33333333-3333-4333-8333-333333333333', 'Tenant C', 'C-1'),
+    ('44444444-4444-4444-8444-444444444444', 'Tenant D', 'D-1');
+INSERT INTO public.tenancy_memberships (org_id, user_id, role) VALUES
+    ('33333333-3333-4333-8333-333333333333',
+     'cccccccc-0000-4000-8000-000000000001', 'WORKSHOP_MANAGER');
+INSERT INTO public.manufacturing_process_profiles
+    (org_id, code, version, label, stations) VALUES
+    ('33333333-3333-4333-8333-333333333333', 'TENANT_CUSTOM', 1, 'Perfil propio', '[]'::jsonb),
+    ('44444444-4444-4444-8444-444444444444', 'OTHER_CUSTOM', 1, 'Perfil ajeno', '[]'::jsonb);
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims',
+    '{"sub":"cccccccc-0000-4000-8000-000000000001","role":"authenticated"}', TRUE);
+SELECT set_config('request.jwt.claim.sub',
+    'cccccccc-0000-4000-8000-000000000001', TRUE);
+
+SELECT is(
+    (SELECT relrowsecurity FROM pg_class
+      WHERE oid = 'public.manufacturing_process_profiles'::regclass),
+    TRUE,
+    'RLS enabled on process profiles'
+);
+SELECT is(
+    (SELECT count(*) FROM public.manufacturing_process_profiles
+      WHERE code = 'TENANT_CUSTOM'),
+    1::BIGINT,
+    'member reads own org profile'
+);
+SELECT is(
+    (SELECT count(*) FROM public.manufacturing_process_profiles
+      WHERE code = 'OTHER_CUSTOM'),
+    0::BIGINT,
+    'member cannot read another tenant''s profile'
+);
+
+RESET ROLE;
 SELECT * FROM finish();
 ROLLBACK;

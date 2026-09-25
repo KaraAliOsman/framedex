@@ -59,6 +59,7 @@ from engine_api.cutting_repository import CuttingRepository
 from engine_api.inspection_repository import InspectorRepository
 from engine_api.repository import SystemParamsRepository
 from pricing.repository import commercial_backend
+from production.service import process_facts_snapshot
 
 from documents.repository import (
     DocumentaryError,
@@ -965,6 +966,24 @@ def freeze_revision_a(
         documentary_complete = True
         production_allowed = True
         stock_repository = CuttingRepository()
+        # Process authority is frozen into the sealed position: release must
+        # route under the profile and system facts that existed at seal — a
+        # later catalog or profile edit can never re-route sealed evidence.
+        position_system_ids = [
+            str(position["system_id"]) for position in positions if position.get("system_id")
+        ]
+        system_facts_by_id = {
+            str(row["id"]): row
+            for row in rows(
+                """
+                SELECT id::text, material::text, end_milling_overlap_mm,
+                       process_profile_id::text
+                FROM public.profile_systems
+                WHERE id = ANY(%s::uuid[])
+                """,
+                [position_system_ids],
+            )
+        } if position_system_ids else {}
         for position in positions:
             position_id = str(position["id"])
             tree = _json_object(position["parametric_tree"], "invalid_parametric_tree")
@@ -998,6 +1017,11 @@ def freeze_revision_a(
             ):
                 raise DocumentaryError("applied_pricing_technical_binding_drift")
 
+            process_facts = process_facts_snapshot(
+                org_id=org_id,
+                engine_result=current_bom,
+                system_facts=system_facts_by_id.get(str(system_id)),
+            )
             annotations = workshop_annotations(position["workshop_annotations"])
             structural = structural_inputs(position["structural_inputs"])
             targets = {
@@ -1251,6 +1275,7 @@ def freeze_revision_a(
                 "legacy_handle_migration_confirmed": bool(
                     position["legacy_handle_migration_confirmed"]
                 ),
+                "process_facts": process_facts,
             })
             bom.append({
                 "position_id": position_id,

@@ -232,11 +232,11 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         if profile is None:
             profile, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
             process_via = "generic_fallback" if profile else via
-    if params is not None and profile is None:
+    if params is not None and (profile is None or process_via == "generic_fallback"):
         prod_b.append(_blocker(
             "process_profile", "perfil de proceso declarado",
             str(system_id),
-            "sin autoridad de proceso versionada la ruta sería inferida del material",
+            "sin autoridad de proceso versionada la ruta cae al genérico — ninguna unión real está garantizada",
             "vincular un perfil de proceso al sistema"))
 
     stations = (profile or {}).get("stations") or []

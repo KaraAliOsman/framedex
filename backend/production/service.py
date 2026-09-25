@@ -120,11 +120,17 @@ _TRANSITIONS = {
 }
 
 
-def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
-    existing = rows(
-        "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
-        [str(org_id)],
+def _ensure_work_centers(
+    org_id: UUID,
+) -> tuple[dict[str, dict[str, object]], set[str]]:
+    """(active-by-kind, inactive-kinds). A kind the org deliberately
+    deactivated is never silently re-seeded: its steps land unassigned and the
+    work order carries an explicit work_center_inactive blocker."""
+    query = (
+        "SELECT id, code, kind, active FROM public.work_centers "
+        "WHERE org_id = %s ORDER BY display_order"
     )
+    existing = rows(query, [str(org_id)])
     present_kinds = {str(center["kind"]) for center in existing}
     missing = [center for center in _DEFAULT_CENTERS if center[2] not in present_kinds]
     if missing:
@@ -138,17 +144,16 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
                     """,
                     [str(org_id), code, name, kind, order],
                 )
-            existing = rows(
-                "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
-                [str(org_id)],
-            )
-    # First center of each kind wins (display_order ascending) — a custom
-    # station the org ordered first keeps step assignment over any default
-    # seeded later of the same kind.
+            existing = rows(query, [str(org_id)])
+    # First ACTIVE center of each kind wins (display_order ascending) — a
+    # custom station the org ordered first keeps step assignment over any
+    # default seeded later of the same kind.
     by_kind: dict[str, dict[str, object]] = {}
     for center in existing:
-        by_kind.setdefault(str(center["kind"]), center)
-    return by_kind
+        if center.get("active"):
+            by_kind.setdefault(str(center["kind"]), center)
+    inactive_kinds = present_kinds - {str(kind) for kind in by_kind}
+    return by_kind, inactive_kinds
 
 
 def _cut_roles(engine_result: dict[str, object]) -> set[str]:
@@ -262,6 +267,7 @@ def _station_has_work(
     engine_result: dict[str, object],
     *,
     end_milling_overlap_mm: object = None,
+    has_handles: bool = False,
 ) -> bool:
     """'auto' stations land only when the sealed result carries work."""
     cuts = engine_result.get("profile_cuts") or []
@@ -269,6 +275,11 @@ def _station_has_work(
     if code == "CUT":
         return bool(cuts or engine_result.get("reinforcements"))
     if code == "MACHINING":
+        # Every member op the sealed facts can emit lands here: END_MACHINING
+        # (overlap authority) and HANDLE_PREP (handle intents). Omitting the
+        # station while an op maps to it would leave work unrouted.
+        if has_handles:
+            return True
         try:
             return end_milling_overlap_mm is not None and Decimal(
                 str(end_milling_overlap_mm)
@@ -289,6 +300,7 @@ def _routing(
     *,
     profile: dict[str, object] | None,
     end_milling_overlap_mm: object = None,
+    has_handles: bool = False,
 ) -> list[str]:
     """The ladder is the declared profile's station template pruned by the
     sealed result: required stations are process-inherent and always land;
@@ -311,7 +323,10 @@ def _routing(
         if not code:
             continue
         if str(station.get("when") or "auto") == "required" or _station_has_work(
-            code, engine_result, end_milling_overlap_mm=end_milling_overlap_mm
+            code,
+            engine_result,
+            end_milling_overlap_mm=end_milling_overlap_mm,
+            has_handles=has_handles,
         ):
             routing.append(code)
     return routing
@@ -338,13 +353,21 @@ def _process_authority(
 def _work_order_payload(
     position: dict[str, object], *, polishing: list | None = None,
     color: str | None = None,
-    system_facts: dict[str, object] | None = None,
+    process: dict[str, object] | None = None,
     org_id: UUID | None = None,
+    system_facts: dict[str, object] | None = None,
+    has_handles: bool = False,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
     profile: dict[str, object] | None = None
     resolved_via: str | None = None
-    if org_id is not None:
+    facts: dict[str, object] = system_facts or {}
+    if process is not None:
+        # Sealed process facts: the profile/inputs frozen with the version.
+        profile = process.get("profile") if isinstance(process.get("profile"), dict) else None
+        resolved_via = process.get("resolved_via")
+        facts = process.get("system") if isinstance(process.get("system"), dict) else {}
+    elif org_id is not None:
         profile, resolved_via = _resolve_process_profile(org_id, engine, system_facts)
     return {
         "schema": "production_wo_v1",
@@ -363,9 +386,41 @@ def _work_order_payload(
         "routing": _routing(
             engine,
             profile=profile,
-            end_milling_overlap_mm=(system_facts or {}).get("end_milling_overlap_mm"),
+            end_milling_overlap_mm=facts.get("end_milling_overlap_mm"),
+            has_handles=has_handles,
         ),
         "process_authority": _process_authority(profile, resolved_via),
+    }
+
+
+_FROZEN_PROFILE_FIELDS = (
+    "id", "code", "version", "joining_method", "corner_process",
+    "cleaning_process", "stations", "operation_station_map",
+    "sash_assembly_required", "hardware_station", "glazing", "qc",
+    "packaging", "optional_operations", "machine_neutral_machining",
+)
+
+
+def _frozen_profile(profile: dict[str, object] | None) -> dict[str, object] | None:
+    if not profile:
+        return None
+    return {field: profile.get(field) for field in _FROZEN_PROFILE_FIELDS}
+
+
+def process_facts_snapshot(
+    *,
+    org_id: UUID,
+    engine_result: dict[str, object],
+    system_facts: dict[str, object] | None,
+) -> dict[str, object]:
+    """The process authority frozen into a sealed position — the resolved
+    profile content AND its routing inputs. Release reads this verbatim so a
+    later catalog/profile edit can never re-route sealed evidence."""
+    profile, via = _resolve_process_profile(org_id, engine_result, system_facts)
+    return {
+        "system": dict(system_facts or {}),
+        "profile": _frozen_profile(profile),
+        "resolved_via": via,
     }
 
 
@@ -466,31 +521,20 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         }
         for position in bom:
             position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
-        centers = _ensure_work_centers(org_id)
+        centers, inactive_kinds = _ensure_work_centers(org_id)
         # The sealed polishing choices live on the snapshot positions — the
         # work order embeds them so the workshop reads edge processing without
         # joining the documentary snapshot.
-        # §29: the routing ladder needs the physical process facts of each
-        # position's profile system — material decides weld-vs-crimp, the
-        # declared end-milling overlap decides the machining step. Missing
-        # or undeclared systems fall back to the generic path.
-        system_facts: dict[str, dict[str, object]] = {}
-        system_ids = sorted({
-            sid for sid in position_systems.values() if sid
-        })
-        if system_ids:
-            system_facts = {
-                str(row["id"]): row
-                for row in rows(
-                    """
-                    SELECT id::text, material::text, end_milling_overlap_mm,
-                           process_profile_id::text
-                    FROM public.profile_systems
-                    WHERE id = ANY(%s::uuid[])
-                    """,
-                    [system_ids],
-                )
-            }
+        # Process authority is frozen per position at seal time. Versions
+        # sealed before the authority model exist get the honest legacy
+        # fallback — their manufacturing facts are never reinterpreted
+        # through a later catalog revision.
+        frozen_facts = {
+            str(pos.get("id")): pos.get("process_facts")
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
+        generic_profile, _ = _load_profile_for(org_id, code="GENERIC_LEGACY")
         polishing_by_position = {
             str(pos.get("id")): pos.get("glass_polishing") or []
             for pos in snapshot.get("positions") or []
@@ -512,15 +556,36 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
+            position_id = str(position.get("position_id") or "")
+            sealed = frozen_facts.get(position_id)
+            process = sealed if isinstance(sealed, dict) else {
+                "system": {},
+                "profile": generic_profile,
+                "resolved_via": "generic_fallback",
+            }
+            has_handles = bool(
+                (next(
+                    (p for p in (snapshot.get("positions") or [])
+                     if str(p.get("id")) == position_id),
+                    {},
+                )).get("handle_intents")
+            )
             payload = _work_order_payload(
                 position,
-                polishing=polishing_by_position.get(str(position.get("position_id"))),
-                color=color_by_position.get(str(position.get("position_id"))),
-                system_facts=system_facts.get(
-                    str(position.get("system_id") or "")
-                ),
+                polishing=polishing_by_position.get(position_id),
+                color=color_by_position.get(position_id),
+                process=process,
                 org_id=org_id,
+                has_handles=has_handles,
             )
+            inactive_step_kinds = sorted({
+                kind for kind, step_code in _STEP_CODE_FOR_CENTER.items()
+                if step_code in payload["routing"] and kind in inactive_kinds
+            })
+            if inactive_step_kinds:
+                payload["blockers"] = [
+                    f"work_center_inactive:{kind}" for kind in inactive_step_kinds
+                ]
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
                 """

@@ -54,7 +54,40 @@ def _version_row(snapshot: dict) -> dict:
 
 _POSITION_ID = str(uuid4())
 _SNAPSHOT = {
-    "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+    "positions": [
+        {
+            "id": _POSITION_ID,
+            "system_id": str(uuid4()),
+            # The authority the version sealed under — release consumes this
+            # verbatim; a later catalog/profile edit can never re-route it.
+            "process_facts": {
+                "system": {
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
+                },
+                "profile": {
+                    "id": "11111111-2222-3333-4444-555555555555",
+                    "code": "PVC_WELDED",
+                    "version": 1,
+                    "joining_method": "WELD",
+                    "stations": [
+                        {"code": "CUT", "when": "auto"},
+                        {"code": "MACHINING", "when": "auto"},
+                        {"code": "WELD", "when": "required"},
+                        {"code": "CLEAN", "when": "required"},
+                        {"code": "SASH_ASSEMBLE", "when": "auto"},
+                        {"code": "HARDWARE", "when": "auto"},
+                        {"code": "GLAZE", "when": "auto"},
+                        {"code": "QC", "when": "required"},
+                        {"code": "PACK", "when": "required"},
+                    ],
+                    "operation_station_map": {"END_MACHINING": "MACHINING", "SAW_CUT": "CUT"},
+                },
+                "resolved_via": "material_default",
+            },
+        }
+    ],
     "bom": [
         {
             "position_id": _POSITION_ID,
@@ -202,7 +235,12 @@ def test_release_rejects_not_allowed_version() -> None:
 
 
 def test_release_creates_work_order_with_steps() -> None:
-    version = _version_row(_SNAPSHOT)
+    # Legacy version (no frozen process_facts) → honest generic ladder.
+    snapshot = {
+        "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+        "bom": _SNAPSHOT["bom"],
+    }
+    version = _version_row(snapshot)
     order_id = uuid4()
     inserted_rows = []
 
@@ -381,6 +419,71 @@ def test_release_freezes_process_authority_into_the_payload() -> None:
     assert authority["version"] == 1
     assert authority["resolved_via"] == "material_default"
     assert authority["operation_station_map"]["END_MACHINING"] == "MACHINING"
+
+
+def test_release_without_frozen_facts_uses_legacy_fallback() -> None:
+    """Versions sealed before the authority model have no process_facts —
+    their facts are never reinterpreted through a later catalog revision."""
+    snapshot = {
+        "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+        "bom": [dict(_SNAPSHOT["bom"][0])],
+    }
+    version = _version_row(snapshot)
+    order_id = uuid4()
+    payloads: list[dict[str, object]] = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [
+                {
+                    "id": "22222222-2222-3333-4444-555555555555",
+                    "code": "GENERIC_LEGACY",
+                    "version": 1,
+                    "joining_method": "NONE",
+                    "stations": [
+                        {"code": "CUT", "when": "auto"},
+                        {"code": "ASSEMBLE", "when": "auto"},
+                        {"code": "GLAZE", "when": "auto"},
+                        {"code": "QC", "when": "required"},
+                        {"code": "PACK", "when": "required"},
+                    ],
+                    "operation_station_map": {"SAW_CUT": "CUT"},
+                }
+            ]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [{"id": order_id, "order_code": "OT", "order_type": "WORKSHOP_OT",
+                     "status": "RELEASED", "payload_json": {},
+                     "project_version_id": version["id"], "created_at": "x",
+                     "steps_total": 0, "steps_done": 0}]
+        return []
+
+    original = service._work_order_payload
+
+    def capture(*args, **kwargs):
+        payload = original(*args, **kwargs)
+        payloads.append(payload)
+        return payload
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ), patch("production.service._work_order_payload", side_effect=capture):
+        service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    authority = payloads[0]["process_authority"]
+    assert authority["code"] == "GENERIC_LEGACY"
+    assert authority["resolved_via"] == "generic_fallback"
 
 
 def test_release_replay_returns_existing() -> None:
@@ -588,7 +691,7 @@ def test_order_code_scopes_to_project() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
@@ -923,7 +1026,7 @@ def test_release_seals_system_from_snapshot_positions() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
@@ -969,7 +1072,7 @@ def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):

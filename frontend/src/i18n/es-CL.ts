@@ -1060,6 +1060,7 @@ const messages = {
   "production.operatorNoOps": "Optimiza la OT para ver la secuencia de trabajo",
   "production.operatorBlockers": "Falta material — reserva incompleta",
   "production.operatorUnmapped": "SKU sin equivalencia comercial",
+  "production.operatorUnassignedOps": "Operaciones sin estación asignada",
   "production.operatorRack": "Ubicación",
   "production.operatorAngles": "Ángulos",
   "production.operatorCut": "Corte",

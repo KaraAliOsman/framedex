@@ -276,11 +276,12 @@ function heightBounds(
 function reconciledHandlePolicy(
   position: DocumentaryPreparationPosition,
   policyId: string,
-): Partial<DocumentaryPreparationPosition> {
+  previouslySeeded: ReadonlySet<string>,
+): { update: Partial<DocumentaryPreparationPosition>; seededKeys: string[] } {
   const requirements = position.handle_requirements.find(
     (entry) => entry.policy_id === policyId,
   )?.requirements;
-  if (!requirements) return { handle_requirement_policy_id: policyId };
+  if (!requirements) return { update: { handle_requirement_policy_id: policyId }, seededKeys: [] };
   const byKey = new Map(requirements.map((requirement) => [intentKey(requirement), requirement]));
   const intents = position.handle_intents.flatMap((intent) => {
     const requirement = byKey.get(
@@ -299,10 +300,35 @@ function reconciledHandlePolicy(
     handle_requirement_policy_id: policyId,
     handle_intents: intents,
   };
+  const seeded = seedHandleIntents(merged);
+  // A kept intent stays auto-seeded even when its reference was remapped —
+  // match on (bay|leaf|slot), not the full key.
+  const carried = intents
+    .filter((intent) =>
+      [...previouslySeeded].some((key) =>
+        key.startsWith(`${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}|`),
+      ),
+    )
+    .map(seedKeyForIntent);
   return {
-    handle_requirement_policy_id: policyId,
-    handle_intents: seedHandleIntents(merged).handle_intents,
+    update: {
+      handle_requirement_policy_id: policyId,
+      handle_intents: seeded.position.handle_intents,
+    },
+    seededKeys: [...new Set([...carried, ...seeded.seededKeys])],
   };
+}
+
+/** Identity of an intent the app auto-seeded — tracked per position so a
+ * placement/policy change recomputes seeded heights while manual entries
+ * stay exactly what the estimator typed. */
+function seedKeyForIntent(intent: {
+  bay_id: string;
+  leaf_id?: string | null;
+  handle_domain_slot: string;
+  vertical_reference: string;
+}): string {
+  return `${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}|${intent.vertical_reference}`;
 }
 
 /** A requirement with no stored intent must not pretend the displayed
@@ -311,13 +337,14 @@ function reconciledHandlePolicy(
  * whose bounds cannot be resolved keep NO intent at all (a blank height
  * fails the save serializer and would block even quote-only emission);
  * their pending chip still shows until the estimator types a value. */
-function seedHandleIntents(
-  position: DocumentaryPreparationPosition,
-): DocumentaryPreparationPosition {
+function seedHandleIntents(position: DocumentaryPreparationPosition): {
+  position: DocumentaryPreparationPosition;
+  seededKeys: string[];
+} {
   const requirements = requirementsFor(position);
-  if (requirements.length === 0) return position;
+  if (requirements.length === 0) return { position, seededKeys: [] };
   const intents = [...position.handle_intents];
-  let seeded = false;
+  const seededKeys: string[] = [];
   for (const requirement of requirements) {
     if (intentFor(position, requirement)) continue;
     const reference = requirement.permitted_vertical_references[0];
@@ -326,16 +353,68 @@ function seedHandleIntents(
     const boundMin = bounds ? parseDecimal(bounds[0]) : null;
     const boundMax = bounds ? parseDecimal(bounds[1]) : null;
     if (boundMin === null || boundMax === null) continue;
-    intents.push({
+    const intent = {
       bay_id: requirement.bay_id,
       leaf_id: requirement.leaf_id,
       handle_domain_slot: requirement.handle_domain_slot,
       requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
       vertical_reference: reference,
-    });
-    seeded = true;
+    };
+    intents.push(intent);
+    seededKeys.push(seedKeyForIntent(intent));
   }
-  return seeded ? { ...position, handle_intents: intents } : position;
+  return {
+    position: seededKeys.length ? { ...position, handle_intents: intents } : position,
+    seededKeys,
+  };
+}
+
+/** After a placement-policy change the leaf bounds move: auto-seeded
+ * midpoints are recomputed (or dropped when no bound resolves — a stale
+ * default must not pretend to be saved), while manually entered heights
+ * stay exactly what the estimator typed. */
+function reseedHandleIntents(
+  position: DocumentaryPreparationPosition,
+  previouslySeeded: ReadonlySet<string>,
+): {
+  position: DocumentaryPreparationPosition;
+  seededKeys: string[];
+} {
+  const requirements = requirementsFor(position);
+  const byKey = new Map(requirements.map((requirement) => [intentKey(requirement), requirement]));
+  const intents = position.handle_intents.flatMap((intent) => {
+    if (!previouslySeeded.has(seedKeyForIntent(intent))) return [intent];
+    const requirement = byKey.get(
+      `${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}`,
+    );
+    if (
+      !requirement ||
+      !requirement.permitted_vertical_references.includes(intent.vertical_reference)
+    )
+      return [];
+    const bounds = heightBounds(position, requirement, intent.vertical_reference);
+    const boundMin = bounds ? parseDecimal(bounds[0]) : null;
+    const boundMax = bounds ? parseDecimal(bounds[1]) : null;
+    if (boundMin === null || boundMax === null) return [];
+    return [
+      {
+        ...intent,
+        requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
+      },
+    ];
+  });
+  const seeded = seedHandleIntents({ ...position, handle_intents: intents });
+  // The full surviving seeded set: recomputed intents keep their membership
+  // (same key), dropped ones leave, fresh seeds join.
+  const surviving = new Set(
+    seeded.position.handle_intents
+      .filter((intent) => previouslySeeded.has(seedKeyForIntent(intent)))
+      .map(seedKeyForIntent),
+  );
+  return {
+    position: seeded.position,
+    seededKeys: [...surviving, ...seeded.seededKeys],
+  };
 }
 
 function selectedPolicy(
@@ -436,6 +515,9 @@ export function ProjectQuotationPanel({
   const [message, setMessage] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const generation = useRef(0);
+  // Which handle intents the app seeded (vs typed by the estimator) —
+  // placement/policy changes recompute only the seeded ones.
+  const seededIntentKeys = useRef(new Map<string, Set<string>>());
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
   useEffect(
     () => () => {
@@ -458,9 +540,11 @@ export function ProjectQuotationPanel({
       if (generation.current === current) {
         setPreparation({
           ...response.data,
-          positions: response.data.positions.map((position) =>
-            seedHandleIntents(mergePreparationSuggestions(position)),
-          ),
+          positions: response.data.positions.map((position) => {
+            const seeded = seedHandleIntents(mergePreparationSuggestions(position));
+            seededIntentKeys.current.set(String(position.position_id), new Set(seeded.seededKeys));
+            return seeded.position;
+          }),
         });
       }
     } catch {
@@ -898,16 +982,22 @@ export function ProjectQuotationPanel({
               {selectedPolicy(
                 position.placement_options,
                 position.manufacturing_placement_policy_id,
-                (value) =>
-                  // Reseed once bounds resolve — a midpoint that only now
-                  // became computable would otherwise display unsaved.
-                  updatePosition(
-                    index,
-                    seedHandleIntents({
+                (value) => {
+                  // Bounds move under the new placement: auto-seeded
+                  // midpoints recompute, manual heights stay as typed.
+                  const reseeded = reseedHandleIntents(
+                    {
                       ...position,
                       manufacturing_placement_policy_id: value,
-                    }),
-                  ),
+                    },
+                    seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
+                  );
+                  seededIntentKeys.current.set(
+                    String(position.position_id),
+                    new Set(reseeded.seededKeys),
+                  );
+                  updatePosition(index, reseeded.position);
+                },
                 t("quotation.placementPolicy"),
                 busy,
                 `placement-policy-${position.position_id}`,
@@ -915,7 +1005,18 @@ export function ProjectQuotationPanel({
               {selectedPolicy(
                 position.handle_options,
                 position.handle_requirement_policy_id,
-                (value) => updatePosition(index, reconciledHandlePolicy(position, value)),
+                (value) => {
+                  const reconciled = reconciledHandlePolicy(
+                    position,
+                    value,
+                    seededIntentKeys.current.get(String(position.position_id)) ?? new Set(),
+                  );
+                  seededIntentKeys.current.set(
+                    String(position.position_id),
+                    new Set(reconciled.seededKeys),
+                  );
+                  updatePosition(index, reconciled.update);
+                },
                 t("quotation.handlePolicy"),
                 busy,
                 `handle-policy-${position.position_id}`,

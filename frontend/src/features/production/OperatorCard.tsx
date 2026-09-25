@@ -127,9 +127,20 @@ export function OperatorStepCard({
 
   // Ops land on the station the frozen process authority declares for their
   // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
-  // Orders frozen before the authority model fall back to the saw.
-  const stationMap = (trace?.operations?.station_map as Record<string, string> | undefined) ?? {};
-  const stepOps = ops.filter((op) => (stationMap[op.kind ?? ""] ?? "CUT") === step.code);
+  // A kind absent from the map is never silently sent to the saw — it
+  // surfaces as an unassigned blocker. Orders frozen before the authority
+  // model keep the legacy saw/member split.
+  const stationMap = trace?.operations?.station_map as Record<string, string> | undefined;
+  const stepOps = stationMap
+    ? ops.filter((op) => stationMap[String(op.kind ?? "")] === step.code)
+    : ops.filter(
+        (op) =>
+          (op.kind === "SAW_CUT") === (step.code === "CUT") ||
+          (op.kind !== "SAW_CUT" && step.code === "MACHINING"),
+      );
+  const unassignedOps = stationMap
+    ? ops.filter((op) => !(String(op.kind ?? "") in stationMap))
+    : [];
   const sawOps = stepOps.filter((op) => op.kind === "SAW_CUT");
   const memberOps = stepOps.filter((op) => op.kind !== "SAW_CUT");
   const cutPieces: Array<{ barIndex: number; source?: string } & CutPiece> = [];
@@ -176,9 +187,14 @@ export function OperatorStepCard({
         </p>
       ) : (
         <div className="operator-card-body">
-          {blockers.length || (step.code === "CUT" && unmapped.length) ? (
+          {blockers.length || (step.code === "CUT" && unmapped.length) || unassignedOps.length ? (
             <p className="operator-blockers" role="alert">
-              {t("production.operatorBlockers")}
+              {blockers.length ? t("production.operatorBlockers") : ""}
+              {unassignedOps.length
+                ? ` · ${t("production.operatorUnassignedOps")}: ${[
+                    ...new Set(unassignedOps.map((op) => op.kind ?? "")),
+                  ].join(", ")}`
+                : ""}
               {unmapped.length && step.code === "CUT"
                 ? ` · ${t("production.operatorUnmapped")}: ${unmapped.join(", ")}`
                 : ""}
