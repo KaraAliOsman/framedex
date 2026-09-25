@@ -41,6 +41,26 @@ const SURFACE_LABELS: Record<string, string> = {
   settings: "configuración",
 };
 
+/** §08-WG — communication workflows are goals on the project/quotation
+ * surface: the dock already binds the project refs, so a preset turns the
+ * generic grounded agent into the five customer communications without a
+ * separate surface. They only prefill the goal — the human edits before
+ * sending, and the answer stays evidence-bound either way. */
+const GOAL_CHIPS: Record<string, string[]> = {
+  project: [
+    "Redacta el correo para enviar la cotización al cliente.",
+    "Resume los cambios de la última revisión para el cliente.",
+    "Redacta un recordatorio de pago pendiente.",
+    "Redacta una actualización del estado de producción para el cliente.",
+    "Redacta el aviso de entrega programada.",
+  ],
+  quotation: [
+    "Redacta el correo para enviar la cotización al cliente.",
+    "Resume los cambios de la última revisión para el cliente.",
+    "Redacta un recordatorio de pago pendiente.",
+  ],
+};
+
 /** The DEKOPEN agent: a goal turns into a server-side observe → plan loop.
  * The backend executes the queries and validates every step; this panel
  * renders provenance (what it consulted), lets the human apply design ops
@@ -266,6 +286,23 @@ export function AgentBody({
         {busy ? <p className="ask-dock__busy">{t("agent.thinking")}</p> : null}
       </div>
       {message ? <p className="ask-dock__error">{message}</p> : null}
+      {!goal.trim() && (GOAL_CHIPS[surface] ?? []).length ? (
+        <div className="ask-dock__chips">
+          {(GOAL_CHIPS[surface] ?? []).map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              className="ask-dock__chip"
+              onClick={() => {
+                setGoal(preset);
+                inputRef.current?.focus();
+              }}
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <form
         className="ask-dock__form"
         onSubmit={(event) => {
