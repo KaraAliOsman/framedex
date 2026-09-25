@@ -48,6 +48,7 @@ ARTIFACT_KINDS = frozenset(
         "project_draft",
         "quote_draft",
         "catalog_candidates",
+        "catalog_review",
         "purchase_plan",
         "production_plan",
         "message",

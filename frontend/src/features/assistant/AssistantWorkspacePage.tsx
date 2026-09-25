@@ -46,6 +46,7 @@ const SURFACE_LABELS: Record<string, string> = {
   production_plan: "plan de producción",
   quotation_complete: "completar cotización",
   project_from_documents: "proyecto desde documentos",
+  catalog_compiler: "compilador de catálogo",
   dashboard: "panel",
   projects: "proyectos",
   project: "proyecto",
@@ -65,6 +66,7 @@ const NEW_JOB_SURFACES = [
   "production_plan",
   "quotation_complete",
   "project_from_documents",
+  "catalog_compiler",
   "dashboard",
   "projects",
   "clients",
@@ -83,6 +85,8 @@ const GOAL_PRESETS: Record<string, string> = {
     "Diagnostica la cotización del proyecto: qué está listo, qué falta (diseño, precio, emisión, aprobación) y el siguiente paso.",
   project_from_documents:
     "Convierte los candidatos extraídos de los documentos del proyecto en un borrador de posiciones con su tipología.",
+  catalog_compiler:
+    "Compila la última importación de catálogo: qué candidatos confirman solos, qué colisiones o ambigüedades reviso yo, y qué queda bloqueado.",
 };
 
 // Surfaces whose job is bound to a project — the form asks which one. The
@@ -95,6 +99,7 @@ const ARTIFACT_KIND_LABELS: Record<string, string> = {
   project_draft: "aiws.artifact.project",
   quote_draft: "aiws.artifact.quote",
   catalog_candidates: "aiws.artifact.catalog",
+  catalog_review: "aiws.artifact.catalogReview",
   purchase_plan: "aiws.artifact.purchase",
   production_plan: "aiws.artifact.production",
   message: "aiws.artifact.message",

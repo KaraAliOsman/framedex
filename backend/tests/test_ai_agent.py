@@ -1150,3 +1150,175 @@ def test_agent_batch_ops_dropped_when_not_editable(monkeypatch):
         operation_key="batch-4",
     )
     assert result["steps"] == []
+
+
+def test_agent_catalog_compiler_review_queue(monkeypatch):
+    """§08-WD — the compiler triages an extracted catalog import into a
+    review-queue artifact: clean rows auto, collisions/ambiguities review,
+    unmappable rows blocked. Confirm still happens on the import surface."""
+    import_id, system_id = uuid4(), uuid4()
+    contexts = {
+        "catalog_compiler": {
+            "surface": "catalog_compiler",
+            "organization": {"name": "Org"},
+            "imports": [
+                {
+                    "id": str(import_id),
+                    "file_name": "perfiles.pdf",
+                    "status": "REVIEW_READY",
+                    "error_code": None,
+                    "system_id": str(system_id),
+                    "candidates_total": 2,
+                    "confirmed_keys": [],
+                    "candidates": [
+                        {
+                            "key": "c1",
+                            "sku": "MARCO-60",
+                            "name": "Marco 60",
+                            "role": "FRAME",
+                            "face_width_mm": "60",
+                            "confidence": "0.95",
+                            "conflict": False,
+                            "existing": [],
+                            "warnings": [],
+                        },
+                        {
+                            "key": "c2",
+                            "sku": "HOJA-70",
+                            "name": "Hoja 70",
+                            "role": "SASH",
+                            "face_width_mm": "70",
+                            "confidence": "LOW",
+                            "conflict": True,
+                            "existing": [
+                                {"id": str(uuid4()), "role": "FRAME", "system_code": "DEMO_60"}
+                            ],
+                            "warnings": ["catalog_conflicts_existing"],
+                        },
+                    ],
+                    "warnings": [],
+                }
+            ],
+            "systems": [
+                {
+                    "id": str(system_id),
+                    "code": "DEMO_60",
+                    "name": "Demo 60",
+                    "material": "PVC",
+                    "manufacturer": "Demo",
+                    "family": "60",
+                }
+            ],
+        }
+    }
+    output = _doc(
+        steps=[
+            {
+                "kind": "artifact",
+                "artifact": {
+                    "kind": "catalog_review",
+                    "title": "Revisión de perfiles.pdf",
+                    "payload": {
+                        "import_id": str(import_id),
+                        "auto": [
+                            {
+                                "key": "c1",
+                                "sku": "MARCO-60",
+                                "role": "FRAME",
+                                "system_id": str(system_id),
+                                "why": "sin conflicto y confidence alta",
+                            }
+                        ],
+                        "review": [
+                            {
+                                "key": "c2",
+                                "reason": "conflicto",
+                                "needed": "crear variante o reemplazar existente",
+                            }
+                        ],
+                        "blocked": [],
+                    },
+                    "references": [str(import_id), str(system_id)],
+                },
+            },
+            {"kind": "navigate", "path": "/catalog", "label": "Abrir catálogo"},
+        ]
+    )
+    calls = _patch(monkeypatch, contexts=contexts, outputs=[output])
+    result = agent.act(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        surface="catalog_compiler",
+        refs={},
+        goal="Compila la última importación",
+        product=None,
+        history=[],
+        operation_key="compile-1",
+    )
+    assert calls[0]["provider_options"]["system"] == agent.COMPILER_SYSTEM
+    artifact = result["artifacts"][0]
+    assert artifact["kind"] == "catalog_review"
+    assert artifact["payload"]["auto"][0]["key"] == "c1"
+    assert artifact["payload"]["review"][0]["key"] == "c2"
+    # References carry only ids the context exposed.
+    assert artifact["references"] == [str(import_id), str(system_id)]
+
+
+def test_catalog_compiler_context_projects_pending_imports(monkeypatch):
+    from ai_gateway import context
+
+    org_id, import_id, system_id = uuid4(), uuid4(), uuid4()
+
+    def fake_rows(sql, params=None):
+        if "tenancy_organizations" in sql:
+            return [{"id": org_id, "name": "Org", "currency": "CLP", "country": "CL"}]
+        if "catalog_imports" in sql:
+            return [
+                {
+                    "id": import_id,
+                    "file_name": "perfiles.pdf",
+                    "status": "REVIEW_READY",
+                    "system_id": system_id,
+                    "candidates": json.dumps(
+                        [
+                            {
+                                "key": "c1",
+                                "sku": "MARCO-60",
+                                "name": "Marco 60",
+                                "role": "FRAME",
+                                "face_width_mm": "60",
+                                "confidence": "0.9",
+                                "conflict": True,
+                                "existing": [
+                                    {"id": str(uuid4()), "role": "FRAME", "system_code": "D60"}
+                                ],
+                                "warnings": ["catalog_conflicts_existing"],
+                            }
+                        ]
+                    ),
+                    "warnings": "[]",
+                    "result": "[]",
+                    "error_code": None,
+                    "created_at": "2026-09-25",
+                }
+            ]
+        if "profile_systems" in sql:
+            return [
+                {
+                    "id": system_id,
+                    "code": "DEMO_60",
+                    "name": "Demo",
+                    "material": "PVC",
+                    "manufacturer": "Demo",
+                    "family": "60",
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(context, "rows", fake_rows)
+    ctx = context.build_context(org_id, "catalog_compiler", {})
+    assert ctx["imports"][0]["id"] == str(import_id)
+    candidate = ctx["imports"][0]["candidates"][0]
+    assert candidate["conflict"] is True
+    assert candidate["existing"][0]["system_code"] == "D60"
+    assert ctx["systems"][0]["id"] == str(system_id)

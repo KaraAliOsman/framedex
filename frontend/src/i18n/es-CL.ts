@@ -2144,6 +2144,7 @@ export const messages = {
   "aiws.artifact.project": "Borrador de proyecto",
   "aiws.artifact.quote": "Borrador de cotización",
   "aiws.artifact.catalog": "Candidatos de catálogo",
+  "aiws.artifact.catalogReview": "Revisión de catálogo",
   "aiws.artifact.purchase": "Plan de compra",
   "aiws.artifact.production": "Plan de producción",
   "aiws.artifact.message": "Mensaje",

@@ -41,6 +41,7 @@ REQUIRED_REFS: dict[str, tuple[str, ...]] = {
     "production_plan": (),
     "quotation_complete": ("project_id",),
     "project_from_documents": ("project_id",),
+    "catalog_compiler": (),
 }
 
 
@@ -1180,6 +1181,103 @@ def _production_plan(org_id: UUID) -> dict:
     return {"work_orders": out, "truncated": len(orders) == MAX_LIST}
 
 
+def _catalog_compiler(org_id: UUID) -> dict:
+    """§08-WD catalog compiler: the org's catalog imports with their article
+    candidates — extract→classify→map→compare already ran deterministic
+    reconciliation (_reconcile marks conflicts + the existing article each
+    collides with, and series gaps land on the import's warnings). What
+    remains genuinely human: uncertain/high-impact rows. The compiler
+    surfaces exactly that queue, plus every tenant-owned system a confirmed
+    article could target. Candidates stay review data — only the confirm
+    endpoint writes catalog authority."""
+    imports = rows(
+        "SELECT id, file_name, status, system_id, candidates, warnings, "
+        "result, error_code, created_at "
+        "FROM public.catalog_imports "
+        "WHERE org_id=%s "
+        "ORDER BY created_at DESC LIMIT %s",
+        [org_id, 6],
+    )
+    systems = rows(
+        "SELECT id, code, name, material::text AS material, "
+        "manufacturer, family "
+        "FROM public.profile_systems "
+        "WHERE org_id=%s AND is_active "
+        "ORDER BY code LIMIT %s",
+        [org_id, MAX_LIST],
+    )
+    budget = 24
+    documents = []
+    for imp in imports:
+        raw = _jsonb(imp["candidates"])
+        cands = raw if isinstance(raw, list) else []
+        take = cands[: max(budget, 0)]
+        budget -= len(take)
+        confirmed = {
+            str(entry.get("key"))
+            for entry in (_jsonb(imp["result"]) or [])
+            if isinstance(entry, dict)
+        }
+        documents.append(
+            {
+                "id": str(imp["id"]),
+                "file_name": _cut(imp["file_name"]),
+                "status": _cut(imp["status"]),
+                "error_code": _cut(imp["error_code"]),
+                "system_id": str(imp["system_id"]) if imp["system_id"] else None,
+                "created_at": str(imp["created_at"])[:10],
+                "candidates_total": len(cands),
+                "confirmed_keys": sorted(confirmed),
+                "candidates": [
+                    {
+                        "key": _cut(c.get("key"), 40),
+                        "sku": _cut(c.get("sku")),
+                        "name": _cut(c.get("name")),
+                        "role": _cut(c.get("role")),
+                        "face_width_mm": _cut(c.get("face_width_mm")),
+                        "confidence": _cut(c.get("confidence")),
+                        "conflict": bool(c.get("conflict")),
+                        "existing": [
+                            {
+                                "id": str(e.get("id")),
+                                "role": _cut(e.get("role")),
+                                "system_code": _cut(e.get("system_code")),
+                            }
+                            for e in (c.get("existing") or [])[:3]
+                            if isinstance(e, dict)
+                        ],
+                        "warnings": [
+                            _cut(w)
+                            for w in (c.get("warnings") or [])[:4]
+                            if isinstance(w, str)
+                        ],
+                    }
+                    for c in take
+                    if isinstance(c, dict)
+                ],
+                "warnings": [
+                    _cut(w)
+                    for w in (_jsonb(imp["warnings"]) or [])[:6]
+                    if isinstance(w, str)
+                ],
+            }
+        )
+    return {
+        "imports": documents,
+        "systems": [
+            {
+                "id": str(s["id"]),
+                "code": _cut(s["code"]),
+                "name": _cut(s["name"]),
+                "material": _cut(s["material"]),
+                "manufacturer": _cut(s["manufacturer"]),
+                "family": _cut(s["family"]),
+            }
+            for s in systems
+        ],
+    }
+
+
 def _settings(org_id: UUID) -> dict:
     # The organization block already carries what the settings surface can
     # answer about; no extra projection needed.
@@ -1203,6 +1301,7 @@ _BUILDERS = {
     "production_plan": _production_plan,
     "quotation_complete": _quotation,
     "project_from_documents": _project_docs,
+    "catalog_compiler": _catalog_compiler,
 }
 
 _REF_BUILDERS = {

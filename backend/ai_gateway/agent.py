@@ -59,6 +59,7 @@ QUERY_TOOLS = {
     "production_plan": "get_production_plan",
     "quotation_complete": "get_quotation",
     "project_from_documents": "get_document_candidates",
+    "catalog_compiler": "get_catalog_imports",
 }
 
 PREPARE_TOOLS = {
@@ -76,6 +77,7 @@ ARTIFACT_TOOLS = {
     "project_draft": "create_project_draft",
     "quote_draft": "create_quote_draft",
     "catalog_candidates": "create_catalog_candidates",
+    "catalog_review": "create_catalog_candidates",
     "purchase_plan": "prepare_purchase_plan",
     "production_plan": "prepare_production_plan",
     "message": "create_message_draft",
@@ -151,7 +153,7 @@ Respondes SOLO un JSON:
 }
 
 Tipos de paso:
-- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
+- {"kind":"query","surface":"projects|project|position|quotation|catalog|production|work_order|clients|purchasing|dashboard|settings|morning_brief|purchase_plan|production_plan|quotation_complete|project_from_documents|catalog_compiler","refs":{...}} — pide los datos de otra superficie; el servidor la ejecuta y el resultado vuelve a ti en la siguiente ronda. Úsalo SIEMPRE que la meta toque datos que el contexto no tiene. refs lleva los ids requeridos (project_id, position_id, work_order_id; system_id para profundizar en un sistema de catálogo) y solo puedes consultar ids que el contexto u observaciones anteriores te mostraron. Máximo 3 por ronda.
 - {"kind":"navigate","path":"/ruta","label":"..."} — navegación dentro de la app. Todo UUID en el path debe venir del contexto o de una observación.
 - {"kind":"ops","ops":[...],"label":"..."} — SOLO cuando el usuario está en una posición de diseño (surface="position" y el pedido trae "product"). Cada op usa EXACTAMENTE los campos del contrato — nunca "refs", "value" ni otros nombres:
   set_module_count {count} | add_unit {side:"left"|"right"} | remove_unit {module} | duplicate_module {module} | add_stacked_unit {module} | insert_module {coupling} | remove_coupling {coupling} | set_coupling_kind {coupling, kind:"INLINE|STACKED|TEE|CORNER"} | set_module_width {module, width_mm} | set_total_width {width_mm} | set_height {height_mm} | equalize_widths {} | equalize_angles {} | set_coupling_angle {coupling, angle_deg} | set_opening {module, opening:"FIXED|TURN_LEFT|TURN_RIGHT|TILT_TURN_LEFT|TILT_TURN_RIGHT|SLIDING_2L|AWNING|DOOR_ENTRY"} | set_glass {module, sku} | set_glass_thickness {module, mm} | set_panel {module, sku|null}
@@ -309,12 +311,41 @@ Reglas duras:
 - Sin texto fuera del JSON."""
 
 
+COMPILER_SYSTEM = """Eres DEKOPEN Agente ejecutando el flujo "compilador de catálogo" — triage honesto de una importación de catálogo ya extraída (español chileno).
+
+El contexto lleva:
+- "imports": importaciones de catálogo — id, file_name, status (UPLOADED|EXTRACTING|REVIEW_READY|CONFIRMED|FAILED), system_id (destino ya comprometido si existe), candidates_total, confirmed_keys (keys ya confirmadas), candidates (máx. 24): key, sku, name, role, face_width_mm, confidence, conflict, existing (artículos del catálogo que colisionan: id, role, system_code), warnings; y warnings del import (p.ej. catalog.series_incomplete:...).
+- "systems": sistemas PROPIOS activos — id, code, name, material, manufacturer, family. Son los ÚNICOS system_id de destino válidos (el confirm exige sistema del tenant).
+
+Respondes SOLO un JSON:
+{
+  "reply": "qué encontraste: cuántos listos, cuántos piden revisión, cuántos bloqueados y por qué",
+  "steps": [pasos],
+  "warnings": ["alertas reales"]
+}
+
+Pasos:
+- UN paso {"kind":"artifact","artifact":{"kind":"catalog_review","title":"Revisión de <file_name>","payload":{"import_id":"<id del contexto>","auto":[{"key":"...","sku":"...","role":"...","system_id":"<uuid propio>","why":"por qué no necesita revisión"}],"review":[{"key":"...","reason":"conflicto|baja confianza|rol único|dato faltante","needed":"qué decide la persona"}],"blocked":[{"key":"...","reason":"por qué no puede confirmarse"}]},"references":["ids del contexto"]}} — la cola de revisión que la persona usa en el panel de importaciones.
+- {"kind":"navigate","path":"/catalog","label":"Abrir catálogo"} — la confirmación real ocurre ahí.
+- {"kind":"query","surface":"catalog","refs":{"system_id":"<id del contexto>"}} para verificar un sistema destino — máximo 2 por ronda.
+
+Reglas duras:
+- "auto" SOLO keys sin conflict, sin warnings propios, confidence distinta de LOW, con sku+role+name presentes y un system_id propio asignable (o el system_id ya comprometido del import). NUNCA inventes system_id — sin sistema asignable va a "blocked".
+- "review": conflict=true, confidence LOW, warnings propias, role faltante, o colisión con "existing" que exige decidir (crear variante vs. reemplazar) — "needed" dice exactamente qué.
+- "blocked": sin system_id válido, keys ya en confirmed_keys, o candidato sin campos mínimos para crear artículo.
+- Una importación CONFIRMED → reply honesto (ya confirmada), auto/review/blocked vacíos.
+- UPLOADED/EXTRACTING/FAILED → warning con su estado; sin candidates inventados.
+- Jamás "ops" ni "prepare" — la confirmación escribe autoridad real y solo ocurre en el panel de importaciones.
+- Sin texto fuera del JSON."""
+
+
 WORKFLOW_SYSTEM: dict[str, str] = {
     "morning_brief": BRIEF_SYSTEM,
     "purchase_plan": PURCHASE_SYSTEM,
     "production_plan": PRODUCTION_SYSTEM,
     "quotation_complete": QUOTE_SYSTEM,
     "project_from_documents": DOC_DRAFT_SYSTEM,
+    "catalog_compiler": COMPILER_SYSTEM,
 }
 
 
