@@ -41,6 +41,7 @@ export function ProjectPositionEditor(): JSX.Element {
   const { id = "", posId = "" } = useParams();
   const [query] = useSearchParams();
   const copyId = posId ? "" : (query.get("copy") ?? "");
+  const preferredSystem = posId || copyId ? null : query.get("system");
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "ESTIMATOR"].includes(org.role))
     return <p role="alert">{t("projects.denied")}</p>;
@@ -48,6 +49,7 @@ export function ProjectPositionEditor(): JSX.Element {
     <PositionWorkspace
       key={`${org.id}:${id}:${posId}:${copyId}`}
       orgId={org.id}
+      preferredSystem={preferredSystem}
       projectId={id}
       positionId={posId}
       copyId={copyId}
@@ -198,11 +200,13 @@ function PositionWorkspace({
   projectId,
   positionId,
   copyId,
+  preferredSystem,
 }: {
   orgId: string;
   projectId: string;
   positionId: string;
   copyId: string;
+  preferredSystem: string | null;
 }): JSX.Element {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
@@ -259,6 +263,9 @@ function PositionWorkspace({
     let active = true;
     if (!positionId && !copyId) {
       const blank = initial();
+      // Onboarding hands its picked system over via ?system= so the first
+      // position opens on the catalog context the user already chose.
+      if (preferredSystem) blank.systemId = preferredSystem;
       useCanvasStore.getState().loadDesign(blank);
       setBaseline({ design: canonicalize(designPayload(blank)), location: "", quantity: "1" });
       setLoaded(true);
@@ -312,7 +319,7 @@ function PositionWorkspace({
       generation.current += 1;
       useCanvasStore.getState().reset();
     };
-  }, [orgId, projectId, positionId, copyId]);
+  }, [orgId, projectId, positionId, copyId, preferredSystem]);
 
   // Once catalog options arrive, fill uniquely-determined SKUs (coupler when
   // the series has exactly one, mullions for splits created by starters).

@@ -3,7 +3,7 @@
 // Steps that produce records create them inline (client, project); steps that
 // belong in another surface deep-link into it (editor, pricing).
 
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,32 @@ import { t } from "../../i18n/es-CL";
 import { EmptyState, StatusBadge } from "../../ui";
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+type OnboardingState = {
+  step?: Step;
+  systemId?: string | null;
+  dataChoice?: "demo" | "real" | null;
+  clientId?: string | null;
+  clientName?: string;
+  projectId?: string | null;
+  projectName?: string;
+};
+
+/** The tour hands off to other surfaces (position editor, pricing) — progress
+ * and created IDs survive the detour per organization. */
+function storageKey(orgId: string): string {
+  return `onboarding:${orgId}`;
+}
+
+function readState(orgId: string): OnboardingState {
+  if (!orgId) return {};
+  try {
+    const raw = sessionStorage.getItem(storageKey(orgId));
+    return raw ? (JSON.parse(raw) as OnboardingState) : {};
+  } catch {
+    return {};
+  }
+}
 
 const STEP_LABELS = [
   "onboarding.stepIdentity",
@@ -71,10 +97,37 @@ export function OnboardingPage(): JSX.Element {
   const [clientName, setClientName] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
+  const restoredRef = useRef(false);
   const [moreClient, setMoreClient] = useState(false);
   const [clientExtra, setClientExtra] = useState({ rut: "", email: "", phone: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orgId || restoredRef.current) return;
+    restoredRef.current = true;
+    const saved = readState(orgId);
+    if (saved.step !== undefined) setStep(saved.step);
+    if (saved.systemId !== undefined) setSystemId(saved.systemId);
+    if (saved.dataChoice !== undefined) setDataChoice(saved.dataChoice);
+    if (saved.clientId !== undefined) setClientId(saved.clientId);
+    if (saved.clientName !== undefined) setClientName(saved.clientName);
+    if (saved.projectId !== undefined) setProjectId(saved.projectId);
+    if (saved.projectName !== undefined) setProjectName(saved.projectName);
+  }, [orgId]);
+
+  useEffect(() => {
+    if (!orgId || !restoredRef.current) return;
+    sessionStorage.setItem(
+      storageKey(orgId),
+      JSON.stringify({ step, systemId, dataChoice, clientId, clientName, projectId, projectName }),
+    );
+  }, [orgId, step, systemId, dataChoice, clientId, clientName, projectId, projectName]);
+
+  function finish(destination: string): void {
+    if (orgId) sessionStorage.removeItem(storageKey(orgId));
+    navigate(destination);
+  }
 
   const systems = useQuery<SystemResponse[]>({
     queryKey: ["onboarding", "systems", orgId],
@@ -391,6 +444,7 @@ export function OnboardingPage(): JSX.Element {
                     <label htmlFor="onb-project-client">{t("projects.client")}</label>
                     <input
                       id="onb-project-client"
+                      required
                       value={clientName}
                       onChange={(event) => setClientName(event.target.value)}
                     />
@@ -399,7 +453,11 @@ export function OnboardingPage(): JSX.Element {
                 <button
                   type="submit"
                   className="ui-button ui-button--primary"
-                  disabled={busy || projectName.trim() === ""}
+                  disabled={
+                    busy ||
+                    projectName.trim() === "" ||
+                    (clientId === null && clientName.trim() === "")
+                  }
                 >
                   {busy ? t("onboarding.saving") : t("onboarding.projectCreate")}
                 </button>
@@ -420,7 +478,7 @@ export function OnboardingPage(): JSX.Element {
             {projectId ? (
               <Link
                 className="ui-button ui-button--primary onboarding-link"
-                to={`/projects/${projectId}/positions/new`}
+                to={`/projects/${projectId}/positions/new${systemId ? `?system=${systemId}` : ""}`}
               >
                 {t("onboarding.positionOpen")}
               </Link>
@@ -483,7 +541,7 @@ export function OnboardingPage(): JSX.Element {
             <button
               type="button"
               className="ui-button ui-button--primary"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => finish("/dashboard")}
             >
               {t("onboarding.finish")}
             </button>

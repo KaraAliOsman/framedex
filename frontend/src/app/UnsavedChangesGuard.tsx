@@ -1,8 +1,10 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useId } from "react";
 import { UNSAFE_DataRouterContext, useBlocker } from "react-router-dom";
 
 import { t } from "../i18n/es-CL";
 import { Dialog } from "../ui";
+
+import { registerDirtySource } from "./shellUtils";
 
 // The production application uses a data router so browser Back and internal
 // navigation pass through the same guard as links.
@@ -14,6 +16,8 @@ export function UnsavedChangesGuard({
   message: string;
 }): JSX.Element | null {
   const router = useContext(UNSAFE_DataRouterContext);
+  const sourceId = useId();
+  useEffect(() => (dirty ? registerDirtySource(sourceId) : undefined), [dirty, sourceId]);
   useEffect(() => {
     if (!dirty) return;
     const leave = (event: BeforeUnloadEvent) => {

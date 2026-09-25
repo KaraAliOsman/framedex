@@ -1,40 +1,44 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+import { useQuery } from "@tanstack/react-query";
+
 import { ApiError } from "../api/apiMutator";
-import { projectsList } from "../api/generated/dekopen";
-import type { ProjectResponse } from "../api/generated/models";
+import { projectsList, type projectsListResponse } from "../api/generated/dekopen";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
 import { useDismiss } from "./shellUtils";
 
 /** Jump between recent projects without leaving the project context. Only
  * rendered inside /projects/:id — everywhere else the rail already offers
- * the full list. Fetch is lazy on first open. */
+ * the full list. Fetch is lazy on first open and stays fresh: project
+ * mutations invalidate the org's query cache. */
 export function ProjectSwitcher(): JSX.Element | null {
   const org = useAuthSession().me?.active_organization;
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<ProjectResponse[] | null>(null);
-  const [failed, setFailed] = useState(false);
   const rootRef = useDismiss<HTMLDivElement>(open, () => setOpen(false));
 
   const parts = location.pathname.split("/").filter(Boolean);
   const projectId = parts[0] === "projects" && parts[1] && parts[1] !== "demo" ? parts[1] : null;
 
-  useEffect(() => {
-    if (!open || !org || items !== null || failed) return;
-    projectsList({ headers: { "X-Organization-ID": org.id } })
-      .then((response) => {
-        if (response.status !== 200) throw new ApiError(response.status, response.data);
-        setItems(response.data.items.slice(0, 8));
-      })
-      .catch(() => setFailed(true));
-  }, [open, org, items, failed]);
+  const query = useQuery({
+    queryKey: ["project-switcher", org?.id],
+    enabled: open && Boolean(org),
+    staleTime: 30_000,
+    queryFn: async ({ signal }) => {
+      const response: projectsListResponse = await projectsList({
+        signal,
+        headers: { "X-Organization-ID": org?.id ?? "" },
+      });
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data.items.slice(0, 8);
+    },
+  });
 
   if (!org || !projectId) return null;
 
-  const candidates = (items ?? []).filter((item) => item.id !== projectId);
+  const candidates = (query.data ?? []).filter((item) => item.id !== projectId);
   return (
     <div className="project-switcher" ref={rootRef}>
       <button
@@ -56,12 +60,17 @@ export function ProjectSwitcher(): JSX.Element | null {
           aria-label={t("shell.switchProject")}
         >
           <p className="shell-menu__title">{t("shell.recentProjects")}</p>
-          {items === null && !failed ? (
+          {query.isPending ? (
             <p className="shell-menu__meta">{t("projects.loading")}</p>
-          ) : failed ? (
-            <p className="shell-menu__meta" role="alert">
-              {t("projects.uncertain")}
-            </p>
+          ) : query.isError ? (
+            <button
+              type="button"
+              className="shell-menu__item"
+              role="alert"
+              onClick={() => void query.refetch()}
+            >
+              {t("projects.uncertain")} · {t("ui.retry")}
+            </button>
           ) : candidates.length === 0 ? (
             <p className="shell-menu__meta">{t("shell.noOtherProjects")}</p>
           ) : (

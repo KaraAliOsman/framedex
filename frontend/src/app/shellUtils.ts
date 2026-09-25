@@ -3,6 +3,20 @@ import { useEffect, useRef } from "react";
 import type { RoleEnum } from "../api/generated/models";
 import type { TranslationKey } from "../i18n/es-CL";
 
+/** Editors register while they hold unsaved work so non-router transitions
+ * (org switch remounts the session context, not the router) can gate on the
+ * same dirty boundary as the route blocker. */
+const dirtySources = new Set<string>();
+export function registerDirtySource(id: string): () => void {
+  dirtySources.add(id);
+  return () => {
+    dirtySources.delete(id);
+  };
+}
+export function hasUnsavedWork(): boolean {
+  return dirtySources.size > 0;
+}
+
 export const roleLabel: Record<RoleEnum, TranslationKey> = {
   OWNER: "shell.role.owner",
   ESTIMATOR: "shell.role.estimator",
@@ -34,8 +48,9 @@ export function useDismiss<T extends HTMLElement>(open: boolean, onClose: () => 
 export type ContextNavItem = { to: string; label: TranslationKey };
 
 /** Context items share a path and differ only by query (Cola vs ?shortage=1):
- * a query target activates on an exact path+query match; the plain target
- * stays active unless a sibling claims the live query. */
+ * a query target activates when all of its params appear in the live query —
+ * production filters compose, so `?shortage=1&status=HOLD` is still Faltantes;
+ * the plain target stays active unless a sibling claims the live query. */
 export function contextItemActive(
   item: ContextNavItem,
   siblings: ContextNavItem[],
@@ -43,10 +58,24 @@ export function contextItemActive(
   search: string,
 ): boolean {
   const url = new URL(item.to, "http://shell.local");
-  if (url.search) return url.pathname === pathname && url.search === search;
   if (url.pathname !== pathname) return false;
-  return !siblings.some((sibling) => {
-    const siblingUrl = new URL(sibling.to, "http://shell.local");
-    return siblingUrl.search !== "" && siblingUrl.search === search;
-  });
+  const live = new URLSearchParams(search);
+  const claimed = (target: ContextNavItem): boolean => {
+    const targetUrl = new URL(target.to, "http://shell.local");
+    const params = [...targetUrl.searchParams.entries()];
+    return (
+      targetUrl.pathname === pathname &&
+      params.length > 0 &&
+      params.every(([key, value]) => live.get(key) === value)
+    );
+  };
+  if (url.search !== "") {
+    // Composed filters (?shortage=1&status=HOLD) still credit the query item
+    // whose params are a subset of the live ones; the first matching sibling
+    // wins so two applied filters never light two rail items.
+    if (!claimed(item)) return false;
+    const earlier = siblings.slice(0, siblings.indexOf(item));
+    return !earlier.some(claimed);
+  }
+  return !siblings.some(claimed);
 }

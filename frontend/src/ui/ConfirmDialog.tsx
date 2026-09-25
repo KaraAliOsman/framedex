@@ -41,37 +41,44 @@ export function usePrompt(): PromptFn {
   return prompt;
 }
 
-export function ConfirmProvider({ children }: PropsWithChildren): JSX.Element {
-  const [request, setRequest] = useState<ConfirmRequest | null>(null);
-  const resolver = useRef<(value: boolean | string | null) => void>(() => undefined);
-  const [draft, setDraft] = useState("");
+type PendingRequest = {
+  request: ConfirmRequest;
+  resolve: (value: boolean | string | null) => void;
+};
 
-  const confirm = useCallback<ConfirmFn>(
-    (next) =>
-      new Promise<boolean>((resolve) => {
-        resolver.current = resolve as (value: boolean | string | null) => void;
+export function ConfirmProvider({ children }: PropsWithChildren): JSX.Element {
+  // Requests queue: a second confirmation while one is open must not strand
+  // the first caller — it waits for its own dialog, shown next.
+  const queueRef = useRef<PendingRequest[]>([]);
+  const [current, setCurrent] = useState<PendingRequest | null>(null);
+  const [draft, setDraft] = useState("");
+  const request = current?.request ?? null;
+
+  const enqueue = useCallback(
+    (next: ConfirmRequest): Promise<boolean | string | null> =>
+      new Promise<boolean | string | null>((resolve) => {
+        queueRef.current.push({ request: next, resolve });
+        setCurrent((previous) => previous ?? queueRef.current.shift() ?? null);
         setDraft("");
-        setRequest(next);
       }),
     [],
   );
 
+  const confirm = useCallback<ConfirmFn>(async (next) => Boolean(await enqueue(next)), [enqueue]);
+
   const prompt = useCallback<PromptFn>(
-    (next) =>
-      new Promise<string | null>((resolve) => {
-        resolver.current = resolve as (value: boolean | string | null) => void;
-        setDraft("");
-        setRequest({ ...next, input: next.input ?? {} });
-      }),
-    [],
+    (next) => enqueue({ ...next, input: next.input ?? {} }) as Promise<string | null>,
+    [enqueue],
   );
 
   const settle = useCallback(
     (value: boolean) => {
-      resolver.current(request?.input ? (value ? draft.trim() : null) : value);
-      setRequest(null);
+      const answer = request?.input ? (value ? draft.trim() : null) : value;
+      current?.resolve(answer);
+      setCurrent(queueRef.current.shift() ?? null);
+      setDraft("");
     },
-    [draft, request],
+    [current, draft, request],
   );
 
   const api = useMemo(() => confirm, [confirm]);

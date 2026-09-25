@@ -804,6 +804,9 @@ const messages = {
   "shell.switchProject": "Cambiar proyecto",
   "shell.recentProjects": "Proyectos recientes",
   "shell.noOtherProjects": "Sin otros proyectos.",
+  "shell.leaveUnsavedTitle": "Cambiar de organización",
+  "shell.leaveUnsavedBody":
+    "Tienes cambios sin guardar en este espacio de trabajo. Si cambias de organización ahora, se perderán.",
   "shell.role.owner": "Propietario",
   "shell.role.estimator": "Estimador",
   "shell.role.workshopManager": "Jefe de taller",

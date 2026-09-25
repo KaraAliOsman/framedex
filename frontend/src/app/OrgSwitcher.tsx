@@ -2,17 +2,36 @@ import { useState } from "react";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
-import { roleLabel, useDismiss } from "./shellUtils";
+import { useConfirm } from "../ui";
+
+import { hasUnsavedWork, roleLabel, useDismiss } from "./shellUtils";
 
 /** Current org identity + switcher. One membership renders read-only — a
  * switcher with nothing to switch to is noise. */
 export function OrgSwitcher(): JSX.Element | null {
   const auth = useAuthSession();
+  const confirm = useConfirm();
   const org = auth.me?.active_organization;
   const [open, setOpen] = useState(false);
   const rootRef = useDismiss<HTMLDivElement>(open, () => setOpen(false));
   if (!org) return null;
   const others = auth.memberships.filter((member) => member.organization_id !== org.id);
+
+  async function switchOrganization(organizationId: string): Promise<void> {
+    setOpen(false);
+    // Switching orgs remounts the session context, bypassing the route
+    // blocker — gate on the shared dirty registry instead.
+    if (
+      hasUnsavedWork() &&
+      !(await confirm({
+        title: t("shell.leaveUnsavedTitle"),
+        body: t("shell.leaveUnsavedBody"),
+        confirmLabel: t("ui.confirm"),
+      }))
+    )
+      return;
+    void auth.selectOrganization(organizationId);
+  }
   return (
     <div className="org-switcher" ref={rootRef}>
       <button
@@ -39,10 +58,7 @@ export function OrgSwitcher(): JSX.Element | null {
                 type="button"
                 role="menuitem"
                 className="shell-menu__item"
-                onClick={() => {
-                  setOpen(false);
-                  void auth.selectOrganization(member.organization_id);
-                }}
+                onClick={() => void switchOrganization(member.organization_id)}
               >
                 <span>{member.organization_name}</span>
                 <span className="shell-menu__meta">{t(roleLabel[member.role])}</span>
