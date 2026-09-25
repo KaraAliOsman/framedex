@@ -898,7 +898,16 @@ export function ProjectQuotationPanel({
               {selectedPolicy(
                 position.placement_options,
                 position.manufacturing_placement_policy_id,
-                (value) => updatePosition(index, { manufacturing_placement_policy_id: value }),
+                (value) =>
+                  // Reseed once bounds resolve — a midpoint that only now
+                  // became computable would otherwise display unsaved.
+                  updatePosition(
+                    index,
+                    seedHandleIntents({
+                      ...position,
+                      manufacturing_placement_policy_id: value,
+                    }),
+                  ),
                 t("quotation.placementPolicy"),
                 busy,
                 `placement-policy-${position.position_id}`,
