@@ -54,6 +54,9 @@ _STEP_CODE_FOR_CENTER = {
     "PACK": "PACK",
 }
 
+# Station code (as stored on production_steps.code) → work_centers.kind.
+_CENTER_KIND_FOR_STATION = {station: kind for kind, station in _STEP_CODE_FOR_CENTER.items()}
+
 _DEFAULT_CENTERS = [
     ("CUT_SAW", "Sierra de corte", "CUT", 10),
     ("MACHINING_CELL", "Centro de mecanizado", "MACHINING", 15),
@@ -1087,6 +1090,46 @@ def transition_step(
             new_status = "BLOCKED"
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
+        # A step released while its center was inactive sits READY but
+        # unassigned — it must never silently progress. When a center of the
+        # required kind has since been activated the step adopts it here and
+        # the order's payload blocker clears; otherwise the transition refuses
+        # and the blocker stays the shop's to-do.
+        if action in ("START", "COMPLETE") and step.get("work_center_id") is None:
+            # step.code is the station code (WELD, GLAZE…); work_centers.kind
+            # is the step vocabulary (WELDING, GLAZING…).
+            kind = _CENTER_KIND_FOR_STATION.get(str(step["code"]))
+            if kind is not None:
+                center = rows(
+                    """
+                    SELECT id, code, name FROM public.work_centers
+                    WHERE org_id = %s AND kind = %s AND active ORDER BY code LIMIT 1
+                    """,
+                    [str(org_id), kind],
+                )
+                if not center:
+                    raise DocumentaryError("work_center_unassigned")
+                rows(
+                    "UPDATE public.production_steps SET work_center_id = %s WHERE id = %s",
+                    [str(center[0]["id"]), str(step_id)],
+                )
+                step["work_center_id"] = center[0]["id"]
+                step["work_center_code"] = center[0]["code"]
+                step["work_center_name"] = center[0]["name"]
+                rows(
+                    """
+                    UPDATE public.orders
+                    SET payload_json = jsonb_set(
+                        payload_json, '{blockers}',
+                        COALESCE((
+                            SELECT jsonb_agg(b) FROM jsonb_array_elements_text(
+                                payload_json->'blockers') b
+                            WHERE b <> %s
+                        ), '[]'::jsonb))
+                    WHERE id = %s
+                    """,
+                    [f"work_center_inactive:{kind}", str(order["id"])],
+                )
         event_name = "QC_FAILED" if (
             action == "COMPLETE" and qc_result == "FAIL"
         ) else _EVENTS[action]

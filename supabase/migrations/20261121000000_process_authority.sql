@@ -50,6 +50,33 @@ ALTER TABLE public.profile_systems
     ADD COLUMN IF NOT EXISTS process_profile_id uuid NULL
         REFERENCES public.manufacturing_process_profiles(id);
 
+-- Tenant scope: a plain FK proves the profile exists, not that the system may
+-- bind it. A binding must name a GLOBAL profile (org_id IS NULL) or one owned
+-- by the binding system's own org — another org's profile is never addressable.
+CREATE OR REPLACE FUNCTION public.profile_system_process_profile_tenant_check()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.process_profile_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM public.manufacturing_process_profiles p
+        WHERE p.id = NEW.process_profile_id
+          AND (p.org_id IS NULL OR p.org_id = NEW.org_id)
+    ) THEN
+        RAISE EXCEPTION 'process_profile_foreign_org';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER profile_system_process_profile_tenant
+    BEFORE INSERT OR UPDATE OF process_profile_id, org_id
+    ON public.profile_systems
+    FOR EACH ROW EXECUTE FUNCTION public.profile_system_process_profile_tenant_check();
+
 -- Global declared authorities (org_id NULL = shared library rows).
 
 INSERT INTO public.manufacturing_process_profiles

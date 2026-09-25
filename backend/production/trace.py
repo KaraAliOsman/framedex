@@ -288,12 +288,19 @@ def _trace_operations(
         by_kind[str(op["kind"])] = by_kind.get(str(op["kind"]), 0) + 1
     # The frozen process authority decides which station an op kind lands on —
     # the UI groups by this declared map, never by a frontend guess. Orders
-    # frozen before the authority model keep a default-saw map.
-    station_map = dict(
-        ((payload.get("process_authority") or {}).get("operation_station_map"))
-        or {"SAW_CUT": "CUT"}
-    )
-    station_map.setdefault("SAW_CUT", "CUT")
+    # frozen before the authority model keep the legacy routing the shop used:
+    # saw cuts at the saw, every other member op at machining. Emitting the
+    # complete map (not a saw-only stub) is what lets the operator card treat
+    # legacy and frozen orders identically.
+    authority_map = (payload.get("process_authority") or {}).get("operation_station_map")
+    if authority_map:
+        station_map = dict(authority_map)
+        station_map.setdefault("SAW_CUT", "CUT")
+    else:
+        station_map = {
+            str(op["kind"]): ("CUT" if op["kind"] == "SAW_CUT" else "MACHINING")
+            for op in ops
+        }
     return {
         "count": len(ops),
         "by_kind": by_kind,

@@ -293,23 +293,44 @@ function reconciledHandlePolicy(
     const [fallback] = requirement.permitted_vertical_references;
     return fallback ? [{ ...intent, vertical_reference: fallback }] : [];
   });
+  // Carried auto-seeds must not keep the old policy's midpoint: recompute each
+  // to the new bounds (or drop when none resolves — the same contract
+  // reseedHandleIntents keeps on a placement change). A stale generated
+  // default must never ship as if it were chosen.
+  const wasSeeded = (intent: {
+    bay_id: string;
+    leaf_id?: string | null;
+    handle_domain_slot: string;
+  }) =>
+    [...previouslySeeded].some((key) =>
+      key.startsWith(`${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}|`),
+    );
+  const reseated = intents.flatMap((intent) => {
+    if (!wasSeeded(intent)) return [intent];
+    const requirement = byKey.get(
+      `${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}`,
+    );
+    if (!requirement) return [];
+    const bounds = heightBounds(position, requirement, intent.vertical_reference);
+    const boundMin = bounds ? parseDecimal(bounds[0]) : null;
+    const boundMax = bounds ? parseDecimal(bounds[1]) : null;
+    if (boundMin === null || boundMax === null) return [];
+    return [
+      {
+        ...intent,
+        requested_height_mm: formatDecimal(midpointDecimal(boundMin, boundMax)),
+      },
+    ];
+  });
   // Requirements only present under the new policy get their seeded intent
   // here too — same displayed-value contract as the initial load.
   const merged = {
     ...position,
     handle_requirement_policy_id: policyId,
-    handle_intents: intents,
+    handle_intents: reseated,
   };
   const seeded = seedHandleIntents(merged);
-  // A kept intent stays auto-seeded even when its reference was remapped —
-  // match on (bay|leaf|slot), not the full key.
-  const carried = intents
-    .filter((intent) =>
-      [...previouslySeeded].some((key) =>
-        key.startsWith(`${intent.bay_id}|${intent.leaf_id ?? ""}|${intent.handle_domain_slot}|`),
-      ),
-    )
-    .map(seedKeyForIntent);
+  const carried = reseated.filter(wasSeeded).map(seedKeyForIntent);
   return {
     update: {
       handle_requirement_policy_id: policyId,
@@ -705,6 +726,16 @@ export function ProjectQuotationPanel({
       )
     )
       return;
+    // A generated midpoint is a suggestion, not a choice: it can only seal
+    // after the estimator accepts it (one click per position) or edits it.
+    if (
+      preparation.positions.some(
+        (position) => (seededIntentKeys.current.get(String(position.position_id))?.size ?? 0) > 0,
+      )
+    ) {
+      setMessage(t("quotation.seedsUnconfirmed"));
+      return;
+    }
     const current = ++generation.current;
     setBusy(true);
     setMessage("");
@@ -1038,6 +1069,25 @@ export function ProjectQuotationPanel({
               {requirementsFor(position).length > 0 && (
                 <div className="handle-inputs">
                   <h4>{t("quotation.handleInputs")}</h4>
+                  {(seededIntentKeys.current.get(String(position.position_id))?.size ?? 0) > 0 && (
+                    <div className="handle-suggested-bar">
+                      <span>{t("quotation.seedsNotice")}</span>
+                      <button
+                        type="button"
+                        className="handle-suggested-confirm"
+                        disabled={busy}
+                        onClick={() => {
+                          // Adopt every generated midpoint on this position as
+                          // the estimator's choice — they stop being suggested
+                          // values and can seal.
+                          seededIntentKeys.current.get(String(position.position_id))?.clear();
+                          updatePosition(index, {});
+                        }}
+                      >
+                        {t("quotation.confirmSuggested")}
+                      </button>
+                    </div>
+                  )}
                   {requirementsFor(position).map((requirement) => {
                     const intent = intentFor(position, requirement);
                     const reference =
@@ -1136,6 +1186,15 @@ export function ProjectQuotationPanel({
                         {!intent?.requested_height_mm && (
                           <span className="handle-pending">{t("quotation.handlePending")}</span>
                         )}
+                        {intent?.requested_height_mm &&
+                          (seededIntentKeys.current
+                            .get(String(position.position_id))
+                            ?.has(seedKeyForIntent(intent)) ??
+                            false) && (
+                            <span className="handle-suggested">
+                              {t("quotation.handleSuggested")}
+                            </span>
+                          )}
                         {outOfBounds && (
                           <span className="handle-pending" role="alert">
                             {t("quotation.handleOutOfBounds")}

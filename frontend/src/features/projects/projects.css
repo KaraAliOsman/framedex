@@ -317,6 +317,31 @@
   background: var(--theme-warning-soft);
   white-space: nowrap;
 }
+.handle-suggested {
+  align-self: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  color: var(--theme-accent);
+  background: var(--theme-accent-soft);
+  white-space: nowrap;
+}
+.handle-suggested-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--theme-accent-soft);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted);
+  background: color-mix(in srgb, var(--theme-accent-soft) 40%, transparent);
+}
+.handle-suggested-confirm {
+  white-space: nowrap;
+}
 .handle-row input[aria-invalid="true"] {
   border-color: var(--theme-danger);
 }

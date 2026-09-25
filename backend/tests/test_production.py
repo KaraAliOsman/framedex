@@ -712,6 +712,67 @@ def test_start_from_blocked_step_is_rejected() -> None:
     assert error.value.code == "step_transition_invalid"
 
 
+def test_unassigned_step_refuses_progress_until_a_center_exists() -> None:
+    # A step released while its center was inactive must not silently start —
+    # the payload blocker is the shop's to-do, not decoration.
+    step = _step_row(status="READY", code="CUT")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_center_unassigned"
+
+
+def test_unassigned_step_adopts_a_later_activated_center() -> None:
+    step = _step_row(status="READY", code="CUT")
+    center = {"id": uuid4(), "code": "SAW-1", "name": "Saw"}
+    updates: list[str] = []
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "FOR UPDATE OF s" in query:
+            return step
+        if "SELECT status::text" in query:
+            return {"status": "IN_PROGRESS"}
+        if "FROM public.production_steps s" in query:
+            return {**step, "status": "IN_PROGRESS", "work_center_id": center["id"],
+                    "work_center_code": center["code"], "work_center_name": center["name"]}
+        if "FROM public.production_steps" in query:
+            return {"total": 2, "done": 0, "blocked": 0, "in_progress": 1}
+        if "UPDATE public.orders" in query or "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=(), code=None):
+        if "FROM public.work_centers" in query:
+            return [center]
+        updates.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        service.transition_step(
+            org_id=uuid4(), step_id=step["id"], action="START",
+            actor_id=uuid4(), note=None,
+        )
+    assert step["work_center_id"] == center["id"]
+    # The step is assigned and the payload blocker cleared.
+    assert any("SET work_center_id" in query for query in updates)
+    assert any("jsonb_set" in query for query in updates)
+
+
 def test_note_action_requires_text() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.transition_step(
@@ -1245,8 +1306,9 @@ def test_optimize_rejects_replan_after_consumed_step() -> None:
 def test_complete_step_rejects_material_shortage() -> None:
     # A consuming step cannot complete while the plan is short material —
     # settling only the reserved part would let the order reach completion
-    # with pieces nobody can physically make.
-    step = _step_row(status="IN_PROGRESS", code="CUT")
+    # with pieces nobody can physically make. (Assigned center: the
+    # unassigned-step gate is exercised by its own test.)
+    step = _step_row(status="IN_PROGRESS", code="CUT", work_center_id=uuid4())
     payload = json.dumps({
         "optimization": {
             "stock_reservations": [
@@ -1290,7 +1352,7 @@ def test_complete_step_rejects_material_shortage() -> None:
 def test_complete_cut_rejects_released_remnant() -> None:
     # An operator unreserved a drop the plan still claims — completing CUT
     # would settle stock another order may already have taken.
-    step = _step_row(status="IN_PROGRESS", code="CUT")
+    step = _step_row(status="IN_PROGRESS", code="CUT", work_center_id=uuid4())
     payload = json.dumps({
         "optimization": {
             "remnants": {
@@ -1560,7 +1622,7 @@ def test_qc_fail_blocks_step_and_holds_order(monkeypatch) -> None:
                 "code": "QC",
                 "label": "Control de calidad",
                 "status": "IN_PROGRESS",
-                "work_center_id": None,
+                "work_center_id": str(uuid4()),
                 "work_center_code": "QC",
                 "started_at": "2026-09-23T00:00:00+00:00",
                 "finished_at": None,

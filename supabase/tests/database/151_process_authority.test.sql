@@ -1,7 +1,7 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
-SELECT plan(15);
+SELECT plan(18);
 
 -- Consolidation A: routing authority is a declared, versioned catalog row —
 -- never inferred from the material family alone.
@@ -95,5 +95,31 @@ SELECT is(
 );
 
 RESET ROLE;
+
+-- Tenant-scope trigger: a system binds only a GLOBAL profile or one owned by
+-- its own org — a foreign org's profile is never addressable by a bare FK.
+SELECT throws_ok(
+    $$INSERT INTO public.profile_systems (org_id, name, code, depth_mm, sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm, process_profile_id)
+      VALUES ('33333333-3333-4333-8333-333333333333', 'SysC', 'SYS-C', 70, 20, 20, 7,
+              (SELECT id FROM public.manufacturing_process_profiles
+                WHERE code='OTHER_CUSTOM'))$$,
+    'process_profile_foreign_org',
+    'a system cannot bind another org''s process profile'
+);
+SELECT lives_ok(
+    $$INSERT INTO public.profile_systems (org_id, name, code, depth_mm, sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm, process_profile_id)
+      VALUES ('33333333-3333-4333-8333-333333333333', 'SysC2', 'SYS-C2', 70, 20, 20, 7,
+              (SELECT id FROM public.manufacturing_process_profiles
+                WHERE code='TENANT_CUSTOM'))$$,
+    'a system binds its own org''s profile'
+);
+SELECT lives_ok(
+    $$INSERT INTO public.profile_systems (org_id, name, code, depth_mm, sliding_glazing_deduction_width_mm, sliding_glazing_deduction_height_mm, door_leaf_side_clearance_mm, process_profile_id)
+      VALUES ('33333333-3333-4333-8333-333333333333', 'SysC3', 'SYS-C3', 70, 20, 20, 7,
+              (SELECT id FROM public.manufacturing_process_profiles
+                WHERE code='PVC_WELDED' AND org_id IS NULL))$$,
+    'a system binds a global profile'
+);
+
 SELECT * FROM finish();
 ROLLBACK;

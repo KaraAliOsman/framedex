@@ -728,6 +728,9 @@ def test_readiness_levels_report_exact_blockers(documentary_tenant):
             ("MACHINING_CENTER", "Mecanizado", "MACHINING", 15),
             ("WELDER", "Soldadora", "WELDING", 20),
             ("CLEANING_STATION", "Limpiadora", "CLEANING", 25),
+            ("SASH_BENCH", "Armado hojas", "SASH_ASSEMBLY", 30),
+            ("HW_BENCH", "Herrajes", "HARDWARE", 32),
+            ("GLAZE_BENCH", "Vidriado", "GLAZING", 40),
             ("QC_STATION", "Control", "QC", 50),
             ("PACK_STATION", "Embalaje", "PACK", 60),
         ):
@@ -792,6 +795,7 @@ def test_readiness_levels_flag_unmapped_machine_ops(documentary_tenant):
             for code, kind in (
                 ("CUT_SAW", "CUT"), ("WELDER", "WELDING"), ("CLEANING_STATION", "CLEANING"),
                 ("QC_STATION", "QC"), ("PACK_STATION", "PACK"), ("MACHINING_CELL", "MACHINING"),
+                ("SASH_BENCH", "SASH_ASSEMBLY"), ("HW_BENCH", "HARDWARE"), ("GLAZE_BENCH", "GLAZING"),
             ):
                 one(
                     "INSERT INTO public.work_centers(org_id, code, name, kind, display_order) "

@@ -386,6 +386,12 @@ const messages = {
   "quotation.handleReference": "Referencia vertical",
   "quotation.handleBounds": "Entre",
   "quotation.handlePending": "pendiente",
+  "quotation.handleSuggested": "sugerida",
+  "quotation.seedsNotice":
+    "Alturas sugeridas calculadas: revísalas y confirma para usarlas en la emisión.",
+  "quotation.confirmSuggested": "Usar sugeridas",
+  "quotation.seedsUnconfirmed":
+    "Confirma o edita las alturas de manilla sugeridas antes de emitir.",
   "quotation.handleOutOfBounds": "fuera de rango",
   "quotation.sideLeft": "lado izquierdo",
   "quotation.sideRight": "lado derecho",

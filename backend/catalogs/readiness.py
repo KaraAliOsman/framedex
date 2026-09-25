@@ -263,7 +263,38 @@ def catalog_readiness(system_id, org_id) -> dict[str, Any]:
         str(station_map[op]) for op in potential_ops
         if op in station_map and station_map[op] in station_codes
     }
-    needed = sorted(set(required) | emit_stations)
+    # Routing emits auto stations from the sealed result — at catalog level the
+    # proxies are the system's declared catalog: glass/panels → GLAZE, hardware
+    # or fittings or handle prep → HARDWARE, sash articles → SASH_ASSEMBLE,
+    # profile cuts → CUT, and the generic assembly station always emits.
+    emitted: set[str] = set()
+    if params is not None:
+        if params.effective_profile_articles:
+            emitted.add("CUT")
+        if params.effective_profile_articles.get(ProfileRole.SASH) is not None:
+            emitted.add("SASH_ASSEMBLE")
+        if (
+            params.available_hardware_kits
+            or "HANDLE_PREP" in potential_ops
+            or rows(
+                "SELECT 1 FROM public.fitting_purchase_mappings WHERE system_id=%s"
+                " AND (org_id IS NULL OR org_id=%s) LIMIT 1",
+                [system_id, org_id],
+            )
+        ):
+            emitted.add("HARDWARE")
+        if rows(
+            "SELECT 1 FROM public.glass_purchase_mappings WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s) LIMIT 1",
+            [system_id, org_id],
+        ) or rows(
+            "SELECT 1 FROM public.infill_articles WHERE system_id=%s"
+            " AND (org_id IS NULL OR org_id=%s) LIMIT 1",
+            [system_id, org_id],
+        ):
+            emitted.add("GLAZE")
+        emitted.add("ASSEMBLE")
+    needed = sorted(set(required) | emit_stations | (emitted & station_codes))
     if profile is not None and needed:
         centers = rows(
             "SELECT kind FROM public.work_centers WHERE org_id=%s AND active",
