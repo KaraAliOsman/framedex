@@ -96,6 +96,7 @@ class AiAgentRequestSerializer(serializers.Serializer):
 
 class AiAgentStepSerializer(serializers.Serializer):
     kind = serializers.CharField()
+    tool = serializers.CharField(required=False)
     label = serializers.CharField()
     path = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
@@ -104,6 +105,7 @@ class AiAgentStepSerializer(serializers.Serializer):
 
 class AiAgentQuerySerializer(serializers.Serializer):
     surface = serializers.CharField()
+    tool = serializers.CharField(required=False)
     status = serializers.CharField()
 
 

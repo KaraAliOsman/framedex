@@ -30,6 +30,45 @@ from projects import design_assist, service as projects_service
 
 CAPABILITY = "agent"
 
+# §07-D — canonical tool registry. Every step/query/artifact resolves to one
+# named tool so the model, the transcript and the workspace share a single
+# vocabulary. Mutations never execute here: ops/prepare only produce the
+# preview a human confirms on the real surface.
+QUERY_TOOLS = {
+    "dashboard": "get_dashboard",
+    "projects": "search_entities",
+    "project": "get_project",
+    "position": "get_position",
+    "quotation": "get_quotation",
+    "catalog": "get_catalog",
+    "production": "get_production_state",
+    "work_order": "get_work_order",
+    "clients": "get_clients",
+    "purchasing": "get_inventory_state",
+    "settings": "get_settings",
+}
+
+PREPARE_TOOLS = {
+    "emit_revision": "generate_document_preview",
+    "release_work_order": "prepare_production_plan",
+    "optimize_work_order": "prepare_production_plan",
+    "register_payment": "prepare_payment",
+    "upload_document": "generate_document_preview",
+    "review_catalog": "create_catalog_candidates",
+    "upload_certificate": "generate_document_preview",
+}
+
+ARTIFACT_TOOLS = {
+    "product_draft": "create_product_draft",
+    "quote_draft": "create_quote_draft",
+    "catalog_candidates": "create_catalog_candidates",
+    "purchase_plan": "prepare_purchase_plan",
+    "production_plan": "prepare_production_plan",
+    "message": "create_message_draft",
+    "comparison": "create_comparison",
+    "document_preview": "generate_document_preview",
+}
+
 MAX_GOAL = 2000
 MAX_REPLY = 4000
 MAX_STEPS = 8
@@ -165,11 +204,22 @@ def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     if not all(ref in context_refs for ref in _PATH_UUID.findall(path)):
         return None
     if kind == "navigate":
-        return {"kind": "navigate", "path": path, "label": label or path}
+        return {
+            "kind": "navigate",
+            "tool": "navigate",
+            "path": path,
+            "label": label or path,
+        }
     action = item.get("action")
     if not isinstance(action, str) or not _prepare_path_valid(action, path):
         return None
-    return {"kind": "prepare", "action": action, "path": path, "label": label or action}
+    return {
+        "kind": "prepare",
+        "tool": PREPARE_TOOLS.get(action, "prepare_action"),
+        "action": action,
+        "path": path,
+        "label": label or action,
+    }
 
 
 def _act(
@@ -315,6 +365,7 @@ def _act(
                 steps.append(
                     {
                         "kind": "ops",
+                        "tool": "preview_commands",
                         "ops": ops,
                         "label": str(item.get("label") or "").strip()[:MAX_LABEL]
                         or "Cambios de diseño",
@@ -332,7 +383,10 @@ def _act(
         for item in (document.get("steps") or [])
         if isinstance(item, dict) and item.get("kind") == "artifact"
     ]
-    validated_artifacts = jobs.artifacts(raw_artifacts, context_refs_all)
+    validated_artifacts = [
+        {**artifact, "tool": ARTIFACT_TOOLS.get(artifact.get("kind"), "create_draft")}
+        for artifact in jobs.artifacts(raw_artifacts, context_refs_all)
+    ]
     claims, references, dropped_claims = jobs.claims_and_references(
         document.get("claims"), context_refs_all
     )
@@ -369,10 +423,15 @@ def _act(
         "queries": [
             # The caller's own surface was already consulted — report it as
             # provenance even when the model never queried anything else.
-            {"surface": surface, "status": "ok"},
+            {
+                "surface": surface,
+                "tool": QUERY_TOOLS.get(surface, "get_context"),
+                "status": "ok",
+            },
             *[
                 {
                     "surface": observation["surface"],
+                    "tool": QUERY_TOOLS.get(observation["surface"], "get_context"),
                     "status": "ok" if "context" in observation else "error",
                 }
                 for observation in all_observations

@@ -94,10 +94,10 @@ def test_agent_simple_reply_and_navigate(monkeypatch):
     )
     assert result["reply"] == "Encontré el proyecto."
     assert result["steps"] == [
-        {"kind": "navigate", "path": f"/projects/{project_id}", "label": "Abrir proyecto"}
+        {"kind": "navigate", "tool": "navigate", "path": f"/projects/{project_id}", "label": "Abrir proyecto"}
     ]
     # The caller's own surface counts as provenance.
-    assert result["queries"] == [{"surface": "dashboard", "status": "ok"}]
+    assert result["queries"] == [{"surface": "dashboard", "tool": "get_dashboard", "status": "ok"}]
     assert calls[0]["capability"] == "agent"
     assert calls[0]["tool_name"] == "agent"
     assert calls[0]["input_payload"]["actions"]["ops_available"] is False
@@ -151,8 +151,8 @@ def test_agent_query_loop_feeds_observation_and_accumulates_credits(monkeypatch)
     # The navigate step is grounded in the observed entity.
     assert result["steps"][0]["path"] == f"/production/{project_id}"
     assert result["queries"] == [
-        {"surface": "dashboard", "status": "ok"},
-        {"surface": "production", "status": "ok"},
+        {"surface": "dashboard", "tool": "get_dashboard", "status": "ok"},
+        {"surface": "production", "tool": "get_production_state", "status": "ok"},
     ]
     assert result["credits_debited"] == 6
 
@@ -183,8 +183,8 @@ def test_agent_query_error_becomes_observation_not_crash(monkeypatch):
         operation_key="goal-3",
     )
     assert result["queries"] == [
-        {"surface": "dashboard", "status": "ok"},
-        {"surface": "project", "status": "error"},
+        {"surface": "dashboard", "tool": "get_dashboard", "status": "ok"},
+        {"surface": "project", "tool": "get_project", "status": "error"},
     ]
 
 
@@ -194,7 +194,7 @@ def test_agent_navigate_rejects_ungrounded_uuid(monkeypatch):
     output = _doc(
         steps=[
             {"kind": "navigate", "path": f"/projects/{ghost}", "label": "Inventado"},
-            {"kind": "navigate", "path": "/projects", "label": "Proyectos"},
+            {"kind": "navigate", "tool": "navigate", "path": "/projects", "label": "Proyectos"},
         ]
     )
     _patch(monkeypatch, contexts=contexts, outputs=[output])
@@ -210,7 +210,7 @@ def test_agent_navigate_rejects_ungrounded_uuid(monkeypatch):
     )
     # The hallucinated-UUID step drops; the safe one survives.
     assert result["steps"] == [
-        {"kind": "navigate", "path": "/projects", "label": "Proyectos"}
+        {"kind": "navigate", "tool": "navigate", "path": "/projects", "label": "Proyectos"}
     ]
 
 
@@ -283,6 +283,7 @@ def test_agent_prepare_requires_allowlisted_action(monkeypatch):
     assert result["steps"] == [
         {
             "kind": "prepare",
+            "tool": "generate_document_preview",
             "action": "emit_revision",
             "path": f"/projects/{project_id}/pricing",
             "label": "Emitir revisión",
@@ -389,7 +390,7 @@ def test_agent_ops_step_validated_through_design_contract(monkeypatch):
         operation_key="goal-9",
     )
     assert result["steps"] == [
-        {"kind": "ops", "ops": validated_ops, "label": "Ajustar ancho"}
+        {"kind": "ops", "tool": "preview_commands", "ops": validated_ops, "label": "Ajustar ancho"}
     ]
     assert result["rejected"] == dropped
     # The provider sees the live product wire — without it the model has no

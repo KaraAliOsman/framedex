@@ -74,17 +74,18 @@ interface TranscriptTurn {
   text?: string;
   reply?: string;
   plan?: { label?: string }[];
-  queries?: { surface?: string; status?: string }[];
+  queries?: { surface?: string; tool?: string; status?: string }[];
   claims?: { text?: string; evidence?: string[] }[];
   references?: string[];
   questions?: string[];
   artifacts?: Artifact[];
-  steps?: { kind?: string; label?: string; path?: string }[];
+  steps?: { kind?: string; tool?: string; label?: string; path?: string }[];
   warnings?: string[];
 }
 
 interface Artifact {
   kind?: string;
+  tool?: string;
   title?: string;
   payload?: unknown;
   references?: string[];
@@ -201,6 +202,7 @@ function AgentTurnView({
                 <ul>
                   {turn.queries.map((query, i) => (
                     <li key={i}>
+                      {query.tool ? <code className="aiws-tool">{query.tool}</code> : null}
                       {query.status === "ok"
                         ? t("agent.queried").replace(
                             "{surface}",
@@ -241,10 +243,12 @@ function AgentTurnView({
                       >
                         {step.kind === "prepare" ? `${t("agent.prepare")} ` : ""}
                         {step.label}
+                        {step.tool ? <code className="aiws-tool">{step.tool}</code> : null}
                       </button>
                     ) : (
                       <span key={i} className="aiws-action aiws-action--static">
                         {step.label}
+                        {step.tool ? <code className="aiws-tool">{step.tool}</code> : null}
                       </span>
                     ),
                   )}

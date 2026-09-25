@@ -537,3 +537,20 @@
     display: none;
   }
 }
+
+.aiws-tool {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong, #d0d5dd);
+  border-radius: 4px;
+  background: var(--surface-sunken, #f2f4f7);
+  color: var(--text-subtle, #667085);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.aiws-action .aiws-tool {
+  margin-right: 0;
+  margin-left: 6px;
+}

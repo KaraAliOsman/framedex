@@ -9,6 +9,7 @@ import type { AiAgentStepOpsItem } from "./aiAgentStepOpsItem";
 
 export interface AiAgentStep {
   kind: string;
+  tool?: string;
   label: string;
   path?: string;
   action?: string;
