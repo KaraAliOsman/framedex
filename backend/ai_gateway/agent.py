@@ -156,10 +156,11 @@ def _queries(
             continue
         surface = item.get("surface")
         refs = item.get("refs") or {}
+        # Shape validation precedes _query_key — it assumes dict refs, so a
+        # malformed value must be rejected before the key is computed.
         if (
             not isinstance(surface, str)
             or surface not in _BUILDERS
-            or _query_key(surface, refs) in seen
             or not isinstance(refs, dict)
             or not all(
                 isinstance(key, str)
@@ -168,6 +169,8 @@ def _queries(
                 for key, value in refs.items()
             )
         ):
+            continue
+        if _query_key(surface, refs) in seen:
             continue
         seen.add(_query_key(surface, refs))
         needed = REQUIRED_REFS.get(surface, ())

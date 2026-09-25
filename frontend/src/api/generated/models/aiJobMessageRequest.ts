@@ -5,6 +5,7 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AiJobMessageRequestProduct } from "./aiJobMessageRequestProduct";
 
 export interface AiJobMessageRequest {
   /**
@@ -12,4 +13,5 @@ export interface AiJobMessageRequest {
    * @maxLength 2000
    */
   message: string;
+  product?: AiJobMessageRequestProduct;
 }

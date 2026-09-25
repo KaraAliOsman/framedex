@@ -135,6 +135,9 @@ class AiAgentResponseSerializer(serializers.Serializer):
 
 class AiJobMessageSerializer(serializers.Serializer):
     message = serializers.CharField(min_length=1, max_length=2000)
+    # Follow-ups carry the position's live product so design ops evaluate
+    # the current design — a stored snapshot would go stale between turns.
+    product = serializers.DictField(required=False)
 
 
 class AiJobSerializer(serializers.Serializer):

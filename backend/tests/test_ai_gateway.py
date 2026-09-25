@@ -1826,7 +1826,143 @@ def test_record_failure_appends_turns(monkeypatch):
         lambda sql, params: written.update(sql=sql, params=params)
         or [{"id": "j1"}],
     )
-    result = jobs.record_failure(job_id=uuid4(), goal="hazlo", error_code="boom")
+    result = jobs.record_failure(
+        job_id=uuid4(), transcript_before=[], goal="hazlo", error_code="boom"
+    )
     assert result == {"id": "j1"}
     assert "FAILED_RETRYABLE" in written["sql"]
     assert "CANCELED" in written["sql"]
+
+
+def test_record_failure_binds_claimed_generation(monkeypatch):
+    """A late failure record must not overwrite a different round's committed
+    transcript — the UPDATE only lands while the row still carries exactly the
+    transcript this round claimed."""
+    from ai_gateway import jobs
+
+    written = {}
+    monkeypatch.setattr(
+        jobs, "rows",
+        lambda sql, params: written.update(sql=sql, params=params) or [],
+    )
+    claimed = [{"role": "user", "text": "primera instrucción"}]
+    result = jobs.record_failure(
+        job_id=uuid4(),
+        transcript_before=claimed,
+        goal="hazlo",
+        error_code="boom",
+    )
+    assert result is None  # no row carried the claimed generation
+    assert "transcript = %s::jsonb" in written["sql"]
+    import json
+    assert json.loads(written["params"][-1]) == claimed
+
+
+def _agent_client(monkeypatch):
+    """Authenticated client whose documentary_scope is a canned resolution."""
+    from types import SimpleNamespace
+
+    from rest_framework.test import APIClient
+
+    from ai_gateway import views as ai_views
+
+    org_id = uuid4()
+    token = SimpleNamespace(user_id=uuid4())
+
+    @contextmanager
+    def fake_scope(request, roles=None):
+        yield token, None, org_id
+
+    monkeypatch.setattr(ai_views, "documentary_scope", fake_scope)
+    client = APIClient()
+    client.force_authenticate(
+        user=SimpleNamespace(is_authenticated=True), token=object()
+    )
+    return client, token, org_id
+
+
+def _post_message(client, job_id, **body):
+    return client.post(
+        f"/api/v1/ai/jobs/{job_id}/messages/", body, format="json"
+    )
+
+
+def test_job_message_forwards_live_product(monkeypatch):
+    """A follow-up on a position job must carry the current product — design
+    ops validate against it, not a snapshot stored when the job was born."""
+    from ai_gateway import jobs, views as ai_views
+
+    client, _, org_id = _agent_client(monkeypatch)
+    job_id = uuid4()
+    transcript = [{"role": "user", "text": "hazlo"}]
+    seen: dict = {}
+    monkeypatch.setattr(
+        jobs, "get_job",
+        lambda **kw: {
+            "id": str(job_id), "surface": "position", "state": "SUCCEEDED",
+            "refs": {"position_id": "p1"}, "transcript": transcript,
+        },
+    )
+    monkeypatch.setattr(jobs, "resume_job", lambda **kw: {"id": str(job_id)})
+    monkeypatch.setattr(
+        ai_views, "act",
+        lambda **kw: seen.update(kw) or {"job_id": str(job_id), "reply": "ok"},
+    )
+    product = {"modules": [{"id": "m1"}]}
+    response = _post_message(
+        client, job_id, message="cambia el ancho", product=product
+    )
+    assert response.status_code == 200
+    assert seen["product"] == product
+    assert seen["goal"] == "cambia el ancho"
+
+
+def test_job_message_contract_error_during_act_records_failure(monkeypatch):
+    """A contract error raised by the agent mid-execution is a failed round:
+    after the scope rolls back, the job lands FAILED_RETRYABLE bound to the
+    transcript generation this round claimed."""
+    from authentication.errors import contract_error
+    from ai_gateway import jobs, views as ai_views
+
+    client, _, org_id = _agent_client(monkeypatch)
+    job_id = uuid4()
+    transcript = [{"role": "user", "text": "hazlo"}]
+    monkeypatch.setattr(
+        jobs, "get_job",
+        lambda **kw: {
+            "id": str(job_id), "surface": "position", "state": "SUCCEEDED",
+            "refs": {}, "transcript": transcript,
+        },
+    )
+    monkeypatch.setattr(jobs, "resume_job", lambda **kw: {"id": str(job_id)})
+
+    def boom(**kw):
+        raise contract_error(422, "ai_agent_ungrounded", "sin evidencia")
+
+    monkeypatch.setattr(ai_views, "act", boom)
+    failures: list[dict] = []
+    monkeypatch.setattr(
+        jobs, "record_failure",
+        lambda **kw: failures.append(kw) or {"id": str(job_id)},
+    )
+    response = _post_message(client, job_id, message="sigue")
+    assert response.status_code == 422
+    assert len(failures) == 1
+    assert failures[0]["transcript_before"] == transcript
+    assert failures[0]["error_code"] == "ai_agent_ungrounded"
+
+
+def test_job_message_contract_error_before_claim_not_recorded(monkeypatch):
+    """Pre-execution contract errors (missing job, conflicts, validation)
+    never touch the row — there is no failed round to record."""
+    from ai_gateway import jobs
+
+    client, _, org_id = _agent_client(monkeypatch)
+    monkeypatch.setattr(jobs, "get_job", lambda **kw: None)
+    failures: list[dict] = []
+    monkeypatch.setattr(
+        jobs, "record_failure", lambda **kw: failures.append(kw)
+    )
+    response = _post_message(client, uuid4(), message="sigue")
+    assert response.status_code == 404
+    assert failures == []

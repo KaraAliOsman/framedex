@@ -165,19 +165,24 @@ def create_failed_job(*, org_id: UUID, user_id: UUID, surface: str,
     return {"id": str(record[0]["id"])}
 
 
-def record_failure(*, job_id: UUID, goal: str, error_code: str) -> dict | None:
+def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
+                   error_code: str) -> dict | None:
     """A failed follow-up lands on the existing job after its round rolled
     back: the user turn stays in the transcript and the row goes
-    FAILED_RETRYABLE. A CANCELED job is left alone — the user's cancel
-    wins over a late failure record."""
+    FAILED_RETRYABLE. The WHERE clause binds the write to the generation
+    this round actually claimed — post-rollback the row still carries the
+    transcript we resumed, so an exact match means the record can never
+    overwrite a different round's claim or committed result (their
+    transcript has moved on)."""
     found = rows(
         "UPDATE public.ai_jobs SET state = 'FAILED_RETRYABLE',"
         " transcript = transcript || %s::jsonb, result = NULL, error_code = %s,"
         " updated_at = NOW()"
-        " WHERE id = %s AND state <> 'CANCELED'"
+        " WHERE id = %s AND state NOT IN ('CANCELED','RUNNING')"
+        " AND transcript = %s::jsonb"
         " RETURNING id",
         [_dump(_failure_turns(goal, error_code)), error_code[:120],
-         str(job_id)],
+         str(job_id), _dump(transcript_before)],
     )
     return {"id": str(found[0]["id"])} if found else None
 

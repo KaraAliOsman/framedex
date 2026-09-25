@@ -13,6 +13,9 @@ import {
 } from "../../api/generated/dekopen";
 import type { AiJob } from "../../api/generated/models/aiJob";
 import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
+import { designAssistProduct } from "../canvas/designOps";
+import type { ProductJson } from "../canvas/productEditing";
+import { useDesignOpsBridge } from "./assistantContext";
 import { t } from "../../i18n/es-CL";
 
 /* ------------------------------------------------------------------ */
@@ -279,6 +282,7 @@ function AgentTurnView({
 
 export function AssistantWorkspacePage(): JSX.Element {
   const auth = useAuthSession();
+  const bridge = useDesignOpsBridge();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const orgId = auth.me?.active_organization?.id ?? null;
@@ -331,7 +335,15 @@ export function AssistantWorkspacePage(): JSX.Element {
     setError("");
     try {
       if (job) {
-        const response = await aiJobMessageCreate(job.id, { message }, headers);
+        // Follow-ups carry the live product on position jobs — design ops
+        // validate against the current design, not a snapshot from creation.
+        const product =
+          job.surface === "position" && bridge ? designAssistProduct(bridge.product as ProductJson) : null;
+        const response = await aiJobMessageCreate(
+          job.id,
+          { message, ...(product ? { product } : {}) },
+          headers,
+        );
         if (response.status !== 200) throw new ApiError(response.status, response.data);
       } else {
         const response = await aiAgent(

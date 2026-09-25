@@ -32,11 +32,16 @@ _CALLERS = ("OWNER", "ESTIMATOR")
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
 
 
-def _record_failure(request, *, goal, job_id, error, surface=None, refs=None):
+def _record_failure(request, *, goal, job_id, error, surface=None, refs=None,
+                    transcript_before=None):
     """§07-B — the round's rollback undid every job write; a fresh RLS scope
     writes FAILED_RETRYABLE so the workspace can show and resume the failed
     job instead of losing it silently."""
-    code = str(getattr(error, "code", None) or "ai_job_failed")[:120]
+    code = str(
+        getattr(error, "contract_code", None)
+        or getattr(error, "code", None)
+        or "ai_job_failed"
+    )[:120]
     try:
         with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
             if job_id is None:
@@ -50,7 +55,10 @@ def _record_failure(request, *, goal, job_id, error, surface=None, refs=None):
                 )
             else:
                 jobs.record_failure(
-                    job_id=job_id, goal=goal, error_code=code
+                    job_id=job_id,
+                    transcript_before=list(transcript_before or []),
+                    goal=goal,
+                    error_code=code,
                 )
     except Exception:  # failure bookkeeping must never mask the real error
         pass
@@ -167,6 +175,7 @@ class AiAgentView(APIView):
         # manager's surface needs it as much as the estimator's. Errors must
         # unwind the request transaction BEFORE failure bookkeeping: catching
         # inside the scope would commit the doomed RUNNING job and strand it.
+        executing = False
         try:
             with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
                 missing_refs = [
@@ -180,6 +189,7 @@ class AiAgentView(APIView):
                         "ai_context_ref_required",
                         f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
                     )
+                executing = True
                 return Response(
                     act(
                         org_id=org_id,
@@ -192,7 +202,20 @@ class AiAgentView(APIView):
                         operation_key=str(data["operation_key"]),
                     )
                 )
-        except ContractAPIException:
+        except ContractAPIException as failure:
+            # Contract errors raised inside act() are execution failures —
+            # the job must still surface as FAILED_RETRYABLE; validation,
+            # authorization and missing-ref errors before execution never
+            # reach the job and only propagate.
+            if executing:
+                _record_failure(
+                    request,
+                    goal=str(data["goal"]),
+                    job_id=None,
+                    surface=surface,
+                    refs=refs,
+                    error=failure,
+                )
             raise
         except Exception as failure:
             _record_failure(
@@ -281,6 +304,7 @@ class AiJobMessagesView(APIView):
         # Errors must unwind the request transaction BEFORE failure
         # bookkeeping — a caught-in-scope exception would commit the resumed
         # RUNNING state and the failed turn would append twice.
+        executing = False
         try:
             with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
                 job = jobs.get_job(
@@ -317,6 +341,10 @@ class AiJobMessagesView(APIView):
                         "ai_job_running",
                         "Ya hay una instrucción en curso en este trabajo.",
                     ) from None
+                # The product rides with each message — the client sends the
+                # position's live representation, so design ops evaluate the
+                # current design, never a snapshot stored at job creation.
+                executing = True
                 return Response(
                     act(
                         org_id=org_id,
@@ -324,7 +352,7 @@ class AiJobMessagesView(APIView):
                         surface=str(job["surface"]),
                         refs=dict(job.get("refs") or {}),
                         goal=str(data["message"]),
-                        product=None,
+                        product=data.get("product"),
                         history=history,
                         operation_key=str(
                             request.headers.get("X-Operation-Key")
@@ -333,15 +361,28 @@ class AiJobMessagesView(APIView):
                         job=job,
                     )
                 )
-        except ContractAPIException:
+        except ContractAPIException as failure:
+            # Only a round that actually claimed the job records failure —
+            # errors before the claim (404, conflicts, validation) leave the
+            # job untouched.
+            if executing:
+                _record_failure(
+                    request,
+                    goal=str(data["message"]),
+                    job_id=job_id,
+                    error=failure,
+                    transcript_before=job.get("transcript"),
+                )
             raise
         except Exception as failure:
             # The rollback restored the job's pre-resume state — the failed
-            # turn appends exactly once here, marked FAILED_RETRYABLE.
+            # turn appends exactly once here, marked FAILED_RETRYABLE, and
+            # only if the row still carries the generation we claimed.
             _record_failure(
                 request,
                 goal=str(data["message"]),
                 job_id=job_id,
                 error=failure,
+                transcript_before=job.get("transcript") if executing else None,
             )
             _raise_agent_error(failure)

@@ -501,6 +501,32 @@ def test_agent_query_unobserved_ref_is_error_not_fetch(monkeypatch):
         goal="Dime el proyecto fantasma", product=None,
         history=[], operation_key="goal-ghost",
     )
+    assert result["reply"] == "Ese proyecto no aparece en tu contexto."
     observations = calls[1]["input_payload"]["observations"]
     assert observations[0]["error"] == "ai_context_ref_unobserved"
-    assert result["queries"][1]["status"] == "error"
+
+
+def test_agent_query_malformed_refs_are_skipped_not_crash(monkeypatch):
+    """Model output is untrusted: a non-dict refs value or a non-scalar ref
+    must be rejected by shape validation before the (surface, refs) key is
+    computed — never a TypeError bubbling out of _query_key."""
+    contexts = {"dashboard": {"surface": "dashboard",
+                            "organization": {"name": "Org"}}}
+    outputs = [
+        _doc(reply="Sin datos.", steps=[
+            {"kind": "query", "surface": "project", "refs": "abc"},
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": ["a", "b"]}},
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": True}},
+        ]),
+    ]
+    calls = _patch(monkeypatch, contexts=contexts, outputs=outputs)
+    result = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="pruébalo", product=None, history=[], operation_key="goal-badrefs",
+    )
+    assert result["reply"] == "Sin datos."
+    # No malformed query reached the fetch layer — one round, no fetch calls.
+    assert len(calls) == 1
+    assert [q["surface"] for q in result["queries"]] == ["dashboard"]

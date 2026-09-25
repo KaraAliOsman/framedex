@@ -44,6 +44,7 @@ export * from "./aiJobDetail";
 export * from "./aiJobDetailRefs";
 export * from "./aiJobDetailResult";
 export * from "./aiJobMessageRequest";
+export * from "./aiJobMessageRequestProduct";
 export * from "./aiJobRefs";
 export * from "./aiJobResult";
 export * from "./allocationRequestRequest";
