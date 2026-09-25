@@ -1,6 +1,9 @@
 import { useContext, useEffect } from "react";
 import { UNSAFE_DataRouterContext, useBlocker } from "react-router-dom";
 
+import { t } from "../i18n/es-CL";
+import { Dialog } from "../ui";
+
 // The production application uses a data router so browser Back and internal
 // navigation pass through the same guard as links.
 export function UnsavedChangesGuard({
@@ -23,12 +26,24 @@ export function UnsavedChangesGuard({
   return router ? <RouteGuard dirty={dirty} message={message} /> : null;
 }
 
-function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): null {
+function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): JSX.Element | null {
   const blocker = useBlocker(dirty);
-  useEffect(() => {
-    if (blocker.state !== "blocked") return;
-    if (window.confirm(message)) blocker.proceed();
-    else blocker.reset();
-  }, [blocker, message]);
-  return null;
+  if (blocker.state !== "blocked") return null;
+  return (
+    <Dialog
+      footer={
+        <>
+          <button onClick={() => blocker.reset()} type="button">
+            {t("ui.cancel")}
+          </button>
+          <button className="ui-button--primary" data-primary onClick={() => blocker.proceed()} type="button">
+            {t("ui.confirm")}
+          </button>
+        </>
+      }
+      onClose={() => blocker.reset()}
+      title={message}
+      width="s"
+    />
+  );
 }

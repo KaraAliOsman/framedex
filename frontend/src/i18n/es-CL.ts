@@ -1874,6 +1874,12 @@ const messages = {
   "projects.importsSection": "Importar",
   "projects.dims": "Medidas",
   "projects.typology": "Tipología",
+  "ui.close": "Cerrar",
+  "ui.cancel": "Cancelar",
+  "ui.confirm": "Confirmar",
+  "ui.edit": "Editar",
+  "ui.errorTitle": "Algo salió mal",
+  "ui.retry": "Reintentar",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

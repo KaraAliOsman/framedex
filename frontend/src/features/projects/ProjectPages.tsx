@@ -32,6 +32,7 @@ import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
+import { useConfirm } from "../../ui";
 
 const fields = [
   ["name", "projects.name", "text", 255],
@@ -319,6 +320,7 @@ function ProjectWorkspace({
   isOwner: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
@@ -449,7 +451,7 @@ function ProjectWorkspace({
   }
 
   async function reload(): Promise<void> {
-    if (draft && !window.confirm(t("projects.discard"))) return;
+    if (draft && !(await confirm({ title: t("projects.discard") }))) return;
     setDraft(null);
     const result = await query.refetch();
     if (lifetime.current?.signal.aborted) return;
@@ -461,13 +463,8 @@ function ProjectWorkspace({
 
   async function deletePosition(position: PositionResponse): Promise<void> {
     const controller = lifetime.current;
-    if (
-      !controller ||
-      controller.signal.aborted ||
-      locked.current ||
-      !window.confirm(t("projects.deleteConfirm"))
-    )
-      return;
+    if (!controller || controller.signal.aborted || locked.current) return;
+    if (!(await confirm({ title: t("projects.deleteConfirm"), danger: true }))) return;
     locked.current = true;
     setBusy(true);
     setError("");
@@ -504,7 +501,7 @@ function ProjectWorkspace({
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
     if (
       (draft !== null || quotationDirty || paymentsDirty || importsDirty) &&
-      !window.confirm(t("projects.leaveUnsaved"))
+      !(await confirm({ title: t("projects.leaveUnsaved") }))
     )
       return;
     locked.current = true;
@@ -584,7 +581,9 @@ function ProjectWorkspace({
           onChange={setDraft}
           onSave={() => void save()}
           onCancel={() => {
-            if (window.confirm(t("projects.discard"))) setDraft(null);
+            void confirm({ title: t("projects.discard") }).then((ok) => {
+              if (ok) setDraft(null);
+            });
           }}
         />
       ) : (

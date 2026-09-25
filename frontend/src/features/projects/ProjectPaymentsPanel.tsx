@@ -28,6 +28,7 @@ import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatDate, formatMoney } from "../money";
 import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
+import { useConfirm, usePrompt } from "../../ui";
 
 const KIND_LABEL: Record<string, TranslationKey> = {
   ANTICIPO: "projects.paymentKindAnticipo",
@@ -74,6 +75,8 @@ export function ProjectPaymentsPanel({
   isOwner?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }): JSX.Element {
+  const confirm = useConfirm();
+  const prompt = usePrompt();
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -165,7 +168,7 @@ export function ProjectPaymentsPanel({
   }
 
   async function voidPayment(payment: ProjectPayment): Promise<void> {
-    if (!window.confirm(t("projects.paymentVoidConfirm"))) return;
+    if (!(await confirm({ title: t("projects.paymentVoidConfirm"), danger: true }))) return;
     const current = generation.current;
     setBusy(true);
     setMessage("");
@@ -348,8 +351,8 @@ export function ProjectPaymentsPanel({
   }
 
   async function annulInvoice(invoice: ProjectInvoice): Promise<void> {
-    if (!window.confirm(t("projects.creditNoteAnnulConfirm"))) return;
-    const reason = window.prompt(t("projects.creditNoteReason"));
+    if (!(await confirm({ title: t("projects.creditNoteAnnulConfirm"), danger: true }))) return;
+    const reason = await prompt({ title: t("projects.creditNoteReason") });
     if (reason === null) return;
     const current = generation.current;
     setBusy(true);
@@ -374,7 +377,7 @@ export function ProjectPaymentsPanel({
   }
 
   async function emitCreditNoteDte(invoice: ProjectInvoice): Promise<void> {
-    const reason = window.prompt(t("projects.creditNoteReason"));
+    const reason = await prompt({ title: t("projects.creditNoteReason") });
     if (reason === null) return;
     const current = generation.current;
     setBusy(true);
