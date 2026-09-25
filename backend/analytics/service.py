@@ -23,20 +23,22 @@ def _counts_by(sql: str, org_id: UUID) -> dict[str, int]:
 
 def operational_summary(*, org_id: UUID) -> dict[str, Any]:
     """One org's live operating picture: funnel, throughput, stock, output."""
-    with transaction.atomic():
-        with documentary_backend():
-            result = _summary(org_id)
-        # job_runs is a service-owned table (service_role grant only): read it
-        # as the connection owner with the explicit org filter, outside the
-        # member-facing role — the same pattern the jobs API uses.
-        result["prep"]["jobs_failed"] = int(
-            one(
-                "SELECT count(*) AS n FROM public.job_runs "
-                "WHERE org_id = %s AND state = 'FAILED'",
-                [str(org_id)],
-            )["n"]
-        )
-        return result
+    with transaction.atomic(), documentary_backend():
+        return _summary(org_id)
+
+
+def failed_jobs_count(*, org_id: UUID) -> int:
+    """Failed background jobs for the dashboard attention queue. job_runs is
+    a service-owned table (service_role grant only) — callers run this as the
+    connection owner, outside the member-facing RLS context, with the explicit
+    org filter; the same pattern the jobs API's job_scope uses."""
+    return int(
+        one(
+            "SELECT count(*) AS n FROM public.job_runs "
+            "WHERE org_id = %s AND state = 'FAILED'",
+            [str(org_id)],
+        )["n"]
+    )
 
 
 def _summary(org_id: UUID) -> dict[str, Any]:

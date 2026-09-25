@@ -627,13 +627,15 @@ function ImportCosts({
 
 type Operation = PriceResponse;
 
-/** Whole-percent-free margin: (net − cost) / net, both Decimal strings. */
+/** Whole-percent-free margin: (net − cost) / net, both Decimal strings —
+ * computed in cents so the display never carries a float artifact. */
 function marginText(net: string, cost: string, currency: string): string {
-  const netValue = Number(net);
-  const costValue = Number(cost);
-  if (!Number.isFinite(netValue) || !Number.isFinite(costValue) || netValue <= 0) return "—";
-  const margin = (netValue - costValue) / netValue;
-  return `${formatMoney(String(netValue - costValue), currency)} · ${(margin * 100).toFixed(1)} %`;
+  const netCents = Math.round(Number(net) * 100);
+  const costCents = Math.round(Number(cost) * 100);
+  if (!Number.isFinite(netCents) || !Number.isFinite(costCents) || netCents <= 0) return "—";
+  const diffCents = netCents - costCents;
+  const margin = diffCents / netCents;
+  return `${formatMoney((diffCents / 100).toFixed(2), currency)} · ${(margin * 100).toFixed(1)} %`;
 }
 
 /** §03-D — the pricing decision surface: the estimator and the approver

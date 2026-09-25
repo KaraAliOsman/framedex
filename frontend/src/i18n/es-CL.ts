@@ -2086,6 +2086,7 @@ export const messages = {
   "projects.compareField.color_exterior": "Color exterior",
   "projects.compareField.price_net": "Precio neto",
   "projects.compareField.discount_pct": "Descuento",
+  "projects.compareField.manufacturing": "Cambió la preparación de taller",
   "projects.compareField.spec": "Cambió la especificación técnica",
   "ui.close": "Cerrar",
   "ui.cancel": "Cancelar",

@@ -1,4 +1,5 @@
-"""Revision comparison: positions keyed by index, commercial fields diffed."""
+"""Revision comparison: positions keyed by persistent id, commercial fields
+diffed; index stays presentation metadata."""
 
 from __future__ import annotations
 
@@ -28,6 +29,9 @@ def _version(code: str, snapshot: dict[str, object]) -> dict[str, object]:
 
 
 def _position(index: int, **overrides) -> dict[str, object]:
+    # A frozen position keeps the project_positions row's persistent id — the
+    # same logical opening carries one id across revisions; callers pass the
+    # same id on both sides to say "same position".
     position = {
         "id": str(uuid4()),
         "position_index": index,
@@ -88,10 +92,14 @@ def _compare(monkeypatch, base_positions, head_positions, base_gross="500000", h
 def test_compare_reports_added_removed_changed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    shared = str(uuid4())
     output = _compare(
         monkeypatch,
-        [_position(1), _position(2)],
-        [_position(1, width_mm="1400.00"), _position(3, location_tag="LIVING")],
+        [_position(1, id=shared), _position(2)],
+        [
+            _position(1, id=shared, width_mm="1400.00"),
+            _position(3, location_tag="LIVING"),
+        ],
     )
     assert output["summary"] == {
         "added": 1,
@@ -123,7 +131,14 @@ def test_compare_reports_added_removed_changed(
 def test_compare_unchanged_positions_stay_out_of_the_diff(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    output = _compare(monkeypatch, [_position(1)], [_position(1)], "250000", "250000")
+    shared = str(uuid4())
+    output = _compare(
+        monkeypatch,
+        [_position(1, id=shared)],
+        [_position(1, id=shared)],
+        "250000",
+        "250000",
+    )
     assert output["positions"] == []
     assert output["summary"]["unchanged"] == 1
     assert output["summary"]["price_gross_delta"] == "0"
@@ -141,14 +156,65 @@ def test_compare_rejects_unknown_revision(monkeypatch: pytest.MonkeyPatch) -> No
 def test_compare_flags_spec_drift_without_field_changes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    shared = str(uuid4())
     output = _compare(
         monkeypatch,
-        [_position(1)],
-        [_position(1, calculation_hash="b" * 64)],
+        [_position(1, id=shared)],
+        [_position(1, id=shared, calculation_hash="b" * 64)],
         "250000",
         "250000",
     )
     assert output["positions"][0]["change"] == "CHANGED"
     assert output["positions"][0]["changes"] == [
         {"field": "spec", "before": "", "after": ""}
+    ]
+
+
+def test_compare_index_reuse_reports_remove_and_add(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Deleting the last position frees its index; a new position may reuse
+    it — the diff must say REMOVED + ADDED, never mask the swap as CHANGED."""
+    kept = str(uuid4())
+    output = _compare(
+        monkeypatch,
+        [_position(1, id=kept), _position(2)],
+        [_position(1, id=kept), _position(2, location_tag="COCINA")],
+        "500000",
+        "500000",
+    )
+    by_index = {entry["position_index"]: entry for entry in output["positions"]}
+    assert set(by_index) == {2}
+    assert {entry["change"] for entry in output["positions"]} == {
+        "REMOVED",
+        "ADDED",
+    }
+    assert output["summary"]["removed"] == 1
+    assert output["summary"]["added"] == 1
+    assert output["summary"]["unchanged"] == 1
+
+
+def test_compare_flags_manufacturing_drift_same_engineering_hash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Workshop-prep edits (handle intents, policies, annotations) change the
+    documentary signature even when the engineering hash is identical — a
+    revision must not present them as unchanged."""
+    shared = str(uuid4())
+    output = _compare(
+        monkeypatch,
+        [_position(1, id=shared)],
+        [
+            _position(
+                1,
+                id=shared,
+                handle_intents=[{"leaf_id": "L1", "height_mm": "1050"}],
+            )
+        ],
+        "250000",
+        "250000",
+    )
+    assert output["positions"][0]["change"] == "CHANGED"
+    assert output["positions"][0]["changes"] == [
+        {"field": "manufacturing", "before": "", "after": ""}
     ]

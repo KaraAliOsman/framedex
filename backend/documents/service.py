@@ -1898,10 +1898,26 @@ _COMPARE_FIELDS = (
 )
 
 
+# Frozen-position fields that carry workshop/documentary authority beyond
+# the engineering hash — annotations, intents, policies, structural inputs.
+# A revision that only changed these must still report a change.
+_DOCUMENTARY_SLICE = (
+    "workshop_annotations",
+    "structural_inputs",
+    "glass_polishing",
+    "handle_intents",
+    "accessory_schedule",
+    "manufacturing_policies",
+    "legacy_handle_migration_confirmed",
+    "process_facts",
+)
+
+
 def _compare_position(row: dict[str, object]) -> dict[str, object]:
     """The commercially legible slice of a frozen position — enough to render
     a thumbnail and read what changed, nothing the customer shouldn't see."""
     return {
+        "id": str(row.get("id") or ""),
         "position_index": int(row["position_index"]),
         "location_tag": row.get("location_tag") or "",
         "typology": str(row.get("typology") or ""),
@@ -1915,13 +1931,29 @@ def _compare_position(row: dict[str, object]) -> dict[str, object]:
         "discount_pct": str(row.get("discount_pct") or ""),
         "parametric_tree": row.get("parametric_tree"),
         "calculation_hash": str(row.get("calculation_hash") or ""),
+        "documentary_signature": documentary_canonical_json_v1(
+            {key: row.get(key) for key in _DOCUMENTARY_SLICE}
+        ).decode("utf-8"),
     }
 
 
 def _public_position(row: dict[str, object] | None) -> dict[str, object] | None:
     if row is None:
         return None
-    return {key: value for key, value in row.items() if key != "calculation_hash"}
+    return {
+        key: value
+        for key, value in row.items()
+        if key not in ("calculation_hash", "documentary_signature")
+    }
+
+
+def _compare_match_key(position: dict[str, object]) -> tuple[str, object]:
+    """Persistent position id when the snapshot carries it; position_index
+    only for snapshots frozen before ids existed. Index alone would merge a
+    deleted position with a new one that reuses its number."""
+    if position["id"]:
+        return ("id", position["id"])
+    return ("index", position["position_index"])
 
 
 def compare_versions(
@@ -1949,7 +1981,7 @@ def compare_versions(
     if base_code not in versions or head_code not in versions:
         raise DocumentaryError("version_not_found")
 
-    def snapshot_of(code: str) -> dict[str, object]:
+    def snapshot_of(code: str) -> tuple[dict[str, object], str | None]:
         version = versions[code]
         snapshot = _json_object(
             version["snapshot_json"], "invalid_frozen_revision_snapshot"
@@ -1966,25 +1998,41 @@ def compare_versions(
     base_snapshot, base_integrity = snapshot_of(base_code)
     head_snapshot, head_integrity = snapshot_of(head_code)
     base_positions = {
-        int(p["position_index"]): _compare_position(p)
-        for p in base_snapshot.get("positions", [])
-        if isinstance(p, dict) and p.get("position_index") is not None
+        _compare_match_key(row): row
+        for row in (
+            _compare_position(p)
+            for p in base_snapshot.get("positions", [])
+            if isinstance(p, dict) and p.get("position_index") is not None
+        )
     }
     head_positions = {
-        int(p["position_index"]): _compare_position(p)
-        for p in head_snapshot.get("positions", [])
-        if isinstance(p, dict) and p.get("position_index") is not None
+        _compare_match_key(row): row
+        for row in (
+            _compare_position(p)
+            for p in head_snapshot.get("positions", [])
+            if isinstance(p, dict) and p.get("position_index") is not None
+        )
     }
     entries: list[dict[str, object]] = []
     added = removed = changed = unchanged = 0
-    for index in sorted(set(base_positions) | set(head_positions)):
-        before = base_positions.get(index)
-        after = head_positions.get(index)
+    keys = sorted(
+        set(base_positions) | set(head_positions),
+        key=lambda key: (
+            (base_positions.get(key) or head_positions[key])["position_index"],
+            key[0],
+        ),
+    )
+    for key in keys:
+        before = base_positions.get(key)
+        after = head_positions.get(key)
+        position_index = (
+            after["position_index"] if after is not None else before["position_index"]
+        )
         if before is None:
             added += 1
             entries.append(
                 {
-                    "position_index": index,
+                    "position_index": position_index,
                     "change": "ADDED",
                     "location_tag": after["location_tag"],
                     "before": None,
@@ -1997,7 +2045,7 @@ def compare_versions(
             removed += 1
             entries.append(
                 {
-                    "position_index": index,
+                    "position_index": position_index,
                     "change": "REMOVED",
                     "location_tag": before["location_tag"],
                     "before": _public_position(before),
@@ -2015,11 +2063,15 @@ def compare_versions(
             fields.append(
                 {"field": "spec", "before": "", "after": ""}
             )
+        if before["documentary_signature"] != after["documentary_signature"]:
+            fields.append(
+                {"field": "manufacturing", "before": "", "after": ""}
+            )
         if fields:
             changed += 1
             entries.append(
                 {
-                    "position_index": index,
+                    "position_index": position_index,
                     "change": "CHANGED",
                     "location_tag": after["location_tag"],
                     "before": _public_position(before),

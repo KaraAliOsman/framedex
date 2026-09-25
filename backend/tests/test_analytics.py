@@ -52,10 +52,6 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
             return {"n": 7}
         if "offcut_inventory" in lowered:
             return {"n": 2}
-        if "job_runs" in lowered:
-            # job_runs is service-owned: read outside the member-facing role as
-            # the connection owner with the explicit org filter.
-            return {"n": 3}
         if "production_allowed" in lowered:
             return {
                 "versions_ready": 2,
@@ -83,7 +79,6 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert out["avg_release_to_dispatch_hours"] == 4.3
     assert out["inventory"] == {"items": 7, "offcuts": 2}
     assert out["prep"]["versions_ready"] == 2
-    assert out["prep"]["jobs_failed"] == 3
     assert out["prep"]["work_orders_shortage"] == 1
     assert out["prep"]["dispatch_ready"] == 1
     assert out["deliveries"] == {"today": 2, "overdue": 1}
@@ -97,3 +92,19 @@ def test_operational_summary_aggregates_live_tables(monkeypatch) -> None:
     assert seen_sql and all(
         "tenancy_organizations" in sql and "org.timezone" in sql for sql in seen_sql
     )
+
+
+def test_failed_jobs_count_runs_org_scoped(monkeypatch) -> None:
+    """job_runs is service-owned: the count must run outside the member-facing
+    RLS context (the view calls it after documentary_scope exits) — here we
+    only pin the org-scoped query itself."""
+    org_id = uuid4()
+
+    def fake_one(sql_text: str, params: list, code: str = "not_found") -> dict:
+        lowered = " ".join(sql_text.lower().split())
+        assert "job_runs" in lowered
+        assert params == [str(org_id)]
+        return {"n": 3}
+
+    monkeypatch.setattr("analytics.service.one", fake_one)
+    assert service.failed_jobs_count(org_id=org_id) == 3

@@ -329,6 +329,7 @@ const COMPARE_FIELD_KEYS: Record<string, TranslationKey> = {
   color_exterior: "projects.compareField.color_exterior",
   price_net: "projects.compareField.price_net",
   discount_pct: "projects.compareField.discount_pct",
+  manufacturing: "projects.compareField.manufacturing",
   spec: "projects.compareField.spec",
 };
 
@@ -624,6 +625,13 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
   const [result, setResult] = useState<RevisionCompareResponse | undefined>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // A selector change invalidates an in-flight comparison — only the response
+  // for the currently selected pair may publish.
+  const generation = useRef(0);
+
+  useEffect(() => {
+    generation.current += 1;
+  }, [baseCode, headCode]);
 
   useEffect(() => {
     if (versions.length >= 2 && !baseCode && !headCode) {
@@ -634,6 +642,7 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
 
   async function compare(): Promise<void> {
     if (!baseCode || !headCode || baseCode === headCode) return;
+    const current = ++generation.current;
     setBusy(true);
     setError("");
     try {
@@ -642,8 +651,9 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
         head: headCode,
       });
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      setResult(response.data);
+      if (generation.current === current) setResult(response.data);
     } catch (err) {
+      if (generation.current !== current) return;
       setResult(undefined);
       setError(
         t(
@@ -653,7 +663,7 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
         ),
       );
     } finally {
-      setBusy(false);
+      if (generation.current === current) setBusy(false);
     }
   }
 
