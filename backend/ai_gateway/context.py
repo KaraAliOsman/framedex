@@ -14,6 +14,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
 
+from authentication.errors import ContractAPIException
 from pricing.repository import rows
 
 MAX_LIST = 20
@@ -322,9 +323,19 @@ def _quotation(org_id: UUID, refs: dict) -> dict:
     }
 
 
-def _catalog(org_id: UUID) -> dict:
+def _catalog(org_id: UUID, refs: dict) -> dict:
+    """§06-H catalog assistant context. Without a system ref: every visible
+    system plus the review-queue signals a triage answer needs. With
+    system_id: the workspace aggregate projected down — readiness ladder
+    with exact blockers (explain), provenance/review state (evidence),
+    compact entity rosters (relationships, dedupe) and revisions."""
+    raw = refs.get("system_id")
+    if raw:
+        return _catalog_system(org_id, _ref(refs, "system_id"))
     systems = rows(
-        "SELECT code, name, material::text AS material, is_global, is_active AS active "
+        "SELECT id, code, name, material::text AS material, is_global, "
+        "is_active AS active, is_global AS read_only, data_provenance::text AS provenance, "
+        "review_pending "
         "FROM public.profile_systems "
         "WHERE org_id=%s OR (org_id IS NULL AND is_global) "
         "ORDER BY code LIMIT %s",
@@ -333,15 +344,115 @@ def _catalog(org_id: UUID) -> dict:
     return {
         "systems": [
             {
+                "id": str(s["id"]),
                 "code": _cut(s["code"]),
                 "name": _cut(s["name"]),
                 "material": _cut(s["material"]),
                 "is_global": bool(s["is_global"]),
+                "read_only": bool(s["read_only"]),
+                "provenance": _cut(s["provenance"]),
+                "review_pending": bool(s["review_pending"]),
                 "active": bool(s["active"]),
             }
             for s in systems
         ],
         "truncated": len(systems) == MAX_LIST,
+    }
+
+
+def _catalog_system(org_id: UUID, system_id: UUID) -> dict:
+    from catalogs.readiness import catalog_readiness
+    from catalogs.service import system_workspace
+
+    try:
+        workspace = system_workspace(org_id, system_id)
+    except ContractAPIException as error:
+        if getattr(error, "status_code", None) == 404:
+            raise _ContextError("ai_context_not_found") from None
+        raise
+    system = workspace["system"]
+
+    def entities(rows_: list[dict], fields: tuple[str, ...]) -> list[dict]:
+        return [
+            {name: _cut(row.get(name)) if not isinstance(row.get(name), bool) else row.get(name) for name in fields}
+            for row in rows_[:MAX_LIST]
+        ]
+
+    review_queue = [
+        {"kind": kind, "id": str(row.get("id")), "label": _cut(row.get("sku") or row.get("code") or row.get("name"))}
+        for kind, rows_ in (
+            ("system", [system]),
+            ("article", workspace["articles"]),
+            ("bead", workspace["beads"]),
+            ("kit", workspace["kits"]),
+        )
+        for row in rows_
+        if row.get("review_pending") or row.get("data_provenance") == "LEGACY_UNVERIFIED"
+    ][:MAX_LIST]
+
+    try:
+        readiness = catalog_readiness(system_id, org_id)
+    except Exception:
+        readiness = None
+
+    return {
+        "system": {
+            "id": str(system["id"]),
+            "code": _cut(system.get("code")),
+            "name": _cut(system.get("name")),
+            "material": _cut(system.get("material")),
+            "manufacturer": _cut(system.get("manufacturer_name")),
+            "family": _cut(system.get("family_name")),
+            "read_only": bool(system.get("read_only")),
+            "provenance": _cut(system.get("data_provenance")),
+            "review_pending": bool(system.get("review_pending")),
+            "revision": _cut(system.get("revision")),
+        },
+        "readiness": readiness,
+        "counts": {
+            "articles": len(workspace["articles"]),
+            "beads": len(workspace["beads"]),
+            "kits": len(workspace["kits"]),
+            "reinforcements": len(workspace["reinforcements"]),
+            "purchase_mappings": len(workspace["purchase_mappings"]),
+            "sections_declared": sum(
+                1 for a in workspace["articles"] if a.get("section")
+            ),
+            "sections_dxf": sum(
+                1
+                for a in workspace["articles"]
+                if isinstance(a.get("section"), dict)
+                and a["section"].get("source") == "DXF_REFERENCE"
+            ),
+        },
+        "articles": entities(
+            workspace["articles"],
+            ("id", "sku", "name", "role", "review_pending",
+             "revision", "section_revision", "section_revised_by"),
+        ),
+        "beads": entities(workspace["beads"], ("id", "sku", "name")),
+        "kits": entities(workspace["kits"], ("id", "code", "label", "review_pending")),
+        "purchase_mappings": entities(
+            workspace["purchase_mappings"],
+            ("id", "profile_article_id", "commercial_sku", "manufacturer_name", "supplier_name"),
+        ),
+        "reinforcements": entities(
+            workspace["reinforcements"], ("id", "sku", "commercial_sku", "name")
+        ),
+        "process_profile": (
+            {
+                "code": _cut(workspace["process_profile"].get("code")),
+                "label": _cut(workspace["process_profile"].get("label")),
+                "version": _cut(workspace["process_profile"].get("version")),
+            }
+            if workspace.get("process_profile")
+            else None
+        ),
+        "review_queue": review_queue,
+        "truncated": any(
+            len(workspace[key]) > MAX_LIST
+            for key in ("articles", "beads", "kits", "purchase_mappings", "reinforcements")
+        ),
     }
 
 
@@ -464,7 +575,7 @@ _BUILDERS = {
     "settings": _settings,
 }
 
-_REF_BUILDERS = {"project", "position", "quotation", "work_order"}
+_REF_BUILDERS = {"project", "position", "quotation", "work_order", "catalog"}
 
 
 def build_context(org_id: UUID, surface: str, refs: dict | None) -> dict:

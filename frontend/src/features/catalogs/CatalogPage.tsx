@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
+import { useAssistantSurface } from "../assistant/assistantContext";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
@@ -107,6 +108,9 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
   // The workspace aggregates the same records under one fetch — saves must
   // invalidate its cache without forcing a whole-list refetch.
   const [workspaceKey, setWorkspaceKey] = useState(0);
+  // The assistant answers inside the selected system's catalog context —
+  // readiness blockers, review queue, entity rosters — not the bare list.
+  useAssistantSurface(selected ? "catalog" : null, selected ? { system_id: selected } : undefined);
   const lifetime = useRef<AbortController | null>(null);
   // Catalog CRUD accepts OWNER/WORKSHOP_MANAGER — an estimator reads the
   // catalog and writes only through the import-review flow.

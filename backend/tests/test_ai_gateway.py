@@ -1567,3 +1567,54 @@ def test_openai_provider_image_payload_is_true_multimodal(monkeypatch):
     )
     user = json.loads(body["messages"][1]["content"])
     assert user["document_url"] == "https://signed.example/doc"
+
+
+def test_catalog_system_drilldown_projection(monkeypatch):
+    """§06-H — catalog?surface query with system_id returns the deep
+    workspace projection: readiness, rosters, review queue, counts."""
+    from uuid import uuid4
+    from ai_gateway import context as context_module
+
+    system_id = uuid4()
+    workspace = {
+        "system": {
+            "id": system_id,
+            "code": "DEMO_60",
+            "name": "Serie Demo",
+            "material": "PVC",
+            "manufacturer_name": "Demo",
+            "family_name": "60",
+            "read_only": False,
+            "data_provenance": "MANUAL",
+            "review_pending": False,
+            "revision": "abc",
+        },
+        "articles": [
+            {"id": uuid4(), "sku": "A-1", "name": "Marco", "role": "FRAME",
+             "review_pending": True, "revision": "r1",
+             "section_revision": None, "section_revised_by": None,
+             "data_provenance": "LEGACY_UNVERIFIED",
+             "section": {"source": "DXF_REFERENCE", "drawing_ref": "x"}},
+        ],
+        "beads": [],
+        "kits": [{"id": uuid4(), "code": "K1", "label": "Kit", "review_pending": False}],
+        "reinforcements": [],
+        "purchase_mappings": [],
+        "process_profile": {"code": "P1", "label": "Std", "version": "1"},
+    }
+    monkeypatch.setattr(
+        "catalogs.service.system_workspace",
+        lambda org_id, sid: workspace,
+    )
+    monkeypatch.setattr(
+        "catalogs.readiness.catalog_readiness",
+        lambda sid, org_id: {"levels": [{"level": "DESIGN_VALID", "ok": False, "blockers": [
+            {"code": "technical_catalog", "missing_authority": "junquillos",
+             "affected": "x", "why": "y", "action": "z"}]}]},
+    )
+    out = context_module._catalog_system(uuid4(), system_id)
+    assert out["system"]["code"] == "DEMO_60"
+    assert out["readiness"]["levels"][0]["blockers"][0]["code"] == "technical_catalog"
+    assert out["counts"]["articles"] == 1 and out["counts"]["sections_dxf"] == 1
+    assert out["review_queue"][0]["label"] == "A-1"
+    assert out["articles"][0]["revision"] == "r1"

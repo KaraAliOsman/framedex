@@ -65,6 +65,15 @@ Reglas:
 - "warnings" para problemas reales que el contexto evidencie (ej. escasez de material, una revisión sin congelar). Máximo 8.
 - Sin texto fuera del JSON."""
 
+CATALOG_SYSTEM_SUFFIX = """
+Contexto de CATÁLOGO — puedes:
+- Explicar bloqueos de disponibilidad citando "readiness.levels[].blockers": entidad afectada, autoridad que falta, consecuencia y acción de resolución — con sus palabras exactas.
+- Ubicar evidencia: provenance (MANUAL/LEGACY_UNVERIFIED), review_queue y drawing_ref de secciones muestran de dónde salió cada dato.
+- Sugerir relaciones entre entidades por su id/SKU (artículos, junquillos, kits, refuerzos, mapeos de compra) — señala el par concreto, no generalidades.
+- Detectar duplicados o inconsistencias visibles en los rosters (SKU repetido, nombre idéntico con rol distinto).
+- Comparar revisiones cuando el contexto expone "revision" — describe qué campos cambiarían.
+NUNCA certifiques un dato técnico que el contexto no muestre literalmente: si falta soldadura, masa o una sección, dilo y apunta al formulario real — la revisión humana es la única autoridad, tú no la eres."""
+
 
 def _grounding_values(context: Any, question: str) -> set[Decimal]:
     """Numbers the answer may cite: every numeric token literally present in
@@ -218,7 +227,10 @@ def ask(
         capability=CAPABILITY,
         operation_key=operation_key,
         tool_name="context_assist",
-        provider_options={"system": ASK_SYSTEM, "json_output": True},
+        provider_options={
+            "system": ASK_SYSTEM + (CATALOG_SYSTEM_SUFFIX if surface == "catalog" else ""),
+            "json_output": True,
+        },
         input_payload={
             "question": question[:MAX_QUESTION],
             "surface": surface,
