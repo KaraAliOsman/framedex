@@ -487,18 +487,24 @@ def _validate_ops(
             and not isinstance(value, bool)
             and 0 <= value < len(module_refs)
         ):
-            return module_refs[value]
+            # Positional addresses name the ORIGINAL summary order; a member
+            # removed earlier in the sequence can't be addressed any more.
+            ref = module_refs[value]
+            return ref if ref in state["module_refs"] else None
         return None
 
     def coupling_ref(value: Any) -> str | None:
-        if isinstance(value, str) and value in coupling_refs:
+        # String ids resolve against the LIVE joint set — a joint dropped by
+        # remove_unit/remove_coupling is gone, not silently re-aimed.
+        if isinstance(value, str) and value in state["coupling_refs"]:
             return value
         if (
             isinstance(value, int)
             and not isinstance(value, bool)
             and 0 <= value < len(coupling_refs)
         ):
-            # A stale index may point at a ref removed earlier in the sequence.
+            # Positional addresses name the summary order; the ref must still
+            # be live, exactly like the module path above.
             ref = coupling_refs[value]
             return ref if ref in state["coupling_refs"] else None
         return None
@@ -527,6 +533,7 @@ def _validate_ops(
                 while len(state["module_refs"]) < item["count"]:
                     tail = state["module_refs"][-1] if state["module_refs"] else None
                     new_ref = _add_ref("m")
+                    module_info[new_ref] = {"shape": "RECT", "frameless": False}
                     state["module_refs"].append(new_ref)
                     if tail is not None:
                         state["coupling_refs"].append(
@@ -560,6 +567,7 @@ def _validate_ops(
                     continue
                 accepted.append({"op": name, "side": item["side"], "ref": _add_ref("m")})
                 new_ref = accepted[-1]["ref"]
+                module_info[new_ref] = {"shape": "RECT", "frameless": False}
                 if item["side"] == "left":
                     state["module_refs"].insert(0, new_ref)
                     if end is not None:
@@ -586,6 +594,17 @@ def _validate_ops(
                     info = state["sim_couplings"].get(c_ref)
                     if info is not None and ref in info["modules"]:
                         incident.append((index, c_ref, info))
+                # The client reuses the EARLIER incident joint's id for the
+                # relink — keep that ref live so follow-up ops can address
+                # the repaired seam; only the later joint is discarded now.
+                relink_candidate = len(incident) == 2 and all(
+                    info.get("kind") == "INLINE" for _, _, info in incident
+                )
+                keep_ref = (
+                    min(incident, key=lambda entry: entry[0])[1]
+                    if relink_candidate
+                    else None
+                )
                 for _, c_ref, info in reversed(incident):
                     # Free the edges the dropped joint claimed on the
                     # SURVIVORS; the removed member's own edges vanish with it.
@@ -599,7 +618,8 @@ def _validate_ops(
                             and isinstance(member, str)
                         ):
                             state["stacked_members"].discard(member)
-                    state["coupling_refs"].remove(c_ref)
+                    if c_ref != keep_ref:
+                        state["coupling_refs"].remove(c_ref)
                     state["sim_couplings"].pop(c_ref, None)
                 state["module_refs"].pop(state["module_refs"].index(ref))
                 state["used_edges"].pop(ref, None)
@@ -607,18 +627,19 @@ def _validate_ops(
                 # The client's one honest repair: exactly two INLINE
                 # incident joints between two distinct rectangular
                 # survivors whose exposed edges are free and not already
-                # joined — they relink INLINE. Every other topology only
-                # removes; inventing a joint fabricates structure.
-                if len(incident) == 2 and all(
-                    info.get("kind") == "INLINE" for _, _, info in incident
-                ):
+                # joined — they relink INLINE under the earlier joint's id.
+                # Every other topology only removes; inventing a joint
+                # fabricates structure.
+                if relink_candidate:
                     survivors: list[tuple[str, Any]] = []
                     for _, _, info in incident:
                         if len(info["modules"]) == 2:
-                            pos = 0 if info["modules"][0] == ref else 1
+                            # The survivor is the OTHER member of the pair.
+                            pos = 1 if info["modules"][0] == ref else 0
                             survivors.append(
                                 (info["modules"][pos], info["edges"][pos])
                             )
+                    joinable = False
                     if len(survivors) == 2:
                         (a_ref, a_edge), (b_ref, b_edge) = survivors
                         joined = any(
@@ -639,12 +660,27 @@ def _validate_ops(
                             and a_edge not in state["used_edges"].get(a_ref, set())
                             and b_edge not in state["used_edges"].get(b_ref, set())
                         )
-                        if joinable:
-                            new_coupling = _add_coupling(
-                                [a_ref, b_ref], [a_edge, b_edge]
-                            )
-                            position = min(index for index, _, _ in incident)
-                            state["coupling_refs"].insert(position, new_coupling)
+                    if joinable and keep_ref is not None:
+                        # The surviving joint keeps the earlier ref and the
+                        # clients' left→right declaration order.
+                        order = {
+                            m_ref: index
+                            for index, m_ref in enumerate(state["module_refs"])
+                        }
+                        (join_left, join_left_edge), (join_right, join_right_edge) = sorted(
+                            [(a_ref, a_edge), (b_ref, b_edge)],
+                            key=lambda entry: order.get(entry[0], -1),
+                        )
+                        state["sim_couplings"][keep_ref] = {
+                            "modules": [join_left, join_right],
+                            "edges": [join_left_edge, join_right_edge],
+                            "kind": "INLINE",
+                        }
+                        _claim(join_left, join_left_edge)
+                        _claim(join_right, join_right_edge)
+                    elif keep_ref is not None and keep_ref in state["coupling_refs"]:
+                        # No repair — the kept ref really is dropped.
+                        state["coupling_refs"].remove(keep_ref)
             else:
                 rejected.append(reject(item, "modulo_invalido"))
         elif name == "duplicate_module":
@@ -666,6 +702,7 @@ def _validate_ops(
                     rejected.append(reject(item, "sin_borde_libre"))
                 else:
                     new_module = _add_ref("m")
+                    module_info[new_module] = dict(module_info.get(ref, {"shape": "RECT"}))
                     position = state["module_refs"].index(ref)
                     state["module_refs"].insert(
                         position + 1 if side == "right" else position, new_module
@@ -696,6 +733,11 @@ def _validate_ops(
                 else:
                     assert left_ref is not None and right_ref is not None
                     new_module = _add_ref("m")
+                    # The inserted member inherits its left neighbor's
+                    # structure — the client clones it the same way.
+                    module_info[new_module] = dict(
+                        module_info.get(left_ref, {"shape": "RECT"})
+                    )
                     state["module_refs"].insert(
                         state["module_refs"].index(left_ref) + 1, new_module
                     )
@@ -757,6 +799,7 @@ def _validate_ops(
                 # set so capacity, removals and chain-end picks see it
                 # (stacked_members keeps it out of chain-end candidates).
                 stacked_ref = _add_ref("m")
+                module_info[stacked_ref] = {"shape": "RECT", "frameless": False}
                 state["module_refs"].append(stacked_ref)
                 state["coupling_refs"].append(
                     _add_coupling([ref, stacked_ref], ["top", "bottom"], kind="STACKED")

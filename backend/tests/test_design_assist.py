@@ -904,3 +904,73 @@ def test_unstacking_makes_the_member_a_chain_end(monkeypatch):
         "duplicate_module",
     ]
     assert out["rejected"] == []
+
+
+def test_relinked_seam_keeps_the_earlier_coupling_ref(monkeypatch):
+    """§5 review: removing the middle member of a chain relinks the survivors
+    under the EARLIER joint's id — the id the client reuses — not a minted
+    added_c*. The repaired seam stays addressable, the dropped ref is dead."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "remove_unit", "module": "m2"},
+                {"op": "set_coupling_angle", "coupling": "c1", "angle_deg": "12"},
+                {"op": "set_coupling_angle", "coupling": "c2", "angle_deg": "12"},
+            ],
+            "notes": "",
+        },
+    )
+    product = {
+        "modules": [
+            {"id": "m1", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m2", "width_mm": "900", "height_mm": "1500"},
+            {"id": "m3", "width_mm": "900", "height_mm": "1500"},
+        ],
+        "couplings": [
+            {"id": "c1", "angle_deg": "0", "kind": "INLINE",
+             "modules": ["m1", "m2"], "edges": ["right", "left"]},
+            {"id": "c2", "angle_deg": "0", "kind": "INLINE",
+             "modules": ["m2", "m3"], "edges": ["right", "left"]},
+        ],
+    }
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=product,
+        prompt="ángulo 12 en la unión",
+        system_id=uuid4(),
+        operation_key="assist-relink",
+    )
+    assert out["ops"] == [
+        {"op": "remove_unit", "module": "m2"},
+        {"op": "set_coupling_angle", "coupling": "c1", "angle_deg": "12"},
+    ]
+    assert out["rejected"] == [{"op": "set_coupling_angle", "reason": "angulo_invalido"}]
+
+
+def test_added_module_ops_check_shape_and_frameless(monkeypatch):
+    """§5 review: a member minted inside the sequence (added_m*) has module
+    info registered — insert/stacked ops don't trip 'miembro_no_recto' on it."""
+    _patch_invoke(
+        monkeypatch,
+        {
+            "ops": [
+                {"op": "add_unit", "side": "right"},
+                {"op": "add_stacked_unit", "module": "added_m1"},
+            ],
+            "notes": "",
+        },
+    )
+    out = design_assist.assist(
+        org_id=uuid4(),
+        user_id=uuid4(),
+        position=_position(),
+        product=_product(modules=1, couplings=0),
+        prompt="otra unidad a la derecha",
+        system_id=uuid4(),
+        operation_key="assist-added-info",
+    )
+    assert [op["op"] for op in out["ops"]] == ["add_unit", "add_stacked_unit"]
+    assert out["rejected"] == []

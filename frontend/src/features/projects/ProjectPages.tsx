@@ -369,7 +369,11 @@ function commercialSteps(
   const stalePending = currentApprovals.some(
     (a) => a.status === "PENDING" && Date.parse(a.expires_at) <= now,
   );
-  const quoted = project.pricing_current || (project.versions?.length ?? 0) > 0;
+  // A sealed version only counts as "sent for quote" when it IS the current
+  // revision — an old sealed draft must not light this step forever.
+  const quoted =
+    project.pricing_current ||
+    (project.versions?.some((v) => v.revision_code === project.current_revision) ?? false);
   const approved = rank >= 2 || approvedRecord;
   const collected = Number(payments?.collected ?? "0");
   const paid = payments?.status === "PAID";
@@ -503,6 +507,12 @@ function ProjectHeader({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       return response.data;
     },
+    // A client-side approval or expiry lands on no websocket — poll while a
+    // live PENDING link exists so the timeline moves without a reload.
+    refetchInterval: (query) =>
+      query.state.data?.some((a) => a.status === "PENDING" && Date.parse(a.expires_at) > Date.now())
+        ? 15000
+        : false,
   });
   const approvalsList = approvals.data ?? [];
   const steps = commercialSteps(project, approvalsList, payments.data);
@@ -1351,7 +1361,7 @@ function ProjectWorkspace({
                     tabIndex={0}
                   >
                     <span className="position-row__thumb">
-                      <PositionThumb design={position.design} />
+                      <PositionThumb design={position.design} variant="studio" />
                     </span>
                     <span
                       className="position-row__loc"

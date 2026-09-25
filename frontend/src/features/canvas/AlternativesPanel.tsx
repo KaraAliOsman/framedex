@@ -6,7 +6,7 @@ import type { DesignAlternativesResponse } from "../../api/generated/models/desi
 import { t } from "../../i18n/es-CL";
 import type { MemberGeometry } from "./members";
 import { elevationEnvelopeMm, isProductModel, type ProductJson } from "./productEditing";
-import { ProductFrontSvg } from "./ProductFrontSvg";
+import { StudioImage } from "./renderStudio";
 
 type Alternative = {
   label: string;
@@ -29,9 +29,6 @@ type Result = {
    * that survives a catalog edit is stale the same way. */
   catalogKey: string;
 };
-
-const NO_ISSUES: never[] = [];
-const NOOP = () => undefined;
 
 function metric(metrics: Record<string, unknown>, key: string): string | null {
   const value = metrics[key];
@@ -234,18 +231,12 @@ export function AlternativesPanel({
                     return (
                       <div key={`alt-${index}`} className="alternative-card">
                         <span className="alternative-card__thumb">
-                          <ProductFrontSvg
+                          <StudioImage
                             product={item.product}
                             members={members}
-                            selectedId={null}
-                            issues={NO_ISSUES}
-                            disabled
-                            preview
-                            onSelectModule={NOOP}
-                            onAddUnit={NOOP}
-                            onCommitModuleWidth={NOOP}
-                            onCommitTotalWidth={NOOP}
-                            onCommitHeight={NOOP}
+                            options={{ width: 360, height: 240 }}
+                            alt={item.label}
+                            className="alternative-card__render"
                           />
                         </span>
                         <p className="alternative-card__label">{item.label}</p>

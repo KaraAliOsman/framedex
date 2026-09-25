@@ -1618,10 +1618,14 @@
   max-height: 140px;
 }
 
-.alternative-card__thumb svg {
+.alternative-card__thumb svg,
+.alternative-card__thumb .alternative-card__render {
   display: block;
   width: 100%;
   height: auto;
+  min-height: 96px;
+  border-radius: var(--radius-sm);
+  background: var(--model3d-backdrop, var(--theme-bg-canvas));
 }
 
 .alternative-card__label {

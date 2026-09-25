@@ -103,7 +103,10 @@ function cacheKey(
   plan: PlanGeometry | null | undefined,
   options: StudioOptions,
 ): string {
-  return JSON.stringify({ product, members, plan, options });
+  // The PNG bakes resolved CSS tokens — the active theme must key the
+  // cache or a light-theme render would survive a dark-mode switch.
+  const theme = typeof document === "undefined" ? null : document.documentElement.dataset.theme;
+  return JSON.stringify({ product, members, plan, options, theme });
 }
 
 export function renderStudioImage(

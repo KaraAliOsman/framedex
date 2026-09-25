@@ -2153,6 +2153,25 @@ export const messages = {
   "ui.edit": "Editar",
   "ui.errorTitle": "Algo salió mal",
   "ui.retry": "Reintentar",
+  "benchmark.title": "Referencia visual de render",
+  "benchmark.subtitle":
+    "Mismo producto proyectado a alzado, comercial y 3D — revisión manual del estándar físico por material.",
+  "benchmark.material.pvc": "PVC blanco",
+  "benchmark.material.foil": "PVC foil madera",
+  "benchmark.material.anthracite": "Aluminio antracita",
+  "benchmark.view2d": "Alzado",
+  "benchmark.commercial": "Comercial",
+  "benchmark.view3d": "3D interactivo",
+  "benchmark.fixture.fixed": "Fijo",
+  "benchmark.fixture.tiltTurn": "Oscilobatiente",
+  "benchmark.fixture.twoSash": "Dos hojas",
+  "benchmark.fixture.sliding": "Corredera",
+  "benchmark.fixture.door": "Puerta",
+  "benchmark.fixture.corner": "Esquina 90°",
+  "benchmark.fixture.bow": "Bow",
+  "benchmark.fixture.frameless": "Sin marco",
+  "benchmark.fixture.trapezoid": "Trapecio",
+  "benchmark.fixture.arch": "Arco",
 } as const;
 
 export type TranslationKey = keyof typeof messages;

@@ -36,9 +36,11 @@ export function attentionEntries(
       warn: false,
     },
     {
+      // QUOTED projects whose current revision still has no live approval
+      // link — already-sent links belong to approvalsPending, not here.
       key: "dashboard.quotesWaiting",
       action: "attention.action.sendQuote",
-      count: projectsByStatus.QUOTED ?? 0,
+      count: Number(prep.quotes_unsent ?? 0),
       to: "/projects?status=QUOTED",
       warn: false,
     },

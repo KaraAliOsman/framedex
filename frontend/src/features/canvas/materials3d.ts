@@ -24,8 +24,21 @@ export interface SolidMaterial {
 
 const MEMBER_TOKENS: Record<string, string> = {
   PVC: "--member-pvc-fill",
+  PVC_FOIL: "--member-foil-fill",
   ALUMINIUM: "--member-aluminium-fill",
+  ALUMINIUM_ANTHRACITE: "--member-anthracite-fill",
 };
+
+/** PBR-ish response per member material in commercial mode — aluminium
+ * families read as coated metal, polymer as satin plastic, foil as a
+ * wood-toned skin over PVC. Unknown materials stay neutral. */
+const MEMBER_RESPONSE: Record<string, { color: string; roughness: number; metalness: number }> = {
+  PVC: { color: "#d6d3c9", roughness: 0.55, metalness: 0.08 },
+  PVC_FOIL: { color: "#7b5a3b", roughness: 0.5, metalness: 0.05 },
+  ALUMINIUM: { color: "#8f959a", roughness: 0.42, metalness: 0.55 },
+  ALUMINIUM_ANTHRACITE: { color: "#3f444a", roughness: 0.45, metalness: 0.6 },
+};
+const MEMBER_RESPONSE_DEFAULT = { color: "#d6d3c9", roughness: 0.55, metalness: 0.08 };
 
 export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial {
   const commercial = mode === "commercial";
@@ -121,16 +134,18 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
         glass: false,
         detail: false,
       };
-    default:
+    default: {
+      const response = MEMBER_RESPONSE[solid.material] ?? MEMBER_RESPONSE_DEFAULT;
       return {
         colorToken: MEMBER_TOKENS[solid.material] ?? "--member-panel-fill",
-        colorFallback: solid.material === "ALUMINIUM" ? "#8f959a" : "#d6d3c9",
-        roughness: commercial ? (solid.material === "ALUMINIUM" ? 0.42 : 0.55) : 0.75,
-        metalness: commercial ? (solid.material === "ALUMINIUM" ? 0.55 : 0.08) : 0.05,
+        colorFallback: response.color,
+        roughness: commercial ? response.roughness : 0.75,
+        metalness: commercial ? response.metalness : 0.05,
         transparent: false,
         opacity: 1,
         glass: false,
         detail: false,
       };
+    }
   }
 }

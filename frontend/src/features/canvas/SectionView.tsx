@@ -19,13 +19,16 @@ type SectionSpec = {
   u0: number;
   v0: number;
   slotW: number;
+  /** Plan depth the member occupies when no section polygon declares its
+   * own — the fallback rectangle's height, separate from the v origin. */
+  approxDepth: number;
 };
 
 function sectionPath(spec: SectionSpec): { d: string; approximate: boolean } {
   const section = normalizedSection(spec.spec);
   if (section === null) {
     return {
-      d: `M ${spec.u0} ${spec.v0} h ${spec.slotW} v ${spec.v0} h ${-spec.slotW} Z`,
+      d: `M ${spec.u0} ${spec.v0} h ${spec.slotW} v ${spec.approxDepth} h ${-spec.slotW} Z`,
       approximate: true,
     };
   }
@@ -57,24 +60,41 @@ export function SectionView({
   const glassT = Math.max(Number(bay?.glass_thickness_mm) || GLASS_DEFAULT_MM, 4);
   const glassZ = depth * 0.45;
   const bead = members.beadFor(bay?.glass_thickness_mm ?? null);
+  // Approximate depth shares: the frame band sits above the sash band, so
+  // an undeclared frame still draws its region — a convention, not a depth.
+  const frameApprox = Math.max(depth - sashD, depth * 0.2);
   const members_drawn: SectionSpec[] = [
-    { spec: members.frame, u0: 0, v0: 0, slotW: members.frame.faceWidthMm },
+    {
+      spec: members.frame,
+      u0: 0,
+      v0: 0,
+      slotW: members.frame.faceWidthMm,
+      approxDepth: frameApprox,
+    },
     {
       spec: members.frame,
       u0: widthMm - members.frame.faceWidthMm,
       v0: 0,
       slotW: members.frame.faceWidthMm,
+      approxDepth: frameApprox,
     },
   ];
   if (operable) {
     const sashW = Math.min(members.sash.faceWidthMm, widthMm / 3);
     members_drawn.push(
-      { spec: members.sash, u0: members.rebateMm, v0: depth - sashD, slotW: sashW },
+      {
+        spec: members.sash,
+        u0: members.rebateMm,
+        v0: depth - sashD,
+        slotW: sashW,
+        approxDepth: sashD,
+      },
       {
         spec: members.sash,
         u0: widthMm - members.rebateMm - sashW,
         v0: depth - sashD,
         slotW: sashW,
+        approxDepth: sashD,
       },
     );
   }
