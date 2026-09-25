@@ -165,7 +165,7 @@ export function renderStudioImage(
   const root = buildThreeScene(scene3d);
   if (options.inside) root.rotation.y = Math.PI;
   scene.add(root);
-  scene.background = new THREE.Color(tokenColor("--model3d-backdrop", "#eef1f2"));
+  scene.background = new THREE.Color(tokenColor("--model3d-backdrop", "rgb(238,241,242)"));
 
   const distance = radius * 2.35;
   const camera = new THREE.PerspectiveCamera(40, width / height, 1, distance * 10);

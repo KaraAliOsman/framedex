@@ -26,7 +26,7 @@ function drawGrain(axis: "u" | "v"): THREE.Texture {
   canvas.width = canvas.height = 256;
   const ctx = canvas.getContext("2d");
   if (ctx) {
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "rgb(255,255,255)";
     ctx.fillRect(0, 0, 256, 256);
     // Grain needs real contrast to read at member scale (review M7) —
     // faint 4–11% streaks vanished against the foil base coat.
@@ -207,7 +207,7 @@ function SolidMesh({
     [material, theme],
   );
   const emissive = useMemo(
-    () => (selected ? tokenColor("--theme-warning", "#b45309") : "#000000"),
+    () => (selected ? tokenColor("--theme-warning", "rgb(180,83,9)") : "rgb(0,0,0)"),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selected, theme],
   );
@@ -258,7 +258,7 @@ function SolidMesh({
        * profile so convention never masquerades as authority. */}
       {(solid.approximate === true || mode === "technical") &&
         (solid.kind === "box" || solid.kind === "profile") && (
-          <Edges scale={1.002} color={tokenColor("--model3d-edge", "#6b7075")} />
+          <Edges scale={1.002} color={tokenColor("--model3d-edge", "rgb(107,112,117)")} />
         )}
     </mesh>
   );

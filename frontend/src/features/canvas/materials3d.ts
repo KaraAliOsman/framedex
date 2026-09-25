@@ -38,15 +38,15 @@ const MEMBER_TOKENS: Record<string, string> = {
  * wood-toned skin over PVC. Unknown materials stay neutral. */
 const MEMBER_RESPONSE: Record<string, { color: string; roughness: number; metalness: number }> = {
   // PVC blanco stays a desaturated polymer white — the previous warm
-  // (#d6d3c9) cast read as tan under the key light (review M6).
-  PVC: { color: "#dfe1dc", roughness: 0.55, metalness: 0.08 },
-  PVC_FOIL: { color: "#7b5a3b", roughness: 0.5, metalness: 0.05 },
-  ALUMINIUM: { color: "#8f959a", roughness: 0.42, metalness: 0.55 },
+  // (rgb(214,211,201)) cast read as tan under the key light (review M6).
+  PVC: { color: "rgb(223,225,220)", roughness: 0.55, metalness: 0.08 },
+  PVC_FOIL: { color: "rgb(123,90,59)", roughness: 0.5, metalness: 0.05 },
+  ALUMINIUM: { color: "rgb(143,149,154)", roughness: 0.42, metalness: 0.55 },
   // Powder-coated anthracite is near-matte — the previous metalness 0.6
   // caught the environment and washed to grey (review M7 / §05-H notes).
-  ALUMINIUM_ANTHRACITE: { color: "#363a40", roughness: 0.55, metalness: 0.35 },
+  ALUMINIUM_ANTHRACITE: { color: "rgb(54,58,64)", roughness: 0.55, metalness: 0.35 },
 };
-const MEMBER_RESPONSE_DEFAULT = { color: "#dfe1dc", roughness: 0.55, metalness: 0.08 };
+const MEMBER_RESPONSE_DEFAULT = { color: "rgb(223,225,220)", roughness: 0.55, metalness: 0.08 };
 
 /** Grain follows the member's run axis: a long box's long dimension, a
  * profile's extrusion direction (v), a contour ring's perimeter (u). */
@@ -62,7 +62,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "glass":
       return {
         colorToken: "--model3d-glass",
-        colorFallback: "#8fb8cc",
+        colorFallback: "rgb(143,184,204)",
         roughness: commercial ? 0.06 : 0.15,
         metalness: 0,
         transparent: true,
@@ -73,7 +73,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "panel":
       return {
         colorToken: "--member-panel-fill",
-        colorFallback: "#b9bcc0",
+        colorFallback: "rgb(185,188,192)",
         roughness: commercial ? 0.6 : 0.75,
         metalness: 0.05,
         transparent: false,
@@ -84,7 +84,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "bead":
       return {
         colorToken: "--member-pvc-edge",
-        colorFallback: "#b3ada0",
+        colorFallback: "rgb(179,173,160)",
         roughness: commercial ? 0.55 : 0.7,
         metalness: 0,
         transparent: false,
@@ -95,7 +95,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "gasket":
       return {
         colorToken: "--model3d-gasket",
-        colorFallback: "#2e3134",
+        colorFallback: "rgb(46,49,52)",
         roughness: 0.9,
         metalness: 0,
         transparent: false,
@@ -106,7 +106,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "track":
       return {
         colorToken: "--model3d-steel",
-        colorFallback: "#8a9197",
+        colorFallback: "rgb(138,145,151)",
         roughness: commercial ? 0.35 : 0.55,
         metalness: commercial ? 0.75 : 0.55,
         transparent: false,
@@ -120,7 +120,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "support":
       return {
         colorToken: "--model3d-steel",
-        colorFallback: "#a9b2b8",
+        colorFallback: "rgb(169,178,184)",
         roughness: commercial ? 0.3 : 0.45,
         metalness: commercial ? 0.85 : 0.55,
         transparent: false,
@@ -133,7 +133,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
       // the glass border; a detail surface like the bead/track.
       return {
         colorToken: "--member-aluminium-fill",
-        colorFallback: "#b9bdc2",
+        colorFallback: "rgb(185,189,194)",
         roughness: commercial ? 0.35 : 0.6,
         metalness: commercial ? 0.7 : 0.3,
         transparent: false,
@@ -144,7 +144,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "coupler":
       return {
         colorToken: "--model3d-coupler",
-        colorFallback: "#5d6469",
+        colorFallback: "rgb(93,100,105)",
         roughness: commercial ? 0.5 : 0.7,
         metalness: commercial ? 0.4 : 0.1,
         transparent: false,
@@ -155,7 +155,7 @@ export function solidMaterial(solid: Solid3D, mode: MaterialMode): SolidMaterial
     case "threshold":
       return {
         colorToken: "--member-aluminium-fill",
-        colorFallback: "#9aa0a5",
+        colorFallback: "rgb(154,160,165)",
         roughness: commercial ? 0.45 : 0.65,
         metalness: commercial ? 0.6 : 0.2,
         transparent: false,
