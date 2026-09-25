@@ -145,10 +145,9 @@ export function DashboardPage(): JSX.Element {
       {next && (
         <Link to={`/projects/${next.id}`} className="dashboard-continue">
           <span className="eyebrow">{t("dashboard.continue")}</span>
-          <span className="dashboard-continue-name">
-            {next.code} · {next.name}
-          </span>
+          <span className="dashboard-continue-name">{next.name || next.code}</span>
           <span className="dashboard-continue-meta">
+            {next.name ? `${next.code} · ` : ""}
             {next.client_name} ·{" "}
             <time dateTime={next.updated_at}>
               {new Date(next.updated_at).toLocaleString("es-CL")}

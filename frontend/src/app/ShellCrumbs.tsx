@@ -49,6 +49,8 @@ export function crumbsFor(
   if (section === "production") return [{ label: t("crumb.production") }];
   if (section === "purchasing") return [{ label: t("crumb.purchasing") }];
   if (section === "clients") return [{ label: t("crumb.clients") }];
+  if (section === "jobs") return [{ label: t("crumb.jobs") }];
+  if (section === "assistant") return [{ label: t("crumb.assistant") }];
   if (section === "catalogs") {
     const head: Crumb = { label: t("crumb.catalogs") };
     if (second === "systems") return [head, { label: t("crumb.systems") }];

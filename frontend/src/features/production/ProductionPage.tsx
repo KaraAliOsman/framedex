@@ -43,6 +43,7 @@ import type {
 } from "../../api/generated/models";
 import { ApiError } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { cutRoleLabel } from "./labels";
@@ -662,7 +663,7 @@ export function ProductionPage(): JSX.Element {
     return (
       <section className="production-page">
         <h1>{t("production.title")}</h1>
-        <p role="alert">{t("production.denied")}</p>
+        <DeniedState reason={t("production.denied")} />
       </section>
     );
   }

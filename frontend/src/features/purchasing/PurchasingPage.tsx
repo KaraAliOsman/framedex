@@ -5,6 +5,7 @@ import { apiMutator, ApiError } from "../../api/apiMutator";
 import { documentaryArtifactAccess } from "../../api/generated/dekopen";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { formatRevision } from "../../format";
 import "./purchasing.css";
@@ -191,7 +192,7 @@ export function PurchasingPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   const [query] = useSearchParams();
   if (!org || !["OWNER", "WORKSHOP_MANAGER"].includes(org.role))
-    return <p role="alert">{t("purchasing.denied")}</p>;
+    return <DeniedState reason={t("purchasing.denied")} />;
   const initialVersionId = query.get("version") ?? "";
   return (
     <PurchasingWorkspace

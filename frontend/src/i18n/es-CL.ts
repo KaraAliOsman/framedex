@@ -279,7 +279,7 @@ export const messages = {
   "projects.saved": "Cambios guardados.",
   "projects.savedState": "Guardado",
   "projects.saveBlocked":
-    "No se puede guardar todavía — el motor no completó la evaluación (datos de fabricación incompletos). Revisa los issue chips.",
+    "No se puede guardar todavía — el motor no completó la evaluación (datos de fabricación incompletos). Revisa las observaciones marcadas en el inspector.",
   "projects.unsaved": "Cambios sin guardar",
   "projects.saveError":
     "No se guardó el cambio. Conservamos tu trabajo; revisa si otra persona editó el vano o si la revisión ya está cerrada.",
@@ -2222,6 +2222,8 @@ export const messages = {
   "crumb.production": "Producción",
   "crumb.purchasing": "Compras",
   "crumb.clients": "Clientes",
+  "crumb.jobs": "Trabajos",
+  "crumb.assistant": "Asistente",
   "crumb.settings": "Ajustes",
   "crumb.settingsGeneral": "General",
   "crumb.settingsBilling": "Facturación",
@@ -2326,6 +2328,8 @@ export const messages = {
   "ui.edit": "Editar",
   "ui.errorTitle": "Algo salió mal",
   "ui.retry": "Reintentar",
+  "ui.deniedTitle": "Sin acceso",
+  "ui.backToDashboard": "Volver al panel",
   "benchmark.title": "Referencia visual de render",
   "benchmark.subtitle":
     "Mismo producto proyectado a alzado, comercial y 3D — revisión manual del estándar físico por material.",

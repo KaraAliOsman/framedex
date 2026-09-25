@@ -1003,12 +1003,19 @@
   margin: 0;
 }
 
+.projects-row__code {
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
 .project-head__code {
   color: var(--theme-text-muted);
   font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
   font-size: 0.75rem;
   font-weight: 400;
-  margin-left: 0.625rem;
   white-space: nowrap;
 }
 

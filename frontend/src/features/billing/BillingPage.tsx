@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { billingRetrieve } from "../../api/generated/dekopen";
 import type { Billing } from "../../api/generated/models";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import "./billing.css";
 import { CommercePanel } from "./CommercePanel";
@@ -16,7 +17,7 @@ const date = (value: string) =>
 export function BillingPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
-  if (!org || org.role !== "OWNER") return <p role="alert">{t("billing.ownerOnly")}</p>;
+  if (!org || org.role !== "OWNER") return <DeniedState reason={t("billing.ownerOnly")} />;
   return <BillingWorkspace key={`${auth.session?.user.id}:${org.id}`} orgId={org.id} />;
 }
 

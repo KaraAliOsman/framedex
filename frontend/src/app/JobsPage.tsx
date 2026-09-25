@@ -7,6 +7,7 @@ import { jobsList, jobsRetry } from "../api/generated/dekopen";
 import type { JobRun } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { jobErrorKey } from "../features/jobs/jobError";
+import { EmptyState } from "../ui";
 import { t, tDynamic, type TranslationKey } from "../i18n/es-CL";
 
 const STATE_KEYS: Record<string, TranslationKey> = {
@@ -142,9 +143,7 @@ export function JobsPage(): JSX.Element {
       ) : query.isError ? (
         <p role="alert">{t("jobs.error")}</p>
       ) : items.length === 0 ? (
-        <div className="dashboard-empty">
-          <p>{t("jobs.empty")}</p>
-        </div>
+        <EmptyState title={t("jobs.empty")} />
       ) : (
         <ul className="jobs-list">
           {items.map((job) => {

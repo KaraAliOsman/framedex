@@ -41,7 +41,7 @@ import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
-import { useConfirm } from "../../ui";
+import { EmptyState, useConfirm } from "../../ui";
 
 const fields = [
   ["name", "projects.name", "text", 255],
@@ -585,8 +585,9 @@ function ProjectHeader({
     <div className="project-head">
       <div className="project-head__row">
         <div>
-          <h1>{project.name ? `${project.code} · ${project.name}` : project.code}</h1>
+          <h1>{project.name || project.code}</h1>
           <p className="project-head__meta">
+            {project.name ? <span className="project-head__code">{project.code}</span> : null}
             <span className="status-chip" data-status={project.status.toLowerCase()}>
               {t(statuses[project.status])}
             </span>
@@ -1577,12 +1578,13 @@ function ProjectWorkspace({
                   <tr key={item.id}>
                     <td>
                       {draft ? (
-                        `${item.code} · ${item.name}`
+                        `${item.name || item.code}`
                       ) : (
                         <Link to={`/projects/${encodeURIComponent(item.id)}`}>
-                          {item.code} · {item.name}
+                          {item.name || item.code}
                         </Link>
                       )}
+                      {item.name ? <span className="projects-row__code">{item.code}</span> : null}
                     </td>
                     <td>{item.client_name}</td>
                     <td>{t(statuses[item.status])}</td>
@@ -1602,7 +1604,7 @@ function ProjectWorkspace({
               </tbody>
             </table>
           </div>
-          {visible.length === 0 && <p>{t("projects.empty")}</p>}
+          {visible.length === 0 && <EmptyState title={t("projects.empty")} />}
         </>
       )}
     </section>

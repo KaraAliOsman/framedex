@@ -268,8 +268,10 @@ it("creates a project, navigates to the server ID and renders persisted metadata
 
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-1042 · Nombre confirmado por servidor",
+    name: "Nombre confirmado por servidor",
   });
+  // The project code stays visible as secondary metadata, not as the title.
+  expect(screen.getByText("P-1042")).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/projects/server-created-id");
   expect(screen.getByText("Cliente persistido")).toBeInTheDocument();
   expect(screen.getByText("persistido@example.test")).toBeInTheDocument();
@@ -323,7 +325,7 @@ it("PATCHes the exact original timestamp and reloads persisted metadata", async 
 
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-001 · Casa actualizada",
+    name: "Casa actualizada",
   });
   expect(screen.getByText(saved.client_phone!)).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(t("projects.saved"));
@@ -390,7 +392,7 @@ it("clones a draft to the returned ID without mutating the source", async () => 
   fireEvent.click(await screen.findByRole("button", { name: t("projects.cloneDraft") }));
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-002 · Copia de Casa original",
+    name: "Copia de Casa original",
   });
 
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
@@ -1298,7 +1300,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
   await decide(true);
-  await screen.findByRole("heading", { level: 1, name: "P-002 · Casa original" });
+  await screen.findByRole("heading", { level: 1, name: "Casa original" });
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
   expect(projectsClone).toHaveBeenCalledTimes(1);
 });

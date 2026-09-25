@@ -206,6 +206,19 @@ button:disabled {
   border-color: var(--theme-danger);
 }
 
+.ui-empty--denied {
+  border-style: solid;
+  min-height: 12rem;
+}
+
+.ui-empty__glyph {
+  fill: none;
+  height: 2rem;
+  stroke: var(--theme-text-secondary);
+  stroke-width: 1.4;
+  width: 2rem;
+}
+
 .ui-skeleton {
   display: flex;
   flex-direction: column;

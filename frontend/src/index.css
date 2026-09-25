@@ -894,7 +894,8 @@ p[role="alert"]:only-child::before {
 }
 
 .metric-card strong {
-  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  /* Headline digits, not code — IBM Plex Mono slashes its zero, so a "0"
+   * KPI read as an empty-set placeholder (review VM3). */
   font-size: 1.375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -926,7 +927,6 @@ p[role="alert"]:only-child::before {
 }
 
 .attention-item strong {
-  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 

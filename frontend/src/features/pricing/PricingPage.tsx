@@ -8,6 +8,7 @@ import { formatMoney } from "../money";
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { actionErrorDetail } from "../errors";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { DeniedState } from "../../ui";
 import { t } from "../../i18n/es-CL";
 import { useCanvasStore } from "../canvas/canvasStore";
 import "./pricing.css";
@@ -174,7 +175,7 @@ export function CommercialPricingPage(): JSX.Element {
   const { id: projectId } = useParams();
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "ESTIMATOR"].includes(org.role))
-    return <p role="alert">{t("pricing.commercialDenied")}</p>;
+    return <DeniedState reason={t("pricing.commercialDenied")} />;
   return (
     <CommercialWorkspace
       key={`${org.id}:${projectId ?? ""}`}
@@ -206,7 +207,7 @@ function CommercialWorkspace({
 export function PricingPage(): JSX.Element {
   const auth = useAuthSession();
   const org = auth.me?.active_organization;
-  if (!org || org.role !== "OWNER") return <p role="alert">{t("pricing.ownerOnly")}</p>;
+  if (!org || org.role !== "OWNER") return <DeniedState reason={t("pricing.ownerOnly")} />;
   return <PricingWorkspace key={org.id} orgId={org.id} />;
 }
 
