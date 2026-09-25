@@ -28,6 +28,10 @@ MAX_CLAIMS = 8
 MAX_REFERENCE = 120
 MAX_REFERENCES = 12
 MAX_ARTIFACTS_PER_RUN = 6
+# The job-level artifact list accumulates across rounds — a follow-up turn
+# must not erase drafts an earlier round produced. Bounded so a long-lived
+# job can't grow the row without limit; oldest drafts age out first.
+MAX_ARTIFACTS_TOTAL = 48
 
 TERMINAL_STATES = frozenset({"SUCCEEDED", "FAILED", "CANCELED"})
 OPEN_STATES = frozenset(
@@ -107,18 +111,23 @@ def list_jobs(
     ]
 
 
-def finish_job(*, job_id: UUID, state: str, transcript: list,
+def finish_job(*, job_id: UUID, state: str, transcript: list, plan: list,
                artifacts: list, warnings: list, result: dict | None,
                error_code: str | None = None) -> dict:
     record = rows(
         "UPDATE public.ai_jobs SET state = %s, transcript = %s::jsonb,"
+        # The plan column mirrors the latest round that produced one — a
+        # question-only follow-up keeps the last real plan visible instead
+        # of blanking the rail.
+        " plan = CASE WHEN %s::jsonb <> '[]'::jsonb THEN %s::jsonb ELSE plan END,"
         " artifacts = %s::jsonb, warnings = %s::jsonb, result = %s::jsonb,"
         " error_code = %s, updated_at = NOW(),"
         " completed_at = CASE WHEN %s IN ('SUCCEEDED','FAILED','CANCELED')"
         " THEN NOW() ELSE completed_at END"
         " WHERE id = %s AND state = 'RUNNING' RETURNING id",
         [
-            state, _dump(transcript), _dump(artifacts), _dump(warnings),
+            state, _dump(transcript), _dump(plan), _dump(plan),
+            _dump(artifacts), _dump(warnings),
             _dump(result) if result is not None else None, error_code,
             state, str(job_id),
         ],

@@ -1986,3 +1986,81 @@ def test_job_message_contract_error_before_claim_not_recorded(monkeypatch):
     response = _post_message(client, uuid4(), message="sigue")
     assert response.status_code == 404
     assert failures == []
+
+
+def test_finish_job_persists_plan(monkeypatch):
+    """The dedicated plan column receives the round's plan — a question-only
+    follow-up keeps the last real plan via the CASE guard."""
+    from ai_gateway import jobs
+
+    written = {}
+    monkeypatch.setattr(
+        jobs, "rows",
+        lambda sql, params: written.update(sql=sql, params=params)
+        or [{"id": uuid4()}],
+    )
+    jobs.finish_job(
+        job_id=uuid4(), state="SUCCEEDED", transcript=[],
+        plan=[{"label": "Revisar estado"}], artifacts=[], warnings=[],
+        result=None,
+    )
+    assert "plan = CASE" in written["sql"]
+    assert json.loads(written["params"][2]) == [{"label": "Revisar estado"}]
+
+
+def test_act_accumulates_artifacts_across_rounds(monkeypatch):
+    """A follow-up round's artifacts add to the job shelf — earlier drafts
+    stay inspectable; the transcript keeps only the round's own."""
+    from ai_gateway import agent
+
+    job_id = uuid4()
+    calls, entity_id = _agent_env(
+        monkeypatch, _agent_document("placeholder"), job_id
+    )
+    import ai_gateway.service as service_module
+    document = _agent_document(
+        entity_id,
+        steps=[{
+            "kind": "artifact",
+            "artifact": {
+                "kind": "quote_draft",
+                "title": "Cotización preliminar",
+                "payload": {"total": 1000},
+                "references": [entity_id],
+            },
+        }],
+    )
+    monkeypatch.setattr(
+        service_module, "invoke",
+        lambda **kw: {
+            "output": json.dumps(document),
+            "credits_debited": 1,
+            "audit_id": str(uuid4()),
+            "model": "mimo-v2.6-pro",
+        },
+    )
+    prior = {
+        "kind": "product_draft",
+        "title": "Borrador previo",
+        "payload": {"positions": 2},
+        "references": [],
+        "tool": "create_draft",
+    }
+    out = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="prepara la cotización", product=None, history=[],
+        operation_key="k",
+        job={"id": str(job_id), "transcript": [], "artifacts": [prior]},
+    )
+    assert [a["title"] for a in calls["artifacts"]] == [
+        "Borrador previo", "Cotización preliminar",
+    ]
+    assert [a["title"] for a in out["artifacts"]] == [
+        "Borrador previo", "Cotización preliminar",
+    ]
+    assert calls["transcript"][1]["artifacts"][0]["title"] == (
+        "Cotización preliminar"
+    )
+    assert calls["plan"] == [
+        {"label": "Revisar estado"}, {"label": "Resumir"},
+    ]

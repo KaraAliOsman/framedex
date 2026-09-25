@@ -521,15 +521,25 @@ def act(
             "warnings": result["warnings"],
         }
     )
+    # The job's artifact shelf accumulates across rounds — a question-only
+    # follow-up must not wipe drafts an earlier turn produced. Each turn's
+    # own artifacts stay attributed in the transcript entry.
+    artifacts = (
+        list(job.get("artifacts") or []) + result["artifacts"]
+    )[-jobs.MAX_ARTIFACTS_TOTAL:]
     jobs.finish_job(
         job_id=UUID(job["id"]),
         state=state,
         transcript=transcript,
-        artifacts=result["artifacts"],
+        plan=result["plan"],
+        artifacts=artifacts,
         warnings=result["warnings"],
         result=result,
     )
     result["job_id"] = job["id"]
     result["state"] = state
     result["transcript"] = transcript
+    # The transcript entry above already captured this round's own list —
+    # the response mirrors the accumulated shelf like the job row does.
+    result["artifacts"] = artifacts
     return result
