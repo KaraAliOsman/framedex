@@ -1716,14 +1716,17 @@ def operations_file_content(
     payload = _decoded(order["payload_json"])
     export = payload.get("operations_export") or {}
     optimization = payload.get("optimization")
-    version_row = one(
-        """
-        SELECT snapshot_json FROM public.project_versions
-        WHERE id = %s AND org_id = %s
-        """,
-        [str(order["project_version_id"]), str(org_id)],
-        "work_order_missing_version",
-    )
+    # The frozen snapshot is denied to the authenticated role — resolve it
+    # through the documentary authority and keep only what the file needs.
+    with documentary_backend():
+        version_row = one(
+            """
+            SELECT snapshot_json FROM public.project_versions
+            WHERE id = %s AND org_id = %s
+            """,
+            [str(order["project_version_id"]), str(org_id)],
+            "work_order_missing_version",
+        )
     version_snapshot = _decoded(version_row["snapshot_json"])
     manufacturing = _raw_fact_units(
         version_snapshot, str(payload.get("position_id") or "") or None

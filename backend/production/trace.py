@@ -16,7 +16,12 @@ import json
 from typing import Any
 from uuid import UUID
 
-from documents.repository import DocumentaryError, one, rows
+from documents.repository import (
+    DocumentaryError,
+    documentary_backend,
+    one,
+    rows,
+)
 
 from dekopen_engine.cutting import CutBar
 from dekopen_engine.manufacturing import ManufacturingFactsV1
@@ -129,15 +134,19 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
     version = None
     version_snapshot: dict[str, Any] = {}
     if order["project_version_id"]:
-        version = one(
-            """
-            SELECT id::text, revision_code, snapshot_sha256, bom_hash,
-                   emitted_at, production_allowed, snapshot_json::text
-            FROM public.project_versions WHERE id = %s AND org_id = %s
-            """,
-            [order["project_version_id"], str(org_id)],
-            "work_order_not_found",
-        )
+        # The frozen snapshot (PII/pricing/BOM) is denied to the
+        # authenticated role — the documentary authority resolves it
+        # server-side and only a role-safe projection reaches the client.
+        with documentary_backend():
+            version = one(
+                """
+                SELECT id::text, revision_code, snapshot_sha256, bom_hash,
+                       emitted_at, production_allowed, snapshot_json::text
+                FROM public.project_versions WHERE id = %s AND org_id = %s
+                """,
+                [order["project_version_id"], str(org_id)],
+                "work_order_not_found",
+            )
         version_snapshot = _decoded(version.pop("snapshot_json", None))
 
     steps = rows(
