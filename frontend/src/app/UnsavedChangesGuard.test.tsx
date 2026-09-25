@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, Link, RouterProvider } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
+import { t } from "../i18n/es-CL";
 import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 
 afterEach(() => vi.restoreAllMocks());
@@ -20,7 +21,6 @@ function Editor(): JSX.Element {
 it.each(["link", "back"] as const)(
   "preserves edits when %s navigation is cancelled",
   async (mode) => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const router = createMemoryRouter(
       [
         { path: "/edit", element: <Editor /> },
@@ -35,11 +35,14 @@ it.each(["link", "back"] as const)(
       await act(async () => {
         await router.navigate(-1);
       });
-    await waitFor(() => expect(confirm).toHaveBeenCalledOnce());
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: t("ui.cancel") }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.getByLabelText("Nombre")).toHaveValue("Trabajo pendiente");
     expect(router.state.location.pathname).toBe("/edit");
-    confirm.mockReturnValue(true);
     fireEvent.click(screen.getByText("Volver"));
+    const confirmDialog = await screen.findByRole("dialog");
+    fireEvent.click(within(confirmDialog).getByRole("button", { name: t("ui.confirm") }));
     await screen.findByRole("heading", { name: "Proyectos" });
     expect(router.state.location.pathname).toBe("/projects");
   },

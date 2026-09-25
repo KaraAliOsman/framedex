@@ -1,6 +1,6 @@
 // frontend/src/features/projects/ProjectPages.test.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -22,6 +22,7 @@ import type {
   ProjectWriteRequest,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import { ConfirmProvider } from "../../ui";
 import { ProjectPages } from "./ProjectPages";
 
 vi.mock("../../api/apiMutator", async (importOriginal) => {
@@ -171,10 +172,22 @@ function mount(path = "/projects/project-a") {
   mounted.push({ router, client });
   render(
     <QueryClientProvider client={client}>
-      <RouterProvider router={router} />
+      <ConfirmProvider>
+        <RouterProvider router={router} />
+      </ConfirmProvider>
     </QueryClientProvider>,
   );
   return router;
+}
+
+/** Click through the canonical confirmation dialog instead of mocking
+ * window.confirm — the test exercises the real surface. */
+async function decide(approve: boolean): Promise<void> {
+  const dialog = await screen.findByRole("dialog");
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: approve ? t("ui.confirm") : t("ui.cancel") }),
+  );
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 }
 
 function change(label: Parameters<typeof t>[0], value: string): void {
@@ -283,7 +296,7 @@ it("creates a project, navigates to the server ID and renders persisted metadata
     }),
   );
   // Successful creation must clear the real unsaved-change blocker.
-  expect(window.confirm).not.toHaveBeenCalled();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
 it("PATCHes the exact original timestamp and reloads persisted metadata", async () => {
@@ -412,10 +425,10 @@ it("deletes using the exact position timestamp and renders the refreshed project
   fireEvent.click(await screen.findByText("1. Dormitorio principal"));
   fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
 
+  await decide(true);
   expect(await screen.findByText(t("projects.noPositions"))).toBeInTheDocument();
   expect(screen.queryByText("1. Dormitorio principal")).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(t("projects.deleted"));
-  expect(window.confirm).toHaveBeenCalledWith(t("projects.deleteConfirm"));
 
   expect(positionsDestroy).toHaveBeenCalledTimes(1);
   const [id, params, options] = vi.mocked(positionsDestroy).mock.calls[0]!;
@@ -448,6 +461,7 @@ it.each([
     mount();
     fireEvent.click(await screen.findByText("1. Dormitorio principal"));
     fireEvent.click(screen.getByRole("button", { name: t("projects.deletePosition") }));
+    await decide(true);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(t(message));
     expect(screen.getByText("1. Dormitorio principal")).toBeInTheDocument();
@@ -595,23 +609,25 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   });
 
   const router = mount();
-  const confirm = vi.mocked(window.confirm);
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
 
-  confirm.mockReturnValue(false);
   fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
-  await waitFor(() => expect(confirm).toHaveBeenCalledWith(t("projects.leaveUnsaved")));
+  const leaveDialog = await screen.findByRole("dialog");
+  expect(leaveDialog).toHaveTextContent(t("projects.leaveUnsaved"));
+  await decide(false);
   expect(router.state.location.pathname).toBe("/projects/project-a");
   expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.cancel") }));
-  expect(confirm).toHaveBeenCalledWith(t("projects.discard"));
+  const discardDialog = await screen.findByRole("dialog");
+  expect(discardDialog).toHaveTextContent(t("projects.discard"));
+  await decide(false);
   expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
 
-  confirm.mockReturnValue(true);
   fireEvent.click(screen.getByRole("button", { name: t("projects.cancel") }));
+  await decide(true);
   await waitFor(() =>
     expect(screen.queryByLabelText(t("quotation.paymentTerms"))).not.toBeInTheDocument(),
   );
@@ -619,13 +635,14 @@ it("guards unsaved quotation preparation edits against navigation and cancel", a
   fireEvent.click(screen.getByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.validUntil", "2026-10-19");
-  confirm.mockReturnValue(false);
   fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
-  await waitFor(() => expect(confirm).toHaveBeenCalledWith(t("projects.leaveUnsaved")));
+  const leaveDialog2 = await screen.findByRole("dialog");
+  expect(leaveDialog2).toHaveTextContent(t("projects.leaveUnsaved"));
+  await decide(false);
   expect(router.state.location.pathname).toBe("/projects/project-a");
 
-  confirm.mockReturnValue(true);
   fireEvent.click(screen.getByRole("link", { name: t("projects.back") }));
+  await decide(true);
   await waitFor(() => expect(router.state.location.pathname).toBe("/projects"));
 });
 
@@ -1263,20 +1280,20 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
   });
 
   const router = mount();
-  const confirm = vi.mocked(window.confirm);
-  confirm.mockReturnValue(false);
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.prepare") }));
   await screen.findByLabelText(t("quotation.paymentTerms"));
   change("quotation.paymentTerms", "50% anticipo");
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
-  await waitFor(() => expect(confirm).toHaveBeenCalledWith(t("projects.leaveUnsaved")));
+  const leaveDialog = await screen.findByRole("dialog");
+  expect(leaveDialog).toHaveTextContent(t("projects.leaveUnsaved"));
+  await decide(false);
   expect(projectsClone).not.toHaveBeenCalled();
   expect(router.state.location.pathname).toBe("/projects/project-a");
   expect(screen.getByLabelText(t("quotation.paymentTerms"))).toHaveValue("50% anticipo");
 
-  confirm.mockReturnValue(true);
   fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
+  await decide(true);
   await screen.findByRole("heading", { level: 1, name: "P-002 · Casa original" });
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
   expect(projectsClone).toHaveBeenCalledTimes(1);
@@ -1295,10 +1312,12 @@ it("opens one idempotent editable successor from a quoted revision", async () =>
   mount();
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.editQuoted") }));
 
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog).toHaveTextContent(t("quotation.successorConfirm"));
+  await decide(true);
   await screen.findByText("Revisión B");
   expect(apiMutator).toHaveBeenCalledTimes(1);
   expect(vi.mocked(apiMutator).mock.calls[0]?.[0]).toBe("/api/v1/projects/project-a/successor/");
-  expect(window.confirm).toHaveBeenCalledWith(t("quotation.successorConfirm"));
 });
 
 it("explicitly retires current draft pricing with an audit reason before editing", async () => {
@@ -1314,9 +1333,14 @@ it("explicitly retires current draft pricing with an audit reason before editing
       response(200, makeProject({ position_count: 1, positions: [makePosition()] })),
     );
   vi.mocked(apiMutator).mockResolvedValue(response(200, {}) as never);
-  vi.spyOn(window, "prompt").mockReturnValue("Corregir medidas");
   mount();
   fireEvent.click(await screen.findByRole("button", { name: t("quotation.resetPricing") }));
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog).toHaveTextContent(t("quotation.resetReason"));
+  fireEvent.change(within(dialog).getByRole("textbox"), {
+    target: { value: "Corregir medidas" },
+  });
+  fireEvent.click(within(dialog).getByRole("button", { name: t("ui.confirm") }));
   await waitFor(() =>
     expect(apiMutator).toHaveBeenCalledWith(
       "/api/v1/projects/project-a/reset-pricing/",

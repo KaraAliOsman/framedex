@@ -39,6 +39,7 @@ import {
   subtractDecimal,
 } from "./decimal";
 import { runJob } from "../jobs/runJob";
+import { useConfirm, usePrompt } from "../../ui";
 
 function requirementsFor(position: DocumentaryPreparationPosition): HandleRequirement[] {
   const group = position.handle_requirements.find(
@@ -530,6 +531,8 @@ export function ProjectQuotationPanel({
   onChanged(): Promise<unknown>;
   onDirtyChange?(dirty: boolean): void;
 }): JSX.Element {
+  const confirm = useConfirm();
+  const prompt = usePrompt();
   const [preparation, setPreparation] = useState<DocumentaryPreparationResponse | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -795,7 +798,7 @@ export function ProjectQuotationPanel({
   }
 
   async function startSuccessor(): Promise<void> {
-    if (!window.confirm(t("quotation.successorConfirm"))) return;
+    if (!(await confirm({ title: t("quotation.successorConfirm") }))) return;
     const current = ++generation.current;
     setBusy(true);
     setMessage("");
@@ -819,7 +822,7 @@ export function ProjectQuotationPanel({
   }
 
   async function resetPricing(): Promise<void> {
-    const reason = window.prompt(t("quotation.resetReason"));
+    const reason = await prompt({ title: t("quotation.resetReason"), input: { required: true } });
     if (!reason?.trim() || !project.current_pricing_operation_id) return;
     setBusy(true);
     setMessage("");
@@ -1565,10 +1568,18 @@ export function ProjectQuotationPanel({
               type="button"
               disabled={busy}
               onClick={() => {
-                if (dirty && !window.confirm(t("projects.discard"))) return;
-                setPreparation(null);
-                setConfirmed(false);
-                setDirty(false);
+                if (!dirty) {
+                  setPreparation(null);
+                  setConfirmed(false);
+                  return;
+                }
+                void confirm({ title: t("projects.discard") }).then((ok) => {
+                  if (ok) {
+                    setPreparation(null);
+                    setConfirmed(false);
+                    setDirty(false);
+                  }
+                });
               }}
             >
               {t("projects.cancel")}

@@ -749,6 +749,11 @@ it.each([
       await act(async () => {
         await view.router.navigate("/projects/project-b/positions/position-b/edit");
       });
+      // The pending save leaves the workspace dirty — the leave dialog gates
+      // the route change and must be confirmed before the new position loads.
+      if (operation === "save") {
+        fireEvent.click(await screen.findByRole("button", { name: t("ui.confirm") }));
+      }
     }
     await ready(next.location_tag!, "CUT-B");
     const currentInputs = useCanvasStore.getState().inputs;

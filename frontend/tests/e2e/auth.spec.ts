@@ -2,6 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
 import * as OTPAuth from "otpauth";
 
 import { formatMoney } from "../../src/features/money";
+import { t } from "../../src/i18n/es-CL";
 import { environment } from "./support/environment";
 import { requireMailpitHealthy, waitForMagicLink } from "./support/mailpit";
 
@@ -140,6 +141,14 @@ async function followRealMagicLink(page: Page, link: string): Promise<void> {
   );
   await page.goto(link);
   await callback;
+  // The callback resolves on navigation; the GoTrue session write lands
+  // asynchronously after it — wait for the persisted token so callers can
+  // read it deterministically.
+  await page.waitForFunction(() =>
+    Object.keys(window.localStorage).some(
+      (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
+    ),
+  );
 }
 
 async function assertRealIdentity(
@@ -208,8 +217,8 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await assertRealIdentity(page, request, fixture, "aal1");
 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
-  await expect(navigation.getByRole("link", { name: "Sistemas", exact: true })).toHaveCount(0);
-  for (const route of ["Proyectos", "Ajustes", "Panel"]) {
+  await expect(navigation.getByRole("link", { name: "Catálogo", exact: true })).toHaveCount(0);
+  for (const route of ["Proyectos", "Administración", "Panel"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }
@@ -350,7 +359,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
   await expect(
-    page.locator("dd").filter({ hasText: formatMoney(quote.project_gross, "CLP") }),
+    page
+      .locator("dd")
+      .filter({ hasText: formatMoney(quote.project_gross, "CLP") })
+      .first(),
   ).toBeVisible();
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);
@@ -406,8 +418,12 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === `/api/v1/projects/${draft.id}/successor/`,
   );
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Editar cotización", exact: true }).click();
+  // §F: in-app ConfirmDialog replaced window.confirm — the successor POST
+  // only fires after the product-surface confirmation.
+  const successorDialog = page.getByRole("dialog");
+  await expect(successorDialog).toContainText(t("quotation.successorConfirm"));
+  await successorDialog.getByRole("button", { name: t("ui.confirm"), exact: true }).click();
   expect((await successor).status()).toBe(201);
   await expect(page.getByText("Borrador", { exact: true })).toBeVisible();
   await expect(page.getByText("Revisión B", { exact: true })).toBeVisible();

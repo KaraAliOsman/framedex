@@ -50,10 +50,14 @@ export function CommandPalette({
   navItems,
   onNavigate,
   organizationId = null,
+  openRequested = 0,
 }: {
   navItems: NavCommandItem[];
   onNavigate(to: string): void;
   organizationId?: string | null;
+  /** Incremental open signal — the topbar search entry pokes the palette open
+   * the same way ⌘K toggles it. */
+  openRequested?: number;
 }): JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -95,6 +99,10 @@ export function CommandPalette({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, pending, close]);
+
+  useEffect(() => {
+    if (openRequested > 0) setOpen(true);
+  }, [openRequested]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();

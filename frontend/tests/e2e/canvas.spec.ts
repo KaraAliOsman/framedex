@@ -172,7 +172,8 @@ test("G1 canvas uses runtime discovery, transactional dimensions, snapping and <
   const height = page.getByLabel("Alto nominal (mm)");
   await width.focus();
   await expect(width).toBeFocused();
-  await expect(width).not.toHaveCSS("outline-style", "none");
+  // The focus contract is a box-shadow ring (ui.css), not outline.
+  await expect(width).not.toHaveCSS("box-shadow", "none");
   await page.keyboard.press("Tab");
   await expect(height).toBeFocused();
   await width.fill("1040");

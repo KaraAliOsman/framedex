@@ -1,5 +1,10 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useId } from "react";
 import { UNSAFE_DataRouterContext, useBlocker } from "react-router-dom";
+
+import { t } from "../i18n/es-CL";
+import { Dialog } from "../ui";
+
+import { consumeNavigationBypass, registerDirtySource } from "./shellUtils";
 
 // The production application uses a data router so browser Back and internal
 // navigation pass through the same guard as links.
@@ -11,6 +16,8 @@ export function UnsavedChangesGuard({
   message: string;
 }): JSX.Element | null {
   const router = useContext(UNSAFE_DataRouterContext);
+  const sourceId = useId();
+  useEffect(() => (dirty ? registerDirtySource(sourceId) : undefined), [dirty, sourceId]);
   useEffect(() => {
     if (!dirty) return;
     const leave = (event: BeforeUnloadEvent) => {
@@ -23,12 +30,31 @@ export function UnsavedChangesGuard({
   return router ? <RouteGuard dirty={dirty} message={message} /> : null;
 }
 
-function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): null {
-  const blocker = useBlocker(dirty);
-  useEffect(() => {
-    if (blocker.state !== "blocked") return;
-    if (window.confirm(message)) blocker.proceed();
-    else blocker.reset();
-  }, [blocker, message]);
-  return null;
+function RouteGuard({ dirty, message }: { dirty: boolean; message: string }): JSX.Element | null {
+  // Function form so the bypass is evaluated per navigation attempt, and the
+  // one-shot consume cannot strand: the immediate guarded transition uses it.
+  const blocker = useBlocker(() => !consumeNavigationBypass() && dirty);
+  if (blocker.state !== "blocked") return null;
+  return (
+    <Dialog
+      footer={
+        <>
+          <button onClick={() => blocker.reset()} type="button">
+            {t("ui.cancel")}
+          </button>
+          <button
+            className="ui-button--primary"
+            data-primary
+            onClick={() => blocker.proceed()}
+            type="button"
+          >
+            {t("ui.confirm")}
+          </button>
+        </>
+      }
+      onClose={() => blocker.reset()}
+      title={message}
+      width="s"
+    />
+  );
 }
