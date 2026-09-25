@@ -71,7 +71,8 @@ def test_svg_path_and_transforms_apply():
     ).encode()
     result = section_import.import_section("sash.svg", content)
     pts = result.candidates[0]["points"]
-    assert [p[0] for p in pts] == ["10.0", "70.0", "70.0", "10.0", "10.0"]
+    # The Z-close duplicate is stripped — the contract wants distinct vertices.
+    assert [p[0] for p in pts] == ["10.0", "70.0", "70.0", "10.0"]
     assert result.candidates[0]["area"] == "4200.00"
 
 
@@ -231,3 +232,34 @@ def test_service_rejects_unparseable(monkeypatch):
             org_id="org-1", file_name="notes.txt", content=b"hello world", content_type=""
         )
     assert "section" in str(exc.value)
+
+
+def test_svg_path_with_two_closed_subpaths_yields_two_candidates():
+    from catalogs.section_import import parse_svg
+
+    svg = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"
+        width="100mm" height="100mm">
+      <path d="M 0 0 L 100 0 L 100 100 L 0 100 Z
+               M 20 20 L 80 20 L 80 80 L 20 80 Z"/>
+    </svg>"""
+    result = parse_svg(svg)
+    assert len(result.candidates) == 2
+
+
+def test_svg_deeply_nested_groups_do_not_recurse_forever():
+    from catalogs.section_import import parse_svg
+
+    depth = 200
+    svg = (
+        b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">'
+        + b"<g>" * depth
+        + b'<rect x="0" y="0" width="5" height="5"/>'
+        + b"</g>" * depth
+        + b"</svg>"
+    )
+    try:
+        result = parse_svg(svg)
+    except Exception as error:  # no closed candidate is fine — never RecursionError
+        assert not isinstance(error, RecursionError)
+        return
+    assert any("deeper than" in w for w in result.warnings)

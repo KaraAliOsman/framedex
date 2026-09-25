@@ -710,10 +710,11 @@ export function SystemWorkspaceView({
               <div>
                 <h4>{wst("stations")}</h4>
                 <ul className="ws-stations">
-                  {(process_profile.stations as { station?: string; work_center?: string }[]).map(
+                  {(process_profile.stations as { code?: string; station?: string; when?: string; work_center?: string }[]).map(
                     (station, index) => (
                       <li key={index}>
-                        <strong>{station.station ?? "?"}</strong>
+                        <strong>{station.code ?? station.station ?? "?"}</strong>
+                        {station.when && <small> · {station.when}</small>}
                         {station.work_center && <small> · {station.work_center}</small>}
                       </li>
                     ),

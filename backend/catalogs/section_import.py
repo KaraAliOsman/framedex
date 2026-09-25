@@ -490,12 +490,21 @@ def parse_svg(content: bytes) -> SectionImportResult:
     def local(tag: str) -> str:
         return tag.rsplit("}", 1)[-1].lower()
 
-    def walk(element, transform):
-        nonlocal open_count
+    MAX_DEPTH = 64
+    deep_count = 0
+
+    def walk(element, transform, depth: int = 0):
+        nonlocal open_count, deep_count
+        if depth > MAX_DEPTH:
+            # Nesting deeper than a real drawing needs is adversarial input —
+            # stop descending before the interpreter stack does.
+            deep_count += 1
+            return
         m = _compose(transform, _parse_transform(element.get("transform")))
         name = local(element.tag)
-        points: list[tuple[Decimal, Decimal]] = []
-        closed = False
+        # Every independently closed outline is its own candidate — a single
+        # path can carry the frame contour AND the channel contour.
+        outlines: list[tuple[list[tuple[Decimal, Decimal]], bool]] = []
         if name in ("polygon", "polyline"):
             nums = [
                 Decimal(n)
@@ -507,25 +516,35 @@ def parse_svg(content: bytes) -> SectionImportResult:
             closed = name == "polygon" or (
                 len(points) > 2 and points[0] == points[-1]
             )
+            if points:
+                outlines.append((points, closed))
         elif name == "path":
             subs, _ = _path_points(element.get("d") or "")
             for sub in subs:
-                if len(sub) >= 3 and sub[0] == sub[-1]:
-                    points = sub
-                    closed = True
+                if len(sub) >= 3:
+                    outlines.append((sub, sub[0] == sub[-1]))
         for child in element:
-            walk(child, m)
-        if not points:
-            return
-        world = [_apply_matrix(m, x, y) for x, y in points]
-        if closed:
-            candidates.append(
-                SectionCandidate(tag=f"{name}#{len(candidates) + 1}", points=world)
-            )
-        else:
-            open_count += 1
+            walk(child, m, depth + 1)
+        for points, closed in outlines:
+            world = [_apply_matrix(m, x, y) for x, y in points]
+            if closed:
+                # A Z-closed outline repeats its first vertex at the end —
+                # the section contract requires distinct vertices.
+                if len(world) > 1 and world[0] == world[-1]:
+                    world = world[:-1]
+                candidates.append(
+                    SectionCandidate(
+                        tag=f"{name}#{len(candidates) + 1}", points=world
+                    )
+                )
+            else:
+                open_count += 1
 
     walk(root, (1.0, 0.0, 0.0, 1.0, 0.0, 0.0))
+    if deep_count:
+        warnings.append(
+            f"{deep_count} nested element(s) deeper than {MAX_DEPTH} levels skipped."
+        )
     if open_count:
         warnings.append(f"{open_count} open outline(s) skipped — only closed shapes qualify.")
     return _finish("svg", mm_per_unit, candidates, warnings)

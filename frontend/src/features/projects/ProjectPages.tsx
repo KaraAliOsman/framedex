@@ -371,9 +371,10 @@ function commercialSteps(
   );
   // A sealed version only counts as "sent for quote" when it IS the current
   // revision — an old sealed draft must not light this step forever.
+  // "Quoted" means the CURRENT revision is sealed — pricing applied to a
+  // live draft is preparation, not a finished quote the client can review.
   const quoted =
-    project.pricing_current ||
-    (project.versions?.some((v) => v.revision_code === project.current_revision) ?? false);
+    project.versions?.some((v) => v.revision_code === project.current_revision) ?? false;
   const approved = rank >= 2 || approvedRecord;
   const collected = Number(payments?.collected ?? "0");
   const paid = payments?.status === "PAID";
@@ -453,6 +454,7 @@ function projectNextAction(
   project: ProjectResponse,
   payments: PaymentsSummary | undefined,
   canWrite: boolean,
+  canRelease: boolean,
   approvals: ApprovalRecord[],
   now: number,
 ): NextAction | undefined {
@@ -487,7 +489,10 @@ function projectNextAction(
       if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
       if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
       // Approved and settled — the remaining work is releasing the sealed
-      // revision into production, which lives in the quote section.
+      // revision into production. Only roles the release endpoint accepts
+      // (owner / workshop manager) get the shortcut; estimators can't act
+      // on it, so for them the header stays honest instead of dead-ending.
+      if (!canRelease) return undefined;
       return { labelKey: "projects.next.release", section: "quote" };
     case "IN_PRODUCTION":
       return { labelKey: "projects.next.production", to: "/production" };
@@ -500,11 +505,13 @@ function ProjectHeader({
   project,
   orgId,
   canWrite,
+  canRelease,
   onOpenSection,
 }: {
   project: ProjectResponse;
   orgId: string;
   canWrite: boolean;
+  canRelease: boolean;
   onOpenSection: (section: FactsSection) => void;
 }): JSX.Element {
   const payments = useQuery({
@@ -550,7 +557,7 @@ function ProjectHeader({
     return () => window.clearTimeout(id);
   }, [soonestExpiry]);
   const steps = commercialSteps(project, approvalsList, payments.data, now);
-  const action = projectNextAction(project, payments.data, canWrite, approvalsList, now);
+  const action = projectNextAction(project, payments.data, canWrite, canRelease, approvalsList, now);
   return (
     <div className="project-head">
       <div className="project-head__row">
@@ -1158,6 +1165,7 @@ function ProjectWorkspace({
       {project ? (
         <ProjectHeader
           canWrite={canWrite}
+          canRelease={canSendEnvio}
           orgId={orgId}
           onOpenSection={(section) => {
             setFactsCollapsed(false);
