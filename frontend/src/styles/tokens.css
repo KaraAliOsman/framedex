@@ -33,6 +33,7 @@
   --theme-success-soft: #e3f2ea;
   --theme-danger: #b3372f;
   --theme-danger-soft: #fbe9e7;
+  --theme-danger-ink: #ffffff;
   --theme-info: var(--theme-accent);
   --theme-info-soft: var(--theme-accent-soft);
   /* Technical states — UNKNOWN means the authority is absent (not "unset"),
@@ -88,6 +89,7 @@
   --theme-success-soft: #16291f;
   --theme-danger: #e06154;
   --theme-danger-soft: #331d1a;
+  --theme-danger-ink: #ffffff;
   --theme-info: var(--theme-accent);
   --theme-info-soft: var(--theme-accent-soft);
   --theme-unknown: #93a19d;

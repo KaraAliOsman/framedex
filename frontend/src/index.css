@@ -727,7 +727,7 @@ a:focus-visible {
   align-items: center;
   background: var(--theme-danger);
   border-radius: var(--radius-pill);
-  color: #ffffff;
+  color: var(--theme-danger-ink);
   display: inline-flex;
   font-size: 0.5625rem;
   font-weight: 700;
