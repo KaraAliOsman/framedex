@@ -123,13 +123,18 @@ function SolidMesh({
 function CameraRig({ radius }: { radius: number }): null {
   const camera = useThree((state) => state.camera);
   const controls = useThree((state) => state.controls) as unknown as {
+    target?: THREE.Vector3;
     update?: () => void;
   } | null;
   useEffect(() => {
     const distance = radius * 2.4;
-    const dir = camera.position.clone();
+    // Refit along the current view direction around the controls' target —
+    // panning moves both, so rescaling about the world origin would change
+    // the orbit angle and slide the product off-screen.
+    const target = controls?.target ?? new THREE.Vector3();
+    const dir = camera.position.clone().sub(target);
     if (dir.lengthSq() === 0) dir.set(0.5, 0.55, 1);
-    camera.position.copy(dir.normalize().multiplyScalar(distance));
+    camera.position.copy(target).add(dir.normalize().multiplyScalar(distance));
     camera.near = 1;
     camera.far = distance * 10;
     camera.updateProjectionMatrix();

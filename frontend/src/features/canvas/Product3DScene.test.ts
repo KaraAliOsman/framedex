@@ -538,4 +538,51 @@ describe("buildScene3D", () => {
     expect(coupler.size[1]).toBeCloseTo(1400, 5);
     expect(coupler.size[2]).toBeCloseTo(60, 5);
   });
+
+  it("keeps a shallow-angle coupler as a prism", () => {
+    const product = makeBowProduct({
+      moduleCount: 2,
+      widthMm: 900,
+      heightMm: 1400,
+      angleDeg: 0.01,
+    });
+    const productWithCoupling = {
+      ...product,
+      assembly: {
+        modules: product.assembly.modules,
+        couplings: [
+          {
+            id: "c1",
+            modules: [product.assembly.modules[0]!.id, product.assembly.modules[1]!.id],
+            edges: ["right", "left"],
+            kind: "INLINE" as const,
+            coupler_profile_sku: null,
+            angle_deg: "0.01",
+          },
+        ],
+      },
+    } as ProductJson;
+    const plan: PlanGeometry = {
+      front_chain: [],
+      modules: [],
+      min_x_mm: "0",
+      min_y_mm: "0",
+      width_mm: "1800",
+      height_mm: "60",
+      couplings: [
+        {
+          coupling_id: "c1",
+          // 0.01° still yields three distinct quantized points (~0.31 mm²)
+          polygon: [
+            { x_mm: "450", y_mm: "0" },
+            { x_mm: "450", y_mm: "-60" },
+            { x_mm: "450.01", y_mm: "-60" },
+          ],
+        },
+      ],
+    };
+    const scene = buildScene3D(productWithCoupling, members, plan);
+    const coupler = scene.couplers.find((solid) => solid.owner === "c1");
+    expect(coupler?.kind).toBe("prism");
+  });
 });
