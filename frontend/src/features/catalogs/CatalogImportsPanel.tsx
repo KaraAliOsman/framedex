@@ -60,6 +60,7 @@ const WARNING_LABEL: Record<string, string> = {
   catalog_name_missing: "importsWarnNameMissing",
   catalog_role_unknown: "importsWarnRoleUnknown",
   catalog_face_width_missing: "importsWarnFaceMissing",
+  catalog_face_width_ambiguous: "importsWarnFaceAmbiguous",
   catalog_conflicts_existing: "importsWarnConflict",
 };
 const ITEM_ERROR_LABEL: Record<string, string> = {
@@ -83,10 +84,21 @@ function codeText(code: string): string {
   return ct(WARNING_LABEL[code] ?? ITEM_ERROR_LABEL[code] ?? "importsErrorUnknown");
 }
 
-/** 'Seguro' = high parse confidence and no disagreement with the live catalog
- * — bulk-accepting is only honest on exactly those rows. */
+const CONFIDENCE_LABEL: Record<string, string> = {
+  VERIFIED_STRUCTURED: "importsConfidenceVerified",
+  HIGH_CANDIDATE: "importsConfidenceCandidate",
+  REVIEW_REQUIRED: "importsConfidenceReview",
+  LOW: "importsConfidenceLow",
+};
+
+/** 'Seguro' = structured or unambiguous evidence and no disagreement with the
+ * live catalog. Pre-selection only — every suggestion still waits for the
+ * human confirm; REVIEW_REQUIRED/LOW rows are never pre-selected. */
 function isSafe(candidate: Candidate): boolean {
-  return candidate.confidence === "HIGH" && !candidate.conflict;
+  return (
+    (candidate.confidence === "VERIFIED_STRUCTURED" || candidate.confidence === "HIGH_CANDIDATE") &&
+    !candidate.conflict
+  );
 }
 
 function formatDate(value: string): string {
@@ -412,7 +424,7 @@ export function CatalogImportsPanel({
                   <th>{ct("importsFieldReinforcement")}</th>
                   <th>{ct("importsFieldWeight")}</th>
                   <th>{ct("importsFieldSteelWeight")}</th>
-                  <th>{t("projects.importsConfidence")}</th>
+                  <th>{ct("importsConfidence")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -530,9 +542,7 @@ export function CatalogImportsPanel({
                           <span
                             className={`production-chip imports-confidence-${row.confidence.toLowerCase()}`}
                           >
-                            {row.confidence === "HIGH"
-                              ? t("projects.importsConfidenceHigh")
-                              : t("projects.importsConfidenceReview")}
+                            {ct(CONFIDENCE_LABEL[row.confidence] ?? "importsConfidenceReview")}
                           </span>
                           {row.warnings.length > 0 && (
                             <span className="imports-warning">

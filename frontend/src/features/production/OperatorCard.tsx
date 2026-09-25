@@ -72,11 +72,12 @@ type SheetPiece = {
 };
 
 /** Stock kinds each routing step physically consumes — mirrors the backend's
- * consume mapping (bars/sheets at CUT, kits/fittings at ASSEMBLE, panels at
- * GLAZE); QC and PACK reserve nothing. */
+ * consume mapping (bars/sheets at CUT, kits/fittings at ASSEMBLE/HARDWARE,
+ * panels at GLAZE); QC, PACK and the process steps reserve nothing. */
 const STEP_STOCK_KINDS: Record<string, string[]> = {
   CUT: ["BAR", "SHEET"],
   ASSEMBLE: ["HARDWARE_KIT", "FITTING"],
+  HARDWARE: ["HARDWARE_KIT", "FITTING"],
   GLAZE: ["PANEL"],
 };
 
@@ -124,8 +125,20 @@ export function OperatorStepCard({
   const bars = trace ? _bars(trace) : [];
   const sheets = trace ? _sheets(trace) : [];
 
-  const sawOps = ops.filter((op) => op.kind === "SAW_CUT");
-  const memberOps = ops.filter((op) => op.kind !== "SAW_CUT");
+  // Ops land on the station the frozen process authority declares for their
+  // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
+  // A kind absent from the map is never silently sent to the saw — it
+  // surfaces as an unassigned blocker. Orders frozen before the authority
+  // model keep the legacy saw/member split.
+  const stationMap = trace?.operations?.station_map as Record<string, string> | undefined;
+  const stepOps = stationMap
+    ? ops.filter((op) => stationMap[String(op.kind ?? "")] === step.code)
+    : ops.filter((op) => (op.kind === "SAW_CUT" ? step.code === "CUT" : step.code === "MACHINING"));
+  const unassignedOps = stationMap
+    ? ops.filter((op) => !(String(op.kind ?? "") in stationMap))
+    : [];
+  const sawOps = stepOps.filter((op) => op.kind === "SAW_CUT");
+  const memberOps = stepOps.filter((op) => op.kind !== "SAW_CUT");
   const cutPieces: Array<{ barIndex: number; source?: string } & CutPiece> = [];
   if (step.code === "CUT") {
     for (const bar of bars) {
@@ -170,9 +183,14 @@ export function OperatorStepCard({
         </p>
       ) : (
         <div className="operator-card-body">
-          {blockers.length || (step.code === "CUT" && unmapped.length) ? (
+          {blockers.length || (step.code === "CUT" && unmapped.length) || unassignedOps.length ? (
             <p className="operator-blockers" role="alert">
-              {t("production.operatorBlockers")}
+              {blockers.length ? t("production.operatorBlockers") : ""}
+              {unassignedOps.length
+                ? ` · ${t("production.operatorUnassignedOps")}: ${[
+                    ...new Set(unassignedOps.map((op) => op.kind ?? "")),
+                  ].join(", ")}`
+                : ""}
               {unmapped.length && step.code === "CUT"
                 ? ` · ${t("production.operatorUnmapped")}: ${unmapped.join(", ")}`
                 : ""}
@@ -241,10 +259,10 @@ export function OperatorStepCard({
             </div>
           ) : null}
 
-          {step.code === "CUT" ? (
+          {step.code === "CUT" || step.code === "MACHINING" || stepOps.length ? (
             <div className="operator-section">
               <h4>{t("production.operatorSequence")}</h4>
-              {ops.length ? (
+              {stepOps.length ? (
                 <>
                   {sawOps.length ? (
                     <table className="production-plan operator-ops">
@@ -280,7 +298,7 @@ export function OperatorStepCard({
                     <table className="production-plan operator-ops">
                       <thead>
                         <tr>
-                          <th>{t("production.operatorMachining")}</th>
+                          <th>{t("production.operatorOperation")}</th>
                           <th>{t("production.operatorHost")}</th>
                           <th>x/y (mm)</th>
                           <th>{t("production.operatorDepth")}</th>

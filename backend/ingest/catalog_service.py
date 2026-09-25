@@ -288,6 +288,10 @@ def extract_catalog_import(*, org_id: UUID, import_id: UUID, actor_id: UUID) -> 
         except Exception as error:
             code = getattr(error, "contract_code", "ai_gateway_error")
             warnings.append(f"catalog.compile_failed:{code}")
+    for candidate in candidates:
+        # Evidence's document id = the import row — review can trace every
+        # field back to the exact document it was extracted from.
+        candidate.setdefault("evidence", {})["document_id"] = str(import_id)
     if not candidates:
         warnings.append("catalog.no_candidates")
     else:

@@ -39,18 +39,25 @@ in `input_payload` is serialized as the user message.
 1. Set `AI_GATEWAY_MIMO_API_KEY`, `AI_GATEWAY_MIMO_BASE_URL`
    (pay-as-you-go `sk-` keys use `https://api.xiaomimimo.com/v1`;
    Token Plan `tp-` keys use the dedicated base URL shown on the plan
-   page, e.g. `https://token-plan-cn.xiaomimimo.com/v1`),
-   `AI_GATEWAY_MIMO_MODEL`.
+   page, e.g. `https://token-plan-sgp.xiaomimimo.com/v1`),
+   `AI_GATEWAY_MIMO_MODEL` — or leave the model unset so the route's own
+   `provider_model` pin decides.
 2. Point the capability route at the provider — a privileged operational
-   statement (routes are backend-read-only):
+   statement (routes are backend-read-only). Current deployments pin every
+   capability to `mimo-v2.6-pro`:
 
    ```sql
    UPDATE public.ai_routes
       SET provider = 'MIMO',
-          provider_model = 'mimo-v1-pro',   -- informational; env model wins
+          provider_model = 'mimo-v2.6-pro',
           prompt_version = 'design-assist-v2'
     WHERE capability = 'design_assist';
    ```
+
+   Capability routing stays intentional: a route can bind a different
+   model per capability (`provider_model` on that route's row, or
+   `AI_GATEWAY_{P}_MODEL` as a deployment-wide override) without any
+   product-code change.
 
 3. Revert any time by restoring `provider = 'MOCK'`.
 

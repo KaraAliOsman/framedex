@@ -278,10 +278,27 @@ class KitWriteSerializer(StrictSerializer):
     is_active = serializers.BooleanField()
 
 
+class ReadinessBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    missing_authority = serializers.CharField()
+    affected = serializers.CharField()
+    why = serializers.CharField()
+    action = serializers.CharField()
+
+
+class ReadinessLevelSerializer(serializers.Serializer):
+    level = serializers.CharField()
+    ok = serializers.BooleanField(required=False)
+    state = serializers.CharField(required=False)
+    blockers = ReadinessBlockerSerializer(many=True)
+
+
 class CatalogReadinessSerializer(serializers.Serializer):
     quote_ready = serializers.BooleanField()
     scope = serializers.CharField()
     reasons = serializers.ListField(child=serializers.CharField())
+    levels = ReadinessLevelSerializer(many=True, required=False)
+    process_via = serializers.CharField(required=False, allow_null=True)
 
 
 class ProvenanceFieldsMixin(serializers.Serializer):

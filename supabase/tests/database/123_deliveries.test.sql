@@ -22,7 +22,7 @@ SELECT ok(
     EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'public' AND tablename = 'deliveries'
-          AND policyname = 'deliveries_isolation'
+          AND policyname = 'deliveries_member_read'
     ),
     'tenant isolation policy in place'
 );

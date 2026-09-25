@@ -54,28 +54,280 @@ def _version_row(snapshot: dict) -> dict:
 
 _POSITION_ID = str(uuid4())
 _SNAPSHOT = {
-    "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+    "positions": [
+        {
+            "id": _POSITION_ID,
+            "system_id": str(uuid4()),
+            # The authority the version sealed under — release consumes this
+            # verbatim; a later catalog/profile edit can never re-route it.
+            "process_facts": {
+                "system": {
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
+                },
+                "profile": {
+                    "id": "11111111-2222-3333-4444-555555555555",
+                    "code": "PVC_WELDED",
+                    "version": 1,
+                    "joining_method": "WELD",
+                    "stations": [
+                        {"code": "CUT", "when": "auto"},
+                        {"code": "MACHINING", "when": "auto"},
+                        {"code": "WELD", "when": "required"},
+                        {"code": "CLEAN", "when": "required"},
+                        {"code": "SASH_ASSEMBLE", "when": "auto"},
+                        {"code": "HARDWARE", "when": "auto"},
+                        {"code": "GLAZE", "when": "auto"},
+                        {"code": "QC", "when": "required"},
+                        {"code": "PACK", "when": "required"},
+                    ],
+                    "operation_station_map": {"END_MACHINING": "MACHINING", "SAW_CUT": "CUT"},
+                },
+                "resolved_via": "material_default",
+            },
+        }
+    ],
     "bom": [
         {
             "position_id": _POSITION_ID,
             "quantity": 1,
             "engine_result": {
-                "profile_cuts": [{"sku": "MARCO", "length_mm": "900"}],
+                "profile_cuts": [{"sku": "MARCO", "role": "SASH", "length_mm": "900"}],
                 "reinforcements": [],
                 "glasses": [{"width_mm": "800", "height_mm": "600"}],
                 "panels": [],
-                "hardware_items": [],
+                "hardware_items": [{"sku": "KIT-1"}],
             },
         }
     ]
 }
 
 
+def _profile(
+    code: str,
+    stations: list[dict[str, str]],
+    *,
+    operation_station_map: dict[str, str] | None = None,
+) -> dict[str, object]:
+    return {
+        "id": "11111111-2222-3333-4444-555555555555",
+        "code": code,
+        "version": 1,
+        "joining_method": "WELD" if "WELD" in [s["code"] for s in stations] else "NONE",
+        "stations": stations,
+        "operation_station_map": operation_station_map or {},
+    }
+
+
 def test_routing_skips_cut_and_glaze_without_materials() -> None:
-    routing = service._routing({"glasses": [], "panels": [], "profile_cuts": [], "reinforcements": []})
+    routing = service._routing({"glasses": [], "panels": [], "profile_cuts": [], "reinforcements": []}, profile=None)
     assert routing == ["ASSEMBLE", "QC", "PACK"]
-    routing = service._routing({"profile_cuts": [{"sku": "x"}], "glasses": [{"a": 1}], "panels": []})
+    routing = service._routing(
+        {"profile_cuts": [{"sku": "x"}], "glasses": [{"a": 1}], "panels": []},
+        profile=None,
+    )
     assert routing == ["CUT", "ASSEMBLE", "GLAZE", "QC", "PACK"]
+
+
+def test_routing_follows_the_declared_profile_stations() -> None:
+    engine = {
+        "profile_cuts": [{"sku": "x", "role": "SASH"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+        "hardware_items": [{"sku": "h"}],
+    }
+    pvc = _profile("PVC_WELDED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "CLEAN", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    assert service._routing(engine, profile=pvc) == [
+        "CUT", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(engine, profile=pvc, end_milling_overlap_mm="1.50") == [
+        "CUT", "MACHINING", "WELD", "CLEAN", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "required"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    assert service._routing(engine, profile=alu) == [
+        "CUT", "MACHINING", "CRIMP", "SASH_ASSEMBLE", "HARDWARE", "GLAZE", "QC", "PACK"
+    ]
+    # A fixed window has no sash to assemble and no hardware to mount — the
+    # stations follow the sealed result under the declared template.
+    fixed = {
+        "profile_cuts": [{"sku": "x", "role": "FRAME"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+        "hardware_items": [],
+    }
+    assert service._routing(fixed, profile=pvc) == [
+        "CUT", "WELD", "CLEAN", "GLAZE", "QC", "PACK"
+    ]
+    assert service._routing(fixed, profile=alu) == [
+        "CUT", "MACHINING", "CRIMP", "GLAZE", "QC", "PACK"
+    ]
+
+
+def test_frameless_profile_never_acquires_joining_stations() -> None:
+    """The pane is the product: FRAMELESS_GLASS has no WELD/CRIMP in its
+    template regardless of the associated system's material family."""
+    frameless_profile = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ])
+    engine = {
+        "profile_cuts": [{"sku": "CANAL", "role": "CHANNEL"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "reinforcements": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+    }
+    routing = service._routing(engine, profile=frameless_profile)
+    assert "WELD" not in routing
+    assert "CRIMP" not in routing
+    assert routing == ["CUT", "HARDWARE", "GLAZE", "QC", "PACK"]
+
+
+def test_mixed_assembly_merges_frameless_into_the_declared_profile() -> None:
+    """A framed unit + a frameless pane in one position: the declared
+    profile keeps its joining authority while the pane contributes the
+    stations/op mappings only frameless work produces."""
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "required"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={
+        "SAW_CUT": "CUT", "END_MACHINING": "MACHINING",
+        "HANDLE_PREP": "MACHINING", "DRAINAGE": "MACHINING",
+    })
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "HARDWARE"})
+    frameless["optional_operations"] = ["HANDLE_PREP"]
+
+    merged = service._merge_frameless(alu, frameless)
+    codes = [s["code"] for s in merged["stations"]]
+    assert "CRIMP" in codes and "HARDWARE" in codes
+    # A pane is never machined: its prep ops land on the fitting station.
+    assert merged["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+    assert merged["operation_station_map"]["END_MACHINING"] == "MACHINING"
+    assert "HANDLE_PREP" in merged["optional_operations"]
+
+
+def test_mixed_resolution_keeps_joining_and_routes_pane_ops() -> None:
+    alu = _profile("ALU_CRIMPED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "CRIMP", "when": "required"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "MACHINING"})
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+    ], operation_station_map={"HANDLE_PREP": "HARDWARE"})
+    frameless["optional_operations"] = ["HANDLE_PREP"]
+
+    def fake_load(org_id, **kwargs):
+        if kwargs.get("product_kind") == "FRAMELESS":
+            return frameless, "product_kind"
+        if kwargs.get("material") == "ALUMINIUM":
+            return alu, "material_default"
+        return None, None
+
+    # Framed sash + frameless channel pane in the same sealed result.
+    engine = {
+        "profile_cuts": [
+            {"sku": "MARCO", "role": "FRAME"},
+            {"sku": "CANAL", "role": "CHANNEL"},
+        ],
+        "glasses": [{"a": 1, "exposed_edges": [0]}],
+        "panels": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+        "hardware_items": [{"sku": "h"}],
+    }
+    with patch("production.service._load_profile_for", side_effect=fake_load):
+        profile, via = service._resolve_process_profile(
+            uuid4(), engine, {"material": "ALUMINIUM"}
+        )
+    assert via == "material_default_mixed"
+    assert profile["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+
+
+def test_handle_ops_land_on_the_profile_declared_station() -> None:
+    frameless = _profile("FRAMELESS_GLASS", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "HARDWARE"})
+    engine = {
+        "profile_cuts": [{"sku": "CANAL", "role": "CHANNEL"}],
+        "glasses": [{"a": 1}],
+        "panels": [],
+        "fittings": [{"sku": "CLAMP-1"}],
+    }
+    routing = service._routing(engine, profile=frameless, has_handles=True)
+    assert "HARDWARE" in routing
+    assert "MACHINING" not in routing
+    # And a profile that maps prep to the mill still lands MACHINING.
+    pvc = _profile("PVC_WELDED", [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ], operation_station_map={"SAW_CUT": "CUT", "HANDLE_PREP": "MACHINING"})
+    framed = {"profile_cuts": [{"sku": "x", "role": "SASH"}], "glasses": [{"a": 1}]}
+    assert service._routing(framed, profile=pvc, has_handles=True) == [
+        "CUT", "MACHINING", "WELD", "QC", "PACK"
+    ]
+
+
+def test_process_authority_freezes_the_declared_map() -> None:
+    authority = service._process_authority(
+        _profile(
+            "ALU_CRIMPED", [],
+            operation_station_map={"END_MACHINING": "MACHINING", "HANDLE_PREP": "HARDWARE"},
+        ),
+        "material_default",
+    )
+    assert authority["code"] == "ALU_CRIMPED"
+    assert authority["version"] == 1
+    assert authority["resolved_via"] == "material_default"
+    assert authority["operation_station_map"]["HANDLE_PREP"] == "HARDWARE"
+    assert service._process_authority(None, None)["resolved_via"] == "fallback"
 
 
 def test_release_rejects_not_allowed_version() -> None:
@@ -90,7 +342,12 @@ def test_release_rejects_not_allowed_version() -> None:
 
 
 def test_release_creates_work_order_with_steps() -> None:
-    version = _version_row(_SNAPSHOT)
+    # Legacy version (no frozen process_facts) → honest generic ladder.
+    snapshot = {
+        "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+        "bom": _SNAPSHOT["bom"],
+    }
+    version = _version_row(snapshot)
     order_id = uuid4()
     inserted_rows = []
 
@@ -134,6 +391,206 @@ def test_release_creates_work_order_with_steps() -> None:
     assert len(step_inserts) == 5  # CUT ASSEMBLE GLAZE QC PACK
     event_inserts = [q for q in inserted_rows if "production_step_events" in q]
     assert len(event_inserts) == 1
+
+
+_PVC_PROFILE_ROW = {
+    "id": "11111111-2222-3333-4444-555555555555",
+    "org_id": None,
+    "code": "PVC_WELDED",
+    "version": 1,
+    "joining_method": "WELD",
+    "stations": [
+        {"code": "CUT", "when": "auto"},
+        {"code": "MACHINING", "when": "auto"},
+        {"code": "WELD", "when": "required"},
+        {"code": "CLEAN", "when": "required"},
+        {"code": "SASH_ASSEMBLE", "when": "auto"},
+        {"code": "HARDWARE", "when": "auto"},
+        {"code": "GLAZE", "when": "auto"},
+        {"code": "QC", "when": "required"},
+        {"code": "PACK", "when": "required"},
+    ],
+    "operation_station_map": {"END_MACHINING": "MACHINING", "SAW_CUT": "CUT"},
+}
+
+
+def test_release_routes_steps_by_declared_process_profile() -> None:
+    version = _version_row(_SNAPSHOT)
+    order_id = uuid4()
+    inserted_rows = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.profile_systems" in query:
+            return [
+                {
+                    "id": _SNAPSHOT["positions"][0]["system_id"],
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
+                }
+            ]
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [_PVC_PROFILE_ROW]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [
+                {
+                    "id": order_id,
+                    "order_code": "OT-REV-A-01",
+                    "order_type": "WORKSHOP_OT",
+                    "status": "RELEASED",
+                    "payload_json": service._work_order_payload(
+                        _SNAPSHOT["bom"][0],
+                        system_facts={"material": "PVC", "end_milling_overlap_mm": "0.00"},
+                    ),
+                    "project_version_id": version["id"],
+                    "created_at": "2026-09-23T00:00:00Z",
+                    "steps_total": 8,
+                    "steps_done": 0,
+                }
+            ]
+        inserted_rows.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ):
+        output = service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    assert output["released"] == 1 and output["created"] == 1
+    step_inserts = [q for q in inserted_rows if "production_steps" in q]
+    assert len(step_inserts) == 8  # CUT WELD CLEAN SASH_ASSEMBLE HARDWARE GLAZE QC PACK
+
+
+def test_release_freezes_process_authority_into_the_payload() -> None:
+    version = _version_row(_SNAPSHOT)
+    order_id = uuid4()
+    payloads: list[dict[str, object]] = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.profile_systems" in query:
+            return [
+                {
+                    "id": _SNAPSHOT["positions"][0]["system_id"],
+                    "material": "PVC",
+                    "end_milling_overlap_mm": "0.00",
+                    "process_profile_id": None,
+                }
+            ]
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [_PVC_PROFILE_ROW]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [{"id": order_id, "order_code": "OT", "order_type": "WORKSHOP_OT",
+                     "status": "RELEASED", "payload_json": {},
+                     "project_version_id": version["id"], "created_at": "x",
+                     "steps_total": 0, "steps_done": 0}]
+        return []
+
+    original = service._work_order_payload
+
+    def capture(*args, **kwargs):
+        payload = original(*args, **kwargs)
+        payloads.append(payload)
+        return payload
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ), patch("production.service._work_order_payload", side_effect=capture):
+        service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    authority = payloads[0]["process_authority"]
+    assert authority["code"] == "PVC_WELDED"
+    assert authority["version"] == 1
+    assert authority["resolved_via"] == "material_default"
+    assert authority["operation_station_map"]["END_MACHINING"] == "MACHINING"
+
+
+def test_release_without_frozen_facts_uses_legacy_fallback() -> None:
+    """Versions sealed before the authority model have no process_facts —
+    their facts are never reinterpreted through a later catalog revision."""
+    snapshot = {
+        "positions": [{"id": _POSITION_ID, "system_id": str(uuid4())}],
+        "bom": [dict(_SNAPSHOT["bom"][0])],
+    }
+    version = _version_row(snapshot)
+    order_id = uuid4()
+    payloads: list[dict[str, object]] = []
+
+    def fake_one(query, params=(), code=None):
+        if "project_versions" in query:
+            return version
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "FROM public.manufacturing_process_profiles" in query:
+            return [
+                {
+                    "id": "22222222-2222-3333-4444-555555555555",
+                    "code": "GENERIC_LEGACY",
+                    "version": 1,
+                    "joining_method": "NONE",
+                    "stations": [
+                        {"code": "CUT", "when": "auto"},
+                        {"code": "ASSEMBLE", "when": "auto"},
+                        {"code": "GLAZE", "when": "auto"},
+                        {"code": "QC", "when": "required"},
+                        {"code": "PACK", "when": "required"},
+                    ],
+                    "operation_station_map": {"SAW_CUT": "CUT"},
+                }
+            ]
+        if "INSERT INTO public.orders" in query:
+            return [{"id": order_id}]
+        if "FROM public.orders" in query and "GROUP BY" in query:
+            return [{"id": order_id, "order_code": "OT", "order_type": "WORKSHOP_OT",
+                     "status": "RELEASED", "payload_json": {},
+                     "project_version_id": version["id"], "created_at": "x",
+                     "steps_total": 0, "steps_done": 0}]
+        return []
+
+    original = service._work_order_payload
+
+    def capture(*args, **kwargs):
+        payload = original(*args, **kwargs)
+        payloads.append(payload)
+        return payload
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ), patch(
+        "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
+    ), patch("production.service._work_order_payload", side_effect=capture):
+        service.release_production(
+            org_id=uuid4(), version_id=version["id"], actor_id=uuid4()
+        )
+    authority = payloads[0]["process_authority"]
+    assert authority["code"] == "GENERIC_LEGACY"
+    assert authority["resolved_via"] == "generic_fallback"
 
 
 def test_release_replay_returns_existing() -> None:
@@ -255,6 +712,85 @@ def test_start_from_blocked_step_is_rejected() -> None:
     assert error.value.code == "step_transition_invalid"
 
 
+def test_unassigned_step_refuses_progress_until_a_center_exists() -> None:
+    # A step released while its center was inactive must not silently start —
+    # the payload blocker is the shop's to-do, not decoration.
+    step = _step_row(status="READY", code="CUT")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_center_unassigned"
+
+
+def test_unassigned_step_adopts_a_later_activated_center() -> None:
+    step = _step_row(status="READY", code="CUT")
+    center = {"id": uuid4(), "code": "SAW-1", "name": "Saw"}
+    updates: list[str] = []
+
+    def fake_one(query, params=(), code=None):
+        if "SELECT order_id FROM public.production_steps" in query:
+            return {"order_id": step["order_id"]}
+        if "FOR UPDATE OF s" in query:
+            return step
+        if "SELECT status::text" in query:
+            return {"status": "IN_PROGRESS"}
+        if "FROM public.production_steps s" in query:
+            return {**step, "status": "IN_PROGRESS", "work_center_id": center["id"],
+                    "work_center_code": center["code"], "work_center_name": center["name"]}
+        if "FROM public.production_steps" in query:
+            return {"total": 2, "done": 0, "blocked": 0, "in_progress": 1}
+        if "UPDATE public.orders" in query or "FROM public.orders" in query:
+            return {"id": step["order_id"], "status": "IN_PROGRESS"}
+        raise AssertionError(query)
+
+    def fake_rows(query, params=(), code=None):
+        if "FROM public.work_centers" in query:
+            return [center]
+        updates.append(query)
+        return []
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        service.transition_step(
+            org_id=uuid4(), step_id=step["id"], action="START",
+            actor_id=uuid4(), note=None,
+        )
+    assert step["work_center_id"] == center["id"]
+    # The step is assigned and the payload blocker cleared.
+    assert any("SET work_center_id" in query for query in updates)
+    assert any("jsonb_set" in query for query in updates)
+
+
+def test_pending_remake_step_refuses_progress_without_a_center() -> None:
+    # Remake steps are copied unassigned as PENDING — the same gate must hold.
+    step = _step_row(status="PENDING", code="CUT")
+    fake_one = _transition_fakes(step, "IN_PROGRESS")
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=lambda *a, **k: []
+    ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
+        "production.service.documentary_backend", side_effect=_atomic
+    ):
+        with pytest.raises(DocumentaryError) as error:
+            service.transition_step(
+                org_id=uuid4(), step_id=step["id"], action="START",
+                actor_id=uuid4(), note=None,
+            )
+    assert error.value.code == "work_center_unassigned"
+
+
 def test_note_action_requires_text() -> None:
     with pytest.raises(DocumentaryError) as error:
         service.transition_step(
@@ -341,7 +877,7 @@ def test_order_code_scopes_to_project() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
@@ -676,7 +1212,7 @@ def test_release_seals_system_from_snapshot_positions() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
@@ -722,7 +1258,7 @@ def test_release_seals_glass_polishing_from_snapshot_positions() -> None:
     ), patch("production.service.transaction.atomic", side_effect=_atomic), patch(
         "production.service.documentary_backend", side_effect=_atomic
     ), patch(
-        "production.service._ensure_work_centers", return_value={}
+        "production.service._ensure_work_centers", return_value=({}, set())
     ), patch(
         "production.service.production_stock.coverage_for_version", return_value={"shortages": 0}
     ):
@@ -788,8 +1324,9 @@ def test_optimize_rejects_replan_after_consumed_step() -> None:
 def test_complete_step_rejects_material_shortage() -> None:
     # A consuming step cannot complete while the plan is short material —
     # settling only the reserved part would let the order reach completion
-    # with pieces nobody can physically make.
-    step = _step_row(status="IN_PROGRESS", code="CUT")
+    # with pieces nobody can physically make. (Assigned center: the
+    # unassigned-step gate is exercised by its own test.)
+    step = _step_row(status="IN_PROGRESS", code="CUT", work_center_id=uuid4())
     payload = json.dumps({
         "optimization": {
             "stock_reservations": [
@@ -833,7 +1370,7 @@ def test_complete_step_rejects_material_shortage() -> None:
 def test_complete_cut_rejects_released_remnant() -> None:
     # An operator unreserved a drop the plan still claims — completing CUT
     # would settle stock another order may already have taken.
-    step = _step_row(status="IN_PROGRESS", code="CUT")
+    step = _step_row(status="IN_PROGRESS", code="CUT", work_center_id=uuid4())
     payload = json.dumps({
         "optimization": {
             "remnants": {
@@ -1103,7 +1640,7 @@ def test_qc_fail_blocks_step_and_holds_order(monkeypatch) -> None:
                 "code": "QC",
                 "label": "Control de calidad",
                 "status": "IN_PROGRESS",
-                "work_center_id": None,
+                "work_center_id": str(uuid4()),
                 "work_center_code": "QC",
                 "started_at": "2026-09-23T00:00:00+00:00",
                 "finished_at": None,

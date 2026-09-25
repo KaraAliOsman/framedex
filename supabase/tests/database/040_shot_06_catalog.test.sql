@@ -66,30 +66,27 @@ SELECT is((SELECT count(*) FROM public.infill_articles WHERE sku = 'PANEL-A'),
     1::BIGINT, 'A reads own panel');
 SELECT is((SELECT count(*) FROM public.infill_articles WHERE sku = 'PANEL-B'),
     0::BIGINT, 'A cannot read B panel even in a global system');
-WITH changed AS (UPDATE public.infill_articles SET weight_kg_m2 = 99.00
-    WHERE org_id IS NULL RETURNING id) SELECT is((SELECT count(*) FROM changed),
-    0::BIGINT, 'A cannot mutate global panel');
+SELECT throws_ok($$UPDATE public.infill_articles SET weight_kg_m2 = 99.00
+    WHERE org_id IS NULL$$, '42501', NULL,
+    'A cannot mutate global panel — member writes are grant-denied');
 SELECT throws_ok($$INSERT INTO public.infill_articles (system_id, sku, name, kind, thickness_mm)
     SELECT id, 'FORBIDDEN-GLOBAL', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501',
-    'new row violates row-level security policy for table "infill_articles"',
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501', NULL,
     'A cannot insert global panel');
-SELECT lives_ok($$INSERT INTO public.infill_articles
+SELECT throws_ok($$INSERT INTO public.infill_articles
     (system_id, org_id, sku, name, kind, thickness_mm)
     SELECT id, '11111111-1111-4111-8111-111111111111', 'A-NEW', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'PGTAP06'$$, 'A can insert own panel');
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501', NULL,
+    'A cannot insert an org panel — infill is authority data, member read-only');
 SELECT throws_ok($$INSERT INTO public.infill_articles
     (system_id, org_id, sku, name, kind, thickness_mm)
     SELECT id, '22222222-2222-4222-8222-222222222222', 'B-FORBIDDEN', 'X', 'SANDWICH_PANEL', 24.00
-    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501',
-    'new row violates row-level security policy for table "infill_articles"',
+    FROM public.profile_systems WHERE code = 'PGTAP06'$$, '42501', NULL,
     'A cannot write B panel');
-WITH changed AS (UPDATE public.infill_articles SET weight_kg_m2 = 11.00
-    WHERE sku = 'A-NEW' RETURNING id) SELECT is((SELECT count(*) FROM changed),
-    1::BIGINT, 'A can update own panel');
-WITH changed AS (DELETE FROM public.infill_articles
-    WHERE sku = 'A-NEW' RETURNING id) SELECT is((SELECT count(*) FROM changed),
-    1::BIGINT, 'A can delete own panel');
+SELECT throws_ok($$UPDATE public.infill_articles SET weight_kg_m2 = 11.00
+    WHERE sku = 'PANEL-A'$$, '42501', NULL, 'A cannot update an org panel');
+SELECT throws_ok($$DELETE FROM public.infill_articles
+    WHERE sku = 'PANEL-A'$$, '42501', NULL, 'A cannot delete an org panel');
 
 RESET ROLE;
 SET LOCAL ROLE authenticated;

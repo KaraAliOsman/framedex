@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
 
@@ -80,6 +80,11 @@ import {
   type ProductModuleJson,
 } from "./productEditing";
 import { OPENING_OPTIONS } from "./openings";
+
+/** §16 3D view: three.js + the scene builder stay out of the editing path —
+ * the bundle only loads when the user opens the panel (lazy chunk), and
+ * frameloop="demand" keeps it idle between interactions. */
+const Model3DView = lazy(() => import("./Model3DView"));
 
 const ISSUE_KEYS: Record<string, TranslationKey> = {
   couplings_count_mismatch: "assembly.issue.couplingsCountMismatch",
@@ -1485,6 +1490,7 @@ export function AssemblyEditor({
    * selection; complexity stays hidden until the user asks for it. */
   const [detail, setDetail] = useState<DetailLevel>("design");
   const [planOpen, setPlanOpen] = useState(true);
+  const [view3dOpen, setView3dOpen] = useState(false);
   /** Queued prompt for the assistant — "" means focus only. Every "…with
    * DEKOPEN" affordance funnels here; the human always confirms. */
   const [assistantDraft, setAssistantDraft] = useState<string | null>(null);
@@ -1914,6 +1920,35 @@ export function AssemblyEditor({
         {couplings.length > 0 && evaluation?.plan && !planOpen && (
           <button type="button" className="plan-toggle" onClick={() => setPlanOpen(true)}>
             {t("assembly.planView")}
+          </button>
+        )}
+        {view3dOpen ? (
+          <div className="model3d-inset" role="complementary" aria-label={t("assembly.view3d")}>
+            <div className="plan-inset__header">
+              <span>{t("assembly.view3d")}</span>
+              <button
+                type="button"
+                aria-label={t("assembly.hide3d")}
+                onClick={() => setView3dOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <Suspense fallback={<div className="model3d-loading">{t("assembly.loading3d")}</div>}>
+              <Model3DView
+                product={product}
+                members={members}
+                plan={evaluation?.plan ?? null}
+                selection={selection}
+                onSelectModule={pickModule}
+                onSelectBay={(moduleId, bayId) => select(`${moduleId}/${bayId}`)}
+                onSelectCoupling={select}
+              />
+            </Suspense>
+          </div>
+        ) : (
+          <button type="button" className="model3d-toggle" onClick={() => setView3dOpen(true)}>
+            {t("assembly.view3d")}
           </button>
         )}
       </div>

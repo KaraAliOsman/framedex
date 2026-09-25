@@ -16,7 +16,12 @@ import json
 from typing import Any
 from uuid import UUID
 
-from documents.repository import DocumentaryError, one, rows
+from documents.repository import (
+    DocumentaryError,
+    documentary_backend,
+    one,
+    rows,
+)
 
 from dekopen_engine.cutting import CutBar
 from dekopen_engine.manufacturing import ManufacturingFactsV1
@@ -129,15 +134,19 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
     version = None
     version_snapshot: dict[str, Any] = {}
     if order["project_version_id"]:
-        version = one(
-            """
-            SELECT id::text, revision_code, snapshot_sha256, bom_hash,
-                   emitted_at, production_allowed, snapshot_json::text
-            FROM public.project_versions WHERE id = %s AND org_id = %s
-            """,
-            [order["project_version_id"], str(org_id)],
-            "work_order_not_found",
-        )
+        # The frozen snapshot (PII/pricing/BOM) is denied to the
+        # authenticated role — the documentary authority resolves it
+        # server-side and only a role-safe projection reaches the client.
+        with documentary_backend():
+            version = one(
+                """
+                SELECT id::text, revision_code, snapshot_sha256, bom_hash,
+                       emitted_at, production_allowed, snapshot_json::text
+                FROM public.project_versions WHERE id = %s AND org_id = %s
+                """,
+                [order["project_version_id"], str(org_id)],
+                "work_order_not_found",
+            )
         version_snapshot = _decoded(version.pop("snapshot_json", None))
 
     steps = rows(
@@ -277,7 +286,28 @@ def _trace_operations(
     by_kind: dict[str, int] = {}
     for op in ops:
         by_kind[str(op["kind"])] = by_kind.get(str(op["kind"]), 0) + 1
-    return {"count": len(ops), "by_kind": by_kind, "items": ops}
+    # The frozen process authority decides which station an op kind lands on —
+    # the UI groups by this declared map, never by a frontend guess. Orders
+    # frozen before the authority model keep the legacy routing the shop used:
+    # saw cuts at the saw, every other member op at machining. Emitting the
+    # complete map (not a saw-only stub) is what lets the operator card treat
+    # legacy and frozen orders identically.
+    authority_map = (payload.get("process_authority") or {}).get("operation_station_map")
+    if authority_map:
+        station_map = dict(authority_map)
+        station_map.setdefault("SAW_CUT", "CUT")
+    else:
+        station_map = {
+            str(op["kind"]): ("CUT" if op["kind"] == "SAW_CUT" else "MACHINING")
+            for op in ops
+        }
+    return {
+        "count": len(ops),
+        "by_kind": by_kind,
+        "items": ops,
+        "station_map": station_map,
+        "process_authority": payload.get("process_authority") or {},
+    }
 
 
 def _piece_hits(order_row: dict[str, Any], piece_id: str) -> list[dict[str, Any]]:

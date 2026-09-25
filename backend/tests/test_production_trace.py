@@ -129,7 +129,8 @@ def _rows_factory():
 
 def test_trace_work_order_assembles_full_chain() -> None:
     with patch("production.trace.one", side_effect=_one_factory()), \
-         patch("production.trace.rows", side_effect=_rows_factory()):
+         patch("production.trace.rows", side_effect=_rows_factory()), \
+         patch("production.trace.documentary_backend"):
         report = trace.trace_work_order(org_id=ORG, order_id=ORDER)
 
     assert report["work_order"]["order_code"] == "OT-0001"

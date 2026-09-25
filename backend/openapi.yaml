@@ -12673,6 +12673,13 @@ components:
           type: array
           items:
             type: string
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadinessLevel'
+        process_via:
+          type: string
+          nullable: true
       required:
       - quote_ready
       - reasons
@@ -18525,6 +18532,41 @@ components:
       description: |-
         * `dual` - dual
         * `mono` - mono
+    ReadinessBlocker:
+      type: object
+      properties:
+        code:
+          type: string
+        missing_authority:
+          type: string
+        affected:
+          type: string
+        why:
+          type: string
+        action:
+          type: string
+      required:
+      - action
+      - affected
+      - code
+      - missing_authority
+      - why
+    ReadinessLevel:
+      type: object
+      properties:
+        level:
+          type: string
+        ok:
+          type: boolean
+        state:
+          type: string
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadinessBlocker'
+      required:
+      - blockers
+      - level
     ReceiptLineRequestRequest:
       type: object
       properties:

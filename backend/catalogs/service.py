@@ -99,14 +99,28 @@ def require_revision(current, expected):
         raise contract_error(409, "catalog_stale_edit", "catalogs.errors.stale_edit")
 
 
-def _visibility(resource):
-    if resource is SYSTEMS:
-        return "(org_id = %s OR (org_id IS NULL AND is_global))"
+def visibility_sql(*, child: bool, alias: str | None = None) -> str:
+    """Canonical catalog visibility — the ONLY definition of who sees what.
+
+    A row is visible when it belongs to the caller's org, or when it is a
+    NULL-org row scoped to a global system (the system itself for
+    ``child=False``). Every consumer — catalog service, global search,
+    future surfaces — resolves visibility through this function so the
+    rules can never diverge.
+    """
+    org_col = f"{alias}.org_id" if alias else "org_id"
+    if not child:
+        return f"({org_col} = %s OR ({org_col} IS NULL AND {alias + '.' if alias else ''}is_global))"
+    system_col = f"{alias}.system_id" if alias else "system_id"
     return (
-        "(org_id = %s OR (org_id IS NULL AND system_id IN "
+        f"({org_col} = %s OR ({org_col} IS NULL AND {system_col} IN "
         "(SELECT id FROM public.profile_systems "
         "WHERE org_id IS NULL AND is_global)))"
     )
+
+
+def _visibility(resource):
+    return visibility_sql(child=resource is not SYSTEMS)
 
 
 def list_rows(resource, org_id, system_id=None):

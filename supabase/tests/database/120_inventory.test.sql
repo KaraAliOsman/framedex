@@ -62,16 +62,17 @@ SELECT ok(
     'authenticated can only append to the movement ledger'
 );
 SELECT ok(
-    has_table_privilege('authenticated', 'public.inventory_movements', 'INSERT')
-    AND has_table_privilege('authenticated', 'public.inventory_movements', 'SELECT'),
-    'authenticated can append and read the movement ledger'
+    has_table_privilege('authenticated', 'public.inventory_movements', 'SELECT')
+    AND NOT has_table_privilege('authenticated', 'public.inventory_movements', 'INSERT'),
+    'authenticated reads the movement ledger; appends run through the documentary authority'
 );
 SELECT ok(
-    EXISTS (
+    has_table_privilege('documentary_backend', 'public.inventory_movements', 'INSERT')
+    AND EXISTS (
         SELECT 1 FROM pg_policies
         WHERE schemaname = 'public'
           AND tablename = 'inventory_movements'
-          AND policyname = 'inventory_movements_insert'
+          AND policyname = 'inventory_movements_member_insert'
           AND with_check LIKE '%documentary_role%'
     ),
     'movement writes require warehouse roles, not just org membership'

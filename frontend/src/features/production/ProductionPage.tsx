@@ -284,16 +284,37 @@ export function ProductionPage(): JSX.Element {
     }
   }, []);
 
-  const loadTrace = useCallback(async () => {
-    if (!selectedId) return;
-    setTraceBusy(true);
-    try {
-      const response = await productionOrderTrace(selectedId);
-      if (response.status === 200) setTrace(response.data);
-    } finally {
-      setTraceBusy(false);
-    }
-  }, [selectedId]);
+  const traceGeneration = useRef(0);
+  const loadTrace = useCallback(
+    async (orderId?: string) => {
+      const id = orderId ?? selectedId;
+      // Only the selected order's trace belongs in state — a mutating action
+      // whose order is no longer selected refreshes nothing (and must not
+      // cancel the selected order's in-flight request either).
+      if (!id || id !== selectedIdRef.current) return;
+      const generation = ++traceGeneration.current;
+      setTraceBusy(true);
+      try {
+        const response = await productionOrderTrace(id);
+        // A late response is discarded when the selection moved on or a
+        // newer request started — the operator card must never render an
+        // order it isn't about.
+        if (generation !== traceGeneration.current) return;
+        if (selectedIdRef.current !== id) return;
+        if (response.status === 200) setTrace(response.data);
+      } catch {
+        // On failure drop the stale data instead of leaving it displayed —
+        // the reload control reappears and the card can't mislead the
+        // operator with pre-mutation stock.
+        if (generation === traceGeneration.current && selectedIdRef.current === id) {
+          setTrace(null);
+        }
+      } finally {
+        if (generation === traceGeneration.current) setTraceBusy(false);
+      }
+    },
+    [selectedId],
+  );
 
   useEffect(() => {
     void loadOrders().catch(() => setMessage(t("production.loadError")));
@@ -301,6 +322,7 @@ export function ProductionPage(): JSX.Element {
 
   useEffect(() => {
     labelsGeneration.current += 1;
+    traceGeneration.current += 1;
     if (!selectedId) {
       detailGeneration.current += 1;
       setDetail(null);
@@ -335,7 +357,14 @@ export function ProductionPage(): JSX.Element {
     try {
       await task;
       setNote("");
-      await Promise.all([loadDetail(orderId), loadOrders()]);
+      // A mutating action (optimize, ops export, step transition) changes
+      // the trace — refetch it so an open operator card never shows stale
+      // reservations/ops until a manual reload.
+      const reloads = [loadDetail(orderId), loadOrders()];
+      // A trace-read failure must not masquerade as a failed mutation —
+      // the step transition or optimization already committed.
+      if (trace) reloads.push(loadTrace(orderId).catch(() => undefined));
+      await Promise.all(reloads);
     } catch (error) {
       if (mounted.current) setMessage(actionErrorDetail(error));
     } finally {

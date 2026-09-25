@@ -40,23 +40,48 @@ from projects.service import project_row
 
 _STEP_CODE_FOR_CENTER = {
     "CUT": "CUT",
+    "PROFILE_CUT": "PROFILE_CUT",
+    "REINFORCEMENT_CUT": "REINFORCEMENT_CUT",
+    "MACHINING": "MACHINING",
+    "WELDING": "WELD",
+    "CLEANING": "CLEAN",
+    "CRIMPING": "CRIMP",
+    "SASH_ASSEMBLY": "SASH_ASSEMBLE",
     "ASSEMBLY": "ASSEMBLE",
+    "HARDWARE": "HARDWARE",
     "GLAZING": "GLAZE",
     "QC": "QC",
     "PACK": "PACK",
 }
 
+# Station code (as stored on production_steps.code) → work_centers.kind.
+_CENTER_KIND_FOR_STATION = {station: kind for kind, station in _STEP_CODE_FOR_CENTER.items()}
+
 _DEFAULT_CENTERS = [
     ("CUT_SAW", "Sierra de corte", "CUT", 10),
-    ("ASSEMBLY_BENCH", "Banco de armado", "ASSEMBLY", 20),
-    ("GLAZING_BENCH", "Banco de vidriado", "GLAZING", 30),
-    ("QC_STATION", "Puesto de control", "QC", 40),
-    ("PACK_STATION", "Puesto de embalaje", "PACK", 50),
+    ("MACHINING_CELL", "Centro de mecanizado", "MACHINING", 15),
+    ("WELDER", "Soldadora", "WELDING", 20),
+    ("CLEANING_STATION", "Limpiadora de esquinas", "CLEANING", 25),
+    ("CRIMPING_MACHINE", "Prensadora de esquinas", "CRIMPING", 26),
+    ("ASSEMBLY_BENCH", "Banco de armado", "ASSEMBLY", 30),
+    ("SASH_ASSEMBLY_BENCH", "Banco de armado de hojas", "SASH_ASSEMBLY", 31),
+    ("HARDWARE_BENCH", "Banco de herrajes", "HARDWARE", 32),
+    ("GLAZING_BENCH", "Banco de vidriado", "GLAZING", 40),
+    ("QC_STATION", "Puesto de control", "QC", 50),
+    ("PACK_STATION", "Puesto de embalaje", "PACK", 60),
 ]
 
 _STEP_LABELS = {
     "CUT": "Corte de perfiles",
+    "PROFILE_CUT": "Corte de perfiles",
+    "REINFORCEMENT_CUT": "Corte de refuerzos",
+    "MACHINING": "Mecanizado",
+    "WELD": "Soldadura",
+    "CLEAN": "Limpieza de esquinas",
+    "CRIMP": "Prensado de esquinas",
+    "SASH_ASSEMBLE": "Armado de hojas",
     "ASSEMBLE": "Armado y herrajes",
+    "HARDWARE": "Montaje de herrajes",
     "GLAZE": "Vidriado y paneles",
     "QC": "Control de calidad",
     "PACK": "Embalaje",
@@ -68,6 +93,7 @@ _STEP_LABELS = {
 _STEP_CONSUMED_KINDS = {
     "CUT": {"BAR", "SHEET"},
     "ASSEMBLE": {"HARDWARE_KIT", "FITTING"},
+    "HARDWARE": {"HARDWARE_KIT", "FITTING"},
     "GLAZE": {"PANEL"},
 }
 
@@ -97,14 +123,22 @@ _TRANSITIONS = {
 }
 
 
-def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
-    existing = rows(
-        "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
-        [str(org_id)],
+def _ensure_work_centers(
+    org_id: UUID,
+) -> tuple[dict[str, dict[str, object]], set[str]]:
+    """(active-by-kind, inactive-kinds). A kind the org deliberately
+    deactivated is never silently re-seeded: its steps land unassigned and the
+    work order carries an explicit work_center_inactive blocker."""
+    query = (
+        "SELECT id, code, kind, active FROM public.work_centers "
+        "WHERE org_id = %s ORDER BY display_order"
     )
-    if not existing:
+    existing = rows(query, [str(org_id)])
+    present_kinds = {str(center["kind"]) for center in existing}
+    missing = [center for center in _DEFAULT_CENTERS if center[2] not in present_kinds]
+    if missing:
         with transaction.atomic(), documentary_backend():
-            for code, name, kind, order in _DEFAULT_CENTERS:
+            for code, name, kind, order in missing:
                 rows(
                     """
                     INSERT INTO public.work_centers(org_id, code, name, kind, display_order)
@@ -113,29 +147,298 @@ def _ensure_work_centers(org_id: UUID) -> dict[str, dict[str, object]]:
                     """,
                     [str(org_id), code, name, kind, order],
                 )
-            existing = rows(
-                "SELECT id, code, kind FROM public.work_centers WHERE org_id = %s ORDER BY display_order",
-                [str(org_id)],
-            )
-    return {str(center["kind"]): center for center in existing}
+            existing = rows(query, [str(org_id)])
+    # First ACTIVE center of each kind wins (display_order ascending) — a
+    # custom station the org ordered first keeps step assignment over any
+    # default seeded later of the same kind.
+    by_kind: dict[str, dict[str, object]] = {}
+    for center in existing:
+        if center.get("active"):
+            by_kind.setdefault(str(center["kind"]), center)
+    inactive_kinds = present_kinds - {str(kind) for kind in by_kind}
+    return by_kind, inactive_kinds
 
 
-def _routing(engine_result: dict[str, object]) -> list[str]:
+def _cut_roles(engine_result: dict[str, object]) -> set[str]:
+    return {
+        str(cut.get("role") or "")
+        for cut in (engine_result.get("profile_cuts") or [])
+        if isinstance(cut, dict)
+    }
+
+
+def _is_frameless(engine_result: dict[str, object]) -> bool:
+    """The pane is the product: channel runs/fittings serve a frameless
+    spec. Such a position must never inherit weld/crimp from whatever
+    material its associated system declares."""
+    if "CHANNEL" in _cut_roles(engine_result):
+        return True
+    if engine_result.get("fittings") and "FRAME" not in _cut_roles(engine_result):
+        return True
+    return any(
+        isinstance(piece, dict) and bool(piece.get("exposed_edges"))
+        for piece in (engine_result.get("glasses") or [])
+    )
+
+
+_FRAMED_CUT_ROLES = {
+    "FRAME", "SASH", "MULLION_V", "MULLION_H", "COUPLER", "THRESHOLD", "INVERSOR",
+}
+
+
+def _has_framed_work(engine_result: dict[str, object]) -> bool:
+    """A framed unit inside the same position — the joining steps must
+    survive even when a frameless pane shares the work order."""
+    return bool(_cut_roles(engine_result) & _FRAMED_CUT_ROLES)
+
+
+def _merge_frameless(
+    base: dict[str, object],
+    frameless: dict[str, object],
+) -> dict[str, object]:
+    """Mixed assembly: the declared/material profile keeps its joining
+    authority; the frameless template contributes the stations and op
+    mappings only the pane can produce (a pane is never machined)."""
+    merged = dict(base)
+    merged_stations = [dict(s) for s in (merged.get("stations") or []) if isinstance(s, dict)]
+    by_code = {str(s["code"]): s for s in merged_stations}
+    for station in (frameless.get("stations") or []):
+        if not isinstance(station, dict):
+            continue
+        code = str(station.get("code") or "")
+        if not code:
+            continue
+        if code in by_code:
+            if station.get("when") == "required":
+                by_code[code]["when"] = "required"
+            continue
+        # Frameless-only stations slot before the QC/PACK tail.
+        insert_at = next(
+            (i for i, s in enumerate(merged_stations) if str(s.get("code")) in ("QC", "PACK")),
+            len(merged_stations),
+        )
+        merged_stations.insert(insert_at, dict(station))
+        by_code[code] = merged_stations[insert_at]
+    merged["stations"] = merged_stations
+    frameless_ops = set(frameless.get("optional_operations") or [])
+    merged_map = dict(base.get("operation_station_map") or {})
+    for op, station in (frameless.get("operation_station_map") or {}).items():
+        if str(op) in frameless_ops or op not in merged_map:
+            merged_map[op] = station
+    merged["operation_station_map"] = merged_map
+    merged["optional_operations"] = sorted(
+        set(base.get("optional_operations") or []) | frameless_ops
+    )
+    return merged
+
+
+def _load_profile_for(
+    org_id: UUID,
+    *,
+    code: str | None = None,
+    profile_id: str | None = None,
+    material: str | None = None,
+    product_kind: str | None = None,
+) -> tuple[dict[str, object] | None, str | None]:
+    """Resolve the declared process authority. Org rows override the global
+    seeds; resolution order is explicit binding → product kind → material.
+    Returns (row, resolved_via)."""
+    where = "org_id IS NULL OR org_id = %s"
+    params: list[object] = [str(org_id)]
+    clause = ""
+    if profile_id:
+        clause = " AND id = %s"
+        params.append(profile_id)
+    elif code:
+        clause = " AND code = %s"
+        params.append(code)
+    elif product_kind:
+        clause = " AND product_kind = %s"
+        params.append(product_kind)
+    elif material:
+        clause = " AND material = %s AND product_kind = 'STANDARD'"
+        params.append(material)
+    else:
+        return None, None
+    record = rows(
+        f"""
+        SELECT * FROM public.manufacturing_process_profiles
+        WHERE ({where}){clause}
+        ORDER BY (org_id IS NOT NULL) DESC, version DESC
+        LIMIT 1
+        """,
+        params,
+    )
+    if not record:
+        return None, None
+    row = dict(record[0])
+    # jsonb columns arrive undecoded in some paths — normalize before the
+    # routing template consumes them.
+    for field in ("stations", "operation_station_map", "optional_operations",
+                  "machine_neutral_machining", "provenance"):
+        value = row.get(field)
+        if isinstance(value, str):
+            try:
+                row[field] = json.loads(value)
+            except (TypeError, ValueError):
+                row[field] = [] if field != "operation_station_map" else {}
+    via = (
+        "system_declared"
+        if profile_id
+        else ("product_kind" if product_kind else ("material_default" if material else "code"))
+    )
+    return row, via
+
+
+def _resolve_process_profile(
+    org_id: UUID,
+    engine_result: dict[str, object],
+    system_facts: dict[str, object] | None,
+) -> tuple[dict[str, object] | None, str | None]:
+    """sealed product → declared authority. A pure frameless position wins
+    over material always; a system-bound profile wins over the material
+    default; a MIXED framed+frameless assembly resolves the declared profile
+    and merges the frameless stations/mappings the pane needs — the framed
+    module never loses its joining steps to its sibling's pane."""
+    facts = system_facts or {}
+    if _is_frameless(engine_result) and not _has_framed_work(engine_result):
+        row, via = _load_profile_for(org_id, product_kind="FRAMELESS")
+        if row:
+            return row, via
+    bound = facts.get("process_profile_id")
+    row: dict[str, object] | None = None
+    via: str | None = None
+    if bound:
+        row, via = _load_profile_for(org_id, profile_id=str(bound))
+    if row is None:
+        material = str(facts.get("material") or "").upper() or None
+        if material:
+            row, via = _load_profile_for(org_id, material=material)
+    if row is None:
+        row, via = _load_profile_for(org_id, code="GENERIC_LEGACY")
+        via = "generic_fallback" if row else via
+    if row is not None and _is_frameless(engine_result) and _has_framed_work(engine_result):
+        frameless, _ = _load_profile_for(org_id, product_kind="FRAMELESS")
+        if frameless is not None:
+            return _merge_frameless(row, frameless), f"{via}_mixed"
+    return row, via
+
+
+def _station_has_work(
+    code: str,
+    engine_result: dict[str, object],
+    *,
+    end_milling_overlap_mm: object = None,
+    has_handles: bool = False,
+    handle_station: str = "MACHINING",
+) -> bool:
+    """'auto' stations land only when the sealed result carries work."""
+    cuts = engine_result.get("profile_cuts") or []
+    roles = _cut_roles(engine_result)
+    # A handle op exists wherever the profile sends HANDLE_PREP — frameless
+    # and mixed profiles route it to HARDWARE, never assume the mill.
+    if has_handles and code == handle_station:
+        return True
+    if code == "CUT":
+        return bool(cuts or engine_result.get("reinforcements"))
+    if code == "MACHINING":
+        # Every member op the sealed facts can emit lands here: END_MACHINING
+        # (overlap authority) and HANDLE_PREP when the profile maps it so.
+        # Omitting the station while an op maps to it would leave work unrouted.
+        try:
+            return end_milling_overlap_mm is not None and Decimal(
+                str(end_milling_overlap_mm)
+            ) > 0
+        except ArithmeticError:
+            return False
+    if code == "SASH_ASSEMBLE":
+        return "SASH" in roles
+    if code == "HARDWARE":
+        return bool(engine_result.get("hardware_items") or engine_result.get("fittings"))
+    if code == "GLAZE":
+        return bool(engine_result.get("glasses") or engine_result.get("panels"))
+    return True
+
+
+def _routing(
+    engine_result: dict[str, object],
+    *,
+    profile: dict[str, object] | None,
+    end_milling_overlap_mm: object = None,
+    has_handles: bool = False,
+) -> list[str]:
+    """The ladder is the declared profile's station template pruned by the
+    sealed result: required stations are process-inherent and always land;
+    auto stations land only with matching sealed work. Where no authority
+    resolved, the honest generic path (CUT/ASSEMBLE/GLAZE/QC/PACK) stands."""
+    stations = ((profile or {}).get("stations") or []) if profile else []
+    if not stations:
+        stations = [
+            {"code": "CUT", "when": "auto"},
+            {"code": "ASSEMBLE", "when": "auto"},
+            {"code": "GLAZE", "when": "auto"},
+            {"code": "QC", "when": "required"},
+            {"code": "PACK", "when": "required"},
+        ]
+    handle_station = str(
+        ((profile or {}).get("operation_station_map") or {}).get("HANDLE_PREP")
+        or "MACHINING"
+    )
     routing: list[str] = []
-    if engine_result.get("profile_cuts") or engine_result.get("reinforcements"):
-        routing.append("CUT")
-    routing.append("ASSEMBLE")
-    if engine_result.get("glasses") or engine_result.get("panels"):
-        routing.append("GLAZE")
-    routing += ["QC", "PACK"]
+    for station in stations:
+        if not isinstance(station, dict):
+            continue
+        code = str(station.get("code") or "")
+        if not code:
+            continue
+        if str(station.get("when") or "auto") == "required" or _station_has_work(
+            code,
+            engine_result,
+            end_milling_overlap_mm=end_milling_overlap_mm,
+            has_handles=has_handles,
+            handle_station=handle_station,
+        ):
+            routing.append(code)
     return routing
+
+
+def _process_authority(
+    profile: dict[str, object] | None,
+    resolved_via: str | None,
+) -> dict[str, object]:
+    """The routing authority frozen into the work order's evidence — every
+    order names the profile and version it was routed under."""
+    if not profile:
+        return {"code": "GENERIC_LEGACY", "version": 0, "resolved_via": "fallback"}
+    return {
+        "profile_id": str(profile.get("id") or ""),
+        "code": str(profile.get("code") or ""),
+        "version": profile.get("version"),
+        "resolved_via": resolved_via,
+        "joining_method": profile.get("joining_method"),
+        "operation_station_map": profile.get("operation_station_map") or {},
+    }
 
 
 def _work_order_payload(
     position: dict[str, object], *, polishing: list | None = None,
     color: str | None = None,
+    process: dict[str, object] | None = None,
+    org_id: UUID | None = None,
+    system_facts: dict[str, object] | None = None,
+    has_handles: bool = False,
 ) -> dict[str, object]:
     engine = position.get("engine_result") or {}
+    profile: dict[str, object] | None = None
+    resolved_via: str | None = None
+    facts: dict[str, object] = system_facts or {}
+    if process is not None:
+        # Sealed process facts: the profile/inputs frozen with the version.
+        profile = process.get("profile") if isinstance(process.get("profile"), dict) else None
+        resolved_via = process.get("resolved_via")
+        facts = process.get("system") if isinstance(process.get("system"), dict) else {}
+    elif org_id is not None:
+        profile, resolved_via = _resolve_process_profile(org_id, engine, system_facts)
     return {
         "schema": "production_wo_v1",
         "position_id": str(position.get("position_id") or ""),
@@ -150,7 +453,44 @@ def _work_order_payload(
             )
         },
         "glass_polishing": list(polishing or []),
-        "routing": _routing(engine),
+        "routing": _routing(
+            engine,
+            profile=profile,
+            end_milling_overlap_mm=facts.get("end_milling_overlap_mm"),
+            has_handles=has_handles,
+        ),
+        "process_authority": _process_authority(profile, resolved_via),
+    }
+
+
+_FROZEN_PROFILE_FIELDS = (
+    "id", "code", "version", "joining_method", "corner_process",
+    "cleaning_process", "stations", "operation_station_map",
+    "sash_assembly_required", "hardware_station", "glazing", "qc",
+    "packaging", "optional_operations", "machine_neutral_machining",
+)
+
+
+def _frozen_profile(profile: dict[str, object] | None) -> dict[str, object] | None:
+    if not profile:
+        return None
+    return {field: profile.get(field) for field in _FROZEN_PROFILE_FIELDS}
+
+
+def process_facts_snapshot(
+    *,
+    org_id: UUID,
+    engine_result: dict[str, object],
+    system_facts: dict[str, object] | None,
+) -> dict[str, object]:
+    """The process authority frozen into a sealed position — the resolved
+    profile content AND its routing inputs. Release reads this verbatim so a
+    later catalog/profile edit can never re-route sealed evidence."""
+    profile, via = _resolve_process_profile(org_id, engine_result, system_facts)
+    return {
+        "system": dict(system_facts or {}),
+        "profile": _frozen_profile(profile),
+        "resolved_via": via,
     }
 
 
@@ -251,10 +591,20 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         }
         for position in bom:
             position["system_id"] = position_systems.get(str(position.get("position_id") or ""))
-        centers = _ensure_work_centers(org_id)
+        centers, inactive_kinds = _ensure_work_centers(org_id)
         # The sealed polishing choices live on the snapshot positions — the
         # work order embeds them so the workshop reads edge processing without
         # joining the documentary snapshot.
+        # Process authority is frozen per position at seal time. Versions
+        # sealed before the authority model exist get the honest legacy
+        # fallback — their manufacturing facts are never reinterpreted
+        # through a later catalog revision.
+        frozen_facts = {
+            str(pos.get("id")): pos.get("process_facts")
+            for pos in snapshot.get("positions") or []
+            if pos.get("id")
+        }
+        generic_profile, _ = _load_profile_for(org_id, code="GENERIC_LEGACY")
         polishing_by_position = {
             str(pos.get("id")): pos.get("glass_polishing") or []
             for pos in snapshot.get("positions") or []
@@ -276,11 +626,36 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
         created_ids: list[UUID] = []
         order_ids: list[UUID] = []
         for index, position in enumerate(bom):
+            position_id = str(position.get("position_id") or "")
+            sealed = frozen_facts.get(position_id)
+            process = sealed if isinstance(sealed, dict) else {
+                "system": {},
+                "profile": generic_profile,
+                "resolved_via": "generic_fallback",
+            }
+            has_handles = bool(
+                (next(
+                    (p for p in (snapshot.get("positions") or [])
+                     if str(p.get("id")) == position_id),
+                    {},
+                )).get("handle_intents")
+            )
             payload = _work_order_payload(
                 position,
-                polishing=polishing_by_position.get(str(position.get("position_id"))),
-                color=color_by_position.get(str(position.get("position_id"))),
+                polishing=polishing_by_position.get(position_id),
+                color=color_by_position.get(position_id),
+                process=process,
+                org_id=org_id,
+                has_handles=has_handles,
             )
+            inactive_step_kinds = sorted({
+                kind for kind, step_code in _STEP_CODE_FOR_CENTER.items()
+                if step_code in payload["routing"] and kind in inactive_kinds
+            })
+            if inactive_step_kinds:
+                payload["blockers"] = [
+                    f"work_center_inactive:{kind}" for kind in inactive_step_kinds
+                ]
             order_code = f"OT-{project_code}-{version['revision_code']}-{index + 1:02d}"[:50]
             inserted = rows(
                 """
@@ -715,6 +1090,52 @@ def transition_step(
             new_status = "BLOCKED"
         if str(step["status"]) not in allowed:
             raise DocumentaryError("step_transition_invalid")
+        # A step released while its center was inactive — or copied unassigned
+        # into a remake — sits READY/PENDING without a center and must never
+        # silently progress. When a center of the required kind has since been
+        # activated the step adopts it here and the order's payload blocker
+        # clears; otherwise the transition refuses and the blocker stays the
+        # shop's to-do. An IN_PROGRESS step already had a center at START, so
+        # deeper validations (e.g. the cut plan) still surface first.
+        if (
+            action in ("START", "COMPLETE")
+            and str(step["status"]) in ("READY", "PENDING")
+            and step.get("work_center_id") is None
+        ):
+            # step.code is the station code (WELD, GLAZE…); work_centers.kind
+            # is the step vocabulary (WELDING, GLAZING…).
+            kind = _CENTER_KIND_FOR_STATION.get(str(step["code"]))
+            if kind is not None:
+                center = rows(
+                    """
+                    SELECT id, code, name FROM public.work_centers
+                    WHERE org_id = %s AND kind = %s AND active ORDER BY code LIMIT 1
+                    """,
+                    [str(org_id), kind],
+                )
+                if not center:
+                    raise DocumentaryError("work_center_unassigned")
+                rows(
+                    "UPDATE public.production_steps SET work_center_id = %s WHERE id = %s",
+                    [str(center[0]["id"]), str(step_id)],
+                )
+                step["work_center_id"] = center[0]["id"]
+                step["work_center_code"] = center[0]["code"]
+                step["work_center_name"] = center[0]["name"]
+                rows(
+                    """
+                    UPDATE public.orders
+                    SET payload_json = jsonb_set(
+                        payload_json, '{blockers}',
+                        COALESCE((
+                            SELECT jsonb_agg(b) FROM jsonb_array_elements_text(
+                                payload_json->'blockers') b
+                            WHERE b <> %s
+                        ), '[]'::jsonb))
+                    WHERE id = %s
+                    """,
+                    [f"work_center_inactive:{kind}", str(order["id"])],
+                )
         event_name = "QC_FAILED" if (
             action == "COMPLETE" and qc_result == "FAIL"
         ) else _EVENTS[action]
@@ -1476,14 +1897,17 @@ def operations_file_content(
     payload = _decoded(order["payload_json"])
     export = payload.get("operations_export") or {}
     optimization = payload.get("optimization")
-    version_row = one(
-        """
-        SELECT snapshot_json FROM public.project_versions
-        WHERE id = %s AND org_id = %s
-        """,
-        [str(order["project_version_id"]), str(org_id)],
-        "work_order_missing_version",
-    )
+    # The frozen snapshot is denied to the authenticated role — resolve it
+    # through the documentary authority and keep only what the file needs.
+    with documentary_backend():
+        version_row = one(
+            """
+            SELECT snapshot_json FROM public.project_versions
+            WHERE id = %s AND org_id = %s
+            """,
+            [str(order["project_version_id"]), str(org_id)],
+            "work_order_missing_version",
+        )
     version_snapshot = _decoded(version_row["snapshot_json"])
     manufacturing = _raw_fact_units(
         version_snapshot, str(payload.get("position_id") or "") or None

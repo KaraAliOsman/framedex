@@ -14,13 +14,14 @@ SELECT ok(
     ),
     'remnant ledger enforces row level security'
 );
-SELECT ok(
-    EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE schemaname = 'public' AND tablename = 'inventory_remnants'
-          AND policyname = 'inventory_remnants_isolation' AND cmd = 'ALL'
-    ),
-    'org isolation policy covers all commands'
+SELECT policies_are(
+    'public', 'inventory_remnants',
+    ARRAY[
+        'inventory_remnants_member_read',
+        'inventory_remnants_member_insert',
+        'inventory_remnants_member_update'
+    ],
+    'member policies cover read, insert, and update'
 );
 SELECT ok(
     EXISTS (

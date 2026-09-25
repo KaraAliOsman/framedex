@@ -3,16 +3,16 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 SET LOCAL search_path = public, private, auth, extensions, pg_temp;
 SELECT plan(2);
 
--- snapshot_json carries the sealed manufacturing facts the production trace
--- reconstructs operations from; without the column grant every order trace
--- 409s on a correctly migrated DB.
+-- §B: the frozen snapshot carries client PII, pricing, BOM and manufacturing
+-- authority — it must never be tenant-readable through PostgREST. The
+-- production trace resolves it server-side via the documentary authority.
 SELECT ok(
-    has_column_privilege('authenticated', 'public.project_versions', 'snapshot_json', 'SELECT'),
-    'snapshot_json is tenant-readable for the production trace'
+    NOT has_column_privilege('authenticated', 'public.project_versions', 'snapshot_json', 'SELECT'),
+    'snapshot_json is denied to the tenant role'
 );
 SELECT ok(
-    NOT has_column_privilege('authenticated', 'public.project_versions', 'pdf_storage_path', 'SELECT'),
-    'internal storage paths stay denied to tenants'
+    has_column_privilege('documentary_backend', 'public.project_versions', 'snapshot_json', 'SELECT'),
+    'snapshot_json stays readable by the documentary authority'
 );
 
 SELECT * FROM finish();

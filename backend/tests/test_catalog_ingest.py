@@ -23,7 +23,7 @@ def test_parse_article_line_full_match():
     assert candidate["sku"] == "MRC-100"
     assert candidate["role"] == "FRAME"
     assert candidate["face_width_mm"] == Decimal("78")
-    assert candidate["confidence"] == "HIGH"
+    assert candidate["confidence"] == "HIGH_CANDIDATE"
     assert candidate["weight_kg_m"] == Decimal("1.45")
     assert candidate["reinforcement_sku"] == "AC-55"
 
@@ -53,6 +53,53 @@ def test_parse_article_line_face_width_bounds():
     assert parse_article_line("ABC-1 marco 400 mm", "r0")["confidence"] == "REVIEW_REQUIRED"
     candidate = parse_article_line("ABC-1 marco 45 mm", "r0")
     assert candidate["face_width_mm"] == Decimal("45")
+
+
+def test_parse_article_line_ambiguous_measurements_resolve_none():
+    # §D: "Marco 70 × 58 mm" never proves face_width=70 — two plausible
+    # measurements leave the field empty and degrade the candidate.
+    candidate = parse_article_line("MRC-70 Marco 70 × 58 mm", "r0")
+    assert candidate is not None
+    assert candidate["face_width_mm"] is None
+    assert candidate["confidence"] == "LOW"
+    assert "catalog_face_width_ambiguous" in candidate["warnings"]
+    assert candidate["evidence"]["fields"]["face_width_mm"]["original"] == ["70 × 58 mm"]
+    assert candidate["evidence"]["fields"]["face_width_mm"]["normalized"] is None
+
+
+def test_parse_article_line_equal_pair_dims_still_resolve():
+    # "45 × 45 mm" is two measurements of the same value — unambiguous, the
+    # candidate keeps it with the pair token as evidence.
+    candidate = parse_article_line("MRC-45 Marco 45 x 45 mm", "r0")
+    assert candidate["face_width_mm"] == Decimal("45")
+    assert "catalog_face_width_ambiguous" not in candidate["warnings"]
+
+
+def test_parse_article_line_evidence_records_what_the_parser_saw():
+    candidate = parse_article_line(
+        "MRC-100 Marco oscilobatiente 78 mm 1.45 kg/m refuerzo AC-55", "r0", "fila 9"
+    )
+    evidence = candidate["evidence"]
+    assert evidence["parser_version"].startswith("catalog-parser/")
+    assert evidence["source"]["ref"] == "fila 9"
+    assert "Marco oscilobatiente" in evidence["source"]["text"]
+    assert evidence["fields"]["face_width_mm"] == {
+        "normalized": Decimal("78"),
+        "original": "78 mm",
+        "unit": "mm",
+        "source": "measurement_token",
+    }
+    assert evidence["fields"]["role"]["original"] == "marco"
+    assert evidence["fields"]["weight_kg_m"]["unit"] == "kg/m"
+    assert evidence["fields"]["reinforcement_sku"]["normalized"] == "AC-55"
+
+
+def test_parse_article_line_prose_never_exceeds_high_candidate():
+    # VERIFIED_STRUCTURED is reserved for explicit structured-table imports —
+    # a heuristic prose line can at most be an unconfirmed candidate.
+    candidate = parse_article_line("MRC-1 Marco 75 mm", "r0")
+    assert candidate["confidence"] == "HIGH_CANDIDATE"
+    assert candidate["confidence"] != "VERIFIED_STRUCTURED"
 
 
 def test_parse_catalog_lines_dedupes_sku():
@@ -107,7 +154,7 @@ def _import_row(**overrides):
                 "reinforcement_sku": "AC-55",
                 "weight_kg_m": "1.45",
                 "steel_weight_kg_m": "1.7",
-                "confidence": "HIGH",
+                "confidence": "HIGH_CANDIDATE",
                 "warnings": [],
             }
         ],
@@ -471,6 +518,7 @@ def test_create_catalog_import_rejects_path_like_filenames():
         "a/b.csv",
         "a\\b.pdf",
         "lista\t.pdf",
+        "a%2Fb.csv",
     ):
         with pytest.raises(APIException) as caught:
             catalog_service.create_catalog_import(

@@ -37,8 +37,13 @@ SELECT has_column(
 );
 SELECT policies_are(
     'public', 'catalog_imports',
-    ARRAY['catalog_imports_isolation', 'catalog_imports_backend'],
-    'exactly the isolation + backend policies'
+    ARRAY[
+        'catalog_imports_member_read',
+        'catalog_imports_member_insert',
+        'catalog_imports_member_update',
+        'catalog_imports_backend'
+    ],
+    'exactly the member + backend policies'
 );
 
 SELECT * FROM finish();

@@ -1,10 +1,13 @@
 """Integration regression tests for SHOT-10 corrective issues."""
 
 from datetime import date
+import json
 from decimal import Decimal
 from uuid import UUID, uuid4
 
 import pytest
+
+from django.db import connection
 
 from authentication.errors import ContractAPIException
 from backend.tests.integration.test_shot09_documentary import (
@@ -548,6 +551,11 @@ def test_readiness_requires_default_frame_reinforcement(documentary_tenant):
         "WHERE system_id=%s AND role='FRAME' RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "purchase" not in catalog_readiness(system, org)["reasons"]
+    # The fixture delete must run as postgres: as_user leaves
+    # SET LOCAL ROLE authenticated for the rest of the transaction, and
+    # member deletes on reinforcement_articles are policy-filtered now.
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
     rows("DELETE FROM public.reinforcement_articles WHERE system_id=%s RETURNING id", [system])
     with as_user(users["OWNER"]):
         assert "purchase" in catalog_readiness(system, org)["reasons"]
@@ -687,3 +695,154 @@ def test_reviewed_catalog_edit_reopens_readiness(documentary_tenant):
             "review_pending"
         ] is False
     assert not flagged()
+
+
+def test_readiness_levels_report_exact_blockers(documentary_tenant):
+    """§E: the levels ladder names the missing authority, what it affects and
+    the action that resolves it — quote_ready keeps its legacy contract."""
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60'")["id"]
+
+    with as_user(users["OWNER"]):
+        readiness = catalog_readiness(demo, org)
+    levels = {level["level"]: level for level in readiness["levels"]}
+    assert levels["DESIGN_VALID"]["ok"] is True
+    assert levels["QUOTE_READY"]["ok"] is True
+    assert levels["MANUFACTURING_INCOMPLETE"]["state"] == "COMPLETE"
+    # Fresh orgs have no work centers until a production release seeds them.
+    assert levels["PRODUCTION_READY"]["ok"] is False
+    blocker = levels["PRODUCTION_READY"]["blockers"][0]
+    assert blocker["code"] == "work_centers"
+    assert blocker["missing_authority"]
+    assert blocker["affected"]
+    assert blocker["why"]
+    assert blocker["action"]
+    assert readiness["process_via"] is not None
+    # quote_ready must not absorb the new production/CNC blockers.
+    assert readiness["quote_ready"] is True
+
+    with as_user(users["WORKSHOP_MANAGER"]), documentary_backend():
+        for code, name, kind, order in (
+            ("CUT_SAW", "Sierra", "CUT", 10),
+            ("MACHINING_CENTER", "Mecanizado", "MACHINING", 15),
+            ("WELDER", "Soldadora", "WELDING", 20),
+            ("CLEANING_STATION", "Limpiadora", "CLEANING", 25),
+            ("SASH_BENCH", "Armado hojas", "SASH_ASSEMBLY", 30),
+            ("HW_BENCH", "Herrajes", "HARDWARE", 32),
+            ("GLAZE_BENCH", "Vidriado", "GLAZING", 40),
+            ("QC_STATION", "Control", "QC", 50),
+            ("PACK_STATION", "Embalaje", "PACK", 60),
+        ):
+            one(
+                "INSERT INTO public.work_centers(org_id, code, name, kind, display_order) "
+                "VALUES (%s,%s,%s,%s,%s) RETURNING id",
+                [org, code, name, kind, order],
+            )
+    with as_user(users["OWNER"]):
+        ready = catalog_readiness(demo, org)
+    levels = {level["level"]: level for level in ready["levels"]}
+    assert levels["PRODUCTION_READY"]["ok"] is True
+    assert levels["CNC_READY"]["ok"] is True
+
+
+def test_readiness_levels_flag_unmapped_machine_ops(documentary_tenant):
+    """A bound profile whose operation→station map can't route a machine
+    operation the system emits stays CNC-incomplete — the UI fallback is
+    never the authority."""
+    from backend.tests.integration.catalog_fixture import copy_fixed_catalog
+    from catalogs.readiness import catalog_readiness
+    org, _, users, _ = documentary_tenant
+    # The clone is org-scoped so member writes can bind process profiles —
+    # global demo systems are member-immutable by policy.
+    demo = copy_fixed_catalog(org)
+    # The clone skips the policy tables by design; a fully-ready system needs
+    # the global manufacturing policies copied for it (postgres-level fixture
+    # writes — they run before any member context locks the role).
+    from pricing.repository import json_text, rows as pg_rows
+    global_demo = one("SELECT id FROM public.profile_systems WHERE code='DEMO_60' AND is_global")["id"]
+    for table in ("manufacturing_placement_policies", "handle_requirement_policies",
+                  "reinforcement_cut_policies"):
+        jsonb_cols = {
+            row["column_name"]
+            for row in pg_rows(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema='public' AND table_name=%s AND data_type='jsonb'",
+                [table],
+            )
+        }
+        for row in pg_rows(
+            f"SELECT * FROM public.{table} WHERE system_id=%s AND org_id IS NULL",
+            [global_demo],
+        ):
+            row = {key: value for key, value in row.items() if key != "id"}
+            for column in jsonb_cols:
+                if isinstance(row.get(column), str):
+                    row[column] = json.loads(row[column])
+            one(
+                f"INSERT INTO public.{table} SELECT (jsonb_populate_record("
+                f"NULL::public.{table}, %s::jsonb)).* RETURNING id",
+                [json_text({**row, "id": str(uuid4()), "system_id": str(demo)})],
+            )
+    pvc = one(
+        "SELECT id FROM public.manufacturing_process_profiles WHERE code='PVC_WELDED'"
+    )["id"]
+    frameless = one(
+        "SELECT id FROM public.manufacturing_process_profiles WHERE code='FRAMELESS_GLASS'"
+    )["id"]
+    try:
+        with as_user(users["WORKSHOP_MANAGER"]), documentary_backend():
+            for code, kind in (
+                ("CUT_SAW", "CUT"), ("WELDER", "WELDING"), ("CLEANING_STATION", "CLEANING"),
+                ("QC_STATION", "QC"), ("PACK_STATION", "PACK"), ("MACHINING_CELL", "MACHINING"),
+                ("SASH_BENCH", "SASH_ASSEMBLY"), ("HW_BENCH", "HARDWARE"), ("GLAZE_BENCH", "GLAZING"),
+            ):
+                one(
+                    "INSERT INTO public.work_centers(org_id, code, name, kind, display_order) "
+                    "VALUES (%s,%s,%s,%s,10) RETURNING id",
+                    [org, code, code, kind],
+                )
+        with as_user(users["WORKSHOP_MANAGER"]):
+            one(
+                "UPDATE public.profile_systems SET process_profile_id=%s WHERE id=%s RETURNING id",
+                [pvc, demo],
+            )
+            readiness = catalog_readiness(demo, org)
+        levels = {level["level"]: level for level in readiness["levels"]}
+        assert levels["PRODUCTION_READY"]["ok"] is True
+        assert levels["CNC_READY"]["ok"] is True
+        assert readiness["process_via"] == "system_declared"
+
+        # The clone has mullions → END_MACHINING; the frameless profile routes
+        # only SAW_CUT and HANDLE_PREP, so binding it must surface the gap.
+        with as_user(users["WORKSHOP_MANAGER"]):
+            one(
+                "UPDATE public.profile_systems SET process_profile_id=%s WHERE id=%s RETURNING id",
+                [frameless, demo],
+            )
+            readiness = catalog_readiness(demo, org)
+        levels = {level["level"]: level for level in readiness["levels"]}
+        assert levels["CNC_READY"]["ok"] is False
+        blocker = next(
+            b for b in levels["CNC_READY"]["blockers"]
+            if b["code"] == "station_map"
+        )
+        assert "END_MACHINING" in blocker["affected"]
+    finally:
+        with as_user(users["WORKSHOP_MANAGER"]):
+            one(
+                "UPDATE public.profile_systems SET process_profile_id=NULL WHERE id=%s RETURNING id",
+                [demo],
+            )
+
+
+def test_global_search_uses_canonical_catalog_visibility(documentary_tenant):
+    """A member searching a global system's code must find the system and
+    its NULL-org articles — identical to what the catalog service lists."""
+    from search.service import search
+    org, _, users, _ = documentary_tenant
+    with as_user(users["ESTIMATOR"]):
+        systems = search(org, "demo_60")["results"]
+        articles = search(org, "marco")["results"]
+    assert any(r["group"] == "systems" and "DEMO_60" in r["title"] for r in systems)
+    assert any(r["group"] == "articles" and r["title"] == "MARCO" for r in articles)

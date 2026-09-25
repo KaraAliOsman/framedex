@@ -33,6 +33,16 @@ import {
   wrapTreeAsProduct,
   type ProductJson,
 } from "./productEditing";
+import { resolveMembers } from "./members";
+
+const TEST_MEMBERS = resolveMembers(undefined);
+// Nested splits need declared mullion geometry — an undeclared mullion can
+// no longer bound a bay region, so tests spell out the members they mean.
+const MULLION_MEMBERS = {
+  ...TEST_MEMBERS,
+  mullionV: { sku: "MULL-60", material: "PVC", faceWidthMm: 70 },
+  mullionH: { sku: "MULL-60", material: "PVC", faceWidthMm: 70 },
+};
 
 function bow(): ReturnType<typeof makeBowProduct> {
   return makeBowProduct({
@@ -166,7 +176,12 @@ describe("removeUnit", () => {
 
 describe("splitModuleBay", () => {
   it("splits the primary bay at the center with the given mullion", () => {
-    const split = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
+    const split = splitModuleBay(
+      bow(),
+      "m2",
+      { type: "SPLIT_V", mullionSku: "MULL-60" },
+      TEST_MEMBERS,
+    );
     const tree = split.assembly.modules[1]!.tree;
     expect(tree.type).toBe("SPLIT_V");
     expect(tree.split_offset_mm).toBe("350.00");
@@ -175,39 +190,68 @@ describe("splitModuleBay", () => {
   });
 
   it("generates unique node ids across repeated splits", () => {
-    const once = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
-    const twice = splitModuleBay(once, "m2", { type: "SPLIT_H", mullionSku: "MULL-60" });
+    const once = splitModuleBay(
+      bow(),
+      "m2",
+      { type: "SPLIT_V", mullionSku: "MULL-60" },
+      TEST_MEMBERS,
+    );
+    const twice = splitModuleBay(
+      once,
+      "m2",
+      { type: "SPLIT_H", mullionSku: "MULL-60" },
+      TEST_MEMBERS,
+    );
     expect(twice).not.toBe(once);
   });
 
   it("refuses door bays and missing mullions", () => {
     const door = setModuleOpening(bow(), "m2", "DOOR_ENTRY");
-    expect(splitModuleBay(door, "m2", { type: "SPLIT_V", mullionSku: "MULL-60" })).toBe(door);
-    expect(splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "" })).toEqual(bow());
+    expect(
+      splitModuleBay(door, "m2", { type: "SPLIT_V", mullionSku: "MULL-60" }, TEST_MEMBERS),
+    ).toBe(door);
+    expect(splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "" }, TEST_MEMBERS)).toEqual(
+      bow(),
+    );
   });
 
   it("splits at a pointer-chosen offset instead of the center", () => {
-    const split = splitModuleBay(bow(), "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      offsetMm: "215.00",
-    });
+    const split = splitModuleBay(
+      bow(),
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        offsetMm: "215.00",
+      },
+      TEST_MEMBERS,
+    );
     expect(split.assembly.modules[1]!.tree.split_offset_mm).toBe("215.00");
   });
 
   it("splits the named leaf bay inside an already-divided module", () => {
-    const once = splitModuleBay(bow(), "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      offsetMm: "350.00",
-    });
+    const once = splitModuleBay(
+      bow(),
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        offsetMm: "350.00",
+      },
+      TEST_MEMBERS,
+    );
     const secondBayId = once.assembly.modules[1]!.tree.children![1]!.id;
-    const twice = splitModuleBay(once, "m2", {
-      type: "SPLIT_H",
-      mullionSku: "MULL-60",
-      bayId: secondBayId,
-      offsetMm: "500.00",
-    });
+    const twice = splitModuleBay(
+      once,
+      "m2",
+      {
+        type: "SPLIT_H",
+        mullionSku: "MULL-60",
+        bayId: secondBayId,
+        offsetMm: "500.00",
+      },
+      TEST_MEMBERS,
+    );
     const tree = twice.assembly.modules[1]!.tree;
     // The first bay stays intact; the second child is now an SPLIT_H node.
     expect(tree.type).toBe("SPLIT_V");
@@ -217,42 +261,96 @@ describe("splitModuleBay", () => {
   });
 
   it("centers nested splits inside the true bay region on off-center parents", () => {
-    const once = splitModuleBay(bow(), "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      offsetMm: "200.00",
-    });
+    const once = splitModuleBay(
+      bow(),
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        offsetMm: "200.00",
+      },
+      MULLION_MEMBERS,
+    );
     const [leftBay, rightBay] = once.assembly.modules[1]!.tree.children!;
     // Fallback members (frame 60, mullion 70): left region [60, 165] is 105mm,
     // right region [235, 640] is 405mm — centering must use those spans, not
     // the raw parent offset.
-    const left = splitModuleBay(once, "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      bayId: leftBay!.id,
-    });
+    const left = splitModuleBay(
+      once,
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        bayId: leftBay!.id,
+      },
+      MULLION_MEMBERS,
+    );
     expect(left.assembly.modules[1]!.tree.children![0]!.type).toBe("SPLIT_V");
     expect(left.assembly.modules[1]!.tree.children![0]!.split_offset_mm).toBe("52.50");
-    const right = splitModuleBay(once, "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      bayId: rightBay!.id,
-    });
+    const right = splitModuleBay(
+      once,
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        bayId: rightBay!.id,
+      },
+      MULLION_MEMBERS,
+    );
     expect(right.assembly.modules[1]!.tree.children![1]!.type).toBe("SPLIT_V");
     expect(right.assembly.modules[1]!.tree.children![1]!.split_offset_mm).toBe("202.50");
   });
 
+  it("refuses to bound a nested split without declared mullion geometry", () => {
+    // A bay-local default derived from fallback member widths would persist a
+    // guessed dimension as if it were authority — the split refuses instead.
+    const once = splitModuleBay(
+      bow(),
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        offsetMm: "200.00",
+      },
+      MULLION_MEMBERS,
+    );
+    const secondBayId = once.assembly.modules[1]!.tree.children![1]!.id;
+    // Same-axis: the parent SPLIT_V's mullion bounds this bay's region —
+    // without declared mullion members there is nothing honest to bound by.
+    const refused = splitModuleBay(
+      once,
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        bayId: secondBayId,
+      },
+      TEST_MEMBERS,
+    ); // TEST_MEMBERS declares no mullion members
+    expect(refused).toBe(once);
+  });
+
   it("returns the same product for an unknown bayId", () => {
-    const once = splitModuleBay(bow(), "m2", {
-      type: "SPLIT_V",
-      mullionSku: "MULL-60",
-      offsetMm: "350.00",
-    });
-    const twice = splitModuleBay(once, "m2", {
-      type: "SPLIT_H",
-      mullionSku: "MULL-60",
-      bayId: "no-such-bay",
-    });
+    const once = splitModuleBay(
+      bow(),
+      "m2",
+      {
+        type: "SPLIT_V",
+        mullionSku: "MULL-60",
+        offsetMm: "350.00",
+      },
+      TEST_MEMBERS,
+    );
+    const twice = splitModuleBay(
+      once,
+      "m2",
+      {
+        type: "SPLIT_H",
+        mullionSku: "MULL-60",
+        bayId: "no-such-bay",
+      },
+      TEST_MEMBERS,
+    );
     // Unknown bay → no change.
     expect(twice).toBe(once);
   });
@@ -260,7 +358,12 @@ describe("splitModuleBay", () => {
 
 describe("moveModuleDivision", () => {
   it("moves the divider to a new offset", () => {
-    const split = splitModuleBay(bow(), "m2", { type: "SPLIT_V", mullionSku: "MULL-60" });
+    const split = splitModuleBay(
+      bow(),
+      "m2",
+      { type: "SPLIT_V", mullionSku: "MULL-60" },
+      TEST_MEMBERS,
+    );
     const divisionId = split.assembly.modules[1]!.tree.id;
     const moved = moveModuleDivision(split, "m2", divisionId, "420.00");
     expect(moved.assembly.modules[1]!.tree.split_offset_mm).toBe("420.00");

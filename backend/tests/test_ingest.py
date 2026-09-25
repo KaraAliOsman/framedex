@@ -688,6 +688,8 @@ def test_create_import_rejects_path_like_filenames(monkeypatch):
         "a\\b.pdf",
         "lista\t.pdf",
         "x\n.pdf",
+        "a%2Fb.pdf",
+        "100%.pdf",
     ):
         with pytest.raises(Exception) as caught:
             service.create_import(
