@@ -1361,9 +1361,14 @@ a:focus-visible {
 .job-row-error {
   color: var(--theme-danger);
   flex-basis: 100%;
-  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   margin: 0.125rem 0 0;
+}
+
+.job-row-code {
+  color: var(--theme-text-muted, #66707f);
+  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
 }
 
 /* Clients workspace — master list + detail. */

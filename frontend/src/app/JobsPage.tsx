@@ -30,6 +30,25 @@ function jobError(error: JobRun["error"]): string {
   return String(error);
 }
 
+/** Backend failure codes grouped into operator-facing recovery language; the
+ * raw code stays visible as a diagnostic tail, not as the message. */
+function jobErrorKey(code: string): TranslationKey {
+  if (code.endsWith("_not_found")) return "jobs.fail.notFound";
+  if (code.includes("permission") || code.includes("access_denied")) return "jobs.fail.permission";
+  if (code.startsWith("document_storage_")) return "jobs.fail.storage";
+  if (code.includes("hash_mismatch") || code.includes("stale")) return "jobs.fail.stale";
+  if (
+    code.startsWith("ai_") ||
+    code.includes("provider") ||
+    code.includes("timeout") ||
+    code.includes("unavailable")
+  )
+    return "jobs.fail.provider";
+  if (code.startsWith("invalid_") || code.endsWith("_invalid") || code.includes("required"))
+    return "jobs.fail.invalid";
+  return "jobs.fail.generic";
+}
+
 /** Background work made visible: what ran, what's running, what failed —
  * with the recovery action (reintentar) next to the failure it fixes. */
 export function JobsPage(): JSX.Element {
@@ -138,7 +157,10 @@ export function JobsPage(): JSX.Element {
                 </time>
               </div>
               {job.state === "FAILED" && jobError(job.error) !== "" && (
-                <p className="job-row-error">{jobError(job.error)}</p>
+                <p className="job-row-error">
+                  {t(jobErrorKey(jobError(job.error)))}{" "}
+                  <code className="job-row-code">{jobError(job.error)}</code>
+                </p>
               )}
               {TERMINAL_RETRYABLE.has(job.state) && (
                 <button

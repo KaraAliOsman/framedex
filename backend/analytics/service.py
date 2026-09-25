@@ -105,8 +105,14 @@ def _summary(org_id: UUID) -> dict[str, Any]:
              WHERE s.org_id = %s AND s.status = 'BLOCKED'
                AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
             (SELECT count(*) FROM public.customer_approvals a
+             JOIN public.project_versions v
+               ON v.id = a.project_version_id AND v.org_id = a.org_id
+             JOIN public.projects p
+               ON p.id = a.project_id AND p.org_id = a.org_id
              WHERE a.org_id = %s AND a.status = 'PENDING'
-               AND a.expires_at > now()) AS approvals_pending
+               AND a.expires_at > now()
+               AND p.current_revision = v.revision_code
+               AND p.status = 'QUOTED') AS approvals_pending
         """,
         [str(org_id)] * 6,
     )

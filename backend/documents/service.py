@@ -2085,6 +2085,7 @@ def compare_versions(
     def totals(snapshot: dict[str, object]) -> dict[str, object]:
         project_data = snapshot.get("project", {})
         return {
+            "currency": str(project_data.get("currency") or ""),
             "total_price_net": str(project_data.get("total_price_net") or ""),
             "total_price_tax": str(project_data.get("total_price_tax") or ""),
             "total_price_gross": str(project_data.get("total_price_gross") or ""),
@@ -2092,14 +2093,17 @@ def compare_versions(
 
     base_totals = totals(base_snapshot)
     head_totals = totals(head_snapshot)
+    # A monetary delta across currencies would be a conversion, not a
+    # comparison — only same-currency totals produce one.
     price_delta = None
-    try:
-        price_delta = str(
-            D(str(head_totals["total_price_gross"]))
-            - D(str(base_totals["total_price_gross"]))
-        )
-    except Exception:
-        price_delta = None
+    if base_totals["currency"] and base_totals["currency"] == head_totals["currency"]:
+        try:
+            price_delta = str(
+                D(str(head_totals["total_price_gross"]))
+                - D(str(base_totals["total_price_gross"]))
+            )
+        except Exception:
+            price_delta = None
     return {
         "project_id": str(project["id"]),
         "project_code": str(project["code"]),

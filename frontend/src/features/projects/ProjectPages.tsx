@@ -436,11 +436,13 @@ interface NextAction {
 function projectNextAction(
   project: ProjectResponse,
   payments: PaymentsSummary | undefined,
+  canWrite: boolean,
 ): NextAction | undefined {
   const paid = payments?.status === "PAID";
   const collected = Number(payments?.collected ?? "0");
   switch (project.status) {
     case "DRAFT":
+      if (!canWrite) return undefined;
       if (project.position_count === 0)
         return {
           labelKey: "projects.next.addPositions",
@@ -450,8 +452,9 @@ function projectNextAction(
         return { labelKey: "projects.next.quote", to: `/projects/${project.id}/pricing` };
       return { labelKey: "projects.next.emit", section: "quote" };
     case "QUOTED":
-      return { labelKey: "projects.next.share", section: "quote" };
+      return canWrite ? { labelKey: "projects.next.share", section: "quote" } : undefined;
     case "APPROVED":
+      if (!canWrite) return undefined;
       if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
       if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
       return undefined;
@@ -465,10 +468,12 @@ function projectNextAction(
 function ProjectHeader({
   project,
   orgId,
+  canWrite,
   onOpenSection,
 }: {
   project: ProjectResponse;
   orgId: string;
+  canWrite: boolean;
   onOpenSection: (section: FactsSection) => void;
 }): JSX.Element {
   const payments = useQuery({
@@ -489,7 +494,7 @@ function ProjectHeader({
   });
   const approvalsList = approvals.data ?? [];
   const steps = commercialSteps(project, approvalsList, payments.data);
-  const action = projectNextAction(project, payments.data);
+  const action = projectNextAction(project, payments.data, canWrite);
   return (
     <div className="project-head">
       <div className="project-head__row">
@@ -674,10 +679,13 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
   type CompareSide = {
     revision_code?: string;
     integrity?: string | null;
+    currency?: string;
     total_price_gross?: string;
   };
   const baseSide = result?.base as CompareSide | undefined;
   const headSide = result?.head as CompareSide | undefined;
+  const baseCurrency = baseSide?.currency || project.currency;
+  const headCurrency = headSide?.currency || project.currency;
   const summary = result?.summary as
     | {
         added?: number;
@@ -761,21 +769,26 @@ function RevisionComparePanel({ project }: { project: ProjectResponse }): JSX.El
               <>
                 {" · "}
                 {t("projects.compareDelta")}{" "}
-                <strong>{formatMoney(summary.price_gross_delta, project.currency)}</strong>
+                <strong>{formatMoney(summary.price_gross_delta, headCurrency)}</strong>
               </>
             )}
           </p>
           <ul className="compare-list">
             {positions.map((entry) => (
               <ComparePosition
-                currency={project.currency}
+                currency={entry.after ? headCurrency : baseCurrency}
                 entry={entry}
                 key={entry.position_index}
               />
             ))}
             {positions.length === 0 && (
               <li className="compare-row" data-change="unchanged">
-                <span className="compare-row__main">{t("projects.compareIdentical")}</span>
+                <span className="compare-row__main">
+                  {summary?.price_gross_delta != null &&
+                  Number(summary.price_gross_delta) !== 0
+                    ? t("projects.compareTotalsOnly")
+                    : t("projects.compareIdentical")}
+                </span>
               </li>
             )}
           </ul>
@@ -1081,6 +1094,7 @@ function ProjectWorkspace({
       />
       {project ? (
         <ProjectHeader
+          canWrite={canWrite}
           orgId={orgId}
           onOpenSection={(section) => {
             setFactsCollapsed(false);

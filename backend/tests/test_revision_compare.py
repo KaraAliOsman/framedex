@@ -53,11 +53,15 @@ def _position(index: int, **overrides) -> dict[str, object]:
 
 
 def _snapshot(
-    revision: str, positions: list[dict[str, object]], gross: str
+    revision: str,
+    positions: list[dict[str, object]],
+    gross: str,
+    currency: str = "CLP",
 ) -> dict[str, object]:
     return {
         "revision": revision,
         "project": {
+            "currency": currency,
             "total_price_net": gross,
             "total_price_tax": "0",
             "total_price_gross": gross,
@@ -76,12 +80,20 @@ def _patch_rows(monkeypatch: pytest.MonkeyPatch, versions: list[dict[str, object
     monkeypatch.setattr(service, "rows", lambda *args, **kwargs: versions)
 
 
-def _compare(monkeypatch, base_positions, head_positions, base_gross="500000", head_gross="600000"):
+def _compare(
+    monkeypatch,
+    base_positions,
+    head_positions,
+    base_gross="500000",
+    head_gross="600000",
+    base_currency="CLP",
+    head_currency="CLP",
+):
     _patch_rows(
         monkeypatch,
         [
-            _version("REV-A", _snapshot("REV-A", base_positions, base_gross)),
-            _version("REV-B", _snapshot("REV-B", head_positions, head_gross)),
+            _version("REV-A", _snapshot("REV-A", base_positions, base_gross, base_currency)),
+            _version("REV-B", _snapshot("REV-B", head_positions, head_gross, head_currency)),
         ],
     )
     return service.compare_versions(
@@ -126,6 +138,25 @@ def test_compare_reports_added_removed_changed(
     assert changes[3]["after"]["parametric_tree"]["type"] == "BAY"
     assert output["base"]["integrity"] is None
     assert output["head"]["total_price_gross"] == "600000"
+    assert output["head"]["currency"] == "CLP"
+
+
+def test_compare_no_delta_across_currencies(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A monetary delta between different currencies would be a conversion,
+    not a comparison — the summary reports totals per side and no delta."""
+    output = _compare(
+        monkeypatch,
+        [_position(1)],
+        [_position(2)],
+        "500000",
+        "600",
+        base_currency="CLP",
+        head_currency="USD",
+    )
+    assert output["summary"]["price_gross_delta"] is None
+    assert output["base"]["currency"] == "CLP"
+    assert output["head"]["currency"] == "USD"
+    assert output["head"]["total_price_gross"] == "600"
 
 
 def test_compare_unchanged_positions_stay_out_of_the_diff(
