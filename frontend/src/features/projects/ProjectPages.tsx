@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
@@ -32,6 +32,7 @@ import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
+import { useConfirm } from "../../ui";
 
 const fields = [
   ["name", "projects.name", "text", 255],
@@ -319,6 +320,8 @@ function ProjectWorkspace({
   isOwner: boolean;
 }): JSX.Element {
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [quotationDirty, setQuotationDirty] = useState(false);
   const [paymentsDirty, setPaymentsDirty] = useState(false);
@@ -416,6 +419,7 @@ function ProjectWorkspace({
         setDraft(null);
         setNotice(t("projects.saved"));
         void query.refetch();
+        void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
       } else {
         const response = await projectsCreate(submitted.value, options);
         if (response.status !== 201) {
@@ -423,6 +427,7 @@ function ProjectWorkspace({
         }
         if (controller.signal.aborted) return;
         flushSync(() => setDraft(null));
+        void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
         navigate(`/projects/${encodeURIComponent(response.data.id)}`);
       }
     } catch (caught) {
@@ -449,7 +454,7 @@ function ProjectWorkspace({
   }
 
   async function reload(): Promise<void> {
-    if (draft && !window.confirm(t("projects.discard"))) return;
+    if (draft && !(await confirm({ title: t("projects.discard") }))) return;
     setDraft(null);
     const result = await query.refetch();
     if (lifetime.current?.signal.aborted) return;
@@ -461,13 +466,8 @@ function ProjectWorkspace({
 
   async function deletePosition(position: PositionResponse): Promise<void> {
     const controller = lifetime.current;
-    if (
-      !controller ||
-      controller.signal.aborted ||
-      locked.current ||
-      !window.confirm(t("projects.deleteConfirm"))
-    )
-      return;
+    if (!controller || controller.signal.aborted || locked.current) return;
+    if (!(await confirm({ title: t("projects.deleteConfirm"), danger: true }))) return;
     locked.current = true;
     setBusy(true);
     setError("");
@@ -504,7 +504,7 @@ function ProjectWorkspace({
     if (!controller || controller.signal.aborted || locked.current || mustReload) return;
     if (
       (draft !== null || quotationDirty || paymentsDirty || importsDirty) &&
-      !window.confirm(t("projects.leaveUnsaved"))
+      !(await confirm({ title: t("projects.leaveUnsaved") }))
     )
       return;
     locked.current = true;
@@ -524,6 +524,7 @@ function ProjectWorkspace({
         setPaymentsDirty(false);
         setImportsDirty(false);
       });
+      void queryClient.invalidateQueries({ queryKey: ["project-switcher"] });
       navigate(`/projects/${response.data.id}`);
     } catch (caught) {
       if (controller.signal.aborted) return;
@@ -584,7 +585,9 @@ function ProjectWorkspace({
           onChange={setDraft}
           onSave={() => void save()}
           onCancel={() => {
-            if (window.confirm(t("projects.discard"))) setDraft(null);
+            void confirm({ title: t("projects.discard") }).then((ok) => {
+              if (ok) setDraft(null);
+            });
           }}
         />
       ) : (

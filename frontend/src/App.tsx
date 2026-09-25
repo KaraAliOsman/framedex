@@ -44,6 +44,9 @@ const CatalogPage = lazy(async () => ({
 const ProjectPositionEditor = lazy(async () => ({
   default: (await import("./features/projects/ProjectPositionEditor")).ProjectPositionEditor,
 }));
+const OnboardingPage = lazy(async () => ({
+  default: (await import("./features/onboarding/OnboardingPage")).OnboardingPage,
+}));
 
 function ProjectSurface({ editor = false }: { editor?: boolean }): JSX.Element {
   return (
@@ -255,6 +258,18 @@ export function AppRoutes(): JSX.Element {
             <AppShell>
               <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
                 <CatalogPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("onboarding.loading")}</p>}>
+                <OnboardingPage />
               </Suspense>
             </AppShell>
           </ReadyGuard>

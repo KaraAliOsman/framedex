@@ -7,6 +7,8 @@ import { AuthSessionProvider } from "./auth/AuthSessionProvider";
 import "./index.css";
 import "./styles/tokens.css";
 import { ThemeProvider } from "./theme/ThemeProvider";
+import { ConfirmProvider } from "./ui";
+import "./ui/ui.css";
 
 const container = document.getElementById("root");
 if (container === null) throw new Error("Frontend root element is missing");
@@ -18,7 +20,9 @@ createRoot(container).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthSessionProvider>
-          <App />
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
         </AuthSessionProvider>
       </ThemeProvider>
     </QueryClientProvider>

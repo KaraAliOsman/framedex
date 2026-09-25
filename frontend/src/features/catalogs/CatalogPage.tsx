@@ -5,6 +5,7 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
+import { useConfirm } from "../../ui";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
   catalogApi,
@@ -461,6 +462,7 @@ function CatalogEditor({
   const [sectionDraft, setSectionDraft] = useState<SectionDraft>(() =>
     initialSectionDraft(row && "section" in row ? row.section : null),
   );
+  const confirm = useConfirm();
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uncertainCreate, setUncertainCreate] = useState(false);
@@ -503,8 +505,8 @@ function CatalogEditor({
     setSectionDraft(next);
   }
 
-  function close() {
-    if (!dirty || window.confirm(ct("discard"))) onClose();
+  async function close() {
+    if (!dirty || (await confirm({ title: ct("discard") }))) onClose();
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -539,7 +541,9 @@ function CatalogEditor({
   }
 
   async function remove() {
-    if (!row || readOnly || inFlight.current || !window.confirm(ct("confirmDelete"))) return;
+    if (!row || readOnly || inFlight.current) return;
+    if (!(await confirm({ title: ct("deleteTitle"), body: ct("confirmDelete"), danger: true })))
+      return;
     inFlight.current = true;
     setBusy(true);
     setError("");

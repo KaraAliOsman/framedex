@@ -1,7 +1,7 @@
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
-import { t } from "../i18n/es-CL";
+import { t, type TranslationKey } from "../i18n/es-CL";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { telemetry } from "../telemetry/telemetry";
@@ -9,36 +9,53 @@ import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
 import { AskDekopen } from "../features/assistant/AskDekopen";
 import { AssistantSurfaceProvider } from "../features/assistant/assistantContext";
-import { ShellCrumbs } from "./ShellCrumbs";
+import { AttentionBell } from "./AttentionBell";
+import { OrgSwitcher } from "./OrgSwitcher";
+import { ProjectSwitcher } from "./ProjectSwitcher";
+import { ShellCrumbs, useProjectName } from "./ShellCrumbs";
 import { ShellLeafContext } from "./shellLeaf";
+import { contextItemActive, roleLabel, type ContextNavItem } from "./shellUtils";
 
-/** Information architecture: the rail is organized around the fenestration
- * job — work surfaces first, secondary records next, account/admin concerns
- * (billing, wallet, cost lists) nested inside Settings so they never compete
- * with the product's center of gravity. */
-const navGroups = [
+/** Work domains, not database tables: the job surfaces first, operational
+ * records next, account/admin last. AI is a persistent topbar entry, not a
+ * route. Context (inside a project or production) replaces the global list —
+ * the rail serves where you are, not everywhere you could go. */
+const domainGroups: {
+  id: string;
+  title: TranslationKey;
+  items: { to: string; label: TranslationKey }[];
+}[] = [
   {
     id: "work",
+    title: "nav.groupWork",
     items: [
-      ["/dashboard", "nav.dashboard"],
-      ["/projects", "nav.projects"],
-      ["/production", "nav.production"],
-      ["/purchasing", "nav.purchasing"],
-      ["/catalogs/systems", "nav.systems"],
+      { to: "/dashboard", label: "nav.dashboard" },
+      { to: "/projects", label: "nav.projects" },
+      { to: "/clients", label: "nav.clients" },
+      { to: "/pricing/commercial", label: "nav.sales" },
     ],
   },
   {
-    id: "records",
-    // Commercial pricing is a step inside the project, not a rail
-    // destination — the route stays deep-linked, it just never competes
-    // with the surfaces the job actually lives in.
-    items: [["/clients", "nav.clients"]],
+    id: "operations",
+    title: "nav.groupOps",
+    items: [
+      { to: "/catalogs/systems", label: "nav.catalog" },
+      { to: "/purchasing", label: "nav.purchasing" },
+      { to: "/production", label: "nav.production" },
+    ],
   },
   {
     id: "account",
-    items: [["/settings/general", "nav.settings"]],
+    title: "nav.groupAccount",
+    items: [{ to: "/settings/general", label: "nav.admin" }],
   },
-] as const;
+];
+
+const productionContext: ContextNavItem[] = [
+  { to: "/production", label: "nav.context.queue" },
+  { to: "/production?shortage=1", label: "nav.context.shortage" },
+  { to: "/production?dispatch_ready=1", label: "nav.context.dispatch" },
+];
 
 export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const auth = useAuthSession();
@@ -48,10 +65,35 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const [leaf, setLeafState] = useState<string | null>(null);
   const setLeaf = useCallback((label: string | null) => setLeafState(label), []);
   const leafContext = useMemo(() => ({ leaf, setLeaf }), [leaf, setLeaf]);
+  const [paletteRequest, setPaletteRequest] = useState(0);
+  const [assistantRequest, setAssistantRequest] = useState(0);
+  const [railOpen, setRailOpen] = useState(false);
+
+  // Close the drawer nav on route change and on Escape — the drawer only
+  // exists below the tablet breakpoint; desktop keeps the rail always.
+  useEffect(() => setRailOpen(false), [location.pathname]);
+  useEffect(() => {
+    function onKey(event: KeyboardEvent): void {
+      if (event.key === "Escape") setRailOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     telemetry.capture("shell_route_viewed", { route_name: location.pathname });
   }, [location.pathname]);
-  const role = auth.me?.active_organization?.role;
+
+  const org = auth.me?.active_organization;
+  const role = org?.role;
+  const canWrite = role === "OWNER" || role === "ESTIMATOR";
+
+  const parts = location.pathname.split("/").filter(Boolean);
+  const projectId = parts[0] === "projects" && parts[1] !== undefined ? parts[1] : null;
+  const context: "project" | "production" | null =
+    projectId !== null ? "project" : parts[0] === "production" ? "production" : null;
+  const projectName = useProjectName(projectId !== null && projectId !== "demo" ? projectId : null);
+
   function navigationAllowed(to: string): boolean {
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
@@ -60,57 +102,178 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     return true;
   }
 
-  const navItems = navGroups.flatMap((group) =>
-    group.items.filter(([to]) => navigationAllowed(to)).map(([to, label]) => ({ to, label })),
-  );
+  const projectContext: ContextNavItem[] =
+    projectId === null || projectId === "demo"
+      ? []
+      : [
+          { to: `/projects/${projectId}`, label: "nav.context.summary" },
+          { to: `/projects/${projectId}/pricing`, label: "nav.context.quote" },
+          ...(canWrite
+            ? [
+                {
+                  to: `/projects/${projectId}/positions/new`,
+                  label: "nav.context.newPosition" as const,
+                },
+              ]
+            : []),
+        ];
+
+  const contextItems = context === "project" ? projectContext : productionContext;
+
+  const navItems = domainGroups
+    .flatMap((group) => group.items)
+    .filter((item) => navigationAllowed(item.to))
+    .concat(contextItems);
 
   return (
     <ShellLeafContext.Provider value={leafContext}>
       <AssistantSurfaceProvider>
-        <div className="app-shell" data-testid="app-shell">
-          <header className="app-ribbon">
-            <span className="brand">{t("app.brand")}</span>
-            <span className="context-title">
-              {auth.me?.active_organization?.name ?? t("org.none")}
-            </span>
-            <button type="button" onClick={toggleTheme} aria-label={t("theme.toggle")}>
-              {t(theme === "light" ? "theme.toDark" : "theme.toLight")}
-            </button>
-            <button type="button" onClick={() => void auth.signOut()}>
-              {t("auth.signOut")}
-            </button>
-          </header>
-          <nav className="tool-rail" aria-label={t("shell.navigation")}>
-            {navGroups.map((group, index) => {
-              const items = group.items.filter(([to]) => navigationAllowed(to));
-              if (items.length === 0) return null;
-              return (
-                <div
-                  key={group.id}
-                  className={`tool-rail__group${group.id === "account" ? " tool-rail__group--account" : ""}`}
-                >
-                  {index > 0 && <span className="tool-rail__divider" aria-hidden />}
-                  {items.map(([to, label]) => (
-                    <NavLink key={to} to={to} title={t(label)} aria-label={t(label)}>
-                      {t(label)}
-                    </NavLink>
-                  ))}
-                </div>
-              );
-            })}
-          </nav>
-          <ShellCrumbs leaf={leaf} />
-          <main className="workspace">{children}</main>
-          <CommandPalette
-            navItems={navItems.map(({ to, label }) => ({ to, label: t(label) }))}
-            onNavigate={(to) => navigate(to)}
-            organizationId={auth.me?.active_organization?.id ?? null}
+        <div className={`app-shell${railOpen ? " rail-open" : ""}`} data-testid="app-shell">
+          <button
+            type="button"
+            className="rail-scrim"
+            aria-hidden={!railOpen}
+            tabIndex={railOpen ? 0 : -1}
+            onClick={() => setRailOpen(false)}
           />
-          <AskDekopen organizationId={auth.me?.active_organization?.id ?? null} />
-          <footer className="status-bar">
-            <span>{t("shell.engineStatus")}</span>
-            <span>{t("shell.apiStatus")}</span>
-          </footer>
+          <aside className="app-rail">
+            <div className="app-rail__brand">
+              <span className="brand">{t("app.brand")}</span>
+            </div>
+            <OrgSwitcher />
+            <nav className="app-rail__nav" aria-label={t("shell.navigation")}>
+              {context === null ? (
+                domainGroups.map((group) => {
+                  const items = group.items.filter((item) => navigationAllowed(item.to));
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={group.id} className="rail-group">
+                      <p className="rail-group__title">{t(group.title)}</p>
+                      {items.map((item) => (
+                        <NavLink key={item.to} to={item.to} className="rail-item">
+                          {t(item.label)}
+                        </NavLink>
+                      ))}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rail-context">
+                  <Link
+                    to={context === "project" ? "/projects" : "/dashboard"}
+                    className="rail-context__back"
+                  >
+                    ‹ {t(context === "project" ? "nav.projects" : "nav.dashboard")}
+                  </Link>
+                  {context === "project" && (
+                    <p className="rail-context__title">
+                      {projectId === "demo"
+                        ? t("crumb.positionDemo")
+                        : (projectName ?? t("crumb.projectFallback"))}
+                    </p>
+                  )}
+                  {contextItems.map((item) => {
+                    const active = contextItemActive(
+                      item,
+                      contextItems,
+                      location.pathname,
+                      location.search,
+                    );
+                    return (
+                      <Link
+                        key={`${item.to}:${item.label}`}
+                        to={item.to}
+                        className={`rail-item${active ? " active" : ""}`}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {t(item.label)}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </nav>
+            <div className="app-rail__user">
+              <div className="app-rail__identity">
+                <span className="app-rail__email">{auth.me?.user.email ?? "—"}</span>
+                {role && <span className="app-rail__role">{t(roleLabel[role])}</span>}
+              </div>
+              <div className="app-rail__user-actions">
+                <button
+                  type="button"
+                  className="rail-icon-button"
+                  onClick={toggleTheme}
+                  aria-label={t("theme.toggle")}
+                  title={t(theme === "light" ? "theme.toDark" : "theme.toLight")}
+                >
+                  {theme === "light" ? "☾" : "☀"}
+                </button>
+                <button
+                  type="button"
+                  className="rail-icon-button"
+                  onClick={() => void auth.signOut()}
+                  aria-label={t("auth.signOut")}
+                  title={t("auth.signOut")}
+                >
+                  ⎋
+                </button>
+              </div>
+            </div>
+          </aside>
+          <div className="app-body">
+            <header className="app-topbar">
+              <button
+                type="button"
+                className="rail-toggle"
+                aria-expanded={railOpen}
+                aria-label={t("shell.menu")}
+                onClick={() => setRailOpen((value) => !value)}
+              >
+                ☰
+              </button>
+              <ShellCrumbs leaf={leaf} />
+              <div className="app-topbar__actions">
+                <ProjectSwitcher />
+                <button
+                  type="button"
+                  className="topbar-search"
+                  onClick={() => setPaletteRequest((value) => value + 1)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+                    <circle cx="5.6" cy="5.6" r="4.1" stroke="currentColor" strokeWidth="1.3" />
+                    <path
+                      d="m8.7 8.7 2.8 2.8"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span>{t("shell.searchHint")}</span>
+                  <kbd>⌘K</kbd>
+                </button>
+                <AttentionBell />
+                <button
+                  type="button"
+                  className="topbar-button topbar-ai"
+                  onClick={() => setAssistantRequest((value) => value + 1)}
+                >
+                  {t("shell.aiEntry")}
+                </button>
+              </div>
+            </header>
+            <main className="workspace">{children}</main>
+          </div>
+          <CommandPalette
+            openRequested={paletteRequest}
+            navItems={navItems.map((item) => ({ to: item.to, label: t(item.label) }))}
+            onNavigate={(to) => navigate(to)}
+            organizationId={org?.id ?? null}
+          />
+          <AskDekopen
+            openRequested={assistantRequest}
+            hideTrigger
+            organizationId={org?.id ?? null}
+          />
         </div>
       </AssistantSurfaceProvider>
     </ShellLeafContext.Provider>

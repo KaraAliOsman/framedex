@@ -13,6 +13,7 @@ import type { ClientResponse } from "../../api/generated/models";
 import type { PatchedClientUpdateRequest } from "../../api/generated/models/patchedClientUpdateRequest";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t } from "../../i18n/es-CL";
+import { useConfirm } from "../../ui";
 import "./projects.css";
 
 const clientFields = [
@@ -81,6 +82,7 @@ export function ClientsPage(): JSX.Element {
 }
 
 function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolean }): JSX.Element {
+  const confirm = useConfirm();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -166,8 +168,8 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
 
   async function deactivate(client: ClientResponse): Promise<void> {
     const controller = lifetime.current;
-    if (!controller || controller.signal.aborted || !window.confirm(t("clients.deactivateConfirm")))
-      return;
+    if (!controller || controller.signal.aborted) return;
+    if (!(await confirm({ title: t("clients.deactivateConfirm"), danger: true }))) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -245,10 +247,12 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
             type="button"
             disabled={busy}
             onClick={() => {
-              if (window.confirm(t("projects.discard"))) {
-                setDraft(null);
-                setEditing(null);
-              }
+              void confirm({ title: t("projects.discard") }).then((ok) => {
+                if (ok) {
+                  setDraft(null);
+                  setEditing(null);
+                }
+              });
             }}
           >
             {t("projects.cancel")}

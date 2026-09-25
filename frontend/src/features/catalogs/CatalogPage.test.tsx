@@ -14,6 +14,7 @@ import type {
   SystemResponse,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { ConfirmProvider } from "../../ui";
 import { CatalogPage } from "./CatalogPage";
 
 const identity = vi.hoisted(() => ({
@@ -195,7 +196,11 @@ function expectNoWrites() {
 }
 
 async function mount() {
-  render(<CatalogPage />);
+  render(
+    <ConfirmProvider>
+      <CatalogPage />
+    </ConfirmProvider>,
+  );
   await screen.findByRole("heading", { name: t("catalog.title") });
 }
 

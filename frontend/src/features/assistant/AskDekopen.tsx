@@ -16,8 +16,14 @@ type Thread = { question: string; answer: AiAskResponse }[];
  * can suggest navigation; it can never execute a mutation. */
 export function AskDekopen({
   organizationId,
+  openRequested = 0,
+  hideTrigger = false,
 }: {
   organizationId: string | null;
+  /** Incremental open signal — the shell's persistent AI entry opens the dock
+   * without the floating trigger. */
+  openRequested?: number;
+  hideTrigger?: boolean;
 }): JSX.Element | null {
   const { surface, refs } = useAssistantContext();
   const navigate = useNavigate();
@@ -32,6 +38,10 @@ export function AskDekopen({
    * call instead of debiting twice. */
   const operationKey = useRef<{ key: string; question: string } | null>(null);
   const requestSeq = useRef(0);
+
+  useEffect(() => {
+    if (openRequested > 0) setOpen(true);
+  }, [openRequested]);
 
   useEffect(() => {
     if (open) requestAnimationFrame(() => inputRef.current?.focus());
@@ -202,7 +212,7 @@ export function AskDekopen({
             </>
           )}
         </section>
-      ) : (
+      ) : hideTrigger ? null : (
         <button
           type="button"
           className="ask-dock__trigger"

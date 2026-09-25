@@ -33,8 +33,23 @@
   --theme-success-soft: #e3f2ea;
   --theme-danger: #b3372f;
   --theme-danger-soft: #fbe9e7;
+  --theme-danger-ink: #ffffff;
   --theme-info: var(--theme-accent);
   --theme-info-soft: var(--theme-accent-soft);
+  /* Technical states — UNKNOWN means the authority is absent (not "unset"),
+     BLOCKED means the domain refuses to proceed. Both are facts to act on,
+     so they get dedicated soft surfaces instead of reusing warning/danger. */
+  --theme-unknown: #6b7a76;
+  --theme-unknown-soft: #e7eceb;
+  --theme-blocked: #8c2f9b;
+  --theme-blocked-soft: #f3e8f7;
+  --theme-focus-ring: #0f817a;
+  --theme-selection: #d3ebe8;
+  --theme-disabled-bg: #eceeee;
+  --theme-disabled-ink: #97a5a2;
+  --theme-disabled-border: #d5dbda;
+  --theme-skeleton: #e2e7e6;
+  --theme-skeleton-sheen: #f2f5f4;
   --signature-ink: #1a1f24;
   --theme-glass-tint: rgba(15, 129, 122, 0.07);
   --member-pvc-fill: #f4f7f6;
@@ -74,8 +89,20 @@
   --theme-success-soft: #16291f;
   --theme-danger: #e06154;
   --theme-danger-soft: #331d1a;
+  --theme-danger-ink: #ffffff;
   --theme-info: var(--theme-accent);
   --theme-info-soft: var(--theme-accent-soft);
+  --theme-unknown: #93a19d;
+  --theme-unknown-soft: #242c2f;
+  --theme-blocked: #c07ad1;
+  --theme-blocked-soft: #2b1f31;
+  --theme-focus-ring: #45beb1;
+  --theme-selection: #163a38;
+  --theme-disabled-bg: #222a2d;
+  --theme-disabled-ink: #5b6a68;
+  --theme-disabled-border: #333d41;
+  --theme-skeleton: #262f33;
+  --theme-skeleton-sheen: #2f393d;
   --theme-glass-tint: rgba(42, 166, 155, 0.1);
   --member-pvc-fill: #2b3438;
   --member-pvc-edge: #48565b;
@@ -118,11 +145,32 @@
   --radius-xl: 12px;
   --radius-pill: 999px;
 
+  /* Elevation — numbered scale; the named shadows resolve through it */
+  --elevation-0: none;
+  --elevation-1: var(--shadow-raise);
+  --elevation-2: var(--shadow-pop);
+  --elevation-3: var(--shadow-modal);
+
+  /* Density — row/control heights on the 4px grid */
+  --density-compact: 1.75rem;
+  --density-default: 2.25rem;
+  --density-loose: 2.75rem;
+  --control-height: var(--density-default);
+
+  /* Interaction */
+  --focus-ring: 0 0 0 2px var(--theme-bg-canvas), 0 0 0 4px var(--theme-focus-ring);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+
   /* Layers */
   --z-island: 10;
   --z-drawer: 30;
   --z-overlay: 50;
   --z-modal: 90;
+
+  /* Breakpoints (used by @media rules; documented as tokens for parity) */
+  --bp-tablet: 1100px;
+  --bp-phone: 720px;
 
   /* Retired-vocabulary aliases — resolve to canonical tokens so older call
      sites render correctly in both themes. New code uses --theme-* directly. */

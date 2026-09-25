@@ -16,7 +16,7 @@ export type Crumb = { label: string; to?: string };
 /** The project name is a fetch, not a route param — resolved once per
  * (org, id) into features/projects/projectNames. Subscribing to the store
  * means a rename writes through to the already-mounted crumb. */
-function useProjectName(id: string | null): string | null {
+export function useProjectName(id: string | null): string | null {
   const orgId = useAuthSession().me?.active_organization?.id;
   const cached = useSyncExternalStore(projectNameSubscribe, () =>
     id && orgId ? projectNameCached(orgId, id) : null,
