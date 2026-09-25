@@ -697,13 +697,23 @@
   color: var(--theme-danger, #c0392b);
   border-color: currentColor;
 }
-.production-chip.imports-confidence-high {
+.production-chip.imports-confidence-verified_structured {
   color: var(--theme-accent);
   border-color: var(--theme-accent);
+}
+.production-chip.imports-confidence-high_candidate {
+  color: var(--theme-accent);
+  border-color: currentColor;
+  border-style: dashed;
 }
 .production-chip.imports-confidence-review_required {
   color: var(--theme-warning, #e56a32);
   border-color: currentColor;
+}
+.production-chip.imports-confidence-low {
+  color: var(--theme-danger, #c0392b);
+  border-color: currentColor;
+  border-style: dashed;
 }
 
 .imports-toggle {

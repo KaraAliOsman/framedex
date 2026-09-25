@@ -1,7 +1,22 @@
 """Deterministic catalog-article parser — supplier rows become article candidates.
 
-A row is HIGH-confidence when sku + name + role + face width all parse; anything
-missing drops to REVIEW_REQUIRED with a reason, never to invented values.
+Trust contract (§D): prose heuristics never prove a technical field. A SKU, a
+role keyword or a nearby number is a *candidate*, not evidence — "Marco 70 × 58
+mm" does not prove face_width_mm = 70, so a line with several plausible
+measurements resolves none of them.
+
+Confidence levels:
+- ``VERIFIED_STRUCTURED``: explicit structured table/header mapping with a
+  declared unit and known source location. This parser never emits it — prose
+  extraction is never structured-verified.
+- ``HIGH_CANDIDATE``: strong, unambiguous prose parse (every field extracted,
+  exactly one measurement candidate, no warnings) — still unconfirmed.
+- ``REVIEW_REQUIRED``: heuristic parse with missing fields.
+- ``LOW``: ambiguous evidence (e.g. multiple measurements compete for a field).
+
+Every candidate carries ``evidence`` — per-field original/normalized values,
+source location and the parser version — so review audits what the parser
+actually saw, and candidates stay suggestions until a human confirms.
 """
 
 from __future__ import annotations
@@ -39,10 +54,22 @@ _SKU = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.\-_/]{0,29}$")
 _NUMBER = re.compile(r"\d{1,5}(?:[.,]\d{1,4})?")
 _KG_M = re.compile(r"(\d{1,3}(?:[.,]\d{1,4})?)\s*kg/?m", re.IGNORECASE)
 _MM = re.compile(r"(\d{1,4}(?:[.,]\d{1,4})?)\s*mm", re.IGNORECASE)
+# A dimension pair ("70 × 58 mm") is two measurements, not one — the regex
+# alone would see only the value next to "mm".
+_DIM_PAIR = re.compile(
+    r"(\d{1,4}(?:[.,]\d{1,4})?)\s*[×x]\s*(\d{1,4}(?:[.,]\d{1,4})?)\s*mm",
+    re.IGNORECASE,
+)
 _REINFORCEMENT = re.compile(
     r"(?:refuerzo|acero|steel|ref\.)\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9.\-_/]{0,29})",
     re.IGNORECASE,
 )
+
+PARSER_VERSION = "catalog-parser/2"
+CONFIDENCE_VERIFIED_STRUCTURED = "VERIFIED_STRUCTURED"
+CONFIDENCE_HIGH_CANDIDATE = "HIGH_CANDIDATE"
+CONFIDENCE_REVIEW_REQUIRED = "REVIEW_REQUIRED"
+CONFIDENCE_LOW = "LOW"
 
 
 def _decimal(token: str) -> Decimal | None:
@@ -52,12 +79,13 @@ def _decimal(token: str) -> Decimal | None:
         return None
 
 
-def _role_of(text: str) -> str | None:
+def _role_of(text: str) -> tuple[str | None, str | None]:
     lowered = text.lower()
     for keywords, role in _ROLE_KEYWORDS:
-        if any(keyword in lowered for keyword in keywords):
-            return role
-    return None
+        for keyword in keywords:
+            if keyword in lowered:
+                return role, keyword
+    return None, None
 
 
 def parse_article_line(
@@ -86,15 +114,33 @@ def parse_article_line(
     reinforcement = _REINFORCEMENT.search(rest)
     reinforcement_sku = reinforcement.group(1).upper() if reinforcement else None
 
-    face_width: Decimal | None = None
+    # Every plausible measurement is a candidate for face width — never the
+    # first. "Marco 70 × 58 mm" offers two; picking either would fabricate the
+    # field, so ambiguity leaves it unset and flags the line.
+    pair_spans: list[tuple[int, int]] = []
+    mm_candidates: list[tuple[Decimal, str]] = []
+    for match in _DIM_PAIR.finditer(rest):
+        pair_spans.append(match.span(0))
+        numeric_spans.append(match.span(0))
+        for group in (1, 2):
+            value = _decimal(match.group(group))
+            if value is not None and Decimal(5) <= value <= Decimal(300):
+                mm_candidates.append((value, match.group(0)))
+
+    def _in_pair(span: tuple[int, int]) -> bool:
+        return any(span[0] < other[1] and span[1] > other[0] for other in pair_spans)
+
     for match in _MM.finditer(rest):
+        if _in_pair(match.span(0)):
+            continue
         value = _decimal(match.group(1))
         if value is not None and Decimal(5) <= value <= Decimal(300):
-            face_width = value
+            mm_candidates.append((value, match.group(0)))
             numeric_spans.append(match.span(0))
-            break
+    distinct_widths = {value for value, _ in mm_candidates}
+    face_width = next(iter(distinct_widths)) if len(distinct_widths) == 1 else None
 
-    role = _role_of(rest)
+    role, role_keyword = _role_of(rest)
 
     def _masked(span: tuple[int, int]) -> bool:
         return any(
@@ -123,8 +169,51 @@ def parse_article_line(
         name = sku
     if role is None:
         warnings.append("catalog_role_unknown")
-    if face_width is None:
+    if not mm_candidates:
         warnings.append("catalog_face_width_missing")
+    elif len(distinct_widths) > 1:
+        warnings.append("catalog_face_width_ambiguous")
+
+    evidence: dict[str, Any] = {
+        "parser_version": PARSER_VERSION,
+        "source": {"ref": source_ref, "text": stripped[:300]},
+        "fields": {
+            "sku": {"normalized": sku, "original": tokens[0], "source": "first_token"},
+            "name": {"normalized": name, "original": rest[:end].strip(), "source": "name_prefix"},
+            "role": (
+                {"normalized": role, "original": role_keyword, "source": "keyword"}
+                if role
+                else {"normalized": "ADDITIONAL", "original": None, "source": "default"}
+            ),
+            "face_width_mm": {
+                "normalized": face_width,
+                "original": (
+                    mm_candidates[0][1]
+                    if len(distinct_widths) == 1
+                    else sorted({token for _, token in mm_candidates}) or None
+                ),
+                "unit": "mm",
+                "source": "measurement_token",
+            },
+            "weight_kg_m": (
+                {"normalized": weight, "original": kg_match.group(0), "unit": "kg/m", "source": "unit_token"}
+                if kg_match
+                else {"normalized": None, "original": None, "unit": "kg/m", "source": None}
+            ),
+            "reinforcement_sku": (
+                {"normalized": reinforcement_sku, "original": reinforcement.group(0), "source": "explicit_token"}
+                if reinforcement
+                else {"normalized": None, "original": None, "source": None}
+            ),
+        },
+    }
+
+    if "catalog_face_width_ambiguous" in warnings:
+        confidence = CONFIDENCE_LOW
+    elif warnings:
+        confidence = CONFIDENCE_REVIEW_REQUIRED
+    else:
+        confidence = CONFIDENCE_HIGH_CANDIDATE
 
     return {
         "key": key,
@@ -137,10 +226,11 @@ def parse_article_line(
         "reinforcement_sku": reinforcement_sku,
         "weight_kg_m": weight,
         "steel_weight_kg_m": None,
-        "confidence": "HIGH" if not warnings else "REVIEW_REQUIRED",
+        "confidence": confidence,
         "warnings": warnings,
         "source_text": stripped[:300],
         "source_ref": source_ref,
+        "evidence": evidence,
     }
 
 
