@@ -20,6 +20,7 @@ export function AttentionBell(): JSX.Element | null {
     queryKey: ["shell", "attention", org?.id],
     enabled: org !== undefined,
     staleTime: 60_000,
+    refetchOnWindowFocus: "always",
     queryFn: async ({ signal }) => {
       const [ops, projects] = await Promise.all([
         analyticsOperationalSummary({ signal, headers: { "X-Organization-ID": org!.id } }),
@@ -42,7 +43,10 @@ export function AttentionBell(): JSX.Element | null {
         aria-expanded={open || undefined}
         aria-label={t("shell.notifications")}
         title={t("shell.notifications")}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (!open) void query.refetch();
+          setOpen((value) => !value);
+        }}
       >
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
           <path
