@@ -240,6 +240,11 @@ class AiJobCollectionView(APIView):
                 description="Cursor: return jobs created before this timestamp "
                 "(the last row's created_at) — older pages of the job rail.",
             ),
+            OpenApiParameter(
+                "before_id", OpenApiTypes.UUID, OpenApiParameter.QUERY,
+                description="Tie-breaker: the last row's id — jobs sharing the "
+                "cursor's timestamp paginate by id so nothing falls between pages.",
+            ),
         ],
         responses={200: AiJobSerializer(many=True), **ERRORS},
         tags=["ai"],
@@ -251,6 +256,7 @@ class AiJobCollectionView(APIView):
                     org_id=org_id,
                     user_id=token.user_id,
                     before=request.query_params.get("before"),
+                    before_id=request.query_params.get("before_id"),
                 )
             )
 

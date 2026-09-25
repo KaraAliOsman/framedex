@@ -418,7 +418,10 @@ export function AssistantWorkspacePage(): JSX.Element {
     if (!last) return;
     setLoadingMore(true);
     try {
-      const response = await aiJobList({ before: last.created_at }, headers);
+      const response = await aiJobList(
+        { before: last.created_at, before_id: last.id },
+        headers,
+      );
       if (response.status === 200) {
         const page = response.data as unknown as AiJob[];
         setOlderJobs((prev) => [...prev, ...page]);

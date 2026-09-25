@@ -11,4 +11,8 @@ export type AiJobListParams = {
    * Cursor: return jobs created before this timestamp (the last row's created_at) — older pages of the job rail.
    */
   before?: string;
+  /**
+   * Tie-breaker: the last row's id — jobs sharing the cursor's timestamp paginate by id so nothing falls between pages.
+   */
+  before_id?: string;
 };

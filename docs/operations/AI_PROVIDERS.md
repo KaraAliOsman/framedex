@@ -41,6 +41,13 @@ in `input_payload` is serialized as the user message.
    `AI_GATEWAY_MIMO_MODEL` stays unset so the route's own `provider_model`
    pin decides — migrations pin every capability to the wire name
    `primalabs-ai/MiMo-V2.6-Pro-RL`.
+
+   **Existing deployments**: `AI_GATEWAY_{P}_MODEL` overrides the route pin,
+   so a previously-set `AI_GATEWAY_MIMO_MODEL=mimo-v2.6-pro` must be
+   REMOVED (or updated to the Primalabs name) when switching endpoints —
+   otherwise requests keep sending the old model identifier and fail.
+   After the change, verify a live capability round-trips (an
+   `ai_provider_*` error means the override survived).
 2. Capability routing stays explicit — a privileged operational statement
    when a capability needs a different model:
 
@@ -54,8 +61,8 @@ in `input_payload` is serialized as the user message.
 
    Capability routing stays intentional: a route can bind a different
    model per capability (`provider_model` on that route's row, or
-   `AI_GATEWAY_{P}_MODEL` as a deployment-wide override) without any
-   product-code change.
+   `AI_GATEWAY_{P}_MODEL` as a deliberate deployment-wide override —
+   never a leftover) without any product-code change.
 
 3. Revert any time by restoring `provider = 'MOCK'`.
 

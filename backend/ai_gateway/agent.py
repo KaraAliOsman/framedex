@@ -172,18 +172,22 @@ def _queries(
             continue
         if _query_key(surface, refs) in seen:
             continue
-        seen.add(_query_key(surface, refs))
         needed = REQUIRED_REFS.get(surface, ())
         if any(name not in refs for name in needed):
+            seen.add(_query_key(surface, refs))
             observations.append(
                 {"surface": surface, "refs": refs, "error": "ai_context_ref_invalid"}
             )
             continue
         if not all(str(value) in observed for value in refs.values()):
+            # Unobserved is retryable: a later projection can expose the id,
+            # so the key is NOT marked seen — only an executed or structurally
+            # invalid query is spent.
             observations.append(
                 {"surface": surface, "refs": refs, "error": "ai_context_ref_unobserved"}
             )
             continue
+        seen.add(_query_key(surface, refs))
         try:
             context = build_context(org_id, surface, refs)
         except _ContextError as error:

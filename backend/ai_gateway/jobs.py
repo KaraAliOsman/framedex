@@ -90,10 +90,21 @@ def list_jobs(
     user_id: UUID,
     limit: int = 30,
     before: str | None = None,
+    before_id: str | None = None,
 ) -> list[dict]:
     params: list[object] = [str(org_id), str(user_id)]
+    if before_id:
+        try:
+            UUID(str(before_id))
+        except ValueError:
+            before_id = None
     cursor = ""
-    if before:
+    if before and before_id:
+        # Composite keyset: ties on created_at paginate by id so rows sharing
+        # the page-edge timestamp can't fall between pages.
+        cursor = " AND (created_at < %s OR (created_at = %s AND id < %s::uuid))"
+        params += [before, before, before_id]
+    elif before:
         cursor = " AND created_at < %s"
         params.append(before)
     params.append(limit)
@@ -105,7 +116,7 @@ def list_jobs(
             " created_at, updated_at, completed_at"
             " FROM public.ai_jobs WHERE org_id = %s AND user_id = %s"
             + cursor
-            + " ORDER BY created_at DESC LIMIT %s",
+            + " ORDER BY created_at DESC, id DESC LIMIT %s",
             params,
         )
     ]
