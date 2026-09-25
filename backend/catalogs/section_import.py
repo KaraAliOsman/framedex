@@ -28,6 +28,12 @@ PARSER_VERSION = "section-import/1.0"
 ARC_SEGMENTS = 12
 MAX_CANDIDATES = 8
 MAX_POINTS = 2000
+# Parse work budgets — a permitted upload can be adversarially dense, so the
+# parser itself bounds effort before `_finish` ever sees the geometry.
+MAX_ELEMENTS = 20000      # SVG elements walked per document
+MAX_PATH_TOKENS = 100000  # tokens per path `d` attribute
+MAX_SUBPATHS = 64         # subpaths emitted per `d`
+MAX_OUTLINES = 128        # outlines (candidates + open) per document
 # $INSUNITS → millimetres per drawing unit (AutoCAD/DXF spec).
 INSUNIT_MM = {
     1: Decimal("25.4"),        # inches
@@ -292,6 +298,10 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
     tokens = re.findall(
         r"[MmLlHhVvCcSsQqTtAaZz]|[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", d
     )
+    if len(tokens) > MAX_PATH_TOKENS:
+        raise SectionImportError(
+            "section_too_complex", "A path exceeds the parsing token budget."
+        )
     subpaths: list[list[tuple[Decimal, Decimal]]] = []
     current: list[tuple[Decimal, Decimal]] = []
     pos = (0.0, 0.0)
@@ -323,12 +333,23 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
         return out
 
     while i < len(tokens):
+        if len(subpaths) >= MAX_SUBPATHS:
+            break
+        if len(current) > MAX_POINTS:
+            raise SectionImportError(
+                "section_too_complex", "A path exceeds the point budget."
+            )
         token = tokens[i]
         if re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz]", token):
             pending = token
             i += 1
             if pending in "Zz":
                 closed_here = True
+                # Per SVG spec the pen returns to the subpath's start — a
+                # relative command after Z must resolve from it, not from
+                # the last drawn vertex.
+                if start is not None:
+                    pos = start
                 flush()
                 pending = ""
             continue
@@ -493,8 +514,15 @@ def parse_svg(content: bytes) -> SectionImportResult:
     MAX_DEPTH = 64
     deep_count = 0
 
+    element_count = 0
+
     def walk(element, transform, depth: int = 0):
-        nonlocal open_count, deep_count
+        nonlocal open_count, deep_count, element_count
+        element_count += 1
+        if element_count > MAX_ELEMENTS or len(candidates) + open_count >= MAX_OUTLINES:
+            raise SectionImportError(
+                "section_too_complex", "The document exceeds the parsing budget."
+            )
         if depth > MAX_DEPTH:
             # Nesting deeper than a real drawing needs is adversarial input —
             # stop descending before the interpreter stack does.
@@ -512,6 +540,10 @@ def parse_svg(content: bytes) -> SectionImportResult:
                     r"[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?", element.get("points") or ""
                 )
             ]
+            if len(nums) > 2 * MAX_POINTS:
+                raise SectionImportError(
+                    "section_too_complex", "A polygon exceeds the point budget."
+                )
             points = [(nums[i], nums[i + 1]) for i in range(0, len(nums) - 1, 2)]
             closed = name == "polygon" or (
                 len(points) > 2 and points[0] == points[-1]
@@ -645,6 +677,10 @@ def parse_dxf(content: bytes) -> SectionImportResult:
 
     def flush() -> None:
         nonlocal vertices, closed, tag_index, open_count
+        if entity in ("LWPOLYLINE", "POLYLINE") and len(vertices) > MAX_POINTS:
+            raise SectionImportError(
+                "section_too_complex", "A polyline exceeds the point budget."
+            )
         if entity in ("LWPOLYLINE", "POLYLINE") and len(vertices) >= 3:
             points: list[tuple[Decimal, Decimal]] = []
             for i, (x, y, bulge) in enumerate(vertices):
@@ -681,6 +717,10 @@ def parse_dxf(content: bytes) -> SectionImportResult:
             entity = None if value == "SEQEND" else value
             continue
         if in_vertex:
+            if len(vertices) > MAX_POINTS:
+                raise SectionImportError(
+                    "section_too_complex", "A polyline exceeds the point budget."
+                )
             x, y, bulge = vertices[-1]
             if code == "10":
                 x = Decimal(value or "0")

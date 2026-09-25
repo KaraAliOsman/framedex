@@ -437,3 +437,70 @@ def test_agent_provider_error_propagates(monkeypatch):
             history=[],
             operation_key="goal-11",
         )
+
+
+def test_agent_queries_same_surface_per_entity(monkeypatch):
+    """A comparison needs the same surface once per entity — dedupe is
+    (surface, refs), never the surface alone."""
+    project_a, project_b = uuid4(), uuid4()
+    contexts = {
+        "dashboard": {
+            "surface": "dashboard",
+            "organization": {"name": "Org"},
+            "projects": [{"id": str(project_a)}, {"id": str(project_b)}],
+        },
+    }
+    outputs = [
+        _doc(reply="", steps=[
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": str(project_a)}},
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": str(project_b)}},
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": str(project_a)}},  # exact dup — skipped
+        ]),
+        _doc(reply="Comparé ambos proyectos."),
+    ]
+    _patch(monkeypatch, contexts=contexts, outputs=outputs)
+    seen = []
+
+    def fake_build(org_id, surface, refs):
+        if surface == "project":
+            seen.append(refs["project_id"])
+            return {"surface": "project", "id": refs["project_id"]}
+        return contexts[surface]
+
+    monkeypatch.setattr(agent, "build_context", fake_build)
+    result = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="Compara los dos proyectos recientes", product=None,
+        history=[], operation_key="goal-cmp",
+    )
+    assert seen == [str(project_a), str(project_b)]
+    assert [q["surface"] for q in result["queries"]] == [
+        "dashboard", "project", "project",
+    ]
+
+
+def test_agent_query_unobserved_ref_is_error_not_fetch(monkeypatch):
+    """A hallucinated id must not reach the projection layer — it becomes an
+    error observation so the model learns to use only ids it was shown."""
+    ghost = uuid4()
+    contexts = {"dashboard": {"surface": "dashboard",
+                            "organization": {"name": "Org"}}}
+    outputs = [
+        _doc(reply="", steps=[
+            {"kind": "query", "surface": "project",
+             "refs": {"project_id": str(ghost)}},
+        ]),
+        _doc(reply="Ese proyecto no aparece en tu contexto."),
+    ]
+    calls = _patch(monkeypatch, contexts=contexts, outputs=outputs)
+    result = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="Dime el proyecto fantasma", product=None,
+        history=[], operation_key="goal-ghost",
+    )
+    observations = calls[1]["input_payload"]["observations"]
+    assert observations[0]["error"] == "ai_context_ref_unobserved"
+    assert result["queries"][1]["status"] == "error"

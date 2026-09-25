@@ -263,3 +263,51 @@ def test_svg_deeply_nested_groups_do_not_recurse_forever():
         assert not isinstance(error, RecursionError)
         return
     assert any("deeper than" in w for w in result.warnings)
+
+
+def test_svg_z_returns_pen_to_subpath_start():
+    """After Z, a relative move resolves from the closed subpath's start —
+    the second contour must not shift by the first's last vertex."""
+    from catalogs.section_import import parse_svg
+
+    svg = b"""<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm">
+      <path d="M 0 0 L 10 0 L 10 10 L 0 10 Z m 5 5 l 5 0 l 0 5 l -5 0 z"/>
+    </svg>"""
+    result = parse_svg(svg)
+    assert len(result.candidates) == 2
+    starts = {tuple(c["points"][0]) for c in result.candidates}
+    assert ("5.0", "5.0") in starts  # relative `m` after Z resolved from (0,0)
+
+
+def test_svg_path_token_budget():
+    from catalogs.section_import import SectionImportError, parse_svg
+    import pytest
+
+    huge = "M 0 0 " + "l 1 0 " * 40000
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="{huge}"/></svg>'
+    with pytest.raises(SectionImportError, match="budget"):
+        parse_svg(svg.encode())
+
+
+def test_svg_subpath_count_is_bounded():
+    from catalogs.section_import import parse_svg
+
+    subs = " ".join(
+        f"M {i} {i} l 1 0 l 0 1 z" for i in range(200)
+    )
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="{subs}"/></svg>'
+    result = parse_svg(svg.encode())
+    # The document parses but the subpath budget trims before 200 outlines.
+    assert len(result.candidates) <= 8
+
+
+def test_dxf_vertex_budget():
+    from catalogs.section_import import SectionImportError, parse_dxf
+    import pytest
+
+    rows = ["0", "SECTION", "2", "ENTITIES", "0", "LWPOLYLINE", "70", "1"]
+    for i in range(2100):
+        rows += ["10", str(i), "20", str(i)]
+    rows += ["0", "ENDSEC", "0", "EOF"]
+    with pytest.raises(SectionImportError, match="budget"):
+        parse_dxf(("\n".join(rows)).encode())

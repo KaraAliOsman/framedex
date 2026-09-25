@@ -24,7 +24,7 @@ from ai_gateway.serializers import (
     AiJobSerializer,
 )
 from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
-from authentication.errors import contract_error
+from authentication.errors import ContractAPIException, contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
 
@@ -161,47 +161,49 @@ class AiAgentView(APIView):
     )
     def post(self, request):
         data = validate(AiAgentRequestSerializer, request.data)
+        surface = str(data["surface"])
+        refs = dict(data.get("refs") or {})
         # The agent only reads projections and proposes steps — the workshop
-        # manager's surface needs it as much as the estimator's.
-        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
-            surface = str(data["surface"])
-            refs = dict(data.get("refs") or {})
-            missing_refs = [
-                name
-                for name in AGENT_REQUIRED_REFS.get(surface, ())
-                if name not in refs
-            ]
-            if missing_refs:
-                raise contract_error(
-                    400,
-                    "ai_context_ref_required",
-                    f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
+        # manager's surface needs it as much as the estimator's. Errors must
+        # unwind the request transaction BEFORE failure bookkeeping: catching
+        # inside the scope would commit the doomed RUNNING job and strand it.
+        try:
+            with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+                missing_refs = [
+                    name
+                    for name in AGENT_REQUIRED_REFS.get(surface, ())
+                    if name not in refs
+                ]
+                if missing_refs:
+                    raise contract_error(
+                        400,
+                        "ai_context_ref_required",
+                        f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
+                    )
+                return Response(
+                    act(
+                        org_id=org_id,
+                        user_id=token.user_id,
+                        surface=surface,
+                        refs=refs,
+                        goal=str(data["goal"]),
+                        product=data.get("product"),
+                        history=list(data.get("history") or []),
+                        operation_key=str(data["operation_key"]),
+                    )
                 )
-            failure = None
-            try:
-                result = act(
-                    org_id=org_id,
-                    user_id=token.user_id,
-                    surface=surface,
-                    refs=refs,
-                    goal=str(data["goal"]),
-                    product=data.get("product"),
-                    history=list(data.get("history") or []),
-                    operation_key=str(data["operation_key"]),
-                )
-            except Exception as error:  # recorded + mapped outside the scope
-                failure = error
-            else:
-                return Response(result)
-        _record_failure(
-            request,
-            goal=str(data["goal"]),
-            job_id=None,
-            surface=surface,
-            refs=refs,
-            error=failure,
-        )
-        _raise_agent_error(failure)
+        except ContractAPIException:
+            raise
+        except Exception as failure:
+            _record_failure(
+                request,
+                goal=str(data["goal"]),
+                job_id=None,
+                surface=surface,
+                refs=refs,
+                error=failure,
+            )
+            _raise_agent_error(failure)
 
 
 class AiJobCollectionView(APIView):
@@ -276,64 +278,70 @@ class AiJobMessagesView(APIView):
     )
     def post(self, request, job_id):
         data = validate(AiJobMessageSerializer, request.data)
-        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
-            job = jobs.get_job(
-                org_id=org_id, user_id=token.user_id, job_id=job_id
-            )
-            if job is None:
-                raise contract_error(
-                    404, "ai_job_not_found", "El trabajo no existe."
+        # Errors must unwind the request transaction BEFORE failure
+        # bookkeeping — a caught-in-scope exception would commit the resumed
+        # RUNNING state and the failed turn would append twice.
+        try:
+            with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+                job = jobs.get_job(
+                    org_id=org_id, user_id=token.user_id, job_id=job_id
                 )
-            if job["state"] == "CANCELED":
-                raise contract_error(
-                    409, "ai_job_terminal", "El trabajo está cancelado."
-                )
-            history = [
-                {
-                    "role": turn.get("role"),
-                    "text": turn.get("text") or turn.get("reply") or "",
-                }
-                for turn in job.get("transcript") or []
-                if isinstance(turn, dict)
-            ]
-            try:
-                jobs.resume_job(
-                    job_id=job_id, transcript=list(job.get("transcript") or [])
-                )
-            except ValueError as error:
-                if str(error) == "ai_job_terminal":
+                if job is None:
                     raise contract_error(
-                        409, "ai_job_terminal", "El trabajo ya terminó."
+                        404, "ai_job_not_found", "El trabajo no existe."
+                    )
+                if job["state"] == "CANCELED":
+                    raise contract_error(
+                        409, "ai_job_terminal", "El trabajo está cancelado."
+                    )
+                history = [
+                    {
+                        "role": turn.get("role"),
+                        "text": turn.get("text") or turn.get("reply") or "",
+                    }
+                    for turn in job.get("transcript") or []
+                    if isinstance(turn, dict)
+                ]
+                try:
+                    jobs.resume_job(
+                        job_id=job_id,
+                        transcript=list(job.get("transcript") or []),
+                    )
+                except ValueError as error:
+                    if str(error) == "ai_job_terminal":
+                        raise contract_error(
+                            409, "ai_job_terminal", "El trabajo ya terminó."
+                        ) from None
+                    raise contract_error(
+                        409,
+                        "ai_job_running",
+                        "Ya hay una instrucción en curso en este trabajo.",
                     ) from None
-                raise contract_error(
-                    409,
-                    "ai_job_running",
-                    "Ya hay una instrucción en curso en este trabajo.",
-                ) from None
-            failure = None
-            try:
-                result = act(
-                    org_id=org_id,
-                    user_id=token.user_id,
-                    surface=str(job["surface"]),
-                    refs=dict(job.get("refs") or {}),
-                    goal=str(data["message"]),
-                    product=None,
-                    history=history,
-                    operation_key=str(
-                        request.headers.get("X-Operation-Key")
-                        or f"{job_id}:{len(history)}"
-                    ),
-                    job=job,
+                return Response(
+                    act(
+                        org_id=org_id,
+                        user_id=token.user_id,
+                        surface=str(job["surface"]),
+                        refs=dict(job.get("refs") or {}),
+                        goal=str(data["message"]),
+                        product=None,
+                        history=history,
+                        operation_key=str(
+                            request.headers.get("X-Operation-Key")
+                            or f"{job_id}:{len(history)}"
+                        ),
+                        job=job,
+                    )
                 )
-            except Exception as error:  # recorded + mapped outside the scope
-                failure = error
-            else:
-                return Response(result)
-        _record_failure(
-            request,
-            goal=str(data["message"]),
-            job_id=job_id,
-            error=failure,
-        )
-        _raise_agent_error(failure)
+        except ContractAPIException:
+            raise
+        except Exception as failure:
+            # The rollback restored the job's pre-resume state — the failed
+            # turn appends exactly once here, marked FAILED_RETRYABLE.
+            _record_failure(
+                request,
+                goal=str(data["message"]),
+                job_id=job_id,
+                error=failure,
+            )
+            _raise_agent_error(failure)
