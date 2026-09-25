@@ -88,7 +88,21 @@ def test_queries_are_org_scoped_and_pattern_safe(fake_rows):
     _seed(responses)
     service.search(org, "%_;DROP--")
     for sql, params in calls:
-        assert "org_id=%s" in sql
+        # org binding is a %s parameter in every query — bare "org_id=%s" for
+        # tenant-only tables, the canonical visibility rule for catalog ones.
+        assert "org_id=%s" in sql or "org_id = %s" in sql
         assert params[0] == str(org)
         assert "POSITION" in sql
         assert all(p == "%_;drop--" for p in params[1:]), params
+
+
+def test_catalog_queries_use_canonical_visibility(fake_rows):
+    """Systems/articles/infills must resolve through the same
+    org-or-global-system rule the catalog service exposes — not a bare
+    org_id filter that would hide global catalog rows."""
+    calls, _ = fake_rows
+    service.search(uuid4(), "ma")
+    global_aware = [sql for sql, _ in calls if "is_global" in sql]
+    assert len(global_aware) == 3
+    for sql in global_aware:
+        assert "org_id = %s OR" in sql

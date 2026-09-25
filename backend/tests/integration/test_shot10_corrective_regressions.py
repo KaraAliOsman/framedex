@@ -827,3 +827,15 @@ def test_readiness_levels_flag_unmapped_machine_ops(documentary_tenant):
                 "UPDATE public.profile_systems SET process_profile_id=NULL WHERE id=%s RETURNING id",
                 [demo],
             )
+
+
+def test_global_search_uses_canonical_catalog_visibility(documentary_tenant):
+    """A member searching a global system's code must find the system and
+    its NULL-org articles — identical to what the catalog service lists."""
+    from search.service import search
+    org, _, users, _ = documentary_tenant
+    with as_user(users["ESTIMATOR"]):
+        systems = search(org, "demo_60")["results"]
+        articles = search(org, "marco")["results"]
+    assert any(r["group"] == "systems" and "DEMO_60" in r["title"] for r in systems)
+    assert any(r["group"] == "articles" and r["title"] == "MARCO" for r in articles)

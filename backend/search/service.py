@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from catalogs.service import visibility_sql
 from pricing.repository import rows
 
 MAX_QUERY_LEN = 80
@@ -92,7 +93,7 @@ def search(org_id: UUID, query: str) -> dict:
 
     for row in org(
         "SELECT id, code, name FROM public.profile_systems"
-        " WHERE org_id=%s AND (__WHERE__)"
+        f" WHERE {visibility_sql(child=False)} AND (__WHERE__)"
         f" ORDER BY code LIMIT {GROUP_LIMIT}",
         "code",
         "name",
@@ -111,7 +112,7 @@ def search(org_id: UUID, query: str) -> dict:
         "SELECT a.id, a.sku, a.name, s.code AS system_code"
         " FROM public.profile_articles a"
         " JOIN public.profile_systems s ON s.id = a.system_id"
-        " WHERE a.org_id=%s AND (__WHERE__)"
+        f" WHERE {visibility_sql(child=True, alias='a')} AND (__WHERE__)"
         f" ORDER BY a.sku LIMIT {GROUP_LIMIT}",
         "a.sku",
         "a.name",
@@ -128,7 +129,7 @@ def search(org_id: UUID, query: str) -> dict:
 
     for row in org(
         "SELECT id, sku, name, kind FROM public.infill_articles"
-        " WHERE org_id=%s AND (__WHERE__)"
+        f" WHERE {visibility_sql(child=True)} AND (__WHERE__)"
         f" ORDER BY sku LIMIT {GROUP_LIMIT}",
         "sku",
         "name",

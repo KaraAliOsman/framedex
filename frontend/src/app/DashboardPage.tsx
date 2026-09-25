@@ -118,7 +118,7 @@ export function DashboardPage(): JSX.Element {
     {
       key: "dashboard.catalogGaps",
       count: Number(prep.catalog_gaps ?? 0),
-      to: "/catalogs",
+      to: "/catalogs/systems",
       warn: true,
     },
     {

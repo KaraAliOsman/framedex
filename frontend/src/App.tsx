@@ -247,6 +247,7 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route path="/projects" element={<ProjectSurface />} />
+      <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
       <Route
         path="/catalogs/systems"
         element={
