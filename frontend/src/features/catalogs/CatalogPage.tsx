@@ -50,10 +50,24 @@ function itemCode(row: Row<Resource>): string {
 
 function systemReadinessLabel(system: Row<"systems">): string {
   if (!system.readiness) return ct("readinessUnknown");
-
-  return system.readiness.quote_ready
-    ? ct("readyFixed")
-    : system.readiness.reasons.map((reason) => ct(`readiness.${reason}`)).join(" · ");
+  const readiness = system.readiness;
+  if (!readiness.quote_ready) {
+    return readiness.reasons.map((reason) => ct(`readiness.${reason}`)).join(" · ");
+  }
+  // Quote-ready systems still surface the higher levels: a system that can be
+  // priced but can't reach the shop floor is honest about which level blocks.
+  const parts = [ct("readyFixed")];
+  for (const name of ["PRODUCTION_READY", "CNC_READY"]) {
+    const level = readiness.levels?.find((entry) => entry.level === name);
+    if (level && level.ok === false && level.blockers.length > 0) {
+      parts.push(
+        `${ct(name === "PRODUCTION_READY" ? "readinessProduction" : "readinessCnc")}: ${level.blockers
+          .map((blocker) => ct(`readiness.${blocker.code}`))
+          .join(" · ")}`,
+      );
+    }
+  }
+  return parts.join(" · ");
 }
 
 export function CatalogPage(): JSX.Element {

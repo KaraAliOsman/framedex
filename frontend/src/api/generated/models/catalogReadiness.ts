@@ -5,9 +5,13 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { ReadinessLevel } from "./readinessLevel";
 
 export interface CatalogReadiness {
   quote_ready: boolean;
   scope: string;
   reasons: string[];
+  levels?: ReadinessLevel[];
+  /** @nullable */
+  process_via?: string | null;
 }

@@ -1117,6 +1117,11 @@ const messages = {
   "catalog.readiness.catalog_review": "Revisar datos técnicos heredados sin verificar",
 
   "catalog.readiness.purchase": "Completar referencias y suministro de materiales",
+  "catalog.readiness.process_profile": "Vincular un perfil de proceso al sistema",
+  "catalog.readiness.work_centers": "Crear los centros de trabajo faltantes",
+  "catalog.readiness.station_map": "Declarar la estación de cada operación",
+  "catalog.readinessProduction": "producción pendiente",
+  "catalog.readinessCnc": "CNC pendiente",
   "catalog.title": "Catálogo técnico",
   "catalog.subtitle": "Series, perfiles y compatibilidades de tu taller.",
   "catalog.systems": "Ficha de serie",
