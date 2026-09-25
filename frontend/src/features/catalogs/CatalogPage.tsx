@@ -182,6 +182,7 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
     // Reload relationships after deletion: the server decides referential behavior.
     if (kind === "systems" && id === selected) setSelected(null);
     setReload((value) => value + 1);
+    setWorkspaceKey((value) => value + 1);
   }
 
   if (loading) return <p role="status">{ct("loading")}</p>;
@@ -242,7 +243,10 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
         systems={data.systems
           .filter((system) => !system.is_global)
           .map((system) => ({ id: system.id, name: system.name, code: system.code }))}
-        onConfirmed={() => setReload((value) => value + 1)}
+        onConfirmed={() => {
+          setReload((value) => value + 1);
+          setWorkspaceKey((value) => value + 1);
+        }}
       />
 
       <div className="catalog-layout">
