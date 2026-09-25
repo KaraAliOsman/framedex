@@ -846,6 +846,10 @@ function CommercialOperations({
   const [selectedMode, setSelectedMode] = useState("COST_PLUS_MARGIN");
   const [history, setHistory] = useState<Operation[]>([]);
   const [boundProject, setBoundProject] = useState<ProjectResponse | undefined>();
+  // Bumped after a successful apply — the project's live totals changed, so
+  // the vsCurrent comparison must rebind rather than diff against the
+  // pre-apply snapshot.
+  const [boundReload, setBoundReload] = useState(0);
   const generation = useRef(0);
 
   const me = useAuthSession().me;
@@ -906,7 +910,7 @@ function CommercialOperations({
     return () => {
       active = false;
     };
-  }, [orgId, operation?.project_id]);
+  }, [orgId, operation?.project_id, boundReload]);
 
   // The audit requires a reason on every preview; seed the first quote's
   // reason so the estimator isn't blocked before any price exists — still
@@ -975,6 +979,7 @@ function CommercialOperations({
       (value) => {
         publishOperation(value);
         setHistory((rows) => rows.map((row) => (row.id === value.id ? value : row)));
+        setBoundReload((count) => count + 1);
       },
       "pricing.applyError",
     );

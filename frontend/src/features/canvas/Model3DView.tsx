@@ -103,35 +103,54 @@ function ClipSetup(): null {
 function LeafGroup({
   motion,
   open,
+  explode,
+  depth,
   children,
 }: {
   motion: LeafMotion;
   open: boolean;
+  /** Despiece pose: leaves lift toward the room side (+z) — reads the
+   * frame↔sash↔glass layering apart without touching geometry. */
+  explode: boolean;
+  depth: number;
   children: React.ReactNode;
 }): JSX.Element {
   const outer = useRef<THREE.Group>(null);
   const inner = useRef<THREE.Group>(null);
   const progress = useRef(0);
+  const explodeProgress = useRef(0);
   const invalidate = useThree((state) => state.invalidate);
   const target = open ? 1 : 0;
+  const explodeTarget = explode ? 1 : 0;
   useFrame((_, delta) => {
-    if (progress.current === target) return;
-    const next = progress.current + (target - progress.current) * Math.min(1, delta * 5.5);
-    progress.current = Math.abs(next - target) < 0.004 ? target : next;
+    const moving = progress.current !== target;
+    const exploding = explodeProgress.current !== explodeTarget;
+    if (!moving && !exploding) return;
+    const step = Math.min(1, delta * 5.5);
+    if (moving) {
+      const next = progress.current + (target - progress.current) * step;
+      progress.current = Math.abs(next - target) < 0.004 ? target : next;
+    }
+    if (exploding) {
+      const next = explodeProgress.current + (explodeTarget - explodeProgress.current) * step;
+      explodeProgress.current = Math.abs(next - explodeTarget) < 0.004 ? explodeTarget : next;
+    }
     const pose = progress.current;
+    const lift = explodeProgress.current * Math.max(depth * 1.35, 60);
     const outerGroup = outer.current;
     const innerGroup = inner.current;
     if (!outerGroup || !innerGroup) return;
     if (motion.kind === "swing") {
       outerGroup.position.set(motion.pivot, 0, 0);
-      innerGroup.position.set(-motion.pivot, 0, 0);
+      innerGroup.position.set(-motion.pivot, 0, lift);
       innerGroup.rotation.y = motion.dir * pose * SWING_RAD;
     } else if (motion.kind === "tilt") {
       outerGroup.position.set(0, motion.pivot, 0);
-      innerGroup.position.set(0, -motion.pivot, 0);
+      innerGroup.position.set(0, -motion.pivot, lift);
       innerGroup.rotation.x = motion.dir * pose * TILT_RAD;
     } else {
       outerGroup.position.set(motion.dir * pose * motion.travel, 0, 0);
+      innerGroup.position.set(0, 0, lift);
     }
     invalidate();
   });
@@ -197,6 +216,15 @@ function SolidMesh({
         : null,
     [solid, material, mode],
   );
+  // Each mesh clones the cached base texture — material disposal does NOT
+  // release a texture map, so the clone is disposed when the map is
+  // replaced or the mesh unmounts (the shared base lives in grainCache).
+  useEffect(() => {
+    if (!map) return;
+    return () => {
+      map.dispose();
+    };
+  }, [map]);
   return (
     <mesh
       geometry={geometry ?? undefined}
@@ -265,6 +293,7 @@ function SceneContent({
   inside,
   open,
   clip,
+  explode,
   onPick,
 }: {
   scene: Scene3D;
@@ -274,6 +303,7 @@ function SceneContent({
   inside: boolean;
   open: boolean;
   clip: boolean;
+  explode: boolean;
   onPick(owner: string): void;
 }): JSX.Element {
   // Corte: a vertical section through the scene center keeps the left
@@ -319,7 +349,13 @@ function SceneContent({
                * rotates/translates around its declared hinge/pivot; fixed
                * members stay put. */}
               {module.leaves.map((motion) => (
-                <LeafGroup key={motion.leafId} motion={motion} open={open}>
+                <LeafGroup
+                  key={motion.leafId}
+                  motion={motion}
+                  open={open}
+                  explode={explode}
+                  depth={module.depth}
+                >
                   {module.solids
                     .filter((solid) => solid.leafId === motion.leafId)
                     .map((solid, index) =>
@@ -370,6 +406,7 @@ export default function Model3DView({
   const [inside, setInside] = useState(false);
   const [open, setOpen] = useState(false);
   const [clip, setClip] = useState(false);
+  const [explode, setExplode] = useState(false);
   const scene = useMemo(() => buildScene3D(product, members, plan), [product, members, plan]);
   const hasLeaves = useMemo(
     () => scene.modules.some((module) => module.leaves.length > 0),
@@ -435,6 +472,15 @@ export default function Model3DView({
         >
           {t("assembly.view3dClip")}
         </button>
+        {hasLeaves && (
+          <button
+            type="button"
+            className={explode ? "is-active" : ""}
+            onClick={() => setExplode((value) => !value)}
+          >
+            {t("assembly.view3dExplode")}
+          </button>
+        )}
       </div>
       <Canvas
         frameloop="demand"
@@ -455,6 +501,7 @@ export default function Model3DView({
           inside={inside}
           open={open}
           clip={clip}
+          explode={explode}
           onPick={pick}
         />
       </Canvas>

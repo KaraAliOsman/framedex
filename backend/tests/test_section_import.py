@@ -311,3 +311,46 @@ def test_dxf_vertex_budget():
     rows += ["0", "ENDSEC", "0", "EOF"]
     with pytest.raises(SectionImportError, match="budget"):
         parse_dxf(("\n".join(rows)).encode())
+
+
+def test_svg_mixed_curve_families_do_not_cross_reflect():
+    """Per SVG spec, S reflects only after C/S and T only after Q/T. A
+    quadratic control point must never reflect into a cubic S (and vice
+    versa) — the smooth command falls back to the current position."""
+    from catalogs.section_import import ARC_SEGMENTS, _path_points
+    from decimal import Decimal
+
+    subs, _ = _path_points("M0 0 Q10 10 20 0 S30 -10 40 0 z")
+    points = subs[0]
+    # S after Q: c1 falls back to pos=(20,0). First S sample sits at
+    # y≈-0.19 with the fallback vs y≈-2.29 when Q's (10,10) is wrongly
+    # reflected into the cubic — index 1+ARC_SEGMENTS is that sample.
+    first_s = points[1 + ARC_SEGMENTS]
+    assert first_s[1] > Decimal("-1")
+
+    subs2, _ = _path_points("M0 0 C0 10 10 10 20 0 T40 0 z")
+    # T after C: no quadratic reflection — the segment is flat (y=0);
+    # a wrongly reflected cubic c2=(10,10) dips to y≈-1.53.
+    first_t = subs2[0][1 + ARC_SEGMENTS]
+    assert first_t[1] > Decimal("-1")
+
+    # Same-family smooth still reflects: S after C mirrors the cubic c2.
+    subs3, _ = _path_points("M0 0 C0 10 10 10 20 0 S20 -10 40 0 z")
+    mirrored = [p for p in subs3[0] if p[1] < Decimal("-2")]
+    assert mirrored != []
+
+
+def test_dxf_malformed_coordinate_rejects_as_import_error():
+    from catalogs.section_import import SectionImportError, parse_dxf
+    import pytest
+
+    rows = [
+        "0", "SECTION", "2", "ENTITIES", "0", "LWPOLYLINE", "70", "1",
+        "10", "NOT-A-NUMBER", "20", "5",
+        "10", "10", "20", "0",
+        "10", "10", "20", "10",
+        "0", "ENDSEC", "0", "EOF",
+    ]
+    with pytest.raises(SectionImportError) as excinfo:
+        parse_dxf(("\n".join(rows)).encode())
+    assert excinfo.value.code == "section_dxf_invalid"

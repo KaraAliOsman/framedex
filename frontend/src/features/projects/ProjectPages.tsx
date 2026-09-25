@@ -108,12 +108,16 @@ function PositionQtyInput({
   disabled,
   onSaved,
   onConflict,
+  onError,
 }: {
   position: PositionResponse;
   orgId: string;
   disabled: boolean;
   onSaved(): Promise<unknown>;
   onConflict(): void;
+  /** Non-conflict failures surface to the page — the edit reverting must
+   * never look like it saved. */
+  onError(): void;
 }): JSX.Element {
   const [value, setValue] = useState(String(position.quantity));
   const [saving, setSaving] = useState(false);
@@ -143,6 +147,7 @@ function PositionQtyInput({
     } catch (caught) {
       setValue(String(position.quantity));
       if (caught instanceof ApiError && caught.status === 409) onConflict();
+      else onError();
     } finally {
       setSaving(false);
     }
@@ -485,14 +490,18 @@ function projectNextAction(
         ? { labelKey: "projects.next.awaiting", section: "quote" }
         : { labelKey: "projects.next.share", section: "quote" };
     case "APPROVED":
-      if (!canWrite) return undefined;
-      if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
-      if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
+      // Payment recording is estimator/owner work; release is owner/WM.
+      // Check each capability separately — a WM (canRelease, !canWrite)
+      // must still reach the release shortcut once the deal is settled.
+      if (canWrite) {
+        if (collected === 0) return { labelKey: "projects.next.deposit", section: "payments" };
+        if (!paid) return { labelKey: "projects.next.balance", section: "payments" };
+      }
       // Approved and settled — the remaining work is releasing the sealed
       // revision into production. Only roles the release endpoint accepts
       // (owner / workshop manager) get the shortcut; estimators can't act
       // on it, so for them the header stays honest instead of dead-ending.
-      if (!canRelease) return undefined;
+      if (!paid || !canRelease) return undefined;
       return { labelKey: "projects.next.release", section: "quote" };
     case "IN_PRODUCTION":
       return { labelKey: "projects.next.production", to: "/production" };
@@ -1430,6 +1439,7 @@ function ProjectWorkspace({
                         <PositionQtyInput
                           disabled={disabled}
                           onConflict={() => setMustReload(true)}
+                          onError={() => setError(t("projects.uncertain"))}
                           onSaved={() => query.refetch()}
                           orgId={orgId}
                           position={position}

@@ -310,9 +310,13 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
     closed_here = False
     i = 0
     pending_smooth: tuple[float, float] | None = None
+    # SVG smooth commands reflect the previous control point ONLY within the
+    # same curve family — S after C/S, T after Q/T. A mixed C→T or Q→S falls
+    # back to the current position (no reflection), never the wrong family.
+    pending_smooth_family: str | None = None
 
     def flush() -> None:
-        nonlocal current, start, closed_here
+        nonlocal current, start, closed_here, pending_smooth, pending_smooth_family
         if current:
             if closed_here and current[0] != current[-1]:
                 current.append(current[0])
@@ -320,6 +324,8 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
         current = []
         start = None
         closed_here = False
+        pending_smooth = None
+        pending_smooth_family = None
 
     def take(n: int) -> list[float]:
         nonlocal i
@@ -405,16 +411,22 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
                 current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
             pos = nxt
             pending_smooth = c2
+            pending_smooth_family = "C"
         elif cmd == "S":
             values = take(4)
             if len(values) < 4:
                 continue
-            c1 = (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1]) if pending_smooth else pos
+            c1 = (
+                (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1])
+                if pending_smooth and pending_smooth_family == "C"
+                else pos
+            )
             c2, nxt = pt(*values[0:2]), pt(*values[2:4])
             for x, y in _sample_cubic(pos, c1, c2, nxt):
                 current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
             pos = nxt
             pending_smooth = c2
+            pending_smooth_family = "C"
         elif cmd == "Q":
             values = take(4)
             if len(values) < 4:
@@ -424,16 +436,22 @@ def _path_points(d: str) -> tuple[list[list[tuple[Decimal, Decimal]]], bool]:
                 current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
             pos = nxt
             pending_smooth = c1
+            pending_smooth_family = "Q"
         elif cmd == "T":
             values = take(2)
             if len(values) < 2:
                 continue
-            c1 = (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1]) if pending_smooth else pos
+            c1 = (
+                (2 * pos[0] - pending_smooth[0], 2 * pos[1] - pending_smooth[1])
+                if pending_smooth and pending_smooth_family == "Q"
+                else pos
+            )
             nxt = pt(*values[0:2])
             for x, y in _sample_quadratic(pos, c1, nxt):
                 current.append((Decimal(str(round(x, 6))), Decimal(str(round(y, 6)))))
             pos = nxt
             pending_smooth = c1
+            pending_smooth_family = "Q"
         elif cmd == "A":
             values = take(7)
             if len(values) < 7:
@@ -659,6 +677,17 @@ def _bulge_arc(
     return out
 
 
+def _dxf_num(value: str) -> Decimal:
+    """Group values are raw drawing bytes — a nonnumeric coordinate is bad
+    input, so it converts to the import contract rather than a server error."""
+    try:
+        return Decimal(value or "0")
+    except InvalidOperation:
+        raise SectionImportError(
+            "section_dxf_invalid", f"A coordinate is not numeric: {value!r}."
+        ) from None
+
+
 def parse_dxf(content: bytes) -> SectionImportResult:
     pairs = list(_dxf_pairs(content))
     mm_per_unit, _ = _dxf_insunits(iter(pairs))
@@ -723,22 +752,22 @@ def parse_dxf(content: bytes) -> SectionImportResult:
                 )
             x, y, bulge = vertices[-1]
             if code == "10":
-                x = Decimal(value or "0")
+                x = _dxf_num(value)
             elif code == "20":
-                y = Decimal(value or "0")
+                y = _dxf_num(value)
             elif code == "42":
-                bulge = Decimal(value or "0")
+                bulge = _dxf_num(value)
             else:
                 continue
             vertices[-1] = (x, y, bulge)
             continue
         if entity in ("LWPOLYLINE", "POLYLINE"):
             if code == "10" and entity == "LWPOLYLINE":
-                vertices.append((Decimal(value or "0"), Decimal(0), Decimal(0)))
+                vertices.append((_dxf_num(value), Decimal(0), Decimal(0)))
             elif code == "20" and vertices and entity == "LWPOLYLINE":
-                vertices[-1] = (vertices[-1][0], Decimal(value or "0"), vertices[-1][2])
+                vertices[-1] = (vertices[-1][0], _dxf_num(value), vertices[-1][2])
             elif code == "42" and vertices and entity == "LWPOLYLINE":
-                vertices[-1] = (vertices[-1][0], vertices[-1][1], Decimal(value or "0"))
+                vertices[-1] = (vertices[-1][0], vertices[-1][1], _dxf_num(value))
             elif code == "70":
                 try:
                     closed = bool(int(value) & 1)
