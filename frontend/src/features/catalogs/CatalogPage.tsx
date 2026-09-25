@@ -542,7 +542,8 @@ function CatalogEditor({
 
   async function remove() {
     if (!row || readOnly || inFlight.current) return;
-    if (!(await confirm({ title: ct("confirmDelete"), danger: true }))) return;
+    if (!(await confirm({ title: ct("deleteTitle"), body: ct("confirmDelete"), danger: true })))
+      return;
     inFlight.current = true;
     setBusy(true);
     setError("");

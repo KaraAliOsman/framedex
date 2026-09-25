@@ -216,20 +216,19 @@ test("manager persists exact typed kit contents through real UI and DB", async (
     contentType: "image/png",
   });
 
-  const confirmation = page.waitForEvent("dialog").then(async (dialog) => {
-    expect(dialog.type()).toBe("confirm");
-    expect(dialog.message()).toBe(t("catalog.confirmDelete"));
-    await dialog.accept();
-  });
-  const deleted = await exchange(page, "DELETE", `${collection}${created.id}/`, 204, () =>
-    form
+  const deleted = await exchange(page, "DELETE", `${collection}${created.id}/`, 204, async () => {
+    await form
       .getByRole("button", {
         name: t("catalog.delete"),
         exact: true,
       })
-      .click(),
-  );
-  await confirmation;
+      .click();
+    // §F: in-app ConfirmDialog replaced window.confirm — assert the same
+    // warning text, then confirm through the product surface.
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText(t("catalog.confirmDelete"));
+    await dialog.getByRole("button", { name: t("ui.confirm"), exact: true }).click();
+  });
   expect(deleted.request().headers()["if-match"]).toBe(`"${updated.revision}"`);
   await expect(form).toHaveCount(0);
 

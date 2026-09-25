@@ -112,6 +112,13 @@ async function requestMagicLink(page: Page, email: string): Promise<void> {
 }
 
 async function accessToken(page: Page): Promise<string> {
+  // The SPA persists the GoTrue session asynchronously after the auth
+  // callback mounts — poll for the key instead of racing a single read.
+  await page.waitForFunction(() =>
+    Object.keys(window.localStorage).some(
+      (key) => key.startsWith("sb-") && key.endsWith("-auth-token"),
+    ),
+  );
   return page.evaluate(() => {
     for (const key of Object.keys(window.localStorage)) {
       if (!key.startsWith("sb-") || !key.endsWith("-auth-token")) continue;
@@ -208,8 +215,8 @@ test("real Magic Link reaches Mailpit and authenticates Django /auth/me", async 
   await assertRealIdentity(page, request, fixture, "aal1");
 
   const navigation = page.getByRole("navigation", { name: "Navegación principal" });
-  await expect(navigation.getByRole("link", { name: "Sistemas", exact: true })).toHaveCount(0);
-  for (const route of ["Proyectos", "Ajustes", "Panel"]) {
+  await expect(navigation.getByRole("link", { name: "Catálogo", exact: true })).toHaveCount(0);
+  for (const route of ["Proyectos", "Administración", "Panel"]) {
     await navigation.getByRole("link", { name: route, exact: true }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
   }
@@ -350,7 +357,10 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByText("Precios aplicados al proyecto.", { exact: true })).toBeVisible();
   await page.goto(`/projects/${draft.id}`);
   await expect(
-    page.locator("dd").filter({ hasText: formatMoney(quote.project_gross, "CLP") }),
+    page
+      .locator("dd")
+      .filter({ hasText: formatMoney(quote.project_gross, "CLP") })
+      .first(),
   ).toBeVisible();
   const persisted = await request.get(`${djangoUrl}/api/v1/projects/${draft.id}/`, { headers });
   expect(persisted.status()).toBe(200);

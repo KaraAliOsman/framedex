@@ -1248,6 +1248,7 @@ const messages = {
   "catalog.view": "Consultar",
   "catalog.save": "Guardar",
   "catalog.delete": "Eliminar",
+  "catalog.deleteTitle": "Eliminar registro",
   "catalog.cancel": "Cancelar",
   "catalog.close": "Cerrar",
   "catalog.retry": "Volver a cargar",
