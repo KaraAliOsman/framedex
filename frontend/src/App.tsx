@@ -42,6 +42,9 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
+const AssistantWorkspacePage = lazy(async () => ({
+  default: (await import("./features/assistant/AssistantWorkspacePage")).AssistantWorkspacePage,
+}));
 const ProjectPositionEditor = lazy(async () => ({
   default: (await import("./features/projects/ProjectPositionEditor")).ProjectPositionEditor,
 }));
@@ -276,6 +279,18 @@ export function AppRoutes(): JSX.Element {
       />
       <Route path="/projects" element={<ProjectSurface />} />
       <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
+      <Route
+        path="/assistant"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
+                <AssistantWorkspacePage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
       <Route
         path="/catalogs/systems"
         element={

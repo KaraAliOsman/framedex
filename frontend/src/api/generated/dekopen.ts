@@ -14,6 +14,9 @@ import type {
   AiAskResponse,
   AiInvokeRequestRequest,
   AiInvokeResponse,
+  AiJob,
+  AiJobDetail,
+  AiJobMessageRequest,
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
@@ -447,6 +450,315 @@ export const aiInvoke = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiInvokeRequestRequest),
+  });
+};
+
+export type aiJobListResponse200 = {
+  data: AiJob[];
+  status: 200;
+};
+
+export type aiJobListResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobListResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobListResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobListResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobListResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobListResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobListResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobListResponseSuccess = aiJobListResponse200 & {
+  headers: Headers;
+};
+export type aiJobListResponseError = (
+  | aiJobListResponse400
+  | aiJobListResponse401
+  | aiJobListResponse403
+  | aiJobListResponse404
+  | aiJobListResponse409
+  | aiJobListResponse422
+  | aiJobListResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobListResponse = aiJobListResponseSuccess | aiJobListResponseError;
+
+export const getAiJobListUrl = () => {
+  return `/api/v1/ai/jobs/`;
+};
+
+/**
+ * The caller's recent AI jobs — the workspace's left rail.
+ */
+export const aiJobList = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobListResponse> => {
+  return apiMutator<aiJobListResponse>(getAiJobListUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiJobRetrieveResponse200 = {
+  data: AiJobDetail;
+  status: 200;
+};
+
+export type aiJobRetrieveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobRetrieveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobRetrieveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobRetrieveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobRetrieveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobRetrieveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobRetrieveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobRetrieveResponseSuccess = aiJobRetrieveResponse200 & {
+  headers: Headers;
+};
+export type aiJobRetrieveResponseError = (
+  | aiJobRetrieveResponse400
+  | aiJobRetrieveResponse401
+  | aiJobRetrieveResponse403
+  | aiJobRetrieveResponse404
+  | aiJobRetrieveResponse409
+  | aiJobRetrieveResponse422
+  | aiJobRetrieveResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobRetrieveResponse = aiJobRetrieveResponseSuccess | aiJobRetrieveResponseError;
+
+export const getAiJobRetrieveUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/`;
+};
+
+/**
+ * One job with its full transcript; DELETE cancels a live run.
+ */
+export const aiJobRetrieve = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobRetrieveResponse> => {
+  return apiMutator<aiJobRetrieveResponse>(getAiJobRetrieveUrl(jobId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type aiJobCancelResponse200 = {
+  data: AiJob;
+  status: 200;
+};
+
+export type aiJobCancelResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobCancelResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobCancelResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobCancelResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobCancelResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobCancelResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobCancelResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobCancelResponseSuccess = aiJobCancelResponse200 & {
+  headers: Headers;
+};
+export type aiJobCancelResponseError = (
+  | aiJobCancelResponse400
+  | aiJobCancelResponse401
+  | aiJobCancelResponse403
+  | aiJobCancelResponse404
+  | aiJobCancelResponse409
+  | aiJobCancelResponse422
+  | aiJobCancelResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobCancelResponse = aiJobCancelResponseSuccess | aiJobCancelResponseError;
+
+export const getAiJobCancelUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/`;
+};
+
+/**
+ * One job with its full transcript; DELETE cancels a live run.
+ */
+export const aiJobCancel = async (
+  jobId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobCancelResponse> => {
+  return apiMutator<aiJobCancelResponse>(getAiJobCancelUrl(jobId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export type aiJobMessageCreateResponse200 = {
+  data: AiAgentResponse;
+  status: 200;
+};
+
+export type aiJobMessageCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobMessageCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobMessageCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobMessageCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobMessageCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobMessageCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobMessageCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobMessageCreateResponseSuccess = aiJobMessageCreateResponse200 & {
+  headers: Headers;
+};
+export type aiJobMessageCreateResponseError = (
+  | aiJobMessageCreateResponse400
+  | aiJobMessageCreateResponse401
+  | aiJobMessageCreateResponse403
+  | aiJobMessageCreateResponse404
+  | aiJobMessageCreateResponse409
+  | aiJobMessageCreateResponse422
+  | aiJobMessageCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobMessageCreateResponse =
+  aiJobMessageCreateResponseSuccess | aiJobMessageCreateResponseError;
+
+export const getAiJobMessageCreateUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/messages/`;
+};
+
+/**
+ * §07-B follow-up instructions: appends a user turn and runs the agent
+ * again inside the same job — transcript, plan and artifacts keep
+ * accumulating; the earlier result is never deleted.
+ */
+export const aiJobMessageCreate = async (
+  jobId: string,
+  aiJobMessageRequest: AiJobMessageRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobMessageCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiJobMessageCreateResponse>(getAiJobMessageCreateUrl(jobId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiJobMessageRequest),
   });
 };
 

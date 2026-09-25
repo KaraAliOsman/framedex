@@ -42,6 +42,7 @@ const domainGroups: {
       { to: "/catalogs/systems", label: "nav.catalog" },
       { to: "/purchasing", label: "nav.purchasing" },
       { to: "/production", label: "nav.production" },
+      { to: "/assistant", label: "nav.assistant" },
     ],
   },
   {

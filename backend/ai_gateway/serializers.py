@@ -114,10 +114,46 @@ class AiAgentRejectedSerializer(serializers.Serializer):
 
 class AiAgentResponseSerializer(serializers.Serializer):
     audit_id = serializers.CharField()
+    job_id = serializers.CharField()
+    state = serializers.CharField()
     model = serializers.CharField()
     credits_debited = serializers.IntegerField()
     reply = serializers.CharField()
+    plan = serializers.ListField(child=serializers.DictField())
+    claims = serializers.ListField(child=serializers.DictField())
+    references = serializers.ListField(child=serializers.CharField())
+    questions = serializers.ListField(child=serializers.CharField())
+    artifacts = serializers.ListField(child=serializers.DictField())
+    transcript = serializers.ListField(child=serializers.DictField())
     steps = AiAgentStepSerializer(many=True)
     queries = AiAgentQuerySerializer(many=True)
     warnings = serializers.ListField(child=serializers.CharField())
     rejected = AiAgentRejectedSerializer(many=True)
+
+
+class AiJobMessageSerializer(serializers.Serializer):
+    message = serializers.CharField(min_length=1, max_length=2000)
+
+
+class AiJobSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    surface = serializers.CharField()
+    refs = serializers.DictField()
+    goal = serializers.CharField()
+    state = serializers.CharField()
+    plan = serializers.ListField()
+    artifacts = serializers.ListField()
+    warnings = serializers.ListField()
+    result = serializers.DictField(required=False, allow_null=True)
+    error_code = serializers.CharField(required=False, allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    completed_at = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class AiJobDetailSerializer(AiJobSerializer):
+    transcript = serializers.ListField()
+
+
+class AiAgentResumeRequestSerializer(serializers.Serializer):
+    pass

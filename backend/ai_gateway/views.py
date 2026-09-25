@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ai_gateway import service
+from ai_gateway import jobs
 from ai_gateway.agent import act
 from ai_gateway.assist import ask
 from ai_gateway.context import _ContextError
@@ -18,6 +19,9 @@ from ai_gateway.serializers import (
     AiAskResponseSerializer,
     AiInvokeRequestSerializer,
     AiInvokeResponseSerializer,
+    AiJobDetailSerializer,
+    AiJobMessageSerializer,
+    AiJobSerializer,
 )
 from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
 from authentication.errors import contract_error
@@ -134,6 +138,143 @@ class AiAgentView(APIView):
                         product=data.get("product"),
                         history=list(data.get("history") or []),
                         operation_key=str(data["operation_key"]),
+                    )
+                )
+            except _ContextError as error:
+                if error.code == "ai_context_ref_invalid":
+                    raise contract_error(
+                        400,
+                        "ai_context_ref_invalid",
+                        "La referencia de contexto no es válida.",
+                    ) from None
+                raise contract_error(
+                    404,
+                    "ai_context_not_found",
+                    "El contexto solicitado no existe o no está disponible.",
+                ) from None
+            except ProviderError as error:
+                raise contract_error(
+                    503,
+                    error.code,
+                    "El proveedor de IA no está disponible en este momento.",
+                ) from None
+
+
+class AiJobCollectionView(APIView):
+    """The caller's recent AI jobs — the workspace's left rail."""
+
+    @extend_schema(
+        operation_id="ai_job_list",
+        responses={200: AiJobSerializer(many=True), **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            return Response(
+                jobs.list_jobs(org_id=org_id, user_id=token.user_id)
+            )
+
+
+class AiJobView(APIView):
+    """One job with its full transcript; DELETE cancels a live run."""
+
+    @extend_schema(
+        operation_id="ai_job_retrieve",
+        responses={200: AiJobDetailSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request, job_id):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            return Response(job)
+
+    @extend_schema(
+        operation_id="ai_job_cancel",
+        responses={200: AiJobSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def delete(self, request, job_id):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            if not jobs.cancel_job(job_id=job_id):
+                raise contract_error(
+                    409, "ai_job_terminal", "El trabajo ya terminó."
+                )
+            return Response(
+                jobs.get_job(
+                    org_id=org_id, user_id=token.user_id, job_id=job_id
+                )
+            )
+
+
+class AiJobMessagesView(APIView):
+    """§07-B follow-up instructions: appends a user turn and runs the agent
+    again inside the same job — transcript, plan and artifacts keep
+    accumulating; the earlier result is never deleted."""
+
+    @extend_schema(
+        operation_id="ai_job_message_create",
+        request=AiJobMessageSerializer,
+        responses={200: AiAgentResponseSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def post(self, request, job_id):
+        data = validate(AiJobMessageSerializer, request.data)
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            if job["state"] == "CANCELED":
+                raise contract_error(
+                    409, "ai_job_terminal", "El trabajo está cancelado."
+                )
+            history = [
+                {
+                    "role": turn.get("role"),
+                    "text": turn.get("text") or turn.get("reply") or "",
+                }
+                for turn in job.get("transcript") or []
+                if isinstance(turn, dict)
+            ]
+            try:
+                jobs.resume_job(
+                    job_id=job_id, transcript=list(job.get("transcript") or [])
+                )
+            except ValueError:
+                raise contract_error(
+                    409, "ai_job_terminal", "El trabajo ya terminó."
+                ) from None
+            try:
+                return Response(
+                    act(
+                        org_id=org_id,
+                        user_id=token.user_id,
+                        surface=str(job["surface"]),
+                        refs=dict(job.get("refs") or {}),
+                        goal=str(data["message"]),
+                        product=None,
+                        history=history,
+                        operation_key=str(
+                            request.headers.get("X-Operation-Key")
+                            or f"{job_id}:{len(history)}"
+                        ),
+                        job=job,
                     )
                 )
             except _ContextError as error:

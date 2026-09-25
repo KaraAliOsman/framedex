@@ -247,6 +247,18 @@ export function AgentBody({
               ) : null}
               <p className="ask-dock__meta">
                 {turn.answer.model} · {turn.answer.credits_debited} {t("assistant.credits")}
+                {turn.answer.job_id ? (
+                  <>
+                    {" · "}
+                    <button
+                      type="button"
+                      className="ask-dock__meta-link"
+                      onClick={() => navigate(`/assistant?job=${turn.answer.job_id}`)}
+                    >
+                      {t("aiws.openWorkspace")}
+                    </button>
+                  </>
+                ) : null}
               </p>
             </div>
           ))

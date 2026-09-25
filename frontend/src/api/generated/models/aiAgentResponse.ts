@@ -7,13 +7,25 @@
  */
 import type { AiAgentQuery } from "./aiAgentQuery";
 import type { AiAgentRejected } from "./aiAgentRejected";
+import type { AiAgentResponseArtifactsItem } from "./aiAgentResponseArtifactsItem";
+import type { AiAgentResponseClaimsItem } from "./aiAgentResponseClaimsItem";
+import type { AiAgentResponsePlanItem } from "./aiAgentResponsePlanItem";
+import type { AiAgentResponseTranscriptItem } from "./aiAgentResponseTranscriptItem";
 import type { AiAgentStep } from "./aiAgentStep";
 
 export interface AiAgentResponse {
   audit_id: string;
+  job_id: string;
+  state: string;
   model: string;
   credits_debited: number;
   reply: string;
+  plan: AiAgentResponsePlanItem[];
+  claims: AiAgentResponseClaimsItem[];
+  references: string[];
+  questions: string[];
+  artifacts: AiAgentResponseArtifactsItem[];
+  transcript: AiAgentResponseTranscriptItem[];
   steps: AiAgentStep[];
   queries: AiAgentQuery[];
   warnings: string[];

@@ -49,6 +49,16 @@ def _patch(monkeypatch, *, contexts=None, outputs=None, invoke_fail=None):
 
     monkeypatch.setattr(agent, "build_context", fake_build)
     monkeypatch.setattr(agent.gateway, "invoke", fake_invoke)
+    monkeypatch.setattr(
+        agent.jobs,
+        "create_job",
+        lambda **kw: {"id": str(uuid4()), "transcript": []},
+    )
+    monkeypatch.setattr(
+        agent.jobs,
+        "finish_job",
+        lambda **kw: {"id": str(kw["job_id"]), "state": kw["state"]},
+    )
     return calls
 
 

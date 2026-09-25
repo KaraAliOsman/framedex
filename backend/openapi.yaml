@@ -241,6 +241,271 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/jobs/:
+    get:
+      operationId: ai_job_list
+      description: The caller's recent AI jobs — the workspace's left rail.
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiJob'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/jobs/{job_id}/:
+    get:
+      operationId: ai_job_retrieve
+      description: One job with its full transcript; DELETE cancels a live run.
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiJobDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+    delete:
+      operationId: ai_job_cancel
+      description: One job with its full transcript; DELETE cancels a live run.
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiJob'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/jobs/{job_id}/messages/:
+    post:
+      operationId: ai_job_message_create
+      description: |-
+        §07-B follow-up instructions: appends a user turn and runs the agent
+        again inside the same job — transcript, plan and artifacts keep
+        accumulating; the earlier result is never deleted.
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiJobMessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiJobMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiJobMessageRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAgentResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/analytics/summary/:
     get:
       operationId: analytics_operational_summary
@@ -12160,12 +12425,44 @@ components:
       properties:
         audit_id:
           type: string
+        job_id:
+          type: string
+        state:
+          type: string
         model:
           type: string
         credits_debited:
           type: integer
         reply:
           type: string
+        plan:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        claims:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        references:
+          type: array
+          items:
+            type: string
+        questions:
+          type: array
+          items:
+            type: string
+        artifacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        transcript:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
         steps:
           type: array
           items:
@@ -12183,13 +12480,21 @@ components:
           items:
             $ref: '#/components/schemas/AiAgentRejected'
       required:
+      - artifacts
       - audit_id
+      - claims
       - credits_debited
+      - job_id
       - model
+      - plan
       - queries
+      - questions
+      - references
       - rejected
       - reply
+      - state
       - steps
+      - transcript
       - warnings
     AiAgentStep:
       type: object
@@ -12320,6 +12625,123 @@ components:
       - output
       - tokens_completion
       - tokens_prompt
+    AiJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surface:
+          type: string
+        refs:
+          type: object
+          additionalProperties: {}
+        goal:
+          type: string
+        state:
+          type: string
+        plan:
+          type: array
+          items: {}
+        artifacts:
+          type: array
+          items: {}
+        warnings:
+          type: array
+          items: {}
+        result:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - artifacts
+      - created_at
+      - goal
+      - id
+      - plan
+      - refs
+      - state
+      - surface
+      - updated_at
+      - warnings
+    AiJobDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surface:
+          type: string
+        refs:
+          type: object
+          additionalProperties: {}
+        goal:
+          type: string
+        state:
+          type: string
+        plan:
+          type: array
+          items: {}
+        artifacts:
+          type: array
+          items: {}
+        warnings:
+          type: array
+          items: {}
+        result:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        transcript:
+          type: array
+          items: {}
+      required:
+      - artifacts
+      - created_at
+      - goal
+      - id
+      - plan
+      - refs
+      - state
+      - surface
+      - transcript
+      - updated_at
+      - warnings
+    AiJobMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - message
     AllocationRequestRequest:
       type: object
       properties:

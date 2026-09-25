@@ -16,7 +16,7 @@ import re
 from typing import Any
 from uuid import UUID
 
-from ai_gateway import service as gateway
+from ai_gateway import jobs, service as gateway
 from ai_gateway.assist import (
     _ALLOWED_PATHS,
     _PATH_UUID,
@@ -172,7 +172,7 @@ def _step_out(item: dict, *, context_refs: frozenset[str]) -> dict | None:
     return {"kind": "prepare", "action": action, "path": path, "label": label or action}
 
 
-def act(
+def _act(
     *,
     org_id: UUID,
     user_id: UUID,
@@ -325,11 +325,46 @@ def act(
         if out is not None:
             steps.append(out)
 
+    context_refs_all = context_refs
+
+    raw_artifacts = [
+        item.get("artifact")
+        for item in (document.get("steps") or [])
+        if isinstance(item, dict) and item.get("kind") == "artifact"
+    ]
+    validated_artifacts = jobs.artifacts(raw_artifacts, context_refs_all)
+    claims, references, dropped_claims = jobs.claims_and_references(
+        document.get("claims"), context_refs_all
+    )
+    if dropped_claims:
+        warnings.append(
+            f"{dropped_claims} afirmación(es) sin evidencia en contexto descartada(s)"
+        )
+    model_refs = jobs._references(document.get("references"), context_refs_all)
+    for ref in model_refs:
+        if ref not in references:
+            references.append(ref)
+    plan = [
+        {"label": str(item.get("label") or "").strip()[:200]}
+        for item in (document.get("plan") or [])
+        if isinstance(item, dict) and str(item.get("label") or "").strip()
+    ][:6]
+    questions = [
+        str(item).strip()[:400]
+        for item in (document.get("questions") or [])
+        if isinstance(item, str) and item.strip()
+    ][:3]
+
     return {
         "audit_id": audit_id,
         "model": model,
         "credits_debited": debited,
         "reply": reply,
+        "plan": plan,
+        "claims": claims,
+        "references": references,
+        "questions": questions,
+        "artifacts": validated_artifacts,
         "steps": steps,
         "queries": [
             # The caller's own surface was already consulted — report it as
@@ -346,3 +381,87 @@ def act(
         "warnings": warnings,
         "rejected": rejected,
     }
+
+
+def act(
+    *,
+    org_id: UUID,
+    user_id: UUID,
+    surface: str,
+    refs: dict,
+    goal: str,
+    product: Any,
+    history: list,
+    operation_key: str,
+    job: dict | None = None,
+) -> dict:
+    """§07-B — every agent run is a durable job. The transcript carries the
+    user's turn plus the model's grounded round; artifacts, claims and
+    warnings land on the row so the workspace can inspect them after the
+    conversation scrolls. Failures persist as FAILED_RETRYABLE — the same
+    goal resumes cleanly with a new operation key."""
+    job = job or jobs.create_job(
+        org_id=org_id, user_id=user_id, surface=surface, refs=refs, goal=goal
+    )
+    transcript = list(job.get("transcript") or [])
+    transcript.append({"role": "user", "text": goal[:MAX_GOAL]})
+    try:
+        result = _act(
+            org_id=org_id,
+            user_id=user_id,
+            surface=surface,
+            refs=refs,
+            goal=goal,
+            product=product,
+            history=history,
+            operation_key=operation_key,
+        )
+    except Exception as error:
+        try:
+            jobs.finish_job(
+                job_id=UUID(job["id"]),
+                state="FAILED_RETRYABLE",
+                transcript=transcript,
+                artifacts=[],
+                warnings=[],
+                result=None,
+                error_code=str(getattr(error, "code", "ai_job_failed"))[:120],
+            )
+        except Exception:
+            pass
+        raise
+
+    has_actions = any(
+        step.get("kind") in ("prepare", "ops") for step in result["steps"]
+    )
+    state = (
+        "WAITING_FOR_USER"
+        if result["questions"]
+        else "WAITING_FOR_APPROVAL" if has_actions else "SUCCEEDED"
+    )
+    transcript.append(
+        {
+            "role": "agent",
+            "reply": result["reply"],
+            "plan": result["plan"],
+            "queries": result["queries"],
+            "claims": result["claims"],
+            "references": result["references"],
+            "questions": result["questions"],
+            "artifacts": result["artifacts"],
+            "steps": result["steps"],
+            "warnings": result["warnings"],
+        }
+    )
+    jobs.finish_job(
+        job_id=UUID(job["id"]),
+        state=state,
+        transcript=transcript,
+        artifacts=result["artifacts"],
+        warnings=result["warnings"],
+        result=result,
+    )
+    result["job_id"] = job["id"]
+    result["state"] = state
+    result["transcript"] = transcript
+    return result

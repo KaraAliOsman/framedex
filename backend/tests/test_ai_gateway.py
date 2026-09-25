@@ -1618,3 +1618,170 @@ def test_catalog_system_drilldown_projection(monkeypatch):
     assert out["counts"]["articles"] == 1 and out["counts"]["sections_dxf"] == 1
     assert out["review_queue"][0]["label"] == "A-1"
     assert out["articles"][0]["revision"] == "r1"
+
+
+def _agent_env(monkeypatch, document, job_id):
+    """Agent run with provider, context and job persistence faked."""
+    from ai_gateway import agent, service
+
+    monkeypatch.setattr(
+        service, "invoke",
+        lambda **kw: {
+            "output": json.dumps(document),
+            "credits_debited": 1,
+            "audit_id": str(uuid4()),
+            "model": "mimo-v2.6-pro",
+        },
+    )
+    entity_id = str(uuid4())
+    monkeypatch.setattr(
+        agent, "build_context",
+        lambda *a, **k: {"surface": "dashboard", "entity": {"id": entity_id}},
+    )
+    calls = {}
+    monkeypatch.setattr(
+        agent.jobs, "create_job",
+        lambda **kw: {"id": str(job_id), "transcript": []},
+    )
+    monkeypatch.setattr(
+        agent.jobs, "finish_job",
+        lambda **kw: calls.update(kw) or {"id": str(job_id)},
+    )
+    return calls, entity_id
+
+
+def _agent_document(entity_id, **extra):
+    document = {
+        "reply": "El proyecto tiene dos posiciones cotizadas.",
+        "plan": [{"label": "Revisar estado"}, {"label": "Resumir"}],
+        "claims": [
+            {"text": "La entidad existe", "evidence": [entity_id]},
+            {"text": "Afirmación inventada", "evidence": [str(uuid4())]},
+        ],
+        "references": [entity_id],
+        "steps": [],
+        "queries": [],
+        "warnings": [],
+    }
+    document.update(extra)
+    return document
+
+
+def test_act_persists_job_and_grounds_claims(monkeypatch):
+    from ai_gateway import agent
+
+    job_id = uuid4()
+    calls, entity_id = _agent_env(
+        monkeypatch, _agent_document("placeholder"), job_id
+    )
+    # rebuild document now that the real entity id is known
+    import ai_gateway.service as service_module
+    document = _agent_document(entity_id)
+    monkeypatch.setattr(
+        service_module, "invoke",
+        lambda **kw: {
+            "output": json.dumps(document),
+            "credits_debited": 1,
+            "audit_id": str(uuid4()),
+            "model": "mimo-v2.6-pro",
+        },
+    )
+    out = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="resume", product=None, history=[], operation_key="k",
+    )
+    assert out["job_id"] == str(job_id)
+    assert out["state"] == "SUCCEEDED"
+    assert out["claims"] == [{"text": "La entidad existe", "evidence": [entity_id]}]
+    assert any("sin evidencia" in w for w in out["warnings"])
+    assert calls["state"] == "SUCCEEDED"
+    assert calls["transcript"][0]["role"] == "user"
+    assert calls["transcript"][1]["role"] == "agent"
+
+
+def test_act_questions_wait_for_user(monkeypatch):
+    from ai_gateway import agent
+
+    job_id = uuid4()
+    calls, _ = _agent_env(monkeypatch, {}, job_id)
+    import ai_gateway.service as service_module
+    monkeypatch.setattr(
+        service_module, "invoke",
+        lambda **kw: {
+            "output": json.dumps({
+                "reply": "Necesito saber qué proyecto.",
+                "questions": ["¿Sobre qué proyecto?"],
+                "steps": [], "queries": [], "warnings": [],
+            }),
+            "credits_debited": 1, "audit_id": str(uuid4()), "model": "m",
+        },
+    )
+    out = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="hazlo", product=None, history=[], operation_key="k",
+    )
+    assert out["state"] == "WAITING_FOR_USER"
+    assert calls["state"] == "WAITING_FOR_USER"
+
+
+def test_act_artifacts_validate_against_allowlist(monkeypatch):
+    from ai_gateway import agent
+
+    job_id = uuid4()
+    calls, entity_id = _agent_env(monkeypatch, {}, job_id)
+    import ai_gateway.service as service_module
+    monkeypatch.setattr(
+        service_module, "invoke",
+        lambda **kw: {
+            "output": json.dumps({
+                "reply": "Te dejé un borrador.",
+                "steps": [
+                    {"kind": "artifact", "artifact": {
+                        "kind": "quote_draft", "title": "Borrador",
+                        "payload": {"total": 100}, "references": [entity_id]}},
+                    {"kind": "artifact", "artifact": {
+                        "kind": "exploit", "title": "x", "payload": {}}},
+                ],
+                "queries": [], "warnings": [],
+            }),
+            "credits_debited": 1, "audit_id": str(uuid4()), "model": "m",
+        },
+    )
+    out = agent.act(
+        org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+        goal="borrador", product=None, history=[], operation_key="k",
+    )
+    assert len(out["artifacts"]) == 1
+    assert out["artifacts"][0]["kind"] == "quote_draft"
+    assert out["artifacts"][0]["references"] == [entity_id]
+
+
+def test_act_failure_marks_retryable(monkeypatch):
+    from ai_gateway import agent, service
+
+    job_id = uuid4()
+    calls = {}
+    monkeypatch.setattr(
+        agent.jobs, "create_job",
+        lambda **kw: {"id": str(job_id), "transcript": []},
+    )
+    monkeypatch.setattr(
+        agent.jobs, "finish_job",
+        lambda **kw: calls.update(kw) or {"id": str(job_id)},
+    )
+    monkeypatch.setattr(
+        agent, "build_context",
+        lambda *a, **k: {"surface": "dashboard"},
+    )
+    monkeypatch.setattr(
+        service, "invoke",
+        lambda **kw: {"output": "not-json", "credits_debited": 1,
+                      "audit_id": "a", "model": "m"},
+    )
+    import pytest
+    with pytest.raises(Exception):
+        agent.act(
+            org_id=uuid4(), user_id=uuid4(), surface="dashboard", refs={},
+            goal="x", product=None, history=[], operation_key="k",
+        )
+    assert calls["state"] == "FAILED_RETRYABLE"
