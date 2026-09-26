@@ -8,12 +8,29 @@ import type {
   SystemWorkspace,
 } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
+import { fmtMm } from "../../format";
+import { opKindLabel, stationCodeLabel } from "../production/labels";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import type { Resource, Row, catalogApi } from "./catalogModel";
 
 type Label = Parameters<typeof t>[0];
 const ct = (key: string) => t(`catalog.${key}` as Label);
 const wst = (key: string) => t(`catalog.ws.${key}` as Label);
+
+function productKindLabel(kind: string): string {
+  const key = `catalog.productKind.${kind}` as Label;
+  return ["catalog.productKind.STANDARD", "catalog.productKind.FRAMELESS"].includes(key)
+    ? t(key)
+    : kind;
+}
+
+function joiningMethodLabel(method: string | null | undefined): string {
+  if (!method) return "—";
+  const key = `catalog.joining.${method}` as Label;
+  return ["catalog.joining.WELD", "catalog.joining.CRIMP", "catalog.joining.NONE"].includes(key)
+    ? t(key)
+    : method;
+}
 
 /** Readiness blocker codes → the workspace section where they resolve. */
 const BLOCKER_SECTION: Record<string, string> = {
@@ -95,12 +112,14 @@ function ArticleCard({
           </div>
           <div>
             <dt>{wst("face")}</dt>
-            <dd>{article.face_width_mm} mm</dd>
+            <dd>{fmtMm(article.face_width_mm)} mm</dd>
           </div>
           <div>
             <dt>{wst("commercialLength")}</dt>
             <dd>
-              {article.commercial_length_mm ? `${article.commercial_length_mm} mm` : wst("unknown")}
+              {article.commercial_length_mm
+                ? `${fmtMm(article.commercial_length_mm)} mm`
+                : wst("unknown")}
             </dd>
           </div>
           <div>
@@ -348,7 +367,7 @@ export function SystemWorkspaceView({
           <dl className="ws-identity-facts">
             <div>
               <dt>{ct("field.depth_mm")}</dt>
-              <dd>{system.depth_mm} mm</dd>
+              <dd>{fmtMm(system.depth_mm)} mm</dd>
             </div>
             <div>
               <dt>{ct("field.chamber_count")}</dt>
@@ -521,11 +540,11 @@ export function SystemWorkspaceView({
                   return (
                     <tr key={bead.id}>
                       <th scope="row">{article?.name ?? bead.bead_article_id}</th>
-                      <td>{bead.glass_thickness_mm} mm</td>
-                      <td>{bead.bead_width_mm} mm</td>
-                      <td>{bead.gasket_interior_mm} mm</td>
-                      <td>{bead.gasket_exterior_mm} mm</td>
-                      <td>{bead.cut_add_mm} mm</td>
+                      <td>{fmtMm(bead.glass_thickness_mm)} mm</td>
+                      <td>{fmtMm(bead.bead_width_mm)} mm</td>
+                      <td>{fmtMm(bead.gasket_interior_mm)} mm</td>
+                      <td>{fmtMm(bead.gasket_exterior_mm)} mm</td>
+                      <td>{fmtMm(bead.cut_add_mm)} mm</td>
                       <td>
                         <button
                           type="button"
@@ -622,9 +641,9 @@ export function SystemWorkspaceView({
                         {row.is_default && <span className="ws-badge">{wst("default")}</span>}
                       </td>
                       <td>{row.name}</td>
-                      <td>{row.thickness_mm ? `${row.thickness_mm} mm` : wst("unknown")}</td>
+                      <td>{row.thickness_mm ? `${fmtMm(row.thickness_mm)} mm` : wst("unknown")}</td>
                       <td>{row.ix_cm4 ? `${row.ix_cm4} cm⁴` : wst("unknown")}</td>
-                      <td>{row.stock_length_mm} mm</td>
+                      <td>{fmtMm(row.stock_length_mm)} mm</td>
                       <td>{row.supplier_name ?? row.manufacturer_name ?? wst("unknown")}</td>
                     </tr>
                   );
@@ -705,12 +724,14 @@ export function SystemWorkspaceView({
               <div className="ws-identity-meta">
                 {process_profile.org_id === null && <span className="ws-chip">{ct("global")}</span>}
                 {process_profile.material && (
-                  <span className="ws-chip">{process_profile.material}</span>
+                  <span className="ws-chip">{ct(`option.${process_profile.material}`)}</span>
                 )}
                 {process_profile.product_kind && (
-                  <span className="ws-chip">{process_profile.product_kind}</span>
+                  <span className="ws-chip">{productKindLabel(process_profile.product_kind)}</span>
                 )}
-                <span className="ws-chip">{process_profile.joining_method}</span>
+                <span className="ws-chip">
+                  {joiningMethodLabel(process_profile.joining_method)}
+                </span>
               </div>
             </header>
             <div className="ws-process-cols">
@@ -726,7 +747,7 @@ export function SystemWorkspaceView({
                     }[]
                   ).map((station, index) => (
                     <li key={index}>
-                      <strong>{station.code ?? station.station ?? "?"}</strong>
+                      <strong>{stationCodeLabel(station.code ?? station.station ?? "?")}</strong>
                       {station.when && <small> · {station.when}</small>}
                       {station.work_center && <small> · {station.work_center}</small>}
                     </li>
@@ -738,7 +759,8 @@ export function SystemWorkspaceView({
                 <ul className="ws-stations">
                   {Object.entries(process_profile.operation_station_map).map(([op, station]) => (
                     <li key={op}>
-                      <code>{op}</code> → <strong>{String(station)}</strong>
+                      <code>{opKindLabel(op)}</code> →{" "}
+                      <strong>{stationCodeLabel(String(station))}</strong>
                     </li>
                   ))}
                 </ul>

@@ -5,7 +5,9 @@
  * piece list with dimensions/angles/origins. Every value is sealed evidence
  * from the trace read — nothing is recomputed here. */
 
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
+import { opKindLabel, stockKindLabel } from "./labels";
 import type { ProductionOrderTrace, ProductionStep } from "../../api/generated/models";
 
 type Reservation = {
@@ -188,7 +190,7 @@ export function OperatorStepCard({
               {blockers.length ? t("production.operatorBlockers") : ""}
               {unassignedOps.length
                 ? ` · ${t("production.operatorUnassignedOps")}: ${[
-                    ...new Set(unassignedOps.map((op) => op.kind ?? "")),
+                    ...new Set(unassignedOps.map((op) => opKindLabel(op.kind))),
                   ].join(", ")}`
                 : ""}
               {unmapped.length && step.code === "CUT"
@@ -245,9 +247,10 @@ export function OperatorStepCard({
                 <ul className="operator-remnants">
                   {remnants.map((remnant) => (
                     <li key={remnant.id}>
-                      {remnant.kind} · {remnant.length_mm ? `${remnant.length_mm} mm` : ""}
-                      {remnant.width_mm ? ` × ${remnant.width_mm}` : ""}
-                      {remnant.height_mm ? ` × ${remnant.height_mm}` : ""}
+                      {stockKindLabel(remnant.kind)}
+                      {remnant.length_mm ? ` · ${fmtMm(remnant.length_mm)} mm` : ""}
+                      {remnant.width_mm ? ` × ${fmtMm(remnant.width_mm)}` : ""}
+                      {remnant.height_mm ? ` × ${fmtMm(remnant.height_mm)}` : ""}
                       {remnant.sheet_workshop_sku ? ` · ${remnant.sheet_workshop_sku}` : ""}
                       {remnant.rack_location
                         ? ` · ${t("production.operatorRack")}: ${remnant.rack_location}`
@@ -308,7 +311,7 @@ export function OperatorStepCard({
                       <tbody>
                         {memberOps.map((op) => (
                           <tr key={op.operation_id}>
-                            <td>{op.kind ?? "—"}</td>
+                            <td>{opKindLabel(op.kind)}</td>
                             <td title={op.host ?? ""}>
                               {String(op.detail?.role ?? op.host ?? "—")}
                             </td>
@@ -347,7 +350,7 @@ export function OperatorStepCard({
                         <td>{piece.role ?? "—"}</td>
                         <td>
                           {piece.length_mm ?? "—"}
-                          {piece.sagitta_mm ? ` ↷${piece.sagitta_mm}` : ""}
+                          {piece.sagitta_mm ? ` ↷${fmtMm(piece.sagitta_mm)}` : ""}
                         </td>
                         <td>
                           {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°

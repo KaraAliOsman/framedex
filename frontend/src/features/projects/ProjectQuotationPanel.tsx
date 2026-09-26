@@ -1,3 +1,4 @@
+import { fmtMm } from "../../format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -1024,11 +1025,7 @@ export function ProjectQuotationPanel({
     setBusy(true);
     setMessage("");
     try {
-      const response = await projectQuoteLinkRevoke(
-        project.id,
-        approvalId,
-        requestOptions,
-      );
+      const response = await projectQuoteLinkRevoke(project.id, approvalId, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       await queryClient.invalidateQueries({
@@ -1426,7 +1423,7 @@ export function ProjectQuotationPanel({
                         return (
                           <div className="workshop-target" key={span.target_id}>
                             <strong>
-                              {span.label} · {span.span_mm} mm
+                              {span.label} · {fmtMm(span.span_mm)} mm
                             </strong>
                             <div className="workshop-row">
                               <label className="workshop-field">
@@ -1707,10 +1704,13 @@ export function ProjectQuotationPanel({
           <h3>{t("quotation.linksTitle")}</h3>
           <ul>
             {approvals.data?.map((link) => {
-              const live =
-                link.status === "PENDING" && Date.parse(link.expires_at) > Date.now();
+              const live = link.status === "PENDING" && Date.parse(link.expires_at) > Date.now();
               return (
-                <li className="quotation-link" data-status={link.status.toLowerCase()} key={link.id}>
+                <li
+                  className="quotation-link"
+                  data-status={link.status.toLowerCase()}
+                  key={link.id}
+                >
                   <span className="status-chip" data-status={link.status.toLowerCase()}>
                     {t(approvalStatusKeys[link.status] ?? "quotation.linkPending")}
                   </span>
@@ -1736,11 +1736,7 @@ export function ProjectQuotationPanel({
                     </span>
                   )}
                   {live && canWrite && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void revokeLink(link.id)}
-                    >
+                    <button type="button" disabled={busy} onClick={() => void revokeLink(link.id)}>
                       {t("quotation.linkRevoke")}
                     </button>
                   )}

@@ -1,3 +1,4 @@
+import { fmtMm } from "../../format";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import "./canvas.css";
@@ -2439,7 +2440,9 @@ export function AssemblyEditor({
                 ],
                 [
                   t("quotation.handleHeight"),
-                  selectedBayNode.handle_height_mm ? `${selectedBayNode.handle_height_mm} mm` : "—",
+                  selectedBayNode.handle_height_mm
+                    ? `${fmtMm(selectedBayNode.handle_height_mm)} mm`
+                    : "—",
                 ],
                 ...(selectedBayNode.opening_type === "DOOR_ENTRY"
                   ? [

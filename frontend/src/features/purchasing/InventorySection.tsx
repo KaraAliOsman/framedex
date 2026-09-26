@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../api/apiMutator";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { formatDateTime } from "../../format";
 
@@ -82,9 +83,9 @@ function movementLabel(type: string): string {
 
 function remnantDims(r: Remnant): string {
   if (r.kind === "BAR") {
-    return r.length_mm ? `${r.length_mm} mm` : "—";
+    return r.length_mm ? `${fmtMm(r.length_mm)} mm` : "—";
   }
-  if (r.width_mm && r.height_mm) return `${r.width_mm} × ${r.height_mm} mm`;
+  if (r.width_mm && r.height_mm) return `${fmtMm(r.width_mm)} × ${fmtMm(r.height_mm)} mm`;
   return "—";
 }
 

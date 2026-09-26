@@ -1,6 +1,7 @@
 import { type PointerEvent, useMemo, useState } from "react";
 
 import type { EngineCalculateResponse } from "../../api/generated/models";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, type DimensionAxis, useCanvasStore } from "./canvasStore";
 import { EditableDimension } from "./EditableDimension";
@@ -53,10 +54,7 @@ export function CADViewportSvg({
   onEditStart,
 }: CADViewportSvgProps): JSX.Element {
   // Stable across draft-dimension keystrokes and pointer drags.
-  const geometry = useMemo(
-    () => fixedPresentationGeometry(inputs, response),
-    [inputs, response],
-  );
+  const geometry = useMemo(() => fixedPresentationGeometry(inputs, response), [inputs, response]);
   const draftDimension = useCanvasStore((state) => state.draftDimension);
   const setDraftDimension = useCanvasStore((state) => state.setDraftDimension);
   const snapEnabled = useCanvasStore((state) => state.snapEnabled);
@@ -179,7 +177,7 @@ export function CADViewportSvg({
           y={geometry.nominalHeight / 2 + 26}
           textAnchor="middle"
         >
-          {response.glasses[0]?.width_mm} × {response.glasses[0]?.height_mm} mm
+          {fmtMm(response.glasses[0]?.width_mm)} × {fmtMm(response.glasses[0]?.height_mm)} mm
         </text>
 
         {previewWidth !== null ? (

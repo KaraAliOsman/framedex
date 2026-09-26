@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../api/apiMutator";
 import { engineCalculate, engineInspect, engineOptimizeCut } from "../../api/generated/dekopen";
 import type { AnnotationRequest, InspectorDiff } from "../../api/generated/models";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { calculationKey, requestFromInputs } from "../canvas/useEngineCalculation";
@@ -310,7 +311,7 @@ export function InspectorModal({
             {cutting.data?.purchase_list.map((line, i) => (
               <li key={i}>
                 <strong>{line.commercial_sku}</strong> · {line.qty_bars} {t("inspector.bars")} ·{" "}
-                {line.stock_length_mm} mm · {line.material} · {line.color}
+                {fmtMm(line.stock_length_mm)} mm · {line.material} · {line.color}
               </li>
             ))}
           </ul>
@@ -318,17 +319,17 @@ export function InspectorModal({
           {cutting.data?.workshop_cut_plan.map((bar) => (
             <article key={bar.bar_index}>
               <h4>
-                {t("inspector.bar")} {bar.bar_index} · {bar.stock_length_mm} mm
+                {t("inspector.bar")} {bar.bar_index} · {fmtMm(bar.stock_length_mm)} mm
               </h4>
               <p>
-                {t("inspector.kerf")}: {bar.kerf_total_mm} mm · {t("inspector.trims")}:{" "}
-                {bar.head_trim_mm} / {bar.tail_trim_mm} mm · {t("inspector.remainder")}:{" "}
-                {bar.remainder_mm} mm
+                {t("inspector.kerf")}: {fmtMm(bar.kerf_total_mm)} mm · {t("inspector.trims")}:{" "}
+                {fmtMm(bar.head_trim_mm)} / {fmtMm(bar.tail_trim_mm)} mm ·{" "}
+                {t("inspector.remainder")}: {fmtMm(bar.remainder_mm)} mm
               </p>
               <ol>
                 {bar.cuts.map((cut) => (
                   <li key={cut.sequence}>
-                    <strong>{cut.workshop_sku}</strong> · {cut.length_mm} mm
+                    <strong>{cut.workshop_sku}</strong> · {fmtMm(cut.length_mm)} mm
                   </li>
                 ))}
               </ol>

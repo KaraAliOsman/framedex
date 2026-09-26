@@ -33,7 +33,7 @@ import type {
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { t, type TranslationKey } from "../../i18n/es-CL";
 import { formatDate, formatMoney } from "../money";
-import { formatDateTime, formatRevision } from "../../format";
+import { fmtMm, formatDateTime, formatRevision } from "../../format";
 import { projectNameWrite } from "./projectNames";
 import "./projects.css";
 import { PositionThumb } from "./PositionThumb";
@@ -715,7 +715,7 @@ function ComparePosition({
           {entry.location_tag || row?.location_tag || t("projects.position")}
         </span>
         <span className="compare-row__dims">
-          {row ? `${row.width_mm} × ${row.height_mm} mm` : ""}
+          {row ? `${fmtMm(row.width_mm)} × ${fmtMm(row.height_mm)} mm` : ""}
         </span>
         {entry.change === "ADDED" && row && (
           <span className="compare-row__detail">
@@ -1527,7 +1527,8 @@ function ProjectWorkspace({
                       {position.position_index}. {position.location_tag || t("projects.position")}
                     </span>
                     <span className="position-row__dims">
-                      {position.design.nominal_width_mm} × {position.design.nominal_height_mm}
+                      {fmtMm(position.design.nominal_width_mm)} ×{" "}
+                      {fmtMm(position.design.nominal_height_mm)}
                     </span>
                     <span className="position-row__qty">
                       {editable ? (
@@ -1575,7 +1576,8 @@ function ProjectWorkspace({
                     <div>
                       <dt>{t("projects.dims")}</dt>
                       <dd>
-                        {selected.design.nominal_width_mm} × {selected.design.nominal_height_mm} mm
+                        {fmtMm(selected.design.nominal_width_mm)} ×{" "}
+                        {fmtMm(selected.design.nominal_height_mm)} mm
                       </dd>
                     </div>
                     <div>

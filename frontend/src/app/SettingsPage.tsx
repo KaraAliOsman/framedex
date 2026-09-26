@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
@@ -35,6 +35,34 @@ const ROLE_KEYS: Record<RoleEnum, TranslationKey> = {
   WORKSHOP_MANAGER: "settings.roleWorkshopManager",
   INSTALLER: "settings.roleInstaller",
 };
+
+function FilePick({
+  inputRef,
+  accept,
+  file,
+  onFile,
+}: {
+  inputRef: RefObject<HTMLInputElement>;
+  accept: string;
+  file: File | null;
+  onFile: (file: File | null) => void;
+}): JSX.Element {
+  return (
+    <span className="file-field">
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="file-input-hidden"
+        onChange={(event) => onFile(event.target.files?.[0] ?? null)}
+      />
+      <button type="button" className="secondary-action" onClick={() => inputRef.current?.click()}>
+        {t("settings.fileChoose")}
+      </button>
+      <span className="file-field__name">{file ? file.name : t("settings.fileNone")}</span>
+    </span>
+  );
+}
 
 function MembershipRow({ membership }: { membership: Membership }): JSX.Element {
   return (
@@ -170,6 +198,8 @@ function FlowIntegrationCard({ orgId }: { orgId: string }): JSX.Element {
 
 function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
   const [items, setItems] = useState<SiiCaf[]>([]);
+  const [pickFile, setPickFile] = useState<File | null>(null);
+  const pickRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -190,10 +220,7 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
 
   async function upload(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
-      "input[type=file]",
-    );
-    const file = input?.files?.[0];
+    const file = pickFile;
     if (!file) return;
     const cafXml = await file.text();
     const form = event.target as HTMLFormElement;
@@ -214,7 +241,8 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
         requestOptions,
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
-      if (input) input.value = "";
+      if (pickRef.current) pickRef.current.value = "";
+      setPickFile(null);
       setMessage({ text: t("settings.siiCafUploaded"), error: false });
       await load();
     } catch {
@@ -255,7 +283,12 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
       <form className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.siiCafFile")}
-          <input type="file" accept=".xml,text/xml" required />
+          <FilePick
+            inputRef={pickRef}
+            accept=".xml,text/xml"
+            file={pickFile}
+            onFile={setPickFile}
+          />
         </label>
         <label>
           {t("settings.siiGiro")}
@@ -285,6 +318,8 @@ function SiiCafCard({ orgId }: { orgId: string }): JSX.Element {
 
 function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
   const [certificate, setCertificate] = useState<SiiCertificate | null>(null);
+  const [pickFile, setPickFile] = useState<File | null>(null);
+  const pickRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
@@ -305,10 +340,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 
   async function upload(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
-      "input[type=file]",
-    );
-    const file = input?.files?.[0];
+    const file = pickFile;
     if (!file) return;
     const form = event.target as HTMLFormElement;
     const field = (name: string) =>
@@ -332,7 +364,8 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
         requestOptions,
       );
       if (response.status !== 201) throw new ApiError(response.status, response.data);
-      if (input) input.value = "";
+      if (pickRef.current) pickRef.current.value = "";
+      setPickFile(null);
       setMessage({ text: t("settings.siiCertUploaded"), error: false });
       await load();
     } catch {
@@ -371,7 +404,7 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
       <form className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.siiCertFile")}
-          <input type="file" accept=".pfx,.p12" required />
+          <FilePick inputRef={pickRef} accept=".pfx,.p12" file={pickFile} onFile={setPickFile} />
         </label>
         <label>
           {t("settings.siiCertPassword")}
@@ -397,6 +430,8 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
 
 function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [pickFile, setPickFile] = useState<File | null>(null);
+  const pickRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [form, setForm] = useState({
@@ -468,17 +503,15 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
 
   async function upload(event: FormEvent): Promise<void> {
     event.preventDefault();
-    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
-      "input[type=file]",
-    );
-    const file = input?.files?.[0];
+    const file = pickFile;
     if (!file) return;
     setBusy(true);
     setMessage(null);
     try {
       const response = await organizationBrandingLogoUpload({ file }, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (input) input.value = "";
+      if (pickRef.current) pickRef.current.value = "";
+      setPickFile(null);
       setMessage({ text: t("settings.brandingLogoUploaded"), error: false });
       await load();
     } catch {
@@ -574,7 +607,12 @@ function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
       <form className="payments-form" onSubmit={upload}>
         <label>
           {t("settings.brandingLogo")}
-          <input type="file" accept="image/png,image/jpeg,image/webp" />
+          <FilePick
+            inputRef={pickRef}
+            accept="image/png,image/jpeg,image/webp"
+            file={pickFile}
+            onFile={setPickFile}
+          />
         </label>
         <div className="payments-form-actions">
           <button type="submit" className="primary-action" disabled={busy}>

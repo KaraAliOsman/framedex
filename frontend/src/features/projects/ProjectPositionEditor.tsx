@@ -1,3 +1,4 @@
+import { fmtMm } from "../../format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -704,7 +705,7 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               <tr key={index}>
                 <td>{cut.sku}</td>
                 <td>
-                  {cut.length_mm}
+                  {fmtMm(cut.length_mm)}
                   <CutBar lengthMm={Number(cut.length_mm)} maxMm={longestCut} />
                 </td>
                 <td>{cut.qty}</td>
@@ -726,8 +727,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
             {result.glasses.map((glass, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
-                <td>{glass.width_mm}</td>
-                <td>{glass.height_mm}</td>
+                <td>{fmtMm(glass.width_mm)}</td>
+                <td>{fmtMm(glass.height_mm)}</td>
               </tr>
             ))}
           </tbody>
@@ -777,7 +778,7 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
                 <tr key={index}>
                   <td>{item.reinforcement_sku || item.parent_profile_sku}</td>
                   <td>
-                    {item.length_mm}
+                    {fmtMm(item.length_mm)}
                     <CutBar lengthMm={Number(item.length_mm)} maxMm={longestCut} />
                   </td>
                   <td>{item.qty}</td>
@@ -802,8 +803,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               {result.panels.map((item, index) => (
                 <tr key={index}>
                   <td>{item.name}</td>
-                  <td>{item.width_mm}</td>
-                  <td>{item.height_mm}</td>
+                  <td>{fmtMm(item.width_mm)}</td>
+                  <td>{fmtMm(item.height_mm)}</td>
                 </tr>
               ))}
             </tbody>

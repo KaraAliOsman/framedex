@@ -1,3 +1,4 @@
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 
 export type GlassPiece = {
@@ -74,7 +75,7 @@ type SizeRow = {
 function sizeRows(group: Group): SizeRow[] {
   const perSize = new Map<string, SizeRow>();
   for (const item of group.pieces) {
-    const dims = `${item.piece.width_mm}×${item.piece.height_mm}`;
+    const dims = `${fmtMm(item.piece.width_mm)}×${fmtMm(item.piece.height_mm)}`;
     const key = `${dims}|${item.edges}`;
     const entry = perSize.get(key) ?? {
       dims,

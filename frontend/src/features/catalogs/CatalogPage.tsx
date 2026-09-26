@@ -3,6 +3,7 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { SystemWorkspaceView } from "./SystemWorkspace";
@@ -44,7 +45,7 @@ function failure(error: unknown): string {
 function itemName(resource: Resource, row: Row<Resource>, data: CatalogData): string {
   if (resource === "glazing" && "bead_article_id" in row) {
     const article = data.articles.find((item) => item.id === row.bead_article_id);
-    return `${article?.name ?? ct("beadUnavailable")} · ${row.glass_thickness_mm} ${ct("mm")}`;
+    return `${article?.name ?? ct("beadUnavailable")} · ${fmtMm(row.glass_thickness_mm)} ${ct("mm")}`;
   }
   return "name" in row ? row.name : ct("record");
 }

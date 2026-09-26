@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { cutRoleLabel } from "./labels";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 
 // Full engine payload contract (backend/production/service.py →
@@ -224,7 +225,7 @@ function CutPlanBarSvg({
         ) : null}
         {wSc > 40 ? (
           <text x={mid} y={46} textAnchor="middle" className="cutplan-cut-len">
-            {cut.length_mm}
+            {fmtMm(cut.length_mm)}
           </text>
         ) : null}
         {angleL ? (
@@ -400,8 +401,8 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       leaf: shortId(piece.leaf_id),
       unit: piece.unit_index ?? 1,
       measure: isCut
-        ? `${cut.length_mm} mm`
-        : `${nest.width_mm}×${nest.height_mm} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
+        ? `${fmtMm(cut.length_mm)} mm`
+        : `${fmtMm(nest.width_mm)}×${fmtMm(nest.height_mm)} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
       angles,
       memberCount: 0,
     };
@@ -432,8 +433,9 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
               <strong>
                 {t("production.optimizeBar")} #{bar.bar_index}
               </strong>{" "}
-              {bar.commercial_sku} · {bar.stock_length_mm} mm · {t("production.cutplanYield")}{" "}
-              {bar.yield_pct}% · {t("production.cutplanRemainder")} {bar.remainder_mm} mm
+              {bar.commercial_sku} · {fmtMm(bar.stock_length_mm)} mm ·{" "}
+              {t("production.cutplanYield")} {bar.yield_pct}% · {t("production.cutplanRemainder")}{" "}
+              {fmtMm(bar.remainder_mm)} mm
             </figcaption>
             <CutPlanBarSvg
               bar={bar}
@@ -451,8 +453,9 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
                   <strong>
                     {t("production.optimizeSheet")} #{layout.sheet_index}
                   </strong>{" "}
-                  {layout.purchasing_sku} · {layout.sheet_width_mm}×{layout.sheet_height_mm} mm ·{" "}
-                  {t("production.cutplanYield")} {layout.yield_pct}%
+                  {layout.purchasing_sku} · {fmtMm(layout.sheet_width_mm)}×
+                  {fmtMm(layout.sheet_height_mm)} mm · {t("production.cutplanYield")}{" "}
+                  {layout.yield_pct}%
                 </figcaption>
                 <CutPlanSheetSvg
                   layout={layout}

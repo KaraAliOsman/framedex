@@ -7,6 +7,7 @@ import { InventorySection } from "./InventorySection";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { DeniedState } from "../../ui";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { formatDateTime, formatRevision } from "../../format";
 import "./purchasing.css";
@@ -493,7 +494,9 @@ function PurchasingWorkspace({
                   <td>
                     {line.remnant_pool
                       ? `${line.remnant_pool.count}${
-                          line.remnant_pool.total_mm ? ` · ${line.remnant_pool.total_mm} mm` : ""
+                          line.remnant_pool.total_mm
+                            ? ` · ${fmtMm(line.remnant_pool.total_mm)} mm`
+                            : ""
                         }`
                       : "—"}
                   </td>

@@ -47,6 +47,7 @@ import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
 import { DeniedState } from "../../ui";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { cutRoleLabel } from "./labels";
@@ -1281,17 +1282,17 @@ export function ProductionPage(): JSX.Element {
                                       </span>
                                     ) : null}
                                   </td>
-                                  <td>{bar.stock_length_mm} mm</td>
+                                  <td>{fmtMm(bar.stock_length_mm)} mm</td>
                                   <td>
                                     {bar.cuts
                                       .map(
                                         (cut) =>
-                                          `${cutRoleLabel(cut.role)} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
+                                          `${cutRoleLabel(cut.role)} ${fmtMm(cut.length_mm)}mm u${cut.unit_index ?? 1}`,
                                       )
                                       .join(" · ")}
                                   </td>
                                   <td>
-                                    {bar.remainder_mm} mm
+                                    {fmtMm(bar.remainder_mm)} mm
                                     {bar.remainder_reusable ? (
                                       <span className="production-remnant-tag">
                                         {" "}
@@ -1467,7 +1468,8 @@ export function ProductionPage(): JSX.Element {
                                   <td>#{layout.sheet_index}</td>
                                   <td>{layout.purchasing_sku}</td>
                                   <td>
-                                    {layout.sheet_width_mm}×{layout.sheet_height_mm} mm
+                                    {fmtMm(layout.sheet_width_mm)}×{fmtMm(layout.sheet_height_mm)}{" "}
+                                    mm
                                   </td>
                                   <td>
                                     {layout.source === "REMNANT" ? (
@@ -1494,7 +1496,7 @@ export function ProductionPage(): JSX.Element {
                             {unnested
                               .map(
                                 (piece) =>
-                                  `${piece.kind} ${piece.width_mm}×${piece.height_mm} mm ×${piece.quantity} (${piece.group})`,
+                                  `${piece.kind} ${fmtMm(piece.width_mm)}×${fmtMm(piece.height_mm)} mm ×${piece.quantity} (${piece.group})`,
                               )
                               .join(" · ")}
                           </p>

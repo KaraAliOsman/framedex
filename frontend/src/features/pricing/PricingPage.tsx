@@ -59,6 +59,13 @@ function contextLabel(value: unknown): string {
 }
 
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})/;
+/** Rates store as fractions (0.35); people think in percents. Render the
+ * percent value with at most two decimals — never float artifacts. */
+function pctDisplay(value: unknown): string {
+  const pct = Number(value) * 100;
+  if (!Number.isFinite(pct)) return "0";
+  return pct.toFixed(2).replace(/\.?0+$/, "");
+}
 /** Stored values are ISO; operators read DD-MM-AAAA everywhere else in the
  * product. Render the business format, keep the raw value for submission. */
 function renderFieldValue(field: Field, value: unknown): string {
@@ -68,7 +75,11 @@ function renderFieldValue(field: Field, value: unknown): string {
     const match = ISO_DAY.exec(text);
     if (match) return `${match[3]}-${match[2]}-${match[1]}`;
   }
+  if (field.type === "percent") return `${pctDisplay(text)} %`;
   if (field.name === "created_at") return formatDateTime(text);
+  if (field.name === "entity") return t(auditEntityLabels[text] ?? "pricing.auditEntity.other");
+  if (field.name === "field") return t(auditActionLabels[text] ?? "pricing.auditAction.other");
+  if (field.name === "actor_type") return t(auditActorLabels[text] ?? "pricing.auditActor.other");
   return text;
 }
 type Field = {
@@ -100,9 +111,9 @@ const fields: Record<string, Field[]> = {
   ],
   rules: [
     { name: "pricing_mode", label: "pricing.mode", options: modes },
-    { name: "default_margin_pct", label: "pricing.margin", initial: "0.35" },
-    { name: "tax_rate_pct", label: "pricing.tax", initial: "0.19" },
-    { name: "waste_factor_pct", label: "pricing.waste", initial: "0.08" },
+    { name: "default_margin_pct", label: "pricing.margin", type: "percent", initial: "35" },
+    { name: "tax_rate_pct", label: "pricing.tax", type: "percent", initial: "19" },
+    { name: "waste_factor_pct", label: "pricing.waste", type: "percent", initial: "8" },
     { name: "labor_rate_per_m2", label: "pricing.labor", initial: "15000" },
     { name: "installation_rate_per_m2", label: "pricing.installation", initial: "12000" },
   ],
@@ -133,6 +144,36 @@ const fields: Record<string, Field[]> = {
     { name: "effective_date", label: "pricing.effectiveDate", type: "date" },
     { name: "source", label: "pricing.source" },
   ],
+  audits: [
+    { name: "entity", label: "pricing.auditEntity" },
+    { name: "field", label: "pricing.auditAction" },
+    { name: "reason", label: "pricing.reason" },
+    { name: "actor_type", label: "pricing.auditActor" },
+    { name: "created_at", label: "pricing.created" },
+  ],
+};
+// Audit rows carry raw storage names (entity = table, field = SQL verb);
+// people read domain nouns and past-tense actions.
+const auditEntityLabels: Record<string, Parameters<typeof t>[0]> = {
+  price_audit_logs: "pricing.auditEntity.priceAuditLogs",
+  price_lists: "pricing.auditEntity.priceLists",
+  price_list_items: "pricing.auditEntity.priceListItems",
+  pricing_configurations: "pricing.auditEntity.pricingConfigurations",
+  pricing_matrix_cells: "pricing.auditEntity.pricingMatrixCells",
+  pricing_operations: "pricing.auditEntity.pricingOperations",
+  pricing_rules: "pricing.auditEntity.pricingRules",
+  project_positions: "pricing.auditEntity.projectPositions",
+  fx_snapshots: "pricing.auditEntity.fxSnapshots",
+};
+const auditActionLabels: Record<string, Parameters<typeof t>[0]> = {
+  INSERT: "pricing.auditAction.insert",
+  UPDATE: "pricing.auditAction.update",
+  DELETE: "pricing.auditAction.delete",
+};
+const auditActorLabels: Record<string, Parameters<typeof t>[0]> = {
+  HUMAN: "pricing.auditActor.human",
+  SYSTEM: "pricing.auditActor.system",
+  AI_AGENT: "pricing.auditActor.ai",
 };
 const sections = [
   "cost-lists",
@@ -309,7 +350,12 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
         else values[field.name] = "";
         continue;
       }
-      values[field.name] = field.type === "number" ? Number(value) : value;
+      values[field.name] =
+        field.type === "percent"
+          ? Number(value) / 100
+          : field.type === "number"
+            ? Number(value)
+            : value;
     }
     if (resource === "cost-lists" || resource === "configurations")
       values.is_active = data.get("is_active") === "on";
@@ -398,7 +444,7 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
             </article>
           ))}
         </div>
-        {fields[resource] && (
+        {fields[resource] && resource !== "audits" && (
           <form
             key={`${resource}-${editing?.id ?? "new"}-${revision}`}
             onSubmit={(event) => void save(event)}
@@ -441,9 +487,20 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 ) : (
                   <input
                     name={field.name}
-                    type={field.type ?? "text"}
+                    type={field.type === "percent" ? "number" : (field.type ?? "text")}
+                    step={field.type === "percent" ? "0.1" : undefined}
+                    min={field.type === "percent" ? "0" : undefined}
+                    max={field.type === "percent" ? "100" : undefined}
                     required={!field.optional}
-                    defaultValue={String(editing?.[field.name] ?? field.initial ?? "")}
+                    defaultValue={
+                      field.type === "percent"
+                        ? editing?.[field.name] !== undefined &&
+                          editing?.[field.name] !== null &&
+                          editing?.[field.name] !== ""
+                          ? pctDisplay(editing[field.name])
+                          : (field.initial ?? "0")
+                        : String(editing?.[field.name] ?? field.initial ?? "")
+                    }
                     disabled={busy}
                   />
                 )}
@@ -753,8 +810,8 @@ function OperationDecision({
           </span>
         )}
         <span className="operation-decision__meta">
-          {operation.revision_code} · {t("pricing.discount")} {operation.discount_pct} ·{" "}
-          <time dateTime={operation.created_at}>{formatDateTime(operation.created_at)}</time>
+          {operation.revision_code} · {t("pricing.discount")} {pctDisplay(operation.discount_pct)} %
+          · <time dateTime={operation.created_at}>{formatDateTime(operation.created_at)}</time>
         </span>
       </header>
 
@@ -764,7 +821,7 @@ function OperationDecision({
           <dd>{formatMoney(operation.total_cost, operation.currency)}</dd>
         </div>
         <div className="operation-total">
-          <dt>{t("pricing.margin")}</dt>
+          <dt>{t("pricing.marginRealized")}</dt>
           <dd>{marginText(operation.project_net, operation.total_cost, operation.currency)}</dd>
         </div>
         <div className="operation-total">
@@ -799,7 +856,7 @@ function OperationDecision({
             <th scope="col">{t("pricing.quantity")}</th>
             <th scope="col">{t("pricing.cost")}</th>
             <th scope="col">{t("pricing.net")}</th>
-            <th scope="col">{t("pricing.margin")}</th>
+            <th scope="col">{t("pricing.marginRealized")}</th>
           </tr>
         </thead>
         <tbody>
@@ -1072,6 +1129,11 @@ function CommercialOperations({
           event.preventDefault();
           const data = Object.fromEntries(new FormData(event.currentTarget));
           if (data.fx_snapshot_id === "") delete data.fx_snapshot_id;
+          // The UI collects percents; the authority stores fractions.
+          for (const key of ["discount_pct", "target_margin"] as const) {
+            if (data[key] !== undefined && data[key] !== "")
+              data[key] = String(Number(data[key]) / 100);
+          }
           void runCurrent(
             () => request<Operation>("preview/", "POST", { ...data, confirmed }),
             publishOperation,
@@ -1142,12 +1204,28 @@ function CommercialOperations({
         </label>
         <label>
           {t("pricing.discount")}
-          <input name="discount_pct" defaultValue="0" required />
+          <input
+            name="discount_pct"
+            type="number"
+            step="0.1"
+            min="0"
+            max="100"
+            defaultValue="0"
+            required
+          />
         </label>
         {selectedMode === "TARGET_GROSS_MARGIN_PROJECT" && (
           <label>
             {t("pricing.margin")}
-            <input name="target_margin" defaultValue="0.35" required />
+            <input
+              name="target_margin"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              defaultValue="35"
+              required
+            />
           </label>
         )}
         <label>
