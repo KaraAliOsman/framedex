@@ -6,7 +6,7 @@ import { portalQuoteDecide, portalQuoteRetrieve } from "../../api/generated/deko
 import type { PortalPosition, PortalQuote } from "../../api/generated/models";
 import { WhiteColorEnum } from "../../api/generated/models";
 import type { PositionDesign } from "../../api/generated/models";
-import { t } from "../../i18n/es-CL";
+import { t, TranslationKey } from "../../i18n/es-CL";
 import { formatRevision } from "../../format";
 import { PositionThumb } from "../projects/PositionThumb";
 import "./portal.css";
@@ -35,24 +35,123 @@ function positionDesign(position: PortalPosition): PositionDesign {
   };
 }
 
-function PositionCard({
-  position,
+const typologyKeys: Record<string, TranslationKey> = {
+  FIXED: "typology.fixed",
+  TURN: "typology.turn",
+  TILT_TURN: "typology.tiltTurn",
+  SLIDING_2L: "typology.sliding2l",
+  SLIDING_3L: "typology.sliding3l",
+  SLIDING_4L: "typology.sliding4l",
+  AWNING: "typology.awning",
+  DOOR_ENTRY: "typology.doorEntry",
+  COMPOSITE: "typology.composite",
+};
+
+function typologyLabel(raw: string | null | undefined): string {
+  const key = raw ? typologyKeys[raw] : undefined;
+  return key ? t(key) : raw ?? "";
+}
+
+/** Identical openings collapse into one proposal card — a 15-unit block of
+ * the same window reads as one group with its locations, not fifteen cards. */
+function groupPositions(positions: PortalPosition[]): {
+  key: string;
+  position: PortalPosition;
+  locations: string[];
+  indexes: string[];
+  quantity: number;
+  totalNet: number;
+}[] {
+  const groups = new Map<
+    string,
+    {
+      key: string;
+      position: PortalPosition;
+      locations: string[];
+      indexes: string[];
+      quantity: number;
+      totalNet: number;
+    }
+  >();
+  for (const position of positions) {
+    const key = JSON.stringify([
+      position.typology,
+      position.width_mm,
+      position.height_mm,
+      position.color_interior,
+      position.color_exterior,
+      position.glass_specs,
+      position.price_net,
+      position.parametric_tree,
+    ]);
+    const group = groups.get(key);
+    const location = position.location_tag?.trim();
+    const index = position.position_index != null ? String(position.position_index) : null;
+    if (group) {
+      if (location && !group.locations.includes(location)) group.locations.push(location);
+      if (index) group.indexes.push(index);
+      group.quantity += position.quantity ?? 1;
+      group.totalNet += Number(position.price_net) || 0;
+    } else {
+      groups.set(key, {
+        key,
+        position,
+        locations: location ? [location] : [],
+        indexes: index ? [index] : [],
+        quantity: position.quantity ?? 1,
+        totalNet: Number(position.price_net) || 0,
+      });
+    }
+  }
+  return [...groups.values()];
+}
+
+function PositionGroupCard({
+  group,
   currency,
 }: {
-  position: PortalPosition;
+  group: ReturnType<typeof groupPositions>[number];
   currency: string;
 }): JSX.Element {
-  const qty = position.quantity ?? 1;
+  const { position } = group;
+  const [variant, setVariant] = useState<"studio" | "elevation">("studio");
+  const specs = position.glass_specs ?? [];
+  const finished = position.finish ?? null;
+  const locations =
+    group.locations.length > 0
+      ? group.locations.join(", ")
+      : `Pos. ${group.indexes.join(", ") || "—"}`;
   return (
     <article className="portal-position">
       <div className="portal-position__thumb">
-        <PositionThumb design={positionDesign(position)} variant="studio" />
+        <PositionThumb design={positionDesign(position)} variant={variant} />
+        <div className="portal-position__views" role="group" aria-label={t("portal.views")}>
+          <button
+            type="button"
+            className="portal-view-toggle"
+            data-active={variant === "studio"}
+            onClick={() => setVariant("studio")}
+          >
+            {t("portal.viewStudio")}
+          </button>
+          <button
+            type="button"
+            className="portal-view-toggle"
+            data-active={variant === "elevation"}
+            onClick={() => setVariant("elevation")}
+          >
+            {t("portal.viewTechnical")}
+          </button>
+        </div>
       </div>
       <div className="portal-position__body">
         <p className="portal-position__id">
-          {position.location_tag || `Pos. ${position.position_index ?? "—"}`}
+          {locations}
+          {group.quantity > 1 ? (
+            <span className="portal-position__count">×{group.quantity}</span>
+          ) : null}
         </p>
-        <p className="portal-position__typology">{position.typology ?? ""}</p>
+        <p className="portal-position__typology">{typologyLabel(position.typology)}</p>
         <dl className="portal-position__facts">
           <div>
             <dt>{t("portal.dims")}</dt>
@@ -62,12 +161,24 @@ function PositionCard({
           </div>
           <div>
             <dt>{t("portal.qty")}</dt>
-            <dd>{qty}</dd>
+            <dd>{group.quantity}</dd>
           </div>
+          {specs.length > 0 ? (
+            <div>
+              <dt>{t("portal.glass")}</dt>
+              <dd>{specs.join(" · ")}</dd>
+            </div>
+          ) : null}
+          {finished ? (
+            <div>
+              <dt>{t("portal.finish")}</dt>
+              <dd>{finished}</dd>
+            </div>
+          ) : null}
         </dl>
         <p className="portal-position__price">
           <span>{t("portal.lineNet")}</span>
-          <strong>{money(position.price_net, currency)}</strong>
+          <strong>{money(String(group.totalNet), currency)}</strong>
         </p>
       </div>
     </article>
@@ -205,12 +316,8 @@ export function PortalQuotePage(): JSX.Element {
           <section className="portal-proposal__positions">
             <h2>{t("portal.positions")}</h2>
             <div className="portal-positions">
-              {quote.positions.map((position, index) => (
-                <PositionCard
-                  key={position.id || index}
-                  position={position}
-                  currency={quote.currency}
-                />
+              {groupPositions(quote.positions).map((group) => (
+                <PositionGroupCard key={group.key} group={group} currency={quote.currency} />
               ))}
             </div>
           </section>

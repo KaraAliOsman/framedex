@@ -24,6 +24,8 @@ class PortalPositionSerializer(serializers.Serializer):
     height_mm = serializers.CharField(allow_blank=True)
     color_interior = serializers.CharField(allow_null=True, allow_blank=True)
     color_exterior = serializers.CharField(allow_null=True, allow_blank=True)
+    glass_specs = serializers.ListField(child=serializers.CharField())
+    finish = serializers.CharField(allow_null=True, allow_blank=True)
     price_net = serializers.CharField()
     parametric_tree = serializers.JSONField(allow_null=True)
 

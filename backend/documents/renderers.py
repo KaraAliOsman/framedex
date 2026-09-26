@@ -92,10 +92,11 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
-.sign-row { display: flex; gap: 8mm; margin-top: 10mm; }
+.sign-row { display: flex; gap: 8mm; margin-top: 10mm; margin-bottom: 7mm; }
 .sign-cell { flex: 1; height: 12mm; border-bottom: 0.5pt solid #465158; position: relative; }
 .sign-cell.sign-date { flex: 0 0 22mm; }
 .sign-label { position: absolute; bottom: -4.5mm; left: 0; font: 600 6pt 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #727D82; }
+table tr { break-inside: avoid; }
 .sol-table td.dimension, table td.dimension { text-align: right; }
 svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
 .figures { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 4mm; }
@@ -593,9 +594,17 @@ def _position_glass_specs(position: dict[str, object]) -> list[str]:
     return _glass_specs(tree)
 
 
+def frozen_glass_specs(position: dict[str, object]) -> list[str]:
+    """Public wrapper — portal/print surfaces reuse the sealed-tree walk."""
+    return _position_glass_specs(position)
+
+
 def _revision_header(
     snapshot: dict[str, object], title: str, doc_code: str, workshop: bool = False
 ) -> tuple[str, str]:
+    """Masthead + titleblock. ``workshop`` docs carry the full BOM hash — a
+    shop-floor integrity anchor; commercial docs show a short fingerprint
+    only, since the sealed hash is the machine identity, not client copy."""
     project = _object(snapshot.get("project"), "invalid_frozen_revision_snapshot")
     issuer = ""
     organization = snapshot.get("organization")
@@ -621,8 +630,11 @@ def _revision_header(
         f'<span class="tb-value">{escape(revision)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
         f'<span class="tb-value">{escape(_cldate(sealed_at))}</span></div>'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">Huella BOM</span>'
-        f'<span class="tb-value">{escape(bom_hash)}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">'
+        f'{"Huella BOM" if workshop else "Huella"}</span>'
+        f'<span class="tb-value">'
+        f'{escape(bom_hash if workshop else (bom_hash[:16] if bom_hash != "—" else "—"))}'
+        "</span></div>"
         '<div class="tb-cell"><span class="tb-label">Página</span>'
         '<span class="tb-value"><span class="pg"></span></span></div>'
         "</div>"
@@ -659,6 +671,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         bucket = groups.setdefault(key, {
             "indexes": [], "locations": [], "quantity": Decimal("0"),
             "price_net": Decimal("0"), "specs": specs, "priced": True,
+            "ref_position": position,
         })
         bucket["indexes"].append(_value(position.get("position_index")))
         location = _value(position.get("location_tag"))
@@ -673,8 +686,15 @@ def _doc01(snapshot: dict[str, object]) -> str:
     opening_rows = []
     for key, bucket in groups.items():
         typology, width_mm, height_mm, specs, ci, ce, _ = key
+        indexes = bucket["indexes"]
+        # Long grouped index lists wrap horribly — compact to first…last + n.
+        index_cell = (
+            ", ".join(indexes)
+            if len(indexes) <= 6
+            else f"{indexes[0]} … {indexes[-1]} ({len(indexes)})"
+        )
         opening_rows.append([
-            ", ".join(bucket["indexes"]),
+            index_cell,
             ", ".join(bucket["locations"]) or "—",
             _TYPOLOGY_ES.get(typology, typology),
             f"{width_mm} × {height_mm}",
@@ -713,16 +733,26 @@ def _doc01(snapshot: dict[str, object]) -> str:
         )
         + "</tbody></table>"
     )
+    # One figure per opening group — identical units share a drawing and the
+    # caption lists every position it covers, keeping long quotes compact.
     body += '<h2>Vistas de vanos</h2><div class="figures">'
-    for position in positions:
+    for bucket in groups.values():
+        ref = bucket["ref_position"]
+        locations = ", ".join(bucket["locations"]) or "—"
+        index_list = bucket["indexes"]
+        indexes = (
+            ", ".join(index_list)
+            if len(index_list) <= 6
+            else f"{index_list[0]} … {index_list[-1]} ({len(index_list)})"
+        )
         body += (
-            f'<figure>{_position_svg(position)}'
+            f'<figure>{_position_svg(ref)}'
             f'<figcaption><span class="figpos">Pos. '
-            f'{escape(_value(position.get("position_index")))}</span> · '
-            f'{escape(_value(position.get("location_tag")))}<br/>'
-            f'<span class="figdim">{escape(_value(position.get("width_mm")))} × '
-            f'{escape(_value(position.get("height_mm")))} mm</span> · Cant. '
-            f'{escape(_value(position.get("quantity")))}</figcaption></figure>'
+            f'{escape(indexes)}</span><br/>'
+            f'{escape(locations)}<br/>'
+            f'<span class="figdim">{escape(_value(ref.get("width_mm")))} × '
+            f'{escape(_value(ref.get("height_mm")))} mm</span> · Cant. '
+            f'{escape(_value(bucket["quantity"]))}</figcaption></figure>'
         )
     body += "</div>"
     body += (
@@ -1313,6 +1343,9 @@ _TYPOLOGY_ES = {
     "TURN": "Abatible",
     "TILT_TURN": "Oscilobatiente",
     "SLIDING_2L": "Corredera 2 hojas",
+    "SLIDING_3L": "Corredera 3 hojas",
+    "SLIDING_4L": "Corredera 4 hojas",
+    "SLIDING": "Corredera",
     "AWNING": "Proyectante",
     "DOOR_ENTRY": "Puerta",
     "COMPOSITE": "Conjunto",
@@ -1320,6 +1353,7 @@ _TYPOLOGY_ES = {
 
 _COLOR_ES = {
     "WHITE": "Blanco",
+    "FOILED": "Foliado",
 }
 
 
@@ -1327,6 +1361,11 @@ def _finish(ci: object, ce: object) -> str:
     interior = _COLOR_ES.get(ci, ci)
     exterior = _COLOR_ES.get(ce, ce)
     return interior if interior == exterior else f"{interior} / {exterior}"
+
+
+def finish_label(color_interior: object, color_exterior: object) -> str:
+    """Public wrapper — non-document surfaces reuse the sealed finish label."""
+    return _finish(color_interior, color_exterior)
 
 
 def _invoice_body(payload: dict[str, object]) -> str:

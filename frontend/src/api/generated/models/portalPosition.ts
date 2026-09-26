@@ -22,6 +22,9 @@ export interface PortalPosition {
   color_interior: string | null;
   /** @nullable */
   color_exterior: string | null;
+  glass_specs: string[];
+  /** @nullable */
+  finish: string | null;
   price_net: string;
   parametric_tree: unknown | null;
 }

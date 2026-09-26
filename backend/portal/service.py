@@ -15,6 +15,7 @@ from django.db import DatabaseError, connection, transaction
 from psycopg import sql
 
 from documents.artifacts import SupabaseDocumentStorage, generate_artifact
+from documents.renderers import finish_label, frozen_glass_specs
 from documents.repository import (
     DocumentaryError,
     decoded,
@@ -246,6 +247,14 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
     for value in values:
         if not isinstance(value, dict):
             continue
+        glass_specs: list[str] = []
+        finish = ""
+        try:
+            glass_specs = frozen_glass_specs(value)
+            finish = finish_label(value.get("color_interior"), value.get("color_exterior"))
+        except DocumentaryError:
+            glass_specs = []
+            finish = ""
         positions.append({
             "id": str(value.get("id") or ""),
             "position_index": value.get("position_index"),
@@ -256,6 +265,8 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "height_mm": str(value.get("height_mm") or ""),
             "color_interior": value.get("color_interior"),
             "color_exterior": value.get("color_exterior"),
+            "glass_specs": glass_specs,
+            "finish": finish or None,
             "price_net": str(value.get("price_net") or "0"),
             "parametric_tree": value.get("parametric_tree"),
         })

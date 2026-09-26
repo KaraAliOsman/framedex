@@ -19410,6 +19410,13 @@ components:
         color_exterior:
           type: string
           nullable: true
+        glass_specs:
+          type: array
+          items:
+            type: string
+        finish:
+          type: string
+          nullable: true
         price_net:
           type: string
         parametric_tree:
@@ -19417,6 +19424,8 @@ components:
       required:
       - color_exterior
       - color_interior
+      - finish
+      - glass_specs
       - height_mm
       - id
       - location_tag
