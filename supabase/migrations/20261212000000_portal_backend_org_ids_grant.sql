@@ -7,4 +7,6 @@
 -- role, so the grant is safe: member policies yield false, portal policies
 -- still gate on app.portal_org_id. Same grant the other backend roles have.
 GRANT EXECUTE ON FUNCTION private.current_user_org_ids() TO portal_backend;
-GRANT EXECUTE ON FUNCTION auth.uid() TO portal_backend;
+-- NOTE: portal policies scope by app.portal_org_id, not auth.uid(), so no
+-- grant is needed there — and the migration role cannot grant auth schema
+-- objects anyway (it would emit a "no privileges were granted" warning).
