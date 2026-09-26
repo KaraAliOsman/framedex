@@ -155,7 +155,9 @@ def list_jobs(
         _decode(record)
         for record in rows(
             f"""
-            SELECT * FROM public.job_runs
+            SELECT id, type, state, progress, result, error, attempt,
+                   max_attempts, created_at, started_at, completed_at
+            FROM public.job_runs
             WHERE {" AND ".join(clauses)}
             ORDER BY created_at DESC, id DESC
             LIMIT %s OFFSET %s

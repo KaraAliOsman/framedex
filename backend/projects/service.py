@@ -193,8 +193,13 @@ def project_versions(org_id, project_id):
     )
 
 
-def project_public(org_id, row, *, detail=False):
-    authority = _pricing_authority(org_id, row["id"], row["current_revision"])
+_UNSET = object()
+
+
+def project_public(org_id, row, *, detail=False, authority=_UNSET,
+                   position_count=_UNSET):
+    if authority is _UNSET:
+        authority = _pricing_authority(org_id, row["id"], row["current_revision"])
     value = {
         **row,
         "pricing_current": authority is not None,
@@ -203,28 +208,83 @@ def project_public(org_id, row, *, detail=False):
         # to render honestly; unpriced rows keep the org-default CLP fallback.
         "currency": (authority or {}).get("currency") or "CLP",
     }
+    value.pop("pricing_reset_at", None)  # internal gate timestamp, not API state
     for key in METADATA:
         value[key] = value[key] or ""
     for key in ("total_price_net", "total_price_tax", "total_price_gross"):
         value[key] = str(value[key])
-    value["position_count"] = rows(
-        "SELECT count(id) AS count FROM public.project_positions WHERE project_id=%s AND org_id=%s",
-        [row["id"], org_id],
-    )[0]["count"]
+    if position_count is _UNSET:
+        position_count = rows(
+            "SELECT count(id) AS count FROM public.project_positions WHERE project_id=%s AND org_id=%s",
+            [row["id"], org_id],
+        )[0]["count"]
+    value["position_count"] = position_count
     if detail:
         value["positions"] = positions(org_id, row["id"])
         value["versions"] = project_versions(org_id, row["id"])
     return value
 
 
-def list_projects(org_id):
-    return [
-        project_public(org_id, row)
-        for row in rows(
-            f"SELECT {','.join(PROJECT_COLUMNS)} FROM public.projects "
-            "WHERE org_id=%s ORDER BY updated_at DESC,id",
-            [org_id],
+def _bulk_pricing_authorities(org_id, project_ids):
+    """Latest APPLIED op per (project, revision) in ONE query — the list
+    endpoint resolves authority per row in Python instead of N×3 queries."""
+    if not project_ids:
+        return {}
+    with commercial_backend():
+        result = rows(
+            "SELECT DISTINCT ON (project_id, COALESCE(revision_code,'REV-A')) "
+            "project_id, COALESCE(revision_code,'REV-A') AS revision, id, "
+            "request->>'currency' AS currency, approved_at "
+            "FROM public.pricing_operations "
+            "WHERE org_id=%s AND project_id = ANY(%s) AND state='APPLIED' "
+            "ORDER BY project_id, COALESCE(revision_code,'REV-A'), "
+            "approved_at DESC, id DESC",
+            [org_id, project_ids],
         )
+    return result
+
+
+def list_projects(org_id):
+    project_rows = rows(
+        f"SELECT {','.join(PROJECT_COLUMNS)}, pricing_reset_at "
+        "FROM public.projects WHERE org_id=%s ORDER BY updated_at DESC,id "
+        "LIMIT 500",
+        [org_id],
+    )
+    if not project_rows:
+        return []
+    project_ids = [row["id"] for row in project_rows]
+    counts = {
+        item["project_id"]: item["count"]
+        for item in rows(
+            "SELECT project_id, count(id) AS count "
+            "FROM public.project_positions "
+            "WHERE org_id=%s AND project_id = ANY(%s) GROUP BY project_id",
+            [org_id, project_ids],
+        )
+    }
+    authorities = {}
+    rows_by_id = {row["id"]: row for row in project_rows}
+    for candidate in _bulk_pricing_authorities(org_id, project_ids):
+        row = rows_by_id[candidate["project_id"]]
+        reset_at = row.get("pricing_reset_at")
+        if candidate["revision"] != row["current_revision"]:
+            continue
+        # Mirrors the scalar predicate: a NULL approved_at under a set
+        # pricing_reset_at excludes the op exactly like SQL NULL comparison.
+        if reset_at is not None and not (
+            candidate["approved_at"] is not None
+            and candidate["approved_at"] > reset_at
+        ):
+            continue
+        authorities[candidate["project_id"]] = candidate
+    return [
+        project_public(
+            org_id, row,
+            authority=authorities.get(row["id"]),
+            position_count=counts.get(row["id"], 0),
+        )
+        for row in project_rows
     ]
 
 

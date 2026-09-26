@@ -2205,6 +2205,8 @@ export function AssemblyEditor({
               className="plan-inset__svg"
               viewBox={`${planBox.x} ${planBox.y} ${planBox.w} ${planBox.h}`}
               preserveAspectRatio="xMidYMid meet"
+              role="img"
+              aria-label={t("assembly.planView")}
             >
               <BowPlanContent
                 plan={evaluation.plan}

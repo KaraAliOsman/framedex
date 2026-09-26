@@ -46,7 +46,7 @@
   --theme-focus-ring: #0f817a;
   --theme-selection: #d3ebe8;
   --theme-disabled-bg: #eceeee;
-  --theme-disabled-ink: #97a5a2;
+  --theme-disabled-ink: #76847f;  /* 3.35:1 on disabled-bg — exempt from AA but readable */
   --theme-disabled-border: #d5dbda;
   --theme-skeleton: #e2e7e6;
   --theme-skeleton-sheen: #f2f5f4;
@@ -111,7 +111,7 @@
   --theme-focus-ring: #45beb1;
   --theme-selection: #163a38;
   --theme-disabled-bg: #222a2d;
-  --theme-disabled-ink: #5b6a68;
+  --theme-disabled-ink: #6b7a76;  /* 3.25:1 on disabled-bg */
   --theme-disabled-border: #333d41;
   --theme-skeleton: #262f33;
   --theme-skeleton-sheen: #2f393d;

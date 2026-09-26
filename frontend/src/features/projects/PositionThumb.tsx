@@ -69,7 +69,11 @@ export function PositionThumb({
 }): JSX.Element {
   const product = useMemo(() => designProduct(design), [design]);
   const [hostRef, visible] = useVisible<HTMLDivElement>();
-  const { totalW, height, lift, dip, leftOver, rightOver } = frontLayout(product);
+  // Grid cards re-render on every parent pass — the layout must not.
+  const { totalW, height, lift, dip, leftOver, rightOver } = useMemo(
+    () => frontLayout(product),
+    [product],
+  );
   // No WebGL → the technical elevation keeps rendering; the studio card
   // would otherwise degrade to an empty placeholder.
   const pad = 8;

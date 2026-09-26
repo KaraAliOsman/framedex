@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
@@ -1379,8 +1379,13 @@ export function ProductFrontContent({
   const { couplings } = product.assembly;
   const frameT = members.frame.faceWidthMm;
   const frameSurface = memberSurface(members.frame.material);
-  const { rects, columns, joints, totalW, height, lift } = frontLayout(product);
-  const issueMap = severityByModule(issues);
+  // Layout derivation runs over every module — memoize so seam/division
+  // drags (per-pointermove renders) don't rebuild the whole elevation.
+  const { rects, columns, joints, totalW, height, lift } = useMemo(
+    () => frontLayout(product),
+    [product],
+  );
+  const issueMap = useMemo(() => severityByModule(issues), [issues]);
   const midY = height / 2;
   const interactive = !preview && !disabled;
   const sheetScale = useViewportScale();

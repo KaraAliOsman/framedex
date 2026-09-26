@@ -803,42 +803,6 @@
 .imports-row-error td {
   background: color-mix(in srgb, var(--theme-warning, #e56a32) 10%, transparent);
 }
-.production-chip.imports-status-uploaded,
-.production-chip.imports-status-extracting {
-  color: var(--theme-info, var(--theme-accent));
-  border-color: currentColor;
-}
-.production-chip.imports-status-review_ready {
-  color: var(--theme-warning, #e56a32);
-  border-color: currentColor;
-}
-.production-chip.imports-status-confirmed {
-  color: var(--theme-accent);
-  border-color: var(--theme-accent);
-}
-.production-chip.imports-status-failed {
-  color: var(--theme-danger, #c0392b);
-  border-color: currentColor;
-}
-.production-chip.imports-confidence-verified_structured {
-  color: var(--theme-accent);
-  border-color: var(--theme-accent);
-}
-.production-chip.imports-confidence-high_candidate {
-  color: var(--theme-accent);
-  border-color: currentColor;
-  border-style: dashed;
-}
-.production-chip.imports-confidence-review_required {
-  color: var(--theme-warning, #e56a32);
-  border-color: currentColor;
-}
-.production-chip.imports-confidence-low {
-  color: var(--theme-danger, #c0392b);
-  border-color: currentColor;
-  border-style: dashed;
-}
-
 .imports-toggle {
   font-weight: 600;
 }

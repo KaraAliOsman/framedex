@@ -67,23 +67,26 @@ export function JobsPage(): JSX.Element {
         ? 4_000
         : 60_000,
     queryFn: async ({ signal }) => {
-      // Older failures stay reachable: fetch every loaded page so "mostrar
-      // más" can always reach past the newest 100.
+      // Older failures stay reachable: all loaded pages refresh in parallel —
+      // a 4s poll must not run N serial round-trips.
+      const responses = await Promise.all(
+        Array.from({ length: pages }, (_, page) =>
+          jobsList(
+            {
+              limit: PAGE_SIZE,
+              offset: page * PAGE_SIZE,
+              state: stateFilter === "" ? undefined : (stateFilter as never),
+            },
+            { signal, headers: { "X-Organization-ID": org!.id } },
+          ),
+        ),
+      );
       const all: JobRun[] = [];
-      for (let page = 0; page < pages; page += 1) {
-        const response = await jobsList(
-          {
-            limit: PAGE_SIZE,
-            offset: page * PAGE_SIZE,
-            state: stateFilter === "" ? undefined : (stateFilter as never),
-          },
-          { signal, headers: { "X-Organization-ID": org!.id } },
-        );
+      for (const response of responses) {
         if (response.status !== 200) {
           throw new ApiError(response.status, response.data);
         }
         all.push(...response.data);
-        if (response.data.length < PAGE_SIZE) break;
       }
       return all;
     },

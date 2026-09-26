@@ -1,4 +1,4 @@
-import { type PointerEvent, useState } from "react";
+import { type PointerEvent, useMemo, useState } from "react";
 
 import type { EngineCalculateResponse } from "../../api/generated/models";
 import { t } from "../../i18n/es-CL";
@@ -52,7 +52,11 @@ export function CADViewportSvg({
   onCommit,
   onEditStart,
 }: CADViewportSvgProps): JSX.Element {
-  const geometry = fixedPresentationGeometry(inputs, response);
+  // Stable across draft-dimension keystrokes and pointer drags.
+  const geometry = useMemo(
+    () => fixedPresentationGeometry(inputs, response),
+    [inputs, response],
+  );
   const draftDimension = useCanvasStore((state) => state.draftDimension);
   const setDraftDimension = useCanvasStore((state) => state.setDraftDimension);
   const snapEnabled = useCanvasStore((state) => state.snapEnabled);
@@ -120,9 +124,9 @@ export function CADViewportSvg({
         viewBox={geometry.viewBox}
         preserveAspectRatio="xMidYMid meet"
         role="group"
-        aria-label="Paño fijo con cotas editables"
+        aria-label={t("canvas.paneEditableDims")}
       >
-        <title>Paño fijo calculado por el motor</title>
+        <title>{t("canvas.paneComputed")}</title>
         <line className="dimension-line" x1="0" y1="-46" x2={geometry.nominalWidth} y2="-46" />
         <line className="dimension-tick" x1="0" y1="-62" x2="0" y2="-30" />
         <line
@@ -221,7 +225,7 @@ export function CADViewportSvg({
         <EditableDimension
           axis="width"
           acceptedValue={inputs.nominalWidthMm}
-          label="Ancho nominal (mm)"
+          label={t("canvas.nominalWidthMm")}
           x={geometry.nominalWidth / 2 - 95}
           y={-100}
           disabled={disabled}
@@ -231,7 +235,7 @@ export function CADViewportSvg({
         <EditableDimension
           axis="height"
           acceptedValue={inputs.nominalHeightMm}
-          label="Alto nominal (mm)"
+          label={t("canvas.nominalHeightMm")}
           x={-226}
           y={geometry.nominalHeight / 2 - 21}
           disabled={disabled}
@@ -242,7 +246,7 @@ export function CADViewportSvg({
         <circle
           className="resize-handle"
           data-testid="resize-width"
-          aria-label="Redimensionar ancho"
+          aria-label={t("canvas.resizeWidth")}
           cx={geometry.nominalWidth}
           cy={geometry.nominalHeight / 2}
           r="18"
@@ -255,7 +259,7 @@ export function CADViewportSvg({
         <circle
           className="resize-handle"
           data-testid="resize-height"
-          aria-label="Redimensionar alto"
+          aria-label={t("canvas.resizeHeight")}
           cx={geometry.nominalWidth / 2}
           cy={geometry.nominalHeight}
           r="18"

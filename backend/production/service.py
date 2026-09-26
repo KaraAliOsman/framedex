@@ -844,6 +844,7 @@ def list_production_orders(*, org_id: UUID) -> dict[str, object]:
         LEFT JOIN public.production_steps s ON s.order_id = o.id
         WHERE o.org_id = %s AND o.order_type = 'WORKSHOP_OT'
         GROUP BY o.id ORDER BY o.created_at DESC
+        LIMIT 300
         """,
         [str(org_id)],
     )

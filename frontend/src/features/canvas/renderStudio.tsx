@@ -100,20 +100,38 @@ function buildThreeScene(scene: Scene3D): THREE.Group {
   return root;
 }
 
+/** One observer serves every StudioImage on the page — a grid of N thumbs
+ * used to register N MutationObservers on documentElement. */
+const themeSubscribers = new Set<(theme: string | undefined) => void>();
+let themeObserver: MutationObserver | null = null;
+
+function subscribeTheme(notify: (theme: string | undefined) => void): () => void {
+  themeSubscribers.add(notify);
+  if (themeObserver === null && typeof document !== "undefined") {
+    themeObserver = new MutationObserver(() => {
+      const theme = document.documentElement.dataset.theme;
+      themeSubscribers.forEach((subscriber) => subscriber(theme));
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+  }
+  return () => {
+    themeSubscribers.delete(notify);
+    if (themeSubscribers.size === 0) {
+      themeObserver?.disconnect();
+      themeObserver = null;
+    }
+  };
+}
+
 /** The PNG bakes resolved CSS tokens — a theme change must re-render. */
 function useDocumentTheme(): string | undefined {
   const [theme, setTheme] = useState<string | undefined>(() =>
     typeof document === "undefined" ? undefined : document.documentElement.dataset.theme,
   );
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const observer = new MutationObserver(() => setTheme(document.documentElement.dataset.theme));
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
+  useEffect(() => subscribeTheme(setTheme), []);
   return theme;
 }
 
