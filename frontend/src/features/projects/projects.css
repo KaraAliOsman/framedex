@@ -748,46 +748,6 @@
   background: var(--accent);
   transition: width 0.3s ease;
 }
-.payments-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-.payments-form label {
-  display: grid;
-  gap: 4px;
-  font-size: var(--text-s, 12px);
-  color: var(--ink-muted);
-}
-.payments-form-wide {
-  grid-column: 1 / -1;
-}
-.payments-form-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 8px;
-}
-.payments-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  font-size: var(--text-s, 13px);
-}
-.payments-table th,
-.payments-table td {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border, #e0deda);
-}
-.payments-table .num {
-  text-align: right;
-  font-family: var(--font-mono, monospace);
-}
-.payments-voided td {
-  opacity: 0.55;
-}
-
 .imports-empty {
   color: var(--theme-text-secondary);
   font-size: 0.9rem;
