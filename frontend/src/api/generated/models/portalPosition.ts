@@ -26,5 +26,7 @@ export interface PortalPosition {
   /** @nullable */
   finish: string | null;
   price_net: string;
+  /** @nullable */
+  discount_pct: string | null;
   parametric_tree: unknown | null;
 }

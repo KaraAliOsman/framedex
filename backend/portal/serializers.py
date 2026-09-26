@@ -12,6 +12,11 @@ class ShareQuoteResponseSerializer(serializers.Serializer):
 class PortalOrganizationSerializer(serializers.Serializer):
     name = serializers.CharField(allow_null=True, allow_blank=True)
     tax_id = serializers.CharField(allow_null=True, allow_blank=True)
+    commercial_name = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_address = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_phone = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_email = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_logo_url = serializers.CharField(allow_null=True, allow_blank=True)
 
 
 class PortalPositionSerializer(serializers.Serializer):
@@ -27,6 +32,7 @@ class PortalPositionSerializer(serializers.Serializer):
     glass_specs = serializers.ListField(child=serializers.CharField())
     finish = serializers.CharField(allow_null=True, allow_blank=True)
     price_net = serializers.CharField()
+    discount_pct = serializers.CharField(allow_null=True, allow_blank=True)
     parametric_tree = serializers.JSONField(allow_null=True)
 
 
@@ -46,9 +52,10 @@ class PortalQuoteSerializer(serializers.Serializer):
     emitted_at = serializers.DateTimeField()
     currency = serializers.CharField()
     payment_terms = serializers.CharField(allow_null=True, allow_blank=True)
-    total_price_net = serializers.CharField()
-    total_price_tax = serializers.CharField()
-    total_price_gross = serializers.CharField()
+    notes_commercial = serializers.CharField(allow_null=True, allow_blank=True)
+    total_price_net = serializers.CharField(allow_null=True)
+    total_price_tax = serializers.CharField(allow_null=True)
+    total_price_gross = serializers.CharField(allow_null=True)
     positions = PortalPositionSerializer(many=True)
     payment = PortalPaymentSerializer(allow_null=True)
     valid_until = serializers.CharField(allow_null=True)

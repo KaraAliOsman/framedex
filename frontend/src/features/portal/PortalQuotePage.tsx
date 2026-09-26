@@ -12,7 +12,8 @@ import { PositionThumb } from "../projects/PositionThumb";
 import "./portal.css";
 import { formatDate } from "../money";
 
-function money(raw: string, currency: string): string {
+function money(raw: string | null, currency: string): string {
+  if (raw == null) return "—";
   const value = Number(raw);
   if (!Number.isFinite(value)) return raw;
   try {
@@ -31,6 +32,8 @@ function positionDesign(position: PortalPosition): PositionDesign {
     system_id: "",
     nominal_width_mm: position.width_mm,
     nominal_height_mm: position.height_mm,
+    // WhiteColorEnum is the only declared design color today — the sealed
+    // interior/exterior colors render in the facts line via `finish`.
     color: WhiteColorEnum.WHITE,
     parametric_tree: position.parametric_tree,
   };
@@ -40,17 +43,31 @@ const typologyKeys: Record<string, TranslationKey> = {
   FIXED: "typology.fixed",
   TURN: "typology.turn",
   TILT_TURN: "typology.tiltTurn",
+  TILT: "typology.tilt",
   SLIDING_2L: "typology.sliding2l",
   SLIDING_3L: "typology.sliding3l",
   SLIDING_4L: "typology.sliding4l",
+  SLIDING: "typology.sliding",
   AWNING: "typology.awning",
   DOOR_ENTRY: "typology.doorEntry",
+  DOOR_DOUBLE: "typology.doorDouble",
+  CORNER: "typology.corner",
+  BOW: "typology.bow",
+  FRAMELESS: "typology.frameless",
   COMPOSITE: "typology.composite",
 };
 
 function typologyLabel(raw: string | null | undefined): string {
   const key = raw ? typologyKeys[raw] : undefined;
   return key ? t(key) : (raw ?? "");
+}
+
+/** Long location/index lists wrap horribly — first…last plus the count. */
+function compactList(values: string[], max = 6): string {
+  if (values.length === 0) return "—";
+  return values.length <= max
+    ? values.join(", ")
+    : `${values[0]} … ${values[values.length - 1]} (${values.length})`;
 }
 
 /** Identical openings collapse into one proposal card — a 15-unit block of
@@ -120,8 +137,8 @@ function PositionGroupCard({
   const finished = position.finish ?? null;
   const locations =
     group.locations.length > 0
-      ? group.locations.join(", ")
-      : `Pos. ${group.indexes.join(", ") || "—"}`;
+      ? compactList(group.locations)
+      : `Pos. ${compactList(group.indexes)}`;
   return (
     <article className="portal-position">
       <div className="portal-position__thumb">
@@ -176,8 +193,19 @@ function PositionGroupCard({
               <dd>{finished}</dd>
             </div>
           ) : null}
+          {Number(position.discount_pct) > 0 ? (
+            <div>
+              <dt>{t("portal.discount")}</dt>
+              <dd>{Number(position.discount_pct)}%</dd>
+            </div>
+          ) : null}
         </dl>
         <p className="portal-position__price">
+          {group.quantity > 1 && (
+            <span className="portal-position__unit">
+              {t("portal.unitNet")} {money(String(group.totalNet / group.quantity), currency)}
+            </span>
+          )}
           <span>{t("portal.lineNet")}</span>
           <strong>{money(String(group.totalNet), currency)}</strong>
         </p>
@@ -191,6 +219,7 @@ export function PortalQuotePage(): JSX.Element {
   const [quote, setQuote] = useState<PortalQuote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [rut, setRut] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -222,6 +251,7 @@ export function PortalQuotePage(): JSX.Element {
       const response = await portalQuoteDecide(token, {
         decision,
         decided_by: name.trim(),
+        decided_rut: rut.trim() || undefined,
         note: note.trim() || undefined,
       });
       if (response.status !== 200) {
@@ -256,17 +286,25 @@ export function PortalQuotePage(): JSX.Element {
   }
 
   const decided = quote.approval_status !== "PENDING";
-  const issuer = quote.organization?.name || "DEKOPEN";
+  const org = quote.organization;
+  const issuer = org?.commercial_name || org?.name || "DEKOPEN";
+  const issuerContact =
+    [org?.brand_address, org?.brand_phone, org?.brand_email]
+      .filter((part) => part != null && part !== "")
+      .join(" · ") || "";
 
   return (
     <main className="portal-page">
       <article className="portal-proposal">
         <header className="portal-proposal__head">
           <div className="portal-proposal__issuer">
-            <p className="portal-proposal__org">{issuer}</p>
-            {quote.organization?.tax_id ? (
-              <p className="portal-proposal__taxid">{quote.organization.tax_id}</p>
-            ) : null}
+            {org?.brand_logo_url ? (
+              <img className="portal-proposal__logo" src={org.brand_logo_url} alt={issuer} />
+            ) : (
+              <p className="portal-proposal__org">{issuer}</p>
+            )}
+            {org?.tax_id ? <p className="portal-proposal__taxid">{org.tax_id}</p> : null}
+            {issuerContact ? <p className="portal-proposal__taxid">{issuerContact}</p> : null}
           </div>
           <div className="portal-proposal__refs">
             <h1>{t("portal.proposalTitle")}</h1>
@@ -317,6 +355,13 @@ export function PortalQuotePage(): JSX.Element {
                 <PositionGroupCard key={group.key} group={group} currency={quote.currency} />
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {quote.notes_commercial ? (
+          <section className="portal-proposal__notes">
+            <h2>{t("portal.notes")}</h2>
+            <p>{quote.notes_commercial}</p>
           </section>
         ) : null}
 
@@ -403,6 +448,15 @@ export function PortalQuotePage(): JSX.Element {
               onChange={(event) => setName(event.target.value)}
               disabled={busy}
               autoComplete="name"
+            />
+            <label htmlFor="portal-rut">{t("portal.rutLabel")}</label>
+            <input
+              id="portal-rut"
+              maxLength={32}
+              value={rut}
+              onChange={(event) => setRut(event.target.value)}
+              disabled={busy}
+              placeholder={t("portal.rutPlaceholder")}
             />
             <label htmlFor="portal-note">{t("portal.noteLabel")}</label>
             <textarea

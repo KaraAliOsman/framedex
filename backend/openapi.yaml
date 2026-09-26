@@ -19465,7 +19465,27 @@ components:
         tax_id:
           type: string
           nullable: true
+        commercial_name:
+          type: string
+          nullable: true
+        brand_address:
+          type: string
+          nullable: true
+        brand_phone:
+          type: string
+          nullable: true
+        brand_email:
+          type: string
+          nullable: true
+        brand_logo_url:
+          type: string
+          nullable: true
       required:
+      - brand_address
+      - brand_email
+      - brand_logo_url
+      - brand_phone
+      - commercial_name
       - name
       - tax_id
     PortalPayment:
@@ -19517,11 +19537,15 @@ components:
           nullable: true
         price_net:
           type: string
+        discount_pct:
+          type: string
+          nullable: true
         parametric_tree:
           nullable: true
       required:
       - color_exterior
       - color_interior
+      - discount_pct
       - finish
       - glass_specs
       - height_mm
@@ -19556,12 +19580,18 @@ components:
         payment_terms:
           type: string
           nullable: true
+        notes_commercial:
+          type: string
+          nullable: true
         total_price_net:
           type: string
+          nullable: true
         total_price_tax:
           type: string
+          nullable: true
         total_price_gross:
           type: string
+          nullable: true
         positions:
           type: array
           items:
@@ -19604,6 +19634,7 @@ components:
       - decided_note
       - emitted_at
       - expires_at
+      - notes_commercial
       - organization
       - payment
       - payment_terms

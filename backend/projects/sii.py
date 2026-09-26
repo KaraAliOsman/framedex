@@ -45,7 +45,8 @@ DTE_CREDIT_NOTE = 61
 DTE_GUIA = 52
 IND_TRASLADO_VENTA = 1
 IND_TRASLADO_INTERNO = 5
-_RUT_COMPACT = re.compile(r"^(\d{7,8})([\dK])$")
+# 5-digit bodies exist in practice (older corporate RUTs start near 10000).
+_RUT_COMPACT = re.compile(r"^(\d{5,8})([\dK])$")
 
 
 try:
@@ -524,7 +525,7 @@ def _render_dte(
     dd = (
         f"<DD><RE>{caf['rut_emisor']}</RE><TD>{tipo}</TD><F>{folio}</F>"
         f"<FE>{fecha}</FE><RR>{receptor}</RR><RSR>{escape(receptor_name[:40])}</RSR>"
-        f"<MNT>{total}</MNT><IT1>{escape(item)}</IT1>{caf['caf_xml']}"
+        f"<MNT>{total}</MNT><IT1>{escape(item[:40])}</IT1>{caf['caf_xml']}"
         f"<TSTED>{tsted}</TSTED></DD>"
     )
     frmt = _sign_dd(dd, caf["rsask"], _row_aad(str(caf["org_id"]), caf))

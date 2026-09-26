@@ -376,6 +376,16 @@ const COMPARE_FIELD_KEYS: Record<string, TranslationKey> = {
   spec: "projects.compareField.spec",
 };
 
+// Compare values arrive as raw strings — render them as the reader expects:
+// money through formatMoney, dims without decimals, discounts as %.
+function formatCompareValue(field: string, value: string, currency: string): string {
+  if (value === "" || value == null) return "";
+  if (field === "price_net") return formatMoney(value, currency);
+  if (field === "width_mm" || field === "height_mm") return fmtMm(value);
+  if (field === "discount_pct") return `${value.replace(/\.0+$/, "")}%`;
+  return value;
+}
+
 const PROJECT_ORDER = ["DRAFT", "QUOTED", "APPROVED", "IN_PRODUCTION", "COMPLETED"];
 
 function projectRank(status: string): number {
@@ -736,9 +746,11 @@ function ComparePosition({
             {entry.changes.map((change) => (
               <li key={change.field}>
                 {t(COMPARE_FIELD_KEYS[change.field] ?? "projects.compareField.spec")}
-                {change.field === "spec"
+                {change.field === "spec" || change.field === "manufacturing"
                   ? ""
-                  : `: ${change.before || "—"} → ${change.after || "—"}`}
+                  : `: ${formatCompareValue(change.field, change.before, currency) || "—"} → ${
+                      formatCompareValue(change.field, change.after, currency) || "—"
+                    }`}
               </li>
             ))}
           </ul>

@@ -148,11 +148,16 @@ export function glassSummaryCsv(groups: Group[], quantity: number): string {
     weightText(totalWeight, quantity, totalUnknown),
     "",
   ]);
-  return rows
-    .map((row) =>
-      row.map((cell) => (/[",\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell)).join(","),
-    )
-    .join("\n");
+  // `;` separator + BOM so the sheet opens correctly in Excel on es-CL locales
+  // (`,` parses columns wrong and UTF-8 accents garble without the BOM).
+  return (
+    "\uFEFF" +
+    rows
+      .map((row) =>
+        row.map((cell) => (/[";\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell)).join(";"),
+      )
+      .join("\n")
+  );
 }
 
 export function GlassSummary({

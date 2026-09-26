@@ -20,9 +20,14 @@ export interface PortalQuote {
   currency: string;
   /** @nullable */
   payment_terms: string | null;
-  total_price_net: string;
-  total_price_tax: string;
-  total_price_gross: string;
+  /** @nullable */
+  notes_commercial: string | null;
+  /** @nullable */
+  total_price_net: string | null;
+  /** @nullable */
+  total_price_tax: string | null;
+  /** @nullable */
+  total_price_gross: string | null;
   positions: PortalPosition[];
   payment: PortalPayment | null;
   /** @nullable */

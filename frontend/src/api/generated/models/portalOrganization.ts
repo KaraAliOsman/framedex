@@ -11,4 +11,14 @@ export interface PortalOrganization {
   name: string | null;
   /** @nullable */
   tax_id: string | null;
+  /** @nullable */
+  commercial_name: string | null;
+  /** @nullable */
+  brand_address: string | null;
+  /** @nullable */
+  brand_phone: string | null;
+  /** @nullable */
+  brand_email: string | null;
+  /** @nullable */
+  brand_logo_url: string | null;
 }

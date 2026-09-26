@@ -71,13 +71,14 @@ describe("GlassSummary", () => {
     expect(onExport).toHaveBeenCalledTimes(1);
     const groups = onExport.mock.calls[0]![0];
     const csv = glassSummaryCsv(groups, 3);
+    expect(csv.startsWith("\uFEFF")).toBe(true); // BOM for Excel/es-CL
     const lines = csv.split("\n");
     expect(lines[0]).toContain("Composición");
     const polished = lines.find((line) => line.includes("S·I"));
     // per-row totals: pane count 1 → ×3 units, area 0.8908×3, weight 17.82×3
-    expect(polished).toContain(",3,2.6724,53.46");
+    expect(polished).toContain(";3;2.6724;53.46");
     const totals = lines[lines.length - 1]!;
     expect(totals).toContain("Totales");
-    expect(totals).toContain(",9,7.2711,145.44"); // 3+3+3 panes, (1.7816+0.6421)*3, (17.82*2+12.84)*3
+    expect(totals).toContain(";9;7.2711;145.44"); // 3+3+3 panes, (1.7816+0.6421)*3, (17.82*2+12.84)*3
   });
 });

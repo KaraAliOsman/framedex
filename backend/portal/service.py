@@ -351,6 +351,11 @@ def portal_quote(token: str) -> dict[str, object]:
             else None
         )
         gross = Decimal(str(sealed.get("total_price_gross") or "0"))
+        # Totals absent from the sealed snapshot stay null — a $0 total on a
+        # public proposal reads as a pricing error, never as "not priced".
+        price_net = sealed.get("total_price_net")
+        price_tax = sealed.get("total_price_tax")
+        price_gross = sealed.get("total_price_gross")
         return {
             "schema": "portal_quote_v1",
             "organization": _sealed_organization(version),
@@ -362,9 +367,9 @@ def portal_quote(token: str) -> dict[str, object]:
             "currency": sealed.get("currency") or "CLP",
             "payment_terms": sealed.get("payment_terms"),
             "notes_commercial": sealed.get("notes_commercial"),
-            "total_price_net": str(sealed.get("total_price_net") or "0"),
-            "total_price_tax": str(sealed.get("total_price_tax") or "0"),
-            "total_price_gross": str(gross),
+            "total_price_net": str(price_net) if price_net is not None else None,
+            "total_price_tax": str(price_tax) if price_tax is not None else None,
+            "total_price_gross": str(price_gross) if price_gross is not None else None,
             "positions": _sealed_positions(version),
             "payment": _payment_state(
                 org_id=org_id, project_id=approval["project_id"], gross=gross

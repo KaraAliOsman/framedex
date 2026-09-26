@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import ceil
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -1983,6 +1983,21 @@ _DOCUMENTARY_SLICE = (
 )
 
 
+# Fields whose "changed" signal must be numeric, not lexical — "268000.00"
+# vs "268000" is the same price, not a revision change.
+_COMPARE_NUMERIC = {"quantity", "width_mm", "height_mm", "price_net", "discount_pct"}
+
+
+def _compare_value(field: str, value: object) -> str:
+    raw = str(value or "")
+    if field in _COMPARE_NUMERIC:
+        try:
+            return format(D(raw).normalize(), "f")
+        except (InvalidOperation, TypeError, ValueError):
+            return raw
+    return raw
+
+
 def _compare_position(row: dict[str, object]) -> dict[str, object]:
     """The commercially legible slice of a frozen position — enough to render
     a thumbnail and read what changed, nothing the customer shouldn't see."""
@@ -2127,7 +2142,7 @@ def compare_versions(
         fields = [
             {"field": field, "before": str(before[field]), "after": str(after[field])}
             for field in _COMPARE_FIELDS
-            if str(before[field]) != str(after[field])
+            if _compare_value(field, before[field]) != _compare_value(field, after[field])
         ]
         spec_drift = before["calculation_hash"] != after["calculation_hash"]
         if not (before["calculation_hash"] and after["calculation_hash"]):

@@ -31,6 +31,7 @@ from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
 from projects import org_branding
 from projects.payments import resolve_or_insert_payment
+from projects.receipts import issue_receipt
 from projects.service import project_row
 
 SIGNED_URL_TTL_SECONDS = 600
@@ -258,6 +259,19 @@ def confirm_delivery(
                         "El cobro registrado para esta entrega no coincide.",
                     )
                 payment_id = payment_row["id"]
+                # Every ledger payment seals a comprobante — the POD cobro is
+                # no exception; a replayed settle finds the existing receipt
+                # via UNIQUE(payment_id) and returns it unchanged.
+                issue_receipt(
+                    org_id=org_id,
+                    project=project,
+                    payment={
+                        "project_id": order["project_id"],
+                        **payment_row,
+                    },
+                    actor_id=actor_id,
+                    deal=deal if deal is not None else {"total": None, "currency": "CLP"},
+                )
                 payment_payload = {
                     "id": str(payment_row["id"]),
                     "kind": payment_row["kind"],

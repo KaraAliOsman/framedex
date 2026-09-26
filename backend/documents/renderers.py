@@ -69,7 +69,7 @@ _CSS = _FONTS + """
 .pg::after { content: counter(page) " / " counter(pages); }
 h1 { font-size: 16pt; font-weight: 600; margin: 0 0 4mm; letter-spacing: -0.2pt; color: #161C1F; }
 h2 { font-size: 11pt; font-weight: 600; margin: 5mm 0 2mm; border-bottom: 0.75pt solid #465158; padding-bottom: 1.2mm; color: #161C1F; }
-h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } p { margin: 1.5mm 0; }
+h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } p { margin: 1.5mm 0; orphans: 3; widows: 3; }
 .masthead { position: relative; display: flex; justify-content: space-between; padding-bottom: 4mm; margin-bottom: 1.6mm; }
 .brand { color: #075F5A; font-weight: 600; font-size: 12pt; letter-spacing: 2.4pt; }
 .brand .mark { display: inline-block; width: 2.4mm; height: 2.4mm; background: #E56A32; margin-left: 1.6mm; }
@@ -84,13 +84,15 @@ h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } 
 table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; table-layout: fixed; }
 thead { border-top: 0.9pt solid #465158; }
 th { color: #465158; font: 6.5pt 'IBM Plex Sans', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; border-bottom: 0.9pt solid #465158; padding: 1.4mm 1.8mm; }
-td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: break-word; hyphens: manual; }
+td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: break-word; hyphens: manual; orphans: 2; widows: 2; }
 tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .workshop h1 { font-size: 14pt; } .workshop th { background: #252D31; color: #FCFDFC; }
 .dimension { font: 11pt 'IBM Plex Mono', monospace; font-weight: 500; color: #161C1F; }
 .hash { font: 6.5pt 'IBM Plex Mono', monospace; color: #465158; overflow-wrap: anywhere; }
 .break-avoid { break-inside: avoid; } h2, h3 { break-after: avoid; } .blank { display: inline-block; width: 5mm; height: 5mm; border: 1px solid #252D31; vertical-align: middle; }
 .confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
+.voided-banner { border: 1.5pt solid #991B1B; color: #991B1B; padding: 3mm 5mm; margin: 3mm 0; break-inside: avoid; }
+.voided-banner p { margin: 0; } .voided-title { font-size: 16pt; font-weight: 700; letter-spacing: 2pt; margin-bottom: 1.5mm; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
 .keep { break-inside: avoid; }
@@ -492,7 +494,7 @@ def _contour_svg_path(
 
 def _position_svg(position: dict[str, object]) -> str:
     tree = _object(position.get("parametric_tree"), "invalid_frozen_parametric_tree")
-    marker = f"arrow-{_value(position.get('position_index'))}"
+    marker = f"arrow-{escape(_value(position.get('position_index')))}"
     elements: list[str] = [
         f'<defs><marker id="{marker}" markerWidth="8" markerHeight="8" refX="6" refY="3" '
         'orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#075F5A" '
@@ -800,6 +802,9 @@ def _doc01(snapshot: dict[str, object]) -> str:
                 if discount_pct not in ("0", "0.00", "0.0000", "—", "")
                 else "—"
             ),
+            _money(bucket["price_net"] / bucket["quantity"], currency)
+            if bucket["priced"] and bucket["quantity"]
+            else "—",
             _money(bucket["price_net"], currency) if bucket["priced"] else "—",
         ])
     quote_folio = f"COT-{_value(project.get('code'))}-{_value(snapshot.get('revision'))}"
@@ -822,15 +827,16 @@ def _doc01(snapshot: dict[str, object]) -> str:
         "</section>"
         "<h2>Solución propuesta</h2>"
         '<table class="sol-table"><colgroup>'
-        '<col style="width:5%"><col style="width:17%"><col style="width:15%">'
-        '<col style="width:12%"><col style="width:5%"><col style="width:16%">'
-        '<col style="width:10%"><col style="width:6%"><col style="width:14%">'
+        '<col style="width:4%"><col style="width:16%"><col style="width:13%">'
+        '<col style="width:11%"><col style="width:5%"><col style="width:15%">'
+        '<col style="width:9%"><col style="width:5%"><col style="width:10%">'
+        '<col style="width:12%">'
         "</colgroup><thead><tr>"
         "<th>Pos.</th><th>Ubicación</th><th>Tipología</th>"
         "<th>Dimensiones (mm)</th><th>Cant.</th><th>Vidrio / relleno</th>"
-        "<th>Acabado</th><th>Dcto.</th><th>Neto</th></tr></thead><tbody>"
+        "<th>Acabado</th><th>Dcto.</th><th>P. unit.</th><th>Neto</th></tr></thead><tbody>"
         + "".join(
-            _row(row, ["", "", "", "nowrap", "dimension", "", "", "", "dimension"])
+            _row(row, ["", "", "", "nowrap", "dimension", "", "", "", "dimension", "dimension"])
             for row in opening_rows
         )
         + "</tbody></table>"
@@ -1313,7 +1319,9 @@ def _doc06(snapshot: dict[str, object]) -> str:
     tolerance = "—"
     if inspector:
         config = _object(inspector[0].get("config"), "invalid_inspector_evidence")
-        tolerance = _value(_object(config.get("R10"), "invalid_inspector_evidence").get("tolerance_mm"))
+        r10 = config.get("R10")
+        if isinstance(r10, dict) and r10.get("tolerance_mm") is not None:
+            tolerance = _value(r10.get("tolerance_mm"))
     rows = [
         ["Escuadra de diagonales", f"Diferencia ≤ {tolerance} mm", "□", "________________"],
         ["Burletes y estanqueidad", "Continuidad visual y cierre", "□", "________________"],
@@ -1373,18 +1381,24 @@ def _doc04(snapshot: dict[str, object]) -> str:
         "revision": revision.get("revision_code"),
         "sealed_at": order.get("confirmed_at"),
         "bom_hash": revision.get("bom_hash"),
+        "organization": snapshot.get("organization"),
     }
     body, _ = _revision_header(pseudo_revision, "Pedido de perfiles", "DOC-04", workshop=True)
     body += (
         f"<p><strong>Orden:</strong> {escape(_value(order.get('order_code')))} · "
         f"<strong>Proveedor:</strong> {escape(_value(order.get('supplier_name')))}</p>"
         + _table(
-            ["Requisito", "Categoría", "SKU taller", "SKU compra", "Cantidad", "Unidad"],
-            [[_short_id(line.get("requirement_key")),
+            ["Requisito", "Categoría", "SKU taller", "SKU compra", "Largo barra (mm)",
+             "Cantidad", "Unidad", "Perfil de corte", "Trazabilidad"],
+            [[_value(line.get("requirement_key")),
               _CATEGORY_ES.get(_value(line.get("category")), line.get("category")),
               ", ".join(_value(item) for item in _array(line.get("technical_skus"), "invalid_order_line")),
-              line.get("purchasing_sku"), line.get("quantity"), line.get("unit")]
-             for line in lines], ["hash", "", "", "", "dimension", ""],
+              line.get("purchasing_sku"),
+              _object(line.get("specification"), "invalid_order_line").get("stock_length_mm"),
+              line.get("quantity"), line.get("unit"),
+              _object(line.get("specification"), "invalid_order_line").get("cutting_profile_id"),
+              ", ".join(_value(item) for item in _array(line.get("source_trace"), "invalid_order_line"))]
+             for line in lines], ["hash", "", "", "", "dimension", "dimension", "", "", ""],
         )
         + "</main>"
     )
@@ -1410,8 +1424,12 @@ def render_pdf_document(
         body = _doc07(snapshot)
     else:
         raise DocumentaryError("pdf_document_type_invalid")
+    title = escape(
+        f"{document_type} {_value(_object(snapshot.get('project'), 'invalid_frozen_revision_snapshot').get('code'))}"
+    )
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{title}</title>"
         f"<style>{_CSS}</style></head><body>{body}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -1445,6 +1463,19 @@ def _receipt_body(payload: dict[str, object]) -> str:
     method = _PAYMENT_METHOD_ES.get(
         _value(payment.get("method")), _value(payment.get("method"))
     )
+    voided = payload.get("voided")
+    voided_block = ""
+    if isinstance(voided, dict):
+        voided_block = (
+            '<section class="voided-banner"><p class="voided-title">ANULADO</p>'
+            f'<p>Este comprobante fue anulado el {escape(_cldate(voided.get("at")))}'
+            + (
+                f' — motivo: {escape(_value(voided.get("reason")))}'
+                if _value(voided.get("reason")) != "—"
+                else ""
+            )
+            + ". El registro permanece como evidencia; no representa un cobro vigente.</p></section>"
+        )
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -1469,6 +1500,7 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f"Comprobante de pago<br>{escape(_cldate(issued_at))}</div></div>"
         '<div class="rule-stack"></div>'
         "<h1>Comprobante de pago</h1>"
+        f"{voided_block}"
         '<section class="hero"><p>Recibido de</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))}"
@@ -1520,6 +1552,7 @@ def render_payment_receipt(
 
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{escape(_value(payload.get('receipt_code')))} — Comprobante de pago</title>"
         f"<style>{_CSS}</style></head><body>{_receipt_body(payload)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -1569,7 +1602,9 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
         f"<p>RUT: {escape(_value(project.get('client_rut')))}</p>"
         f"<p>{escape(_value(project.get('delivery_address')))}</p>"
-        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+        f'<p class="total">'
+        + ("Bultos" if units else "Unidades")
+        + f': {escape(_value(totals.get("units")))}</p></section>'
     )
     if units:
         body += (
@@ -1628,6 +1663,7 @@ def render_dispatch_note(
 
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{escape(_value(payload.get('note_code')))} — Guía de despacho</title>"
         f"<style>{_CSS}</style></head><body>{_dispatch_note_body(payload)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -1732,8 +1768,22 @@ def _invoice_body(payload: dict[str, object]) -> str:
         "<h1>Factura</h1>"
         '<section class="hero"><p>Facturar a</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
-        f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
-        f"{escape(_value(project.get('delivery_address')))}</p>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}"
+        + (
+            f" · {escape(_value(project.get('client_giro')))}"
+            if _value(project.get("client_giro")) != "—"
+            else ""
+        )
+        + (
+            f" · {escape(_value(project.get('client_address')))}"
+            if _value(project.get("client_address")) != "—"
+            else (
+                f" · {escape(_value(project.get('client_comuna')))}"
+                if _value(project.get("client_comuna")) != "—"
+                else ""
+            )
+        )
+        + "</p>"
         f'<p class="total">Total: {escape(_money(deal.get("total_gross"), currency))}</p></section>'
     )
     if positions:
@@ -1794,6 +1844,7 @@ def render_project_invoice(
 
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{escape(_value(payload.get('invoice_code')))} — Factura</title>"
         f"<style>{_CSS}</style></head><body>{_invoice_body(payload)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -1909,6 +1960,7 @@ def render_credit_note(
 
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{escape(_value(payload.get('note_code')))} — Nota de crédito</title>"
         f"<style>{_CSS}</style></head><body>{_credit_note_body(payload)}</body></html>"
     )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(
@@ -1959,9 +2011,11 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
         f"<h2>{escape(_value(receiver.get('name')))}</h2>"
         f"<p>RUT: {escape(_value(receiver.get('rut')))}</p>"
         f"<p>{escape(_value(delivery.get('address')))} · "
-        f"{escape(_value(delivery.get('scheduled_date')))} "
+        f"{escape(_cldate(delivery.get('scheduled_date')))} "
         f"{escape(_value(delivery.get('time_window')))}</p>"
-        f'<p class="total">Unidades: {escape(_value(totals.get("units")))}</p></section>'
+        f'<p class="total">'
+        + ("Bultos" if units else "Unidades")
+        + f': {escape(_value(totals.get("units")))}</p></section>'
     )
     if units:
         body += (
@@ -1986,7 +2040,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
     contact = _value(delivery.get("contact_name"))
     installer = _value(delivery.get("installer_name"))
     detail_rows = [
-        ["Entrega programada", f"{_value(delivery.get('scheduled_date'))} · {_value(delivery.get('time_window'))}"],
+        ["Entrega programada", f"{_cldate(delivery.get('scheduled_date'))} · {_value(delivery.get('time_window'))}"],
         ["Contacto en sitio", contact],
         ["Cuadrilla", installer],
     ]
@@ -2030,6 +2084,7 @@ def render_delivery_pod(
     signature_b64 = base64.b64encode(signature_png).decode("ascii")
     html = (
         "<!doctype html><html lang=\"es-CL\"><head><meta charset=\"utf-8\">"
+        f"<title>{escape(_value(payload.get('confirmation_code')))} — Comprobante de entrega</title>"
         f"<style>{_CSS}"
         ".pod-signature{max-width:70mm;max-height:28mm;border:0.4pt solid "
         "#e5e7eb;border-radius:4px;padding:2mm;background:#fff}"

@@ -170,6 +170,14 @@ def _patch_env(monkeypatch, storage, *, order=None, delivery=None, existing=None
         )
 
     storage.payment_data = []
+    storage.receipt_calls = []
+    monkeypatch.setattr(
+        confirmations,
+        "issue_receipt",
+        lambda *, org_id, project, payment, actor_id, deal: storage.receipt_calls.append(
+            {"payment_id": payment["id"], "deal": deal}
+        ),
+    )
     monkeypatch.setattr(confirmations, "one", fake_one)
     monkeypatch.setattr(confirmations, "rows", fake_rows)
     monkeypatch.setattr(
