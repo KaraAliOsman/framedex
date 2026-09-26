@@ -578,12 +578,19 @@ def _position_svg(position: dict[str, object]) -> str:
                     _object(module.get("tree"), "invalid_frozen_parametric_tree"),
                     x, baseline, module_width, module_height, elements, marker,
                 )
-            elements.append(
-                f'<text x="{_pt(x + module_width / Decimal("30"))}" '
-                f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
-                f'font-size="{_pt(module_height / Decimal("18"))}" '
-                f'fill="#727D82">{escape(_value(module.get("id")))}</text>'
-            )
+            # Module-id labels drop on sliver modules — squeezed text
+            # colliding with the next unit's label reads worse than none.
+            label = _value(module.get("id"))
+            label_size = module_height / Decimal("18")
+            if module_width / Decimal("30") + (
+                Decimal(len(label)) * label_size * Decimal("0.65")
+            ) < module_width:
+                elements.append(
+                    f'<text x="{_pt(x + module_width / Decimal("30"))}" '
+                    f'y="{_pt(baseline + module_height - module_height / Decimal("30"))}" '
+                    f'font-size="{_pt(label_size)}" '
+                    f'fill="#727D82">{escape(label)}</text>'
+                )
         for joint in layout.column_joints:
             seam_x = joint.x_mm - left_edge
             seam_top = top_edge - joint.top_mm
