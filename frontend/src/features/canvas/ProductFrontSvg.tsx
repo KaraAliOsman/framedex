@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import type { ProductIssue } from "../../api/generated/models";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 import type { IntentNode } from "./intentEditing";
 import { isSlidingOpening, resolvedSlidingLayout } from "./intentEditing";
@@ -86,7 +87,7 @@ function SvgDim({
           }
         }}
       >
-        {value}
+        {fmtMm(value)}
       </text>
     );
   }
@@ -137,8 +138,8 @@ export function OpeningGlyph({
   w: number;
   h: number;
 }): JSX.Element {
-  const padX = w * 0.12;
-  const padY = h * 0.12;
+  const padX = w * 0.2;
+  const padY = h * 0.2;
   const left = x + padX;
   const right = x + w - padX;
   const top = y + padY;
@@ -690,7 +691,9 @@ function Bay({
             width={Math.max(pane.w, 0)}
             height={Math.max(pane.h, 0)}
           />
-          {pane.w > 30 && pane.h > 30 && (
+          {/* The sheen only belongs on inert glass — under an operable leaf
+           * it crosses the opening glyph and reads as a scribble. */}
+          {pane.w > 30 && pane.h > 30 && !node.opening_type && (
             <line
               className="glass-sheen"
               x1={pane.x + pane.w * 0.18}

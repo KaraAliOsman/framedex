@@ -1824,7 +1824,7 @@ p[role="alert"]:only-child::before {
   color: var(--theme-text-primary);
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: 5.5rem minmax(8rem, 1fr) auto auto;
+  grid-template-columns: auto minmax(8rem, 1fr) auto auto;
   padding: 0.5rem 0;
   text-decoration: none;
 }
