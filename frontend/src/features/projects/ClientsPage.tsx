@@ -160,6 +160,13 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
     staleTime: 60_000,
   });
 
+  // A workspace leads with the work — land on the first client's ficha
+  // instead of an empty hint pane (same pattern as /production).
+  useEffect(() => {
+    if (routeClientId || creating || !query.data || query.data.length === 0) return;
+    navigate(`/clients/${query.data[0]!.id}`, { replace: true });
+  }, [routeClientId, creating, query.data, navigate]);
+
   const allProjects = projectsQuery.data ?? [];
   const projectsByClient = new Map<string, ProjectResponse[]>();
   for (const project of allProjects) {
