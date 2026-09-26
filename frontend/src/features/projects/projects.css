@@ -535,6 +535,24 @@
   padding-block: 0.5rem;
   border-bottom: 1px solid var(--theme-border-subtle);
 }
+.quotation-links ul {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.quotation-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+.quotation-link__meta {
+  color: var(--theme-text-secondary);
+  font-size: 0.8125rem;
+}
 .position-thumb-host {
   align-self: start;
 }

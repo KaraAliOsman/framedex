@@ -243,6 +243,14 @@ def resolve_or_insert_payment(
             "payment_requires_deal",
             "Registra cobros solo sobre un proyecto cotizado.",
         )
+    # The deal must be sealed before money moves — a receipt that freezes
+    # live totals can be silently re-priced under the client's feet (F18).
+    if deal["sealed_revision"] is None:
+        raise contract_error(
+            422,
+            "payment_requires_sealed_deal",
+            "Emite una revisión de cotización antes de registrar cobros.",
+        )
     if deal["currency"] == "CLP" and data["amount"] != data[
         "amount"
     ].to_integral_value():
@@ -257,6 +265,21 @@ def resolve_or_insert_payment(
             422,
             "payment_recorded_in_future",
             "La fecha del cobro no puede ser futura.",
+        )
+    # Over-collection guard: a payment must fit inside the outstanding
+    # balance — the ledger flips PAID on collected >= total and would
+    # silently absorb the excess otherwise (F19).
+    collected_rows = rows(
+        "SELECT COALESCE(SUM(amount), 0) AS collected FROM public.project_payments "
+        "WHERE org_id=%s AND project_id=%s AND voided_at IS NULL",
+        [str(org_id), str(project_id)],
+    )
+    balance = deal["total"] - Decimal(str(collected_rows[0]["collected"]))
+    if Decimal(str(data["amount"])) > balance:
+        raise contract_error(
+            422,
+            "payment_exceeds_balance",
+            "El cobro supera el saldo pendiente del proyecto.",
         )
     payment = rows(
         "INSERT INTO public.project_payments"

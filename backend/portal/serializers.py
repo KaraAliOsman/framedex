@@ -40,7 +40,6 @@ class PortalQuoteSerializer(serializers.Serializer):
     project_code = serializers.CharField()
     project_name = serializers.CharField()
     client_name = serializers.CharField()
-    project_status = serializers.CharField()
     revision_code = serializers.CharField()
     emitted_at = serializers.DateTimeField()
     currency = serializers.CharField()
@@ -67,8 +66,10 @@ class ApprovalRecordSerializer(serializers.Serializer):
     revision_code = serializers.CharField()
     decided_by = serializers.CharField(allow_null=True)
     decided_at = serializers.DateTimeField(allow_null=True)
+    decided_note = serializers.CharField(allow_null=True)
     expires_at = serializers.DateTimeField()
     created_at = serializers.DateTimeField()
+    revoked_at = serializers.DateTimeField(allow_null=True)
 
 
 class DecideRequestSerializer(serializers.Serializer):

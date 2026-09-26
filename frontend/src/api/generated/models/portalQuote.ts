@@ -15,7 +15,6 @@ export interface PortalQuote {
   project_code: string;
   project_name: string;
   client_name: string;
-  project_status: string;
   revision_code: string;
   emitted_at: string;
   currency: string;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 from decimal import Decimal
 from html import escape
 from pathlib import Path
@@ -71,6 +72,8 @@ h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } 
 .masthead { position: relative; display: flex; justify-content: space-between; padding-bottom: 4mm; margin-bottom: 1.6mm; }
 .brand { color: #075F5A; font-weight: 600; font-size: 12pt; letter-spacing: 2.4pt; }
 .brand .mark { display: inline-block; width: 2.4mm; height: 2.4mm; background: #E56A32; margin-left: 1.6mm; }
+.brand-logo { display: block; max-height: 12mm; max-width: 48mm; }
+.brand-sub { font-size: 6.5pt; color: #727D82; letter-spacing: 0.9pt; margin-top: 1.2mm; }
 .meta { text-align: right; color: #727D82; font: 8pt 'IBM Plex Mono', monospace; padding-right: 9mm; }
 .meta strong { color: #252D31; font-weight: 500; }
 .rule-stack { border-top: 1.5pt solid #075F5A; border-bottom: 0.5pt solid #CDD5D6; height: 1.2mm; margin-bottom: 6mm; }
@@ -173,6 +176,74 @@ _MITER = (
     f'<path d="M0,0 L32,0 L32,32 Z" fill="{_PAPER}" stroke="{_TEAL_800}" '
     'stroke-width="2"/></svg>'
 )
+
+
+_LOGO_MAX_BYTES = 512 * 1024
+_LOGO_MAGICS = {
+    b"\x89PNG\r\n\x1a\n": "image/png",
+    b"\xff\xd8\xff": "image/jpeg",
+    b"RIFF": "image/webp",
+}
+
+
+def _logo_uri(organization: dict | None) -> str | None:
+    """Embed the frozen brand logo as a data URI when its stored sha pins the
+    bytes — a document never fails (or changes identity) over a logo, so any
+    storage or integrity failure renders the plain brand name instead."""
+    if not isinstance(organization, dict):
+        return None
+    object_key = _value(organization.get("brand_logo_key"))
+    expected = _value(organization.get("brand_logo_sha256"))
+    if object_key == "—" or expected == "—":
+        return None
+    try:
+        from documents.storage import SupabaseDocumentStorage
+
+        content = SupabaseDocumentStorage().download_bounded(
+            object_key, _LOGO_MAX_BYTES
+        )
+    except Exception:
+        return None
+    if not content or hashlib.sha256(content).hexdigest() != expected:
+        return None
+    media = None
+    if content.startswith(b"RIFF") and len(content) > 11 and content[8:12] == b"WEBP":
+        media = "image/webp"
+    else:
+        for magic, kind in _LOGO_MAGICS.items():
+            if content.startswith(magic):
+                media = kind
+                break
+    if media is None:
+        return None
+    return f"data:{media};base64,{base64.b64encode(content).decode('ascii')}"
+
+
+def _brand_block(organization: dict | None) -> str:
+    """White-label masthead brand: the org's logo or commercial name leads;
+    'Generado con DEKOPEN' stays as the discreet tool attribution. A snapshot
+    frozen before branding renders the bare DEKOPEN wordmark."""
+    org = organization if isinstance(organization, dict) else {}
+    uri = _logo_uri(org)
+    if uri:
+        brand = f'<img class="brand-logo" src="{uri}" alt="">'
+    else:
+        label = (
+            _value(org.get("commercial_name"))
+            if _value(org.get("commercial_name")) != "—"
+            else _value(org.get("name"))
+        )
+        if label == "—":
+            label = "DEKOPEN"
+            brand = f'<div class="brand">{label}<span class="mark"></span></div>'
+        else:
+            brand = f'<div class="brand">{escape(label)}</div>'
+    attribution = (
+        '<div class="brand-sub">Generado con DEKOPEN</div>'
+        if isinstance(organization, dict) and organization.get("name")
+        else ""
+    )
+    return f"<div>{brand}{attribution}</div>"
 
 
 _SVG_INSET = Decimal("0.06")
@@ -557,8 +628,7 @@ def _revision_header(
         "</div>"
     )
     header = (
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"{issuer}"
         f"<strong>{escape(project_code)}</strong><br>"
@@ -1048,6 +1118,7 @@ def _receipt_body(payload: dict[str, object]) -> str:
     balance = _object(payload.get("balance"), "invalid_receipt_balance")
     issued_at = _value(payload.get("issued_at"))
     receipt_code = _value(payload.get("receipt_code"))
+    organization = payload.get("organization")
     currency = _value(project.get("currency"))
     kind = _PAYMENT_KIND_ES.get(_value(payment.get("kind")), _value(payment.get("kind")))
     method = _PAYMENT_METHOD_ES.get(
@@ -1071,8 +1142,7 @@ def _receipt_body(payload: dict[str, object]) -> str:
     )
     body = (
         f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"<strong>{escape(receipt_code)}</strong><br>"
         f"Comprobante de pago<br>{escape(_cldate(issued_at))}</div></div>"
@@ -1138,6 +1208,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
     units = payload.get("units") or []
     issued_at = _value(payload.get("issued_at"))
     note_code = _value(payload.get("note_code"))
+    organization = payload.get("organization")
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -1156,8 +1227,7 @@ def _dispatch_note_body(payload: dict[str, object]) -> str:
     )
     body = (
         f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"<strong>{escape(note_code)}</strong><br>"
         f"Guía de despacho<br>{escape(_cldate(issued_at))}</div></div>"
@@ -1268,6 +1338,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
     invoice_code = _value(payload.get("invoice_code"))
     revision = _value(payload.get("revision_code"))
     currency = _value(project.get("currency"))
+    organization = payload.get("organization")
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -1286,8 +1357,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
     )
     body = (
         f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"<strong>{escape(invoice_code)}</strong><br>"
         f"Factura<br>{escape(_cldate(issued_at))}</div></div>"
@@ -1376,6 +1446,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
     invoice_code = _value(invoice.get("invoice_code"))
     revision = _value(payload.get("revision_code"))
     currency = _value((deal or {}).get("currency")) or _value(project.get("currency"))
+    organization = payload.get("organization")
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -1394,8 +1465,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
     )
     body = (
         f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"<strong>{escape(credit_code)}</strong><br>"
         f"Nota de crédito<br>{escape(_cldate(issued_at))}</div></div>"
@@ -1491,6 +1561,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
     payment = payload.get("payment")
     issued_at = _value(payload.get("issued_at"))
     confirmation_code = _value(payload.get("confirmation_code"))
+    organization = payload.get("organization")
     titleblock = (
         '<div class="titleblock">'
         f'<div class="tb-cell"><span class="tb-label">Proyecto</span>'
@@ -1509,8 +1580,7 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
     )
     body = (
         f'<main>{titleblock}'
-        f'<div class="masthead">{_MITER}<div><div class="brand">DEKOPEN'
-        '<span class="mark"></span></div></div>'
+        f'<div class="masthead">{_MITER}{_brand_block(organization)}'
         '<div class="meta">'
         f"<strong>{escape(confirmation_code)}</strong><br>"
         f"Comprobante de entrega<br>{escape(_cldate(issued_at))}</div></div>"

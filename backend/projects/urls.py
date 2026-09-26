@@ -6,6 +6,8 @@ from projects.views import (
     ClientView,
     ClientsView,
     FlowPaymentConfirmView,
+    OrganizationBrandingLogoView,
+    OrganizationBrandingView,
     ProjectCloneView,
     ProjectPaymentIntegrationView,
     ProjectPaymentLinkRecoverView,
@@ -37,6 +39,8 @@ from projects.options import DesignOptionsView
 urlpatterns = [
     path("projects/design-options/<uuid:system_id>/", DesignOptionsView.as_view()),
     path("projects/flow/confirm/<uuid:link_id>/", FlowPaymentConfirmView.as_view()),
+    path("organization/branding/", OrganizationBrandingView.as_view()),
+    path("organization/branding/logo/", OrganizationBrandingLogoView.as_view()),
     path("projects/payment-integration/", ProjectPaymentIntegrationView.as_view()),
     path("clients/", ClientsView.as_view()),
     path("clients/<uuid:client_id>/", ClientView.as_view()),

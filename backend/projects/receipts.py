@@ -25,6 +25,7 @@ from documents.repository import documentary_backend
 from documents.renderers import render_payment_receipt
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import org_branding
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -87,6 +88,7 @@ def issue_receipt(
     collected = _collected(org_id, UUID(project_id_s))
     payload = {
         "receipt_code": receipt_code,
+        "organization": org_branding.branding_for_snapshot(org_id=org_id),
         "issued_at": timezone.now().isoformat(),
         "project": {
             "code": project["code"],

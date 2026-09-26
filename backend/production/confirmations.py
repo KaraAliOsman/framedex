@@ -29,6 +29,7 @@ from documents.repository import DocumentaryError, documentary_backend
 from documents.renderers import render_delivery_pod
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import org_branding
 from projects.payments import resolve_or_insert_payment
 from projects.service import project_row
 
@@ -279,6 +280,7 @@ def confirm_delivery(
             signature_hash = _sha256(signature_png)
             payload = {
                 "confirmation_code": confirmation_code,
+                "organization": org_branding.branding_for_snapshot(org_id=org_id),
                 "issued_at": issued_at.isoformat(),
                 "receiver": {
                     "name": receiver,

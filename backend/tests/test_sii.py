@@ -1260,3 +1260,84 @@ def test_tributario_refuses_xml_without_ted():
     with pytest.raises(ContractAPIException) as excinfo:
         sii_repr.compose_tributario_pdf(dte_xml=b"<DTE/>", parent_pdf=b"%PDF")
     assert excinfo.value.contract_code == "sii_dte_xml_unreadable"
+
+
+def test_emit_dte_itemizes_positions_and_payment_form(monkeypatch):
+    """F24: a payload carrying reconciling per-position nets emits one
+    Detalle each plus FmaPago/TermPagoGlosa instead of one lump line."""
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["positions"] = [
+        {
+            "position_index": 1,
+            "typology": "SLIDING_2L",
+            "quantity": 2,
+            "width_mm": "1200.00",
+            "height_mm": "1500.00",
+            "price_net": "400000",
+        },
+        {
+            "position_index": 2,
+            "typology": "FIXED",
+            "quantity": 1,
+            "width_mm": "800.00",
+            "height_mm": "900.00",
+            "price_net": "600000",
+        },
+    ]
+    invoice["payload_json"]["project"]["payment_terms"] = (
+        "50% anticipo, saldo contra entrega"
+    )
+    invoice["payload_json"]["balance"] = {
+        "collected": "500000",
+        "amount_due": "690000",
+    }
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(
+        monkeypatch,
+        storage,
+        cafs=[caf],
+        invoice=invoice,
+        insert_row=_dte_row(invoice["id"], folio=1),
+    )
+    sii.emit_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert text.count("<Detalle>") == 2
+    assert "<NmbItem>Pos. 1 SLIDING_2L 1200.00x1500.00mm</NmbItem>" in text
+    assert "<QtyItem>2</QtyItem>" in text
+    assert "<MontoItem>400000</MontoItem>" in text
+    assert "<MontoItem>600000</MontoItem>" in text
+    assert "<FmaPago>2</FmaPago>" in text
+    assert "<TermPagoGlosa>50% anticipo, saldo contra entrega</TermPagoGlosa>" in text
+
+
+def test_emit_dte_falls_back_when_lines_do_not_reconcile(monkeypatch):
+    """Missing or non-integral line nets keep the single summary line — a
+    DTE whose Detalle sum contradicts MntNeto would be rejected by the SII."""
+    storage = _Storage()
+    invoice = _invoice_row()
+    invoice["payload_json"]["positions"] = [
+        {"position_index": 1, "typology": "FIXED", "quantity": 1}
+    ]
+    caf = _caf_row(_parse(), org_id=invoice["org_id"], actual=0)
+    _patch_env(
+        monkeypatch,
+        storage,
+        cafs=[caf],
+        invoice=invoice,
+        insert_row=_dte_row(invoice["id"], folio=1),
+    )
+    sii.emit_dte(
+        org_id=invoice["org_id"],
+        project={"id": invoice["project_id"]},
+        invoice_id=invoice["id"],
+        actor_id=uuid4(),
+    )
+    text = storage.uploads[0][1].decode("iso-8859-1")
+    assert text.count("<Detalle>") == 1
+    assert "Según cotización REV-A" in text

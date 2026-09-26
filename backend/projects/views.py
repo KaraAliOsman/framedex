@@ -24,6 +24,7 @@ from projects import (
     design_alternatives,
     design_assist,
     invoices,
+    org_branding,
     payment_links,
     payments,
     receipts,
@@ -36,6 +37,8 @@ from projects.serializers import (
     ClientResponseSerializer,
     ClientUpdateSerializer,
     ClientWriteSerializer,
+    OrgBrandingSerializer,
+    OrgBrandingWriteSerializer,
     PaymentIntegrationSerializer,
     PaymentIntegrationStatusSerializer,
     PaymentLinkCreateSerializer,
@@ -479,6 +482,69 @@ class FlowPaymentConfirmView(APIView):
                 "El cobro requiere confirmación del proveedor.",
             ) from None
         return response({"received": True})
+
+
+class OrganizationBrandingView(APIView):
+    parser_classes = [DecimalJSONParser]
+
+    @extend_schema(
+        operation_id="organization_branding_get",
+        responses={200: OrgBrandingSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            return response(org_branding.get_branding(org_id=org))
+
+    @extend_schema(
+        operation_id="organization_branding_save",
+        request=OrgBrandingWriteSerializer,
+        responses={200: OrgBrandingSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def put(self, request):
+        data = validate(OrgBrandingWriteSerializer, request.data)
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(org_branding.save_branding(org_id=org, data=data))
+
+
+class OrganizationBrandingLogoView(APIView):
+    @extend_schema(
+        operation_id="organization_branding_logo_upload",
+        request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+        responses={200: OrgBrandingSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def put(self, request):
+        file_obj = request.FILES.get("file") if hasattr(request, "FILES") else None
+        if file_obj is None:
+            raise contract_error(400, "brand_logo_missing", "Adjunta un archivo PNG, JPEG o WebP.")
+        content = file_obj.read()
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(org_branding.save_logo(org_id=org, content=content))
+
+    @extend_schema(
+        operation_id="organization_branding_logo_read",
+        responses={200: {"type": "string", "format": "binary"}, **ERRORS},
+        **SCHEMA,
+    )
+    def get(self, request):
+        with scope(request, READ_ROLES) as (_, _, org):
+            content, content_type = org_branding.logo_bytes(org_id=org)
+        return Response(
+            content,
+            content_type=content_type,
+            headers={"Cache-Control": "private, max-age=300"},
+        )
+
+    @extend_schema(
+        operation_id="organization_branding_logo_delete",
+        responses={200: OrgBrandingSerializer, **ERRORS},
+        **SCHEMA,
+    )
+    def delete(self, request):
+        with scope(request, WRITE_ROLES) as (_, _, org):
+            return response(org_branding.clear_logo(org_id=org))
 
 
 class ProjectPaymentView(APIView):

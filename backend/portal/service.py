@@ -93,6 +93,20 @@ def share_quote(
     token = secrets.token_urlsafe(_TOKEN_BYTES)
     expires_at = datetime.now(timezone.utc) + timedelta(days=_APPROVAL_TTL_DAYS)
     with transaction.atomic(), documentary_backend():
+        # A fresh share supersedes every outstanding link for this revision —
+        # otherwise pending tokens accumulate and stay concurrently valid.
+        rows(
+            "UPDATE public.customer_approvals SET status='REVOKED',revoked_at=%s,"
+            "revoked_by=%s WHERE org_id=%s AND project_id=%s "
+            "AND project_version_id=%s AND status='PENDING' RETURNING id",
+            [
+                datetime.now(timezone.utc),
+                str(actor_id),
+                str(org_id),
+                str(project_id),
+                str(versions[0]["id"]),
+            ],
+        )
         one(
             "INSERT INTO public.customer_approvals "
             "(org_id,project_id,project_version_id,token_hash,expires_at,created_by) "
@@ -107,6 +121,29 @@ def share_quote(
             ],
         )
     return {"token": token, "expires_at": expires_at}
+
+
+def revoke_link(
+    *, org_id: UUID, project_id: UUID, approval_id: UUID, actor_id: UUID
+) -> dict[str, object]:
+    """Kill a PENDING link. Decided links stay on the record — revocation is
+    an off switch for an unanswered share, not a way to un-decide a client."""
+    with documentary_backend():
+        approval = one(
+            "SELECT id,status FROM public.customer_approvals "
+            "WHERE id=%s AND org_id=%s AND project_id=%s",
+            [str(approval_id), str(org_id), str(project_id)],
+            "approval_not_found",
+        )
+        if str(approval["status"]) == "REVOKED":
+            return approval
+        if str(approval["status"]) != "PENDING":
+            raise DocumentaryError("approval_not_pending")
+        return one(
+            "UPDATE public.customer_approvals SET status='REVOKED',revoked_at=%s,"
+            "revoked_by=%s WHERE id=%s AND status='PENDING' RETURNING id,status",
+            [datetime.now(timezone.utc), str(actor_id), str(approval_id)],
+        )
 
 
 def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]:
@@ -130,10 +167,14 @@ def list_approvals(*, org_id: UUID, project_id: UUID) -> list[dict[str, object]]
                 else None,
                 "expires_at": row["expires_at"].isoformat(),
                 "created_at": row["created_at"].isoformat(),
+                "revoked_at": row["revoked_at"].isoformat()
+                if row["revoked_at"]
+                else None,
+                "decided_note": row["decided_note"],
             }
             for row in rows(
-                "SELECT a.id,a.status,a.decided_by,a.decided_at,a.expires_at,"
-                "a.created_at,v.revision_code "
+                "SELECT a.id,a.status,a.decided_by,a.decided_at,a.decided_note,"
+                "a.expires_at,a.created_at,a.revoked_at,v.revision_code "
                 "FROM public.customer_approvals a "
                 "JOIN public.project_versions v "
                 "ON v.id = a.project_version_id "
@@ -152,6 +193,8 @@ def _approval_for_token(token: str) -> dict[str, object]:
     if len(found) != 1:
         raise DocumentaryError("quote_not_found")
     approval = found[0]
+    if approval["status"] == "REVOKED":
+        raise DocumentaryError("quote_revoked")
     if approval["expires_at"] < datetime.now(timezone.utc):
         raise DocumentaryError("quote_expired")
     return approval
@@ -284,7 +327,6 @@ def portal_quote(token: str) -> dict[str, object]:
             "project_code": sealed.get("code") or "",
             "project_name": sealed.get("name") or "",
             "client_name": sealed.get("client_name") or "",
-            "project_status": project["status"],
             "revision_code": version["revision_code"],
             "emitted_at": version["emitted_at"].isoformat(),
             "currency": sealed.get("currency") or "CLP",

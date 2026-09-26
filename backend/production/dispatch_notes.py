@@ -22,6 +22,7 @@ from documents.repository import documentary_backend
 from documents.renderers import render_dispatch_note
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import org_branding
 
 SIGNED_URL_TTL_SECONDS = 600
 
@@ -98,6 +99,7 @@ def issue_dispatch_note(
     units = _manifest_units(order_payload)
     payload = {
         "note_code": note_code,
+        "organization": org_branding.branding_for_snapshot(org_id=org_id),
         "issued_at": timezone.now().isoformat(),
         "order": {
             "code": order["order_code"],

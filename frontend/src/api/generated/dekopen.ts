@@ -126,6 +126,9 @@ import type {
   OrderReceiptRequestRequest,
   OrderReceiving,
   OrderResponse,
+  OrgBranding,
+  OrgBrandingWriteRequest,
+  OrganizationBrandingLogoUploadBody,
   PackingLabels,
   PackingManifest,
   PatchedArticleWriteRequest,
@@ -6469,6 +6472,388 @@ export const jobsRetry = async (
   });
 };
 
+export type organizationBrandingGetResponse200 = {
+  data: OrgBranding;
+  status: 200;
+};
+
+export type organizationBrandingGetResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationBrandingGetResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationBrandingGetResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationBrandingGetResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationBrandingGetResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationBrandingGetResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationBrandingGetResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationBrandingGetResponseSuccess = organizationBrandingGetResponse200 & {
+  headers: Headers;
+};
+export type organizationBrandingGetResponseError = (
+  | organizationBrandingGetResponse400
+  | organizationBrandingGetResponse401
+  | organizationBrandingGetResponse403
+  | organizationBrandingGetResponse404
+  | organizationBrandingGetResponse409
+  | organizationBrandingGetResponse422
+  | organizationBrandingGetResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationBrandingGetResponse =
+  organizationBrandingGetResponseSuccess | organizationBrandingGetResponseError;
+
+export const getOrganizationBrandingGetUrl = () => {
+  return `/api/v1/organization/branding/`;
+};
+
+export const organizationBrandingGet = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationBrandingGetResponse> => {
+  return apiMutator<organizationBrandingGetResponse>(getOrganizationBrandingGetUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type organizationBrandingSaveResponse200 = {
+  data: OrgBranding;
+  status: 200;
+};
+
+export type organizationBrandingSaveResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationBrandingSaveResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationBrandingSaveResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationBrandingSaveResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationBrandingSaveResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationBrandingSaveResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationBrandingSaveResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationBrandingSaveResponseSuccess = organizationBrandingSaveResponse200 & {
+  headers: Headers;
+};
+export type organizationBrandingSaveResponseError = (
+  | organizationBrandingSaveResponse400
+  | organizationBrandingSaveResponse401
+  | organizationBrandingSaveResponse403
+  | organizationBrandingSaveResponse404
+  | organizationBrandingSaveResponse409
+  | organizationBrandingSaveResponse422
+  | organizationBrandingSaveResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationBrandingSaveResponse =
+  organizationBrandingSaveResponseSuccess | organizationBrandingSaveResponseError;
+
+export const getOrganizationBrandingSaveUrl = () => {
+  return `/api/v1/organization/branding/`;
+};
+
+export const organizationBrandingSave = async (
+  orgBrandingWriteRequest?: OrgBrandingWriteRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationBrandingSaveResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<organizationBrandingSaveResponse>(getOrganizationBrandingSaveUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(orgBrandingWriteRequest),
+  });
+};
+
+export type organizationBrandingLogoReadResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type organizationBrandingLogoReadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationBrandingLogoReadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationBrandingLogoReadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationBrandingLogoReadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationBrandingLogoReadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationBrandingLogoReadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationBrandingLogoReadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationBrandingLogoReadResponseSuccess =
+  organizationBrandingLogoReadResponse200 & {
+    headers: Headers;
+  };
+export type organizationBrandingLogoReadResponseError = (
+  | organizationBrandingLogoReadResponse400
+  | organizationBrandingLogoReadResponse401
+  | organizationBrandingLogoReadResponse403
+  | organizationBrandingLogoReadResponse404
+  | organizationBrandingLogoReadResponse409
+  | organizationBrandingLogoReadResponse422
+  | organizationBrandingLogoReadResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationBrandingLogoReadResponse =
+  organizationBrandingLogoReadResponseSuccess | organizationBrandingLogoReadResponseError;
+
+export const getOrganizationBrandingLogoReadUrl = () => {
+  return `/api/v1/organization/branding/logo/`;
+};
+
+export const organizationBrandingLogoRead = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationBrandingLogoReadResponse> => {
+  return apiMutator<organizationBrandingLogoReadResponse>(getOrganizationBrandingLogoReadUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export type organizationBrandingLogoUploadResponse200 = {
+  data: OrgBranding;
+  status: 200;
+};
+
+export type organizationBrandingLogoUploadResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationBrandingLogoUploadResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationBrandingLogoUploadResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationBrandingLogoUploadResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationBrandingLogoUploadResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationBrandingLogoUploadResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationBrandingLogoUploadResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationBrandingLogoUploadResponseSuccess =
+  organizationBrandingLogoUploadResponse200 & {
+    headers: Headers;
+  };
+export type organizationBrandingLogoUploadResponseError = (
+  | organizationBrandingLogoUploadResponse400
+  | organizationBrandingLogoUploadResponse401
+  | organizationBrandingLogoUploadResponse403
+  | organizationBrandingLogoUploadResponse404
+  | organizationBrandingLogoUploadResponse409
+  | organizationBrandingLogoUploadResponse422
+  | organizationBrandingLogoUploadResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationBrandingLogoUploadResponse =
+  organizationBrandingLogoUploadResponseSuccess | organizationBrandingLogoUploadResponseError;
+
+export const getOrganizationBrandingLogoUploadUrl = () => {
+  return `/api/v1/organization/branding/logo/`;
+};
+
+export const organizationBrandingLogoUpload = async (
+  organizationBrandingLogoUploadBody?: OrganizationBrandingLogoUploadBody,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationBrandingLogoUploadResponse> => {
+  const formData = new FormData();
+  if (organizationBrandingLogoUploadBody?.file !== undefined) {
+    formData.append(`file`, organizationBrandingLogoUploadBody.file);
+  }
+
+  return apiMutator<organizationBrandingLogoUploadResponse>(
+    getOrganizationBrandingLogoUploadUrl(),
+    {
+      ...options,
+      method: "PUT",
+      body: formData,
+    },
+  );
+};
+
+export type organizationBrandingLogoDeleteResponse200 = {
+  data: OrgBranding;
+  status: 200;
+};
+
+export type organizationBrandingLogoDeleteResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type organizationBrandingLogoDeleteResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type organizationBrandingLogoDeleteResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type organizationBrandingLogoDeleteResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type organizationBrandingLogoDeleteResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type organizationBrandingLogoDeleteResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type organizationBrandingLogoDeleteResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type organizationBrandingLogoDeleteResponseSuccess =
+  organizationBrandingLogoDeleteResponse200 & {
+    headers: Headers;
+  };
+export type organizationBrandingLogoDeleteResponseError = (
+  | organizationBrandingLogoDeleteResponse400
+  | organizationBrandingLogoDeleteResponse401
+  | organizationBrandingLogoDeleteResponse403
+  | organizationBrandingLogoDeleteResponse404
+  | organizationBrandingLogoDeleteResponse409
+  | organizationBrandingLogoDeleteResponse422
+  | organizationBrandingLogoDeleteResponse503
+) & {
+  headers: Headers;
+};
+
+export type organizationBrandingLogoDeleteResponse =
+  organizationBrandingLogoDeleteResponseSuccess | organizationBrandingLogoDeleteResponseError;
+
+export const getOrganizationBrandingLogoDeleteUrl = () => {
+  return `/api/v1/organization/branding/logo/`;
+};
+
+export const organizationBrandingLogoDelete = async (
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<organizationBrandingLogoDeleteResponse> => {
+  return apiMutator<organizationBrandingLogoDeleteResponse>(
+    getOrganizationBrandingLogoDeleteUrl(),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
 export type portalQuoteRetrieveResponse200 = {
   data: PortalQuote;
   status: 200;
@@ -12747,6 +13132,85 @@ export const projectQuoteLinkCreate = async (
     ...options,
     method: "POST",
   });
+};
+
+export type projectQuoteLinkRevokeResponse200 = {
+  data: ApprovalRecord[];
+  status: 200;
+};
+
+export type projectQuoteLinkRevokeResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteLinkRevokeResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteLinkRevokeResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteLinkRevokeResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteLinkRevokeResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteLinkRevokeResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteLinkRevokeResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteLinkRevokeResponseSuccess = projectQuoteLinkRevokeResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteLinkRevokeResponseError = (
+  | projectQuoteLinkRevokeResponse400
+  | projectQuoteLinkRevokeResponse401
+  | projectQuoteLinkRevokeResponse403
+  | projectQuoteLinkRevokeResponse404
+  | projectQuoteLinkRevokeResponse409
+  | projectQuoteLinkRevokeResponse422
+  | projectQuoteLinkRevokeResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteLinkRevokeResponse =
+  projectQuoteLinkRevokeResponseSuccess | projectQuoteLinkRevokeResponseError;
+
+export const getProjectQuoteLinkRevokeUrl = (projectId: string, approvalId: string) => {
+  return `/api/v1/projects/${projectId}/quote-links/${approvalId}/revoke/`;
+};
+
+/**
+ * Revoke a PENDING customer-approval link — the token dies immediately.
+ */
+export const projectQuoteLinkRevoke = async (
+  projectId: string,
+  approvalId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteLinkRevokeResponse> => {
+  return apiMutator<projectQuoteLinkRevokeResponse>(
+    getProjectQuoteLinkRevokeUrl(projectId, approvalId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
 };
 
 export type projectsResetPricingResponse200 = {

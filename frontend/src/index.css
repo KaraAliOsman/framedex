@@ -1223,6 +1223,18 @@ p[role="alert"]:only-child::before {
   color: var(--theme-success);
 }
 
+/* Customer approval link states (quotation links ledger) */
+.status-chip[data-status="pending"] {
+  background: var(--theme-info-soft);
+  color: var(--theme-info);
+}
+
+.status-chip[data-status="declined"],
+.status-chip[data-status="revoked"] {
+  background: var(--theme-danger-soft);
+  color: var(--theme-danger);
+}
+
 .settings-group {
   margin-top: 1.25rem;
 }
@@ -1289,6 +1301,23 @@ p[role="alert"]:only-child::before {
 .settings-mono {
   font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
   font-size: 0.75rem;
+}
+
+.settings-branding-preview {
+  align-items: center;
+  border: 1px dashed var(--theme-border-subtle);
+  border-radius: 0.375rem;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 0.75rem;
+  min-height: 4rem;
+  padding: 0.5rem;
+}
+
+.settings-branding-logo {
+  max-height: 3.5rem;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .settings-theme {

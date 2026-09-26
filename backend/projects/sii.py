@@ -450,11 +450,13 @@ def _render_dte(
     referencia: str = "",
     iddoc_extra: str = "",
     qty_item: int | None = None,
+    detalles: list | None = None,
 ) -> str:
-    """Minimal DTE skeleton shared by 33/52/61: Encabezado + one Detalle +
-    the TED (DD + FRMT SHA1withRSA stamped by the CAF key). A None deal
-    emits the amount-less shape a guía de despacho carries: Totales and
-    MontoItem stay present with 0 — the DTE schema requires them — and
+    """Minimal DTE skeleton shared by 33/52/61: Encabezado + Detalle line(s) +
+    the TED (DD + FRMT SHA1withRSA stamped by the CAF key). ``detalles`` emits
+    per-position lines; without it a single summary line carries the neto. A
+    None deal emits the amount-less shape a guía de despacho carries: Totales
+    and MontoItem stay present with 0 — the DTE schema requires them — and
     QtyItem carries the moved units."""
     if deal is not None:
         # A DTE is a peso document: a foreign-currency deal would lose its
@@ -543,14 +545,31 @@ def _render_dte(
             else f"<Totales><MntTotal>{total}</MntTotal></Totales>"
         )
         + "</Encabezado>"
-        f"<Detalle><NroLinDet>1</NroLinDet><NmbItem>{escape(item)}</NmbItem>"
         + (
-            f"<QtyItem>{qty_item}</QtyItem>"
-            if qty_item is not None
-            else ""
+            "".join(
+                f"<Detalle><NroLinDet>{index}</NroLinDet>"
+                f"<NmbItem>{escape(line['nmb'][:80])}</NmbItem>"
+                + (
+                    f"<QtyItem>{line['qty']}</QtyItem>"
+                    if line.get("qty") is not None
+                    else ""
+                )
+                + f"<MontoItem>{line['monto']}</MontoItem></Detalle>"
+                for index, line in enumerate(detalles, start=1)
+            )
+            if detalles
+            else (
+                f"<Detalle><NroLinDet>1</NroLinDet>"
+                f"<NmbItem>{escape(item)}</NmbItem>"
+                + (
+                    f"<QtyItem>{qty_item}</QtyItem>"
+                    if qty_item is not None
+                    else ""
+                )
+                + f"<MontoItem>{neto}</MontoItem></Detalle>"
+            )
         )
-        + f"<MontoItem>{neto}</MontoItem>"
-        + f"</Detalle>{referencia}"
+        + f"{referencia}"
         f'<TED version="1.0">{dd}<FRMT algoritmo="SHA1withRSA">{frmt}</FRMT></TED>'
         f"<TmstFirma>{tsted}</TmstFirma></Documento></DTE>"
     )
@@ -589,7 +608,10 @@ def _receptor(payload: dict) -> tuple[str, str, str]:
 
 
 def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
-    """DTE-33: one Detalle referencing the sealed quotation."""
+    """DTE-33: one Detalle per sold position when the sealed payload carries
+    reconciling line nets; otherwise the single summary line. IdDoc also
+    carries the payment form: FmaPago 1 when the invoice was fully collected
+    at issue, 2 for credit, plus TermPagoGlosa with the sealed terms."""
     payload = (
         invoice["payload_json"]
         if isinstance(invoice["payload_json"], dict)
@@ -599,6 +621,41 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
     revision = payload.get("revision_code") or "REV-A"
     positions = payload.get("positions") or []
     item = f"Según cotización {revision} - {len(positions)} posición(es)"
+    neto = int(Decimal(str(payload["deal"]["total_net"])))
+    detalles = None
+    if positions and all(
+        position.get("price_net") is not None
+        and Decimal(str(position["price_net"]))
+        == Decimal(str(position["price_net"])).to_integral_value()
+        for position in positions
+    ):
+        lines = [
+            {
+                "nmb": (
+                    f"Pos. {position.get('position_index')} "
+                    f"{position.get('typology') or 'item'} "
+                    f"{position.get('width_mm')}x{position.get('height_mm')}mm"
+                ),
+                "qty": position.get("quantity"),
+                "monto": int(Decimal(str(position["price_net"]))),
+            }
+            for position in positions
+        ]
+        # The SII validates MntNeto against the Detalle sum — a rounding gap
+        # rejects the folio, so a non-reconciling set falls back to the
+        # single summary line instead of emitting a wrong document.
+        if sum(line["monto"] for line in lines) == neto:
+            detalles = lines
+    balance = payload.get("balance") or {}
+    amount_due = balance.get("amount_due")
+    fma_pago = 1 if amount_due is not None and Decimal(str(amount_due)) == 0 else 2
+    terms = (
+        str(payload.get("project", {}).get("payment_terms") or "").strip()[:45]
+    )
+    iddoc_extra = (
+        f"<FmaPago>{fma_pago}</FmaPago>"
+        + (f"<TermPagoGlosa>{escape(terms)}</TermPagoGlosa>" if terms else "")
+    )
     return _render_dte(
         tipo=DTE_FACTURA,
         folio=folio,
@@ -609,6 +666,8 @@ def _dte_xml(*, folio: int, invoice: dict, caf: dict, issued_at) -> str:
         item=item,
         caf=caf,
         issued_at=issued_at,
+        iddoc_extra=iddoc_extra,
+        detalles=detalles,
     )
 
 

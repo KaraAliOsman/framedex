@@ -26,7 +26,7 @@ from documents.repository import documentary_backend
 from documents.renderers import render_project_invoice
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
-from projects import sii, sii_envio
+from projects import org_branding, sii, sii_envio
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +154,7 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
             sealed_project = deal["project"]
             payload = {
                 "invoice_code": invoice_code,
+                "organization": org_branding.branding_for_snapshot(org_id=org_id),
                 "issued_at": timezone.now().isoformat(),
                 "revision_code": deal["revision_code"],
                 "project": {
@@ -180,6 +181,11 @@ def issue_invoice(*, org_id: UUID, project: dict, actor_id: UUID) -> dict:
                         if position.get("height_mm") is not None
                         else None,
                         "location_tag": position.get("location_tag"),
+                        # Frozen line net so the DTE can itemize per position
+                        # (F24) — None for snapshots that predate the column.
+                        "price_net": str(position.get("price_net"))
+                        if position.get("price_net") is not None
+                        else None,
                     }
                     for position in deal["positions"]
                 ],

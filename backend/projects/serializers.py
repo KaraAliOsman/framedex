@@ -455,3 +455,35 @@ class DesignAssistResponseSerializer(serializers.Serializer):
     ops = serializers.ListField(child=serializers.DictField())
     rejected = serializers.ListField(child=serializers.DictField())
     notes = serializers.CharField(allow_null=True)
+
+
+class OrgBrandingSerializer(serializers.Serializer):
+    """Org white-label identity rendered on emitted documents."""
+
+    name = serializers.CharField()
+    tax_id = serializers.CharField(allow_null=True, allow_blank=True)
+    commercial_name = serializers.CharField(allow_null=True, allow_blank=True)
+    giro = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_address = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_phone = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_email = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_logo_key = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_logo_sha256 = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class OrgBrandingWriteSerializer(StrictSerializer):
+    commercial_name = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    giro = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    brand_address = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    brand_phone = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=64
+    )
+    brand_email = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )

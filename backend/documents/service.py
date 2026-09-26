@@ -1348,7 +1348,9 @@ def freeze_revision_a(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
         )
         organization = one(
-            "SELECT name, tax_id FROM public.tenancy_organizations WHERE id = %s",
+            "SELECT name, tax_id, commercial_name, giro, brand_address,"
+            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256"
+            " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
         )
@@ -1360,9 +1362,18 @@ def freeze_revision_a(
             "org_id": org_id,
             # Issuer identity for the letterhead — rendered only on revisions
             # frozen after this field existed; older snapshots simply omit it.
+            # The logo key is content-addressed, so the frozen sha pins the
+            # exact bytes a re-rendered document may show.
             "organization": {
                 "name": str(organization["name"]),
                 "tax_id": str(organization["tax_id"]),
+                "commercial_name": organization["commercial_name"],
+                "giro": organization["giro"],
+                "brand_address": organization["brand_address"],
+                "brand_phone": organization["brand_phone"],
+                "brand_email": organization["brand_email"],
+                "brand_logo_key": organization["brand_logo_key"],
+                "brand_logo_sha256": organization["brand_logo_sha256"],
             },
             "revision": revision,
             "sealed_by": actor_id,

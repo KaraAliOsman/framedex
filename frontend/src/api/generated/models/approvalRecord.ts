@@ -14,6 +14,10 @@ export interface ApprovalRecord {
   decided_by: string | null;
   /** @nullable */
   decided_at: string | null;
+  /** @nullable */
+  decided_note: string | null;
   expires_at: string;
   created_at: string;
+  /** @nullable */
+  revoked_at: string | null;
 }

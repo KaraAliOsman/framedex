@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
 import {
+  getOrganizationBrandingLogoReadUrl,
+  organizationBrandingGet,
+  organizationBrandingLogoDelete,
+  organizationBrandingLogoUpload,
+  organizationBrandingSave,
   projectPaymentIntegrationSave,
   projectPaymentIntegrationStatus,
   siiCafRegister,
@@ -10,6 +15,7 @@ import {
   siiCertificateStatus,
   siiCertificateUpload,
 } from "../api/generated/dekopen";
+import { apiFetchBlob } from "../api/apiMutator";
 import type {
   ApiUrlEnum,
   Membership,
@@ -389,12 +395,209 @@ function SiiCertificateCard({ orgId }: { orgId: string }): JSX.Element {
   );
 }
 
+function OrgBrandingCard({ orgId }: { orgId: string }): JSX.Element {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const [form, setForm] = useState({
+    commercial_name: "",
+    giro: "",
+    brand_address: "",
+    brand_phone: "",
+    brand_email: "",
+  });
+  const requestOptions = { headers: { "X-Organization-ID": orgId } };
+
+  const load = useCallback(async () => {
+    try {
+      const response = await organizationBrandingGet(requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setForm({
+        commercial_name: response.data.commercial_name ?? "",
+        giro: response.data.giro ?? "",
+        brand_address: response.data.brand_address ?? "",
+        brand_phone: response.data.brand_phone ?? "",
+        brand_email: response.data.brand_email ?? "",
+      });
+      if (response.data.brand_logo_key) {
+        try {
+          const { blob } = await apiFetchBlob(getOrganizationBrandingLogoReadUrl());
+          setLogoUrl((previous) => {
+            if (previous) URL.revokeObjectURL(previous);
+            return URL.createObjectURL(blob);
+          });
+        } catch {
+          setLogoUrl(null);
+        }
+      } else {
+        setLogoUrl(null);
+      }
+    } catch {
+      setMessage({ text: t("settings.brandingLoadError"), error: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function save(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    const field = (name: keyof typeof form) => form[name].trim() || null;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await organizationBrandingSave(
+        {
+          commercial_name: field("commercial_name"),
+          giro: field("giro"),
+          brand_address: field("brand_address"),
+          brand_phone: field("brand_phone"),
+          brand_email: field("brand_email"),
+        },
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setMessage({ text: t("settings.brandingSaved"), error: false });
+    } catch {
+      setMessage({ text: t("settings.brandingSaveError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function upload(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    const input = (event.target as HTMLFormElement).querySelector<HTMLInputElement>(
+      "input[type=file]",
+    );
+    const file = input?.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await organizationBrandingLogoUpload({ file }, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (input) input.value = "";
+      setMessage({ text: t("settings.brandingLogoUploaded"), error: false });
+      await load();
+    } catch {
+      setMessage({ text: t("settings.brandingSaveError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeLogo(): Promise<void> {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await organizationBrandingLogoDelete(requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      setMessage({ text: t("settings.brandingSaved"), error: false });
+      await load();
+    } catch {
+      setMessage({ text: t("settings.brandingSaveError"), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-card">
+      <h3 className="eyebrow">{t("settings.branding")}</h3>
+      <p className="settings-hint">{t("settings.brandingHint")}</p>
+      {message && <p className={message.error ? "form-error" : "settings-hint"}>{message.text}</p>}
+      <div className="settings-branding-preview">
+        {logoUrl ? (
+          <img
+            className="settings-branding-logo"
+            src={logoUrl}
+            alt={t("settings.brandingLogoAlt")}
+          />
+        ) : (
+          <p className="settings-hint">{t("settings.brandingLogoEmpty")}</p>
+        )}
+      </div>
+      <form className="payments-form" onSubmit={save}>
+        <label>
+          {t("settings.brandingName")}
+          <input
+            maxLength={255}
+            value={form.commercial_name}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, commercial_name: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          {t("settings.brandingGiro")}
+          <input
+            maxLength={255}
+            value={form.giro}
+            onChange={(event) => setForm((prev) => ({ ...prev, giro: event.target.value }))}
+          />
+        </label>
+        <label>
+          {t("settings.brandingAddress")}
+          <input
+            maxLength={255}
+            value={form.brand_address}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, brand_address: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          {t("settings.brandingPhone")}
+          <input
+            maxLength={64}
+            value={form.brand_phone}
+            onChange={(event) => setForm((prev) => ({ ...prev, brand_phone: event.target.value }))}
+          />
+        </label>
+        <label>
+          {t("settings.brandingEmail")}
+          <input
+            type="email"
+            maxLength={255}
+            value={form.brand_email}
+            onChange={(event) => setForm((prev) => ({ ...prev, brand_email: event.target.value }))}
+          />
+        </label>
+        <div className="payments-form-actions">
+          <button type="submit" className="primary-action" disabled={busy}>
+            {t("settings.brandingSave")}
+          </button>
+        </div>
+      </form>
+      <form className="payments-form" onSubmit={upload}>
+        <label>
+          {t("settings.brandingLogo")}
+          <input type="file" accept="image/png,image/jpeg,image/webp" />
+        </label>
+        <div className="payments-form-actions">
+          <button type="submit" className="primary-action" disabled={busy}>
+            {t("settings.brandingLogoUpload")}
+          </button>
+          {logoUrl && (
+            <button type="button" className="secondary-action" disabled={busy} onClick={removeLogo}>
+              {t("settings.brandingLogoRemove")}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function SettingsPage(): JSX.Element {
   const auth = useAuthSession();
   const { theme, toggleTheme } = useTheme();
   const me = auth.me;
   const org = me?.active_organization;
   const isOwner = org?.role === "OWNER";
+  const canWriteDocs = org?.role === "OWNER" || org?.role === "ESTIMATOR";
 
   return (
     <section className="settings" aria-labelledby="page-title">
@@ -503,6 +706,17 @@ export function SettingsPage(): JSX.Element {
           </div>
         </div>
       </section>
+
+      {canWriteDocs && org !== undefined && (
+        <section aria-labelledby="settings-group-docs" className="settings-group">
+          <h2 id="settings-group-docs" className="settings-group__title">
+            {t("settings.groupDocs")}
+          </h2>
+          <div className="settings-grid">
+            <OrgBrandingCard orgId={org.id} />
+          </div>
+        </section>
+      )}
 
       {isOwner && org !== undefined && (
         <section aria-labelledby="settings-group-charging" className="settings-group">

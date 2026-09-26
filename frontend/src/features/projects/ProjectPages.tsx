@@ -402,6 +402,9 @@ function commercialSteps(
   const stalePending = currentApprovals.some(
     (a) => a.status === "PENDING" && Date.parse(a.expires_at) <= now,
   );
+  // A declined answer is a real answer — the estimator must see "rechazada",
+  // not an eternal "waiting on client" (review F15).
+  const declined = currentApprovals.some((a) => a.status === "DECLINED");
   // A sealed version only counts as "sent for quote" when it IS the current
   // revision — an old sealed draft must not light this step forever.
   // "Quoted" means the CURRENT revision is sealed — pricing applied to a
@@ -440,14 +443,22 @@ function commercialSteps(
     {
       key: "approved",
       labelKey: "projects.step.approved",
-      state: approved ? "done" : livePending ? "current" : stalePending ? "blocked" : "pending",
+      state: approved
+        ? "done"
+        : livePending
+          ? "current"
+          : declined || stalePending
+            ? "blocked"
+            : "pending",
       detail: approvedRecord
         ? formatDate(currentApprovals.find((a) => a.status === "APPROVED")?.decided_at ?? undefined)
         : livePending
           ? t("projects.stepWaitClient")
-          : stalePending
-            ? t("projects.stepLinkExpired")
-            : undefined,
+          : declined
+            ? t("projects.stepLinkDeclined")
+            : stalePending
+              ? t("projects.stepLinkExpired")
+              : undefined,
     },
     {
       key: "deposit",

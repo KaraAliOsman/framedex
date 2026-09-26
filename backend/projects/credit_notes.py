@@ -26,6 +26,7 @@ from documents.repository import documentary_backend
 from documents.renderers import render_credit_note
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import org_branding
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,7 @@ def seal_credit_note(
     reason_text = (reason or "").strip() or None
     payload = {
         "credit_code": credit_code,
+        "organization": org_branding.branding_for_snapshot(org_id=UUID(org_id_s)),
         "issued_at": timezone.now().isoformat(),
         "reason": reason_text,
         "invoice": {

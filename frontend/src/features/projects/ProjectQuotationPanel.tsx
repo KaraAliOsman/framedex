@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../api/apiMutator";
@@ -9,12 +9,15 @@ import {
   documentarySaveInputs,
   productionRelease,
   projectQuoteLinkCreate,
+  projectQuoteLinkRevoke,
+  projectQuoteLinksList,
   projectsStartSuccessor,
   projectsResetPricing,
 } from "../../api/generated/dekopen";
 import type {
   AccessoryLine,
   AccessorySchedule,
+  ApprovalRecord,
   CoverageEnum,
   PolishingEdges,
   DocumentaryPolicyOption,
@@ -110,6 +113,13 @@ const ORDER_TYPE_KEYS: Record<(typeof ORDER_TYPES)[number], TranslationKey> = {
 };
 
 const EMPTY_EDGES: PolishingEdges = { top: false, right: false, bottom: false, left: false };
+
+const approvalStatusKeys: Record<ApprovalRecord["status"], TranslationKey> = {
+  PENDING: "quotation.linkPending",
+  APPROVED: "quotation.linkApproved",
+  DECLINED: "quotation.linkDeclined",
+  REVOKED: "quotation.linkRevoked",
+};
 
 /** One inspector rule that blocked the freeze, from the 422's
  * `error.inspector_failures` extra (review WB2). */
@@ -576,6 +586,16 @@ export function ProjectQuotationPanel({
   // placement/policy changes recompute only the seeded ones.
   const seededIntentKeys = useRef(new Map<string, Set<string>>());
   const requestOptions = { headers: { "X-Organization-ID": orgId } };
+  // The customer-link ledger — same key the workspace header polls, so one
+  // cache feeds both the timeline and the per-link revoke controls here.
+  const approvals = useQuery({
+    queryKey: ["projects", "quote-approvals", orgId, project.id],
+    queryFn: async () => {
+      const response = await projectQuoteLinksList(project.id);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      return response.data;
+    },
+  });
   useEffect(
     () => () => {
       generation.current += 1;
@@ -986,6 +1006,35 @@ export function ProjectQuotationPanel({
       } catch {
         setMessage(url);
       }
+    } catch {
+      if (generation.current === current) setMessage(t("quotation.error"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function revokeLink(approvalId: string): Promise<void> {
+    const ok = await confirm({
+      title: t("quotation.linkRevokeConfirm"),
+      confirmLabel: t("quotation.linkRevoke"),
+      danger: true,
+    });
+    if (!ok) return;
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteLinkRevoke(
+        project.id,
+        approvalId,
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", "quote-approvals", orgId, project.id],
+      });
+      setMessage(t("quotation.linkRevokedDone"));
     } catch {
       if (generation.current === current) setMessage(t("quotation.error"));
     } finally {
@@ -1652,6 +1701,54 @@ export function ProjectQuotationPanel({
             </button>
           </div>
         </form>
+      )}
+      {(approvals.data?.length ?? 0) > 0 && (
+        <div className="quotation-links">
+          <h3>{t("quotation.linksTitle")}</h3>
+          <ul>
+            {approvals.data?.map((link) => {
+              const live =
+                link.status === "PENDING" && Date.parse(link.expires_at) > Date.now();
+              return (
+                <li className="quotation-link" data-status={link.status.toLowerCase()} key={link.id}>
+                  <span className="status-chip" data-status={link.status.toLowerCase()}>
+                    {t(approvalStatusKeys[link.status] ?? "quotation.linkPending")}
+                  </span>
+                  <strong>{formatRevision(link.revision_code)}</strong>
+                  <time dateTime={link.created_at}>{formatDateTime(link.created_at)}</time>
+                  {link.status === "PENDING" && (
+                    <span className="quotation-link__meta">
+                      {live
+                        ? `${t("quotation.linkExpires")} ${formatDateTime(link.expires_at)}`
+                        : t("quotation.linkExpired")}
+                    </span>
+                  )}
+                  {(link.status === "APPROVED" || link.status === "DECLINED") && (
+                    <span className="quotation-link__meta">
+                      {link.decided_by ?? ""}
+                      {link.decided_at ? ` · ${formatDateTime(link.decided_at)}` : ""}
+                      {link.decided_note ? ` · “${link.decided_note}”` : ""}
+                    </span>
+                  )}
+                  {link.status === "REVOKED" && link.revoked_at && (
+                    <span className="quotation-link__meta">
+                      {t("quotation.linkRevokedAt")} {formatDateTime(link.revoked_at)}
+                    </span>
+                  )}
+                  {live && canWrite && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void revokeLink(link.id)}
+                    >
+                      {t("quotation.linkRevoke")}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
       {(project.versions?.length ?? 0) > 0 && (
         <div className="quotation-history">

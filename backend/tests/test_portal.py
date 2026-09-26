@@ -371,3 +371,81 @@ def test_decide_replay_keeps_sealed_state(monkeypatch) -> None:
     # a second decision never rewrites the approval row or the project
     assert not any(c.startswith("update") for c in calls)
     assert out["approval_status"] == "APPROVED"
+
+
+def test_revoked_token_is_dead(monkeypatch) -> None:
+    _roles(monkeypatch)
+    monkeypatch.setattr(
+        "portal.service.rows", lambda *a, **k: [_approval(status="REVOKED")]
+    )
+    with pytest.raises(DocumentaryError, match="quote_revoked"):
+        service.portal_quote("revoked-token")
+    with pytest.raises(DocumentaryError, match="quote_revoked"):
+        service.decide_quote(
+            token="revoked-token", decision="APPROVED", decided_by="Ana", note=None
+        )
+
+
+def test_share_supersedes_pending_links(monkeypatch) -> None:
+    _roles(monkeypatch)
+    org_id, project_id, actor_id, version_id = uuid4(), uuid4(), uuid4(), uuid4()
+    revoked: list[list] = []
+
+    def fake_one(sql_text, params, code="not_found"):
+        lowered = " ".join(sql_text.lower().split())
+        if lowered.startswith("select id,status"):
+            return {"id": project_id, "status": "QUOTED"}
+        if lowered.startswith("insert into"):
+            return {"id": uuid4()}
+        raise AssertionError(lowered)
+
+    def fake_rows(sql_text, params=()):
+        lowered = " ".join(sql_text.lower().split())
+        if lowered.startswith("update public.customer_approvals"):
+            revoked.append(list(params))
+            return []
+        if "project_versions" in lowered:
+            return [{"id": version_id}]
+        return []
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    monkeypatch.setattr("portal.service.rows", fake_rows)
+    monkeypatch.setattr("portal.service.generate_artifact", lambda **k: ({}, True))
+    service.share_quote(
+        org_id=org_id, project_id=project_id, actor_id=actor_id, role="ESTIMATOR"
+    )
+    # outstanding PENDING links on the same version die inside the mint tx
+    assert len(revoked) == 1
+    assert revoked[0][1:] == [str(actor_id), str(org_id), str(project_id), str(version_id)]
+
+
+def test_revoke_link_transitions_pending_only(monkeypatch) -> None:
+    _roles(monkeypatch)
+    org_id, project_id, approval_id, actor_id = uuid4(), uuid4(), uuid4(), uuid4()
+    calls: list[list] = []
+
+    def fake_one(sql_text, params, code="not_found"):
+        lowered = " ".join(sql_text.lower().split())
+        calls.append(list(params))
+        if lowered.startswith("update"):
+            return {"id": approval_id, "status": "REVOKED"}
+        return {"id": approval_id, "status": "PENDING"}
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    out = service.revoke_link(
+        org_id=org_id, project_id=project_id, approval_id=approval_id, actor_id=actor_id
+    )
+    assert out["status"] == "REVOKED"
+
+    # a decided link cannot be revoked — the client's answer stands
+    monkeypatch.setattr(
+        "portal.service.one",
+        lambda *a, **k: {"id": approval_id, "status": "APPROVED"},
+    )
+    with pytest.raises(DocumentaryError, match="approval_not_pending"):
+        service.revoke_link(
+            org_id=org_id,
+            project_id=project_id,
+            approval_id=approval_id,
+            actor_id=actor_id,
+        )
