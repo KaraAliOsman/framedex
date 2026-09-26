@@ -959,10 +959,16 @@ function CommercialOperations({
   // The applied operation is the page's primary state — load history on
   // mount instead of waiting for a manual Recargar click. StrictMode's
   // simulated remount must not issue a second read: the ref survives the
-  // double-invoked effects while the generation guard owns staleness.
+  // double-invoked effects while the generation guard owns staleness. The
+  // remount branch releases `busy`: the cleanup bumped the generation, so
+  // the orphaned mount-load's `finally` can never reset it — and no
+  // user-triggered run can exist yet on a remount.
   const historyMounted = useRef(false);
   useEffect(() => {
-    if (historyMounted.current) return;
+    if (historyMounted.current) {
+      setBusy(false);
+      return;
+    }
     historyMounted.current = true;
     if (orgId) void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps

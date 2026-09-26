@@ -52,11 +52,13 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
 
   const projectName = `E2E sintético ${crypto.randomUUID()}`;
   const save = () => page.getByRole("button", { name: "Guardar", exact: true }).click();
-  const back = () => page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  const back = () => page.getByRole("link", { name: /Volver al proyecto/ }).click();
 
   await page.goto("/projects");
   await expect(page.getByText("No hay proyectos que coincidan.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Crear proyecto", exact: true }).click();
+  // Extended identity fields live under the collapsed "Datos adicionales" section.
+  await page.locator("summary", { hasText: "Datos adicionales" }).click();
 
   const metadata = [
     ["Nombre del proyecto", projectName],
@@ -191,7 +193,10 @@ test("SHOT-10 real project core path and visual evidence", async ({ page, manual
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
 
   const bom = page.locator("details.project-bom");
-  await bom.locator("summary").click();
+  await bom.waitFor({ state: "attached" });
+  await bom.evaluate((element) => {
+    (element as HTMLDetailsElement).open = true;
+  });
   const profileRows = bom.locator("table").first().locator("tbody tr");
   await expect(profileRows).toHaveCount(editedBom.profile_cuts.length);
   for (const [index, cut] of editedBom.profile_cuts.entries()) {

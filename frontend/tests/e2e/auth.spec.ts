@@ -108,7 +108,7 @@ function latestMagicLink(
 async function requestMagicLink(page: Page, email: string): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("Correo").fill(email);
-  await page.getByRole("button", { name: "Enviar Magic Link" }).click();
+  await page.getByRole("button", { name: "Enviar enlace de acceso" }).click();
   await expect(page.getByRole("status")).toContainText("Revisa el buzón local");
 }
 
@@ -333,7 +333,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
   await expect(page.getByLabel("Proyecto", { exact: true })).toHaveCount(0);
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-10");
@@ -437,7 +437,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByLabel("Cantidad", { exact: true }).fill("3");
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByText("Guardado", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
   await page.getByLabel("Motivo del cambio", { exact: true }).fill("Apply browser REV-B quote");
@@ -535,8 +535,8 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   const compositePosition = await (await compositeSave).json();
   expect(compositePosition.typology).toBe("COMPOSITE");
-  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
-  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
+  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.reload();
   await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
   await page
@@ -549,7 +549,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // draws a real mullion member between the two glass bays.
   await expect(page.locator(".canvas-sheet .member-mullion")).toHaveCount(1);
   await expect(page.locator(".canvas-sheet .module-glass")).toHaveCount(2);
-  await page.getByRole("link", { name: "Volver al proyecto", exact: true }).click();
+  await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.getByRole("link", { name: "Calcular precio", exact: true }).click();
   await page.getByLabel("Fecha efectiva", { exact: true }).fill("2026-09-19");
   await page.getByLabel("Motivo del cambio", { exact: true }).fill("Composite browser price");
@@ -693,7 +693,7 @@ for (const tier of ["TRIAL", "STARTER"] as const) {
     expect(project.status(), await project.text()).toBe(201);
     await page.goto(`/projects/${(await project.json()).id}`);
     await expect(
-      page.getByRole("heading", { name: / · SHOT-11 manual product$/, level: 1 }),
+      page.getByRole("heading", { name: "SHOT-11 manual product", exact: true, level: 1 }),
     ).toBeVisible();
   });
 }

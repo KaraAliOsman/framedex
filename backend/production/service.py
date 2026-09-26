@@ -877,8 +877,7 @@ def production_prep(*, org_id: UUID) -> dict[str, object]:
                   SELECT 1 FROM public.project_versions v2
                   WHERE v2.org_id = v.org_id AND v2.project_id = v.project_id
                     AND v2.production_allowed
-                    AND COALESCE(v2.emitted_at, v2.created_at)
-                        > COALESCE(v.emitted_at, v.created_at)
+                    AND v2.emitted_at > v.emitted_at
               )
             ORDER BY v.emitted_at DESC NULLS LAST, v.id
             """,

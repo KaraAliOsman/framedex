@@ -354,7 +354,9 @@ class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
 class PaymentLinkCreateSerializer(StrictSerializer):
     operation_key = serializers.CharField(min_length=8, max_length=80)
     kind = serializers.ChoiceField(choices=("ANTICIPO", "PARCIAL", "SALDO"))
-    amount = serializers.DecimalField(max_digits=14, decimal_places=0, min_value=Decimal("1"))
+    # Accept decimal spellings ("1180000.00") at the edge — the service keeps
+    # the authoritative integer-CLP check so "1180.50" still gets a domain 422.
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     payer_email = serializers.EmailField(max_length=200)
     subject = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
