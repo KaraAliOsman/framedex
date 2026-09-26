@@ -183,7 +183,8 @@ def _unit_map_svg(
     section's relationship view."""
     width = _mm(unit.nominal_width_mm)
     height = _mm(unit.nominal_height_mm)
-    pad = Decimal("70")
+    font = max(min(width, height) / Decimal("24"), Decimal("28"))
+    pad = max(Decimal("80"), font * Decimal("1.4"))
     vb_w = width + pad * 2
     vb_h = height + pad * 2
     # WeasyPrint scales svgs from physical width/height attributes, not CSS.
@@ -196,7 +197,6 @@ def _unit_map_svg(
         text-anchor=middle is ignored by the renderer."""
         return cx - size * Decimal("0.6") * Decimal(len(text)) / 2
 
-    font = max(min(width, height) / Decimal("24"), Decimal("28"))
     small = font * Decimal("0.7")
     svg = [
         f'<svg width="{box_w}mm" height="{box_h}mm" '
@@ -267,7 +267,7 @@ def _unit_map_svg(
     h_text = _value(height)
     svg.append(
         f'<text x="{_cx(width / 2, w_text, font)}" '
-        f'y="{-pad * Decimal("0.28")}" '
+        f'y="{-pad * Decimal("0.35")}" '
         f'fill="#161C1F" font-size="{font}">{w_text}</text>'
         f'<text x="{width + pad * Decimal("0.35")}" '
         f'y="{_cx(height / 2, h_text, font)}" '
