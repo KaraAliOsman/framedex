@@ -77,6 +77,31 @@ it("returns the neutral bead convention for unknown thicknesses", () => {
   expect(members.beadFor("24.00")).toBe(18); // catalog match still wins
 });
 
+it("beadSpecFor returns the catalog bead member, section included", () => {
+  const section = {
+    source: "POLYGON" as const,
+    polygon: [
+      { x_mm: "0", y_mm: "0" },
+      { x_mm: "12", y_mm: "0" },
+      { x_mm: "12", y_mm: "10" },
+      { x_mm: "0", y_mm: "10" },
+    ],
+    depth_mm: "10.00",
+  };
+  const members = resolveMembers({
+    ...CATALOG,
+    glazing_beads: [
+      { glass_thickness_mm: "24.00", bead_width_mm: "18.00", sku: "BEAD-24", section },
+      { glass_thickness_mm: "28.00", bead_width_mm: "15.00", sku: "BEAD-28" },
+    ],
+  });
+  expect(members.beadSpecFor("24.00")?.section?.source).toBe("POLYGON");
+  expect(members.beadSpecFor("24.00")?.sku).toBe("BEAD-24");
+  expect(members.beadSpecFor("28.00")?.section).toBeNull();
+  expect(members.beadSpecFor("999.00")).toBeNull();
+  expect(members.beadSpecFor(null)).toBeNull();
+});
+
 it("carries a declared catalog section through to the member spec", () => {
   const section = {
     source: "POLYGON" as const,

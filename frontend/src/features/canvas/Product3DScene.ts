@@ -810,7 +810,16 @@ function leafSolids(
         glassT,
         bay.glass_spec,
       );
-      gasketAndBead(solids, owner, paneRegion, sashW, z0, glassT, depth);
+      gasketAndBead(
+        solids,
+        owner,
+        paneRegion,
+        sashW,
+        z0,
+        glassT,
+        depth,
+        members.beadSpecFor(bay.glass_thickness_mm ?? null),
+      );
       tagLeaf(solids, leafFrom, leafId);
       // Presentation only: adjacent leaves fan apart — the direction is a
       // readability convention since the product declares no leaf travel.
@@ -894,25 +903,52 @@ function leafSolids(
         bay.glass_spec,
       );
     }
-    gasketAndBead(solids, owner, region, sashW, glassZ, glassT, depth);
+    gasketAndBead(
+      solids,
+      owner,
+      region,
+      sashW,
+      glassZ,
+      glassT,
+      depth,
+      members.beadSpecFor(bay.glass_thickness_mm ?? null),
+    );
     hardwareSolids(solids, owner, bay, region, sashW, depth);
     // A door opening closes on a low threshold, not the frame's bottom
-    // profile — the declared threshold member sits at the sill plane.
+    // profile — the declared threshold member sits at the sill plane, its
+    // real section extruded when the catalog carries one.
     if (bay.opening_type === "DOOR_ENTRY" && members.threshold !== null) {
       const thresholdW = Math.min(members.threshold.faceWidthMm, region.w);
-      solids.push(
-        box(
+      const thresholdSection = normalizedSection(members.threshold);
+      if (thresholdSection !== null) {
+        solids.push({
+          kind: "profile",
           owner,
-          "threshold",
-          members.threshold.material,
-          region.x,
-          region.y - thresholdW,
-          0,
-          region.w,
-          thresholdW,
-          Math.min(depth, Number(members.threshold.section?.depth_mm) || depth),
-        ),
-      );
+          surface: "threshold",
+          material: members.threshold.material,
+          outline: thresholdSection.outline,
+          axis: "x",
+          a0: region.x,
+          a1: region.x + region.w,
+          u0: region.y - thresholdW / 2 - thresholdSection.width / 2,
+          v0: 0,
+        });
+      } else {
+        solids.push({
+          ...box(
+            owner,
+            "threshold",
+            members.threshold.material,
+            region.x,
+            region.y - thresholdW,
+            0,
+            region.w,
+            thresholdW,
+            depth,
+          ),
+          approximate: true,
+        });
+      }
     }
     tagLeaf(solids, leafFrom, leafId);
     // Hinge conventions mirror hardwareSolids: TURN_LEFT/DOOR hinge on the
@@ -959,7 +995,16 @@ function leafSolids(
     glassT,
     bay.glass_spec,
   );
-  gasketAndBead(solids, owner, region, bead, glassZ, glassT, depth);
+  gasketAndBead(
+    solids,
+    owner,
+    region,
+    bead,
+    glassZ,
+    glassT,
+    depth,
+    members.beadSpecFor(bay.glass_thickness_mm ?? null),
+  );
 }
 
 /** The glazing seat around a pane — the bead bars at the aperture edge
@@ -973,18 +1018,36 @@ function gasketAndBead(
   glassZ: number,
   glassT: number,
   depth: number,
+  beadSpec?: MemberSpec | null,
 ): void {
   const beadW = Math.max(Math.min(inset * 0.45, 20), 10);
-  thinRing(
-    solids,
-    owner,
-    "bead",
-    "PVC",
-    { x: region.x, y: region.y, w: region.w, h: region.h },
-    Math.min(beadW, inset),
-    Math.min(glassZ + glassT, depth),
-    Math.min(BEAD_DEPTH_MM, Math.max(depth - glassZ - glassT, 0)),
-  );
+  const beadZ = Math.min(glassZ + glassT, depth);
+  const beadDepth = Math.min(BEAD_DEPTH_MM, Math.max(depth - glassZ - glassT, 0));
+  // A declared bead section extrudes the real profile; anything else stays
+  // the explicitly-approximate thin ring.
+  if (beadSpec && normalizedSection(beadSpec) !== null) {
+    memberBarRing(
+      solids,
+      owner,
+      "bead",
+      beadSpec,
+      region,
+      Math.min(beadW, inset),
+      beadDepth,
+      beadZ,
+    );
+  } else {
+    thinRing(
+      solids,
+      owner,
+      "bead",
+      "PVC",
+      { x: region.x, y: region.y, w: region.w, h: region.h },
+      Math.min(beadW, inset),
+      beadZ,
+      beadDepth,
+    );
+  }
   thinRing(
     solids,
     owner,
@@ -1364,20 +1427,40 @@ export function buildScene3D(
         .map((id) => moduleScenes.find((scene) => scene.moduleId === id)?.depth)
         .filter((d): d is number => typeof d === "number");
       const depth = depths.length > 0 ? Math.min(...depths) : fallbackDepth;
-      const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? frameT;
-      couplers.push(
-        box(
-          polygon.coupling_id,
-          "coupler",
+      const couplerSpec = members.couplerFor(coupling?.coupler_profile_sku ?? null);
+      const couplerSection = couplerSpec ? normalizedSection(couplerSpec) : null;
+      const barW = couplerSpec?.faceWidthMm ?? frameT;
+      // A straight joint's coupler runs vertically — its declared section
+      // extrudes along the seam; undeclared stays an approximate bar.
+      if (couplerSection !== null) {
+        couplers.push({
+          kind: "profile",
+          owner: polygon.coupling_id,
+          surface: "coupler",
           material,
-          joint.x - barW / 2,
-          0,
-          0,
-          barW,
-          height,
-          depth,
-        ),
-      );
+          outline: couplerSection.outline,
+          axis: "y",
+          a0: 0,
+          a1: height,
+          u0: joint.x - couplerSection.width / 2,
+          v0: 0,
+        });
+      } else {
+        couplers.push({
+          ...box(
+            polygon.coupling_id,
+            "coupler",
+            material,
+            joint.x - barW / 2,
+            0,
+            0,
+            barW,
+            height,
+            depth,
+          ),
+          approximate: true,
+        });
+      }
       worldPoints.push([joint.x - barW / 2, 0, 0], [joint.x + barW / 2, height, depth]);
       continue;
     }
@@ -1409,24 +1492,62 @@ export function buildScene3D(
       ? moduleScenes.find((scene) => scene.moduleId === memberId)
       : undefined;
     const memberModule = memberId ? moduleById.get(memberId) : undefined;
-    const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 30;
-    const solid = box(
-      joint.couplingId,
-      "coupler",
-      members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
-      0,
-      -barW / 2,
-      0,
-      memberModule ? Number(memberModule.width_mm) : joint.w,
-      barW,
-      memberScene?.depth ?? fallbackDepth,
-    );
+    const couplerSpec = members.couplerFor(coupling?.coupler_profile_sku ?? null);
+    const couplerSection = couplerSpec ? normalizedSection(couplerSpec) : null;
+    const barW = couplerSpec?.faceWidthMm ?? 30;
+    const run = memberModule ? Number(memberModule.width_mm) : joint.w;
+    const depth = memberScene?.depth ?? fallbackDepth;
+    const solid: Solid3D =
+      couplerSection !== null
+        ? {
+            kind: "profile",
+            owner: joint.couplingId,
+            surface: "coupler",
+            material: couplerSpec?.material ?? members.frame.material,
+            outline: couplerSection.outline,
+            axis: "x",
+            a0: 0,
+            a1: run,
+            u0: -couplerSection.width / 2,
+            v0: 0,
+          }
+        : {
+            ...box(
+              joint.couplingId,
+              "coupler",
+              couplerSpec?.material ?? members.frame.material,
+              0,
+              -barW / 2,
+              0,
+              run,
+              barW,
+              depth,
+            ),
+            approximate: true,
+          };
     if (memberScene) {
       memberScene.solids.push(solid);
     } else {
-      solid.center[0] = joint.x + solid.size[0] / 2;
-      solid.center[1] = joint.y - barW / 2 + solid.size[1] / 2;
-      couplers.push(solid);
+      // Profile solids carry their own placement, so the orphan path (no
+      // member scene to inherit from) keeps the declarative box which the
+      // caller repositions.
+      const bar =
+        solid.kind === "box"
+          ? solid
+          : box(
+              joint.couplingId,
+              "coupler",
+              couplerSpec?.material ?? members.frame.material,
+              0,
+              -barW / 2,
+              0,
+              run,
+              barW,
+              depth,
+            );
+      bar.center[0] = joint.x + bar.size[0] / 2;
+      bar.center[1] = joint.y - barW / 2 + bar.size[1] / 2;
+      couplers.push({ ...bar, approximate: true });
       worldPoints.push([joint.x, joint.y, 0], [joint.x + joint.w, joint.y, 0]);
     }
   }
