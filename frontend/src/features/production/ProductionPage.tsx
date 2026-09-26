@@ -1432,9 +1432,15 @@ export function ProductionPage(): JSX.Element {
                                   {comparisonEntries
                                     .map(
                                       ({ key, metrics: m }) =>
-                                        `${key}${comparison?.chosen === key ? "*" : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
+                                        `${
+                                          t(
+                                            `production.optimizeVariant.${key}` as Parameters<
+                                              typeof t
+                                            >[0],
+                                          ) || key
+                                        }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
                                     )
-                                    .join("  |  ")}
+                                    .join("  ·  ")}
                                 </p>
                               ) : null}
                               {unplaced.length ? (

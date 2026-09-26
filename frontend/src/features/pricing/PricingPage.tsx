@@ -580,6 +580,7 @@ function ImportCosts({
 }): JSX.Element {
   const [preview, setPreview] = useState<Row[]>([]);
   const [pending, setPending] = useState<FormData | null>(null);
+  const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const inputRevision = useRef(0);
@@ -684,7 +685,19 @@ function ImportCosts({
         </label>
         <label>
           {t("pricing.file")}
-          <input type="file" accept=".xlsx" name="file" required />
+          <span className="file-field">
+            <span className="ui-button ui-button--small">{t("settings.fileChoose")}</span>
+            <span className="file-field__name">{fileName || t("settings.fileNone")}</span>
+          </span>
+          <input
+            type="file"
+            className="file-input-hidden"
+            accept=".xlsx"
+            name="file"
+            required
+            aria-label={t("pricing.file")}
+            onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
+          />
         </label>
         {["sku", "description", "unit", "unit_cost"].map((key, index) => (
           <label key={key}>

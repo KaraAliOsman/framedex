@@ -137,7 +137,7 @@ function ArticleCard({
           </div>
           <div>
             <dt>{wst("weight")}</dt>
-            <dd>{article.weight_kg_m ? `${article.weight_kg_m} kg/m` : wst("unknown")}</dd>
+            <dd>{article.weight_kg_m ? `${fmtMm(article.weight_kg_m)} kg/m` : wst("unknown")}</dd>
           </div>
           <div>
             <dt>{wst("purchaseState")}</dt>
@@ -184,8 +184,16 @@ function ReadinessLadder({
   const levels = readiness.levels ?? [];
   return (
     <ol className="ws-ladder">
-      {levels.map((level) => {
+      {levels.map((level, levelIndex) => {
         const ok = levelOk(level);
+        // Levels carry cumulative blocker lists — show only what THIS level
+        // adds, or the same card would repeat down the whole ladder.
+        const prior = new Set(
+          levels
+            .slice(0, levelIndex)
+            .flatMap((entry) => entry.blockers.map((b) => `${b.code}|${b.affected}`)),
+        );
+        const own = level.blockers.filter((b) => !prior.has(`${b.code}|${b.affected}`));
         return (
           <li key={level.level} className={`ws-ladder-level ${ok ? "is-ok" : "is-blocked"}`}>
             <header>
@@ -201,9 +209,9 @@ function ReadinessLadder({
                     : wst("incomplete")}
               </em>
             </header>
-            {!ok && level.blockers.length > 0 && (
+            {!ok && own.length > 0 && (
               <ul className="ws-blockers">
-                {level.blockers.map((blocker, index) => (
+                {own.map((blocker, index) => (
                   <li key={`${blocker.code}-${index}`} className="ws-blocker">
                     <button
                       type="button"

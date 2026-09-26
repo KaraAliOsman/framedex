@@ -160,7 +160,14 @@ export function DashboardPage(): JSX.Element {
         <section className="dashboard-ops" aria-label={t("dashboard.opsTitle")}>
           <h2 className="eyebrow">{t("dashboard.opsTitle")}</h2>
           <div className="dashboard-funnel">
-            {WO_STATUSES.map((status) => {
+            {WO_STATUSES.every(
+              (status) =>
+                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) === 0,
+            ) && <p className="dashboard-funnel-empty">{t("dashboard.noWorkOrders")}</p>}
+            {WO_STATUSES.filter(
+              (status) =>
+                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) > 0,
+            ).map((status) => {
               const count = Number(
                 (opsQuery.data.work_orders as Record<string, number>)[status] ?? 0,
               );

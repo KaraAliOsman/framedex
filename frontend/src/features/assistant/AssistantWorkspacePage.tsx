@@ -406,6 +406,15 @@ export function AssistantWorkspacePage(): JSX.Element {
     transcriptEnd.current?.scrollIntoView({ block: "end" });
   }, [job?.id, transcript.length]);
 
+  // A finished job's newest artifact surfaces in the inspector without a
+  // click — the pane only stays empty when the user picked nothing yet.
+  useEffect(() => {
+    if (artifact !== null) return;
+    const latest = [...transcript].reverse().find((turn) => turn.artifacts?.length);
+    const first = latest?.artifacts?.[0];
+    if (first) setArtifact(first);
+  }, [transcript, artifact]);
+
   async function send(): Promise<void> {
     const message = draft.trim();
     if (!message || busy || !orgId) return;

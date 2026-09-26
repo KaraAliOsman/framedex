@@ -21,6 +21,7 @@ import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useShellLeaf } from "../../app/shellLeaf";
 import { t, tDynamic } from "../../i18n/es-CL";
+import { DeniedState } from "../../ui";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
 import type { IntentNode, Opening } from "../canvas/intentEditing";
@@ -44,7 +45,7 @@ export function ProjectPositionEditor(): JSX.Element {
   const preferredSystem = posId || copyId ? null : query.get("system");
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "ESTIMATOR"].includes(org.role))
-    return <p role="alert">{t("projects.denied")}</p>;
+    return <DeniedState reason={t("projects.denied")} />;
   return (
     <PositionWorkspace
       key={`${org.id}:${id}:${posId}:${copyId}`}

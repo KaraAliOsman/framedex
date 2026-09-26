@@ -9,7 +9,7 @@ import { CatalogImportsPanel } from "./CatalogImportsPanel";
 import { SystemWorkspaceView } from "./SystemWorkspace";
 import { SectionPreviewSvg } from "../canvas/SectionPreviewSvg";
 import { SectionImportPanel } from "./SectionImportPanel";
-import { useConfirm } from "../../ui";
+import { DeniedState, useConfirm } from "../../ui";
 import type { ProcessProfileOption } from "../../api/generated/models";
 import {
   HARDWARE_COMPONENT_CATEGORIES,
@@ -84,7 +84,7 @@ export function CatalogPage(): JSX.Element {
   const organization = me?.active_organization;
   if (status !== "ready") return <p role="status">{ct("loading")}</p>;
   if (!organization || !["OWNER", "WORKSHOP_MANAGER", "ESTIMATOR"].includes(organization.role))
-    return <p role="alert">{ct("permission")}</p>;
+    return <DeniedState reason={ct("permission")} />;
 
   return (
     <CatalogWorkspace

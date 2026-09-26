@@ -41,7 +41,7 @@ import { ProjectBom } from "./ProjectPositionEditor";
 import { ProjectQuotationPanel } from "./ProjectQuotationPanel";
 import { ProjectImportsPanel } from "./ProjectImportsPanel";
 import { ProjectPaymentsPanel } from "./ProjectPaymentsPanel";
-import { EmptyState, useConfirm } from "../../ui";
+import { DeniedState, EmptyState, useConfirm } from "../../ui";
 
 const fields = [
   ["name", "projects.name", "text", 255],
@@ -937,7 +937,7 @@ export function ProjectPages(): JSX.Element {
   const userId = auth.session?.user.id;
 
   if (!org || !userId || !["OWNER", "ESTIMATOR", "WORKSHOP_MANAGER"].includes(org.role)) {
-    return <p role="alert">{t("projects.denied")}</p>;
+    return <DeniedState reason={t("projects.denied")} />;
   }
 
   const identity = `${userId}:${org.id}:${org.role}`;

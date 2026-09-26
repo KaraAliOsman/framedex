@@ -114,7 +114,7 @@ export function JobsPage(): JSX.Element {
   const items = query.data ?? [];
   const hasMore = items.length === pages * PAGE_SIZE;
   return (
-    <section className="dashboard" aria-labelledby="page-title">
+    <section className="dashboard jobs-page" aria-labelledby="page-title">
       <header className="dashboard-head">
         <div>
           <h1 id="page-title">{t("jobs.title")}</h1>

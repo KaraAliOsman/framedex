@@ -170,17 +170,28 @@ export function SectionImportPanel({
       </header>
       <p>{ct("help")}</p>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".dxf,.svg,image/svg+xml"
-        disabled={busy}
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void upload(file);
-          event.target.value = "";
-        }}
-      />
+      <span className="file-field">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".dxf,.svg,image/svg+xml"
+          className="file-input-hidden"
+          disabled={busy}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void upload(file);
+            event.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          className="ui-button ui-button--small"
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {t("settings.fileChoose")}
+        </button>
+      </span>
       {busy && <p role="status">{ct("uploading")}</p>}
       {error && <p role="alert">{error}</p>}
 
