@@ -1200,7 +1200,14 @@ function ProjectWorkspace({
     return (
       <section className="projects-page">
         <p role="alert">{t("projects.loadError")}</p>
-        <button onClick={() => void reload()}>{t("projects.reload")}</button>
+        <div className="projects-error-actions">
+          <button onClick={() => void reload()}>{t("projects.reload")}</button>
+          {/* A stale deep link is a dead end without an escape back to the
+           * list — don't strand the user on an error page. */}
+          <Link className="ui-backlink" to="/projects">
+            {t("crumb.projects")}
+          </Link>
+        </div>
       </section>
     );
   }
