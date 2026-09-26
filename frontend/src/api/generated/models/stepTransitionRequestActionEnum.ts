@@ -13,9 +13,10 @@
  * * `UNBLOCK` - UNBLOCK
  * * `NOTE` - NOTE
  */
-export type ActionEnum = (typeof ActionEnum)[keyof typeof ActionEnum];
+export type StepTransitionRequestActionEnum =
+  (typeof StepTransitionRequestActionEnum)[keyof typeof StepTransitionRequestActionEnum];
 
-export const ActionEnum = {
+export const StepTransitionRequestActionEnum = {
   START: "START",
   COMPLETE: "COMPLETE",
   BLOCK: "BLOCK",

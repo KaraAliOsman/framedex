@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -100,7 +101,7 @@ def create_job(*, org_id: UUID, user_id: UUID, surface: str,
             " (org_id, user_id, surface, refs, goal, state)"
             " VALUES (%s, %s, %s, %s::jsonb, %s, 'RUNNING')"
             " RETURNING id, org_id, user_id, surface, refs, goal, state, plan,"
-            " transcript, artifacts, warnings, result, error_code,"
+            " transcript, artifacts, warnings, result, error_code, outcomes,"
             " created_at, updated_at, completed_at",
             [str(org_id), str(user_id), surface, _dump(refs or {}),
              goal[:MAX_GOAL]],
@@ -111,7 +112,7 @@ def create_job(*, org_id: UUID, user_id: UUID, surface: str,
 def get_job(*, org_id: UUID, user_id: UUID, job_id: UUID) -> dict | None:
     found = rows(
         "SELECT id, org_id, user_id, surface, refs, goal, state, plan,"
-        " transcript, artifacts, warnings, result, error_code,"
+        " transcript, artifacts, warnings, result, error_code, outcomes,"
         " created_at, updated_at, completed_at"
         " FROM public.ai_jobs WHERE id = %s AND org_id = %s AND user_id = %s",
         [str(job_id), str(org_id), str(user_id)],
@@ -147,7 +148,7 @@ def list_jobs(
         _decode(row)
         for row in rows(
             "SELECT id, org_id, user_id, surface, refs, goal, state, plan,"
-            " artifacts, warnings, result, error_code,"
+            " artifacts, warnings, result, error_code, outcomes,"
             " created_at, updated_at, completed_at"
             " FROM public.ai_jobs WHERE org_id = %s AND user_id = %s"
             + cursor
@@ -273,6 +274,44 @@ def cancel_job(*, job_id: UUID) -> bool:
         )
 
 
+def record_outcome(
+    *, org_id: UUID, user_id: UUID, job_id: UUID, entry: dict
+) -> dict | None:
+    """§08 measurement — record what the human did with a proposed step
+    (applied / declined / apply_failed). Dedupe on the (turn, step, action)
+    triple so a retried report can never double-count a click."""
+    recorded = {
+        "turn_index": int(entry["turn_index"]),
+        "step_index": int(entry["step_index"]),
+        "action": str(entry["action"]),
+        "ops": [str(op)[:80] for op in (entry.get("ops") or [])][:200],
+        "recorded_by": str(user_id),
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    dedupe = [
+        {
+            "turn_index": recorded["turn_index"],
+            "step_index": recorded["step_index"],
+            "action": recorded["action"],
+        }
+    ]
+    with _ai_backend():
+        found = rows(
+            "UPDATE public.ai_jobs SET outcomes = outcomes || %s::jsonb,"
+            " updated_at = NOW()"
+            " WHERE id = %s AND org_id = %s AND user_id = %s"
+            " AND NOT outcomes @> %s::jsonb RETURNING id",
+            [
+                _dump([recorded]),
+                str(job_id),
+                str(org_id),
+                str(user_id),
+                _dump(dedupe),
+            ],
+        )
+    return {"id": str(found[0]["id"]), "recorded": True} if found else {"id": str(job_id), "recorded": False}
+
+
 # ----------------------------------------------------------------- contract
 
 
@@ -346,7 +385,10 @@ def artifacts(raw: Any, allowed: frozenset[str]) -> list[dict]:
 
 def _decode(record: dict[str, object]) -> dict[str, object]:
     out = dict(record)
-    for name in ("refs", "plan", "transcript", "artifacts", "warnings", "result"):
+    for name in (
+        "refs", "plan", "transcript", "artifacts", "warnings", "result",
+        "outcomes",
+    ):
         value = out.get(name)
         if isinstance(value, str):
             out[name] = json.loads(value, parse_float=Decimal, parse_int=Decimal)

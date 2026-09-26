@@ -786,6 +786,19 @@ def release_production(*, org_id: UUID, version_id: UUID, actor_id: UUID) -> dic
                 """,
                 [json.dumps({"prep": prep_stamp}), str(order_id), str(org_id)],
             )
+        # §08: released into a known shortage → a purchase task per order,
+        # queued inside this tx so the task exists iff the release does.
+        if prep_stamp["shortages"] > 0:
+            from automations.service import emit
+
+            for order_id in order_ids:
+                emit(
+                    "automation.purchase_task",
+                    org_id=org_id,
+                    actor_id=actor_id,
+                    idempotency_key=f"auto:buy:{order_id}:forecast",
+                    order_id=str(order_id),
+                )
         orders = rows(
             """
             SELECT o.id, o.order_code, o.order_type::text, o.status::text, o.payload_json,
@@ -1492,6 +1505,19 @@ def transition_step(
             """,
             [str(step_id)],
         )
+        # §08: a completed station queues the next-step notice — recomputed
+        # when the job runs so a retried task reports the true successor.
+        if new_status == "DONE":
+            from automations.service import emit
+
+            emit(
+                "automation.step_advance",
+                org_id=org_id,
+                actor_id=actor_id,
+                idempotency_key=f"auto:step:{step_id}:done",
+                order_id=str(step["order_id"]),
+                step_code=str(step["code"]),
+            )
         return {"step": _public_step(fresh), "order_status": order_status}
 
 
@@ -2825,6 +2851,19 @@ def optimize_work_order(
                 }),
             ],
         )
+        # §08: the plan says which claims stock couldn't fill — queue the
+        # purchase task inside this tx so the plan and the task commit
+        # together (deduped to the order, not per optimize click).
+        if any(row["short"] != "0" for row in stock_reservations):
+            from automations.service import emit
+
+            emit(
+                "automation.purchase_task",
+                org_id=org_id,
+                actor_id=actor_id,
+                idempotency_key=f"auto:buy:{order_id}",
+                order_id=str(order_id),
+            )
         return {
             "order_id": str(order_id),
             "order_code": order["order_code"],

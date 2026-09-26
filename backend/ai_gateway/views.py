@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from ai_gateway import service
 from ai_gateway import jobs
+from ai_gateway.metrics import ai_metrics
 from ai_gateway.agent import act
 from ai_gateway.assist import ask
 from ai_gateway.context import _ContextError
@@ -21,7 +22,10 @@ from ai_gateway.serializers import (
     AiInvokeResponseSerializer,
     AiJobDetailSerializer,
     AiJobMessageSerializer,
+    AiJobOutcomeResponseSerializer,
+    AiJobOutcomeSerializer,
     AiJobSerializer,
+    AiMetricsSerializer,
 )
 from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
 from authentication.errors import ContractAPIException, contract_error
@@ -419,3 +423,63 @@ class AiJobMessagesView(APIView):
                 transcript_before=job.get("transcript") if executing else None,
             )
             _raise_agent_error(failure)
+
+
+class AiJobOutcomeView(APIView):
+    """§08 measurement — the client reports what the human did with a
+    proposed step. Idempotent: a retried report dedupes on
+    (turn, step, action) and answers 200 with recorded=false instead of
+    double-counting."""
+
+    @extend_schema(
+        operation_id="ai_job_outcome_create",
+        request=AiJobOutcomeSerializer,
+        responses={200: AiJobOutcomeResponseSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def post(self, request, job_id):
+        data = validate(AiJobOutcomeSerializer, request.data)
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            result = jobs.record_outcome(
+                org_id=org_id,
+                user_id=token.user_id,
+                job_id=job_id,
+                entry=data,
+            )
+            return Response(result)
+
+
+class AiMetricsView(APIView):
+    """§08 measurement — org-level AI metrics over the trailing window."""
+
+    @extend_schema(
+        operation_id="ai_metrics",
+        parameters=[
+            ACTIVE_ORGANIZATION_HEADER,
+            OpenApiParameter(
+                "days", OpenApiTypes.INT, location=OpenApiParameter.QUERY
+            ),
+        ],
+        responses={200: AiMetricsSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request):
+        try:
+            days = int(request.query_params.get("days") or 30)
+        except (TypeError, ValueError):
+            raise contract_error(
+                400, "ai_metrics_days_invalid", "El período no es válido."
+            ) from None
+        if not 1 <= days <= 365:
+            raise contract_error(
+                400, "ai_metrics_days_invalid", "El período no es válido."
+            )
+        with documentary_scope(request, _AGENT_CALLERS) as (_, _, org_id):
+            return Response(ai_metrics(org_id=org_id, days=days))

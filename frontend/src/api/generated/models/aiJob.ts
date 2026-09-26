@@ -21,6 +21,7 @@ export interface AiJob {
   result?: AiJobResult;
   /** @nullable */
   error_code?: string | null;
+  outcomes?: unknown[];
   created_at: string;
   updated_at: string;
   /** @nullable */

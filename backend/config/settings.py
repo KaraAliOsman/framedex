@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "ai_gateway.apps.AiGatewayConfig",
     "ingest.apps.IngestConfig",
     "search.apps.SearchConfig",
+    "automations.apps.AutomationsConfig",
 ]
 
 MIDDLEWARE = [

@@ -298,4 +298,28 @@ def decide_quote(
                 )
                 if len(updated) != 1:
                     raise DocumentaryError("quote_link_stale")
+                # §08: an approved quote queues the material forecast for the
+                # version it decided — the job carries the link's minted actor
+                # (verified OWNER/ESTIMATOR at share time) as its principal.
+                # The surrounding role is pricing_backend; the version lookup
+                # needs documentary grants.
+                from automations.service import emit
+
+                with documentary_backend():
+                    version_rows = rows(
+                        "SELECT id FROM public.project_versions "
+                        "WHERE project_id=%s AND org_id=%s AND revision_code=%s "
+                        "ORDER BY emitted_at DESC,id DESC LIMIT 1",
+                        [str(approval["project_id"]), str(approval["org_id"]),
+                         version["revision_code"]],
+                    )
+                if version_rows:
+                    version_id = str(version_rows[0]["id"])
+                    emit(
+                        "automation.prep_forecast",
+                        org_id=UUID(str(approval["org_id"])),
+                        actor_id=UUID(str(approval["created_by"])),
+                        idempotency_key=f"auto:prep:{version_id}",
+                        version_id=version_id,
+                    )
     return portal_quote(token)

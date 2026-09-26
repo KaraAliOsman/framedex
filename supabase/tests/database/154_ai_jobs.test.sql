@@ -20,8 +20,8 @@ SELECT is(
     (SELECT count(*)::int FROM pg_policies
      WHERE schemaname = 'public' AND tablename = 'ai_jobs'
        AND policyname LIKE 'ai_jobs_%'),
-    3,
-    'ai_jobs has select/insert/update policies (no delete)'
+    4,
+    'ai_jobs has select/insert/update/metrics-select policies (no delete)'
 );
 SELECT ok(
     NOT EXISTS (

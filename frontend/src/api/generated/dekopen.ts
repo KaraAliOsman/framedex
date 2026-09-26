@@ -18,6 +18,10 @@ import type {
   AiJobDetail,
   AiJobListParams,
   AiJobMessageRequest,
+  AiJobOutcomeRequest,
+  AiJobOutcomeResponse,
+  AiMetrics,
+  AiMetricsParams,
   AllocationRequestRequest,
   AllocationResponse,
   ApplyRequest,
@@ -775,6 +779,181 @@ export const aiJobMessageCreate = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(aiJobMessageRequest),
+  });
+};
+
+export type aiJobOutcomeCreateResponse200 = {
+  data: AiJobOutcomeResponse;
+  status: 200;
+};
+
+export type aiJobOutcomeCreateResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiJobOutcomeCreateResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiJobOutcomeCreateResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiJobOutcomeCreateResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiJobOutcomeCreateResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiJobOutcomeCreateResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiJobOutcomeCreateResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiJobOutcomeCreateResponseSuccess = aiJobOutcomeCreateResponse200 & {
+  headers: Headers;
+};
+export type aiJobOutcomeCreateResponseError = (
+  | aiJobOutcomeCreateResponse400
+  | aiJobOutcomeCreateResponse401
+  | aiJobOutcomeCreateResponse403
+  | aiJobOutcomeCreateResponse404
+  | aiJobOutcomeCreateResponse409
+  | aiJobOutcomeCreateResponse422
+  | aiJobOutcomeCreateResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiJobOutcomeCreateResponse =
+  aiJobOutcomeCreateResponseSuccess | aiJobOutcomeCreateResponseError;
+
+export const getAiJobOutcomeCreateUrl = (jobId: string) => {
+  return `/api/v1/ai/jobs/${jobId}/outcome/`;
+};
+
+/**
+ * §08 measurement — the client reports what the human did with a
+ * proposed step. Idempotent: a retried report dedupes on
+ * (turn, step, action) and answers 200 with recorded=false instead of
+ * double-counting.
+ */
+export const aiJobOutcomeCreate = async (
+  jobId: string,
+  aiJobOutcomeRequest: AiJobOutcomeRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiJobOutcomeCreateResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<aiJobOutcomeCreateResponse>(getAiJobOutcomeCreateUrl(jobId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(aiJobOutcomeRequest),
+  });
+};
+
+export type aiMetricsResponse200 = {
+  data: AiMetrics;
+  status: 200;
+};
+
+export type aiMetricsResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type aiMetricsResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type aiMetricsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type aiMetricsResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type aiMetricsResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type aiMetricsResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type aiMetricsResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type aiMetricsResponseSuccess = aiMetricsResponse200 & {
+  headers: Headers;
+};
+export type aiMetricsResponseError = (
+  | aiMetricsResponse400
+  | aiMetricsResponse401
+  | aiMetricsResponse403
+  | aiMetricsResponse404
+  | aiMetricsResponse409
+  | aiMetricsResponse422
+  | aiMetricsResponse503
+) & {
+  headers: Headers;
+};
+
+export type aiMetricsResponse = aiMetricsResponseSuccess | aiMetricsResponseError;
+
+export const getAiMetricsUrl = (params?: AiMetricsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/ai/metrics/?${stringifiedParams}`
+    : `/api/v1/ai/metrics/`;
+};
+
+/**
+ * §08 measurement — org-level AI metrics over the trailing window.
+ */
+export const aiMetrics = async (
+  params?: AiMetricsParams,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<aiMetricsResponse> => {
+  return apiMutator<aiMetricsResponse>(getAiMetricsUrl(params), {
+    ...options,
+    method: "GET",
   });
 };
 
@@ -9053,7 +9232,7 @@ export const getProductionOrderOptimizeUrl = (orderId: string) => {
 
 export const productionOrderOptimize = async (
   orderId: string,
-  workOrderOptimizeRequestRequest: WorkOrderOptimizeRequestRequest,
+  workOrderOptimizeRequestRequest?: WorkOrderOptimizeRequestRequest,
   options?: Parameters<typeof apiMutator>[1],
 ): Promise<productionOrderOptimizeResponse> => {
   const getHeaders = (

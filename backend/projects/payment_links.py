@@ -367,6 +367,19 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             "WHERE org_id=%s AND id=%s RETURNING *",
             [verified["flowOrder"], str(payment[0]["id"]), str(org_id), str(link_id)],
         )[0]
+        # §08: the provider-verified settle queues the commercial refresh the
+        # same way a manual payment does — inside the tx, keyed to the
+        # payment row it minted.
+        from automations.service import emit
+
+        emit(
+            "automation.commercial_refresh",
+            org_id=org_id,
+            actor_id=link["created_by"],
+            idempotency_key=f"auto:comm:{link['project_id']}:{payment[0]['id']}",
+            project_id=str(link["project_id"]),
+            payment_id=str(payment[0]["id"]),
+        )
     return {"link": _public_link(link)}
 
 

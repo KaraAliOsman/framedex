@@ -325,6 +325,18 @@ def record_payment(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict
                 actor_id=actor_id,
                 deal=deal,
             )
+            # §08: a recorded payment queues the commercial-state refresh —
+            # inside this tx so the job exists iff the payment does.
+            from automations.service import emit
+
+            emit(
+                "automation.commercial_refresh",
+                org_id=org_id,
+                actor_id=actor_id,
+                idempotency_key=f"auto:comm:{project_id}:{payment['id']}",
+                project_id=str(project_id),
+                payment_id=str(payment["id"]),
+            )
     return {
         "payment": _payment_public(payment, receipt),
         "receipt": receipt,
@@ -356,4 +368,14 @@ def void_payment(*, org_id: UUID, project_id: UUID, payment_id: UUID, actor_id: 
             )
             if not found:
                 raise contract_error(404, "payment_not_found", "El pago no está disponible.")
+        from automations.service import emit
+
+        emit(
+            "automation.commercial_refresh",
+            org_id=org_id,
+            actor_id=actor_id,
+            idempotency_key=f"auto:comm:{project_id}:{payment_id}:void",
+            project_id=str(project_id),
+            payment_id=str(payment_id),
+        )
     return _summary(org_id, project_id, project)

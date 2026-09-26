@@ -6,7 +6,9 @@ from ai_gateway.views import (
     AiInvokeView,
     AiJobCollectionView,
     AiJobMessagesView,
+    AiJobOutcomeView,
     AiJobView,
+    AiMetricsView,
 )
 
 urlpatterns = [
@@ -20,4 +22,10 @@ urlpatterns = [
         AiJobMessagesView.as_view(),
         name="ai-job-messages",
     ),
+    path(
+        "jobs/<uuid:job_id>/outcome/",
+        AiJobOutcomeView.as_view(),
+        name="ai-job-outcome",
+    ),
+    path("metrics/", AiMetricsView.as_view(), name="ai-metrics"),
 ]

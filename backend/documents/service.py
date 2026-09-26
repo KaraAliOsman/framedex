@@ -1485,6 +1485,30 @@ def freeze_revision_a(
                 [project_id, org_id, revision],
                 "revision_state_transition_failed",
             )
+        # §08 automations: a production-allowed freeze queues the material
+        # forecast; a freeze that revealed missing catalog authority files a
+        # catalog task per affected system instead. Emit inside this tx so the
+        # job exists iff the version does.
+        from automations.service import emit
+
+        if production_allowed:
+            emit(
+                "automation.prep_forecast",
+                org_id=org_id,
+                actor_id=actor_id,
+                idempotency_key=f"auto:prep:{version_id}",
+                version_id=str(version_id),
+            )
+        else:
+            for system_id in sorted(position_system_ids):
+                emit(
+                    "automation.catalog_task",
+                    org_id=org_id,
+                    actor_id=actor_id,
+                    idempotency_key=f"auto:catalog:{version_id}:{system_id}",
+                    system_id=system_id,
+                    version_id=str(version_id),
+                )
         return {
             "id": str(version_id),
             "pricing_operation_id": str(pricing_operation_id),

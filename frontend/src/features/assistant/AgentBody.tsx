@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
-import { aiAgent } from "../../api/generated/dekopen";
+import { aiAgent, aiJobOutcomeCreate } from "../../api/generated/dekopen";
 import type { AiAgentResponse } from "../../api/generated/models/aiAgentResponse";
 import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiAgentHistoryRequest } from "../../api/generated/models/aiAgentHistoryRequest";
@@ -19,9 +19,12 @@ type Turn = {
   /** The product the ops steps were validated against — a later commit makes
    * them stale, so applying them then is refused. */
   product: { [key: string]: unknown } | null;
-  /** Turn indexes whose ops step already committed — re-applying a consumed
+  /** Step indexes whose proposal already committed — re-applying a consumed
    * plan would mint duplicate structural ids against a changed product. */
   appliedOps: Set<number>;
+  /** Step indexes the human explicitly declined — feeds the rejection-rate
+   * metric server-side. */
+  declinedOps: Set<number>;
 };
 
 function asDesignOps(step: AiAgentStep): DesignOp[] {
@@ -128,7 +131,13 @@ export function AgentBody({
       if (seq !== requestSeq.current) return;
       setThread((prev) => [
         ...prev,
-        { goal: trimmed, answer: response.data, product, appliedOps: new Set() },
+        {
+          goal: trimmed,
+          answer: response.data,
+          product,
+          appliedOps: new Set(),
+          declinedOps: new Set(),
+        },
       ]);
       setGoal("");
       operationKey.current = null;
@@ -146,15 +155,54 @@ export function AgentBody({
     }
   }
 
+  /** §08 measurement — report the human's decision on a proposed step back
+   * to the job. Best-effort: the server dedupes on (turn, step, action), so
+   * a retry or double click can never double-count; a reporting failure
+   * must never block the UI. */
+  function reportOutcome(
+    turnIndex: number,
+    stepIndex: number,
+    action: "applied" | "declined" | "apply_failed",
+    ops: { op?: string }[],
+  ): void {
+    const jobId = thread[turnIndex]?.answer.job_id;
+    if (!jobId) return;
+    void aiJobOutcomeCreate(
+      jobId,
+      {
+        turn_index: turnIndex,
+        step_index: stepIndex,
+        action,
+        ops: ops.map((op) => op.op ?? "unknown"),
+      },
+      { headers: { "X-Organization-ID": organizationId } },
+    ).catch(() => undefined);
+  }
+
   function applyOps(turnIndex: number, stepIndex: number, ops: DesignOp[]): void {
     const turn = thread[turnIndex];
     // The bridge must still close over the exact product the ops were
     // validated against — a commit in between made them stale.
     if (!bridge || !turn || turn.product !== bridge.product) return;
-    bridge.apply(ops);
+    try {
+      bridge.apply(ops);
+    } catch {
+      reportOutcome(turnIndex, stepIndex, "apply_failed", ops);
+      return;
+    }
+    reportOutcome(turnIndex, stepIndex, "applied", ops);
     setThread((prev) =>
       prev.map((item, i) =>
         i === turnIndex ? { ...item, appliedOps: new Set(item.appliedOps).add(stepIndex) } : item,
+      ),
+    );
+  }
+
+  function declineOps(turnIndex: number, stepIndex: number, ops: DesignOp[]): void {
+    reportOutcome(turnIndex, stepIndex, "declined", ops);
+    setThread((prev) =>
+      prev.map((item, i) =>
+        i === turnIndex ? { ...item, declinedOps: new Set(item.declinedOps).add(stepIndex) } : item,
       ),
     );
   }
@@ -231,12 +279,24 @@ export function AgentBody({
                       );
                     }
                     if (step.kind === "batch_ops" && refs.project_id) {
+                      const applied = turn.appliedOps.has(stepIndex);
                       return (
                         <BatchOpsStep
                           key={stepIndex}
                           step={step}
                           organizationId={organizationId}
                           projectId={refs.project_id}
+                          settled={applied}
+                          onSettled={(action, ops) => {
+                            reportOutcome(turnIndex, stepIndex, action, ops);
+                            setThread((prev) =>
+                              prev.map((item, i) =>
+                                i === turnIndex
+                                  ? { ...item, appliedOps: new Set(item.appliedOps).add(stepIndex) }
+                                  : item,
+                              ),
+                            );
+                          }}
                         />
                       );
                     }
@@ -244,6 +304,7 @@ export function AgentBody({
                       const ops = asDesignOps(step);
                       if (!ops.length) return null;
                       const applied = turn.appliedOps.has(stepIndex);
+                      const declined = turn.declinedOps.has(stepIndex);
                       const stale = !bridge || turn.product !== bridge.product;
                       return (
                         <div key={stepIndex} className="ask-dock__ops">
@@ -260,17 +321,29 @@ export function AgentBody({
                               </li>
                             ))}
                           </ul>
-                          <button
-                            type="button"
-                            className="ask-dock__action"
-                            disabled={applied || stale || !bridge}
-                            title={stale && bridge ? t("assistant.stale") : undefined}
-                            onClick={() => applyOps(turnIndex, stepIndex, ops)}
-                          >
-                            {applied
-                              ? t("agent.applied")
-                              : t("assistant.apply").replace("{count}", String(ops.length))}
-                          </button>
+                          <div className="ask-dock__ops-actions">
+                            <button
+                              type="button"
+                              className="ask-dock__action"
+                              disabled={applied || declined || stale || !bridge}
+                              title={stale && bridge ? t("assistant.stale") : undefined}
+                              onClick={() => applyOps(turnIndex, stepIndex, ops)}
+                            >
+                              {applied
+                                ? t("agent.applied")
+                                : t("assistant.apply").replace("{count}", String(ops.length))}
+                            </button>
+                            {!applied ? (
+                              <button
+                                type="button"
+                                className="ask-dock__action ask-dock__action--ghost"
+                                disabled={declined}
+                                onClick={() => declineOps(turnIndex, stepIndex, ops)}
+                              >
+                                {declined ? t("agent.declined") : t("agent.decline")}
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       );
                     }

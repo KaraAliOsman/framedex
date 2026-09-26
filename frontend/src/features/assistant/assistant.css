@@ -630,3 +630,68 @@
   margin-right: 0;
   margin-left: 6px;
 }
+
+/* §08 measurement — apply/decline pair + workspace metrics strip. */
+.ask-dock__ops-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ask-dock__ops-actions .ask-dock__action {
+  align-self: auto;
+}
+.ask-dock__action--ghost {
+  background: transparent;
+  color: var(--theme-text-secondary, #576664);
+  border-style: dashed;
+}
+.aiws-metrics {
+  border: 1px solid var(--theme-border-subtle, #d9dfde);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--theme-surface-panel, #ffffff);
+}
+.aiws-metrics h2 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--theme-text-secondary, #576664);
+  margin: 0 0 8px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.aiws-metrics h2 small {
+  font-weight: 400;
+  text-transform: none;
+  color: var(--theme-text-tertiary, #7b8a88);
+}
+.aiws-metrics dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+}
+.aiws-metrics dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.aiws-metrics dt {
+  font-size: 10.5px;
+  color: var(--theme-text-tertiary, #7b8a88);
+}
+.aiws-metrics dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--theme-text-primary, #1f2a29);
+  font-variant-numeric: tabular-nums;
+}
+.aiws-metrics__failure {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--theme-danger, #b3372f);
+}

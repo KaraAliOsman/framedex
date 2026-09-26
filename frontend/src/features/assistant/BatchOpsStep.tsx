@@ -92,10 +92,18 @@ export function BatchOpsStep({
   step,
   organizationId,
   projectId,
+  settled = false,
+  onSettled,
 }: {
   step: AiAgentStep;
   organizationId: string;
   projectId: string;
+  /** The turn already decided this proposal (apply or decline) — render the
+   * settled state instead of re-offering actions. */
+  settled?: boolean;
+  /** §08 measurement — report the human's decision to the owning job. The
+   * parent records the outcome; dedupe happens server-side. */
+  onSettled?: (action: "applied" | "declined" | "apply_failed", ops: { op?: string }[]) => void;
 }): JSX.Element {
   const queryClient = useQueryClient();
   const items = (step.items ?? []) as BatchItem[];
@@ -226,9 +234,26 @@ export function BatchOpsStep({
         }
         void queryClient.invalidateQueries({ queryKey: ["project-pages"] });
         setPhase("done");
+        // Report each group separately so apply failures don't inflate the
+        // applied count — dedupe is per (turn, step, action) server-side.
+        const appliedOps = next.filter((row) => row.status === "applied").flatMap((row) => row.ops);
+        const failedOps = next
+          .filter((row) => row.status === "apply_failed")
+          .flatMap((row) => row.ops);
+        if (appliedOps.length) onSettled?.("applied", appliedOps);
+        if (failedOps.length) onSettled?.("apply_failed", failedOps);
+        if (!appliedOps.length && !failedOps.length) onSettled?.("apply_failed", []);
       })();
       return next;
     });
+  }
+
+  function decline(): void {
+    onSettled?.(
+      "declined",
+      rows.flatMap((row) => row.ops),
+    );
+    setPhase("done");
   }
 
   const ready = rows.filter((row) => row.status === "ready");
@@ -254,6 +279,13 @@ export function BatchOpsStep({
 
   if (phase === "loading") {
     return <p className="ask-dock__hint">{t("agent.batchLoading")}</p>;
+  }
+  if (settled && phase !== "done") {
+    return (
+      <div className="ask-dock__ops ask-dock__batch">
+        <p className="ask-dock__hint">{t("agent.batchSettled")}</p>
+      </div>
+    );
   }
   return (
     <div className="ask-dock__ops ask-dock__batch">
@@ -310,6 +342,14 @@ export function BatchOpsStep({
               onClick={() => void apply()}
             >
               {t("agent.batchApply").replace("{count}", String(ready.length))}
+            </button>
+            <button
+              type="button"
+              className="ask-dock__action ask-dock__action--ghost"
+              disabled={phase === "applying"}
+              onClick={decline}
+            >
+              {t("agent.decline")}
             </button>
           </>
         )}

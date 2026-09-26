@@ -153,9 +153,40 @@ class AiJobSerializer(serializers.Serializer):
     warnings = serializers.ListField()
     result = serializers.DictField(required=False, allow_null=True)
     error_code = serializers.CharField(required=False, allow_null=True)
+    outcomes = serializers.ListField(required=False)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
     completed_at = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class AiJobOutcomeSerializer(serializers.Serializer):
+    """Client report: what the human did with one proposed step."""
+
+    turn_index = serializers.IntegerField(min_value=0, max_value=1000)
+    step_index = serializers.IntegerField(min_value=0, max_value=1000)
+    action = serializers.ChoiceField(
+        choices=["applied", "declined", "apply_failed"]
+    )
+    ops = serializers.ListField(
+        child=serializers.CharField(max_length=80),
+        required=False,
+        max_length=200,
+    )
+
+
+class AiJobOutcomeResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    recorded = serializers.BooleanField()
+
+
+class AiMetricsSerializer(serializers.Serializer):
+    window_days = serializers.IntegerField()
+    jobs = serializers.DictField()
+    commands = serializers.DictField()
+    approvals = serializers.DictField()
+    artifacts_produced = serializers.IntegerField()
+    cost = serializers.DictField()
+    time_saved = serializers.DictField()
 
 
 class AiJobDetailSerializer(AiJobSerializer):

@@ -17,6 +17,7 @@ import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
 import { designAssistProduct } from "../canvas/designOps";
 import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
+import { AiMetricsCard } from "./AiMetricsCard";
 import { jobErrorKey } from "../jobs/jobError";
 import { t } from "../../i18n/es-CL";
 
@@ -542,7 +543,10 @@ export function AssistantWorkspacePage(): JSX.Element {
         ) : null}
         <div className="aiws-transcript">
           {transcript.length === 0 && !job ? (
-            <p className="aiws-empty">{t("aiws.hint")}</p>
+            <>
+              <AiMetricsCard organizationId={orgId ?? ""} />
+              <p className="aiws-empty">{t("aiws.hint")}</p>
+            </>
           ) : (
             transcript.map((turn, index) =>
               turn.role === "user" ? (

@@ -521,6 +521,155 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/ai/jobs/{job_id}/outcome/:
+    post:
+      operationId: ai_job_outcome_create
+      description: |-
+        §08 measurement — the client reports what the human did with a
+        proposed step. Idempotent: a retried report dedupes on
+        (turn, step, action) and answers 200 with recorded=false instead of
+        double-counting.
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ai
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiJobOutcomeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AiJobOutcomeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AiJobOutcomeRequest'
+        required: true
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiJobOutcomeResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/v1/ai/metrics/:
+    get:
+      operationId: ai_metrics
+      description: §08 measurement — org-level AI metrics over the trailing window.
+      parameters:
+      - in: header
+        name: X-Organization-ID
+        schema:
+          type: string
+          format: uuid
+        description: Active organization; validated against the JWT user's active
+          memberships.
+      - in: query
+        name: days
+        schema:
+          type: integer
+      tags:
+      - ai
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiMetrics'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/analytics/summary/:
     get:
       operationId: analytics_operational_summary
@@ -8138,7 +8287,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/WorkOrderOptimizeRequestRequest'
-        required: true
       security:
       - SupabaseBearer: []
       responses:
@@ -12447,20 +12595,6 @@ components:
       required:
       - coverage
       - items
-    ActionEnum:
-      enum:
-      - START
-      - COMPLETE
-      - BLOCK
-      - UNBLOCK
-      - NOTE
-      type: string
-      description: |-
-        * `START` - START
-        * `COMPLETE` - COMPLETE
-        * `BLOCK` - BLOCK
-        * `UNBLOCK` - UNBLOCK
-        * `NOTE` - NOTE
     ActiveOrganization:
       type: object
       properties:
@@ -12816,6 +12950,9 @@ components:
         error_code:
           type: string
           nullable: true
+        outcomes:
+          type: array
+          items: {}
         created_at:
           type: string
           format: date-time
@@ -12868,6 +13005,9 @@ components:
         error_code:
           type: string
           nullable: true
+        outcomes:
+          type: array
+          items: {}
         created_at:
           type: string
           format: date-time
@@ -12905,6 +13045,82 @@ components:
           additionalProperties: {}
       required:
       - message
+    AiJobOutcomeActionEnum:
+      enum:
+      - applied
+      - declined
+      - apply_failed
+      type: string
+      description: |-
+        * `applied` - applied
+        * `declined` - declined
+        * `apply_failed` - apply_failed
+    AiJobOutcomeRequest:
+      type: object
+      description: 'Client report: what the human did with one proposed step.'
+      properties:
+        turn_index:
+          type: integer
+          maximum: 1000
+          minimum: 0
+        step_index:
+          type: integer
+          maximum: 1000
+          minimum: 0
+        action:
+          $ref: '#/components/schemas/AiJobOutcomeActionEnum'
+        ops:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          maxItems: 200
+      required:
+      - action
+      - step_index
+      - turn_index
+    AiJobOutcomeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        recorded:
+          type: boolean
+      required:
+      - id
+      - recorded
+    AiMetrics:
+      type: object
+      properties:
+        window_days:
+          type: integer
+        jobs:
+          type: object
+          additionalProperties: {}
+        commands:
+          type: object
+          additionalProperties: {}
+        approvals:
+          type: object
+          additionalProperties: {}
+        artifacts_produced:
+          type: integer
+        cost:
+          type: object
+          additionalProperties: {}
+        time_saved:
+          type: object
+          additionalProperties: {}
+      required:
+      - approvals
+      - artifacts_produced
+      - commands
+      - cost
+      - jobs
+      - time_saved
+      - window_days
     AllocationRequestRequest:
       type: object
       properties:
@@ -20875,11 +21091,25 @@ components:
       required:
       - order_status
       - step
+    StepTransitionRequestActionEnum:
+      enum:
+      - START
+      - COMPLETE
+      - BLOCK
+      - UNBLOCK
+      - NOTE
+      type: string
+      description: |-
+        * `START` - START
+        * `COMPLETE` - COMPLETE
+        * `BLOCK` - BLOCK
+        * `UNBLOCK` - UNBLOCK
+        * `NOTE` - NOTE
     StepTransitionRequestRequest:
       type: object
       properties:
         action:
-          $ref: '#/components/schemas/ActionEnum'
+          $ref: '#/components/schemas/StepTransitionRequestActionEnum'
         note:
           type: string
           nullable: true
@@ -21463,20 +21693,6 @@ components:
       - id
       - kind
       - name
-    WorkCenterKindEnum:
-      enum:
-      - CUT
-      - ASSEMBLY
-      - GLAZING
-      - QC
-      - PACK
-      type: string
-      description: |-
-        * `CUT` - CUT
-        * `ASSEMBLY` - ASSEMBLY
-        * `GLAZING` - GLAZING
-        * `QC` - QC
-        * `PACK` - PACK
     WorkCenterList:
       type: object
       properties:
@@ -21486,6 +21702,36 @@ components:
             $ref: '#/components/schemas/WorkCenter'
       required:
       - centers
+    WorkCenterRequestKindEnum:
+      enum:
+      - CUT
+      - PROFILE_CUT
+      - REINFORCEMENT_CUT
+      - MACHINING
+      - WELDING
+      - CLEANING
+      - CRIMPING
+      - SASH_ASSEMBLY
+      - ASSEMBLY
+      - HARDWARE
+      - GLAZING
+      - QC
+      - PACK
+      type: string
+      description: |-
+        * `CUT` - CUT
+        * `PROFILE_CUT` - PROFILE_CUT
+        * `REINFORCEMENT_CUT` - REINFORCEMENT_CUT
+        * `MACHINING` - MACHINING
+        * `WELDING` - WELDING
+        * `CLEANING` - CLEANING
+        * `CRIMPING` - CRIMPING
+        * `SASH_ASSEMBLY` - SASH_ASSEMBLY
+        * `ASSEMBLY` - ASSEMBLY
+        * `HARDWARE` - HARDWARE
+        * `GLAZING` - GLAZING
+        * `QC` - QC
+        * `PACK` - PACK
     WorkCenterRequestRequest:
       type: object
       properties:
@@ -21498,7 +21744,7 @@ components:
           minLength: 1
           maxLength: 200
         kind:
-          $ref: '#/components/schemas/WorkCenterKindEnum'
+          $ref: '#/components/schemas/WorkCenterRequestKindEnum'
         display_order:
           type: integer
           default: 0
@@ -21526,7 +21772,6 @@ components:
       properties:
         color:
           type: string
-          minLength: 1
           maxLength: 50
         cutting_profile_code:
           type: string
@@ -21537,8 +21782,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/StrategyEnum'
           default: auto
-      required:
-      - color
     WorkshopAnnotation:
       type: object
       properties:

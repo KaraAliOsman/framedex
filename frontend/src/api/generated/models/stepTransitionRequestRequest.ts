@@ -5,11 +5,11 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
-import type { ActionEnum } from "./actionEnum";
+import type { StepTransitionRequestActionEnum } from "./stepTransitionRequestActionEnum";
 import type { StepTransitionRequestRequestQcResult } from "./stepTransitionRequestRequestQcResult";
 
 export interface StepTransitionRequestRequest {
-  action: ActionEnum;
+  action: StepTransitionRequestActionEnum;
   /**
    * @minLength 1
    * @maxLength 500
