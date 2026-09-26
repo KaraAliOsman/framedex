@@ -44,6 +44,7 @@ const domainGroups: {
       { to: "/purchasing", label: "nav.purchasing" },
       { to: "/production", label: "nav.production" },
       { to: "/assistant", label: "nav.assistant" },
+      { to: "/jobs", label: "nav.jobs" },
     ],
   },
   {
@@ -103,6 +104,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
       return role === "OWNER" || role === "ESTIMATOR";
     if (to === "/assistant")
       return role !== "INSTALLER";
+    if (to === "/jobs") return role !== "INSTALLER";
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
     if (to === "/production")

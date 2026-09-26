@@ -1258,6 +1258,7 @@ export const messages = {
   "nav.purchasing": "Compras",
   "nav.production": "Producción",
   "nav.assistant": "Asistente",
+  "nav.jobs": "Trabajos",
 
   "production.title": "Producción",
   "production.subtitle":
