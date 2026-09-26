@@ -604,7 +604,9 @@ def test_pricing_http_valid_preview_remains_successful(committed_commercial_rows
     assert response.status_code==200
     body = response.json()
     assert set(body)=={'id','project_id','revision_code','discount_pct','state','currency','lines',
-                      'project_net','project_tax','project_gross'}
+                      'project_net','project_tax','project_gross','cost_lines','total_cost',
+                      'reason','requested_by','approved_by','approved_at','created_at'}
+    assert body['approved_by'] is None and body['approved_at'] is None
     assert body['state']=='PREVIEW'
     assert body['project_id']==str(project)
     assert body['revision_code']=='REV-A'
@@ -1096,22 +1098,21 @@ def test_preview_isolation_first_sql_and_normal_endpoint_is_read_committed(
     request_thread = get_ident()
     original_execute = CursorWrapper.execute
 
+    preview_isolation = []
+
     def traced_execute(cursor, sql, params=None):
         if get_ident()==request_thread:
-            statements.append(str(sql).strip())
+            statement=str(sql).strip()
+            statements.append(statement)
+            # Sample the connection's isolation level once the request's
+            # transaction is live — the first real statement after the SET.
+            if not preview_isolation and not statement.upper().startswith('SET '):
+                with connection.cursor() as probe:
+                    original_execute(probe,'SHOW transaction_isolation')
+                    preview_isolation.append(probe.fetchone()[0])
         return original_execute(cursor,sql,params)
 
     monkeypatch.setattr(CursorWrapper,'execute',traced_execute)
-    preview_isolation = []
-    original_preview = pricing_views.preview
-
-    def checked_preview(*args,**kwargs):
-        with connection.cursor() as cursor:
-            cursor.execute('SHOW transaction_isolation')
-            preview_isolation.append(cursor.fetchone()[0])
-        return original_preview(*args,**kwargs)
-
-    monkeypatch.setattr(pricing_views,'preview',checked_preview)
     response = owner_client(users['OWNER']).post('/api/v1/pricing/preview/',
                                                  price_payload(project),format='json')
     assert response.status_code==200

@@ -3,10 +3,13 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { apiMutator, ApiError } from "../../api/apiMutator";
 import { documentaryArtifactAccess } from "../../api/generated/dekopen";
+import { InventorySection } from "./InventorySection";
 import { runJob } from "../jobs/runJob";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { DeniedState } from "../../ui";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
-import { formatRevision } from "../../format";
+import { formatDateTime, formatRevision } from "../../format";
 import "./purchasing.css";
 
 type OrderType =
@@ -23,6 +26,20 @@ function categoryLabel(category: string): string {
     "FITTING",
   ]);
   return known.has(category) ? t(key) : category;
+}
+
+const unitPlural = new Intl.PluralRules("es-CL");
+function purchaseUnitLabel(unit: string | null | undefined, qty?: number): string {
+  if (!unit) return "";
+  const known: ReadonlySet<string> = new Set(["EA", "BAR", "KIT", "SHEET", "M", "M2", "KG"]);
+  if (!known.has(unit)) return unit;
+  const plural = qty === undefined || unitPlural.select(qty) !== "one";
+  return t(`purchasing.unitValue.${unit}${plural ? ".other" : ".one"}` as Parameters<typeof t>[0]);
+}
+
+function qtyNumber(value: string | number | null | undefined): number | undefined {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 const ORDER_TYPES: OrderType[] = [
@@ -191,7 +208,7 @@ export function PurchasingPage(): JSX.Element {
   const org = useAuthSession().me?.active_organization;
   const [query] = useSearchParams();
   if (!org || !["OWNER", "WORKSHOP_MANAGER"].includes(org.role))
-    return <p role="alert">{t("purchasing.denied")}</p>;
+    return <DeniedState reason={t("purchasing.denied")} />;
   const initialVersionId = query.get("version") ?? "";
   return (
     <PurchasingWorkspace
@@ -393,7 +410,9 @@ function PurchasingWorkspace({
       <header>
         <h1>{t("purchasing.title")}</h1>
         <p>{t("purchasing.subtitle")}</p>
-        <Link to="/projects">{t("purchasing.workshop")}</Link>
+        <Link className="ui-backlink ui-backlink--back" to="/projects">
+          {t("purchasing.workshop")}
+        </Link>
       </header>
       {message && <p role="alert">{message}</p>}
       {busy && <p role="status">{t("purchasing.loading")}</p>}
@@ -409,10 +428,7 @@ function PurchasingWorkspace({
             {versions.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.project_code} · {formatRevision(item.revision_code)} ·{" "}
-                {new Date(item.emitted_at).toLocaleString("es-CL", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
+                {formatDateTime(item.emitted_at)}
               </option>
             ))}
           </select>
@@ -425,7 +441,11 @@ function PurchasingWorkspace({
         </p>
       )}
       {blockers.length > 0 && (
-        <section className="purchasing-blockers" aria-label={t("purchasing.blockers")}>
+        <section
+          className="purchasing-blockers"
+          aria-label={t("purchasing.blockers")}
+          role="status"
+        >
           <h2>{t("purchasing.blockers")}</h2>
           <ul>
             {blockers.map((blocker, index) => (
@@ -438,7 +458,11 @@ function PurchasingWorkspace({
         </section>
       )}
       {coverageLines.length > 0 && (
-        <section className="purchasing-coverage" aria-label={t("purchasing.coverageTitle")}>
+        <section
+          className="purchasing-coverage"
+          aria-label={t("purchasing.coverageTitle")}
+          role="status"
+        >
           <h2>{t("purchasing.coverageTitle")}</h2>
           {(coverage?.shortages ?? 0) > 0 && (
             <p className="purchasing-coverage-alert" role="alert">
@@ -466,7 +490,10 @@ function PurchasingWorkspace({
                   <td>{categoryLabel(line.category)}</td>
                   <td>
                     {line.purchasing_sku}
-                    <span className="purchasing-coverage-unit"> {line.unit}</span>
+                    <span className="purchasing-coverage-unit">
+                      {" "}
+                      {purchaseUnitLabel(line.unit, 2)}
+                    </span>
                   </td>
                   <td>{line.required}</td>
                   <td>{line.on_hand}</td>
@@ -484,7 +511,9 @@ function PurchasingWorkspace({
                   <td>
                     {line.remnant_pool
                       ? `${line.remnant_pool.count}${
-                          line.remnant_pool.total_mm ? ` · ${line.remnant_pool.total_mm} mm` : ""
+                          line.remnant_pool.total_mm
+                            ? ` · ${fmtMm(line.remnant_pool.total_mm)} mm`
+                            : ""
                         }`
                       : "—"}
                   </td>
@@ -552,7 +581,7 @@ function PurchasingWorkspace({
                 <tr key={item.item_id}>
                   <td>{item.sku}</td>
                   <td>
-                    {item.name} · {item.unit}
+                    {item.name} · {purchaseUnitLabel(item.unit, 2)}
                   </td>
                   <td>{item.on_hand_qty}</td>
                   <td>{item.reserved_qty}</td>
@@ -563,6 +592,15 @@ function PurchasingWorkspace({
           </table>
         </section>
       )}
+      <InventorySection
+        request={request}
+        canWrite={role === "WORKSHOP_MANAGER" || role === "OWNER"}
+        stockItems={stock.map((item) => ({
+          item_id: item.item_id,
+          sku: item.sku,
+          name: item.name,
+        }))}
+      />
       {state?.version && (
         <section className="purchasing-documents">
           <h2>{t("purchasing.documents")}</h2>
@@ -721,16 +759,17 @@ function RequirementRow({
         {requirement.physical_stock_identity && (
           <small>
             {t("purchasing.stock")}:{" "}
-            {requirement.physical_stock_sku
-              ? `${requirement.physical_stock_sku}${
-                  requirement.physical_stock_name ? ` · ${requirement.physical_stock_name}` : ""
-                }`
-              : requirement.physical_stock_identity}
+            {requirement.physical_stock_sku || requirement.physical_stock_name
+              ? [requirement.physical_stock_sku, requirement.physical_stock_name]
+                  .filter(Boolean)
+                  .join(" · ")
+              : t("purchasing.stockUnassigned")}
           </small>
         )}
       </td>
       <td>
-        {requirement.quantity} {requirement.unit}
+        {requirement.quantity}{" "}
+        {purchaseUnitLabel(requirement.unit, qtyNumber(requirement.quantity))}
       </td>
       <td>
         {confirmed ? (
@@ -1075,7 +1114,7 @@ function ReceivingPanel({
                 <tr key={line.id}>
                   <td>{line.purchasing_sku ?? line.category}</td>
                   <td>
-                    {line.ordered_qty} {line.unit}
+                    {line.ordered_qty} {purchaseUnitLabel(line.unit, qtyNumber(line.ordered_qty))}
                   </td>
                   <td>{line.received_qty}</td>
                   <td>{line.outstanding_qty}</td>
@@ -1084,6 +1123,7 @@ function ReceivingPanel({
                       type="number"
                       min="0"
                       step="any"
+                      aria-label={`${t("purchasing.receiveNow")} · ${line.purchasing_sku ?? line.category}`}
                       disabled={busy || Number(line.outstanding_qty) <= 0}
                       value={quantities[line.id]?.received ?? "0"}
                       onChange={(event) =>
@@ -1102,6 +1142,7 @@ function ReceivingPanel({
                       type="number"
                       min="0"
                       step="any"
+                      aria-label={`${t("purchasing.receiveDamaged")} · ${line.purchasing_sku ?? line.category}`}
                       disabled={busy || Number(line.outstanding_qty) <= 0}
                       value={quantities[line.id]?.damaged ?? "0"}
                       onChange={(event) =>

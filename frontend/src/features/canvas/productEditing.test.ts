@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   addAdjacentUnit,
+  duplicateModule,
+  insertModuleBetween,
   makeTrapezoidModule,
   elevationLayoutMm,
   equalizeCouplingAngles,
@@ -497,6 +499,64 @@ describe("scaleModuleWidths", () => {
     expect(envelope).toBeCloseTo(1200, 2);
     expect(Number(scaled.assembly.modules[0]!.width_mm)).toBeCloseTo(1200, 2);
     expect(Number(scaled.assembly.modules[1]!.width_mm)).toBeCloseTo(1200, 2);
+  });
+});
+
+describe("legacy positional couplings", () => {
+  // Rows without modules/edges resolve coupling i to modules i↔i+1. Any
+  // mutation that reorders modules must pin every joint to the pair it
+  // actually joins — not let the saved assembly reconnect wrong units.
+  function legacy(): ProductJson {
+    const product = bow();
+    return {
+      ...product,
+      assembly: {
+        modules: [...product.assembly.modules],
+        couplings: product.assembly.couplings.map((coupling) => ({
+          id: coupling.id,
+          angle_deg: coupling.angle_deg,
+          coupler_profile_sku: coupling.coupler_profile_sku,
+          kind: "INLINE" as const,
+        })),
+      },
+    } as ProductJson;
+  }
+
+  it("pins joints on duplicate — the copy never hijacks an old seam", () => {
+    const copied = duplicateModule(legacy(), "m1");
+    const byId = new Map(copied.assembly.couplings.map((c) => [c.id, c]));
+    // m1's right edge is claimed (legacy c1), so the copy lands on its left
+    // at index 0 — without materialization c1 would resolve copy↔m1.
+    expect(byId.get("c1")?.modules).toEqual(["m1", "m2"]);
+    expect(byId.get("c1")?.edges).toEqual(["right", "left"]);
+    expect(byId.get("c2")?.modules).toEqual(["m2", "m3"]);
+    // The new coplanar joint names its endpoints too.
+    expect(copied.assembly.couplings.at(-1)?.modules).toEqual([
+      copied.assembly.modules[0]!.id,
+      "m1",
+    ]);
+  });
+
+  it("pins joints on prepend — addAdjacentUnit left keeps the chain", () => {
+    const grown = addAdjacentUnit(legacy(), "left");
+    const byId = new Map(grown.assembly.couplings.map((c) => [c.id, c]));
+    expect(byId.get("c1")?.modules).toEqual(["m1", "m2"]);
+    expect(byId.get("c2")?.modules).toEqual(["m2", "m3"]);
+    expect(grown.assembly.couplings[0]?.modules).toEqual([grown.assembly.modules[0]!.id, "m1"]);
+  });
+
+  it("pins joints on insert between a positional seam", () => {
+    const inserted = insertModuleBetween(legacy(), "c1");
+    const byId = new Map(inserted.assembly.couplings.map((c) => [c.id, c]));
+    const added = inserted.assembly.modules[1]!;
+    // c1 keeps its id on the left↔new joint; the minted joint joins
+    // new↔m2 explicitly; the untouched c2 stays on m2↔m3.
+    expect(byId.get("c1")?.modules).toEqual(["m1", added.id]);
+    expect(byId.get("c2")?.modules).toEqual(["m2", "m3"]);
+    const minted = inserted.assembly.couplings.find(
+      (c) => c.modules?.[0] === added.id && c.modules?.[1] === "m2",
+    );
+    expect(minted).toBeDefined();
   });
 });
 

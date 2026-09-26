@@ -27,6 +27,20 @@ def operational_summary(*, org_id: UUID) -> dict[str, Any]:
         return _summary(org_id)
 
 
+def failed_jobs_count(*, org_id: UUID) -> int:
+    """Failed background jobs for the dashboard attention queue. job_runs is
+    a service-owned table (service_role grant only) — callers run this as the
+    connection owner, outside the member-facing RLS context, with the explicit
+    org filter; the same pattern the jobs API's job_scope uses."""
+    return int(
+        one(
+            "SELECT count(*) AS n FROM public.job_runs "
+            "WHERE org_id = %s AND state = 'FAILED'",
+            [str(org_id)],
+        )["n"]
+    )
+
+
 def _summary(org_id: UUID) -> dict[str, Any]:
     work_orders = _counts_by(
         """
@@ -85,9 +99,48 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             (SELECT count(*) FROM public.profile_systems s
              WHERE s.org_id = %s
                AND (s.rebate_depth_mm IS NULL
-                    OR s.end_milling_overlap_mm IS NULL)) AS catalog_gaps
+                    OR s.end_milling_overlap_mm IS NULL)) AS catalog_gaps,
+            (SELECT count(*) FROM public.production_steps s
+             JOIN public.orders o ON o.id = s.order_id AND o.org_id = s.org_id
+             WHERE s.org_id = %s AND s.status = 'BLOCKED'
+               AND o.status NOT IN ('CANCELLED', 'INSTALLED')) AS steps_blocked,
+            (SELECT count(DISTINCT a.project_id) FROM public.customer_approvals a
+             JOIN public.project_versions v
+               ON v.id = a.project_version_id AND v.org_id = a.org_id
+             JOIN public.projects p
+               ON p.id = a.project_id AND p.org_id = a.org_id
+             WHERE a.org_id = %s AND a.status = 'PENDING'
+               AND a.expires_at > now()
+               AND p.current_revision = v.revision_code
+               AND p.status = 'QUOTED') AS approvals_pending,
+            (SELECT count(*) FROM public.projects p
+             WHERE p.org_id = %s AND p.status = 'QUOTED'
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision))
+                AS quotes_unsent,
+            (SELECT count(*) FROM public.projects p
+             WHERE p.org_id = %s AND p.status = 'QUOTED'
+               AND EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision)
+               AND NOT EXISTS (
+                   SELECT 1 FROM public.customer_approvals a
+                   JOIN public.project_versions v
+                     ON v.id = a.project_version_id AND v.org_id = a.org_id
+                   WHERE a.org_id = p.org_id AND a.project_id = p.id
+                     AND v.revision_code = p.current_revision
+                     AND (a.status = 'APPROVED'
+                          OR (a.status = 'PENDING' AND a.expires_at > now()))))
+                AS quotes_stale
         """,
-        [str(org_id)] * 4,
+        [str(org_id)] * 8,
     )
     lead = one(
         """
@@ -148,9 +201,17 @@ def _summary(org_id: UUID) -> dict[str, Any]:
             (SELECT count(*) FROM public.project_positions WHERE org_id = %s)
                 AS positions,
             (SELECT count(*) FROM public.project_versions
-             WHERE org_id = %s) AS sealed_versions
+             WHERE org_id = %s) AS sealed_versions,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'DRAFT') AS drafts,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'QUOTED') AS quoted,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'APPROVED') AS approved,
+            (SELECT count(*) FROM public.projects
+             WHERE org_id = %s AND status = 'IN_PRODUCTION') AS in_production
         """,
-        [str(org_id), str(org_id), str(org_id)],
+        [str(org_id)] * 7,
     )
     recent = [
         {

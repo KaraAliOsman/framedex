@@ -29,7 +29,9 @@ from documents.repository import DocumentaryError, documentary_backend
 from documents.renderers import render_delivery_pod
 from documents.storage import SupabaseDocumentStorage
 from pricing.repository import one, rows
+from projects import org_branding
 from projects.payments import resolve_or_insert_payment
+from projects.receipts import issue_receipt
 from projects.service import project_row
 
 SIGNED_URL_TTL_SECONDS = 600
@@ -43,6 +45,29 @@ _PAYMENT_METHODS = {"TRANSFER", "CASH", "CARD", "CHECK", "OTHER"}
 
 def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def _pod_currency(org_id: UUID, project_id, deal: dict | None) -> str:
+    """Currency printed on the POD — the same sources the payment deal
+    resolves (sealed snapshot → org) so a replayed cobro still renders the
+    money in the project's own currency rather than a non-CLP dash."""
+    if deal is not None:
+        return deal["currency"]
+    versions = rows(
+        "SELECT snapshot_json::text AS snapshot_json "
+        "FROM public.project_versions "
+        "WHERE org_id=%s AND project_id=%s ORDER BY emitted_at DESC,id DESC LIMIT 1",
+        [str(org_id), str(project_id)],
+    )
+    if versions:
+        snapshot = versions[0]["snapshot_json"]
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+        sealed = snapshot.get("project") if isinstance(snapshot, dict) else None
+        if (sealed or {}).get("currency"):
+            return sealed["currency"]
+    org = rows("SELECT currency FROM public.tenancy_organizations WHERE id=%s", [str(org_id)])
+    return org[0]["currency"] if org else "CLP"
 
 
 def _confirmation_public(row) -> dict:
@@ -199,12 +224,13 @@ def confirm_delivery(
             project = project_row(org_id, order["project_id"], lock=True)
             payment_id = None
             payment_payload = None
+            deal = None
             if payment_kwargs is not None:
                 # The cobro goes through the cobranza ledger primitive so the
                 # same deal, currency, project and replay rules apply — the
                 # pod:<delivery> key dedupes a retried confirm like every
                 # other payment.
-                payment_row, _ = resolve_or_insert_payment(
+                payment_row, deal = resolve_or_insert_payment(
                     org_id=org_id,
                     project_id=order["project_id"],
                     project=project,
@@ -233,6 +259,19 @@ def confirm_delivery(
                         "El cobro registrado para esta entrega no coincide.",
                     )
                 payment_id = payment_row["id"]
+                # Every ledger payment seals a comprobante — the POD cobro is
+                # no exception; a replayed settle finds the existing receipt
+                # via UNIQUE(payment_id) and returns it unchanged.
+                issue_receipt(
+                    org_id=org_id,
+                    project=project,
+                    payment={
+                        "project_id": order["project_id"],
+                        **payment_row,
+                    },
+                    actor_id=actor_id,
+                    deal=deal if deal is not None else {"total": None, "currency": "CLP"},
+                )
                 payment_payload = {
                     "id": str(payment_row["id"]),
                     "kind": payment_row["kind"],
@@ -251,9 +290,11 @@ def confirm_delivery(
                 else json.loads(order["payload_json"] or "{}")
             )
             units = _manifest_units(order_payload)
+            currency = _pod_currency(org_id, order["project_id"], deal)
             signature_hash = _sha256(signature_png)
             payload = {
                 "confirmation_code": confirmation_code,
+                "organization": org_branding.branding_for_snapshot(org_id=org_id),
                 "issued_at": issued_at.isoformat(),
                 "receiver": {
                     "name": receiver,
@@ -271,6 +312,7 @@ def confirm_delivery(
                     "name": project["name"],
                     "client_name": project["client_name"],
                     "client_rut": project["client_rut"],
+                    "currency": currency,
                 },
                 "delivery": {
                     "id": delivery_id_s,

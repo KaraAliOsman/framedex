@@ -10,6 +10,7 @@ import {
   projectPaymentIntegrationStatus,
   projectPaymentLinksList,
   projectPaymentsList,
+  projectQuoteLinksList,
   projectsClone,
   projectsCreate,
   projectsList,
@@ -61,6 +62,8 @@ vi.mock("../../api/generated/dekopen", async (importOriginal) => {
     projectPaymentIntegrationStatus: vi.fn(),
     projectPaymentLinkCreate: vi.fn(),
     projectPaymentLinkRecover: vi.fn(),
+    projectQuoteLinksList: vi.fn(),
+    documentsCompareVersions: vi.fn(),
   };
 });
 
@@ -75,6 +78,9 @@ function makePosition(): PositionResponse {
     position_index: 1,
     location_tag: "Dormitorio principal",
     quantity: 2,
+    cost_net: "0",
+    price_net: "0",
+    discount_pct: "0",
     typology: "FIXED",
     updated_at: "2026-09-18T12:01:02.123456Z",
     design: {
@@ -231,6 +237,7 @@ beforeEach(() => {
   vi.mocked(projectPaymentIntegrationStatus).mockResolvedValue(
     response(200, { configured: false, enabled: false }),
   );
+  vi.mocked(projectQuoteLinksList).mockResolvedValue(response(200, []));
 });
 
 afterEach(() => {
@@ -264,8 +271,10 @@ it("creates a project, navigates to the server ID and renders persisted metadata
 
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-1042 · Nombre confirmado por servidor",
+    name: "Nombre confirmado por servidor",
   });
+  // The project code stays visible as secondary metadata, not as the title.
+  expect(screen.getByText("P-1042")).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/projects/server-created-id");
   expect(screen.getByText("Cliente persistido")).toBeInTheDocument();
   expect(screen.getByText("persistido@example.test")).toBeInTheDocument();
@@ -319,7 +328,7 @@ it("PATCHes the exact original timestamp and reloads persisted metadata", async 
 
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-001 · Casa actualizada",
+    name: "Casa actualizada",
   });
   expect(screen.getByText(saved.client_phone!)).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(t("projects.saved"));
@@ -386,7 +395,7 @@ it("clones a draft to the returned ID without mutating the source", async () => 
   fireEvent.click(await screen.findByRole("button", { name: t("projects.cloneDraft") }));
   await screen.findByRole("heading", {
     level: 1,
-    name: "P-002 · Copia de Casa original",
+    name: "Copia de Casa original",
   });
 
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
@@ -555,7 +564,7 @@ it("prepares and explicitly emits the current priced revision", async () => {
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   expect(screen.getAllByText("Revisión A")).toHaveLength(2);
   expect(apiMutator).toHaveBeenCalledTimes(3);
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
@@ -761,7 +770,7 @@ it("saves handle placement intents for operable leaves before emitting", async (
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   expect(body.positions[0].handle_intents).toEqual([
@@ -922,7 +931,7 @@ it("reconciles handle intents when the handle policy changes", async () => {
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // B2's SECONDARY slot does not exist under handle-b: dropped. B1 survives
@@ -1048,7 +1057,7 @@ it("keeps a manually edited height when the handle policy changes", async () => 
   fireEvent.click(screen.getByLabelText(t("quotation.confirm")));
   fireEvent.click(screen.getByRole("button", { name: t("quotation.emit") }));
 
-  await screen.findByText(t("projects.quoted"));
+  await screen.findAllByText(t("projects.quoted"));
   const saveRequest = vi.mocked(apiMutator).mock.calls[1]!;
   const body = JSON.parse(String((saveRequest[1] as RequestInit).body));
   // The estimator typed 750 — the v2 reseed (bounds 700–900 → midpoint 800)
@@ -1294,7 +1303,7 @@ it("asks before cloning away from dirty quotation preparation edits", async () =
 
   fireEvent.click(screen.getByRole("button", { name: t("projects.cloneDraft") }));
   await decide(true);
-  await screen.findByRole("heading", { level: 1, name: "P-002 · Casa original" });
+  await screen.findByRole("heading", { level: 1, name: "Casa original" });
   expect(router.state.location.pathname).toBe("/projects/copy-server-id");
   expect(projectsClone).toHaveBeenCalledTimes(1);
 });

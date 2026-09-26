@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/apiMutator";
-import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
+import { analyticsOperationalSummary } from "../api/generated/dekopen";
 import { useAuthSession } from "../auth/AuthSessionProvider";
 import { t } from "../i18n/es-CL";
-import { attentionEntries } from "./attention";
+import { attentionEntries, attentionLabel } from "./attention";
 import { useDismiss } from "./shellUtils";
 
 /** Topbar bell: the same action-required feed the dashboard renders, one
@@ -22,13 +22,12 @@ export function AttentionBell(): JSX.Element | null {
     staleTime: 60_000,
     refetchOnWindowFocus: "always",
     queryFn: async ({ signal }) => {
-      const [ops, projects] = await Promise.all([
-        analyticsOperationalSummary({ signal, headers: { "X-Organization-ID": org!.id } }),
-        projectsList({ signal, headers: { "X-Organization-ID": org!.id } }),
-      ]);
+      const ops = await analyticsOperationalSummary({
+        signal,
+        headers: { "X-Organization-ID": org!.id },
+      });
       if (ops.status !== 200) throw new ApiError(ops.status, ops.data);
-      if (projects.status !== 200) throw new ApiError(projects.status, projects.data);
-      return attentionEntries(ops.data, projects.data.items);
+      return attentionEntries(ops.data);
     },
   });
 
@@ -65,11 +64,7 @@ export function AttentionBell(): JSX.Element | null {
         {count > 0 && <span className="attention-bell__badge">{count}</span>}
       </button>
       {open && (
-        <div
-          className="shell-menu shell-menu--right"
-          role="menu"
-          aria-label={t("shell.notifications")}
-        >
+        <div className="shell-menu shell-menu--right" aria-label={t("shell.notifications")}>
           <p className="shell-menu__title">{t("shell.notifications")}</p>
           {query.isPending ? (
             <p className="shell-menu__meta">{t("dashboard.attentionLoading")}</p>
@@ -84,18 +79,20 @@ export function AttentionBell(): JSX.Element | null {
               {(query.data ?? []).map((entry) => (
                 <li key={entry.key}>
                   <Link
-                    role="menuitem"
                     className={`shell-menu__item${entry.warn ? " shell-menu__item--warn" : ""}`}
                     to={entry.to}
                     onClick={() => setOpen(false)}
                   >
-                    <span>{t(entry.key)}</span>
+                    <span>{attentionLabel(entry)}</span>
                     <strong>{entry.count}</strong>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
+          <Link className="shell-menu__all" to="/dashboard" onClick={() => setOpen(false)}>
+            {t("shell.notificationsAll")}
+          </Link>
         </div>
       )}
     </div>

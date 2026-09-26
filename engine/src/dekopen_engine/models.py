@@ -187,6 +187,42 @@ class SectionAxis(EngineModel):
     y_mm: Decimal
 
 
+def _segments_properly_intersect(
+    a1: tuple[Decimal, Decimal],
+    a2: tuple[Decimal, Decimal],
+    b1: tuple[Decimal, Decimal],
+    b2: tuple[Decimal, Decimal],
+) -> bool:
+    """Proper crossing test — segments share no endpoint and cross in their
+    interiors. Touches/collinear overlaps at a shared vertex are the polygon's
+    normal edge adjacency, not a self-intersection."""
+
+    def orient(p: tuple[Decimal, Decimal], q: tuple[Decimal, Decimal], r: tuple[Decimal, Decimal]) -> Decimal:
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+
+    d1 = orient(b1, b2, a1)
+    d2 = orient(b1, b2, a2)
+    d3 = orient(a1, a2, b1)
+    d4 = orient(a1, a2, b2)
+    return ((d1 > 0) != (d2 > 0)) and ((d3 > 0) != (d4 > 0))
+
+
+def polygon_self_intersects(points: list[tuple[Decimal, Decimal]]) -> bool:
+    """True when any two non-adjacent edges of the closed polygon properly
+    cross. Adjacent edges share a vertex by construction and are skipped."""
+    count = len(points)
+    for i in range(count):
+        a1, a2 = points[i], points[(i + 1) % count]
+        for j in range(i + 1, count):
+            # Adjacent edges (incl. the last-first wrap pair) share an endpoint.
+            if j == i + 1 or (i == 0 and j == count - 1):
+                continue
+            b1, b2 = points[j], points[(j + 1) % count]
+            if _segments_properly_intersect(a1, a2, b1, b2):
+                return True
+    return False
+
+
 class ProfileSection(EngineModel):
     """Simplified technical cross-section of a catalog profile (mandate §15).
 
@@ -224,6 +260,8 @@ class ProfileSection(EngineModel):
             area += x1 * y2 - x2 * y1
         if area == 0:
             raise ValueError("section polygon encloses no area")
+        if polygon_self_intersects(points):
+            raise ValueError("section polygon self-intersects")
         if self.source == "DXF_REFERENCE" and not (self.drawing_ref or "").strip():
             raise ValueError("DXF_REFERENCE section needs a drawing_ref")
         return self

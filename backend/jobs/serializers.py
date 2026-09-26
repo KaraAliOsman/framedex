@@ -46,3 +46,4 @@ class JobListQuerySerializer(serializers.Serializer):
         choices=("QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELED"),
     )
     limit = serializers.IntegerField(required=False, min_value=1, max_value=100, default=50)
+    offset = serializers.IntegerField(required=False, min_value=0, default=0)

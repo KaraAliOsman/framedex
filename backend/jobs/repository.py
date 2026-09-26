@@ -71,6 +71,7 @@ def insert_job(
 
 def requeue_terminal(
     *,
+    org_id: UUID,
     job_id: UUID,
     payload: dict[str, object],
     max_attempts: int,
@@ -99,7 +100,7 @@ def requeue_terminal(
             completed_at = NULL,
             created_by = %s,
             updated_at = NOW()
-        WHERE id = %s AND state IN ('FAILED', 'CANCELED')
+        WHERE org_id = %s AND id = %s AND state IN ('FAILED', 'CANCELED')
         RETURNING *
         """,
         [
@@ -107,6 +108,7 @@ def requeue_terminal(
             max_attempts,
             run_after,
             str(created_by) if created_by else None,
+            str(org_id),
             str(job_id),
         ],
     )
@@ -138,6 +140,7 @@ def list_jobs(
     job_type: str | None = None,
     state: str | None = None,
     limit: int = 50,
+    offset: int = 0,
 ) -> list[dict[str, object]]:
     clauses = ["org_id = %s"]
     parameters: list[object] = [str(org_id)]
@@ -147,15 +150,17 @@ def list_jobs(
     if state:
         clauses.append("state = %s")
         parameters.append(state)
-    parameters.append(limit)
+    parameters.extend([limit, offset])
     return [
         _decode(record)
         for record in rows(
             f"""
-            SELECT * FROM public.job_runs
+            SELECT id, type, state, progress, result, error, attempt,
+                   max_attempts, created_at, started_at, completed_at
+            FROM public.job_runs
             WHERE {" AND ".join(clauses)}
-            ORDER BY created_at DESC
-            LIMIT %s
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s OFFSET %s
             """,
             parameters,
         )

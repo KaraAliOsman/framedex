@@ -44,7 +44,7 @@ async function authenticate(
 ): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("Correo", { exact: true }).fill(email);
-  await page.getByRole("button", { name: "Enviar Magic Link", exact: true }).click();
+  await page.getByRole("button", { name: "Enviar enlace de acceso", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Revisa el buzón local");
 
   const message = await waitForMagicLink({

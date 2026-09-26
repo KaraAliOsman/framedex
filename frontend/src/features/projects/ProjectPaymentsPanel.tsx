@@ -1,9 +1,12 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
   projectCreditNoteAccess,
   projectCreditNoteDteAccess,
   projectCreditNoteDteEmit,
+  projectCreditNoteDteEnvioAccess,
+  projectCreditNoteDteEnvioSend,
   projectCreditNoteEmit,
   projectInvoiceAccess,
   projectInvoiceDteAccess,
@@ -25,6 +28,7 @@ import type {
   ProjectPayment,
 } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { actionErrorDetail } from "../errors";
 import { formatDate, formatMoney } from "../money";
 import { formatRevision } from "../../format";
 import { ProjectPaymentLinksPanel } from "./ProjectPaymentLinksPanel";
@@ -49,17 +53,6 @@ const STATUS_LABEL: Record<string, TranslationKey> = {
   PAID: "projects.paymentStatusPaid",
 };
 
-/** Contract errors carry actionable detail (e.g. `sii_caf_exhausted` tells
- * the operator to load a CAF) — surface it instead of the generic toast. */
-function actionErrorDetail(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    const payload = error.payload as { error?: { detail?: unknown } } | null;
-    const detail = payload?.error?.detail;
-    if (typeof detail === "string" && detail.trim()) return detail;
-  }
-  return fallback;
-}
-
 export function ProjectPaymentsPanel({
   projectId,
   orgId,
@@ -77,6 +70,7 @@ export function ProjectPaymentsPanel({
 }): JSX.Element {
   const confirm = useConfirm();
   const prompt = usePrompt();
+  const queryClient = useQueryClient();
   const [summary, setSummary] = useState<PaymentsSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -130,7 +124,15 @@ export function ProjectPaymentsPanel({
 
   function openForm(): void {
     setOperationKey(crypto.randomUUID());
-    setBaseline({ kind, method });
+    // Follow the deal's position — registering against an outstanding
+    // balance should open as SALDO prefilled with what is owed, not the
+    // anticipo the first payment was (review WM7).
+    const collected = summary ? Number(summary.collected) : 0;
+    const balance = summary ? Number(summary.balance) : 0;
+    const nextKind: PaymentKindEnum = collected > 0 && balance > 0 ? "SALDO" : "ANTICIPO";
+    setKind(nextKind);
+    if (nextKind === "SALDO") setAmount(String(balance));
+    setBaseline({ kind: nextKind, method });
     setShowForm(true);
   }
 
@@ -155,6 +157,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 201) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, projectId],
+      });
       setShowForm(false);
       setAmount("");
       setReference("");
@@ -177,6 +182,9 @@ export function ProjectPaymentsPanel({
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) return;
       setSummary(response.data);
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "payments-summary", orgId, projectId],
+      });
     } catch (error) {
       if (generation.current === current) {
         setMessage(actionErrorDetail(error, t("projects.paymentsVoidError")));
@@ -335,6 +343,55 @@ export function ProjectPaymentsPanel({
     setMessage("");
     try {
       const response = await projectInvoiceDteEnvioAccess(projectId, invoice.id, requestOptions);
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) {
+        tab.close();
+        return;
+      }
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      if (generation.current === current) setMessage(t("projects.envioOpenError"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function sendCreditEnvio(note: ProjectCreditNote, resubmit = false): Promise<void> {
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEnvioSend(
+        projectId,
+        note.id,
+        { resubmit },
+        requestOptions,
+      );
+      if (response.status !== 201) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      await load();
+    } catch (error) {
+      if (generation.current === current) {
+        setMessage(actionErrorDetail(error, t("projects.envioSendError")));
+      }
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function openCreditEnvio(note: ProjectCreditNote): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("projects.envioOpenError"));
+      return;
+    }
+    const current = generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectCreditNoteDteEnvioAccess(projectId, note.id, requestOptions);
       if (response.status !== 200) throw new ApiError(response.status, response.data);
       if (generation.current !== current) {
         tab.close();
@@ -684,6 +741,19 @@ export function ProjectPaymentsPanel({
                           {`${t("projects.envioStatus")} · ${invoice.dte.envio.status}`}
                         </button>
                       )}
+                      {invoice.credit_note?.dte?.envio && (
+                        <button
+                          type="button"
+                          className="production-chip"
+                          title={`${t("projects.envioStatus")} · ${invoice.credit_note.dte.envio.track_id ?? ""}`}
+                          onClick={() => {
+                            if (invoice.credit_note) void openCreditEnvio(invoice.credit_note);
+                          }}
+                          disabled={busy}
+                        >
+                          {`${t("projects.envioStatus")} · ${invoice.credit_note.dte.envio.status}`}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <button
@@ -737,6 +807,39 @@ export function ProjectPaymentsPanel({
                           disabled={busy}
                         >
                           {invoice.dte.envio.attempted === true && !invoice.dte.envio.track_id
+                            ? t("projects.envioResend")
+                            : t("projects.envioRefresh")}
+                        </button>
+                      )}
+                      {canSendEnvio &&
+                        invoice.credit_note?.dte &&
+                        !invoice.credit_note.dte.envio && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (invoice.credit_note) void sendCreditEnvio(invoice.credit_note);
+                            }}
+                            disabled={busy}
+                          >
+                            {t("projects.envioSend")}
+                          </button>
+                        )}
+                      {canSendEnvio && invoice.credit_note?.dte?.envio?.status === "PENDING" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (invoice.credit_note) {
+                              void sendCreditEnvio(
+                                invoice.credit_note,
+                                invoice.credit_note.dte?.envio?.attempted === true &&
+                                  !invoice.credit_note.dte.envio.track_id,
+                              );
+                            }
+                          }}
+                          disabled={busy}
+                        >
+                          {invoice.credit_note.dte.envio.attempted === true &&
+                          !invoice.credit_note.dte.envio.track_id
                             ? t("projects.envioResend")
                             : t("projects.envioRefresh")}
                         </button>

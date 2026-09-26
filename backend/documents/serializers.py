@@ -271,3 +271,68 @@ class SignedAccessResponseSerializer(serializers.Serializer):
     artifact_id = serializers.UUIDField()
     signed_url = serializers.URLField()
     expires_in = serializers.IntegerField(min_value=3600, max_value=3600)
+
+
+class RevisionCompareQuerySerializer(serializers.Serializer):
+    base = serializers.RegexField(r"^REV-[A-Z]+$")
+    head = serializers.RegexField(r"^REV-[A-Z]+$")
+
+
+class RevisionCompareSideSerializer(serializers.Serializer):
+    revision_code = serializers.CharField()
+    emitted_at = serializers.CharField()
+    integrity = serializers.ChoiceField(
+        choices=("VERIFIED", "MISMATCH"), allow_null=True
+    )
+    currency = serializers.CharField()
+    total_price_net = serializers.CharField()
+    total_price_tax = serializers.CharField()
+    total_price_gross = serializers.CharField()
+
+
+class RevisionCompareSummarySerializer(serializers.Serializer):
+    added = serializers.IntegerField()
+    removed = serializers.IntegerField()
+    changed = serializers.IntegerField()
+    unchanged = serializers.IntegerField()
+    price_gross_delta = serializers.CharField(allow_null=True)
+
+
+class RevisionComparePositionSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    position_index = serializers.IntegerField()
+    location_tag = serializers.CharField()
+    typology = serializers.CharField()
+    system_id = serializers.CharField()
+    quantity = serializers.IntegerField()
+    width_mm = serializers.CharField()
+    height_mm = serializers.CharField()
+    color_interior = serializers.CharField()
+    color_exterior = serializers.CharField()
+    price_net = serializers.CharField()
+    discount_pct = serializers.CharField()
+    parametric_tree = serializers.JSONField(allow_null=True)
+
+
+class RevisionCompareFieldSerializer(serializers.Serializer):
+    field = serializers.CharField()
+    before = serializers.CharField()
+    after = serializers.CharField()
+
+
+class RevisionCompareEntrySerializer(serializers.Serializer):
+    position_index = serializers.IntegerField()
+    change = serializers.ChoiceField(choices=("ADDED", "REMOVED", "CHANGED"))
+    location_tag = serializers.CharField()
+    before = RevisionComparePositionSerializer(allow_null=True)
+    after = RevisionComparePositionSerializer(allow_null=True)
+    changes = RevisionCompareFieldSerializer(many=True)
+
+
+class RevisionCompareResponseSerializer(serializers.Serializer):
+    project_id = serializers.CharField()
+    project_code = serializers.CharField()
+    base = RevisionCompareSideSerializer()
+    head = RevisionCompareSideSerializer()
+    summary = RevisionCompareSummarySerializer()
+    positions = RevisionCompareEntrySerializer(many=True)

@@ -87,7 +87,7 @@ async function setupEstimator(): Promise<FixtureUser> {
 async function authenticate(page: Page, fixture: FixtureUser): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("Correo").fill(fixture.email);
-  await page.getByRole("button", { name: "Enviar Magic Link" }).click();
+  await page.getByRole("button", { name: "Enviar enlace de acceso" }).click();
   await expect(page.getByRole("status")).toContainText("Revisa el buzón local");
   const message = await waitForMagicLink({
     baseUrl: mailpitUrl,

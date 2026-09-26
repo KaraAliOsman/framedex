@@ -15,10 +15,11 @@ from uuid import UUID, uuid4
 from django.db import DatabaseError, transaction
 
 from authentication.errors import contract_error
+from authentication.rls import catalog_backend
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from ingest.catalog_parser import ROLES, parse_catalog_lines
-from ingest.extract import extract_tagged, kind_for, safe_file_name
+from ingest.extract import extract_tagged, kind_for, safe_file_name, sniffed_kind
 from jobs import service as jobs_service
 from pricing.repository import rows
 
@@ -108,6 +109,12 @@ def create_catalog_import(
             422,
             "catalog_import_file_invalid",
             "El nombre del archivo contiene caracteres no permitidos.",
+        )
+    if not sniffed_kind(kind, content):
+        raise contract_error(
+            422,
+            "catalog_import_file_mismatch",
+            "El contenido del archivo no coincide con su extensión.",
         )
     import_id = uuid4()
     storage_path = f"catalog-imports/{org_id}/{import_id}/{file_name}"
@@ -414,16 +421,20 @@ def confirm_catalog_import(
                 errors.append({"key": key, "code": "catalog_role_invalid"})
                 continue
             try:
-                # The tenant's own claims write the article — same RLS path
-                # catalog CRUD uses; the per-item savepoint keeps a rejected
-                # row (singleton role, constraint) from aborting the batch.
-                with transaction.atomic():
+                # The API stamps provenance — members cannot write it, so the
+                # insert runs under catalog_backend inside the same org/user
+                # RLS claims. review_pending=TRUE keeps the import honest: the
+                # confirm matched a parser candidate, but a human has not
+                # reviewed the technical row yet — readiness flags it until
+                # they do (CAT-10: a confirm click is not a review stamp).
+                with transaction.atomic(), catalog_backend():
                     inserted = rows(
                         "INSERT INTO public.profile_articles("
                         "system_id, org_id, sku, name, role, material, face_width_mm,"
                         " commercial_length_mm, welding_loss_mm, reinforcement_sku,"
-                        " weight_kg_m, steel_weight_kg_m, data_provenance)"
-                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'IMPORT')"
+                        " weight_kg_m, steel_weight_kg_m, data_provenance,"
+                        " review_pending)"
+                        " VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'IMPORT',TRUE)"
                         " ON CONFLICT (system_id, sku) DO NOTHING"
                         " RETURNING id",
                         [

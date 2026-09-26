@@ -12,7 +12,7 @@ from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -39,6 +39,9 @@ from catalogs.serializers import (
     KitResponseSerializer,
     SystemListSerializer,
     SystemResponseSerializer,
+    ProcessProfileOptionListSerializer,
+    SystemWorkspaceSerializer,
+    SectionImportResponseSerializer,
 )
 
 
@@ -212,6 +215,7 @@ class CatalogReviewView(APIView):
                     tenant.active_organization.organization_id,
                     row_id,
                     token.user_id,
+                    expected_revision=request.headers.get("If-Match"),
                 )
                 output = self.response_serializer(row).data
         except DatabaseError as error:
@@ -324,6 +328,7 @@ BeadCollectionView, BeadDetailView = _endpoint_classes(
     BeadResponseSerializer,
     BeadListSerializer,
 )
+BeadReviewView = _review_view("Bead", service.BEADS, BeadResponseSerializer)
 KitCollectionView, KitDetailView = _endpoint_classes(
     "Kit",
     service.KITS,
@@ -331,3 +336,65 @@ KitCollectionView, KitDetailView = _endpoint_classes(
     KitListSerializer,
 )
 KitReviewView = _review_view("Kit", service.KITS, KitResponseSerializer)
+
+
+class SystemWorkspaceView(APIView):
+    """GET systems/<id>/workspace/ — the §06 aggregate read: identity +
+    readiness + every entity bound to the system in one fetch."""
+
+    @extend_schema(
+        operation_id="catalog_system_workspace",
+        parameters=HEADERS,
+        responses={200: SystemWorkspaceSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request, row_id):
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
+            data = service.system_workspace(org_id, str(row_id))
+            output = SystemWorkspaceSerializer(data).data
+        return Response(output)
+
+
+class SectionImportCollectionView(APIView):
+    """POST section-imports/ — upload a DXF/SVG drawing, get back the stored
+    document path + detected outline candidates for human review."""
+
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        operation_id="catalog_section_import_create",
+        parameters=HEADERS,
+        request={"multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}},
+        responses={200: SectionImportResponseSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def post(self, request):
+        upload = request.FILES.get("file")
+        if upload is None:
+            raise contract_error(400, "section_file_missing", "catalogs.errors.section_file_missing")
+        with catalog_scope(request, roles=WRITE_ROLES) as org_id:
+            data = service.import_section_drawing(
+                org_id=org_id,
+                file_name=upload.name,
+                content=upload.read(5_000_001),
+                content_type=upload.content_type or "",
+            )
+        return Response(SectionImportResponseSerializer(data).data)
+
+
+class ProcessProfileCollectionView(APIView):
+    """GET process-profiles/ — the declared process authorities an org may
+    bind a system to (global library plus org-owned rows)."""
+
+    @extend_schema(
+        operation_id="catalog_process_profile_list",
+        parameters=HEADERS,
+        responses={200: ProcessProfileOptionListSerializer, **ERRORS},
+        tags=["catalogs"],
+    )
+    def get(self, request):
+        with catalog_scope(request, roles=READ_ROLES) as org_id:
+            output = ProcessProfileOptionListSerializer(
+                {"items": service.process_profile_options(org_id)}
+            ).data
+        return Response(output)

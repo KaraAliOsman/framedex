@@ -5,8 +5,9 @@ import { ApiError } from "../api/apiMutator";
 import { analyticsOperationalSummary, projectsList } from "../api/generated/dekopen";
 import type { OperationalSummary, ProjectResponse } from "../api/generated/models";
 import { useAuthSession } from "../auth/AuthSessionProvider";
+import { formatDateTime } from "../format";
 import { t, type TranslationKey } from "../i18n/es-CL";
-import { attentionEntries } from "./attention";
+import { attentionEntries, attentionLabel } from "./attention";
 
 const WO_STATUSES = [
   "RELEASED",
@@ -96,7 +97,7 @@ export function DashboardPage(): JSX.Element {
 
   // One canonical attention feed — the topbar bell renders the same queue,
   // so the surfaces can never disagree about what needs a human.
-  const attention = attentionEntries(opsQuery.data, items);
+  const attention = attentionEntries(opsQuery.data);
 
   return (
     <section className="dashboard" aria-labelledby="page-title">
@@ -132,8 +133,9 @@ export function DashboardPage(): JSX.Element {
                 className={entry.warn ? "attention-item is-warn" : "attention-item"}
               >
                 <Link to={entry.to}>
-                  <span>{t(entry.key)}</span>
                   <strong>{entry.count}</strong>
+                  <span className="attention-label">{attentionLabel(entry)}</span>
+                  <span className="attention-cta">{t(entry.action)}</span>
                 </Link>
               </li>
             ))}
@@ -144,14 +146,11 @@ export function DashboardPage(): JSX.Element {
       {next && (
         <Link to={`/projects/${next.id}`} className="dashboard-continue">
           <span className="eyebrow">{t("dashboard.continue")}</span>
-          <span className="dashboard-continue-name">
-            {next.code} · {next.name}
-          </span>
+          <span className="dashboard-continue-name">{next.name || next.code}</span>
           <span className="dashboard-continue-meta">
+            {next.name ? `${next.code} · ` : ""}
             {next.client_name} ·{" "}
-            <time dateTime={next.updated_at}>
-              {new Date(next.updated_at).toLocaleString("es-CL")}
-            </time>
+            <time dateTime={next.updated_at}>{formatDateTime(next.updated_at)}</time>
           </span>
           <span className="dashboard-continue-cta">{t("dashboard.resume")}</span>
         </Link>
@@ -161,7 +160,14 @@ export function DashboardPage(): JSX.Element {
         <section className="dashboard-ops" aria-label={t("dashboard.opsTitle")}>
           <h2 className="eyebrow">{t("dashboard.opsTitle")}</h2>
           <div className="dashboard-funnel">
-            {WO_STATUSES.map((status) => {
+            {WO_STATUSES.every(
+              (status) =>
+                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) === 0,
+            ) && <p className="dashboard-funnel-empty">{t("dashboard.noWorkOrders")}</p>}
+            {WO_STATUSES.filter(
+              (status) =>
+                Number((opsQuery.data.work_orders as Record<string, number>)[status] ?? 0) > 0,
+            ).map((status) => {
               const count = Number(
                 (opsQuery.data.work_orders as Record<string, number>)[status] ?? 0,
               );
@@ -206,7 +212,7 @@ export function DashboardPage(): JSX.Element {
                     {t(eventLabel[item.event] ?? "production.eventStepCompleted")}
                   </span>
                   <span className="dashboard-activity-code">{item.order_code}</span>
-                  <time dateTime={item.at}>{new Date(item.at).toLocaleString("es-CL")}</time>
+                  <time dateTime={item.at}>{formatDateTime(item.at)}</time>
                 </li>
               ))}
             </ul>
@@ -234,14 +240,16 @@ export function DashboardPage(): JSX.Element {
         <div className="dashboard-list">
           <div className="dashboard-list-head">
             <h2 className="eyebrow">{t("dashboard.recent")}</h2>
-            <Link to="/projects">{t("dashboard.viewAll")}</Link>
+            <Link className="ui-backlink" to="/projects">
+              {t("dashboard.viewAll")}
+            </Link>
           </div>
           <ul>
             {recent.map((item) => (
               <li key={item.id}>
                 <Link to={`/projects/${item.id}`} className="dashboard-row">
-                  <span className="dashboard-row-code">{item.code}</span>
                   <span className="dashboard-row-name">{item.name}</span>
+                  <span className="dashboard-row-code">{item.code}</span>
                   <span className="dashboard-row-client">{item.client_name}</span>
                   <span className="status-chip" data-status={item.status.toLowerCase()}>
                     {t(statuses[item.status])}

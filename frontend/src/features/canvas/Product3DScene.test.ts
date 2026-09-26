@@ -585,4 +585,95 @@ describe("buildScene3D", () => {
     const coupler = scene.couplers.find((solid) => solid.owner === "c1");
     expect(coupler?.kind).toBe("prism");
   });
+
+  describe("§05 physical details", () => {
+    function frameSectionOptions(): DesignOptions {
+      return {
+        profiles: [
+          {
+            role: "FRAME",
+            sku: "FR-SEC",
+            material: "PVC",
+            face_width_mm: "60.00",
+            section: {
+              source: "POLYGON",
+              depth_mm: "70.00",
+              polygon: [
+                { x_mm: "0", y_mm: "0" },
+                { x_mm: "60", y_mm: "0" },
+                { x_mm: "60", y_mm: "70" },
+                { x_mm: "0", y_mm: "70" },
+              ],
+            },
+          },
+        ],
+      } as DesignOptions;
+    }
+
+    it("extrudes a declared frame section as profile solids, not boxes", () => {
+      const product = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+      const scene = buildScene3D(product, resolveMembers(frameSectionOptions()));
+      const profiles = scene.modules[0]!.solids.filter(
+        (solid) => solid.kind === "profile" && solid.surface === "frame",
+      );
+      // the ring emits one run per side — posts on y, rails on x
+      expect(profiles).toHaveLength(4);
+      expect(profiles.every((solid) => solid.kind === "profile" && !solid.approximate)).toBe(true);
+      const post = profiles[0]!;
+      expect(post.kind).toBe("profile");
+      if (post.kind === "profile") {
+        expect(post.axis).toBe("y");
+        expect(post.a1 - post.a0).toBeCloseTo(1400, 5);
+        expect(post.outline.length).toBe(4);
+      }
+    });
+
+    it("keeps undeclared members approximate boxes", () => {
+      const product = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+      const scene = buildScene3D(product, members);
+      const frames = scene.modules[0]!.solids.filter(
+        (solid) => solid.surface === "frame",
+      ) as BoxSolid[];
+      expect(frames).toHaveLength(4);
+      expect(frames.every((solid) => solid.approximate === true)).toBe(true);
+    });
+
+    it("emits bead and gasket solids around a fixed pane", () => {
+      const product = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+      const scene = buildScene3D(product, members);
+      const solids = scene.modules[0]!.solids;
+      expect(solids.filter((solid) => solid.surface === "bead").length).toBe(4);
+      expect(solids.filter((solid) => solid.surface === "gasket").length).toBe(4);
+    });
+
+    it("emits hinges and a handle on an operable leaf", () => {
+      const base = makeBowProduct({ moduleCount: 1, widthMm: 900, heightMm: 1400, angleDeg: 0 });
+      const module = {
+        ...base.assembly.modules[0]!,
+        tree: { id: "b1", type: "BAY", opening_type: "TURN_LEFT", glass_thickness_mm: "4.00" },
+      } as (typeof base.assembly.modules)[number];
+      const product = { ...base, assembly: { modules: [module], couplings: [] } } as ProductJson;
+      const scene = buildScene3D(product, members);
+      const solids = scene.modules[0]!.solids;
+      expect(solids.filter((solid) => solid.surface === "hinge").length).toBe(2);
+      expect(solids.filter((solid) => solid.surface === "handle").length).toBe(2);
+    });
+
+    it("emits one rail per declared sliding track", () => {
+      const base = makeBowProduct({ moduleCount: 1, widthMm: 1800, heightMm: 1400, angleDeg: 0 });
+      const module = {
+        ...base.assembly.modules[0]!,
+        tree: {
+          id: "b1",
+          type: "BAY",
+          opening_type: "SLIDING_2L",
+          glass_thickness_mm: "4.00",
+        },
+      } as (typeof base.assembly.modules)[number];
+      const product = { ...base, assembly: { modules: [module], couplings: [] } } as ProductJson;
+      const scene = buildScene3D(product, members);
+      const tracks = scene.modules[0]!.solids.filter((solid) => solid.surface === "track");
+      expect(tracks).toHaveLength(2);
+    });
+  });
 });

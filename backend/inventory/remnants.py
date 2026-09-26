@@ -87,7 +87,8 @@ def list_remnants(
         parameters.append(status)
     items = rows(
         f"{_SELECT} WHERE {' AND '.join(clauses)}"
-        " ORDER BY kind, status, length_mm NULLS LAST, width_mm NULLS LAST, id",
+        " ORDER BY kind, status, length_mm NULLS LAST, width_mm NULLS LAST, id"
+        " LIMIT 500",
         parameters,
     )
     return {"remnants": [_remnant_row(r) for r in items]}

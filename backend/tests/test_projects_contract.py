@@ -273,6 +273,9 @@ def test_position_public_preserves_pre_upgrade_glass_metadata_hash():
         "color_exterior": "WHITE",
         "parametric_tree": _json.dumps(design["parametric_tree"]),
         "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "cost_net": Decimal("0"),
+        "price_net": Decimal("0"),
+        "discount_pct": Decimal("0"),
         "updated_at": "2026-09-23T00:00:00Z",
     }
     public = service.position_public(row)
@@ -328,6 +331,9 @@ def test_position_public_reads_new_glass_metadata_fields():
         "color_exterior": "WHITE",
         "parametric_tree": _json.dumps(design["parametric_tree"]),
         "bom_snapshot": _json.dumps({**stored_bom, "calculation_hash": expected}),
+        "cost_net": Decimal("0"),
+        "price_net": Decimal("0"),
+        "discount_pct": Decimal("0"),
         "updated_at": "2026-09-23T00:00:00Z",
     }
     public = service.position_public(row)

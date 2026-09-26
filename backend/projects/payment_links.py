@@ -161,10 +161,31 @@ def create_link(*, org_id: UUID, project_id: UUID, actor_id: UUID, data: dict) -
         raise contract_error(422, "payment_kind_invalid", "Tipo de cobro no válido.")
     subject = (data.get("subject") or "").strip() or f"{project['name']} — pago {kind.lower()}"
     # Freeze the deal the payer agrees to — settlement must be able to seal a
-    # comprobante even if pricing is reset while the customer is paying.
+    # comprobante even if pricing is reset while the customer is paying. An
+    # unpriced/unsealed project can never produce a charge (F19): a mailed
+    # Flow link collects real money against nothing.
     deal = _deal(org_id, project_id, project)
-    deal_total = str(deal["total"]) if deal else None
-    deal_currency = deal["currency"] if deal else None
+    if deal is None or deal["sealed_revision"] is None:
+        raise contract_error(
+            422,
+            "payment_requires_sealed_deal",
+            "Emite una revisión de cotización antes de crear un cobro.",
+        )
+    with documentary_backend():
+        collected = rows(
+            "SELECT COALESCE(SUM(amount), 0) AS collected FROM public.project_payments "
+            "WHERE org_id=%s AND project_id=%s AND voided_at IS NULL",
+            [str(org_id), str(project_id)],
+        )
+    balance = deal["total"] - Decimal(str(collected[0]["collected"]))
+    if amount > balance:
+        raise contract_error(
+            422,
+            "payment_exceeds_balance",
+            "El cobro supera el saldo pendiente del proyecto.",
+        )
+    deal_total = str(deal["total"])
+    deal_currency = deal["currency"]
     with transaction.atomic(), documentary_backend():
         integration = rows(
             "SELECT * FROM public.org_payment_integrations "
@@ -367,6 +388,19 @@ def _settle(*, org_id: UUID, link_id: UUID, verified: dict, client: FlowClient) 
             "WHERE org_id=%s AND id=%s RETURNING *",
             [verified["flowOrder"], str(payment[0]["id"]), str(org_id), str(link_id)],
         )[0]
+        # §08: the provider-verified settle queues the commercial refresh the
+        # same way a manual payment does — inside the tx, keyed to the
+        # payment row it minted.
+        from automations.service import emit
+
+        emit(
+            "automation.commercial_refresh",
+            org_id=org_id,
+            actor_id=link["created_by"],
+            idempotency_key=f"auto:comm:{link['project_id']}:{payment[0]['id']}",
+            project_id=str(link["project_id"]),
+            payment_id=str(payment[0]["id"]),
+        )
     return {"link": _public_link(link)}
 
 

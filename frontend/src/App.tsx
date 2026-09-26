@@ -5,6 +5,7 @@ import { t } from "./i18n/es-CL";
 
 import { AppShell } from "./app/AppShell";
 import { DashboardPage } from "./app/DashboardPage";
+import { JobsPage } from "./app/JobsPage";
 import { SettingsPage } from "./app/SettingsPage";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { ReadyGuard, SessionGuard } from "./auth/AuthGuards";
@@ -41,6 +42,9 @@ const ClientsPage = lazy(async () => ({
 const CatalogPage = lazy(async () => ({
   default: (await import("./features/catalogs/CatalogPage")).CatalogPage,
 }));
+const AssistantWorkspacePage = lazy(async () => ({
+  default: (await import("./features/assistant/AssistantWorkspacePage")).AssistantWorkspacePage,
+}));
 const ProjectPositionEditor = lazy(async () => ({
   default: (await import("./features/projects/ProjectPositionEditor")).ProjectPositionEditor,
 }));
@@ -74,6 +78,10 @@ const PortalQuotePage = lazy(async () => {
   const module = await import("./features/portal/PortalQuotePage");
   return { default: module.PortalQuotePage };
 });
+const BenchmarkPage = lazy(async () => {
+  const module = await import("./features/benchmark/BenchmarkPage");
+  return { default: module.BenchmarkPage };
+});
 
 function HomeRedirect(): JSX.Element {
   const auth = useAuthSession();
@@ -84,7 +92,16 @@ function HomeRedirect(): JSX.Element {
   if (auth.status === "organization_required") {
     return <Navigate to="/select-organization" replace />;
   }
-  return <Navigate to={auth.status === "ready" ? "/dashboard" : "/login"} replace />;
+  if (auth.status === "ready") {
+    // An installer's work lives on the production floor — the commercial
+    // dashboard would deny both of its queries and greet them with errors.
+    const home =
+      auth.me?.active_organization?.role === "INSTALLER"
+        ? "/production"
+        : "/dashboard";
+    return <Navigate to={home} replace />;
+  }
+  return <Navigate to="/login" replace />;
 }
 
 export function AppRoutes(): JSX.Element {
@@ -95,7 +112,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("wallet.loading")}</p>}>
                 <BillingPage />
               </Suspense>
             </AppShell>
@@ -107,7 +124,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("wallet.loading")}</p>}>
                 <WalletPage />
               </Suspense>
             </AppShell>
@@ -121,7 +138,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("projects.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
                 <CommercialPricingPage />
               </Suspense>
             </AppShell>
@@ -133,7 +150,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("canvas.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
                 <CanvasEditor2DView demoRoute />
               </Suspense>
             </AppShell>
@@ -173,6 +190,16 @@ export function AppRoutes(): JSX.Element {
           </Suspense>
         }
       />
+      {import.meta.env.DEV && (
+        <Route
+          path="/benchmark"
+          element={
+            <Suspense fallback={<p role="status" />}>
+              <BenchmarkPage />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route
@@ -202,12 +229,24 @@ export function AppRoutes(): JSX.Element {
         }
       />
       <Route
-        path="/clients"
+        path="/clients/:id?"
         element={
           <ReadyGuard>
             <AppShell>
               <Suspense fallback={<p role="status">{t("clients.loading")}</p>}>
                 <ClientsPage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
+      <Route
+        path="/jobs"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("jobs.title")}</p>}>
+                <JobsPage />
               </Suspense>
             </AppShell>
           </ReadyGuard>
@@ -251,6 +290,18 @@ export function AppRoutes(): JSX.Element {
       />
       <Route path="/projects" element={<ProjectSurface />} />
       <Route path="/catalogs" element={<Navigate to="/catalogs/systems" replace />} />
+      <Route
+        path="/assistant"
+        element={
+          <ReadyGuard>
+            <AppShell>
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
+                <AssistantWorkspacePage />
+              </Suspense>
+            </AppShell>
+          </ReadyGuard>
+        }
+      />
       <Route
         path="/catalogs/systems"
         element={

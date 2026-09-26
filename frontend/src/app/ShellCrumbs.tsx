@@ -48,7 +48,14 @@ export function crumbsFor(
   if (section === "dashboard") return [{ label: t("crumb.dashboard") }];
   if (section === "production") return [{ label: t("crumb.production") }];
   if (section === "purchasing") return [{ label: t("crumb.purchasing") }];
-  if (section === "clients") return [{ label: t("crumb.clients") }];
+  if (section === "clients") {
+    const head: Crumb = { label: t("crumb.clients") };
+    if (second !== undefined)
+      return [{ ...head, to: "/clients" }, { label: t("crumb.clientDetail") }];
+    return [head];
+  }
+  if (section === "jobs") return [{ label: t("crumb.jobs") }];
+  if (section === "assistant") return [{ label: t("crumb.assistant") }];
   if (section === "catalogs") {
     const head: Crumb = { label: t("crumb.catalogs") };
     if (second === "systems") return [head, { label: t("crumb.systems") }];

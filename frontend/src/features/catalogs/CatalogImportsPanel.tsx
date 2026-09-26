@@ -1,3 +1,4 @@
+import { fmtMm } from "../../format";
 import { Fragment, useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ApiError } from "../../api/apiMutator";
 import {
@@ -565,7 +566,7 @@ export function CatalogImportsPanel({
                               <span key={match.system_code} className="imports-existing">
                                 {ct("importsExisting").replace("{system}", match.system_code)}:{" "}
                                 {match.name} · {ct(`option.${match.role}`)}
-                                {match.face_width_mm ? ` · ${match.face_width_mm} mm` : ""}
+                                {match.face_width_mm ? ` · ${fmtMm(match.face_width_mm)} mm` : ""}
                               </span>
                             ))}
                           </td>

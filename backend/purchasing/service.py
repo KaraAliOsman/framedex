@@ -18,6 +18,7 @@ from dekopen_engine.documentary_canonical import (
 
 from documents.repository import DocumentaryError, decoded, documentary_backend, json_text, one, rows
 from inventory.production_stock import coverage_for_version
+from projects import org_branding
 
 
 ORDER_TYPES = (
@@ -466,6 +467,9 @@ def confirm_order_type_batch(
                 "allocation_identity": allocation_identity,
                 "supplier_eligibility": eligibility_snapshot,
                 "lines": line_snapshots,
+                # Issuer identity for the letterhead — sealed with the order so
+                # re-renders keep the same branding.
+                "organization": org_branding.branding_for_snapshot(org_id=org_id),
             }
             order_snapshot_hash = documentary_sha256_v1(snapshot)
             one(

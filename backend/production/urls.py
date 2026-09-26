@@ -13,9 +13,12 @@ from production.views import (
     ProductionOrderOpsFileView,
     ProductionOrderDispatchNoteView,
     ProductionOrderDispatchNoteDteView,
+    ProductionOrderDispatchNoteEnvioView,
     ProductionOrderInstallationView,
     ProductionOrderLabelsView,
     ProductionOrderCncFileView,
+    ProductionOrderCutPackView,
+    ProductionOrderPackView,
     ProductionOrderDetailView,
     ProductionOrderListView,
     ProductionOrderOptimizeView,
@@ -89,6 +92,16 @@ urlpatterns = [
         name="production-order-packing",
     ),
     path(
+        "orders/<uuid:order_id>/cut-pack/",
+        ProductionOrderCutPackView.as_view(),
+        name="production-order-cut-pack",
+    ),
+    path(
+        "orders/<uuid:order_id>/production-pack/",
+        ProductionOrderPackView.as_view(),
+        name="production-order-pack",
+    ),
+    path(
         "orders/<uuid:order_id>/labels/",
         ProductionOrderLabelsView.as_view(),
         name="production-order-labels",
@@ -127,6 +140,11 @@ urlpatterns = [
         "orders/<uuid:order_id>/dispatch-note-dte/",
         ProductionOrderDispatchNoteDteView.as_view(),
         name="production-order-dispatch-note-dte",
+    ),
+    path(
+        "orders/<uuid:order_id>/dispatch-note-envio/",
+        ProductionOrderDispatchNoteEnvioView.as_view(),
+        name="production-order-dispatch-note-envio",
     ),
     path(
         "orders/<uuid:order_id>/install/",

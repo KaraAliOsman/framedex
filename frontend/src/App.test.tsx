@@ -78,7 +78,7 @@ describe("SHOT-04 application routes", () => {
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Proyectos" })).toHaveAttribute("href", "/projects");
     fireEvent.click(screen.getByRole("link", { name: "Proyectos" }));
-    expect(await screen.findByRole("heading", { name: "Proyectos" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Todos los proyectos" })).toBeInTheDocument();
   });
 
   it("routes an OWNER requiring aal2 to the MFA flow", async () => {

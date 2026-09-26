@@ -131,6 +131,7 @@ class _NullAtomic:
 @pytest.fixture(autouse=True)
 def _no_db(monkeypatch):
     monkeypatch.setattr(catalog_service, "transaction", _NullAtomic())
+    monkeypatch.setattr(catalog_service, "catalog_backend", _backend)
 
 
 def _import_row(**overrides):

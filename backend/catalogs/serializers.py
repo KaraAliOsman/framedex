@@ -8,7 +8,11 @@ from rest_framework import serializers
 from pricing.serializers import StrictSerializer
 from dekopen_engine.geometry import SUPPORTED_OPENING_TYPES
 from dekopen_engine.hardware import normalize_opening_type
-from dekopen_engine.models import BayOpeningType, HARDWARE_COMPONENT_CATEGORIES
+from dekopen_engine.models import (
+    BayOpeningType,
+    HARDWARE_COMPONENT_CATEGORIES,
+    polygon_self_intersects,
+)
 
 KIT_OPENING_TYPES = sorted(
     {
@@ -97,6 +101,18 @@ class SystemWriteSerializer(StrictSerializer):
     )
     version = serializers.IntegerField(min_value=1, max_value=2147483647)
     is_active = serializers.BooleanField()
+    # §06 system identity — NULL means unknown, never invented.
+    manufacturer = serializers.CharField(
+        max_length=255, required=False, allow_null=True, allow_blank=True
+    )
+    family = serializers.CharField(
+        max_length=150, required=False, allow_null=True, allow_blank=True
+    )
+    applications = serializers.ListField(
+        child=serializers.CharField(max_length=60), required=False
+    )
+    # Declared process authority — bound rows must be global or org-owned.
+    process_profile_id = serializers.UUIDField(required=False, allow_null=True)
 
 
 class SectionPointSerializer(StrictSerializer):
@@ -107,6 +123,22 @@ class SectionPointSerializer(StrictSerializer):
 class SectionAxisSerializer(StrictSerializer):
     name = serializers.CharField(max_length=50)
     y_mm = decimal_field(10, 2)
+
+
+class SectionImportCandidateSerializer(serializers.Serializer):
+    index = serializers.IntegerField()
+    tag = serializers.CharField()
+    points = serializers.ListField(child=serializers.ListField(child=serializers.CharField()))
+    area = serializers.CharField()
+
+
+class SectionImportResponseSerializer(serializers.Serializer):
+    document_path = serializers.CharField()
+    format = serializers.CharField()
+    parser_version = serializers.CharField()
+    mm_per_unit = serializers.CharField(allow_null=True)
+    candidates = SectionImportCandidateSerializer(many=True)
+    warnings = serializers.ListField(child=serializers.CharField())
 
 
 class ProfileSectionSerializer(StrictSerializer):
@@ -160,6 +192,10 @@ class ProfileSectionSerializer(StrictSerializer):
             area += x1 * y2 - x2 * y1
         if area == 0:
             raise serializers.ValidationError("A section polygon must enclose area.")
+        if polygon_self_intersects(points):
+            raise serializers.ValidationError(
+                "A section polygon cannot self-intersect."
+            )
         return value
 
     def validate(self, attrs):
@@ -332,7 +368,7 @@ class ArticleResponseSerializer(ProvenanceFieldsMixin, ArticleWriteSerializer):
     section_revised_by = serializers.UUIDField(read_only=True, allow_null=True)
 
 
-class BeadResponseSerializer(BeadWriteSerializer):
+class BeadResponseSerializer(ProvenanceFieldsMixin, BeadWriteSerializer):
     revision = serializers.CharField(read_only=True)
     read_only = serializers.BooleanField()
     id = serializers.UUIDField()
@@ -362,3 +398,92 @@ class KitListSerializer(serializers.Serializer):
 
 class CatalogFilterSerializer(StrictSerializer):
     system_id = serializers.UUIDField(required=False)
+
+
+class ReinforcementRowSerializer(serializers.Serializer):
+    """A declared reinforcement profile bound to a parent article — steel
+    authority the workspace surfaces alongside the profile it stiffens."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField(allow_null=True)
+    system_id = serializers.UUIDField()
+    parent_profile_article_id = serializers.UUIDField()
+    sku = serializers.CharField()
+    commercial_sku = serializers.CharField()
+    name = serializers.CharField()
+    manufacturer_name = serializers.CharField(allow_null=True)
+    supplier_name = serializers.CharField(allow_null=True)
+    stock_length_mm = serializers.CharField()
+    thickness_mm = serializers.CharField(allow_null=True)
+    ix_cm4 = serializers.CharField(allow_null=True)
+    purchase_unit = serializers.CharField()
+    is_default = serializers.BooleanField()
+    is_active = serializers.BooleanField()
+
+
+class PurchaseMappingRowSerializer(serializers.Serializer):
+    """Catalog article → commercial purchase identity."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField(allow_null=True)
+    profile_article_id = serializers.UUIDField()
+    commercial_sku = serializers.CharField()
+    manufacturer_name = serializers.CharField()
+    supplier_name = serializers.CharField(allow_null=True)
+    purchase_unit = serializers.CharField()
+    is_active = serializers.BooleanField()
+
+
+class ProcessProfileRowSerializer(serializers.Serializer):
+    """The declared manufacturing process a system binds — stations, corner
+    method, glazing/QC/pack flags. org_id NULL = a global authority."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField(allow_null=True)
+    code = serializers.CharField()
+    version = serializers.IntegerField()
+    label = serializers.CharField()
+    material = serializers.CharField(allow_null=True)
+    product_kind = serializers.CharField(allow_null=True)
+    joining_method = serializers.CharField()
+    corner_process = serializers.CharField()
+    cleaning_process = serializers.BooleanField()
+    stations = serializers.ListField()
+    operation_station_map = serializers.DictField()
+    sash_assembly_required = serializers.BooleanField()
+    hardware_station = serializers.BooleanField()
+    glazing = serializers.BooleanField()
+    qc = serializers.BooleanField()
+    packaging = serializers.BooleanField()
+    optional_operations = serializers.ListField()
+    machine_neutral_machining = serializers.ListField()
+    provenance = serializers.DictField()
+
+
+class SystemWorkspaceSerializer(serializers.Serializer):
+    """The §06 system home: identity + readiness + the entities bound to
+    this system across every catalog domain, in one fetch."""
+
+    system = SystemResponseSerializer()
+    articles = ArticleResponseSerializer(many=True)
+    beads = BeadResponseSerializer(many=True)
+    kits = KitResponseSerializer(many=True)
+    reinforcements = ReinforcementRowSerializer(many=True)
+    purchase_mappings = PurchaseMappingRowSerializer(many=True)
+    process_profile = ProcessProfileRowSerializer(allow_null=True)
+
+
+class ProcessProfileOptionSerializer(serializers.Serializer):
+    """Compact option for the system→process-profile binding picker."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField(allow_null=True)
+    code = serializers.CharField()
+    version = serializers.IntegerField()
+    label = serializers.CharField()
+    material = serializers.CharField(allow_null=True)
+    product_kind = serializers.CharField(allow_null=True)
+
+
+class ProcessProfileOptionListSerializer(serializers.Serializer):
+    items = ProcessProfileOptionSerializer(many=True)

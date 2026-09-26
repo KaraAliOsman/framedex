@@ -191,7 +191,7 @@ class SystemParamsRepository:
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text
                 FROM public.profile_articles
-                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
                 """,
                 [system_id, active_org_id],
@@ -226,7 +226,7 @@ class SystemParamsRepository:
                        reinforcement_gap_mm, weight_kg_m, steel_weight_kg_m,
                        reinforcement_sku, material::text, section::text
                 FROM public.profile_articles
-                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                   AND role = 'COUPLER'
                 ORDER BY sku
                 """,
@@ -247,7 +247,7 @@ class SystemParamsRepository:
                 """
                 SELECT sku, name
                 FROM public.profile_articles
-                WHERE system_id = %s AND (org_id IS NULL OR org_id = %s)
+                WHERE system_id = %s AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
                 """,
                 [system_id, active_org_id],
@@ -273,9 +273,9 @@ class SystemParamsRepository:
                 JOIN public.profile_articles AS article
                   ON article.id = matrix.bead_article_id
                 WHERE matrix.system_id = %s AND matrix.is_active = TRUE
-                  AND (matrix.org_id IS NULL OR matrix.org_id = %s)
+                  AND (matrix.org_id = %s OR (matrix.org_id IS NULL AND matrix.system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                   AND article.system_id = matrix.system_id
-                  AND (article.org_id IS NULL OR article.org_id = %s)
+                  AND (article.org_id = %s OR (article.org_id IS NULL AND article.system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY matrix.glass_thickness_mm
                 """,
                 [system_id, active_org_id, active_org_id],
@@ -303,7 +303,7 @@ class SystemParamsRepository:
                        stay_arms_qty, contents::text, weight_kg, carriage_capacity_kg
                 FROM public.hardware_kits
                 WHERE system_id = %s AND is_active = TRUE
-                  AND (org_id IS NULL OR org_id = %s)
+                  AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
                 """,
                 [system_id, active_org_id],
@@ -336,7 +336,7 @@ class SystemParamsRepository:
                 SELECT sku, name, kind, thickness_mm, weight_kg_m2
                 FROM public.infill_articles
                 WHERE system_id = %s AND is_active = TRUE
-                  AND (org_id IS NULL OR org_id = %s)
+                  AND (org_id = %s OR (org_id IS NULL AND system_id IN (SELECT id FROM public.profile_systems WHERE org_id IS NULL AND is_global)))
                 ORDER BY sku
                 """,
                 [system_id, active_org_id],

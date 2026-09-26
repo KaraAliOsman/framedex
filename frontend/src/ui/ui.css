@@ -27,15 +27,34 @@ button.ui-button {
   border-color: var(--theme-border-strong);
 }
 
+/* Tertiary navigation links ("Volver al proyecto", "Ver todos") — quiet
+ * chrome, never default-browser blue (review m5). */
+a.ui-backlink {
+  align-items: center;
+  color: var(--theme-text-muted);
+  display: inline-flex;
+  font-size: var(--text-s);
+  text-decoration: none;
+}
+
+a.ui-backlink--back::before {
+  content: "‹";
+  margin-right: 0.125rem;
+}
+
+a.ui-backlink:hover {
+  color: var(--theme-text-primary);
+}
+
 .ui-button--primary {
-  background: var(--theme-accent);
-  border-color: var(--theme-accent);
+  background: var(--theme-accent-strong);
+  border-color: var(--theme-accent-strong);
   color: var(--theme-surface-panel);
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: var(--theme-accent-strong);
-  border-color: var(--theme-accent-strong);
+  background: var(--theme-accent-deep);
+  border-color: var(--theme-accent-deep);
 }
 
 .ui-button--danger {
@@ -206,6 +225,19 @@ button:disabled {
   border-color: var(--theme-danger);
 }
 
+.ui-empty--denied {
+  border-style: solid;
+  min-height: 12rem;
+}
+
+.ui-empty__glyph {
+  fill: none;
+  height: 2rem;
+  stroke: var(--theme-text-secondary);
+  stroke-width: 1.4;
+  width: 2rem;
+}
+
 .ui-skeleton {
   display: flex;
   flex-direction: column;
@@ -327,6 +359,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   max-height: 85vh;
+  max-width: calc(100vw - 2rem);
   outline: none;
   width: 34rem;
 }
@@ -539,4 +572,86 @@ button:disabled {
   border-color: var(--theme-disabled-border);
   color: var(--theme-disabled-ink);
   cursor: not-allowed;
+}
+
+/* Production/status chip — shared by Settings, Catalogs (imports), Projects
+   and Production; it lives in the eager layer so chips render on cold loads
+   of any surface. */
+.production-chip {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--theme-border-subtle);
+  color: var(--theme-text-secondary);
+}
+.production-chip.status-done,
+.production-chip.status-completed {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+.production-chip.status-in_progress {
+  color: var(--theme-info, var(--theme-accent));
+  border-color: currentColor;
+}
+.production-chip.status-blocked,
+.production-chip.status-hold {
+  color: var(--theme-warning, #e56a32);
+  border-color: currentColor;
+}
+.production-chip.delivery-scheduled {
+  border-color: var(--accent);
+}
+.production-chip.delivery-on_route {
+  border-color: var(--warn, #b7791f);
+}
+.production-chip.delivery-delivered {
+  border-color: var(--ok, #2f855a);
+}
+.production-chip.delivery-failed {
+  border-color: var(--danger, #c53030);
+}
+.production-chip.is-warn {
+  color: var(--theme-warn, #b45309);
+  border-color: var(--theme-warn, #b45309);
+}
+.production-chip.is-ready {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+.production-chip.imports-status-uploaded,
+.production-chip.imports-status-extracting {
+  color: var(--theme-info, var(--theme-accent));
+  border-color: currentColor;
+}
+.production-chip.imports-status-review_ready {
+  color: var(--theme-warning, #e56a32);
+  border-color: currentColor;
+}
+.production-chip.imports-status-confirmed {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+.production-chip.imports-status-failed {
+  color: var(--theme-danger, #c0392b);
+  border-color: currentColor;
+}
+.production-chip.imports-confidence-verified_structured {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+.production-chip.imports-confidence-high_candidate {
+  color: var(--theme-accent);
+  border-color: currentColor;
+  border-style: dashed;
+}
+.production-chip.imports-confidence-review_required {
+  color: var(--theme-warning, #e56a32);
+  border-color: currentColor;
+}
+.production-chip.imports-confidence-low {
+  color: var(--theme-danger, #c0392b);
+  border-color: currentColor;
+  border-style: dashed;
 }

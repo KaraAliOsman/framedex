@@ -30,9 +30,12 @@
 }
 .production-filters {
   display: flex;
-  flex-wrap: wrap;
+  /* Nine+ chips ragged-wrap onto two lines; one scrollable row stays clean. */
+  flex-wrap: nowrap;
   gap: var(--space-1);
   margin-bottom: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
 .production-filter {
@@ -41,9 +44,11 @@
   background: var(--theme-surface);
   color: var(--theme-text-muted);
   cursor: pointer;
+  flex: none;
   font: inherit;
   font-size: var(--text-xs);
   padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
 }
 
 .production-filter:hover {
@@ -57,8 +62,9 @@
   font-weight: 600;
 }
 
+/* Clear-filters reads as a control, not a placeholder — same solid chrome as
+ * the preset filters, de-emphasized by color only (review m12). */
 .production-filter-clear {
-  border-style: dashed;
   color: var(--theme-text);
 }
 
@@ -108,29 +114,6 @@
   font-size: 0.85rem;
   color: var(--theme-text-secondary);
 }
-.production-chip {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--theme-border-subtle);
-  color: var(--theme-text-secondary);
-}
-.production-chip.status-done,
-.production-chip.status-completed {
-  color: var(--theme-accent);
-  border-color: var(--theme-accent);
-}
-.production-chip.status-in_progress {
-  color: var(--theme-info, var(--theme-accent));
-  border-color: currentColor;
-}
-.production-chip.status-blocked,
-.production-chip.status-hold {
-  color: var(--theme-warning, #e56a32);
-  border-color: currentColor;
-}
 .production-detail-head {
   display: flex;
   align-items: center;
@@ -162,13 +145,17 @@
   margin: 1rem 0;
   padding: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 .production-step {
+  align-items: center;
+  background: var(--theme-bg-canvas);
   border: 1px solid var(--theme-border-subtle);
   border-radius: 0.375rem;
-  padding: 0.75rem;
-  background: var(--theme-bg-canvas);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
 }
 .production-step.step-done {
   opacity: 0.75;
@@ -190,14 +177,15 @@
   color: var(--theme-text-secondary);
 }
 .production-step-note {
-  margin: 0.5rem 0 0;
   color: var(--theme-text-secondary);
+  flex-basis: 100%;
   font-size: 0.9rem;
+  margin: 0.2rem 0 0;
 }
 .production-step-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.6rem;
+  margin-left: auto;
 }
 .production-step-actions button,
 .production-order {
@@ -245,6 +233,11 @@
 .production-cnc button:disabled {
   cursor: wait;
   opacity: 0.6;
+}
+.production-cnc .production-cutpack {
+  border-color: var(--theme-accent, #0f817a);
+  background: var(--theme-accent-soft);
+  font-weight: 600;
 }
 
 .production-remake:hover:not(:disabled) {
@@ -475,21 +468,7 @@
   display: flex;
   gap: 8px;
 }
-.production-chip.delivery-scheduled {
-  border-color: var(--accent);
-}
-.production-chip.delivery-on_route {
-  border-color: var(--warn, #b7791f);
-}
-.production-chip.delivery-delivered {
-  border-color: var(--ok, #2f855a);
-}
-.production-chip.delivery-failed {
-  border-color: var(--danger, #c53030);
-}
-.production-chip-danger {
-  color: var(--danger, #c53030);
-}
+
 .signature-pad {
   position: relative;
   margin-top: 4px;
@@ -893,12 +872,4 @@
   display: block;
   font-size: 0.72rem;
   color: var(--theme-text-secondary);
-}
-.production-chip.is-warn {
-  color: var(--theme-warn, #b45309);
-  border-color: var(--theme-warn, #b45309);
-}
-.production-chip.is-ready {
-  color: var(--theme-accent);
-  border-color: var(--theme-accent);
 }

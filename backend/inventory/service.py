@@ -315,7 +315,7 @@ def record_movement(
     production flows; here only RECEIPT-free adjustments are allowed."""
     if movement_type not in ("ADJUSTMENT", "RETURN", "SCRAP"):
         raise DocumentaryError("movement_type_not_allowed")
-    with transaction.atomic():
+    with transaction.atomic(), documentary_backend():
         item = one(
             "SELECT id FROM public.inventory_items WHERE id = %s AND org_id = %s",
             [str(item_id), str(org_id)],

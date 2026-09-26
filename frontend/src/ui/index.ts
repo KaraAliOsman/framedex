@@ -5,4 +5,11 @@ export { ContextNav, SplitPane, Toolbar, ToolbarSpacer, ToolbarTitle } from "./L
 export type { ContextNavItem } from "./Layout";
 export { StatusBadge } from "./StatusBadge";
 export type { StatusTone } from "./StatusBadge";
-export { EmptyState, ErrorState, EvidenceChip, Skeleton, WarningBanner } from "./States";
+export {
+  DeniedState,
+  EmptyState,
+  ErrorState,
+  EvidenceChip,
+  Skeleton,
+  WarningBanner,
+} from "./States";

@@ -4,7 +4,9 @@
  * Narrow views over the trace payload's open dicts — every value shown is
  * evidence stored at seal time, never recomputed client-side. */
 
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
+import { remnantStatusLabel, stockKindLabel } from "./labels";
 import type {
   ProductionOrderTracePlan,
   ProductionOrderTraceStock,
@@ -159,10 +161,10 @@ export function TraceStock({ stock }: { stock: ProductionOrderTraceStock }) {
         <ul className="production-trace-remnants">
           {remnants.map((remnant) => (
             <li key={remnant.id}>
-              {remnant.kind} · {remnant.status}
-              {remnant.length_mm ? ` · ${remnant.length_mm} mm` : ""}
-              {remnant.width_mm ? ` × ${remnant.width_mm}` : ""}
-              {remnant.height_mm ? ` × ${remnant.height_mm}` : ""}
+              {stockKindLabel(remnant.kind)} · {remnantStatusLabel(remnant.status)}
+              {remnant.length_mm ? ` · ${fmtMm(remnant.length_mm)} mm` : ""}
+              {remnant.width_mm ? ` × ${fmtMm(remnant.width_mm)}` : ""}
+              {remnant.height_mm ? ` × ${fmtMm(remnant.height_mm)}` : ""}
               {remnant.sheet_workshop_sku ? ` · ${remnant.sheet_workshop_sku}` : ""}
             </li>
           ))}
@@ -183,12 +185,12 @@ export function TracePieceMatches({ report }: { report: ProductionPieceTrace }) 
         <li key={`${match.work_order?.id ?? "wo"}-${index}`}>
           <strong>{match.work_order?.order_code ?? "—"}</strong>
           {" · "}
-          {match.location?.kind}
+          {stockKindLabel(match.location?.kind)}
           {match.location?.kind === "BAR"
             ? ` · ${t("production.traceBar")} ${match.location.bar_index ?? "—"}`
             : ` · ${t("production.traceSheet")} ${match.location?.sheet_index ?? "—"}`}
           {match.location?.piece?.role ? ` · ${match.location.piece.role}` : ""}
-          {match.location?.piece?.length_mm ? ` · ${match.location.piece.length_mm} mm` : ""}
+          {match.location?.piece?.length_mm ? ` · ${fmtMm(match.location.piece.length_mm)} mm` : ""}
           {match.steps?.length
             ? ` · ${match.steps.filter((s) => s.status === "DONE").length}/${match.steps.length} ${t("production.stepsShort")}`
             : ""}

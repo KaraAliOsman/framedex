@@ -26,7 +26,12 @@ from production import service
 from production.trace import trace_piece, trace_version, trace_work_order
 from production.confirmations import confirmation_access, confirm_delivery
 from production.dispatch_notes import dispatch_note_access
-from projects import sii
+from projects import sii, sii_envio
+from projects.serializers import (
+    SiiEnvioAccessSerializer,
+    SiiEnvioSendSerializer,
+    SiiEnvioSerializer,
+)
 from production.serializers import (
     ProductionPrepSerializer,
     DeliveryConfirmRequestSerializer,
@@ -303,6 +308,52 @@ class ProductionOrderDxfFileView(APIView):
         return response
 
 
+class ProductionOrderCutPackView(APIView):
+    @extend_schema(
+        operation_id="production_order_cut_pack",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={(200, "application/pdf"): OpenApiTypes.STR, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                from production.cut_pack import render_cut_pack
+
+                content, download_name = render_cut_pack(
+                    org_id=org_id, order_id=order_id
+                )
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{download_name}"'
+        )
+        return response
+
+
+class ProductionOrderPackView(APIView):
+    @extend_schema(
+        operation_id="production_order_pack",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={(200, "application/pdf"): OpenApiTypes.STR, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                from production.pack import render_production_pack
+
+                content, download_name = render_production_pack(
+                    org_id=org_id, order_id=order_id
+                )
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{download_name}"'
+        )
+        return response
+
+
 class ProductionOrderOpsExportView(APIView):
     @extend_schema(
         operation_id="production_order_ops_export",
@@ -478,6 +529,41 @@ class ProductionOrderDispatchNoteDteView(APIView):
         return Response(output)
 
 
+class ProductionOrderDispatchNoteEnvioView(APIView):
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte_envio_send",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=SiiEnvioSendSerializer,
+        responses={201: SiiEnvioSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def post(self, request, order_id: UUID):
+        data = validate(SiiEnvioSendSerializer, request.data)
+        with public_production_errors():
+            with documentary_scope(request, _WRITERS) as (token, _, org_id):
+                output = sii_envio.send_dispatch_note_envio(
+                    org_id=org_id,
+                    order_id=order_id,
+                    actor_id=token.user_id,
+                    resubmit=bool(data.get("resubmit")),
+                )
+        return Response(output, status=201)
+
+    @extend_schema(
+        operation_id="production_order_dispatch_note_dte_envio",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        responses={200: SiiEnvioAccessSerializer, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                output = sii_envio.dispatch_note_envio_access(
+                    org_id=org_id, order_id=order_id
+                )
+        return Response(output)
+
+
 class WorkCenterListView(APIView):
     @extend_schema(
         operation_id="production_work_centers",
@@ -529,8 +615,9 @@ class ProductionOrderOptimizeView(APIView):
                     org_id=org_id,
                     order_id=order_id,
                     actor_id=token.user_id,
-                    color=data["color"],
+                    color=data.get("color"),
                     cutting_profile_code=data.get("cutting_profile_code"),
+                    strategy=data["strategy"],
                 )
         return Response(output)
 

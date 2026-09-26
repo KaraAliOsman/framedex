@@ -14,6 +14,21 @@ urlpatterns = [
         views.SystemReviewView.as_view(),
         name="catalog-system-review",
     ),
+    path(
+        "process-profiles/",
+        views.ProcessProfileCollectionView.as_view(),
+        name="catalog-process-profiles",
+    ),
+    path(
+        "section-imports/",
+        views.SectionImportCollectionView.as_view(),
+        name="catalog-section-imports",
+    ),
+    path(
+        "systems/<uuid:row_id>/workspace/",
+        views.SystemWorkspaceView.as_view(),
+        name="catalog-system-workspace",
+    ),
     path("articles/", views.ArticleCollectionView.as_view(), name="catalog-article-list"),
     path(
         "articles/<uuid:row_id>/",
@@ -30,6 +45,11 @@ urlpatterns = [
         "glazing/<uuid:row_id>/",
         views.BeadDetailView.as_view(),
         name="catalog-bead-detail",
+    ),
+    path(
+        "glazing/<uuid:row_id>/review/",
+        views.BeadReviewView.as_view(),
+        name="catalog-bead-review",
     ),
     path("hardware-kits/", views.KitCollectionView.as_view(), name="catalog-kit-list"),
     path(

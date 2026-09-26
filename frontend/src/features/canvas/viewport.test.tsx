@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
 
 import { CanvasViewport } from "./CanvasViewport";
-import { fitTransform, panBy, unionBox, zoomAt } from "./viewport";
+import { FIT_PADDING, fitTransform, panBy, unionBox, zoomAt } from "./viewport";
 
 const BOX = { x: -170, y: -150, w: 2100, h: 1670 };
 
@@ -11,7 +11,10 @@ it("fit centers the content box with padding", () => {
   // Centered: screen center = container center.
   expect(view.tx + (BOX.x + BOX.w / 2) * view.scale).toBeCloseTo(500, 1);
   expect(view.ty + (BOX.y + BOX.h / 2) * view.scale).toBeCloseTo(350, 1);
-  expect(view.scale).toBeCloseTo(Math.min(904 / 2100, 604 / 1670), 4);
+  expect(view.scale).toBeCloseTo(
+    Math.min((1000 - FIT_PADDING * 2) / 2100, (700 - FIT_PADDING * 2) / 1670),
+    4,
+  );
 });
 
 it("zoomAt keeps the anchor point fixed on screen", () => {
@@ -51,7 +54,7 @@ it("renders the island controls and opens the zoom menu", () => {
   // Pre-fit state renders at 100%.
   expect(screen.getByLabelText("Opciones de zoom").textContent).toBe(`${Math.round(100)}%`);
   fireEvent.click(screen.getByLabelText("Opciones de zoom"));
-  expect(screen.getByRole("menuitem", { name: /Ajustar a la vista/ })).toBeTruthy();
-  const selection = screen.getByRole("menuitem", { name: /Ajustar a la selección/ });
+  expect(screen.getByRole("button", { name: /Ajustar a la vista/ })).toBeTruthy();
+  const selection = screen.getByRole("button", { name: /Ajustar a la selección/ });
   expect((selection as HTMLButtonElement).disabled).toBe(true);
 });

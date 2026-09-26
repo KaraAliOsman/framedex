@@ -46,6 +46,7 @@ class ProductionOrderSerializer(serializers.Serializer):
     next_step = ProductionNextStepSerializer(allow_null=True)
     dispatch_ready = serializers.BooleanField()
     shortage = serializers.IntegerField()
+    version_shortage = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     project_version_id = serializers.UUIDField(allow_null=True, required=False)
     payload = serializers.DictField(required=False)
@@ -152,6 +153,7 @@ class DispatchNoteSerializer(serializers.Serializer):
 
 class DispatchNoteAccessSerializer(DispatchNoteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -170,6 +172,7 @@ class DispatchNoteDteSerializer(serializers.Serializer):
 
 class DispatchNoteDteAccessSerializer(DispatchNoteDteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -218,22 +221,25 @@ class WorkCenterListSerializer(serializers.Serializer):
 class WorkCenterRequestSerializer(StrictSerializer):
     code = serializers.CharField(max_length=50)
     name = serializers.CharField(max_length=200)
-    kind = serializers.ChoiceField(choices=("CUT", "ASSEMBLY", "GLAZING", "QC", "PACK"))
+    kind = serializers.ChoiceField(
+        choices=(
+            "CUT", "PROFILE_CUT", "REINFORCEMENT_CUT", "MACHINING",
+            "WELDING", "CLEANING", "CRIMPING", "SASH_ASSEMBLY", "ASSEMBLY",
+            "HARDWARE", "GLAZING", "QC", "PACK",
+        )
+    )
     display_order = serializers.IntegerField(required=False, default=0)
 
 
 class WorkOrderOptimizeRequestSerializer(StrictSerializer):
-    color = serializers.CharField(max_length=50)
+    # Optional: the sealed payload color is authoritative — a contradicting
+    # request color is refused, an omitted one inherits the sealed value.
+    # Only legacy orders without a sealed color still require it (service 422).
+    color = serializers.CharField(required=False, allow_blank=True, max_length=50)
     cutting_profile_code = serializers.CharField(required=False, allow_null=True, max_length=50)
     strategy = serializers.ChoiceField(
         choices=["fast", "deep", "auto"], required=False, default="auto"
     )
-
-    def validate(self, data):
-        data = super().validate(data)
-        if not (data.get("color") or "").strip():
-            raise serializers.ValidationError({"color": "Color is required"})
-        return data
 
 
 class WorkOrderOptimizeSerializer(serializers.Serializer):
@@ -325,6 +331,7 @@ class ProductionOrderTraceSerializer(serializers.Serializer):
     project = serializers.DictField(allow_null=True)
     version = serializers.DictField(allow_null=True)
     position_id = serializers.CharField(allow_null=True, required=False)
+    labels = serializers.DictField(required=False)
     plan = serializers.DictField()
     stock = serializers.DictField()
     steps = serializers.ListField()

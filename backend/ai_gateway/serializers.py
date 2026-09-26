@@ -96,14 +96,18 @@ class AiAgentRequestSerializer(serializers.Serializer):
 
 class AiAgentStepSerializer(serializers.Serializer):
     kind = serializers.CharField()
+    tool = serializers.CharField(required=False)
     label = serializers.CharField()
     path = serializers.CharField(required=False)
     action = serializers.CharField(required=False)
     ops = serializers.ListField(child=serializers.DictField(), required=False)
+    # §08-WC batch edits: validated ops grouped per position.
+    items = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class AiAgentQuerySerializer(serializers.Serializer):
     surface = serializers.CharField()
+    tool = serializers.CharField(required=False)
     status = serializers.CharField()
 
 
@@ -112,12 +116,103 @@ class AiAgentRejectedSerializer(serializers.Serializer):
     reason = serializers.CharField()
 
 
-class AiAgentResponseSerializer(serializers.Serializer):
-    audit_id = serializers.CharField()
+class AiAgentAcceptedSerializer(serializers.Serializer):
+    """202 — the run is queued on the durable worker; the client polls the
+    job detail for the live transcript and the terminal result."""
+
+    job_id = serializers.UUIDField()
+    state = serializers.CharField()
+
+
+class AiAgentRunSerializer(serializers.Serializer):
+    """Durable-job payload for one agent round (first submit or follow-up)."""
+
+    ai_job_id = serializers.UUIDField()
+    mode = serializers.ChoiceField(choices=["new", "resume"])
+    surface = serializers.CharField(min_length=2, max_length=40)
+    refs = serializers.DictField(required=False)
+    goal = serializers.CharField(min_length=1, max_length=2000)
+    product = serializers.DictField(required=False, allow_null=True)
+    history = AiAgentHistorySerializer(many=True, required=False, max_length=24)
+    operation_key = serializers.CharField(min_length=8, max_length=200)
+
+
+class AiAgentResultSerializer(serializers.Serializer):
+    """The payload act() stores on the job's `result` column — the envelope
+    fields (audit/job ids, state, transcript) live on the job row itself."""
+
     model = serializers.CharField()
     credits_debited = serializers.IntegerField()
     reply = serializers.CharField()
+    plan = serializers.ListField(child=serializers.DictField())
+    claims = serializers.ListField(child=serializers.DictField())
+    references = serializers.ListField(child=serializers.CharField())
+    questions = serializers.ListField(child=serializers.CharField())
+    artifacts = serializers.ListField(child=serializers.DictField())
     steps = AiAgentStepSerializer(many=True)
     queries = AiAgentQuerySerializer(many=True)
     warnings = serializers.ListField(child=serializers.CharField())
     rejected = AiAgentRejectedSerializer(many=True)
+
+
+class AiJobMessageSerializer(serializers.Serializer):
+    message = serializers.CharField(min_length=1, max_length=2000)
+    # Follow-ups carry the position's live product so design ops evaluate
+    # the current design — a stored snapshot would go stale between turns.
+    product = serializers.DictField(required=False)
+
+
+class AiJobSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    surface = serializers.CharField()
+    refs = serializers.DictField()
+    goal = serializers.CharField()
+    state = serializers.CharField()
+    cancel_signaled = serializers.BooleanField(required=False)
+    plan = serializers.ListField()
+    artifacts = serializers.ListField()
+    warnings = serializers.ListField()
+    result = AiAgentResultSerializer(required=False, allow_null=True)
+    error_code = serializers.CharField(required=False, allow_null=True)
+    outcomes = serializers.ListField(required=False)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    completed_at = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class AiJobOutcomeSerializer(serializers.Serializer):
+    """Client report: what the human did with one proposed step."""
+
+    turn_index = serializers.IntegerField(min_value=0, max_value=1000)
+    step_index = serializers.IntegerField(min_value=0, max_value=1000)
+    action = serializers.ChoiceField(
+        choices=["applied", "declined", "apply_failed"]
+    )
+    ops = serializers.ListField(
+        child=serializers.CharField(max_length=80),
+        required=False,
+        max_length=200,
+    )
+
+
+class AiJobOutcomeResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    recorded = serializers.BooleanField()
+
+
+class AiMetricsSerializer(serializers.Serializer):
+    window_days = serializers.IntegerField()
+    jobs = serializers.DictField()
+    commands = serializers.DictField()
+    approvals = serializers.DictField()
+    artifacts_produced = serializers.IntegerField()
+    cost = serializers.DictField()
+    time_saved = serializers.DictField()
+
+
+class AiJobDetailSerializer(AiJobSerializer):
+    transcript = serializers.ListField()
+
+
+class AiAgentResumeRequestSerializer(serializers.Serializer):
+    pass

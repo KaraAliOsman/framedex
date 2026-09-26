@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { t, type TranslationKey } from "../i18n/es-CL";
 
 import { useAuthSession } from "../auth/AuthSessionProvider";
+import { MOD_K_HINT } from "../platform";
 import { telemetry } from "../telemetry/telemetry";
 import { useTheme } from "../theme/ThemeProvider";
 import { CommandPalette } from "../features/commands/CommandPalette";
@@ -42,6 +43,8 @@ const domainGroups: {
       { to: "/catalogs/systems", label: "nav.catalog" },
       { to: "/purchasing", label: "nav.purchasing" },
       { to: "/production", label: "nav.production" },
+      { to: "/assistant", label: "nav.assistant" },
+      { to: "/jobs", label: "nav.jobs" },
     ],
   },
   {
@@ -95,10 +98,16 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const projectName = useProjectName(projectId !== null && projectId !== "demo" ? projectId : null);
 
   function navigationAllowed(to: string): boolean {
+    // Mirrors the backend role sets — a nav link must never land on a
+    // 403 wall.
+    if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
+    if (to === "/assistant") return role !== "INSTALLER";
+    if (to === "/jobs") return role !== "INSTALLER";
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
     if (to === "/production")
       return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
+    if (to === "/dashboard" || to === "/projects" || to === "/clients") return role !== "INSTALLER";
     return true;
   }
 
@@ -107,7 +116,15 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
       ? []
       : [
           { to: `/projects/${projectId}`, label: "nav.context.summary" },
-          { to: `/projects/${projectId}/pricing`, label: "nav.context.quote" },
+          // Pricing ops accept O/E only — WM gets the summary but no dead link.
+          ...(canWrite
+            ? [
+                {
+                  to: `/projects/${projectId}/pricing`,
+                  label: "nav.context.quote" as const,
+                },
+              ]
+            : []),
           ...(canWrite
             ? [
                 {
@@ -129,6 +146,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     <ShellLeafContext.Provider value={leafContext}>
       <AssistantSurfaceProvider>
         <div className={`app-shell${railOpen ? " rail-open" : ""}`} data-testid="app-shell">
+          <a href="#workspace-main" className="skip-link">
+            {t("shell.skipToContent")}
+          </a>
           <button
             type="button"
             className="rail-scrim"
@@ -195,7 +215,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
             </nav>
             <div className="app-rail__user">
               <div className="app-rail__identity">
-                <span className="app-rail__email">{auth.me?.user.email ?? "—"}</span>
+                <span className="app-rail__email" title={auth.me?.user.email ?? undefined}>
+                  {auth.me?.user.email ? auth.me.user.email.split("@")[0] : "—"}
+                </span>
                 {role && <span className="app-rail__role">{t(roleLabel[role])}</span>}
               </div>
               <div className="app-rail__user-actions">
@@ -249,7 +271,7 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                     />
                   </svg>
                   <span>{t("shell.searchHint")}</span>
-                  <kbd>⌘K</kbd>
+                  <kbd>{MOD_K_HINT}</kbd>
                 </button>
                 <AttentionBell />
                 <button
@@ -261,7 +283,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                 </button>
               </div>
             </header>
-            <main className="workspace">{children}</main>
+            <main className="workspace" id="workspace-main" tabIndex={-1}>
+              {children}
+            </main>
           </div>
           <CommandPalette
             openRequested={paletteRequest}

@@ -12,6 +12,8 @@ from jobs.registry import JobContext, JobPermanentError, ProgressReporter, regis
 from ingest.serializers import ExtractPayloadSerializer
 
 
+# roles mirror the REST writer sets (document extract: _WRITERS; catalog
+# extract: _CATALOG_WRITERS) — a job spec must not widen the API's ACL.
 @register(
     "ingest.document.extract",
     roles=("OWNER", "ESTIMATOR"),
@@ -76,7 +78,7 @@ def extract_document_job(
 
 @register(
     "ingest.catalog.extract",
-    roles=("OWNER", "ESTIMATOR"),
+    roles=("OWNER", "WORKSHOP_MANAGER"),
     payload_serializer=ExtractPayloadSerializer,
     label="Extraer artículos del catálogo",
 )
@@ -104,7 +106,7 @@ def extract_catalog_job(
                 cursor.execute(
                     "SELECT 1 FROM public.tenancy_memberships "
                     "WHERE user_id=%s AND org_id=%s AND is_active "
-                    "AND role IN ('OWNER','ESTIMATOR')",
+                    "AND role IN ('OWNER','WORKSHOP_MANAGER')",
                     [str(context.created_by), str(context.org_id)],
                 )
                 member = cursor.fetchone()

@@ -67,6 +67,9 @@ class PositionResponseSerializer(serializers.Serializer):
     location_tag = serializers.CharField(allow_null=True)
     quantity = serializers.IntegerField()
     typology = serializers.CharField()
+    cost_net = serializers.CharField()
+    price_net = serializers.CharField()
+    discount_pct = serializers.CharField()
     design = PositionDesignSerializer()
     bom = EngineCalculateResponseSerializer()
     updated_at = serializers.DateTimeField()
@@ -225,6 +228,7 @@ class ProjectDteSerializer(serializers.Serializer):
 
 class ProjectDteAccessSerializer(ProjectDteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -240,6 +244,7 @@ class ProjectCreditNoteSerializer(serializers.Serializer):
 
 class ProjectCreditNoteAccessSerializer(ProjectCreditNoteSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -259,6 +264,7 @@ class ProjectInvoiceSerializer(serializers.Serializer):
 
 class ProjectInvoiceAccessSerializer(ProjectInvoiceSerializer):
     signed_url = serializers.CharField()
+    tributario_signed_url = serializers.CharField(allow_null=True)
     expires_in = serializers.IntegerField()
 
 
@@ -351,7 +357,9 @@ class PaymentRecordResponseSerializer(PaymentsSummarySerializer):
 class PaymentLinkCreateSerializer(StrictSerializer):
     operation_key = serializers.CharField(min_length=8, max_length=80)
     kind = serializers.ChoiceField(choices=("ANTICIPO", "PARCIAL", "SALDO"))
-    amount = serializers.DecimalField(max_digits=14, decimal_places=0, min_value=Decimal("1"))
+    # Accept decimal spellings ("1180000.00") at the edge — the service keeps
+    # the authoritative integer-CLP check so "1180.50" still gets a domain 422.
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"))
     payer_email = serializers.EmailField(max_length=200)
     subject = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
@@ -452,3 +460,35 @@ class DesignAssistResponseSerializer(serializers.Serializer):
     ops = serializers.ListField(child=serializers.DictField())
     rejected = serializers.ListField(child=serializers.DictField())
     notes = serializers.CharField(allow_null=True)
+
+
+class OrgBrandingSerializer(serializers.Serializer):
+    """Org white-label identity rendered on emitted documents."""
+
+    name = serializers.CharField()
+    tax_id = serializers.CharField(allow_null=True, allow_blank=True)
+    commercial_name = serializers.CharField(allow_null=True, allow_blank=True)
+    giro = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_address = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_phone = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_email = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_logo_key = serializers.CharField(allow_null=True, allow_blank=True)
+    brand_logo_sha256 = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class OrgBrandingWriteSerializer(StrictSerializer):
+    commercial_name = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    giro = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    brand_address = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )
+    brand_phone = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=64
+    )
+    brand_email = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False, max_length=255
+    )

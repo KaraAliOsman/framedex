@@ -23,7 +23,9 @@ export function AuthCallbackPage(): JSX.Element {
         <p role="alert">
           {t(auth.status === "no_membership" ? "auth.noMembership" : "auth.callbackError")}
         </p>
-        <Link to="/login">{t("auth.returnToLogin")}</Link>
+        <Link className="ui-backlink ui-backlink--back" to="/login">
+          {t("auth.returnToLogin")}
+        </Link>
       </main>
     );
   }

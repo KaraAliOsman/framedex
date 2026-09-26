@@ -68,9 +68,11 @@ export function CanvasViewport({
   // contentBox changes (the async plan arriving later must not jump the view).
   const userInteractedRef = useRef(false);
   const lastFitBoxRef = useRef<Box | null>(null);
+  const lastFitSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
   const fit = useCallback(() => {
     lastFitBoxRef.current = contentBox;
+    lastFitSizeRef.current = { w: size.w, h: size.h };
     setView(fitTransform(contentBox, size.w, size.h));
   }, [contentBox, size.w, size.h]);
 
@@ -98,9 +100,11 @@ export function CanvasViewport({
       fit();
       return;
     }
-    // Sheet grew (e.g. the plan arrived after the first fit): refit only
-    // while the user has not taken manual control of the view. Compared by
-    // value — contentBox is rebuilt each render.
+    // Sheet grew (e.g. the plan arrived after the first fit) or the container
+    // itself resized (the /new page collapses once a starter applies — a stale
+    // transform would clip the drawing off the viewport): refit in both cases,
+    // only while the user has not taken manual control of the view. Compared
+    // by value — contentBox is rebuilt each render.
     const last = lastFitBoxRef.current;
     const sameBox =
       last !== null &&
@@ -108,7 +112,8 @@ export function CanvasViewport({
       last.y === contentBox.y &&
       last.w === contentBox.w &&
       last.h === contentBox.h;
-    if (!sameBox && !userInteractedRef.current) fit();
+    const resized = lastFitSizeRef.current.w !== size.w || lastFitSizeRef.current.h !== size.h;
+    if ((!sameBox || resized) && !userInteractedRef.current) fit();
   }, [fit, size, contentBox]);
 
   // Space held → pan mode. Listen on window so it works wherever focus sits.
@@ -177,16 +182,18 @@ export function CanvasViewport({
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.shiftKey && event.key === "!") {
+    // event.code pins shortcuts to physical keys — `key` varies across
+    // keyboard layouts (Shift+2 is "@" in US, `"` in es-CL).
+    if (event.shiftKey && event.code === "Digit1") {
       event.preventDefault();
       fit();
-    } else if (event.shiftKey && (event.key === "@" || event.key === '"')) {
+    } else if (event.shiftKey && event.code === "Digit2") {
       event.preventDefault();
       if (selectionBox) {
         userInteractedRef.current = true;
         setView(fitTransform(selectionBox, size.w, size.h));
       }
-    } else if (event.shiftKey && event.key === ")") {
+    } else if (event.shiftKey && event.code === "Digit0") {
       event.preventDefault();
       userInteractedRef.current = true;
       setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
@@ -290,12 +297,11 @@ export function CanvasViewport({
           +
         </button>
         {menuOpen && (
-          <div className="viewport-menu" role="menu">
+          <div className="viewport-menu">
             {menu.map((item) => (
               <button
                 key={item.label}
                 type="button"
-                role="menuitem"
                 className="viewport-menu__item"
                 disabled={item.disabled}
                 onClick={() => {

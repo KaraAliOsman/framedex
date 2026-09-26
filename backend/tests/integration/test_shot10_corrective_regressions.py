@@ -416,9 +416,13 @@ def test_same_bay_geometry_change_invalidates_documentary_authority(documentary_
         prepared = prepare_documentary_inputs(org_id=org, project_id=project_id)
         evidence = prepared["positions"][0]
         assert evidence["calculation_hash"] != previous["positions"][0]["calculation_hash"]
-        assert evidence["workshop_annotations"] == []
-        assert evidence["glass_polishing"] == []
-        assert evidence["accessory_schedule"] is None
+        # WM3: a surviving bay keeps its recorded workshop annotations across a
+        # re-prepare — the stale-identity guard below is what blocks saving the
+        # old evidence against the new calculation.
+        assert len(evidence["workshop_annotations"]) == 1
+        assert evidence["workshop_annotations"][0]["bay_id"] == "B1"
+        assert len(evidence["glass_polishing"]) == 1
+        assert evidence["accessory_schedule"] is not None
         assert prepared["payment_terms"] == previous["payment_terms"]
         old_input = {key: value for key, value in previous["positions"][0].items()
                      if key not in ("system_name", "placement_options", "handle_options", "reinforcement_options")}
@@ -661,7 +665,10 @@ def test_reviewed_catalog_edit_reopens_readiness(documentary_tenant):
     )
     assert flagged()
     with as_user(owner):
-        catalog_service.review(catalog_service.ARTICLES, org, article_id, owner)
+        row = catalog_service.retrieve(catalog_service.ARTICLES, org, article_id)
+        catalog_service.review(
+            catalog_service.ARTICLES, org, article_id, owner, f'"{row["revision"]}"'
+        )
     assert not flagged()
 
     # Editing the reviewed row's technical values reopens the gate.
@@ -675,7 +682,10 @@ def test_reviewed_catalog_edit_reopens_readiness(documentary_tenant):
 
     # Reviewing again clears it; a further technical edit reopens again.
     with as_user(owner):
-        catalog_service.review(catalog_service.ARTICLES, org, article_id, owner)
+        row = catalog_service.retrieve(catalog_service.ARTICLES, org, article_id)
+        catalog_service.review(
+            catalog_service.ARTICLES, org, article_id, owner, f'"{row["revision"]}"'
+        )
     assert not flagged()
 
     # A never-reviewed authored row (provenance MANUAL, no prior review)

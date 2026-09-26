@@ -112,15 +112,15 @@ it.each(["ESTIMATOR", "INSTALLER"])("denies S19 to %s without fetching", (role) 
 it("renders immutable quantities without editable inputs", async () => {
   mockState();
   renderPage();
-  const cell = await screen.findByText("4 EA");
+  const cell = await screen.findByText("4 unidades");
   expect(cell.closest("td")).not.toContainHTML("input");
-  expect(screen.getByText("7 BAR")).toBeInTheDocument();
+  expect(screen.getByText("7 barras")).toBeInTheDocument();
 });
 
 it("offers only suppliers eligible for the requirement key", async () => {
   mockState();
   renderPage();
-  const row = (await screen.findByText("4 EA")).closest("tr")!;
+  const row = (await screen.findByText("4 unidades")).closest("tr")!;
   const select = within(row).getByLabelText(t("purchasing.chooseSupplier"));
   const options = within(select)
     .getAllByRole("option")
@@ -132,7 +132,7 @@ it("offers only suppliers eligible for the requirement key", async () => {
 it("keeps batch confirmation disabled until the type is fully allocated and attested", async () => {
   mockState();
   renderPage();
-  const section = (await screen.findByText("4 EA")).closest("section")!;
+  const section = (await screen.findByText("4 unidades")).closest("section")!;
   const confirm = within(section).getByRole("button", { name: t("purchasing.confirm") });
   expect(confirm).toBeDisabled();
   const checkbox = within(section).getByLabelText(t("purchasing.confirmCheckbox"));
@@ -151,7 +151,7 @@ it("confirms an allocated type only after explicit attestation", async () => {
     ],
   });
   renderPage();
-  const section = (await screen.findByText("4 EA")).closest("section")!;
+  const section = (await screen.findByText("4 unidades")).closest("section")!;
   const confirm = within(section).getByRole("button", { name: t("purchasing.confirm") });
   expect(confirm).toBeDisabled();
   fireEvent.click(within(section).getByLabelText(t("purchasing.confirmCheckbox")));
@@ -198,7 +198,7 @@ it("sends a draft order only after explicit attestation", async () => {
 it("renders string source traces as complete identities, not characters", async () => {
   mockState();
   renderPage();
-  const cell = (await screen.findByText("4 EA")).closest("tr")!;
+  const cell = (await screen.findByText("4 unidades")).closest("tr")!;
   const trace = "5".repeat(64);
   // Old behavior enumerated characters via Object.entries on the string,
   // producing "0=5 · 1=5 · ..." rows and never the complete identity.
@@ -221,7 +221,7 @@ it("shows workshop managers only document actions the backend authorizes", async
     ],
   });
   renderPage();
-  await screen.findByText("4 EA");
+  await screen.findByText("4 unidades");
   for (const key of ["purchasing.doc03", "purchasing.doc05", "purchasing.doc06"] as const)
     expect(screen.getByText(t(key))).toBeInTheDocument();
   expect(screen.getByText(t("purchasing.doc02"))).toBeInTheDocument();
@@ -233,7 +233,7 @@ it("shows the owner every document action including DOC-01 and DOC-07", async ()
   identity.role = "OWNER";
   mockState();
   renderPage();
-  await screen.findByText("4 EA");
+  await screen.findByText("4 unidades");
   for (const key of [
     "purchasing.doc01",
     "purchasing.doc03",
@@ -250,7 +250,7 @@ it("surfaces a load failure without fabricating requirements", async () => {
   await waitFor(() =>
     expect(screen.getByRole("alert")).toHaveTextContent(t("purchasing.loadError")),
   );
-  expect(screen.queryByText("4 EA")).not.toBeInTheDocument();
+  expect(screen.queryByText("4 unidades")).not.toBeInTheDocument();
 });
 
 it("drops the stale revision when the newly selected version fails to load", async () => {
@@ -273,7 +273,7 @@ it("drops the stale revision when the newly selected version fails to load", asy
     expect(screen.getByRole("alert")).toHaveTextContent(t("purchasing.loadError")),
   );
   expect(screen.queryByText("P-001")).not.toBeInTheDocument();
-  expect(screen.queryByText("4 EA")).not.toBeInTheDocument();
+  expect(screen.queryByText("4 unidades")).not.toBeInTheDocument();
   expect(screen.queryByText(t("purchasing.doc03"))).not.toBeInTheDocument();
 });
 
@@ -292,7 +292,7 @@ it("submits eligibility keys in canonical order even when visual order differs",
     eligibilities: [],
   });
   renderPage();
-  const section = (await screen.findByText("4 EA")).closest("section")!;
+  const section = (await screen.findByText("4 unidades")).closest("section")!;
   const form = section.querySelector("details.purchasing-eligibility form")!;
   expect(form).not.toBeNull();
   fireEvent.change(form.querySelector('input[name="supplier_identity"]')!, {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { cutRoleLabel } from "./labels";
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
 
 // Full engine payload contract (backend/production/service.py →
@@ -133,6 +134,7 @@ export type WorkOrderOptimization = {
   remnants?: RemnantLedger;
   stock_reservations?: StockReservation[];
   unmapped_stock_skus?: string[];
+  invalidated?: boolean;
 };
 
 type PieceRef = {
@@ -147,13 +149,26 @@ function num(value: string | number | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Same member = same source opening + sash/pane + role — cross-highlights
- * every cut/nest belonging to one physical fenestration member. */
+/** Interchangeable piece spec — the same join the printed packs use to list
+ * shared piece codes: location (position/bay/leaf) + role + sku + measure +
+ * angles. Two different frame members of one bay only group when they are
+ * literally the same cut spec. */
 function memberKey(piece: CutPlacement | NestPlacement): string {
-  const role = (piece as CutPlacement).role ?? "";
-  return [piece.source_position_id ?? "-", piece.bay_id ?? "-", piece.leaf_id ?? "-", role].join(
-    "|",
-  );
+  const cut = piece as CutPlacement;
+  const nest = piece as NestPlacement;
+  const measure =
+    cut.length_mm != null
+      ? `L${cut.length_mm}|${cut.angle_left ?? ""}|${cut.angle_right ?? ""}`
+      : `N${nest.width_mm ?? ""}x${nest.height_mm ?? ""}`;
+  return [
+    piece.source_position_id ?? "-",
+    piece.bay_id ?? "-",
+    piece.leaf_id ?? "-",
+    cut.role ?? "",
+    cut.source_kind ?? "",
+    piece.workshop_sku ?? "",
+    measure,
+  ].join("|");
 }
 
 function materialClass(material: string | undefined, kind?: string): string {
@@ -223,7 +238,7 @@ function CutPlanBarSvg({
         ) : null}
         {wSc > 40 ? (
           <text x={mid} y={46} textAnchor="middle" className="cutplan-cut-len">
-            {cut.length_mm}
+            {fmtMm(cut.length_mm)}
           </text>
         ) : null}
         {angleL ? (
@@ -371,7 +386,14 @@ function pieceLabel(piece: CutPlacement | NestPlacement, code: string): string {
   return piece.workshop_sku ? `${piece.workshop_sku} · ${code}` : code;
 }
 
-export function CutPlanView({ optimization }: { optimization: WorkOrderOptimization }) {
+export function CutPlanView({
+  optimization,
+  labels = {},
+}: {
+  optimization: WorkOrderOptimization;
+  /** Shop codes matching the printed packs (V-xx/H-xx/P-xx) keyed by id. */
+  labels?: Record<string, string>;
+}) {
   const [selected, setSelected] = useState<PieceRef | null>(null);
   const bars = optimization.bars?.workshop_cut_plan ?? [];
   const sheets = optimization.sheets ?? [];
@@ -394,17 +416,19 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       material: cut.material ?? "—",
       color: cut.color ?? "—",
       role: cutRoleLabel(cut.role),
-      position: shortId(piece.source_position_id),
-      bay: shortId(piece.bay_id),
-      leaf: shortId(piece.leaf_id),
+      position:
+        (piece.source_position_id && labels[piece.source_position_id]) ??
+        shortId(piece.source_position_id),
+      bay: (piece.bay_id && labels[piece.bay_id]) ?? shortId(piece.bay_id),
+      leaf: (piece.leaf_id && labels[piece.leaf_id]) ?? shortId(piece.leaf_id),
       unit: piece.unit_index ?? 1,
       measure: isCut
-        ? `${cut.length_mm} mm`
-        : `${nest.width_mm}×${nest.height_mm} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
+        ? `${fmtMm(cut.length_mm)} mm`
+        : `${fmtMm(nest.width_mm)}×${fmtMm(nest.height_mm)} mm${nest.rotated ? ` (${t("production.optimizeRotated")})` : ""}`,
       angles,
       memberCount: 0,
     };
-  }, [selected]);
+  }, [selected, labels]);
 
   if (detail && selected) {
     // Count every placement sharing this member across bars + sheets.
@@ -431,8 +455,9 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
               <strong>
                 {t("production.optimizeBar")} #{bar.bar_index}
               </strong>{" "}
-              {bar.commercial_sku} · {bar.stock_length_mm} mm · {t("production.cutplanYield")}{" "}
-              {bar.yield_pct}% · {t("production.cutplanRemainder")} {bar.remainder_mm} mm
+              {bar.commercial_sku} · {fmtMm(bar.stock_length_mm)} mm ·{" "}
+              {t("production.cutplanYield")} {bar.yield_pct}% · {t("production.cutplanRemainder")}{" "}
+              {fmtMm(bar.remainder_mm)} mm
             </figcaption>
             <CutPlanBarSvg
               bar={bar}
@@ -450,8 +475,9 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
                   <strong>
                     {t("production.optimizeSheet")} #{layout.sheet_index}
                   </strong>{" "}
-                  {layout.purchasing_sku} · {layout.sheet_width_mm}×{layout.sheet_height_mm} mm ·{" "}
-                  {t("production.cutplanYield")} {layout.yield_pct}%
+                  {layout.purchasing_sku} · {fmtMm(layout.sheet_width_mm)}×
+                  {fmtMm(layout.sheet_height_mm)} mm · {t("production.cutplanYield")}{" "}
+                  {layout.yield_pct}%
                 </figcaption>
                 <CutPlanSheetSvg
                   layout={layout}

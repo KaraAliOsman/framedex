@@ -22,6 +22,7 @@ from documents.repository import (
     one,
     rows,
 )
+from documents.renderers import _piece_labels
 
 from dekopen_engine.cutting import CutBar
 from dekopen_engine.manufacturing import ManufacturingFactsV1
@@ -212,6 +213,16 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
     )
 
     position_id = payload.get("position_id")
+    # Shop-facing piece/location codes (M-xx/R-xx/I-xx/V-xx/H-xx) — the same
+    # codes the printed packs emit, so web and paper reconcile.
+    piece_label_map: dict[str, str] = {}
+    if version_snapshot:
+        try:
+            for group in _piece_labels(version_snapshot).values():
+                for key, code in group.items():
+                    piece_label_map[str(key)] = code
+        except DocumentaryError:
+            piece_label_map = {}
     return {
         "work_order": {
             "id": order["id"],
@@ -224,6 +235,7 @@ def trace_work_order(*, org_id: UUID, order_id: UUID) -> dict[str, Any]:
         "project": project,
         "version": version,
         "position_id": position_id,
+        "labels": piece_label_map,
         "plan": {
             "optimized_at": optimization.get("optimized_at"),
             "strategy": optimization.get("strategy"),

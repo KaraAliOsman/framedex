@@ -79,7 +79,7 @@ export function applyDesignOps(
   // Synthetic refs resolve in apply order: after each structural op, the ids
   // it minted join the state so `added_m1`/`added_c2` in a later op points at
   // the real entity the sequence produced, never a guess.
-  const state: DesignOpState = { addedModules: [], addedCouplings: [] };
+  const state: DesignOpState = { addedModules: [], addedCouplings: [], origin: product };
   return ops.reduce((current, op) => {
     const next = applyDesignOp(current, op, specs, state);
     harvestAdded(state, current, next);
@@ -97,7 +97,7 @@ export function describeDesignOp(
   priorOps: DesignOp[] = [],
   specs: CommandSpec[] = ASSEMBLY_COMMANDS,
 ): string {
-  const state: DesignOpState = { addedModules: [], addedCouplings: [] };
+  const state: DesignOpState = { addedModules: [], addedCouplings: [], origin: product };
   const evolved = priorOps.reduce((current, prior) => {
     const next = applyDesignOp(current, prior, specs, state);
     harvestAdded(state, current, next);

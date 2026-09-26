@@ -5,6 +5,7 @@ from documents.views import (
     ArtifactGenerateView,
     DocumentaryInputsView,
     FreezeRevisionView,
+    RevisionCompareView,
 )
 
 urlpatterns = [
@@ -23,5 +24,10 @@ urlpatterns = [
         "projects/<uuid:project_id>/freeze/",
         FreezeRevisionView.as_view(),
         name="documentary-freeze",
+    ),
+    path(
+        "projects/<uuid:project_id>/versions/compare/",
+        RevisionCompareView.as_view(),
+        name="documentary-versions-compare",
     ),
 ]

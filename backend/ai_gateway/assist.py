@@ -17,6 +17,13 @@ from ai_gateway.context import REQUIRED_REFS, _ContextError, build_context
 from authentication.errors import contract_error
 from projects.design_assist import _BARE_NUMBER_RE, _MEASURE_RE, _parse_number
 
+# Tokens that carry digits without quantitative meaning — scrubbed before the
+# grounding scan so they cannot back an invented number.
+_OPAQUE_TOKEN_RE = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|\d{4}-\d{2}-\d{2}(?:[T ][0-9:.]+(?:Z|[+-]\d{2}:?\d{2})?)?"
+)
+
 CAPABILITY = "context_assist"
 MAX_QUESTION = 2000
 MAX_ANSWER = 4000
@@ -65,6 +72,15 @@ Reglas:
 - "warnings" para problemas reales que el contexto evidencie (ej. escasez de material, una revisión sin congelar). Máximo 8.
 - Sin texto fuera del JSON."""
 
+CATALOG_SYSTEM_SUFFIX = """
+Contexto de CATÁLOGO — puedes:
+- Explicar bloqueos de disponibilidad citando "readiness.levels[].blockers": entidad afectada, autoridad que falta, consecuencia y acción de resolución — con sus palabras exactas.
+- Ubicar evidencia: provenance (MANUAL/LEGACY_UNVERIFIED), review_queue y drawing_ref de secciones muestran de dónde salió cada dato.
+- Sugerir relaciones entre entidades por su id/SKU (artículos, junquillos, kits, refuerzos, mapeos de compra) — señala el par concreto, no generalidades.
+- Detectar duplicados o inconsistencias visibles en los rosters (SKU repetido, nombre idéntico con rol distinto).
+- Comparar revisiones cuando el contexto expone "revision" — describe qué campos cambiarían.
+NUNCA certifiques un dato técnico que el contexto no muestre literalmente: si falta soldadura, masa o una sección, dilo y apunta al formulario real — la revisión humana es la única autoridad, tú no la eres."""
+
 
 def _grounding_values(context: Any, question: str) -> set[Decimal]:
     """Numbers the answer may cite: every numeric token literally present in
@@ -78,12 +94,19 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
             for item in node.values():
                 walk(item)
         elif isinstance(node, list):
-            values.add(Decimal(len(node)))
+            # Entity collections may ground "cuántos" answers; scalar arrays
+            # (coordinates, point pairs) can't launder an invented count.
+            if any(isinstance(item, dict) for item in node):
+                values.add(Decimal(len(node)))
             for item in node:
                 walk(item)
 
     walk(context)
-    for match in _BARE_NUMBER_RE.finditer(json.dumps(context)):
+    # Opaque identifiers and dates look numeric to a bare-digit scan but
+    # carry no quantitative meaning — scrub them so '2026-09-30' can't ground
+    # '2026 unidades' nor a UUID's hex digits a fabricated measure.
+    scrubbed = _OPAQUE_TOKEN_RE.sub(" ", json.dumps(context))
+    for match in _BARE_NUMBER_RE.finditer(scrubbed):
         number = _parse_number(match.group(0))
         if number is not None:
             values.add(number)
@@ -110,8 +133,11 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
 def _grounded(answer: str, values: set[Decimal]) -> bool:
     """Every number in the answer must be citable — within rounding tolerance
     of a grounding value ('el desperdicio es 20%' may cite a 20.4 in context,
-    but '3 barras' may not invent a consumption)."""
-    for match in _BARE_NUMBER_RE.finditer(answer):
+    but '3 barras' may not invent a consumption). Opaque tokens are scrubbed
+    before scanning: a date or UUID in the text is an identifier, not a
+    numeric claim ('entrega 2026-09-30' need not ground '2026')."""
+    scan = _OPAQUE_TOKEN_RE.sub(" ", answer)
+    for match in _BARE_NUMBER_RE.finditer(scan):
         number = _parse_number(match.group(0))
         if number is None:
             continue
@@ -218,7 +244,10 @@ def ask(
         capability=CAPABILITY,
         operation_key=operation_key,
         tool_name="context_assist",
-        provider_options={"system": ASK_SYSTEM, "json_output": True},
+        provider_options={
+            "system": ASK_SYSTEM + (CATALOG_SYSTEM_SUFFIX if surface == "catalog" else ""),
+            "json_output": True,
+        },
         input_payload={
             "question": question[:MAX_QUESTION],
             "surface": surface,
@@ -234,12 +263,18 @@ def ask(
             "El asistente devolvió una respuesta inválida.",
         ) from None
     validated = _answer(document, _context_refs(context))
-    if not _grounded(validated["answer"], _grounding_values(context, question)):
+    values = _grounding_values(context, question)
+    if not _grounded(validated["answer"], values):
         raise contract_error(
             502,
             "ai_assist_ungrounded",
             "El asistente citó valores que no constan en el contexto.",
         )
+    # Warnings render as system-derived evidence — invented numerics there
+    # carry the same weight as an ungrounded answer.
+    validated["warnings"] = [
+        item for item in validated["warnings"] if _grounded(item, values)
+    ]
     return {
         "audit_id": envelope["audit_id"],
         "model": envelope["model"],

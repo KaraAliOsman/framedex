@@ -6,6 +6,7 @@ import { ApiError } from "../../api/apiMutator";
 import { globalSearch } from "../../api/generated/dekopen";
 import type { SearchResult } from "../../api/generated/models";
 import { t, type TranslationKey } from "../../i18n/es-CL";
+import { MOD_K_HINT } from "../../platform";
 import { useCommandSurface } from "./registry";
 import type { CommandParam, ResolvedCommand } from "./types";
 
@@ -255,6 +256,18 @@ export function CommandPalette({
             placeholder={pending && currentParam ? currentParam.label : t("cmd.placeholder")}
             aria-label={pending && currentParam ? currentParam.label : t("cmd.placeholder")}
             aria-invalid={invalidParam || undefined}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-results"
+            aria-activedescendant={
+              pending && currentParam
+                ? filteredOptions.length > 0
+                  ? `command-palette-option-${Math.min(cursor, filteredOptions.length - 1)}`
+                  : undefined
+                : items.length > 0
+                  ? `command-palette-option-${Math.min(cursor, items.length - 1)}`
+                  : undefined
+            }
             onChange={(event) => {
               setQuery(event.target.value);
               setCursor(0);
@@ -262,15 +275,16 @@ export function CommandPalette({
             }}
             onKeyDown={onInputKeyDown}
           />
-          <kbd>Ctrl K</kbd>
+          <kbd>{MOD_K_HINT}</kbd>
         </div>
         {pending && currentParam ? (
-          <ul className="command-palette-list" role="listbox">
+          <ul className="command-palette-list" role="listbox" id="command-palette-results">
             {currentParam.kind === "choice" ? (
               filteredOptions.map((option, index) => (
                 <li key={option.value}>
                   <button
                     type="button"
+                    id={`command-palette-option-${index}`}
                     role="option"
                     aria-selected={index === cursor}
                     className={`command-palette-item${index === cursor ? " active" : ""}`}
@@ -300,11 +314,12 @@ export function CommandPalette({
           </ul>
         ) : (
           <>
-            <ul className="command-palette-list" role="listbox">
+            <ul className="command-palette-list" role="listbox" id="command-palette-results">
               {items.map((item, index) => (
                 <li key={item.key}>
                   <button
                     type="button"
+                    id={`command-palette-option-${index}`}
                     role="option"
                     aria-selected={index === cursor}
                     className={`command-palette-item${index === cursor ? " active" : ""}`}

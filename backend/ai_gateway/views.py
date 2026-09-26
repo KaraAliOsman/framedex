@@ -2,30 +2,73 @@
 
 from __future__ import annotations
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ai_gateway import service
-from ai_gateway.agent import act
+from ai_gateway import jobs
+from ai_gateway.metrics import ai_metrics
 from ai_gateway.assist import ask
 from ai_gateway.context import _ContextError
 from ai_gateway.providers import ProviderError
 from ai_gateway.serializers import (
+    AiAgentAcceptedSerializer,
     AiAgentRequestSerializer,
-    AiAgentResponseSerializer,
     AiAskRequestSerializer,
     AiAskResponseSerializer,
     AiInvokeRequestSerializer,
     AiInvokeResponseSerializer,
+    AiJobDetailSerializer,
+    AiJobMessageSerializer,
+    AiJobOutcomeResponseSerializer,
+    AiJobOutcomeSerializer,
+    AiJobSerializer,
+    AiMetricsSerializer,
 )
 from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
-from authentication.errors import contract_error
+from authentication.errors import ContractAPIException, contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
+from jobs import service as job_service
 
-_CALLERS = ("OWNER", "ESTIMATOR")
+# Ask and invoke answer inside the caller's RLS projection exactly like the
+# agent loop — a workshop manager who may run the agent must also be able to
+# ask, or the two AI surfaces contradict each other (review WM6).
 _AGENT_CALLERS = ("OWNER", "ESTIMATOR", "WORKSHOP_MANAGER")
+_CALLERS = _AGENT_CALLERS
+# Generic invoke exists for the member-facing raw capabilities only. Every
+# richer capability has its own validated endpoint — letting a caller pick
+# 'agent'/'catalog_compile' here would bypass context builders and output
+# validation while spending org credits.
+_MEMBER_CAPABILITIES = frozenset({"nlp_command", "discount_suggest"})
+
+
+def _raise_agent_error(error: Exception):
+    if isinstance(error, _ContextError):
+        if error.code == "ai_context_ref_invalid":
+            raise contract_error(
+                400,
+                "ai_context_ref_invalid",
+                "La referencia de contexto no es válida.",
+            ) from None
+        raise contract_error(
+            404,
+            "ai_context_not_found",
+            "El contexto solicitado no existe o no está disponible.",
+        ) from None
+    if isinstance(error, ProviderError):
+        raise contract_error(
+            503,
+            error.code,
+            "El proveedor de IA no está disponible en este momento.",
+        ) from None
+    if isinstance(error, ValueError) and str(error) == "ai_job_terminal":
+        raise contract_error(
+            409, "ai_job_terminal", "El trabajo ya terminó."
+        ) from None
+    raise error
 
 
 class AiInvokeView(APIView):
@@ -38,6 +81,12 @@ class AiInvokeView(APIView):
     )
     def post(self, request):
         data = validate(AiInvokeRequestSerializer, request.data)
+        if str(data["capability"]) not in _MEMBER_CAPABILITIES:
+            raise contract_error(
+                422,
+                "ai_capability_forbidden",
+                "Esa capacidad se usa desde su propia superficie.",
+            )
         with documentary_scope(request, _CALLERS) as (token, _, org_id):
             try:
                 return Response(
@@ -47,7 +96,9 @@ class AiInvokeView(APIView):
                         capability=str(data["capability"]),
                         operation_key=str(data["operation_key"]),
                         input_payload=dict(data["input_payload"]),
-                        tool_name=str(data.get("tool_name") or "") or None,
+                        # tool_name is audit attribution — the member cannot
+                        # relabel a row as another tool (review AI-05).
+                        tool_name=None,
                     )
                 )
             except ProviderError as error:
@@ -102,16 +153,18 @@ class AiAgentView(APIView):
         operation_id="ai_agent",
         parameters=[ACTIVE_ORGANIZATION_HEADER],
         request=AiAgentRequestSerializer,
-        responses={200: AiAgentResponseSerializer, **ERRORS},
+        responses={202: AiAgentAcceptedSerializer, **ERRORS},
         tags=["ai"],
     )
     def post(self, request):
         data = validate(AiAgentRequestSerializer, request.data)
-        # The agent only reads projections and proposes steps — the workshop
-        # manager's surface needs it as much as the estimator's.
+        surface = str(data["surface"])
+        refs = dict(data.get("refs") or {})
+        # The run executes on the durable worker: the POST only creates the
+        # QUEUED job row and enqueues its execution, so the client reaches
+        # the live transcript (and the cancel affordance) instead of
+        # blocking a request thread for the whole provider loop.
         with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
-            surface = str(data["surface"])
-            refs = dict(data.get("refs") or {})
             missing_refs = [
                 name
                 for name in AGENT_REQUIRED_REFS.get(surface, ())
@@ -123,34 +176,258 @@ class AiAgentView(APIView):
                     "ai_context_ref_required",
                     f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
                 )
+            operation_key = str(data["operation_key"])
+            job = jobs.enqueue_job(
+                org_id=org_id,
+                user_id=token.user_id,
+                surface=surface,
+                refs=refs,
+                goal=str(data["goal"]),
+                operation_key=operation_key,
+            )
             try:
-                return Response(
-                    act(
-                        org_id=org_id,
-                        user_id=token.user_id,
-                        surface=surface,
-                        refs=refs,
-                        goal=str(data["goal"]),
-                        product=data.get("product"),
-                        history=list(data.get("history") or []),
-                        operation_key=str(data["operation_key"]),
-                    )
+                job_service.enqueue(
+                    org_id=org_id,
+                    job_type="ai.agent.run",
+                    payload={
+                        "ai_job_id": job["id"],
+                        "mode": "new",
+                        "surface": surface,
+                        "refs": refs,
+                        "goal": str(data["goal"]),
+                        "product": data.get("product"),
+                        "history": list(data.get("history") or []),
+                        "operation_key": operation_key,
+                    },
+                    idempotency_key=f"ai:{operation_key}",
+                    created_by=token.user_id,
                 )
-            except _ContextError as error:
-                if error.code == "ai_context_ref_invalid":
+            except job_service.JobServiceError as error:
+                raise contract_error(
+                    409, error.code, "No se pudo encolar la tarea del agente."
+                ) from error
+            return Response(
+                {"job_id": job["id"], "state": job["state"]},
+                status=status.HTTP_202_ACCEPTED,
+            )
+
+
+class AiJobCollectionView(APIView):
+    """The caller's recent AI jobs — the workspace's left rail."""
+
+    @extend_schema(
+        operation_id="ai_job_list",
+        parameters=[
+            OpenApiParameter(
+                "before", OpenApiTypes.DATETIME, OpenApiParameter.QUERY,
+                description="Cursor: return jobs created before this timestamp "
+                "(the last row's created_at) — older pages of the job rail.",
+            ),
+            OpenApiParameter(
+                "before_id", OpenApiTypes.UUID, OpenApiParameter.QUERY,
+                description="Tie-breaker: the last row's id — jobs sharing the "
+                "cursor's timestamp paginate by id so nothing falls between pages.",
+            ),
+        ],
+        responses={200: AiJobSerializer(many=True), **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            return Response(
+                jobs.list_jobs(
+                    org_id=org_id,
+                    user_id=token.user_id,
+                    before=request.query_params.get("before"),
+                    before_id=request.query_params.get("before_id"),
+                )
+            )
+
+
+class AiJobView(APIView):
+    """One job with its full transcript; DELETE cancels a live run."""
+
+    @extend_schema(
+        operation_id="ai_job_retrieve",
+        responses={200: AiJobDetailSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request, job_id):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            return Response(job)
+
+    @extend_schema(
+        operation_id="ai_job_cancel",
+        responses={200: AiJobSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def delete(self, request, job_id):
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
+                raise contract_error(
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            outcome = jobs.request_cancel(
+                job_id=job_id, org_id=org_id, user_id=token.user_id
+            )
+            if outcome == "terminal":
+                raise contract_error(
+                    409, "ai_job_terminal", "El trabajo ya terminó."
+                )
+            job["cancel_signaled"] = outcome == "signaled"
+            return Response(job)
+
+
+class AiJobMessagesView(APIView):
+    """§07-B follow-up instructions: appends a user turn and runs the agent
+    again inside the same job — transcript, plan and artifacts keep
+    accumulating; the earlier result is never deleted."""
+
+    @extend_schema(
+        operation_id="ai_job_message_create",
+        request=AiJobMessageSerializer,
+        responses={202: AiAgentAcceptedSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def post(self, request, job_id):
+        data = validate(AiJobMessageSerializer, request.data)
+        # The claim and run happen in the worker — the POST validates,
+        # enqueues a resume round, and returns 202 so the workspace polls
+        # the live transcript instead of blocking on the provider loop.
+        try:
+            with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+                job = jobs.get_job(
+                    org_id=org_id, user_id=token.user_id, job_id=job_id
+                )
+                if job is None:
                     raise contract_error(
-                        400,
-                        "ai_context_ref_invalid",
-                        "La referencia de contexto no es válida.",
-                    ) from None
+                        404, "ai_job_not_found", "El trabajo no existe."
+                    )
+                if job["state"] in ("FAILED", "CANCELED"):
+                    raise contract_error(
+                        409, "ai_job_terminal", "El trabajo ya terminó."
+                    )
+                if job["state"] in ("QUEUED", "PLANNING", "RUNNING"):
+                    raise contract_error(
+                        409,
+                        "ai_job_running",
+                        "Ya hay una instrucción en curso en este trabajo.",
+                    )
+                history = [
+                    {
+                        "role": turn.get("role"),
+                        "text": turn.get("text") or turn.get("reply") or "",
+                    }
+                    for turn in job.get("transcript") or []
+                    if isinstance(turn, dict)
+                ]
+                operation_key = str(
+                    request.headers.get("X-Operation-Key")
+                    or f"{job_id}:{len(history)}"
+                )
+                try:
+                    job_service.enqueue(
+                        org_id=org_id,
+                        job_type="ai.agent.run",
+                        payload={
+                            "ai_job_id": str(job["id"]),
+                            "mode": "resume",
+                            "surface": str(job["surface"]),
+                            "refs": dict(job.get("refs") or {}),
+                            "goal": str(data["message"]),
+                            # The product rides with each message — the client
+                            # sends the position's live representation, so
+                            # design ops evaluate the current design, never a
+                            # snapshot stored at job creation.
+                            "product": data.get("product"),
+                            "history": history,
+                            "operation_key": operation_key,
+                        },
+                        idempotency_key=f"ai:{operation_key}",
+                        created_by=token.user_id,
+                    )
+                except job_service.JobServiceError as error:
+                    raise contract_error(
+                        409, error.code,
+                        "No se pudo encolar la instrucción del agente.",
+                    ) from error
+                return Response(
+                    {"job_id": str(job["id"]), "state": "QUEUED"},
+                    status=status.HTTP_202_ACCEPTED,
+                )
+        except ContractAPIException:
+            # The claim happens in the worker now — errors before the enqueue
+            # (404, conflicts, validation) leave the job untouched.
+            raise
+        except Exception as failure:
+            _raise_agent_error(failure)
+
+
+class AiJobOutcomeView(APIView):
+    """§08 measurement — the client reports what the human did with a
+    proposed step. Idempotent: a retried report dedupes on
+    (turn, step, action) and answers 200 with recorded=false instead of
+    double-counting."""
+
+    @extend_schema(
+        operation_id="ai_job_outcome_create",
+        request=AiJobOutcomeSerializer,
+        responses={200: AiJobOutcomeResponseSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def post(self, request, job_id):
+        data = validate(AiJobOutcomeSerializer, request.data)
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            job = jobs.get_job(
+                org_id=org_id, user_id=token.user_id, job_id=job_id
+            )
+            if job is None:
                 raise contract_error(
-                    404,
-                    "ai_context_not_found",
-                    "El contexto solicitado no existe o no está disponible.",
-                ) from None
-            except ProviderError as error:
-                raise contract_error(
-                    503,
-                    error.code,
-                    "El proveedor de IA no está disponible en este momento.",
-                ) from None
+                    404, "ai_job_not_found", "El trabajo no existe."
+                )
+            result = jobs.record_outcome(
+                org_id=org_id,
+                user_id=token.user_id,
+                job_id=job_id,
+                entry=data,
+            )
+            return Response(result)
+
+
+class AiMetricsView(APIView):
+    """§08 measurement — org-level AI metrics over the trailing window."""
+
+    @extend_schema(
+        operation_id="ai_metrics",
+        parameters=[
+            ACTIVE_ORGANIZATION_HEADER,
+            OpenApiParameter(
+                "days", OpenApiTypes.INT, location=OpenApiParameter.QUERY
+            ),
+        ],
+        responses={200: AiMetricsSerializer, **ERRORS},
+        tags=["ai"],
+    )
+    def get(self, request):
+        try:
+            days = int(request.query_params.get("days") or 30)
+        except (TypeError, ValueError):
+            raise contract_error(
+                400, "ai_metrics_days_invalid", "El período no es válido."
+            ) from None
+        if not 1 <= days <= 365:
+            raise contract_error(
+                400, "ai_metrics_days_invalid", "El período no es válido."
+            )
+        with documentary_scope(request, _AGENT_CALLERS) as (_, _, org_id):
+            return Response(ai_metrics(org_id=org_id, days=days))

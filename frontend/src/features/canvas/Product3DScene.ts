@@ -1,11 +1,11 @@
 import type { PlanGeometry, PlanModule } from "../../api/generated/models";
-import type { ProductJson, ProductModuleJson } from "./productEditing";
+import type { ContourJson, ProductJson, ProductModuleJson } from "./productEditing";
 import { modulePrimaryBay, resolveStacks } from "./productEditing";
 import type { IntentNode } from "./intentEditing";
 import { resolvedSlidingLayout } from "./intentEditing";
 import { insetContourPoints } from "./contourGeometry";
 import { frontLayout } from "./ProductFrontSvg";
-import type { MemberGeometry } from "./members";
+import type { MemberGeometry, MemberSpec } from "./members";
 
 /** Pure 3D scene builder — the §16 view derives every solid from the SAME
  * product model the 2D elevation renders (front layout, bay tree, catalog
@@ -17,7 +17,21 @@ export type Pt2 = [number, number];
 export type Vec3 = [number, number, number];
 
 export type SolidKind =
-  "frame" | "sash" | "mullion" | "glass" | "panel" | "coupler" | "support" | "fitting";
+  | "frame"
+  | "sash"
+  | "mullion"
+  | "glass"
+  | "panel"
+  | "coupler"
+  | "support"
+  | "fitting"
+  | "bead"
+  | "gasket"
+  | "handle"
+  | "hinge"
+  | "track"
+  | "threshold"
+  | "spacer";
 
 export interface BoxSolid {
   kind: "box";
@@ -26,6 +40,14 @@ export interface BoxSolid {
   material: string;
   center: Vec3;
   size: Vec3;
+  /** True when the solid is a neutral convention (no declared catalog
+   * section) — renderers must show it as approximate, never as the
+   * manufacturer profile. */
+  approximate?: boolean;
+  /** Presentation grouping: the operable leaf this solid belongs to, so
+   * the view can swing/slide it without touching the owner→selection
+   * convention. Fixed members carry no leafId. */
+  leafId?: string;
 }
 
 /** Member ring / pane extruded along the module's depth axis from a
@@ -40,6 +62,31 @@ export interface ShapeSolid {
   holes: Pt2[][];
   z0: number;
   depth: number;
+  approximate?: boolean;
+  leafId?: string;
+}
+
+/** Member run with a declared catalog cross-section (§05-B): `outline` is
+ * the normalized section — u the face direction across the member slot,
+ * v interior-positive depth with the exterior face at v = 0. `axis` is
+ * the direction the member runs in module space ("x" for rails, "y" for
+ * posts); the run spans a0..a1 and the (u,v) origin sits at (u0, v0).
+ * Never approximate — the polygon IS the manufacturer declaration. */
+export interface ProfileSolid {
+  kind: "profile";
+  owner: string;
+  surface: SolidKind;
+  material: string;
+  outline: Pt2[];
+  axis: "x" | "y";
+  a0: number;
+  a1: number;
+  u0: number;
+  v0: number;
+  /** Never set on profile solids — a declared section is never approximate;
+   * the field exists so the union keeps one schema. */
+  approximate?: boolean;
+  leafId?: string;
 }
 
 /** Coupler wedge in world space: a plan polygon (x,z) extruded vertically. */
@@ -51,9 +98,32 @@ export interface PrismSolid {
   outline: Pt2[];
   y0: number;
   y1: number;
+  approximate?: boolean;
+  leafId?: string;
 }
 
-export type Solid3D = BoxSolid | ShapeSolid | PrismSolid;
+export type Solid3D = BoxSolid | ShapeSolid | PrismSolid | ProfileSolid;
+
+/** §05-E — a leaf's presentation motion, derived from its declared opening
+ * type and region. This is UI state only: it never changes the product
+ * model, dimensions or BOM — the engine stays the authority on what the
+ * product IS; the motion only shows how it would open.
+ *
+ * Coordinates live in module space (x right, y up, z into the wall — +z is
+ * the room side). `pivot` is the hinge edge: the leaf's left/right edge x
+ * for a swing, its bottom/top edge y for a tilt. `dir` signs the pose:
+ * swing −1 opens a left-hinge leaf, +1 a right-hinge leaf (rotation about
+ * +Y at pivotX so the free edge moves +z); tilt +1 tips the free edge
+ * toward the room (TILT_TURN bottom pivot) or out (AWNING top pivot, same
+ * sign — the pivot placement makes the difference); slide ±1 along +x by
+ * `travel`. */
+export interface LeafMotion {
+  leafId: string;
+  kind: "swing" | "tilt" | "slide";
+  pivot: number;
+  dir: number;
+  travel: number;
+}
 
 export interface ModuleScene {
   moduleId: string;
@@ -65,6 +135,7 @@ export interface ModuleScene {
   /** Module depth — stack coupler bars are emitted in this local frame. */
   depth: number;
   solids: Solid3D[];
+  leaves: LeafMotion[];
 }
 
 export interface Scene3D {
@@ -82,9 +153,170 @@ const FALLBACK_DEPTH_MM = 60;
 const GLASS_DEFAULT_MM = 20;
 const SUPPORT_CHANNEL_MM = 14;
 const FITTING_BLOCK_MM = 90;
+const GASKET_MM = 3;
+const BEAD_DEPTH_MM = 10;
+const HANDLE_HEIGHT_MM = 1050;
+const HANDLE_OFFSET_MM = 14;
+const HINGE_MM = 14;
+const TRACK_MM = 10;
 
 type Region = { x: number; y: number; w: number; h: number };
 type NodeRegion = { node: IntentNode; region: Region };
+
+const SPACER_MM = 10;
+const SPACER_INSET_MM = 5;
+
+/** Parse a declared glass composition — "4-16-4" (pane/cavity/pane) or
+ * "4-16-4-16-4" (triple glazing): panes at even indices, air chambers at
+ * odd. Free text like "4 Float Incoloro" and implausible numbers return
+ * null — the renderer then draws one slab, never a fabricated stack. */
+export function iguSpec(
+  spec: string | null | undefined,
+): { panes: number[]; chambers: number[] } | null {
+  if (!spec) return null;
+  const parts = spec.split("-").map((part) => Number(part.trim()));
+  if (parts.length < 3 || parts.length % 2 === 0 || parts.some((part) => !Number.isFinite(part))) {
+    return null;
+  }
+  const panes = parts.filter((_, index) => index % 2 === 0);
+  const chambers = parts.filter((_, index) => index % 2 === 1);
+  if (panes.some((t) => t < 2 || t > 19) || chambers.some((t) => t < 4 || t > 40)) {
+    return null;
+  }
+  return { panes, chambers };
+}
+
+/** The aluminium edge spacer of a real IGU cavity — a perimeter bar just
+ * inside the glazing edge, the thin metal line visible at the glass
+ * border on any real insulated unit. */
+function spacerRing(
+  solids: Solid3D[],
+  owner: string,
+  x: number,
+  y: number,
+  z0: number,
+  w: number,
+  h: number,
+  t: number,
+): void {
+  const inset = Math.min(SPACER_INSET_MM, w / 8, h / 8);
+  const bar = Math.min(SPACER_MM, w / 4, h / 4);
+  const sx = x + inset;
+  const sy = y + inset;
+  const sw = w - 2 * inset;
+  const sh = h - 2 * inset;
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy, z0, sw, bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy + sh - bar, z0, sw, bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx, sy + bar, z0, bar, sh - 2 * bar, t));
+  solids.push(box(owner, "spacer", "ALUMINIUM", sx + sw - bar, sy + bar, z0, bar, sh - 2 * bar, t));
+}
+
+/** The glazing infill of a bay. One slab when no composition is declared;
+ * a real IGU stack — declared panes separated by spacer bars — when
+ * `glass_spec` declares the pane/cavity layout. The stack scales into the
+ * glazing slot thickness, so declared proportions stay intact and a
+ * "4-16-4" never draws as a 20mm slab of glass. */
+function glassInfill(
+  solids: Solid3D[],
+  owner: string,
+  x: number,
+  y: number,
+  z0: number,
+  w: number,
+  h: number,
+  glassT: number,
+  spec: string | null | undefined,
+): void {
+  const igu = iguSpec(spec);
+  if (!igu) {
+    solids.push(box(owner, "glass", "GLASS", x, y, z0, w, h, glassT));
+    return;
+  }
+  const declared =
+    igu.panes.reduce((sum, t) => sum + t, 0) + igu.chambers.reduce((sum, t) => sum + t, 0);
+  const scale = declared > 0 ? glassT / declared : 1;
+  let cursor = z0;
+  igu.panes.forEach((paneT, index) => {
+    const thickness = paneT * scale;
+    solids.push(box(owner, "glass", "GLASS", x, y, cursor, w, h, thickness));
+    cursor += thickness;
+    const cavityT = (igu.chambers[index] ?? 0) * scale;
+    if (cavityT > 0) {
+      spacerRing(solids, owner, x, y, cursor, w, h, cavityT);
+      cursor += cavityT;
+    }
+  });
+}
+
+/** Contour glazing — the same IGU stack as `glassInfill`, but each pane is
+ * the contoured outline and the spacer is a contour-inset ring, since a
+ * rectangular bar would overhang a sloped or arched edge. */
+function contourGlassInfill(
+  solids: Solid3D[],
+  owner: string,
+  contour: ContourJson,
+  insetMm: number,
+  z0: number,
+  glassT: number,
+  spec: string | null | undefined,
+): void {
+  const outline = insetContourPoints(contour, insetMm).map((p) => [p.x, p.y] as Pt2);
+  if (outline.length < 3) return;
+  const igu = iguSpec(spec);
+  if (!igu) {
+    solids.push({
+      kind: "shape",
+      owner,
+      surface: "glass",
+      material: "GLASS",
+      outline,
+      holes: [],
+      z0,
+      depth: glassT,
+    });
+    return;
+  }
+  const declared =
+    igu.panes.reduce((sum, t) => sum + t, 0) + igu.chambers.reduce((sum, t) => sum + t, 0);
+  const scale = declared > 0 ? glassT / declared : 1;
+  let cursor = z0;
+  igu.panes.forEach((paneT, index) => {
+    const thickness = paneT * scale;
+    solids.push({
+      kind: "shape",
+      owner,
+      surface: "glass",
+      material: "GLASS",
+      outline,
+      holes: [],
+      z0: cursor,
+      depth: thickness,
+    });
+    cursor += thickness;
+    const cavityT = (igu.chambers[index] ?? 0) * scale;
+    if (cavityT > 0) {
+      const ringOutline = insetContourPoints(contour, insetMm + SPACER_INSET_MM).map(
+        (p) => [p.x, p.y] as Pt2,
+      );
+      const ringHole = insetContourPoints(contour, insetMm + SPACER_INSET_MM + SPACER_MM).map(
+        (p) => [p.x, p.y] as Pt2,
+      );
+      if (ringOutline.length >= 3 && ringHole.length >= 3) {
+        solids.push({
+          kind: "shape",
+          owner,
+          surface: "spacer",
+          material: "ALUMINIUM",
+          outline: ringOutline,
+          holes: [ringHole],
+          z0: cursor,
+          depth: cavityT,
+        });
+      }
+      cursor += cavityT;
+    }
+  });
+}
 
 function box(
   owner: string,
@@ -107,12 +339,55 @@ function box(
   };
 }
 
-/** Four-member ring inside a region (long sides full span, caps between). */
+/** Declared section normalized into the member's local (u,v): u the face
+ * direction across the member slot, v interior-positive with the exterior
+ * face at v = 0 — `orientation` names which drawing edge is exterior. Only
+ * a real polygon normalizes; anything else returns null and the caller
+ * stays approximate. Exported for the technical section view, which draws
+ * the same shapes in plan. */
+export function normalizedSection(
+  spec: MemberSpec,
+): { outline: Pt2[]; width: number; depth: number } | null {
+  const section = spec.section;
+  if (!section || section.polygon.length < 3) return null;
+  const points = section.polygon.map((point) => [Number(point.x_mm), Number(point.y_mm)] as Pt2);
+  if (points.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y))) return null;
+  const rotated = points.map(([x, y]): Pt2 => {
+    switch (section.orientation) {
+      case "EXTERIOR_UP":
+        return [-x, -y];
+      case "EXTERIOR_LEFT":
+        return [-y, x];
+      case "EXTERIOR_RIGHT":
+        return [y, -x];
+      default:
+        return [x, y];
+    }
+  });
+  const xs = rotated.map((point) => point[0]);
+  const ys = rotated.map((point) => point[1]);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const width = Math.max(...xs) - minX;
+  const depth = Math.max(...ys) - minY;
+  if (width <= 0 || depth <= 0) return null;
+  return {
+    outline: rotated.map(([x, y]) => [x - minX, y - minY] as Pt2),
+    width,
+    depth,
+  };
+}
+
+/** Four-member ring inside a region (long sides full span, caps between).
+ * A declared catalog section extrudes each side as the real profile —
+ * straight-cut ends meet at corners (the miter is a fabrication detail,
+ * not a visual one). Without a section the member stays an explicitly
+ * approximate box, never a fabricated declaration. */
 function memberBarRing(
   solids: Solid3D[],
   owner: string,
   surface: SolidKind,
-  material: string,
+  spec: MemberSpec,
   region: Region,
   barW: number,
   depth: number,
@@ -120,21 +395,225 @@ function memberBarRing(
 ): void {
   const w = Math.min(barW, region.w / 2);
   const h = Math.min(barW, region.h / 2);
+  const section = normalizedSection(spec);
+  if (section !== null) {
+    const uCenter = section.width / 2;
+    const runs: { axis: "x" | "y"; a0: number; a1: number; u0: number }[] = [
+      {
+        axis: "y",
+        a0: region.y,
+        a1: region.y + region.h,
+        u0: region.x + w / 2 - uCenter,
+      },
+      {
+        axis: "y",
+        a0: region.y,
+        a1: region.y + region.h,
+        u0: region.x + region.w - w / 2 - uCenter,
+      },
+      {
+        axis: "x",
+        a0: region.x + w,
+        a1: region.x + region.w - w,
+        u0: region.y + h / 2 - uCenter,
+      },
+      {
+        axis: "x",
+        a0: region.x + w,
+        a1: region.x + region.w - w,
+        u0: region.y + region.h - h / 2 - uCenter,
+      },
+    ];
+    for (const run of runs) {
+      if (run.a1 - run.a0 <= 0) continue;
+      solids.push({
+        kind: "profile",
+        owner,
+        surface,
+        material: spec.material,
+        outline: section.outline,
+        axis: run.axis,
+        a0: run.a0,
+        a1: run.a1,
+        u0: run.u0,
+        v0: z0,
+      });
+    }
+    return;
+  }
+  const fallback = { approximate: true };
   solids.push(
-    box(owner, surface, material, region.x, region.y, z0, w, region.h, depth),
-    box(owner, surface, material, region.x + region.w - w, region.y, z0, w, region.h, depth),
-    box(owner, surface, material, region.x + w, region.y, z0, region.w - 2 * w, h, depth),
+    {
+      ...box(owner, surface, spec.material, region.x, region.y, z0, w, region.h, depth),
+      ...fallback,
+    },
+    {
+      ...box(
+        owner,
+        surface,
+        spec.material,
+        region.x + region.w - w,
+        region.y,
+        z0,
+        w,
+        region.h,
+        depth,
+      ),
+      ...fallback,
+    },
+    {
+      ...box(owner, surface, spec.material, region.x + w, region.y, z0, region.w - 2 * w, h, depth),
+      ...fallback,
+    },
+    {
+      ...box(
+        owner,
+        surface,
+        spec.material,
+        region.x + w,
+        region.y + region.h - h,
+        z0,
+        region.w - 2 * w,
+        h,
+        depth,
+      ),
+      ...fallback,
+    },
+  );
+}
+
+/** Thin bar ring (bead or gasket) inset inside an aperture — the glazing
+ * seat and the rubber line that closes it. */
+function thinRing(
+  solids: Solid3D[],
+  owner: string,
+  surface: SolidKind,
+  material: string,
+  region: Region,
+  lineW: number,
+  z0: number,
+  depth: number,
+): void {
+  if (region.w <= lineW * 2 || region.h <= lineW * 2 || depth <= 0) return;
+  solids.push(
+    box(owner, surface, material, region.x, region.y, z0, lineW, region.h, depth),
     box(
       owner,
       surface,
       material,
-      region.x + w,
-      region.y + region.h - h,
+      region.x + region.w - lineW,
+      region.y,
       z0,
-      region.w - 2 * w,
-      h,
+      lineW,
+      region.h,
       depth,
     ),
+    box(
+      owner,
+      surface,
+      material,
+      region.x + lineW,
+      region.y,
+      z0,
+      region.w - 2 * lineW,
+      lineW,
+      depth,
+    ),
+    box(
+      owner,
+      surface,
+      material,
+      region.x + lineW,
+      region.y + region.h - lineW,
+      z0,
+      region.w - 2 * lineW,
+      lineW,
+      depth,
+    ),
+  );
+}
+
+/** Operable-leaf hardware: hinges on the side the leaf opens toward,
+ * a lever handle opposite them at the declared handle height (or the
+ * conventional 1050 mm when undeclared — a presentation convention, the
+ * declared value wins when known). */
+function hardwareSolids(
+  solids: Solid3D[],
+  owner: string,
+  bay: IntentNode,
+  region: Region,
+  sashW: number,
+  zInterior: number,
+): void {
+  const opening = bay.opening_type;
+  if (opening === "AWNING") {
+    for (const frac of [0.2, 0.8]) {
+      solids.push(
+        box(
+          owner,
+          "hinge",
+          "STEEL",
+          region.x + region.w * frac - HINGE_MM / 2,
+          region.y + region.h - sashW * 0.9,
+          zInterior - 6,
+          HINGE_MM,
+          sashW * 0.7,
+          10,
+        ),
+      );
+    }
+    solids.push(
+      box(
+        owner,
+        "handle",
+        "STEEL",
+        region.x + region.w / 2 - 8,
+        region.y + 30,
+        zInterior,
+        16,
+        24,
+        14,
+      ),
+    );
+    return;
+  }
+  const hingeLeft = opening === "TURN_LEFT" || opening === "TILT_TURN_LEFT";
+  const hingeRight = opening === "TURN_RIGHT" || opening === "TILT_TURN_RIGHT";
+  const door = opening === "DOOR_ENTRY";
+  if (!hingeLeft && !hingeRight && !door) return;
+  const hingeX = hingeLeft || door ? region.x + 2 : region.x + region.w - HINGE_MM - 2;
+  for (const frac of [0.12, 0.88]) {
+    solids.push(
+      box(
+        owner,
+        "hinge",
+        "STEEL",
+        hingeX,
+        region.y + region.h * frac,
+        zInterior - 6,
+        HINGE_MM,
+        Math.min(region.h * 0.1, 110),
+        10,
+      ),
+    );
+  }
+  const declaredHandle = Number(bay.handle_height_mm);
+  const handleY =
+    region.y +
+    Math.min(
+      Number.isFinite(declaredHandle) && declaredHandle > 0 ? declaredHandle : HANDLE_HEIGHT_MM,
+      region.h - 40,
+    );
+  const handleX =
+    hingeLeft || door ? region.x + region.w - HANDLE_OFFSET_MM - 30 : region.x + HANDLE_OFFSET_MM;
+  // The rose/lever must stand proud of the leaf face — flush at zInterior
+  // they z-fought the sash front and read invisible (review M5). A ~130 mm
+  // lever pointing into the leaf reads at real handle proportion.
+  const plateX = handleX + 8;
+  const leverX = hingeRight ? plateX + 18 : plateX - 130;
+  solids.push(
+    box(owner, "handle", "STEEL", plateX, handleY - 30, zInterior + 2, 18, 60, 10),
+    box(owner, "handle", "STEEL", leverX, handleY - 6, zInterior + 10, 130, 12, 40),
   );
 }
 
@@ -197,6 +676,7 @@ function planTransform(
   planModule: PlanModule | undefined,
   rect: { x: number; sill: number },
   fallbackDepth: number,
+  declared?: { x: number; y: number; theta: number },
 ): { position: Vec3; rotationY: number; depth: number; fromPlan: boolean } {
   if (planModule && planModule.corners.length >= 4) {
     const [start, end, , backStart] = planModule.corners;
@@ -217,6 +697,18 @@ function planTransform(
       };
     }
   }
+  if (declared) {
+    // No engine plan — reproduce the plan's front chain from the declared
+    // coupling angles: the member starts at its column's chain point and
+    // runs along the accumulated heading. Only the front edge is
+    // authoritative here; the back edge keeps the fallback depth.
+    return {
+      position: [declared.x, rect.sill, declared.y === 0 ? 0 : -declared.y],
+      rotationY: declared.theta,
+      depth: fallbackDepth,
+      fromPlan: true,
+    };
+  }
   return {
     position: [rect.x, rect.sill, 0],
     rotationY: 0,
@@ -225,11 +717,21 @@ function planTransform(
   };
 }
 
+/** Mark the solids appended since `from` as belonging to `leafId`. */
+function tagLeaf(solids: Solid3D[], from: number, leafId: string): void {
+  for (let index = from; index < solids.length; index += 1) {
+    const solid = solids[index];
+    if (solid) solid.leafId = leafId;
+  }
+}
+
 /** Leaf bay solids: sliding panes ride their declared tracks at stepped
  * depths, operable leaves get a sash ring + pane, fixed leaves a pane,
- * panels an opaque slab. */
+ * panels an opaque slab. Operable leaves also register a presentation-only
+ * LeafMotion so the view can open them. */
 function leafSolids(
   solids: Solid3D[],
+  leaves: LeafMotion[],
   module: ProductModuleJson,
   bay: IntentNode,
   region: Region,
@@ -266,18 +768,16 @@ function leafSolids(
       const slotX = region.x + pitch * index;
       if (panel.kind === "FIXED") {
         // Fixed slots glaze directly — no sash, same as the front view.
-        solids.push(
-          box(
-            owner,
-            "glass",
-            "GLASS",
-            slotX + bead,
-            region.y + bead,
-            z0,
-            Math.max(pitch - 2 * bead, 1),
-            Math.max(region.h - 2 * bead, 1),
-            glassT,
-          ),
+        glassInfill(
+          solids,
+          owner,
+          slotX + bead,
+          region.y + bead,
+          z0,
+          Math.max(pitch - 2 * bead, 1),
+          Math.max(region.h - 2 * bead, 1),
+          glassT,
+          bay.glass_spec,
         );
         return;
       }
@@ -286,31 +786,68 @@ function leafSolids(
         region.x + region.w - leafW,
       );
       const paneRegion: Region = { x: leafX, y: region.y, w: leafW, h: region.h };
+      const leafId = `${bay.id}:${index}`;
+      const leafFrom = solids.length;
       const sashW = Math.min(members.sash.faceWidthMm, leafW / 3, region.h / 3);
       memberBarRing(
         solids,
         owner,
         "sash",
-        members.sash.material,
+        members.sash,
         paneRegion,
         sashW,
         sashD,
         Math.max(z0 - sashD, 0),
       );
+      glassInfill(
+        solids,
+        owner,
+        paneRegion.x + sashW,
+        paneRegion.y + sashW,
+        z0,
+        Math.max(leafW - 2 * sashW, 1),
+        Math.max(paneRegion.h - 2 * sashW, 1),
+        glassT,
+        bay.glass_spec,
+      );
+      gasketAndBead(
+        solids,
+        owner,
+        paneRegion,
+        sashW,
+        z0,
+        glassT,
+        depth,
+        members.beadSpecFor(bay.glass_thickness_mm ?? null),
+      );
+      tagLeaf(solids, leafFrom, leafId);
+      // Presentation only: adjacent leaves fan apart — the direction is a
+      // readability convention since the product declares no leaf travel.
+      leaves.push({
+        leafId,
+        kind: "slide",
+        pivot: 0,
+        dir: index % 2 === 0 ? -1 : 1,
+        travel: Math.min(leafW * 0.55, region.w * 0.45),
+      });
+    });
+    // Sliding leaves ride rails — the track channels at the sill plane are
+    // a physical detail, one per declared track.
+    for (let track = 0; track < sliding.tracks; track += 1) {
       solids.push(
         box(
           owner,
-          "glass",
-          "GLASS",
-          paneRegion.x + sashW,
-          paneRegion.y + sashW,
-          z0,
-          Math.max(leafW - 2 * sashW, 1),
-          Math.max(paneRegion.h - 2 * sashW, 1),
-          glassT,
+          "track",
+          "ALUMINIUM",
+          region.x,
+          region.y - 2,
+          Math.min(glassZ + (sliding.tracks - 1 - track) * trackStep, depth - glassT),
+          region.w,
+          TRACK_MM,
+          TRACK_MM,
         ),
       );
-    });
+    }
     return;
   }
 
@@ -332,48 +869,194 @@ function leafSolids(
   }
 
   if (operable) {
+    const leafId = owner;
+    const leafFrom = solids.length;
     const sashW = Math.min(members.sash.faceWidthMm, region.w / 3, region.h / 3);
     const sashD = depth * 0.45;
-    memberBarRing(
-      solids,
-      owner,
-      "sash",
-      members.sash.material,
-      region,
-      sashW,
-      sashD,
-      depth - sashD,
-    );
+    memberBarRing(solids, owner, "sash", members.sash, region, sashW, sashD, depth - sashD);
     // An operable bay's infill sits inside its sash — an opaque panel for
     // panel doors, glazing otherwise (the front view wraps both the same).
-    solids.push(
-      box(
+    if (bay.panel_article_sku) {
+      solids.push(
+        box(
+          owner,
+          "panel",
+          members.frame.material,
+          region.x + sashW,
+          region.y + sashW,
+          glassZ,
+          Math.max(region.w - 2 * sashW, 1),
+          Math.max(region.h - 2 * sashW, 1),
+          glassT,
+        ),
+      );
+    } else {
+      glassInfill(
+        solids,
         owner,
-        bay.panel_article_sku ? "panel" : "glass",
-        bay.panel_article_sku ? members.frame.material : "GLASS",
         region.x + sashW,
         region.y + sashW,
         glassZ,
         Math.max(region.w - 2 * sashW, 1),
         Math.max(region.h - 2 * sashW, 1),
         glassT,
-      ),
+        bay.glass_spec,
+      );
+    }
+    gasketAndBead(
+      solids,
+      owner,
+      region,
+      sashW,
+      glassZ,
+      glassT,
+      depth,
+      members.beadSpecFor(bay.glass_thickness_mm ?? null),
     );
+    hardwareSolids(solids, owner, bay, region, sashW, depth);
+    // A door opening closes on a low threshold, not the frame's bottom
+    // profile — the declared threshold member sits at the sill plane, its
+    // real section extruded when the catalog carries one.
+    if (bay.opening_type === "DOOR_ENTRY" && members.threshold !== null) {
+      const thresholdW = Math.min(members.threshold.faceWidthMm, region.w);
+      const thresholdSection = normalizedSection(members.threshold);
+      if (thresholdSection !== null) {
+        solids.push({
+          kind: "profile",
+          owner,
+          surface: "threshold",
+          material: members.threshold.material,
+          outline: thresholdSection.outline,
+          axis: "x",
+          a0: region.x,
+          a1: region.x + region.w,
+          u0: region.y - thresholdW / 2 - thresholdSection.width / 2,
+          v0: 0,
+        });
+      } else {
+        solids.push({
+          ...box(
+            owner,
+            "threshold",
+            members.threshold.material,
+            region.x,
+            region.y - thresholdW,
+            0,
+            region.w,
+            thresholdW,
+            depth,
+          ),
+          approximate: true,
+        });
+      }
+    }
+    tagLeaf(solids, leafFrom, leafId);
+    // Hinge conventions mirror hardwareSolids: TURN_LEFT/DOOR hinge on the
+    // leaf's left edge, TURN_RIGHT on the right; TILT_TURN tips the top in
+    // on a bottom pivot, AWNING swings its bottom out on a top pivot.
+    const opening = bay.opening_type;
+    if (opening === "AWNING") {
+      leaves.push({
+        leafId,
+        kind: "tilt",
+        pivot: region.y + region.h,
+        dir: 1,
+        travel: 0,
+      });
+    } else if (opening === "TILT_TURN_LEFT" || opening === "TILT_TURN_RIGHT") {
+      leaves.push({
+        leafId,
+        kind: "tilt",
+        pivot: region.y,
+        dir: 1,
+        travel: 0,
+      });
+    } else {
+      const hingeLeft = opening === "TURN_LEFT" || opening === "DOOR_ENTRY";
+      leaves.push({
+        leafId,
+        kind: "swing",
+        pivot: hingeLeft ? region.x : region.x + region.w,
+        dir: hingeLeft ? -1 : 1,
+        travel: 0,
+      });
+    }
     return;
   }
 
-  solids.push(
-    box(
+  glassInfill(
+    solids,
+    owner,
+    region.x + bead,
+    region.y + bead,
+    glassZ,
+    Math.max(region.w - 2 * bead, 1),
+    Math.max(region.h - 2 * bead, 1),
+    glassT,
+    bay.glass_spec,
+  );
+  gasketAndBead(
+    solids,
+    owner,
+    region,
+    bead,
+    glassZ,
+    glassT,
+    depth,
+    members.beadSpecFor(bay.glass_thickness_mm ?? null),
+  );
+}
+
+/** The glazing seat around a pane — the bead bars at the aperture edge
+ * plus the rubber line hugging the glass. `inset` is the member face that
+ * already frames the pane (sash width on operable leaves, bead elsewhere). */
+function gasketAndBead(
+  solids: Solid3D[],
+  owner: string,
+  region: Region,
+  inset: number,
+  glassZ: number,
+  glassT: number,
+  depth: number,
+  beadSpec?: MemberSpec | null,
+): void {
+  const beadW = Math.max(Math.min(inset * 0.45, 20), 10);
+  const beadZ = Math.min(glassZ + glassT, depth);
+  const beadDepth = Math.min(BEAD_DEPTH_MM, Math.max(depth - glassZ - glassT, 0));
+  // A declared bead section extrudes the real profile; anything else stays
+  // the explicitly-approximate thin ring.
+  if (beadSpec && normalizedSection(beadSpec) !== null) {
+    memberBarRing(
+      solids,
       owner,
-      "glass",
-      "GLASS",
-      region.x + bead,
-      region.y + bead,
-      glassZ,
-      Math.max(region.w - 2 * bead, 1),
-      Math.max(region.h - 2 * bead, 1),
-      glassT,
-    ),
+      "bead",
+      beadSpec,
+      region,
+      Math.min(beadW, inset),
+      beadDepth,
+      beadZ,
+    );
+  } else {
+    thinRing(
+      solids,
+      owner,
+      "bead",
+      "PVC",
+      { x: region.x, y: region.y, w: region.w, h: region.h },
+      Math.min(beadW, inset),
+      beadZ,
+      beadDepth,
+    );
+  }
+  thinRing(
+    solids,
+    owner,
+    "gasket",
+    "GASKET",
+    { x: region.x + inset, y: region.y + inset, w: region.w - inset * 2, h: region.h - inset * 2 },
+    GASKET_MM,
+    Math.min(glassZ + glassT - GASKET_MM, Math.max(depth - GASKET_MM, 0)),
+    GASKET_MM,
   );
 }
 
@@ -400,18 +1083,16 @@ function framelessSolids(
     Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
     4,
   );
-  solids.push(
-    box(
-      owner,
-      "glass",
-      "GLASS",
-      reveal,
-      reveal,
-      Math.max((depth - glassT) / 2, 0),
-      Math.max(w - 2 * reveal, 1),
-      Math.max(h - 2 * reveal, 1),
-      glassT,
-    ),
+  glassInfill(
+    solids,
+    owner,
+    reveal,
+    reveal,
+    Math.max((depth - glassT) / 2, 0),
+    Math.max(w - 2 * reveal, 1),
+    Math.max(h - 2 * reveal, 1),
+    glassT,
+    modulePrimaryBay(module)?.glass_spec,
   );
   const edgeSpan = (edge: string): Region => {
     switch (edge) {
@@ -524,14 +1205,42 @@ export function buildScene3D(
   const worldPoints: Vec3[] = [];
 
   const stacks = resolveStacks(product);
+  // Declared-angle front chain for plan-less products — mirrors the engine's
+  // plan walk: column i's heading adds the seam's angle_deg, each column's
+  // front-start is the previous one's front-end. Corner/bow assemblies
+  // fold; a straight chain degenerates to the flat elevation.
+  const columnTransform = new Map<string, { x: number; y: number; theta: number }>();
+  {
+    const columnSeams = joints.filter((joint) => joint.kind === "column");
+    const couplingById = new Map(
+      product.assembly.couplings.map((coupling) => [coupling.id, coupling]),
+    );
+    let chainX = 0;
+    let chainY = 0;
+    let theta = 0;
+    columns.forEach((column, index) => {
+      columnTransform.set(column.rootId, { x: chainX, y: chainY, theta });
+      chainX += column.w * Math.cos(theta);
+      chainY += column.w * Math.sin(theta);
+      const seam = columnSeams[index];
+      // The elevation nulls angleDeg on non-INLINE seams because a front
+      // view does not bend — the scene walk still folds on every declared
+      // coupling angle, so a CORNER joint angles the following columns.
+      const angleDeg =
+        seam?.angleDeg ?? (seam?.couplingId ? couplingById.get(seam.couplingId)?.angle_deg : null);
+      if (angleDeg) theta += (Number(angleDeg) * Math.PI) / 180;
+    });
+  }
   for (const rect of rects) {
     const module = rect.module;
     const w = Number(module.width_mm);
     const h = Number(module.height_mm);
+    const rootId = stacks.stackRoot.get(module.id) ?? module.id;
     const { position, rotationY, depth, fromPlan } = planTransform(
       planById.get(module.id),
       rect,
       fallbackDepth,
+      columnTransform.get(rootId),
     );
     // A stacked member shares its root's plan footprint; the elevation
     // centres it inside the column, so offset along the root heading by
@@ -545,6 +1254,7 @@ export function buildScene3D(
       }
     }
     const solids: Solid3D[] = [];
+    const leaves: LeafMotion[] = [];
 
     if (module.frameless) {
       framelessSolids(solids, module, w, h, depth);
@@ -569,27 +1279,21 @@ export function buildScene3D(
         Number.isFinite(declaredT) && declaredT > 0 ? declaredT : GLASS_DEFAULT_MM,
         4,
       );
-      const glassOutline = insetContourPoints(module.contour, frameT + bead).map(
-        (p) => [p.x, p.y] as Pt2,
+      contourGlassInfill(
+        solids,
+        primaryBay ? `${module.id}/${primaryBay.id}` : module.id,
+        module.contour,
+        frameT + bead,
+        Math.max((depth - glassT) / 2, 0),
+        glassT,
+        primaryBay?.glass_spec,
       );
-      if (glassOutline.length >= 3) {
-        solids.push({
-          kind: "shape",
-          owner: primaryBay ? `${module.id}/${primaryBay.id}` : module.id,
-          surface: "glass",
-          material: "GLASS",
-          outline: glassOutline,
-          holes: [],
-          z0: Math.max((depth - glassT) / 2, 0),
-          depth: glassT,
-        });
-      }
     } else {
       memberBarRing(
         solids,
         module.id,
         "frame",
-        members.frame.material,
+        members.frame,
         { x: 0, y: 0, w, h },
         frameT,
         depth,
@@ -611,8 +1315,26 @@ export function buildScene3D(
       );
       for (const bar of out.bars) {
         const mullion = bar.vertical ? members.mullionV : members.mullionH;
-        solids.push(
-          box(
+        const mullionSection = mullion !== null ? normalizedSection(mullion) : null;
+        if (mullionSection !== null) {
+          solids.push({
+            kind: "profile",
+            owner: module.id,
+            surface: "mullion",
+            material: mullion!.material,
+            outline: mullionSection.outline,
+            axis: bar.vertical ? "y" : "x",
+            a0: bar.vertical ? bar.region.y : bar.region.x,
+            a1: bar.vertical ? bar.region.y + bar.region.h : bar.region.x + bar.region.w,
+            u0: bar.vertical
+              ? bar.region.x + bar.region.w / 2 - mullionSection.width / 2
+              : bar.region.y + bar.region.h / 2 - mullionSection.width / 2,
+            v0: 0,
+          });
+          continue;
+        }
+        solids.push({
+          ...box(
             module.id,
             "mullion",
             mullion?.material ?? members.frame.material,
@@ -623,14 +1345,15 @@ export function buildScene3D(
             Math.max(bar.region.h, 0.5),
             depth,
           ),
-        );
+          approximate: true,
+        });
       }
       for (const leaf of out.leaves) {
-        leafSolids(solids, module, leaf.node, leaf.region, members, depth);
+        leafSolids(solids, leaves, module, leaf.node, leaf.region, members, depth);
       }
     }
 
-    moduleScenes.push({ moduleId: module.id, position, rotationY, depth, solids });
+    moduleScenes.push({ moduleId: module.id, position, rotationY, depth, solids, leaves });
 
     const cos = Math.cos(rotationY);
     const sin = Math.sin(rotationY);
@@ -704,20 +1427,40 @@ export function buildScene3D(
         .map((id) => moduleScenes.find((scene) => scene.moduleId === id)?.depth)
         .filter((d): d is number => typeof d === "number");
       const depth = depths.length > 0 ? Math.min(...depths) : fallbackDepth;
-      const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? frameT;
-      couplers.push(
-        box(
-          polygon.coupling_id,
-          "coupler",
+      const couplerSpec = members.couplerFor(coupling?.coupler_profile_sku ?? null);
+      const couplerSection = couplerSpec ? normalizedSection(couplerSpec) : null;
+      const barW = couplerSpec?.faceWidthMm ?? frameT;
+      // A straight joint's coupler runs vertically — its declared section
+      // extrudes along the seam; undeclared stays an approximate bar.
+      if (couplerSection !== null) {
+        couplers.push({
+          kind: "profile",
+          owner: polygon.coupling_id,
+          surface: "coupler",
           material,
-          joint.x - barW / 2,
-          0,
-          0,
-          barW,
-          height,
-          depth,
-        ),
-      );
+          outline: couplerSection.outline,
+          axis: "y",
+          a0: 0,
+          a1: height,
+          u0: joint.x - couplerSection.width / 2,
+          v0: 0,
+        });
+      } else {
+        couplers.push({
+          ...box(
+            polygon.coupling_id,
+            "coupler",
+            material,
+            joint.x - barW / 2,
+            0,
+            0,
+            barW,
+            height,
+            depth,
+          ),
+          approximate: true,
+        });
+      }
       worldPoints.push([joint.x - barW / 2, 0, 0], [joint.x + barW / 2, height, depth]);
       continue;
     }
@@ -749,24 +1492,62 @@ export function buildScene3D(
       ? moduleScenes.find((scene) => scene.moduleId === memberId)
       : undefined;
     const memberModule = memberId ? moduleById.get(memberId) : undefined;
-    const barW = members.couplerFor(coupling?.coupler_profile_sku ?? null)?.faceWidthMm ?? 30;
-    const solid = box(
-      joint.couplingId,
-      "coupler",
-      members.couplerFor(coupling?.coupler_profile_sku ?? null)?.material ?? members.frame.material,
-      0,
-      -barW / 2,
-      0,
-      memberModule ? Number(memberModule.width_mm) : joint.w,
-      barW,
-      memberScene?.depth ?? fallbackDepth,
-    );
+    const couplerSpec = members.couplerFor(coupling?.coupler_profile_sku ?? null);
+    const couplerSection = couplerSpec ? normalizedSection(couplerSpec) : null;
+    const barW = couplerSpec?.faceWidthMm ?? 30;
+    const run = memberModule ? Number(memberModule.width_mm) : joint.w;
+    const depth = memberScene?.depth ?? fallbackDepth;
+    const solid: Solid3D =
+      couplerSection !== null
+        ? {
+            kind: "profile",
+            owner: joint.couplingId,
+            surface: "coupler",
+            material: couplerSpec?.material ?? members.frame.material,
+            outline: couplerSection.outline,
+            axis: "x",
+            a0: 0,
+            a1: run,
+            u0: -couplerSection.width / 2,
+            v0: 0,
+          }
+        : {
+            ...box(
+              joint.couplingId,
+              "coupler",
+              couplerSpec?.material ?? members.frame.material,
+              0,
+              -barW / 2,
+              0,
+              run,
+              barW,
+              depth,
+            ),
+            approximate: true,
+          };
     if (memberScene) {
       memberScene.solids.push(solid);
     } else {
-      solid.center[0] = joint.x + solid.size[0] / 2;
-      solid.center[1] = joint.y - barW / 2 + solid.size[1] / 2;
-      couplers.push(solid);
+      // Profile solids carry their own placement, so the orphan path (no
+      // member scene to inherit from) keeps the declarative box which the
+      // caller repositions.
+      const bar =
+        solid.kind === "box"
+          ? solid
+          : box(
+              joint.couplingId,
+              "coupler",
+              couplerSpec?.material ?? members.frame.material,
+              0,
+              -barW / 2,
+              0,
+              run,
+              barW,
+              depth,
+            );
+      bar.center[0] = joint.x + bar.size[0] / 2;
+      bar.center[1] = joint.y - barW / 2 + bar.size[1] / 2;
+      couplers.push({ ...bar, approximate: true });
       worldPoints.push([joint.x, joint.y, 0], [joint.x + joint.w, joint.y, 0]);
     }
   }

@@ -22,6 +22,7 @@ export interface ProductionOrder {
   next_step: ProductionNextStep | null;
   dispatch_ready: boolean;
   shortage: number;
+  version_shortage: number;
   created_at: string;
   /** @nullable */
   project_version_id?: string | null;

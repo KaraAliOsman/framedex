@@ -14,6 +14,8 @@ import {
   productionOrderDispatchNote,
   productionOrderDispatchNoteDte,
   productionOrderDispatchNoteDteEmit,
+  productionOrderDispatchNoteDteEnvio,
+  productionOrderDispatchNoteDteEnvioSend,
   productionOrderDxfExport,
   productionOrderInstall,
   productionOrderLabels,
@@ -41,8 +43,12 @@ import type {
   ProductionPrepItem,
   ProductionStep,
 } from "../../api/generated/models";
-import { ApiError } from "../../api/apiMutator";
+import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
+import { formatDateTime } from "../../format";
+import { DeniedState } from "../../ui";
+import { fmtMm } from "../../format";
+import { formatDate } from "../money";
 import { t } from "../../i18n/es-CL";
 import { useAssistantSurface } from "../assistant/assistantContext";
 import { cutRoleLabel } from "./labels";
@@ -221,6 +227,7 @@ export function ProductionPage(): JSX.Element {
   const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
   const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
   const [sigDrawn, setSigDrawn] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<"draw" | "typed">("draw");
   const [trace, setTrace] = useState<ProductionOrderTrace | null>(null);
   const [traceBusy, setTraceBusy] = useState(false);
   const [operatorStepId, setOperatorStepId] = useState<string | null>(null);
@@ -245,13 +252,26 @@ export function ProductionPage(): JSX.Element {
   const statusFilter = params.get("status") ?? "";
   const shortageOnly = params.get("shortage") === "1";
   const dispatchReadyOnly = params.get("dispatch_ready") === "1";
+  // A blocked step recomputes the order to HOLD — the only source of HOLD.
+  const blockedOnly = params.get("blocked") === "1";
   const filteredOrders = orders.filter(
     (order) =>
       (statusFilter === "" || order.status === statusFilter) &&
+      (!blockedOnly || order.status === "HOLD") &&
       (!shortageOnly || order.shortage > 0) &&
       (!dispatchReadyOnly || order.dispatch_ready),
   );
-  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly;
+  const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly || blockedOnly;
+
+  // A workspace leads with the work — pin the top-priority order into the
+  // detail pane instead of leaving it empty waiting for a click.
+  useEffect(() => {
+    if (selectedId || filteredOrders.length === 0) return;
+    const next = new URLSearchParams(params);
+    next.set("order", filteredOrders[0]!.id);
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, filteredOrders[0]?.id]);
 
   const loadOrders = useCallback(async () => {
     const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);
@@ -544,8 +564,12 @@ export function ProductionPage(): JSX.Element {
   }
 
   async function submitConfirmation(orderId: string): Promise<void> {
+    if (!confirmName.trim()) return;
+    if (signatureMode === "typed") {
+      sigRef.current?.renderTyped(confirmName.trim());
+    }
     const dataUrl = sigRef.current?.dataURL();
-    if (!dataUrl || !confirmName.trim()) return;
+    if (!dataUrl) return;
     setBusy(true);
     try {
       const response = await productionOrderDeliveryConfirm(orderId, {
@@ -625,6 +649,42 @@ export function ProductionPage(): JSX.Element {
     }
   }
 
+  async function sendDispatchEnvio(orderId: string, resubmit = false): Promise<void> {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await productionOrderDispatchNoteDteEnvioSend(orderId, {
+        resubmit,
+      });
+      if (response.status === 201) {
+        await loadDetail(orderId);
+      } else {
+        setMessage(t("production.envioSendError"));
+      }
+    } catch {
+      setMessage(t("production.envioSendError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openDispatchEnvio(orderId: string): Promise<void> {
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      setMessage(t("production.envioOpenError"));
+      return;
+    }
+    try {
+      const response = await productionOrderDispatchNoteDteEnvio(orderId);
+      if (response.status !== 200) throw new Error("envio_error");
+      tab.opener = null;
+      tab.location.href = response.data.signed_url;
+    } catch {
+      tab.close();
+      setMessage(t("production.envioOpenError"));
+    }
+  }
+
   async function openDispatchNote(orderId: string): Promise<void> {
     const tab = window.open("", "_blank");
     if (!tab) {
@@ -652,6 +712,38 @@ export function ProductionPage(): JSX.Element {
     URL.revokeObjectURL(url);
   }
 
+  async function downloadCutPack(orderId: string, orderCode: string): Promise<void> {
+    try {
+      const { blob, filename } = await apiFetchBlob(
+        `/api/v1/production/orders/${orderId}/cut-pack/`,
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename ?? `${orderCode}-pack-corte.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(t("production.cutPackError"));
+    }
+  }
+
+  async function downloadProductionPack(orderId: string, orderCode: string): Promise<void> {
+    try {
+      const { blob, filename } = await apiFetchBlob(
+        `/api/v1/production/orders/${orderId}/production-pack/`,
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename ?? `${orderCode}-pack-produccion.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(t("production.productionPackError"));
+    }
+  }
+
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
   const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
   const canStep = canWrite || role === "INSTALLER";
@@ -659,7 +751,7 @@ export function ProductionPage(): JSX.Element {
     return (
       <section className="production-page">
         <h1>{t("production.title")}</h1>
-        <p role="alert">{t("production.denied")}</p>
+        <DeniedState reason={t("production.denied")} />
       </section>
     );
   }
@@ -797,6 +889,17 @@ export function ProductionPage(): JSX.Element {
                       {t("production.shortageChip").replace("{count}", String(order.shortage))}
                     </span>
                   ) : null}
+                  {order.version_shortage > order.shortage ? (
+                    <span
+                      className="production-chip is-warn"
+                      title={t("production.versionShortageTitle")}
+                    >
+                      {t("production.versionShortageChip").replace(
+                        "{count}",
+                        String(order.version_shortage - order.shortage),
+                      )}
+                    </span>
+                  ) : null}
                   {order.dispatch_ready ? (
                     <span className="production-chip is-ready">
                       {t("production.dispatchReadyChip")}
@@ -817,7 +920,8 @@ export function ProductionPage(): JSX.Element {
                 </span>
                 {detail.quantity ? (
                   <span className="production-order-progress">
-                    {detail.quantity} {t("production.units")}
+                    {detail.quantity}{" "}
+                    {t(detail.quantity === 1 ? "production.unitsOne" : "production.units")}
                   </span>
                 ) : null}
                 {detail.shortage > 0 ? (
@@ -825,12 +929,23 @@ export function ProductionPage(): JSX.Element {
                     {t("production.shortageChip").replace("{count}", String(detail.shortage))}
                   </span>
                 ) : null}
+                {detail.version_shortage > detail.shortage ? (
+                  <span
+                    className="production-chip is-warn"
+                    title={t("production.versionShortageTitle")}
+                  >
+                    {t("production.versionShortageChip").replace(
+                      "{count}",
+                      String(detail.version_shortage - detail.shortage),
+                    )}
+                  </span>
+                ) : null}
                 {detail.dispatch_ready ? (
                   <span className="production-chip is-ready">
                     {t("production.dispatchReadyChip")}
                   </span>
                 ) : null}
-                {canWrite && detail.status === "COMPLETED" ? (
+                {canWrite && detail.dispatch_ready ? (
                   <button
                     type="button"
                     className="production-dispatch"
@@ -880,6 +995,47 @@ export function ProductionPage(): JSX.Element {
                     {t("production.dteEmit")}
                   </button>
                 ) : null}
+                {(() => {
+                  const envio = detail.dispatch_note_dte?.envio as
+                    | { status?: string; track_id?: string | null; attempted?: boolean }
+                    | null
+                    | undefined;
+                  if (!detail.dispatch_note_dte) return null;
+                  const resubmit = envio?.attempted === true && !envio?.track_id;
+                  return (
+                    <>
+                      {envio?.status ? (
+                        <button
+                          type="button"
+                          className="production-dispatch production-note-envio"
+                          title={`${t("production.envioStatus")} · ${envio.track_id ?? ""}`}
+                          onClick={() => void openDispatchEnvio(detail.id)}
+                        >
+                          {`${t("production.envioStatus")} · ${envio.status}`}
+                        </button>
+                      ) : canWrite ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => void sendDispatchEnvio(detail.id)}
+                        >
+                          {t("production.envioSend")}
+                        </button>
+                      ) : null}
+                      {canWrite && envio?.status === "PENDING" ? (
+                        <button
+                          type="button"
+                          className="production-dispatch"
+                          disabled={busy}
+                          onClick={() => void sendDispatchEnvio(detail.id, resubmit)}
+                        >
+                          {resubmit ? t("production.envioResend") : t("production.envioRefresh")}
+                        </button>
+                      ) : null}
+                    </>
+                  );
+                })()}
                 {canWrite && detail.status === "HOLD" ? (
                   <button
                     type="button"
@@ -947,7 +1103,7 @@ export function ProductionPage(): JSX.Element {
                       {optimization?.optimized_at ? (
                         <time dateTime={optimization.optimized_at}>
                           {t("production.optimizeRunAt")}:
-                          {new Date(optimization.optimized_at).toLocaleString("es-CL")}
+                          {formatDateTime(optimization.optimized_at)}
                         </time>
                       ) : null}
                     </header>
@@ -956,13 +1112,23 @@ export function ProductionPage(): JSX.Element {
                     detail.status !== "DISPATCHED" &&
                     detail.status !== "INSTALLED" ? (
                       <div className="production-optimize-controls">
-                        <input
-                          type="text"
-                          value={optColor}
-                          onChange={(event) => setOptColor(event.target.value)}
-                          placeholder={t("production.optimizeColorPlaceholder")}
-                          aria-label={t("production.optimizeColor")}
-                        />
+                        {(() => {
+                          const sealedColor =
+                            typeof detail.payload?.color === "string"
+                              ? detail.payload.color.trim()
+                              : "";
+                          return (
+                            <input
+                              type="text"
+                              value={optColor}
+                              onChange={(event) => setOptColor(event.target.value)}
+                              placeholder={t("production.optimizeColorPlaceholder")}
+                              aria-label={t("production.optimizeColor")}
+                              readOnly={Boolean(sealedColor)}
+                              title={sealedColor ? t("production.optimizeColorSealed") : undefined}
+                            />
+                          );
+                        })()}
                         <select
                           value={optStrategy}
                           onChange={(event) => setOptStrategy(event.target.value)}
@@ -991,6 +1157,32 @@ export function ProductionPage(): JSX.Element {
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
+                          <button
+                            type="button"
+                            className="production-cutpack"
+                            disabled={busy || Boolean(optimization.invalidated)}
+                            title={
+                              optimization.invalidated
+                                ? t("production.cutPackInvalidated")
+                                : undefined
+                            }
+                            onClick={() => downloadCutPack(detail.id, detail.order_code)}
+                          >
+                            {t("production.cutPackButton")}
+                          </button>
+                          <button
+                            type="button"
+                            className="production-cutpack"
+                            disabled={busy || Boolean(optimization.invalidated)}
+                            title={
+                              optimization.invalidated
+                                ? t("production.cutPackInvalidated")
+                                : undefined
+                            }
+                            onClick={() => downloadProductionPack(detail.id, detail.order_code)}
+                          >
+                            {t("production.productionPackButton")}
+                          </button>
                           {canOptimize &&
                           detail.status !== "COMPLETED" &&
                           detail.status !== "DISPATCHED" &&
@@ -1065,6 +1257,7 @@ export function ProductionPage(): JSX.Element {
                           <CutPlanView
                             key={optimization.optimized_at ?? "optimization"}
                             optimization={optimization}
+                            labels={(trace?.labels as Record<string, string> | undefined) ?? {}}
                           />
                         ) : null}
                         {cutPlan.length ? (
@@ -1092,17 +1285,17 @@ export function ProductionPage(): JSX.Element {
                                       </span>
                                     ) : null}
                                   </td>
-                                  <td>{bar.stock_length_mm} mm</td>
+                                  <td>{fmtMm(bar.stock_length_mm)} mm</td>
                                   <td>
                                     {bar.cuts
                                       .map(
                                         (cut) =>
-                                          `${cutRoleLabel(cut.role)} ${cut.length_mm}mm u${cut.unit_index ?? 1}`,
+                                          `${cutRoleLabel(cut.role)} ${fmtMm(cut.length_mm)}mm u${cut.unit_index ?? 1}`,
                                       )
                                       .join(" · ")}
                                   </td>
                                   <td>
-                                    {bar.remainder_mm} mm
+                                    {fmtMm(bar.remainder_mm)} mm
                                     {bar.remainder_reusable ? (
                                       <span className="production-remnant-tag">
                                         {" "}
@@ -1176,9 +1369,7 @@ export function ProductionPage(): JSX.Element {
                                           )}
                                         </td>
                                         <td>
-                                          {row.consumed_at
-                                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
-                                            : "—"}
+                                          {row.consumed_at ? formatDate(row.consumed_at) : "—"}
                                         </td>
                                       </tr>
                                     ))}
@@ -1242,9 +1433,15 @@ export function ProductionPage(): JSX.Element {
                                   {comparisonEntries
                                     .map(
                                       ({ key, metrics: m }) =>
-                                        `${key}${comparison?.chosen === key ? "*" : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
+                                        `${
+                                          t(
+                                            `production.optimizeVariant.${key}` as Parameters<
+                                              typeof t
+                                            >[0],
+                                          ) || key
+                                        }${comparison?.chosen === key ? " ← " + t("production.optimizeChosen") : ""}: ${m?.purchased_bars ?? 0} barras · ${m?.process_waste_mm ?? "0"} mm`,
                                     )
-                                    .join("  |  ")}
+                                    .join("  ·  ")}
                                 </p>
                               ) : null}
                               {unplaced.length ? (
@@ -1278,7 +1475,8 @@ export function ProductionPage(): JSX.Element {
                                   <td>#{layout.sheet_index}</td>
                                   <td>{layout.purchasing_sku}</td>
                                   <td>
-                                    {layout.sheet_width_mm}×{layout.sheet_height_mm} mm
+                                    {fmtMm(layout.sheet_width_mm)}×{fmtMm(layout.sheet_height_mm)}{" "}
+                                    mm
                                   </td>
                                   <td>
                                     {layout.source === "REMNANT" ? (
@@ -1305,7 +1503,7 @@ export function ProductionPage(): JSX.Element {
                             {unnested
                               .map(
                                 (piece) =>
-                                  `${piece.kind} ${piece.width_mm}×${piece.height_mm} mm ×${piece.quantity} (${piece.group})`,
+                                  `${piece.kind} ${fmtMm(piece.width_mm)}×${fmtMm(piece.height_mm)} mm ×${piece.quantity} (${piece.group})`,
                               )
                               .join(" · ")}
                           </p>
@@ -1324,7 +1522,7 @@ export function ProductionPage(): JSX.Element {
                       <h3>{t("production.packingTitle")}</h3>
                       {packing?.generated_at ? (
                         <time dateTime={packing.generated_at}>
-                          {new Date(packing.generated_at).toLocaleString("es-CL")}
+                          {formatDateTime(packing.generated_at)}
                         </time>
                       ) : null}
                       {canWrite &&
@@ -1463,23 +1661,14 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       ) : null}
                       {canStep && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => void transitionDelivery(detail.id, "DELIVERED")}
-                          >
-                            {t("production.deliveryDelivered")}
-                          </button>
-                          <button
-                            type="button"
-                            className="production-chip-danger"
-                            disabled={busy}
-                            onClick={() => void transitionDelivery(detail.id, "FAILED")}
-                          >
-                            {t("production.deliveryFailed")}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          className="production-chip-danger"
+                          disabled={busy}
+                          onClick={() => void transitionDelivery(detail.id, "FAILED")}
+                        >
+                          {t("production.deliveryFailed")}
+                        </button>
                       ) : null}
                       {canStep &&
                       delivery &&
@@ -1565,7 +1754,36 @@ export function ProductionPage(): JSX.Element {
                         </label>
                         <div className="production-delivery-wide">
                           {t("production.deliverySignature")}
-                          <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                          <div
+                            className="production-signature-mode"
+                            role="group"
+                            aria-label={t("production.deliverySignature")}
+                          >
+                            <button
+                              type="button"
+                              className={signatureMode === "draw" ? "chip is-active" : "chip"}
+                              aria-pressed={signatureMode === "draw"}
+                              onClick={() => setSignatureMode("draw")}
+                            >
+                              {t("production.signatureModeDraw")}
+                            </button>
+                            <button
+                              type="button"
+                              className={signatureMode === "typed" ? "chip is-active" : "chip"}
+                              aria-pressed={signatureMode === "typed"}
+                              onClick={() => setSignatureMode("typed")}
+                            >
+                              {t("production.signatureModeType")}
+                            </button>
+                          </div>
+                          <div hidden={signatureMode !== "draw"}>
+                            <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                          </div>
+                          {signatureMode === "typed" ? (
+                            <p className="production-signature-typed">
+                              {t("production.signatureTypedHint")}
+                            </p>
+                          ) : null}
                         </div>
                         <label className="production-confirm-collect">
                           <input
@@ -1623,7 +1841,12 @@ export function ProductionPage(): JSX.Element {
                           </>
                         ) : null}
                         <div className="production-delivery-actions">
-                          <button type="submit" disabled={busy || !sigDrawn || !confirmName.trim()}>
+                          <button
+                            type="submit"
+                            disabled={
+                              busy || !confirmName.trim() || (signatureMode === "draw" && !sigDrawn)
+                            }
+                          >
                             {t("production.deliveryConfirmSubmit")}
                           </button>
                           <button
@@ -1920,9 +2143,7 @@ export function ProductionPage(): JSX.Element {
                 <ol>
                   {detail.events.map((event) => (
                     <li key={event.id}>
-                      <time dateTime={event.created_at}>
-                        {new Date(event.created_at).toLocaleString("es-CL")}
-                      </time>
+                      <time dateTime={event.created_at}>{formatDateTime(event.created_at)}</time>
                       <span>{t(eventKey[event.event] ?? "production.eventNote")}</span>
                     </li>
                   ))}

@@ -22,9 +22,16 @@ export interface MemberGeometry {
   threshold: MemberSpec | null;
   /** bead sightline width by glass thickness (mm). */
   beadFor(glassThicknessMm: string | null): number;
+  /** The bead as a member — section included when the catalog declares it.
+   * Null when the thickness resolves to the neutral convention only. */
+  beadSpecFor(glassThicknessMm: string | null): MemberSpec | null;
   couplerFor(sku: string | null): MemberSpec | null;
   rebateMm: number;
   sashOverlapMm: number;
+  /** Serializable digest of the lookup tables the functions close over —
+   * JSON.stringify drops functions, so caches that key on this object need
+   * the bead/coupler mappings rendered as data. */
+  signature?: string;
 }
 
 export const FALLBACK_MEMBERS = {
@@ -65,11 +72,22 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
       section: item.section ?? null,
     });
   }
-  const beads = new Map<string, number>();
+  const beads = new Map<string, MemberSpec>();
   for (const bead of options?.glazing_beads ?? []) {
     const width = Number(bead.bead_width_mm);
-    if (Number.isFinite(width) && width > 0) beads.set(bead.glass_thickness_mm, width);
+    if (Number.isFinite(width) && width > 0) {
+      beads.set(bead.glass_thickness_mm, {
+        sku: bead.sku,
+        material: "PVC",
+        faceWidthMm: width,
+        section: bead.section ?? null,
+      });
+    }
   }
+  const signature = JSON.stringify({
+    beads: [...beads.entries()],
+    couplers: [...couplers.entries()],
+  });
   const rebate = Number(options?.rebate_depth_mm);
   const sashOverlap = Number(options?.sash_overlap_mm);
   return {
@@ -86,10 +104,15 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
       : null,
     beadFor(glassThicknessMm) {
       if (glassThicknessMm !== null && beads.has(glassThicknessMm))
-        return beads.get(glassThicknessMm)!;
+        return beads.get(glassThicknessMm)!.faceWidthMm;
       // Unresolved or unknown thickness → neutral drawing convention, never
       // an arbitrary catalog bead presented as selected.
       return FALLBACK.bead;
+    },
+    beadSpecFor(glassThicknessMm) {
+      if (glassThicknessMm !== null && beads.has(glassThicknessMm))
+        return beads.get(glassThicknessMm)!;
+      return null;
     },
     couplerFor(sku) {
       if (sku) return couplers.get(sku) ?? null;
@@ -100,5 +123,6 @@ export function resolveMembers(options: DesignOptions | undefined): MemberGeomet
     rebateMm: Number.isFinite(rebate) && rebate > 0 ? rebate : FALLBACK.rebate,
     sashOverlapMm:
       Number.isFinite(sashOverlap) && sashOverlap >= 0 ? sashOverlap : FALLBACK.sashOverlap,
+    signature,
   };
 }

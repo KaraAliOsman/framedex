@@ -5,8 +5,11 @@
  * piece list with dimensions/angles/origins. Every value is sealed evidence
  * from the trace read — nothing is recomputed here. */
 
+import { fmtMm } from "../../format";
 import { t } from "../../i18n/es-CL";
+import { opKindLabel, stockKindLabel } from "./labels";
 import type { ProductionOrderTrace, ProductionStep } from "../../api/generated/models";
+import { formatDate } from "../money";
 
 type Reservation = {
   kind?: string;
@@ -102,6 +105,27 @@ function _sheets(trace: ProductionOrderTrace): Array<Record<string, unknown>> {
   return (trace.plan?.sheets as Array<Record<string, unknown>> | undefined) ?? [];
 }
 
+/** Shop location codes (V-xx bays / H-xx leaves / P-xx positions) matching the
+ * printed packs — the backend emits the same map it uses for the PDFs. */
+function _labels(trace: ProductionOrderTrace): Record<string, string> {
+  return (trace.labels as Record<string, string> | undefined) ?? {};
+}
+
+function _loc(
+  labels: Record<string, string>,
+  piece: { unit_index?: number; bay_id?: string; leaf_id?: string },
+): string {
+  const parts: string[] = [];
+  if (piece.bay_id) {
+    parts.push(labels[piece.bay_id] ?? `b·${piece.bay_id.slice(0, 4)}`);
+  }
+  if (piece.leaf_id) {
+    parts.push(labels[piece.leaf_id] ?? `h·${piece.leaf_id.slice(0, 4)}`);
+  }
+  const prefix = piece.unit_index ? `u${piece.unit_index}` : "";
+  return [prefix, ...parts].filter(Boolean).join(" · ");
+}
+
 function _isShort(value: string | undefined): boolean {
   return !!value && Number(value) > 0;
 }
@@ -124,6 +148,7 @@ export function OperatorStepCard({
   const ops = trace ? _ops(trace) : [];
   const bars = trace ? _bars(trace) : [];
   const sheets = trace ? _sheets(trace) : [];
+  const labels = trace ? _labels(trace) : {};
 
   // Ops land on the station the frozen process authority declares for their
   // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
@@ -151,7 +176,7 @@ export function OperatorStepCard({
         });
       }
     }
-    cutPieces.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    cutPieces.sort((a, b) => a.barIndex - b.barIndex || (a.sequence ?? 0) - (b.sequence ?? 0));
   }
   const sheetPieces: SheetPiece[] = [];
   if (step.code === "GLAZE" || step.code === "CUT") {
@@ -188,7 +213,7 @@ export function OperatorStepCard({
               {blockers.length ? t("production.operatorBlockers") : ""}
               {unassignedOps.length
                 ? ` · ${t("production.operatorUnassignedOps")}: ${[
-                    ...new Set(unassignedOps.map((op) => op.kind ?? "")),
+                    ...new Set(unassignedOps.map((op) => opKindLabel(op.kind))),
                   ].join(", ")}`
                 : ""}
               {unmapped.length && step.code === "CUT"
@@ -229,11 +254,7 @@ export function OperatorStepCard({
                             "0"
                           )}
                         </td>
-                        <td>
-                          {row.consumed_at
-                            ? new Date(row.consumed_at).toLocaleDateString("es-CL")
-                            : "—"}
-                        </td>
+                        <td>{row.consumed_at ? formatDate(row.consumed_at) : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -245,9 +266,10 @@ export function OperatorStepCard({
                 <ul className="operator-remnants">
                   {remnants.map((remnant) => (
                     <li key={remnant.id}>
-                      {remnant.kind} · {remnant.length_mm ? `${remnant.length_mm} mm` : ""}
-                      {remnant.width_mm ? ` × ${remnant.width_mm}` : ""}
-                      {remnant.height_mm ? ` × ${remnant.height_mm}` : ""}
+                      {stockKindLabel(remnant.kind)}
+                      {remnant.length_mm ? ` · ${fmtMm(remnant.length_mm)} mm` : ""}
+                      {remnant.width_mm ? ` × ${fmtMm(remnant.width_mm)}` : ""}
+                      {remnant.height_mm ? ` × ${fmtMm(remnant.height_mm)}` : ""}
                       {remnant.sheet_workshop_sku ? ` · ${remnant.sheet_workshop_sku}` : ""}
                       {remnant.rack_location
                         ? ` · ${t("production.operatorRack")}: ${remnant.rack_location}`
@@ -308,7 +330,7 @@ export function OperatorStepCard({
                       <tbody>
                         {memberOps.map((op) => (
                           <tr key={op.operation_id}>
-                            <td>{op.kind ?? "—"}</td>
+                            <td>{opKindLabel(op.kind)}</td>
                             <td title={op.host ?? ""}>
                               {String(op.detail?.role ?? op.host ?? "—")}
                             </td>
@@ -347,16 +369,12 @@ export function OperatorStepCard({
                         <td>{piece.role ?? "—"}</td>
                         <td>
                           {piece.length_mm ?? "—"}
-                          {piece.sagitta_mm ? ` ↷${piece.sagitta_mm}` : ""}
+                          {piece.sagitta_mm ? ` · f ${fmtMm(piece.sagitta_mm)}` : ""}
                         </td>
                         <td>
                           {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°
                         </td>
-                        <td>
-                          {piece.unit_index ? `u${piece.unit_index}` : ""}
-                          {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
-                          {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
-                        </td>
+                        <td>{_loc(labels, piece)}</td>
                         <td>
                           {piece.barIndex}
                           {piece.source === "REMNANT"
@@ -389,11 +407,7 @@ export function OperatorStepCard({
                       <td>
                         {piece.width_mm ?? "—"} × {piece.height_mm ?? "—"}
                       </td>
-                      <td>
-                        {piece.unit_index ? `u${piece.unit_index}` : ""}
-                        {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
-                        {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
-                      </td>
+                      <td>{_loc(labels, piece)}</td>
                     </tr>
                   ))}
                 </tbody>

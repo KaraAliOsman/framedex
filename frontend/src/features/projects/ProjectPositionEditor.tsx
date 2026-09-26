@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { fmtMm } from "../../format";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -19,7 +20,8 @@ import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { ApiError } from "../../api/apiMutator";
 import { UnsavedChangesGuard } from "../../app/UnsavedChangesGuard";
 import { useShellLeaf } from "../../app/shellLeaf";
-import { t } from "../../i18n/es-CL";
+import { t, tDynamic } from "../../i18n/es-CL";
+import { DeniedState } from "../../ui";
 import { type CanvasDesignInputs, useCanvasStore } from "../canvas/canvasStore";
 import { AssemblyEditor } from "../canvas/AssemblyEditor";
 import type { IntentNode, Opening } from "../canvas/intentEditing";
@@ -30,7 +32,6 @@ import {
   elevationEnvelopeMm,
   isProductModel,
   isSingleUnit,
-  removeUnit,
   wrapTreeAsProduct,
   type ProductJson,
 } from "../canvas/productEditing";
@@ -44,7 +45,7 @@ export function ProjectPositionEditor(): JSX.Element {
   const preferredSystem = posId || copyId ? null : query.get("system");
   const org = useAuthSession().me?.active_organization;
   if (!org || !["OWNER", "ESTIMATOR"].includes(org.role))
-    return <p role="alert">{t("projects.denied")}</p>;
+    return <DeniedState reason={t("projects.denied")} />;
   return (
     <PositionWorkspace
       key={`${org.id}:${id}:${posId}:${copyId}`}
@@ -156,26 +157,52 @@ function resolveDefaults(
 }
 
 /** The design object that save() would send — used both by save and by the
- * dirty baseline, so they can never disagree about what "unchanged" means. */
-function designPayload(inputs: CanvasDesignInputs): PositionDesignRequest | null {
+ * dirty baseline, so they can never disagree about what "unchanged" means.
+ * The finish choice is validated against the series' declared colors — never
+ * a hardcoded white, and a catalog option the engine can't map stays
+ * unsaveable instead of throwing. */
+function designPayload(
+  inputs: CanvasDesignInputs,
+  allowedColors: string[],
+): PositionDesignRequest | null {
   const product = inputs.product;
-  if (product === null || !inputs.systemId || inputs.color !== "WHITE") return null;
+  // The save contract today declares exactly one mappable finish — the
+  // picker's options come from the catalog, but the payload type only
+  // accepts a finish the engine can map. A color outside that set stays
+  // displayed, selectable, and unsaveable rather than silently coerced.
+  const color = inputs.color === "WHITE" ? inputs.color : null;
+  if (product === null || !inputs.systemId || color === null || !allowedColors.includes(color))
+    return null;
   const single = isSingleUnit(product) ? product.assembly.modules[0] : undefined;
   return single !== undefined
     ? {
         system_id: inputs.systemId,
         nominal_width_mm: single.width_mm,
         nominal_height_mm: single.height_mm,
-        color: inputs.color,
+        color,
         parametric_tree: single.tree,
       }
     : {
         system_id: inputs.systemId,
         nominal_width_mm: elevationEnvelopeMm(product).width.toFixed(2),
         nominal_height_mm: elevationEnvelopeMm(product).height.toFixed(2),
-        color: inputs.color,
+        color,
         parametric_tree: product,
       };
+}
+
+/** The unsaved-changes identity — the live inputs themselves, not the
+ * save payload: a canvas design with no system picked yet produces no
+ * payload at all, and comparing `null` to `null` would call work that
+ * doesn't exist yet "unchanged" and let a reload discard it silently. */
+function designIdentity(inputs: CanvasDesignInputs): string {
+  return canonicalize({
+    color: inputs.color,
+    nominalHeightMm: inputs.nominalHeightMm,
+    nominalWidthMm: inputs.nominalWidthMm,
+    product: inputs.product,
+    systemId: inputs.systemId,
+  });
 }
 
 /** JSON.stringify with recursively sorted keys — a stable identity for
@@ -258,6 +285,14 @@ function PositionWorkspace({
     enabled: !!systemId,
     retry: false,
   });
+  // Finishes the series declares. A stored finish it stopped offering still
+  // displays — the picker lists it once — but can't save: the engine's color
+  // contract is the authority, not this list's length.
+  const declaredColors = options.data?.colors ?? [];
+  const colorChoices =
+    inputs.color && !declaredColors.includes(inputs.color)
+      ? [...declaredColors, inputs.color]
+      : declaredColors;
 
   useEffect(() => {
     let active = true;
@@ -267,7 +302,11 @@ function PositionWorkspace({
       // position opens on the catalog context the user already chose.
       if (preferredSystem) blank.systemId = preferredSystem;
       useCanvasStore.getState().loadDesign(blank);
-      setBaseline({ design: canonicalize(designPayload(blank)), location: "", quantity: "1" });
+      setBaseline({
+        design: designIdentity(blank),
+        location: "",
+        quantity: "1",
+      });
       setLoaded(true);
     } else
       void positionsRetrieve(positionId || copyId, { headers: { "X-Organization-ID": orgId } })
@@ -277,7 +316,6 @@ function PositionWorkspace({
             throw new Error("unavailable");
           const item = response.data;
 
-          if (item.design.color !== "WHITE") throw new Error("unsupported color");
           const tree = item.design.parametric_tree;
           const product: ProductJson = isProductModel(tree)
             ? tree
@@ -290,7 +328,10 @@ function PositionWorkspace({
             systemId: item.design.system_id,
             nominalWidthMm: item.design.nominal_width_mm,
             nominalHeightMm: item.design.nominal_height_mm,
-            color: "WHITE",
+            // A stored finish the series no longer declares still renders —
+            // the picker lists it once so the field is honest, while
+            // designPayload refuses to save a finish the engine can't map.
+            color: item.design.color,
             parametricTree:
               product.assembly.modules.at(0)?.tree ??
               ({ id: "m1", type: "BAY", opening_type: "FIXED" } as IntentNode),
@@ -301,7 +342,16 @@ function PositionWorkspace({
             copyId
               ? null
               : {
-                  design: canonicalize(item.design),
+                  design: designIdentity({
+                    color: item.design.color,
+                    nominalHeightMm: item.design.nominal_height_mm,
+                    nominalWidthMm: item.design.nominal_width_mm,
+                    parametricTree:
+                      product.assembly.modules.at(0)?.tree ??
+                      ({ id: "m1", type: "BAY", opening_type: "FIXED" } as IntentNode),
+                    product,
+                    systemId: item.design.system_id,
+                  }),
                   location: item.location_tag ?? "",
                   quantity: String(item.quantity),
                 },
@@ -345,52 +395,6 @@ function PositionWorkspace({
     }
   }, [inputs, options.data]);
 
-  useEffect(() => {
-    function onKey(event: KeyboardEvent): void {
-      const target = event.target;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement
-      )
-        return;
-      if (event.key === "Escape") {
-        useCanvasStore.getState().select(null);
-        return;
-      }
-      if (event.key === "Delete" || event.key === "Backspace") {
-        const state = useCanvasStore.getState();
-        const product = state.inputs.product;
-        if (
-          product !== null &&
-          product.assembly.modules.length > 1 &&
-          product.assembly.modules.some((module) => module.id === state.selection)
-        ) {
-          event.preventDefault();
-          state.commitInputs({
-            ...state.inputs,
-            product: removeUnit(product, state.selection),
-          });
-          state.select(null);
-          setResult(null);
-          setAssemblyEval(null);
-        }
-        return;
-      }
-      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-      const key = event.key.toLowerCase();
-      if (key === "z") {
-        event.preventDefault();
-        applyHistory(event.shiftKey ? "redo" : "undo");
-      } else if (key === "y") {
-        event.preventDefault();
-        applyHistory("redo");
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   function applyHistory(direction: "undo" | "redo"): void {
     const store = useCanvasStore.getState();
     if (direction === "undo") store.undo();
@@ -418,6 +422,10 @@ function PositionWorkspace({
     );
   }, []);
 
+  // designIdentity deep-serializes the product — memoize on the inputs
+  // reference so location/quantity keystrokes skip the canonicalization.
+  const identity = useMemo(() => designIdentity(inputs), [inputs]);
+
   const assemblyUnsaveable =
     assemblyEval?.status === "INVALID" ||
     (assemblyEval?.modules ?? []).some((module) => module.result == null);
@@ -429,7 +437,7 @@ function PositionWorkspace({
       !result ||
       assemblyUnsaveable ||
       busy ||
-      inputs.color !== "WHITE" ||
+      !declaredColors.includes(inputs.color) ||
       inputs.product === null ||
       !systemId ||
       !/^[1-9]\d*$/.test(quantity) ||
@@ -442,7 +450,7 @@ function PositionWorkspace({
     setMessage("");
     // A lone unit persists in the classic documentary shape; real assemblies
     // save as product-v2. The in-canvas model is always compositional.
-    const design = designPayload(inputs) as PositionDesignRequest;
+    const design = designPayload(inputs, declaredColors) as PositionDesignRequest;
     const body = {
       location_tag: location,
       quantity: Number(quantity),
@@ -462,7 +470,7 @@ function PositionWorkspace({
       const value = response.data as PositionResponse;
       setSaved(value);
       setResult(value.bom);
-      setBaseline({ design: canonicalize(design), location, quantity });
+      setBaseline({ design: designIdentity(inputs), location, quantity });
       setMessage(t("projects.saved"));
       // The unsaved-changes blocker still sees dirty=true until the baseline
       // commits, so the post-create navigation must wait for the next render.
@@ -483,7 +491,7 @@ function PositionWorkspace({
   const dirty =
     baseline === null
       ? true
-      : canonicalize(designPayload(inputs)) !== baseline.design ||
+      : identity !== baseline.design ||
         location !== baseline.location ||
         quantity !== baseline.quantity;
   const product = inputs.product;
@@ -527,7 +535,12 @@ function PositionWorkspace({
       <UnsavedChangesGuard dirty={dirty} message={t("projects.leaveUnsaved")} />
       <header className="projects-header">
         <div>
-          <Link to={`/projects/${projectId}`}>{t("projects.back")}</Link>
+          <Link
+            className="ui-backlink ui-backlink--back"
+            to={projectId ? `/projects/${projectId}` : "/projects"}
+          >
+            {t("projects.back")}
+          </Link>
           <h1>{location || t("projects.position")}</h1>
         </div>
         <span role="status">
@@ -557,81 +570,113 @@ function PositionWorkspace({
       </header>
       {message && <p role="status">{message}</p>}
       <fieldset className="position-head" disabled={busy}>
-        <label className="position-head__field">
-          <span>{t("projects.location")}</span>
-          <input value={location} onChange={(e) => setLocation(e.target.value)} />
-        </label>
-        <label className="position-head__field">
-          <span>{t("pricing.quantity")}</span>
-          <input
-            inputMode="numeric"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-          />
-        </label>
-        <label className="position-head__field position-head__field--wide">
-          <span>{t("projects.system")}</span>
-          <select
-            className="assembly-select"
-            aria-label={t("projects.system")}
-            value={systemId}
-            onChange={(e) => {
-              const next = e.target.value || null;
-              if (inputs.systemId !== next) {
-                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                setMessage("");
+        {/* <fieldset> can't be a flex container — the row wraps the fields
+            so the strip stays horizontal. */}
+        <div className="position-head__row">
+          <label className="position-head__field">
+            <span>{t("projects.location")}</span>
+            <input
+              aria-label={t("projects.location")}
+              placeholder={t("projects.locationPlaceholder")}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </label>
+          <label className="position-head__field">
+            <span>{t("pricing.quantity")}</span>
+            <input
+              inputMode="numeric"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </label>
+          <label className="position-head__field position-head__field--wide">
+            <span>{t("projects.system")}</span>
+            <select
+              className="assembly-select"
+              aria-label={t("projects.system")}
+              value={systemId}
+              onChange={(e) => {
+                const next = e.target.value || null;
+                if (inputs.systemId !== next) {
+                  useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                  setMessage("");
+                }
+              }}
+            >
+              <option value="">{t("projects.chooseSystem")}</option>
+              {systems.data
+                ?.filter((system) => system.quote_ready)
+                .map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.name}
+                    {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {(systems.isError || options.isError) && (
+            <p className="position-head__alert" role="alert">
+              {t("projects.catalogError")}
+            </p>
+          )}
+          {(systems.isPending || (systemId && options.isPending)) && (
+            <p className="position-head__alert" role="status">
+              {t("projects.loading")}
+            </p>
+          )}
+          <label className="position-head__color">
+            <span>{t("projects.color")}</span>
+            <select
+              className="assembly-select"
+              aria-label={t("projects.color")}
+              disabled={busy || declaredColors.length === 0}
+              value={inputs.color}
+              onChange={(event) =>
+                useCanvasStore.getState().commitInputs({
+                  ...inputs,
+                  color: event.target.value as CanvasDesignInputs["color"],
+                })
               }
-            }}
-          >
-            <option value="">{t("projects.chooseSystem")}</option>
-            {systems.data
-              ?.filter((system) => system.quote_ready)
-              .map((system) => (
-                <option key={system.id} value={system.id}>
-                  {system.name}
-                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+            >
+              {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
+              {colorChoices.map((color) => (
+                <option key={color} value={color}>
+                  {tDynamic("projects.color", color)}
                 </option>
               ))}
-          </select>
-        </label>
-        {(systems.isError || options.isError) && (
-          <p className="position-head__alert" role="alert">
-            {t("projects.catalogError")}
-          </p>
-        )}
-        {(systems.isPending || (systemId && options.isPending)) && (
-          <p className="position-head__alert" role="status">
-            {t("projects.loading")}
-          </p>
-        )}
-        <p className="position-head__hint">{t("projects.colorWhite")}</p>
+            </select>
+          </label>
+        </div>
       </fieldset>
-      <div className="position-workspace">
-        <details
-          className="starter-library"
-          open={libraryOpen}
-          onToggle={(event) => setLibraryOpen(event.currentTarget.open)}
-        >
-          <summary>{t("assembly.starterLibrary")}</summary>
-          <StarterGallery
-            members={resolveMembers(options.data)}
+      <div className="position-body">
+        <div className="position-workspace">
+          <details
+            className="starter-library"
+            open={libraryOpen}
+            onToggle={(event) => setLibraryOpen(event.currentTarget.open)}
+          >
+            <summary>{t("assembly.starterLibrary")}</summary>
+            <StarterGallery
+              members={resolveMembers(options.data)}
+              disabled={busy}
+              onPick={pickStarter}
+            />
+          </details>
+          <AssemblyEditor
+            organizationId={orgId}
+            couplerSkus={options.data?.coupler_skus ?? []}
+            glassSkus={options.data?.glass_skus ?? []}
+            panelSkus={options.data?.panel_skus ?? []}
+            options={options.data}
+            optionsReady={options.data !== undefined || options.isError}
             disabled={busy}
-            onPick={pickStarter}
+            onChanged={onAssemblyChanged}
+            onEvaluationChange={onAssemblyEvaluation}
+            positionId={saved?.id ?? null}
+            positionPanel={positionPanel}
           />
-        </details>
-        <AssemblyEditor
-          organizationId={orgId}
-          couplerSkus={options.data?.coupler_skus ?? []}
-          glassSkus={options.data?.glass_skus ?? []}
-          panelSkus={options.data?.panel_skus ?? []}
-          options={options.data}
-          optionsReady={options.data !== undefined || options.isError}
-          disabled={busy}
-          onChanged={onAssemblyChanged}
-          onEvaluationChange={onAssemblyEvaluation}
-          positionId={saved?.id ?? null}
-          positionPanel={positionPanel}
-        />
+        </div>
       </div>
       {result ? (
         <ProjectBom result={result} />
@@ -661,7 +706,7 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               <tr key={index}>
                 <td>{cut.sku}</td>
                 <td>
-                  {cut.length_mm}
+                  {fmtMm(cut.length_mm)}
                   <CutBar lengthMm={Number(cut.length_mm)} maxMm={longestCut} />
                 </td>
                 <td>{cut.qty}</td>
@@ -683,8 +728,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
             {result.glasses.map((glass, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
-                <td>{glass.width_mm}</td>
-                <td>{glass.height_mm}</td>
+                <td>{fmtMm(glass.width_mm)}</td>
+                <td>{fmtMm(glass.height_mm)}</td>
               </tr>
             ))}
           </tbody>
@@ -734,7 +779,7 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
                 <tr key={index}>
                   <td>{item.reinforcement_sku || item.parent_profile_sku}</td>
                   <td>
-                    {item.length_mm}
+                    {fmtMm(item.length_mm)}
                     <CutBar lengthMm={Number(item.length_mm)} maxMm={longestCut} />
                   </td>
                   <td>{item.qty}</td>
@@ -759,8 +804,8 @@ export function ProjectBom({ result }: { result: EngineCalculateResponse }): JSX
               {result.panels.map((item, index) => (
                 <tr key={index}>
                   <td>{item.name}</td>
-                  <td>{item.width_mm}</td>
-                  <td>{item.height_mm}</td>
+                  <td>{fmtMm(item.width_mm)}</td>
+                  <td>{fmtMm(item.height_mm)}</td>
                 </tr>
               ))}
             </tbody>

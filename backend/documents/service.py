@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from math import ceil
 from typing import Mapping, TypeVar
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -23,6 +23,7 @@ from dekopen_engine.inspection_models import (
     InspectorConfig,
     InspectorInput,
     InspectorResult,
+    InspectorSeverity,
     RuleEvaluationStatus,
 )
 from dekopen_engine.inspector import inspect
@@ -1095,8 +1096,18 @@ def freeze_revision_a(
                 inspections.append(
                     (module_id, inspection, module_complete, module_allowed)
                 )
+                # Only RED-severity failures block unconditionally — a
+                # YELLOW finding is a warning the inspector itself classifies
+                # as production-allowed, so blocking on it made a healthy
+                # freeze fail invisibly (review WB3).
+                red_rules = {
+                    finding.rule_id
+                    for finding in inspection.findings
+                    if finding.severity is InspectorSeverity.RED
+                }
                 has_failures = has_failures or any(
                     evaluation.status is RuleEvaluationStatus.FAIL
+                    and evaluation.rule_id in red_rules
                     for evaluation in inspection.evaluations
                 )
                 position_production_allowed = (
@@ -1107,7 +1118,28 @@ def freeze_revision_a(
                 inspection.status == "RED" for _, inspection, _, _ in inspections
             )
             if has_failures or (is_red and not allow_incomplete_workshop):
-                raise DocumentaryError("inspector_red_blocks_documentary_freeze")
+                # Serialize the blocking rules — a bare "inspector_red_blocks"
+                # left the emission form unable to say WHAT failed (review WB2).
+                failures = [
+                    {
+                        "rule": str(finding.rule_id.value),
+                        "severity": str(finding.severity.value),
+                        "title": finding.title,
+                        "diagnosis": finding.diagnosis,
+                        "recommendation": finding.recommendation,
+                        "module_id": module_id,
+                        "bay_id": finding.bay_id,
+                        "leaf_id": finding.leaf_id,
+                    }
+                    for module_id, inspection, _, _ in inspections
+                    for finding in inspection.findings
+                    if finding.severity is InspectorSeverity.RED
+                ]
+                raise DocumentaryError(
+                    "inspector_red_blocks_documentary_freeze",
+                    detail="Una regla del inspector bloquea el congelamiento documental.",
+                    extra={"inspector_failures": failures},
+                )
             production_allowed = production_allowed and position_production_allowed
             documentary_complete = documentary_complete and position_complete
 
@@ -1316,7 +1348,9 @@ def freeze_revision_a(
             project_id=project_id, revision=revision, positions=position_inputs, bom=bom
         )
         organization = one(
-            "SELECT name, tax_id FROM public.tenancy_organizations WHERE id = %s",
+            "SELECT name, tax_id, commercial_name, giro, brand_address,"
+            " brand_phone, brand_email, brand_logo_key, brand_logo_sha256"
+            " FROM public.tenancy_organizations WHERE id = %s",
             [str(org_id)],
             "organization_not_found",
         )
@@ -1328,9 +1362,18 @@ def freeze_revision_a(
             "org_id": org_id,
             # Issuer identity for the letterhead — rendered only on revisions
             # frozen after this field existed; older snapshots simply omit it.
+            # The logo key is content-addressed, so the frozen sha pins the
+            # exact bytes a re-rendered document may show.
             "organization": {
                 "name": str(organization["name"]),
                 "tax_id": str(organization["tax_id"]),
+                "commercial_name": organization["commercial_name"],
+                "giro": organization["giro"],
+                "brand_address": organization["brand_address"],
+                "brand_phone": organization["brand_phone"],
+                "brand_email": organization["brand_email"],
+                "brand_logo_key": organization["brand_logo_key"],
+                "brand_logo_sha256": organization["brand_logo_sha256"],
             },
             "revision": revision,
             "sealed_by": actor_id,
@@ -1453,6 +1496,30 @@ def freeze_revision_a(
                 [project_id, org_id, revision],
                 "revision_state_transition_failed",
             )
+        # §08 automations: a production-allowed freeze queues the material
+        # forecast; a freeze that revealed missing catalog authority files a
+        # catalog task per affected system instead. Emit inside this tx so the
+        # job exists iff the version does.
+        from automations.service import emit
+
+        if production_allowed:
+            emit(
+                "automation.prep_forecast",
+                org_id=org_id,
+                actor_id=actor_id,
+                idempotency_key=f"auto:prep:{version_id}",
+                version_id=str(version_id),
+            )
+        else:
+            for system_id in sorted(position_system_ids):
+                emit(
+                    "automation.catalog_task",
+                    org_id=org_id,
+                    actor_id=actor_id,
+                    idempotency_key=f"auto:catalog:{version_id}:{system_id}",
+                    system_id=system_id,
+                    version_id=str(version_id),
+                )
         return {
             "id": str(version_id),
             "pricing_operation_id": str(pricing_operation_id),
@@ -1586,8 +1653,10 @@ def prepare_documentary_inputs(
             result,
         )
         identity_hash = identity_hashes[0]
-        if existing and existing["calculation_hash"] not in identity_hashes:
-            existing = None
+        # A changed product no longer discards the estimator's work (review
+        # WM3): saved values carry forward and the per-target filters below
+        # drop only the entries whose bay/leaf/span disappeared — an
+        # untouched leaf keeps its recorded measurements across re-prepare.
         valid_bays, valid_leaves, valid_spans, valid_glass = _valid_targets(calculations)
 
         trace_leaves: list[dict[str, object]] = []
@@ -1882,3 +1951,271 @@ def revision_snapshot(version_id: UUID, org_id: UUID) -> tuple[dict[str, object]
     if snapshot_sha256_v1(snapshot) != str(version["snapshot_sha256"]):
         raise DocumentaryError("frozen_revision_hash_mismatch")
     return version, snapshot
+
+
+_COMPARE_FIELDS = (
+    "position_index",
+    "location_tag",
+    "quantity",
+    "typology",
+    "system_id",
+    "width_mm",
+    "height_mm",
+    "color_interior",
+    "color_exterior",
+    "price_net",
+    "discount_pct",
+)
+
+
+# Frozen-position fields that carry workshop/documentary authority beyond
+# the engineering hash — annotations, intents, policies, structural inputs.
+# A revision that only changed these must still report a change.
+_DOCUMENTARY_SLICE = (
+    "workshop_annotations",
+    "structural_inputs",
+    "glass_polishing",
+    "handle_intents",
+    "accessory_schedule",
+    "manufacturing_policies",
+    "legacy_handle_migration_confirmed",
+    "process_facts",
+)
+
+
+# Fields whose "changed" signal must be numeric, not lexical — "268000.00"
+# vs "268000" is the same price, not a revision change.
+_COMPARE_NUMERIC = {"quantity", "width_mm", "height_mm", "price_net", "discount_pct"}
+
+
+def _compare_value(field: str, value: object) -> str:
+    raw = str(value or "")
+    if field in _COMPARE_NUMERIC:
+        try:
+            return format(D(raw).normalize(), "f")
+        except (InvalidOperation, TypeError, ValueError):
+            return raw
+    return raw
+
+
+def _compare_position(row: dict[str, object]) -> dict[str, object]:
+    """The commercially legible slice of a frozen position — enough to render
+    a thumbnail and read what changed, nothing the customer shouldn't see."""
+    return {
+        "id": str(row.get("id") or ""),
+        "position_index": int(row["position_index"]),
+        "location_tag": row.get("location_tag") or "",
+        "typology": str(row.get("typology") or ""),
+        "system_id": str(row.get("system_id") or ""),
+        "quantity": int(row.get("quantity") or 0),
+        "width_mm": str(row.get("width_mm") or ""),
+        "height_mm": str(row.get("height_mm") or ""),
+        "color_interior": str(row.get("color_interior") or ""),
+        "color_exterior": str(row.get("color_exterior") or ""),
+        "price_net": str(row.get("price_net") or ""),
+        "discount_pct": str(row.get("discount_pct") or ""),
+        "parametric_tree": row.get("parametric_tree"),
+        "calculation_hash": str(row.get("calculation_hash") or ""),
+        "documentary_signature": documentary_canonical_json_v1(
+            {key: row.get(key) for key in _DOCUMENTARY_SLICE}
+        ).decode("utf-8"),
+    }
+
+
+def _public_position(row: dict[str, object] | None) -> dict[str, object] | None:
+    if row is None:
+        return None
+    return {
+        key: value
+        for key, value in row.items()
+        if key not in ("calculation_hash", "documentary_signature")
+    }
+
+
+def _compare_match_key(position: dict[str, object]) -> tuple[str, object]:
+    """Persistent position id when the snapshot carries it; position_index
+    only for snapshots frozen before ids existed. Index alone would merge a
+    deleted position with a new one that reuses its number."""
+    if position["id"]:
+        return ("id", position["id"])
+    return ("index", position["position_index"])
+
+
+def compare_versions(
+    *, org_id: UUID, project_id: UUID, base_code: str, head_code: str
+) -> dict[str, object]:
+    """Side-by-side diff of two frozen revisions of one project: positions
+    keyed by position_index, commercial fields compared string-for-string.
+    Snapshots that predate the hash columns are compared as stored; sealed
+    integrity fields are still reported so the reader sees what is proven."""
+    with documentary_backend():
+        project = one(
+            "SELECT id,code,name FROM public.projects WHERE id=%s AND org_id=%s",
+            [str(project_id), str(org_id)],
+            "project_not_found",
+        )
+        versions = {
+            str(row["revision_code"]): row
+            for row in rows(
+                "SELECT id,revision_code,snapshot_json::text,snapshot_sha256,"
+                "emitted_at FROM public.project_versions "
+                "WHERE org_id=%s AND project_id=%s AND revision_code IN (%s,%s)",
+                [str(org_id), str(project_id), base_code, head_code],
+            )
+        }
+    if base_code not in versions or head_code not in versions:
+        raise DocumentaryError("version_not_found")
+
+    def snapshot_of(code: str) -> tuple[dict[str, object], str | None]:
+        version = versions[code]
+        snapshot = _json_object(
+            version["snapshot_json"], "invalid_frozen_revision_snapshot"
+        )
+        integrity = None
+        if version["snapshot_sha256"]:
+            integrity = (
+                "VERIFIED"
+                if snapshot_sha256_v1(snapshot) == str(version["snapshot_sha256"])
+                else "MISMATCH"
+            )
+        return snapshot, integrity
+
+    base_snapshot, base_integrity = snapshot_of(base_code)
+    head_snapshot, head_integrity = snapshot_of(head_code)
+    base_positions = {
+        _compare_match_key(row): row
+        for row in (
+            _compare_position(p)
+            for p in base_snapshot.get("positions", [])
+            if isinstance(p, dict) and p.get("position_index") is not None
+        )
+    }
+    head_positions = {
+        _compare_match_key(row): row
+        for row in (
+            _compare_position(p)
+            for p in head_snapshot.get("positions", [])
+            if isinstance(p, dict) and p.get("position_index") is not None
+        )
+    }
+    entries: list[dict[str, object]] = []
+    added = removed = changed = unchanged = 0
+    keys = sorted(
+        set(base_positions) | set(head_positions),
+        key=lambda key: (
+            (base_positions.get(key) or head_positions.get(key))["position_index"],
+            key[0],
+        ),
+    )
+    for key in keys:
+        before = base_positions.get(key)
+        after = head_positions.get(key)
+        position_index = (
+            after["position_index"] if after is not None else before["position_index"]
+        )
+        if before is None:
+            added += 1
+            entries.append(
+                {
+                    "position_index": position_index,
+                    "change": "ADDED",
+                    "location_tag": after["location_tag"],
+                    "before": None,
+                    "after": _public_position(after),
+                    "changes": [],
+                }
+            )
+            continue
+        if after is None:
+            removed += 1
+            entries.append(
+                {
+                    "position_index": position_index,
+                    "change": "REMOVED",
+                    "location_tag": before["location_tag"],
+                    "before": _public_position(before),
+                    "after": None,
+                    "changes": [],
+                }
+            )
+            continue
+        fields = [
+            {"field": field, "before": str(before[field]), "after": str(after[field])}
+            for field in _COMPARE_FIELDS
+            if _compare_value(field, before[field]) != _compare_value(field, after[field])
+        ]
+        spec_drift = before["calculation_hash"] != after["calculation_hash"]
+        if not (before["calculation_hash"] and after["calculation_hash"]):
+            # Pre-hash snapshots cannot prove design equality by hash — fall
+            # back to the canonical tree so a bay that changed FIXED→TURN_LEFT
+            # still surfaces instead of reading as unchanged.
+            spec_drift = documentary_canonical_json_v1(
+                before.get("parametric_tree")
+            ) != documentary_canonical_json_v1(after.get("parametric_tree"))
+        if spec_drift:
+            fields.append({"field": "spec", "before": "", "after": ""})
+        if before["documentary_signature"] != after["documentary_signature"]:
+            fields.append(
+                {"field": "manufacturing", "before": "", "after": ""}
+            )
+        if fields:
+            changed += 1
+            entries.append(
+                {
+                    "position_index": position_index,
+                    "change": "CHANGED",
+                    "location_tag": after["location_tag"],
+                    "before": _public_position(before),
+                    "after": _public_position(after),
+                    "changes": fields,
+                }
+            )
+        else:
+            unchanged += 1
+
+    def totals(snapshot: dict[str, object]) -> dict[str, object]:
+        project_data = snapshot.get("project", {})
+        return {
+            "currency": str(project_data.get("currency") or ""),
+            "total_price_net": str(project_data.get("total_price_net") or ""),
+            "total_price_tax": str(project_data.get("total_price_tax") or ""),
+            "total_price_gross": str(project_data.get("total_price_gross") or ""),
+        }
+
+    base_totals = totals(base_snapshot)
+    head_totals = totals(head_snapshot)
+    # A monetary delta across currencies would be a conversion, not a
+    # comparison — only same-currency totals produce one.
+    price_delta = None
+    if base_totals["currency"] and base_totals["currency"] == head_totals["currency"]:
+        try:
+            price_delta = str(
+                D(str(head_totals["total_price_gross"]))
+                - D(str(base_totals["total_price_gross"]))
+            )
+        except Exception:
+            price_delta = None
+    return {
+        "project_id": str(project["id"]),
+        "project_code": str(project["code"]),
+        "base": {
+            "revision_code": base_code,
+            "emitted_at": versions[base_code]["emitted_at"].isoformat(),
+            "integrity": base_integrity,
+            **base_totals,
+        },
+        "head": {
+            "revision_code": head_code,
+            "emitted_at": versions[head_code]["emitted_at"].isoformat(),
+            "integrity": head_integrity,
+            **head_totals,
+        },
+        "summary": {
+            "added": added,
+            "removed": removed,
+            "changed": changed,
+            "unchanged": unchanged,
+            "price_gross_delta": price_delta,
+        },
+        "positions": entries,
+    }
