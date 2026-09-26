@@ -41,7 +41,7 @@ import type {
   ProductionPrepItem,
   ProductionStep,
 } from "../../api/generated/models";
-import { ApiError } from "../../api/apiMutator";
+import { ApiError, apiFetchBlob } from "../../api/apiMutator";
 import { useAuthSession } from "../../auth/AuthSessionProvider";
 import { formatDateTime } from "../../format";
 import { DeniedState } from "../../ui";
@@ -657,6 +657,22 @@ export function ProductionPage(): JSX.Element {
     URL.revokeObjectURL(url);
   }
 
+  async function downloadCutPack(orderId: string, orderCode: string): Promise<void> {
+    try {
+      const { blob, filename } = await apiFetchBlob(
+        `/api/v1/production/orders/${orderId}/cut-pack/`,
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename ?? `${orderCode}-pack-corte.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(t("production.cutPackError"));
+    }
+  }
+
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
   const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
   const canStep = canWrite || role === "INSTALLER";
@@ -1028,6 +1044,19 @@ export function ProductionPage(): JSX.Element {
                       if (!optimization) return null;
                       return (
                         <div className="production-cnc">
+                          <button
+                            type="button"
+                            className="production-cutpack"
+                            disabled={busy || Boolean(optimization.invalidated)}
+                            title={
+                              optimization.invalidated
+                                ? t("production.cutPackInvalidated")
+                                : undefined
+                            }
+                            onClick={() => downloadCutPack(detail.id, detail.order_code)}
+                          >
+                            {t("production.cutPackButton")}
+                          </button>
                           {canOptimize &&
                           detail.status !== "COMPLETED" &&
                           detail.status !== "DISPATCHED" &&

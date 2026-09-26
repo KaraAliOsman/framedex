@@ -7979,6 +7979,78 @@ export const productionOrderCncFile = async (
   );
 };
 
+export type productionOrderCutPackResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionOrderCutPackResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderCutPackResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderCutPackResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderCutPackResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderCutPackResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderCutPackResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderCutPackResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderCutPackResponseSuccess = productionOrderCutPackResponse200 & {
+  headers: Headers;
+};
+export type productionOrderCutPackResponseError = (
+  | productionOrderCutPackResponse400
+  | productionOrderCutPackResponse401
+  | productionOrderCutPackResponse403
+  | productionOrderCutPackResponse404
+  | productionOrderCutPackResponse409
+  | productionOrderCutPackResponse422
+  | productionOrderCutPackResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderCutPackResponse =
+  productionOrderCutPackResponseSuccess | productionOrderCutPackResponseError;
+
+export const getProductionOrderCutPackUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/cut-pack/`;
+};
+
+export const productionOrderCutPack = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderCutPackResponse> => {
+  return apiMutator<productionOrderCutPackResponse>(getProductionOrderCutPackUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type productionOrderDeliveryResponse200 = {
   data: DeliveryResponse;
   status: 200;

@@ -247,6 +247,11 @@
   cursor: wait;
   opacity: 0.6;
 }
+.production-cnc .production-cutpack {
+  border-color: var(--theme-accent, #0f817a);
+  background: var(--theme-accent-soft);
+  font-weight: 600;
+}
 
 .production-remake:hover:not(:disabled) {
   background: color-mix(in srgb, var(--theme-mark) 12%, transparent);

@@ -303,6 +303,29 @@ class ProductionOrderDxfFileView(APIView):
         return response
 
 
+class ProductionOrderCutPackView(APIView):
+    @extend_schema(
+        operation_id="production_order_cut_pack",
+        parameters=[ACTIVE_ORGANIZATION_HEADER],
+        request=None,
+        responses={(200, "application/pdf"): OpenApiTypes.STR, **ERRORS},
+        tags=["production"],
+    )
+    def get(self, request, order_id: UUID):
+        with public_production_errors():
+            with documentary_scope(request, _READERS) as (_, _, org_id):
+                from production.cut_pack import render_cut_pack
+
+                content, download_name = render_cut_pack(
+                    org_id=org_id, order_id=order_id
+                )
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{download_name}"'
+        )
+        return response
+
+
 class ProductionOrderOpsExportView(APIView):
     @extend_schema(
         operation_id="production_order_ops_export",

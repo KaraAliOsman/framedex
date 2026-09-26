@@ -133,6 +133,7 @@ export type WorkOrderOptimization = {
   remnants?: RemnantLedger;
   stock_reservations?: StockReservation[];
   unmapped_stock_skus?: string[];
+  invalidated?: boolean;
 };
 
 type PieceRef = {
