@@ -13,7 +13,15 @@ import "./ui/ui.css";
 const container = document.getElementById("root");
 if (container === null) throw new Error("Frontend root element is missing");
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Route re-mounts shouldn't instantly re-hit the API — most reads
+      // stay accurate within 30 s and mutations invalidate explicitly.
+      staleTime: 30_000,
+    },
+  },
+});
 
 createRoot(container).render(
   <StrictMode>

@@ -106,14 +106,19 @@ export function AskDekopen({
   return (
     <div className={`ask-dock${open ? " ask-dock--open" : ""}`}>
       {open ? (
-        <section className="ask-dock__panel" aria-label={t("ask.title")}>
+        <section
+          className="ask-dock__panel"
+          aria-label={t("ask.title")}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setOpen(false);
+          }}
+        >
           <header className="ask-dock__header">
             <span className="ask-dock__title">{t("assistant.dockTitle")}</span>
-            <span className="ask-dock__modes" role="tablist">
+            <span className="ask-dock__modes">
               <button
                 type="button"
-                role="tab"
-                aria-selected={mode === "ask"}
+                aria-pressed={mode === "ask"}
                 className={`ask-dock__mode${mode === "ask" ? " ask-dock__mode--active" : ""}`}
                 onClick={() => setMode("ask")}
               >
@@ -121,8 +126,7 @@ export function AskDekopen({
               </button>
               <button
                 type="button"
-                role="tab"
-                aria-selected={mode === "agent"}
+                aria-pressed={mode === "agent"}
                 className={`ask-dock__mode${mode === "agent" ? " ask-dock__mode--active" : ""}`}
                 onClick={() => setMode("agent")}
               >
@@ -150,7 +154,7 @@ export function AskDekopen({
             />
           ) : (
             <>
-              <div className="ask-dock__thread">
+              <div className="ask-dock__thread" aria-live="polite" role="log">
                 {thread.length === 0 ? (
                   <p className="ask-dock__hint">{t("ask.hint")}</p>
                 ) : (

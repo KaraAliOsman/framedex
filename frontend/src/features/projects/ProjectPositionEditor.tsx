@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -420,6 +420,10 @@ function PositionWorkspace({
     );
   }, []);
 
+  // designIdentity deep-serializes the product — memoize on the inputs
+  // reference so location/quantity keystrokes skip the canonicalization.
+  const identity = useMemo(() => designIdentity(inputs), [inputs]);
+
   const assemblyUnsaveable =
     assemblyEval?.status === "INVALID" ||
     (assemblyEval?.modules ?? []).some((module) => module.result == null);
@@ -485,7 +489,7 @@ function PositionWorkspace({
   const dirty =
     baseline === null
       ? true
-      : designIdentity(inputs) !== baseline.design ||
+      : identity !== baseline.design ||
         location !== baseline.location ||
         quantity !== baseline.quantity;
   const product = inputs.product;

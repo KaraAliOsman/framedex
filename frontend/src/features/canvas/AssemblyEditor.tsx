@@ -429,7 +429,7 @@ function FramelessSection({
         {spec.supports.map((support, index) => (
           <li key={index} className="frameless-row">
             <select
-              aria-label={t("assembly.framelessSupports")}
+              aria-label={t("assembly.framelessEdge")}
               value={support.edge}
               disabled={busy}
               onChange={(event) => setSupport(index, { edge: event.target.value as FramelessEdge })}
@@ -441,7 +441,7 @@ function FramelessSection({
               ))}
             </select>
             <select
-              aria-label={t("assembly.framelessSupports")}
+              aria-label={t("assembly.framelessKind")}
               value={support.kind}
               disabled={busy}
               onChange={(event) =>
@@ -489,7 +489,7 @@ function FramelessSection({
             <button
               type="button"
               className="ghost-button is-danger"
-              aria-label="×"
+              aria-label={`${t("assembly.framelessRemoveItem")} ${t("assembly.framelessSupports")} ${index + 1}`}
               disabled={busy}
               onClick={() =>
                 update({ ...spec, supports: spec.supports.filter((_, at) => at !== index) })
@@ -523,7 +523,7 @@ function FramelessSection({
         {spec.fittings.map((fitting, index) => (
           <li key={index} className="frameless-row">
             <select
-              aria-label={t("assembly.framelessFittings")}
+              aria-label={t("assembly.framelessKind")}
               value={fitting.kind}
               disabled={busy}
               onChange={(event) =>
@@ -558,7 +558,7 @@ function FramelessSection({
             <button
               type="button"
               className="ghost-button is-danger"
-              aria-label="×"
+              aria-label={`${t("assembly.framelessRemoveItem")} ${t("assembly.framelessFittings")} ${index + 1}`}
               disabled={busy}
               onClick={() =>
                 update({ ...spec, fittings: spec.fittings.filter((_, at) => at !== index) })
@@ -1782,6 +1782,7 @@ export function AssemblyEditor({
       left: Math.max(0, Math.min(contextMenu.x, window.innerWidth - rect.width)),
       top: Math.max(0, Math.min(contextMenu.y, window.innerHeight - rect.height)),
     });
+    menu.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
   }, [contextMenu]);
 
   useEffect(() => {
@@ -1882,10 +1883,15 @@ export function AssemblyEditor({
     [options],
   );
 
-  const front = frontLayout(product);
-  const frontBox = frontBounds(product);
+  // One layout pass per product commit — bounds/selection boxes derive from
+  // the memo instead of recomputing the elevation four times per render.
+  const front = useMemo(() => frontLayout(product), [product]);
+  const frontBox = useMemo(() => frontBounds(front), [front]);
   const planBox = couplings.length > 0 && evaluation?.plan ? planBounds(evaluation.plan) : null;
-  const selectionBox = frontModuleBox(product, selectedModule?.id ?? null);
+  const selectionBox = useMemo(
+    () => frontModuleBox(front, selectedModule?.id ?? null),
+    [front, selectedModule?.id],
+  );
 
   // The shared command registry: palette, keyboard and AI all dispatch the
   // same typed commands; `commit` inside is the single undoable transaction.
@@ -2136,6 +2142,18 @@ export function AssemblyEditor({
           event.preventDefault();
           setContextMenu({ x: event.clientX, y: event.clientY });
         }}
+        onKeyDown={(event) => {
+          // Keyboard context-menu trigger — Shift+F10 or the dedicated
+          // ContextMenu key opens the same menu, centered on the canvas.
+          if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+            event.preventDefault();
+            const rect = event.currentTarget.getBoundingClientRect();
+            setContextMenu({
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            });
+          }
+        }}
       >
         <CanvasViewport contentBox={frontBox} selectionBox={selectionBox} status={statusText}>
           <ProductFrontContent
@@ -2256,6 +2274,32 @@ export function AssemblyEditor({
           }}
           onMouseDown={(event) => event.stopPropagation()}
           onContextMenu={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            // APG menu contract — arrows cycle, Home/End jump, Esc closes.
+            if (
+              event.key !== "ArrowDown" &&
+              event.key !== "ArrowUp" &&
+              event.key !== "Home" &&
+              event.key !== "End"
+            ) {
+              return;
+            }
+            const items = Array.from(
+              event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+            );
+            if (!items.length) return;
+            event.preventDefault();
+            const index = items.indexOf(document.activeElement as HTMLElement);
+            const next =
+              event.key === "Home"
+                ? items[0]
+                : event.key === "End"
+                  ? items[items.length - 1]
+                  : items[
+                      (index + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length
+                    ];
+            next?.focus();
+          }}
         >
           {surface.commands
             .filter((command) => !command.params?.length)

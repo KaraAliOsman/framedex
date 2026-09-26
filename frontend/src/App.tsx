@@ -103,7 +103,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("wallet.loading")}</p>}>
                 <BillingPage />
               </Suspense>
             </AppShell>
@@ -115,7 +115,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("wallet.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("wallet.loading")}</p>}>
                 <WalletPage />
               </Suspense>
             </AppShell>
@@ -129,7 +129,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("projects.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("projects.loading")}</p>}>
                 <CommercialPricingPage />
               </Suspense>
             </AppShell>
@@ -141,7 +141,7 @@ export function AppRoutes(): JSX.Element {
         element={
           <ReadyGuard>
             <AppShell>
-              <Suspense fallback={<p>{t("canvas.loading")}</p>}>
+              <Suspense fallback={<p role="status">{t("canvas.loading")}</p>}>
                 <CanvasEditor2DView demoRoute />
               </Suspense>
             </AppShell>

@@ -60,11 +60,7 @@ export function AttentionBell(): JSX.Element | null {
         {count > 0 && <span className="attention-bell__badge">{count}</span>}
       </button>
       {open && (
-        <div
-          className="shell-menu shell-menu--right"
-          role="menu"
-          aria-label={t("shell.notifications")}
-        >
+        <div className="shell-menu shell-menu--right" aria-label={t("shell.notifications")}>
           <p className="shell-menu__title">{t("shell.notifications")}</p>
           {query.isPending ? (
             <p className="shell-menu__meta">{t("dashboard.attentionLoading")}</p>
@@ -79,7 +75,6 @@ export function AttentionBell(): JSX.Element | null {
               {(query.data ?? []).map((entry) => (
                 <li key={entry.key}>
                   <Link
-                    role="menuitem"
                     className={`shell-menu__item${entry.warn ? " shell-menu__item--warn" : ""}`}
                     to={entry.to}
                     onClick={() => setOpen(false)}

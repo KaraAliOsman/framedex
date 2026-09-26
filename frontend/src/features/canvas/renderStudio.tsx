@@ -7,6 +7,7 @@ import { buildScene3D, type Scene3D, type Solid3D } from "./Product3DScene";
 import { solidToGeometry } from "./scene3dGeometry";
 import { solidMaterial } from "./materials3d";
 import type { MemberGeometry } from "./members";
+import { webglAvailable } from "./webglAvailable";
 
 /** §05-F commercial renderer — the same ProductModel scene the orbit view
  * shows, rendered offscreen under studio lighting to a PNG data URL for
@@ -31,6 +32,10 @@ function getRenderer(): THREE.WebGLRenderer | null {
   if (renderer === "unavailable") return null;
   if (renderer) return renderer;
   if (typeof document === "undefined") return null;
+  if (!webglAvailable()) {
+    renderer = "unavailable";
+    return null;
+  }
   try {
     const canvas = document.createElement("canvas");
     renderer = new THREE.WebGLRenderer({
@@ -44,12 +49,6 @@ function getRenderer(): THREE.WebGLRenderer | null {
     renderer = "unavailable";
   }
   return renderer instanceof THREE.WebGLRenderer ? renderer : null;
-}
-
-/** True when a WebGL context can be created — callers render a vector
- * fallback instead of the empty studio placeholder. */
-export function webglAvailable(): boolean {
-  return getRenderer() !== null;
 }
 
 function tokenColor(token: string, fallback: string): string {
@@ -145,7 +144,12 @@ export function renderStudioImage(
   const height = options.height ?? RENDER_H;
   const key = cacheKey(product, members, plan, options);
   const hit = cache.get(key);
-  if (hit !== undefined) return hit;
+  if (hit !== undefined) {
+    // Refresh recency so a visible card never ages out under the cap.
+    cache.delete(key);
+    cache.set(key, hit);
+    return hit;
+  }
 
   const scene3d = buildScene3D(product, members, plan);
   const scene = new THREE.Scene();
@@ -183,7 +187,13 @@ export function renderStudioImage(
       (node.material as THREE.Material).dispose();
     }
   });
-  if (cache.size >= CACHE_LIMIT) cache.clear();
+  // LRU eviction — Map order is insertion order, so the first key is the
+  // oldest render; clearing the whole map forces on-screen cards to re-render.
+  while (cache.size >= CACHE_LIMIT) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
   cache.set(key, url);
   return url;
 }
@@ -215,14 +225,26 @@ export function StudioImage({
   const theme = useDocumentTheme();
   useEffect(() => {
     let alive = true;
-    // Defer the WebGL pass a tick so a grid mounts before rendering.
-    const id = window.setTimeout(() => {
+    // Defer the WebGL pass until the browser is idle — a grid of cards
+    // mounts first and renders scene-by-scene off the critical path.
+    const schedule = (cb: () => void): (() => void) => {
+      const idle = (window as { requestIdleCallback?: (cb: () => void) => number })
+        .requestIdleCallback;
+      if (idle) {
+        const id = idle(cb);
+        return () =>
+          (window as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+      }
+      const id = window.setTimeout(cb, 0);
+      return () => window.clearTimeout(id);
+    };
+    const cancel = schedule(() => {
       const rendered = renderStudioImage(product, members, plan, memoOptions);
       if (alive) setUrl(rendered);
-    }, 0);
+    });
     return () => {
       alive = false;
-      window.clearTimeout(id);
+      cancel();
     };
   }, [product, members, plan, memoOptions, theme]);
   if (url === null) {

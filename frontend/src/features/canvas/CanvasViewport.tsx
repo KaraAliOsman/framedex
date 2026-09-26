@@ -182,16 +182,18 @@ export function CanvasViewport({
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.shiftKey && event.key === "!") {
+    // event.code pins shortcuts to physical keys — `key` varies across
+    // keyboard layouts (Shift+2 is "@" in US, `"` in es-CL).
+    if (event.shiftKey && event.code === "Digit1") {
       event.preventDefault();
       fit();
-    } else if (event.shiftKey && (event.key === "@" || event.key === '"')) {
+    } else if (event.shiftKey && event.code === "Digit2") {
       event.preventDefault();
       if (selectionBox) {
         userInteractedRef.current = true;
         setView(fitTransform(selectionBox, size.w, size.h));
       }
-    } else if (event.shiftKey && event.key === ")") {
+    } else if (event.shiftKey && event.code === "Digit0") {
       event.preventDefault();
       userInteractedRef.current = true;
       setView((current) => zoomAt(current, size.w / 2, size.h / 2, SCALE_100 / current.scale));
@@ -295,12 +297,11 @@ export function CanvasViewport({
           +
         </button>
         {menuOpen && (
-          <div className="viewport-menu" role="menu">
+          <div className="viewport-menu">
             {menu.map((item) => (
               <button
                 key={item.label}
                 type="button"
-                role="menuitem"
                 className="viewport-menu__item"
                 disabled={item.disabled}
                 onClick={() => {

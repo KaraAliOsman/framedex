@@ -425,7 +425,11 @@ function PurchasingWorkspace({
         </p>
       )}
       {blockers.length > 0 && (
-        <section className="purchasing-blockers" aria-label={t("purchasing.blockers")}>
+        <section
+          className="purchasing-blockers"
+          aria-label={t("purchasing.blockers")}
+          role="status"
+        >
           <h2>{t("purchasing.blockers")}</h2>
           <ul>
             {blockers.map((blocker, index) => (
@@ -438,7 +442,11 @@ function PurchasingWorkspace({
         </section>
       )}
       {coverageLines.length > 0 && (
-        <section className="purchasing-coverage" aria-label={t("purchasing.coverageTitle")}>
+        <section
+          className="purchasing-coverage"
+          aria-label={t("purchasing.coverageTitle")}
+          role="status"
+        >
           <h2>{t("purchasing.coverageTitle")}</h2>
           {(coverage?.shortages ?? 0) > 0 && (
             <p className="purchasing-coverage-alert" role="alert">
@@ -1084,6 +1092,7 @@ function ReceivingPanel({
                       type="number"
                       min="0"
                       step="any"
+                      aria-label={`${t("purchasing.receiveNow")} · ${line.purchasing_sku ?? line.category}`}
                       disabled={busy || Number(line.outstanding_qty) <= 0}
                       value={quantities[line.id]?.received ?? "0"}
                       onChange={(event) =>
@@ -1102,6 +1111,7 @@ function ReceivingPanel({
                       type="number"
                       min="0"
                       step="any"
+                      aria-label={`${t("purchasing.receiveDamaged")} · ${line.purchasing_sku ?? line.category}`}
                       disabled={busy || Number(line.outstanding_qty) <= 0}
                       value={quantities[line.id]?.damaged ?? "0"}
                       onChange={(event) =>

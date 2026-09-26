@@ -131,6 +131,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
     <ShellLeafContext.Provider value={leafContext}>
       <AssistantSurfaceProvider>
         <div className={`app-shell${railOpen ? " rail-open" : ""}`} data-testid="app-shell">
+          <a href="#workspace-main" className="skip-link">
+            {t("shell.skipToContent")}
+          </a>
           <button
             type="button"
             className="rail-scrim"
@@ -263,7 +266,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
                 </button>
               </div>
             </header>
-            <main className="workspace">{children}</main>
+            <main className="workspace" id="workspace-main" tabIndex={-1}>
+              {children}
+            </main>
           </div>
           <CommandPalette
             openRequested={paletteRequest}

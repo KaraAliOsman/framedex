@@ -229,6 +229,14 @@ function SolidMesh({
       map.dispose();
     };
   }, [map]);
+  // BufferGeometry passed to <mesh geometry> is not auto-disposed by r3f —
+  // every edit regenerates solids, so the replaced geometry must be freed
+  // or GPU memory grows monotonically through a session.
+  useEffect(() => {
+    return () => {
+      geometry?.dispose();
+    };
+  }, [geometry]);
   return (
     <mesh
       geometry={geometry ?? undefined}

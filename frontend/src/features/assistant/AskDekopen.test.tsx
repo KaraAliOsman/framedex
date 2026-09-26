@@ -140,7 +140,7 @@ describe("AskDekopen — Agente mode", () => {
     agentMock.mockResolvedValue(agentResponse() as never);
     renderDock("/projects/abc-1");
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
-    fireEvent.click(screen.getByRole("tab", { name: "Agente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Revisa el estado del proyecto" },
     });
@@ -193,7 +193,7 @@ describe("AskDekopen — Agente mode", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
-    fireEvent.click(screen.getByRole("tab", { name: "Agente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Cambia el ancho a 1400" },
     });
@@ -243,7 +243,7 @@ describe("AskDekopen — Agente mode", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Abrir el asistente/i }));
-    fireEvent.click(screen.getByRole("tab", { name: "Agente" }));
+    fireEvent.click(screen.getByRole("button", { name: "Agente" }));
     fireEvent.change(screen.getByRole("textbox", { name: /Qué necesitas lograr/i }), {
       target: { value: "Cambia el alto" },
     });

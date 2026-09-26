@@ -27,7 +27,7 @@
   --theme-accent-soft: #e4f3f1;
   --theme-accent-ink: #0b4d49;
   --theme-mark: #e56a32;
-  --theme-warning: #b25e09;
+  --theme-warning: #9c5306;
   --theme-warning-soft: #fdf1e3;
   --theme-success: #1e7a4c;
   --theme-success-soft: #e3f2ea;
@@ -39,7 +39,7 @@
   /* Technical states — UNKNOWN means the authority is absent (not "unset"),
      BLOCKED means the domain refuses to proceed. Both are facts to act on,
      so they get dedicated soft surfaces instead of reusing warning/danger. */
-  --theme-unknown: #6b7a76;
+  --theme-unknown: #5f6d69;
   --theme-unknown-soft: #e7eceb;
   --theme-blocked: #8c2f9b;
   --theme-blocked-soft: #f3e8f7;

@@ -225,6 +225,7 @@ export function ProductionPage(): JSX.Element {
   const [collectMethod, setCollectMethod] = useState<MethodEnum>("CASH");
   const [collectKind, setCollectKind] = useState<PaymentKindEnum>("SALDO");
   const [sigDrawn, setSigDrawn] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<"draw" | "typed">("draw");
   const [trace, setTrace] = useState<ProductionOrderTrace | null>(null);
   const [traceBusy, setTraceBusy] = useState(false);
   const [operatorStepId, setOperatorStepId] = useState<string | null>(null);
@@ -551,8 +552,12 @@ export function ProductionPage(): JSX.Element {
   }
 
   async function submitConfirmation(orderId: string): Promise<void> {
+    if (!confirmName.trim()) return;
+    if (signatureMode === "typed") {
+      sigRef.current?.renderTyped(confirmName.trim());
+    }
     const dataUrl = sigRef.current?.dataURL();
-    if (!dataUrl || !confirmName.trim()) return;
+    if (!dataUrl) return;
     setBusy(true);
     try {
       const response = await productionOrderDeliveryConfirm(orderId, {
@@ -1730,7 +1735,36 @@ export function ProductionPage(): JSX.Element {
                         </label>
                         <div className="production-delivery-wide">
                           {t("production.deliverySignature")}
-                          <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                          <div
+                            className="production-signature-mode"
+                            role="group"
+                            aria-label={t("production.deliverySignature")}
+                          >
+                            <button
+                              type="button"
+                              className={signatureMode === "draw" ? "chip is-active" : "chip"}
+                              aria-pressed={signatureMode === "draw"}
+                              onClick={() => setSignatureMode("draw")}
+                            >
+                              {t("production.signatureModeDraw")}
+                            </button>
+                            <button
+                              type="button"
+                              className={signatureMode === "typed" ? "chip is-active" : "chip"}
+                              aria-pressed={signatureMode === "typed"}
+                              onClick={() => setSignatureMode("typed")}
+                            >
+                              {t("production.signatureModeType")}
+                            </button>
+                          </div>
+                          <div hidden={signatureMode !== "draw"}>
+                            <SignaturePad ref={sigRef} onDraw={setSigDrawn} />
+                          </div>
+                          {signatureMode === "typed" ? (
+                            <p className="production-signature-typed">
+                              {t("production.signatureTypedHint")}
+                            </p>
+                          ) : null}
                         </div>
                         <label className="production-confirm-collect">
                           <input
@@ -1788,7 +1822,12 @@ export function ProductionPage(): JSX.Element {
                           </>
                         ) : null}
                         <div className="production-delivery-actions">
-                          <button type="submit" disabled={busy || !sigDrawn || !confirmName.trim()}>
+                          <button
+                            type="submit"
+                            disabled={
+                              busy || !confirmName.trim() || (signatureMode === "draw" && !sigDrawn)
+                            }
+                          >
                             {t("production.deliveryConfirmSubmit")}
                           </button>
                           <button

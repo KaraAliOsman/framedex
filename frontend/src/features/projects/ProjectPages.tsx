@@ -1468,7 +1468,7 @@ function ProjectWorkspace({
                 )}
             </div>
             {project.position_count === 0 && <p>{t("projects.noPositions")}</p>}
-            <div className="position-grid" role="list">
+            <div className="position-grid" role="listbox" aria-label={t("projects.positions")}>
               {project.positions?.map((position) => {
                 const status = positionStatusKey(project, position);
                 return (
@@ -1484,7 +1484,7 @@ function ProjectWorkspace({
                         setSelectedId(position.id);
                       }
                     }}
-                    role="listitem"
+                    role="option"
                     tabIndex={0}
                   >
                     <span className="position-row__thumb">

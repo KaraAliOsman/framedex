@@ -513,7 +513,7 @@ export function AssistantWorkspacePage(): JSX.Element {
           setSearchParams({});
         }}
       />
-      <main className="aiws-main">
+      <div className="aiws-main">
         {job ? (
           <header className="aiws-head">
             <div>
@@ -637,7 +637,7 @@ export function AssistantWorkspacePage(): JSX.Element {
             {t("agent.send")}
           </button>
         </form>
-      </main>
+      </div>
       <aside className="aiws-inspector" aria-label={t("aiws.inspector")}>
         {artifact ? (
           <div className="aiws-artifact-detail">

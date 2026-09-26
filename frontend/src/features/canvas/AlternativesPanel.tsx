@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 const NOOP = () => {};
 
@@ -9,7 +9,12 @@ import { t } from "../../i18n/es-CL";
 import type { MemberGeometry } from "./members";
 import { elevationEnvelopeMm, isProductModel, type ProductJson } from "./productEditing";
 import { ProductFrontSvg } from "./ProductFrontSvg";
-import { StudioImage, webglAvailable } from "./renderStudio";
+import { webglAvailable } from "./webglAvailable";
+
+// three.js stays behind the dynamic boundary — see renderStudio.
+const LazyStudioImage = lazy(() =>
+  import("./renderStudio").then((mod) => ({ default: mod.StudioImage })),
+);
 
 type Alternative = {
   label: string;
@@ -235,13 +240,15 @@ export function AlternativesPanel({
                       <div key={`alt-${index}`} className="alternative-card">
                         <span className="alternative-card__thumb">
                           {webglAvailable() ? (
-                            <StudioImage
-                              product={item.product}
-                              members={members}
-                              options={{ width: 360, height: 240 }}
-                              alt={item.label}
-                              className="alternative-card__render"
-                            />
+                            <Suspense fallback={null}>
+                              <LazyStudioImage
+                                product={item.product}
+                                members={members}
+                                options={{ width: 360, height: 240 }}
+                                alt={item.label}
+                                className="alternative-card__render"
+                              />
+                            </Suspense>
                           ) : (
                             /* No WebGL → the technical elevation keeps the
                              * card legible instead of an empty studio box. */

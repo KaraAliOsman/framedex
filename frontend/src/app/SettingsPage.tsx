@@ -430,7 +430,22 @@ export function SettingsPage(): JSX.Element {
 
           <div className="settings-card">
             <h3 className="eyebrow">{t("settings.appearance")}</h3>
-            <div className="settings-theme" role="radiogroup" aria-label={t("settings.theme")}>
+            <div
+              className="settings-theme"
+              role="radiogroup"
+              aria-label={t("settings.theme")}
+              onKeyDown={(event) => {
+                // Roving radio contract — arrows move the checked choice.
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                event.preventDefault();
+                const next = theme === "light" ? "dark" : "light";
+                if (next !== theme) {
+                  toggleTheme();
+                  const options = event.currentTarget.querySelectorAll('[role="radio"]');
+                  (options[next === "light" ? 0 : 1] as HTMLElement | undefined)?.focus();
+                }
+              }}
+            >
               {(["light", "dark"] as const).map((option) => (
                 <button
                   key={option}
@@ -439,6 +454,7 @@ export function SettingsPage(): JSX.Element {
                   aria-checked={theme === option}
                   className="settings-theme-option"
                   data-active={theme === option}
+                  tabIndex={theme === option ? 0 : -1}
                   onClick={() => {
                     if (theme !== option) toggleTheme();
                   }}

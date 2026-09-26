@@ -466,6 +466,15 @@ function Bay({
           event.stopPropagation();
           onSelect();
         },
+        role: "button" as const,
+        tabIndex: 0,
+        onKeyDown: (event: React.KeyboardEvent) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.stopPropagation();
+            event.preventDefault();
+            onSelect();
+          }
+        },
         style: { cursor: "pointer" },
       }
     : {};
@@ -1212,9 +1221,17 @@ export function frontLayout(product: ProductJson): FrontLayout {
   };
 }
 
+function isFrontLayout(value: ProductJson | FrontLayout): value is FrontLayout {
+  return "rects" in value && "totalW" in value;
+}
+
+function asLayout(value: ProductJson | FrontLayout): FrontLayout {
+  return isFrontLayout(value) ? value : frontLayout(value);
+}
+
 /** The drawable extent of the front elevation including gutters and chains. */
-export function frontBounds(product: ProductJson) {
-  const { totalW, height, lift, dip, leftOver, rightOver } = frontLayout(product);
+export function frontBounds(source: ProductJson | FrontLayout) {
+  const { totalW, height, lift, dip, leftOver, rightOver } = asLayout(source);
   return {
     x: -LEFT_GUTTER - leftOver,
     y: -TOP_GUTTER,
@@ -1224,9 +1241,9 @@ export function frontBounds(product: ProductJson) {
 }
 
 /** Sheet-space box of a module's frame — the Shift+2 / zoom-to-selection target. */
-export function frontModuleBox(product: ProductJson, moduleId: string | null) {
+export function frontModuleBox(source: ProductJson | FrontLayout, moduleId: string | null) {
   if (!moduleId) return null;
-  const layout = frontLayout(product);
+  const layout = asLayout(source);
   const rect = layout.rects.find((item) => item.module.id === moduleId);
   if (!rect) return null;
   const top = layout.height - rect.sill - rect.h;
