@@ -738,7 +738,7 @@ export function SettingsPage(): JSX.Element {
               <div className="settings-row">
                 <dt>{t("settings.shortcutUndo")}</dt>
                 <dd>
-                  <kbd>{MOD_KEY_HINT}Z</kbd> / <kbd>{MOD_KEY_HINT}⇧Z</kbd>
+                  <kbd>{MOD_KEY_HINT}Z</kbd> / <kbd>{MOD_KEY_HINT}Shift Z</kbd>
                 </dd>
               </div>
             </dl>

@@ -270,6 +270,7 @@ function ProjectMetadataForm({
             value: draft.value[name] ?? "",
             required: true,
             maxLength,
+            "aria-label": t(label),
             onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
               onChange({
                 ...draft,
@@ -278,7 +279,13 @@ function ProjectMetadataForm({
           };
           return (
             <label key={name}>
-              {t(label)}
+              <span>
+                {t(label)}
+                <span className="form-required" aria-hidden="true">
+                  {" "}
+                  *
+                </span>
+              </span>
               {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
             </label>
           );
@@ -307,11 +314,13 @@ function ProjectMetadataForm({
             );
           })}
         </details>
-        <button type="submit">{t("projects.save")}</button>
+        <div className="form-actions">
+          <button type="submit">{t("projects.save")}</button>
+          <button type="button" disabled={disabled} onClick={onCancel}>
+            {t("projects.cancel")}
+          </button>
+        </div>
       </fieldset>
-      <button type="button" disabled={disabled} onClick={onCancel}>
-        {t("projects.cancel")}
-      </button>
     </form>
   );
 }
@@ -1366,11 +1375,11 @@ function ProjectWorkspace({
                 )}
                 <dl className="project-metadata project-facts__list">
                   {fields
-                    .filter(([name]) => name !== "name")
+                    .filter(([name]) => name !== "name" && Boolean(project[name]))
                     .map(([name, label]) => (
                       <div key={name}>
                         <dt>{t(label)}</dt>
-                        <dd>{project[name] || "—"}</dd>
+                        <dd>{project[name]}</dd>
                       </div>
                     ))}
                   <div>

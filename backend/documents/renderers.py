@@ -806,7 +806,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         '<col style="width:13%"><col style="width:15%">'
         "</colgroup><thead><tr>"
         "<th>Pos.</th><th>Ubicación</th><th>Tipología</th>"
-        "<th>Dimensiones mm</th><th>Cant.</th><th>Relleno</th>"
+        "<th>Dimensiones (mm)</th><th>Cant.</th><th>Relleno</th>"
         "<th>Acabado</th><th>Neto</th></tr></thead><tbody>"
         + "".join(
             _row(row, ["", "", "", "", "dimension", "", "", "dimension"])
@@ -921,7 +921,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
             )
         if infills:
             body += _table(
-                ["Relleno", "Vano / hoja", "Especificación", "Dimensiones mm", "Forma", "Retención"],
+                ["Relleno", "Vano / hoja", "Especificación", "Dimensiones (mm)", "Forma", "Retención"],
                 [[labels["infill"].get(item.get("infill_id"), item.get("infill_id")),
                   _location(labels, item.get("bay_id"), item.get("leaf_id")),
                   item.get("composition"),

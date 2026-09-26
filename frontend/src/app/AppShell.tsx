@@ -100,17 +100,14 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   function navigationAllowed(to: string): boolean {
     // Mirrors the backend role sets — a nav link must never land on a
     // 403 wall.
-    if (to === "/pricing/commercial")
-      return role === "OWNER" || role === "ESTIMATOR";
-    if (to === "/assistant")
-      return role !== "INSTALLER";
+    if (to === "/pricing/commercial") return role === "OWNER" || role === "ESTIMATOR";
+    if (to === "/assistant") return role !== "INSTALLER";
     if (to === "/jobs") return role !== "INSTALLER";
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
     if (to === "/production")
       return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
-    if (to === "/dashboard" || to === "/projects" || to === "/clients")
-      return role !== "INSTALLER";
+    if (to === "/dashboard" || to === "/projects" || to === "/clients") return role !== "INSTALLER";
     return true;
   }
 
@@ -218,7 +215,9 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
             </nav>
             <div className="app-rail__user">
               <div className="app-rail__identity">
-                <span className="app-rail__email">{auth.me?.user.email ?? "—"}</span>
+                <span className="app-rail__email" title={auth.me?.user.email ?? undefined}>
+                  {auth.me?.user.email ? auth.me.user.email.split("@")[0] : "—"}
+                </span>
                 {role && <span className="app-rail__role">{t(roleLabel[role])}</span>}
               </div>
               <div className="app-rail__user-actions">

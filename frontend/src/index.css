@@ -1303,6 +1303,7 @@ p[role="alert"]:only-child::before {
 
 .status-chip[data-status="draft"] {
   background: var(--theme-surface-card);
+  border: 1px solid var(--theme-border-strong);
   color: var(--theme-text-secondary);
 }
 

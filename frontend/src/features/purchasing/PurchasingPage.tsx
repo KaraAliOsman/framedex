@@ -28,6 +28,20 @@ function categoryLabel(category: string): string {
   return known.has(category) ? t(key) : category;
 }
 
+const unitPlural = new Intl.PluralRules("es-CL");
+function purchaseUnitLabel(unit: string | null | undefined, qty?: number): string {
+  if (!unit) return "";
+  const known: ReadonlySet<string> = new Set(["EA", "BAR", "KIT", "SHEET", "M", "M2", "KG"]);
+  if (!known.has(unit)) return unit;
+  const plural = qty === undefined || unitPlural.select(qty) !== "one";
+  return t(`purchasing.unitValue.${unit}${plural ? ".other" : ".one"}` as Parameters<typeof t>[0]);
+}
+
+function qtyNumber(value: string | number | null | undefined): number | undefined {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 const ORDER_TYPES: OrderType[] = [
   "SUPPLIER_PROFILE_PO",
   "SUPPLIER_GLASS_PO",
@@ -476,7 +490,10 @@ function PurchasingWorkspace({
                   <td>{categoryLabel(line.category)}</td>
                   <td>
                     {line.purchasing_sku}
-                    <span className="purchasing-coverage-unit"> {line.unit}</span>
+                    <span className="purchasing-coverage-unit">
+                      {" "}
+                      {purchaseUnitLabel(line.unit, 2)}
+                    </span>
                   </td>
                   <td>{line.required}</td>
                   <td>{line.on_hand}</td>
@@ -564,7 +581,7 @@ function PurchasingWorkspace({
                 <tr key={item.item_id}>
                   <td>{item.sku}</td>
                   <td>
-                    {item.name} · {item.unit}
+                    {item.name} · {purchaseUnitLabel(item.unit, 2)}
                   </td>
                   <td>{item.on_hand_qty}</td>
                   <td>{item.reserved_qty}</td>
@@ -751,7 +768,8 @@ function RequirementRow({
         )}
       </td>
       <td>
-        {requirement.quantity} {requirement.unit}
+        {requirement.quantity}{" "}
+        {purchaseUnitLabel(requirement.unit, qtyNumber(requirement.quantity))}
       </td>
       <td>
         {confirmed ? (
@@ -1096,7 +1114,7 @@ function ReceivingPanel({
                 <tr key={line.id}>
                   <td>{line.purchasing_sku ?? line.category}</td>
                   <td>
-                    {line.ordered_qty} {line.unit}
+                    {line.ordered_qty} {purchaseUnitLabel(line.unit, qtyNumber(line.ordered_qty))}
                   </td>
                   <td>{line.received_qty}</td>
                   <td>{line.outstanding_qty}</td>

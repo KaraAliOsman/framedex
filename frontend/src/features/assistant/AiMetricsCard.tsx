@@ -96,7 +96,10 @@ export function AiMetricsCard({
         </div>
         <div>
           <dt>{t("aiws.metrics.timeSaved")}</dt>
-          <dd title={t("aiws.metrics.timeSavedHint")}>{minutes(timeSaved.seconds ?? 0)}*</dd>
+          <dd>
+            {minutes(timeSaved.seconds ?? 0)}{" "}
+            <small className="aiws-metrics__estimate">{t("aiws.metrics.estimateMark")}</small>
+          </dd>
         </div>
       </dl>
       {topFailure ? (

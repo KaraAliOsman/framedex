@@ -24,6 +24,7 @@
   --theme-text-muted: #5c6c68;
   --theme-accent: #0f817a;
   --theme-accent-strong: #0b6b66;
+  --theme-accent-deep: #09524e;
   --theme-accent-soft: #e4f3f1;
   --theme-accent-ink: #0b4d49;
   --theme-mark: #e56a32;
@@ -46,7 +47,7 @@
   --theme-focus-ring: #0f817a;
   --theme-selection: #d3ebe8;
   --theme-disabled-bg: #eceeee;
-  --theme-disabled-ink: #76847f;  /* 3.35:1 on disabled-bg — exempt from AA but readable */
+  --theme-disabled-ink: #76847f; /* 3.35:1 on disabled-bg — exempt from AA but readable */
   --theme-disabled-border: #d5dbda;
   --theme-skeleton: #e2e7e6;
   --theme-skeleton-sheen: #f2f5f4;
@@ -92,6 +93,7 @@
   --theme-text-muted: #81938f;
   --theme-accent: #2aa69b;
   --theme-accent-strong: #45beb1;
+  --theme-accent-deep: #2aa69b;
   --theme-accent-soft: #14312f;
   --theme-accent-ink: #bfe6e0;
   --theme-mark: #e8804a;
@@ -111,7 +113,7 @@
   --theme-focus-ring: #45beb1;
   --theme-selection: #163a38;
   --theme-disabled-bg: #222a2d;
-  --theme-disabled-ink: #6b7a76;  /* 3.25:1 on disabled-bg */
+  --theme-disabled-ink: #6b7a76; /* 3.25:1 on disabled-bg */
   --theme-disabled-border: #333d41;
   --theme-skeleton: #262f33;
   --theme-skeleton-sheen: #2f393d;

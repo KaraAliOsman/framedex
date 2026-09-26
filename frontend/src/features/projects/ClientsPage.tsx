@@ -317,6 +317,7 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
                 name,
                 value: (draft.value[name] as string | undefined) ?? "",
                 required: name === "name",
+                "aria-label": t(label),
                 maxLength,
                 onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
                   setDraft({
@@ -326,28 +327,38 @@ function ClientsWorkspace({ orgId, canWrite }: { orgId: string; canWrite: boolea
               };
               return (
                 <label key={name}>
-                  {t(label)}
+                  <span>
+                    {t(label)}
+                    {name === "name" ? (
+                      <span className="form-required" aria-hidden="true">
+                        {" "}
+                        *
+                      </span>
+                    ) : null}
+                  </span>
                   {type === "textarea" ? <textarea {...props} /> : <input {...props} type={type} />}
                 </label>
               );
             })}
-            <button type="submit">{t("projects.save")}</button>
+            <div className="form-actions">
+              <button type="submit">{t("projects.save")}</button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void confirm({ title: t("projects.discard") }).then((ok) => {
+                    if (ok) {
+                      setDraft(null);
+                      setEditing(null);
+                      setCreating(false);
+                    }
+                  });
+                }}
+              >
+                {t("projects.cancel")}
+              </button>
+            </div>
           </fieldset>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              void confirm({ title: t("projects.discard") }).then((ok) => {
-                if (ok) {
-                  setDraft(null);
-                  setEditing(null);
-                  setCreating(false);
-                }
-              });
-            }}
-          >
-            {t("projects.cancel")}
-          </button>
         </form>
       ) : (
         <div className="clients-desk">

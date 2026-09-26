@@ -47,14 +47,14 @@ a.ui-backlink:hover {
 }
 
 .ui-button--primary {
-  background: var(--theme-accent);
-  border-color: var(--theme-accent);
+  background: var(--theme-accent-strong);
+  border-color: var(--theme-accent-strong);
   color: var(--theme-surface-panel);
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: var(--theme-accent-strong);
-  border-color: var(--theme-accent-strong);
+  background: var(--theme-accent-deep);
+  border-color: var(--theme-accent-deep);
 }
 
 .ui-button--danger {
