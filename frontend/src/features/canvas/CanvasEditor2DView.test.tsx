@@ -160,6 +160,7 @@ describe("SHOT-05 transactional G1 editor", () => {
     expect(editor).toHaveAttribute("data-system-id", "runtime-discovered-system");
     expect(calculateMock).toHaveBeenCalledWith(
       expect.objectContaining({ system_id: "runtime-discovered-system" }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(screen.getByLabelText("Ancho nominal (mm)")).toHaveValue("1000.00");
     expect(screen.getByLabelText("Alto nominal (mm)")).toHaveValue("1000.00");
@@ -203,6 +204,7 @@ describe("SHOT-05 transactional G1 editor", () => {
         nominal_width_mm: "1100.50",
         nominal_height_mm: "1150.00",
       }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
