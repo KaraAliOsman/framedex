@@ -19,7 +19,7 @@ from authentication.rls import catalog_backend
 from documents.repository import documentary_backend
 from documents.storage import SupabaseDocumentStorage
 from ingest.catalog_parser import ROLES, parse_catalog_lines
-from ingest.extract import extract_tagged, kind_for, safe_file_name
+from ingest.extract import extract_tagged, kind_for, safe_file_name, sniffed_kind
 from jobs import service as jobs_service
 from pricing.repository import rows
 
@@ -109,6 +109,12 @@ def create_catalog_import(
             422,
             "catalog_import_file_invalid",
             "El nombre del archivo contiene caracteres no permitidos.",
+        )
+    if not sniffed_kind(kind, content):
+        raise contract_error(
+            422,
+            "catalog_import_file_mismatch",
+            "El contenido del archivo no coincide con su extensión.",
         )
     import_id = uuid4()
     storage_path = f"catalog-imports/{org_id}/{import_id}/{file_name}"

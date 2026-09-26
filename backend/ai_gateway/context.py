@@ -383,7 +383,7 @@ def _projects(org_id: UUID) -> dict:
 
 def _project_row(org_id: UUID, project_id: UUID) -> dict:
     result = rows(
-        "SELECT id, code, name, client_name, status, current_revision, "
+        "SELECT id, code, name, client_id, client_name, status, current_revision, "
         "total_price_net, total_price_tax, total_price_gross "
         "FROM public.projects WHERE id=%s AND org_id=%s",
         [project_id, org_id],
@@ -496,6 +496,7 @@ def _position(org_id: UUID, refs: dict) -> dict:
         "pr.code AS project_code, pr.name AS project_name "
         "FROM public.project_positions p "
         "LEFT JOIN public.profile_systems s ON s.id = p.system_id "
+        "  AND (s.org_id = p.org_id OR (s.org_id IS NULL AND s.is_global)) "
         "JOIN public.projects pr ON pr.id = p.project_id AND pr.org_id = p.org_id "
         "WHERE p.id=%s AND p.org_id=%s",
         [_ref(refs, "position_id"), org_id],
@@ -879,7 +880,7 @@ def _production(org_id: UUID) -> dict:
         "COUNT(s.id) AS steps_total, "
         "COUNT(s.id) FILTER (WHERE s.status='DONE') AS steps_done "
         "FROM public.orders o "
-        "LEFT JOIN public.production_steps s ON s.order_id=o.id "
+        "LEFT JOIN public.production_steps s ON s.order_id=o.id AND s.org_id=o.org_id "
         "WHERE o.org_id=%s AND o.order_type='WORKSHOP_OT' "
         "GROUP BY o.id ORDER BY o.created_at DESC LIMIT %s",
         [org_id, MAX_LIST],

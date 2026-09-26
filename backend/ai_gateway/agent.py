@@ -473,14 +473,29 @@ def _prepare_path_valid(action: str, path: str) -> bool:
     return bool(re.fullmatch(pattern, path))
 
 
+def _key_grounded(key: Any, grounding: set) -> bool:
+    """A key composed only of numeric/money characters ("999999",
+    "$ 60.000") renders as a number claim; identifier keys with letters
+    ("item_2") stay structure."""
+    if isinstance(key, str):
+        if re.search(r"[A-Za-z_]", key):
+            return True
+        return _grounded(key, grounding)
+    return _payload_grounded(key, grounding)
+
+
 def _payload_grounded(node: Any, grounding: set) -> bool:
     """An artifact payload is durable output — invented numbers inside a
     quote or purchase plan render as fact. Every scalar carries the same
     citable-numbers rule as the reply: literal numbers must sit inside the
-    grounding set, and strings face _grounded. Keys are structure, not
-    claims."""
+    grounding set, and strings face _grounded. A key that IS a number
+    ("total_999999" renders as text) is a claim, not structure — identifier
+    keys containing digits stay free."""
     if isinstance(node, dict):
-        return all(_payload_grounded(value, grounding) for value in node.values())
+        return all(
+            _key_grounded(key, grounding) and _payload_grounded(value, grounding)
+            for key, value in node.items()
+        )
     if isinstance(node, list):
         return all(_payload_grounded(item, grounding) for item in node)
     if isinstance(node, bool) or node is None:
@@ -889,6 +904,16 @@ def _act(
     claims, references, dropped_claims = jobs.claims_and_references(
         document.get("claims"), context_refs_all
     )
+    # An evidence ref must not launder an invented number: claim text faces
+    # the same grounding check as the reply and warnings.
+    grounded_claims = []
+    for claim in claims:
+        if _grounded(claim["text"], grounding):
+            grounded_claims.append(claim)
+        else:
+            dropped_claims += 1
+            dropped_ungrounded += 1
+    claims = grounded_claims
     if dropped_claims:
         warnings.append(
             f"{dropped_claims} afirmación(es) sin evidencia en contexto descartada(s)"

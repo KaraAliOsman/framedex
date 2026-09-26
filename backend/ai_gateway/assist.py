@@ -94,7 +94,10 @@ def _grounding_values(context: Any, question: str) -> set[Decimal]:
             for item in node.values():
                 walk(item)
         elif isinstance(node, list):
-            values.add(Decimal(len(node)))
+            # Entity collections may ground "cuántos" answers; scalar arrays
+            # (coordinates, point pairs) can't launder an invented count.
+            if any(isinstance(item, dict) for item in node):
+                values.add(Decimal(len(node)))
             for item in node:
                 walk(item)
 
@@ -260,12 +263,18 @@ def ask(
             "El asistente devolvió una respuesta inválida.",
         ) from None
     validated = _answer(document, _context_refs(context))
-    if not _grounded(validated["answer"], _grounding_values(context, question)):
+    values = _grounding_values(context, question)
+    if not _grounded(validated["answer"], values):
         raise contract_error(
             502,
             "ai_assist_ungrounded",
             "El asistente citó valores que no constan en el contexto.",
         )
+    # Warnings render as system-derived evidence — invented numerics there
+    # carry the same weight as an ungrounded answer.
+    validated["warnings"] = [
+        item for item in validated["warnings"] if _grounded(item, values)
+    ]
     return {
         "audit_id": envelope["audit_id"],
         "model": envelope["model"],

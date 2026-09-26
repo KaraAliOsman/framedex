@@ -1800,7 +1800,7 @@ def test_resume_job_claims_settled_states_only(monkeypatch):
 
     monkeypatch.setattr(jobs, "rows", fake_rows)
     with pytest.raises(ValueError, match="ai_job_running"):
-        jobs.resume_job(job_id=uuid4(), transcript=[])
+        jobs.resume_job(job_id=uuid4(), transcript=[], org_id=uuid4(), user_id=uuid4())
 
 
 def test_resume_job_reports_terminal(monkeypatch):
@@ -1814,7 +1814,7 @@ def test_resume_job_reports_terminal(monkeypatch):
 
     monkeypatch.setattr(jobs, "rows", fake_rows)
     with pytest.raises(ValueError, match="ai_job_terminal"):
-        jobs.resume_job(job_id=uuid4(), transcript=[])
+        jobs.resume_job(job_id=uuid4(), transcript=[], org_id=uuid4(), user_id=uuid4())
 
 
 def test_record_failure_appends_turns(monkeypatch):

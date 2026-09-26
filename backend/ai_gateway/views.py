@@ -314,7 +314,9 @@ class AiJobView(APIView):
                 raise contract_error(
                     404, "ai_job_not_found", "El trabajo no existe."
                 )
-            if not jobs.cancel_job(job_id=job_id):
+            if not jobs.cancel_job(
+                job_id=job_id, org_id=org_id, user_id=token.user_id
+            ):
                 raise contract_error(
                     409, "ai_job_terminal", "El trabajo ya terminó."
                 )
@@ -367,6 +369,8 @@ class AiJobMessagesView(APIView):
                     jobs.resume_job(
                         job_id=job_id,
                         transcript=list(job.get("transcript") or []),
+                        org_id=org_id,
+                        user_id=token.user_id,
                     )
                 except ValueError as error:
                     if str(error) == "ai_job_terminal":

@@ -185,7 +185,7 @@ def finish_job(*, job_id: UUID, state: str, transcript: list, plan: list,
     return {"id": str(record[0]["id"])}
 
 
-def resume_job(*, job_id: UUID, transcript: list) -> dict:
+def resume_job(*, job_id: UUID, transcript: list, org_id: UUID, user_id: UUID) -> dict:
     """Claim a settled job for a new round. The UPDATE itself is the lock:
     only WAITING_*/FAILED_RETRYABLE/SUCCEEDED states move to RUNNING, so a
     follow-up racing a live round or a closed job gets a conflict instead of
@@ -195,10 +195,10 @@ def resume_job(*, job_id: UUID, transcript: list) -> dict:
             "UPDATE public.ai_jobs SET state = 'RUNNING',"
             " transcript = %s::jsonb, result = NULL, error_code = NULL,"
             " completed_at = NULL, updated_at = NOW()"
-            " WHERE id = %s AND state IN"
+            " WHERE id = %s AND org_id = %s AND user_id = %s AND state IN"
             " ('WAITING_FOR_USER','WAITING_FOR_APPROVAL','FAILED_RETRYABLE','SUCCEEDED')"
             " RETURNING id",
-            [_dump(transcript), str(job_id)],
+            [_dump(transcript), str(job_id), str(org_id), str(user_id)],
         )
     if record:
         return {"id": str(record[0]["id"])}
@@ -261,15 +261,16 @@ def record_failure(*, job_id: UUID, transcript_before: list, goal: str,
     return {"id": str(found[0]["id"])} if found else None
 
 
-def cancel_job(*, job_id: UUID) -> bool:
+def cancel_job(*, job_id: UUID, org_id: UUID, user_id: UUID) -> bool:
     with _ai_backend():
         return bool(
             rows(
                 "UPDATE public.ai_jobs SET state = 'CANCELED',"
                 " updated_at = NOW(), completed_at = NOW() WHERE id = %s"
+                " AND org_id = %s AND user_id = %s"
                 " AND state NOT IN ('SUCCEEDED','FAILED','CANCELED')"
                 " RETURNING id",
-                [str(job_id)],
+                [str(job_id), str(org_id), str(user_id)],
             )
         )
 
