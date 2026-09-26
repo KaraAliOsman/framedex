@@ -430,6 +430,11 @@ class ProjectPaymentLinkRecoverView(APIView):
                 ) from None
 
 
+# Provider credentials (API key / webhook secret) are owner-level data —
+# estimators operate the ledger, not the payment plumbing.
+_OWNER_ONLY = ("OWNER",)
+
+
 class ProjectPaymentIntegrationView(APIView):
     parser_classes = [DecimalJSONParser]
 
@@ -439,7 +444,7 @@ class ProjectPaymentIntegrationView(APIView):
         **SCHEMA,
     )
     def get(self, request):
-        with scope(request, WRITE_ROLES) as (_, _, org):
+        with scope(request, _OWNER_ONLY) as (_, _, org):
             return response(payment_links.get_integration(org_id=org))
 
     @extend_schema(
@@ -450,7 +455,7 @@ class ProjectPaymentIntegrationView(APIView):
     )
     def put(self, request):
         data = validate(PaymentIntegrationSerializer, request.data)
-        with scope(request, WRITE_ROLES) as (_, _, org):
+        with scope(request, _OWNER_ONLY) as (_, _, org):
             return response(payment_links.save_integration(org_id=org, data=data))
 
 

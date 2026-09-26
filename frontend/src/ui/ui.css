@@ -359,6 +359,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   max-height: 85vh;
+  max-width: calc(100vw - 2rem);
   outline: none;
   width: 34rem;
 }

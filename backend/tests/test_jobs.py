@@ -262,7 +262,9 @@ def _client_with_scope(monkeypatch, role: str):
     token = SimpleNamespace(user_id=uuid4(), claims={}, aal="aal1")
 
     @contextmanager
-    def fake_scope(request):
+    def fake_scope(request, allowed=None):
+        if allowed is not None and role not in allowed:
+            raise service.JobServiceError("job_permission_denied")
         yield token, _tenant(role, org_id), org_id
 
     monkeypatch.setattr(job_views, "job_scope", fake_scope)
@@ -336,7 +338,7 @@ def test_detail_view_404s_for_missing_job(monkeypatch) -> None:
 
 
 def test_list_view_passes_filters(monkeypatch) -> None:
-    client, _, org_id = _client_with_scope(monkeypatch, "INSTALLER")
+    client, _, org_id = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
     seen: dict[str, object] = {}
     monkeypatch.setattr(
         service,
@@ -352,6 +354,13 @@ def test_list_view_passes_filters(monkeypatch) -> None:
         "limit": 5,
         "offset": 20,
     }
+
+
+def test_list_view_denies_installer(monkeypatch) -> None:
+    client, _, _ = _client_with_scope(monkeypatch, "INSTALLER")
+    response = client.get("/api/v1/jobs/")
+    assert response.status_code == 403
+    assert response.data["error"]["code"] == "job_permission_denied"
 
 
 def test_enqueue_requeues_a_terminal_row(monkeypatch) -> None:

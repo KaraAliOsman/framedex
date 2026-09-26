@@ -92,7 +92,16 @@ function HomeRedirect(): JSX.Element {
   if (auth.status === "organization_required") {
     return <Navigate to="/select-organization" replace />;
   }
-  return <Navigate to={auth.status === "ready" ? "/dashboard" : "/login"} replace />;
+  if (auth.status === "ready") {
+    // An installer's work lives on the production floor — the commercial
+    // dashboard would deny both of its queries and greet them with errors.
+    const home =
+      auth.me?.active_organization?.role === "INSTALLER"
+        ? "/production"
+        : "/dashboard";
+    return <Navigate to={home} replace />;
+  }
+  return <Navigate to="/login" replace />;
 }
 
 export function AppRoutes(): JSX.Element {

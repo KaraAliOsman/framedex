@@ -97,10 +97,18 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
   const projectName = useProjectName(projectId !== null && projectId !== "demo" ? projectId : null);
 
   function navigationAllowed(to: string): boolean {
+    // Mirrors the backend role sets — a nav link must never land on a
+    // 403 wall.
+    if (to === "/pricing/commercial")
+      return role === "OWNER" || role === "ESTIMATOR";
+    if (to === "/assistant")
+      return role !== "INSTALLER";
     if (to === "/catalogs/systems" || to === "/purchasing")
       return role === "OWNER" || role === "WORKSHOP_MANAGER";
     if (to === "/production")
       return role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
+    if (to === "/dashboard" || to === "/projects" || to === "/clients")
+      return role !== "INSTALLER";
     return true;
   }
 
@@ -109,7 +117,15 @@ export function AppShell({ children }: PropsWithChildren): JSX.Element {
       ? []
       : [
           { to: `/projects/${projectId}`, label: "nav.context.summary" },
-          { to: `/projects/${projectId}/pricing`, label: "nav.context.quote" },
+          // Pricing ops accept O/E only — WM gets the summary but no dead link.
+          ...(canWrite
+            ? [
+                {
+                  to: `/projects/${projectId}/pricing`,
+                  label: "nav.context.quote" as const,
+                },
+              ]
+            : []),
           ...(canWrite
             ? [
                 {
