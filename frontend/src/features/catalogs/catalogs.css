@@ -377,15 +377,32 @@
 }
 .ws-blockers {
   list-style: none;
-  margin: 0.5rem 0 0;
+  margin: 0.6rem 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 .ws-blocker {
-  border-top: 1px dashed var(--theme-border);
-  padding-top: 0.4rem;
+  background: var(--theme-surface-raised, var(--theme-surface));
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+  padding: 0.5rem 0.7rem;
+}
+.ws-blocker-head {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ws-blocker-level {
+  background: var(--theme-warn-bg, #fdf3e3);
+  border-radius: var(--theme-radius-pill, 999px);
+  color: var(--theme-warn, #b26a00);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  text-transform: uppercase;
 }
 .ws-blocker-target {
   background: none;

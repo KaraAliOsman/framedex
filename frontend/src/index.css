@@ -688,7 +688,7 @@ a:focus-visible {
   left: 0;
   list-style: none;
   margin: 0;
-  min-width: 13rem;
+  min-width: 17rem;
   padding: var(--space-1);
   position: absolute;
   top: calc(100% + 6px);
@@ -736,6 +736,21 @@ a:focus-visible {
   color: var(--theme-text-muted);
   font-size: var(--text-xs);
   padding: var(--space-1) var(--space-2);
+}
+
+.shell-menu__all {
+  border-top: 1px solid var(--theme-border-subtle);
+  color: var(--theme-accent-strong);
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+}
+
+.shell-menu__all:hover {
+  background: var(--theme-surface-hover);
+  border-radius: var(--radius-md);
 }
 
 .attention-bell__badge {

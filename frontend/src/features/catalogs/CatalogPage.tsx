@@ -54,6 +54,12 @@ function itemCode(row: Row<Resource>): string {
   return "sku" in row ? row.sku : "code" in row ? row.code : "";
 }
 
+/** Import-generated codes embed a UUID (TEST-0f41dce9…) — render the short
+ * form in lists; the full code stays in the tooltip. */
+function shortCode(code: string): string {
+  return code.length > 16 ? `${code.slice(0, 16)}…` : code;
+}
+
 function systemReadinessLabel(system: Row<"systems">): string {
   if (!system.readiness) return ct("readinessUnknown");
   const readiness = system.readiness;
@@ -63,15 +69,20 @@ function systemReadinessLabel(system: Row<"systems">): string {
   // Quote-ready systems still surface the higher levels: a system that can be
   // priced but can't reach the shop floor is honest about which level blocks.
   const parts = [ct("readyFixed")];
+  const shown = new Set<string>();
   for (const name of ["PRODUCTION_READY", "CNC_READY"]) {
     const level = readiness.levels?.find((entry) => entry.level === name);
     if (level && level.ok === false && level.blockers.length > 0) {
       // First blocker names the gate; the ladder in the system workspace lists
       // the rest — a cell joined on '·' per blocker became an unreadable run-on.
+      const first = level.blockers.at(0)?.code;
+      // The same missing authority gates several levels — state it once.
+      if (first && shown.has(first)) continue;
+      if (first) shown.add(first);
       const extra = level.blockers.length > 1 ? ` (+${level.blockers.length - 1})` : "";
       parts.push(
         `${ct(name === "PRODUCTION_READY" ? "readinessProduction" : "readinessCnc")}: ${ct(
-          `readiness.${level.blockers.at(0)?.code}`,
+          `readiness.${first}`,
         )}${extra}`,
       );
     }
@@ -283,8 +294,8 @@ function CatalogWorkspace({ orgId, role }: { orgId: string; role: string }): JSX
                   }}
                 >
                   <strong>{system.name}</strong>
-                  <span>
-                    {system.code} · {ct(`option.${system.material}`)}
+                  <span title={system.code}>
+                    {shortCode(system.code)} · {ct(`option.${system.material}`)}
                   </span>
                   <small>
                     {system.is_global ? ct("global") : ct("own")}

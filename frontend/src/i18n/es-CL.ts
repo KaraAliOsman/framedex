@@ -880,6 +880,7 @@ export const messages = {
   "nav.context.dispatch": "Despacho",
   "shell.searchHint": "Buscar o ejecutar…",
   "shell.notifications": "Notificaciones",
+  "shell.notificationsAll": "Ver todo en el panel",
   "shell.notificationsEmpty": "Sin pendientes por atender.",
   "shell.aiEntry": "IA",
   "shell.switchOrg": "Cambiar organización",

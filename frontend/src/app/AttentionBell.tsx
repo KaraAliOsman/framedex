@@ -86,6 +86,9 @@ export function AttentionBell(): JSX.Element | null {
               ))}
             </ul>
           )}
+          <Link className="shell-menu__all" to="/dashboard" onClick={() => setOpen(false)}>
+            {t("shell.notificationsAll")}
+          </Link>
         </div>
       )}
     </div>

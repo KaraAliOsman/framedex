@@ -58,14 +58,6 @@ const BLOCKER_SECTION: Record<string, string> = {
   station_map: "ws.process",
 };
 
-const LEVEL_LABEL: Record<string, string> = {
-  DESIGN_VALID: "ws.level.DESIGN_VALID",
-  QUOTE_READY: "ws.level.QUOTE_READY",
-  MANUFACTURING_INCOMPLETE: "ws.level.MANUFACTURING_INCOMPLETE",
-  PRODUCTION_READY: "ws.level.PRODUCTION_READY",
-  CNC_READY: "ws.level.CNC_READY",
-};
-
 /** Entity references in blocker text carry raw UUIDs — a record id means
  * nothing read as prose. Keep the identity but show only its short code. */
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
@@ -182,62 +174,71 @@ function ReadinessLadder({
   const readiness = system.readiness;
   if (!readiness) return <p className="ws-empty">{ct("readinessUnknown")}</p>;
   const levels = readiness.levels ?? [];
+  // Levels carry cumulative blocker lists — attribute each blocker to the
+  // first level that reports it so nothing repeats down the ladder.
+  const blockerRows: { level: string; blocker: (typeof levels)[number]["blockers"][number] }[] = [];
+  const seen = new Set<string>();
+  for (const level of levels) {
+    for (const blocker of level.blockers) {
+      const key = `${blocker.code}|${blocker.affected}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        blockerRows.push({ level: level.level, blocker });
+      }
+    }
+  }
   return (
-    <ol className="ws-ladder">
-      {levels.map((level, levelIndex) => {
-        const ok = levelOk(level);
-        // Levels carry cumulative blocker lists — show only what THIS level
-        // adds, or the same card would repeat down the whole ladder.
-        const prior = new Set(
-          levels
-            .slice(0, levelIndex)
-            .flatMap((entry) => entry.blockers.map((b) => `${b.code}|${b.affected}`)),
-        );
-        const own = level.blockers.filter((b) => !prior.has(`${b.code}|${b.affected}`));
-        return (
-          <li key={level.level} className={`ws-ladder-level ${ok ? "is-ok" : "is-blocked"}`}>
-            <header>
-              <span className="ws-ladder-state" aria-hidden="true">
-                {ok ? "●" : "◐"}
-              </span>
-              <strong>{t((LEVEL_LABEL[level.level] ?? level.level) as Label)}</strong>
-              <em>
-                {level.state
-                  ? t(`catalog.ws.state.${level.state}` as Label)
-                  : ok
-                    ? wst("complete")
-                    : wst("incomplete")}
-              </em>
-            </header>
-            {!ok && own.length > 0 && (
-              <ul className="ws-blockers">
-                {own.map((blocker, index) => (
-                  <li key={`${blocker.code}-${index}`} className="ws-blocker">
-                    <button
-                      type="button"
-                      className="ws-blocker-target"
-                      onClick={() => onJump(BLOCKER_SECTION[blocker.code] ?? "ws.system")}
-                      title={wst("jumpToSection")}
-                    >
-                      {ct(`readiness.${blocker.code}`)}
-                      <span className="ws-blocker-affected"> — {shortId(blocker.affected)}</span>
-                    </button>
-                    <p className="ws-blocker-detail">
-                      <strong>{wst("missingAuthority")}:</strong>{" "}
-                      {shortId(blocker.missing_authority)}
-                      <br />
-                      <strong>{wst("consequence")}:</strong> {shortId(blocker.why)}
-                      <br />
-                      <strong>{wst("resolution")}:</strong> {shortId(blocker.action)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        );
-      })}
-    </ol>
+    <>
+      <ol className="ws-ladder">
+        {levels.map((level) => {
+          const ok = levelOk(level);
+          return (
+            <li key={level.level} className={`ws-ladder-level ${ok ? "is-ok" : "is-blocked"}`}>
+              <header>
+                <span className="ws-ladder-state" aria-hidden="true">
+                  {ok ? "●" : "◐"}
+                </span>
+                <strong>{wst(`level.${level.level}`)}</strong>
+                <em>
+                  {level.state
+                    ? t(`catalog.ws.state.${level.state}` as Label)
+                    : ok
+                      ? wst("complete")
+                      : wst("incomplete")}
+                </em>
+              </header>
+            </li>
+          );
+        })}
+      </ol>
+      {blockerRows.length > 0 && (
+        <ul className="ws-blockers">
+          {blockerRows.map(({ level, blocker }, index) => (
+            <li key={`${level}-${blocker.code}-${index}`} className="ws-blocker">
+              <div className="ws-blocker-head">
+                <span className="ws-blocker-level">{wst(`level.${level}`)}</span>
+                <button
+                  type="button"
+                  className="ws-blocker-target"
+                  onClick={() => onJump(BLOCKER_SECTION[blocker.code] ?? "ws.system")}
+                  title={wst("jumpToSection")}
+                >
+                  {ct(`readiness.${blocker.code}`)}
+                  <span className="ws-blocker-affected"> — {shortId(blocker.affected)}</span>
+                </button>
+              </div>
+              <p className="ws-blocker-detail">
+                <strong>{wst("missingAuthority")}:</strong> {shortId(blocker.missing_authority)}
+                <br />
+                <strong>{wst("consequence")}:</strong> {shortId(blocker.why)}
+                <br />
+                <strong>{wst("resolution")}:</strong> {shortId(blocker.action)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 
@@ -371,7 +372,10 @@ export function SystemWorkspaceView({
       <header className="ws-identity" id="ws.system">
         <div className="ws-identity-head">
           <h2>
-            {system.name} <code>{system.code}</code>
+            {system.name}{" "}
+            <code title={system.code}>
+              {system.code.length > 16 ? `${system.code.slice(0, 16)}…` : system.code}
+            </code>
           </h2>
           <div className="ws-identity-meta">
             {system.manufacturer && <span className="ws-chip">{system.manufacturer}</span>}
