@@ -18,6 +18,13 @@ import { BatchOpsStep } from "./BatchOpsStep";
  * timeout — the dock polls the job record and renders the stored result
  * once the round settles. */
 const LIVE_STATES = new Set(["QUEUED", "PLANNING", "RUNNING"]);
+const STATE_LABEL: Record<string, string> = {
+  QUEUED: "agent.state.queued",
+  PLANNING: "agent.state.planning",
+  RUNNING: "agent.state.running",
+  WAITING_FOR_USER: "agent.state.waiting_for_user",
+  WAITING_FOR_APPROVAL: "agent.state.waiting_for_approval",
+} as const;
 const POLL_MS = 1500;
 const POLL_LIMIT = 160;
 
@@ -102,6 +109,7 @@ export function AgentBody({
   const bridge = useDesignOpsBridge();
   const [goal, setGoal] = useState("");
   const [busy, setBusy] = useState(false);
+  const [jobState, setJobState] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [thread, setThread] = useState<Turn[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -119,6 +127,7 @@ export function AgentBody({
     if (!trimmed || busy) return;
     setBusy(true);
     setMessage("");
+    setJobState(null);
     if (!operationKey.current || operationKey.current.goal !== trimmed) {
       operationKey.current = { key: crypto.randomUUID(), goal: trimmed };
     }
@@ -156,6 +165,7 @@ export function AgentBody({
         if (detail.status !== 200) throw new ApiError(detail.status, detail.data);
         job = detail.data;
         if (!LIVE_STATES.has(job.state)) break;
+        setJobState(job.state);
         await new Promise((resolve) => setTimeout(resolve, POLL_MS));
       }
       if (!job || LIVE_STATES.has(job.state)) {
@@ -192,7 +202,10 @@ export function AgentBody({
           : t("agent.error"),
       );
     } finally {
-      if (seq === requestSeq.current) setBusy(false);
+      if (seq === requestSeq.current) {
+        setBusy(false);
+        setJobState(null);
+      }
     }
   }
 
@@ -410,7 +423,13 @@ export function AgentBody({
             </div>
           ))
         )}
-        {busy ? <p className="ask-dock__busy">{t("agent.thinking")}</p> : null}
+        {busy ? (
+          <p className="ask-dock__busy">
+            {jobState && STATE_LABEL[jobState]
+              ? t(STATE_LABEL[jobState] as Parameters<typeof t>[0])
+              : t("agent.thinking")}
+          </p>
+        ) : null}
       </div>
       {message ? <p className="ask-dock__error">{message}</p> : null}
       {!goal.trim() && (GOAL_CHIPS[surface] ?? []).length ? (
