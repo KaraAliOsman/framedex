@@ -802,6 +802,17 @@ export function ProductionPage(): JSX.Element {
                       {t("production.shortageChip").replace("{count}", String(order.shortage))}
                     </span>
                   ) : null}
+                  {order.version_shortage > order.shortage ? (
+                    <span
+                      className="production-chip is-warn"
+                      title={t("production.versionShortageTitle")}
+                    >
+                      {t("production.versionShortageChip").replace(
+                        "{count}",
+                        String(order.version_shortage),
+                      )}
+                    </span>
+                  ) : null}
                   {order.dispatch_ready ? (
                     <span className="production-chip is-ready">
                       {t("production.dispatchReadyChip")}
@@ -830,12 +841,23 @@ export function ProductionPage(): JSX.Element {
                     {t("production.shortageChip").replace("{count}", String(detail.shortage))}
                   </span>
                 ) : null}
+                {detail.version_shortage > detail.shortage ? (
+                  <span
+                    className="production-chip is-warn"
+                    title={t("production.versionShortageTitle")}
+                  >
+                    {t("production.versionShortageChip").replace(
+                      "{count}",
+                      String(detail.version_shortage),
+                    )}
+                  </span>
+                ) : null}
                 {detail.dispatch_ready ? (
                   <span className="production-chip is-ready">
                     {t("production.dispatchReadyChip")}
                   </span>
                 ) : null}
-                {canWrite && detail.status === "COMPLETED" ? (
+                {canWrite && detail.dispatch_ready ? (
                   <button
                     type="button"
                     className="production-dispatch"
@@ -961,13 +983,23 @@ export function ProductionPage(): JSX.Element {
                     detail.status !== "DISPATCHED" &&
                     detail.status !== "INSTALLED" ? (
                       <div className="production-optimize-controls">
-                        <input
-                          type="text"
-                          value={optColor}
-                          onChange={(event) => setOptColor(event.target.value)}
-                          placeholder={t("production.optimizeColorPlaceholder")}
-                          aria-label={t("production.optimizeColor")}
-                        />
+                        {(() => {
+                          const sealedColor =
+                            typeof detail.payload?.color === "string"
+                              ? detail.payload.color.trim()
+                              : "";
+                          return (
+                            <input
+                              type="text"
+                              value={optColor}
+                              onChange={(event) => setOptColor(event.target.value)}
+                              placeholder={t("production.optimizeColorPlaceholder")}
+                              aria-label={t("production.optimizeColor")}
+                              readOnly={Boolean(sealedColor)}
+                              title={sealedColor ? t("production.optimizeColorSealed") : undefined}
+                            />
+                          );
+                        })()}
                         <select
                           value={optStrategy}
                           onChange={(event) => setOptStrategy(event.target.value)}
@@ -1468,23 +1500,14 @@ export function ProductionPage(): JSX.Element {
                         </button>
                       ) : null}
                       {canStep && delivery?.status === "ON_ROUTE" && !delivery.confirmation ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => void transitionDelivery(detail.id, "DELIVERED")}
-                          >
-                            {t("production.deliveryDelivered")}
-                          </button>
-                          <button
-                            type="button"
-                            className="production-chip-danger"
-                            disabled={busy}
-                            onClick={() => void transitionDelivery(detail.id, "FAILED")}
-                          >
-                            {t("production.deliveryFailed")}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          className="production-chip-danger"
+                          disabled={busy}
+                          onClick={() => void transitionDelivery(detail.id, "FAILED")}
+                        >
+                          {t("production.deliveryFailed")}
+                        </button>
                       ) : null}
                       {canStep &&
                       delivery &&

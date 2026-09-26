@@ -1159,6 +1159,9 @@ export const messages = {
   "production.prepRelease": "Liberar",
   "production.prepPositions": "posiciones",
   "production.shortageChip": "Falta material ({count})",
+  "production.versionShortageChip": "Versión: {count} faltantes",
+  "production.versionShortageTitle":
+    "El faltante corresponde a la versión completa, no solo a esta orden",
   "production.dispatchReadyChip": "Guía pendiente",
   "production.units": "unidades",
   "production.materialCuts": "Cortes de perfil",
@@ -1203,6 +1206,7 @@ export const messages = {
   "production.optimizeTitle": "Plan de corte",
   "production.optimizeEmpty": "Aún no hay plan de corte. Optimiza para calcular barras y planchas.",
   "production.optimizeColor": "Color de perfil",
+  "production.optimizeColorSealed": "Color sellado en la orden — no editable",
   "production.optimizeColorPlaceholder": "WHITE / FOILED",
   "production.optimizeButton": "Optimizar corte",
   "production.optimizeBars": "Barras",

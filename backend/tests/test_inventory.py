@@ -192,7 +192,9 @@ def test_record_movement_returns_full_projection() -> None:
     }
     with patch("inventory.service.rows", return_value=[]), patch(
         "inventory.service.one", return_value=row
-    ), patch("inventory.service.transaction.atomic", return_value=_atomic()):
+    ), patch(
+        "inventory.service.transaction.atomic", return_value=_atomic()
+    ), patch("inventory.service.documentary_backend", return_value=_atomic()):
         output = service.record_movement(
             org_id=uuid4(),
             actor_id=uuid4(),

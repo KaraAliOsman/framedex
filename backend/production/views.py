@@ -531,6 +531,7 @@ class ProductionOrderOptimizeView(APIView):
                     actor_id=token.user_id,
                     color=data["color"],
                     cutting_profile_code=data.get("cutting_profile_code"),
+                    strategy=data["strategy"],
                 )
         return Response(output)
 

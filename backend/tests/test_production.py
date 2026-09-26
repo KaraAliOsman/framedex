@@ -1316,7 +1316,7 @@ def test_optimize_rejects_replan_after_consumed_step() -> None:
 
     def fake_rows(query, params=()):
         if "production_steps" in query:
-            return [{"code": "CUT"}]
+            return [{"code": "CUT", "status": "DONE"}]
         raise AssertionError(query)
 
     with patch("production.service.one", side_effect=fake_one), patch(
@@ -1330,6 +1330,68 @@ def test_optimize_rejects_replan_after_consumed_step() -> None:
                 color="BLANCO",
             )
     assert error.value.code == "work_order_replan_after_consumption"
+
+
+def test_optimize_rejects_replan_while_consuming_step_in_progress() -> None:
+    # An IN_PROGRESS consuming step is physically cutting plan A — replanning
+    # mid-cut would silently restock its claims under a different plan.
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "IN_PRODUCTION",
+                "payload_json": {},
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "production_steps" in query:
+            return [{"code": "GLAZE", "status": "IN_PROGRESS"}]
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(),
+                color="BLANCO",
+            )
+    assert error.value.code == "work_order_replan_step_in_progress"
+
+
+def test_optimize_rejects_color_contradicting_sealed_payload() -> None:
+    # The sealed color is authoritative — optimizing a FOILED order against
+    # WHITE stock variants would cut the wrong finish.
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "IN_PRODUCTION",
+                "payload_json": {"color": "FOILED"},
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "production_steps" in query:
+            return []
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(),
+                color="WHITE",
+            )
+    assert error.value.code == "optimize_color_mismatch"
 
 
 def test_complete_step_rejects_material_shortage() -> None:
@@ -1573,7 +1635,14 @@ def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
         "production.service.optimize_cut", return_value=cut_result
     ), patch(
         "production.service._sheet_rules",
-        return_value={"by_sku": {}, "by_thickness": {"4.00": [rule]}},
+        return_value={
+            "by_sku": {},
+            "by_thickness": {},
+            # The piece's article_sku is the substrate key — a sheet that
+            # declares glass_sku V4 hosts it; same-thickness sheets of other
+            # substrates never do.
+            "by_glass": {"V4": [rule]},
+        },
     ), patch("production.service.nest_rects", side_effect=fake_nest), patch(
         "production.service.remnants_service"
     ) as rem, patch(
@@ -1598,10 +1667,32 @@ def test_optimize_sheet_piece_ids_unique_per_unit() -> None:
 
 
 def test_optimize_requires_color() -> None:
-    with pytest.raises(DocumentaryError) as error:
-        service.optimize_work_order(
-            org_id=uuid4(), order_id=uuid4(), actor_id=uuid4(), color="  ",
-        )
+    # No sealed color on the payload and none supplied — nothing authoritative
+    # to optimize against.
+    order_id = uuid4()
+
+    def fake_one(query, params=(), code=None):
+        if "FOR UPDATE" in query:
+            return {
+                "id": order_id, "order_code": "OT", "status": "RELEASED",
+                "payload_json": {},
+            }
+        raise AssertionError(query)
+
+    def fake_rows(query, params=()):
+        if "production_steps" in query:
+            return []
+        raise AssertionError(query)
+
+    with patch("production.service.one", side_effect=fake_one), patch(
+        "production.service.rows", side_effect=fake_rows
+    ), patch(
+        "production.service.transaction.atomic", return_value=_atomic()
+    ), patch("production.service.documentary_backend", return_value=_atomic()):
+        with pytest.raises(DocumentaryError) as error:
+            service.optimize_work_order(
+                org_id=uuid4(), order_id=order_id, actor_id=uuid4(), color="  ",
+            )
     assert error.value.code == "optimize_color_required"
 
 
@@ -1625,12 +1716,19 @@ def test_optimize_post_forwards_scope(monkeypatch) -> None:
 
 
 def test_optimize_post_rejects_blank_color(monkeypatch) -> None:
+    # Blank color passes the serializer (sealed payload color can fill it) and
+    # the service decides — an unsealed order with nothing supplied 422s.
     client, _, _ = _client_with_scope(monkeypatch, "WORKSHOP_MANAGER")
+
+    def fake_optimize(**kwargs):
+        raise DocumentaryError("optimize_color_required")
+
+    monkeypatch.setattr(service, "optimize_work_order", fake_optimize)
     response = client.post(
         f"/api/v1/production/orders/{uuid4()}/optimize/",
         {"color": " "}, format="json",
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 
@@ -2244,7 +2342,7 @@ def test_dispatch_requires_completed_and_is_idempotent(monkeypatch) -> None:
             "id": str(order_id),
             "order_code": "OT-1",
             "status": captured_status["row"]["status"],
-            "payload_json": {},
+            "payload_json": {"packing": {"units": [{"code": "U-1"}]}},
             "project_id": str(project_id),
         }
 
@@ -2525,7 +2623,9 @@ def test_installation_requires_dispatched_and_is_idempotent(monkeypatch) -> None
     def fake_rows(sql_text: str, params: list) -> list:
         lowered = " ".join(sql_text.lower().split())
         if "from public.deliveries" in lowered:
-            return []
+            return [{"status": "DELIVERED"}]
+        if "from public.delivery_confirmations" in lowered:
+            return [{"id": "ce-1"}]
         if "update public.orders set status" in lowered:
             captured["status"] = "INSTALLED"
         if "insert into public.production_step_events" in lowered:
@@ -2697,7 +2797,7 @@ def test_delivery_transition_rejected_after_installation(monkeypatch) -> None:
     ):
         with pytest.raises(DocumentaryError, match="order_already_installed"):
             service.transition_delivery(
-                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+                org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="FAILED"
             )
 
 
@@ -2761,6 +2861,8 @@ def test_delivery_transition_requires_dispatched_order(monkeypatch) -> None:
             service.transition_delivery(
                 org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="ON_ROUTE"
             )
+        # DELIVERED is not a manual transition — only confirm_delivery (the
+        # sealed-POD path) may stamp it.
         with pytest.raises(DocumentaryError, match="delivery_transition_invalid"):
             service.transition_delivery(
                 org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
@@ -2771,7 +2873,7 @@ def test_delivery_transition_requires_dispatched_order(monkeypatch) -> None:
             )
 
 
-def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
+def test_delivery_transition_fails_and_replays(monkeypatch) -> None:
     org_id, order_id = uuid4(), uuid4()
     order = {"id": str(order_id), "order_code": "OT-1", "status": "DISPATCHED"}
     delivery = {"id": uuid4(), "status": "ON_ROUTE"}
@@ -2797,14 +2899,14 @@ def test_delivery_transition_delivers_and_replays(monkeypatch) -> None:
         "production.service.documentary_backend", side_effect=_atomic
     ):
         out = service.transition_delivery(
-            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="FAILED"
         )
         replay = service.transition_delivery(
-            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="DELIVERED"
+            org_id=org_id, order_id=order_id, actor_id=uuid4(), to_status="FAILED"
         )
-    assert out["delivery"]["status"] == "DELIVERED"
-    assert replay["delivery"]["status"] == "DELIVERED"
-    assert len(events) == 1 and events[0][1][2] == "WO_DELIVERY_DELIVERED"
+    assert out["delivery"]["status"] == "FAILED"
+    assert replay["delivery"]["status"] == "FAILED"
+    assert len(events) == 1 and events[0][1][2] == "WO_DELIVERY_FAILED"
 
 
 def test_prep_lists_approved_versions_without_orders(monkeypatch) -> None:
@@ -2875,4 +2977,7 @@ def test_public_order_surfaces_workflow_flags() -> None:
 
     order["payload_json"] = json.dumps({"prep": {"shortages": 2}})
     output = service._public_order(order)
-    assert output["shortage"] == 2
+    # The prep count is version scope, never the order's own — it surfaces
+    # under version_shortage while shortage stays the order's reservations.
+    assert output["shortage"] == 0
+    assert output["version_shortage"] == 2

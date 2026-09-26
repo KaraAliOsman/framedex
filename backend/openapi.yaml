@@ -18778,6 +18778,8 @@ components:
           type: boolean
         shortage:
           type: integer
+        version_shortage:
+          type: integer
         created_at:
           type: string
           format: date-time
@@ -18801,6 +18803,7 @@ components:
       - status
       - steps_done
       - steps_total
+      - version_shortage
     ProductionOrderDetail:
       type: object
       properties:
@@ -18830,6 +18833,8 @@ components:
         dispatch_ready:
           type: boolean
         shortage:
+          type: integer
+        version_shortage:
           type: integer
         created_at:
           type: string
@@ -18871,6 +18876,7 @@ components:
       - steps
       - steps_done
       - steps_total
+      - version_shortage
     ProductionOrderList:
       type: object
       properties:
