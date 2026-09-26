@@ -1549,6 +1549,9 @@ function ProjectWorkspace({
                   <h3>
                     {t("projects.selectedPosition")} · {selected.position_index}
                   </h3>
+                  <div className="position-detail__thumb">
+                    <PositionThumb design={selected.design} variant="studio" />
+                  </div>
                   <dl className="project-metadata">
                     <div>
                       <dt>{t("projects.location")}</dt>
@@ -1629,7 +1632,11 @@ function ProjectWorkspace({
                       {item.name ? <span className="projects-row__code">{item.code}</span> : null}
                     </td>
                     <td>{item.client_name}</td>
-                    <td>{t(statuses[item.status])}</td>
+                    <td>
+                      <span className="status-chip" data-status={item.status.toLowerCase()}>
+                        {t(statuses[item.status])}
+                      </span>
+                    </td>
                     <td>{item.position_count}</td>
                     <td>
                       <time dateTime={item.updated_at}>{formatDateTime(item.updated_at)}</time>

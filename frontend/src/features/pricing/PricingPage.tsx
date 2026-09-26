@@ -1061,6 +1061,7 @@ function CommercialOperations({
         />
       )}
       <form
+        className="commercial-form"
         onChange={(event) => {
           const target = event.target as HTMLInputElement;
           if (target.name === "reason" || target.name === "confirmed") return;

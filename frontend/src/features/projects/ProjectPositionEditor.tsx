@@ -568,80 +568,84 @@ function PositionWorkspace({
       </header>
       {message && <p role="status">{message}</p>}
       <fieldset className="position-head" disabled={busy}>
-        <label className="position-head__field">
-          <span>{t("projects.location")}</span>
-          <input
-            aria-label={t("projects.location")}
-            placeholder={t("projects.locationPlaceholder")}
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-        </label>
-        <label className="position-head__field">
-          <span>{t("pricing.quantity")}</span>
-          <input
-            inputMode="numeric"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-          />
-        </label>
-        <label className="position-head__field position-head__field--wide">
-          <span>{t("projects.system")}</span>
-          <select
-            className="assembly-select"
-            aria-label={t("projects.system")}
-            value={systemId}
-            onChange={(e) => {
-              const next = e.target.value || null;
-              if (inputs.systemId !== next) {
-                useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
-                setMessage("");
+        {/* <fieldset> can't be a flex container — the row wraps the fields
+            so the strip stays horizontal. */}
+        <div className="position-head__row">
+          <label className="position-head__field">
+            <span>{t("projects.location")}</span>
+            <input
+              aria-label={t("projects.location")}
+              placeholder={t("projects.locationPlaceholder")}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </label>
+          <label className="position-head__field">
+            <span>{t("pricing.quantity")}</span>
+            <input
+              inputMode="numeric"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+            />
+          </label>
+          <label className="position-head__field position-head__field--wide">
+            <span>{t("projects.system")}</span>
+            <select
+              className="assembly-select"
+              aria-label={t("projects.system")}
+              value={systemId}
+              onChange={(e) => {
+                const next = e.target.value || null;
+                if (inputs.systemId !== next) {
+                  useCanvasStore.getState().commitInputs({ ...inputs, systemId: next });
+                  setMessage("");
+                }
+              }}
+            >
+              <option value="">{t("projects.chooseSystem")}</option>
+              {systems.data
+                ?.filter((system) => system.quote_ready)
+                .map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.name}
+                    {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {(systems.isError || options.isError) && (
+            <p className="position-head__alert" role="alert">
+              {t("projects.catalogError")}
+            </p>
+          )}
+          {(systems.isPending || (systemId && options.isPending)) && (
+            <p className="position-head__alert" role="status">
+              {t("projects.loading")}
+            </p>
+          )}
+          <label className="position-head__color">
+            <span>{t("projects.color")}</span>
+            <select
+              className="assembly-select"
+              aria-label={t("projects.color")}
+              disabled={busy || declaredColors.length === 0}
+              value={inputs.color}
+              onChange={(event) =>
+                useCanvasStore.getState().commitInputs({
+                  ...inputs,
+                  color: event.target.value as CanvasDesignInputs["color"],
+                })
               }
-            }}
-          >
-            <option value="">{t("projects.chooseSystem")}</option>
-            {systems.data
-              ?.filter((system) => system.quote_ready)
-              .map((system) => (
-                <option key={system.id} value={system.id}>
-                  {system.name}
-                  {system.is_demo ? ` · ${t("projects.synthetic")}` : ""}
+            >
+              {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
+              {colorChoices.map((color) => (
+                <option key={color} value={color}>
+                  {tDynamic("projects.color", color)}
                 </option>
               ))}
-          </select>
-        </label>
-        {(systems.isError || options.isError) && (
-          <p className="position-head__alert" role="alert">
-            {t("projects.catalogError")}
-          </p>
-        )}
-        {(systems.isPending || (systemId && options.isPending)) && (
-          <p className="position-head__alert" role="status">
-            {t("projects.loading")}
-          </p>
-        )}
-        <label className="position-head__color">
-          <span>{t("projects.color")}</span>
-          <select
-            className="assembly-select"
-            aria-label={t("projects.color")}
-            disabled={busy || declaredColors.length === 0}
-            value={inputs.color}
-            onChange={(event) =>
-              useCanvasStore.getState().commitInputs({
-                ...inputs,
-                color: event.target.value as CanvasDesignInputs["color"],
-              })
-            }
-          >
-            {colorChoices.length === 0 && <option value={inputs.color}>{inputs.color}</option>}
-            {colorChoices.map((color) => (
-              <option key={color} value={color}>
-                {tDynamic("projects.color", color)}
-              </option>
-            ))}
-          </select>
-        </label>
+            </select>
+          </label>
+        </div>
       </fieldset>
       <div className="position-body">
         <div className="position-workspace">

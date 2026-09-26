@@ -24,7 +24,7 @@ export const IDENTITY: ViewTransform = { scale: 1, tx: 0, ty: 0 };
 export const SCALE_100 = 0.5;
 export const SCALE_MIN = 0.03;
 export const SCALE_MAX = 6;
-export const FIT_PADDING = 48;
+export const FIT_PADDING = 24;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
