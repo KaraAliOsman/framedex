@@ -201,6 +201,76 @@ def test_portal_quote_reads_sealed_snapshot_not_live_totals(monkeypatch) -> None
     assert out["valid_until"] == "2999-01-01"
 
 
+def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) -> None:
+    """§09: the proposal surfaces the sealed positions, the issuer identity
+    and the project's collected/balance payment state."""
+    _roles(monkeypatch)
+    approval = _approval()
+    sealed = {
+        "organization": {"name": "Vidriería Sur", "tax_id": "76.123.456-7"},
+        "project": {
+            "code": "P-1",
+            "name": "Casa",
+            "client_name": "Ana",
+            "payment_terms": "50% anticipo",
+            "currency": "CLP",
+            "total_price_net": "1000.00",
+            "total_price_tax": "190.00",
+            "total_price_gross": "1190.00",
+            "quotation_valid_until": "2999-01-01",
+        },
+        "positions": [
+            {
+                "id": "pos-1",
+                "position_index": 1,
+                "quantity": 2,
+                "typology": "2F_TT",
+                "location_tag": "LIVING",
+                "width_mm": "1200.00",
+                "height_mm": "1500.00",
+                "price_net": "500.00",
+                "parametric_tree": {"type": "ROOT"},
+            },
+            "ignored-non-dict",
+        ],
+    }
+
+    def fake_rows(sql_text, params=()):
+        lowered = " ".join(sql_text.lower().split())
+        if "token_hash" in lowered:
+            return [approval]
+        if "project_payments" in lowered:
+            return [
+                {"amount": "400.00", "voided_at": None},
+                {"amount": "50.00", "voided_at": "x"},
+            ]
+        return []
+
+    def fake_one(sql_text, params, code="not_found"):
+        lowered = " ".join(sql_text.lower().split())
+        if "project_versions" in lowered:
+            return _version(snapshot=sealed)
+        if "public.projects" in lowered:
+            return _live()
+        raise AssertionError(lowered)
+
+    monkeypatch.setattr("portal.service.rows", fake_rows)
+    monkeypatch.setattr("portal.service.one", fake_one)
+    with patch("portal.service.SupabaseDocumentStorage"):
+        out = service.portal_quote("tok")
+
+    assert out["organization"] == {"name": "Vidriería Sur", "tax_id": "76.123.456-7"}
+    assert out["payment_terms"] == "50% anticipo"
+    assert out["positions"][0]["typology"] == "2F_TT"
+    assert out["positions"][0]["parametric_tree"] == {"type": "ROOT"}
+    assert len(out["positions"]) == 1
+    assert out["payment"] == {
+        "status": "PARTIAL",
+        "collected": "400.00",
+        "balance": "790.00",
+    }
+
+
 def test_decide_approves_project_and_replays(monkeypatch) -> None:
     _roles(monkeypatch)
     approval = _approval()

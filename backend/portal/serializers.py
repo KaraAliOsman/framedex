@@ -9,17 +9,47 @@ class ShareQuoteResponseSerializer(serializers.Serializer):
     path = serializers.CharField()
 
 
+class PortalOrganizationSerializer(serializers.Serializer):
+    name = serializers.CharField(allow_null=True, allow_blank=True)
+    tax_id = serializers.CharField(allow_null=True, allow_blank=True)
+
+
+class PortalPositionSerializer(serializers.Serializer):
+    id = serializers.CharField(allow_blank=True)
+    position_index = serializers.IntegerField(allow_null=True)
+    quantity = serializers.IntegerField(allow_null=True)
+    typology = serializers.CharField(allow_null=True, allow_blank=True)
+    location_tag = serializers.CharField(allow_null=True, allow_blank=True)
+    width_mm = serializers.CharField(allow_blank=True)
+    height_mm = serializers.CharField(allow_blank=True)
+    color_interior = serializers.CharField(allow_null=True, allow_blank=True)
+    color_exterior = serializers.CharField(allow_null=True, allow_blank=True)
+    price_net = serializers.CharField()
+    parametric_tree = serializers.JSONField(allow_null=True)
+
+
+class PortalPaymentSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    collected = serializers.CharField()
+    balance = serializers.CharField()
+
+
 class PortalQuoteSerializer(serializers.Serializer):
     schema = serializers.CharField()
+    organization = PortalOrganizationSerializer()
     project_code = serializers.CharField()
     project_name = serializers.CharField()
     client_name = serializers.CharField()
     project_status = serializers.CharField()
     revision_code = serializers.CharField()
     emitted_at = serializers.DateTimeField()
+    currency = serializers.CharField()
+    payment_terms = serializers.CharField(allow_null=True, allow_blank=True)
     total_price_net = serializers.CharField()
     total_price_tax = serializers.CharField()
     total_price_gross = serializers.CharField()
+    positions = PortalPositionSerializer(many=True)
+    payment = PortalPaymentSerializer(allow_null=True)
     valid_until = serializers.CharField(allow_null=True)
     validity_expired = serializers.BooleanField()
     superseded = serializers.BooleanField()

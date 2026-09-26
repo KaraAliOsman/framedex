@@ -5,18 +5,27 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { PortalOrganization } from "./portalOrganization";
+import type { PortalPayment } from "./portalPayment";
+import type { PortalPosition } from "./portalPosition";
 
 export interface PortalQuote {
   schema: string;
+  organization: PortalOrganization;
   project_code: string;
   project_name: string;
   client_name: string;
   project_status: string;
   revision_code: string;
   emitted_at: string;
+  currency: string;
+  /** @nullable */
+  payment_terms: string | null;
   total_price_net: string;
   total_price_tax: string;
   total_price_gross: string;
+  positions: PortalPosition[];
+  payment: PortalPayment | null;
   /** @nullable */
   valid_until: string | null;
   validity_expired: boolean;

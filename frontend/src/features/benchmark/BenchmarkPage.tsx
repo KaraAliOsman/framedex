@@ -76,6 +76,7 @@ function benchMembers(profile: "pvc" | "alu", material: string): MemberGeometry 
     mullionH: spec(material, mullion),
     threshold: spec(material, threshold),
     beadFor: () => FALLBACK_MEMBERS.bead,
+    beadSpecFor: () => null,
     couplerFor: () => spec(material, coupler),
     rebateMm: FALLBACK_MEMBERS.rebate,
     sashOverlapMm: FALLBACK_MEMBERS.sashOverlap,

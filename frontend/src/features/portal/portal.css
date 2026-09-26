@@ -124,3 +124,260 @@
   font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
   font-size: 0.75rem;
 }
+
+/* §09 proposal layout — issuer-branded document, position cards with the
+   §05 studio render, commercial summary, payment state, then the decision. */
+.portal-proposal {
+  width: min(62rem, 100%);
+  display: grid;
+  gap: var(--space-5);
+}
+
+.portal-proposal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--theme-accent);
+}
+
+.portal-proposal__org {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.portal-proposal__taxid {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--theme-text-muted);
+}
+
+.portal-proposal__refs {
+  text-align: right;
+}
+
+.portal-proposal__refs h1 {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.portal-proposal__ref {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-s);
+  color: var(--theme-text-secondary);
+}
+
+.portal-proposal__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.portal-totals {
+  margin: 0;
+  display: flex;
+  gap: var(--space-5);
+  text-align: right;
+}
+
+.portal-totals dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-text-muted);
+}
+
+.portal-totals dd {
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.portal-totals__gross dd {
+  font-size: var(--text-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.portal-proposal__positions h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-s);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-text-muted);
+}
+
+.portal-positions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-3);
+}
+
+.portal-position {
+  display: grid;
+  grid-template-columns: minmax(0, 7.5rem) 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-lg);
+  align-items: start;
+}
+
+.portal-position__thumb {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--theme-bg-canvas);
+}
+
+.portal-position__thumb svg,
+.portal-position__thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.portal-position__id {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--text-body);
+}
+
+.portal-position__typology {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--theme-text-muted);
+  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+}
+
+.portal-position__facts {
+  margin: var(--space-2) 0;
+  display: flex;
+  gap: var(--space-4);
+}
+
+.portal-position__facts dt {
+  font-size: var(--text-xs);
+  color: var(--theme-text-muted);
+}
+
+.portal-position__facts dd {
+  margin: 0;
+  font-size: var(--text-s);
+}
+
+.portal-position__price {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-s);
+}
+
+.portal-position__price span {
+  color: var(--theme-text-muted);
+}
+
+.portal-proposal__commercial {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.portal-terms h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-text-muted);
+}
+
+.portal-terms p {
+  margin: 0;
+}
+
+.portal-payment {
+  margin: 0;
+  display: flex;
+  gap: var(--space-5);
+  text-align: right;
+}
+
+.portal-payment dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-text-muted);
+}
+
+.portal-payment dd {
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.portal-payment__state {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--text-s);
+}
+
+.portal-payment__state--pending {
+  background: var(--theme-surface-raised);
+  color: var(--theme-text-secondary);
+}
+
+.portal-payment__state--partial {
+  background: var(--theme-warning-soft);
+  color: var(--theme-warning);
+}
+
+.portal-payment__state--paid {
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent-ink);
+}
+
+.portal-decision textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--theme-surface-panel);
+  color: var(--theme-text-primary);
+  font: inherit;
+  resize: vertical;
+}
+
+.portal-decision textarea:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 1px;
+  border-color: var(--theme-accent);
+}
+
+.portal-proposal__brand {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--theme-border-subtle);
+  font-size: var(--text-xs);
+  color: var(--theme-text-muted);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.portal-proposal .portal-decision {
+  background: var(--theme-surface-panel);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}

@@ -18428,11 +18428,81 @@ components:
       - left
       - right
       - top
+    PortalOrganization:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        tax_id:
+          type: string
+          nullable: true
+      required:
+      - name
+      - tax_id
+    PortalPayment:
+      type: object
+      properties:
+        status:
+          type: string
+        collected:
+          type: string
+        balance:
+          type: string
+      required:
+      - balance
+      - collected
+      - status
+    PortalPosition:
+      type: object
+      properties:
+        id:
+          type: string
+        position_index:
+          type: integer
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        typology:
+          type: string
+          nullable: true
+        location_tag:
+          type: string
+          nullable: true
+        width_mm:
+          type: string
+        height_mm:
+          type: string
+        color_interior:
+          type: string
+          nullable: true
+        color_exterior:
+          type: string
+          nullable: true
+        price_net:
+          type: string
+        parametric_tree:
+          nullable: true
+      required:
+      - color_exterior
+      - color_interior
+      - height_mm
+      - id
+      - location_tag
+      - parametric_tree
+      - position_index
+      - price_net
+      - quantity
+      - typology
+      - width_mm
     PortalQuote:
       type: object
       properties:
         schema:
           type: string
+        organization:
+          $ref: '#/components/schemas/PortalOrganization'
         project_code:
           type: string
         project_name:
@@ -18446,12 +18516,25 @@ components:
         emitted_at:
           type: string
           format: date-time
+        currency:
+          type: string
+        payment_terms:
+          type: string
+          nullable: true
         total_price_net:
           type: string
         total_price_tax:
           type: string
         total_price_gross:
           type: string
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalPosition'
+        payment:
+          allOf:
+          - $ref: '#/components/schemas/PortalPayment'
+          nullable: true
         valid_until:
           type: string
           nullable: true
@@ -18480,11 +18563,16 @@ components:
       required:
       - approval_status
       - client_name
+      - currency
       - decided_at
       - decided_by
       - decided_note
       - emitted_at
       - expires_at
+      - organization
+      - payment
+      - payment_terms
+      - positions
       - project_code
       - project_name
       - project_status

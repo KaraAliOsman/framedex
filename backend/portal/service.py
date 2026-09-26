@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 import hashlib
 import json
 import secrets
@@ -192,8 +193,71 @@ def _live_project(approval: dict[str, object], *, for_update: bool = False) -> d
     )
 
 
+def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
+    """The proposal's position cards — immutable snapshot rows, not live data."""
+    snapshot = decoded(version["snapshot_json"])
+    values = snapshot.get("positions") if isinstance(snapshot, dict) else None
+    if not isinstance(values, list):
+        return []
+    positions = []
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        positions.append({
+            "id": str(value.get("id") or ""),
+            "position_index": value.get("position_index"),
+            "quantity": value.get("quantity"),
+            "typology": value.get("typology"),
+            "location_tag": value.get("location_tag"),
+            "width_mm": str(value.get("width_mm") or ""),
+            "height_mm": str(value.get("height_mm") or ""),
+            "color_interior": value.get("color_interior"),
+            "color_exterior": value.get("color_exterior"),
+            "price_net": str(value.get("price_net") or "0"),
+            "parametric_tree": value.get("parametric_tree"),
+        })
+    return positions
+
+
+def _sealed_organization(version: dict[str, object]) -> dict[str, object]:
+    snapshot = decoded(version["snapshot_json"])
+    org = snapshot.get("organization") if isinstance(snapshot, dict) else None
+    if not isinstance(org, dict):
+        return {}
+    return {"name": org.get("name"), "tax_id": org.get("tax_id")}
+
+
+def _payment_state(
+    *, org_id: object, project_id: object, gross: Decimal
+) -> dict[str, object] | None:
+    """The customer's own payment state on the proposal link."""
+    payments = rows(
+        "SELECT amount,voided_at FROM public.project_payments "
+        "WHERE org_id=%s AND project_id=%s",
+        [str(org_id), str(project_id)],
+    )
+    if not payments:
+        return None
+    collected = sum(
+        (Decimal(str(p["amount"])) for p in payments if p["voided_at"] is None),
+        Decimal("0"),
+    )
+    balance = gross - collected
+    if collected <= 0:
+        status = "PENDING"
+    elif balance > 0:
+        status = "PARTIAL"
+    else:
+        status = "PAID"
+    return {
+        "status": status,
+        "collected": str(collected),
+        "balance": str(balance),
+    }
+
+
 def portal_quote(token: str) -> dict[str, object]:
-    """Public read: the shared quote summary plus the sealed PDF link."""
+    """Public read: the sealed proposal — positions, issuer, totals, payment."""
     with transaction.atomic(), portal_backend():
         approval = _approval_for_token(token)
         org_id = approval["org_id"]
@@ -213,17 +277,25 @@ def portal_quote(token: str) -> dict[str, object]:
             if artifacts
             else None
         )
+        gross = Decimal(str(sealed.get("total_price_gross") or "0"))
         return {
             "schema": "portal_quote_v1",
+            "organization": _sealed_organization(version),
             "project_code": sealed.get("code") or "",
             "project_name": sealed.get("name") or "",
             "client_name": sealed.get("client_name") or "",
             "project_status": project["status"],
             "revision_code": version["revision_code"],
             "emitted_at": version["emitted_at"].isoformat(),
+            "currency": sealed.get("currency") or "CLP",
+            "payment_terms": sealed.get("payment_terms"),
             "total_price_net": str(sealed.get("total_price_net") or "0"),
             "total_price_tax": str(sealed.get("total_price_tax") or "0"),
-            "total_price_gross": str(sealed.get("total_price_gross") or "0"),
+            "total_price_gross": str(gross),
+            "positions": _sealed_positions(version),
+            "payment": _payment_state(
+                org_id=org_id, project_id=approval["project_id"], gross=gross
+            ),
             "valid_until": sealed.get("quotation_valid_until"),
             "validity_expired": bool(
                 sealed.get("quotation_valid_until")
