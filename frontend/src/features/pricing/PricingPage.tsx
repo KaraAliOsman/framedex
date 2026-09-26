@@ -68,9 +68,24 @@ function pctDisplay(value: unknown): string {
 }
 /** Stored values are ISO; operators read DD-MM-AAAA everywhere else in the
  * product. Render the business format, keep the raw value for submission. */
-function renderFieldValue(field: Field, value: unknown): string {
+function renderFieldValue(
+  field: Field,
+  value: unknown,
+  refs?: { costLists?: Row[]; configurations?: Row[] },
+): string {
   if (value === undefined || value === null || value === "") return "—";
   const text = String(value);
+  // FK references render the authority's human label, never the raw UUID.
+  if (field.name === "cost_list_id") {
+    const list = refs?.costLists?.find((row) => String(row.id) === text);
+    return list ? `${list.supplier_name} · ${list.currency}` : "—";
+  }
+  if (field.name === "configuration_id") {
+    const config = refs?.configurations?.find((row) => String(row.id) === text);
+    return config
+      ? `${contextLabel(config.context_code)} · ${optionLabel(String(config.typology))}`
+      : "—";
+  }
   if (field.type === "date") {
     const match = ISO_DAY.exec(text);
     if (match) return `${match[3]}-${match[2]}-${match[1]}`;
@@ -333,6 +348,15 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
           if (current) setMessage(t("pricing.loadError"));
         });
     }
+    if (resource === "cost-items") {
+      void request<{ items: Row[] }>("admin/cost-lists/")
+        .then((response) => {
+          if (current) setCostLists(response.items);
+        })
+        .catch(() => {
+          if (current) setMessage(t("pricing.loadError"));
+        });
+    }
     return () => {
       current = false;
     };
@@ -432,7 +456,9 @@ function PricingWorkspace({ orgId }: { orgId: string }): JSX.Element {
                 ).map((field) => (
                   <div key={field.name}>
                     <dt>{t(field.label)}</dt>
-                    <dd>{renderFieldValue(field, item[field.name])}</dd>
+                    <dd>
+                      {renderFieldValue(field, item[field.name], { costLists, configurations })}
+                    </dd>
                   </div>
                 ))}
               </dl>

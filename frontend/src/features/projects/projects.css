@@ -89,7 +89,7 @@
 .projects-page dd {
   margin: 0 0 0.75rem;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .project-metadata {
   display: grid;

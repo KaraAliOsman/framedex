@@ -1766,3 +1766,16 @@ p[role="alert"]:only-child::before {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Checkbox labels sit inline with their box — a bare label {display:grid}
+   stacks the control over its text, which reads as a detached checkbox. */
+label:has(> input[type="checkbox"]),
+label.settings-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+label:has(> input[type="checkbox"]) input[type="checkbox"],
+label.settings-inline input[type="checkbox"] {
+  flex: none;
+}

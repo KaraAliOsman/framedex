@@ -17,6 +17,19 @@ type Label = Parameters<typeof t>[0];
 const ct = (key: string) => t(`catalog.${key}` as Label);
 const wst = (key: string) => t(`catalog.ws.${key}` as Label);
 
+function provenanceLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  if (value === "LEGACY_UNVERIFIED") return t("catalog.provenanceLegacy");
+  const key = `catalog.provenance.${value}` as Label;
+  return [
+    "catalog.provenance.SEED_SYNTHETIC",
+    "catalog.provenance.MANUAL",
+    "catalog.provenance.IMPORT",
+  ].includes(key)
+    ? t(key)
+    : value;
+}
+
 function productKindLabel(kind: string): string {
   const key = `catalog.productKind.${kind}` as Label;
   return ["catalog.productKind.STANDARD", "catalog.productKind.FRAMELESS"].includes(key)
@@ -383,7 +396,7 @@ export function SystemWorkspaceView({
             </div>
             <div>
               <dt>{wst("provenance")}</dt>
-              <dd>{system.data_provenance}</dd>
+              <dd>{provenanceLabel(system.data_provenance)}</dd>
             </div>
           </dl>
           {canEdit && (

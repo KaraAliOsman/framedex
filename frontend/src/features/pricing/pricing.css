@@ -96,7 +96,7 @@
 }
 .pricing-page dd {
   margin: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .pricing-page table {
   width: 100%;

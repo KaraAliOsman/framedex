@@ -1302,7 +1302,7 @@ export const messages = {
   "production.prepRelease": "Liberar",
   "production.prepPositions": "posiciones",
   "production.shortageChip": "Falta material ({count})",
-  "production.versionShortageChip": "Versión: {count} faltantes",
+  "production.versionShortageChip": "Otras posiciones: {count} faltantes",
   "production.versionShortageTitle":
     "El faltante corresponde a la versión completa, no solo a esta orden",
   "production.dispatchReadyChip": "Guía pendiente",
@@ -1613,6 +1613,9 @@ export const messages = {
   "catalog.active": "Activo",
   "catalog.inactive": "Inactivo",
   "catalog.provenanceLegacy": "Sin revisar",
+  "catalog.provenance.SEED_SYNTHETIC": "Catálogo de demostración",
+  "catalog.provenance.MANUAL": "Ingresado manualmente",
+  "catalog.provenance.IMPORT": "Importado de documento",
   "catalog.productKind.STANDARD": "Estándar",
   "catalog.productKind.FRAMELESS": "Sin marco",
   "catalog.joining.WELD": "Soldado",

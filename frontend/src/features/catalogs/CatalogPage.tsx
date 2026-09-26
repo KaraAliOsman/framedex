@@ -66,10 +66,13 @@ function systemReadinessLabel(system: Row<"systems">): string {
   for (const name of ["PRODUCTION_READY", "CNC_READY"]) {
     const level = readiness.levels?.find((entry) => entry.level === name);
     if (level && level.ok === false && level.blockers.length > 0) {
+      // First blocker names the gate; the ladder in the system workspace lists
+      // the rest — a cell joined on '·' per blocker became an unreadable run-on.
+      const extra = level.blockers.length > 1 ? ` (+${level.blockers.length - 1})` : "";
       parts.push(
-        `${ct(name === "PRODUCTION_READY" ? "readinessProduction" : "readinessCnc")}: ${level.blockers
-          .map((blocker) => ct(`readiness.${blocker.code}`))
-          .join(" · ")}`,
+        `${ct(name === "PRODUCTION_READY" ? "readinessProduction" : "readinessCnc")}: ${ct(
+          `readiness.${level.blockers.at(0)?.code}`,
+        )}${extra}`,
       );
     }
   }

@@ -30,9 +30,12 @@
 }
 .production-filters {
   display: flex;
-  flex-wrap: wrap;
+  /* Nine+ chips ragged-wrap onto two lines; one scrollable row stays clean. */
+  flex-wrap: nowrap;
   gap: var(--space-1);
   margin-bottom: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
 }
 
 .production-filter {
@@ -41,9 +44,11 @@
   background: var(--theme-surface);
   color: var(--theme-text-muted);
   cursor: pointer;
+  flex: none;
   font: inherit;
   font-size: var(--text-xs);
   padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
 }
 
 .production-filter:hover {

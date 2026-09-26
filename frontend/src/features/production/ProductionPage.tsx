@@ -896,7 +896,7 @@ export function ProductionPage(): JSX.Element {
                     >
                       {t("production.versionShortageChip").replace(
                         "{count}",
-                        String(order.version_shortage),
+                        String(order.version_shortage - order.shortage),
                       )}
                     </span>
                   ) : null}
@@ -936,7 +936,7 @@ export function ProductionPage(): JSX.Element {
                   >
                     {t("production.versionShortageChip").replace(
                       "{count}",
-                      String(detail.version_shortage),
+                      String(detail.version_shortage - detail.shortage),
                     )}
                   </span>
                 ) : null}

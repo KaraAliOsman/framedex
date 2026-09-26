@@ -288,10 +288,17 @@ def list_projects(org_id):
     ]
 
 
+def _next_project_code():
+    """Sequential human code — opaque (a shared sequence leaks no row count)
+    and race-free under the (org_id, code) unique index."""
+    value = rows("SELECT nextval('public.project_code_seq') AS seq")[0]["seq"]
+    return f"P-{int(value):06d}"
+
+
 def create_project(org_id, actor_id, data):
     identity = uuid4()
     # The code is an opaque human-readable reference, never an internal DB ID input.
-    code = f"P-{identity.hex[:12].upper()}"
+    code = _next_project_code()
     values = {key: data.get(key, "") for key in METADATA}
     client_id = data.get("client_id")
     if client_id:
