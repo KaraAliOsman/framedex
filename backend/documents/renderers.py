@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 from decimal import Decimal
 from html import escape
 from pathlib import Path
@@ -88,7 +89,7 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .workshop h1 { font-size: 14pt; } .workshop th { background: #252D31; color: #FCFDFC; }
 .dimension { font: 11pt 'IBM Plex Mono', monospace; font-weight: 500; color: #161C1F; }
 .hash { font: 6.5pt 'IBM Plex Mono', monospace; color: #465158; overflow-wrap: anywhere; }
-.break-avoid { break-inside: avoid; } .blank { display: inline-block; width: 5mm; height: 5mm; border: 1px solid #252D31; vertical-align: middle; }
+.break-avoid { break-inside: avoid; } h2, h3 { break-after: avoid; } .blank { display: inline-block; width: 5mm; height: 5mm; border: 1px solid #252D31; vertical-align: middle; }
 .confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
@@ -101,9 +102,13 @@ table tr { break-inside: avoid; }
 svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
 .figures { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 4mm; }
 .figures figure { margin: 0; width: 58mm; break-inside: avoid; }
+/* Extreme-aspect openings (500×2300) at fixed width would render taller than
+   the page and bleed through the footer — cap the drawable height. */
+.figures svg { max-height: 190mm; }
 .figures figcaption { color: #4A5559; font-size: 7pt; line-height: 1.45; margin-top: 1mm; }
 .figures .figpos { color: #161C1F; font-weight: 600; }
 .figures .figdim { font-family: 'IBM Plex Mono', monospace; font-size: 7.5pt; }
+.workshop-figure svg { max-height: 170mm; }
 """
 
 
@@ -286,7 +291,7 @@ def _pt(value: Decimal) -> str:
 
 def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                   width: Decimal, height: Decimal, out: list[str],
-                  marker: str) -> None:
+                  marker: str, glyph_only: bool = False) -> None:
     node_type = str(node.get("type"))
     children = node.get("children")
     if children is None:
@@ -296,7 +301,7 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
     if node_type == "ROOT":
         if len(children) != 1 or not isinstance(children[0], dict):
             raise DocumentaryError("invalid_frozen_parametric_tree")
-        _svg_elements(children[0], x, y, width, height, out, marker)
+        _svg_elements(children[0], x, y, width, height, out, marker, glyph_only)
         return
     if node_type in ("SPLIT_V", "SPLIT_H"):
         offset = node.get("split_offset_mm")
@@ -312,16 +317,16 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                 f'y2="{_pt(y + height)}" stroke="#465158" stroke-width="'
                 f'{_pt(height / Decimal("60"))}"/>'
             )
-            _svg_elements(first, x, y, split, height, out, marker)
-            _svg_elements(second, x + split, y, width - split, height, out, marker)
+            _svg_elements(first, x, y, split, height, out, marker, glyph_only)
+            _svg_elements(second, x + split, y, width - split, height, out, marker, glyph_only)
         else:
             out.append(
                 f'<line x1="{_pt(x)}" y1="{_pt(y + split)}" x2="{_pt(x + width)}" '
                 f'y2="{_pt(y + split)}" stroke="#465158" stroke-width="'
                 f'{_pt(width / Decimal("60"))}"/>'
             )
-            _svg_elements(first, x, y, width, split, out, marker)
-            _svg_elements(second, x, y + split, width, height - split, out, marker)
+            _svg_elements(first, x, y, width, split, out, marker, glyph_only)
+            _svg_elements(second, x, y + split, width, height - split, out, marker, glyph_only)
         return
     if node_type != "BAY":
         raise DocumentaryError("invalid_frozen_parametric_tree")
@@ -330,15 +335,16 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
     ix, iy = x + inset_x, y + inset_y
     iw, ih = width - inset_x * 2, height - inset_y * 2
     stroke = _pt(min(width, height) / Decimal("120"))
-    out.append(
-        f'<rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" height="{_pt(height)}" '
-        'fill="none" stroke="#075F5A" stroke-width="' + _pt(min(width, height) / Decimal("40"))
-        + '"/>'
-    )
-    out.append(
-        f'<rect x="{_pt(ix)}" y="{_pt(iy)}" width="{_pt(iw)}" height="{_pt(ih)}" '
-        f'fill="#E6F4F2" stroke="#075F5A" stroke-width="{stroke}"/>'
-    )
+    if not glyph_only:
+        out.append(
+            f'<rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" height="{_pt(height)}" '
+            'fill="none" stroke="#075F5A" stroke-width="' + _pt(min(width, height) / Decimal("40"))
+            + '"/>'
+        )
+        out.append(
+            f'<rect x="{_pt(ix)}" y="{_pt(iy)}" width="{_pt(iw)}" height="{_pt(ih)}" '
+            f'fill="#E6F4F2" stroke="#075F5A" stroke-width="{stroke}"/>'
+        )
     opening = node.get("opening_type")
     mx, my = ix + iw / 2, iy + ih / 2
     if opening in ("TURN_LEFT", "TILT_TURN_LEFT"):
@@ -400,6 +406,46 @@ def _svg_elements(node: dict[str, object], x: Decimal, y: Decimal,
                 f'<line x1="{_pt(mx)}" y1="{_pt(iy)}" x2="{_pt(mx)}" '
                 f'y2="{_pt(iy + ih)}" stroke="#075F5A" stroke-width="{stroke}"/>'
             )
+
+
+def _frameless_pane(frameless: dict[str, object], x: Decimal, y: Decimal,
+                    width: Decimal, height: Decimal, out: list[str]) -> None:
+    """Glass-only module figure: the pane itself plus its DECLARED edge
+    supports — no fake frame, no invented fitting positions."""
+    stroke = _pt(min(width, height) / Decimal("140"))
+    support_stroke = _pt(min(width, height) / Decimal("30"))
+    out.append(
+        f'<rect x="{_pt(x)}" y="{_pt(y)}" width="{_pt(width)}" height="{_pt(height)}" '
+        f'fill="#E6F4F2" stroke="#075F5A" stroke-width="{stroke}"/>'
+    )
+    segments = {
+        "top": (x, y, x + width, y),
+        "bottom": (x, y + height, x + width, y + height),
+        "left": (x, y, x, y + height),
+        "right": (x + width, y, x + width, y + height),
+    }
+    for raw in _array(frameless.get("supports"), "invalid_frozen_parametric_tree"):
+        support = _object(raw, "invalid_frozen_parametric_tree")
+        edge = segments.get(str(support.get("edge")))
+        if edge is None:
+            continue
+        x1, y1, x2, y2 = edge
+        mx1 = x1 + (x2 - x1) / Decimal("4")
+        my1 = y1 + (y2 - y1) / Decimal("4")
+        mx2 = x2 - (x2 - x1) / Decimal("4")
+        my2 = y2 - (y2 - y1) / Decimal("4")
+        out.append(
+            f'<line x1="{_pt(mx1)}" y1="{_pt(my1)}" x2="{_pt(mx2)}" '
+            f'y2="{_pt(my2)}" stroke="#E56A32" stroke-width="{support_stroke}"/>'
+        )
+    fittings = _array(frameless.get("fittings"), "invalid_frozen_parametric_tree")
+    if fittings:
+        out.append(
+            f'<text x="{_pt(x + width / Decimal("6"))}" '
+            f'y="{_pt(y + height / Decimal("6"))}" '
+            f'font-size="{_pt(min(width, height) / Decimal("12"))}" '
+            f'fill="#465158">+{len(fittings)}</text>'
+        )
 
 
 def _contour_svg_path(
@@ -507,12 +553,25 @@ def _position_svg(position: dict[str, object]) -> str:
         for module, member, module_width, module_height, member_top, path_d in draws:
             x = member.x_mm - left_edge
             baseline = top_edge - (member.sill_mm + member_top)
+            frameless = module.get("frameless")
             if path_d is not None:
                 stroke = module_width / Decimal("150")
                 elements.append(
                     f'<g transform="translate({_pt(x)} {_pt(baseline)})">'
                     f'<path d="{path_d}" fill="none" stroke="#252D31" '
                     f'stroke-width="{_pt(stroke)}"/></g>'
+                )
+                # A contour module still has opening semantics — draw its
+                # glyphs inside the bounding box, just not the frame rects.
+                _svg_elements(
+                    _object(module.get("tree"), "invalid_frozen_parametric_tree"),
+                    x, baseline, module_width, module_height, elements, marker,
+                    glyph_only=True,
+                )
+            elif frameless is not None:
+                _frameless_pane(
+                    _object(frameless, "invalid_frozen_parametric_tree"),
+                    x, baseline, module_width, module_height, elements,
                 )
             else:
                 _svg_elements(
@@ -661,12 +720,18 @@ def _doc01(snapshot: dict[str, object]) -> str:
     groups: dict[tuple[object, ...], dict[str, object]] = {}
     for position in positions:
         specs = ", ".join(_position_glass_specs(position)) or "Panel declarado"
+        # The sealed tree is the design signature — mirrored pairs (TURN_LEFT
+        # vs TURN_RIGHT) and any leaf/panel difference must NOT group, or the
+        # one rendered figure would lie about handedness.
+        tree_sig = json.dumps(
+            position.get("parametric_tree"), sort_keys=True, default=str
+        )
         key = (
             _value(position.get("typology")), _value(position.get("width_mm")),
             _value(position.get("height_mm")), specs,
             _value(position.get("color_interior")),
             _value(position.get("color_exterior")),
-            _value(position.get("price_net")),
+            _value(position.get("price_net")), tree_sig,
         )
         bucket = groups.setdefault(key, {
             "indexes": [], "locations": [], "quantity": Decimal("0"),
@@ -685,7 +750,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
             bucket["price_net"] += _num(position.get("price_net"))
     opening_rows = []
     for key, bucket in groups.items():
-        typology, width_mm, height_mm, specs, ci, ce, _ = key
+        typology, width_mm, height_mm, specs, ci, ce = key[:6]
         indexes = bucket["indexes"]
         # Long grouped index lists wrap horribly — compact to first…last + n.
         index_cell = (
@@ -693,9 +758,13 @@ def _doc01(snapshot: dict[str, object]) -> str:
             if len(indexes) <= 6
             else f"{indexes[0]} … {indexes[-1]} ({len(indexes)})"
         )
+        table_locations = bucket["locations"]
         opening_rows.append([
             index_cell,
-            ", ".join(bucket["locations"]) or "—",
+            (", ".join(table_locations)
+             if len(table_locations) <= 6
+             else f"{table_locations[0]} … {table_locations[-1]} ({len(table_locations)})")
+            or "—",
             _TYPOLOGY_ES.get(typology, typology),
             f"{width_mm} × {height_mm}",
             bucket["quantity"], specs, _finish(ci, ce),
@@ -738,7 +807,12 @@ def _doc01(snapshot: dict[str, object]) -> str:
     body += '<h2>Vistas de vanos</h2><div class="figures">'
     for bucket in groups.values():
         ref = bucket["ref_position"]
-        locations = ", ".join(bucket["locations"]) or "—"
+        location_list = bucket["locations"]
+        locations = (
+            ", ".join(location_list)
+            if len(location_list) <= 6
+            else f"{location_list[0]} … {location_list[-1]} ({len(location_list)})"
+        ) or "—"
         index_list = bucket["indexes"]
         indexes = (
             ", ".join(index_list)
@@ -803,44 +877,47 @@ def _doc03(snapshot: dict[str, object]) -> str:
         infills = [_object(item, "invalid_infill_fact")
                    for item in _array(fact.get("infills"), "invalid_manufacturing_fact")]
         body += (
-            f'<section class="break-avoid"><h2>Posición {escape(_value(fact.get("position_index")))} · '
+            f'<section><h2>Posición {escape(_value(fact.get("position_index")))} · '
             f'Repetición {escape(_value(fact.get("repetition_index")))}</h2>'
             f'<p class="dimension">{escape(_value(fact.get("nominal_width_mm")))} × '
             f'{escape(_value(fact.get("nominal_height_mm")))} mm</p>'
             + _table(
-                ["Pieza", "Rol / slot", "SKU taller", "Corte mm", "Ángulos", "Referencia X/Y"],
+                ["Pieza", "Rol / slot", "SKU taller", "Corte mm", "Ángulos", "Flecha mm", "Referencia X/Y"],
                 [[
                     labels["member"].get(member.get("member_id"), member.get("member_id")),
                     f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('role'))} / "
                     f"{_value(_object(member.get('identity'), 'invalid_member_identity').get('physical_member_slot'))}",
                     member.get("workshop_sku"), member.get("cut_length_mm"),
                     f"{_value(member.get('angle_left'))}° / {_value(member.get('angle_right'))}°",
+                    member.get("sagitta_mm") if member.get("sagitta_mm") is not None else "—",
                     f"({_value(_object(member.get('start'), 'invalid_member_point').get('x_mm'))}, "
                     f"{_value(_object(member.get('start'), 'invalid_member_point').get('y_mm'))}) → "
                     f"({_value(_object(member.get('end'), 'invalid_member_point').get('x_mm'))}, "
                     f"{_value(_object(member.get('end'), 'invalid_member_point').get('y_mm'))})",
-                ] for member in members], ["hash", "", "", "dimension", "", ""]
+                ] for member in members], ["hash", "", "", "dimension", "", "dimension", ""]
             )
         )
         if reinforcements:
             body += _table(
-                ["Refuerzo", "Pieza padre", "SKU acero", "Corte mm", "Ángulos"],
+                ["Refuerzo", "Pieza padre", "SKU acero", "Corte mm", "Ángulos", "Flecha mm"],
                 [[labels["reinforcement"].get(item.get("reinforcement_id"), item.get("reinforcement_id")),
                   labels["member"].get(item.get("parent_member_id"), item.get("parent_member_id")),
                   item.get("workshop_sku"), item.get("cut_length_mm"),
-                  f"{_value(item.get('angle_left'))}° / {_value(item.get('angle_right'))}°"]
-                 for item in reinforcements], ["hash", "hash", "", "dimension", ""]
+                  f"{_value(item.get('angle_left'))}° / {_value(item.get('angle_right'))}°",
+                  item.get("sagitta_mm") if item.get("sagitta_mm") is not None else "—"]
+                 for item in reinforcements], ["hash", "hash", "", "dimension", "", "dimension"]
             )
         if infills:
             body += _table(
-                ["Relleno", "Vano / hoja", "Especificación", "Dimensiones mm", "Retención"],
+                ["Relleno", "Vano / hoja", "Especificación", "Dimensiones mm", "Forma", "Retención"],
                 [[labels["infill"].get(item.get("infill_id"), item.get("infill_id")),
                   _location(labels, item.get("bay_id"), item.get("leaf_id")),
                   item.get("composition"),
                   f"{_value(_object(item.get('rect'), 'invalid_infill_rect').get('width_mm'))} × "
                   f"{_value(_object(item.get('rect'), 'invalid_infill_rect').get('height_mm'))}",
+                  (f"Perfilado {len(item['shape'])} vértices" if item.get("shape") else "Rectangular"),
                   "Junquillos identificados en matriz"] for item in infills],
-                ["hash", "", "", "dimension", ""],
+                ["hash", "", "", "dimension", "", ""],
             )
         if handles:
             body += _table(
@@ -861,7 +938,7 @@ def _doc03(snapshot: dict[str, object]) -> str:
             if position is None:
                 raise DocumentaryError("invalid_frozen_revision_snapshot")
             body += (
-                f'<div class="break-avoid" style="text-align:center">'
+                f'<div class="break-avoid workshop-figure" style="text-align:center">'
                 f'<div style="display:inline-block;max-width:100mm">'
                 f'{_position_svg(_object(position, "invalid_frozen_position"))}</div></div>'
             )
@@ -968,6 +1045,15 @@ def _piece_labels(
     }
 
 
+def _short_id(value: object) -> str:
+    """Raw 64-hex/UUID identities dump a full hash cell — truncate for
+    display while staying recognizably unique to the shop."""
+    text = _value(value)
+    if len(text) > 20:
+        return text[:12] + "…"
+    return text
+
+
 def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: object) -> str:
     bay = labels["bay"].get(bay_id, _value(bay_id))
     if leaf_id is None:
@@ -989,7 +1075,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
         body += (
             f"<h2>{escape(_value(group.get('purchasing_sku')))} · "
             f"{escape(_value(group.get('source_kind')))}</h2>"
-            f"<p><strong>Stock físico:</strong> {escape(_value(group.get('physical_stock_identity')))} · "
+            f"<p><strong>Stock físico:</strong> {escape(_short_id(group.get('physical_stock_identity')))} · "
             f"<strong>Largo:</strong> {escape(_value(group.get('stock_length_mm')))} mm · "
             f"<strong>Barras:</strong> {escape(_value(group.get('purchased_bar_count')))}</p>"
         )
@@ -1001,15 +1087,22 @@ def _doc05(snapshot: dict[str, object]) -> str:
                 f"<h3>Barra {escape(_value(bar.get('bar_index')))} · remanente "
                 f"{escape(_value(bar.get('remainder_mm')))} mm</h3>"
                 + _table(
-                    ["Sec.", "Pieza física", "Posición", "Vano / hoja", "SKU taller", "Corte mm", "Ángulos"],
+                    ["Sec.", "Pieza física", "Posición", "Vano / hoja", "SKU taller", "Corte mm", "Ángulos", "Flecha mm"],
                     [[cut.get("sequence"),
                       labels["member"].get(cut.get("piece_id"),
-                                           labels["reinforcement"].get(cut.get("piece_id"), cut.get("piece_id"))),
-                      labels["position"].get(cut.get("source_position_id"), cut.get("source_position_id")),
+                                           labels["reinforcement"].get(
+                                               cut.get("piece_id"),
+                                               _short_id(cut.get("piece_id")),
+                                           )),
+                      labels["position"].get(
+                          cut.get("source_position_id"),
+                          _short_id(cut.get("source_position_id")),
+                      ),
                       _location(labels, cut.get("bay_id"), cut.get("leaf_id")),
                       cut.get("workshop_sku"), cut.get("length_mm"),
-                      f"{_value(cut.get('angle_left'))}° / {_value(cut.get('angle_right'))}°"]
-                     for cut in cuts], ["", "hash", "", "", "", "dimension", ""]
+                      f"{_value(cut.get('angle_left'))}° / {_value(cut.get('angle_right'))}°",
+                      cut.get("sagitta_mm") if cut.get("sagitta_mm") is not None else "—"]
+                     for cut in cuts], ["", "hash", "", "", "", "dimension", "", "dimension"]
                 )
             )
     return body + "</main>"
@@ -1051,17 +1144,20 @@ def _doc07(snapshot: dict[str, object]) -> str:
     costs = _array(input_snapshot.get("cost_lines"), "invalid_pricing_evidence")
     realized = _object(snapshot.get("realized_waste"), "invalid_frozen_revision_snapshot")
     body, _ = _revision_header(snapshot, "Informe ejecutivo de costos y margen", "DOC-07")
+    currency = _value(project.get("currency"))
     body += '<p class="confidential">CONFIDENCIAL · SOLO PROPIETARIO</p>'
     body += _table(
         ["Posición", "Costo capturado"],
-        [[_array(item, "invalid_pricing_evidence")[0], _array(item, "invalid_pricing_evidence")[1]]
+        [[_array(item, "invalid_pricing_evidence")[0],
+          _money(_array(item, "invalid_pricing_evidence")[1], currency)]
          for item in costs], ["", "dimension"],
     )
     body += _table(
         ["Costo neto", "Venta neta", "Impuesto", "Venta total"],
-        [[pricing.get("applied_total_cost_net"),
-          project.get("total_price_net"), project.get("total_price_tax"),
-          project.get("total_price_gross")]],
+        [[_money(pricing.get("applied_total_cost_net"), currency),
+          _money(project.get("total_price_net"), currency),
+          _money(project.get("total_price_tax"), currency),
+          _money(project.get("total_price_gross"), currency)]],
         ["dimension", "dimension", "", "dimension"],
     )
     status = realized.get("status")
@@ -1670,8 +1766,12 @@ def _delivery_pod_body(payload: dict[str, object], signature_b64: str) -> str:
                 ["Medio", "Tipo", "Monto", "Referencia"],
                 [
                     [
-                        payment.get("method"),
-                        payment.get("kind"),
+                        _PAYMENT_METHOD_ES.get(
+                            _value(payment.get("method")), _value(payment.get("method"))
+                        ),
+                        _PAYMENT_KIND_ES.get(
+                            _value(payment.get("kind")), _value(payment.get("kind"))
+                        ),
                         _money(payment.get("amount"), currency),
                         payment.get("reference"),
                     ]

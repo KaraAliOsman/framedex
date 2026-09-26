@@ -383,7 +383,7 @@ def test_qc_is_blank_and_cost_report_uses_frozen_not_recorded_authority() -> Non
     assert "Diferencia ≤ 1.50 mm" in qc
     assert "________________" in qc
     cost = _doc07(revision_snapshot())
-    assert "60000.00" in cost
+    assert "$ 60.000" in cost
     assert "NO REGISTRADA" in cost
     assert "valor: —" in cost
     invalid = {**revision_snapshot(), "realized_waste": {"status": "RECORDED", "value": "0"}}

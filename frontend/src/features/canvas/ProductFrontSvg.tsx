@@ -154,8 +154,13 @@ export function OpeningGlyph({
       {kind.includes("LEFT") && (
         <polyline points={`${left},${top} ${right},${cy} ${left},${bottom}`} fill="none" />
       )}
-      {(kind.startsWith("TILT") || kind === "AWNING") && (
+      {kind.startsWith("TILT") && (
         <polyline points={`${left},${bottom} ${cx},${top} ${right},${bottom}`} fill="none" />
+      )}
+      {/* Awning is top-hinged — its triangle mirrors the issued doc (base at
+          the top edge), not the tilt glyph. */}
+      {kind === "AWNING" && (
+        <polyline points={`${left},${top} ${cx},${bottom} ${right},${top}`} fill="none" />
       )}
       {kind.startsWith("SLIDING") &&
         (() => {
