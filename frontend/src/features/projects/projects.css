@@ -1,5 +1,7 @@
 .projects-page {
-  max-width: 96rem;
+  /* Match .dashboard's workspace width — 96rem left ~190px dead rails on each
+   * side of a 1920 viewport while master-detail panes could use them. */
+  max-width: 120rem;
   margin-inline: auto;
   padding: 1.5rem;
   color: var(--theme-text-primary);

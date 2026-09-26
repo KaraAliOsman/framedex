@@ -699,32 +699,34 @@ function ImportCosts({
             onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
           />
         </label>
-        {["sku", "description", "unit", "unit_cost"].map((key, index) => (
-          <label key={key}>
-            {t("pricing.column")} ·{" "}
-            {t(
-              ["pricing.sku", "pricing.description", "pricing.unit", "pricing.cost"][
-                index
-              ] as Parameters<typeof t>[0],
-            )}
-            <input
-              name={`column_${key}`}
-              required
-              defaultValue={["SKU", "Descripción", "Unidad", "Precio Unitario"][index]}
-            />
+        <div className="form-grid">
+          {["sku", "description", "unit", "unit_cost"].map((key, index) => (
+            <label key={key}>
+              {t("pricing.column")} ·{" "}
+              {t(
+                ["pricing.sku", "pricing.description", "pricing.unit", "pricing.cost"][
+                  index
+                ] as Parameters<typeof t>[0],
+              )}
+              <input
+                name={`column_${key}`}
+                required
+                defaultValue={["SKU", "Descripción", "Unidad", "Precio Unitario"][index]}
+              />
+            </label>
+          ))}
+          <label>
+            {t("pricing.separator")}
+            <select name="decimal_separator">
+              <option value=".">.</option>
+              <option value=",">,</option>
+            </select>
           </label>
-        ))}
-        <label>
-          {t("pricing.separator")}
-          <select name="decimal_separator">
-            <option value=".">.</option>
-            <option value=",">,</option>
-          </select>
-        </label>
-        <label>
-          {t("pricing.reason")}
-          <input name="reason" required />
-        </label>
+          <label>
+            {t("pricing.reason")}
+            <input name="reason" required />
+          </label>
+        </div>
         <button disabled={busy}>{t("pricing.previewImport")}</button>
       </form>
       {error && <p role="alert">{error}</p>}
