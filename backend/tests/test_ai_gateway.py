@@ -1909,8 +1909,11 @@ def _post_message(client, job_id, **body):
 
 def test_job_message_forwards_live_product(monkeypatch):
     """A follow-up on a position job must carry the current product — design
-    ops validate against it, not a snapshot stored when the job was born."""
-    from ai_gateway import jobs, views as ai_views
+    ops validate against it, not a snapshot stored when the job was born.
+    The run itself executes on the durable worker, so the product lands in
+    the enqueued payload."""
+    from ai_gateway import jobs
+    from jobs import service as job_service
 
     client, _, org_id = _agent_client(monkeypatch)
     job_id = uuid4()
@@ -1923,50 +1926,87 @@ def test_job_message_forwards_live_product(monkeypatch):
             "refs": {"position_id": "p1"}, "transcript": transcript,
         },
     )
-    monkeypatch.setattr(jobs, "resume_job", lambda **kw: {"id": str(job_id)})
     monkeypatch.setattr(
-        ai_views, "act",
-        lambda **kw: seen.update(kw) or {"job_id": str(job_id), "reply": "ok"},
+        job_service, "enqueue",
+        lambda **kw: seen.update(kw) or ({"id": uuid4()}, True),
     )
     product = {"modules": [{"id": "m1"}]}
     response = _post_message(
         client, job_id, message="cambia el ancho", product=product
     )
-    assert response.status_code == 200
-    assert seen["product"] == product
-    assert seen["goal"] == "cambia el ancho"
+    assert response.status_code == 202
+    assert response.json() == {"job_id": str(job_id), "state": "QUEUED"}
+    assert seen["job_type"] == "ai.agent.run"
+    assert seen["payload"]["product"] == product
+    assert seen["payload"]["goal"] == "cambia el ancho"
+    assert seen["payload"]["mode"] == "resume"
+    assert seen["payload"]["ai_job_id"] == str(job_id)
 
 
-def test_job_message_contract_error_during_act_records_failure(monkeypatch):
-    """A contract error raised by the agent mid-execution is a failed round:
-    after the scope rolls back, the job lands FAILED_RETRYABLE bound to the
-    transcript generation this round claimed."""
+@pytest.mark.django_db
+def test_agent_run_handler_records_failure(monkeypatch):
+    """A contract error raised by the agent mid-run is a failed round: after
+    the worker's transaction rolls back, the job lands FAILED_RETRYABLE bound
+    to the transcript generation this round claimed."""
     from authentication.errors import contract_error
-    from ai_gateway import jobs, views as ai_views
+    from jobs.registry import JobContext, JobPermanentError
+    from ai_gateway import handlers, jobs, agent
 
-    client, _, org_id = _agent_client(monkeypatch)
     job_id = uuid4()
+    org_id = uuid4()
+    user_id = uuid4()
     transcript = [{"role": "user", "text": "hazlo"}]
     monkeypatch.setattr(
         jobs, "get_job",
         lambda **kw: {
             "id": str(job_id), "surface": "position", "state": "SUCCEEDED",
-            "refs": {}, "transcript": transcript,
+            "transcript": transcript,
         },
     )
     monkeypatch.setattr(jobs, "resume_job", lambda **kw: {"id": str(job_id)})
+    monkeypatch.setattr(jobs, "cancel_requested", lambda **kw: False)
 
     def boom(**kw):
         raise contract_error(422, "ai_agent_ungrounded", "sin evidencia")
 
-    monkeypatch.setattr(ai_views, "act", boom)
+    monkeypatch.setattr(agent, "act", boom)
     failures: list[dict] = []
     monkeypatch.setattr(
         jobs, "record_failure",
         lambda **kw: failures.append(kw) or {"id": str(job_id)},
     )
-    response = _post_message(client, job_id, message="sigue")
-    assert response.status_code == 422
+    context = JobContext(
+        job_id=uuid4(), org_id=org_id, created_by=user_id,
+        attempt=1, max_attempts=3,
+        payload={"ai_job_id": str(job_id), "mode": "resume",
+                 "surface": "position", "refs": {}, "goal": "sigue",
+                 "operation_key": "k-12345678"},
+    )
+    monkeypatch.setattr(
+        handlers, "_claims", lambda ctx: "{}"
+    )
+    monkeypatch.setattr(handlers, "_set_claims", lambda cursor, ctx: None)
+
+    class _Cur:
+        def execute(self, *a, **k):
+            return None
+        def fetchone(self):
+            return ("ESTIMATOR",)
+
+    class _Conn:
+        def cursor(self):
+            return self
+        def __enter__(self):
+            return _Cur()
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr(handlers, "connection", _Conn())
+
+    import pytest as _pytest
+    with _pytest.raises(JobPermanentError) as exc:
+        handlers.ai_agent_run(dict(context.payload), context, lambda p: None)
+    assert str(exc.value) == "ai_agent_ungrounded"
     assert len(failures) == 1
     assert failures[0]["transcript_before"] == transcript
     assert failures[0]["error_code"] == "ai_agent_ungrounded"

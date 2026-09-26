@@ -2280,6 +2280,8 @@ export const messages = {
   "agent.send": "Ejecutar",
   "agent.thinking": "Trabajando…",
   "agent.error": "No se pudo contactar al agente.",
+  "agent.stillRunning": "La tarea sigue en curso — revisa el trabajo en Asistente.",
+  "agent.canceled": "La tarea fue cancelada.",
   "agent.queried": "Consultó {surface}",
   "agent.queryFailed": "No encontró {surface}",
   "agent.prepare": "Preparar:",

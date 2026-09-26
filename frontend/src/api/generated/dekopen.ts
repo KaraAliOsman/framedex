@@ -8,8 +8,8 @@
 import type {
   AdminResponse,
   AdminWriteRequest,
+  AiAgentAccepted,
   AiAgentRequestRequest,
-  AiAgentResponse,
   AiAskRequestRequest,
   AiAskResponse,
   AiInvokeRequestRequest,
@@ -209,9 +209,9 @@ import type {
 } from "./models";
 
 import { apiMutator } from "../apiMutator";
-export type aiAgentResponse200 = {
-  data: AiAgentResponse;
-  status: 200;
+export type aiAgentResponse202 = {
+  data: AiAgentAccepted;
+  status: 202;
 };
 
 export type aiAgentResponse400 = {
@@ -249,7 +249,7 @@ export type aiAgentResponse503 = {
   status: 503;
 };
 
-export type aiAgentResponseSuccess = aiAgentResponse200 & {
+export type aiAgentResponseSuccess = aiAgentResponse202 & {
   headers: Headers;
 };
 export type aiAgentResponseError = (
@@ -697,9 +697,9 @@ export const aiJobCancel = async (
   });
 };
 
-export type aiJobMessageCreateResponse200 = {
-  data: AiAgentResponse;
-  status: 200;
+export type aiJobMessageCreateResponse202 = {
+  data: AiAgentAccepted;
+  status: 202;
 };
 
 export type aiJobMessageCreateResponse400 = {
@@ -737,7 +737,7 @@ export type aiJobMessageCreateResponse503 = {
   status: 503;
 };
 
-export type aiJobMessageCreateResponseSuccess = aiJobMessageCreateResponse200 & {
+export type aiJobMessageCreateResponseSuccess = aiJobMessageCreateResponse202 & {
   headers: Headers;
 };
 export type aiJobMessageCreateResponseError = (

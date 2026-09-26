@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/apiMutator";
-import { aiAgent, aiJobOutcomeCreate } from "../../api/generated/dekopen";
-import type { AiAgentResponse } from "../../api/generated/models/aiAgentResponse";
+import { aiAgent, aiJobOutcomeCreate, aiJobRetrieve } from "../../api/generated/dekopen";
+import type { AiAgentResult } from "../../api/generated/models/aiAgentResult";
 import type { AiAgentStep } from "../../api/generated/models/aiAgentStep";
 import type { AiAgentHistoryRequest } from "../../api/generated/models/aiAgentHistoryRequest";
+import type { AiJobDetail } from "../../api/generated/models/aiJobDetail";
 import { t } from "../../i18n/es-CL";
 import type { DesignOp } from "../commands/types";
 import { describeDesignOp, designAssistProduct } from "../canvas/designOps";
@@ -13,9 +14,25 @@ import type { ProductJson } from "../canvas/productEditing";
 import { useDesignOpsBridge } from "./assistantContext";
 import { BatchOpsStep } from "./BatchOpsStep";
 
+/** The durable worker can leave the job running far longer than a request
+ * timeout — the dock polls the job record and renders the stored result
+ * once the round settles. */
+const LIVE_STATES = new Set(["QUEUED", "PLANNING", "RUNNING"]);
+const POLL_MS = 1500;
+const POLL_LIMIT = 160;
+
+/** What a turn renders — the stored agent result plus the job's identity,
+ * which lives on the job row (the envelope fields are not duplicated into
+ * `result`). */
+type AgentAnswer = AiAgentResult & { job_id: string; state: string };
+
+function jobAnswer(job: AiJobDetail): AgentAnswer {
+  return { ...(job.result as AiAgentResult), job_id: job.id, state: job.state };
+}
+
 type Turn = {
   goal: string;
-  answer: AiAgentResponse;
+  answer: AgentAnswer;
   /** The product the ops steps were validated against — a later commit makes
    * them stale, so applying them then is refused. */
   product: { [key: string]: unknown } | null;
@@ -127,13 +144,37 @@ export function AgentBody({
         },
         { headers: { "X-Organization-ID": organizationId } },
       );
-      if (response.status !== 200) throw new ApiError(response.status, response.data);
-      if (seq !== requestSeq.current) return;
+      if (response.status !== 202) {
+        throw new ApiError(response.status, response.data);
+      }
+      const jobId = response.data.job_id;
+      const headers = { headers: { "X-Organization-ID": organizationId } };
+      let job: AiJobDetail | null = null;
+      for (let attempt = 0; attempt < POLL_LIMIT; attempt += 1) {
+        if (seq !== requestSeq.current) return;
+        const detail = await aiJobRetrieve(jobId, headers);
+        if (detail.status !== 200) throw new ApiError(detail.status, detail.data);
+        job = detail.data;
+        if (!LIVE_STATES.has(job.state)) break;
+        await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+      }
+      if (!job || LIVE_STATES.has(job.state)) {
+        setMessage(t("agent.stillRunning"));
+        return;
+      }
+      if (job.state === "CANCELED") {
+        setMessage(t("agent.canceled"));
+        return;
+      }
+      if (job.state.startsWith("FAILED")) {
+        setMessage(t("agent.error"));
+        return;
+      }
       setThread((prev) => [
         ...prev,
         {
           goal: trimmed,
-          answer: response.data,
+          answer: jobAnswer(job),
           product,
           appliedOps: new Set(),
           declinedOps: new Set(),

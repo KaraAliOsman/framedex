@@ -5,8 +5,8 @@
  * Authenticated tenant and engine API boundary.
  * OpenAPI spec version: 1.0.0
  */
+import type { AiAgentResult } from "./aiAgentResult";
 import type { AiJobRefs } from "./aiJobRefs";
-import type { AiJobResult } from "./aiJobResult";
 
 export interface AiJob {
   id: string;
@@ -14,11 +14,11 @@ export interface AiJob {
   refs: AiJobRefs;
   goal: string;
   state: string;
+  cancel_signaled?: boolean;
   plan: unknown[];
   artifacts: unknown[];
   warnings: unknown[];
-  /** @nullable */
-  result?: AiJobResult;
+  result?: AiAgentResult | null;
   /** @nullable */
   error_code?: string | null;
   outcomes?: unknown[];

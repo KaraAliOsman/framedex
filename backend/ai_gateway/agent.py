@@ -694,6 +694,11 @@ def _batch_ops_step(
     }
 
 
+class JobCanceledError(Exception):
+    """A cancel signal arrived while the run was in flight — the caller
+    unwinds and marks the job CANCELED instead of finishing it."""
+
+
 def _act(
     *,
     org_id: UUID,
@@ -704,6 +709,7 @@ def _act(
     product: Any,
     history: list,
     operation_key: str,
+    job_id: UUID | None = None,
 ) -> dict:
     context = build_context(org_id, surface, refs)
     contexts = [context]
@@ -716,6 +722,11 @@ def _act(
     model = ""
     document: Any = {}
     for round_index in range(MAX_ROUNDS):
+        # Cooperative cancel: the run transaction holds the ai_jobs row lock,
+        # so the cancel request lands in a separate signals table — checked
+        # here between provider rounds.
+        if job_id is not None and jobs.cancel_requested(job_id=job_id):
+            raise JobCanceledError()
         envelope = gateway.invoke(
             org_id=org_id,
             user_id=user_id,
@@ -1012,6 +1023,7 @@ def act(
         product=product,
         history=history,
         operation_key=operation_key,
+        job_id=UUID(job["id"]) if job.get("id") else None,
     )
 
     has_actions = any(

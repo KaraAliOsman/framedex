@@ -37,11 +37,11 @@ paths:
       security:
       - SupabaseBearer: []
       responses:
-        '200':
+        '202':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AiAgentResponse'
+                $ref: '#/components/schemas/AiAgentAccepted'
           description: ''
         '400':
           content:
@@ -473,11 +473,11 @@ paths:
       security:
       - SupabaseBearer: []
       responses:
-        '200':
+        '202':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AiAgentResponse'
+                $ref: '#/components/schemas/AiAgentAccepted'
           description: ''
         '400':
           content:
@@ -13485,6 +13485,20 @@ components:
       required:
       - reason
       - values
+    AiAgentAccepted:
+      type: object
+      description: |-
+        202 — the run is queued on the durable worker; the client polls the
+        job detail for the live transcript and the terminal result.
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+      required:
+      - job_id
+      - state
     AiAgentHistoryRequest:
       type: object
       properties:
@@ -13557,15 +13571,12 @@ components:
       - goal
       - operation_key
       - surface
-    AiAgentResponse:
+    AiAgentResult:
       type: object
+      description: |-
+        The payload act() stores on the job's `result` column — the envelope
+        fields (audit/job ids, state, transcript) live on the job row itself.
       properties:
-        audit_id:
-          type: string
-        job_id:
-          type: string
-        state:
-          type: string
         model:
           type: string
         credits_debited:
@@ -13595,11 +13606,6 @@ components:
           items:
             type: object
             additionalProperties: {}
-        transcript:
-          type: array
-          items:
-            type: object
-            additionalProperties: {}
         steps:
           type: array
           items:
@@ -13618,10 +13624,8 @@ components:
             $ref: '#/components/schemas/AiAgentRejected'
       required:
       - artifacts
-      - audit_id
       - claims
       - credits_debited
-      - job_id
       - model
       - plan
       - queries
@@ -13629,9 +13633,7 @@ components:
       - references
       - rejected
       - reply
-      - state
       - steps
-      - transcript
       - warnings
     AiAgentStep:
       type: object
@@ -13784,6 +13786,8 @@ components:
           type: string
         state:
           type: string
+        cancel_signaled:
+          type: boolean
         plan:
           type: array
           items: {}
@@ -13794,8 +13798,8 @@ components:
           type: array
           items: {}
         result:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/AiAgentResult'
           nullable: true
         error_code:
           type: string
@@ -13839,6 +13843,8 @@ components:
           type: string
         state:
           type: string
+        cancel_signaled:
+          type: boolean
         plan:
           type: array
           items: {}
@@ -13849,8 +13855,8 @@ components:
           type: array
           items: {}
         result:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/AiAgentResult'
           nullable: true
         error_code:
           type: string
@@ -19048,7 +19054,7 @@ components:
         amount:
           type: string
           format: decimal
-          pattern: ^-?\d{0,14}(?:\.\d{0,0})?$
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
         payer_email:
           type: string
           format: email

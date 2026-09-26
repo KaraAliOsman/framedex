@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ai_gateway import service
 from ai_gateway import jobs
 from ai_gateway.metrics import ai_metrics
-from ai_gateway.agent import act
 from ai_gateway.assist import ask
 from ai_gateway.context import _ContextError
 from ai_gateway.providers import ProviderError
 from ai_gateway.serializers import (
+    AiAgentAcceptedSerializer,
     AiAgentRequestSerializer,
-    AiAgentResponseSerializer,
     AiAskRequestSerializer,
     AiAskResponseSerializer,
     AiInvokeRequestSerializer,
@@ -31,6 +31,7 @@ from ai_gateway.context import REQUIRED_REFS as AGENT_REQUIRED_REFS
 from authentication.errors import ContractAPIException, contract_error
 from authentication.serializers import ACTIVE_ORGANIZATION_HEADER
 from documents.views import ERRORS, documentary_scope, validate
+from jobs import service as job_service
 
 # Ask and invoke answer inside the caller's RLS projection exactly like the
 # agent loop — a workshop manager who may run the agent must also be able to
@@ -42,38 +43,6 @@ _CALLERS = _AGENT_CALLERS
 # 'agent'/'catalog_compile' here would bypass context builders and output
 # validation while spending org credits.
 _MEMBER_CAPABILITIES = frozenset({"nlp_command", "discount_suggest"})
-
-
-def _record_failure(request, *, goal, job_id, error, surface=None, refs=None,
-                    transcript_before=None):
-    """§07-B — the round's rollback undid every job write; a fresh RLS scope
-    writes FAILED_RETRYABLE so the workspace can show and resume the failed
-    job instead of losing it silently."""
-    code = str(
-        getattr(error, "contract_code", None)
-        or getattr(error, "code", None)
-        or "ai_job_failed"
-    )[:120]
-    try:
-        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
-            if job_id is None:
-                jobs.create_failed_job(
-                    org_id=org_id,
-                    user_id=token.user_id,
-                    surface=surface,
-                    refs=refs or {},
-                    goal=goal,
-                    error_code=code,
-                )
-            else:
-                jobs.record_failure(
-                    job_id=job_id,
-                    transcript_before=list(transcript_before or []),
-                    goal=goal,
-                    error_code=code,
-                )
-    except Exception:  # failure bookkeeping must never mask the real error
-        pass
 
 
 def _raise_agent_error(error: Exception):
@@ -184,69 +153,63 @@ class AiAgentView(APIView):
         operation_id="ai_agent",
         parameters=[ACTIVE_ORGANIZATION_HEADER],
         request=AiAgentRequestSerializer,
-        responses={200: AiAgentResponseSerializer, **ERRORS},
+        responses={202: AiAgentAcceptedSerializer, **ERRORS},
         tags=["ai"],
     )
     def post(self, request):
         data = validate(AiAgentRequestSerializer, request.data)
         surface = str(data["surface"])
         refs = dict(data.get("refs") or {})
-        # The agent only reads projections and proposes steps — the workshop
-        # manager's surface needs it as much as the estimator's. Errors must
-        # unwind the request transaction BEFORE failure bookkeeping: catching
-        # inside the scope would commit the doomed RUNNING job and strand it.
-        executing = False
-        try:
-            with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
-                missing_refs = [
-                    name
-                    for name in AGENT_REQUIRED_REFS.get(surface, ())
-                    if name not in refs
-                ]
-                if missing_refs:
-                    raise contract_error(
-                        400,
-                        "ai_context_ref_required",
-                        f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
-                    )
-                executing = True
-                return Response(
-                    act(
-                        org_id=org_id,
-                        user_id=token.user_id,
-                        surface=surface,
-                        refs=refs,
-                        goal=str(data["goal"]),
-                        product=data.get("product"),
-                        history=list(data.get("history") or []),
-                        operation_key=str(data["operation_key"]),
-                    )
+        # The run executes on the durable worker: the POST only creates the
+        # QUEUED job row and enqueues its execution, so the client reaches
+        # the live transcript (and the cancel affordance) instead of
+        # blocking a request thread for the whole provider loop.
+        with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
+            missing_refs = [
+                name
+                for name in AGENT_REQUIRED_REFS.get(surface, ())
+                if name not in refs
+            ]
+            if missing_refs:
+                raise contract_error(
+                    400,
+                    "ai_context_ref_required",
+                    f"Esta superficie requiere la referencia '{missing_refs[0]}'.",
                 )
-        except ContractAPIException as failure:
-            # Contract errors raised inside act() are execution failures —
-            # the job must still surface as FAILED_RETRYABLE; validation,
-            # authorization and missing-ref errors before execution never
-            # reach the job and only propagate.
-            if executing:
-                _record_failure(
-                    request,
-                    goal=str(data["goal"]),
-                    job_id=None,
-                    surface=surface,
-                    refs=refs,
-                    error=failure,
-                )
-            raise
-        except Exception as failure:
-            _record_failure(
-                request,
-                goal=str(data["goal"]),
-                job_id=None,
+            operation_key = str(data["operation_key"])
+            job = jobs.enqueue_job(
+                org_id=org_id,
+                user_id=token.user_id,
                 surface=surface,
                 refs=refs,
-                error=failure,
+                goal=str(data["goal"]),
+                operation_key=operation_key,
             )
-            _raise_agent_error(failure)
+            try:
+                job_service.enqueue(
+                    org_id=org_id,
+                    job_type="ai.agent.run",
+                    payload={
+                        "ai_job_id": job["id"],
+                        "mode": "new",
+                        "surface": surface,
+                        "refs": refs,
+                        "goal": str(data["goal"]),
+                        "product": data.get("product"),
+                        "history": list(data.get("history") or []),
+                        "operation_key": operation_key,
+                    },
+                    idempotency_key=f"ai:{operation_key}",
+                    created_by=token.user_id,
+                )
+            except job_service.JobServiceError as error:
+                raise contract_error(
+                    409, error.code, "No se pudo encolar la tarea del agente."
+                ) from error
+            return Response(
+                {"job_id": job["id"], "state": job["state"]},
+                status=status.HTTP_202_ACCEPTED,
+            )
 
 
 class AiJobCollectionView(APIView):
@@ -314,17 +277,15 @@ class AiJobView(APIView):
                 raise contract_error(
                     404, "ai_job_not_found", "El trabajo no existe."
                 )
-            if not jobs.cancel_job(
+            outcome = jobs.request_cancel(
                 job_id=job_id, org_id=org_id, user_id=token.user_id
-            ):
+            )
+            if outcome == "terminal":
                 raise contract_error(
                     409, "ai_job_terminal", "El trabajo ya terminó."
                 )
-            return Response(
-                jobs.get_job(
-                    org_id=org_id, user_id=token.user_id, job_id=job_id
-                )
-            )
+            job["cancel_signaled"] = outcome == "signaled"
+            return Response(job)
 
 
 class AiJobMessagesView(APIView):
@@ -335,15 +296,14 @@ class AiJobMessagesView(APIView):
     @extend_schema(
         operation_id="ai_job_message_create",
         request=AiJobMessageSerializer,
-        responses={200: AiAgentResponseSerializer, **ERRORS},
+        responses={202: AiAgentAcceptedSerializer, **ERRORS},
         tags=["ai"],
     )
     def post(self, request, job_id):
         data = validate(AiJobMessageSerializer, request.data)
-        # Errors must unwind the request transaction BEFORE failure
-        # bookkeeping — a caught-in-scope exception would commit the resumed
-        # RUNNING state and the failed turn would append twice.
-        executing = False
+        # The claim and run happen in the worker — the POST validates,
+        # enqueues a resume round, and returns 202 so the workspace polls
+        # the live transcript instead of blocking on the provider loop.
         try:
             with documentary_scope(request, _AGENT_CALLERS) as (token, _, org_id):
                 job = jobs.get_job(
@@ -353,9 +313,15 @@ class AiJobMessagesView(APIView):
                     raise contract_error(
                         404, "ai_job_not_found", "El trabajo no existe."
                     )
-                if job["state"] == "CANCELED":
+                if job["state"] in ("FAILED", "CANCELED"):
                     raise contract_error(
-                        409, "ai_job_terminal", "El trabajo está cancelado."
+                        409, "ai_job_terminal", "El trabajo ya terminó."
+                    )
+                if job["state"] in ("QUEUED", "PLANNING", "RUNNING"):
+                    raise contract_error(
+                        409,
+                        "ai_job_running",
+                        "Ya hay una instrucción en curso en este trabajo.",
                     )
                 history = [
                     {
@@ -365,67 +331,45 @@ class AiJobMessagesView(APIView):
                     for turn in job.get("transcript") or []
                     if isinstance(turn, dict)
                 ]
+                operation_key = str(
+                    request.headers.get("X-Operation-Key")
+                    or f"{job_id}:{len(history)}"
+                )
                 try:
-                    jobs.resume_job(
-                        job_id=job_id,
-                        transcript=list(job.get("transcript") or []),
+                    job_service.enqueue(
                         org_id=org_id,
-                        user_id=token.user_id,
+                        job_type="ai.agent.run",
+                        payload={
+                            "ai_job_id": str(job["id"]),
+                            "mode": "resume",
+                            "surface": str(job["surface"]),
+                            "refs": dict(job.get("refs") or {}),
+                            "goal": str(data["message"]),
+                            # The product rides with each message — the client
+                            # sends the position's live representation, so
+                            # design ops evaluate the current design, never a
+                            # snapshot stored at job creation.
+                            "product": data.get("product"),
+                            "history": history,
+                            "operation_key": operation_key,
+                        },
+                        idempotency_key=f"ai:{operation_key}",
+                        created_by=token.user_id,
                     )
-                except ValueError as error:
-                    if str(error) == "ai_job_terminal":
-                        raise contract_error(
-                            409, "ai_job_terminal", "El trabajo ya terminó."
-                        ) from None
+                except job_service.JobServiceError as error:
                     raise contract_error(
-                        409,
-                        "ai_job_running",
-                        "Ya hay una instrucción en curso en este trabajo.",
-                    ) from None
-                # The product rides with each message — the client sends the
-                # position's live representation, so design ops evaluate the
-                # current design, never a snapshot stored at job creation.
-                executing = True
+                        409, error.code,
+                        "No se pudo encolar la instrucción del agente.",
+                    ) from error
                 return Response(
-                    act(
-                        org_id=org_id,
-                        user_id=token.user_id,
-                        surface=str(job["surface"]),
-                        refs=dict(job.get("refs") or {}),
-                        goal=str(data["message"]),
-                        product=data.get("product"),
-                        history=history,
-                        operation_key=str(
-                            request.headers.get("X-Operation-Key")
-                            or f"{job_id}:{len(history)}"
-                        ),
-                        job=job,
-                    )
+                    {"job_id": str(job["id"]), "state": "QUEUED"},
+                    status=status.HTTP_202_ACCEPTED,
                 )
-        except ContractAPIException as failure:
-            # Only a round that actually claimed the job records failure —
-            # errors before the claim (404, conflicts, validation) leave the
-            # job untouched.
-            if executing:
-                _record_failure(
-                    request,
-                    goal=str(data["message"]),
-                    job_id=job_id,
-                    error=failure,
-                    transcript_before=job.get("transcript"),
-                )
+        except ContractAPIException:
+            # The claim happens in the worker now — errors before the enqueue
+            # (404, conflicts, validation) leave the job untouched.
             raise
         except Exception as failure:
-            # The rollback restored the job's pre-resume state — the failed
-            # turn appends exactly once here, marked FAILED_RETRYABLE, and
-            # only if the row still carries the generation we claimed.
-            _record_failure(
-                request,
-                goal=str(data["message"]),
-                job_id=job_id,
-                error=failure,
-                transcript_before=job.get("transcript") if executing else None,
-            )
             _raise_agent_error(failure)
 
 

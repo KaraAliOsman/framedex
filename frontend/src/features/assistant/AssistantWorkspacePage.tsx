@@ -436,7 +436,9 @@ export function AssistantWorkspacePage(): JSX.Element {
           { message, ...(product ? { product } : {}) },
           { headers: { ...headers.headers, "X-Operation-Key": operationKey.current.key } },
         );
-        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        if (response.status !== 202) {
+          throw new ApiError(response.status, response.data);
+        }
       } else {
         const needsProject = REF_BOUND_PROJECT_SURFACES.has(newSurface);
         if (needsProject && !newProjectId) {
@@ -454,7 +456,9 @@ export function AssistantWorkspacePage(): JSX.Element {
           },
           headers,
         );
-        if (response.status !== 200) throw new ApiError(response.status, response.data);
+        if (response.status !== 202) {
+          throw new ApiError(response.status, response.data);
+        }
         const jobId = (response.data as { job_id?: string }).job_id;
         if (jobId) setSearchParams({ job: jobId });
       }

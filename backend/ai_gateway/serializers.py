@@ -116,10 +116,31 @@ class AiAgentRejectedSerializer(serializers.Serializer):
     reason = serializers.CharField()
 
 
-class AiAgentResponseSerializer(serializers.Serializer):
-    audit_id = serializers.CharField()
-    job_id = serializers.CharField()
+class AiAgentAcceptedSerializer(serializers.Serializer):
+    """202 — the run is queued on the durable worker; the client polls the
+    job detail for the live transcript and the terminal result."""
+
+    job_id = serializers.UUIDField()
     state = serializers.CharField()
+
+
+class AiAgentRunSerializer(serializers.Serializer):
+    """Durable-job payload for one agent round (first submit or follow-up)."""
+
+    ai_job_id = serializers.UUIDField()
+    mode = serializers.ChoiceField(choices=["new", "resume"])
+    surface = serializers.CharField(min_length=2, max_length=40)
+    refs = serializers.DictField(required=False)
+    goal = serializers.CharField(min_length=1, max_length=2000)
+    product = serializers.DictField(required=False, allow_null=True)
+    history = AiAgentHistorySerializer(many=True, required=False, max_length=24)
+    operation_key = serializers.CharField(min_length=8, max_length=200)
+
+
+class AiAgentResultSerializer(serializers.Serializer):
+    """The payload act() stores on the job's `result` column — the envelope
+    fields (audit/job ids, state, transcript) live on the job row itself."""
+
     model = serializers.CharField()
     credits_debited = serializers.IntegerField()
     reply = serializers.CharField()
@@ -128,7 +149,6 @@ class AiAgentResponseSerializer(serializers.Serializer):
     references = serializers.ListField(child=serializers.CharField())
     questions = serializers.ListField(child=serializers.CharField())
     artifacts = serializers.ListField(child=serializers.DictField())
-    transcript = serializers.ListField(child=serializers.DictField())
     steps = AiAgentStepSerializer(many=True)
     queries = AiAgentQuerySerializer(many=True)
     warnings = serializers.ListField(child=serializers.CharField())
@@ -148,10 +168,11 @@ class AiJobSerializer(serializers.Serializer):
     refs = serializers.DictField()
     goal = serializers.CharField()
     state = serializers.CharField()
+    cancel_signaled = serializers.BooleanField(required=False)
     plan = serializers.ListField()
     artifacts = serializers.ListField()
     warnings = serializers.ListField()
-    result = serializers.DictField(required=False, allow_null=True)
+    result = AiAgentResultSerializer(required=False, allow_null=True)
     error_code = serializers.CharField(required=False, allow_null=True)
     outcomes = serializers.ListField(required=False)
     created_at = serializers.DateTimeField()

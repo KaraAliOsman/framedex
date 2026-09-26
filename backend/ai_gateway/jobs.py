@@ -19,7 +19,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from django.db import DatabaseError, connection
+from django.db import DatabaseError, connection, transaction
 
 from pricing.repository import rows
 
@@ -93,6 +93,13 @@ def _dump(value: Any) -> str:
     return json.dumps(value, default=str)
 
 
+_JOB_COLUMNS = (
+    "id, org_id, user_id, surface, refs, goal, state, plan,"
+    " transcript, artifacts, warnings, result, error_code, outcomes,"
+    " operation_key, created_at, updated_at, completed_at"
+)
+
+
 def create_job(*, org_id: UUID, user_id: UUID, surface: str,
                refs: dict, goal: str) -> dict:
     with _ai_backend():
@@ -100,13 +107,140 @@ def create_job(*, org_id: UUID, user_id: UUID, surface: str,
             "INSERT INTO public.ai_jobs"
             " (org_id, user_id, surface, refs, goal, state)"
             " VALUES (%s, %s, %s, %s::jsonb, %s, 'RUNNING')"
-            " RETURNING id, org_id, user_id, surface, refs, goal, state, plan,"
-            " transcript, artifacts, warnings, result, error_code, outcomes,"
-            " created_at, updated_at, completed_at",
+            f" RETURNING {_JOB_COLUMNS}",
             [str(org_id), str(user_id), surface, _dump(refs or {}),
              goal[:MAX_GOAL]],
         )[0]
     return _decode(record)
+
+
+def enqueue_job(*, org_id: UUID, user_id: UUID, surface: str,
+                refs: dict, goal: str, operation_key: str) -> dict:
+    """Submit-side job row in QUEUED — the worker claims it. Idempotent on
+    (org, user, operation_key): a retried POST replays to the in-flight row
+    instead of leaving an orphan that can never be claimed."""
+    with _ai_backend():
+        record = rows(
+            "INSERT INTO public.ai_jobs"
+            " (org_id, user_id, surface, refs, goal, state, operation_key)"
+            " VALUES (%s, %s, %s, %s::jsonb, %s, 'QUEUED', %s)"
+            " ON CONFLICT (org_id, user_id, operation_key)"
+            " WHERE operation_key IS NOT NULL DO NOTHING"
+            f" RETURNING {_JOB_COLUMNS}",
+            [str(org_id), str(user_id), surface, _dump(refs or {}),
+             goal[:MAX_GOAL], operation_key[:200]],
+        )
+        if not record:
+            record = rows(
+                f"SELECT {_JOB_COLUMNS} FROM public.ai_jobs"
+                " WHERE org_id = %s AND user_id = %s AND operation_key = %s",
+                [str(org_id), str(user_id), operation_key[:200]],
+            )
+    return _decode(record[0])
+
+
+def claim_queued_job(*, job_id: UUID, org_id: UUID, user_id: UUID) -> dict | None:
+    """The worker's atomic claim — only a QUEUED row moves to RUNNING, so a
+    job canceled while waiting in the queue is never executed."""
+    with _ai_backend():
+        record = rows(
+            "UPDATE public.ai_jobs SET state = 'RUNNING', updated_at = NOW()"
+            " WHERE id = %s AND org_id = %s AND user_id = %s AND state = 'QUEUED'"
+            f" RETURNING {_JOB_COLUMNS}",
+            [str(job_id), str(org_id), str(user_id)],
+        )
+    return _decode(record[0]) if record else None
+
+
+def fail_queued_job(*, job_id: UUID, goal: str, error_code: str) -> dict | None:
+    """Failure bookkeeping for a first run whose transaction rolled back the
+    claim — the row is still QUEUED; mark it FAILED_RETRYABLE so the
+    workspace can resume it instead of showing a stuck queue entry."""
+    with _ai_backend():
+        record = rows(
+            "UPDATE public.ai_jobs SET state = 'FAILED_RETRYABLE',"
+            " transcript = %s::jsonb, error_code = %s, updated_at = NOW()"
+            " WHERE id = %s AND state = 'QUEUED' RETURNING id",
+            [_dump(_failure_turns(goal, error_code)), error_code[:120],
+             str(job_id)],
+        )
+    return {"id": str(record[0]["id"])} if record else None
+
+
+def cancel_requested(*, job_id: UUID) -> bool:
+    """Cooperative cancel read — the signals table has no row-lock coupling to
+    ai_jobs, so a cancel arrives while the run transaction still holds it."""
+    if connection.vendor != "postgresql":
+        return False
+    with _ai_backend():
+        return bool(
+            rows(
+                "SELECT 1 FROM public.ai_job_cancel_signals WHERE job_id = %s",
+                [str(job_id)],
+            )
+        )
+
+
+def clear_cancel_signal(*, job_id: UUID) -> None:
+    if connection.vendor != "postgresql":
+        return
+    with _ai_backend():
+        rows(
+            "DELETE FROM public.ai_job_cancel_signals WHERE job_id = %s"
+            " RETURNING job_id",
+            [str(job_id)],
+        )
+
+
+def request_cancel(*, job_id: UUID, org_id: UUID, user_id: UUID) -> str:
+    """'canceled' — the row flipped immediately; 'signaled' — the run holds
+    the row lock, so a signal row asks the worker to abort between rounds;
+    'terminal' — nothing live to cancel."""
+    with transaction.atomic():
+        with _ai_backend():
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL lock_timeout = '800ms'")
+                cursor.execute("SAVEPOINT ai_cancel")
+                try:
+                    cursor.execute(
+                        "UPDATE public.ai_jobs SET state = 'CANCELED',"
+                        " updated_at = NOW(), completed_at = NOW() WHERE id = %s"
+                        " AND org_id = %s AND user_id = %s"
+                        " AND state NOT IN ('SUCCEEDED','FAILED','CANCELED')"
+                        " RETURNING id",
+                        [str(job_id), str(org_id), str(user_id)],
+                    )
+                    landed = cursor.fetchone() is not None
+                    cursor.execute("RELEASE SAVEPOINT ai_cancel")
+                except DatabaseError as error:
+                    cursor.execute("ROLLBACK TO SAVEPOINT ai_cancel")
+                    sqlstate = getattr(error, "sqlstate", None) or getattr(
+                        getattr(error, "__cause__", None), "sqlstate", None
+                    )
+                    if sqlstate != "55P03":
+                        raise
+                    # The worker holds the row lock for the whole run —
+                    # signal instead of waiting out the provider call.
+                    landed = False
+                if landed:
+                    return "canceled"
+                # 0 rows without a lock means terminal — confirm the job is
+                # still live before signaling a run that isn't.
+                cursor.execute(
+                    "SELECT state FROM public.ai_jobs"
+                    " WHERE id = %s AND org_id = %s AND user_id = %s",
+                    [str(job_id), str(org_id), str(user_id)],
+                )
+                found = cursor.fetchone()
+                if found is None or str(found[0]) in TERMINAL_STATES:
+                    return "terminal"
+                cursor.execute(
+                    "INSERT INTO public.ai_job_cancel_signals"
+                    " (job_id, org_id, user_id) VALUES (%s, %s, %s)"
+                    " ON CONFLICT (job_id) DO NOTHING",
+                    [str(job_id), str(org_id), str(user_id)],
+                )
+                return "signaled"
 
 
 def get_job(*, org_id: UUID, user_id: UUID, job_id: UUID) -> dict | None:
