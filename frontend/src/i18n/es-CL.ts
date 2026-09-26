@@ -2060,6 +2060,8 @@ export const messages = {
   "production.cutPackButton": "Pack de corte (PDF)",
   "production.cutPackError": "No se pudo descargar el pack de corte",
   "production.cutPackInvalidated": "El plan fue invalidado por una reoptimización",
+  "production.productionPackButton": "Pack de producción (PDF)",
+  "production.productionPackError": "No se pudo descargar el pack de producción",
   "production.eventDxfExported": "Archivos DXF generados",
   "production.eventInstalled": "Instalación confirmada",
   "production.installButton": "Confirmar instalación",

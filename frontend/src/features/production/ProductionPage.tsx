@@ -673,6 +673,22 @@ export function ProductionPage(): JSX.Element {
     }
   }
 
+  async function downloadProductionPack(orderId: string, orderCode: string): Promise<void> {
+    try {
+      const { blob, filename } = await apiFetchBlob(
+        `/api/v1/production/orders/${orderId}/production-pack/`,
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename ?? `${orderCode}-pack-produccion.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(t("production.productionPackError"));
+    }
+  }
+
   const canAct = role === "OWNER" || role === "WORKSHOP_MANAGER" || role === "INSTALLER";
   const canWrite = role === "OWNER" || role === "WORKSHOP_MANAGER";
   const canStep = canWrite || role === "INSTALLER";
@@ -1056,6 +1072,19 @@ export function ProductionPage(): JSX.Element {
                             onClick={() => downloadCutPack(detail.id, detail.order_code)}
                           >
                             {t("production.cutPackButton")}
+                          </button>
+                          <button
+                            type="button"
+                            className="production-cutpack"
+                            disabled={busy || Boolean(optimization.invalidated)}
+                            title={
+                              optimization.invalidated
+                                ? t("production.cutPackInvalidated")
+                                : undefined
+                            }
+                            onClick={() => downloadProductionPack(detail.id, detail.order_code)}
+                          >
+                            {t("production.productionPackButton")}
                           </button>
                           {canOptimize &&
                           detail.status !== "COMPLETED" &&

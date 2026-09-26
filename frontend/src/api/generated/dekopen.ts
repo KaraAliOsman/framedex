@@ -9395,6 +9395,78 @@ export const productionOrderPacking = async (
   });
 };
 
+export type productionOrderPackResponse200 = {
+  data: Blob;
+  status: 200;
+};
+
+export type productionOrderPackResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type productionOrderPackResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type productionOrderPackResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type productionOrderPackResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type productionOrderPackResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type productionOrderPackResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type productionOrderPackResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type productionOrderPackResponseSuccess = productionOrderPackResponse200 & {
+  headers: Headers;
+};
+export type productionOrderPackResponseError = (
+  | productionOrderPackResponse400
+  | productionOrderPackResponse401
+  | productionOrderPackResponse403
+  | productionOrderPackResponse404
+  | productionOrderPackResponse409
+  | productionOrderPackResponse422
+  | productionOrderPackResponse503
+) & {
+  headers: Headers;
+};
+
+export type productionOrderPackResponse =
+  productionOrderPackResponseSuccess | productionOrderPackResponseError;
+
+export const getProductionOrderPackUrl = (orderId: string) => {
+  return `/api/v1/production/orders/${orderId}/production-pack/`;
+};
+
+export const productionOrderPack = async (
+  orderId: string,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<productionOrderPackResponse> => {
+  return apiMutator<productionOrderPackResponse>(getProductionOrderPackUrl(orderId), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export type productionOrderRemakeResponse201 = {
   data: ProductionOrderDetail;
   status: 201;
