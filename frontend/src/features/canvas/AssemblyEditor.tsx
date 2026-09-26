@@ -2351,6 +2351,38 @@ export function AssemblyEditor({
             </button>
           ))}
         </div>
+        {issues.length > 0 && (
+          <ul className="assembly-issues" aria-label={t("assembly.issues")} ref={issuesListRef}>
+            {issues.map((issue, index) => (
+              <li key={`${issue.code}-${index}`}>
+                <button
+                  type="button"
+                  className={`issue-chip issue-chip--${issue.severity}`}
+                  onClick={() => {
+                    const target = issue.target;
+                    if (target.startsWith("module:") || target.startsWith("coupling:")) {
+                      select(target.slice(target.indexOf(":") + 1));
+                    }
+                  }}
+                >
+                  {issueText(issue, modules, couplings)}
+                </button>
+                <button
+                  type="button"
+                  className="issue-fix"
+                  title={t("assistant.fixWith")}
+                  onClick={() =>
+                    askAssistant(
+                      `${t("assistant.fixPrompt")} ${issueText(issue, modules, couplings)}`,
+                    )
+                  }
+                >
+                  {t("assistant.fixWith")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         {detail === "technical" ? (
           <TechnicalPanel
             evaluation={evaluation}
@@ -2503,7 +2535,6 @@ export function AssemblyEditor({
             <p className="assembly-hint">{t("assembly.elementHint")}</p>
           </section>
         )}
-        {positionPanel}
         {product && (
           <div ref={assistantSectionRef}>
             <AssistantPanel
@@ -2539,38 +2570,6 @@ export function AssemblyEditor({
             />
           </div>
         )}
-        {issues.length > 0 && (
-          <ul className="assembly-issues" aria-label={t("assembly.issues")} ref={issuesListRef}>
-            {issues.map((issue, index) => (
-              <li key={`${issue.code}-${index}`}>
-                <button
-                  type="button"
-                  className={`issue-chip issue-chip--${issue.severity}`}
-                  onClick={() => {
-                    const target = issue.target;
-                    if (target.startsWith("module:") || target.startsWith("coupling:")) {
-                      select(target.slice(target.indexOf(":") + 1));
-                    }
-                  }}
-                >
-                  {issueText(issue, modules, couplings)}
-                </button>
-                <button
-                  type="button"
-                  className="issue-fix"
-                  title={t("assistant.fixWith")}
-                  onClick={() =>
-                    askAssistant(
-                      `${t("assistant.fixPrompt")} ${issueText(issue, modules, couplings)}`,
-                    )
-                  }
-                >
-                  {t("assistant.fixWith")}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
       <footer className="assembly-statusbar">
         <span
@@ -2601,7 +2600,7 @@ export function AssemblyEditor({
               ) {
                 select(first.target.slice(first.target.indexOf(":") + 1));
               }
-              // The list lives at the end of the inspector column — surface
+              // The list sits at the top of the inspector column — surface
               // it so the click visibly resolves to the issues, not silence.
               issuesListRef.current?.scrollIntoView({
                 behavior: "smooth",

@@ -251,7 +251,10 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
+  /* The editor route is a bounded app viewport — the body never scrolls, so a
+     wheel gesture over the canvas pans the drawing instead of trapping the
+     page scroll. Ancillary content (BOM) docks below in its own scroller. */
+  overflow: hidden;
 }
 
 .position-body .position-workspace {
@@ -262,6 +265,13 @@
 
 .position-body .assembly-editor {
   height: 100%;
+}
+@media (max-height: 700px) {
+  /* Short laptop screens: let the editor shrink below the 28rem floor rather
+     than clip its status bar under the non-scrolling body. */
+  .position-body .assembly-editor {
+    min-height: 0;
+  }
 }
 
 /* Position metadata folded into the inspector column — compact fields, same
@@ -600,8 +610,16 @@
     width: 100%;
   }
 }
+/* BOM docks at the bottom of the bounded editor viewport: a slim bar when
+   closed, a capped pane with its own scroll when opened — the page column
+   itself never scrolls. */
 .project-bom {
-  margin-top: 0.75rem;
+  flex: none;
+  margin-top: 0.5rem;
+}
+.project-bom[open] {
+  max-height: 42dvh;
+  overflow-y: auto;
 }
 .project-bom summary {
   cursor: pointer;

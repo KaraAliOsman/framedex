@@ -675,12 +675,12 @@ function PositionWorkspace({
             positionPanel={positionPanel}
           />
         </div>
-        {result ? (
-          <ProjectBom result={result} />
-        ) : (
-          <p role="status">{t("projects.calculationRequired")}</p>
-        )}
       </div>
+      {result ? (
+        <ProjectBom result={result} />
+      ) : (
+        <p role="status">{t("projects.calculationRequired")}</p>
+      )}
     </section>
   );
 }
