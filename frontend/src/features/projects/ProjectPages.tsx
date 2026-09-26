@@ -1025,6 +1025,14 @@ function ProjectWorkspace({
     refetchOnReconnect: false,
   });
 
+  // Workspace-first pattern (same as /clients and /production): land on the
+  // first vano's detail card rather than an empty hint pane.
+  useEffect(() => {
+    if (selectedId) return;
+    const first = query.data?.project?.positions?.[0]?.id;
+    if (first) setSelectedId(first);
+  }, [selectedId, query.data]);
+
   // The picker only materializes when the metadata form opens — fetch then,
   // so the list page never pays for it.
   const clientsQuery = useQuery<ClientResponse[]>({
