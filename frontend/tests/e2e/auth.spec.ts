@@ -430,7 +430,7 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   // The desk grid is select-then-act: pick the vano row so the side pane
   // offers Abrir diseño.
   await page
-    .locator(".position-grid [role='listitem']")
+    .locator(".position-grid [role='option']")
     .filter({ hasText: "Fijo comercial" })
     .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
@@ -538,9 +538,9 @@ test("SHOT-10 OWNER prices and emits immutable quotation revisions", async ({ pa
   await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.getByRole("link", { name: /Volver al proyecto/ }).click();
   await page.reload();
-  await page.getByRole("link", { name: /P-[A-Z0-9]+ · Composite browser gate/ }).click();
+  await page.getByRole("link", { name: "Composite browser gate", exact: true }).click();
   await page
-    .locator(".position-grid [role='listitem']")
+    .locator(".position-grid [role='option']")
     .filter({ hasText: "Fachada compuesta" })
     .click();
   await page.getByRole("link", { name: "Abrir diseño", exact: true }).click();
