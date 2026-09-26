@@ -20,6 +20,10 @@ from dekopen_engine.operations import OperationKind, operations_from_plan
 from documents.renderers import (
     _CSS,
     _cldate,
+    _cut_key,
+    _cut_member_map,
+    _infill_code_map,
+    _infill_key,
     _location,
     _piece_labels,
     _table,
@@ -30,7 +34,13 @@ from django.db import transaction
 
 from documents.repository import DocumentaryError, decoded, documentary_backend, one
 
-from production.cut_pack import _CSS_PACK, _bar_svg, _mm, _sheet_svg
+from production.cut_pack import (
+    _CSS_PACK,
+    _UNNEST_REASONS,
+    _bar_svg,
+    _mm,
+    _sheet_svg,
+)
 from production.service import (
     _decoded,
     _optimization_fingerprint,
@@ -173,6 +183,83 @@ _VERTICAL_REFERENCE_LABELS = {
     "LEAF_BOTTOM": "borde inferior de la hoja",
 }
 
+_OPENING_LABELS = {
+    "FIXED": "Fijo",
+    "TURN_LEFT": "Abatir izq.",
+    "TURN_RIGHT": "Abatir der.",
+    "TILT_TURN_LEFT": "Oscilobatiente izq.",
+    "TILT_TURN_RIGHT": "Oscilobatiente der.",
+    "SLIDING_2L": "Corredera 2 hojas",
+    "SLIDING_3L": "Corredera 3 hojas",
+    "SLIDING_4L": "Corredera 4 hojas",
+    "SLIDING": "Corredera",
+    "AWNING": "Proyectante",
+    "DOOR_ENTRY": "Puerta",
+    "DOOR_DOUBLE": "Puerta doble",
+}
+
+_ROLE_LABELS = {
+    "FRAME": "Marco",
+    "SASH": "Hoja",
+    "MULLION_V": "Montante vert.",
+    "MULLION_H": "Travesaño",
+    "GLAZING_BEAD": "Vidriera",
+    "COUPLER": "Acople",
+    "THRESHOLD": "Umbral",
+}
+
+_INFILL_LABELS = {
+    "GLASS": "Vidrio",
+    "PANEL": "Panel",
+    "GLASS_PANEL": "Vidrio + panel",
+}
+
+_OP_LABELS = {
+    "SAW_CUT": "Corte sierra",
+    "END_MILL": "Reto de extremo",
+    "END_MACHINING": "Caja de extremo",
+    "HANDLE_PREP": "Prep. herraje",
+    "LOCK_PREP": "Prep. cerradura",
+    "HINGE_PREP": "Prep. bisagra",
+    "DRAINAGE": "Drenaje",
+}
+
+_TOOL_LABELS = {
+    "saw": "Disco de corte",
+    "end_mill": "Fresa de copia",
+    "drill": "Broca",
+    "mark": "Marcado",
+}
+
+_BASIS_LABELS = {
+    "cut_plan.head_trim": "Plan de corte",
+    "cut_plan.placement": "Plan de corte",
+    "cut_plan.tail_trim": "Plan de corte",
+    "member_end_overlap": "Solape de extremo",
+}
+
+_EDGE_LABELS = {"START": "Ext. A", "END": "Ext. B"}
+
+
+def _op_reference(detail: dict[str, object]) -> str:
+    """Human reference for where the op sits: cut edge (Ext. A/B) or the
+    declared vertical reference — never raw enums."""
+    edge = str(detail.get("edge") or "")
+    if edge in _EDGE_LABELS:
+        return _EDGE_LABELS[edge]
+    vref = str(detail.get("vertical_reference") or "")
+    if vref in _VERTICAL_REFERENCE_LABELS:
+        return _VERTICAL_REFERENCE_LABELS[vref]
+    return "—"
+
+
+def _basis_label(basis: str) -> str:
+    if basis in _BASIS_LABELS:
+        return _BASIS_LABELS[basis]
+    if basis.startswith("handle_requirement_policy:"):
+        return f"Política herraje {basis.split(':', 1)[1]}"
+    return basis
+
 
 def _unit_map_svg(
     unit: ManufacturingFactsV1,
@@ -210,10 +297,21 @@ def _unit_map_svg(
         code = labels["infill"].get(infill.infill_id, infill.semantic_infill_id)
         x, y = _mm(rect.x_mm), _mm(rect.y_mm)
         w, h = _mm(rect.width_mm), _mm(rect.height_mm)
+        shape = infill.shape or []
+        if shape:
+            points = " ".join(f"{_mm(p.x_mm)},{_mm(p.y_mm)}" for p in shape)
+            svg.append(
+                f'<polygon points="{points}" fill="#8FB8CC" '
+                'fill-opacity="0.25" stroke="#4A7E93" stroke-width="2" '
+                'stroke-dasharray="10 6"/>'
+            )
+        else:
+            svg.append(
+                f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
+                'fill="#8FB8CC" fill-opacity="0.25" stroke="#4A7E93" '
+                'stroke-width="2" stroke-dasharray="10 6"/>'
+            )
         svg.append(
-            f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
-            'fill="#8FB8CC" fill-opacity="0.25" stroke="#4A7E93" '
-            'stroke-width="2" stroke-dasharray="10 6"/>'
             f'<text x="{_cx(x + w / 2, str(code), font)}" '
             f'y="{y + h / 2 + font * Decimal("0.35")}" '
             f'fill="#2C5667" font-size="{font}" font-weight="600">'
@@ -223,7 +321,9 @@ def _unit_map_svg(
         rect = leaf.rect
         x, y = _mm(rect.x_mm), _mm(rect.y_mm)
         w, h = _mm(rect.width_mm), _mm(rect.height_mm)
-        opening = str(leaf.opening_type.value)
+        opening = _OPENING_LABELS.get(
+            str(leaf.opening_type.value), str(leaf.opening_type.value)
+        )
         svg.append(
             f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="none" '
             'stroke="#0B7770" stroke-width="2.5" stroke-dasharray="4 4"/>'
@@ -232,17 +332,20 @@ def _unit_map_svg(
             f'fill="#0B4D49" font-size="{small}">'
             f"{escape(opening)}</text>"
         )
-    for member in unit.members:
+    for index, member in enumerate(unit.members):
         code = labels["member"].get(member.member_id, member.semantic_member_id)
         x1, y1 = _mm(member.start.x_mm), _mm(member.start.y_mm)
         x2, y2 = _mm(member.end.x_mm), _mm(member.end.y_mm)
-        # Label sits toward the member's start end and off the run —
-        # mid-run collides with centered infill codes inside the glass area.
+        # Labels stagger along the run and alternate the perpendicular side
+        # so clustered members (sash over frame) don't print their codes on
+        # top of each other; mid-run collides with centered infill codes.
         dx, dy = x2 - x1, y2 - y1
         run = max((dx * dx + dy * dy).sqrt(), Decimal("1"))
         px, py = -dy / run, dx / run
-        lx = (x1 + dx * Decimal("0.12")) + px * font * Decimal("0.9")
-        ly = (y1 + dy * Decimal("0.12")) + py * font * Decimal("0.9")
+        along = Decimal("0.10") + Decimal(index % 3) * Decimal("0.38")
+        side = Decimal("0.9") if index % 2 == 0 else Decimal("-0.7")
+        lx = (x1 + dx * along) + px * font * side
+        ly = (y1 + dy * along) + py * font * side
         svg.append(
             f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
             'stroke="#161C1F" stroke-width="7" stroke-linecap="round"/>'
@@ -256,9 +359,16 @@ def _unit_map_svg(
         x, y = _mm(handle.point.x_mm), _mm(handle.point.y_mm)
         r = font * Decimal("0.55")
         label = f"{code} · {_value(handle.requested_height_mm)} mm"
+        # Right-hand default flips to left-of-mark when it would clip the
+        # viewBox edge (handle near the right jamb).
+        est = Decimal(len(label)) * small * Decimal("0.55")
+        gap = r + font * Decimal("0.3")
+        lx = x + gap
+        if lx + est > width:
+            lx = x - gap - est
         svg.append(
             f'<circle cx="{x}" cy="{y}" r="{r}" fill="#E56A32"/>'
-            f'<text x="{x + r + font * Decimal("0.3")}" '
+            f'<text x="{lx}" '
             f'y="{y + small * Decimal("0.35")}" fill="#8A3A12" '
             f'font-size="{small}" font-weight="700">{escape(label)}</text>'
         )
@@ -341,6 +451,8 @@ def _pack_html(
     optimization: dict[str, object],
     snapshot: dict[str, object],
     labels: dict[str, dict[object, str]],
+    cut_map: dict[tuple[str, ...], str],
+    infills: dict[tuple[str, str, str], str],
     fact_units: list[ManufacturingFactsV1],
     fingerprint: str,
 ) -> str:
@@ -417,24 +529,27 @@ def _pack_html(
     )
     # ---- cut ----
     if bars:
-        body += '<section class="pack-section"><h2>Plan de barras</h2>'
+        body += '<section class="pack-section">'
+        first = True
         for bar in bars:
             source = str(bar.get("source") or "NEW")
             badge = (
                 '<span class="badge badge-remnant">remanente '
-                + escape(_value(bar.get("remnant_id"))[:10])
+                + escape(_value(bar.get("remnant_id")))
                 + "</span>"
                 if source == "REMNANT"
                 else '<span class="badge badge-new">barra nueva</span>'
             )
             body += (
                 '<div class="bar-band">'
-                f"<h3>Barra {_value(bar.get('bar_index'))} · "
+                + ("<h2>Plan de barras</h2>" if first else "")
+                + f"<h3>Barra {_value(bar.get('bar_index'))} · "
                 f"{escape(_value(bar.get('commercial_sku')))} · "
                 f"{escape(_value(bar.get('material')))} · "
                 f"{_value(bar.get('stock_length_mm'))} mm {badge} · "
                 f"rendimiento {_value(bar.get('yield_pct'))}%</h3>"
-                + _bar_svg(bar, labels)
+                + _bar_svg(bar, labels, cut_map)
+                + "</div>"
                 + _table(
                     [
                         "Sec.",
@@ -448,12 +563,9 @@ def _pack_html(
                     [
                         [
                             cut.get("sequence"),
-                            labels["member"].get(
-                                cut.get("piece_id"),
-                                labels["reinforcement"].get(
-                                    cut.get("piece_id"),
-                                    str(cut.get("piece_id") or "")[:10],
-                                ),
+                            cut_map.get(
+                                _cut_key(cut),
+                                str(cut.get("piece_id") or "")[:10],
                             ),
                             labels["position"].get(
                                 cut.get("source_position_id"),
@@ -472,20 +584,25 @@ def _pack_html(
                     ],
                     ["", "", "", "", "dimension", "", "dimension"],
                 )
-                + "</div>"
             )
+            first = False
         body += "</section>"
     if sheets:
-        body += '<section class="pack-section"><h2>Plan de láminas</h2>'
+        body += '<section class="pack-section">'
+        first = True
         for sheet in sheets:
             body += (
-                f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
+                '<div class="bar-band">'
+                + ("<h2>Plan de láminas</h2>" if first else "")
+                + f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
                 f"{escape(_value(sheet.get('purchasing_sku')))} · "
                 f"{_value(sheet.get('sheet_width_mm'))}×"
                 f"{_value(sheet.get('sheet_height_mm'))} mm · "
                 f"rendimiento {_value(sheet.get('yield_pct'))}%</h3>"
-                + _sheet_svg(sheet, labels)
+                + _sheet_svg(sheet, labels, infills)
+                + "</div>"
             )
+            first = False
         body += "</section>"
     if unnested:
         body += (
@@ -494,7 +611,10 @@ def _pack_html(
                 ["Pieza", "Grupo", "Medidas", "Motivo"],
                 [
                     [
-                        str(item.get("kind") or "")
+                        infills.get(
+                            _infill_key(item),
+                            str(item.get("kind") or ""),
+                        )
                         + " · "
                         + _location(
                             labels, item.get("bay_id"), item.get("leaf_id")
@@ -503,7 +623,10 @@ def _pack_html(
                         f"{_value(item.get('width_mm'))}×{_value(item.get('height_mm'))}"
                         if item.get("width_mm")
                         else _value(item.get("length_mm")),
-                        item.get("reason"),
+                        _UNNEST_REASONS.get(
+                            str(item.get("reason") or ""),
+                            item.get("reason"),
+                        ),
                     ]
                     for item in unnested
                 ],
@@ -543,33 +666,38 @@ def _pack_html(
             member_dict = (
                 member.model_dump(mode="json") if member is not None else {}
             )
+            op_dicts = [op.model_dump(mode="json") for op in host_ops]
             body += (
                 '<div class="member-card">'
                 f"<h4>{escape(code)} · "
                 f"{escape(member_dict.get('workshop_sku', '') or '')} · "
                 f"{_value(member_dict.get('cut_length_mm'))} mm</h4>"
-                + _member_svg(member_dict, [op.model_dump(mode="json") for op in host_ops])
+                + _member_svg(member_dict, op_dicts)
                 + '<div class="op-table">'
                 + '<table><colgroup>'
-                + '<col style="width:7mm"/><col style="width:18mm"/>'
-                + '<col style="width:10mm"/><col style="width:10mm"/>'
-                + '<col style="width:13mm"/><col style="width:17mm"/><col/>'
+                + '<col style="width:7mm"/><col style="width:17mm"/>'
+                + '<col style="width:11mm"/><col style="width:14mm"/>'
+                + '<col style="width:12mm"/><col style="width:16mm"/><col/>'
                 + "</colgroup>"
                 + _table_raw(
-                    ["N°", "Op", "x", "y", "P.", "Hr.", "Base"],
+                    ["N°", "Op", "Dist.", "Ref.", "P.", "Hr.", "Base"],
                     [
                         [
                             index + 1,
-                            op.kind.value,
-                            _value(op.x_mm),
-                            _value(op.y_mm),
+                            _OP_LABELS.get(op.kind.value, op.kind.value),
+                            _value(
+                                _op_anchor(member_dict, op_dicts[index])
+                            ),
+                            _op_reference(op.detail),
                             _value(op.depth_mm),
-                            _value(op.tool_id),
-                            _value(op.basis),
+                            _TOOL_LABELS.get(
+                                str(op.tool_id or ""), _value(op.tool_id)
+                            ),
+                            _basis_label(op.basis),
                         ]
                         for index, op in enumerate(host_ops)
                     ],
-                    ["mark", "", "dimension", "dimension", "dimension", "", ""],
+                    ["mark", "", "dimension", "", "dimension", "", ""],
                 )
                 + "</div>"
                 + "</div>"
@@ -596,7 +724,8 @@ def _pack_html(
                         [
                             labels["member"].get(m.member_id, m.semantic_member_id),
                             "Miembro",
-                            f"{escape(m.workshop_sku)} · {escape(m.identity.role.value)}",
+                            f"{escape(m.workshop_sku)} · "
+                            f"{escape(_ROLE_LABELS.get(m.identity.role.value, m.identity.role.value))}",
                         ]
                         for m in unit.members
                     ]
@@ -612,7 +741,7 @@ def _pack_html(
                     + [
                         [
                             labels["infill"].get(i.infill_id, "I"),
-                            str(i.kind),
+                            _INFILL_LABELS.get(i.kind, i.kind),
                             f"{escape(i.technical_sku)} · {escape(i.composition)}",
                         ]
                         for i in unit.infills
@@ -621,7 +750,7 @@ def _pack_html(
                         [
                             labels["handle"].get(h.handle_id, "MAN"),
                             "Herraje",
-                            f"{escape(h.handle_domain_slot)} · "
+                            f"{escape(h.handle_domain_slot.replace('_', ' ').title())} · "
                             f"{_value(h.requested_height_mm)} mm",
                         ]
                         for h in unit.handles
@@ -823,6 +952,8 @@ def render_production_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]
             optimization=optimization,
             snapshot=snapshot,
             labels=labels,
+            cut_map=_cut_member_map(snapshot, labels),
+            infills=_infill_code_map(snapshot, labels),
             fact_units=fact_units,
             fingerprint=fingerprint,
         )

@@ -9964,6 +9964,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: ''
+  /api/v1/projects/{project_id}/approve/:
+    post:
+      operationId: project_quote_approve_internal
+      description: Staff records that the customer approved the quote off-channel
+        — same audit trail and project transition as a portal decision.
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalApprovalRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InternalApprovalRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InternalApprovalRequest'
+      security:
+      - SupabaseBearer: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalApprovalResult'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
   /api/v1/projects/{project_id}/clone/:
     post:
       operationId: projects_clone
@@ -15369,6 +15445,9 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        decided_rut:
+          type: string
+          maxLength: 32
         note:
           type: string
           maxLength: 500
@@ -17459,6 +17538,19 @@ components:
       description: |-
         * `VERIFIED` - VERIFIED
         * `MISMATCH` - MISMATCH
+    InternalApprovalRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 500
+    InternalApprovalResult:
+      type: object
+      properties:
+        project_status:
+          type: string
+      required:
+      - project_status
     InventoryMovement:
       type: object
       properties:
@@ -20149,6 +20241,9 @@ components:
         position_id:
           type: string
           nullable: true
+        labels:
+          type: object
+          additionalProperties: {}
         plan:
           type: object
           additionalProperties: {}

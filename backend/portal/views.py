@@ -21,6 +21,8 @@ from portal import service
 from portal.serializers import (
     ApprovalRecordSerializer,
     DecideRequestSerializer,
+    InternalApprovalResultSerializer,
+    InternalApprovalSerializer,
     PortalQuoteSerializer,
     ShareQuoteResponseSerializer,
 )
@@ -53,6 +55,10 @@ def public_portal_errors():
         if error.code in ("quote_expired", "quote_validity_expired"):
             raise contract_error(
                 410, error.code, "Esta cotización ya no está vigente; solicita un enlace nuevo."
+            ) from error
+        if error.code == "quote_approve_revision_mismatch":
+            raise contract_error(
+                409, error.code, "Esta cotización fue reemplazada por una revisión nueva."
             ) from error
         if error.code == "quote_link_stale":
             raise contract_error(
@@ -139,6 +145,34 @@ class ProjectQuoteLinkRevokeView(APIView):
             )
 
 
+class ProjectQuoteApproveView(APIView):
+    @extend_schema(
+        operation_id="project_quote_approve_internal",
+        description=(
+            "Staff records that the customer approved the quote off-channel — "
+            "same audit trail and project transition as a portal decision."
+        ),
+        request=InternalApprovalSerializer,
+        responses={200: InternalApprovalResultSerializer, **ERRORS},
+    )
+    def post(self, request, project_id: UUID):
+        with public_portal_errors(), documentary_scope(request, _WRITERS) as (
+            token,
+            _,
+            org_id,
+        ):
+            payload = validate(InternalApprovalSerializer, request.data or {})
+            return Response(
+                service.approve_internal(
+                    org_id=org_id,
+                    project_id=project_id,
+                    actor_id=token.user_id,
+                    actor_label=token.email or str(token.user_id),
+                    note=payload.get("note"),
+                )
+            )
+
+
 class PortalQuoteView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -173,5 +207,6 @@ class PortalQuoteDecisionView(APIView):
                 decision=str(data["decision"]),
                 decided_by=str(data["decided_by"]).strip(),
                 note=str(data.get("note") or "").strip() or None,
+                decided_rut=str(data.get("decided_rut") or "").strip() or None,
             )
             return Response(output)

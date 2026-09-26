@@ -331,6 +331,7 @@ class ProductionOrderTraceSerializer(serializers.Serializer):
     project = serializers.DictField(allow_null=True)
     version = serializers.DictField(allow_null=True)
     position_id = serializers.CharField(allow_null=True, required=False)
+    labels = serializers.DictField(required=False)
     plan = serializers.DictField()
     stock = serializers.DictField()
     steps = serializers.ListField()

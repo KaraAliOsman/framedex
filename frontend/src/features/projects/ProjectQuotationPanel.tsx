@@ -9,6 +9,7 @@ import {
   documentaryPrepareInputs,
   documentarySaveInputs,
   productionRelease,
+  projectQuoteApproveInternal,
   projectQuoteLinkCreate,
   projectQuoteLinkRevoke,
   projectQuoteLinksList,
@@ -988,6 +989,16 @@ export function ProjectQuotationPanel({
     (project.versions?.length ?? 0) > 0;
 
   async function shareQuote(): Promise<void> {
+    const pendingLink = (approvals.data ?? []).find(
+      (link) => link.status === "PENDING",
+    );
+    if (pendingLink) {
+      const ok = await confirm({
+        title: t("quotation.shareReplacesLink"),
+        confirmLabel: t("quotation.share"),
+      });
+      if (!ok) return;
+    }
     const current = ++generation.current;
     setBusy(true);
     setMessage("");
@@ -1007,6 +1018,35 @@ export function ProjectQuotationPanel({
       } catch {
         setMessage(url);
       }
+    } catch {
+      if (generation.current === current) setMessage(t("quotation.error"));
+    } finally {
+      if (generation.current === current) setBusy(false);
+    }
+  }
+
+  async function approveInternally(): Promise<void> {
+    const ok = await confirm({
+      title: t("quotation.markApprovedConfirm"),
+      confirmLabel: t("quotation.markApproved"),
+    });
+    if (!ok) return;
+    const current = ++generation.current;
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await projectQuoteApproveInternal(
+        project.id,
+        {},
+        requestOptions,
+      );
+      if (response.status !== 200) throw new ApiError(response.status, response.data);
+      if (generation.current !== current) return;
+      void queryClient.invalidateQueries({
+        queryKey: ["projects", "quote-approvals", orgId, project.id],
+      });
+      await onChanged();
+      setMessage(t("quotation.markApprovedDone"));
     } catch {
       if (generation.current === current) setMessage(t("quotation.error"));
     } finally {
@@ -1066,6 +1106,11 @@ export function ProjectQuotationPanel({
         {canShare && (
           <button disabled={busy} onClick={() => void shareQuote()}>
             {t("quotation.share")}
+          </button>
+        )}
+        {canWrite && project.status === "QUOTED" && (
+          <button disabled={busy} onClick={() => void approveInternally()}>
+            {t("quotation.markApproved")}
           </button>
         )}
       </header>

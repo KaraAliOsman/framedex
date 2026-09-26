@@ -105,6 +105,27 @@ function _sheets(trace: ProductionOrderTrace): Array<Record<string, unknown>> {
   return (trace.plan?.sheets as Array<Record<string, unknown>> | undefined) ?? [];
 }
 
+/** Shop location codes (V-xx bays / H-xx leaves / P-xx positions) matching the
+ * printed packs — the backend emits the same map it uses for the PDFs. */
+function _labels(trace: ProductionOrderTrace): Record<string, string> {
+  return (trace.labels as Record<string, string> | undefined) ?? {};
+}
+
+function _loc(
+  labels: Record<string, string>,
+  piece: { unit_index?: number; bay_id?: string; leaf_id?: string },
+): string {
+  const parts: string[] = [];
+  if (piece.bay_id) {
+    parts.push(labels[piece.bay_id] ?? `b·${piece.bay_id.slice(0, 4)}`);
+  }
+  if (piece.leaf_id) {
+    parts.push(labels[piece.leaf_id] ?? `h·${piece.leaf_id.slice(0, 4)}`);
+  }
+  const prefix = piece.unit_index ? `u${piece.unit_index}` : "";
+  return [prefix, ...parts].filter(Boolean).join(" · ");
+}
+
 function _isShort(value: string | undefined): boolean {
   return !!value && Number(value) > 0;
 }
@@ -127,6 +148,7 @@ export function OperatorStepCard({
   const ops = trace ? _ops(trace) : [];
   const bars = trace ? _bars(trace) : [];
   const sheets = trace ? _sheets(trace) : [];
+  const labels = trace ? _labels(trace) : {};
 
   // Ops land on the station the frozen process authority declares for their
   // kind (END_MACHINING→MACHINING, HANDLE_PREP→HARDWARE on frameless, ...).
@@ -154,7 +176,7 @@ export function OperatorStepCard({
         });
       }
     }
-    cutPieces.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    cutPieces.sort((a, b) => a.barIndex - b.barIndex || (a.sequence ?? 0) - (b.sequence ?? 0));
   }
   const sheetPieces: SheetPiece[] = [];
   if (step.code === "GLAZE" || step.code === "CUT") {
@@ -352,11 +374,7 @@ export function OperatorStepCard({
                         <td>
                           {piece.angle_left ?? "—"}° / {piece.angle_right ?? "—"}°
                         </td>
-                        <td>
-                          {piece.unit_index ? `u${piece.unit_index}` : ""}
-                          {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
-                          {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
-                        </td>
+                        <td>{_loc(labels, piece)}</td>
                         <td>
                           {piece.barIndex}
                           {piece.source === "REMNANT"
@@ -389,11 +407,7 @@ export function OperatorStepCard({
                       <td>
                         {piece.width_mm ?? "—"} × {piece.height_mm ?? "—"}
                       </td>
-                      <td>
-                        {piece.unit_index ? `u${piece.unit_index}` : ""}
-                        {piece.bay_id ? ` · b·${piece.bay_id.slice(0, 4)}` : ""}
-                        {piece.leaf_id ? ` · h·${piece.leaf_id.slice(0, 4)}` : ""}
-                      </td>
+                      <td>{_loc(labels, piece)}</td>
                     </tr>
                   ))}
                 </tbody>

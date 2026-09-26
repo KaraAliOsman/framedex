@@ -74,9 +74,18 @@ class ApprovalRecordSerializer(serializers.Serializer):
     revoked_at = serializers.DateTimeField(allow_null=True)
 
 
+class InternalApprovalSerializer(serializers.Serializer):
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class InternalApprovalResultSerializer(serializers.Serializer):
+    project_status = serializers.CharField()
+
+
 class DecideRequestSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(choices=["APPROVED", "DECLINED"])
     decided_by = serializers.CharField(max_length=255)
+    decided_rut = serializers.CharField(required=False, allow_blank=True, max_length=32)
     note = serializers.CharField(required=False, allow_blank=True, max_length=500)
 
     def validate_decided_by(self, value):

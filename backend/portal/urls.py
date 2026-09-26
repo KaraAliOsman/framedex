@@ -3,6 +3,7 @@ from django.urls import path
 from portal.views import (
     PortalQuoteDecisionView,
     PortalQuoteView,
+    ProjectQuoteApproveView,
     ProjectQuoteLinkRevokeView,
     ProjectQuoteLinkView,
 )
@@ -12,6 +13,11 @@ urlpatterns = [
         "projects/<uuid:project_id>/quote-link/",
         ProjectQuoteLinkView.as_view(),
         name="project-quote-link",
+    ),
+    path(
+        "projects/<uuid:project_id>/approve/",
+        ProjectQuoteApproveView.as_view(),
+        name="project-quote-approve",
     ),
     path(
         "projects/<uuid:project_id>/quote-links/<uuid:approval_id>/revoke/",

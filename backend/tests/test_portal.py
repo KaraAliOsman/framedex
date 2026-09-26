@@ -89,6 +89,20 @@ def test_share_quote_requires_quoted_status(monkeypatch) -> None:
         )
 
 
+class _FakeCursor:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, statement, params=()):
+        pass
+
+    def fetchone(self):
+        return ["authenticated"]
+
+
 def _approval(status="PENDING", expired=False):
     return {
         "id": uuid4(),
@@ -259,7 +273,15 @@ def test_portal_quote_carries_positions_issuer_and_payment_state(monkeypatch) ->
     with patch("portal.service.SupabaseDocumentStorage"):
         out = service.portal_quote("tok")
 
-    assert out["organization"] == {"name": "Vidriería Sur", "tax_id": "76.123.456-7"}
+    assert out["organization"] == {
+        "name": "Vidriería Sur",
+        "tax_id": "76.123.456-7",
+        "commercial_name": None,
+        "brand_address": None,
+        "brand_phone": None,
+        "brand_email": None,
+        "brand_logo_url": None,
+    }
     assert out["payment_terms"] == "50% anticipo"
     assert out["positions"][0]["typology"] == "2F_TT"
     assert out["positions"][0]["parametric_tree"] == {"type": "ROOT"}
@@ -417,6 +439,115 @@ def test_share_supersedes_pending_links(monkeypatch) -> None:
     # outstanding PENDING links on the same version die inside the mint tx
     assert len(revoked) == 1
     assert revoked[0][1:] == [str(actor_id), str(org_id), str(project_id), str(version_id)]
+
+
+def test_approve_internal_mints_decided_row_and_transitions(monkeypatch) -> None:
+    _roles(monkeypatch)
+    org_id, project_id, actor_id, version_id = uuid4(), uuid4(), uuid4(), uuid4()
+    calls: list[str] = []
+
+    def fake_one(sql_text, params, code="not_found"):
+        lowered = " ".join(sql_text.lower().split())
+        calls.append(lowered)
+        if lowered.startswith("insert into public.customer_approvals"):
+            return {
+                "id": uuid4(),
+                "org_id": org_id,
+                "project_id": project_id,
+                "created_by": actor_id,
+            }
+        if lowered.startswith("select id,status,current_revision"):
+            return {
+                "id": project_id,
+                "status": "QUOTED",
+                "current_revision": "REV-A",
+            }
+        raise AssertionError(lowered)
+
+    def fake_rows(sql_text, params=()):
+        lowered = " ".join(sql_text.lower().split())
+        calls.append(lowered)
+        if "project_versions" in lowered:
+            return [{"id": version_id, "revision_code": "REV-A"}]
+        if lowered.startswith("update public.projects"):
+            return [{"id": project_id}]
+        return []
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    monkeypatch.setattr("portal.service.rows", fake_rows)
+    monkeypatch.setattr(
+        "portal.service.connection",
+        SimpleNamespace(cursor=lambda: _FakeCursor()),
+    )
+    out = service.approve_internal(
+        org_id=org_id,
+        project_id=project_id,
+        actor_id=actor_id,
+        actor_label="estimador@taller.cl",
+        note="Aprobó por teléfono",
+    )
+    assert out == {"project_status": "APPROVED"}
+    assert any(
+        c.startswith("update public.customer_approvals") and "'revoked'" in c
+        for c in calls
+    )
+    assert any("status='approved'" in c for c in calls)
+    assert any("update public.projects" in c for c in calls)
+
+
+def test_approve_internal_requires_quoted(monkeypatch) -> None:
+    _roles(monkeypatch)
+
+    def fake_one(sql_text, params, code="not_found"):
+        return {"id": uuid4(), "status": "DRAFT", "current_revision": "REV-A"}
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    with pytest.raises(DocumentaryError, match="quote_approve_requires_quoted"):
+        service.approve_internal(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            actor_label="x@x.cl",
+            note=None,
+        )
+
+
+def test_approve_internal_idempotent_on_approved(monkeypatch) -> None:
+    _roles(monkeypatch)
+
+    def fake_one(sql_text, params, code="not_found"):
+        return {"id": uuid4(), "status": "APPROVED", "current_revision": "REV-A"}
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    out = service.approve_internal(
+        org_id=uuid4(),
+        project_id=uuid4(),
+        actor_id=uuid4(),
+        actor_label="x@x.cl",
+        note=None,
+    )
+    assert out == {"project_status": "APPROVED"}
+
+
+def test_approve_internal_rejects_revision_mismatch(monkeypatch) -> None:
+    _roles(monkeypatch)
+
+    def fake_one(sql_text, params, code="not_found"):
+        return {"id": uuid4(), "status": "QUOTED", "current_revision": "REV-A"}
+
+    def fake_rows(sql_text, params=()):
+        return [{"id": uuid4(), "revision_code": "REV-B"}]
+
+    monkeypatch.setattr("portal.service.one", fake_one)
+    monkeypatch.setattr("portal.service.rows", fake_rows)
+    with pytest.raises(DocumentaryError, match="quote_approve_revision_mismatch"):
+        service.approve_internal(
+            org_id=uuid4(),
+            project_id=uuid4(),
+            actor_id=uuid4(),
+            actor_label="x@x.cl",
+            note=None,
+        )
 
 
 def test_revoke_link_transitions_pending_only(monkeypatch) -> None:

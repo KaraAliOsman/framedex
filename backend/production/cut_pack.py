@@ -13,6 +13,10 @@ from uuid import UUID
 from documents.renderers import (
     _CSS,
     _cldate,
+    _cut_key,
+    _cut_member_map,
+    _infill_code_map,
+    _infill_key,
     _location,
     _piece_labels,
     _table,
@@ -31,9 +35,10 @@ _CSS_PACK = """
         @bottom-center { content: element(titleblock); } }
 .bar-svg { width: 100%; height: auto; display: block; }
 .bar-svg text { font-family: 'IBM Plex Mono', monospace; }
-.sheet-svg { height: 150mm; width: auto; display: block; }
+.sheet-svg { display: block; margin: 0 auto; }
 .sheet-svg text { font-family: 'IBM Plex Mono', monospace; }
-.bar-band { break-inside: avoid; margin-bottom: 6mm; }
+.bar-band { break-inside: avoid; display: inline-block; width: 100%;
+            margin-bottom: 6mm; }
 .pack-meta { display: flex; gap: 8mm; font: 8pt 'IBM Plex Mono', monospace;
              margin: 2mm 0 4mm; }
 .pack-meta strong { color: #161C1F; }
@@ -50,26 +55,65 @@ def _mm(value: object) -> Decimal:
     return Decimal(str(value))
 
 
-def _bar_svg(bar: dict[str, object], labels: dict[str, dict[object, str]]) -> str:
+def _bar_svg(
+    bar: dict[str, object],
+    labels: dict[str, dict[object, str]],
+    cut_map: dict[tuple[str, ...], str],
+) -> str:
     """The wide strip the saw operator reads: head trim → pieces separated
     by kerf marks → tail trim → remainder (green when reusable, hatched when
-    waste). Piece labels alternate above/below so dense cuts never collide."""
+    waste). Text is sized in physical millimetres — a 6000mm bar and a 900mm
+    remnant render the same print size — and dense small pieces take leader
+    labels in alternating lanes so codes never overlap."""
     stock = _mm(bar["stock_length_mm"])
     head_trim = _mm(bar["head_trim_mm"])
     tail_trim = _mm(bar["tail_trim_mm"])
     kerf = _mm(bar["kerf_mm"])
     remainder = _mm(bar["remainder_mm"])
     cuts = [c for c in bar.get("cuts") or [] if isinstance(c, dict)]
-    bar_h = Decimal("90")
-    pad_top = Decimal("80")
-    pad_bottom = Decimal("70")
+    # The strip renders ~260mm wide on the page: `u` viewBox units ≈ 1
+    # printed mm. Sizing every label off `u` keeps real print size constant
+    # regardless of the stock length.
+    u = max(stock / Decimal("260"), Decimal("4"))
+    fs_code = u * Decimal("3.2")
+    fs_dim = u * Decimal("2.8")
+    fs_seq = u * Decimal("3.4")
+    bar_h = u * Decimal("9")
+    # Lanes reach pad_top-16.8u above and pad_top+bar_h+20.8u below — keep
+    # padding beyond the deepest lane so the third leader line never clips.
+    pad_top = u * Decimal("19")
+    pad_bottom = u * Decimal("22")
     height = pad_top + bar_h + pad_bottom
-    view_w = stock
     svg = [
-        f'<svg class="bar-svg" viewBox="0 0 {view_w} {height}" '
+        f'<svg class="bar-svg" viewBox="0 0 {stock} {height}" '
         'preserveAspectRatio="xMinYMid meet" '
         'xmlns="http://www.w3.org/2000/svg">'
     ]
+
+    def _est(text: str, fs: Decimal) -> Decimal:
+        return Decimal(len(text)) * fs * Decimal("0.62")
+
+    lane_step = u * Decimal("6.4")
+    lane_ys = {
+        "above": [pad_top - u * Decimal("4") - i * lane_step for i in range(3)],
+        "below": [
+            pad_top + bar_h + u * Decimal("8") + i * lane_step for i in range(3)
+        ],
+    }
+    lane_used: dict[str, list[list[Decimal]]] = {
+        "above": [[Decimal("0"), Decimal("0")] for _ in range(3)],
+        "below": [[Decimal("0"), Decimal("0")] for _ in range(3)],
+    }
+
+    def _cut_label(cut: dict[str, object]) -> str:
+        piece_id = str(cut.get("piece_id") or "")
+        return cut_map.get(
+            _cut_key(cut),
+            labels["member"].get(
+                piece_id, labels["reinforcement"].get(piece_id, piece_id[:10])
+            ),
+        )
+
     x = Decimal("0")
     usable_end = stock - remainder
     # head trim
@@ -78,57 +122,87 @@ def _bar_svg(bar: dict[str, object], labels: dict[str, dict[object, str]]) -> st
             f'<rect x="{x}" y="{pad_top}" width="{head_trim}" height="{bar_h}" '
             'fill="#465158" stroke="#161C1F" stroke-width="1"/>'
         )
-        if head_trim >= 60:
+        if head_trim >= u * Decimal("3"):
             svg.append(
                 f'<text x="{x + head_trim / 2}" y="{pad_top + bar_h / 2}" '
                 'text-anchor="middle" dominant-baseline="middle" fill="#FCFDFC" '
-                'font-size="18">punta</text>'
+                f'font-size="{fs_dim}">punta</text>'
             )
         x += head_trim
     for index, cut in enumerate(cuts):
         piece_len = _mm(cut["length_mm"])
-        piece_id = str(cut.get("piece_id") or "")
-        code = labels["member"].get(
-            piece_id, labels["reinforcement"].get(piece_id, piece_id[:10])
-        )
+        code = _cut_label(cut)
         location = _location(labels, cut.get("bay_id"), cut.get("leaf_id"))
         position = labels["position"].get(cut.get("source_position_id"), "")
-        angles = f"{_value(cut.get('angle_left'))}°/{_value(cut.get('angle_right'))}°"
-        above = index % 2 == 0
+        angles = (
+            f"{_value(cut.get('angle_left'))}°/{_value(cut.get('angle_right'))}°"
+        )
+        seq = str(cut.get("sequence") or index + 1)
         svg.append(
             f'<rect x="{x}" y="{pad_top}" width="{piece_len}" height="{bar_h}" '
             'fill="#0B7770" stroke="#075F5A" stroke-width="1.5"/>'
         )
         center = x + piece_len / 2
-        if piece_len >= 110:
+        inside = (
+            _est(code, fs_code) < piece_len * Decimal("0.9")
+            and _est(location, fs_dim) < piece_len * Decimal("0.9")
+        )
+        if inside:
             svg.append(
-                f'<text x="{center}" y="{pad_top + bar_h / 2 - 12}" '
-                'text-anchor="middle" fill="#FCFDFC" font-size="24" '
-                f'font-weight="600">{escape(str(code))}</text>'
-                f'<text x="{center}" y="{pad_top + bar_h / 2 + 20}" '
-                'text-anchor="middle" fill="#FCFDFC" font-size="18">'
-                f'{escape(location)}{" " if position else ""}{escape(str(position))}</text>'
+                f'<text x="{center}" y="{pad_top + bar_h * Decimal("0.38")}" '
+                'text-anchor="middle" fill="#FCFDFC" '
+                f'font-size="{fs_code}" font-weight="600">{escape(code)}</text>'
+                f'<text x="{center}" y="{pad_top + bar_h * Decimal("0.78")}" '
+                'text-anchor="middle" fill="#FCFDFC" '
+                f'font-size="{fs_dim}">'
+                f'{escape(location)}{" " if position else ""}'
+                f'{escape(str(position))}</text>'
             )
             svg.append(
-                f'<text x="{center}" y="{pad_top + bar_h + 34}" '
-                'text-anchor="middle" fill="#161C1F" font-size="20">'
+                f'<text x="{center}" y="{pad_top + bar_h + u * Decimal("4.5")}" '
+                'text-anchor="middle" fill="#161C1F" '
+                f'font-size="{fs_dim}">'
                 f'{_value(cut.get("length_mm"))} mm · {angles}</text>'
             )
         else:
-            label_y = pad_top - 14 if above else pad_top + bar_h + 34
+            if _est(seq, fs_seq) < piece_len * Decimal("0.8"):
+                svg.append(
+                    f'<text x="{center}" y="{pad_top + bar_h / 2}" '
+                    'text-anchor="middle" dominant-baseline="middle" '
+                    f'fill="#FCFDFC" font-size="{fs_seq}" '
+                    f'font-weight="600">{seq}</text>'
+                )
+            side = "above" if index % 2 == 0 else "below"
+            label = f"{seq} · {code} · {_value(cut.get('length_mm'))}"
+            half = _est(label, fs_code) / 2
+            lane = 0
+            while (
+                lane < 2
+                and center - half <= lane_used[side][lane][1]
+                and lane_used[side][lane][1] > 0
+            ):
+                lane += 1
+            cx = center
+            if lane_used[side][lane][1] > 0 and cx - half <= lane_used[side][lane][1]:
+                # Deepest lane already busy — nudge the label right of the
+                # used extent; the leader line slants but never overlaps.
+                cx = lane_used[side][lane][1] + half + u * Decimal("1.5")
+            lane_used[side][lane] = [cx - half, cx + half]
+            ly = lane_ys[side][lane]
+            anchor_y = pad_top if side == "above" else pad_top + bar_h
             svg.append(
-                f'<line x1="{center}" y1="{pad_top if above else pad_top + bar_h}" '
-                f'x2="{center}" y2="{label_y + (6 if above else -6)}" '
+                f'<line x1="{center}" y1="{anchor_y}" '
+                f'x2="{cx - half}" y2="{ly + (u * Decimal("1.2") if side == "above" else -u * Decimal("3.4"))}" '
                 'stroke="#465158" stroke-width="1"/>'
-                f'<text x="{center}" y="{label_y}" text-anchor="middle" '
-                f'fill="#161C1F" font-size="18">{escape(str(code))} · '
-                f'{_value(cut.get("length_mm"))}</text>'
+                f'<text x="{cx}" y="{ly}" text-anchor="middle" '
+                f'fill="#161C1F" font-size="{fs_code}" '
+                f'font-weight="600">{escape(label)}</text>'
             )
         x += piece_len
         if index < len(cuts) - 1 and kerf > 0:
             svg.append(
-                f'<rect x="{x}" y="{pad_top - 6}" width="{kerf}" '
-                f'height="{bar_h + 12}" fill="#E56A32"/>'
+                f'<rect x="{x}" y="{pad_top - u * Decimal("0.8")}" width="{kerf}" '
+                f'height="{bar_h + u * Decimal("1.6")}" fill="#E56A32"/>'
             )
             x += kerf
     if tail_trim > 0:
@@ -146,11 +220,18 @@ def _bar_svg(bar: dict[str, object], labels: dict[str, dict[object, str]]) -> st
             'stroke-dasharray="6 3"/>'
         )
         tag = "retazo" if reusable else "desecho"
-        if remainder >= 90:
+        if remainder >= u * Decimal("4"):
+            # Clamp the label inside the piece — a narrow remainder at the
+            # right edge otherwise spills past the viewBox.
+            label = f"{tag} {_value(remainder)} mm"
+            cx = min(
+                x + remainder / 2,
+                stock - u * Decimal("0.5") - _est(label, fs_dim) / 2,
+            )
             svg.append(
-                f'<text x="{x + remainder / 2}" y="{pad_top + bar_h / 2}" '
+                f'<text x="{cx}" y="{pad_top + bar_h / 2}" '
                 'text-anchor="middle" dominant-baseline="middle" '
-                'fill="#161C1F" font-size="18">'
+                f'fill="#161C1F" font-size="{fs_dim}">'
                 f'{tag} {escape(_value(remainder))} mm</text>'
             )
     # stock baseline
@@ -162,13 +243,35 @@ def _bar_svg(bar: dict[str, object], labels: dict[str, dict[object, str]]) -> st
     return "".join(svg)
 
 
-def _sheet_svg(sheet: dict[str, object], labels: dict[str, dict[object, str]]) -> str:
+_UNNEST_REASONS = {
+    "shaped_glass_outline": "Vidrio con forma — corte por plantilla",
+    "no_declared_sheet": "Sin lámina declarada",
+    "piece_larger_than_usable_sheet": "Pieza mayor que la lámina útil",
+}
+
+
+def _sheet_svg(
+    sheet: dict[str, object],
+    labels: dict[str, dict[object, str]],
+    infills: dict[tuple[str, str, str], str],
+) -> str:
     sheet_w = _mm(sheet["sheet_width_mm"])
     sheet_h = _mm(sheet["sheet_height_mm"])
     margin = Decimal("60")
+    # Explicit mm sizing — ~1:20 print scale, capped to fit the landscape
+    # content box (~259×190mm after h2/h3). WeasyPrint ignores CSS height on
+    # SVGs inside shrink-wrap contexts, so the scale lives on the element.
+    vb_w = sheet_w + margin * 2
+    vb_h = sheet_h + margin * 2
+    scale = min(
+        Decimal("0.05"),
+        Decimal("250") / vb_w,
+        Decimal("150") / vb_h,
+    )
     svg = [
-        f'<svg class="sheet-svg" viewBox="{-margin} {-margin} '
-        f'{sheet_w + margin * 2} {sheet_h + margin * 2}" '
+        f'<svg class="sheet-svg" width="{vb_w * scale}mm" '
+        f'height="{vb_h * scale}mm" viewBox="{-margin} {-margin} '
+        f'{vb_w} {vb_h}" '
         'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">',
         f'<rect x="0" y="0" width="{sheet_w}" height="{sheet_h}" fill="#F5F7F6" '
         'stroke="#161C1F" stroke-width="4"/>',
@@ -179,16 +282,31 @@ def _sheet_svg(sheet: dict[str, object], labels: dict[str, dict[object, str]]) -
         x, y = _mm(placement["x_mm"]), _mm(placement["y_mm"])
         w, h = _mm(placement["width_mm"]), _mm(placement["height_mm"])
         location = _location(labels, placement.get("bay_id"), placement.get("leaf_id"))
+        code = infills.get(_infill_key(placement), str(placement.get("piece_id") or ""))
         rotated = bool(placement.get("rotated"))
+        # Print-size labels: a full-height piece earns ~5mm code text; fonts
+        # shrink with the smaller piece dimension so narrow panes stay legible.
+        fs_code = min(
+            h * Decimal("0.075"),
+            w * Decimal("0.9") / (Decimal("0.62") * Decimal(max(len(code), 1))),
+        )
+        fs_dim = fs_code * Decimal("0.8")
+        fs_loc = fs_code * Decimal("0.62")
+        gap = fs_code * Decimal("1.15")
         svg.append(
             f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#BFE6E0" '
             'stroke="#075F5A" stroke-width="3"/>'
-            f'<text x="{x + w / 2}" y="{y + h / 2 - 10}" text-anchor="middle" '
-            'fill="#0B4D49" font-size="42" font-weight="600">'
-            f'{escape(location)}{" ⟳" if rotated else ""}</text>'
-            f'<text x="{x + w / 2}" y="{y + h / 2 + 36}" text-anchor="middle" '
-            'fill="#161C1F" font-size="34">'
+            f'<text x="{x + w / 2}" y="{y + h / 2 - gap}" text-anchor="middle" '
+            'fill="#0B4D49" '
+            f'font-size="{fs_code}" font-weight="600">'
+            f'{escape(code)}{" ⟳" if rotated else ""}</text>'
+            f'<text x="{x + w / 2}" y="{y + h / 2 + fs_dim}" text-anchor="middle" '
+            'fill="#161C1F" '
+            f'font-size="{fs_dim}">'
             f'{_value(w)}×{_value(h)}</text>'
+            f'<text x="{x + w / 2}" y="{y + h / 2 + gap + fs_dim}" '
+            'text-anchor="middle" '
+            f'fill="#4A5559" font-size="{fs_loc}">{escape(location)}</text>'
         )
     for remnant in sheet.get("produced_remnants") or []:
         if not isinstance(remnant, dict):
@@ -208,6 +326,8 @@ def _pack_html(
     order: dict[str, object],
     optimization: dict[str, object],
     labels: dict[str, dict[object, str]],
+    cut_map: dict[tuple[str, ...], str],
+    infills: dict[tuple[str, str, str], str],
     fingerprint: str,
 ) -> str:
     order_code = _value(order["order_code"])
@@ -250,32 +370,37 @@ def _pack_html(
         "</div>"
     )
     if bars:
-        body += "<h2>Plan de barras</h2>"
+        first = True
         for bar in bars:
             source = str(bar.get("source") or "NEW")
             badge = (
                 '<span class="badge badge-remnant">remanente '
-                + escape(_value(bar.get("remnant_id"))[:10])
+                + escape(_value(bar.get("remnant_id")))
                 + "</span>"
                 if source == "REMNANT"
                 else '<span class="badge badge-new">barra nueva</span>'
             )
             body += (
                 '<div class="bar-band">'
-                f"<h3>Barra {_value(bar.get('bar_index'))} · "
+                + ("<h2>Plan de barras</h2>" if first else "")
+                + f"<h3>Barra {_value(bar.get('bar_index'))} · "
                 f"{escape(_value(bar.get('commercial_sku')))} · "
                 f"{escape(_value(bar.get('material')))} · "
                 f"{_value(bar.get('stock_length_mm'))} mm {badge} · "
                 f"rendimiento {_value(bar.get('yield_pct'))}%</h3>"
-                + _bar_svg(bar, labels)
+                + _bar_svg(bar, labels, cut_map)
+                + "</div>"
                 + _table(
                     ["Sec.", "Pieza", "Posición", "Vano / hoja", "Corte mm", "Ángulos", "Sagitta"],
                     [[cut.get("sequence"),
-                      labels["member"].get(
-                          cut.get("piece_id"),
-                          labels["reinforcement"].get(
+                      cut_map.get(
+                          _cut_key(cut),
+                          labels["member"].get(
                               cut.get("piece_id"),
-                              str(cut.get("piece_id") or "")[:10],
+                              labels["reinforcement"].get(
+                                  cut.get("piece_id"),
+                                  str(cut.get("piece_id") or "")[:10],
+                              ),
                           ),
                       ),
                       labels["position"].get(
@@ -290,30 +415,41 @@ def _pack_html(
                      if isinstance(cut, dict)],
                     ["", "", "", "", "dimension", "", "dimension"],
                 )
-                + "</div>"
             )
+            first = False
     if sheets:
-        body += "<h2>Plan de láminas</h2>"
+        first = True
         for sheet in sheets:
+            # The h2 rides inside the first band — break-after:avoid is
+            # unreliable across pages in WeasyPrint, while an inline-level
+            # box is atomic by construction.
             body += (
-                f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
+                '<div class="bar-band">'
+                + ("<h2>Plan de láminas</h2>" if first else "")
+                + f"<h3>Lámina {_value(sheet.get('sheet_index'))} · "
                 f"{escape(_value(sheet.get('purchasing_sku')))} · "
                 f"{_value(sheet.get('sheet_width_mm'))}×"
                 f"{_value(sheet.get('sheet_height_mm'))} mm · "
                 f"rendimiento {_value(sheet.get('yield_pct'))}%</h3>"
-                + _sheet_svg(sheet, labels)
+                + _sheet_svg(sheet, labels, infills)
+                + "</div>"
             )
+            first = False
     if unnested:
         body += (
             "<h2>Piezas no ubicadas</h2>"
             + _table(
                 ["Pieza", "Grupo", "Medidas", "Motivo"],
-                [[str(item.get("kind") or "") + " · "
-                  + _location(labels, item.get("bay_id"), item.get("leaf_id")),
+                [[infills.get(
+                      _infill_key(item),
+                      str(item.get("kind") or "") + " · "
+                      + _location(labels, item.get("bay_id"), item.get("leaf_id")),
+                  ),
                   item.get("group"),
                   f"{_value(item.get('width_mm'))}×{_value(item.get('height_mm'))}"
                   if item.get("width_mm") else _value(item.get("length_mm")),
-                  item.get("reason")]
+                  _UNNEST_REASONS.get(str(item.get("reason") or ""),
+                                      _value(item.get("reason")))]
                  for item in unnested],
                 ["", "", "dimension", ""],
             )
@@ -376,6 +512,8 @@ def render_cut_pack(*, org_id: UUID, order_id: UUID) -> tuple[bytes, str]:
             order=order,
             optimization=optimization,
             labels=labels,
+            cut_map=_cut_member_map(snapshot, labels),
+            infills=_infill_code_map(snapshot, labels),
             fingerprint=fingerprint,
         )
     content = HTML(string=html, url_fetcher=_url_fetcher).write_pdf(

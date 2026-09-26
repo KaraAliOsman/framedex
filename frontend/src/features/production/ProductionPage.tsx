@@ -1257,6 +1257,7 @@ export function ProductionPage(): JSX.Element {
                           <CutPlanView
                             key={optimization.optimized_at ?? "optimization"}
                             optimization={optimization}
+                            labels={(trace?.labels as Record<string, string> | undefined) ?? {}}
                           />
                         ) : null}
                         {cutPlan.length ? (

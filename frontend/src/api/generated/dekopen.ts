@@ -109,6 +109,8 @@ import type {
   ImportRequestRequest,
   ImportUploadRequest,
   InstallationRequestRequest,
+  InternalApprovalRequest,
+  InternalApprovalResult,
   InventoryMovement,
   InventoryMovementRequestRequest,
   InventoryMovements,
@@ -11011,6 +11013,95 @@ export const projectsUpdate = async (
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(patchedProjectUpdateRequest),
   });
+};
+
+export type projectQuoteApproveInternalResponse200 = {
+  data: InternalApprovalResult;
+  status: 200;
+};
+
+export type projectQuoteApproveInternalResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type projectQuoteApproveInternalResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type projectQuoteApproveInternalResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type projectQuoteApproveInternalResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type projectQuoteApproveInternalResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type projectQuoteApproveInternalResponse422 = {
+  data: ErrorResponse;
+  status: 422;
+};
+
+export type projectQuoteApproveInternalResponse503 = {
+  data: ErrorResponse;
+  status: 503;
+};
+
+export type projectQuoteApproveInternalResponseSuccess = projectQuoteApproveInternalResponse200 & {
+  headers: Headers;
+};
+export type projectQuoteApproveInternalResponseError = (
+  | projectQuoteApproveInternalResponse400
+  | projectQuoteApproveInternalResponse401
+  | projectQuoteApproveInternalResponse403
+  | projectQuoteApproveInternalResponse404
+  | projectQuoteApproveInternalResponse409
+  | projectQuoteApproveInternalResponse422
+  | projectQuoteApproveInternalResponse503
+) & {
+  headers: Headers;
+};
+
+export type projectQuoteApproveInternalResponse =
+  projectQuoteApproveInternalResponseSuccess | projectQuoteApproveInternalResponseError;
+
+export const getProjectQuoteApproveInternalUrl = (projectId: string) => {
+  return `/api/v1/projects/${projectId}/approve/`;
+};
+
+/**
+ * Staff records that the customer approved the quote off-channel — same audit trail and project transition as a portal decision.
+ */
+export const projectQuoteApproveInternal = async (
+  projectId: string,
+  internalApprovalRequest?: InternalApprovalRequest,
+  options?: Parameters<typeof apiMutator>[1],
+): Promise<projectQuoteApproveInternalResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return apiMutator<projectQuoteApproveInternalResponse>(
+    getProjectQuoteApproveInternalUrl(projectId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+      body: JSON.stringify(internalApprovalRequest),
+    },
+  );
 };
 
 export type projectsCloneResponse201 = {

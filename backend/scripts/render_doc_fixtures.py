@@ -18,7 +18,8 @@ django.setup()
 from documents.renderers import _doc01, _CSS  # noqa: E402
 
 
-def _position(i, location, typology, w, h, qty, price, ci="WHITE", ce="WHITE"):
+def _position(i, location, typology, w, h, qty, price, ci="WHITE", ce="WHITE",
+              discount="0"):
     return {
         "position_index": str(i),
         "location_tag": location,
@@ -27,6 +28,7 @@ def _position(i, location, typology, w, h, qty, price, ci="WHITE", ce="WHITE"):
         "height_mm": Decimal(h),
         "quantity": Decimal(qty),
         "price_net": Decimal(price),
+        "discount_pct": Decimal(discount),
         "color_interior": ci,
         "color_exterior": ce,
         "parametric_tree": {
@@ -36,16 +38,12 @@ def _position(i, location, typology, w, h, qty, price, ci="WHITE", ce="WHITE"):
             "children": [
                 {
                     "type": "BAY",
-                    "opening_type": (
-                        "TILT_TURN_LEFT"
-                        if typology == "TILT_TURN"
-                        else {
-                            "FIXED": "FIXED",
-                            "TILT": "AWNING",
-                            "SLIDING_2L": "SLIDING_2L",
-                            "CORNER": "FIXED",
-                        }.get(typology, "FIXED")
-                    ),
+                    "opening_type": {
+                        "TILT_TURN": "TILT_TURN_LEFT",
+                        "AWNING": "AWNING",
+                        "SLIDING_2L": "SLIDING_2L",
+                        "DOOR_ENTRY": "DOOR_ENTRY",
+                    }.get(typology, "FIXED"),
                     "glass_spec": "DVC 4-12-4",
                     "children": [],
                 }
@@ -69,9 +67,7 @@ def _snapshot(project_overrides, positions, revision="A"):
         "payment_terms": "Anticipo 40% al aprobar, saldo contra entrega",
         "quotation_valid_until": "2026-10-15",
         "notes_commercial": "Incluye instalación y sellado. No incluye terminaciones interiores.",
-        "total_price_net": sum(
-            Decimal(p["price_net"]) * Decimal(p["quantity"]) for p in positions
-        ),
+        "total_price_net": sum(Decimal(p["price_net"]) for p in positions),
     }
     project.update(project_overrides)
     net = project["total_price_net"]
@@ -101,8 +97,9 @@ CASES = {
         [
             _position(1, "Living", "TILT_TURN", 2400, 1800, 1, 685000),
             _position(2, "Dormitorio 1", "FIXED", 1200, 1400, 1, 198000),
-            _position(3, "Dormitorio 2", "TILT_TURN", 1400, 1400, 2, 268000),
-            _position(4, "Baño", "TILT", 600, 900, 1, 98000, "FOILED", "FOILED"),
+            _position(3, "Dormitorio 2", "TILT_TURN", 1400, 1400, 2, 268000,
+                      discount="10"),
+            _position(4, "Baño", "AWNING", 600, 900, 1, 98000, "FOILED", "FOILED"),
         ],
     ),
     "apartment-block": _snapshot(
@@ -152,7 +149,7 @@ CASES = {
             _position(
                 i,
                 f"Unidad residencial tipo A piso {i} dormitorio principal oriente",
-                "TILT_TURN" if i % 2 else "CORNER",
+                "TILT_TURN" if i % 2 else "COMPOSITE",
                 2400,
                 1800,
                 1,

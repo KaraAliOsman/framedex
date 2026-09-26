@@ -149,13 +149,26 @@ function num(value: string | number | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Same member = same source opening + sash/pane + role — cross-highlights
- * every cut/nest belonging to one physical fenestration member. */
+/** Interchangeable piece spec — the same join the printed packs use to list
+ * shared piece codes: location (position/bay/leaf) + role + sku + measure +
+ * angles. Two different frame members of one bay only group when they are
+ * literally the same cut spec. */
 function memberKey(piece: CutPlacement | NestPlacement): string {
-  const role = (piece as CutPlacement).role ?? "";
-  return [piece.source_position_id ?? "-", piece.bay_id ?? "-", piece.leaf_id ?? "-", role].join(
-    "|",
-  );
+  const cut = piece as CutPlacement;
+  const nest = piece as NestPlacement;
+  const measure =
+    cut.length_mm != null
+      ? `L${cut.length_mm}|${cut.angle_left ?? ""}|${cut.angle_right ?? ""}`
+      : `N${nest.width_mm ?? ""}x${nest.height_mm ?? ""}`;
+  return [
+    piece.source_position_id ?? "-",
+    piece.bay_id ?? "-",
+    piece.leaf_id ?? "-",
+    cut.role ?? "",
+    cut.source_kind ?? "",
+    piece.workshop_sku ?? "",
+    measure,
+  ].join("|");
 }
 
 function materialClass(material: string | undefined, kind?: string): string {
@@ -373,7 +386,14 @@ function pieceLabel(piece: CutPlacement | NestPlacement, code: string): string {
   return piece.workshop_sku ? `${piece.workshop_sku} · ${code}` : code;
 }
 
-export function CutPlanView({ optimization }: { optimization: WorkOrderOptimization }) {
+export function CutPlanView({
+  optimization,
+  labels = {},
+}: {
+  optimization: WorkOrderOptimization;
+  /** Shop codes matching the printed packs (V-xx/H-xx/P-xx) keyed by id. */
+  labels?: Record<string, string>;
+}) {
   const [selected, setSelected] = useState<PieceRef | null>(null);
   const bars = optimization.bars?.workshop_cut_plan ?? [];
   const sheets = optimization.sheets ?? [];
@@ -396,9 +416,11 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       material: cut.material ?? "—",
       color: cut.color ?? "—",
       role: cutRoleLabel(cut.role),
-      position: shortId(piece.source_position_id),
-      bay: shortId(piece.bay_id),
-      leaf: shortId(piece.leaf_id),
+      position:
+        (piece.source_position_id && labels[piece.source_position_id]) ??
+        shortId(piece.source_position_id),
+      bay: (piece.bay_id && labels[piece.bay_id]) ?? shortId(piece.bay_id),
+      leaf: (piece.leaf_id && labels[piece.leaf_id]) ?? shortId(piece.leaf_id),
       unit: piece.unit_index ?? 1,
       measure: isCut
         ? `${fmtMm(cut.length_mm)} mm`
@@ -406,7 +428,7 @@ export function CutPlanView({ optimization }: { optimization: WorkOrderOptimizat
       angles,
       memberCount: 0,
     };
-  }, [selected]);
+  }, [selected, labels]);
 
   if (detail && selected) {
     // Count every placement sharing this member across bars + sheets.

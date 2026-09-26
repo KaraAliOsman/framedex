@@ -321,8 +321,11 @@ def ops_document(
     machine: MachineProfile = NEUTRAL_MACHINE_PROFILE,
     order_code: str,
     plan_seed: str | None = None,
+    piece_labels: dict[str, str] | None = None,
 ) -> dict[str, object]:
-    """Canonical machine-neutral ops document (dekopen_ops_v1)."""
+    """Canonical machine-neutral ops document (dekopen_ops_v1).
+    ``piece_labels`` maps piece/member ids to shop codes (M-xx/R-xx/…):
+    presentation metadata, never dimensional authority."""
     emitted = {op.kind.value for op in ops}
     all_kinds = {kind.value for kind in OperationKind}
     return {
@@ -333,6 +336,7 @@ def ops_document(
         "operation_count": len(ops),
         "counts_by_kind": {kind: len(group) for kind, group in _group(ops).items()},
         "unemitted_kinds": sorted(all_kinds - emitted),
+        "piece_labels": dict(piece_labels or {}),
         "operations": [op.model_dump(mode="json") for op in ops],
     }
 
@@ -378,16 +382,24 @@ class NeutralOpsPostProcessor:
 
     _CSV_HEADER = (
         "operation_id,kind,host_kind,host,coordinate_system,"
-        "x_mm,y_mm,angle_left_deg,angle_right_deg,depth_mm,tool_id,basis"
+        "x_mm,y_mm,angle_left_deg,angle_right_deg,depth_mm,tool_id,basis,"
+        "piece_id,piece_label,sequence,bar_sku"
     )
 
     def render(self, document: dict[str, object]) -> dict[str, str]:
         raw_ops = document.get("operations")
         ops = raw_ops if isinstance(raw_ops, list) else []
+        labels = document.get("piece_labels")
+        piece_labels = labels if isinstance(labels, dict) else {}
         rows = [self._CSV_HEADER]
         for op in ops:
             if not isinstance(op, dict):
                 continue
+            detail = op.get("detail")
+            detail = detail if isinstance(detail, dict) else {}
+            piece_id = detail.get("piece_id") or (
+                op.get("host") if op.get("host_kind") == "MEMBER" else ""
+            )
             rows.append(
                 ",".join(
                     _cell(op.get(key))
@@ -398,6 +410,10 @@ class NeutralOpsPostProcessor:
                         "tool_id", "basis",
                     )
                 )
+                + "," + _cell(piece_id)
+                + "," + _cell(piece_labels.get(str(piece_id), ""))
+                + "," + _cell(detail.get("sequence"))
+                + "," + _cell(detail.get("commercial_sku"))
             )
         return {
             "operations.json": json.dumps(

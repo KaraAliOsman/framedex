@@ -2077,7 +2077,10 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
                 "order_code": "OT-P-AAA-01",
                 "status": "IN_PROGRESS",
                 "payload_json": {"optimization": optimization},
+                "project_version_id": str(uuid4()),
             }
+        if "project_versions" in lowered:
+            return {"snapshot_json": {}}
         raise AssertionError(f"unexpected one(): {lowered}")
 
     monkeypatch.setattr("production.service.one", fake_one)
@@ -2096,13 +2099,16 @@ def test_export_dxf_files_writes_deterministic_geometry(monkeypatch) -> None:
     assert sorted(out["files"]) == ["bars.dxf", "sheet_1.dxf"]
     sheet = stored["files"]["sheet_1.dxf"]
     assert sheet.startswith("0\nSECTION\n2\nHEADER") and sheet.endswith("0\nEOF\n")
-    assert "AC1015" in sheet and "V-01·U2 800x600" in sheet
+    # ASCII-only labels (AC1015-era DXF) and AcDb subclass markers.
+    assert "AC1015" in sheet and "V-01-U2 800x600" in sheet
+    assert "100\nAcDbPolyline" in sheet and "100\nAcDbText" in sheet
     bars = stored["files"]["bars.dxf"]
-    assert "M-02·U1 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    assert "M-02-U1 1200 45.0/45.0" in bars and "MARCO-60" in bars
+    assert "100\nAcDbLine" in bars
     # Saw consumption matches optimize_cut: head trim once (mark at 15),
     # then each piece length + one kerf → piece ends at 1215 and 2719.
     for mark_x in ("10\n15\n20", "10\n1215\n20", "10\n2719\n20"):
-        assert f"8\nMARK\n{mark_x}" in bars
+        assert f"AcDbLine\n{mark_x}" in bars
     assert "10\n1200\n20" not in bars
     assert stored["schema"] == "work_order_dxf_export_v1"
     assert stored["optimization_fingerprint"]

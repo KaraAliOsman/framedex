@@ -28,7 +28,20 @@ from dekopen_engine.operations import (
     operations_from_plan,
     ops_document,
 )
-from documents.repository import DocumentaryError, documentary_backend, one, rows
+from documents.repository import (
+    DocumentaryError,
+    decoded,
+    documentary_backend,
+    one,
+    rows,
+)
+from documents.renderers import (
+    _cut_key,
+    _cut_member_map,
+    _infill_code_map,
+    _infill_key,
+    _piece_labels,
+)
 from engine_api.cutting_repository import CuttingRepository
 from inventory import remnants as remnants_service
 from inventory import production_stock
@@ -1947,10 +1960,37 @@ def export_operations(
             for bar in (optimization.get("bars") or {}).get("workshop_cut_plan") or []
         ]
         ops = operations_from_plan(bars=bars, fact_units=fact_units)
+        empty_labels: dict[str, dict[object, str]] = {
+            key: {}
+            for key in (
+                "member", "reinforcement", "infill", "handle",
+                "bay", "leaf", "leaf_fact", "position",
+            )
+        }
+        try:
+            labels = _piece_labels(version_snapshot)
+        except DocumentaryError:
+            labels = empty_labels
+        cut_map = _cut_member_map(version_snapshot, labels)
+        piece_labels = {
+            str(mid): code for mid, code in labels["member"].items()
+        }
+        piece_labels.update(
+            {str(rid): code for rid, code in labels["reinforcement"].items()}
+        )
+        for bar in (optimization.get("bars") or {}).get(
+            "workshop_cut_plan"
+        ) or []:
+            for cut in (bar.get("cuts") or []) if isinstance(bar, dict) else []:
+                if isinstance(cut, dict) and cut.get("piece_id"):
+                    piece_labels[str(cut["piece_id"])] = cut_map.get(
+                        _cut_key(cut), ""
+                    )
         document = ops_document(
             ops,
             order_code=str(order["order_code"]),
             plan_seed=(optimization.get("bars") or {}).get("plan_seed"),
+            piece_labels=piece_labels,
         )
         files = NeutralOpsPostProcessor().render(document)
         manufacturing = _raw_fact_units(
@@ -2063,7 +2103,9 @@ def export_dxf_files(
     with transaction.atomic(), documentary_backend():
         order = one(
             """
-            SELECT id, order_code, status::text, payload_json FROM public.orders
+            SELECT id, order_code, status::text, payload_json,
+                   project_version_id
+            FROM public.orders
             WHERE id = %s AND org_id = %s AND order_type = 'WORKSHOP_OT'
             FOR UPDATE
             """,
@@ -2082,7 +2124,47 @@ def export_dxf_files(
             raise DocumentaryError("dxf_requires_optimization")
         if optimization.get("invalidated"):
             raise DocumentaryError("plan_invalidated")
-        files = dxf_files(optimization)
+        # Resolve printed piece codes against the sealed snapshot so machine
+        # labels match the packs (M-xx / R-xx / I-xx) instead of hash prefixes.
+        version = one(
+            "SELECT snapshot_json::text AS snapshot_json "
+            "FROM public.project_versions WHERE id=%s AND org_id=%s",
+            [str(order["project_version_id"]), str(org_id)],
+            "version_not_found",
+        )
+        snapshot = decoded(version["snapshot_json"])
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+        labels = _piece_labels({
+            **snapshot,
+            "manufacturing": snapshot.get("manufacturing")
+            if isinstance(snapshot.get("manufacturing"), list)
+            else [],
+            "positions": snapshot.get("positions")
+            if isinstance(snapshot.get("positions"), list)
+            else [],
+        })
+        cut_map = _cut_member_map(snapshot, labels)
+        infill_map = _infill_code_map(snapshot, labels)
+        codes: dict[str, str] = {}
+        for bar in (optimization.get("bars") or {}).get("workshop_cut_plan") or []:
+            if not isinstance(bar, dict):
+                continue
+            for cut in bar.get("cuts") or []:
+                if isinstance(cut, dict) and cut.get("piece_id"):
+                    code = cut_map.get(_cut_key(cut))
+                    if code:
+                        codes[str(cut["piece_id"])] = code
+        for sheet in optimization.get("sheets") or []:
+            if not isinstance(sheet, dict):
+                continue
+            for placement in sheet.get("placements") or []:
+                if isinstance(placement, dict) and placement.get("piece_id"):
+                    codes[str(placement["piece_id"])] = infill_map.get(
+                        _infill_key(placement),
+                        str(placement["piece_id"]),
+                    )
+        files = dxf_files(optimization, codes=codes)
         if not files:
             raise DocumentaryError("dxf_requires_optimization")
         export = {

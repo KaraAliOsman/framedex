@@ -268,17 +268,36 @@ def _sealed_positions(version: dict[str, object]) -> list[dict[str, object]]:
             "glass_specs": glass_specs,
             "finish": finish or None,
             "price_net": str(value.get("price_net") or "0"),
+            "discount_pct": str(value.get("discount_pct") or "0"),
             "parametric_tree": value.get("parametric_tree"),
         })
     return positions
 
 
 def _sealed_organization(version: dict[str, object]) -> dict[str, object]:
+    """The issuer's white-label identity for the proposal page — commercial
+    name, contact lines and a signed logo URL, all from the sealed snapshot
+    so a later rebrand can't rewrite a live quote."""
     snapshot = decoded(version["snapshot_json"])
     org = snapshot.get("organization") if isinstance(snapshot, dict) else None
     if not isinstance(org, dict):
         return {}
-    return {"name": org.get("name"), "tax_id": org.get("tax_id")}
+    logo_url = None
+    logo_key = org.get("brand_logo_key")
+    if logo_key:
+        try:
+            logo_url = SupabaseDocumentStorage().signed_url(str(logo_key))
+        except Exception:
+            logo_url = None
+    return {
+        "name": org.get("name"),
+        "tax_id": org.get("tax_id"),
+        "commercial_name": org.get("commercial_name"),
+        "brand_address": org.get("brand_address"),
+        "brand_phone": org.get("brand_phone"),
+        "brand_email": org.get("brand_email"),
+        "brand_logo_url": logo_url,
+    }
 
 
 def _payment_state(
@@ -342,6 +361,7 @@ def portal_quote(token: str) -> dict[str, object]:
             "emitted_at": version["emitted_at"].isoformat(),
             "currency": sealed.get("currency") or "CLP",
             "payment_terms": sealed.get("payment_terms"),
+            "notes_commercial": sealed.get("notes_commercial"),
             "total_price_net": str(sealed.get("total_price_net") or "0"),
             "total_price_tax": str(sealed.get("total_price_tax") or "0"),
             "total_price_gross": str(gross),
@@ -367,8 +387,123 @@ def portal_quote(token: str) -> dict[str, object]:
         }
 
 
+def _transition_project_approved(
+    *, approval: dict[str, object], version_id: str, now: datetime
+) -> None:
+    """Move the live project to APPROVED and queue its material forecast.
+
+    Runs inside the caller's atomic block. The pricing trigger only allows
+    pricing_backend and its project policy checks the caller's membership
+    role, so the transition asserts the claims the approval delegated:
+    created_by was verified as OWNER/ESTIMATOR when the approval was minted.
+    The status guard makes the write atomic — a concurrent decision that
+    commits first turns this into a no-op.
+    """
+    claims = json.dumps({"sub": str(approval["created_by"])})
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT set_config('request.jwt.claims', %s, true)", [claims]
+        )
+        cursor.execute("SET LOCAL ROLE pricing_backend")
+    updated = rows(
+        "UPDATE public.projects SET status='APPROVED',updated_at=%s "
+        "WHERE id=%s AND org_id=%s AND status='QUOTED' RETURNING id",
+        [now, approval["project_id"], approval["org_id"]],
+    )
+    if len(updated) != 1:
+        raise DocumentaryError("quote_link_stale")
+    # §08: an approved quote queues the material forecast for the version it
+    # decided — the job carries the approval's minted actor as its principal.
+    from automations.service import emit
+
+    emit(
+        "automation.prep_forecast",
+        org_id=UUID(str(approval["org_id"])),
+        actor_id=UUID(str(approval["created_by"])),
+        idempotency_key=f"auto:prep:{version_id}",
+        version_id=version_id,
+    )
+
+
+def approve_internal(
+    *,
+    org_id: UUID,
+    project_id: UUID,
+    actor_id: UUID,
+    actor_label: str,
+    note: str | None,
+) -> dict[str, object]:
+    """Staff records that the customer approved the quote off-channel.
+
+    Mints an already-APPROVED approval row bound to the project's latest
+    sealed version — the same audit shape a customer decision leaves — and
+    runs the same project transition. Outstanding pending links for the
+    revision are revoked: the deal is decided, so no token should stay live.
+    """
+    with documentary_backend():
+        project = one(
+            "SELECT id,status,current_revision FROM public.projects "
+            "WHERE id=%s AND org_id=%s",
+            [str(project_id), str(org_id)],
+            "project_not_found",
+        )
+        live_status = str(project["status"])
+        if live_status == "APPROVED":
+            return {"project_status": "APPROVED"}
+        if live_status != "QUOTED":
+            raise DocumentaryError("quote_approve_requires_quoted")
+        versions = rows(
+            "SELECT id,revision_code FROM public.project_versions "
+            "WHERE project_id=%s AND org_id=%s "
+            "ORDER BY emitted_at DESC,id DESC LIMIT 1",
+            [str(project_id), str(org_id)],
+        )
+        if not versions:
+            raise DocumentaryError("version_not_found")
+        if str(project["current_revision"]) != str(versions[0]["revision_code"]):
+            raise DocumentaryError("quote_approve_revision_mismatch")
+
+    now = datetime.now(timezone.utc)
+    with transaction.atomic(), documentary_backend():
+        rows(
+            "UPDATE public.customer_approvals SET status='REVOKED',revoked_at=%s,"
+            "revoked_by=%s WHERE org_id=%s AND project_id=%s "
+            "AND project_version_id=%s AND status='PENDING'",
+            [now, str(actor_id), str(org_id), str(project_id),
+             str(versions[0]["id"])],
+        )
+        internal_token = secrets.token_urlsafe(_TOKEN_BYTES)
+        approval = one(
+            "INSERT INTO public.customer_approvals "
+            "(org_id,project_id,project_version_id,token_hash,status,decided_by,"
+            "decided_at,decided_note,expires_at,created_by) "
+            "VALUES (%s,%s,%s,%s,'APPROVED',%s,%s,%s,%s,%s) "
+            "RETURNING id,org_id,project_id,created_by",
+            [
+                str(org_id),
+                str(project_id),
+                str(versions[0]["id"]),
+                hashlib.sha256(internal_token.encode()).hexdigest(),
+                actor_label,
+                now,
+                note or None,
+                now + timedelta(days=_APPROVAL_TTL_DAYS),
+                str(actor_id),
+            ],
+        )
+        _transition_project_approved(
+            approval=approval, version_id=str(versions[0]["id"]), now=now
+        )
+    return {"project_status": "APPROVED"}
+
+
 def decide_quote(
-    *, token: str, decision: str, decided_by: str, note: str | None
+    *,
+    token: str,
+    decision: str,
+    decided_by: str,
+    note: str | None,
+    decided_rut: str | None = None,
 ) -> dict[str, object]:
     """Approve or decline the shared quote; replays return the sealed state."""
     with transaction.atomic(), portal_backend():
@@ -398,53 +533,18 @@ def decide_quote(
                 "UPDATE public.customer_approvals SET status=%s,decided_by=%s,"
                 "decided_at=%s,decided_note=%s WHERE id=%s AND status='PENDING' "
                 "RETURNING id",
-                [decision, decided_by, now, note or None, approval["id"]],
+                [
+                    decision,
+                    f"{decided_by} · {decided_rut}" if decided_rut else decided_by,
+                    now,
+                    note or None,
+                    approval["id"],
+                ],
             )
             if decided and decision == "APPROVED" and live_status == "QUOTED":
-                # Project status transitions belong to the commercial service:
-                # the pricing trigger and revision guard only allow
-                # pricing_backend, and its project policy checks the caller's
-                # membership role. The approval carries that delegated
-                # authority — created_by was verified as OWNER/ESTIMATOR when
-                # the link was minted — so assert those claims for the
-                # transition, exactly as authenticated_rls_context does for a
-                # real request. The decider is recorded on the approval row.
-                claims = json.dumps({"sub": str(approval["created_by"])})
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT set_config('request.jwt.claims', %s, true)",
-                        [claims],
-                    )
-                    cursor.execute("SET LOCAL ROLE pricing_backend")
-                updated = rows(
-                    "UPDATE public.projects SET status='APPROVED',updated_at=%s "
-                    "WHERE id=%s AND org_id=%s AND status='QUOTED' RETURNING id",
-                    [now, approval["project_id"], approval["org_id"]],
+                _transition_project_approved(
+                    approval=approval,
+                    version_id=str(approval["project_version_id"]),
+                    now=now,
                 )
-                if len(updated) != 1:
-                    raise DocumentaryError("quote_link_stale")
-                # §08: an approved quote queues the material forecast for the
-                # version it decided — the job carries the link's minted actor
-                # (verified OWNER/ESTIMATOR at share time) as its principal.
-                # The surrounding role is pricing_backend; the version lookup
-                # needs documentary grants.
-                from automations.service import emit
-
-                with documentary_backend():
-                    version_rows = rows(
-                        "SELECT id FROM public.project_versions "
-                        "WHERE project_id=%s AND org_id=%s AND revision_code=%s "
-                        "ORDER BY emitted_at DESC,id DESC LIMIT 1",
-                        [str(approval["project_id"]), str(approval["org_id"]),
-                         version["revision_code"]],
-                    )
-                if version_rows:
-                    version_id = str(version_rows[0]["id"])
-                    emit(
-                        "automation.prep_forecast",
-                        org_id=UUID(str(approval["org_id"])),
-                        actor_id=UUID(str(approval["created_by"])),
-                        idempotency_key=f"auto:prep:{version_id}",
-                        version_id=version_id,
-                    )
     return portal_quote(token)

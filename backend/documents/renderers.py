@@ -75,16 +75,16 @@ h3 { font-size: 9.5pt; font-weight: 600; margin: 4mm 0 1.5mm; color: #252D31; } 
 .brand .mark { display: inline-block; width: 2.4mm; height: 2.4mm; background: #E56A32; margin-left: 1.6mm; }
 .brand-logo { display: block; max-height: 12mm; max-width: 48mm; }
 .brand-sub { font-size: 6.5pt; color: #727D82; letter-spacing: 0.9pt; margin-top: 1.2mm; }
-.meta { text-align: right; color: #727D82; font: 8pt 'IBM Plex Mono', monospace; padding-right: 9mm; }
+.meta { text-align: right; color: #727D82; font: 8pt 'IBM Plex Mono', monospace; padding-right: 11mm; }
 .meta strong { color: #252D31; font-weight: 500; }
 .rule-stack { border-top: 1.5pt solid #075F5A; border-bottom: 0.5pt solid #CDD5D6; height: 1.2mm; margin-bottom: 6mm; }
 .miter { position: absolute; top: 0; right: 0; width: 8mm; height: 8mm; }
-.hero { position: relative; background: #E6F4F2; border-left: 3px solid #0B7770; padding: 4mm 5mm; margin: 3mm 0 5mm; }
+.hero { position: relative; background: #E6F4F2; border-left: 3px solid #0B7770; padding: 3mm 5mm; margin: 2.5mm 0 4mm; }
 .hero p { color: #465158; } .total { font-size: 14pt; font-weight: 600; color: #075F5A; }
 table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; table-layout: fixed; }
 thead { border-top: 0.9pt solid #465158; }
 th { color: #465158; font: 6.5pt 'IBM Plex Sans', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; border-bottom: 0.9pt solid #465158; padding: 1.4mm 1.8mm; }
-td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: normal; hyphens: auto; }
+td { border-bottom: 0.5pt solid #CDD5D6; padding: 1.6mm 1.8mm; vertical-align: top; overflow-wrap: break-word; hyphens: manual; }
 tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .workshop h1 { font-size: 14pt; } .workshop th { background: #252D31; color: #FCFDFC; }
 .dimension { font: 11pt 'IBM Plex Mono', monospace; font-weight: 500; color: #161C1F; }
@@ -93,15 +93,17 @@ tbody tr:last-child td { border-bottom: 0.9pt solid #465158; }
 .confidential { color: #991B1B; font-weight: 600; font-size: 6.5pt; text-transform: uppercase; letter-spacing: 0.8pt; }
 .muted { color: #727D82; } .signature { height: 15mm; border-bottom: 0.5pt solid #465158; margin-top: 6mm; }
 .signoff { break-inside: avoid; }
-.sign-row { display: flex; gap: 8mm; margin-top: 10mm; margin-bottom: 7mm; }
-.sign-cell { flex: 1; height: 12mm; border-bottom: 0.5pt solid #465158; position: relative; }
+.keep { break-inside: avoid; }
+.sign-row { display: flex; gap: 8mm; margin-top: 4mm; margin-bottom: 4mm; }
+.sign-cell { flex: 1; height: 10mm; border-bottom: 0.5pt solid #465158; position: relative; }
 .sign-cell.sign-date { flex: 0 0 22mm; }
 .sign-label { position: absolute; bottom: -4.5mm; left: 0; font: 600 6pt 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #727D82; }
 table tr { break-inside: avoid; }
-.sol-table td.dimension, table td.dimension { text-align: right; }
+.sol-table td.dimension, table td.dimension { text-align: right; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
 svg:not(.miter) { max-width: 100%; height: auto; display: block; } svg text { font-family: 'IBM Plex Mono', monospace; }
 .figures { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 4mm; }
-.figures figure { margin: 0; width: 58mm; break-inside: avoid; }
+.figures figure { margin: 0; width: 46mm; break-inside: avoid; }
 /* Extreme-aspect openings (500×2300) at fixed width would render taller than
    the page and bleed through the footer — cap the drawable height. */
 .figures svg { max-height: 190mm; }
@@ -260,8 +262,8 @@ def _money(amount: object, currency: object) -> str:
     code = _value(currency)
     if code == "CLP":
         grouped = f"{value:,.0f}".replace(",", ".")
-        return f"$ {grouped}"
-    return f"{code} {value:,.2f}"
+        return f"$\u00a0{grouped}"
+    return f"{code}\u00a0{value:,.2f}"
 
 
 def _cldate(raw: object) -> str:
@@ -681,6 +683,17 @@ def _revision_header(
                 f"{escape(issuer_name)}"
                 f" · RUT {escape(_value(organization.get('tax_id')))}<br>"
             )
+        contact = " · ".join(
+            part
+            for part in (
+                _value(organization.get("brand_address")),
+                _value(organization.get("brand_phone")),
+                _value(organization.get("brand_email")),
+            )
+            if part and part != "—"
+        )
+        if contact:
+            issuer += f"{escape(contact)}<br>"
     bom_hash = _value(snapshot.get("bom_hash"))
     class_name = "workshop" if workshop else ""
     sealed_at = _value(snapshot.get("sealed_at"))
@@ -743,7 +756,8 @@ def _doc01(snapshot: dict[str, object]) -> str:
             _value(position.get("height_mm")), specs,
             _value(position.get("color_interior")),
             _value(position.get("color_exterior")),
-            _value(position.get("price_net")), tree_sig,
+            _value(position.get("price_net")),
+            _value(position.get("discount_pct")), tree_sig,
         )
         bucket = groups.setdefault(key, {
             "indexes": [], "locations": [], "quantity": Decimal("0"),
@@ -763,6 +777,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
     opening_rows = []
     for key, bucket in groups.items():
         typology, width_mm, height_mm, specs, ci, ce = key[:6]
+        discount_pct = key[7]
         indexes = bucket["indexes"]
         # Long grouped index lists wrap horribly — compact to first…last + n.
         index_cell = (
@@ -778,11 +793,17 @@ def _doc01(snapshot: dict[str, object]) -> str:
              else f"{table_locations[0]} … {table_locations[-1]} ({len(table_locations)})")
             or "—",
             _TYPOLOGY_ES.get(typology, typology),
-            f"{width_mm} × {height_mm}",
+            f"{width_mm}\u00a0×\u00a0{height_mm}",
             bucket["quantity"], specs, _finish(ci, ce),
+            (
+                f"{format(_num(discount_pct).normalize(), 'f')}%"
+                if discount_pct not in ("0", "0.00", "0.0000", "—", "")
+                else "—"
+            ),
             _money(bucket["price_net"], currency) if bucket["priced"] else "—",
         ])
-    body, _ = _revision_header(snapshot, "Cotización comercial", "DOC-01")
+    quote_folio = f"COT-{_value(project.get('code'))}-{_value(snapshot.get('revision'))}"
+    body, _ = _revision_header(snapshot, "Cotización comercial", quote_folio)
     client_lines = []
     for label, field in (("RUT", "client_rut"), ("Giro", "client_giro"),
                          ("Comuna", "client_comuna"), ("Dirección", "client_address"),
@@ -801,22 +822,25 @@ def _doc01(snapshot: dict[str, object]) -> str:
         "</section>"
         "<h2>Solución propuesta</h2>"
         '<table class="sol-table"><colgroup>'
-        '<col style="width:7%"><col style="width:15%"><col style="width:12%">'
-        '<col style="width:12%"><col style="width:7%"><col style="width:19%">'
-        '<col style="width:13%"><col style="width:15%">'
+        '<col style="width:5%"><col style="width:17%"><col style="width:15%">'
+        '<col style="width:12%"><col style="width:5%"><col style="width:16%">'
+        '<col style="width:10%"><col style="width:6%"><col style="width:14%">'
         "</colgroup><thead><tr>"
         "<th>Pos.</th><th>Ubicación</th><th>Tipología</th>"
-        "<th>Dimensiones (mm)</th><th>Cant.</th><th>Relleno</th>"
-        "<th>Acabado</th><th>Neto</th></tr></thead><tbody>"
+        "<th>Dimensiones (mm)</th><th>Cant.</th><th>Vidrio / relleno</th>"
+        "<th>Acabado</th><th>Dcto.</th><th>Neto</th></tr></thead><tbody>"
         + "".join(
-            _row(row, ["", "", "", "", "dimension", "", "", "dimension"])
+            _row(row, ["", "", "", "nowrap", "dimension", "", "", "", "dimension"])
             for row in opening_rows
         )
         + "</tbody></table>"
     )
     # One figure per opening group — identical units share a drawing and the
     # caption lists every position it covers, keeping long quotes compact.
-    body += '<h2>Vistas de vanos</h2><div class="figures">'
+    # The flex grid can't fragment mid-page in WeasyPrint, so it sits between
+    # the totals and the commercial close — conditions and the signature block
+    # keep flowing on the same page instead of orphaning a final page.
+    figures = '<h2>Vistas de los productos</h2><div class="figures">'
     for bucket in groups.values():
         ref = bucket["ref_position"]
         location_list = bucket["locations"]
@@ -831,16 +855,32 @@ def _doc01(snapshot: dict[str, object]) -> str:
             if len(index_list) <= 6
             else f"{index_list[0]} … {index_list[-1]} ({len(index_list)})"
         )
-        body += (
+        figures += (
             f'<figure>{_position_svg(ref)}'
             f'<figcaption><span class="figpos">Pos. '
-            f'{escape(indexes)}</span><br/>'
-            f'{escape(locations)}<br/>'
+            f'{escape(indexes)}</span> · {escape(locations)}<br/>'
             f'<span class="figdim">{escape(_value(ref.get("width_mm")))} × '
             f'{escape(_value(ref.get("height_mm")))} mm</span> · Cant. '
             f'{escape(_value(bucket["quantity"]))}</figcaption></figure>'
         )
-    body += "</div>"
+    figures += "</div>"
+    granted_discounts = sorted(
+        {
+            key[7]
+            for key in groups
+            if key[7] not in ("0", "0.00", "0.0000", "—", "")
+        },
+        key=lambda item: _num(item),
+    )
+    discount_note = (
+        "<p class=\"muted\">Precios incluyen descuento del "
+        + " / ".join(
+            f"{format(_num(pct).normalize(), 'f')}%" for pct in granted_discounts
+        )
+        + ".</p>"
+        if granted_discounts
+        else ""
+    )
     body += (
         "<h2>Resumen comercial</h2>"
         + _table(["Neto", "Impuesto", "Total"], [[
@@ -848,6 +888,9 @@ def _doc01(snapshot: dict[str, object]) -> str:
             _money(project.get("total_price_tax"), currency),
             _money(project.get("total_price_gross"), currency),
         ]], ["dimension", "dimension", "dimension"])
+        + discount_note
+        + figures
+        + '<div class="keep">'
         + f"<h2>Condiciones</h2><p><strong>Pago:</strong> {escape(_value(project.get('payment_terms')))}</p>"
         + "<p><strong>Oferta válida hasta:</strong> "
         + escape(_cldate(project.get("quotation_valid_until"))) + "</p>"
@@ -859,7 +902,7 @@ def _doc01(snapshot: dict[str, object]) -> str:
         '<div class="sign-cell sign-date"><span class="sign-label">Fecha</span></div>'
         "</div>"
         '<p class="muted">Aceptación del cliente — la firma confirma la '
-        "aceptación de esta cotización.</p></div></main>"
+        "aceptación de esta cotización.</p></div></div></main>"
     )
     return body
 
@@ -1069,6 +1112,145 @@ def _short_id(value: object) -> str:
     return text
 
 
+def _norm_dec(value: object) -> str:
+    """Normalize a Decimal-serialized value for join keys — '1800.00' and
+    '1800' must collide, trailing zeros must not split identities."""
+    if value is None:
+        return ""
+    return format(Decimal(str(value)).normalize(), "f")
+
+
+def _role_name(value: object) -> str:
+    """Enum identities travel as 'ProfileRole.FRAME' through stored JSON and
+    as 'FRAME' through live engine dumps — collapse both to the name."""
+    return str(value if value is not None else "").rsplit(".", 1)[-1]
+
+
+def _join_codes(codes: list[str]) -> str:
+    unique = sorted(set(codes))
+    if len(unique) <= 3:
+        return " · ".join(unique)
+    return f"{unique[0]} · +{len(unique) - 1}"
+
+
+def _cut_member_map(
+    snapshot: dict[str, object], labels: dict[str, dict[object, str]]
+) -> dict[tuple[str, ...], str]:
+    """Cut-spec → member/reinforcement codes for saw output.
+
+    A bar cut's piece_id is a sha256 of the cut spec, never the frozen member
+    identity, so cut artifacts used to print hash prefixes. The join runs on
+    the deterministic spec tuple. Identical members share one spec — the
+    printed code lists every member the piece serves, which stays honest
+    because those pieces are physically interchangeable.
+    """
+    manufacturing = snapshot.get("manufacturing")
+    if not isinstance(manufacturing, list):
+        return {}
+    spec: dict[tuple[str, ...], list[str]] = {}
+    for fact in manufacturing:
+        if not isinstance(fact, dict):
+            continue
+        members = {
+            str(item.get("member_id")): item
+            for item in _array(fact.get("members"), "invalid_manufacturing_fact")
+        }
+        for item in members.values():
+            identity = _object(item.get("identity"), "invalid_manufacturing_fact")
+            key = (
+                "PROFILE",
+                str(item.get("workshop_sku") or ""),
+                _norm_dec(item.get("cut_length_mm")),
+                _norm_dec(item.get("angle_left")),
+                _norm_dec(item.get("angle_right")),
+                _role_name(identity.get("role")),
+                str(item.get("bay_id") or ""),
+                str(item.get("leaf_id") or ""),
+                str(identity.get("position_id") or ""),
+                _norm_dec(item.get("sagitta_mm")),
+            )
+            spec.setdefault(key, []).append(
+                labels["member"].get(
+                    item.get("member_id"), str(item.get("member_id") or "")[:10]
+                )
+            )
+        for item in _array(fact.get("reinforcements"), "invalid_manufacturing_fact"):
+            parent = members.get(str(item.get("parent_member_id")))
+            if parent is None:
+                continue
+            identity = _object(parent.get("identity"), "invalid_manufacturing_fact")
+            key = (
+                "REINFORCEMENT",
+                str(item.get("workshop_sku") or ""),
+                _norm_dec(item.get("cut_length_mm")),
+                _norm_dec(item.get("angle_left")),
+                _norm_dec(item.get("angle_right")),
+                _role_name(identity.get("role")),
+                str(parent.get("bay_id") or ""),
+                str(parent.get("leaf_id") or ""),
+                str(identity.get("position_id") or ""),
+                "",
+            )
+            spec.setdefault(key, []).append(
+                labels["reinforcement"].get(
+                    item.get("reinforcement_id"),
+                    str(item.get("reinforcement_id") or "")[:10],
+                )
+            )
+    return {key: _join_codes(codes) for key, codes in spec.items()}
+
+
+def _cut_key(cut: dict[str, object]) -> tuple[str, ...]:
+    """The spec tuple a placed cut joins on — mirrors _cut_member_map."""
+    return (
+        str(cut.get("source_kind") or "PROFILE"),
+        str(cut.get("workshop_sku") or ""),
+        _norm_dec(cut.get("length_mm")),
+        _norm_dec(cut.get("angle_left")),
+        _norm_dec(cut.get("angle_right")),
+        _role_name(cut.get("role")),
+        str(cut.get("bay_id") or ""),
+        str(cut.get("leaf_id") or ""),
+        str(cut.get("source_position_id") or ""),
+        _norm_dec(cut.get("sagitta_mm")),
+    )
+
+
+def _infill_code_map(
+    snapshot: dict[str, object], labels: dict[str, dict[object, str]]
+) -> dict[tuple[str, str, str], str]:
+    """(position, bay, leaf) → infill codes, so sheet/nested pieces print the
+    I-xx identity the assembly map and glazing table already use instead of a
+    sheet-local V-xx counter that collides with bay codes."""
+    manufacturing = snapshot.get("manufacturing")
+    if not isinstance(manufacturing, list):
+        return {}
+    spec: dict[tuple[str, str, str], list[str]] = {}
+    for fact in manufacturing:
+        if not isinstance(fact, dict):
+            continue
+        for item in _array(fact.get("infills"), "invalid_manufacturing_fact"):
+            key = (
+                str(item.get("position_id") or ""),
+                str(item.get("bay_id") or ""),
+                str(item.get("leaf_id") or ""),
+            )
+            spec.setdefault(key, []).append(
+                labels["infill"].get(
+                    item.get("infill_id"), str(item.get("infill_id") or "")[:10]
+                )
+            )
+    return {key: _join_codes(codes) for key, codes in spec.items()}
+
+
+def _infill_key(piece: dict[str, object]) -> tuple[str, str, str]:
+    return (
+        str(piece.get("source_position_id") or ""),
+        str(piece.get("bay_id") or ""),
+        str(piece.get("leaf_id") or ""),
+    )
+
+
 def _location(labels: dict[str, dict[object, str]], bay_id: object, leaf_id: object) -> str:
     bay = labels["bay"].get(bay_id, _value(bay_id))
     if leaf_id is None:
@@ -1085,6 +1267,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
     groups = [_object(item, "invalid_stock_group")
               for item in _array(purchase.get("stock_groups"), "invalid_purchase_projection")]
     labels = _piece_labels(snapshot)
+    cut_map = _cut_member_map(snapshot, labels)
     body, _ = _revision_header(snapshot, "Plan de corte 1D", "DOC-05", workshop=True)
     for group in groups:
         body += (
@@ -1104,11 +1287,7 @@ def _doc05(snapshot: dict[str, object]) -> str:
                 + _table(
                     ["Sec.", "Pieza física", "Posición", "Vano / hoja", "SKU taller", "Corte mm", "Ángulos", "Flecha mm"],
                     [[cut.get("sequence"),
-                      labels["member"].get(cut.get("piece_id"),
-                                           labels["reinforcement"].get(
-                                               cut.get("piece_id"),
-                                               _short_id(cut.get("piece_id")),
-                                           )),
+                      cut_map.get(_cut_key(cut), _short_id(cut.get("piece_id"))),
                       labels["position"].get(
                           cut.get("source_position_id"),
                           _short_id(cut.get("source_position_id")),
@@ -1142,7 +1321,7 @@ def _doc06(snapshot: dict[str, object]) -> str:
         ["Herrajes", "Operación y calibración física", "□", "________________"],
         ["Vidrios / paneles", "Sin daño y correctamente retenidos", "□", "________________"],
     ]
-    body += _table(["Control", "Criterio esperado", "Sin completar", "Medición / observación"], rows)
+    body += _table(["Control", "Criterio esperado", "Cumple", "Medición / observación"], rows)
     body += (
         "<p><strong>Operador:</strong> ______________________________</p>"
         "<p><strong>Fecha de ejecución QC:</strong> __________________</p>"
@@ -1276,8 +1455,8 @@ def _receipt_body(payload: dict[str, object]) -> str:
         f'<span class="tb-value">{escape(receipt_code)}</span></div>'
         f'<div class="tb-cell"><span class="tb-label">Fecha</span>'
         f'<span class="tb-value">{escape(_cldate(issued_at))}</span></div>'
-        f'<div class="tb-cell tb-wide"><span class="tb-label">Operación</span>'
-        f'<span class="tb-value">{escape(_value(payment.get("operation_key")))}</span></div>'
+        f'<div class="tb-cell tb-wide"><span class="tb-label">Concepto</span>'
+        f'<span class="tb-value">{escape(kind)}</span></div>'
         '<div class="tb-cell"><span class="tb-label">Página</span>'
         '<span class="tb-value"><span class="pg"></span></span></div>'
         "</div>"
@@ -1292,8 +1471,17 @@ def _receipt_body(payload: dict[str, object]) -> str:
         "<h1>Comprobante de pago</h1>"
         '<section class="hero"><p>Recibido de</p>'
         f"<h2>{escape(_value(project.get('client_name')))}</h2>"
-        f"<p>RUT: {escape(_value(project.get('client_rut')))} · "
-        f"{escape(_value(project.get('delivery_address')))}</p>"
+        f"<p>RUT: {escape(_value(project.get('client_rut')))}"
+        + (
+            f" · {escape(_value(project.get('client_address')))}"
+            if _value(project.get("client_address")) != "—"
+            else (
+                f" · {escape(_value(project.get('client_comuna')))}"
+                if _value(project.get("client_comuna")) != "—"
+                else ""
+            )
+        )
+        + "</p>"
         f'<p class="total">Monto: {escape(_money(payment.get("amount"), currency))}</p></section>'
     )
     body += (
@@ -1453,6 +1641,7 @@ def render_dispatch_note(
 _TYPOLOGY_ES = {
     "FIXED": "Fijo",
     "TURN": "Abatible",
+    "TILT": "Oscilante",
     "TILT_TURN": "Oscilobatiente",
     "SLIDING_2L": "Corredera 2 hojas",
     "SLIDING_3L": "Corredera 3 hojas",
@@ -1460,6 +1649,10 @@ _TYPOLOGY_ES = {
     "SLIDING": "Corredera",
     "AWNING": "Proyectante",
     "DOOR_ENTRY": "Puerta",
+    "DOOR_DOUBLE": "Puerta doble",
+    "CORNER": "Esquinero",
+    "BOW": "Ventana en arco",
+    "FRAMELESS": "Vidrio sin marco",
     "COMPOSITE": "Conjunto",
 }
 
@@ -1547,7 +1740,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
         body += (
             "<h2>Detalle</h2>"
             + _table(
-                ["Posición", "Tipología", "Medidas (mm)", "Cantidad"],
+                ["Posición", "Tipología", "Medidas (mm)", "Cantidad", "Neto"],
                 [
                     [
                         position.get("position_index"),
@@ -1555,7 +1748,7 @@ def _invoice_body(payload: dict[str, object]) -> str:
                             _value(position.get("typology")),
                             _value(position.get("typology")),
                         ),
-                        f"{_value(position.get('width_mm'))} × "
+                        f"{_value(position.get('width_mm'))}\u00a0×\u00a0"
                         f"{_value(position.get('height_mm'))}"
                         + (
                             f" · {_value(position.get('location_tag'))}"
@@ -1563,10 +1756,11 @@ def _invoice_body(payload: dict[str, object]) -> str:
                             else ""
                         ),
                         position.get("quantity"),
+                        _money(position.get("price_net"), currency),
                     ]
                     for position in positions
                 ],
-                ["dimension", "", "", "dimension"],
+                ["", "", "", "dimension", "dimension"],
             )
         )
     payment_terms = _value(project.get("payment_terms"))
@@ -1653,7 +1847,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
     body += (
         f"<p><strong>Referencia:</strong> anula Factura {escape(invoice_code)}"
         + (
-            f" emitida el {escape(str(invoice.get('issued_at'))[:10])}"
+            f" emitida el {escape(_cldate(invoice.get('issued_at')))}"
             if invoice.get("issued_at")
             else ""
         )
@@ -1666,7 +1860,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
         body += (
             "<h2>Detalle</h2>"
             + _table(
-                ["Posición", "Tipología", "Medidas (mm)", "Cantidad"],
+                ["Posición", "Tipología", "Medidas (mm)", "Cantidad", "Neto"],
                 [
                     [
                         position.get("position_index"),
@@ -1674,7 +1868,7 @@ def _credit_note_body(payload: dict[str, object]) -> str:
                             _value(position.get("typology")),
                             _value(position.get("typology")),
                         ),
-                        f"{_value(position.get('width_mm'))} × "
+                        f"{_value(position.get('width_mm'))}\u00a0×\u00a0"
                         f"{_value(position.get('height_mm'))}"
                         + (
                             f" · {_value(position.get('location_tag'))}"
@@ -1682,10 +1876,11 @@ def _credit_note_body(payload: dict[str, object]) -> str:
                             else ""
                         ),
                         position.get("quantity"),
+                        _money(position.get("price_net"), currency),
                     ]
                     for position in positions
                 ],
-                ["dimension", "", "", "dimension"],
+                ["", "", "", "dimension", "dimension"],
             )
         )
     body += (

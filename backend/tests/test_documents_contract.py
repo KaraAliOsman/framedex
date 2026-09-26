@@ -268,7 +268,7 @@ def test_client_document_escapes_input_and_never_contains_raw_cost() -> None:
     html = _doc01(revision_snapshot())
     assert "Cliente &lt;Seguro&gt;" in html
     assert "60000.00" not in html
-    assert "$ 119.000" in html
+    assert "$\u00a0119.000" in html
 
 
 def test_client_quote_includes_deterministic_opening_drawings() -> None:
@@ -383,7 +383,7 @@ def test_qc_is_blank_and_cost_report_uses_frozen_not_recorded_authority() -> Non
     assert "Diferencia ≤ 1.50 mm" in qc
     assert "________________" in qc
     cost = _doc07(revision_snapshot())
-    assert "$ 60.000" in cost
+    assert "$\u00a060.000" in cost
     assert "NO REGISTRADA" in cost
     assert "valor: —" in cost
     invalid = {**revision_snapshot(), "realized_waste": {"status": "RECORDED", "value": "0"}}
