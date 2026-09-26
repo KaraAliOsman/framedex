@@ -36,6 +36,11 @@ const LEVEL_LABEL: Record<string, string> = {
   CNC_READY: "ws.level.CNC_READY",
 };
 
+/** Entity references in blocker text carry raw UUIDs — a record id means
+ * nothing read as prose. Keep the identity but show only its short code. */
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const shortId = (text: string) => text.replace(UUID_RE, (id) => id.slice(0, 8));
+
 function levelOk(level: { ok?: boolean; state?: string; blockers: unknown[] }): boolean {
   if (level.state) return level.state === "COMPLETE";
   return level.ok === true;
@@ -175,14 +180,15 @@ function ReadinessLadder({
                       title={wst("jumpToSection")}
                     >
                       {ct(`readiness.${blocker.code}`)}
-                      <span className="ws-blocker-affected"> — {blocker.affected}</span>
+                      <span className="ws-blocker-affected"> — {shortId(blocker.affected)}</span>
                     </button>
                     <p className="ws-blocker-detail">
-                      <strong>{wst("missingAuthority")}:</strong> {blocker.missing_authority}
+                      <strong>{wst("missingAuthority")}:</strong>{" "}
+                      {shortId(blocker.missing_authority)}
                       <br />
-                      <strong>{wst("consequence")}:</strong> {blocker.why}
+                      <strong>{wst("consequence")}:</strong> {shortId(blocker.why)}
                       <br />
-                      <strong>{wst("resolution")}:</strong> {blocker.action}
+                      <strong>{wst("resolution")}:</strong> {shortId(blocker.action)}
                     </p>
                   </li>
                 ))}

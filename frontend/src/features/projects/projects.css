@@ -887,7 +887,7 @@
   cursor: pointer;
   display: grid;
   gap: 0.625rem;
-  grid-template-columns: 4.25rem minmax(6rem, 1fr) 8.5rem 4.5rem auto;
+  grid-template-columns: 5.5rem minmax(6rem, 1fr) 8.5rem 4.5rem auto;
   padding: 0.5rem 0.75rem;
 }
 
@@ -910,14 +910,19 @@
   border: 1px solid var(--theme-border-subtle);
   border-radius: var(--radius-sm, 0.25rem);
   display: block;
-  height: 3.5rem;
+  height: 4.25rem;
   overflow: hidden;
-  width: 4.25rem;
+  width: 5.5rem;
 }
 
-.position-row__thumb svg {
+/* The studio render is sized for cards — inside the row it must fit the
+ * thumb cell instead of cropping the product's edges. */
+.position-row__thumb svg,
+.position-row__thumb .position-thumb,
+.position-row__thumb .position-thumb-host {
   display: block;
   height: 100%;
+  object-fit: contain;
   width: 100%;
 }
 

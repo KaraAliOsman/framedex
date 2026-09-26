@@ -261,6 +261,16 @@ export function ProductionPage(): JSX.Element {
   );
   const listFiltered = statusFilter !== "" || shortageOnly || dispatchReadyOnly || blockedOnly;
 
+  // A workspace leads with the work — pin the top-priority order into the
+  // detail pane instead of leaving it empty waiting for a click.
+  useEffect(() => {
+    if (selectedId || filteredOrders.length === 0) return;
+    const next = new URLSearchParams(params);
+    next.set("order", filteredOrders[0]!.id);
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, filteredOrders[0]?.id]);
+
   const loadOrders = useCallback(async () => {
     const [response, prepResponse] = await Promise.all([productionOrders(), productionPrep()]);
     if (response.status === 200) setOrders(response.data.orders);
